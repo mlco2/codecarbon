@@ -1,0 +1,1 @@
+A repo of expertise shared by [comet.ml](https://comet.ml) to help with our [`co2-tracker`](https://github.com/mlco2/co2-tracker), under the [MIT License](https://github.com/mlco2/comet-shared/blob/master/LICENSE)
