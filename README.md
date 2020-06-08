@@ -11,6 +11,9 @@ pip install -r requirements.txt  # We need this for now as co2_tracker_utils is 
 ```
 
 `co2_tracker` will now be installed to the local environment
+
+#### Online mode (for setups with internet access)
+
 ```python
 from co2_tracker import CO2Tracker
 tracker = CO2Tracker()
@@ -28,6 +31,28 @@ from co2_tracker import track_co2
 def training_loop():
    pass
 ```
+#### Offline mode (for setups without internet access)
+
+The offline tracker can be used as follows:
+```python
+from co2_tracker import OfflineCO2Tracker
+
+tracker = OfflineCO2Tracker(country="Canada")
+tracker.start()
+# GPU Intensive code goes here
+tracker.stop()
+```
+
+or 
+
+```python
+from co2_tracker import track_co2
+
+@track_co2(offline=True, country="Canada")
+def training_loop():
+   pass
+```
+
 ## Quickstart
 
 For an example application, we use TensorFlow 2.0 on MNIST. 
