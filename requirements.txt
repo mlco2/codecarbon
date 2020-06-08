@@ -1,0 +1,2 @@
+.
+-e git+https://github.com/comet-ml/co2-tracker-utils@ec1eba9de49a6825cd20cef56f6003976c7df7a3#egg=co2_tracker_utils
