@@ -28,6 +28,7 @@ from co2_tracker import track_co2
 def training_loop():
    pass
 ```
+## Quickstart
 
 For an example application, we use TensorFlow 2.0 on MNIST. 
 
