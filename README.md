@@ -94,5 +94,5 @@ make html
 * Sample data file is in `examples/default.emissions`
 * Run with the following command
 ```
-python co2_tracker/viz/co2board.py/viz/co2board.py --filename="examples/default.emissions"
+python co2_tracker/viz/co2board.py --filename="examples/default.emissions"
 ```
