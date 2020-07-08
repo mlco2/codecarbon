@@ -4,7 +4,16 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 # TODO: Add co2-tracker-utils once it is published to PyPI here
-DEPENDENCIES = ["APScheduler", "pandas", "requests", "dataclasses"]
+DEPENDENCIES = [
+    "APScheduler",
+    "pandas",
+    "requests",
+    "dataclasses",
+    "co2-tracker-utils",
+    "dash",
+    "fire",
+    "dash_bootstrap_components",
+]
 
 TEST_DEPENDENCIES = ["responses", "tox", "mock", "pytest"]
 
