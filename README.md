@@ -7,7 +7,7 @@ Create a virtual environment using `conda` or `virtualenv.`
 ```
 conda env create --name co2_tracker_env
 conda activate co2_tracker_env
-pip install -r requirements.txt  # We need this for now as co2_tracker_utils is not published to PyPI
+pip install . 
 ```
 
 `co2_tracker` will now be installed to the local environment
@@ -90,3 +90,9 @@ cd docs
 make html
 ```
 
+## [WIP] Visualization Tool
+* Sample data file is in `examples/default.emissions`
+* Run with the following command
+```
+python viz/co2board.py --filename="examples/default.emissions"
+```
