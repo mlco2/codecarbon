@@ -13,7 +13,7 @@ from threading import Timer
 
 import locate
 import convert
-import evaluate
+import report
 
 
 def compute_summary_stats(df: pd.DataFrame) -> pd.DataFrame:
@@ -57,7 +57,7 @@ def render_app(df: pd.DataFrame):
         ),
     )
 
-    baseline_card = [
+    equivalencies_card = [
         dbc.CardHeader(html.Strong("Assumed Carbon Equivalencies")),
         dbc.CardBody(
             [
@@ -118,7 +118,7 @@ def render_app(df: pd.DataFrame):
         ),
     ]
 
-    placeholder_card = [
+    equivalents_card = [
         dbc.CardHeader(html.Strong(["CO", html.Sub("2"), " Emissions Equivalents"])),
         dbc.CardBody(
             [
@@ -133,9 +133,9 @@ def render_app(df: pd.DataFrame):
                 ),
                 html.P(
                     [
-                        "Min. of 32-in. LCD TV: ",
+                        "Time of 32-in. LCD TV: ",
                         html.Strong(
-                            "{:.2e} minutes".format(convert.carbon_to_tv(emissionsss)),
+                            convert.carbon_to_tv(emissionsss),
                             style={"color": "green"},
                         ),
                     ],
@@ -156,41 +156,56 @@ def render_app(df: pd.DataFrame):
         ),
     ]
 
-    emissions_card = [
+    general_info_card = [
         dbc.CardHeader(html.Strong("General Information")),
         dbc.CardBody(
             [
-                html.P(
+                dbc.Row(
                     [
-                        "Location: ",
-                        html.Strong(
-                            "{} ".format(location),
-                            style={"color": "green"},
+                        dbc.Col(
+                            html.P(
+                                [
+                                    "Location: ",
+                                    html.Strong("{} ".format(location), style={"color": "green"}),
+                                ],
+                            ),
                         ),
-                    ],
-                ),
-                html.P(
-                    [
-                        "Total kilowatt hours used: ",
-                        html.Strong(
-                            "{} kWh".format(kwh),
-                            style={"color": "green"},
+                        dbc.Col(
+                            html.P(
+                                [
+                                    "Total kilowatt hours used: ",
+                                    html.Strong(
+                                        "{} kWh".format(kwh),
+                                        style={"color": "green"},
+                                    ),
+                                ],
+                            ),
                         ),
-                    ],
-                ),
-                html.P(
-                    [
-                        "Total emissions for all projects: ",
-                        html.Strong(
-                            "{} kg".format(emissionsss),
-                            style={"color": "green"},
-                        ),
-                    ],
+                        dbc.Col(
+                            html.P(
+                                [
+                                    "Total emissions for all projects: ",
+                                    html.Strong("{} kg".format(emissionsss), style={"color": "green"}),
+                                ],
+                            )
+                        )
+                    ]
                 )
-
             ],
             className="card-text",
         ),
+    ]
+
+    energy_mix_card = [
+        dbc.CardHeader(html.Strong("Energy Mix Data")),
+        dbc.CardBody(
+            [
+                dcc.Graph(
+                    id = "energy-mix",
+                    figure = report.energy_mix_graph(location, state_emission)
+                )
+            ]
+        )
     ]
 
     header = dbc.Jumbotron(
@@ -211,29 +226,43 @@ def render_app(df: pd.DataFrame):
             dbc.Row(
                 [
                     dbc.Col(
-                        dbc.CardDeck(
-                            [
-                                dbc.Card(
-                                    emissions_card, color="primary", outline=True
-                                ),
-                                dbc.Card(
-                                    baseline_card, color="primary", outline=True
-                                ),
-                                dbc.Card(
-                                    placeholder_card, color="primary", outline=True
-                                ),
-                            ]
-                        )
-                    )
+                        dbc.Card(
+                            general_info_card, color="primary", outline=True
+                        ),
+                    ),
                 ],
                 style={"padding": "10px"},
                 className="mb-4",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Graph(
+                            id = "energy-mix",
+                            figure = report.energy_mix_graph(location, state_emission)
+                        ),
+                    ),
+                    dbc.Col(
+                        dbc.CardDeck(
+                            [
+                                dbc.Card(
+                                    equivalencies_card, color="primary", outline=True
+                                ),
+                                dbc.Card(
+                                    equivalents_card, color="primary", outline=True
+                                ),
+                            ]
+                        ),
+                    )
+                ],
+                style={"padding": "10px"},
+                className="row align-items-center mb-4",
             ),
 
         ],
     )
 
-    comparisons = html.Div(
+    default_comparisons = html.Div(
         [
             html.H3(
                 "Emission Comparisons",
@@ -256,7 +285,7 @@ def render_app(df: pd.DataFrame):
 
             dcc.Graph(
                 id = "comparison-bar-charts",
-                figure = evaluate.comparison_graphs(kwh, location, emissionsss)
+                figure = report.comparison_graphs(kwh, location, emissionsss, state_emission)
             )
         ]
     )
@@ -271,7 +300,7 @@ def render_app(df: pd.DataFrame):
 
 
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
-    app.layout = dbc.Container([header, cards, comparisons, graph_and_table], style={"padding-top": "50px"},)
+    app.layout = dbc.Container([header, cards, default_comparisons, graph_and_table], style={"padding-top": "50px"},)
     return app
 
 

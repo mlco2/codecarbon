@@ -70,4 +70,12 @@ def carbon_to_tv(kg_carbon):
     Gives the amount of minutes of watching a 32-inch LCD flat screen tv required to emit and
     equivalent amount of carbon. Ratio is 0.097 kg CO2 / 1 hour tv
     '''
-    return kg_carbon * (1 / .097) * 60
+    time_in_minutes = kg_carbon * (1 / .097) * 60
+    formated_value = "{:.2g} minutes".format(time_in_minutes)
+    if time_in_minutes >= 60:
+        time_in_hours = time_in_minutes / 60
+        formated_value = "{:.3g} hours".format(time_in_hours)
+        if time_in_hours >= 24:
+            time_in_days = time_in_hours / 24
+            formated_value = "{:.2g} days".format(time_in_days)
+    return formated_value

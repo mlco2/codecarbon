@@ -1,7 +1,5 @@
 import os
 import json
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 import convert
 import locate
@@ -17,14 +15,58 @@ def get_data(file):
     return data
 
 
-def custom_emissions_comparison(process_kwh, locations, default_location):
+def energy_mix(location, state_emission):
+    """ Gets the energy mix information for a specific location
+
+        Parameters:
+            location (str): user's location
+            location_of_default (str): Specifies which average to use if
+            	location cannot be determined
+
+        Returns:
+            breakdown (list): percentages of each energy type
+    """
+    if state_emission == True:
+        # Default to U.S. average for unknown location
+        data = get_data("../data/private_infra/2016/energy_mix_us.json")
+        s = data[location]['mix']
+        coal, oil, natural_gas = s['coal']*100, s['oil']*100, s['gas']*100
+        nuclear, hydro, biomass, wind, solar, geo, = \
+        s['nuclear'], s['hydro'], s['biomass'], s['wind'], \
+        s['solar'], s['geothermal']
+
+        low_carbon = sum([nuclear,hydro,biomass,wind,solar,geo])*100
+        mix_data = [['Coal', "{:.2f}".format(coal)],
+                    ['Oil', "{:.2f}".format(oil)],
+                    ['Natural Gas', "{:.2f}".format(natural_gas)],
+                    ['Low Carbon', "{:.2f}".format(low_carbon)]]
+
+        return mix_data
+
+    else:
+        data = get_data("../data/private_infra/2016/energy_mix.json")
+        c = data[location] # get country
+        total, breakdown =  c['total'], [c['coal'], c['petroleum'], \
+        c['naturalGas'], c['lowCarbon']]
+
+        breakdown = list(map(lambda x: 100*x/total, breakdown))
+        coal, petroleum, natural_gas, low_carbon = breakdown
+        mix_data = [['Coal',  "{:.2f}".format(coal)],
+                    ['Petroleum', "{:.2f}".format(petroleum)],
+                    ['Natural Gas', "{:.2f}".format(natural_gas)],
+                    ['Low Carbon', "{:.2f}".format(low_carbon)]]
+
+        return mix_data
+
+
+def custom_emissions_comparison(process_kwh, locations, default_location, state_emission):
     # TODO: Disambiguation of states such as Georgia, US and Georgia
     intl_data = get_data("../data/private_infra/2016/energy_mix.json")
     us_data = get_data("../data/private_infra/2016/us_emissions.json")
     emissions = []
 
     for location in locations:
-        if locate.in_US(location):
+        if state_emission == True:
             emission = convert.lbs_to_kgs(us_data[location]*convert.to_MWh(process_kwh))
             emissions.append((location, emission))
         else:
@@ -43,7 +85,7 @@ def custom_emissions_comparison(process_kwh, locations, default_location):
     return emissions
 
 
-def default_emissions_comparison(process_kwh, default_location):
+def default_emissions_comparison(process_kwh, default_location, state_emission):
     # Calculates emissions in different locations
 
     intl_data = get_data("../data/private_infra/2016/energy_mix.json")
@@ -92,65 +134,12 @@ def default_emissions_comparison(process_kwh, default_location):
     return comparison_values
 
 
-def comparison_graphs(kwh, location, emissions):
-    comparison_data = get_comparison_data(kwh)
-    bar_charts_data = [comparison_data[6:], comparison_data[3:6], comparison_data[:3]]
-    trace_names = ["Global", "Europe", "United States"]
-    fig = make_subplots(rows=1, cols=3)
-
-    chart_col = 1
-    for data in bar_charts_data:
-        comparison_values = bar_charts_data[chart_col-1]
-        comparison_values.append([location, emissions])
-        comparison_values.sort(key = lambda x: x[1])
-        # bar chart colors
-        colors = ['rgb(166, 189, 219)',] * 4
-        labels = []
-        data = []
-        count = 0
-        for pair in comparison_values:
-            if pair[0] == location:
-                colors[count] = 'rgb(28, 144, 153)'
-            labels.append(pair[0])
-            data.append(pair[1])
-            count += 1
-        fig.add_trace(
-            go.Bar(
-                x=labels,
-                y=data,
-                marker_color=colors,
-                marker_line_color='rgb(8,48,107)',
-                marker_line_width=1.5,
-                name = trace_names[chart_col-1],
-                showlegend=False
-            ),
-            row=1,
-            col=chart_col
-        )
-        chart_col += 1
-
-    fig.update_layout(
-        xaxis_tickangle=-45,
-        xaxis_title="United States",
-        yaxis_title="CO2 (kg)",
-
-        xaxis2_tickangle=-45,
-        xaxis2_title="Europe",
-        yaxis2_title="CO2 (kg)",
-
-        xaxis3_tickangle=-45,
-        xaxis3_title="Global (excluding Europe and US)",
-        yaxis3_title="CO2 (kg)",
-    )
-    return fig
-
-
-def get_comparison_data(kwh, locations=["Mongolia", "Iceland", "Switzerland"]):
+def get_comparison_data(kwh, state_emission, locations=["Mongolia", "Iceland", "Switzerland"]):
     default_location = False
     if locations == ["Mongolia", "Iceland", "Switzerland"]:
         default_location = True
-        comparison_values = default_emissions_comparison(kwh, default_location)
+        comparison_values = default_emissions_comparison(kwh, default_location, state_emission)
     else:
-        comparison_values = custom_emissions_comparison(kwh, locations, default_location)
+        comparison_values = custom_emissions_comparison(kwh, locations, default_location, state_emission)
 
     return comparison_values
