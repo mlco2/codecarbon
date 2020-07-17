@@ -5,7 +5,7 @@ from co2_tracker.emissions import (
     get_cloud_emissions,
 )
 from co2_tracker.units import Energy
-from co2_tracker.external import CloudMetadata, GeoMetadata
+from co2_tracker.external.geography import CloudMetadata, GeoMetadata
 from tests.testutils import get_test_app_config
 
 

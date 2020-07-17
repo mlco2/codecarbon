@@ -18,17 +18,14 @@ class CO2Data:
     project_name: str
     duration: float
     emissions: float
+    total_energy_usage: float
+    country: str
+    region: str
 
     @property
     def values(self) -> OrderedDict:
         return OrderedDict(
-            [
-                ("timestamp", self.timestamp.strftime("%Y-%m-%d %H:%M:%S")),
-                ("experiment_id", self.experiment_id),
-                ("project_name", self.project_name),
-                ("duration", str(self.duration)),
-                ("emissions", str(self.emissions)),
-            ]
+            self.__dict__.items()
         )
 
 

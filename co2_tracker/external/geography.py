@@ -1,15 +1,10 @@
-""" Encapsulates external dependencies to retrieve cloud, gpu and geographical metadata """
-
 import logging
 import re
 from dataclasses import dataclass
-from typing import Dict, Callable, Optional, List, Iterable
+from typing import Optional, Dict, Callable
 
 import requests
 from co2_tracker_utils.cloud_logging import get_env_cloud_details
-from co2_tracker_utils.gpu_logging import get_gpu_details, is_gpu_details_available
-
-from co2_tracker.units import Power
 
 logger = logging.getLogger(__name__)
 
@@ -67,35 +62,3 @@ class GeoMetadata:
             )
             return cls(country="Canada")
         return cls(country=response["country"], region=response["region"])
-
-
-@dataclass
-class GPUMetadata:
-    is_gpu_available: bool
-    num_gpus: int
-
-    def get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
-        """ Get total power consumed by specific GPUs identified by `gpu_ids`
-        :param gpu_ids:
-        :return:
-        """
-        all_gpu_details: List[Dict] = get_gpu_details()
-        return Power.from_milli_watts(
-            sum(
-                [
-                    gpu_details["power_usage"]
-                    for idx, gpu_details in enumerate(all_gpu_details)
-                    if idx in gpu_ids
-                ]
-            )
-        )
-
-    @property
-    def total_power(self) -> Power:
-        return self.get_power_for_gpus(gpu_ids=set(range(self.num_gpus)))
-
-    @classmethod
-    def from_co2_tracker_utils(cls) -> "GPUMetadata":
-        return cls(
-            is_gpu_available=is_gpu_details_available(), num_gpus=len(get_gpu_details())
-        )

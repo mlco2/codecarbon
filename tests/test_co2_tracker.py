@@ -7,7 +7,7 @@ import responses
 import requests
 
 from co2_tracker.co2_tracker import CO2Tracker, track_co2
-from co2_tracker.external import CloudMetadata
+from co2_tracker.external.geography import CloudMetadata
 from tests.testdata import (
     GEO_METADATA_CANADA,
     TWO_GPU_DETAILS_RESPONSE,
@@ -21,9 +21,9 @@ def heavy_computation(run_time_secs: int = 3):
         pass
 
 
-@mock.patch("co2_tracker.external.is_gpu_details_available", return_value=True)
+@mock.patch("co2_tracker.co2_tracker.is_gpu_details_available", return_value=True)
 @mock.patch(
-    "co2_tracker.external.get_gpu_details", return_value=TWO_GPU_DETAILS_RESPONSE,
+    "co2_tracker.external.hardware.get_gpu_details", return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 @mock.patch(
     "co2_tracker.co2_tracker.CO2Tracker._get_cloud_metadata",
@@ -77,7 +77,7 @@ class TestCO2Tracker(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
 
-    @mock.patch("co2_tracker.external.requests.get")
+    @mock.patch("co2_tracker.external.geography.requests.get")
     def test_co2_tracker_timeout(
         self,
         mocked_requests_get,

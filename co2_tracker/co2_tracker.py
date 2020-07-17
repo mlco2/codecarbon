@@ -10,19 +10,22 @@ from functools import wraps
 from typing import Optional, List, Callable
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from co2_tracker_utils.gpu_logging import is_gpu_details_available
 
 from co2_tracker.config import cfg, AppConfig
 from co2_tracker.emissions import (
     get_cloud_emissions,
     get_private_infra_emissions,
+    get_cloud_country,
 )
-from co2_tracker.external import GeoMetadata, CloudMetadata, GPUMetadata
+from co2_tracker.external.geography import GeoMetadata, CloudMetadata
+from co2_tracker.external.hardware import GPU, CPU
 from co2_tracker.persistence import (
     FilePersistence,
     CO2Data,
     BasePersistence,
 )
-from co2_tracker.units import Time, Energy
+from co2_tracker.units import Time, Energy, Power
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +57,12 @@ class BaseCO2Tracker(ABC):
         self._measure_power_secs: int = measure_power_secs
         self._start_time: Optional[float] = None
         self._output_dir: str = output_dir
-        self._gpu_total_energy: Energy = Energy.from_energy(kwh=0)
+        self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._gpu = GPUMetadata.from_co2_tracker_utils()
+        self._is_gpu_available = is_gpu_details_available()
+        self._hardware = (
+            GPU.from_co2_tracker_utils()
+        )  # TODO: Change once CPU support is available
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
         self._scheduler.add_job(
@@ -77,7 +83,8 @@ class BaseCO2Tracker(ABC):
         Returns: None
         """
 
-        if not self._gpu.is_gpu_available:
+        # TODO: Change once CPU support is available
+        if not self._is_gpu_available:
             logger.warning("No GPU available")
             return
 
@@ -104,9 +111,21 @@ class BaseCO2Tracker(ABC):
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
         emissions: float = (
-            get_private_infra_emissions(self._gpu_total_energy, geo, self._app_config)
+            get_private_infra_emissions(self._total_energy, geo, self._app_config)
             if cloud.is_on_private_infra
-            else get_cloud_emissions(self._gpu_total_energy, cloud, self._app_config)
+            else get_cloud_emissions(self._total_energy, cloud, self._app_config)
+        )
+
+        country: str = (
+            geo.country
+            if cloud.is_on_private_infra
+            else get_cloud_country(cloud, self._app_config)
+        )
+
+        region: str = (
+            ("" if geo.region is None else geo.region)
+            if cloud.is_on_private_infra
+            else ""
         )
 
         data = CO2Data(
@@ -115,6 +134,9 @@ class BaseCO2Tracker(ABC):
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
+            total_energy_usage=self._total_energy.kwh,
+            country=country,
+            region=region,
         )
 
         for persistence in self.persistence_objs:
@@ -142,8 +164,8 @@ class BaseCO2Tracker(ABC):
 
         Returns: None
         """
-        self._gpu_total_energy += Energy.from_power_and_time(
-            power=self._gpu.total_power,
+        self._total_energy += Energy.from_power_and_time(
+            power=self._hardware.total_power,
             time=Time.from_seconds(self._measure_power_secs),
         )
 
