@@ -1,31 +1,35 @@
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-import plotly.express as px
 
 import evaluate
 
-def comparison_graphs(kwh, location, emissions, state_emission):
-    comparison_data = evaluate.get_comparison_data(kwh, state_emission)
-    bar_charts_data = [comparison_data[6:], comparison_data[3:6], comparison_data[:3]]
-    trace_names = ["United States", "Europe", "Global"]
+
+def bar_chart_data(comparison_values, location, emissions):
+    comparison_values.append([location, emissions])
+    comparison_values.sort(key = lambda x: x[1])
+    # bar chart colors
+    colors = ['rgb(166, 189, 219)',] * len(comparison_values)
+    labels = []
+    data = []
+    count = 0
+    for pair in comparison_values:
+        if pair[0] == location:
+            colors[count] = 'rgb(28, 144, 153)'
+        labels.append(pair[0])
+        data.append(pair[1])
+        count += 1
+    return labels, data, colors
+
+
+def default_comparison_graphs(kwh, location, emissions, intl_mix, us_data):
+    comparison_data = evaluate.get_comparison_data(kwh, intl_mix, us_data, default_location=True)
+    individual_chart_data = [comparison_data[6:], comparison_data[3:6], comparison_data[:3]]
+    trace_names = ["Europe", "Global", "United States"]
     fig = make_subplots(rows=1, cols=3)
 
-    chart_col = 1
-    for data in bar_charts_data:
-        comparison_values = bar_charts_data[chart_col-1]
-        comparison_values.append([location, emissions])
-        comparison_values.sort(key = lambda x: x[1])
-        # bar chart colors
-        colors = ['rgb(166, 189, 219)',] * 4
-        labels = []
-        data = []
-        count = 0
-        for pair in comparison_values:
-            if pair[0] == location:
-                colors[count] = 'rgb(28, 144, 153)'
-            labels.append(pair[0])
-            data.append(pair[1])
-            count += 1
+    for chart_col in range(3):
+        comparison_values = individual_chart_data[chart_col]
+        labels, data, colors = bar_chart_data(comparison_values, location, emissions)
         fig.add_trace(
             go.Bar(
                 x=labels,
@@ -37,9 +41,8 @@ def comparison_graphs(kwh, location, emissions, state_emission):
                 showlegend=False
             ),
             row=1,
-            col=chart_col
+            col=chart_col+1
         )
-        chart_col += 1
 
     fig.update_layout(
         xaxis_tickangle=-45,
@@ -55,8 +58,30 @@ def comparison_graphs(kwh, location, emissions, state_emission):
     return fig
 
 
-def energy_mix_graph(location, state_emission):
-    mix_data = evaluate.energy_mix(location, state_emission)
+def custom_comparison_graph(kwh, location, emissions, locations, intl_mix, us_data):
+    comparison_data = evaluate.get_comparison_data(kwh, intl_mix, us_data, locations)
+    labels, data, colors = bar_chart_data(comparison_data, location, emissions)
+
+    fig = go.Figure(
+        data = go.Bar(
+            x=labels,
+            y=data,
+            marker_color=colors,
+            marker_line_color='rgb(8,48,107)',
+            marker_line_width=1.5,
+            showlegend=False
+        )
+    )
+    fig.update_layout(
+        xaxis_tickangle=-45,
+        xaxis_title="Other Location",
+        yaxis_title="CO2 (kg)",
+    )
+    return fig
+
+
+def energy_mix_graph(location, intl_mix, us_mix):
+    mix_data = evaluate.energy_mix(location, intl_mix, us_mix)
     labels = []
     values = []
     for pair in mix_data:
