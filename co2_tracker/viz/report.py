@@ -74,7 +74,7 @@ def custom_comparison_graph(kwh, location, emissions, locations, intl_mix, us_da
     )
     fig.update_layout(
         xaxis_tickangle=-45,
-        xaxis_title="Other Location",
+        xaxis_title="Location",
         yaxis_title="CO2 (kg)",
     )
     return fig
@@ -90,8 +90,9 @@ def energy_mix_graph(location, intl_mix, us_mix):
 
     colors = ['rgb(202,0,32)', 'rgb(145,197,222)', 'rgb(244,165,130)', 'rgb(5,113,176)']
 
-    fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
-    fig.update_traces(hoverinfo='label+percent', textinfo='percent+label', textfont_size=15,
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values,
+                    showlegend=False, insidetextorientation="horizontal")])
+    fig.update_traces(hoverinfo='label+percent', textinfo='percent+label', textfont_size=16,
                   marker=dict(colors=colors, line=dict(color='#000000', width=2)))
     fig.update_layout(title_text="Energy Mix Data")
     return fig
