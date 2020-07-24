@@ -91,6 +91,9 @@ def render_app(df: pd.DataFrame):
     us_mix = evaluate.get_data("../data/private_infra/2016/energy_mix_us.json")
     us_data = evaluate.get_data("../data/private_infra/2016/us_emissions.json")
 
+    countries_with_direct_emissions = {"United States": us_mix}
+    countries_with_regional_energy_mix = ["United States"]
+
     country_list = sorted(intl_mix.keys())
 
     table = dbc.Table.from_dataframe(
@@ -289,16 +292,29 @@ def render_app(df: pd.DataFrame):
                     dbc.Col(
                         [
                             html.H5(
-                                "Choose Locations:",
+                                "Select Countries:",
                                 style={
                                     "textAlign": "left",
-                                    "fontWeight": "bold"
+                                    "fontWeight": "400",
                                 }
                             ),
                             dcc.Dropdown(
                                 id="selected-countries",
                                 options=[{"label": i, "value": i} for i in country_list],
-                                value=["Mongolia", "Iceland", "Switzerland"],
+                                value=["United States", "Iceland", "Switzerland"],
+                                multi=True
+                            ),
+                            html.H5(
+                                "Select Regions:",
+                                style={
+                                    "textAlign": "left",
+                                    "fontWeight": "400",
+                                    "padding-top": "10px"
+                                }
+                            ),
+                            dcc.Dropdown(
+                                id="selected-regions",
+                                value=[],
                                 multi=True
                             )
                         ],
@@ -325,11 +341,13 @@ def render_app(df: pd.DataFrame):
         ]
     )
 
-    hidden_div = html.Div(id='intermediate-value', style={'display': 'none'})
+    hidden_div1 = html.Div(id='intermediate-value', style={'display': 'none'})
+    hidden_div2 = html.Div(id='countries-dropdown-data', style={'display': 'none'})
 
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
     app.layout = dbc.Container([header, project_dropdown, cards, default_comparisons,
-                                custom_comparison, graph_and_table, hidden_div],
+                                custom_comparison, graph_and_table, hidden_div1,
+                                hidden_div2],
                                 style={"padding-top": "50px"},)
 
     # intermediate data
@@ -343,16 +361,12 @@ def render_app(df: pd.DataFrame):
         region = project_row.iloc[0,4]
         country = project_row.iloc[0,5]
 
-        if country in ["United States"]:
-            location = region
-        else:
-            location = country
-
         variables_df = pd.DataFrame(
             {
                 "emissions": emissions,
                 "kwh": kwh,
-                "location": location
+                "region": region,
+                "country": country
             },
             index=[0]
         )
@@ -371,7 +385,13 @@ def render_app(df: pd.DataFrame):
         dff = pd.read_json(jsonified_variables)
         emissions = dff.iloc[0, 0]
         kwh = dff.iloc[0, 1]
-        location = dff.iloc[0, 2]
+        region = dff.iloc[0, 2]
+        country = dff.iloc[0, 3]
+
+        if country in countries_with_regional_energy_mix:
+            location = region
+        else:
+            location = country
 
         general_info_location = "{} ".format(location)
         general_info_kwh = "{:.3g} kWh".format(kwh)
@@ -394,7 +414,13 @@ def render_app(df: pd.DataFrame):
         [Input('intermediate-value', 'children')])
     def update_equivalencies_card(jsonified_variables):
         dff = pd.read_json(jsonified_variables)
-        location = dff.iloc[0, 2]
+        region = dff.iloc[0, 2]
+        country = dff.iloc[0, 3]
+
+        if country in countries_with_regional_energy_mix:
+            location = region
+        else:
+            location = country
 
         if locate.in_US(location):
             energy_sources = ["Coal", "Oil", "Natural Gas", "Low Carbon"]
@@ -421,21 +447,74 @@ def render_app(df: pd.DataFrame):
         dff = pd.read_json(jsonified_variables)
         emissions = dff.iloc[0, 0]
         kwh = dff.iloc[0, 1]
-        location = dff.iloc[0, 2]
+        region = dff.iloc[0, 2]
+        country = dff.iloc[0, 3]
+
+        if country in countries_with_direct_emissions:
+            location = region
+        else:
+            location = country
+
         fig = report.default_comparison_graphs(kwh, location, emissions, intl_mix, us_data)
         return fig
 
-    # custom comparison graph callback
+    # intermediate data for custom comparison graph region dropdown
+    @app.callback(
+        [Output("countries-dropdown-data", "children"),
+         Output("selected-regions", "options")],
+        [Input("selected-countries", "value")])
+    def update_regions_dropdown(countries):
+        regions = []
+        for country in countries:
+            if country in countries_with_direct_emissions:
+                regions_in_country = countries_with_direct_emissions[country].keys()
+                regions.extend(
+                    list(map(lambda x: country+"/"+x , regions_in_country))
+                )
+
+        if regions == []:
+            regions.append("No Regions Available")
+            region_dropdown_data = [{"label": i, "value": i, "disabled": True} for i in regions]
+        else:
+            regions = sorted(regions)
+            region_dropdown_data = [{"label": i, "value": i} for i in regions]
+
+        countries_df = pd.DataFrame({"countries": countries})
+        return countries_df.to_json(), region_dropdown_data
+
+    # custom comparison graph country dropdown callback
     @app.callback(
         Output("custom-comparison-graph", "figure"),
-        [Input("selected-countries", "value"),
+        [Input("countries-dropdown-data", "children"),
+         Input("selected-regions", "value"),
          Input("intermediate-value", "children")])
-    def update_custom_comparison_graph(countries, jsonified_variables):
+    def update_custom_comparison_graph(countries, regions, jsonified_variables):
+        countries_df = pd.read_json(countries)
+        countries = countries_df['countries'].tolist()
         dff = pd.read_json(jsonified_variables)
         emissions = dff.iloc[0, 0]
         kwh = dff.iloc[0, 1]
-        location = dff.iloc[0, 2]
-        fig = report.custom_comparison_graph(kwh, location, emissions, countries, intl_mix, us_data)
+        region = dff.iloc[0, 2]
+        country = dff.iloc[0, 3]
+
+        if country in countries_with_direct_emissions:
+            location = region
+        else:
+            location = country
+
+        if regions != ["No Regions Available"]:
+            regions = [x for x in regions if x.split("/")[0] in countries]
+            if regions == []:
+                locations = countries
+            else:
+                locations = countries + list(map(lambda x: x.split("/")[1], regions))
+                countries_with_regions = list(set(list(map(lambda x: x.split("/")[0], regions))))
+                for country in countries_with_regions:
+                    locations.remove(country)
+        else:
+            locations = countries
+
+        fig = report.custom_comparison_graph(kwh, location, emissions, locations, intl_mix, us_data)
         return fig
 
     return app
