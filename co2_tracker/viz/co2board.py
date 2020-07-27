@@ -151,6 +151,9 @@ def render_app(df: pd.DataFrame):
                         ),
                     ],
                 ),
+                html.P(
+                    html.Br()
+                )
             ],
             className="card-text",
         ),
@@ -211,7 +214,24 @@ def render_app(df: pd.DataFrame):
                 className="lead",
             ),
             html.Hr(className="my-4"),
-            html.P(dbc.Button("Learn more", color="primary"), className="lead"),
+            html.P(
+                [
+                    "For more information on the methodology used to calculate ",
+                    "these results, see: ",
+                    html.A(
+                        "mlco2 paper",
+                        href='https://arxiv.org/pdf/1910.09700.pdf',
+                        target="_blank"
+                    ),
+                    " and ",
+                    html.A(
+                        "energy-usage paper",
+                        href='https://arxiv.org/pdf/1911.08354.pdf',
+                        target="_blank"
+                    ),
+                    "."
+                ]
+            )
         ],
     )
 
@@ -226,30 +246,28 @@ def render_app(df: pd.DataFrame):
                     ),
                 ],
                 style={"padding": "10px"},
-                className="mb-4",
+                className="mb-0",
             ),
             dbc.Row(
                 [
+                    dbc.Col(
+                        dbc.Card(
+                            equivalencies_card, color="primary", outline=True
+                        ),
+                    ),
                     dbc.Col(
                         dcc.Graph(
                             id = "energy-mix"
                         ),
                     ),
                     dbc.Col(
-                        dbc.CardDeck(
-                            [
-                                dbc.Card(
-                                    equivalencies_card, color="primary", outline=True
-                                ),
-                                dbc.Card(
-                                    equivalents_card, color="primary", outline=True
-                                ),
-                            ]
+                        dbc.Card(
+                            equivalents_card, color="primary", outline=True
                         ),
                     )
                 ],
                 style={"padding": "10px"},
-                className="row align-items-center mb-4",
+                className="row align-items-center mb-0",
             ),
 
         ],
@@ -301,7 +319,7 @@ def render_app(df: pd.DataFrame):
                             dcc.Dropdown(
                                 id="selected-countries",
                                 options=[{"label": i, "value": i} for i in country_list],
-                                value=["United States", "Iceland", "Switzerland"],
+                                value=["Mongolia", "Iceland", "Switzerland"],
                                 multi=True
                             ),
                             html.H5(
@@ -330,14 +348,14 @@ def render_app(df: pd.DataFrame):
     graph_and_table = html.Div(
         [
             html.H3(
-                "Emission Time Series",
+                "Emissions Time Series",
                 style={
                     "textAlign": "center",
                     "fontWeight": "bold"
                 }
             ),
-            dbc.Row([dbc.Col(graph)]),
-            dbc.Row([dbc.Col(table)]),
+            dbc.Row([dbc.Col(graph)], className="row mb-2"),
+            dbc.Row([dbc.Col(table)], className="row mb-4"),
         ]
     )
 
