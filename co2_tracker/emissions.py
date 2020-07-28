@@ -4,15 +4,15 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
-import configparser
 import json
 import logging
 from typing import Dict, Optional
+
 import pandas as pd
 
-from co2_tracker.units import CO2EmissionsPerKwh, Energy
-from co2_tracker.external import GeoMetadata, CloudMetadata
 from co2_tracker.config import AppConfig
+from co2_tracker.external.geography import GeoMetadata, CloudMetadata
+from co2_tracker.units import CO2EmissionsPerKwh, Energy
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,13 @@ def get_cloud_emissions(
     )
 
     return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
+
+
+def get_cloud_country(cloud: CloudMetadata, config: AppConfig) -> str:
+    df: pd.DataFrame = pd.read_csv(config.cloud_emissions_path)
+    return df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)][
+        "country"
+    ].item()
 
 
 def get_private_infra_emissions(
