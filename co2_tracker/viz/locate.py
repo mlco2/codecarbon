@@ -1,7 +1,7 @@
 import requests
 
 # TODO: Make these sets
-STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado', \
+US = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado', \
 'Connecticut','Delaware', 'Florida','Georgia','Hawaii','Idaho', \
 'Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana', \
 'Maine','Maryland','Massachusetts','Michigan','Minnesota', \
@@ -22,11 +22,18 @@ EUROPE = ['Albania','Andorra','Armenia','Austria','Azerbaijan', \
           'Russia','San Marino','Serbia','Slovakia','Slovenia','Spain', \
           'Sweden','Switzerland','Turkey','Ukraine','United Kingdom','Vatican City']
 
+CANADA = ['British Columbia', 'Newfoundland and Labrador', 'Saskatchewan',
+            'Prince Edward Island', 'Ontario', 'Nova Scotia', 'Quebec',
+            'Alberta', 'Manitoba', 'Northwest Territories', 'New Brunswick',
+            'Nunavut', 'Yukon']
 
 """ LOCATION UTILS """
 
 def in_US(location):
-    return (location in STATES)# or location == "United States")
+    return (location in US)
 
 def in_Europe(location):
     return (location in EUROPE)
+
+def in_Canada(location):
+    return (location in CANADA)

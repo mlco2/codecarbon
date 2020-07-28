@@ -14,8 +14,20 @@ def get_data(file):
         data = json.load(f)
     return data
 
+def get_intl_energy_mix():
+    intl_mix = get_data("../data/private_infra/2016/energy_mix.json")
+    return intl_mix
 
-def energy_mix(location, intl_mix, us_mix):
+def get_country_energy_mix():
+    us_mix = get_data("../data/private_infra/2016/energy_mix_us.json")
+    canada_mix = get_data("../data/private_infra/2016/energy_mix_canada.json")
+    return us_mix, canada_mix
+
+def get_direct_emissions():
+    us_data = get_data("../data/private_infra/2016/us_emissions.json")
+    return us_data
+
+def energy_mix(region, country):
     """ Gets the energy mix information for a specific location
 
         Parameters:
@@ -26,12 +38,15 @@ def energy_mix(location, intl_mix, us_mix):
         Returns:
             breakdown (list): percentages of each energy type
     """
-    if locate.in_US(location):
-        s = us_mix[location]['mix']
-        coal, oil, natural_gas = s['coal']*100, s['oil']*100, s['gas']*100
+    us_mix, canada_mix = get_country_energy_mix()
+    intl_mix = get_intl_energy_mix()
+
+    if country == "United States":
+        us = us_mix[region]['mix']
+        coal, oil, natural_gas = us['coal']*100, us['oil']*100, us['gas']*100
         nuclear, hydro, biomass, wind, solar, geo, = \
-        s['nuclear'], s['hydro'], s['biomass'], s['wind'], \
-        s['solar'], s['geothermal']
+        us['nuclear'], us['hydro'], us['biomass'], us['wind'], \
+        us['solar'], us['geothermal']
 
         low_carbon = sum([nuclear,hydro,biomass,wind,solar,geo])*100
         mix_data = [['Coal', "{:.2f}".format(coal)],
@@ -42,12 +57,22 @@ def energy_mix(location, intl_mix, us_mix):
         return mix_data
 
     else:
-        c = intl_mix[location] # get country
-        total, breakdown =  c['total'], [c['coal'], c['petroleum'], \
-        c['naturalGas'], c['lowCarbon']]
+        if country == "Canada":
+            canada = canada_mix[region]
+            coal, petroleum, natural_gas = canada["Coal"], canada["Petroleum"], \
+                                        canada["Natural Gas"]
+            nuclear, biomass, solar, tidal, wind, hydro = canada['Nuclear'], \
+            canada['Biomass'], canada['Solar'], canada['Tidal'], canada['Wind'], \
+            canada['Hydro']
 
-        breakdown = list(map(lambda x: 100*x/total, breakdown))
-        coal, petroleum, natural_gas, low_carbon = breakdown
+            low_carbon = sum([nuclear,biomass,solar,tidal, wind, hydro])
+        else:
+            intl = intl_mix[country]
+            total, breakdown =  intl['total'], [intl['coal'], intl['petroleum'], \
+            intl['naturalGas'], intl['lowCarbon']]
+
+            breakdown = list(map(lambda x: 100*x/total, breakdown))
+            coal, petroleum, natural_gas, low_carbon = breakdown
         mix_data = [['Coal',  "{:.2f}".format(coal)],
                     ['Petroleum', "{:.2f}".format(petroleum)],
                     ['Natural Gas', "{:.2f}".format(natural_gas)],
@@ -56,18 +81,31 @@ def energy_mix(location, intl_mix, us_mix):
         return mix_data
 
 
-def custom_emissions_comparison(process_kwh, locations, intl_mix, us_data):
+def custom_emissions_comparison(process_kwh, locations):
     # TODO: Disambiguation of states such as Georgia, US and Georgia
     emissions = []
+
+    intl_mix = get_intl_energy_mix()
+    us_mix, canada_mix = get_country_energy_mix()
+    us_data = get_direct_emissions()
 
     for location in locations:
         if locate.in_US(location):
             emission = convert.lbs_to_kgs(us_data[location]*convert.to_MWh(process_kwh))
             emissions.append((location, emission))
+        elif locate.in_Canada(location):
+            canada = canada_mix[location]
+            coal, petroleum, natural_gas = canada["Coal"], canada["Petroleum"], \
+                                        canada["Natural Gas"]
+            breakdown = [convert.coal_to_carbon(process_kwh * coal/100),
+            convert.petroleum_to_carbon(process_kwh * petroleum/100),
+            convert.natural_gas_to_carbon(process_kwh * natural_gas/100), 0]
+            emission = sum(breakdown)
+            emissions.append((location, emission))
         else:
-             c = intl_mix[location]
-             total, breakdown = c['total'], [c['coal'], c['petroleum'], \
-             c['naturalGas'], c['lowCarbon']]
+             intl = intl_mix[location]
+             total, breakdown = intl['total'], [intl['coal'], intl['petroleum'], \
+             intl['naturalGas'], intl['lowCarbon']]
              if isinstance(total, float) and float(total) > 0:
                  breakdown = list(map(lambda x: 100*x/total, breakdown))
                  coal, petroleum, natural_gas, low_carbon = breakdown
@@ -80,11 +118,12 @@ def custom_emissions_comparison(process_kwh, locations, intl_mix, us_data):
     return emissions
 
 
-def default_emissions_comparison(process_kwh, intl_mix, us_data):
+def default_emissions_comparison(process_kwh):
     # Calculates emissions in different locations
     global_emissions, europe_emissions, us_emissions = [], [], []
 
     # Handling international
+    intl_mix = get_intl_energy_mix()
     for country in intl_mix:
            c = intl_mix[country]
            total, breakdown = c['total'], [c['coal'], c['petroleum'], \
@@ -105,6 +144,7 @@ def default_emissions_comparison(process_kwh, intl_mix, us_data):
     europe_emissions.sort(key=lambda x: x[1])
 
     # Handling US
+    us_data = get_direct_emissions()
     for state in us_data:
         if ((state != "United States") and state != "_units"):
             if us_data[state] != "lbs/MWh":
@@ -126,11 +166,11 @@ def default_emissions_comparison(process_kwh, intl_mix, us_data):
     return comparison_values
 
 
-def get_comparison_data(kwh, intl_mix, us_data, locations=["Mongolia", "Iceland", "Switzerland"],
+def get_comparison_data(kwh, locations=["Mongolia", "Iceland", "Switzerland"],
                         default_location=False):
     if default_location == True:
-        comparison_values = default_emissions_comparison(kwh, intl_mix, us_data)
+        comparison_values = default_emissions_comparison(kwh)
     else:
-        comparison_values = custom_emissions_comparison(kwh, locations, intl_mix, us_data)
+        comparison_values = custom_emissions_comparison(kwh, locations)
 
     return comparison_values

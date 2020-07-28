@@ -21,8 +21,8 @@ def bar_chart_data(comparison_values, location, emissions):
     return labels, data, colors
 
 
-def default_comparison_graphs(kwh, location, emissions, intl_mix, us_data):
-    comparison_data = evaluate.get_comparison_data(kwh, intl_mix, us_data, default_location=True)
+def default_comparison_graphs(kwh, location, emissions):
+    comparison_data = evaluate.get_comparison_data(kwh, default_location=True)
     individual_chart_data = [comparison_data[6:], comparison_data[3:6], comparison_data[:3]]
     trace_names = ["Europe", "Global", "United States"]
     fig = make_subplots(rows=1, cols=3)
@@ -58,8 +58,8 @@ def default_comparison_graphs(kwh, location, emissions, intl_mix, us_data):
     return fig
 
 
-def custom_comparison_graph(kwh, location, emissions, locations, intl_mix, us_data):
-    comparison_data = evaluate.get_comparison_data(kwh, intl_mix, us_data, locations)
+def custom_comparison_graph(kwh, location, emissions, locations):
+    comparison_data = evaluate.get_comparison_data(kwh, locations)
     labels, data, colors = bar_chart_data(comparison_data, location, emissions)
 
     fig = go.Figure(
@@ -80,8 +80,13 @@ def custom_comparison_graph(kwh, location, emissions, locations, intl_mix, us_da
     return fig
 
 
-def energy_mix_graph(location, intl_mix, us_mix):
-    mix_data = evaluate.energy_mix(location, intl_mix, us_mix)
+def energy_mix_graph(region, country, countries_with_regional_energy_mix):
+    mix_data = evaluate.energy_mix(region, country)
+    if country in countries_with_regional_energy_mix:
+        location = region
+    else:
+        location = country
+
     labels = []
     values = []
     for pair in mix_data:
@@ -95,6 +100,6 @@ def energy_mix_graph(location, intl_mix, us_mix):
                     showlegend=False, insidetextorientation="horizontal")])
     fig.update_traces(hoverinfo='label+percent', textinfo='percent+label', textfont_size=15,
                   marker=dict(colors=colors, line=dict(color='#000000', width=2)))
-    fig.update_layout(margin=dict(t=60,b=60,l=60,r=60), title_text=title,
-                    title_x=0.5, title_y=0.85)
+    fig.update_layout(margin=dict(t=60,b=60,l=60,r=60)) #, title_text=title,
+                    # title_x=0.5, title_y=0.85)
     return fig
