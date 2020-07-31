@@ -27,7 +27,7 @@ def get_direct_emissions():
     us_data = get_data("../data/private_infra/2016/us_emissions.json")
     return us_data
 
-def energy_mix(region, country):
+def energy_mix(location):
     """ Gets the energy mix information for a specific location
 
         Parameters:
@@ -41,8 +41,8 @@ def energy_mix(region, country):
     us_mix, canada_mix = get_country_energy_mix()
     intl_mix = get_intl_energy_mix()
 
-    if country == "United States":
-        us = us_mix[region]['mix']
+    if locate.in_US(location):
+        us = us_mix[location]['mix']
         coal, oil, natural_gas = us['coal']*100, us['oil']*100, us['gas']*100
         nuclear, hydro, biomass, wind, solar, geo, = \
         us['nuclear'], us['hydro'], us['biomass'], us['wind'], \
@@ -57,8 +57,8 @@ def energy_mix(region, country):
         return mix_data
 
     else:
-        if country == "Canada":
-            canada = canada_mix[region]
+        if locate.in_Canada(location):
+            canada = canada_mix[location]
             coal, petroleum, natural_gas = canada["Coal"], canada["Petroleum"], \
                                         canada["Natural Gas"]
             nuclear, biomass, solar, tidal, wind, hydro = canada['Nuclear'], \
@@ -67,7 +67,7 @@ def energy_mix(region, country):
 
             low_carbon = sum([nuclear,biomass,solar,tidal, wind, hydro])
         else:
-            intl = intl_mix[country]
+            intl = intl_mix[location]
             total, breakdown =  intl['total'], [intl['coal'], intl['petroleum'], \
             intl['naturalGas'], intl['lowCarbon']]
 
@@ -174,3 +174,20 @@ def get_comparison_data(kwh, locations=["Mongolia", "Iceland", "Switzerland"],
         comparison_values = custom_emissions_comparison(kwh, locations)
 
     return comparison_values
+
+
+def get_min_place_and_emissions(kwh):
+    comparison_values = default_emissions_comparison(kwh)
+    min_global = comparison_values[2]
+    min_europe = comparison_values[5]
+    min_us = comparison_values[8]
+    min_emissions = min(min_global[1], min_europe[1], min_us[1])
+
+    if min_global[1] == min_emissions:
+        min_place = min_global[0]
+    elif min_europe[1] == min_emissions:
+        min_place = min_europe[0]
+    else:
+        min_place = min_us[0]
+
+    return min_place, min_emissions

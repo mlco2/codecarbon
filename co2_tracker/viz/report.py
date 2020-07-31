@@ -7,7 +7,7 @@ import evaluate
 def bar_chart_data(comparison_values, location, emissions):
     comparison_values.append([location, emissions])
     comparison_values.sort(key = lambda x: x[1])
-    # bar chart colors
+    # update bar chart colors
     colors = ['rgb(166, 189, 219)',] * len(comparison_values)
     labels = []
     data = []
@@ -30,10 +30,13 @@ def default_comparison_graphs(kwh, location, emissions):
     for chart_col in range(3):
         comparison_values = individual_chart_data[chart_col]
         labels, data, colors = bar_chart_data(comparison_values, location, emissions)
+        label_text = [round(i, 2) for i in data]
         fig.add_trace(
             go.Bar(
                 x=labels,
                 y=data,
+                text=label_text,
+                textposition='outside',
                 marker_color=colors,
                 marker_line_color='rgb(8,48,107)',
                 marker_line_width=1.5,
@@ -55,17 +58,22 @@ def default_comparison_graphs(kwh, location, emissions):
         xaxis3_tickangle=-45,
         xaxis3_title="Global (excluding Europe and US)",
     )
+    emissions_list = [value[1] for value in comparison_values]
+    fig.update_yaxes(range=(0, 1.1*emissions_list[-1]))
     return fig
 
 
 def custom_comparison_graph(kwh, location, emissions, locations):
     comparison_data = evaluate.get_comparison_data(kwh, locations)
     labels, data, colors = bar_chart_data(comparison_data, location, emissions)
+    label_text = [round(value, 2) for value in data]
 
     fig = go.Figure(
         data = go.Bar(
             x=labels,
             y=data,
+            text=label_text,
+            textposition='outside',
             marker_color=colors,
             marker_line_color='rgb(8,48,107)',
             marker_line_width=1.5,
@@ -77,21 +85,23 @@ def custom_comparison_graph(kwh, location, emissions, locations):
         xaxis_title="Location",
         yaxis_title="CO2 (kg)",
     )
+    emissions_list = [value[1] for value in comparison_data]
+    fig.update_yaxes(range=(0, 1.1*emissions_list[-1]))
     return fig
 
 
-def energy_mix_graph(region, country, countries_with_regional_energy_mix):
-    mix_data = evaluate.energy_mix(region, country)
-    if country in countries_with_regional_energy_mix:
-        location = region
-    else:
-        location = country
-
+def energy_mix_data(location, countries_with_regional_energy_mix):
+    mix_data = evaluate.energy_mix(location)
     labels = []
     values = []
     for pair in mix_data:
         labels.append(pair[0])
         values.append(pair[1])
+    return labels, values
+
+
+def energy_mix_graph(location, countries_with_regional_energy_mix):
+    labels, values = energy_mix_data(location, countries_with_regional_energy_mix)
 
     colors = ['rgb(202,0,32)', 'rgb(145,197,222)', 'rgb(244,165,130)', 'rgb(5,113,176)']
     title = "Energy Mix: " + location
@@ -100,6 +110,5 @@ def energy_mix_graph(region, country, countries_with_regional_energy_mix):
                     showlegend=False, insidetextorientation="horizontal")])
     fig.update_traces(hoverinfo='label+percent', textinfo='percent+label', textfont_size=15,
                   marker=dict(colors=colors, line=dict(color='#000000', width=2)))
-    fig.update_layout(margin=dict(t=60,b=60,l=60,r=60)) #, title_text=title,
-                    # title_x=0.5, title_y=0.85)
+    fig.update_layout(margin=dict(t=60,b=60,l=60,r=60))
     return fig
