@@ -12,16 +12,9 @@ from typing import Optional, List, Callable
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from co2_tracker.config import cfg, AppConfig
-from co2_tracker.emissions import (
-    get_cloud_emissions,
-    get_private_infra_emissions,
-)
+from co2_tracker.emissions import get_cloud_emissions, get_private_infra_emissions
 from co2_tracker.external import GeoMetadata, CloudMetadata, GPUMetadata
-from co2_tracker.persistence import (
-    FilePersistence,
-    CO2Data,
-    BasePersistence,
-)
+from co2_tracker.persistence import FilePersistence, CO2Data, BasePersistence
 from co2_tracker.units import Time, Energy
 
 logger = logging.getLogger(__name__)
@@ -60,7 +53,7 @@ class BaseCO2Tracker(ABC):
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
         self._scheduler.add_job(
-            self._measure_power, "interval", seconds=measure_power_secs,
+            self._measure_power, "interval", seconds=measure_power_secs
         )
 
         self._app_config: AppConfig = self._get_config()

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_cloud_emissions(
-    energy: Energy, cloud: CloudMetadata, config: AppConfig,
+    energy: Energy, cloud: CloudMetadata, config: AppConfig
 ) -> float:
     """ Computes emissions for cloud infra
     Args:
@@ -57,11 +57,11 @@ def get_private_infra_emissions(
 
     return (
         _get_country_emissions_energy_mix(
-            energy, geo, energy_mix_data_path=config.private_infra_energy_mix_path,
+            energy, geo, energy_mix_data_path=config.private_infra_energy_mix_path
         )
         if compute_with_energy_mix
         else _get_united_states_emissions(
-            energy, geo, us_data_path=config.private_infra_us_path,
+            energy, geo, us_data_path=config.private_infra_us_path
         )
     )
 

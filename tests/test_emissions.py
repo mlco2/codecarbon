@@ -1,9 +1,6 @@
 import unittest
 
-from co2_tracker.emissions import (
-    get_private_infra_emissions,
-    get_cloud_emissions,
-)
+from co2_tracker.emissions import get_private_infra_emissions, get_cloud_emissions
 from co2_tracker.units import Energy
 from co2_tracker.external import CloudMetadata, GeoMetadata
 from tests.testutils import get_test_app_config
@@ -78,7 +75,7 @@ class TestEmissions(unittest.TestCase):
 
         # WHEN
         emissions = get_private_infra_emissions(
-            Energy.from_energy(kwh=3), GeoMetadata(country="Canada"), self.app_config,
+            Energy.from_energy(kwh=3), GeoMetadata(country="Canada"), self.app_config
         )
 
         # THEN

@@ -8,10 +8,7 @@ import requests
 
 from co2_tracker.co2_tracker import CO2Tracker, track_co2
 from co2_tracker.external import CloudMetadata
-from tests.testdata import (
-    GEO_METADATA_CANADA,
-    TWO_GPU_DETAILS_RESPONSE,
-)
+from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
 from tests.testutils import get_test_app_config
 
 
@@ -23,7 +20,7 @@ def heavy_computation(run_time_secs: int = 3):
 
 @mock.patch("co2_tracker.external.is_gpu_details_available", return_value=True)
 @mock.patch(
-    "co2_tracker.external.get_gpu_details", return_value=TWO_GPU_DETAILS_RESPONSE,
+    "co2_tracker.external.get_gpu_details", return_value=TWO_GPU_DETAILS_RESPONSE
 )
 @mock.patch(
     "co2_tracker.co2_tracker.CO2Tracker._get_cloud_metadata",
