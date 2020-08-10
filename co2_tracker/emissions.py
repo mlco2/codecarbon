@@ -21,11 +21,10 @@ def get_cloud_emissions(
 ) -> float:
     """
     Computes emissions for cloud infra
-    Args:
-        energy: Mean power consumption of the process (kWh)
-        cloud: Region of compute
-        config: Location of data files
-    Returns: CO2 emissions in kg
+    :param energy: Mean power consumption of the process (kWh)
+           cloud: Region of compute
+           config: Location of data files
+    :return: CO2 emissions in kg
     """
 
     df: pd.DataFrame = pd.read_csv(config.cloud_emissions_path)
@@ -46,11 +45,10 @@ def get_private_infra_emissions(
 ) -> float:
     """
     Computes emissions for private infra
-    Args:
-        energy: Mean power consumption of the process (kWh)
-        geo: Country and region metadata
-        config: Location of data files
-    Returns: CO2 emissions in kg
+    :param energy: Mean power consumption of the process (kWh)
+           geo: Country and region metadata
+           config: Location of data files
+    :return: CO2 emissions in kg
     """
     compute_with_energy_mix: bool = geo.country != "United States" or (
         geo.country == "United States" and geo.region is None
@@ -73,11 +71,10 @@ def _get_united_states_emissions(
     """
     Computes emissions for United States on private infra
     https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
-    Args:
-        energy: Mean power consumption of the process (kWh)
-        geo: Country and region metadata.
-        us_data_path: Emission data for United States
-    Returns: CO2 emissions in kg
+    :param energy: Mean power consumption of the process (kWh)
+           geo: Country and region metadata.
+           us_data_path: Emission data for United States
+    :return: CO2 emissions in kg
     """
 
     us_state: Optional[str] = geo.region
@@ -102,12 +99,10 @@ def _get_country_emissions_energy_mix(
     """
     Computes emissions for International locations on private infra
     https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
-    Args:
-        energy: Mean power consumption of the process (kWh)
-        geo: Country and region metadata.
-        energy_mix_data_path: Energy mix data file path
-
-    Returns: CO2 emissions in kg
+    :param energy: Mean power consumption of the process (kWh)
+           geo: Country and region metadata.
+           energy_mix_data_path: Energy mix data file path
+    :return: CO2 emissions in kg
     """
 
     # source: https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2

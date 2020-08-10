@@ -76,7 +76,8 @@ class GPUMetadata:
     num_gpus: int
 
     def get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
-        """ Get total power consumed by specific GPUs identified by `gpu_ids`
+        """
+        Get total power consumed by specific GPUs identified by `gpu_ids`
         :param gpu_ids:
         :return:
         """

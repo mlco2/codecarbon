@@ -13,9 +13,7 @@ import webbrowser
 from threading import Timer
 from dash.dependencies import Input, Output
 
-import convert
-import report
-import evaluate
+from . import convert, evaluate, report
 
 
 def compute_summary_stats(df: pd.DataFrame) -> pd.DataFrame:

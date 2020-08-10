@@ -12,7 +12,8 @@ import os
 
 @dataclass
 class CO2Data:
-    """ Encapsulates experiment artifacts
+    """
+    Encapsulates experiment artifacts
     """
 
     timestamp: datetime
@@ -35,7 +36,8 @@ class CO2Data:
 
 
 class BasePersistence(ABC):
-    """ An abstract class that requires children to inherit a single method,
+    """
+    An abstract class that requires children to inherit a single method,
     `flush` which is used for persisting data. This could be by saving it to a file,
     posting to Json Box, saving to a database, sending a slack message etc.
     """
@@ -46,7 +48,8 @@ class BasePersistence(ABC):
 
 
 class FilePersistence(BasePersistence):
-    """ Saves experiment artifacts to a file
+    """
+    Saves experiment artifacts to a file
     """
 
     def __init__(self, save_file_path: str):

@@ -36,14 +36,11 @@ class BaseCO2Tracker(ABC):
         save_to_file: bool = True,
     ):
         """
-        Args:
-            project_name (str): Project name for current experiment run. Default value of "default"
-            measure_power_secs (int): Interval (in seconds) of measuring power usage.
-                                      Defaults to 15.
-            output_dir (str): Directory path to which the experiment artifacts are saved.
-                              Saved to current directory by default.
-            save_to_file (bool): Indicates if the emission artifacts should be logged to a file.
-        Returns: None
+        :param project_name (str): Project name for current experiment run. Default value of "default"
+               measure_power_secs (int): Interval (in seconds) of measuring power usage, defaults to 15.
+               output_dir (str): Directory path to which the experiment artifacts are saved.
+                                 Saved to current directory by default.
+               save_to_file (bool): Indicates if the emission artifacts should be logged to a file.
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
@@ -71,7 +68,7 @@ class BaseCO2Tracker(ABC):
         """
         Starts tracking the experiment.
         Currently, Nvidia GPUs are supported.
-        Returns: None
+        :return: None
         """
 
         if not self._gpu.is_gpu_available:
@@ -87,8 +84,8 @@ class BaseCO2Tracker(ABC):
 
     def stop(self) -> Optional[float]:
         """
-        Stops tracking the experiment.
-        Returns: CO2 emissions in kgs.
+        Stops tracking the experiment
+        :return: CO2 emissions in kgs
         """
         if self._start_time is None:
             logging.error("Need to first start the tracker")
@@ -122,14 +119,14 @@ class BaseCO2Tracker(ABC):
     @abstractmethod
     def _get_geo_metadata(self) -> GeoMetadata:
         """
-        Returns: Metadata containing geographical info
+        :return: Metadata containing geographical info
         """
         pass
 
     @abstractmethod
     def _get_cloud_metadata(self) -> CloudMetadata:
         """
-        Returns: Metadata containing cloud info
+        :return: Metadata containing cloud info
         """
         pass
 
@@ -137,7 +134,7 @@ class BaseCO2Tracker(ABC):
         """
         A function that is periodically run by the `BackgroundScheduler`
         every `self._measure_power` seconds.
-        Returns: None
+        :return: None
         """
         self._gpu_total_energy += Energy.from_power_and_time(
             power=self._gpu.total_power,
@@ -156,10 +153,9 @@ class OfflineCO2Tracker(BaseCO2Tracker):
 
     def __init__(self, country: str, *args, region: Optional[str] = None, **kwargs):
         """
-        Args:
-            country (str): The country in which the experiment in being run.
-            region (str): The provincial region, for example, California in the US. Currently, this only affects
-                          calculations for the United States.
+        :param country (str): The country in which the experiment in being run.
+               region (str): The provincial region, for example, California in the US.
+                             Currently, this only affects calculations for the United States.
         """
         # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
         self._country: str = country if country is not None else "Canada"
@@ -196,16 +192,15 @@ def track_co2(
 ):
     """
     Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
-    Args:
-        fn: Function to be decorated
-        project_name (str): Project name for current experiment run. Default value of "default"
-        output_dir (str): Directory path to which the experiment artifacts are saved.
-                          Saved to current directory by default.
-        offline (bool): Indicates if the tracker should be run in offline mode.
-        country (str): The country in which the experiment in being run. Required if `offline=True`
-        region (str): The provincial region, for example, California in the US. Currently, this only affects
-                      calculations for the United States.
-    Returns: The decorated function
+    :param fn: Function to be decorated
+           project_name (str): Project name for current experiment run. Default value of "default"
+           output_dir (str): Directory path to which the experiment artifacts are saved.
+                             Saved to current directory by default.
+           offline (bool): Indicates if the tracker should be run in offline mode.
+           country (str): The country in which the experiment in being run. Required if `offline=True`
+           region (str): The provincial region, for example, California in the US.
+                         Currently, this only affects calculations for the United States.
+    :return: The decorated function
     """
 
     def _decorate(fn: Callable):
