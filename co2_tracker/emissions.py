@@ -6,12 +6,12 @@ https://github.com/responsibleproblemsolving/energy-usage
 
 import json
 import logging
-from typing import Dict, Optional
 import pandas as pd
+from typing import Dict, Optional
 
-from co2_tracker.units import CO2EmissionsPerKwh, Energy
-from co2_tracker.external import GeoMetadata, CloudMetadata
-from co2_tracker.config import AppConfig
+from .units import CO2EmissionsPerKwh, Energy
+from .external import GeoMetadata, CloudMetadata
+from .config import AppConfig
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 def get_cloud_emissions(
     energy: Energy, cloud: CloudMetadata, config: AppConfig
 ) -> float:
-    """ Computes emissions for cloud infra
+    """
+    Computes emissions for cloud infra
     Args:
         energy: Mean power consumption of the process (kWh)
         cloud: Region of compute
@@ -43,7 +44,8 @@ def get_cloud_emissions(
 def get_private_infra_emissions(
     energy: Energy, geo: GeoMetadata, config: AppConfig
 ) -> float:
-    """ Computes emissions for private infra
+    """
+    Computes emissions for private infra
     Args:
         energy: Mean power consumption of the process (kWh)
         geo: Country and region metadata
@@ -68,7 +70,8 @@ def get_private_infra_emissions(
 def _get_united_states_emissions(
     energy: Energy, geo: GeoMetadata, us_data_path: str
 ) -> float:
-    """ Computes emissions for United States on private infra
+    """
+    Computes emissions for United States on private infra
     https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
     Args:
         energy: Mean power consumption of the process (kWh)
@@ -96,7 +99,8 @@ def _get_united_states_emissions(
 def _get_country_emissions_energy_mix(
     energy: Energy, geo: GeoMetadata, energy_mix_data_path: str
 ) -> float:
-    """ Computes emissions for International locations on private infra
+    """
+    Computes emissions for International locations on private infra
     https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
     Args:
         energy: Mean power consumption of the process (kWh)

@@ -1,11 +1,14 @@
-""" Provides functionality for unit conversions """
+"""
+Provides functionality for unit conversions
+"""
 
 from dataclasses import dataclass
 
 
 @dataclass
 class CO2EmissionsPerKwh:
-    """ Measured in kg/kwh
+    """
+    Measured in kg/kwh
     """
 
     LBS_MWH_TO_KG_KWH = 0.00045359237
@@ -28,7 +31,8 @@ class CO2EmissionsPerKwh:
 
 @dataclass
 class Energy:
-    """ Measured in kwh
+    """
+    Measured in kwh
     """
 
     kwh: float
@@ -50,7 +54,8 @@ class Energy:
 
 @dataclass
 class Power:
-    """ Measured in kw
+    """
+    Measured in kw
     """
 
     MILLI_WATTS_TO_WATTS = 0.001
@@ -67,7 +72,8 @@ class Power:
 
 @dataclass
 class Time:
-    """ Measured in seconds
+    """
+    Measured in seconds
     """
 
     SECONDS_TO_HOURS = 0.00027777778

@@ -1,15 +1,16 @@
-""" Encapsulates external dependencies to retrieve cloud, gpu and geographical metadata """
+"""
+Encapsulates external dependencies to retrieve cloud, gpu and geographical metadata
+"""
 
-import logging
-import re
-from dataclasses import dataclass
-from typing import Dict, Callable, Optional, List, Iterable
-
-import requests
 from co2_tracker_utils.cloud_logging import get_env_cloud_details
 from co2_tracker_utils.gpu_logging import get_gpu_details, is_gpu_details_available
+from dataclasses import dataclass
+import logging
+import re
+import requests
+from typing import Dict, Callable, Optional, List, Iterable
 
-from co2_tracker.units import Power
+from .units import Power
 
 logger = logging.getLogger(__name__)
 

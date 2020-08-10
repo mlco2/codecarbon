@@ -1,11 +1,13 @@
-""" Provides functionality for persistence of data """
+"""
+Provides functionality for persistence of data
+"""
 
-import csv
-import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+import csv
 from dataclasses import dataclass
 from datetime import datetime
+import os
 
 
 @dataclass

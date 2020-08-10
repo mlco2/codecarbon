@@ -1,18 +1,22 @@
-""" App configuration: This will likely change when we have a common location for data files """
+"""
+App configuration: This will likely change when we have a common location for data files
+"""
 
 from dataclasses import dataclass
 import pkg_resources
+
+cfg = {
+    "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
+    "cloud_emissions_path": "data/cloud/impact.csv",
+    "private_infra_us_path": "data/private_infra/2016/us_emissions.json",
+    "private_infra_energy_mix_path": "data/private_infra/2016/energy_mix.json",
+}
 
 
 @dataclass
 class AppConfig:
     def __init__(self):
-        self.config = {
-            "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
-            "cloud_emissions_path": "data/cloud/impact.csv",
-            "private_infra_us_path": "data/private_infra/2016/us_emissions.json",
-            "private_infra_energy_mix_path": "data/private_infra/2016/energy_mix.json",
-        }
+        self.config = cfg
         self.module_name = "co2_tracker"
 
     @property

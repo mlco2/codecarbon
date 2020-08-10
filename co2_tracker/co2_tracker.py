@@ -1,21 +1,22 @@
-""" Contains implementations of the Public facing API: CO2Tracker, OfflineCO2Tracker and @track_co2 """
+"""
+Contains implementations of the Public facing API: CO2Tracker, OfflineCO2Tracker and @track_co2
+"""
 
+from abc import abstractmethod, ABC
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+from functools import wraps
 import logging
 import os
 import time
-import uuid
-from abc import abstractmethod, ABC
-from datetime import datetime
-from functools import wraps
 from typing import Optional, List, Callable
+import uuid
 
-from apscheduler.schedulers.background import BackgroundScheduler
-
-from co2_tracker.config import AppConfig
-from co2_tracker.emissions import get_cloud_emissions, get_private_infra_emissions
-from co2_tracker.external import GeoMetadata, CloudMetadata, GPUMetadata
-from co2_tracker.persistence import FilePersistence, CO2Data, BasePersistence
-from co2_tracker.units import Time, Energy
+from .config import AppConfig
+from .emissions import get_cloud_emissions, get_private_infra_emissions
+from .external import GeoMetadata, CloudMetadata, GPUMetadata
+from .persistence import FilePersistence, CO2Data, BasePersistence
+from .units import Time, Energy
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +36,14 @@ class BaseCO2Tracker(ABC):
         save_to_file: bool = True,
     ):
         """
-        project_name (str): Project name for current experiment run. Default value of "default"
-        measure_power_secs (int): Interval (in seconds) of measuring power usage.
-                                  Defaults to 15.
-        output_dir (str): Directory path to which the experiment artifacts are saved.
-                          Saved to current directory by default.
-        save_to_file (bool): Indicates if the emission artifacts should be logged to a file.
+        Args:
+            project_name (str): Project name for current experiment run. Default value of "default"
+            measure_power_secs (int): Interval (in seconds) of measuring power usage.
+                                      Defaults to 15.
+            output_dir (str): Directory path to which the experiment artifacts are saved.
+                              Saved to current directory by default.
+            save_to_file (bool): Indicates if the emission artifacts should be logged to a file.
+        Returns: None
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
@@ -65,8 +68,9 @@ class BaseCO2Tracker(ABC):
             )
 
     def start(self) -> None:
-        """ Starts tracking the experiment. Currently, Nvidia GPUs are supported.
-        
+        """
+        Starts tracking the experiment.
+        Currently, Nvidia GPUs are supported.
         Returns: None
         """
 
@@ -82,8 +86,8 @@ class BaseCO2Tracker(ABC):
         self._scheduler.start()
 
     def stop(self) -> Optional[float]:
-        """ Stops tracking the experiment.
-
+        """
+        Stops tracking the experiment.
         Returns: CO2 emissions in kgs.
         """
         if self._start_time is None:
@@ -133,7 +137,6 @@ class BaseCO2Tracker(ABC):
         """
         A function that is periodically run by the `BackgroundScheduler`
         every `self._measure_power` seconds.
-
         Returns: None
         """
         self._gpu_total_energy += Energy.from_power_and_time(
@@ -147,8 +150,8 @@ class BaseCO2Tracker(ABC):
 
 class OfflineCO2Tracker(BaseCO2Tracker):
     """
-    Offline implementation of the `CO2tracker.` In addition to the standard arguments, the following
-    are required.
+    Offline implementation of the `CO2tracker.`
+    In addition to the standard arguments, the following are required.
     """
 
     def __init__(self, country: str, *args, region: Optional[str] = None, **kwargs):
@@ -191,8 +194,8 @@ def track_co2(
     country: Optional[str] = None,
     region: Optional[str] = None,
 ):
-    """ Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
-
+    """
+    Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
     Args:
         fn: Function to be decorated
         project_name (str): Project name for current experiment run. Default value of "default"
