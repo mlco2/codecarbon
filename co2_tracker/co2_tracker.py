@@ -11,7 +11,7 @@ from typing import Optional, List, Callable
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from co2_tracker.config import cfg, AppConfig
+from co2_tracker.config import AppConfig
 from co2_tracker.emissions import get_cloud_emissions, get_private_infra_emissions
 from co2_tracker.external import GeoMetadata, CloudMetadata, GPUMetadata
 from co2_tracker.persistence import FilePersistence, CO2Data, BasePersistence
@@ -21,9 +21,10 @@ logger = logging.getLogger(__name__)
 
 
 class BaseCO2Tracker(ABC):
-    """ Primary abstraction with the CO2 Tracker functionality.
-     Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata` that are implemented by the
-     two concrete classes `OfflineCO2Tracker` and `CO2Tracker.`
+    """
+    Primary abstraction with the CO2 Tracker functionality.
+    Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata`
+    that are implemented by two concrete classes `OfflineCO2Tracker` and `CO2Tracker.`
     """
 
     def __init__(
@@ -34,19 +35,19 @@ class BaseCO2Tracker(ABC):
         save_to_file: bool = True,
     ):
         """
-
-        Args:
-            project_name (str): Project name for current experiment run. Default value of "default"
-            measure_power_secs (int): Interval in seconds in which the GPU power is measured.
-                                                       Defaults to 15.
-            output_dir (str): Directory path to which the experiment artifacts are saved. Saved to current directory
-                              by default.
-            save_to_file (bool): Indicates if the emission artifacts should be logged to a file
+        project_name (str): Project name for current experiment run. Default value of "default"
+        measure_power_secs (int): Interval (in seconds) of measuring power usage.
+                                  Defaults to 15.
+        output_dir (str): Directory path to which the experiment artifacts are saved.
+                          Saved to current directory by default.
+        save_to_file (bool): Indicates if the emission artifacts should be logged to a file.
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
-        self._start_time: Optional[float] = None
         self._output_dir: str = output_dir
+        self._app_config: AppConfig = self._get_config()
+
+        self._start_time: Optional[float] = None
         self._gpu_total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._gpu = GPUMetadata.from_co2_tracker_utils()
@@ -56,7 +57,6 @@ class BaseCO2Tracker(ABC):
             self._measure_power, "interval", seconds=measure_power_secs
         )
 
-        self._app_config: AppConfig = self._get_config()
         self.persistence_objs: List[BasePersistence] = list()
 
         if save_to_file:
@@ -130,7 +130,8 @@ class BaseCO2Tracker(ABC):
         pass
 
     def _measure_power(self) -> None:
-        """ A function that is periodically run by the `BackgroundScheduler`
+        """
+        A function that is periodically run by the `BackgroundScheduler`
         every `self._measure_power` seconds.
 
         Returns: None
@@ -141,11 +142,12 @@ class BaseCO2Tracker(ABC):
         )
 
     def _get_config(self) -> AppConfig:
-        return AppConfig(cfg)
+        return AppConfig()
 
 
 class OfflineCO2Tracker(BaseCO2Tracker):
-    """ Offline implementation of the `CO2tracker.` In addition to the standard arguments, the following
+    """
+    Offline implementation of the `CO2tracker.` In addition to the standard arguments, the following
     are required.
     """
 
@@ -169,7 +171,8 @@ class OfflineCO2Tracker(BaseCO2Tracker):
 
 
 class CO2Tracker(BaseCO2Tracker):
-    """ A CO2 tracker that auto infers geographical location.
+    """
+    A CO2 tracker that auto infers geographical location.
     """
 
     def _get_geo_metadata(self) -> GeoMetadata:

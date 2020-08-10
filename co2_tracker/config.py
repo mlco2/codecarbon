@@ -1,22 +1,18 @@
 """ App configuration: This will likely change when we have a common location for data files """
 
 from dataclasses import dataclass
-from typing import Dict
-
 import pkg_resources
-
-cfg = {
-    "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
-    "cloud_emissions_path": "data/cloud/impact.csv",
-    "private_infra_us_path": "data/private_infra/2016/us_emissions.json",
-    "private_infra_energy_mix_path": "data/private_infra/2016/energy_mix.json",
-}
 
 
 @dataclass
 class AppConfig:
-    def __init__(self, config: Dict):
-        self.config = config
+    def __init__(self):
+        self.config = {
+            "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
+            "cloud_emissions_path": "data/cloud/impact.csv",
+            "private_infra_us_path": "data/private_infra/2016/us_emissions.json",
+            "private_infra_energy_mix_path": "data/private_infra/2016/energy_mix.json",
+        }
         self.module_name = "co2_tracker"
 
     @property
@@ -25,6 +21,10 @@ class AppConfig:
 
     @property
     def cloud_emissions_path(self):
+        """
+        Resource Extraction from a package
+        https://setuptools.readthedocs.io/en/latest/pkg_resources.html#resource-extraction
+        """
         return pkg_resources.resource_filename(
             self.module_name, self.config["cloud_emissions_path"]
         )

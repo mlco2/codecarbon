@@ -4,7 +4,6 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
-import configparser
 import json
 import logging
 from typing import Dict, Optional
