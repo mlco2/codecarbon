@@ -11,9 +11,8 @@ import pandas as pd
 import plotly.express as px
 import webbrowser
 from threading import Timer
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 
-import locate
 import convert
 import report
 import evaluate
@@ -479,9 +478,9 @@ def render_app(df: pd.DataFrame):
         general_info_kwh = "{:.3g} kWh".format(kwh)
         general_info_emissions = ["{:.3g} kg CO".format(emissions), html.Sub("2")]
 
-        equivalents_miles = "{:.2e} miles".format(convert.carbon_to_miles(emissions))
+        equivalents_miles = f"{convert.carbon_to_miles(emissions)} miles"
         equivalents_tv = convert.carbon_to_tv(emissions)
-        equivalents_home = "{:.2e} %".format(convert.carbon_to_home(emissions))
+        equivalents_home = f"{convert.carbon_to_home(emissions)} %"
 
         return (
             general_info_location,

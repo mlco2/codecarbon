@@ -51,7 +51,7 @@ def carbon_to_miles(kg_carbon):
     1 CO2, CH4, and N2O/0.988 CO2 = 4.09 x 10-4 metric tons CO2E/mile
     Source: EPA
     """
-    return kg_carbon / (4.09 * 10 ** (-7))  # number of miles driven by avg car
+    return format(kg_carbon / 0.409, ".2f")  # number of miles driven by avg car
 
 
 def carbon_to_home(kg_carbon):
@@ -62,9 +62,9 @@ def carbon_to_home(kg_carbon):
      = 160.58 kg CO2/week on average
     Source: EPA
     """
-    return (
-        kg_carbon / 160.58
-    ) * 100  # percent of CO2 used in an avg US household in a week
+    return format(
+        (kg_carbon / 160.58) * 100, ".2f"
+    )  # percent of CO2 used in an avg US household in a week
 
 
 def carbon_to_tv(kg_carbon):
