@@ -2,17 +2,16 @@
 Contains implementations of the Public facing API: CO2Tracker, OfflineCO2Tracker and @track_co2
 """
 
+from abc import abstractmethod, ABC
+from apscheduler.schedulers.background import BackgroundScheduler
+from co2_tracker_utils.gpu_logging import is_gpu_details_available
+from datetime import datetime
+from functools import wraps
 import logging
 import os
 import time
-import uuid
-from abc import abstractmethod, ABC
-from datetime import datetime
-from functools import wraps
 from typing import Optional, List, Callable
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from co2_tracker_utils.gpu_logging import is_gpu_details_available
+import uuid
 
 from co2_tracker.config import AppConfig
 from co2_tracker.emissions import (

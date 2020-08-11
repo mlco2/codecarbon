@@ -1,9 +1,9 @@
+import responses
 import unittest
 from unittest import mock
 
-import responses
-
 from co2_tracker.external.geography import CloudMetadata, GeoMetadata
+
 from tests.testdata import (
     CLOUD_METADATA_AWS,
     CLOUD_METADATA_AZURE,

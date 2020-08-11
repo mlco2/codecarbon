@@ -6,9 +6,8 @@ https://github.com/responsibleproblemsolving/energy-usage
 
 import json
 import logging
-from typing import Dict, Optional
-
 import pandas as pd
+from typing import Dict, Optional
 
 from co2_tracker.config import AppConfig
 from co2_tracker.external.geography import GeoMetadata, CloudMetadata

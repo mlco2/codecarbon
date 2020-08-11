@@ -1,9 +1,12 @@
-import logging
-from abc import abstractmethod, ABC
-from dataclasses import dataclass
-from typing import Iterable, List, Dict
+"""
+Encapsulates external dependencies to retrieve hardware metadata
+"""
 
+from abc import abstractmethod, ABC
 from co2_tracker_utils.gpu_logging import get_gpu_details
+from dataclasses import dataclass
+import logging
+from typing import Iterable, List, Dict
 
 from co2_tracker.units import Power
 

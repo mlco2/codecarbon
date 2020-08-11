@@ -1,4 +1,5 @@
 import tensorflow as tf
+
 from co2_tracker import CO2Tracker
 
 mnist = tf.keras.datasets.mnist

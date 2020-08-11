@@ -1,13 +1,13 @@
 import os
+import responses
+import requests
 import time
 import unittest
 from unittest import mock
 
-import responses
-import requests
-
 from co2_tracker.co2_tracker import CO2Tracker, track_co2
 from co2_tracker.external.geography import CloudMetadata
+
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
 from tests.testutils import get_test_app_config
 
