@@ -13,7 +13,7 @@ import webbrowser
 from threading import Timer
 from dash.dependencies import Input, Output
 
-from . import convert, evaluate, report
+import convert, evaluate, report
 
 
 def compute_summary_stats(df: pd.DataFrame) -> pd.DataFrame:
@@ -728,16 +728,16 @@ def render_app(df: pd.DataFrame):
     return app
 
 
-def open_browser():
-    webbrowser.open_new("http://127.0.0.1:2000/")
+# def open_browser():
+#     webbrowser.open_new("http://127.0.0.1:2000/")
 
 
 def main(filename: str) -> None:
     df = pd.read_csv(filename)
     app = render_app(df)
-    app.run_server(port=2000)
+    app.run_server()
 
 
 if __name__ == "__main__":
-    Timer(1, open_browser).start()
+    # Timer(1, open_browser).start()
     fire.Fire(main)

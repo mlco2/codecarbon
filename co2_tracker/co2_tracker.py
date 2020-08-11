@@ -61,7 +61,7 @@ class BaseCO2Tracker(ABC):
 
         if save_to_file:
             self.persistence_objs.append(
-                FilePersistence(os.path.join(output_dir, f"{project_name}.emissions"))
+                FilePersistence(os.path.join(output_dir, "carbon.emissions"))
             )
 
     def start(self) -> None:
