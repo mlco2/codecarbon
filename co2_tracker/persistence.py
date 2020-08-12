@@ -24,6 +24,9 @@ class CO2Data:
     energy_consumed: float
     country: str
     region: str
+    on_cloud: str
+    cloud_provider: str
+    cloud_region: str
 
     @property
     def values(self) -> OrderedDict:
