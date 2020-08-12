@@ -37,7 +37,7 @@ def compute_summary_stats(df: pd.DataFrame) -> pd.DataFrame:
                 for project in projects
             ],
             "Mean Energy Usage (kWh)": [
-                df[df["project_name"] == project]["total_energy_usage"].mean()
+                df[df["project_name"] == project]["energy_consumed"].mean()
                 for project in projects
             ],
             "Region": [

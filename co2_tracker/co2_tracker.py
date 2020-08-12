@@ -130,7 +130,7 @@ class BaseCO2Tracker(ABC):
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
-            total_energy_usage=self._total_energy.kwh,
+            energy_consumed=self._total_energy.kwh,
             country=country,
             region=region,
         )

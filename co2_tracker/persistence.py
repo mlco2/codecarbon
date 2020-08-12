@@ -21,7 +21,7 @@ class CO2Data:
     project_name: str
     duration: float
     emissions: float
-    total_energy_usage: float
+    energy_consumed: float
     country: str
     region: str
 

@@ -1,4 +1,4 @@
-,timestamp,experiment_id,project_name,duration,emissions,total_energy_usage,country,region
+,timestamp,experiment_id,project_name,duration,emissions,energy_consumed,country,region
 0,2020-07-23 09:26:11.667679,68f53844-f3af-48fb-971a-ffab844a6b6f,project_3,34,8,8,Canada,Ontario
 1,2020-07-24 15:26:11.667700,9288b395-c196-45c3-9c5e-05a8c127f753,project_4,16,1,3,Canada,Ontario
 2,2020-07-25 21:26:11.667705,ed2a22f1-aa97-4fe2-a52c-a985817b7493,project_1,19,1,1,Canada,Ontario
