@@ -26,8 +26,8 @@ class CO2Data:
     country: str
     region: str
     on_cloud: str = "N"
-    cloud_provider: Optional[str] = None
-    cloud_region: Optional[str] = None
+    cloud_provider: str = ""
+    cloud_region: str = ""
 
     @property
     def values(self) -> OrderedDict:

@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CloudMetadata:
 
-    provider: Optional[str]
-    region: Optional[str]
+    provider: str
+    region: str
 
     @property
     def is_on_private_infra(self) -> bool:
-        return self.provider is None and self.region is None
+        return self.provider is "" and self.region is ""
 
     @classmethod
     def from_co2_tracker_utils(cls) -> "CloudMetadata":
@@ -40,7 +40,7 @@ class CloudMetadata:
         cloud_metadata: Dict = get_env_cloud_details()
 
         if cloud_metadata is None:
-            return cls(provider=None, region=None)
+            return cls(provider="", region="")
 
         provider: str = cloud_metadata["provider"].lower()
         region: str = extract_region_for_provider.get(provider)(cloud_metadata)
@@ -52,7 +52,7 @@ class CloudMetadata:
 class GeoMetadata:
 
     country: str
-    region: Optional[str] = None
+    region: str = ""
 
     @classmethod
     def from_geo_js(cls, url: str) -> "GeoMetadata":
