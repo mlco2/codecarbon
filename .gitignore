@@ -108,3 +108,7 @@ venv.bak/
 
 # Sphinx
 docs/_build/
+
+# OS generated files
+.DS_Store
+.DS_Store?
