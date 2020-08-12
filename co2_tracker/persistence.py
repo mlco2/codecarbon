@@ -8,6 +8,7 @@ import csv
 from dataclasses import dataclass
 from datetime import datetime
 import os
+from typing import Optional
 
 
 @dataclass
@@ -24,9 +25,9 @@ class CO2Data:
     energy_consumed: float
     country: str
     region: str
-    on_cloud: str
-    cloud_provider: str
-    cloud_region: str
+    on_cloud: str = "N"
+    cloud_provider: Optional[str] = None
+    cloud_region: Optional[str] = None
 
     @property
     def values(self) -> OrderedDict:
