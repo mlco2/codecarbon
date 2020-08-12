@@ -42,11 +42,11 @@ class BaseCO2Tracker(ABC):
         save_to_file: bool = True,
     ):
         """
-        :param project_name (str): Project name for current experiment run. Default value of "default"
-               measure_power_secs (int): Interval (in seconds) of measuring power usage, defaults to 15.
-               output_dir (str): Directory path to which the experiment artifacts are saved.
-                                 Saved to current directory by default.
-               save_to_file (bool): Indicates if the emission artifacts should be logged to a file.
+        :param project_name: Project name for current experiment run. Default value of "default"
+        :param measure_power_secs: Interval (in seconds) of measuring power usage, defaults to 15.
+        :param output_dir: Directory path to which the experiment artifacts are saved.
+                           Saved to current directory by default.
+        :param save_to_file: Indicates if the emission artifacts should be logged to a file.
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
@@ -69,7 +69,7 @@ class BaseCO2Tracker(ABC):
 
         if save_to_file:
             self.persistence_objs.append(
-                FilePersistence(os.path.join(output_dir, "carbon.emissions"))
+                FilePersistence(os.path.join(output_dir, "emissions.csv"))
             )
 
     def start(self) -> None:
@@ -111,7 +111,7 @@ class BaseCO2Tracker(ABC):
                 self._total_energy, geo, self._app_config
             )
             country = geo.country
-            region = "" if geo.region is None else geo.region
+            region = geo.region
             on_cloud = "N"
             cloud_provider = ""
             cloud_region = ""
@@ -179,9 +179,9 @@ class OfflineCO2Tracker(BaseCO2Tracker):
 
     def __init__(self, country: str, *args, region: Optional[str] = None, **kwargs):
         """
-        :param country (str): The country in which the experiment in being run.
-               region (str): The provincial region, for example, California in the US.
-                             Currently, this only affects calculations for the United States.
+        :param country: The country in which the experiment in being run.
+        :param region: The provincial region, for example, California in the US.
+                       Currently, this only affects calculations for the United States.
         """
         # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
         self._country: str = country if country is not None else "Canada"
@@ -192,7 +192,7 @@ class OfflineCO2Tracker(BaseCO2Tracker):
         return GeoMetadata(country=self._country, region=self._region)
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata(provider=None, region=None)
+        return CloudMetadata(provider="", region="")
 
 
 class CO2Tracker(BaseCO2Tracker):
@@ -213,18 +213,20 @@ def track_co2(
     project_name: str = "default",
     output_dir: str = ".",
     offline: bool = False,
-    country: Optional[str] = None,
-    region: Optional[str] = None,
+    country: str = "",
+    region: str = "",
 ):
     """
     Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
+
+
     :param fn: Function to be decorated
-           project_name (str): Project name for current experiment run. Default value of "default"
-           output_dir (str): Directory path to which the experiment artifacts are saved.
-                             Saved to current directory by default.
-           offline (bool): Indicates if the tracker should be run in offline mode.
-           country (str): The country in which the experiment in being run. Required if `offline=True`
-           region (str): The provincial region, for example, California in the US.
+    :param project_name: Project name for current experiment run. Default value of "default"
+    :param output_dir: Directory path to which the experiment artifacts are saved.
+                       Saved to current directory by default.
+    :param offline: Indicates if the tracker should be run in offline mode.
+    :param country: The country in which the experiment in being run. Required if `offline=True`
+    :param region: The provincial region, for example, California in the US.
                          Currently, this only affects calculations for the United States.
     :return: The decorated function
     """

@@ -22,8 +22,8 @@ def get_cloud_emissions(
     """
     Computes emissions for cloud infra
     :param energy: Mean power consumption of the process (kWh)
-           cloud: Region of compute
-           config: Location of data files
+    :param cloud: Region of compute
+    :param config: Location of data files
     :return: CO2 emissions in kg
     """
 
@@ -53,8 +53,8 @@ def get_private_infra_emissions(
     """
     Computes emissions for private infra
     :param energy: Mean power consumption of the process (kWh)
-           geo: Country and region metadata
-           config: Location of data files
+    :param geo: Country and region metadata
+    :param config: Location of data files
     :return: CO2 emissions in kg
     """
     compute_with_energy_mix: bool = geo.country != "United States" or (
@@ -78,8 +78,8 @@ def _get_united_states_emissions(
     Computes emissions for United States on private infra
     https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
     :param energy: Mean power consumption of the process (kWh)
-           geo: Country and region metadata.
-           us_data_path: Emission data for United States
+    :param geo: Country and region metadata.
+    :param us_data_path: Emission data for United States
     :return: CO2 emissions in kg
     """
 
@@ -106,8 +106,8 @@ def _get_country_emissions_energy_mix(
     Computes emissions for International locations on private infra
     https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
     :param energy: Mean power consumption of the process (kWh)
-           geo: Country and region metadata.
-           energy_mix_data_path: Energy mix data file path
+    :param geo: Country and region metadata.
+    :param energy_mix_data_path: Energy mix data file path
     :return: CO2 emissions in kg
     """
 
