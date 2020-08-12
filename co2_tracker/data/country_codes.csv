@@ -1,223 +1,225 @@
-country,code
-Afghanistan,AFG
-Albania,ALB
-Algeria,DZA
-American Samoa,ASM
-Andorra,AND
-Angola,AGO
-Anguilla,AIA
-Antigua and Barbuda,ATG
-Argentina,ARG
-Armenia,ARM
-Aruba,ABW
-Australia,AUS
-Austria,AUT
-Azerbaijan,AZE
-"Bahamas, The",BHM
-Bahrain,BHR
-Bangladesh,BGD
-Barbados,BRB
-Belarus,BLR
-Belgium,BEL
-Belize,BLZ
-Benin,BEN
-Bermuda,BMU
-Bhutan,BTN
-Bolivia,BOL
-Bosnia and Herzegovina,BIH
-Botswana,BWA
-Brazil,BRA
-British Virgin Islands,VGB
-Brunei,BRN
-Bulgaria,BGR
-Burkina Faso,BFA
-Burma,MMR
-Burundi,BDI
-Cabo Verde,CPV
-Cambodia,KHM
-Cameroon,CMR
-Canada,CAN
-Cayman Islands,CYM
-Central African Republic,CAF
-Chad,TCD
-Chile,CHL
-China,CHN
-Colombia,COL
-Comoros,COM
-"Congo, Democratic Republic of the",COD
-"Congo, Republic of the",COG
-Cook Islands,COK
-Costa Rica,CRI
-Cote d'Ivoire,CIV
-Croatia,HRV
-Cuba,CUB
-Curacao,CUW
-Cyprus,CYP
-Czech Republic,CZE
-Denmark,DNK
-Djibouti,DJI
-Dominica,DMA
-Dominican Republic,DOM
-Ecuador,ECU
-Egypt,EGY
-El Salvador,SLV
-Equatorial Guinea,GNQ
-Eritrea,ERI
-Estonia,EST
-Ethiopia,ETH
-Falkland Islands (Islas Malvinas),FLK
-Faroe Islands,FRO
-Fiji,FJI
-Finland,FIN
-France,FRA
-French Polynesia,PYF
-Gabon,GAB
-"Gambia, The",GMB
-Georgia,GEO
-Germany,DEU
-Ghana,GHA
-Gibraltar,GIB
-Greece,GRC
-Greenland,GRL
-Grenada,GRD
-Guam,GUM
-Guatemala,GTM
-Guernsey,GGY
-Guinea-Bissau,GNB
-Guinea,GIN
-Guyana,GUY
-Haiti,HTI
-Honduras,HND
-Hong Kong,HKG
-Hungary,HUN
-Iceland,ISL
-India,IND
-Indonesia,IDN
-Iran,IRN
-Iraq,IRQ
-Ireland,IRL
-Isle of Man,IMN
-Israel,ISR
-Italy,ITA
-Jamaica,JAM
-Japan,JPN
-Jersey,JEY
-Jordan,JOR
-Kazakhstan,KAZ
-Kenya,KEN
-Kiribati,KIR
-"Korea, North",PRK
-"Korea, South",KOR
-Kosovo,KSV
-Kuwait,KWT
-Kyrgyzstan,KGZ
-Laos,LAO
-Latvia,LVA
-Lebanon,LBN
-Lesotho,LSO
-Liberia,LBR
-Libya,LBY
-Liechtenstein,LIE
-Lithuania,LTU
-Luxembourg,LUX
-Macau,MAC
-Macedonia,MKD
-Madagascar,MDG
-Malawi,MWI
-Malaysia,MYS
-Maldives,MDV
-Mali,MLI
-Malta,MLT
-Marshall Islands,MHL
-Mauritania,MRT
-Mauritius,MUS
-Mexico,MEX
-"Micronesia, Federated States of",FSM
-Moldova,MDA
-Monaco,MCO
-Mongolia,MNG
-Montenegro,MNE
-Morocco,MAR
-Mozambique,MOZ
-Namibia,NAM
-Nepal,NPL
-Netherlands,NLD
-New Caledonia,NCL
-New Zealand,NZL
-Nicaragua,NIC
-Nigeria,NGA
-Niger,NER
-Niue,NIU
-Northern Mariana Islands,MNP
-Norway,NOR
-Oman,OMN
-Pakistan,PAK
-Palau,PLW
-Panama,PAN
-Papua New Guinea,PNG
-Paraguay,PRY
-Peru,PER
-Philippines,PHL
-Poland,POL
-Portugal,PRT
-Puerto Rico,PRI
-Qatar,QAT
-Romania,ROU
-Russia,RUS
-Rwanda,RWA
-Saint Kitts and Nevis,KNA
-Saint Lucia,LCA
-Saint Martin,MAF
-Saint Pierre and Miquelon,SPM
-Saint Vincent and the Grenadines,VCT
-Samoa,WSM
-San Marino,SMR
-Sao Tome and Principe,STP
-Saudi Arabia,SAU
-Senegal,SEN
-Serbia,SRB
-Seychelles,SYC
-Sierra Leone,SLE
-Singapore,SGP
-Sint Maarten,SXM
-Slovakia,SVK
-Slovenia,SVN
-Solomon Islands,SLB
-Somalia,SOM
-South Africa,ZAF
-South Sudan,SSD
-Spain,ESP
-Sri Lanka,LKA
-Sudan,SDN
-Suriname,SUR
-Swaziland,SWZ
-Sweden,SWE
-Switzerland,CHE
-Syria,SYR
-Taiwan,TWN
-Tajikistan,TJK
-Tanzania,TZA
-Thailand,THA
-Timor-Leste,TLS
-Togo,TGO
-Tonga,TON
-Trinidad and Tobago,TTO
-Tunisia,TUN
-Turkey,TUR
-Turkmenistan,TKM
-Tuvalu,TUV
-Uganda,UGA
-Ukraine,UKR
-United Arab Emirates,ARE
-United Kingdom,GBR
-United States,USA
-Uruguay,URY
-Uzbekistan,UZB
-Vanuatu,VUT
-Venezuela,VEN
-Vietnam,VNM
-Virgin Islands,VGB
-West Bank,WBG
-Yemen,YEM
-Zambia,ZMB
-Zimbabwe,ZWE
+country,code,,,,
+Afghanistan,AFG,,Afghanistan,,TRUE
+Albania,ALB,,Albania,,TRUE
+Algeria,DZA,,Algeria,,TRUE
+American Samoa,ASM,,American Samoa,,TRUE
+Angola,AGO,,Angola,,TRUE
+Anguilla,AIA,,Antarctica,,FALSE
+Antigua and Barbuda,ATG,,Antigua and Barbuda,,TRUE
+Argentina,ARG,,Argentina,,TRUE
+Armenia,ARM,,Armenia,,TRUE
+Aruba,ABW,,Aruba,,TRUE
+Australia,AUS,,Australia,,TRUE
+Austria,AUT,,Austria,,TRUE
+Azerbaijan,AZE,,Azerbaijan,,TRUE
+Bahama The,BHM,,Bahama The,,TRUE
+Bahrain,BHR,,Bahrain,,TRUE
+Bangladesh,BGD,,Bangladesh,,TRUE
+Barbados,BRB,,Barbados,,TRUE
+Belarus,BLR,,Belarus,,TRUE
+Belgium,BEL,,Belgium,,TRUE
+Belize,BLZ,,Belize,,TRUE
+Benin,BEN,,Benin,,TRUE
+Bermuda,BMU,,Bermuda,,TRUE
+Bhutan,BTN,,Bhutan,,TRUE
+Bolivia,BOL,,Bolivia,,TRUE
+Bosnia and Herzegovina,BIH,,Bosnia and Herzegovina,,TRUE
+Botswana,BWA,,Botswana,,TRUE
+Brazil,BRA,,Brazil,,TRUE
+British Virgin Islands,VGB,,Brunei,,FALSE
+Brunei,BRN,,Bulgaria,,FALSE
+Bulgaria,BGR,,Burkina Faso,,FALSE
+Burkina Faso,BFA,,Burma (Myanmar),,FALSE
+Burma,MMR,,Burundi,,FALSE
+Burundi,BDI,,Cambodia,,FALSE
+Cabo Verde,CPV,,Cameroon,,FALSE
+Cambodia,KHM,,Canada,,FALSE
+Cameroon,CMR,,Cape Verde,,FALSE
+Canada,CAN,,Cayman Islands,,FALSE
+Cayman Islands,CYM,,Central African Republic,,FALSE
+Central African Republic,CAF,,Chad,,FALSE
+Chad,TCD,,Chile,,FALSE
+Chile,CHL,,China,,FALSE
+China,CHN,,Colombia,,FALSE
+Colombia,COL,,Comoros,,FALSE
+Comoros,COM,,Congo (Brazzaville),,FALSE
+"Congo, Democratic Republic of the",COD,,Congo (Kinshasa),,FALSE
+"Congo, Republic of the",COG,,Cook Islands,,FALSE
+Cook Islands,COK,,Costa Rica,,FALSE
+Costa Rica,CRI,,Cote dIvoire (IvoryCoast),,FALSE
+Cote d'Ivoire,CIV,,Croatia,,FALSE
+Croatia,HRV,,Cuba,,FALSE
+Cuba,CUB,,Cyprus,,FALSE
+Curacao,CUW,,Czech Republic,,FALSE
+Cyprus,CYP,,Denmark,,FALSE
+Czech Republic,CZE,,Djibouti,,FALSE
+Denmark,DNK,,Dominica,,FALSE
+Djibouti,DJI,,Dominican Republic,,FALSE
+Dominica,DMA,,Ecuador,,FALSE
+Dominican Republic,DOM,,Egypt,,FALSE
+Ecuador,ECU,,El Salvador,,FALSE
+Egypt,EGY,,Equatorial Guinea,,FALSE
+El Salvador,SLV,,Eritrea,,FALSE
+Equatorial Guinea,GNQ,,Estonia,,FALSE
+Eritrea,ERI,,Ethiopia,,FALSE
+Estonia,EST,,Falkland Islands (Islas Malvinas),,FALSE
+Ethiopia,ETH,,Faroe Islands,,FALSE
+Falkland Islands (Islas Malvinas),FLK,,Fiji,,FALSE
+Faroe Islands,FRO,,Finland,,FALSE
+Fiji,FJI,,France,,FALSE
+Finland,FIN,,French Guiana,,FALSE
+France,FRA,,French Polynesia,,FALSE
+French Polynesia,PYF,,Gabon,,FALSE
+Gabon,GAB,,Gambi The,,FALSE
+"Gambia, The",GMB,,Georgia,,FALSE
+Georgia,GEO,,Germany,,FALSE
+Germany,DEU,,Ghana,,FALSE
+Ghana,GHA,,Gibraltar,,FALSE
+Gibraltar,GIB,,Greece,,FALSE
+Greece,GRC,,Greenland,,FALSE
+Greenland,GRL,,Grenada,,FALSE
+Grenada,GRD,,Guadeloupe,,FALSE
+Guam,GUM,,Guam,,TRUE
+Guatemala,GTM,,Guatemala,,TRUE
+Guernsey,GGY,,Guinea,,FALSE
+Guinea-Bissau,GNB,,Guinea-Bissau,,TRUE
+Guinea,GIN,,Guyana,,FALSE
+Guyana,GUY,,Haiti,,FALSE
+Haiti,HTI,,Hawaiian Trade Zone,,FALSE
+Honduras,HND,,Honduras,,TRUE
+Hong Kong,HKG,,Hong Kong,,TRUE
+Hungary,HUN,,Hungary,,TRUE
+Iceland,ISL,,Iceland,,TRUE
+India,IND,,India,,TRUE
+Indonesia,IDN,,Indonesia,,TRUE
+Iran,IRN,,Iran,,TRUE
+Iraq,IRQ,,Iraq,,TRUE
+Ireland,IRL,,Ireland,,TRUE
+Isle of Man,IMN,,Israel,,FALSE
+Israel,ISR,,Italy,,FALSE
+Italy,ITA,,Jamaica,,FALSE
+Jamaica,JAM,,Japan,,FALSE
+Japan,JPN,,Jordan,,FALSE
+Jersey,JEY,,Kazakhstan,,FALSE
+Jordan,JOR,,Kenya,,FALSE
+Kazakhstan,KAZ,,Kiribati,,FALSE
+Kenya,KEN,,Kore North,,FALSE
+Kiribati,KIR,,Kore South,,FALSE
+"Korea, North",PRK,,Kosovo,,FALSE
+"Korea, South",KOR,,Kuwait,,FALSE
+Kosovo,KSV,,Kyrgyzstan,,FALSE
+Kuwait,KWT,,Laos,,FALSE
+Kyrgyzstan,KGZ,,Latvia,,FALSE
+Laos,LAO,,Lebanon,,FALSE
+Latvia,LVA,,Lesotho,,FALSE
+Lebanon,LBN,,Liberia,,FALSE
+Lesotho,LSO,,Libya,,FALSE
+Liberia,LBR,,Lithuania,,FALSE
+Libya,LBY,,Luxembourg,,FALSE
+Liechtenstein,LIE,,Macau,,FALSE
+Lithuania,LTU,,Macedonia,,FALSE
+Luxembourg,LUX,,Madagascar,,FALSE
+Macau,MAC,,Malawi,,FALSE
+Macedonia,MKD,,Malaysia,,FALSE
+Madagascar,MDG,,Maldives,,FALSE
+Malawi,MWI,,Mali,,FALSE
+Malaysia,MYS,,Malta,,FALSE
+Maldives,MDV,,Martinique,,FALSE
+Mali,MLI,,Mauritania,,FALSE
+Malta,MLT,,Mauritius,,FALSE
+Marshall Islands,MHL,,Mexico,,FALSE
+Mauritania,MRT,,Micronesia,,FALSE
+Mauritius,MUS,,Moldova,,FALSE
+Mexico,MEX,,Mongolia,,FALSE
+"Micronesia, Federated States of",FSM,,Montenegro,,FALSE
+Moldova,MDA,,Montserrat,,FALSE
+Monaco,MCO,,Morocco,,FALSE
+Mongolia,MNG,,Mozambique,,FALSE
+Montenegro,MNE,,Namibia,,FALSE
+Morocco,MAR,,Nauru,,FALSE
+Mozambique,MOZ,,Nepal,,FALSE
+Namibia,NAM,,Netherlands,,FALSE
+Nepal,NPL,,Netherlands Antilles,,FALSE
+Netherlands,NLD,,New Caledonia,,FALSE
+New Caledonia,NCL,,New Zealand,,FALSE
+New Zealand,NZL,,Nicaragua,,FALSE
+Nicaragua,NIC,,Niger,,FALSE
+Nigeria,NGA,,Nigeria,,TRUE
+Niger,NER,,Niue,,FALSE
+Niue,NIU,,Northern Mariana Islands,,FALSE
+Northern Mariana Islands,MNP,,Norway,,FALSE
+Norway,NOR,,Oman,,FALSE
+Oman,OMN,,Pakistan,,FALSE
+Pakistan,PAK,,Palestinian Territories,,FALSE
+Palau,PLW,,Panama,,FALSE
+Panama,PAN,,Papua New Guinea,,FALSE
+Papua New Guinea,PNG,,Paraguay,,FALSE
+Paraguay,PRY,,Peru,,FALSE
+Peru,PER,,Philippines,,FALSE
+Philippines,PHL,,Poland,,FALSE
+Poland,POL,,Portugal,,FALSE
+Portugal,PRT,,Puerto Rico,,FALSE
+Puerto Rico,PRI,,Qatar,,FALSE
+Qatar,QAT,,Reunion,,FALSE
+Romania,ROU,,Romania,,TRUE
+Russia,RUS,,Russia,,TRUE
+Rwanda,RWA,,Rwanda,,TRUE
+Saint Kitts and Nevis,KNA,,Saint Helena,,FALSE
+Saint Lucia,LCA,,Saint Kitts and Nevis,,FALSE
+Saint Martin,MAF,,Saint Lucia,,FALSE
+Saint Pierre and Miquelon,SPM,,Saint Pierre and Miquelon,,TRUE
+Saint Vincent and the Grenadines,VCT,,Saint Vincent/Grenadines,,FALSE
+Samoa,WSM,,Samoa,,TRUE
+San Marino,SMR,,Sao Tome and Principe,,FALSE
+Sao Tome and Principe,STP,,Saudi Arabia,,FALSE
+Saudi Arabia,SAU,,Senegal,,FALSE
+Senegal,SEN,,Serbia,,FALSE
+Serbia,SRB,,Seychelles,,FALSE
+Seychelles,SYC,,Sierra Leone,,FALSE
+Sierra Leone,SLE,,Singapore,,FALSE
+Singapore,SGP,,Slovakia,,FALSE
+Sint Maarten,SXM,,Slovenia,,FALSE
+Slovakia,SVK,,Solomon Islands,,FALSE
+Slovenia,SVN,,Somalia,,FALSE
+Solomon Islands,SLB,,South Africa,,FALSE
+Somalia,SOM,,South Sudan,,FALSE
+South Africa,ZAF,,Spain,,FALSE
+South Sudan,SSD,,Sri Lanka,,FALSE
+Spain,ESP,,Sudan,,FALSE
+Sri Lanka,LKA,,Suriname,,FALSE
+Sudan,SDN,,Swaziland,,FALSE
+Suriname,SUR,,Sweden,,FALSE
+Swaziland,SWZ,,Switzerland,,FALSE
+Sweden,SWE,,Syria,,FALSE
+Switzerland,CHE,,Taiwan,,FALSE
+Syria,SYR,,Tajikistan,,FALSE
+Taiwan,TWN,,Tanzania,,FALSE
+Tajikistan,TJK,,Thailand,,FALSE
+Tanzania,TZA,,Timor-Leste (East Timor),,FALSE
+Thailand,THA,,Togo,,FALSE
+Timor-Leste,TLS,,Tonga,,FALSE
+Togo,TGO,,Trinidad and Tobago,,FALSE
+Tonga,TON,,Tunisia,,FALSE
+Trinidad and Tobago,TTO,,Turkey,,FALSE
+Tunisia,TUN,,Turkmenistan,,FALSE
+Turkey,TUR,,Turks and Caicos Islands,,FALSE
+Turkmenistan,TKM,,Tuvalu,,FALSE
+Tuvalu,TUV,,U.S. Pacific Islands,,FALSE
+Uganda,UGA,,U.S. Territories,,FALSE
+Ukraine,UKR,,Uganda,,FALSE
+United Arab Emirates,ARE,,Ukraine,,FALSE
+United Kingdom,GBR,,United Arab Emirates,,FALSE
+United States,USA,,United Kingdom,,FALSE
+Uruguay,URY,,United States,,FALSE
+Uzbekistan,UZB,,Uruguay,,FALSE
+Vanuatu,VUT,,Uzbekistan,,FALSE
+Venezuela,VEN,,Vanuatu,,FALSE
+Vietnam,VNM,,Venezuela,,FALSE
+Virgin Islands,VGB,,Vietnam,,FALSE
+West Bank,WBG,,Virgin Island  U.S.,,FALSE
+Yemen,YEM,,Virgin Island British,,FALSE
+Zambia,ZMB,,Wake Island,,FALSE
+Zimbabwe,ZWE,,Western Sahara,,FALSE
+,,,Yemen,,FALSE
+,,,Zambia,,FALSE
+,,,Zimbabwe,,FALSE
