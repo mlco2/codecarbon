@@ -106,23 +106,22 @@ class BaseCO2Tracker(ABC):
         geo: GeoMetadata = self._get_geo_metadata()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
-        emissions: float = (
-            get_private_infra_emissions(self._total_energy, geo, self._app_config)
-            if cloud.is_on_private_infra
-            else get_cloud_emissions(self._total_energy, cloud, self._app_config)
-        )
-
-        country: str = (
-            geo.country
-            if cloud.is_on_private_infra
-            else get_cloud_country(cloud, self._app_config)
-        )
-
-        region: str = (
-            ("" if geo.region is None else geo.region)
-            if cloud.is_on_private_infra
-            else ""
-        )
+        if cloud.is_on_private_infra:
+            emissions = get_private_infra_emissions(
+                self._total_energy, geo, self._app_config
+            )
+            country = geo.country
+            region = "" if geo.region is None else geo.region
+            on_cloud = "N"
+            cloud_provider = ""
+            cloud_region = ""
+        else:
+            emissions = get_cloud_emissions(self._total_energy, cloud, self._app_config)
+            country = get_cloud_country(cloud, self._app_config)
+            region = ""
+            on_cloud = "Y"
+            cloud_provider = cloud.provider
+            cloud_region = cloud.region
 
         data = CO2Data(
             timestamp=datetime.now(),
@@ -133,6 +132,9 @@ class BaseCO2Tracker(ABC):
             energy_consumed=self._total_energy.kwh,
             country=country,
             region=region,
+            on_cloud=on_cloud,
+            cloud_provider=cloud_provider,
+            cloud_region=cloud_region,
         )
 
         for persistence in self.persistence_objs:
