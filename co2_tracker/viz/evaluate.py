@@ -16,7 +16,7 @@ def get_data(file):
 
 
 def get_intl_energy_mix():
-    intl_mix = get_data("../data/private_infra/2016/energy_mix.json")
+    intl_mix = get_data("../data/private_infra/2016/global_energy_mix.json")
     return intl_mix
 
 

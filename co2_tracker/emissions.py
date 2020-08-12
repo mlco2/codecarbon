@@ -119,17 +119,17 @@ def _get_country_emissions_energy_mix(
     }
 
     with open(energy_mix_data_path) as f:
-        intl_energy_mix_data: Dict = json.load(f)
+        energy_mix: Dict = json.load(f)
 
-    if geo.country not in intl_energy_mix_data:
+    if geo.country not in energy_mix:
         # TODO: Deal with missing data, default to something
         raise Exception()
 
-    country_data: Dict = intl_energy_mix_data[geo.country]
+    country_energy_mix: Dict = energy_mix[geo.country]
 
     emissions_percentage: Dict[str, float] = {
-        emission: country_data[emission] / country_data["total"]
-        for emission in country_data.keys() - {"total"}
+        emission: country_energy_mix[emission] / country_energy_mix["total"]
+        for emission in country_energy_mix.keys() - {"total"}
     }
 
     #  Weighted sum of emissions by % of contributions

@@ -39,7 +39,7 @@ setuptools.setup(
         "co2_tracker": [
             "data/cloud/impact.csv",
             "data/private_infra/2016/us_emissions.json",
-            "data/private_infra/2016/energy_mix.json",
+            "data/private_infra/2016/global_energy_mix.json",
         ]
     },
     python_requires=">=3.6",
