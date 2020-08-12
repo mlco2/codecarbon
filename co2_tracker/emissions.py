@@ -61,15 +61,14 @@ def get_private_infra_emissions(
         geo.country == "United States" and geo.region is None
     )
 
-    return (
-        _get_country_emissions_energy_mix(
+    if compute_with_energy_mix:
+        return _get_country_emissions_energy_mix(
             energy, geo, energy_mix_data_path=config.private_infra_energy_mix_path
         )
-        if compute_with_energy_mix
-        else _get_united_states_emissions(
+    else:
+        return _get_united_states_emissions(
             energy, geo, us_data_path=config.private_infra_us_path
         )
-    )
 
 
 def _get_united_states_emissions(
