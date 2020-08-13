@@ -58,7 +58,7 @@ def get_private_infra_emissions(
     :return: CO2 emissions in kg
     """
     compute_with_energy_mix: bool = geo.country != "United States" or (
-        geo.country == "United States" and geo.region is None
+        geo.country == "United States" and geo.region == ""
     )
 
     if compute_with_energy_mix:
@@ -127,10 +127,12 @@ def _get_country_emissions_energy_mix(
 
     country_energy_mix: Dict = energy_mix[geo.country]
 
-    emissions_percentage: Dict[str, float] = {
-        emission: country_energy_mix[emission] / country_energy_mix["total"]
-        for emission in country_energy_mix.keys() - {"total"}
-    }
+    emissions_percentage: Dict[str, float] = {}
+    for energy_type in country_energy_mix.keys():
+        if energy_type not in ["total", "isoCode"]:
+            emissions_percentage[energy_type] = (
+                country_energy_mix[energy_type] / country_energy_mix["total"]
+            )
 
     #  Weighted sum of emissions by % of contributions
     # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
