@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
+import plotly.express as px
 
 
 class Components:
@@ -24,7 +25,7 @@ class Components:
             [
                 html.H5(
                     "Select a Project",
-                    style={"textAlign": "left", "fontWeight": "bold"},
+                    style={"text-align": "left", "font-weight": "bold"},
                 ),
                 dcc.Dropdown(
                     id="project_name",
@@ -36,36 +37,75 @@ class Components:
         )
 
     @staticmethod
+    def get_cloud_emissions_barchart():
+        return dbc.Col(
+            [
+                html.Br(),
+                html.H2(
+                    [
+                        "Emissions Across ",
+                        html.Strong(
+                            id="cloud_provider_name",
+                            style={"font-weight": "normal", "color": "green"},
+                        ),
+                        " Regions",
+                    ],
+                    style={"text-align": "center"},
+                ),
+                dcc.Graph(id="cloud_emissions_barchart"),
+            ],
+            id="cloud_emissions_barchart_component",
+            # style={"display": "block"},
+        )
+
+    @staticmethod
+    def get_cloud_emissions_barchart_figure(cloud_emissions_barchart_data):
+        return px.bar(
+            cloud_emissions_barchart_data,
+            x="region",
+            y="emissions",
+            hover_data=["region", "country", "emissions"],
+            color="emissions",
+            labels={
+                "emissions": "Carbon Equivalent (kg)",
+                "region": "Region",
+                "country": "Country",
+            },
+            color_continuous_scale=px.colors.sequential.Greens_r,
+            height=500,
+        ).update_xaxes(tickangle=45)
+
+    @staticmethod
+    def get_global_emissions_choropleth():
+        return dbc.Col(
+            [
+                html.Br(),
+                html.H2("Global Emissions Equivalent", style={"text-align": "center"}),
+                dcc.Graph(id="global_emissions_choropleth"),
+            ]
+        )
+
+    @staticmethod
+    def get_global_emissions_choropleth_figure(choropleth_data):
+        return px.choropleth(
+            data_frame=choropleth_data,
+            locations="iso_code",
+            color="emissions",
+            hover_data=["country", "emissions"],
+            labels={
+                "country": "Country",
+                "emissions": "Carbon Equivalent (kg)",
+                "iso_code": "Country Code",
+            },
+            color_continuous_scale=px.colors.sequential.Greens_r,
+        )
+
+    @staticmethod
     def get_hidden_project_data():
         return html.Div(id="hidden_project_data")  # , style={"display": "none"})
 
     @staticmethod
     def get_hidden_project_summary():
         return html.H1(
-            dcc.Store(id="hidden_project_summary")
-        )  # , style={"display": "none"})
-
-    @staticmethod
-    def get_project_summary(project_df: pd.DataFrame):
-        last_run = project_df.iloc[-1]
-        print(last_run)
-        project_summary = {
-            "last_run": {
-                "timestamp": last_run.timestamp,
-                "duration": last_run.duration,
-                "emissions": last_run.emissions,
-                "energy_consumed": last_run.energy_consumed,
-            },
-            "total": {
-                "duration": sum(project_df.duration),
-                "emissions": sum(project_df.emissions),
-                "energy_consumed": sum(project_df.energy_consumed),
-            },
-            "country": last_run.country,
-            "region": last_run.region,
-            "on_cloud": last_run.on_cloud,
-            "cloud_provider": last_run.cloud_provider,
-            "cloud_region": last_run.cloud_region,
-        }
-        print(project_summary)
-        return project_summary
+            dcc.Store(id="hidden_project_summary")  # , style={"display": "none"}
+        )
