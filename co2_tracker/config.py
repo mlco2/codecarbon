@@ -3,7 +3,10 @@ App configuration: This will likely change when we have a common location for da
 """
 
 from dataclasses import dataclass
+import json
+import pandas as pd
 import pkg_resources
+from typing import Dict
 
 cfg = {
     "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
@@ -44,3 +47,17 @@ class AppConfig:
         return pkg_resources.resource_filename(
             self.module_name, self.config["global_energy_mix_data_path"]
         )
+
+    def get_global_energy_mix_data(self) -> Dict:
+        """
+        Returns Global Energy Mix Data
+        """
+        with open(self.global_energy_mix_data_path) as f:
+            global_energy_mix: Dict = json.load(f)
+        return global_energy_mix
+
+    def get_cloud_emissions_data(self) -> pd.DataFrame:
+        """
+        Returns Cloud Regions Impact Data
+        """
+        return pd.read_csv(self.cloud_emissions_path)
