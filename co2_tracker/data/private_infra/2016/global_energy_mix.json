@@ -87,14 +87,6 @@
     "total": 12.477930701038,
     "isoCode": "BRA"
   },
-  "Micronesia": {
-    "lowCarbon": 0.0,
-    "naturalGas": 0.0,
-    "petroleum": 0.0,
-    "coal": 0.0,
-    "total": 0.0,
-    "isoCode": "FSM"
-  },
   "Malta": {
     "lowCarbon": 0.0068381788,
     "naturalGas": 0.0,
@@ -158,14 +150,6 @@
     "coal": 0.011074481635343,
     "total": 0.31711829907183,
     "isoCode": "KEN"
-  },
-  "Tuvalu": {
-    "lowCarbon": 0.0,
-    "naturalGas": 0.0,
-    "petroleum": 0.0,
-    "coal": 0.0,
-    "total": 0.0,
-    "isoCode": "TUV"
   },
   "Nauru": {
     "lowCarbon": 2.3117864e-05,
@@ -775,14 +759,6 @@
     "coal": 0.00029470175555021,
     "total": 0.1260075949991,
     "isoCode": "COD"
-  },
-  "Northern Mariana Islands": {
-    "lowCarbon": 0.0,
-    "naturalGas": 0.0,
-    "petroleum": 0.0,
-    "coal": 0.0,
-    "total": 0.0,
-    "isoCode": "MNP"
   },
   "Libya": {
     "lowCarbon": 0.00171624366653,
