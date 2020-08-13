@@ -8,8 +8,8 @@ import pkg_resources
 cfg = {
     "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
     "cloud_emissions_path": "data/cloud/impact.csv",
-    "private_infra_us_path": "data/private_infra/2016/us_emissions.json",
-    "private_infra_global_energy_mix_path": "data/private_infra/2016/global_energy_mix.json",
+    "usa_emissions_data_path": "data/private_infra/2016/us_emissions.json",
+    "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
 }
 
 
@@ -34,13 +34,13 @@ class AppConfig:
         )
 
     @property
-    def private_infra_us_path(self):
+    def usa_emissions_data_path(self):
         return pkg_resources.resource_filename(
-            self.module_name, self.config["private_infra_us_path"]
+            self.module_name, self.config["usa_emissions_data_path"]
         )
 
     @property
-    def private_infra_energy_mix_path(self):
+    def global_energy_mix_data_path(self):
         return pkg_resources.resource_filename(
-            self.module_name, self.config["private_infra_energy_mix_path"]
+            self.module_name, self.config["global_energy_mix_data_path"]
         )
