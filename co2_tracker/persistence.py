@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 import csv
 from dataclasses import dataclass
-from datetime import datetime
 import os
 
 
@@ -16,7 +15,7 @@ class CO2Data:
     Encapsulates experiment artifacts
     """
 
-    timestamp: datetime
+    timestamp: str
     experiment_id: str
     project_name: str
     duration: float

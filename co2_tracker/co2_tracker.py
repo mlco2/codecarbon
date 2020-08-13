@@ -124,7 +124,7 @@ class BaseCO2Tracker(ABC):
             cloud_region = cloud.region
 
         data = CO2Data(
-            timestamp=datetime.now(),
+            timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             experiment_id=str(uuid.uuid4()),
             project_name=self._project_name,
             duration=duration.seconds,
