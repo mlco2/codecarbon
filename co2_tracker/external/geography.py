@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import logging
 import re
 import requests
-from typing import Optional, Dict, Callable
+from typing import Callable, Dict
 
 logger = logging.getLogger(__name__)
 
