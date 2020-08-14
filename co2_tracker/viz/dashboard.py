@@ -2,13 +2,11 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 from dash.dependencies import Input, Output
-
-import dash_table as dt
 import fire
 import pandas as pd
 
 from co2_tracker.viz.components import Components
-from co2_tracker.viz.choropleth import Choropleth
+from co2_tracker.viz.data import Data
 
 
 def render_app(df: pd.DataFrame):
@@ -19,14 +17,16 @@ def render_app(df: pd.DataFrame):
     project_dropdown = components.get_project_dropdown(df)
     hidden_project_data = components.get_hidden_project_data()
     hidden_project_summary = components.get_hidden_project_summary()
+    cloud_emissions_barchart = components.get_cloud_emissions_barchart()
+    global_emissions_choropleth = components.get_global_emissions_choropleth()
 
-    choropleth = Choropleth()
-    global_emissions_choropleth = choropleth.get_global_emissions_choropleth()
+    data = Data()
 
     app.layout = dbc.Container(
         [
             header,
             project_dropdown,
+            cloud_emissions_barchart,
             global_emissions_choropleth,
             hidden_project_summary,
             hidden_project_data,
@@ -43,12 +43,9 @@ def render_app(df: pd.DataFrame):
     )
     def update_project_data(project_name: str):
         print(project_name)
-        project_df = df[df.project_name == project_name]
-        project_df = project_df.sort_values(by="timestamp")
-        data = project_df.to_dict("rows")
-        columns = [{"name": column, "id": column} for column in project_df.columns]
-        project_summary = components.get_project_summary(project_df)
-        return dt.DataTable(data=data, columns=columns), project_summary
+        project_data = data.get_project_data(df, project_name)
+        project_summary = data.get_project_summary(project_data.data)
+        return project_data, project_summary
 
     @app.callback(
         Output(component_id="global_emissions_choropleth", component_property="figure"),
@@ -56,10 +53,51 @@ def render_app(df: pd.DataFrame):
     )
     def update_global_emissions_choropleth(hidden_project_summary: dcc.Store):
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
-        choropleth_data = choropleth.get_global_emissions_choropleth_data(
+        global_emissions_choropleth_data = data.get_global_emissions_choropleth_data(
             net_energy_consumed
         )
-        return choropleth.get_global_emissions_choropleth_figure(choropleth_data)
+        return components.get_global_emissions_choropleth_figure(
+            global_emissions_choropleth_data
+        )
+
+    @app.callback(
+        Output(
+            component_id="cloud_emissions_barchart_component",
+            component_property="style",
+        ),
+        [Input(component_id="hidden_project_summary", component_property="data")],
+    )
+    def update_on_cloud(hidden_project_summary: dcc.Store):
+        on_cloud = hidden_project_summary["on_cloud"]
+        if on_cloud == "Y":
+            return {"display": "block"}
+        else:
+            return {"display": "none"}
+
+    @app.callback(
+        [
+            Output(component_id="cloud_provider_name", component_property="children"),
+            Output(
+                component_id="cloud_emissions_barchart", component_property="figure"
+            ),
+        ],
+        [Input(component_id="hidden_project_summary", component_property="data")],
+    )
+    def update_cloud_emissions_barchart(hidden_project_summary: dcc.Store):
+        on_cloud = hidden_project_summary["on_cloud"]
+        net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
+        cloud_provider = hidden_project_summary["cloud_provider"]
+        cloud_region = hidden_project_summary["cloud_region"]
+        cloud_provider_name, cloud_emissions_barchart_data = data.get_cloud_emissions_barchart_data(
+            net_energy_consumed, on_cloud, cloud_provider, cloud_region
+        )
+
+        return (
+            cloud_provider_name,
+            components.get_cloud_emissions_barchart_figure(
+                cloud_emissions_barchart_data
+            ),
+        )
 
     return app
 
@@ -71,5 +109,4 @@ def main(filename: str, port: int = 8050, debug: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    # Timer(1, open_browser).start()
     fire.Fire(main)
