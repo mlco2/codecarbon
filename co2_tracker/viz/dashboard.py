@@ -2,6 +2,7 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 from dash.dependencies import Input, Output
+import dash_table as dt
 import fire
 import pandas as pd
 
@@ -14,22 +15,28 @@ def render_app(df: pd.DataFrame):
 
     components = Components()
     header = components.get_header()
+    net_summary = components.get_net_summary()
     project_dropdown = components.get_project_dropdown(df)
-    hidden_project_data = components.get_hidden_project_data()
-    hidden_project_summary = components.get_hidden_project_summary()
+    project_details = components.get_project_details()
+    _hidden_project_data = components.get_hidden_project_data()
+    _hidden_project_summary = components.get_hidden_project_summary()
     cloud_emissions_barchart = components.get_cloud_emissions_barchart()
     global_emissions_choropleth = components.get_global_emissions_choropleth()
+    project_time_series = components.get_project_time_series()
 
     data = Data()
 
     app.layout = dbc.Container(
         [
             header,
+            net_summary,
             project_dropdown,
+            project_details,
             cloud_emissions_barchart,
             global_emissions_choropleth,
-            hidden_project_summary,
-            hidden_project_data,
+            project_time_series,
+            _hidden_project_data,
+            _hidden_project_summary,
         ],
         style={"padding-top": "50px"},
     )
@@ -38,6 +45,24 @@ def render_app(df: pd.DataFrame):
         [
             Output(component_id="hidden_project_data", component_property="children"),
             Output(component_id="hidden_project_summary", component_property="data"),
+            Output(component_id="net_power_consumption", component_property="children"),
+            Output(component_id="net_carbon_equivalent", component_property="children"),
+            Output(
+                component_id="project_infrastructure_location",
+                component_property="children",
+            ),
+            Output(
+                component_id="project_power_consumption", component_property="children"
+            ),
+            Output(
+                component_id="project_carbon_equivalent", component_property="children"
+            ),
+            Output(
+                component_id="last_run_power_consumption", component_property="children"
+            ),
+            Output(
+                component_id="last_run_carbon_equivalent", component_property="children"
+            ),
         ],
         [Input(component_id="project_name", component_property="value")],
     )
@@ -45,7 +70,47 @@ def render_app(df: pd.DataFrame):
         print(project_name)
         project_data = data.get_project_data(df, project_name)
         project_summary = data.get_project_summary(project_data.data)
-        return project_data, project_summary
+        print(project_summary)
+        net_power_consumption = f"{sum(df['energy_consumed'])} kWh"
+        net_carbon_equivalent = f"{sum(df['emissions'])} kg"
+        if {project_summary["region"]} == "":
+            project_infrastructure_location = f"{project_summary['country']}"
+        else:
+            project_infrastructure_location = (
+                f"{project_summary['region']}, {project_summary['country']}"
+            )
+        project_power_consumption = f"{project_summary['total']['energy_consumed']} kWh"
+        project_carbon_equivalent = f"{project_summary['total']['emissions']} kg"
+        last_run_power_consumption = (
+            f"{project_summary['last_run']['energy_consumed']} kWh"
+        )
+        last_run_carbon_equivalent = f"{project_summary['last_run']['emissions']} kg"
+
+        return (
+            project_data,
+            project_summary,
+            net_power_consumption,
+            net_carbon_equivalent,
+            project_infrastructure_location,
+            project_power_consumption,
+            project_carbon_equivalent,
+            last_run_power_consumption,
+            last_run_carbon_equivalent,
+        )
+
+    @app.callback(
+        [
+            Output(component_id="car_icon", component_property="src"),
+            Output(component_id="tv_icon", component_property="src"),
+            Output(component_id="house_icon", component_property="src"),
+        ],
+        [Input(component_id="hidden_project_summary", component_property="data")],
+    )
+    def update_real_world_equivalents(hidden_project_summary: dcc.Store):
+        car_icon = app.get_asset_url("car_icon.png")
+        tv_icon = app.get_asset_url("tv_icon.png")
+        house_icon = app.get_asset_url("house_icon.png")
+        return car_icon, tv_icon, house_icon
 
     @app.callback(
         Output(component_id="global_emissions_choropleth", component_property="figure"),
@@ -58,6 +123,15 @@ def render_app(df: pd.DataFrame):
         )
         return components.get_global_emissions_choropleth_figure(
             global_emissions_choropleth_data
+        )
+
+    @app.callback(
+        Output(component_id="project_time_series", component_property="figure"),
+        [Input(component_id="hidden_project_data", component_property="children")],
+    )
+    def update_project_time_series(hidden_project_data: dt.DataTable):
+        return components.get_project_time_series_figure(
+            hidden_project_data["props"]["data"]
         )
 
     @app.callback(
