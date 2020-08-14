@@ -7,16 +7,40 @@ import plotly.express as px
 
 
 class Components:
+    def __init__(self):
+        self.colorscale = [
+            "rgb(0, 68, 27)",
+            "rgb(0, 109, 44)",
+            "rgb(35, 139, 69)",
+            "rgb(65, 171, 93)",
+            "rgb(116, 196, 118)",
+            "rgb(161, 217, 155)",
+            "rgb(199, 233, 192)",
+            "rgb(229, 245, 224)",
+            "rgb(189, 189, 189)",
+            "rgb(150, 150, 150)",
+            # "rgb(115, 115, 115)",
+        ]  # px.colors.sequential.Greens_r,
+
     @staticmethod
     def get_header():
         return dbc.Jumbotron(
-            [html.H1("Carbon Emissions", style={"textAlign": "center"})]
+            [
+                html.H1("Carbon Footprint", style={"textAlign": "center"}),
+                html.P(
+                    "Machine Learning has a carbon footprint."
+                    " Track emissions from your experiments",
+                    style={"textAlign": "center"},
+                    className="lead",
+                ),
+            ]
         )
 
     @staticmethod
     def get_net_summary():
         return html.Div(
             [
+                html.H2("Across All Projects", style={"textAlign": "center"}),
                 html.H4(
                     [
                         "Net Power Consumption : ",
@@ -38,7 +62,7 @@ class Components:
                     style={"textAlign": "right", "float": "right"},
                 ),
             ],
-            style={"paddingLeft": 16, "paddingRight": 16},
+            style={"paddingLeft": "1.4%", "paddingRight": "1.4%"},
         )
 
     @staticmethod
@@ -108,7 +132,7 @@ class Components:
                                         "float": "right",
                                         "color": "green",
                                         "fontWeight": "bold",
-                                        "paddingLeft": 10,
+                                        "paddingLeft": 5,
                                     },
                                 ),
                             ],
@@ -122,43 +146,122 @@ class Components:
                 html.Br(),
                 html.Div(
                     [
-                        html.H2(
-                            "Real World Equivalents", style={"textAlign": "center"}
-                        ),
+                        html.H2("Exemplary Equivalents", style={"textAlign": "center"}),
+                        html.Br(),
                         html.P(
                             [
-                                html.Img(
-                                    id="house_icon",
+                                html.Div(
+                                    [
+                                        html.Img(
+                                            id="house_icon",
+                                            style={"height": "20%", "width": "50%"},
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.Strong(
+                                                    id="household_fraction",
+                                                    style={
+                                                        "color": "green",
+                                                        "fontSize": 20,
+                                                        "paddingLeft": "4%",
+                                                    },
+                                                ),
+                                                html.H5(
+                                                    "of weekly",
+                                                    style={"paddingLeft": "3.5%"},
+                                                ),
+                                                html.H5(
+                                                    "American",
+                                                    style={"paddingLeft": "2.8%"},
+                                                ),
+                                                html.H5("household"),
+                                                html.H5(
+                                                    "emissions",
+                                                    style={"paddingLeft": "1.4%"},
+                                                ),
+                                            ]
+                                        ),
+                                    ],
+                                    style={"float": "left", "width": "25%"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Img(
+                                            id="car_icon",
+                                            style={
+                                                "height": "55%",
+                                                "width": "40%",
+                                                "paddingLeft": "4%",
+                                            },
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.Strong(
+                                                    id="car_miles",
+                                                    style={
+                                                        "color": "green",
+                                                        "fontWeight": "bold",
+                                                        "fontSize": 20,
+                                                    },
+                                                ),
+                                                html.H5(
+                                                    "driven",
+                                                    style={"paddingLeft": "12%"},
+                                                ),
+                                            ]
+                                        ),
+                                    ],
                                     style={
-                                        "height": "10%",
-                                        "width": "10%",
-                                        "align": "right",
+                                        "float": "left",
+                                        "width": "50%",
+                                        "paddingLeft": 90,
                                     },
                                 ),
-                                html.Img(
-                                    id="car_icon",
-                                    style={
-                                        "height": "10%",
-                                        "width": "10%",
-                                        "align": "left",
-                                    },
-                                ),
-                                html.Img(
-                                    id="tv_icon",
-                                    style={
-                                        "height": "10%",
-                                        "width": "10%",
-                                        "align": "center",
-                                    },
+                                html.Div(
+                                    [
+                                        html.Img(
+                                            id="tv_icon",
+                                            style={
+                                                "height": "25%",
+                                                "width": "50%",
+                                                "paddingLeft": "5%",
+                                            },
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.Strong(
+                                                    id="tv_time",
+                                                    style={
+                                                        "color": "green",
+                                                        "fontSize": 20,
+                                                        "paddingLeft": "8%",
+                                                    },
+                                                ),
+                                                html.H5(
+                                                    "of 32-inch",
+                                                    style={"paddingLeft": "4.8%"},
+                                                ),
+                                                html.H5(
+                                                    "LCD TV",
+                                                    style={"paddingLeft": "10%"},
+                                                ),
+                                                html.H5(
+                                                    "watched",
+                                                    style={"paddingLeft": "6.4%"},
+                                                ),
+                                            ]
+                                        ),
+                                    ],
+                                    style={"float": "right", "width": "25%"},
                                 ),
                             ],
-                            style={"marginLeft": "100px"},
+                            style={"paddingLeft": "20%", "paddingRight": "15%"},
                         ),
                     ],
                     style={"display": "inline-block"},
                 ),
             ],
-            style={"paddingLeft": 16, "paddingRight": 16},
+            style={"paddingLeft": "1.4%", "paddingRight": "1.4%"},
         )
 
     @staticmethod
@@ -168,10 +271,7 @@ class Components:
             dbc.Col(
                 [
                     html.Br(),
-                    html.H5(
-                        "Select a Project",
-                        style={"textAlign": "left", "fontWeight": "bold"},
-                    ),
+                    html.H3("Select a Project", style={"textAlign": "left"}),
                     dcc.Dropdown(
                         id="project_name",
                         options=[{"label": i, "value": i} for i in projects],
@@ -198,16 +298,16 @@ class Components:
                             ),
                             " Regions",
                         ],
-                        style={"textAlign": "center"},
+                        style={"textAlign": "center", "paddingLeft": "18%"},
                     ),
                     dcc.Graph(id="cloud_emissions_barchart"),
                 ],
                 id="cloud_emissions_barchart_component",
-            )
+            ),
+            style={"marginLeft": "-18%"},
         )
 
-    @staticmethod
-    def get_cloud_emissions_barchart_figure(cloud_emissions_barchart_data):
+    def get_cloud_emissions_barchart_figure(self, cloud_emissions_barchart_data):
         return (
             px.bar(
                 cloud_emissions_barchart_data,
@@ -220,19 +320,9 @@ class Components:
                     "region": "Region",
                     "country": "Country",
                 },
-                color_continuous_scale=[
-                    "rgb(0, 68, 27)",
-                    "rgb(0, 109, 44)",
-                    "rgb(35, 139, 69)",
-                    "rgb(65, 171, 93)",
-                    "rgb(116, 196, 118)",
-                    "rgb(161, 217, 155)",
-                    "rgb(199, 233, 192)",
-                    "rgb(229, 245, 224)",
-                    "rgb(189, 189, 189)",
-                    "rgb(150, 150, 150)",
-                ],  # px.colors.sequential.Greens_r,
+                color_continuous_scale=self.colorscale,
                 height=500,
+                width=1500,
             )
             .update_xaxes(tickangle=45)
             .update_layout(plot_bgcolor="rgb(255,255,255)")
@@ -246,17 +336,16 @@ class Components:
                     html.Br(),
                     html.Br(),
                     html.H2(
-                        "Global Emissions Equivalent", style={"textAlign": "center"}
+                        "Global Emissions Equivalent",
+                        style={"textAlign": "center", "paddingLeft": "15%"},
                     ),
-                    dcc.Graph(
-                        id="global_emissions_choropleth", style={"paddingLeft": 200}
-                    ),
+                    dcc.Graph(id="global_emissions_choropleth"),
                 ]
-            )
+            ),
+            style={"marginLeft": "-15%"},
         )
 
-    @staticmethod
-    def get_global_emissions_choropleth_figure(choropleth_data):
+    def get_global_emissions_choropleth_figure(self, choropleth_data):
         return px.choropleth(
             data_frame=choropleth_data,
             locations="iso_code",
@@ -267,18 +356,9 @@ class Components:
                 "emissions": "Carbon Equivalent (kg)",
                 "iso_code": "Country Code",
             },
-            color_continuous_scale=[
-                "rgb(0, 68, 27)",
-                "rgb(0, 109, 44)",
-                "rgb(35, 139, 69)",
-                "rgb(65, 171, 93)",
-                "rgb(116, 196, 118)",
-                "rgb(161, 217, 155)",
-                "rgb(199, 233, 192)",
-                "rgb(229, 245, 224)",
-                "rgb(189, 189, 189)",
-                "rgb(150, 150, 150)",
-            ],  # px.colors.sequential.Greens_r,
+            width=1400,
+            height=600,
+            color_continuous_scale=self.colorscale,
         )
 
     @staticmethod
@@ -287,11 +367,11 @@ class Components:
             dbc.Col(
                 [
                     html.Br(),
-                    html.Br(),
                     html.H2("Emissions Timeline", style={"textAlign": "center"}),
                     dcc.Graph(id="project_time_series"),
                 ]
-            )
+            ),
+            style={"paddingLeft": "3%"},
         )
 
     @staticmethod

@@ -100,17 +100,26 @@ def render_app(df: pd.DataFrame):
 
     @app.callback(
         [
+            Output(component_id="house_icon", component_property="src"),
             Output(component_id="car_icon", component_property="src"),
             Output(component_id="tv_icon", component_property="src"),
-            Output(component_id="house_icon", component_property="src"),
+            Output(component_id="car_miles", component_property="children"),
+            Output(component_id="tv_time", component_property="children"),
+            Output(component_id="household_fraction", component_property="children"),
         ],
         [Input(component_id="hidden_project_summary", component_property="data")],
     )
-    def update_real_world_equivalents(hidden_project_summary: dcc.Store):
+    def update_exemplary_equivalents(hidden_project_summary: dcc.Store):
+        project_carbon_equivalent = hidden_project_summary["total"]["emissions"]
+        house_icon = app.get_asset_url("house_icon.png")
         car_icon = app.get_asset_url("car_icon.png")
         tv_icon = app.get_asset_url("tv_icon.png")
-        house_icon = app.get_asset_url("house_icon.png")
-        return car_icon, tv_icon, house_icon
+        car_miles = f"{data.get_car_miles(project_carbon_equivalent)} miles"
+        tv_time = data.get_tv_time(project_carbon_equivalent)
+        household_fraction = (
+            f"{data.get_household_fraction(project_carbon_equivalent)} %"
+        )
+        return house_icon, car_icon, tv_icon, car_miles, tv_time, household_fraction
 
     @app.callback(
         Output(component_id="global_emissions_choropleth", component_property="figure"),
