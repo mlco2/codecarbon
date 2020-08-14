@@ -60,20 +60,36 @@ class Components:
 
     @staticmethod
     def get_cloud_emissions_barchart_figure(cloud_emissions_barchart_data):
-        return px.bar(
-            cloud_emissions_barchart_data,
-            x="region",
-            y="emissions",
-            hover_data=["region", "country", "emissions"],
-            color="emissions",
-            labels={
-                "emissions": "Carbon Equivalent (kg)",
-                "region": "Region",
-                "country": "Country",
-            },
-            color_continuous_scale=px.colors.sequential.Greens_r,
-            height=500,
-        ).update_xaxes(tickangle=45)
+        return (
+            px.bar(
+                cloud_emissions_barchart_data,
+                x="region",
+                y="emissions",
+                hover_data=["region", "country", "emissions"],
+                color="emissions",
+                labels={
+                    "emissions": "Carbon Equivalent (kg)",
+                    "region": "Region",
+                    "country": "Country",
+                },
+                color_continuous_scale=[
+                    "rgb(0, 68, 27)",
+                    "rgb(0, 109, 44)",
+                    "rgb(35, 139, 69)",
+                    "rgb(65, 171, 93)",
+                    "rgb(116, 196, 118)",
+                    "rgb(161, 217, 155)",
+                    "rgb(199, 233, 192)",
+                    "rgb(229, 245, 224)",
+                    "rgb(189, 189, 189)",
+                    "rgb(150, 150, 150)",
+                    "rgb(115, 115, 115)",
+                ],  # px.colors.sequential.Greens_r,
+                height=500,
+            )
+            .update_xaxes(tickangle=45)
+            .update_layout(plot_bgcolor="rgb(255,255,255)")
+        )
 
     @staticmethod
     def get_global_emissions_choropleth():
@@ -97,7 +113,19 @@ class Components:
                 "emissions": "Carbon Equivalent (kg)",
                 "iso_code": "Country Code",
             },
-            color_continuous_scale=px.colors.sequential.Greens_r,
+            color_continuous_scale=[
+                "rgb(0, 68, 27)",
+                "rgb(0, 109, 44)",
+                "rgb(35, 139, 69)",
+                "rgb(65, 171, 93)",
+                "rgb(116, 196, 118)",
+                "rgb(161, 217, 155)",
+                "rgb(199, 233, 192)",
+                "rgb(229, 245, 224)",
+                "rgb(189, 189, 189)",
+                "rgb(150, 150, 150)",
+                "rgb(115, 115, 115)",
+            ],  # px.colors.sequential.Greens_r,
         )
 
     @staticmethod
