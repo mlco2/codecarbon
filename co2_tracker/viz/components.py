@@ -28,8 +28,7 @@ class Components:
             [
                 html.H1("Carbon Footprint", style={"textAlign": "center"}),
                 html.P(
-                    "Machine Learning has a carbon footprint."
-                    " Track emissions from your experiments",
+                    "Track emissions from ML experiments",
                     style={"textAlign": "center"},
                     className="lead",
                 ),
@@ -66,13 +65,31 @@ class Components:
         )
 
     @staticmethod
+    def get_project_dropdown(df: pd.DataFrame):
+        projects = sorted(list(df["project_name"].unique()))
+        return html.Div(
+            dbc.Col(
+                [
+                    html.Br(),
+                    html.H3("Select a Project", style={"textAlign": "left"}),
+                    dcc.Dropdown(
+                        id="project_name",
+                        options=[{"label": i, "value": i} for i in projects],
+                        value=projects[0],
+                    ),
+                ],
+                style={"display": "inline-block"},
+            )
+        )
+
+    @staticmethod
     def get_project_details():
         return html.Div(
             [
                 html.Br(),
                 html.Div(
                     [
-                        html.H4(
+                        html.H3(
                             [
                                 "Infrastructure Hosted at ",
                                 html.Strong(
@@ -81,19 +98,10 @@ class Components:
                                 ),
                             ],
                             style={"textAlign": "left", "float": "left"},
-                        ),
-                        html.H4(
-                            [
-                                "Last Run Power Consumption : ",
-                                html.Strong(
-                                    id="last_run_power_consumption",
-                                    style={"fontWeight": "normal", "color": "green"},
-                                ),
-                            ],
-                            style={"textAlign": "right", "float": "right"},
-                        ),
+                        )
                     ]
                 ),
+                html.Br(),
                 html.Br(),
                 html.Div(
                     [
@@ -109,9 +117,9 @@ class Components:
                         ),
                         html.H4(
                             [
-                                "Last Run Carbon Equivalent : ",
+                                "Last Run Power Consumption : ",
                                 html.Strong(
-                                    id="last_run_carbon_equivalent",
+                                    id="last_run_power_consumption",
                                     style={"fontWeight": "normal", "color": "green"},
                                 ),
                             ],
@@ -137,7 +145,17 @@ class Components:
                                 ),
                             ],
                             style={"textAlign": "left", "float": "left"},
-                        )
+                        ),
+                        html.H4(
+                            [
+                                "Last Run Carbon Equivalent : ",
+                                html.Strong(
+                                    id="last_run_carbon_equivalent",
+                                    style={"fontWeight": "normal", "color": "green"},
+                                ),
+                            ],
+                            style={"textAlign": "right", "float": "right"},
+                        ),
                     ]
                 ),
                 html.Br(),
@@ -262,24 +280,6 @@ class Components:
                 ),
             ],
             style={"paddingLeft": "1.4%", "paddingRight": "1.4%"},
-        )
-
-    @staticmethod
-    def get_project_dropdown(df: pd.DataFrame):
-        projects = sorted(list(df["project_name"].unique()))
-        return html.Div(
-            dbc.Col(
-                [
-                    html.Br(),
-                    html.H3("Select a Project", style={"textAlign": "left"}),
-                    dcc.Dropdown(
-                        id="project_name",
-                        options=[{"label": i, "value": i} for i in projects],
-                        value=projects[0],
-                    ),
-                ],
-                style={"display": "inline-block"},
-            )
         )
 
     @staticmethod
