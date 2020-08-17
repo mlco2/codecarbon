@@ -22,7 +22,7 @@ def render_app(df: pd.DataFrame):
     _hidden_project_data = components.get_hidden_project_data()
     _hidden_project_summary = components.get_hidden_project_summary()
     cloud_emissions_barchart = components.get_cloud_emissions_barchart()
-    global_emissions_choropleth = components.get_global_emissions_choropleth()
+    global_comaprison = components.get_global_comparison()
     project_time_series = components.get_project_time_series()
 
     data = Data()
@@ -35,7 +35,7 @@ def render_app(df: pd.DataFrame):
             project_details,
             exemplary_equivalents,
             cloud_emissions_barchart,
-            global_emissions_choropleth,
+            global_comaprison,
             project_time_series,
             _hidden_project_data,
             _hidden_project_summary,
@@ -124,17 +124,29 @@ def render_app(df: pd.DataFrame):
         return house_icon, car_icon, tv_icon, car_miles, tv_time, household_fraction
 
     @app.callback(
-        Output(component_id="global_emissions_choropleth", component_property="figure"),
-        [Input(component_id="hidden_project_summary", component_property="data")],
+        Output(component_id="tab_content", component_property="children"),
+        [
+            Input(component_id="global_benchmarks", component_property="value"),
+            Input(component_id="hidden_project_summary", component_property="data"),
+        ],
     )
-    def update_global_emissions_choropleth(hidden_project_summary: dcc.Store):
+    def update_global_comparisons(active_tab: str, hidden_project_summary: dcc.Store):
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
         global_emissions_choropleth_data = data.get_global_emissions_choropleth_data(
             net_energy_consumed
         )
-        return components.get_global_emissions_choropleth_figure(
-            global_emissions_choropleth_data
-        )
+        if active_tab == "emissions_tab":
+            return components.get_global_emissions_choropleth(
+                components.get_global_emissions_choropleth_figure(
+                    global_emissions_choropleth_data
+                )
+            )
+        else:
+            return components.get_global_energy_mix_choropleth(
+                components.get_global_energy_mix_choropleth_figure(
+                    global_emissions_choropleth_data
+                )
+            )
 
     @app.callback(
         Output(component_id="project_time_series", component_property="figure"),
