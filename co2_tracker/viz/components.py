@@ -158,6 +158,14 @@ class Components:
                         ),
                     ]
                 ),
+            ],
+            style={"paddingLeft": "1.4%", "paddingRight": "1.4%"},
+        )
+
+    @staticmethod
+    def get_exemplary_equivalents():
+        return html.Div(
+            [
                 html.Br(),
                 html.Br(),
                 html.Br(),
@@ -207,8 +215,8 @@ class Components:
                                         html.Img(
                                             id="car_icon",
                                             style={
-                                                "height": "55%",
-                                                "width": "40%",
+                                                "height": "45%",
+                                                "width": "32.5%",
                                                 "paddingLeft": "4%",
                                             },
                                         ),
@@ -240,8 +248,8 @@ class Components:
                                         html.Img(
                                             id="tv_icon",
                                             style={
-                                                "height": "25%",
-                                                "width": "50%",
+                                                "height": "35%",
+                                                "width": "53%",
                                                 "paddingLeft": "5%",
                                             },
                                         ),
@@ -278,8 +286,7 @@ class Components:
                     ],
                     style={"display": "inline-block"},
                 ),
-            ],
-            style={"paddingLeft": "1.4%", "paddingRight": "1.4%"},
+            ]
         )
 
     @staticmethod

@@ -18,6 +18,7 @@ def render_app(df: pd.DataFrame):
     net_summary = components.get_net_summary()
     project_dropdown = components.get_project_dropdown(df)
     project_details = components.get_project_details()
+    exemplary_equivalents = components.get_exemplary_equivalents()
     _hidden_project_data = components.get_hidden_project_data()
     _hidden_project_summary = components.get_hidden_project_summary()
     cloud_emissions_barchart = components.get_cloud_emissions_barchart()
@@ -32,6 +33,7 @@ def render_app(df: pd.DataFrame):
             net_summary,
             project_dropdown,
             project_details,
+            exemplary_equivalents,
             cloud_emissions_barchart,
             global_emissions_choropleth,
             project_time_series,
