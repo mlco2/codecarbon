@@ -57,7 +57,7 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: number of miles driven by avg car
         """
-        return "{:.2f}".format(project_carbon_equivalent / 0.409)
+        return "{:.0f}".format(project_carbon_equivalent / 0.409)
 
     def get_tv_time(self, project_carbon_equivalent: float):
         """

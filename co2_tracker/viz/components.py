@@ -218,9 +218,9 @@ class Components:
                                         html.Img(
                                             id="car_icon",
                                             style={
-                                                "height": "45%",
-                                                "width": "32.5%",
-                                                "paddingLeft": "4%",
+                                                "height": "43%",
+                                                "width": "28.5%",
+                                                # "paddingLeft": "2%",
                                             },
                                         ),
                                         html.Div(
@@ -235,7 +235,7 @@ class Components:
                                                 ),
                                                 html.H5(
                                                     "driven",
-                                                    style={"paddingLeft": "12%"},
+                                                    style={"paddingLeft": "5.5%"},
                                                 ),
                                             ]
                                         ),
@@ -268,7 +268,7 @@ class Components:
                                                 ),
                                                 html.H5(
                                                     "of 32-inch",
-                                                    style={"paddingLeft": "4.8%"},
+                                                    style={"paddingLeft": "5%"},
                                                 ),
                                                 html.H5(
                                                     "LCD TV",
