@@ -57,7 +57,7 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: number of miles driven by avg car
         """
-        return format(project_carbon_equivalent / 0.409, ".2f")
+        return "{:.2f}".format(project_carbon_equivalent / 0.409)
 
     def get_tv_time(self, project_carbon_equivalent: float):
         """
@@ -69,13 +69,13 @@ class Data:
         :return: equivalent TV time
         """
         time_in_minutes = project_carbon_equivalent * (1 / 0.097) * 60
-        formated_value = "{:.2g} minutes".format(time_in_minutes)
+        formated_value = "{:.0f} minutes".format(time_in_minutes)
         if time_in_minutes >= 60:
             time_in_hours = time_in_minutes / 60
-            formated_value = "{:.3g} hours".format(time_in_hours)
+            formated_value = "{:.0f} hours".format(time_in_hours)
             if time_in_hours >= 24:
                 time_in_days = time_in_hours / 24
-                formated_value = "{:.2g} days".format(time_in_days)
+                formated_value = "{:.0f} days".format(time_in_days)
         return formated_value
 
     def get_household_fraction(self, project_carbon_equivalent: float):
@@ -88,11 +88,14 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: % of weekly emissions re: an average American household
         """
-        return format((project_carbon_equivalent / 160.58) * 100, ".2f")
+        return "{:.2f}".format((project_carbon_equivalent / 160.58) * 100)
 
     def get_global_emissions_choropleth_data(
         self, net_energy_consumed: float
     ) -> List[Dict]:
+        def formatted_energy_percentage(energy_type: float, total: float) -> float:
+            return float("{:.1f}".format((energy_type / total) * 100))
+
         global_energy_mix = self.app_config.get_global_energy_mix_data()
         choropleth_data = []
         for country in global_energy_mix.keys():
@@ -109,11 +112,24 @@ class Data:
                     GeoMetadata(country),
                     self.app_config.global_energy_mix_data_path,
                 )
+                total = global_energy_mix[country]["total"]
                 choropleth_data.append(
                     {
                         "iso_code": global_energy_mix[country]["isoCode"],
                         "emissions": country_emissions,
                         "country": country,
+                        "coal": formatted_energy_percentage(
+                            global_energy_mix[country]["coal"], total
+                        ),
+                        "petroleum": formatted_energy_percentage(
+                            global_energy_mix[country]["petroleum"], total
+                        ),
+                        "natural_gas": formatted_energy_percentage(
+                            global_energy_mix[country]["naturalGas"], total
+                        ),
+                        "low_carbon": formatted_energy_percentage(
+                            global_energy_mix[country]["lowCarbon"], total
+                        ),
                     }
                 )
         return choropleth_data
