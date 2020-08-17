@@ -9,7 +9,7 @@ import plotly.express as px
 class Components:
     def __init__(self):
         self.colorscale = [
-            "rgb(0, 68, 27)",
+            "rgb(0, 68, 27)",  # greens
             "rgb(0, 109, 44)",
             "rgb(35, 139, 69)",
             "rgb(65, 171, 93)",
@@ -17,9 +17,12 @@ class Components:
             "rgb(161, 217, 155)",
             "rgb(199, 233, 192)",
             "rgb(229, 245, 224)",
+            "rgb(240, 240, 240)",  # greys
+            "rgb(217, 217, 217)",
             "rgb(189, 189, 189)",
-            "rgb(150, 150, 150)",
-            # "rgb(115, 115, 115)",
+            "rgb(253, 208, 162)",  # oranges
+            "rgb(253, 174, 107)",
+            "rgb(253, 141, 60)",
         ]  # px.colors.sequential.Greens_r,
 
     @staticmethod
@@ -336,20 +339,37 @@ class Components:
         )
 
     @staticmethod
-    def get_global_emissions_choropleth():
+    def get_global_comparison():
         return html.Div(
-            dbc.Col(
-                [
-                    html.Br(),
-                    html.Br(),
-                    html.H2(
-                        "Global Emissions Equivalent",
-                        style={"textAlign": "center", "paddingLeft": "15%"},
-                    ),
-                    dcc.Graph(id="global_emissions_choropleth"),
-                ]
-            ),
-            style={"marginLeft": "-15%"},
+            [
+                html.Br(),
+                html.Br(),
+                html.H2(
+                    "Global Benchmarks",
+                    style={
+                        "textAlign": "center",
+                        "paddingLeft": "15%",
+                        "marginLeft": "-15%",
+                    },
+                ),
+                html.Br(),
+                html.Br(),
+                dcc.Tabs(
+                    id="global_benchmarks",
+                    value="emissions_tab",
+                    children=[
+                        dcc.Tab(label="Emissions Equivalent", value="emissions_tab"),
+                        dcc.Tab(label="Energy Mix", value="energy_mix_tab"),
+                    ],
+                ),
+                html.Div(id="tab_content"),
+            ]
+        )
+
+    def get_global_emissions_choropleth(self, figure):
+        return html.Div(
+            dbc.Col(dcc.Graph(id="global_emissions_choropleth", figure=figure)),
+            style={"marginLeft": "-16%"},
         )
 
     def get_global_emissions_choropleth_figure(self, choropleth_data):
@@ -357,11 +377,56 @@ class Components:
             data_frame=choropleth_data,
             locations="iso_code",
             color="emissions",
-            hover_data=["country", "emissions"],
+            hover_data=[
+                "country",
+                "emissions",
+                "coal",
+                "petroleum",
+                "natural_gas",
+                "low_carbon",
+            ],
             labels={
                 "country": "Country",
                 "emissions": "Carbon Equivalent (kg)",
                 "iso_code": "Country Code",
+                "coal": "Coal Energy (%)",
+                "petroleum": "Petroleum Energy (%)",
+                "natural_gas": "Natural Gas Energy (%)",
+                "low_carbon": "Low Carbon Energy (%)",
+            },
+            width=1400,
+            height=600,
+            color_continuous_scale=self.colorscale,
+        )
+
+    def get_global_energy_mix_choropleth(self, figure):
+        return html.Div(
+            dbc.Col(dcc.Graph(id="global_energy_mix_choropleth", figure=figure)),
+            style={"marginLeft": "-16%"},
+        )
+
+    def get_global_energy_mix_choropleth_figure(self, choropleth_data):
+        energy_type = "coal"
+        return px.choropleth(
+            data_frame=choropleth_data,
+            locations="iso_code",
+            color=energy_type,
+            hover_data=[
+                "country",
+                "emissions",
+                energy_type,
+                "petroleum",
+                "natural_gas",
+                "low_carbon",
+            ],
+            labels={
+                "country": "Country",
+                "emissions": "Carbon Equivalent (kg)",
+                "iso_code": "Country Code",
+                energy_type: "Coal Energy (%)",
+                # "petroleum": "Petroleum Energy (%)",
+                # "natural_gas": "Natural Gas Energy (%)",
+                # "low_carbon": "Low Carbon Energy (%)",
             },
             width=1400,
             height=600,
