@@ -339,7 +339,49 @@ class Components:
         )
 
     @staticmethod
-    def get_global_comparison():
+    def get_emissions_tab():
+        return dcc.Tab(
+            label="Emissions Equivalent",
+            value="emissions_tab",
+            id="global_emissions",
+            children=[
+                html.Div(
+                    dbc.Col(dcc.Graph(id="global_emissions_choropleth")),
+                    style={"marginLeft": "-16%"},
+                )
+            ],
+        )
+
+    @staticmethod
+    def get_energy_mix_tab():
+        return dcc.Tab(
+            label="Energy Mix",
+            value="energy_mix_tab",
+            id="global_energy_mix",
+            children=[
+                html.Div(
+                    dbc.Col(
+                        [
+                            html.Br(),
+                            html.H4("Select Energy Source"),
+                            dcc.Dropdown(
+                                id="energy_type",
+                                options=[
+                                    {"label": "Coal", "value": "coal"},
+                                    {"label": "Petroleum", "value": "petroleum"},
+                                    {"label": "Natural Gas", "value": "natural_gas"},
+                                    {"label": "Low Carbon", "value": "low_carbon"},
+                                ],
+                                value="coal",
+                            ),
+                            dcc.Graph(id="global_energy_mix_choropleth"),
+                        ]
+                    )
+                )
+            ],
+        )
+
+    def get_global_comparison(self):
         return html.Div(
             [
                 html.Br(),
@@ -357,19 +399,9 @@ class Components:
                 dcc.Tabs(
                     id="global_benchmarks",
                     value="emissions_tab",
-                    children=[
-                        dcc.Tab(label="Emissions Equivalent", value="emissions_tab"),
-                        dcc.Tab(label="Energy Mix", value="energy_mix_tab"),
-                    ],
+                    children=[self.get_emissions_tab(), self.get_energy_mix_tab()],
                 ),
-                html.Div(id="tab_content"),
             ]
-        )
-
-    def get_global_emissions_choropleth(self, figure):
-        return html.Div(
-            dbc.Col(dcc.Graph(id="global_emissions_choropleth", figure=figure)),
-            style={"marginLeft": "-16%"},
         )
 
     def get_global_emissions_choropleth_figure(self, choropleth_data):
@@ -399,38 +431,29 @@ class Components:
             color_continuous_scale=self.colorscale,
         )
 
-    def get_global_energy_mix_choropleth(self, figure):
-        return html.Div(
-            dbc.Col(dcc.Graph(id="global_energy_mix_choropleth", figure=figure)),
-            style={"marginLeft": "-16%"},
-        )
-
-    def get_global_energy_mix_choropleth_figure(self, choropleth_data):
-        energy_type = "coal"
+    def get_global_energy_mix_choropleth_figure(self, energy_type, choropleth_data):
+        energy_labels = {
+            "coal": "Coal Energy (%)",
+            "petroleum": "Petroleum Energy (%)",
+            "natural_gas": "Natural Gas Energy (%)",
+            "low_carbon": "Low Carbon Energy (%)",
+        }
         return px.choropleth(
             data_frame=choropleth_data,
             locations="iso_code",
             color=energy_type,
-            hover_data=[
-                "country",
-                "emissions",
-                energy_type,
-                "petroleum",
-                "natural_gas",
-                "low_carbon",
-            ],
+            hover_data=["country", "emissions", energy_type],
             labels={
                 "country": "Country",
                 "emissions": "Carbon Equivalent (kg)",
                 "iso_code": "Country Code",
-                energy_type: "Coal Energy (%)",
-                # "petroleum": "Petroleum Energy (%)",
-                # "natural_gas": "Natural Gas Energy (%)",
-                # "low_carbon": "Low Carbon Energy (%)",
+                energy_type: energy_labels[energy_type],
             },
             width=1400,
             height=600,
-            color_continuous_scale=self.colorscale,
+            color_continuous_scale=list(reversed(self.colorscale))
+            if energy_type == "low_carbon"
+            else self.colorscale,
         )
 
     @staticmethod
