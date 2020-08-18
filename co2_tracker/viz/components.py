@@ -302,16 +302,23 @@ class Components:
                             ),
                             " Regions",
                         ],
-                        style={"textAlign": "center", "paddingLeft": "12%"},
+                        style={"textAlign": "center", "marginLeft": "12%"},
                     ),
                     dcc.Graph(id="cloud_emissions_barchart"),
+                    html.Br(),
+                    html.Div(
+                        id="cloud_recommendation",
+                        style={"marginLeft": "12%", "textAlign": "center"},
+                    ),
                 ],
                 id="cloud_emissions_barchart_component",
             ),
             style={"marginLeft": "-12%"},
         )
 
-    def get_cloud_emissions_barchart_figure(self, cloud_emissions_barchart_data):
+    def get_cloud_emissions_barchart_figure(
+        self, cloud_emissions_barchart_data: pd.DataFrame
+    ):
         return (
             px.bar(
                 cloud_emissions_barchart_data,
@@ -331,6 +338,64 @@ class Components:
             .update_xaxes(tickangle=45)
             .update_layout(plot_bgcolor="rgb(255,255,255)")
         )
+
+    def get_cloud_recommendation(
+        self,
+        on_cloud: str,
+        cloud_provider_name: str,
+        cloud_emissions_barchart_data: pd.DataFrame,
+    ):
+        if on_cloud == "N":
+            return html.H4()
+
+        print(type(cloud_emissions_barchart_data))
+        print(cloud_emissions_barchart_data)
+        cloud_emissions_project_region = cloud_emissions_barchart_data.iloc[0, :]
+        cloud_emissions_minimum_region = cloud_emissions_barchart_data.iloc[1, :]
+        if (
+            cloud_emissions_minimum_region.emissions
+            > cloud_emissions_project_region.emissions
+        ):
+            return html.H4(
+                [
+                    f"Already running on {cloud_provider_name}'s least emissions region ",
+                    html.Strong(
+                        f"{cloud_emissions_project_region.region}",
+                        style={"fontWeight": "normal", "color": "green"},
+                    ),
+                ]
+            )
+        else:
+            return (
+                html.H4(
+                    [
+                        f"Had this been run in ",
+                        html.Strong(
+                            f"{cloud_emissions_minimum_region.region}",
+                            style={"fontWeight": "normal", "color": "green"},
+                        ),
+                        " region, ",
+                    ]
+                ),
+                html.H4(
+                    [
+                        "then the emitted carbon would have been ",
+                        html.Strong(
+                            f"{'{:.1f}'.format(cloud_emissions_minimum_region.emissions)} kg",
+                            style={"fontWeight": "normal", "color": "green"},
+                        ),
+                    ]
+                ),
+                html.H4(
+                    [
+                        "Reducing the current  emissions by ",
+                        html.Strong(
+                            f"{'{:.1f}'.format(cloud_emissions_project_region.emissions - cloud_emissions_minimum_region.emissions)} kg",
+                            style={"fontWeight": "normal", "color": "green"},
+                        ),
+                    ]
+                ),
+            )
 
     @staticmethod
     def get_emissions_tab():
@@ -460,6 +525,7 @@ class Components:
         return html.Div(
             dbc.Col(
                 [
+                    html.Br(),
                     html.Br(),
                     html.H2("Emissions Timeline", style={"textAlign": "center"}),
                     dcc.Graph(id="project_time_series"),

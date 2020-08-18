@@ -181,6 +181,7 @@ def render_app(df: pd.DataFrame):
             Output(
                 component_id="cloud_emissions_barchart", component_property="figure"
             ),
+            Output(component_id="cloud_recommendation", component_property="children"),
         ],
         [Input(component_id="hidden_project_summary", component_property="data")],
     )
@@ -197,6 +198,9 @@ def render_app(df: pd.DataFrame):
             cloud_provider_name,
             components.get_cloud_emissions_barchart_figure(
                 cloud_emissions_barchart_data
+            ),
+            components.get_cloud_recommendation(
+                on_cloud, cloud_provider_name, cloud_emissions_barchart_data
             ),
         )
 
