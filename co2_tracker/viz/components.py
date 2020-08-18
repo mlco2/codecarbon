@@ -100,7 +100,7 @@ class Components:
                                     style={"fontWeight": "normal", "color": "green"},
                                 ),
                             ],
-                            style={"textAlign": "left", "float": "left"},
+                            style={"float": "left"},
                         )
                     ]
                 ),
@@ -116,7 +116,7 @@ class Components:
                                     style={"fontWeight": "normal", "color": "green"},
                                 ),
                             ],
-                            style={"textAlign": "left", "float": "left"},
+                            style={"float": "left"},
                         ),
                         html.H4(
                             [
@@ -126,7 +126,7 @@ class Components:
                                     style={"fontWeight": "normal", "color": "green"},
                                 ),
                             ],
-                            style={"textAlign": "right", "float": "right"},
+                            style={"float": "right"},
                         ),
                     ]
                 ),
@@ -138,16 +138,10 @@ class Components:
                                 "Carbon Equivalent Across All Experiments : ",
                                 html.Strong(
                                     id="project_carbon_equivalent",
-                                    style={
-                                        "textAlign": "right",
-                                        "float": "right",
-                                        "color": "green",
-                                        "fontWeight": "bold",
-                                        "paddingLeft": 5,
-                                    },
+                                    style={"color": "green", "fontWeight": "bold"},
                                 ),
                             ],
-                            style={"textAlign": "left", "float": "left"},
+                            style={"float": "left"},
                         ),
                         html.H4(
                             [
@@ -157,7 +151,7 @@ class Components:
                                     style={"fontWeight": "normal", "color": "green"},
                                 ),
                             ],
-                            style={"textAlign": "right", "float": "right"},
+                            style={"float": "right"},
                         ),
                     ]
                 ),
@@ -308,13 +302,13 @@ class Components:
                             ),
                             " Regions",
                         ],
-                        style={"textAlign": "center", "paddingLeft": "18%"},
+                        style={"textAlign": "center", "paddingLeft": "12%"},
                     ),
                     dcc.Graph(id="cloud_emissions_barchart"),
                 ],
                 id="cloud_emissions_barchart_component",
             ),
-            style={"marginLeft": "-18%"},
+            style={"marginLeft": "-12%"},
         )
 
     def get_cloud_emissions_barchart_figure(self, cloud_emissions_barchart_data):
@@ -332,7 +326,7 @@ class Components:
                 },
                 color_continuous_scale=self.colorscale,
                 height=500,
-                width=1500,
+                width=1400,
             )
             .update_xaxes(tickangle=45)
             .update_layout(plot_bgcolor="rgb(255,255,255)")
@@ -346,8 +340,10 @@ class Components:
             id="global_emissions",
             children=[
                 html.Div(
-                    dbc.Col(dcc.Graph(id="global_emissions_choropleth")),
-                    style={"marginLeft": "-16%"},
+                    dbc.Col(
+                        dcc.Graph(id="global_emissions_choropleth"),
+                        style={"marginLeft": "-16%"},
+                    )
                 )
             ],
         )
@@ -374,7 +370,10 @@ class Components:
                                 ],
                                 value="coal",
                             ),
-                            dcc.Graph(id="global_energy_mix_choropleth"),
+                            dcc.Graph(
+                                id="global_energy_mix_choropleth",
+                                style={"marginLeft": "-16%"},
+                            ),
                         ]
                     )
                 )
