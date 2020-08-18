@@ -124,29 +124,33 @@ def render_app(df: pd.DataFrame):
         return house_icon, car_icon, tv_icon, car_miles, tv_time, household_fraction
 
     @app.callback(
-        Output(component_id="tab_content", component_property="children"),
         [
-            Input(component_id="global_benchmarks", component_property="value"),
+            Output(
+                component_id="global_emissions_choropleth", component_property="figure"
+            ),
+            Output(
+                component_id="global_energy_mix_choropleth", component_property="figure"
+            ),
+        ],
+        [
             Input(component_id="hidden_project_summary", component_property="data"),
+            Input(component_id="energy_type", component_property="value"),
         ],
     )
-    def update_global_comparisons(active_tab: str, hidden_project_summary: dcc.Store):
+    def update_global_comparisons(hidden_project_summary: dcc.Store, energy_type: str):
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
         global_emissions_choropleth_data = data.get_global_emissions_choropleth_data(
             net_energy_consumed
         )
-        if active_tab == "emissions_tab":
-            return components.get_global_emissions_choropleth(
-                components.get_global_emissions_choropleth_figure(
-                    global_emissions_choropleth_data
-                )
-            )
-        else:
-            return components.get_global_energy_mix_choropleth(
-                components.get_global_energy_mix_choropleth_figure(
-                    global_emissions_choropleth_data
-                )
-            )
+
+        return (
+            components.get_global_emissions_choropleth_figure(
+                global_emissions_choropleth_data
+            ),
+            components.get_global_energy_mix_choropleth_figure(
+                energy_type, global_emissions_choropleth_data
+            ),
+        )
 
     @app.callback(
         Output(component_id="project_time_series", component_property="figure"),
