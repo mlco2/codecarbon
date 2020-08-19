@@ -31,8 +31,8 @@ class Components:
             [
                 html.H1("Carbon Footprint", style={"textAlign": "center"}),
                 html.P(
-                    "Track emissions from ML experiments",
-                    style={"textAlign": "center"},
+                    "Measure Emissions from Compute",
+                    style={"textAlign": "center", "paddingLeft": "0.5%"},
                     className="lead",
                 ),
             ]
@@ -347,9 +347,6 @@ class Components:
     ):
         if on_cloud == "N":
             return html.H4()
-
-        print(type(cloud_emissions_barchart_data))
-        print(cloud_emissions_barchart_data)
         cloud_emissions_project_region = cloud_emissions_barchart_data.iloc[0, :]
         cloud_emissions_minimum_region = cloud_emissions_barchart_data.iloc[1, :]
         if (
