@@ -557,3 +557,31 @@ class Components:
         return html.Div(
             dcc.Store(id="hidden_project_summary"), style={"display": "none"}
         )
+
+    @staticmethod
+    def get_references():
+        return html.Div(
+            [
+                html.Br(),
+                html.Br(),
+                html.H2("References "),
+                html.Ul(
+                    [
+                        html.Li(
+                            html.A(
+                                "Energy Usage Reports: Environmental awareness as part of algorithmic accountability",
+                                href="https://arxiv.org/pdf/1911.08354.pdf",
+                            )
+                        ),
+                        html.Li(
+                            html.A(
+                                "Quantifying the Carbon Emissions of Machine Learning",
+                                href="https://arxiv.org/pdf/1910.09700.pdf",
+                            )
+                        ),
+                    ]
+                ),
+                html.Br(),
+                html.Br(),
+            ]
+        )

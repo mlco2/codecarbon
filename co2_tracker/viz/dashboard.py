@@ -24,6 +24,7 @@ def render_app(df: pd.DataFrame):
     cloud_emissions_barchart = components.get_cloud_emissions_barchart()
     global_comaprison = components.get_global_comparison()
     project_time_series = components.get_project_time_series()
+    references = components.get_references()
 
     data = Data()
 
@@ -37,6 +38,7 @@ def render_app(df: pd.DataFrame):
             cloud_emissions_barchart,
             global_comaprison,
             project_time_series,
+            references,
             _hidden_project_data,
             _hidden_project_summary,
         ],
