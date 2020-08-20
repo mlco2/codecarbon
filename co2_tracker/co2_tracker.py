@@ -206,8 +206,8 @@ def track_co2(
     project_name: str = "default",
     output_dir: str = ".",
     offline: bool = False,
-    country: str = "",
-    region: str = "",
+    country: Optional[str] = None,
+    region: Optional[str] = None,
 ):
     """
     Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`

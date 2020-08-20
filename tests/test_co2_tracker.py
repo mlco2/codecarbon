@@ -27,12 +27,11 @@ def heavy_computation(run_time_secs: int = 3):
     "co2_tracker.co2_tracker.CO2Tracker._get_cloud_metadata",
     return_value=CloudMetadata(provider=None, region=None),
 )
-@mock.patch("co2_tracker.co2_tracker.BaseCO2Tracker._get_config")
 class TestCO2Tracker(unittest.TestCase):
     def setUp(self) -> None:
-        self.app_config = get_test_data_source()
+        self.data_source = get_test_data_source()
         self.project_name = "project_foo"
-        self.emissions_file_path = os.path.join(os.getcwd(), "carbon.emissions")
+        self.emissions_file_path = os.path.join(os.getcwd(), "emissions.csv")
 
     def tearDown(self) -> None:
         if os.path.isfile(self.emissions_file_path):
@@ -41,13 +40,11 @@ class TestCO2Tracker(unittest.TestCase):
     @responses.activate
     def test_co2_tracker_TWO_GPU_PRIVATE_INFRA_CANADA(
         self,
-        mocked_get_config,
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
     ):
         # GIVEN
-        mocked_get_config.return_value = self.app_config
         responses.add(
             responses.GET,
             "https://get.geojs.io/v1/ip/geo.json",
@@ -77,13 +74,11 @@ class TestCO2Tracker(unittest.TestCase):
     def test_co2_tracker_timeout(
         self,
         mocked_requests_get,
-        mocked_get_config,
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
     ):
         # GIVEN
-        mocked_get_config.return_value = self.app_config
 
         def raise_timeout_exception(*args, **kwargs):
             raise requests.exceptions.Timeout()
@@ -102,14 +97,12 @@ class TestCO2Tracker(unittest.TestCase):
     @responses.activate
     def test_decorator_ONLINE_NO_ARGS(
         self,
-        mocked_get_config,
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
     ):
 
         # GIVEN
-        mocked_get_config.return_value = self.app_config
         responses.add(
             responses.GET,
             "https://get.geojs.io/v1/ip/geo.json",
@@ -130,13 +123,11 @@ class TestCO2Tracker(unittest.TestCase):
     @responses.activate
     def test_decorator_ONLINE_WITH_ARGS(
         self,
-        mocked_get_config,
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
     ):
         # GIVEN
-        mocked_get_config.return_value = self.app_config
         responses.add(
             responses.GET,
             "https://get.geojs.io/v1/ip/geo.json",
@@ -156,7 +147,6 @@ class TestCO2Tracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_NO_COUNTRY(
         self,
-        mocked_get_config,
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
@@ -171,13 +161,11 @@ class TestCO2Tracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_WITH_ARGS(
         self,
-        mocked_get_config,
         mocked_get_cloud_metadata,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
     ):
         # GIVEN
-        mocked_get_config.return_value = self.app_config
 
         @track_co2(offline=True, country="Canada", project_name=self.project_name)
         def dummy_train_model():

@@ -31,7 +31,10 @@ class Emissions:
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
 
         # TODO: deal with missing data
-
+        print(cloud.provider, cloud.region)
+        print(
+            df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)]
+        )
         emissions_per_kwh: CO2EmissionsPerKwh = CO2EmissionsPerKwh.from_g_per_kwh(
             df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)][
                 "impact"
@@ -54,7 +57,7 @@ class Emissions:
         :return: CO2 emissions in kg
         """
         compute_with_energy_mix: bool = geo.country != "United States" or (
-            geo.country == "United States" and geo.region == ""
+            geo.country == "United States" and geo.region is None
         )
 
         if compute_with_energy_mix:

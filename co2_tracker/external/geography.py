@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import logging
 import re
 import requests
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CloudMetadata:
 
-    provider: str
-    region: str
+    provider: Optional[str]
+    region: Optional[str]
 
     @property
     def is_on_private_infra(self) -> bool:
-        return self.provider is "" and self.region is ""
+        return self.provider is None and self.region is None
 
     @classmethod
     def from_co2_tracker_utils(cls) -> "CloudMetadata":
@@ -40,7 +40,7 @@ class CloudMetadata:
         cloud_metadata: Dict = get_env_cloud_details()
 
         if cloud_metadata is None:
-            return cls(provider="", region="")
+            return cls(provider=None, region=None)
 
         provider: str = cloud_metadata["provider"].lower()
         region: str = extract_region_for_provider.get(provider)(cloud_metadata)
@@ -52,7 +52,7 @@ class CloudMetadata:
 class GeoMetadata:
 
     country: str
-    region: str = ""
+    region: Optional[str] = None
 
     @classmethod
     def from_geo_js(cls, url: str) -> "GeoMetadata":
