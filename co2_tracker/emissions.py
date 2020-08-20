@@ -46,14 +46,11 @@ class Emissions:
             (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
         ]["country"].item()
 
-    def get_private_infra_emissions(
-        self, energy: Energy, geo: GeoMetadata, data_source: DataSource
-    ) -> float:
+    def get_private_infra_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
         Computes emissions for private infra
         :param energy: Mean power consumption of the process (kWh)
         :param geo: Country and region metadata
-        :param data_source: Interface to Emissions and Energy Mix Data
         :return: CO2 emissions in kg
         """
         compute_with_energy_mix: bool = geo.country != "United States" or (

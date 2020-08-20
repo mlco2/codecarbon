@@ -9,7 +9,7 @@ from co2_tracker.co2_tracker import CO2Tracker, track_co2
 from co2_tracker.external.geography import CloudMetadata
 
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
-from tests.testutils import get_test_app_config
+from tests.testutils import get_test_data_source
 
 
 def heavy_computation(run_time_secs: int = 3):
@@ -30,7 +30,7 @@ def heavy_computation(run_time_secs: int = 3):
 @mock.patch("co2_tracker.co2_tracker.BaseCO2Tracker._get_config")
 class TestCO2Tracker(unittest.TestCase):
     def setUp(self) -> None:
-        self.app_config = get_test_app_config()
+        self.app_config = get_test_data_source()
         self.project_name = "project_foo"
         self.emissions_file_path = os.path.join(os.getcwd(), "carbon.emissions")
 
