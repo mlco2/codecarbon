@@ -186,7 +186,7 @@ class OfflineCO2Tracker(BaseCO2Tracker):
         return GeoMetadata(country=self._country, region=self._region)
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata(provider="", region="")
+        return CloudMetadata(provider=None, region=None)
 
 
 class CO2Tracker(BaseCO2Tracker):
@@ -220,7 +220,7 @@ def track_co2(
     :param offline: Indicates if the tracker should be run in offline mode.
     :param country: The country in which the experiment in being run. Required if `offline=True`
     :param region: The provincial region, for example, California in the US.
-                         Currently, this only affects calculations for the United States.
+                   Currently, this only affects calculations for the United States.
     :return: The decorated function
     """
 
