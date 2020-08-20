@@ -32,19 +32,19 @@ class CO2Data:
         return OrderedDict(self.__dict__.items())
 
 
-class BasePersistence(ABC):
+class BaseOutput(ABC):
     """
     An abstract class that requires children to inherit a single method,
-    `flush` which is used for persisting data. This could be by saving it to a file,
+    `out` which is used for persisting data. This could be by saving it to a file,
     posting to Json Box, saving to a database, sending a slack message etc.
     """
 
     @abstractmethod
-    def flush(self, data: CO2Data):
+    def out(self, data: CO2Data):
         pass
 
 
-class FilePersistence(BasePersistence):
+class FileOutput(BaseOutput):
     """
     Saves experiment artifacts to a file
     """
@@ -52,7 +52,7 @@ class FilePersistence(BasePersistence):
     def __init__(self, save_file_path: str):
         self.save_file_path: str = save_file_path
 
-    def flush(self, data: CO2Data):
+    def out(self, data: CO2Data):
         file_exists: bool = os.path.isfile(self.save_file_path)
 
         with open(self.save_file_path, "a+") as f:

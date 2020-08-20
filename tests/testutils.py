@@ -1,5 +1,5 @@
-from co2_tracker.config import AppConfig
+from co2_tracker.input import DataSource
 
 
-def get_test_app_config() -> AppConfig:
-    return AppConfig()
+def get_test_app_config() -> DataSource:
+    return DataSource()

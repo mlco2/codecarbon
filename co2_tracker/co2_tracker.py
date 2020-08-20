@@ -13,15 +13,11 @@ import time
 from typing import Optional, List, Callable
 import uuid
 
-from co2_tracker.config import AppConfig
-from co2_tracker.emissions import (
-    get_cloud_emissions,
-    get_private_infra_emissions,
-    get_cloud_country,
-)
+from co2_tracker.input import DataSource
+from co2_tracker.emissions import Emissions
 from co2_tracker.external.geography import GeoMetadata, CloudMetadata
 from co2_tracker.external.hardware import GPU
-from co2_tracker.persistence import FilePersistence, CO2Data, BasePersistence
+from co2_tracker.output import FileOutput, CO2Data, BaseOutput
 from co2_tracker.units import Time, Energy
 
 logger = logging.getLogger(__name__)
@@ -64,12 +60,13 @@ class BaseCO2Tracker(ABC):
             self._measure_power, "interval", seconds=measure_power_secs
         )
 
-        self._app_config: AppConfig = self._get_config()
-        self.persistence_objs: List[BasePersistence] = list()
+        self._data_source = DataSource()
+        self._emissions: Emissions = Emissions(self._data_source)
+        self.persistence_objs: List[BaseOutput] = list()
 
         if save_to_file:
             self.persistence_objs.append(
-                FilePersistence(os.path.join(output_dir, "emissions.csv"))
+                FileOutput(os.path.join(output_dir, "emissions.csv"))
             )
 
     def start(self) -> None:
@@ -107,8 +104,8 @@ class BaseCO2Tracker(ABC):
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
         if cloud.is_on_private_infra:
-            emissions = get_private_infra_emissions(
-                self._total_energy, geo, self._app_config
+            emissions = self._emissions.get_private_infra_emissions(
+                self._total_energy, geo
             )
             country = geo.country
             region = geo.region
@@ -116,8 +113,8 @@ class BaseCO2Tracker(ABC):
             cloud_provider = ""
             cloud_region = ""
         else:
-            emissions = get_cloud_emissions(self._total_energy, cloud, self._app_config)
-            country = get_cloud_country(cloud, self._app_config)
+            emissions = self._emissions.get_cloud_emissions(self._total_energy, cloud)
+            country = self._emissions.get_cloud_country(cloud)
             region = ""
             on_cloud = "Y"
             cloud_provider = cloud.provider
@@ -138,7 +135,7 @@ class BaseCO2Tracker(ABC):
         )
 
         for persistence in self.persistence_objs:
-            persistence.flush(data)
+            persistence.out(data)
 
         return emissions
 
@@ -166,9 +163,6 @@ class BaseCO2Tracker(ABC):
             power=self._hardware.total_power,
             time=Time.from_seconds(self._measure_power_secs),
         )
-
-    def _get_config(self) -> AppConfig:
-        return AppConfig()
 
 
 class OfflineCO2Tracker(BaseCO2Tracker):
@@ -201,8 +195,7 @@ class CO2Tracker(BaseCO2Tracker):
     """
 
     def _get_geo_metadata(self) -> GeoMetadata:
-        config: AppConfig = self._get_config()
-        return GeoMetadata.from_geo_js(config.geo_js_url)
+        return GeoMetadata.from_geo_js(self._data_source.geo_js_url)
 
     def _get_cloud_metadata(self) -> CloudMetadata:
         return CloudMetadata.from_co2_tracker_utils()

@@ -2,12 +2,12 @@ import dash_table as dt
 import pandas as pd
 from typing import List, Dict, Tuple
 
-from co2_tracker.config import AppConfig
+from co2_tracker.input import DataSource
 
 
 class Data:
     def __init__(self):
-        self.app_config = AppConfig()
+        self.app_config = DataSource()
 
     @staticmethod
     def get_project_data(df: pd.DataFrame, project_name) -> dt.DataTable:

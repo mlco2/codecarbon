@@ -2,24 +2,20 @@
 App configuration: This will likely change when we have a common location for data files
 """
 
-from dataclasses import dataclass
 import json
 import pandas as pd
 import pkg_resources
 from typing import Dict
 
-cfg = {
-    "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
-    "cloud_emissions_path": "data/cloud/impact.csv",
-    "usa_emissions_data_path": "data/private_infra/2016/us_emissions.json",
-    "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
-}
 
-
-@dataclass
-class AppConfig:
+class DataSource:
     def __init__(self):
-        self.config = cfg
+        self.config = {
+            "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
+            "cloud_emissions_path": "data/cloud/impact.csv",
+            "usa_emissions_data_path": "data/private_infra/2016/us_emissions.json",
+            "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
+        }
         self.module_name = "co2_tracker"
 
     @property
@@ -61,3 +57,11 @@ class AppConfig:
         Returns Cloud Regions Impact Data
         """
         return pd.read_csv(self.cloud_emissions_path)
+
+    def get_usa_emissions_data(self) -> pd.DataFrame:
+        """
+        Returns Emissions Across US States in lbs/MWh
+        """
+        with open(self.usa_emissions_data_path) as f:
+            usa_emissions: Dict = json.load(f)
+        return usa_emissions
