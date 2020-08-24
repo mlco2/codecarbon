@@ -75,14 +75,14 @@ class Emissions:
 
         us_state: Optional[str] = geo.region
 
-        us_state_emissions_data = self._data_source.get_usa_emissions_data()
+        us_state_emissions_data = self._data_source.get_us_state_emissions_data()
 
         if us_state not in us_state_emissions_data:
             # TODO: Deal with missing data, default to something
             raise Exception()
 
         emissions_per_kwh: CO2EmissionsPerKwh = CO2EmissionsPerKwh.from_lbs_per_mwh(
-            us_state_emissions_data[us_state]
+            us_state_emissions_data[us_state]["emissions"]
         )
 
         return emissions_per_kwh.kgs_per_kwh * energy.kwh

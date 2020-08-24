@@ -13,7 +13,7 @@ class DataSource:
         self.config = {
             "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
             "cloud_emissions_path": "data/cloud/impact.csv",
-            "usa_emissions_data_path": "data/private_infra/2016/us_emissions.json",
+            "us_state_emissions_data_path": "data/private_infra/2016/us_emissions.json",
             "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
         }
         self.module_name = "co2_tracker"
@@ -33,9 +33,9 @@ class DataSource:
         )
 
     @property
-    def usa_emissions_data_path(self):
+    def us_state_emissions_data_path(self):
         return pkg_resources.resource_filename(
-            self.module_name, self.config["usa_emissions_data_path"]
+            self.module_name, self.config["us_state_emissions_data_path"]
         )
 
     @property
@@ -58,10 +58,10 @@ class DataSource:
         """
         return pd.read_csv(self.cloud_emissions_path)
 
-    def get_usa_emissions_data(self) -> pd.DataFrame:
+    def get_us_state_emissions_data(self) -> pd.DataFrame:
         """
         Returns Emissions Across US States in lbs/MWh
         """
-        with open(self.usa_emissions_data_path) as f:
-            usa_emissions: Dict = json.load(f)
-        return usa_emissions
+        with open(self.us_state_emissions_data_path) as f:
+            us_state_emissions_data: Dict = json.load(f)
+        return us_state_emissions_data
