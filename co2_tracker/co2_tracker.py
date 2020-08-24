@@ -107,15 +107,17 @@ class BaseCO2Tracker(ABC):
             emissions = self._emissions.get_private_infra_emissions(
                 self._total_energy, geo
             )
-            country = geo.country
+            country_name = geo.country_name
+            country_iso_code = geo.country_iso_code
             region = geo.region
             on_cloud = "N"
             cloud_provider = ""
             cloud_region = ""
         else:
             emissions = self._emissions.get_cloud_emissions(self._total_energy, cloud)
-            country = self._emissions.get_cloud_country(cloud)
-            region = ""
+            country_name = self._emissions.get_cloud_country_name(cloud)
+            country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
+            region = self._emissions.get_cloud_geo_region(cloud)
             on_cloud = "Y"
             cloud_provider = cloud.provider
             cloud_region = cloud.region
@@ -127,7 +129,8 @@ class BaseCO2Tracker(ABC):
             duration=duration.seconds,
             emissions=emissions,
             energy_consumed=self._total_energy.kwh,
-            country=country,
+            country_name=country_name,
+            country_iso_code=country_iso_code,
             region=region,
             on_cloud=on_cloud,
             cloud_provider=cloud_provider,
@@ -171,19 +174,31 @@ class OfflineCO2Tracker(BaseCO2Tracker):
     In addition to the standard arguments, the following are required.
     """
 
-    def __init__(self, country: str, *args, region: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        country_iso_code: str,
+        country_name: str,
+        *args,
+        region: Optional[str] = None,
+        **kwargs
+    ):
         """
         :param country: The country in which the experiment in being run.
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States.
         """
         # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
-        self._country: str = country if country is not None else "Canada"
+        self._country_iso_code: str = "CAN" if country_iso_code is None else country_iso_code
+        self._country_name: str = "Canada" if country_name is None else country_name
         self._region: Optional[str] = region
         super().__init__(*args, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:
-        return GeoMetadata(country=self._country, region=self._region)
+        return GeoMetadata(
+            country_iso_code=self._country_iso_code,
+            country_name=self._country_name,
+            region=self._region,
+        )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
         return CloudMetadata(provider=None, region=None)
@@ -206,7 +221,8 @@ def track_co2(
     project_name: str = "default",
     output_dir: str = ".",
     offline: bool = False,
-    country: Optional[str] = None,
+    country_iso_code: Optional[str] = None,
+    country_name: Optional[str] = None,
     region: Optional[str] = None,
 ):
     """
@@ -218,7 +234,8 @@ def track_co2(
     :param output_dir: Directory path to which the experiment artifacts are saved.
                        Saved to current directory by default.
     :param offline: Indicates if the tracker should be run in offline mode.
-    :param country: The country in which the experiment in being run. Required if `offline=True`
+    :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run. Required if `offline=True`
+    :param country_name: Name of the country where the experiment in being run. Required if `offline=True`
     :param region: The provincial region, for example, California in the US.
                    Currently, this only affects calculations for the United States.
     :return: The decorated function
@@ -228,12 +245,13 @@ def track_co2(
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
             if offline:
-                if country is None:
-                    raise Exception("Country is a required argument for Offline mode")
+                if country_iso_code is None:
+                    raise Exception("Needs ISO Code of the Country for Offline mode")
                 tracker = OfflineCO2Tracker(
                     project_name=project_name,
                     output_dir=output_dir,
-                    country=country,
+                    country_iso_code=country_iso_code,
+                    country_name=country_name,
                     region=region,
                 )
                 tracker.start()

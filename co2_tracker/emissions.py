@@ -6,7 +6,7 @@ https://github.com/responsibleproblemsolving/energy-usage
 
 import logging
 import pandas as pd
-from typing import Dict, Optional
+from typing import Dict
 
 from co2_tracker.external.geography import GeoMetadata, CloudMetadata
 from co2_tracker.input import DataSource
@@ -42,11 +42,38 @@ class Emissions:
 
         return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
 
-    def get_cloud_country(self, cloud: CloudMetadata) -> str:
+    def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
+        """
+        Returns the Country Name where the cloud region is located
+        """
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         return df.loc[
             (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        ]["country"].item()
+        ]["countryName"].item()
+
+    def get_cloud_country_iso_code(self, cloud: CloudMetadata) -> str:
+        """
+        Returns the Country ISO Code where the cloud region is located
+        """
+        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
+        return df.loc[
+            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        ]["countryIsoCode"].item()
+
+    def get_cloud_geo_region(self, cloud: CloudMetadata) -> str:
+        """
+        Returns the State/City where the cloud region is located
+        """
+        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
+        state = df.loc[
+            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        ]["state"].item()
+        if state is not None:
+            return state
+        city = df.loc[
+            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        ]["city"].item()
+        return city
 
     def get_private_infra_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
@@ -55,43 +82,45 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
-        compute_with_energy_mix: bool = geo.country != "United States" or (
-            geo.country == "United States" and geo.region is None
+        compute_with_energy_mix: bool = geo.country_iso_code.upper() != "USA" or (
+            geo.country_iso_code.upper() == "USA" and geo.region is None
         )
 
         if compute_with_energy_mix:
-            return self._get_country_emissions_energy_mix(energy, geo)
+            return self.get_country_emissions(energy, geo)
         else:
-            return self._get_united_states_emissions(energy, geo)
+            return self.get_region_emissions(energy, geo)
 
-    def _get_united_states_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
+    def get_region_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
-        Computes emissions for United States on private infra
+        Computes emissions for a country on private infra,
+        given emissions per unit power consumed at a regional level
         https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
         :param energy: Mean power consumption of the process (kWh)
         :param geo: Country and region metadata.
         :return: CO2 emissions in kg
         """
 
-        us_state: Optional[str] = geo.region
+        country_emissions_data = self._data_source.get_country_emissions_data(
+            geo.country_iso_code.lower()
+        )
 
-        us_state_emissions_data = self._data_source.get_us_state_emissions_data()
-
-        if us_state not in us_state_emissions_data:
+        if geo.region not in country_emissions_data:
             # TODO: Deal with missing data, default to something
-            raise Exception()
+            raise Exception(
+                f"Region: {geo.region} not found for Country with ISO CODE : {geo.country_iso_code}"
+            )
 
         emissions_per_kwh: CO2EmissionsPerKwh = CO2EmissionsPerKwh.from_lbs_per_mwh(
-            us_state_emissions_data[us_state]["emissions"]
+            country_emissions_data[geo.region]["emissions"]
         )
 
         return emissions_per_kwh.kgs_per_kwh * energy.kwh
 
-    def _get_country_emissions_energy_mix(
-        self, energy: Energy, geo: GeoMetadata
-    ) -> float:
+    def get_country_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
-        Computes emissions for International locations on private infra
+        Computes emissions for a country on private infra,
+        given emissions per unit power consumed at a country level
         https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
         :param energy: Mean power consumption of the process (kWh)
         :param geo: Country and region metadata
@@ -107,15 +136,15 @@ class Emissions:
 
         energy_mix = self._data_source.get_global_energy_mix_data()
 
-        if geo.country not in energy_mix:
+        if geo.country_iso_code not in energy_mix:
             # TODO: Deal with missing data, default to something
             raise Exception()
 
-        country_energy_mix: Dict = energy_mix[geo.country]
+        country_energy_mix: Dict = energy_mix[geo.country_iso_code]
 
         emissions_percentage: Dict[str, float] = {}
         for energy_type in country_energy_mix.keys():
-            if energy_type not in ["total", "isoCode"]:
+            if energy_type not in ["total", "isoCode", "countryName"]:
                 emissions_percentage[energy_type] = (
                     country_energy_mix[energy_type] / country_energy_mix["total"]
                 )

@@ -21,7 +21,8 @@ class CO2Data:
     duration: float
     emissions: float
     energy_consumed: float
-    country: str
+    country_name: str
+    country_iso_code: str
     region: str
     on_cloud: str = "N"
     cloud_provider: str = ""

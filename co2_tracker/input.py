@@ -13,7 +13,7 @@ class DataSource:
         self.config = {
             "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
             "cloud_emissions_path": "data/cloud/impact.csv",
-            "us_state_emissions_data_path": "data/private_infra/2016/us_emissions.json",
+            "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
             "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
         }
         self.module_name = "co2_tracker"
@@ -32,10 +32,9 @@ class DataSource:
             self.module_name, self.config["cloud_emissions_path"]
         )
 
-    @property
-    def us_state_emissions_data_path(self):
+    def country_emissions_data_path(self, country: str):
         return pkg_resources.resource_filename(
-            self.module_name, self.config["us_state_emissions_data_path"]
+            self.module_name, self.config[f"{country}_emissions_data_path"]
         )
 
     @property
@@ -58,10 +57,12 @@ class DataSource:
         """
         return pd.read_csv(self.cloud_emissions_path)
 
-    def get_us_state_emissions_data(self) -> pd.DataFrame:
+    def get_country_emissions_data(self, country_iso_code: str) -> Dict:
         """
-        Returns Emissions Across US States in lbs/MWh
+        Returns Emissions Across Regions in a country
+        :param country_iso_code: ISO code similar to one used in file names
+        :return: emissions in lbs/MWh and region code
         """
-        with open(self.us_state_emissions_data_path) as f:
-            us_state_emissions_data: Dict = json.load(f)
-        return us_state_emissions_data
+        with open(self.country_emissions_data_path(country_iso_code)) as f:
+            country_emissions_data: Dict = json.load(f)
+        return country_emissions_data
