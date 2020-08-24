@@ -31,7 +31,7 @@ class Components:
             [
                 html.H1("Carbon Footprint", style={"textAlign": "center"}),
                 html.P(
-                    "Measure Emissions from Compute",
+                    "Measure Compute Emissions",
                     style={"textAlign": "center", "paddingLeft": "0.5%"},
                     className="lead",
                 ),
