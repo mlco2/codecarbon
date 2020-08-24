@@ -287,7 +287,7 @@ class Components:
         )
 
     @staticmethod
-    def get_cloud_emissions_barchart():
+    def get_cloud_emissions_comparison():
         return html.Div(
             dbc.Col(
                 [
@@ -311,7 +311,7 @@ class Components:
                         style={"marginLeft": "12%", "textAlign": "center"},
                     ),
                 ],
-                id="cloud_emissions_barchart_component",
+                id="cloud_emissions_comparison_component",
             ),
             style={"marginLeft": "-12%"},
         )
@@ -324,12 +324,12 @@ class Components:
                 cloud_emissions_barchart_data,
                 x="region",
                 y="emissions",
-                hover_data=["region", "country", "emissions"],
+                hover_data=["region", "countryName", "emissions"],
                 color="emissions",
                 labels={
                     "emissions": "Carbon Equivalent (kg)",
                     "region": "Region",
-                    "country": "Country",
+                    "countryName": "Country",
                 },
                 color_continuous_scale=self.colorscale,
                 height=500,
@@ -515,6 +515,59 @@ class Components:
             color_continuous_scale=list(reversed(self.colorscale))
             if energy_type == "low_carbon"
             else self.colorscale,
+        )
+
+    @staticmethod
+    def get_regional_emissions_comparison():
+        return html.Div(
+            dbc.Col(
+                [
+                    html.Br(),
+                    html.Br(),
+                    html.H2(
+                        [
+                            "Emissions Across Regions in ",
+                            html.Strong(
+                                id="country_name",
+                                style={"fontWeight": "normal", "color": "green"},
+                            ),
+                        ],
+                        style={"textAlign": "center", "marginLeft": "12%"},
+                    ),
+                    dcc.Graph(id="regional_emissions_comparison_choropleth"),
+                ],
+                id="regional_emissions_comparison_component",
+            ),
+            style={"marginLeft": "-12%"},
+        )
+
+    def get_regional_emissions_choropleth_figure(
+        self, choropleth_data, country_iso_code: str
+    ):
+        # add location_modes and scopes for other country codes
+        location_modes = {"usa": "USA-states"}
+        scopes = {"usa": "usa"}
+        try:
+            location_mode = location_modes[country_iso_code.lower()]
+            scope = scopes[country_iso_code.lower()]
+        except KeyError as e:
+            location_mode = None
+            scope = "world"
+        return px.choropleth(
+            data_frame=choropleth_data,
+            locations="region_code",
+            locationmode=location_mode,
+            scope=scope,
+            color="emissions",
+            hover_data=["region_name", "emissions", "region_code"],
+            labels={
+                "region_name": "Region",
+                "emissions": "Carbon Equivalent (kg)",
+                "region_code": "Region Code",
+            },
+            width=1400,
+            height=600,
+            color_continuous_scale=self.colorscale,
         )
 
     @staticmethod

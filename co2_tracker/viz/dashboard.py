@@ -21,8 +21,9 @@ def render_app(df: pd.DataFrame):
     exemplary_equivalents = components.get_exemplary_equivalents()
     _hidden_project_data = components.get_hidden_project_data()
     _hidden_project_summary = components.get_hidden_project_summary()
-    cloud_emissions_barchart = components.get_cloud_emissions_barchart()
-    global_comaprison = components.get_global_comparison()
+    cloud_emissions_comparison = components.get_cloud_emissions_comparison()
+    global_comparison = components.get_global_comparison()
+    regional_comparison = components.get_regional_emissions_comparison()
     project_time_series = components.get_project_time_series()
     references = components.get_references()
 
@@ -35,8 +36,9 @@ def render_app(df: pd.DataFrame):
             project_dropdown,
             project_details,
             exemplary_equivalents,
-            cloud_emissions_barchart,
-            global_comaprison,
+            cloud_emissions_comparison,
+            global_comparison,
+            regional_comparison,
             project_time_series,
             references,
             _hidden_project_data,
@@ -78,10 +80,10 @@ def render_app(df: pd.DataFrame):
         net_power_consumption = f"{sum(df['energy_consumed'])} kWh"
         net_carbon_equivalent = f"{sum(df['emissions'])} kg"
         if {project_summary["region"]} == "":
-            project_infrastructure_location = f"{project_summary['country']}"
+            project_infrastructure_location = f"{project_summary['country_name']}"
         else:
             project_infrastructure_location = (
-                f"{project_summary['region']}, {project_summary['country']}"
+                f"{project_summary['region']}, {project_summary['country_name']}"
             )
         project_power_consumption = f"{project_summary['total']['energy_consumed']} kWh"
         project_carbon_equivalent = f"{project_summary['total']['emissions']} kg"
@@ -155,6 +157,47 @@ def render_app(df: pd.DataFrame):
         )
 
     @app.callback(
+        Output(
+            component_id="regional_emissions_comparison_component",
+            component_property="style",
+        ),
+        [Input(component_id="hidden_project_summary", component_property="data")],
+    )
+    def update_show_regional_comparison(hidden_project_summary: dcc.Store):
+        country_iso_code = hidden_project_summary["country_iso_code"]
+        # add country codes here to render for different countries
+        if country_iso_code.upper() in ["USA"]:
+            return {"display": "block"}
+        else:
+            return {"display": "none"}
+
+    @app.callback(
+        [
+            Output(component_id="country_name", component_property="children"),
+            Output(
+                component_id="regional_emissions_comparison_choropleth",
+                component_property="figure",
+            ),
+        ],
+        [Input(component_id="hidden_project_summary", component_property="data")],
+    )
+    def update_regional_comparison_choropleth(hidden_project_summary: dcc.Store):
+        country_name = hidden_project_summary["country_name"]
+        print(country_name)
+        country_iso_code = hidden_project_summary["country_iso_code"]
+        net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
+        regional_emissions_choropleth_data = data.get_regional_emissions_choropleth_data(
+            net_energy_consumed, country_iso_code
+        )
+
+        return (
+            country_name,
+            components.get_regional_emissions_choropleth_figure(
+                regional_emissions_choropleth_data, country_iso_code
+            ),
+        )
+
+    @app.callback(
         Output(component_id="project_time_series", component_property="figure"),
         [Input(component_id="hidden_project_data", component_property="children")],
     )
@@ -165,7 +208,7 @@ def render_app(df: pd.DataFrame):
 
     @app.callback(
         Output(
-            component_id="cloud_emissions_barchart_component",
+            component_id="cloud_emissions_comparison_component",
             component_property="style",
         ),
         [Input(component_id="hidden_project_summary", component_property="data")],

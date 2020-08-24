@@ -40,7 +40,8 @@ class Data:
                     map(lambda experiment: experiment["energy_consumed"], project_data)
                 ),
             },
-            "country": last_run["country"],
+            "country_name": last_run["country_name"],
+            "country_iso_code": last_run["country_iso_code"],
             "region": last_run["region"],
             "on_cloud": last_run["on_cloud"],
             "cloud_provider": last_run["cloud_provider"],
@@ -100,35 +101,77 @@ class Data:
 
         global_energy_mix = self._data_source.get_global_energy_mix_data()
         choropleth_data = []
-        for country in global_energy_mix.keys():
-            if country not in ["_define", "Antarctica"]:
+        for country_iso_code in global_energy_mix.keys():
+            country_name = global_energy_mix[country_iso_code]["countryName"]
+
+            if country_iso_code not in ["_define", "ATA"]:
                 from co2_tracker.units import Energy
 
                 energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
 
                 from co2_tracker.external.geography import GeoMetadata
 
-                country_emissions = self._emissions._get_country_emissions_energy_mix(
-                    energy_consumed, GeoMetadata(country)
+                country_emissions = self._emissions.get_country_emissions(
+                    energy_consumed,
+                    GeoMetadata(
+                        country_name=country_name, country_iso_code=country_iso_code
+                    ),
                 )
-                total = global_energy_mix[country]["total"]
+                total = global_energy_mix[country_iso_code]["total"]
                 choropleth_data.append(
                     {
-                        "iso_code": global_energy_mix[country]["isoCode"],
+                        "iso_code": country_iso_code,
                         "emissions": country_emissions,
-                        "country": country,
+                        "country": country_name,
                         "coal": formatted_energy_percentage(
-                            global_energy_mix[country]["coal"], total
+                            global_energy_mix[country_iso_code]["coal"], total
                         ),
                         "petroleum": formatted_energy_percentage(
-                            global_energy_mix[country]["petroleum"], total
+                            global_energy_mix[country_iso_code]["petroleum"], total
                         ),
                         "natural_gas": formatted_energy_percentage(
-                            global_energy_mix[country]["naturalGas"], total
+                            global_energy_mix[country_iso_code]["naturalGas"], total
                         ),
                         "low_carbon": formatted_energy_percentage(
-                            global_energy_mix[country]["lowCarbon"], total
+                            global_energy_mix[country_iso_code]["lowCarbon"], total
                         ),
+                    }
+                )
+        return choropleth_data
+
+    def get_regional_emissions_choropleth_data(
+        self, net_energy_consumed: float, country_iso_code: str
+    ) -> List[Dict]:
+
+        # add country codes here to render for different countries
+        if country_iso_code.upper() not in ["USA"]:
+            return [{"region_code": "", "region_name": "", "emissions": ""}]
+
+        region_emissions = self._data_source.get_country_emissions_data(
+            country_iso_code.lower()
+        )
+        print(region_emissions)
+        choropleth_data = []
+        for region_name in region_emissions.keys():
+
+            region_code = region_emissions[region_name]["regionCode"]
+            if region_name not in ["_unit"]:
+                from co2_tracker.units import Energy
+
+                energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
+
+                from co2_tracker.external.geography import GeoMetadata
+
+                emissions = self._emissions.get_region_emissions(
+                    energy_consumed,
+                    GeoMetadata(country_iso_code=country_iso_code, region=region_name),
+                )
+
+                choropleth_data.append(
+                    {
+                        "region_code": region_code,
+                        "region_name": region_name,
+                        "emissions": emissions,
                     }
                 )
         return choropleth_data
@@ -141,10 +184,13 @@ class Data:
         cloud_region: str,
     ) -> Tuple[str, pd.DataFrame]:
         if on_cloud == "N":
-            return "", pd.DataFrame(data={"region": [], "emissions": [], "country": []})
+            return (
+                "",
+                pd.DataFrame(data={"region": [], "emissions": [], "countryName": []}),
+            )
         cloud_emissions = self._data_source.get_cloud_emissions_data()
         cloud_emissions = cloud_emissions[
-            ["provider", "providerName", "region", "impact", "country"]
+            ["provider", "providerName", "region", "impact", "countryName"]
         ]
 
         from co2_tracker.units import CO2EmissionsPerKwh
