@@ -3,11 +3,13 @@ import pandas as pd
 from typing import List, Dict, Tuple
 
 from co2_tracker.input import DataSource
+from co2_tracker.emissions import Emissions
 
 
 class Data:
     def __init__(self):
-        self.app_config = DataSource()
+        self._data_source = DataSource()
+        self._emissions = Emissions(self._data_source)
 
     @staticmethod
     def get_project_data(df: pd.DataFrame, project_name) -> dt.DataTable:
@@ -96,21 +98,18 @@ class Data:
         def formatted_energy_percentage(energy_type: float, total: float) -> float:
             return float("{:.1f}".format((energy_type / total) * 100))
 
-        global_energy_mix = self.app_config.get_global_energy_mix_data()
+        global_energy_mix = self._data_source.get_global_energy_mix_data()
         choropleth_data = []
         for country in global_energy_mix.keys():
             if country not in ["_define", "Antarctica"]:
                 from co2_tracker.units import Energy
 
                 energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
-                from co2_tracker.emissions import _get_country_emissions_energy_mix
 
                 from co2_tracker.external.geography import GeoMetadata
 
-                country_emissions = _get_country_emissions_energy_mix(
-                    energy_consumed,
-                    GeoMetadata(country),
-                    self.app_config.global_energy_mix_data_path,
+                country_emissions = self._emissions._get_country_emissions_energy_mix(
+                    energy_consumed, GeoMetadata(country)
                 )
                 total = global_energy_mix[country]["total"]
                 choropleth_data.append(
@@ -143,7 +142,7 @@ class Data:
     ) -> Tuple[str, pd.DataFrame]:
         if on_cloud == "N":
             return "", pd.DataFrame(data={"region": [], "emissions": [], "country": []})
-        cloud_emissions = self.app_config.get_cloud_emissions_data()
+        cloud_emissions = self._data_source.get_cloud_emissions_data()
         cloud_emissions = cloud_emissions[
             ["provider", "providerName", "region", "impact", "country"]
         ]

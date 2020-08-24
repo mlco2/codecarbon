@@ -4,7 +4,6 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
-import json
 import logging
 import pandas as pd
 from typing import Dict, Optional
