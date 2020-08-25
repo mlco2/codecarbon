@@ -167,7 +167,7 @@ class TestCO2Tracker(unittest.TestCase):
     ):
         # GIVEN
 
-        @track_co2(offline=True, country="Canada", project_name=self.project_name)
+        @track_co2(offline=True, country_iso_code="CAN", project_name=self.project_name)
         def dummy_train_model():
             return 42
 
