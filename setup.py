@@ -6,16 +6,16 @@ with open("README.md", "r") as f:
 # TODO: Add co2-tracker-utils once it is published to PyPI here
 DEPENDENCIES = [
     "APScheduler",
-    "pandas",
-    "requests",
-    "dataclasses",
     "co2-tracker-utils",
     "dash",
-    "fire",
     "dash_bootstrap_components",
+    "dataclasses",
+    "fire",
+    "pandas",
+    "requests",
 ]
 
-TEST_DEPENDENCIES = ["responses", "tox", "mock", "pytest"]
+TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
 
 
 setuptools.setup(

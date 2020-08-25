@@ -1,4 +1,4 @@
-pytest
 mock
+pytest
 responses
 tox
