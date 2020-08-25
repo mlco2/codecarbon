@@ -227,8 +227,6 @@ def track_co2(
 ):
     """
     Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
-
-
     :param fn: Function to be decorated
     :param project_name: Project name for current experiment run. Default value of "default"
     :param output_dir: Directory path to which the experiment artifacts are saved.
