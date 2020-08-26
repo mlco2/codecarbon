@@ -48,12 +48,12 @@ class CloudMetadata:
         return cls(provider=provider, region=region)
 
 
-@dataclass
 class GeoMetadata:
 
-    country_iso_code: str
-    country_name: Optional[str] = None
-    region: Optional[str] = None
+    def __init__(self, country_iso_code: str, country_name: Optional[str] = None, region: Optional[str] = None):
+        self.country_iso_code = country_iso_code.upper()
+        self.country_name = country_name
+        self.region = region if region is None else region.lower()
 
     @classmethod
     def from_geo_js(cls, url: str) -> "GeoMetadata":
@@ -66,7 +66,7 @@ class GeoMetadata:
             )
             return cls(country_iso_code="CAN", country_name="Canada")
         return cls(
-            country_iso_code=response["country_code3"],
+            country_iso_code=response["country_code3"].upper(),
             country_name=response["country"],
             region=response["region"].lower(),
         )

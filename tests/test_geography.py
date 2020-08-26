@@ -61,7 +61,7 @@ class TestGeoMetadata(unittest.TestCase):
         geo = GeoMetadata.from_geo_js(self.geo_js_url)
         self.assertEqual("USA", geo.country_iso_code)
         self.assertEqual("United States", geo.country_name)
-        self.assertEqual("Illinois", geo.region)
+        self.assertEqual("illinois", geo.region)
 
     @responses.activate
     def test_geo_metadata_CANADA(self):

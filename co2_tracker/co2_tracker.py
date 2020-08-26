@@ -191,7 +191,7 @@ class OfflineCO2Tracker(BaseCO2Tracker):
         # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
         self._country_iso_code: str = "CAN" if country_iso_code is None else country_iso_code
         self._country_name: str = "Canada" if country_name is None else country_name
-        self._region: Optional[str] = region.lower()
+        self._region: Optional[str] = region if region is None else region.lower()
         super().__init__(*args, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:

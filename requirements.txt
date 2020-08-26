@@ -6,3 +6,5 @@ dataclasses
 fire
 pandas
 requests
+sphinx
+sphinx-rtd-theme
