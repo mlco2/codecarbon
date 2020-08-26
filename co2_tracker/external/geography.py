@@ -49,8 +49,12 @@ class CloudMetadata:
 
 
 class GeoMetadata:
-
-    def __init__(self, country_iso_code: str, country_name: Optional[str] = None, region: Optional[str] = None):
+    def __init__(
+        self,
+        country_iso_code: str,
+        country_name: Optional[str] = None,
+        region: Optional[str] = None,
+    ):
         self.country_iso_code = country_iso_code.upper()
         self.country_name = country_name
         self.region = region if region is None else region.lower()

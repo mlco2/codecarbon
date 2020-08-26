@@ -17,5 +17,23 @@ CO₂eq can then be calculated as ``C * P``
 Carbon Intensity
 ----------------
 
-When calculating carbon intensity of the electricity consumed
+Carbon Intensity of the electricity consumed is calculated as a weighted average of the emissions from different
+energy sources, ``Coal, Petroleum, Natural Gas and Renewable`` that are used to generate electricity from the nearby grid.
+
+
+.. list-table:: Carbon Intensity Across Energy Sources
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Energy Source
+     - Carbon Intensity (kg/MWh)
+   * - Coal
+     - 996
+   * - Petroleum
+     - 817
+   * - Natural Gas
+     - 744
+   * - Low Carbon
+     - 0
+
 
