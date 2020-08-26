@@ -15,9 +15,9 @@ help:
 .PHONY: help Makefile
 
 # Build docs and move _build/html to docs folder, where github pages expect them to be
-userdocs:
+docs:
 	@make html
-	@cp -a _build/html/. ../docs
+	@cp -a _build/html/. ..
 	@rm -rf _build
 
 # Catch-all target: route all unknown targets to Sphinx using the new

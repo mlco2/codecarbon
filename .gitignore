@@ -104,7 +104,6 @@ venv.bak/
 .idea/
 
 # Sphinx
-userdocs/_build/
 docs/_build/
 
 # OS generated files
