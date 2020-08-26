@@ -230,8 +230,6 @@ def track_co2(
 ):
     """
     Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
-
-
     :param fn: Function to be decorated
     :param project_name: Project name for current experiment run, default name as "co2tracker"
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15

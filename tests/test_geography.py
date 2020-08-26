@@ -59,8 +59,8 @@ class TestGeoMetadata(unittest.TestCase):
     def test_geo_metadata_USA(self):
         responses.add(responses.GET, self.geo_js_url, json=GEO_METADATA_USA, status=200)
         geo = GeoMetadata.from_geo_js(self.geo_js_url)
-        self.assertEqual("United States", geo.country_name)
         self.assertEqual("USA", geo.country_iso_code)
+        self.assertEqual("United States", geo.country_name)
         self.assertEqual("Illinois", geo.region)
 
     @responses.activate
@@ -69,5 +69,5 @@ class TestGeoMetadata(unittest.TestCase):
             responses.GET, self.geo_js_url, json=GEO_METADATA_CANADA, status=200
         )
         geo = GeoMetadata.from_geo_js(self.geo_js_url)
-        self.assertEqual("Canada", geo.country_name)
         self.assertEqual("CAN", geo.country_iso_code)
+        self.assertEqual("Canada", geo.country_name)
