@@ -15,8 +15,8 @@ class CO2Data:
     Encapsulates experiment artifacts
     """
 
-    timestamp: str
     experiment_id: str
+    timestamp: str
     project_name: str
     duration: float
     emissions: float

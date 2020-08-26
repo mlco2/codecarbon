@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Input Parameters &mdash; CO2 Tracker 0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Quickstart" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CO2 Tracker
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CO2Tracker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Input Parameters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#co2tracker">CO2Tracker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#offlineco2tracker">OfflineCO2Tracker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#track-co2">&#64;track_co2</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Logging</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize.html">Visualize</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">CO2 Tracker</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Input Parameters</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/parameters.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="input-parameters">
+<span id="parameters"></span><h1>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this headline">¶</a></h1>
+<p>A set of parameters are supported by API to help users provide additional details per project.</p>
+<div class="section" id="co2tracker">
+<h2>CO2Tracker<a class="headerlink" href="#co2tracker" title="Permalink to this headline">¶</a></h2>
+<p>The online mode object <code class="docutils literal notranslate"><span class="pre">CO2Tracker</span></code> takes following input parameters.</p>
+<table class="colwidths-given docutils align-default" id="id1">
+<caption><span class="caption-text">Input Parameters to CO2Tracker</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 80%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameters</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>project_name</p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>measure_power_secs</p></td>
+<td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>output_dir</p></td>
+<td><div class="line-block">
+<div class="line">Directory path to which the experiment details are logged</div>
+<div class="line">in a CSV file called <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code>, defaults to current directory</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p>save_to_file</p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if the emission artifacts should be logged</div>
+<div class="line">to a CSV file at <code class="docutils literal notranslate"><span class="pre">output_dir/emissions.csv</span></code>, defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="offlineco2tracker">
+<h2>OfflineCO2Tracker<a class="headerlink" href="#offlineco2tracker" title="Permalink to this headline">¶</a></h2>
+<p>The offline mode object <code class="docutils literal notranslate"><span class="pre">OfflineCO2Tracker</span></code> takes following input parameters.</p>
+<table class="colwidths-given docutils align-default" id="id2">
+<caption><span class="caption-text">Input Parameters to OfflineCO2Tracker</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 80%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameters</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>country_iso_code</p></td>
+<td><p>3 letter ISO Code of the country where the experiment in being run</p></td>
+</tr>
+<tr class="row-odd"><td><p>country_name</p></td>
+<td><p>Name of the country where the experiment in being run</p></td>
+</tr>
+<tr class="row-even"><td><p>region</p></td>
+<td><div class="line-block">
+<div class="line">Optional Name of the Province/State/City, where the infrastructure is hosted</div>
+<div class="line">Currently, supported only for US States</div>
+<div class="line">for example - California or New York</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p>project_name</p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>measure_power_secs</p></td>
+<td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>project_name</p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>measure_power_secs</p></td>
+<td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>output_dir</p></td>
+<td><div class="line-block">
+<div class="line">Directory path to which the experiment details are logged</div>
+<div class="line">in a CSV file called <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code>, defaults to current directory</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p>save_to_file</p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if the emission artifacts should be logged</div>
+<div class="line">to a CSV file at <code class="docutils literal notranslate"><span class="pre">output_dir/emissions.csv</span></code>, defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="track-co2">
+<h2>&#64;track_co2<a class="headerlink" href="#track-co2" title="Permalink to this headline">¶</a></h2>
+<p>Decorator <code class="docutils literal notranslate"><span class="pre">track_co2</span></code> takes following input parameters.</p>
+<table class="colwidths-given docutils align-default" id="id3">
+<caption><span class="caption-text">Input Parameters to &#64;track_co2</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 80%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameters</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>project_name</p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>measure_power_secs</p></td>
+<td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>project_name</p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>measure_power_secs</p></td>
+<td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>output_dir</p></td>
+<td><div class="line-block">
+<div class="line">Directory path to which the experiment details are logged</div>
+<div class="line">in a CSV file called <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code>, defaults to current directory</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p>save_to_file</p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if the emission artifacts should be logged</div>
+<div class="line">to a CSV file at <code class="docutils literal notranslate"><span class="pre">output_dir/emissions.csv</span></code>, defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p>offline</p></td>
+<td><p>Boolean variable indicating if the tracker should be run in offline mode, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>country_iso_code</p></td>
+<td><p>3 letter ISO Code of the country where the experiment in being run</p></td>
+</tr>
+<tr class="row-even"><td><p>country_name</p></td>
+<td><p>Name of the country where the experiment in being run</p></td>
+</tr>
+<tr class="row-odd"><td><p>region</p></td>
+<td><div class="line-block">
+<div class="line">Optional Name of the Province/State/City, where the infrastructure is hosted</div>
+<div class="line">Currently, supported only for US States</div>
+<div class="line">for example - California or New York</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="usage.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, BCG GAMMA, Comet.ml, Haverford College, MILA
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

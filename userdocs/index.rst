@@ -26,6 +26,7 @@ CO2Tracker
 
    installation
    usage
+   parameters
    examples
 
 .. toctree::

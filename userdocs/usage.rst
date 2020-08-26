@@ -2,13 +2,14 @@
 
 Quickstart
 ==========
-
 The CO2 tracking tool can be used along with any deep learning framework. It supports both ``online`` (with internet access) and
-``offline`` (without internet access) modes of operation. The tracker can be used in following ways.
+``offline`` (without internet access) modes. The tracker can be used in following ways.
 
 
 Online Mode
-------------
+-----------
+When the environment has internet access ``CO2Tracker`` object or vanilla ``track_co2`` decorator can be used, which has parameter
+``offline`` defaulted to ``False``.
 
 Explicit Object
 ~~~~~~~~~~~~~~~
@@ -45,6 +46,10 @@ Offline Mode
 An offline version is available to support restricted environments without internet access. The internal computations remain unchanged, however,
 a ``country_iso_code`` parameter is required to fetch Carbon Intensity details of the regional electricity used.
 
+Explicit Object
+~~~~~~~~~~~~~~~
+Developers can use ``OfflineCO2Tracker`` object to track emissions in absence of internet access as follows.
+
 .. code-block:: python
 
    from co2_tracker import OfflineCO2Tracker
@@ -53,6 +58,13 @@ a ``country_iso_code`` parameter is required to fetch Carbon Intensity details o
    # GPU intensive training code
    tracker.stop()
 
+
+Decorator
+~~~~~~~~~
+``track_co2`` decorator in offline mode requires following two parameters:
+
+- ``offline`` set to ``True``, which defaults to ``False`` to support online mode.
+- ``country_iso_code`` as the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, for example - CAN for Canada.
 
 .. code-block:: python
 

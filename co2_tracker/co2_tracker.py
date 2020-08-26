@@ -32,17 +32,17 @@ class BaseCO2Tracker(ABC):
 
     def __init__(
         self,
-        project_name: str = "default",
+        project_name: str = "co2tracker",
         measure_power_secs: int = 15,
         output_dir: str = ".",
         save_to_file: bool = True,
     ):
         """
-        :param project_name: Project name for current experiment run. Default value of "default"
-        :param measure_power_secs: Interval (in seconds) of measuring power usage, defaults to 15.
-        :param output_dir: Directory path to which the experiment artifacts are saved.
-                           Saved to current directory by default.
-        :param save_to_file: Indicates if the emission artifacts should be logged to a file.
+        :param project_name: Project name for current experiment run, default name as "co2tracker"
+        :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
+        :param output_dir: Directory path to which the experiment details are logged
+                           in a CSV file called `emissions.csv`, defaults to current directory
+        :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
@@ -123,8 +123,8 @@ class BaseCO2Tracker(ABC):
             cloud_region = cloud.region
 
         data = CO2Data(
-            timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             experiment_id=str(uuid.uuid4()),
+            timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
@@ -183,15 +183,15 @@ class OfflineCO2Tracker(BaseCO2Tracker):
         **kwargs
     ):
         """
-        :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run.
-        :param country_name: Name of the country where the experiment in being run.
+        :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run
+        :param country_name: Name of the country where the experiment in being run
         :param region: The provincial region, for example, California in the US.
-                       Currently, this only affects calculations for the United States.
+                       Currently, this only affects calculations for the United States
         """
         # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
         self._country_iso_code: str = "CAN" if country_iso_code is None else country_iso_code
         self._country_name: str = "Canada" if country_name is None else country_name
-        self._region: Optional[str] = region
+        self._region: Optional[str] = region.lower()
         super().__init__(*args, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -219,8 +219,10 @@ class CO2Tracker(BaseCO2Tracker):
 
 def track_co2(
     fn: Callable = None,
-    project_name: str = "default",
+    project_name: str = "co2tracker",
+    measure_power_secs: int = 15,
     output_dir: str = ".",
+    save_to_file: bool = True,
     offline: bool = False,
     country_iso_code: Optional[str] = None,
     country_name: Optional[str] = None,
@@ -231,14 +233,18 @@ def track_co2(
 
 
     :param fn: Function to be decorated
-    :param project_name: Project name for current experiment run. Default value of "default"
-    :param output_dir: Directory path to which the experiment artifacts are saved.
-                       Saved to current directory by default.
-    :param offline: Indicates if the tracker should be run in offline mode.
-    :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run. Required if `offline=True`
-    :param country_name: Name of the country where the experiment in being run. Required if `offline=True`
+    :param project_name: Project name for current experiment run, default name as "co2tracker"
+    :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
+    :param output_dir: Directory path to which the experiment details are logged
+                       in a CSV file called `emissions.csv`, defaults to current directory
+    :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
+    :param offline: Indicates if the tracker should be run in offline mode
+    :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run,
+                             required if `offline=True`
+    :param country_name: Name of the country where the experiment in being run,
+                         required if `offline=True`
     :param region: The provincial region, for example, California in the US.
-                   Currently, this only affects calculations for the United States.
+                   Currently, this only affects calculations for the United States
     :return: The decorated function
     """
 
@@ -250,7 +256,9 @@ def track_co2(
                     raise Exception("Needs ISO Code of the Country for Offline mode")
                 tracker = OfflineCO2Tracker(
                     project_name=project_name,
+                    measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
+                    save_to_file=save_to_file,
                     country_iso_code=country_iso_code,
                     country_name=country_name,
                     region=region,
@@ -259,7 +267,12 @@ def track_co2(
                 fn(*args, **kwargs)
                 tracker.stop()
             else:
-                tracker = CO2Tracker(project_name=project_name, output_dir=output_dir)
+                tracker = CO2Tracker(
+                    project_name=project_name,
+                    measure_power_secs=measure_power_secs,
+                    output_dir=output_dir,
+                    save_to_file=save_to_file,
+                )
                 tracker.start()
                 fn(*args, **kwargs)
                 tracker.stop()

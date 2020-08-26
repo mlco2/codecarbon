@@ -68,5 +68,5 @@ class GeoMetadata:
         return cls(
             country_iso_code=response["country_code3"],
             country_name=response["country"],
-            region=response["region"],
+            region=response["region"].lower(),
         )

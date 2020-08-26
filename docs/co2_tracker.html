@@ -90,6 +90,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CO2Tracker</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Input Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Logging</span></p>
 <ul>
@@ -166,7 +168,7 @@
 <h2>CO2 Tracker<a class="headerlink" href="#co2-tracker" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="co2_tracker.CO2Tracker">
-<em class="property">class </em><code class="sig-prename descclassname">co2_tracker.</code><code class="sig-name descname">CO2Tracker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">project_name</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'default'</span></em>, <em class="sig-param"><span class="n">measure_power_secs</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">15</span></em>, <em class="sig-param"><span class="n">output_dir</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'.'</span></em>, <em class="sig-param"><span class="n">save_to_file</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#co2_tracker.CO2Tracker" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">co2_tracker.</code><code class="sig-name descname">CO2Tracker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">project_name</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'co2tracker'</span></em>, <em class="sig-param"><span class="n">measure_power_secs</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">15</span></em>, <em class="sig-param"><span class="n">output_dir</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'.'</span></em>, <em class="sig-param"><span class="n">save_to_file</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#co2_tracker.CO2Tracker" title="Permalink to this definition">¶</a></dt>
 <dd><p>A CO2 tracker that auto infers geographical location.</p>
 <dl class="py method">
 <dt id="co2_tracker.CO2Tracker.start">
@@ -227,20 +229,24 @@ Currently, Nvidia GPUs are supported.
 <h2>Decorator<a class="headerlink" href="#decorator" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="co2_tracker.track_co2">
-<code class="sig-prename descclassname">co2_tracker.</code><code class="sig-name descname">track_co2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">project_name</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'default'</span></em>, <em class="sig-param"><span class="n">output_dir</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'.'</span></em>, <em class="sig-param"><span class="n">offline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">country_iso_code</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">country_name</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">region</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#co2_tracker.track_co2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">co2_tracker.</code><code class="sig-name descname">track_co2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">project_name</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'co2tracker'</span></em>, <em class="sig-param"><span class="n">measure_power_secs</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">15</span></em>, <em class="sig-param"><span class="n">output_dir</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'.'</span></em>, <em class="sig-param"><span class="n">save_to_file</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">offline</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">country_iso_code</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">country_name</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">region</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#co2_tracker.track_co2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator that supports both <cite>CO2Tracker</cite> and <cite>OfflineCO2Tracker</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fn</strong> – Function to be decorated</p></li>
-<li><p><strong>project_name</strong> – Project name for current experiment run. Default value of “default”</p></li>
-<li><p><strong>output_dir</strong> – Directory path to which the experiment artifacts are saved.
-Saved to current directory by default.</p></li>
-<li><p><strong>offline</strong> – Indicates if the tracker should be run in offline mode.</p></li>
-<li><p><strong>country_iso_code</strong> – 3 letter ISO Code of the country where the experiment in being run. Required if <cite>offline=True</cite></p></li>
-<li><p><strong>country_name</strong> – Name of the country where the experiment in being run. Required if <cite>offline=True</cite></p></li>
+<li><p><strong>project_name</strong> – Project name for current experiment run, default name as “co2tracker”</p></li>
+<li><p><strong>measure_power_secs</strong> – Interval (in seconds) to measure hardware power usage, defaults to 15</p></li>
+<li><p><strong>output_dir</strong> – Directory path to which the experiment details are logged
+in a CSV file called <cite>emissions.csv</cite>, defaults to current directory</p></li>
+<li><p><strong>save_to_file</strong> – Indicates if the emission artifacts should be logged to a file, defaults to True</p></li>
+<li><p><strong>offline</strong> – Indicates if the tracker should be run in offline mode</p></li>
+<li><p><strong>country_iso_code</strong> – 3 letter ISO Code of the country where the experiment in being run,
+required if <cite>offline=True</cite></p></li>
+<li><p><strong>country_name</strong> – Name of the country where the experiment in being run,
+required if <cite>offline=True</cite></p></li>
 <li><p><strong>region</strong> – The provincial region, for example, California in the US.
-Currently, this only affects calculations for the United States.</p></li>
+Currently, this only affects calculations for the United States</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

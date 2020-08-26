@@ -169,7 +169,7 @@ class Data:
                 choropleth_data.append(
                     {
                         "region_code": region_code,
-                        "region_name": region_name,
+                        "region_name": region_name.upper(),
                         "emissions": emissions,
                     }
                 )
