@@ -43,4 +43,5 @@ setuptools.setup(
         ]
     },
     python_requires=">=3.6",
+    entry_points={"console_scripts": ["co2board = co2_tracker.viz.dashboard:main"]},
 )

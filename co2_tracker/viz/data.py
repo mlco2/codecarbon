@@ -150,7 +150,6 @@ class Data:
         region_emissions = self._data_source.get_country_emissions_data(
             country_iso_code.lower()
         )
-        print(region_emissions)
         choropleth_data = []
         for region_name in region_emissions.keys():
 

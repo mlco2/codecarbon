@@ -1,0 +1,23 @@
+.. _usage_offline:
+
+Offline Mode
+------------
+An offline version is available to support restricted environments without internet access. The internal computations remain unchanged, however,
+a ``country_iso_code`` parameter is required to fetch Carbon Intensity details of the regional electricity used.
+
+.. code-block:: python
+
+   tracker = OfflineCO2Tracker(country_iso_code="CAN")
+   tracker.start()
+   # GPU intensive training code
+   tracker.stop()
+
+
+.. code-block:: python
+
+   @track_co2(offline=True, country_iso_code="CAN")
+   def training_function():
+       # training code goes here
+
+
+The CO2 emissions will be saved to a ``emissions.csv`` file in the same directory. Please refer to the full API documentation for additional configuration options.

@@ -183,7 +183,8 @@ class OfflineCO2Tracker(BaseCO2Tracker):
         **kwargs
     ):
         """
-        :param country: The country in which the experiment in being run.
+        :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run.
+        :param country_name: Name of the country where the experiment in being run.
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States.
         """
