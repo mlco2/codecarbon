@@ -183,8 +183,8 @@ class OfflineCO2Tracker(BaseCO2Tracker):
         **kwargs
     ):
         """
-        :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run
-        :param country_name: Name of the country where the experiment in being run
+        :param country_iso_code: 3 letter ISO Code of the country where the experiment is being run
+        :param country_name: Name of the country where the experiment is being run
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States
         """
@@ -237,9 +237,9 @@ def track_co2(
                        in a CSV file called `emissions.csv`, defaults to current directory
     :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
     :param offline: Indicates if the tracker should be run in offline mode
-    :param country_iso_code: 3 letter ISO Code of the country where the experiment in being run,
+    :param country_iso_code: 3 letter ISO Code of the country where the experiment is being run,
                              required if `offline=True`
-    :param country_name: Name of the country where the experiment in being run,
+    :param country_name: Name of the country where the experiment is being run,
                          required if `offline=True`
     :param region: The provincial region, for example, California in the US.
                    Currently, this only affects calculations for the United States
