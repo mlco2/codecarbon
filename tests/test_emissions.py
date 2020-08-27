@@ -1,8 +1,8 @@
 import unittest
 
-from co2_tracker.emissions import Emissions
-from co2_tracker.units import Energy
-from co2_tracker.external.geography import CloudMetadata, GeoMetadata
+from co2tracker.emissions import Emissions
+from co2tracker.units import Energy
+from co2tracker.external.geography import CloudMetadata, GeoMetadata
 
 from tests.testutils import get_test_data_source
 

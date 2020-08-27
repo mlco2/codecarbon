@@ -4,7 +4,6 @@ Contains implementations of the Public facing API: CO2Tracker, OfflineCO2Tracker
 
 from abc import abstractmethod, ABC
 from apscheduler.schedulers.background import BackgroundScheduler
-from co2_tracker_utils.gpu_logging import is_gpu_details_available
 from datetime import datetime
 from functools import wraps
 import logging
@@ -13,12 +12,13 @@ import time
 from typing import Optional, List, Callable
 import uuid
 
-from co2_tracker.input import DataSource
-from co2_tracker.emissions import Emissions
-from co2_tracker.external.geography import GeoMetadata, CloudMetadata
-from co2_tracker.external.hardware import GPU
-from co2_tracker.output import FileOutput, CO2Data, BaseOutput
-from co2_tracker.units import Time, Energy
+from co2tracker.input import DataSource
+from co2tracker.emissions import Emissions
+from co2tracker.external.geography import GeoMetadata, CloudMetadata
+from co2tracker.external.hardware import GPU
+from co2tracker.output import FileOutput, CO2Data, BaseOutput
+from co2tracker.units import Time, Energy
+from co2tracker.utils.gpu import is_gpu_details_available
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +48,10 @@ class BaseCO2Tracker(ABC):
         self._measure_power_secs: int = measure_power_secs
         self._start_time: Optional[float] = None
         self._output_dir: str = output_dir
-        self._total_energy: Energy = Energy.from_energy(kwh=0)
+        self._total_energy: Energy = Energy.from_energy(kwh=1)
         self._scheduler = BackgroundScheduler()
         self._is_gpu_available = is_gpu_details_available()
-        self._hardware = (
-            GPU.from_co2_tracker_utils()
-        )  # TODO: Change once CPU support is available
+        self._hardware = GPU.from_utils()  # TODO: Change once CPU support is available
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
         self._scheduler.add_job(
@@ -75,11 +73,6 @@ class BaseCO2Tracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
-
-        # TODO: Change once CPU support is available
-        if not self._is_gpu_available:
-            logger.warning("No GPU available")
-            return
 
         if self._start_time is not None:
             logger.warning("Already started tracking")
@@ -214,7 +207,7 @@ class CO2Tracker(BaseCO2Tracker):
         return GeoMetadata.from_geo_js(self._data_source.geo_js_url)
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata.from_co2_tracker_utils()
+        return CloudMetadata.from_utils()
 
 
 def track_co2(

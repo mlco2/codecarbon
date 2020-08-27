@@ -3,12 +3,12 @@ Encapsulates external dependencies to retrieve hardware metadata
 """
 
 from abc import abstractmethod, ABC
-from co2_tracker_utils.gpu_logging import get_gpu_details
 from dataclasses import dataclass
 import logging
 from typing import Iterable, List, Dict
 
-from co2_tracker.units import Power
+from co2tracker.units import Power
+from co2tracker.utils.gpu import get_gpu_details
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class GPU(BaseHardware):
         return self.get_power_for_gpus(gpu_ids=set(range(self.num_gpus)))
 
     @classmethod
-    def from_co2_tracker_utils(cls) -> "GPU":
+    def from_utils(cls) -> "GPU":
         return cls(num_gpus=len(get_gpu_details()))
 
 

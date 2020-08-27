@@ -25,7 +25,6 @@ Following pip packages are used by the CO2Tracker package.
 .. code-block::  bash
 
     APScheduler
-    co2-tracker-utils
     dash
     dash_bootstrap_components
     dataclasses

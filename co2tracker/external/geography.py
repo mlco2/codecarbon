@@ -2,12 +2,13 @@
 Encapsulates external dependencies to retrieve cloud and geographical metadata
 """
 
-from co2_tracker_utils.cloud_logging import get_env_cloud_details
 from dataclasses import dataclass
 import logging
 import re
 import requests
 from typing import Callable, Dict, Optional
+
+from co2tracker.utils.cloud import get_env_cloud_details
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class CloudMetadata:
         return self.provider is None and self.region is None
 
     @classmethod
-    def from_co2_tracker_utils(cls) -> "CloudMetadata":
+    def from_utils(cls) -> "CloudMetadata":
         def extract_gcp_region(zone: str) -> str:
             """
             projects/705208488469/zones/us-central1-a -> us-central1

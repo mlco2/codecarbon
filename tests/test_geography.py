@@ -2,7 +2,7 @@ import responses
 import unittest
 from unittest import mock
 
-from co2_tracker.external.geography import CloudMetadata, GeoMetadata
+from co2tracker.external.geography import CloudMetadata, GeoMetadata
 
 from tests.testdata import (
     CLOUD_METADATA_AWS,
@@ -15,36 +15,36 @@ from tests.testdata import (
 
 class TestCloudMetadata(unittest.TestCase):
     @mock.patch(
-        "co2_tracker.external.geography.get_env_cloud_details",
+        "co2tracker.external.geography.get_env_cloud_details",
         return_value=CLOUD_METADATA_AWS,
     )
     def test_cloud_metadata_AWS(self, mock_get_env_cloud_details):
         # WHEN
-        cloud = CloudMetadata.from_co2_tracker_utils()
+        cloud = CloudMetadata.from_utils()
 
         # THEN
         self.assertEqual("aws", cloud.provider)
         self.assertEqual("us-east-1", cloud.region)
 
     @mock.patch(
-        "co2_tracker.external.geography.get_env_cloud_details",
+        "co2tracker.external.geography.get_env_cloud_details",
         return_value=CLOUD_METADATA_AZURE,
     )
     def test_cloud_metadata_AZURE(self, mock_get_env_cloud_details):
         # WHEN
-        cloud = CloudMetadata.from_co2_tracker_utils()
+        cloud = CloudMetadata.from_utils()
 
         # THEN
         self.assertEqual("azure", cloud.provider)
         self.assertEqual("eastus", cloud.region)
 
     @mock.patch(
-        "co2_tracker.external.geography.get_env_cloud_details",
+        "co2tracker.external.geography.get_env_cloud_details",
         return_value=CLOUD_METADATA_GCP,
     )
     def test_cloud_metadata_GCP(self, mock_get_env_cloud_details):
         # WHEN
-        cloud = CloudMetadata.from_co2_tracker_utils()
+        cloud = CloudMetadata.from_utils()
 
         # THEN
         self.assertEqual("gcp", cloud.provider)

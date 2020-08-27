@@ -18,7 +18,7 @@ pass it as a param to function calls to start and stop the emissions tracking of
 
 .. code-block:: python
 
-   from co2_tracker import CO2Tracker
+   from co2tracker import CO2Tracker
    tracker = CO2Tracker()
    tracker.start()
    # GPU intensive training code
@@ -32,7 +32,7 @@ emissions of the training code.
 
 .. code-block:: python
 
-   from co2_tracker import track_co2
+   from co2tracker import track_co2
    # Results are saved to a `emissions.csv` file
    # in the same directory by default.
    @track_co2
@@ -52,7 +52,7 @@ Developers can use ``OfflineCO2Tracker`` object to track emissions in absence of
 
 .. code-block:: python
 
-   from co2_tracker import OfflineCO2Tracker
+   from co2tracker import OfflineCO2Tracker
    tracker = OfflineCO2Tracker(country_iso_code="CAN")
    tracker.start()
    # GPU intensive training code
@@ -68,7 +68,7 @@ Decorator
 
 .. code-block:: python
 
-   from co2_tracker import track_co2
+   from co2tracker import track_co2
    @track_co2(offline=True, country_iso_code="CAN")
    def training_function():
        # training code goes here

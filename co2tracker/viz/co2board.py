@@ -6,8 +6,8 @@ import dash_table as dt
 import fire
 import pandas as pd
 
-from co2_tracker.viz.components import Components
-from co2_tracker.viz.data import Data
+from co2tracker.viz.components import Components
+from co2tracker.viz.data import Data
 
 
 def render_app(df: pd.DataFrame):

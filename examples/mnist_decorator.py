@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from co2_tracker import track_co2
+from co2tracker import track_co2
 
 
 @track_co2(project_name="foo")

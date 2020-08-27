@@ -7,7 +7,7 @@ Explicit Object
 .. code-block:: python
 
    import tensorflow as tf
-   from co2_tracker import CO2Tracker
+   from co2tracker import CO2Tracker
 
    mnist = tf.keras.datasets.mnist
 
@@ -47,7 +47,7 @@ Decorator
 .. code-block:: python
 
     import tensorflow as tf
-    from co2_tracker import track_co2
+    from co2tracker import track_co2
 
     @track_co2(project_name="foo")
     def train_model():

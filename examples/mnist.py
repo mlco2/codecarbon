@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from co2_tracker import CO2Tracker
+from co2tracker import CO2Tracker
 
 mnist = tf.keras.datasets.mnist
 
@@ -25,4 +25,4 @@ tracker = CO2Tracker()
 tracker.start()
 model.fit(x_train, y_train, epochs=5)
 emissions: float = tracker.stop()
-print(emissions)
+print(f"Emissions: {emissions} kg")

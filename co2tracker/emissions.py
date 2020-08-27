@@ -8,9 +8,9 @@ import logging
 import pandas as pd
 from typing import Dict
 
-from co2_tracker.external.geography import GeoMetadata, CloudMetadata
-from co2_tracker.input import DataSource
-from co2_tracker.units import CO2EmissionsPerKwh, Energy
+from co2tracker.external.geography import GeoMetadata, CloudMetadata
+from co2tracker.input import DataSource
+from co2tracker.units import CO2EmissionsPerKwh, Energy
 
 logger = logging.getLogger(__name__)
 
