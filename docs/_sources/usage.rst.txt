@@ -63,7 +63,7 @@ Decorator
 ~~~~~~~~~
 ``track_co2`` decorator in offline mode requires following two parameters:
 
-- ``offline`` set to ``True``, which defaults to ``False`` to support online mode.
+- ``offline`` needs to be set to ``True``, which defaults to ``False`` for online mode.
 - ``country_iso_code`` as the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, for example - CAN for Canada.
 
 .. code-block:: python
@@ -74,5 +74,6 @@ Decorator
        # training code goes here
 
 
-The CO2 emissions will be saved to a ``emissions.csv`` file in the same directory. Please refer to the full API documentation for additional configuration options.
+The CO2 emissions will be saved to a ``emissions.csv`` file in the same directory. Please refer to the :ref:`complete API <parameters>` for
+additional parameters and configuration options.
 

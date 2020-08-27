@@ -229,7 +229,7 @@ a <code class="docutils literal notranslate"><span class="pre">country_iso_code<
 <h3>Decorator<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">track_co2</span></code> decorator in offline mode requires following two parameters:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">offline</span></code> set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, which defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code> to support online mode.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">offline</span></code> needs to be set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, which defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code> for online mode.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> as the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, for example - CAN for Canada.</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2_tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
@@ -238,7 +238,8 @@ a <code class="docutils literal notranslate"><span class="pre">country_iso_code<
     <span class="c1"># training code goes here</span>
 </pre></div>
 </div>
-<p>The CO2 emissions will be saved to a <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code> file in the same directory. Please refer to the full API documentation for additional configuration options.</p>
+<p>The CO2 emissions will be saved to a <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code> file in the same directory. Please refer to the <a class="reference internal" href="parameters.html#parameters"><span class="std std-ref">complete API</span></a> for
+additional parameters and configuration options.</p>
 </div>
 </div>
 </div>
