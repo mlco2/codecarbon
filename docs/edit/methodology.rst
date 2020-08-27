@@ -49,3 +49,6 @@ Power supply to the underlying hardware is tracked at frequent time intervals. T
 The net Power Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
 
+References
+----------
+`Energy Usage Reports: Environmental awareness as part of algorithmic accountability <https://arxiv.org/pdf/1911.08354.pdf>`_
