@@ -167,7 +167,7 @@
 <div class="section" id="explicit-object">
 <h2>Explicit Object<a class="headerlink" href="#explicit-object" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
-<span class="kn">from</span> <span class="nn">co2_tracker</span> <span class="kn">import</span> <span class="n">CO2Tracker</span>
+<span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">CO2Tracker</span>
 
 <span class="n">mnist</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">mnist</span>
 
@@ -205,7 +205,7 @@
 <div class="section" id="decorator">
 <h2>Decorator<a class="headerlink" href="#decorator" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
-<span class="kn">from</span> <span class="nn">co2_tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
+<span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
 
 <span class="nd">@track_co2</span><span class="p">(</span><span class="n">project_name</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">train_model</span><span class="p">():</span>

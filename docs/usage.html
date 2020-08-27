@@ -188,7 +188,7 @@
 <h3>Explicit Object<a class="headerlink" href="#explicit-object" title="Permalink to this headline">¶</a></h3>
 <p>In case of absence of a single entry and stop point to the training code base, users can instantiate a <code class="docutils literal notranslate"><span class="pre">CO2Tracker</span></code> object and
 pass it as a param to function calls to start and stop the emissions tracking of the compute section.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2_tracker</span> <span class="kn">import</span> <span class="n">CO2Tracker</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">CO2Tracker</span>
 <span class="n">tracker</span> <span class="o">=</span> <span class="n">CO2Tracker</span><span class="p">()</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 <span class="c1"># GPU intensive training code</span>
@@ -200,7 +200,7 @@ pass it as a param to function calls to start and stop the emissions tracking of
 <h3>Decorator<a class="headerlink" href="#decorator" title="Permalink to this headline">¶</a></h3>
 <p>In case the training code base is wrapped in a function, users can use the decorator <code class="docutils literal notranslate"><span class="pre">&#64;track_co2</span></code> on the function to enable tracking
 emissions of the training code.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2_tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
 <span class="c1"># Results are saved to a `emissions.csv` file</span>
 <span class="c1"># in the same directory by default.</span>
 <span class="nd">@track_co2</span>
@@ -217,7 +217,7 @@ a <code class="docutils literal notranslate"><span class="pre">country_iso_code<
 <div class="section" id="id1">
 <h3>Explicit Object<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>Developers can use <code class="docutils literal notranslate"><span class="pre">OfflineCO2Tracker</span></code> object to track emissions in absence of internet access as follows.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2_tracker</span> <span class="kn">import</span> <span class="n">OfflineCO2Tracker</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">OfflineCO2Tracker</span>
 <span class="n">tracker</span> <span class="o">=</span> <span class="n">OfflineCO2Tracker</span><span class="p">(</span><span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 <span class="c1"># GPU intensive training code</span>
@@ -232,7 +232,7 @@ a <code class="docutils literal notranslate"><span class="pre">country_iso_code<
 <li><p><code class="docutils literal notranslate"><span class="pre">offline</span></code> needs to be set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, which defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code> for online mode.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> as the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, for example - CAN for Canada.</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2_tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
 <span class="nd">@track_co2</span><span class="p">(</span><span class="n">offline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">training_function</span><span class="p">():</span>
     <span class="c1"># training code goes here</span>
