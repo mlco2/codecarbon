@@ -51,10 +51,6 @@ The offline mode object ``OfflineCO2Tracker`` takes following input parameters.
      - Name of the project, defaults to ``co2tracker``
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
-   * - project_name
-     - Name of the project, defaults to ``co2tracker``
-   * - measure_power_secs
-     - Interval (in seconds) to measure hardware power usage, defaults to ``15``
    * - output_dir
      - | Directory path to which the experiment details are logged
        | in a CSV file called ``emissions.csv``, defaults to current directory
@@ -74,10 +70,6 @@ Decorator ``track_co2`` takes following input parameters.
 
    * - Parameters
      - Description
-   * - project_name
-     - Name of the project, defaults to ``co2tracker``
-   * - measure_power_secs
-     - Interval (in seconds) to measure hardware power usage, defaults to ``15``
    * - project_name
      - Name of the project, defaults to ``co2tracker``
    * - measure_power_secs
