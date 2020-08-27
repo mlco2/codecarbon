@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Methodology</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#carbon-intensity">Carbon Intensity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#power-usage">Power Usage</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
@@ -206,6 +207,16 @@ energy sources, <code class="docutils literal notranslate"><span class="pre">Coa
 </tr>
 </tbody>
 </table>
+<p>For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Net Carbon Intensity = 0.25 * 996 + 0.35 * 817 + 0.26 * 744 + 0.14 * 0 = 728.39 kgCO₂/MWh
+</pre></div>
+</div>
+</div>
+<div class="section" id="power-usage">
+<h2>Power Usage<a class="headerlink" href="#power-usage" title="Permalink to this headline">¶</a></h2>
+<p>Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
+<code class="docutils literal notranslate"><span class="pre">measure_power_secs</span></code>, with default value 15 seconds, that can be passed when instantiating the emissions tracker.</p>
+<p>The net Power Used is the net power supply consumed during the compute time, measured as <code class="docutils literal notranslate"><span class="pre">kWh</span></code>.</p>
 </div>
 </div>
 

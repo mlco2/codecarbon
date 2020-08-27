@@ -34,8 +34,11 @@ energy sources, ``Coal, Petroleum, Natural Gas and Renewable`` that are used to 
    * - Low Carbon
      - 0
 
-For example, if the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable,
-then the net Carbon Intensity = 0.25 * 996 + 0.35 * 817 + 0.26 * 744 + 0.14 * 0 = 728.39 kg CO₂ / MWh
+For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable.
+
+.. code-block:: text
+
+    Net Carbon Intensity = 0.25 * 996 + 0.35 * 817 + 0.26 * 744 + 0.14 * 0 = 728.39 kgCO₂/MWh
 
 
 Power Usage
@@ -43,6 +46,6 @@ Power Usage
 Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
 ``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions tracker.
 
-The net Power Used is the net power supply consumed during the compute time, measured as kWh.
+The net Power Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
 

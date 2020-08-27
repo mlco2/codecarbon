@@ -2,7 +2,6 @@
 
 Methodology
 ===========
-
 CO₂-equivalents [CO₂eq] is measured in kg of CO₂ emitted, which can be inferred from two main factors :
 
 .. code-block:: text
@@ -16,7 +15,6 @@ CO₂eq can then be calculated as ``C * P``
 
 Carbon Intensity
 ----------------
-
 Carbon Intensity of the electricity consumed is calculated as a weighted average of the emissions from different
 energy sources, ``Coal, Petroleum, Natural Gas and Renewable`` that are used to generate electricity from the nearby grid.
 
@@ -35,5 +33,19 @@ energy sources, ``Coal, Petroleum, Natural Gas and Renewable`` that are used to 
      - 744
    * - Low Carbon
      - 0
+
+For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable.
+
+.. code-block:: text
+
+    Net Carbon Intensity = 0.25 * 996 + 0.35 * 817 + 0.26 * 744 + 0.14 * 0 = 728.39 kgCO₂/MWh
+
+
+Power Usage
+-----------
+Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
+``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions tracker.
+
+The net Power Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
 
