@@ -40,9 +40,9 @@ The offline mode object ``OfflineCO2Tracker`` takes following input parameters.
    * - Parameters
      - Description
    * - country_iso_code
-     - 3 letter ISO Code of the country where the experiment in being run
+     - 3 letter ISO Code of the country where the experiment is being run
    * - country_name
-     - Name of the country where the experiment in being run
+     - Name of the country where the experiment is being run
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted
        | Currently, supported only for US States
@@ -83,9 +83,9 @@ Decorator ``track_co2`` takes following input parameters.
    * - offline
      - Boolean variable indicating if the tracker should be run in offline mode, defaults to ``False``
    * - country_iso_code
-     - 3 letter ISO Code of the country where the experiment in being run
+     - 3 letter ISO Code of the country where the experiment is being run
    * - country_name
-     - Name of the country where the experiment in being run
+     - Name of the country where the experiment is being run
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted
        | Currently, supported only for US States
