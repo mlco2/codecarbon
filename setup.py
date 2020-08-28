@@ -3,7 +3,6 @@ import setuptools
 with open("README.md", "r") as f:
     long_description = f.read()
 
-# TODO: Add co2-tracker-utils once it is published to PyPI here
 DEPENDENCIES = [
     "APScheduler",
     "co2-tracker-utils",
@@ -19,7 +18,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
 
 
 setuptools.setup(
-    name="codecarbon",
+    name="code-carbon",
     version="0.0.1",
     author="BCG GAMMA",
     long_description=long_description,
