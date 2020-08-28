@@ -84,11 +84,11 @@ tox
 ```
 
 ## Generate Documentation
-Install [`sphinx.`](https://www.sphinx-doc.org/en/master/usage/installation.html) On MacOS,  
+Install [`sphinx.`](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) using pip. 
 ```
-brew install sphinx-doc
-cd docs
-make html
+pip install -U sphinx
+cd docs/edit
+make docs
 ```
 
 ## Visualization Tool
