@@ -84,7 +84,7 @@ tox
 ```
 
 ## Generate Documentation
-Install [`sphinx.`](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) using pip. 
+Install [`sphinx`](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) using pip. 
 ```
 pip install -U sphinx
 cd docs/edit
