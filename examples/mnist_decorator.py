@@ -3,7 +3,7 @@ import tensorflow as tf
 from codecarbon import track_emissions
 
 
-@track_emissions(project_name="foo")
+@track_emissions(project_name="mnist")
 def train_model():
     mnist = tf.keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -20,8 +20,9 @@ def train_model():
 
     model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
 
-    model.fit(x_train, y_train, epochs=5)
+    model.fit(x_train, y_train, epochs=10)
+    return model
 
 
 if __name__ == "__main__":
-    train_model()
+    model = train_model()
