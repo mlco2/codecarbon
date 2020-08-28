@@ -1,55 +1,5 @@
 # Emissions Tracker
 Emissions Tracker is a Python package for tracking the carbon emissions produced by various kinds of computer programs, from straightforward algorithms to deep neural networks. 
-￼
-Sasha Luccioni, PhD
-AI/ML Researcher - Mila & Université de Montréal, 2020 National Geographic Explorer, IVADO Fellow
-
-Who viewed your profile
-949
-Views of your post
-2,883
-Access exclusive tools & insights
- Try Premium Free for 1 Month
- Saved items
-Recent
-￼
-AI for GOOD
-AI Works!
-Artificial Intelligence & Robotics
-Artificial Intelligence
-Artificial Intelligence Applications
-GroupsSee all Groups
-￼
-AI for GOOD
-AI Works!
-Artificial Intelligence & Robotics
-￼Show more Show more Groups
-Events
-￼
-￼
-10th International Advance Computing Conference
-Followed HashtagsSee all Followed Hashtags
-Discover more
-￼
-Start a post
-￼
-Photo
-￼
-Video
-￼
-Document
-Write article
-￼
-Sort by:
-Top
-Feed Updates
-Feed post
-Kristine Gloria, Ph.D. celebrates this
-￼
-￼
-Grace Abuhamad
- • 2nd
-
 By taking into account your computing infrastructure, location, usage and running time, Emissions Tracker can provide an estimate of how much CO2 you produced, and give you some comparisons with common modes of transporation to give you an order of magnitude. 
 
 
