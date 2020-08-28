@@ -8,7 +8,7 @@ By taking into account your computing infrastructure, location, usage and runnin
 Create a virtual environment using `conda` or `virtualenv.` 
 
 ```
-conda env create --name codecarbon_env
+conda create --name codecarbon_env
 conda activate codecarbon_env
 pip install . 
 ```
