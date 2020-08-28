@@ -24,7 +24,7 @@ def heavy_computation(run_time_secs: int = 3):
     return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 @mock.patch(
-    "codecarbon.emissions_tracker.CarbonTracker._get_cloud_metadata",
+    "codecarbon.emissions_tracker.EmissionsTracker._get_cloud_metadata",
     return_value=CloudMetadata(provider=None, region=None),
 )
 class TestCarbonTracker(unittest.TestCase):
