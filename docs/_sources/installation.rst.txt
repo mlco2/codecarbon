@@ -31,4 +31,5 @@ Following pip packages are used by the CodeCarbon package.
     dataclasses
     fire
     pandas
+    pynvml
     requests

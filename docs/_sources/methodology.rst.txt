@@ -18,9 +18,16 @@ Carbon Intensity
 Carbon Intensity of the electricity consumed is calculated as a weighted average of the emissions from different
 energy sources, ``Coal, Petroleum, Natural Gas and Renewable`` that are used to generate electricity from the nearby grid.
 
+.. image:: ./images/grid_energy_mix.png
+            :align: center
+            :alt: Grid Energy Mix
+            :height: 300px
+            :width: 350px
+
 
 .. list-table:: Carbon Intensity Across Energy Sources
    :widths: 50 50
+   :align: center
    :header-rows: 1
 
    * - Energy Source

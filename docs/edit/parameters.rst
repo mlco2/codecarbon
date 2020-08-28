@@ -12,6 +12,7 @@ The online mode object ``EmissionsTracker`` takes following input parameters.
 
 .. list-table:: Input Parameters to EmissionsTracker
    :widths: 20 80
+   :align: center
    :header-rows: 1
 
    * - Parameters
@@ -35,6 +36,7 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
 
 .. list-table:: Input Parameters to OfflineEmissionsTracker
    :widths: 20 80
+   :align: center
    :header-rows: 1
 
    * - Parameters
@@ -66,6 +68,7 @@ Decorator ``track_emissions`` takes following input parameters.
 
 .. list-table:: Input Parameters to @track_emissions
    :widths: 20 80
+   :align: center
    :header-rows: 1
 
    * - Parameters

@@ -9,6 +9,7 @@ input parameter [defaults to current directory], for each experiment tracked acr
 
 .. list-table:: Data Fields Logged for each Experiment
    :widths: 20 80
+   :align: center
    :header-rows: 1
 
    * - Fields

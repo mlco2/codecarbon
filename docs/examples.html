@@ -198,7 +198,7 @@
 
 <span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">()</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">emissions</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
 </pre></div>
@@ -211,7 +211,7 @@
 <span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
 
 
-<span class="nd">@track_emissions</span><span class="p">(</span><span class="n">project_name</span><span class="o">=</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+<span class="nd">@track_emissions</span><span class="p">(</span><span class="n">project_name</span><span class="o">=</span><span class="s2">&quot;mnist&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">train_model</span><span class="p">():</span>
     <span class="n">mnist</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">mnist</span>
     <span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
@@ -228,11 +228,13 @@
 
     <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s2">&quot;adam&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">])</span>
 
-    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">train_model</span><span class="p">()</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>

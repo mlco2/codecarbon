@@ -7,6 +7,7 @@ Following table illustrates Carbon Footprint from compute of training popular mo
 
 .. list-table:: Carbon Footprint and Compute Cost of Training of Popular Models
    :widths: 16 16 16 16 16 20
+   :align: center
    :header-rows: 1
 
    * - Model
@@ -55,6 +56,7 @@ Following are some examples from daily life depicting amounts of Carbon Emitted.
 
 .. list-table:: Carbon Footprint Across Routine Activities
    :widths: 50 50
+   :align: center
    :header-rows: 1
 
    * - Consumption

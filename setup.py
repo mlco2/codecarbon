@@ -11,6 +11,7 @@ DEPENDENCIES = [
     "dataclasses",
     "fire",
     "pandas",
+    "pynvml",
     "requests",
 ]
 
