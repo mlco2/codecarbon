@@ -43,5 +43,5 @@ setuptools.setup(
         ]
     },
     python_requires=">=3.6",
-    entry_points={"console_scripts": ["co2board = codecarbon.viz.dashboard:main"]},
+    entry_points={"console_scripts": ["carbonboard = codecarbon.viz.dashboard:main"]},
 )

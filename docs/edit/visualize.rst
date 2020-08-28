@@ -13,7 +13,7 @@ The App can be run by executing the below CLI command that needs following argum
 
 .. code-block:: bash
 
-    co2board --filepath="examples/emissions.csv" --port=3333
+    carbonboard --filepath="examples/emissions.csv" --port=3333
 
 
 Summary and Equivalents
