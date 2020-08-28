@@ -1,0 +1,214 @@
+{
+  "rhode island": {
+    "emissions": 870.822,
+    "regionCode": "RI"
+  },
+  "north dakota": {
+    "emissions": 1663.754,
+    "regionCode": "ND"
+  },
+  "alaska": {
+    "emissions": 925.862,
+    "regionCode": "AK"
+  },
+  "maryland": {
+    "emissions": 1012.682,
+    "regionCode": "MD"
+  },
+  "new mexico": {
+    "emissions": 1572.786,
+    "regionCode": "NM"
+  },
+  "arizona": {
+    "emissions": 932.225,
+    "regionCode": "AZ"
+  },
+  "oregon": {
+    "emissions": 305.891,
+    "regionCode": "OR"
+  },
+  "alabama": {
+    "emissions": 912.917,
+    "regionCode": "AL"
+  },
+  "virginia": {
+    "emissions": 813.802,
+    "regionCode": "VA"
+  },
+  "colorado": {
+    "emissions": 1468.373,
+    "regionCode": "CO"
+  },
+  "louisiana": {
+    "emissions": 878.85,
+    "regionCode": "LA"
+  },
+  "mississippi": {
+    "emissions": 940.716,
+    "regionCode": "MS"
+  },
+  "missouri": {
+    "emissions": 1687.742,
+    "regionCode": "MO"
+  },
+  "iowa": {
+    "emissions": 997.858,
+    "regionCode": "IA"
+  },
+  "texas": {
+    "emissions": 1049.527,
+    "regionCode": "TX"
+  },
+  "oklahoma": {
+    "emissions": 1043.716,
+    "regionCode": "OK"
+  },
+  "usa": {
+    "emissions": 998.443,
+    "regionCode": "usa"
+  },
+  "michigan": {
+    "emissions": 1099.854,
+    "regionCode": "MI"
+  },
+  "pennsylvania": {
+    "emissions": 855.444,
+    "regionCode": "PA"
+  },
+  "north carolina": {
+    "emissions": 867.441,
+    "regionCode": "NC"
+  },
+  "south carolina": {
+    "emissions": 629.428,
+    "regionCode": "SC"
+  },
+  "kentucky": {
+    "emissions": 1954.301,
+    "regionCode": "KY"
+  },
+  "ohio": {
+    "emissions": 1465.96,
+    "regionCode": "OH"
+  },
+  "indiana": {
+    "emissions": 1812.703,
+    "regionCode": "IN"
+  },
+  "vermont": {
+    "emissions": 56.89,
+    "regionCode": "VT"
+  },
+  "new jersey": {
+    "emissions": 557.822,
+    "regionCode": "NJ"
+  },
+  "nebraska": {
+    "emissions": 1281.153,
+    "regionCode": "NE"
+  },
+  "tennessee": {
+    "emissions": 992.271,
+    "regionCode": "TN"
+  },
+  "district of columbia": {
+    "emissions": 481.786,
+    "regionCode": "DC"
+  },
+  "south dakota": {
+    "emissions": 513.316,
+    "regionCode": "SD"
+  },
+  "connecticut": {
+    "emissions": 498.467,
+    "regionCode": "CT"
+  },
+  "minnesota": {
+    "emissions": 1012.67,
+    "regionCode": "MN"
+  },
+  "maine": {
+    "emissions": 336.964,
+    "regionCode": "ME"
+  },
+  "wisconsin": {
+    "emissions": 1388.88,
+    "regionCode": "WI"
+  },
+  "montana": {
+    "emissions": 1251.022,
+    "regionCode": "MT"
+  },
+  "hawaii": {
+    "emissions": 1522.102,
+    "regionCode": "HI"
+  },
+  "kansas": {
+    "emissions": 1195.553,
+    "regionCode": "KS"
+  },
+  "new hampshire": {
+    "emissions": 310.564,
+    "regionCode": "NH"
+  },
+  "west virginia": {
+    "emissions": 1975.757,
+    "regionCode": "WV"
+  },
+  "nevada": {
+    "emissions": 769.912,
+    "regionCode": "NV"
+  },
+  "_unit": {
+    "emissions": "lbs/MWh",
+    "regionCode": "2 digit state/region code"
+  },
+  "delaware": {
+    "emissions": 887.415,
+    "regionCode": "DE"
+  },
+  "idaho": {
+    "emissions": 188.695,
+    "regionCode": "ID"
+  },
+  "california": {
+    "emissions": 452.541,
+    "regionCode": "CA"
+  },
+  "arkansas": {
+    "emissions": 1115.65,
+    "regionCode": "AR"
+  },
+  "new york": {
+    "emissions": 464.02,
+    "regionCode": "NY"
+  },
+  "florida": {
+    "emissions": 1024.205,
+    "regionCode": "FL"
+  },
+  "wyoming": {
+    "emissions": 2026.26,
+    "regionCode": "WY"
+  },
+  "georgia": {
+    "emissions": 1001.754,
+    "regionCode": "GA"
+  },
+  "illinois": {
+    "emissions": 811.318,
+    "regionCode": "IL"
+  },
+  "washington": {
+    "emissions": 186.844,
+    "regionCode": "WA"
+  },
+  "massachusetts": {
+    "emissions": 821.327,
+    "regionCode": "MA"
+  },
+  "utah": {
+    "emissions": 1627.372,
+    "regionCode": "UT"
+  }
+}

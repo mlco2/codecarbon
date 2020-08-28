@@ -3,23 +3,22 @@ import setuptools
 with open("README.md", "r") as f:
     long_description = f.read()
 
-# TODO: Add co2-tracker-utils once it is published to PyPI here
 DEPENDENCIES = [
     "APScheduler",
-    "pandas",
-    "requests",
-    "dataclasses",
     "co2-tracker-utils",
     "dash",
-    "fire",
     "dash_bootstrap_components",
+    "dataclasses",
+    "fire",
+    "pandas",
+    "requests",
 ]
 
-TEST_DEPENDENCIES = ["responses", "tox", "mock", "pytest"]
+TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
 
 
 setuptools.setup(
-    name="co2_tracker",
+    name="code-carbon",
     version="0.0.1",
     author="BCG GAMMA",
     long_description=long_description,
@@ -36,11 +35,12 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
     ],
     package_data={
-        "co2_tracker": [
+        "codecarbon": [
             "data/cloud/impact.csv",
             "data/private_infra/2016/usa_emissions.json",
             "data/private_infra/2016/global_energy_mix.json",
         ]
     },
     python_requires=">=3.6",
+    entry_points={"console_scripts": ["carbonboard = codecarbon.viz.dashboard:main"]},
 )

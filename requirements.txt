@@ -1,8 +1,10 @@
 APScheduler
-pandas
-requests
-dataclasses
 co2-tracker-utils
 dash
-fire
 dash_bootstrap_components
+dataclasses
+fire
+pandas
+requests
+sphinx
+sphinx-rtd-theme
