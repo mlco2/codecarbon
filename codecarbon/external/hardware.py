@@ -7,8 +7,8 @@ from dataclasses import dataclass
 import logging
 from typing import Iterable, List, Dict
 
-from co2tracker.units import Power
-from co2tracker.utils.gpu import get_gpu_details
+from codecarbon.units import Power
+from codecarbon.utils.gpu import get_gpu_details
 
 logger = logging.getLogger(__name__)
 

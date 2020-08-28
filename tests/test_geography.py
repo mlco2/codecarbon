@@ -2,7 +2,7 @@ import responses
 import unittest
 from unittest import mock
 
-from co2tracker.external.geography import CloudMetadata, GeoMetadata
+from codecarbon.external.geography import CloudMetadata, GeoMetadata
 
 from tests.testdata import (
     CLOUD_METADATA_AWS,
@@ -15,7 +15,7 @@ from tests.testdata import (
 
 class TestCloudMetadata(unittest.TestCase):
     @mock.patch(
-        "co2tracker.external.geography.get_env_cloud_details",
+        "codecarbon.external.geography.get_env_cloud_details",
         return_value=CLOUD_METADATA_AWS,
     )
     def test_cloud_metadata_AWS(self, mock_get_env_cloud_details):
@@ -27,7 +27,7 @@ class TestCloudMetadata(unittest.TestCase):
         self.assertEqual("us-east-1", cloud.region)
 
     @mock.patch(
-        "co2tracker.external.geography.get_env_cloud_details",
+        "codecarbon.external.geography.get_env_cloud_details",
         return_value=CLOUD_METADATA_AZURE,
     )
     def test_cloud_metadata_AZURE(self, mock_get_env_cloud_details):
@@ -39,7 +39,7 @@ class TestCloudMetadata(unittest.TestCase):
         self.assertEqual("eastus", cloud.region)
 
     @mock.patch(
-        "co2tracker.external.geography.get_env_cloud_details",
+        "codecarbon.external.geography.get_env_cloud_details",
         return_value=CLOUD_METADATA_GCP,
     )
     def test_cloud_metadata_GCP(self, mock_get_env_cloud_details):

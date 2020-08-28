@@ -5,8 +5,8 @@ import time
 import unittest
 from unittest import mock
 
-from co2tracker.co2tracker import CO2Tracker, track_co2
-from co2tracker.external.geography import CloudMetadata
+from codecarbon.carbontracker import CarbonTracker, track_carbon
+from codecarbon.external.geography import CloudMetadata
 
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
 from tests.testutils import get_test_data_source
@@ -18,16 +18,16 @@ def heavy_computation(run_time_secs: int = 3):
         pass
 
 
-@mock.patch("co2tracker.co2tracker.is_gpu_details_available", return_value=True)
+@mock.patch("codecarbon.codecarbon.is_gpu_details_available", return_value=True)
 @mock.patch(
-    "co2tracker.external.hardware.get_gpu_details",
+    "codecarbon.external.hardware.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 @mock.patch(
-    "co2tracker.co2tracker.CO2Tracker._get_cloud_metadata",
+    "codecarbon.codecarbon.CO2Tracker._get_cloud_metadata",
     return_value=CloudMetadata(provider=None, region=None),
 )
-class TestCO2Tracker(unittest.TestCase):
+class TestCarbonTracker(unittest.TestCase):
     def setUp(self) -> None:
         self.data_source = get_test_data_source()
         self.project_name = "project_foo"
@@ -38,7 +38,7 @@ class TestCO2Tracker(unittest.TestCase):
             os.remove(self.emissions_file_path)  # delete test artifact if it exists.
 
     @responses.activate
-    def test_co2_tracker_TWO_GPU_PRIVATE_INFRA_CANADA(
+    def test_carbon_tracker_TWO_GPU_PRIVATE_INFRA_CANADA(
         self,
         mocked_env_cloud_details,
         mocked_get_gpu_details,
@@ -51,7 +51,7 @@ class TestCO2Tracker(unittest.TestCase):
             json=GEO_METADATA_CANADA,
             status=200,
         )
-        tracker = CO2Tracker(measure_power_secs=1, save_to_file=False)
+        tracker = CarbonTracker(measure_power_secs=1, save_to_file=False)
 
         # WHEN
         tracker.start()
@@ -70,8 +70,8 @@ class TestCO2Tracker(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
 
-    @mock.patch("co2tracker.external.geography.requests.get")
-    def test_co2_tracker_timeout(
+    @mock.patch("codecarbon.external.geography.requests.get")
+    def test_carbon_tracker_timeout(
         self,
         mocked_requests_get,
         mocked_env_cloud_details,
@@ -85,7 +85,7 @@ class TestCO2Tracker(unittest.TestCase):
 
         mocked_requests_get.side_effect = raise_timeout_exception
 
-        tracker = CO2Tracker(measure_power_secs=1, save_to_file=False)
+        tracker = CarbonTracker(measure_power_secs=1, save_to_file=False)
 
         # WHEN
         tracker.start()
@@ -111,7 +111,7 @@ class TestCO2Tracker(unittest.TestCase):
         )
 
         # WHEN
-        @track_co2(project_name=self.project_name)
+        @track_carbon(project_name=self.project_name)
         def dummy_train_model():
             return 42
 
@@ -136,7 +136,7 @@ class TestCO2Tracker(unittest.TestCase):
         )
 
         # WHEN
-        @track_co2(project_name=self.project_name, output_dir=".")
+        @track_carbon(project_name=self.project_name, output_dir=".")
         def dummy_train_model():
             return 42
 
@@ -153,7 +153,7 @@ class TestCO2Tracker(unittest.TestCase):
     ):
         # WHEN
 
-        @track_co2(offline=True)
+        @track_carbon(offline=True)
         def dummy_train_model():
             return 42
 
@@ -167,7 +167,9 @@ class TestCO2Tracker(unittest.TestCase):
     ):
         # GIVEN
 
-        @track_co2(offline=True, country_iso_code="CAN", project_name=self.project_name)
+        @track_carbon(
+            offline=True, country_iso_code="CAN", project_name=self.project_name
+        )
         def dummy_train_model():
             return 42
 

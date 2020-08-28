@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from co2tracker import track_co2
+from codecarbon import track_carbon
 
 
-@track_co2(project_name="foo")
+@track_carbon(project_name="foo")
 def train_model():
     mnist = tf.keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()

@@ -19,7 +19,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
 
 
 setuptools.setup(
-    name="co2tracker",
+    name="codecarbon",
     version="0.0.1",
     author="BCG GAMMA",
     long_description=long_description,
@@ -36,12 +36,12 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
     ],
     package_data={
-        "co2tracker": [
+        "codecarbon": [
             "data/cloud/impact.csv",
             "data/private_infra/2016/usa_emissions.json",
             "data/private_infra/2016/global_energy_mix.json",
         ]
     },
     python_requires=">=3.6",
-    entry_points={"console_scripts": ["co2board = co2tracker.viz.dashboard:main"]},
+    entry_points={"console_scripts": ["co2board = codecarbon.viz.dashboard:main"]},
 )

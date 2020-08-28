@@ -2,8 +2,8 @@ import dash_table as dt
 import pandas as pd
 from typing import List, Dict, Tuple
 
-from co2tracker.input import DataSource
-from co2tracker.emissions import Emissions
+from codecarbon.input import DataSource
+from codecarbon.emissions import Emissions
 
 
 class Data:
@@ -105,11 +105,11 @@ class Data:
             country_name = global_energy_mix[country_iso_code]["countryName"]
 
             if country_iso_code not in ["_define", "ATA"]:
-                from co2tracker.units import Energy
+                from codecarbon.units import Energy
 
                 energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
 
-                from co2tracker.external.geography import GeoMetadata
+                from codecarbon.external.geography import GeoMetadata
 
                 country_emissions = self._emissions.get_country_emissions(
                     energy_consumed,
@@ -155,11 +155,11 @@ class Data:
 
             region_code = region_emissions[region_name]["regionCode"]
             if region_name not in ["_unit"]:
-                from co2tracker.units import Energy
+                from codecarbon.units import Energy
 
                 energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
 
-                from co2tracker.external.geography import GeoMetadata
+                from codecarbon.external.geography import GeoMetadata
 
                 emissions = self._emissions.get_region_emissions(
                     energy_consumed,
@@ -192,7 +192,7 @@ class Data:
             ["provider", "providerName", "region", "impact", "countryName"]
         ]
 
-        from co2tracker.units import CO2EmissionsPerKwh
+        from codecarbon.units import CO2EmissionsPerKwh
 
         cloud_emissions["emissions"] = cloud_emissions.apply(
             lambda row: CO2EmissionsPerKwh.from_g_per_kwh(row.impact).kgs_per_kwh

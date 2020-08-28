@@ -1,14 +1,14 @@
 import unittest
 from unittest import mock
 
-from co2tracker.external.hardware import GPU
+from codecarbon.external.hardware import GPU
 
 from tests.testdata import TWO_GPU_DETAILS_RESPONSE
 
 
-@mock.patch("co2tracker.co2tracker.is_gpu_details_available", return_value=True)
+@mock.patch("codecarbon.codecarbon.is_gpu_details_available", return_value=True)
 @mock.patch(
-    "co2tracker.external.hardware.get_gpu_details",
+    "codecarbon.external.hardware.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 class TestGPUMetadata(unittest.TestCase):

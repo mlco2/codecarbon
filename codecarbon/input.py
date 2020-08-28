@@ -16,7 +16,7 @@ class DataSource:
             "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
             "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
         }
-        self.module_name = "co2tracker"
+        self.module_name = "codecarbon"
 
     @property
     def geo_js_url(self):

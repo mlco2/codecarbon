@@ -12,33 +12,33 @@ import time
 from typing import Optional, List, Callable
 import uuid
 
-from co2tracker.input import DataSource
-from co2tracker.emissions import Emissions
-from co2tracker.external.geography import GeoMetadata, CloudMetadata
-from co2tracker.external.hardware import GPU
-from co2tracker.output import FileOutput, CO2Data, BaseOutput
-from co2tracker.units import Time, Energy
-from co2tracker.utils.gpu import is_gpu_details_available
+from codecarbon.input import DataSource
+from codecarbon.emissions import Emissions
+from codecarbon.external.geography import GeoMetadata, CloudMetadata
+from codecarbon.external.hardware import GPU
+from codecarbon.output import FileOutput, CO2Data, BaseOutput
+from codecarbon.units import Time, Energy
+from codecarbon.utils.gpu import is_gpu_details_available
 
 logger = logging.getLogger(__name__)
 
 
-class BaseCO2Tracker(ABC):
+class BaseCarbonTracker(ABC):
     """
-    Primary abstraction with the CO2 Tracker functionality.
+    Primary abstraction with Carbon Tracking functionality.
     Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata`
-    that are implemented by two concrete classes `OfflineCO2Tracker` and `CO2Tracker.`
+    that are implemented by two concrete classes `OfflineCarbonTracker` and `CarbonTracker.`
     """
 
     def __init__(
         self,
-        project_name: str = "co2tracker",
+        project_name: str = "codecarbon",
         measure_power_secs: int = 15,
         output_dir: str = ".",
         save_to_file: bool = True,
     ):
         """
-        :param project_name: Project name for current experiment run, default name as "co2tracker"
+        :param project_name: Project name for current experiment run, default name as "codecarbon"
         :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current directory
@@ -161,9 +161,9 @@ class BaseCO2Tracker(ABC):
         )
 
 
-class OfflineCO2Tracker(BaseCO2Tracker):
+class OfflineCarbonTracker(BaseCarbonTracker):
     """
-    Offline implementation of the `CO2tracker.`
+    Offline implementation of the `CarbonTracker.`
     In addition to the standard arguments, the following are required.
     """
 
@@ -198,7 +198,7 @@ class OfflineCO2Tracker(BaseCO2Tracker):
         return CloudMetadata(provider=None, region=None)
 
 
-class CO2Tracker(BaseCO2Tracker):
+class CarbonTracker(BaseCarbonTracker):
     """
     A CO2 tracker that auto infers geographical location.
     """
@@ -210,9 +210,9 @@ class CO2Tracker(BaseCO2Tracker):
         return CloudMetadata.from_utils()
 
 
-def track_co2(
+def track_carbon(
     fn: Callable = None,
-    project_name: str = "co2tracker",
+    project_name: str = "codecarbon",
     measure_power_secs: int = 15,
     output_dir: str = ".",
     save_to_file: bool = True,
@@ -224,7 +224,7 @@ def track_co2(
     """
     Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
     :param fn: Function to be decorated
-    :param project_name: Project name for current experiment run, default name as "co2tracker"
+    :param project_name: Project name for current experiment run, default name as "codecarbon"
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
     :param output_dir: Directory path to which the experiment details are logged
                        in a CSV file called `emissions.csv`, defaults to current directory
@@ -245,7 +245,7 @@ def track_co2(
             if offline:
                 if country_iso_code is None:
                     raise Exception("Needs ISO Code of the Country for Offline mode")
-                tracker = OfflineCO2Tracker(
+                tracker = OfflineCarbonTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
@@ -258,7 +258,7 @@ def track_co2(
                 fn(*args, **kwargs)
                 tracker.stop()
             else:
-                tracker = CO2Tracker(
+                tracker = CarbonTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,

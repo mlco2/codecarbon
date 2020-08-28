@@ -1,4 +1,4 @@
-# CO2 Tracker
+# Carbon Tracker
 
 
 ## Setup
@@ -15,8 +15,8 @@ pip install .
 #### Online mode (for setups with internet access)
 
 ```python
-from co2tracker import CO2Tracker
-tracker = CO2Tracker()
+from codecarbon import CarbonTracker
+tracker = CarbonTracker()
 tracker.start()
 # GPU Intensive code goes here
 tracker.stop()
@@ -25,9 +25,9 @@ tracker.stop()
 Or use the decorator
 
 ```python
-from co2tracker import track_co2
+from codecarbon import track_carbon
 
-@track_co2
+@track_carbon
 def training_loop():
    pass
 ```
@@ -35,9 +35,9 @@ def training_loop():
 
 The offline tracker can be used as follows:
 ```python
-from co2tracker import OfflineCO2Tracker
+from codecarbon import OfflineCarbonTracker
 
-tracker = OfflineCO2Tracker(country="Canada")
+tracker = OfflineCarbonTracker(country="Canada")
 tracker.start()
 # GPU Intensive code goes here
 tracker.stop()
@@ -46,9 +46,9 @@ tracker.stop()
 or 
 
 ```python
-from co2tracker import track_co2
+from codecarbon import track_carbon
 
-@track_co2(offline=True, country="Canada")
+@track_carbon(offline=True, country="Canada")
 def training_loop():
    pass
 ```
