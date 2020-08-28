@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class CO2EmissionsPerKwh:
+class EmissionsPerKwh:
     """
     Measured in kg/kwh
     """
@@ -17,15 +17,15 @@ class CO2EmissionsPerKwh:
     kgs_per_kwh: float
 
     @classmethod
-    def from_lbs_per_mwh(cls, lbs_per_mwh: float) -> "CO2EmissionsPerKwh":
-        return cls(kgs_per_kwh=lbs_per_mwh * CO2EmissionsPerKwh.LBS_MWH_TO_KG_KWH)
+    def from_lbs_per_mwh(cls, lbs_per_mwh: float) -> "EmissionsPerKwh":
+        return cls(kgs_per_kwh=lbs_per_mwh * EmissionsPerKwh.LBS_MWH_TO_KG_KWH)
 
     @classmethod
-    def from_g_per_kwh(cls, g_per_kwh: float) -> "CO2EmissionsPerKwh":
-        return cls(kgs_per_kwh=g_per_kwh * CO2EmissionsPerKwh.G_KWH_TO_KG_KWH)
+    def from_g_per_kwh(cls, g_per_kwh: float) -> "EmissionsPerKwh":
+        return cls(kgs_per_kwh=g_per_kwh * EmissionsPerKwh.G_KWH_TO_KG_KWH)
 
     @classmethod
-    def from_kgs_per_kwh(cls, kgs_per_kwh: float) -> "CO2EmissionsPerKwh":
+    def from_kgs_per_kwh(cls, kgs_per_kwh: float) -> "EmissionsPerKwh":
         return cls(kgs_per_kwh=kgs_per_kwh)
 
 

@@ -18,7 +18,7 @@ input parameter [defaults to current directory], for each experiment tracked acr
    * - timestamp
      - Time of the experiment in ``%Y-%m-%dT%H:%M:%S`` format
    * - project_name
-     - Name of the project, defaults to ``co2tracker``
+     - Name of the project, defaults to ``codecarbon``
    * - duration
      - Duration of the compute, in seconds
    * - emissions
@@ -42,4 +42,4 @@ input parameter [defaults to current directory], for each experiment tracked acr
 ..  note::
 
     Developers can enhance the Output interface, based on requirements for example to log into a database, by implementing a custom Class
-    that is a derived implementation of base class ``BaseOutput`` at ``co2_tracker/output.py``
+    that is a derived implementation of base class ``BaseOutput`` at ``codecarbon/output.py``

@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
-project = "CO2 Tracker"
+project = "CodeCarbon"
 copyright = "2020, BCG GAMMA, Comet.ml, Haverford College, MILA"
 author = "BCG GAMMA, Comet.ml, Haverford College, MILA"
 

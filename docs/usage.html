@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Quickstart &mdash; CO2 Tracker 0.0.1 documentation</title>
+  <title>Quickstart &mdash; CodeCarbon 0.0.1 documentation</title>
   
 
   
@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Input Parameters" href="parameters.html" />
-    <link rel="prev" title="Installing CO2Tracker" href="installation.html" /> 
+    <link rel="prev" title="Installing CodeCarbon" href="installation.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -51,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CO2 Tracker
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CodeCarbon
           
 
           
@@ -90,7 +90,7 @@
 </ul>
 <p class="caption"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CO2Tracker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#online-mode">Online Mode</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#explicit-object">Explicit Object</a></li>
@@ -126,7 +126,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">CO2 Tracker</a>
+          <a href="index.html">CodeCarbon</a>
         
       </nav>
 
@@ -182,14 +182,14 @@
 <code class="docutils literal notranslate"><span class="pre">offline</span></code> (without internet access) modes. The tracker can be used in following ways.</p>
 <div class="section" id="online-mode">
 <h2>Online Mode<a class="headerlink" href="#online-mode" title="Permalink to this headline">¶</a></h2>
-<p>When the environment has internet access <code class="docutils literal notranslate"><span class="pre">CO2Tracker</span></code> object or vanilla <code class="docutils literal notranslate"><span class="pre">track_co2</span></code> decorator can be used, which has parameter
+<p>When the environment has internet access <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object or vanilla <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> decorator can be used, which has parameter
 <code class="docutils literal notranslate"><span class="pre">offline</span></code> defaulted to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 <div class="section" id="explicit-object">
 <h3>Explicit Object<a class="headerlink" href="#explicit-object" title="Permalink to this headline">¶</a></h3>
-<p>In case of absence of a single entry and stop point to the training code base, users can instantiate a <code class="docutils literal notranslate"><span class="pre">CO2Tracker</span></code> object and
+<p>In case of absence of a single entry and stop point to the training code base, users can instantiate a <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object and
 pass it as a param to function calls to start and stop the emissions tracking of the compute section.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">CO2Tracker</span>
-<span class="n">tracker</span> <span class="o">=</span> <span class="n">CO2Tracker</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">EmissionsTracker</span>
+<span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">()</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 <span class="c1"># GPU intensive training code</span>
 <span class="n">emissions</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
@@ -198,12 +198,12 @@ pass it as a param to function calls to start and stop the emissions tracking of
 </div>
 <div class="section" id="decorator">
 <h3>Decorator<a class="headerlink" href="#decorator" title="Permalink to this headline">¶</a></h3>
-<p>In case the training code base is wrapped in a function, users can use the decorator <code class="docutils literal notranslate"><span class="pre">&#64;track_co2</span></code> on the function to enable tracking
+<p>In case the training code base is wrapped in a function, users can use the decorator <code class="docutils literal notranslate"><span class="pre">&#64;track_emissions</span></code> on the function to enable tracking
 emissions of the training code.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
 <span class="c1"># Results are saved to a `emissions.csv` file</span>
 <span class="c1"># in the same directory by default.</span>
-<span class="nd">@track_co2</span>
+<span class="nd">@track_emissions</span>
 <span class="k">def</span> <span class="nf">training_function</span><span class="p">():</span>
     <span class="c1"># training code goes here</span>
 </pre></div>
@@ -216,9 +216,9 @@ emissions of the training code.</p>
 a <code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> parameter is required to fetch Carbon Intensity details of the regional electricity used.</p>
 <div class="section" id="id1">
 <h3>Explicit Object<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p>Developers can use <code class="docutils literal notranslate"><span class="pre">OfflineCO2Tracker</span></code> object to track emissions in absence of internet access as follows.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">OfflineCO2Tracker</span>
-<span class="n">tracker</span> <span class="o">=</span> <span class="n">OfflineCO2Tracker</span><span class="p">(</span><span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>
+<p>Developers can use <code class="docutils literal notranslate"><span class="pre">OfflineEmissionsTracker</span></code> object to track emissions in absence of internet access as follows.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">OfflineEmissionsTracker</span>
+<span class="n">tracker</span> <span class="o">=</span> <span class="n">OfflineEmissionsTracker</span><span class="p">(</span><span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 <span class="c1"># GPU intensive training code</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
@@ -227,18 +227,18 @@ a <code class="docutils literal notranslate"><span class="pre">country_iso_code<
 </div>
 <div class="section" id="id2">
 <h3>Decorator<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">track_co2</span></code> decorator in offline mode requires following two parameters:</p>
+<p><code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> decorator in offline mode requires following two parameters:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">offline</span></code> needs to be set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, which defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code> for online mode.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> as the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, for example - CAN for Canada.</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">co2tracker</span> <span class="kn">import</span> <span class="n">track_co2</span>
-<span class="nd">@track_co2</span><span class="p">(</span><span class="n">offline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
+<span class="nd">@track_emissions</span><span class="p">(</span><span class="n">offline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">training_function</span><span class="p">():</span>
     <span class="c1"># training code goes here</span>
 </pre></div>
 </div>
-<p>The CO2 emissions will be saved to a <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code> file in the same directory. Please refer to the <a class="reference internal" href="parameters.html#parameters"><span class="std std-ref">complete API</span></a> for
+<p>The Carbon emissions will be saved to a <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code> file in the same directory. Please refer to the <a class="reference internal" href="parameters.html#parameters"><span class="std std-ref">complete API</span></a> for
 additional parameters and configuration options.</p>
 </div>
 </div>
@@ -255,7 +255,7 @@ additional parameters and configuration options.</p>
         <a href="parameters.html" class="btn btn-neutral float-right" title="Input Parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="installation.html" class="btn btn-neutral float-left" title="Installing CO2Tracker" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installing CodeCarbon" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

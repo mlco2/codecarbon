@@ -5,19 +5,19 @@ Input Parameters
 
 A set of parameters are supported by API to help users provide additional details per project.
 
-CO2Tracker
-----------
+EmissionsTracker
+----------------
 
-The online mode object ``CO2Tracker`` takes following input parameters.
+The online mode object ``EmissionsTracker`` takes following input parameters.
 
-.. list-table:: Input Parameters to CO2Tracker
+.. list-table:: Input Parameters to EmissionsTracker
    :widths: 20 80
    :header-rows: 1
 
    * - Parameters
      - Description
    * - project_name
-     - Name of the project, defaults to ``co2tracker``
+     - Name of the project, defaults to ``codecarbon``
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
    * - output_dir
@@ -28,12 +28,12 @@ The online mode object ``CO2Tracker`` takes following input parameters.
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
 
 
-OfflineCO2Tracker
------------------
+OfflineEmissionsTracker
+-----------------------
 
-The offline mode object ``OfflineCO2Tracker`` takes following input parameters.
+The offline mode object ``OfflineEmissionsTracker`` takes following input parameters.
 
-.. list-table:: Input Parameters to OfflineCO2Tracker
+.. list-table:: Input Parameters to OfflineEmissionsTracker
    :widths: 20 80
    :header-rows: 1
 
@@ -48,7 +48,7 @@ The offline mode object ``OfflineCO2Tracker`` takes following input parameters.
        | Currently, supported only for US States
        | for example - California or New York
    * - project_name
-     - Name of the project, defaults to ``co2tracker``
+     - Name of the project, defaults to ``codecarbon``
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
    * - output_dir
@@ -59,19 +59,19 @@ The offline mode object ``OfflineCO2Tracker`` takes following input parameters.
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
 
 
-@track_co2
-----------
+@track_emissions
+----------------
 
-Decorator ``track_co2`` takes following input parameters.
+Decorator ``track_emissions`` takes following input parameters.
 
-.. list-table:: Input Parameters to @track_co2
+.. list-table:: Input Parameters to @track_emissions
    :widths: 20 80
    :header-rows: 1
 
    * - Parameters
      - Description
    * - project_name
-     - Name of the project, defaults to ``co2tracker``
+     - Name of the project, defaults to ``codecarbon``
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
    * - output_dir

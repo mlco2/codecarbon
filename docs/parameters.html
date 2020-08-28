@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Input Parameters &mdash; CO2 Tracker 0.0.1 documentation</title>
+  <title>Input Parameters &mdash; CodeCarbon 0.0.1 documentation</title>
   
 
   
@@ -51,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CO2 Tracker
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CodeCarbon
           
 
           
@@ -90,12 +90,12 @@
 </ul>
 <p class="caption"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CO2Tracker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Input Parameters</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#co2tracker">CO2Tracker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#offlineco2tracker">OfflineCO2Tracker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#track-co2">&#64;track_co2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#emissionstracker">EmissionsTracker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#offlineemissionstracker">OfflineEmissionsTracker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#track-emissions">&#64;track_emissions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -119,7 +119,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">CO2 Tracker</a>
+          <a href="index.html">CodeCarbon</a>
         
       </nav>
 
@@ -172,11 +172,11 @@
   <div class="section" id="input-parameters">
 <span id="parameters"></span><h1>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this headline">¶</a></h1>
 <p>A set of parameters are supported by API to help users provide additional details per project.</p>
-<div class="section" id="co2tracker">
-<h2>CO2Tracker<a class="headerlink" href="#co2tracker" title="Permalink to this headline">¶</a></h2>
-<p>The online mode object <code class="docutils literal notranslate"><span class="pre">CO2Tracker</span></code> takes following input parameters.</p>
+<div class="section" id="emissionstracker">
+<h2>EmissionsTracker<a class="headerlink" href="#emissionstracker" title="Permalink to this headline">¶</a></h2>
+<p>The online mode object <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> takes following input parameters.</p>
 <table class="colwidths-given docutils align-default" id="id1">
-<caption><span class="caption-text">Input Parameters to CO2Tracker</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Input Parameters to EmissionsTracker</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -188,7 +188,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>project_name</p></td>
-<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>measure_power_secs</p></td>
 <td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
@@ -210,11 +210,11 @@
 </tbody>
 </table>
 </div>
-<div class="section" id="offlineco2tracker">
-<h2>OfflineCO2Tracker<a class="headerlink" href="#offlineco2tracker" title="Permalink to this headline">¶</a></h2>
-<p>The offline mode object <code class="docutils literal notranslate"><span class="pre">OfflineCO2Tracker</span></code> takes following input parameters.</p>
+<div class="section" id="offlineemissionstracker">
+<h2>OfflineEmissionsTracker<a class="headerlink" href="#offlineemissionstracker" title="Permalink to this headline">¶</a></h2>
+<p>The offline mode object <code class="docutils literal notranslate"><span class="pre">OfflineEmissionsTracker</span></code> takes following input parameters.</p>
 <table class="colwidths-given docutils align-default" id="id2">
-<caption><span class="caption-text">Input Parameters to OfflineCO2Tracker</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -240,7 +240,7 @@
 </td>
 </tr>
 <tr class="row-odd"><td><p>project_name</p></td>
-<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p>measure_power_secs</p></td>
 <td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
@@ -262,11 +262,11 @@
 </tbody>
 </table>
 </div>
-<div class="section" id="track-co2">
-<h2>&#64;track_co2<a class="headerlink" href="#track-co2" title="Permalink to this headline">¶</a></h2>
-<p>Decorator <code class="docutils literal notranslate"><span class="pre">track_co2</span></code> takes following input parameters.</p>
+<div class="section" id="track-emissions">
+<h2>&#64;track_emissions<a class="headerlink" href="#track-emissions" title="Permalink to this headline">¶</a></h2>
+<p>Decorator <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> takes following input parameters.</p>
 <table class="colwidths-given docutils align-default" id="id3">
-<caption><span class="caption-text">Input Parameters to &#64;track_co2</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -278,7 +278,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>project_name</p></td>
-<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">co2tracker</span></code></p></td>
+<td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>measure_power_secs</p></td>
 <td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>

@@ -5,7 +5,7 @@ import time
 import unittest
 from unittest import mock
 
-from codecarbon.carbontracker import CarbonTracker, track_carbon
+from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
 from codecarbon.external.geography import CloudMetadata
 
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
@@ -18,13 +18,13 @@ def heavy_computation(run_time_secs: int = 3):
         pass
 
 
-@mock.patch("codecarbon.carbontracker.is_gpu_details_available", return_value=True)
+@mock.patch("codecarbon.emissions_tracker.is_gpu_details_available", return_value=True)
 @mock.patch(
     "codecarbon.external.hardware.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 @mock.patch(
-    "codecarbon.carbontracker.CarbonTracker._get_cloud_metadata",
+    "codecarbon.emissions_tracker.CarbonTracker._get_cloud_metadata",
     return_value=CloudMetadata(provider=None, region=None),
 )
 class TestCarbonTracker(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestCarbonTracker(unittest.TestCase):
             json=GEO_METADATA_CANADA,
             status=200,
         )
-        tracker = CarbonTracker(measure_power_secs=1, save_to_file=False)
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         # WHEN
         tracker.start()
@@ -85,7 +85,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         mocked_requests_get.side_effect = raise_timeout_exception
 
-        tracker = CarbonTracker(measure_power_secs=1, save_to_file=False)
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         # WHEN
         tracker.start()
@@ -111,7 +111,7 @@ class TestCarbonTracker(unittest.TestCase):
         )
 
         # WHEN
-        @track_carbon(project_name=self.project_name)
+        @track_emissions(project_name=self.project_name)
         def dummy_train_model():
             return 42
 
@@ -136,7 +136,7 @@ class TestCarbonTracker(unittest.TestCase):
         )
 
         # WHEN
-        @track_carbon(project_name=self.project_name, output_dir=".")
+        @track_emissions(project_name=self.project_name, output_dir=".")
         def dummy_train_model():
             return 42
 
@@ -153,7 +153,7 @@ class TestCarbonTracker(unittest.TestCase):
     ):
         # WHEN
 
-        @track_carbon(offline=True)
+        @track_emissions(offline=True)
         def dummy_train_model():
             return 42
 
@@ -167,7 +167,7 @@ class TestCarbonTracker(unittest.TestCase):
     ):
         # GIVEN
 
-        @track_carbon(
+        @track_emissions(
             offline=True, country_iso_code="CAN", project_name=self.project_name
         )
         def dummy_train_model():

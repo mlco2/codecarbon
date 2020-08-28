@@ -12,7 +12,7 @@ As Explicit Object
 
     import tensorflow as tf
 
-    from co2tracker import CO2Tracker
+    from codecarbon import EmissionsTracker
 
     mnist = tf.keras.datasets.mnist
 
@@ -33,7 +33,7 @@ As Explicit Object
 
     model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
 
-    tracker = CO2Tracker()
+    tracker = EmissionsTracker()
     tracker.start()
     model.fit(x_train, y_train, epochs=5)
     emissions: float = tracker.stop()
@@ -48,10 +48,10 @@ As A Decorator
 
     import tensorflow as tf
 
-    from co2tracker import track_co2
+    from codecarbon import track_emissions
 
 
-    @track_co2(project_name="foo")
+    @track_emissions(project_name="foo")
     def train_model():
         mnist = tf.keras.datasets.mnist
         (x_train, y_train), (x_test, y_test) = mnist.load_data()

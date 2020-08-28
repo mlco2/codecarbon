@@ -5,18 +5,18 @@
 Create a virtual environment using `conda` or `virtualenv.` 
 
 ```
-conda env create --name co2_tracker_env
-conda activate co2_tracker_env
+conda env create --name codecarbon_env
+conda activate codecarbon_env
 pip install . 
 ```
 
-`co2_tracker` will now be installed to the local environment
+`codecarbon` will now be installed to the local environment
 
 #### Online mode (for setups with internet access)
 
 ```python
-from codecarbon import CarbonTracker
-tracker = CarbonTracker()
+from codecarbon import EmissionsTracker
+tracker = EmissionsTracker()
 tracker.start()
 # GPU Intensive code goes here
 tracker.stop()
@@ -25,9 +25,9 @@ tracker.stop()
 Or use the decorator
 
 ```python
-from codecarbon import track_carbon
+from codecarbon import track_emissions
 
-@track_carbon
+@track_emissions
 def training_loop():
    pass
 ```
@@ -35,9 +35,9 @@ def training_loop():
 
 The offline tracker can be used as follows:
 ```python
-from codecarbon import OfflineCarbonTracker
+from codecarbon import OfflineEmissionsTracker
 
-tracker = OfflineCarbonTracker(country="Canada")
+tracker = OfflineEmissionsTracker(country="Canada")
 tracker.start()
 # GPU Intensive code goes here
 tracker.stop()
@@ -46,9 +46,9 @@ tracker.stop()
 or 
 
 ```python
-from codecarbon import track_carbon
+from codecarbon import track_emissions
 
-@track_carbon(offline=True, country="Canada")
+@track_emissions(offline=True, country="Canada")
 def training_loop():
    pass
 ```
@@ -94,5 +94,5 @@ make html
 * Sample data file is in `examples/default.emissions`
 * Run with the following command
 ```
-python co2_tracker/viz/co2board.py --filename="examples/default.emissions"
+python codecarbon/viz/carbonboard.py --filepath="examples/default.emissions"
 ```

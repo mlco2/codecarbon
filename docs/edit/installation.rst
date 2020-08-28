@@ -1,6 +1,6 @@
 .. _installation:
 
-Installing CO2Tracker
+Installing CodeCarbon
 =====================
 
 The package is hosted on the pip repository here.
@@ -8,7 +8,7 @@ To install the package, run the following command in your terminal.
 
 .. code-block::  bash
 
-    pip install co2tracker
+    pip install codecarbon
 
 ..  note::
 
@@ -20,11 +20,12 @@ Dependencies
 
 pip
 ~~~
-Following pip packages are used by the CO2Tracker package.
+Following pip packages are used by the CodeCarbon package.
 
 .. code-block::  bash
 
     APScheduler
+    co2-tracker-utils
     dash
     dash_bootstrap_components
     dataclasses

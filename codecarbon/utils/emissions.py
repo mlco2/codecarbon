@@ -10,7 +10,7 @@ from typing import Dict
 
 from codecarbon.external.geography import GeoMetadata, CloudMetadata
 from codecarbon.input import DataSource
-from codecarbon.units import CO2EmissionsPerKwh, Energy
+from codecarbon.units import EmissionsPerKwh, Energy
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class Emissions:
         print(
             df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)]
         )
-        emissions_per_kwh: CO2EmissionsPerKwh = CO2EmissionsPerKwh.from_g_per_kwh(
+        emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_g_per_kwh(
             df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)][
                 "impact"
             ].item()
@@ -111,7 +111,7 @@ class Emissions:
                 f"Region: {geo.region} not found for Country with ISO CODE : {geo.country_iso_code}"
             )
 
-        emissions_per_kwh: CO2EmissionsPerKwh = CO2EmissionsPerKwh.from_lbs_per_mwh(
+        emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_lbs_per_mwh(
             country_emissions_data[geo.region]["emissions"]
         )
 
@@ -128,10 +128,10 @@ class Emissions:
         """
 
         # source: https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
-        emissions_by_source: Dict[str, CO2EmissionsPerKwh] = {
-            "coal": CO2EmissionsPerKwh.from_kgs_per_kwh(0.995725971),
-            "petroleum": CO2EmissionsPerKwh.from_kgs_per_kwh(0.8166885263),
-            "naturalGas": CO2EmissionsPerKwh.from_kgs_per_kwh(0.7438415916),
+        emissions_by_source: Dict[str, EmissionsPerKwh] = {
+            "coal": EmissionsPerKwh.from_kgs_per_kwh(0.995725971),
+            "petroleum": EmissionsPerKwh.from_kgs_per_kwh(0.8166885263),
+            "naturalGas": EmissionsPerKwh.from_kgs_per_kwh(0.7438415916),
         }
 
         energy_mix = self._data_source.get_global_energy_mix_data()
@@ -154,7 +154,7 @@ class Emissions:
         # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916
         # `emissions_per_kwh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916)
         #  >> 0.5358309 kg/kwh
-        emissions_per_kwh = CO2EmissionsPerKwh.from_kgs_per_kwh(
+        emissions_per_kwh = EmissionsPerKwh.from_kgs_per_kwh(
             sum(
                 [
                     emissions_percentage[source]

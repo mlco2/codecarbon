@@ -1,17 +1,10 @@
-.. CO2 Tracker documentation master file, created by
+.. CodeCarbon documentation master file, created by
    sphinx-quickstart on Thu Jun  4 11:09:10 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-CO2Tracker
+CodeCarbon
 ==========
-.. toctree::
-   :maxdepth: 2
-
-.. automodule:: CO2Tracker
-    :members:
-
-
 .. toctree::
    :caption: Introduction
    :maxdepth: 2

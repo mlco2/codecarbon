@@ -1,5 +1,5 @@
 """
-Contains implementations of the Public facing API: CO2Tracker, OfflineCO2Tracker and @track_co2
+Contains implementations of the Public facing API: EmissionsTracker, OfflineEmissionsTracker and @track_emissions
 """
 
 from abc import abstractmethod, ABC
@@ -13,19 +13,19 @@ from typing import Optional, List, Callable
 import uuid
 
 from codecarbon.input import DataSource
-from codecarbon.emissions import Emissions
+from codecarbon.utils.emissions import Emissions
 from codecarbon.external.geography import GeoMetadata, CloudMetadata
 from codecarbon.external.hardware import GPU
-from codecarbon.output import FileOutput, CO2Data, BaseOutput
+from codecarbon.output import FileOutput, EmissionsData, BaseOutput
 from codecarbon.units import Time, Energy
 from codecarbon.utils.gpu import is_gpu_details_available
 
 logger = logging.getLogger(__name__)
 
 
-class BaseCarbonTracker(ABC):
+class BaseEmissionsTracker(ABC):
     """
-    Primary abstraction with Carbon Tracking functionality.
+    Primary abstraction with Emissions Tracking functionality.
     Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata`
     that are implemented by two concrete classes `OfflineCarbonTracker` and `CarbonTracker.`
     """
@@ -115,7 +115,7 @@ class BaseCarbonTracker(ABC):
             cloud_provider = cloud.provider
             cloud_region = cloud.region
 
-        data = CO2Data(
+        data = EmissionsData(
             experiment_id=str(uuid.uuid4()),
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -161,9 +161,9 @@ class BaseCarbonTracker(ABC):
         )
 
 
-class OfflineCarbonTracker(BaseCarbonTracker):
+class OfflineEmissionsTracker(BaseEmissionsTracker):
     """
-    Offline implementation of the `CarbonTracker.`
+    Offline implementation of the `EmissionsTracker`
     In addition to the standard arguments, the following are required.
     """
 
@@ -198,9 +198,10 @@ class OfflineCarbonTracker(BaseCarbonTracker):
         return CloudMetadata(provider=None, region=None)
 
 
-class CarbonTracker(BaseCarbonTracker):
+class EmissionsTracker(BaseEmissionsTracker):
     """
-    A CO2 tracker that auto infers geographical location.
+    An online emissions tracker that auto infers geographical location,
+    using `geojs` API
     """
 
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -210,7 +211,7 @@ class CarbonTracker(BaseCarbonTracker):
         return CloudMetadata.from_utils()
 
 
-def track_carbon(
+def track_emissions(
     fn: Callable = None,
     project_name: str = "codecarbon",
     measure_power_secs: int = 15,
@@ -222,7 +223,7 @@ def track_carbon(
     region: Optional[str] = None,
 ):
     """
-    Decorator that supports both `CO2Tracker` and `OfflineCO2Tracker`
+    Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
     :param fn: Function to be decorated
     :param project_name: Project name for current experiment run, default name as "codecarbon"
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
@@ -245,7 +246,7 @@ def track_carbon(
             if offline:
                 if country_iso_code is None:
                     raise Exception("Needs ISO Code of the Country for Offline mode")
-                tracker = OfflineCarbonTracker(
+                tracker = OfflineEmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
@@ -258,7 +259,7 @@ def track_carbon(
                 fn(*args, **kwargs)
                 tracker.stop()
             else:
-                tracker = CarbonTracker(
+                tracker = EmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,

@@ -10,9 +10,9 @@ import os
 
 
 @dataclass
-class CO2Data:
+class EmissionsData:
     """
-    Encapsulates experiment artifacts
+    Output object containg experiment data
     """
 
     experiment_id: str
@@ -41,7 +41,7 @@ class BaseOutput(ABC):
     """
 
     @abstractmethod
-    def out(self, data: CO2Data):
+    def out(self, data: EmissionsData):
         pass
 
 
@@ -53,7 +53,7 @@ class FileOutput(BaseOutput):
     def __init__(self, save_file_path: str):
         self.save_file_path: str = save_file_path
 
-    def out(self, data: CO2Data):
+    def out(self, data: EmissionsData):
         file_exists: bool = os.path.isfile(self.save_file_path)
 
         with open(self.save_file_path, "a+") as f:
