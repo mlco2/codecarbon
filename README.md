@@ -40,7 +40,7 @@ The offline tracker can be used as follows:
 ```python
 from codecarbon import OfflineEmissionsTracker
 
-tracker = OfflineEmissionsTracker(country="Canada")
+tracker = OfflineEmissionsTracker(country_iso_code="CAN")
 tracker.start()
 # GPU Intensive code goes here
 tracker.stop()
@@ -51,7 +51,7 @@ or
 ```python
 from codecarbon import track_emissions
 
-@track_emissions(offline=True, country="Canada")
+@track_emissions(offline=True, country_iso_code="CAN")
 def training_loop():
    pass
 ```
