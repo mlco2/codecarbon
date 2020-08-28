@@ -95,5 +95,5 @@ make html
 * Sample data file is in `examples/emissions.csv`
 * Run with the following command
 ```
-python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv`"
+python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
