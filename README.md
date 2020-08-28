@@ -1,12 +1,15 @@
-# Carbon Tracker
+# Emissions Tracker
+Emissions Tracker is a Python package for tracking the carbon emissions produced by various kinds of computer programs, from straightforward algorithms to deep neural networks. 
+
+By taking into account your computing infrastructure, location, usage and running time, Emissions Tracker can provide an estimate of how much CO2 you produced, and give you some comparisons with common modes of transporation to give you an order of magnitude. 
 
 
 ## Setup
 Create a virtual environment using `conda` or `virtualenv.` 
 
 ```
-conda env create --name codecarbon_env
-conda activate codecarbon_env
+conda create --name codecarbon python=3.6
+conda activate codecarbon
 pip install . 
 ```
 
@@ -37,7 +40,7 @@ The offline tracker can be used as follows:
 ```python
 from codecarbon import OfflineEmissionsTracker
 
-tracker = OfflineEmissionsTracker(country="Canada")
+tracker = OfflineEmissionsTracker(country_iso_code="CAN")
 tracker.start()
 # GPU Intensive code goes here
 tracker.stop()
@@ -48,7 +51,7 @@ or
 ```python
 from codecarbon import track_emissions
 
-@track_emissions(offline=True, country="Canada")
+@track_emissions(offline=True, country_iso_code="CAN")
 def training_loop():
    pass
 ```
@@ -83,9 +86,9 @@ tox
 ```
 
 ## Generate Documentation
-Install [`sphinx.`](https://www.sphinx-doc.org/en/master/usage/installation.html) On MacOS,  
+Install [`sphinx`](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) using pip. 
 ```
-brew install sphinx-doc
+pip install -U sphinx
 cd docs/edit
 make docs
 ```
