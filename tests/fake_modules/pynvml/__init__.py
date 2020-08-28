@@ -19,12 +19,7 @@
 # OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-import sys
-
-if sys.version_info >= (3, 4):
-    from unittest.mock import Mock
-else:
-    from mock import Mock
+from unittest.mock import Mock
 
 DETAILS = {}
 

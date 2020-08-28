@@ -48,7 +48,7 @@ class BaseCarbonTracker(ABC):
         self._measure_power_secs: int = measure_power_secs
         self._start_time: Optional[float] = None
         self._output_dir: str = output_dir
-        self._total_energy: Energy = Energy.from_energy(kwh=1)
+        self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._is_gpu_available = is_gpu_details_available()
         self._hardware = GPU.from_utils()  # TODO: Change once CPU support is available

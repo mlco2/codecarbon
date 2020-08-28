@@ -1,5 +1,5 @@
 """
-The CO2 Tracker module. The following objects/decorators belong to the Public API
+The Carbon Tracker module. The following objects/decorators belong to the Public API
 """
 
 from .carbontracker import CarbonTracker, OfflineCarbonTracker, track_carbon

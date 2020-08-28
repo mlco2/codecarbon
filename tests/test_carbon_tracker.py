@@ -18,13 +18,13 @@ def heavy_computation(run_time_secs: int = 3):
         pass
 
 
-@mock.patch("codecarbon.codecarbon.is_gpu_details_available", return_value=True)
+@mock.patch("codecarbon.carbontracker.is_gpu_details_available", return_value=True)
 @mock.patch(
     "codecarbon.external.hardware.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 @mock.patch(
-    "codecarbon.codecarbon.CO2Tracker._get_cloud_metadata",
+    "codecarbon.carbontracker.CarbonTracker._get_cloud_metadata",
     return_value=CloudMetadata(provider=None, region=None),
 )
 class TestCarbonTracker(unittest.TestCase):

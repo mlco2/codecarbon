@@ -39,7 +39,7 @@ class FakeGPUEnv(object):
             pass
 
         try:
-            del sys.modules["co2_tracker_utils.gpu_logging"]
+            del sys.modules["coedcarbon.utils.gpu"]
         except KeyError:
             pass
 
@@ -122,14 +122,14 @@ class FakeGPUEnv(object):
         sys.path = self.old_sys_path
 
 
-class TestGpuLogging(FakeGPUEnv):
+class TestGpu(FakeGPUEnv):
     def test_is_gpu_details_available(self):
-        from co2_tracker_utils.gpu_logging import is_gpu_details_available
+        from codecarbon.utils.gpu import is_gpu_details_available
 
         assert is_gpu_details_available() is True
 
     def test_static_gpu_info(self):
-        from co2_tracker_utils.gpu_logging import get_gpu_static_info
+        from codecarbon.utils.gpu import get_gpu_static_info
 
         expected = [
             {
@@ -151,12 +151,12 @@ class TestGpuLogging(FakeGPUEnv):
         assert get_gpu_static_info() == expected
 
     def test_gpu_details(self):
-        from co2_tracker_utils.gpu_logging import get_gpu_details
+        from codecarbon.utils.gpu import get_gpu_details
 
         assert get_gpu_details() == self.expected
 
     def test_gpu_no_power_limit(self):
-        from co2_tracker_utils.gpu_logging import get_gpu_details
+        from codecarbon.utils.gpu import get_gpu_details
         import pynvml
 
         def raiseException(handle):
@@ -171,7 +171,7 @@ class TestGpuLogging(FakeGPUEnv):
         assert get_gpu_details() == expected_power_limit
 
 
-class TestGpuLoggingNotAvailable(object):
+class TestGpuNotAvailable(object):
     def setup_method(self):
         self.old_sys_path = copy(sys.path)
         fake_module_path = os.path.join(os.path.dirname(__file__), "fake_modules")
@@ -184,7 +184,7 @@ class TestGpuLoggingNotAvailable(object):
             pass
 
         try:
-            del sys.modules["co2_tracker_utils.gpu_logging"]
+            del sys.modules["codecarbon.utils.gpu"]
         except KeyError:
             pass
 
@@ -201,16 +201,16 @@ class TestGpuLoggingNotAvailable(object):
         sys.path = self.old_sys_path
 
     def test_is_gpu_details_not_available(self):
-        from co2_tracker_utils.gpu_logging import is_gpu_details_available
+        from codecarbon.utils.gpu import is_gpu_details_available
 
         assert is_gpu_details_available() is False
 
     def test_gpu_details_not_available(self):
-        from co2_tracker_utils.gpu_logging import get_gpu_details
+        from codecarbon.utils.gpu import get_gpu_details
 
         assert get_gpu_details() == []
 
     def test_static_gpu_info_not_available(self):
-        from co2_tracker_utils.gpu_logging import get_gpu_static_info
+        from codecarbon.utils.gpu import get_gpu_static_info
 
         assert get_gpu_static_info() == []
