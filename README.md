@@ -86,13 +86,13 @@ tox
 Install [`sphinx.`](https://www.sphinx-doc.org/en/master/usage/installation.html) On MacOS,  
 ```
 brew install sphinx-doc
-cd docs
-make html
+cd docs/edit
+make docs
 ```
 
-## [WIP] Visualization Tool
-* Sample data file is in `examples/default.emissions`
+## Visualization Tool
+* Sample data file is in `examples/emissions.csv`
 * Run with the following command
 ```
-python codecarbon/viz/carbonboard.py --filepath="examples/default.emissions"
+python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
