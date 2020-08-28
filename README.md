@@ -1,4 +1,4 @@
-# Carbon Tracker
+# Emissions Tracker
 
 
 ## Setup
