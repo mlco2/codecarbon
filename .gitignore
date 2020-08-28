@@ -63,9 +63,6 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
-docs/_build/
-
 # PyBuilder
 target/
 
@@ -108,3 +105,7 @@ venv.bak/
 
 # Sphinx
 docs/_build/
+
+# OS generated files
+.DS_Store
+.DS_Store?

@@ -1,5 +1,6 @@
 import tensorflow as tf
-from co2_tracker import CO2Tracker
+
+from codecarbon import EmissionsTracker
 
 mnist = tf.keras.datasets.mnist
 
@@ -20,8 +21,8 @@ loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
 model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
 
-tracker = CO2Tracker()
+tracker = EmissionsTracker()
 tracker.start()
-model.fit(x_train, y_train, epochs=5)
+model.fit(x_train, y_train, epochs=10)
 emissions: float = tracker.stop()
-print(emissions)
+print(f"Emissions: {emissions} kg")
