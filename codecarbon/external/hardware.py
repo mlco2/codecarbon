@@ -20,10 +20,14 @@ class BaseHardware(ABC):
     def total_power(self) -> Power:
         pass
 
-
 @dataclass
 class GPU(BaseHardware):
     num_gpus: int
+
+    def __repr__(self) -> str:
+        return super().__repr__() + " ({})".format(
+            ", ".join([d["name"] for d in get_gpu_details()])
+        )
 
     def get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
         """
