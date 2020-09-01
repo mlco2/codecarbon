@@ -1,7 +1,8 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -11,18 +12,12 @@
   
 
   
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
   
   
   
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -34,6 +29,10 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Methodology" href="methodology.html" />
@@ -51,7 +50,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CodeCarbon
+            <a href="index.html" class="icon icon-home"> CodeCarbon
           
 
           
@@ -74,7 +73,6 @@
           
         </div>
 
-        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -104,7 +102,6 @@
             
           
         </div>
-        
       </div>
     </nav>
 
@@ -143,7 +140,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
       <li>Motivation</li>
     
@@ -170,12 +167,12 @@
 Advancements in Computers learning to recognize objects and faces in images, driving cars, and beating human beings at
 sophisticated games has resulted in AI becoming ubiquitous across industries.</p>
 <p>State-of-the-art Deep Learning models leverage significant amount of computing power, while training on GPUs for weeks,
-consequently consume enormous amounts of energy in form of electricity. As the effects of climate change become more apparent,
+consequently consume enormous amounts of energy in form of electricity. As the effects of Climate Change become more apparent,
 AI experts are taking steps to mitigate the emissions from training Machine Learning models.</p>
-<p>This package enables developers to track carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents, or CO₂eq, across machine learning experiments or other programs.
-<code class="docutils literal notranslate"><span class="pre">CO₂-equivalents</span> <span class="pre">[CO₂eq]</span></code> is a standardized measure used to express the global warming potential of various greenhouse gases
-as a single number: the amount of CO₂ that would have the equivalent global warming impact. For computing, which emits CO₂
-via the electricity it is consuming, carbon emissions are measured in kilograms of CO₂-equivalent per kilowatt-hour.</p>
+<p>This package enables developers to track emissions, measured as CO₂eq or CO₂-equivalents, across experiments.
+<code class="docutils literal notranslate"><span class="pre">CO₂-equivalents</span> <span class="pre">[CO₂eq]</span></code> is a standardized measure used to express the global-warming potential of various greenhouse gases
+as a single number, as the amount of CO₂ that would have the equivalent global warming impact. For computing, which emits CO₂
+via the electricity it is consuming, carbon intensity is measured in in grams of CO₂-equivalent per kilowatt-hour.</p>
 </div>
 
 
@@ -198,19 +195,11 @@ via the electricity it is consuming, carbon emissions are measured in kilograms 
 
   <div role="contentinfo">
     <p>
-        
         &copy; Copyright 2020, BCG GAMMA, Comet.ml, Haverford College, MILA
 
     </p>
   </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -221,6 +210,7 @@ via the electricity it is consuming, carbon emissions are measured in kilograms 
 
   </div>
   
+
 
   <script type="text/javascript">
       jQuery(function () {

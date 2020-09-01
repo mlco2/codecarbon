@@ -40,7 +40,8 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
    * - Parameters
      - Description
    * - country_iso_code
-     - 3 letter ISO Code of the country where the experiment is being run
+     - | 3 letter ISO Code of the country where the experiment is being run.
+       | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/code-carbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json>`_
    * - country_name
      - Name of the country where the experiment is being run
    * - region

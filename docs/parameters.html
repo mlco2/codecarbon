@@ -1,7 +1,8 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   
@@ -11,18 +12,12 @@
   
 
   
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-
-  
   
   
   
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -34,6 +29,10 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Examples" href="examples.html" />
@@ -51,7 +50,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CodeCarbon
+            <a href="index.html" class="icon icon-home"> CodeCarbon
           
 
           
@@ -74,7 +73,6 @@
           
         </div>
 
-        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -109,7 +107,6 @@
             
           
         </div>
-        
       </div>
     </nav>
 
@@ -148,7 +145,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
       <li>Input Parameters</li>
     
@@ -226,7 +223,11 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>country_iso_code</p></td>
-<td><p>3 letter ISO Code of the country where the experiment is being run</p></td>
+<td><div class="line-block">
+<div class="line">3 letter ISO Code of the country where the experiment is being run.</div>
+<div class="line">Available countries are listed in <a class="reference external" href="https://github.com/mlco2/code-carbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json">global_energy_mix.json</a></div>
+</div>
+</td>
 </tr>
 <tr class="row-odd"><td><p>country_name</p></td>
 <td><p>Name of the country where the experiment is being run</p></td>
@@ -339,19 +340,11 @@
 
   <div role="contentinfo">
     <p>
-        
         &copy; Copyright 2020, BCG GAMMA, Comet.ml, Haverford College, MILA
 
     </p>
   </div>
-    
-    
-    
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -362,6 +355,7 @@
 
   </div>
   
+
 
   <script type="text/javascript">
       jQuery(function () {
