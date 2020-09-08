@@ -1,6 +1,7 @@
+from typing import Dict, List, Tuple
+
 import dash_table as dt
 import pandas as pd
-from typing import List, Dict, Tuple
 
 from codecarbon.input import DataSource
 from codecarbon.utils.emissions import Emissions

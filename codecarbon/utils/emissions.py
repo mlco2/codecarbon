@@ -5,10 +5,11 @@ https://github.com/responsibleproblemsolving/energy-usage
 """
 
 import logging
-import pandas as pd
 from typing import Dict
 
-from codecarbon.external.geography import GeoMetadata, CloudMetadata
+import pandas as pd
+
+from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.input import DataSource
 from codecarbon.units import EmissionsPerKwh, Energy
 

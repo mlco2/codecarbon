@@ -1,13 +1,13 @@
 import os
-import responses
-import requests
 import time
 import unittest
 from unittest import mock
 
+import requests
+import responses
+
 from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
 from codecarbon.external.geography import CloudMetadata
-
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
 from tests.testutils import get_test_data_source
 

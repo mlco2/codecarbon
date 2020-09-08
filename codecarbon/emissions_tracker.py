@@ -2,22 +2,23 @@
 Contains implementations of the Public facing API: EmissionsTracker, OfflineEmissionsTracker and @track_emissions
 """
 
-from abc import abstractmethod, ABC
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
-from functools import wraps
 import logging
 import os
 import time
-from typing import Optional, List, Callable
 import uuid
+from abc import ABC, abstractmethod
+from datetime import datetime
+from functools import wraps
+from typing import Callable, List, Optional
 
-from codecarbon.input import DataSource
-from codecarbon.utils.emissions import Emissions
-from codecarbon.external.geography import GeoMetadata, CloudMetadata
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import GPU
-from codecarbon.output import FileOutput, EmissionsData, BaseOutput
-from codecarbon.units import Time, Energy
+from codecarbon.input import DataSource
+from codecarbon.output import BaseOutput, EmissionsData, FileOutput
+from codecarbon.units import Energy, Time
+from codecarbon.utils.emissions import Emissions
 from codecarbon.utils.gpu import is_gpu_details_available
 
 logger = logging.getLogger(__name__)

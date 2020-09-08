@@ -3,9 +3,10 @@ App configuration: This will likely change when we have a common location for da
 """
 
 import json
+from typing import Dict
+
 import pandas as pd
 import pkg_resources
-from typing import Dict
 
 
 class DataSource:

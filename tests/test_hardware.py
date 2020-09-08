@@ -2,7 +2,6 @@ import unittest
 from unittest import mock
 
 from codecarbon.external.hardware import GPU
-
 from tests.testdata import TWO_GPU_DETAILS_RESPONSE
 
 
