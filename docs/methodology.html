@@ -87,7 +87,6 @@
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Methodology</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#carbon-intensity">Carbon Intensity</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#localization">Localization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#power-usage">Power Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
@@ -172,19 +171,17 @@
             
   <div class="section" id="methodology">
 <span id="id1"></span><h1>Methodology<a class="headerlink" href="#methodology" title="Permalink to this headline">¶</a></h1>
-<p>Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [CO₂eq], are the product of two main factors:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>C = Carbon Intensity of the electricity consumed for computation: quantified as kg of CO₂ emitted per kilowatt-hour of electricity.
+<p>CO₂-equivalents [CO₂eq] is measured in kg of CO₂ emitted, which can be inferred from two main factors :</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>C = Carbon intensity of the electricity used, measured in kg of CO₂ emitted per kilowatt-hour.
 
-P = Power Consumed by the computational infrastructure: quantified as kilowatt-hours.
+P = Power consumed by the underlying infrastructure, as kilowatt-hour.
 </pre></div>
 </div>
-<p>Carbon dioxide emissions (CO₂eq) can then be calculated as <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">*</span> <span class="pre">P</span></code></p>
+<p>CO₂eq can then be calculated as <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">*</span> <span class="pre">P</span></code></p>
 <div class="section" id="carbon-intensity">
 <h2>Carbon Intensity<a class="headerlink" href="#carbon-intensity" title="Permalink to this headline">¶</a></h2>
 <p>Carbon Intensity of the electricity consumed is calculated as a weighted average of the emissions from different
-energy sources that are used in electricity generation. Many different fuel sources are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, this package calculates the Carbon Intensity of the electricity consumed.<p>
-
-Carbon Intensity of each individual fossil fuel source (e.g., coal, petroleum, natural gas) is based on measured carbon dioxide output and power generation in the United States. These values were applied worldwide: electricity from coal generation in Germany is assigned the same Carbon Intensity as electricity from coal generation in Japan. </p>
+energy sources, <code class="docutils literal notranslate"><span class="pre">Coal,</span> <span class="pre">Petroleum,</span> <span class="pre">Natural</span> <span class="pre">Gas</span> <span class="pre">and</span> <span class="pre">Renewable</span></code> that are used to generate electricity from the nearby grid.</p>
 <table class="colwidths-given docutils align-default" id="id2">
 <caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
 <colgroup>
@@ -206,17 +203,16 @@ Carbon Intensity of each individual fossil fuel source (e.g., coal, petroleum, n
 <tr class="row-even"><td><p>Natural Gas</p></td>
 <td><p>744</p></td>
 </tr>
-<tr class="row-odd"><td><p>Low Carbon</p></td>
+<tr class="row-odd"><td><p>Renewable (hydroelectricity, wind power, solar, etc.)</p></td>
 <td><p>0</p></td>
 </tr>
 </tbody>
 </table>
-<div class="section" id="localization"><h2>Localization<a class="headerlink" href="#localization" title="Permalink to this headline">¶</a></h2>
-<P>The local energy mix is based on the specific location where code is run. In the included visualizations, global benchmarks can be seen. Once a location is determined, the amount of electricity from fossil fuel and renewable sources is used to define the local Energy Mix.</P>
-<p>For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable.</p>
+<p>For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Net Carbon Intensity = 0.25 * 996 + 0.35 * 817 + 0.26 * 744 + 0.14 * 0 = 728.39 kgCO₂/MWh
 </pre></div>
 </div>
+<p>For renewable sources like hydroelectricity, although there are emissions associated with constructing the infrastructure itself, there is very little emissions that come from the actual power generation itself (that is, the water flowing through the turbine). We therefore consider their direct carbon emissions to be zero for the purposes of our project.</p>
 </div>
 <div class="section" id="power-usage">
 <h2>Power Usage<a class="headerlink" href="#power-usage" title="Permalink to this headline">¶</a></h2>

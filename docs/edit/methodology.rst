@@ -6,9 +6,9 @@ CO₂-equivalents [CO₂eq] is measured in kg of CO₂ emitted, which can be inf
 
 .. code-block:: text
 
-    C = Carbon Intensity of the electricity consumed for compute, as kg of CO₂ emitted per kilowatt-hour.
+    C = Carbon intensity of the electricity used, measured in kg of CO₂ emitted per kilowatt-hour.
 
-    P = Power Consumed by the underlying infrastructure, as kilowatt-hour.
+    P = Power consumed by the underlying infrastructure, as kilowatt-hour.
 
 CO₂eq can then be calculated as ``C * P``
 
@@ -31,15 +31,16 @@ energy sources, ``Coal, Petroleum, Natural Gas and Renewable`` that are used to 
      - 817
    * - Natural Gas
      - 744
-   * - Low Carbon
+   * - Renewable (hydroelectricity, wind power, solar, etc.)
      - 0
 
-For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable.
+For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable:
 
 .. code-block:: text
 
     Net Carbon Intensity = 0.25 * 996 + 0.35 * 817 + 0.26 * 744 + 0.14 * 0 = 728.39 kgCO₂/MWh
 
+For renewable sources like hydroelectricity, although there are emissions associated with constructing the infrastructure itself, there is very little emissions that come from the actual power generation itself (that is, the water flowing through the turbine). We therefore consider their direct carbon emissions to be zero for the purposes of our project.
 
 Power Usage
 -----------
