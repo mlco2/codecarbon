@@ -10,7 +10,7 @@ from typing import Dict
 
 from codecarbon.external.geography import GeoMetadata, CloudMetadata
 from codecarbon.input import DataSource
-from codecarbon.units import EmissionsPerKwh, Energy
+from codecarbon.core.units import EmissionsPerKwh, Energy
 
 logger = logging.getLogger(__name__)
 

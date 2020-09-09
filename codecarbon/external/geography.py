@@ -8,7 +8,7 @@ import re
 import requests
 from typing import Callable, Dict, Optional
 
-from codecarbon.utils.cloud import get_env_cloud_details
+from codecarbon.core.cloud import get_env_cloud_details
 
 logger = logging.getLogger(__name__)
 

@@ -124,12 +124,12 @@ class FakeGPUEnv(object):
 
 class TestGpu(FakeGPUEnv):
     def test_is_gpu_details_available(self):
-        from codecarbon.utils.gpu import is_gpu_details_available
+        from codecarbon.core.gpu import is_gpu_details_available
 
         assert is_gpu_details_available() is True
 
     def test_static_gpu_info(self):
-        from codecarbon.utils.gpu import get_gpu_static_info
+        from codecarbon.core.gpu import get_gpu_static_info
 
         expected = [
             {
@@ -151,12 +151,12 @@ class TestGpu(FakeGPUEnv):
         assert get_gpu_static_info() == expected
 
     def test_gpu_details(self):
-        from codecarbon.utils.gpu import get_gpu_details
+        from codecarbon.core.gpu import get_gpu_details
 
         assert get_gpu_details() == self.expected
 
     def test_gpu_no_power_limit(self):
-        from codecarbon.utils.gpu import get_gpu_details
+        from codecarbon.core.gpu import get_gpu_details
         import pynvml
 
         def raiseException(handle):
@@ -201,16 +201,16 @@ class TestGpuNotAvailable(object):
         sys.path = self.old_sys_path
 
     def test_is_gpu_details_not_available(self):
-        from codecarbon.utils.gpu import is_gpu_details_available
+        from codecarbon.core.gpu import is_gpu_details_available
 
         assert is_gpu_details_available() is False
 
     def test_gpu_details_not_available(self):
-        from codecarbon.utils.gpu import get_gpu_details
+        from codecarbon.core.gpu import get_gpu_details
 
         assert get_gpu_details() == []
 
     def test_static_gpu_info_not_available(self):
-        from codecarbon.utils.gpu import get_gpu_static_info
+        from codecarbon.core.gpu import get_gpu_static_info
 
         assert get_gpu_static_info() == []
