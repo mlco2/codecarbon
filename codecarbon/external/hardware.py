@@ -5,7 +5,7 @@ Encapsulates external dependencies to retrieve hardware metadata
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 import logging
-from typing import Iterable, List, Dict
+from typing import Iterable, List, Dict, Optional
 
 from codecarbon.units import Power
 from codecarbon.utils.gpu import get_gpu_details
@@ -20,16 +20,18 @@ class BaseHardware(ABC):
     def total_power(self) -> Power:
         pass
 
+
 @dataclass
 class GPU(BaseHardware):
     num_gpus: int
+    gpu_ids: Optional[List]
 
     def __repr__(self) -> str:
         return super().__repr__() + " ({})".format(
             ", ".join([d["name"] for d in get_gpu_details()])
         )
 
-    def get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
+    def _get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
         """
         Get total power consumed by specific GPUs identified by `gpu_ids`
         :param gpu_ids:
@@ -48,11 +50,19 @@ class GPU(BaseHardware):
 
     @property
     def total_power(self) -> Power:
-        return self.get_power_for_gpus(gpu_ids=set(range(self.num_gpus)))
+        if self.gpu_ids is not None:
+            gpu_ids = self.gpu_ids
+            assert set(gpu_ids).issubset(
+                set(range(self.num_gpus))
+            ), f"Unknown GPU ids {gpu_ids}"
+        else:
+            gpu_ids = set(range(self.num_gpus))
+
+        return self._get_power_for_gpus(gpu_ids=gpu_ids)
 
     @classmethod
-    def from_utils(cls) -> "GPU":
-        return cls(num_gpus=len(get_gpu_details()))
+    def from_utils(cls, gpu_ids) -> "GPU":
+        return cls(num_gpus=len(get_gpu_details()), gpu_ids=gpu_ids)
 
 
 @dataclass

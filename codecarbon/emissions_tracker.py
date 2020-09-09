@@ -36,6 +36,7 @@ class BaseEmissionsTracker(ABC):
         measure_power_secs: int = 15,
         output_dir: str = ".",
         save_to_file: bool = True,
+        gpu_ids: Optional[List] = None,
     ):
         """
         :param project_name: Project name for current experiment run, default name as "codecarbon"
@@ -43,6 +44,7 @@ class BaseEmissionsTracker(ABC):
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current directory
         :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
+        :param gpu_ids: User-specified known gpu ids to track, defaults to None
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
@@ -51,7 +53,7 @@ class BaseEmissionsTracker(ABC):
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._is_gpu_available = is_gpu_details_available()
-        self._hardware = GPU.from_utils()  # TODO: Change once CPU support is available
+        self._hardware = GPU.from_utils(gpu_ids)  # TODO: Change once CPU support is available
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
         self._scheduler.add_job(
