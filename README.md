@@ -96,6 +96,7 @@ You can run tests by simply entering tox in the terminal when in the root packag
 ```
 tox
 ```
+In order to contribute a change to our code base, please submit a pull request (PR) via GitHub and someone from our team will go over it and accept it.
 
 ## Generate Documentation
 No software is complete without great documentation! 
@@ -105,6 +106,11 @@ pip install -U sphinx sphinx_rtd_theme
 cd docs/edit
 make docs
 ```
+In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
+```
+make docs
+```
+to regenerate the html files.
 
 ## Visualization Tool
 To track the evolution of your CO<sub>2</sub> emissions or just to see some nice graphs and charts, you can use the visualization tool that we created. 
