@@ -101,7 +101,7 @@ tox
 No software is complete without great documentation! 
 To make generating documentation easier, install the [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) and use it to edit and improve the existing documentation: 
 ```
-pip install -U sphinx
+pip install -U sphinx sphinx_rtd_theme
 cd docs/edit
 make docs
 ```
