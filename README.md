@@ -120,4 +120,11 @@ You can run try it out on a sample data file such as the one in `examples/emissi
 ```
 python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
+
 Once you have generated your own .csv file based on your computations, you can feed that into the visualization tool to see a more visual representation of your own emissions.
+
+![](https://github.com/mlco2/code-carbon/blob/master/docs/edit/images/summary.png)
+
+You can also see the carbon intensity of different regions and countries:
+![](https://github.com/mlco2/code-carbon/blob/master/docs/edit/images/global_equivalents.png)
+
