@@ -126,5 +126,9 @@ Once you have generated your own .csv file based on your computations, you can f
 ![](https://github.com/mlco2/code-carbon/blob/master/docs/edit/images/summary.png)
 
 You can also see the carbon intensity of different regions and countries:
+
 ![](https://github.com/mlco2/code-carbon/blob/master/docs/edit/images/global_equivalents.png)
 
+As well as the relative carbon intensity of different compute regions of cloud providers:
+
+![](https://github.com/mlco2/code-carbon/blob/master/docs/edit/images/cloud_emissions.png)
