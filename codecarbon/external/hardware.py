@@ -20,6 +20,7 @@ class BaseHardware(ABC):
     def total_power(self) -> Power:
         pass
 
+
 @dataclass
 class GPU(BaseHardware):
     num_gpus: int

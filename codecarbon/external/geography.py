@@ -73,5 +73,5 @@ class GeoMetadata:
         return cls(
             country_iso_code=response["country_code3"].upper(),
             country_name=response["country"],
-            region=response["region"].lower(),
+            region=response["region"].lower() if "region" in response else "",
         )
