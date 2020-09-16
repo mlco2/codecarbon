@@ -2,19 +2,19 @@
 
 Quickstart
 ==========
-The CO2 tracking tool can be used along with any deep learning framework. It supports both ``online`` (with internet access) and
-``offline`` (without internet access) modes. The tracker can be used in following ways.
+The CO2 tracking tool can be used along with any computing framework. It supports both ``online`` (with internet access) and
+``offline`` (without internet access) modes. The tracker can be used in following ways:
 
 
 Online Mode
 -----------
-When the environment has internet access ``EmissionsTracker`` object or vanilla ``track_emissions`` decorator can be used, which has parameter
-``offline`` defaulted to ``False``.
+When the environment has internet access, the ``EmissionsTracker`` object or the ``track_emissions`` decorator can be used, which has
+``offline`` parameter set to ``False`` by default.
 
 Explicit Object
 ~~~~~~~~~~~~~~~
-In case of absence of a single entry and stop point to the training code base, users can instantiate a ``EmissionsTracker`` object and
-pass it as a param to function calls to start and stop the emissions tracking of the compute section.
+In the case of absence of a single entry and stop point for the training code base, users can instantiate a ``EmissionsTracker`` object and
+pass it as a parameter to function calls to start and stop the emissions tracking of the compute section.
 
 .. code-block:: python
 
@@ -27,7 +27,7 @@ pass it as a param to function calls to start and stop the emissions tracking of
 
 Decorator
 ~~~~~~~~~
-In case the training code base is wrapped in a function, users can use the decorator ``@track_emissions`` on the function to enable tracking
+In case the training code base is wrapped in a function, users can use the decorator ``@track_emissions`` within the function to enable tracking
 emissions of the training code.
 
 .. code-block:: python
@@ -43,12 +43,12 @@ emissions of the training code.
 
 Offline Mode
 ------------
-An offline version is available to support restricted environments without internet access. The internal computations remain unchanged, however,
-a ``country_iso_code`` parameter is required to fetch Carbon Intensity details of the regional electricity used.
+An offline version is available to support restricted environments without internet access. The internal computations remain unchanged; however,
+a ``country_iso_code`` parameter, which corresponds to the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, is required to fetch Carbon Intensity details of the regional electricity used. A complete list of country ISO codes can be found on `Wikipedia <https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes>`_.
 
 Explicit Object
 ~~~~~~~~~~~~~~~
-Developers can use ``OfflineEmissionsTracker`` object to track emissions in absence of internet access as follows.
+Developers can use the ``OfflineEmissionsTracker`` object to track emissions as follows:
 
 .. code-block:: python
 
@@ -61,10 +61,10 @@ Developers can use ``OfflineEmissionsTracker`` object to track emissions in abse
 
 Decorator
 ~~~~~~~~~
-``track_emissions`` decorator in offline mode requires following two parameters:
+The ``track_emissions`` decorator in offline mode requires following two parameters:
 
 - ``offline`` needs to be set to ``True``, which defaults to ``False`` for online mode.
-- ``country_iso_code`` as the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, for example - CAN for Canada.
+- ``country_iso_code`` the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted
 
 .. code-block:: python
 

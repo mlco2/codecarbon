@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,12 +11,18 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,10 +34,6 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Methodology" href="methodology.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> CodeCarbon
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CodeCarbon
           
 
           
@@ -73,6 +74,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -102,6 +104,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -140,7 +143,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Motivation</li>
     
@@ -163,16 +166,10 @@
             
   <div class="section" id="motivation">
 <span id="id1"></span><h1>Motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h1>
-<p>In recent years, Artificial Intelligence has become remarkably good at performing tasks that humans are routinely expert at.
-Advancements in Computers learning to recognize objects and faces in images, driving cars, and beating human beings at
-sophisticated games has resulted in AI becoming ubiquitous across industries.</p>
-<p>State-of-the-art Deep Learning models leverage significant amount of computing power, while training on GPUs for weeks,
-consequently consume enormous amounts of energy in form of electricity. As the effects of Climate Change become more apparent,
-AI experts are taking steps to mitigate the emissions from training Machine Learning models.</p>
-<p>This package enables developers to track emissions, measured as CO₂eq or CO₂-equivalents, across experiments.
-<code class="docutils literal notranslate"><span class="pre">CO₂-equivalents</span> <span class="pre">[CO₂eq]</span></code> is a standardized measure used to express the global-warming potential of various greenhouse gases
-as a single number, as the amount of CO₂ that would have the equivalent global warming impact. For computing, which emits CO₂
-via the electricity it is consuming, carbon intensity is measured in in grams of CO₂-equivalent per kilowatt-hour.</p>
+<p>In recent years, Artificial Intelligence and, more specifically, Machine Learning, has become remarkably good at performing human-level tasks: recognizing objects and faces in images, driving cars, and playing sophisticated games like chess and Go.</p>
+<p>In order to achieve these incredible levels of performance, current approaches leverage vast amounts of data to learn underlying patterns and features. Thus, state-of-the-art Machine Learning models leverage significant amounts of computing power, training on advanced processors for weeks or months, consequently consuming enormous amounts of energy. Depending on the energy grid used during this process, this can entail the emission of large amounts of greenhouse gases such as CO₂</p>
+<p>With AI models becoming more ubiquitous and deployed across different sectors and industries, AI’s environmental impact is also growing. This is why it is important to estimate and curtail both the energy used and the emissions produced by training and deploying AI models. This package enables developers to track emissions, measured as CO₂eq or CO₂-equivalents, across experiments.</p>
+<p>This package enables developers to track emissions, measured as CO₂eq or CO₂-equivalents, across experiments, in order to estimate the carbon footprint of their work. In order to do this, we use <code class="docutils literal notranslate"><span class="pre">CO₂-equivalents</span> <span class="pre">[CO₂eq]</span></code>, which is a standardized measure used to express the global-warming potential of various greenhouse gases. Computing emits CO₂eq due to the electricity sources being used by the electricity grid that it is connected to – coal and it is consuming, carbon intensity is measured in in grams of CO₂-equivalent per kilowatt-hour.</p>
 </div>
 
 
@@ -195,11 +192,19 @@ via the electricity it is consuming, carbon intensity is measured in in grams of
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2020, BCG GAMMA, Comet.ml, Haverford College, MILA
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -210,7 +215,6 @@ via the electricity it is consuming, carbon intensity is measured in in grams of
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

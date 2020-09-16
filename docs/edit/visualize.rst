@@ -34,7 +34,7 @@ The App also provides exemplary equivalents from daily life, for example:
 
 Regional Comparisons
 --------------------
-The App also provides a comparative visual to benchmark emissions and energy mix of the electricity from the Grid across countries.
+The App also provides a comparative visual to benchmark emissions and energy mix of the electricity from the grid across different countries.
 
 .. image:: ./images/global_equivalents.png
             :align: center

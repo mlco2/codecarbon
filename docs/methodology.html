@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,12 +11,18 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,10 +34,6 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Model Comparisons" href="model_examples.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> CodeCarbon
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> CodeCarbon
           
 
           
@@ -73,6 +74,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -107,6 +109,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -145,7 +148,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Methodology</li>
     
@@ -169,9 +172,9 @@
   <div class="section" id="methodology">
 <span id="id1"></span><h1>Methodology<a class="headerlink" href="#methodology" title="Permalink to this headline">¶</a></h1>
 <p>CO₂-equivalents [CO₂eq] is measured in kg of CO₂ emitted, which can be inferred from two main factors :</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>C = Carbon Intensity of the electricity consumed for compute, as kg of CO₂ emitted per kilowatt-hour.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>C = Carbon intensity of the electricity used, measured in kg of CO₂ emitted per kilowatt-hour.
 
-P = Power Consumed by the underlying infrastructure, as kilowatt-hour.
+P = Power consumed by the underlying infrastructure, as kilowatt-hour.
 </pre></div>
 </div>
 <p>CO₂eq can then be calculated as <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">*</span> <span class="pre">P</span></code></p>
@@ -200,15 +203,16 @@ energy sources, <code class="docutils literal notranslate"><span class="pre">Coa
 <tr class="row-even"><td><p>Natural Gas</p></td>
 <td><p>744</p></td>
 </tr>
-<tr class="row-odd"><td><p>Low Carbon</p></td>
+<tr class="row-odd"><td><p>Renewable (hydroelectricity, wind power, solar, etc.)</p></td>
 <td><p>0</p></td>
 </tr>
 </tbody>
 </table>
-<p>For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable.</p>
+<p>For example, in case the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Renewable:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Net Carbon Intensity = 0.25 * 996 + 0.35 * 817 + 0.26 * 744 + 0.14 * 0 = 728.39 kgCO₂/MWh
 </pre></div>
 </div>
+<p>For renewable sources like hydroelectricity, although there are emissions associated with constructing the infrastructure itself, there is very little emissions that come from the actual power generation itself (that is, the water flowing through the turbine). We therefore consider their direct carbon emissions to be zero for the purposes of our project.</p>
 </div>
 <div class="section" id="power-usage">
 <h2>Power Usage<a class="headerlink" href="#power-usage" title="Permalink to this headline">¶</a></h2>
@@ -242,11 +246,19 @@ energy sources, <code class="docutils literal notranslate"><span class="pre">Coa
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2020, BCG GAMMA, Comet.ml, Haverford College, MILA
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -257,7 +269,6 @@ energy sources, <code class="docutils literal notranslate"><span class="pre">Coa
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
