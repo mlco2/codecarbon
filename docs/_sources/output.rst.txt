@@ -30,7 +30,7 @@ input parameter [defaults to current directory], for each experiment tracked acr
    * - country_iso_code
      - 3-letter alphabet ISO Code of the respective country
    * - region
-     - One of Province/State/City, where the infrastructure is hosted
+     - Province/State/City where the compute infrastructure is hosted
    * - on_cloud
      - ``Y`` if the infrastructure is on cloud, ``N`` in case of private infrastructure
    * - cloud_provider
