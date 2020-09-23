@@ -53,7 +53,9 @@ class BaseEmissionsTracker(ABC):
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._is_gpu_available = is_gpu_details_available()
-        self._hardware = GPU.from_utils(gpu_ids)  # TODO: Change once CPU support is available
+        self._hardware = GPU.from_utils(
+            gpu_ids
+        )  # TODO: Change once CPU support is available
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
         self._scheduler.add_job(

@@ -20,9 +20,16 @@ energy sources that are used to generate electricity, including fossil fuels and
 
 Carbon Intensity of each individual fossil fuel source (e.g., coal, petroleum, natural gas) is based on measured carbon dioxide output and power generation in the United States. These values were applied worldwide: electricity from coal generation in Germany is assigned the same Carbon Intensity as electricity from coal generation in Japan. 
 
+.. image:: ./images/grid_energy_mix.png
+            :align: center
+            :alt: Grid Energy Mix
+            :height: 300px
+            :width: 350px
+
 
 .. list-table:: Carbon Intensity Across Energy Sources
    :widths: 50 50
+   :align: center
    :header-rows: 1
 
    * - Energy Source
