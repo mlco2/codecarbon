@@ -21,7 +21,7 @@
 
 import responses
 
-from codecarbon.utils.cloud import CLOUD_METADATA_MAPPING, get_env_cloud_details
+from codecarbon.core.cloud import CLOUD_METADATA_MAPPING, get_env_cloud_details
 
 
 def setup_cloud_details_responses(tested_provider, provider_metadata):

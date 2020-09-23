@@ -3,7 +3,7 @@ import pandas as pd
 from typing import List, Dict, Tuple
 
 from codecarbon.input import DataSource
-from codecarbon.utils.emissions import Emissions
+from codecarbon.core.emissions import Emissions
 
 
 class Data:
@@ -105,7 +105,7 @@ class Data:
             country_name = global_energy_mix[country_iso_code]["countryName"]
 
             if country_iso_code not in ["_define", "ATA"]:
-                from codecarbon.units import Energy
+                from codecarbon.core.units import Energy
 
                 energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
 
@@ -155,7 +155,7 @@ class Data:
 
             region_code = region_emissions[region_name]["regionCode"]
             if region_name not in ["_unit"]:
-                from codecarbon.units import Energy
+                from codecarbon.core.units import Energy
 
                 energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
 
@@ -192,7 +192,7 @@ class Data:
             ["provider", "providerName", "region", "impact", "countryName"]
         ]
 
-        from codecarbon.units import EmissionsPerKwh
+        from codecarbon.core.units import EmissionsPerKwh
 
         cloud_emissions["emissions"] = cloud_emissions.apply(
             lambda row: EmissionsPerKwh.from_g_per_kwh(row.impact).kgs_per_kwh

@@ -13,12 +13,12 @@ from typing import Optional, List, Callable
 import uuid
 
 from codecarbon.input import DataSource
-from codecarbon.utils.emissions import Emissions
+from codecarbon.core.emissions import Emissions
 from codecarbon.external.geography import GeoMetadata, CloudMetadata
 from codecarbon.external.hardware import GPU
 from codecarbon.output import FileOutput, EmissionsData, BaseOutput
-from codecarbon.units import Time, Energy
-from codecarbon.utils.gpu import is_gpu_details_available
+from codecarbon.core.units import Time, Energy
+from codecarbon.core.gpu import is_gpu_details_available
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,14 @@ class BaseEmissionsTracker(ABC):
 
         self._scheduler.shutdown()
 
+        emissions_data = self._prepare_emissions_data()
+
+        for persistence in self.persistence_objs:
+            persistence.out(emissions_data)
+
+        return emissions_data.emissions
+
+    def _prepare_emissions_data(self) -> EmissionsData:
         cloud: CloudMetadata = self._get_cloud_metadata()
         geo: GeoMetadata = self._get_geo_metadata()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
@@ -117,7 +125,7 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = cloud.provider
             cloud_region = cloud.region
 
-        data = EmissionsData(
+        return EmissionsData(
             experiment_id=str(uuid.uuid4()),
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -131,11 +139,6 @@ class BaseEmissionsTracker(ABC):
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
-
-        for persistence in self.persistence_objs:
-            persistence.out(data)
-
-        return emissions
 
     @abstractmethod
     def _get_geo_metadata(self) -> GeoMetadata:
