@@ -13,12 +13,12 @@ from typing import Optional, List, Callable
 import uuid
 
 from codecarbon.input import DataSource
-from codecarbon.utils.emissions import Emissions
+from codecarbon.core.emissions import Emissions
 from codecarbon.external.geography import GeoMetadata, CloudMetadata
 from codecarbon.external.hardware import GPU
 from codecarbon.output import FileOutput, EmissionsData, BaseOutput
-from codecarbon.units import Time, Energy
-from codecarbon.utils.gpu import is_gpu_details_available
+from codecarbon.core.units import Time, Energy
+from codecarbon.core.gpu import is_gpu_details_available
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ class BaseEmissionsTracker(ABC):
         measure_power_secs: int = 15,
         output_dir: str = ".",
         save_to_file: bool = True,
+        gpu_ids: Optional[List] = None,
     ):
         """
         :param project_name: Project name for current experiment run, default name as "codecarbon"
@@ -43,6 +44,7 @@ class BaseEmissionsTracker(ABC):
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current directory
         :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
+        :param gpu_ids: User-specified known gpu ids to track, defaults to None
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
@@ -51,7 +53,7 @@ class BaseEmissionsTracker(ABC):
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._is_gpu_available = is_gpu_details_available()
-        self._hardware = GPU.from_utils()  # TODO: Change once CPU support is available
+        self._hardware = GPU.from_utils(gpu_ids)  # TODO: Change once CPU support is available
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
         self._scheduler.add_job(
@@ -92,6 +94,14 @@ class BaseEmissionsTracker(ABC):
 
         self._scheduler.shutdown()
 
+        emissions_data = self._prepare_emissions_data()
+
+        for persistence in self.persistence_objs:
+            persistence.out(emissions_data)
+
+        return emissions_data.emissions
+
+    def _prepare_emissions_data(self) -> EmissionsData:
         cloud: CloudMetadata = self._get_cloud_metadata()
         geo: GeoMetadata = self._get_geo_metadata()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
@@ -115,7 +125,7 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = cloud.provider
             cloud_region = cloud.region
 
-        data = EmissionsData(
+        return EmissionsData(
             experiment_id=str(uuid.uuid4()),
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -129,11 +139,6 @@ class BaseEmissionsTracker(ABC):
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
-
-        for persistence in self.persistence_objs:
-            persistence.out(data)
-
-        return emissions
 
     @abstractmethod
     def _get_geo_metadata(self) -> GeoMetadata:

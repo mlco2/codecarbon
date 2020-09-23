@@ -3,7 +3,8 @@
 Installing CodeCarbon
 =====================
 
-The package is hosted on the pip repository here.
+The package is hosted on the pip repository here (TODO).
+
 To install the package, run the following command in your terminal.
 
 .. code-block::  bash
@@ -20,7 +21,7 @@ Dependencies
 
 pip
 ~~~
-Following pip packages are used by the CodeCarbon package.
+The following pip packages are used by the CodeCarbon package, and will be installed along with the package itself:
 
 .. code-block::  bash
 

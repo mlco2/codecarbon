@@ -178,16 +178,16 @@
             
   <div class="section" id="quickstart">
 <span id="usage"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
-<p>The CO2 tracking tool can be used along with any deep learning framework. It supports both <code class="docutils literal notranslate"><span class="pre">online</span></code> (with internet access) and
-<code class="docutils literal notranslate"><span class="pre">offline</span></code> (without internet access) modes. The tracker can be used in following ways.</p>
+<p>The CO2 tracking tool can be used along with any computing framework. It supports both <code class="docutils literal notranslate"><span class="pre">online</span></code> (with internet access) and
+<code class="docutils literal notranslate"><span class="pre">offline</span></code> (without internet access) modes. The tracker can be used in following ways:</p>
 <div class="section" id="online-mode">
 <h2>Online Mode<a class="headerlink" href="#online-mode" title="Permalink to this headline">¶</a></h2>
-<p>When the environment has internet access <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object or vanilla <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> decorator can be used, which has parameter
-<code class="docutils literal notranslate"><span class="pre">offline</span></code> defaulted to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<p>When the environment has internet access, the <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object or the <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> decorator can be used, which has
+<code class="docutils literal notranslate"><span class="pre">offline</span></code> parameter set to <code class="docutils literal notranslate"><span class="pre">False</span></code> by default.</p>
 <div class="section" id="explicit-object">
 <h3>Explicit Object<a class="headerlink" href="#explicit-object" title="Permalink to this headline">¶</a></h3>
-<p>In case of absence of a single entry and stop point to the training code base, users can instantiate a <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object and
-pass it as a param to function calls to start and stop the emissions tracking of the compute section.</p>
+<p>In the case of absence of a single entry and stop point for the training code base, users can instantiate a <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object and
+pass it as a parameter to function calls to start and stop the emissions tracking of the compute section.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">EmissionsTracker</span>
 <span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">()</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -198,7 +198,7 @@ pass it as a param to function calls to start and stop the emissions tracking of
 </div>
 <div class="section" id="decorator">
 <h3>Decorator<a class="headerlink" href="#decorator" title="Permalink to this headline">¶</a></h3>
-<p>In case the training code base is wrapped in a function, users can use the decorator <code class="docutils literal notranslate"><span class="pre">&#64;track_emissions</span></code> on the function to enable tracking
+<p>In case the training code base is wrapped in a function, users can use the decorator <code class="docutils literal notranslate"><span class="pre">&#64;track_emissions</span></code> within the function to enable tracking
 emissions of the training code.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
 <span class="c1"># Results are saved to a `emissions.csv` file</span>
@@ -212,11 +212,11 @@ emissions of the training code.</p>
 </div>
 <div class="section" id="offline-mode">
 <h2>Offline Mode<a class="headerlink" href="#offline-mode" title="Permalink to this headline">¶</a></h2>
-<p>An offline version is available to support restricted environments without internet access. The internal computations remain unchanged, however,
-a <code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> parameter is required to fetch Carbon Intensity details of the regional electricity used.</p>
+<p>An offline version is available to support restricted environments without internet access. The internal computations remain unchanged; however,
+a <code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> parameter, which corresponds to the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, is required to fetch Carbon Intensity details of the regional electricity used. A complete list of country ISO codes can be found on <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes">Wikipedia</a>.</p>
 <div class="section" id="id1">
 <h3>Explicit Object<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p>Developers can use <code class="docutils literal notranslate"><span class="pre">OfflineEmissionsTracker</span></code> object to track emissions in absence of internet access as follows.</p>
+<p>Developers can use the <code class="docutils literal notranslate"><span class="pre">OfflineEmissionsTracker</span></code> object to track emissions as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">OfflineEmissionsTracker</span>
 <span class="n">tracker</span> <span class="o">=</span> <span class="n">OfflineEmissionsTracker</span><span class="p">(</span><span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -227,10 +227,10 @@ a <code class="docutils literal notranslate"><span class="pre">country_iso_code<
 </div>
 <div class="section" id="id2">
 <h3>Decorator<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> decorator in offline mode requires following two parameters:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> decorator in offline mode requires following two parameters:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">offline</span></code> needs to be set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, which defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code> for online mode.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> as the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted, for example - CAN for Canada.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">country_iso_code</span></code> the 3-letter alphabet ISO Code of the country where the compute infrastructure is hosted</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
 <span class="nd">@track_emissions</span><span class="p">(</span><span class="n">offline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;CAN&quot;</span><span class="p">)</span>

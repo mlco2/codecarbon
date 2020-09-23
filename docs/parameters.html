@@ -174,9 +174,9 @@
 <p>A set of parameters are supported by API to help users provide additional details per project.</p>
 <div class="section" id="emissionstracker">
 <h2>EmissionsTracker<a class="headerlink" href="#emissionstracker" title="Permalink to this headline">¶</a></h2>
-<p>The online mode object <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> takes following input parameters.</p>
-<table class="colwidths-given docutils align-center" id="id1">
-<caption><span class="caption-text">Input Parameters to EmissionsTracker</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<p>The online mode object <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> takes following input parameters:</p>
+<table class="colwidths-given docutils align-default" id="id2">
+<caption><span class="caption-text">Input Parameters to EmissionsTracker</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -213,8 +213,8 @@
 <div class="section" id="offlineemissionstracker">
 <h2>OfflineEmissionsTracker<a class="headerlink" href="#offlineemissionstracker" title="Permalink to this headline">¶</a></h2>
 <p>The offline mode object <code class="docutils literal notranslate"><span class="pre">OfflineEmissionsTracker</span></code> takes following input parameters.</p>
-<table class="colwidths-given docutils align-center" id="id2">
-<caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<table class="colwidths-given docutils align-default" id="id3">
+<caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -226,7 +226,11 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>country_iso_code</p></td>
-<td><p>3 letter ISO Code of the country where the experiment is being run</p></td>
+<td><div class="line-block">
+<div class="line">3 letter ISO Code of the country where the experiment is being run.</div>
+<div class="line">Available countries are listed in <a class="reference external" href="https://github.com/mlco2/code-carbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json">global_energy_mix.json</a></div>
+</div>
+</td>
 </tr>
 <tr class="row-odd"><td><p>country_name</p></td>
 <td><p>Name of the country where the experiment is being run</p></td>
@@ -235,7 +239,7 @@
 <td><div class="line-block">
 <div class="line">Optional Name of the Province/State/City, where the infrastructure is hosted</div>
 <div class="line">Currently, supported only for US States</div>
-<div class="line">for example - California or New York</div>
+<div class="line">for example - California or New York, from the <a class="reference external" href="https://github.com/mlco2/code-carbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json">list</a></div>
 </div>
 </td>
 </tr>
@@ -265,8 +269,8 @@
 <div class="section" id="track-emissions">
 <h2>&#64;track_emissions<a class="headerlink" href="#track-emissions" title="Permalink to this headline">¶</a></h2>
 <p>Decorator <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> takes following input parameters.</p>
-<table class="colwidths-given docutils align-center" id="id3">
-<caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<table class="colwidths-given docutils align-default" id="id4">
+<caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id4" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -298,7 +302,11 @@
 </td>
 </tr>
 <tr class="row-even"><td><p>offline</p></td>
-<td><p>Boolean variable indicating if the tracker should be run in offline mode, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if the tracker should be run in offline mode</div>
+<div class="line">defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></div>
+</div>
+</td>
 </tr>
 <tr class="row-odd"><td><p>country_iso_code</p></td>
 <td><p>3 letter ISO Code of the country where the experiment is being run</p></td>
@@ -310,7 +318,7 @@
 <td><div class="line-block">
 <div class="line">Optional Name of the Province/State/City, where the infrastructure is hosted</div>
 <div class="line">Currently, supported only for US States</div>
-<div class="line">for example - California or New York</div>
+<div class="line">for example - California or New York, from the <a class="reference external" href="https://github.com/mlco2/code-carbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json">list</a></div>
 </div>
 </td>
 </tr>
