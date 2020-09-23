@@ -127,13 +127,16 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = cloud.provider
             cloud_region = cloud.region
 
+        if float(emissions) == 0.0 and not self._is_gpu_available:
+            emissions = ""
+
         return EmissionsData(
             experiment_id=str(uuid.uuid4()),
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
-            energy_consumed=self._total_energy.kwh,
+            energy_consumed=self._total_energy.kwh if emissions != "" else "",
             country_name=country_name,
             country_iso_code=country_iso_code,
             region=region,
