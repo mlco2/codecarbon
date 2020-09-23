@@ -3,10 +3,10 @@
 Examples
 ========
 
-Following are examples to train an Deep Learning model on MNIST Data to recognize digits in images using tensorflow.
+Following are examples to train an Deep Learning model on MNIST Data to recognize digits in images using TensorFlow.
 
-As Explicit Object
-------------------
+Using the Explicit Object
+-------------------------
 
 .. code-block:: python
 
@@ -41,8 +41,8 @@ As Explicit Object
 
 
 
-As A Decorator
---------------
+Using the Decorator
+-------------------
 
 .. code-block:: python
 
