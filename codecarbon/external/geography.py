@@ -60,6 +60,13 @@ class GeoMetadata:
         self.country_name = country_name
         self.region = region if region is None else region.lower()
 
+    def __repr__(self) -> str:
+        return "GeoMetadata({}={}, {}={}, {}={})".format(
+            "country_iso_code", self.country_iso_code,
+            "country_name", self.country_name,
+            "region", self.region,
+        )
+
     @classmethod
     def from_geo_js(cls, url: str) -> "GeoMetadata":
         try:
