@@ -366,7 +366,7 @@ class Components:
             return (
                 html.H4(
                     [
-                        f"Had this been run in ",
+                        "Had this been run in ",
                         html.Strong(
                             f"{cloud_emissions_minimum_region.region}",
                             style={"fontWeight": "normal", "color": "green"},
@@ -550,7 +550,7 @@ class Components:
         try:
             location_mode = location_modes[country_iso_code.lower()]
             scope = scopes[country_iso_code.lower()]
-        except KeyError as e:
+        except KeyError:
             location_mode = None
             scope = "world"
         return px.choropleth(

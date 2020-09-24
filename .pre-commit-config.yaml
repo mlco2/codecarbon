@@ -19,4 +19,3 @@ repos:
     hooks:
     -   id: flake8
         args: ['--config=.flake8']
-        additional_dependencies: ['flake8-coding==1.3.2', 'flake8-copyright==0.2.2']
