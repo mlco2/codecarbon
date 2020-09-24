@@ -30,8 +30,8 @@ requirements:
 test:
   imports:
     - codecarbon
+    - codecarbon.core
     - codecarbon.external
-    - codecarbon.utils
     - codecarbon.viz
 
 about:
