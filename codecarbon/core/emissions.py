@@ -9,9 +9,9 @@ from typing import Dict
 
 import pandas as pd
 
+from codecarbon.core.units import EmissionsPerKwh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.input import DataSource
-from codecarbon.units import EmissionsPerKwh, Energy
 
 logger = logging.getLogger(__name__)
 

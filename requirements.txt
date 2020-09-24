@@ -5,6 +5,7 @@ dash_bootstrap_components
 dataclasses
 fire
 pandas
+pynvml
 requests
 sphinx
 sphinx-rtd-theme

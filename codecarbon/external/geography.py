@@ -9,7 +9,7 @@ from typing import Callable, Dict, Optional
 
 import requests
 
-from codecarbon.utils.cloud import get_env_cloud_details
+from codecarbon.core.cloud import get_env_cloud_details
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +61,16 @@ class GeoMetadata:
         self.country_name = country_name
         self.region = region if region is None else region.lower()
 
+    def __repr__(self) -> str:
+        return "GeoMetadata({}={}, {}={}, {}={})".format(
+            "country_iso_code",
+            self.country_iso_code,
+            "country_name",
+            self.country_name,
+            "region",
+            self.region,
+        )
+
     @classmethod
     def from_geo_js(cls, url: str) -> "GeoMetadata":
         try:
@@ -74,5 +84,5 @@ class GeoMetadata:
         return cls(
             country_iso_code=response["country_code3"].upper(),
             country_name=response["country"],
-            region=response["region"].lower(),
+            region=response.get("region", "").lower(),
         )
