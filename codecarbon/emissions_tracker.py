@@ -49,7 +49,7 @@ class BaseEmissionsTracker(ABC):
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
         self._start_time: Optional[float] = None
-        self._last_measured_time: Optional[float] = None
+        self._last_measured_time: float = time.time()
         self._output_dir: str = output_dir
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
