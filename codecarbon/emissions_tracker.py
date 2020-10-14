@@ -49,6 +49,7 @@ class BaseEmissionsTracker(ABC):
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
         self._start_time: Optional[float] = None
+        self._last_measured_time: float = time.time()
         self._output_dir: str = output_dir
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
@@ -82,7 +83,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning("Already started tracking")
             return
 
-        self._start_time = time.time()
+        self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
 
     def stop(self) -> Optional[float]:
@@ -164,8 +165,9 @@ class BaseEmissionsTracker(ABC):
         """
         self._total_energy += Energy.from_power_and_time(
             power=self._hardware.total_power,
-            time=Time.from_seconds(self._measure_power_secs),
+            time=Time.from_seconds(time.time()-self._last_measured_time),
         )
+        self._last_measured_time = time.time()
 
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):

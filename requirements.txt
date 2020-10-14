@@ -9,3 +9,4 @@ pynvml
 requests
 sphinx
 sphinx-rtd-theme
+mypy

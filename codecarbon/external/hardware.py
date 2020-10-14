@@ -61,7 +61,7 @@ class GPU(BaseHardware):
         return self._get_power_for_gpus(gpu_ids=gpu_ids)
 
     @classmethod
-    def from_utils(cls, gpu_ids=None) -> "GPU":
+    def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
         return cls(num_gpus=len(get_gpu_details()), gpu_ids=gpu_ids)
 
 
