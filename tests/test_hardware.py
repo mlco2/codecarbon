@@ -23,5 +23,5 @@ class TestGPUMetadata(unittest.TestCase):
     ):
         gpu = GPU.from_utils()
         self.assertAlmostEqual(
-            0.032159, gpu.get_power_for_gpus(gpu_ids=[1]).kw, places=2
+            0.032159, gpu._get_power_for_gpus(gpu_ids=[1]).kw, places=2
         )

@@ -39,7 +39,7 @@ class FakeGPUEnv(object):
             pass
 
         try:
-            del sys.modules["coedcarbon.utils.gpu"]
+            del sys.modules["codecarbon.core.gpu"]
         except KeyError:
             pass
 
@@ -184,7 +184,7 @@ class TestGpuNotAvailable(object):
             pass
 
         try:
-            del sys.modules["codecarbon.utils.gpu"]
+            del sys.modules["codecarbon.core.gpu"]
         except KeyError:
             pass
 
