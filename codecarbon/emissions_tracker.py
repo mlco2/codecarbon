@@ -166,7 +166,7 @@ class BaseEmissionsTracker(ABC):
         """
         self._total_energy += Energy.from_power_and_time(
             power=self._hardware.total_power,
-            time=Time.from_seconds(time.time()-self._last_measured_time),
+            time=Time.from_seconds(time.time() - self._last_measured_time),
         )
         self._last_measured_time = time.time()
 
