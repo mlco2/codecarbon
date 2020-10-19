@@ -163,9 +163,16 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power` seconds.
         :return: None
         """
+        last_duration = time.time()-self._last_measured_time
+
+        warning_duration = self._measure_power_secs * 3
+        if last_duration > warning_duration:
+            warn_msg = "Background scheduler didn't run for a long period (%ds), results might be inacurate"
+            logger.warning(warn_msg, last_duration)
+
         self._total_energy += Energy.from_power_and_time(
             power=self._hardware.total_power,
-            time=Time.from_seconds(time.time()-self._last_measured_time),
+            time=Time.from_seconds(last_duration),
         )
         self._last_measured_time = time.time()
 
