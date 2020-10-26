@@ -1,11 +1,17 @@
 import os
+from unittest.mock import patch
+
 import responses
 import requests
 import time
 import unittest
 from unittest import mock
 
-from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
+from codecarbon.emissions_tracker import (
+    EmissionsTracker,
+    track_emissions,
+    BaseEmissionsTracker,
+)
 from codecarbon.external.geography import CloudMetadata
 
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
@@ -93,6 +99,24 @@ class TestCarbonTracker(unittest.TestCase):
         emissions = tracker.stop()
         self.assertEqual(1, mocked_requests_get.call_count)
         self.assertAlmostEqual(1.1037980397280433e-05, emissions, places=2)
+
+    @mock.patch("codecarbon.emissions_tracker.time.time")
+    def test_graceful_failure(
+        self,
+        mocked_time,
+        mocked_env_cloud_details,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+    ):
+
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        def raise_exception(*args, **kwargs):
+            raise Exception()
+
+        mocked_time.side_effect = raise_exception
+
+        tracker.start()
 
     @responses.activate
     def test_decorator_ONLINE_NO_ARGS(

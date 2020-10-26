@@ -10,6 +10,7 @@ import logging
 import os
 import time
 from typing import Optional, List, Callable
+from codecarbon.core.util import suppress
 import uuid
 
 from codecarbon.input import DataSource
@@ -71,6 +72,7 @@ class BaseEmissionsTracker(ABC):
                 FileOutput(os.path.join(output_dir, "emissions.csv"))
             )
 
+    @suppress(Exception)
     def start(self) -> None:
         """
         Starts tracking the experiment.
@@ -85,13 +87,14 @@ class BaseEmissionsTracker(ABC):
         self._start_time = time.time()
         self._scheduler.start()
 
+    @suppress(Exception)
     def stop(self) -> Optional[float]:
         """
         Stops tracking the experiment
         :return: CO2 emissions in kgs
         """
         if self._start_time is None:
-            logging.error("Need to first start the tracker")
+            logger.error("Need to first start the tracker")
             return None
 
         self._scheduler.shutdown()
