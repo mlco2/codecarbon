@@ -135,11 +135,11 @@ As well as the relative carbon intensity of different compute regions of cloud p
 
 ## Comet Integration
 
-**Emissions Tracker** integrates with [Comet](https://www.comet.ml/site) for experiment tracking and visualization. Comet provides data scientists with tools to track, compare, explain and reproduce their experiments, and now with **Emissions Tracker** you can easily track the carbon footprint of your jobs along with training metrics, hyperparameters, debugging dataset samples and more.
+**Emissions Tracker** automatically integrates with [Comet](https://www.comet.ml/site) for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with **Emissions Tracker** you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
 
 ![](docs/_images/comet-workspace.png)
 
-To get started, make sure you have installed `comet-ml`.
+To get started with the Comet-CodeCarbon integration, make sure you have `comet-ml` installed:
 
 ```
 pip install comet_ml
@@ -147,7 +147,7 @@ pip install comet_ml
 
 Go to [Comet's website](https://www.comet.ml/signup) and create a free account. From your account settings page, copy your personal API key.
 
-In the `comet-mnist.py` example file, replace the placeholder code with your API key:
+In the [`comet-mnist.py`](examples/comet-mnist.py) example file, replace the placeholder code with your API key:
 
 ```
 exp = Experiment(api_key="YOUR API KEY")
@@ -159,4 +159,4 @@ To see the carbon footprint of your experiment, go to the `Panels` tab in the le
 
 From the Panel Gallery click the `Public` tab and search for `Emissions Tracker`. Once you've found it, add it to your Experiment.
 
-![](![](docs/_images/codecarbon-panel.png)
+![](docs/_images/codecarbon-panel.png)
