@@ -182,7 +182,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     def __init__(
         self,
         country_iso_code: str,
-        country_name: str,
+        country_name: Optional[str] = None,
         *args,
         region: Optional[str] = None,
         **kwargs
