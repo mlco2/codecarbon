@@ -159,4 +159,8 @@ To see the carbon footprint of your experiment, go to the `Panels` tab in the le
 
 From the Panel Gallery click the `Public` tab and search for `Emissions Tracker`. Once you've found it, add it to your Experiment.
 
+![](docs/_images/panel-gallery.gif)
+
+Now back in the `Panels` tab you'll see your Emissions Tracker visualization in the Comet UI. To render the Emissions Tracker visualization by default, save your `View`
+
 ![](docs/_images/codecarbon-panel.png)
