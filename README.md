@@ -161,6 +161,6 @@ From the Panel Gallery click the `Public` tab and search for `Emissions Tracker`
 
 ![](docs/_gifs/panel-gallery.gif)
 
-Now back in the `Panels` tab you'll see your Emissions Tracker visualization in the Comet UI. To render the Emissions Tracker visualization by default, save your `View`
+Now back in the `Panels` tab you'll see your Emissions Tracker visualization in the Comet UI. To render the Emissions Tracker visualization by default, save your `View`. And voilà! Every time you run your experiments, you'll be able to visualize your CodeCarbon emissions data alongside everything else you need to track for your research. 
 
 ![](docs/_images/codecarbon-panel.png)
