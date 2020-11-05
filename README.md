@@ -142,8 +142,10 @@ As well as the relative carbon intensity of different compute regions of cloud p
 To get started with the **Comet**-**CodeCarbon** integration, make sure you have `comet-ml` installed:
 
 ```
-pip install comet_ml
+pip install comet_ml>=3.2.2
 ```
+
+The minimum Comet version
 
 Go to [Comet's website](https://www.comet.ml/signup) and create a free account. From your account settings page, copy your personal API key.
 

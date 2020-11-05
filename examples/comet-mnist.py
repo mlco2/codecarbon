@@ -1,6 +1,5 @@
 from comet_ml import Experiment
 import tensorflow as tf
-from codecarbon import EmissionsTracker
 
 experiment = Experiment(api_key="YOUR API KEY",
                         project_name="codecarbon")
@@ -20,8 +19,6 @@ model = tf.keras.models.Sequential(
     ]
 )
 
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
+model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
 model.fit(x_train, y_train, epochs=10)
