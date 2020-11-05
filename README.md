@@ -135,11 +135,11 @@ As well as the relative carbon intensity of different compute regions of cloud p
 
 ## Comet Integration
 
-**Emissions Tracker** automatically integrates with [Comet](https://www.comet.ml/site) for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with **Emissions Tracker** you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
+**CodeCarbon** automatically integrates with [Comet](https://www.comet.ml/site) for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with **CodeCarbon** you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
 
 ![](docs/_images/comet-workspace.png)
 
-To get started with the Comet-CodeCarbon integration, make sure you have `comet-ml` installed:
+To get started with the **Comet**-**CodeCarbon** integration, make sure you have `comet-ml` installed:
 
 ```
 pip install comet_ml
@@ -155,12 +155,12 @@ exp = Experiment(api_key="YOUR API KEY")
 
 Run your experiment and click on the link in stdout to be taken back to the Comet UI. Automatically you'll see your metrics, hyperparameters, graph definition, system and environment details and more.
 
-To see the carbon footprint of your experiment, go to the `Panels` tab in the left sidebar and click `Add Panel`.
+**Comet** will automatically create an `EmissionsTracker` from the `codecarbon` package. To visualize the carbon footprint of your experiment, go to the `Panels` tab in the left sidebar and click `Add Panel`.
 
 From the Panel Gallery click the `Public` tab and search for `Emissions Tracker`. Once you've found it, add it to your Experiment.
 
 ![](docs/_gifs/panel-gallery.gif)
 
-Now back in the `Panels` tab you'll see your Emissions Tracker visualization in the Comet UI. To render the Emissions Tracker visualization by default, save your `View`. And voilà! Every time you run your experiments, you'll be able to visualize your CodeCarbon emissions data alongside everything else you need to track for your research. 
+Now back in the `Panels` tab you'll see your Emissions Tracker visualization in the Comet UI. To render the Emissions Tracker visualization by default, save your `View`. And voilà! Every time you run your experiments, you'll be able to visualize your CodeCarbon emissions data alongside everything else you need to track for your research.
 
 ![](docs/_images/codecarbon-panel.png)

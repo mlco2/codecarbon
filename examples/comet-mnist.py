@@ -24,8 +24,4 @@ loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
 model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
 
-tracker = EmissionsTracker()
-tracker.start()
 model.fit(x_train, y_train, epochs=10)
-emissions: float = tracker.stop()
-print(f"Emissions: {emissions} kg")
