@@ -1,5 +1,6 @@
 """
-Contains implementations of the Public facing API: EmissionsTracker, OfflineEmissionsTracker and @track_emissions
+Contains implementations of the Public facing API:
+EmissionsTracker, OfflineEmissionsTracker and @track_emissions
 """
 
 from abc import abstractmethod, ABC
@@ -28,7 +29,8 @@ class BaseEmissionsTracker(ABC):
     """
     Primary abstraction with Emissions Tracking functionality.
     Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata`
-    that are implemented by two concrete classes `OfflineCarbonTracker` and `CarbonTracker.`
+    that are implemented by two concrete classes `OfflineCarbonTracker`
+    and `CarbonTracker.`
     """
 
     def __init__(
@@ -40,11 +42,15 @@ class BaseEmissionsTracker(ABC):
         gpu_ids: Optional[List] = None,
     ):
         """
-        :param project_name: Project name for current experiment run, default name as "codecarbon"
-        :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
+        :param project_name: Project name for current experiment run,
+                             default name as "codecarbon"
+        :param measure_power_secs: Interval (in seconds) to measure hardware power
+                                   usage,defaults to 15
         :param output_dir: Directory path to which the experiment details are logged
-                           in a CSV file called `emissions.csv`, defaults to current directory
-        :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
+                           in a CSV file called `emissions.csv`, defaults to current
+                           directory
+        :param save_to_file: Indicates if the emission artifacts should be
+                             logged to a file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         """
         self._project_name: str = project_name
@@ -59,7 +65,8 @@ class BaseEmissionsTracker(ABC):
             gpu_ids
         )  # TODO: Change once CPU support is available
 
-        # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
+        # Run `self._measure_power` every `measure_power_secs`
+        # seconds in a background thread:
         self._scheduler.add_job(
             self._measure_power, "interval", seconds=measure_power_secs
         )
@@ -166,16 +173,18 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power` seconds.
         :return: None
         """
-        last_duration = time.time()-self._last_measured_time
+        last_duration = time.time() - self._last_measured_time
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
-            warn_msg = "Background scheduler didn't run for a long period (%ds), results might be inacurate"
+            warn_msg = (
+                "Background scheduler didn't run for a long period"
+                + " (%ds), results might be inacurate"
+            )
             logger.warning(warn_msg, last_duration)
 
         self._total_energy += Energy.from_power_and_time(
-            power=self._hardware.total_power,
-            time=Time.from_seconds(last_duration),
+            power=self._hardware.total_power, time=Time.from_seconds(last_duration)
         )
         self._last_measured_time = time.time()
 
@@ -200,7 +209,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States
         """
-        # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
+        # TODO: Currently we silently use a default value of Canada.
+        # TODO: Decide if we should fail with missing args.
         self._country_iso_code: str = "CAN" if country_iso_code is None else country_iso_code
         self._country_name: str = "Canada" if country_name is None else country_name
         self._region: Optional[str] = region if region is None else region.lower()
@@ -244,14 +254,18 @@ def track_emissions(
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
     :param fn: Function to be decorated
-    :param project_name: Project name for current experiment run, default name as "codecarbon"
-    :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
+    :param project_name: Project name for current experiment run,
+                         default name as "codecarbon"
+    :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
+                               defaults to 15
     :param output_dir: Directory path to which the experiment details are logged
-                       in a CSV file called `emissions.csv`, defaults to current directory
-    :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
+                       in a CSV file called `emissions.csv`, defaults to current
+                       directory
+    :param save_to_file: Indicates if the emission artifacts should be logged to a
+                         file, defaults to True
     :param offline: Indicates if the tracker should be run in offline mode
-    :param country_iso_code: 3 letter ISO Code of the country where the experiment is being run,
-                             required if `offline=True`
+    :param country_iso_code: 3 letter ISO Code of the country where the experiment is
+                             being run, required if `offline=True`
     :param country_name: Name of the country where the experiment is being run,
                          required if `offline=True`
     :param region: The provincial region, for example, California in the US.
