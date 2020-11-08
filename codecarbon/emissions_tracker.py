@@ -10,6 +10,7 @@ import logging
 import os
 import time
 from typing import Optional, List, Callable
+from codecarbon.core.util import suppress
 import uuid
 
 from codecarbon.input import DataSource
@@ -49,6 +50,7 @@ class BaseEmissionsTracker(ABC):
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
         self._start_time: Optional[float] = None
+        self._last_measured_time: float = time.time()
         self._output_dir: str = output_dir
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
@@ -71,6 +73,7 @@ class BaseEmissionsTracker(ABC):
                 FileOutput(os.path.join(output_dir, "emissions.csv"))
             )
 
+    @suppress(Exception)
     def start(self) -> None:
         """
         Starts tracking the experiment.
@@ -82,16 +85,17 @@ class BaseEmissionsTracker(ABC):
             logger.warning("Already started tracking")
             return
 
-        self._start_time = time.time()
+        self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
 
+    @suppress(Exception)
     def stop(self) -> Optional[float]:
         """
         Stops tracking the experiment
         :return: CO2 emissions in kgs
         """
         if self._start_time is None:
-            logging.error("Need to first start the tracker")
+            logger.error("Need to first start the tracker")
             return None
 
         self._scheduler.shutdown()
@@ -162,10 +166,18 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power` seconds.
         :return: None
         """
+        last_duration = time.time()-self._last_measured_time
+
+        warning_duration = self._measure_power_secs * 3
+        if last_duration > warning_duration:
+            warn_msg = "Background scheduler didn't run for a long period (%ds), results might be inacurate"
+            logger.warning(warn_msg, last_duration)
+
         self._total_energy += Energy.from_power_and_time(
             power=self._hardware.total_power,
-            time=Time.from_seconds(self._measure_power_secs),
+            time=Time.from_seconds(last_duration),
         )
+        self._last_measured_time = time.time()
 
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):
@@ -177,7 +189,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     def __init__(
         self,
         country_iso_code: str,
-        country_name: str,
+        country_name: Optional[str] = None,
         *args,
         region: Optional[str] = None,
         **kwargs

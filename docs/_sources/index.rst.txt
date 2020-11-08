@@ -12,6 +12,7 @@ CodeCarbon
    motivation
    methodology
    model_examples
+   faq
 
 .. toctree::
    :caption: Getting Started
