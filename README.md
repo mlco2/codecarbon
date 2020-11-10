@@ -1,5 +1,8 @@
 
 Track the carbon emissions of your machine learning code, quantify your impact (and log it all on [comet.ml](https://comet.ml)!)
+
+<br/>
+
 ![banner](/banner.png)
 
 <br/>
