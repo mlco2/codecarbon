@@ -7,11 +7,12 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 <br/>
 
 - [About CodeCarbon](#about-codecarbon)
-- [Setup](#setup)
+- [Installation](#installation)
+- [Quickstart](#quickstart)
     - [Online mode](#online-mode)
     - [Offline mode](#offline-mode)
     - [Using comet.ml](#using-cometml)
-- [Quickstart](#quickstart)
+- [Examples](#examples)
 - [Contributing](#contributing)
 - [Built-in Visualization Tool](#built-in-visualization-tool)
 - [Comet Integration](#comet-integration)
@@ -30,7 +31,7 @@ Our hope is that this package will be used widely for estimating the carbon foot
 Follow the steps below to set up the package and don't hesitate to open an issue if you need help!
 
 
-# Setup
+# Installation
 Create a virtual environment using `conda` for easier management of dependencies and packages.
 For installing conda, follow the instructions on the [official conda website](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
 
@@ -41,6 +42,8 @@ pip install .
 ```
 
 `codecarbon` will now be installed in your the local environment
+
+# Quickstart
 
 ### Online mode
 This is the most straightforward usage of the package, which is possible if you have access to the Internet, which is necessary to gather information regarding your geographical location.
@@ -91,7 +94,7 @@ def training_loop():
 
 Nothing to do here 🚀 ! Comet automatically logs your emissions if you have CodeCarbon installed. More about comet and adding the CodeCarbon panel to your project in [Comet Integration](#comet-integration).
 
-# Quickstart
+# Examples
 
 As an illustration of how to use CodeCarbon, we created a simple example using TensorFlow for digit classification on the [MNIST dataset](http://yann.lecun.com/exdb/mnist/):
 
