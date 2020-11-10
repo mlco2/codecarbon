@@ -1,6 +1,7 @@
 # CodeCarbon
 
 Track the carbon emissions of your machine learning code, quantify your impact (and log it all on [comet.ml](https://comet.ml)!)
+![banner](/banner.png)
 
 - [CodeCarbon](#codecarbon)
   - [About](#about)
@@ -87,7 +88,7 @@ Nothing to do here 🚀 ! Comet automatically logs your emissions if you have Co
 
 ## Quickstart
 
-As a simple illustration of using the package, we use a built-in example using TensorFlow for digit classification on the [MNIST dataset](http://yann.lecun.com/exdb/mnist/):
+As an illustration of how to use CodeCarbon, we created a simple example using TensorFlow for digit classification on the [MNIST dataset](http://yann.lecun.com/exdb/mnist/):
 
 First, install Tensorflow  2.0:
 
@@ -95,15 +96,17 @@ First, install Tensorflow  2.0:
 pip install tensorflow
 ```
 
-Then, run the examples in the `examples/` folder, which will call the online version of the Emissions tracker by default:
+Then, run the examples in the [`examples/`](/examples/) folder, which will call the online version of the Emissions tracker by default:
 
 ```
 python examples/mnist.py
 python examples/mnist_decorator.py
 ```
-This will create a .csv file with information about the energy that you used to carry out the classification task, and an estimate of the CO<sub>2</sub> that you generated, complete with comparisons to common modes of transportation to give you a better idea of the order of magnitude of your emissions.
+
+This will create a `.csv` file with information about the energy that you used to carry out the classification task, and an estimate of the CO<sub>2</sub> that you generated, complete with comparisons to common modes of transportation to give you a better idea of the order of magnitude of your emissions.
 
 ## Contributing
+
 We are hoping that the open-source community will help us edit our code and make it better!
 If you want to contribute, make sure that the [`tox` package](https://tox.readthedocs.io/en/latest/example/package.html) is available to run tests and debug:
 
