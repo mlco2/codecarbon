@@ -1,15 +1,15 @@
-import responses
 import unittest
 from unittest import mock
 
-from codecarbon.external.geography import CloudMetadata, GeoMetadata
+import responses
 
+from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from tests.testdata import (
     CLOUD_METADATA_AWS,
     CLOUD_METADATA_AZURE,
     CLOUD_METADATA_GCP,
-    GEO_METADATA_USA,
     GEO_METADATA_CANADA,
+    GEO_METADATA_USA,
 )
 
 

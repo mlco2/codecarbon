@@ -1,19 +1,13 @@
 import os
-from unittest.mock import patch
-
-import responses
-import requests
 import time
 import unittest
 from unittest import mock
 
-from codecarbon.emissions_tracker import (
-    EmissionsTracker,
-    track_emissions,
-    BaseEmissionsTracker,
-)
-from codecarbon.external.geography import CloudMetadata
+import requests
+import responses
 
+from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
+from codecarbon.external.geography import CloudMetadata
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
 from tests.testutils import get_test_data_source
 
@@ -65,6 +59,7 @@ class TestCarbonTracker(unittest.TestCase):
         emissions = tracker.stop()
 
         # THEN
+        print("MOCKED GPU DETAILS", mocked_get_gpu_details.call_args_list)
         self.assertEqual(
             3, mocked_get_gpu_details.call_count
         )  # 2 times in 5 seconds + once for init = 3

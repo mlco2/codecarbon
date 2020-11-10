@@ -3,7 +3,6 @@ import unittest
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-
 from tests.testutils import get_test_data_source
 
 
