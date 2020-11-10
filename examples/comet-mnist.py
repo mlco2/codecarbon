@@ -1,10 +1,7 @@
-from comet_ml import Experiment
 import tensorflow as tf
+from comet_ml import Experiment
 
-experiment = Experiment(
-    api_key="YOUR API KEY",
-    project_name="codecarbon"
-)
+experiment = Experiment(api_key="YOUR API KEY", project_name="codecarbon")
 
 mnist = tf.keras.datasets.mnist
 
@@ -21,6 +18,8 @@ model = tf.keras.models.Sequential(
     ]
 )
 
-model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+model.compile(
+    optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
+)
 
 model.fit(x_train, y_train, epochs=10)
