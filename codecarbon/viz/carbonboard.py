@@ -1,10 +1,10 @@
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-from dash.dependencies import Input, Output
 import dash_table as dt
 import fire
 import pandas as pd
+from dash.dependencies import Input, Output
 
 from codecarbon.viz.components import Components
 from codecarbon.viz.data import Data
@@ -232,7 +232,10 @@ def render_app(df: pd.DataFrame):
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
         cloud_provider = hidden_project_summary["cloud_provider"]
         cloud_region = hidden_project_summary["cloud_region"]
-        cloud_provider_name, cloud_emissions_barchart_data = data.get_cloud_emissions_barchart_data(
+        (
+            cloud_provider_name,
+            cloud_emissions_barchart_data,
+        ) = data.get_cloud_emissions_barchart_data(
             net_energy_consumed, on_cloud, cloud_provider, cloud_region
         )
 

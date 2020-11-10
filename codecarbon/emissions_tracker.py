@@ -2,24 +2,25 @@
 Contains implementations of the Public facing API: EmissionsTracker, OfflineEmissionsTracker and @track_emissions
 """
 
-from abc import abstractmethod, ABC
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
-from functools import wraps
 import logging
 import os
 import time
-from typing import Optional, List, Callable
-from codecarbon.core.util import suppress
 import uuid
+from abc import ABC, abstractmethod
+from datetime import datetime
+from functools import wraps
+from typing import Callable, List, Optional
 
-from codecarbon.input import DataSource
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from codecarbon.core.emissions import Emissions
-from codecarbon.external.geography import GeoMetadata, CloudMetadata
-from codecarbon.external.hardware import GPU
-from codecarbon.output import FileOutput, EmissionsData, BaseOutput
-from codecarbon.core.units import Time, Energy
 from codecarbon.core.gpu import is_gpu_details_available
+from codecarbon.core.units import Energy, Time
+from codecarbon.core.util import suppress
+from codecarbon.external.geography import CloudMetadata, GeoMetadata
+from codecarbon.external.hardware import GPU
+from codecarbon.input import DataSource
+from codecarbon.output import BaseOutput, EmissionsData, FileOutput
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,7 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power` seconds.
         :return: None
         """
-        last_duration = time.time()-self._last_measured_time
+        last_duration = time.time() - self._last_measured_time
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
@@ -174,8 +175,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         self._total_energy += Energy.from_power_and_time(
-            power=self._hardware.total_power,
-            time=Time.from_seconds(last_duration),
+            power=self._hardware.total_power, time=Time.from_seconds(last_duration),
         )
         self._last_measured_time = time.time()
 

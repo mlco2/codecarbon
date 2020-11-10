@@ -2,11 +2,12 @@
 Encapsulates external dependencies to retrieve cloud and geographical metadata
 """
 
-from dataclasses import dataclass
 import logging
 import re
-import requests
+from dataclasses import dataclass
 from typing import Callable, Dict, Optional
+
+import requests
 
 from codecarbon.core.cloud import get_env_cloud_details
 

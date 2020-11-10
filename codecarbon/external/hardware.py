@@ -2,13 +2,13 @@
 Encapsulates external dependencies to retrieve hardware metadata
 """
 
-from abc import abstractmethod, ABC
-from dataclasses import dataclass
 import logging
-from typing import Iterable, List, Dict, Optional
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Dict, Iterable, List, Optional
 
-from codecarbon.core.units import Power
 from codecarbon.core.gpu import get_gpu_details
+from codecarbon.core.units import Power
 
 logger = logging.getLogger(__name__)
 
