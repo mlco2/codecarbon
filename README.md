@@ -1,19 +1,19 @@
-# CodeCarbon
 
 Track the carbon emissions of your machine learning code, quantify your impact (and log it all on [comet.ml](https://comet.ml)!)
 ![banner](/banner.png)
 
-- [CodeCarbon](#codecarbon)
-  - [About](#about)
-  - [Setup](#setup)
-      - [Online mode](#online-mode)
-      - [Offline mode](#offline-mode)
-      - [Using comet.ml](#using-cometml)
-  - [Quickstart](#quickstart)
-  - [Contributing](#contributing)
-  - [Built-in Visualization Tool](#built-in-visualization-tool)
-  - [Comet Integration](#comet-integration)
-  - [Generate Documentation](#generate-documentation)
+<br/>
+
+- [About](#about)
+- [Setup](#setup)
+    - [Online mode](#online-mode)
+    - [Offline mode](#offline-mode)
+    - [Using comet.ml](#using-cometml)
+- [Quickstart](#quickstart)
+- [Contributing](#contributing)
+- [Built-in Visualization Tool](#built-in-visualization-tool)
+- [Comet Integration](#comet-integration)
+- [Generate Documentation](#generate-documentation)
 
 ## About
 While computing currently represents roughly 0.5% of the world’s energy consumption, that percentage is projected to grow beyond 2% in the coming years, which will entail a significant rise in global CO2 emissions if not done properly. Given this increase, it is important to quantify and track the extent and origin of this energy usage, and to minimize the emissions incurred as much as possible.
