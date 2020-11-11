@@ -1,4 +1,4 @@
-from comet_ml import Experiment
+from comet_ml import Experiment  # isort:skip
 
 import tensorflow as tf
 
@@ -7,8 +7,7 @@ import tensorflow as tf
 ## https://www.comet.ml/user/settings/account#section-DEVELOPER_INFORMATION
 ## And here for setup information:
 ## https://www.comet.ml/docs/python-sdk/advanced/#experiment-configuration-parameters
-experiment = Experiment(
-)
+experiment = Experiment()
 
 mnist = tf.keras.datasets.mnist
 
@@ -29,4 +28,3 @@ loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
 
 model.fit(x_train, y_train, epochs=10)
-print(f"Emissions: {emissions} kg")
