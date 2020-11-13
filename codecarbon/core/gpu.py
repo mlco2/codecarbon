@@ -33,7 +33,7 @@ def to_utf8(str_or_bytes):
 
 
 def get_gpu_name(handle):
-    """ Returns the name of the GPU device
+    """Returns the name of the GPU device
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1ga5361803e044c6fdf3b08523fb6d1481
     """
     name = pynvml.nvmlDeviceGetName(handle)
@@ -41,7 +41,7 @@ def get_gpu_name(handle):
 
 
 def get_uuid(handle):
-    """ Returns the globally unique GPU device UUID
+    """Returns the globally unique GPU device UUID
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g72710fb20f30f0c2725ce31579832654
     """
     uuid = pynvml.nvmlDeviceGetUUID(handle)
@@ -49,28 +49,28 @@ def get_uuid(handle):
 
 
 def get_memory_info(handle):
-    """ Returns memory info in bytes
+    """Returns memory info in bytes
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g2dfeb1db82aa1de91aa6edf941c85ca8
     """
     return pynvml.nvmlDeviceGetMemoryInfo(handle)
 
 
 def get_temperature(handle):
-    """ Returns degrees in the Celsius scale
+    """Returns degrees in the Celsius scale
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g92d1c5182a14dd4be7090e3c1480b121
     """
     return pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
 
 
 def get_power_usage(handle):
-    """ Returns power usage in milliwatts
+    """Returns power usage in milliwatts
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g7ef7dff0ff14238d08a19ad7fb23fc87
     """
     return pynvml.nvmlDeviceGetPowerUsage(handle)
 
 
 def get_power_limit(handle):
-    """ Returns max power usage in milliwatts
+    """Returns max power usage in milliwatts
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g263b5bf552d5ec7fcd29a088264d10ad
     """
     try:
@@ -80,21 +80,21 @@ def get_power_limit(handle):
 
 
 def get_gpu_utilization(handle):
-    """ Returns the % of utilization of the kernels during the last sample
+    """Returns the % of utilization of the kernels during the last sample
     https://docs.nvidia.com/deploy/nvml-api/structnvmlUtilization__t.html#structnvmlUtilization__t
     """
     return pynvml.nvmlDeviceGetUtilizationRates(handle).gpu
 
 
 def get_compute_mode(handle):
-    """ Returns the compute mode of the GPU
+    """Returns the compute mode of the GPU
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceEnumvs.html#group__nvmlDeviceEnumvs_1gbed1b88f2e3ba39070d31d1db4340233
     """
     return pynvml.nvmlDeviceGetComputeMode(handle)
 
 
 def get_compute_processes(handle):
-    """ Returns the list of processes ids having a compute context on the
+    """Returns the list of processes ids having a compute context on the
     device with the memory used
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g46ceaea624d5c96e098e03c453419d68
     """
@@ -104,7 +104,7 @@ def get_compute_processes(handle):
 
 
 def get_graphics_processes(handle):
-    """ Returns the list of processes ids having a graphics context on the
+    """Returns the list of processes ids having a graphics context on the
     device with the memory used
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g7eacf7fa7ba4f4485d166736bf31195e
     """
@@ -114,7 +114,7 @@ def get_graphics_processes(handle):
 
 
 def get_gpu_static_info():
-    """ Get all GPUs static information.
+    """Get all GPUs static information.
     >>> get_gpu_static_info()
     [
         {
@@ -152,7 +152,7 @@ def get_gpu_static_info():
 
 
 def get_gpu_details():
-    """ Get all GPUs instantaneous metrics
+    """Get all GPUs instantaneous metrics
     >>> get_gpu_details()
     [
         {
@@ -204,8 +204,7 @@ def get_gpu_details():
 
 
 def is_gpu_details_available():
-    """ Returns True if the GPU details are available.
-    """
+    """Returns True if the GPU details are available."""
     try:
         pynvml.nvmlInit()
         return True
