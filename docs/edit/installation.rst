@@ -6,7 +6,7 @@ Installing CodeCarbon
 From pypi repository
 --------------------
 
-The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`.
+The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`_.
 
 To install the package, run the following command in your terminal.
 
@@ -17,7 +17,7 @@ To install the package, run the following command in your terminal.
 From conda repository
 --------------------
 
-The package is hosted on the conda repository `here <https://anaconda.org/codecarbon/codecarbon>`.
+The package is hosted on the conda repository `here <https://anaconda.org/codecarbon/codecarbon>`_.
 
 To install the package, run the following command in your terminal.
 
