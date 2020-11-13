@@ -75,8 +75,8 @@ def render_app(df: pd.DataFrame):
     def update_project_data(project_name: str):
         project_data = data.get_project_data(df, project_name)
         project_summary = data.get_project_summary(project_data.data)
-        net_power_consumption = f"{sum(df['energy_consumed'])} kWh"
-        net_carbon_equivalent = f"{sum(df['emissions'])} kg"
+        net_power_consumption = f"{'{:.1f}'.format(sum(df['energy_consumed']))} kWh"
+        net_carbon_equivalent = f"{'{:.1f}'.format(sum(df['emissions']))} kg"
         if {project_summary["region"]} == "":
             project_infrastructure_location = f"{project_summary['country_name']}"
         else:
@@ -183,8 +183,10 @@ def render_app(df: pd.DataFrame):
         country_name = hidden_project_summary["country_name"]
         country_iso_code = hidden_project_summary["country_iso_code"]
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
-        regional_emissions_choropleth_data = data.get_regional_emissions_choropleth_data(
-            net_energy_consumed, country_iso_code
+        regional_emissions_choropleth_data = (
+            data.get_regional_emissions_choropleth_data(
+                net_energy_consumed, country_iso_code
+            )
         )
 
         return (

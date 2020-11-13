@@ -27,18 +27,25 @@ class Data:
             "last_run": {
                 "timestamp": last_run["timestamp"],
                 "duration": last_run["duration"],
-                "emissions": last_run["emissions"],
-                "energy_consumed": last_run["energy_consumed"],
+                "emissions": round(last_run["emissions"], 1),
+                "energy_consumed": round((last_run["energy_consumed"]), 1),
             },
             "total": {
                 "duration": sum(
                     map(lambda experiment: experiment["duration"], project_data)
                 ),
-                "emissions": sum(
-                    map(lambda experiment: experiment["emissions"], project_data)
+                "emissions": round(
+                    sum(map(lambda experiment: experiment["emissions"], project_data)),
+                    1,
                 ),
-                "energy_consumed": sum(
-                    map(lambda experiment: experiment["energy_consumed"], project_data)
+                "energy_consumed": round(
+                    sum(
+                        map(
+                            lambda experiment: experiment["energy_consumed"],
+                            project_data,
+                        )
+                    ),
+                    1,
                 ),
             },
             "country_name": last_run["country_name"],

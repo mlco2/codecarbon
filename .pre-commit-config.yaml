@@ -9,8 +9,8 @@ repos:
     args: [--filter-files"]
     hooks:
     -   id: isort
--   repo: https://github.com/psf/black
-    rev: 19.10b0
+-   repo: https://github.com/python/black
+    rev: stable
     hooks:
     - id: black
       args: [--safe]

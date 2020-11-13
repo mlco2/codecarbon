@@ -175,7 +175,8 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         self._total_energy += Energy.from_power_and_time(
-            power=self._hardware.total_power, time=Time.from_seconds(last_duration),
+            power=self._hardware.total_power,
+            time=Time.from_seconds(last_duration),
         )
         self._last_measured_time = time.time()
 
@@ -201,7 +202,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                        Currently, this only affects calculations for the United States
         """
         # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
-        self._country_iso_code: str = "CAN" if country_iso_code is None else country_iso_code
+        self._country_iso_code: str = (
+            "CAN" if country_iso_code is None else country_iso_code
+        )
         self._country_name: str = "Canada" if country_name is None else country_name
         self._region: Optional[str] = region if region is None else region.lower()
         super().__init__(*args, **kwargs)
