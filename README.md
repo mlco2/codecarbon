@@ -190,21 +190,21 @@ The minimum Comet version
 
 Go to [Comet's website](https://www.comet.ml/signup) and create a free account. From your account settings page, copy your personal API key.
 
-In the [`comet-mnist.py`](examples/comet-mnist.py) example file, replace the placeholder code with your API key:
+In the [`mnist-comet.py`](examples/mnist-comet.py) example file, replace the placeholder code with your API key:
 
 ```
-exp = Experiment(api_key="YOUR API KEY")
+experiment = Experiment(api_key="YOUR API KEY")
 ```
 
 Run your experiment and click on the link in stdout to be taken back to the Comet UI. Automatically you'll see your metrics, hyperparameters, graph definition, system and environment details and more.
 
-**Comet** will automatically create an `EmissionsTracker` from the `codecarbon` package. To visualize the carbon footprint of your experiment, go to the `Panels` tab in the left sidebar and click `Add Panel`.
+**Comet** will automatically create an `EmissionsTracker` object from the `codecarbon` package when your code runs. To visualize the carbon footprint of your experiment, go to the `Panels` tab in the left sidebar and click `Add Panel`.
 
-From the Panel Gallery click the `Public` tab and search for `Emissions Tracker`. Once you've found it, add it to your Experiment.
+From the Panel Gallery click the `Public` tab and search for `CodeCarbon Footprint`. Once you've found it, add it to your Experiment.
 
 ![](docs/edit/images/panel-gallery.gif)
 
-Now back in the `Panels` tab you'll see your Emissions Tracker visualization in the Comet UI. To render the Emissions Tracker visualization by default, save your `View`. And voilà! Every time you run your experiments, you'll be able to visualize your CodeCarbon emissions data alongside everything else you need to track for your research.
+Now back in the `Panels` tab you'll see your CodeCarbon Footprint visualization in the Comet UI. To render the visualization by default, save your `View`. And voilà! Every time you run your experiments, you'll be able to visualize your CodeCarbon emissions data alongside everything else you need to track for your research.
 
 ![](docs/edit/images/codecarbon-panel.png)
 
