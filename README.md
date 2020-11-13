@@ -6,8 +6,14 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 
 <br/>
 
+[![](https://img.shields.io/conda/v/codecarbon/codecarbon?style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?style=for-the-badge)](https://pypi.org/project/codecarbon/)
+
 - [About CodeCarbon](#about-codecarbon)
 - [Installation](#installation)
+  - [pip](#pip)
+  - [conda](#conda)
+  - [Latest](#latest)
 - [Quickstart](#quickstart)
     - [Online mode](#online-mode)
     - [Offline mode](#offline-mode)
@@ -52,8 +58,8 @@ pip install codecarbon
 conda install -c codecarbon -c conda-forge codecarbon
 ```
 
+`codecarbon` is now installed in your the local environment
 
-`codecarbon` will now be installed in your the local environment
 
 # Quickstart
 
