@@ -5,6 +5,11 @@
 
 CodeCarbon
 ==========
+
+.. image:: ./images/banner.png
+            :align: center
+            :alt: Banner
+
 .. toctree::
    :caption: Introduction
    :maxdepth: 2

@@ -19,7 +19,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
 
 
 setuptools.setup(
-    name="code-carbon",
+    name="codecarbon",
     version="0.0.1",
     author="BCG GAMMA",
     long_description=long_description,
