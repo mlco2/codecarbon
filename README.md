@@ -13,7 +13,6 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 - [Installation](#installation)
   - [pip](#pip)
   - [conda](#conda)
-  - [Latest](#latest)
 - [Quickstart](#quickstart)
     - [Online mode](#online-mode)
     - [Offline mode](#offline-mode)
