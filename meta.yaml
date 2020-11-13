@@ -19,13 +19,13 @@ requirements:
   run:
     - python>3.6
     - apscheduler
-    - co2-tracker-utils
     - dash
     - dash-bootstrap-components
     - dataclasses
     - fire
     - pandas
     - requests
+    - pynvml
 
 test:
   imports:
