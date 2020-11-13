@@ -38,8 +38,20 @@ For installing conda, follow the instructions on the [official conda website](ht
 ```
 conda create --name codecarbon python=3.6
 conda activate codecarbon
-pip install .
 ```
+
+### Install from pypi repository
+
+```
+pip install codecarbon
+```
+
+### Install from conda repository
+
+```
+conda install -c codecarbon -c conda-forge codecarbon
+```
+
 
 `codecarbon` will now be installed in your the local environment
 
