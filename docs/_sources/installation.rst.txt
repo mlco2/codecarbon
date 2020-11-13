@@ -15,7 +15,7 @@ To install the package, run the following command in your terminal.
     pip install codecarbon
 
 From conda repository
---------------------
+---------------------
 
 The package is hosted on the conda repository `here <https://anaconda.org/codecarbon/codecarbon>`_.
 
