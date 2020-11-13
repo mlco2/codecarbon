@@ -1,4 +1,4 @@
-![banner](codecarbon/docs/edit/images/banner.png)
+![banner](docs/edit/images/banner.png)
 
 <br/>
 
@@ -147,21 +147,21 @@ carbonboard --filepath="examples/emissions.csv" --port=xxxx
 
 Once you have generated your own .csv file based on your computations, you can feed that into the visualization tool to see a more visual representation of your own emissions.
 
-![Dashboard Summary](codecarbon/docs/edit/images/summary.png)
+![Dashboard Summary](docs/edit/images/summary.png)
 
 You can also see the carbon intensity of different regions and countries:
 
-![Global Equivalents](codecarbon/docs/edit/images/global_equivalents.png)
+![Global Equivalents](docs/edit/images/global_equivalents.png)
 
 As well as the relative carbon intensity of different compute regions of cloud providers:
 
-![Cloud Emissions](codecarbon/docs/edit/images/cloud_emissions.png)
+![Cloud Emissions](docs/edit/images/cloud_emissions.png)
 
 # Comet Integration
 
 **CodeCarbon** automatically integrates with [Comet](https://www.comet.ml/site) for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with **CodeCarbon** you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
 
-![](codecarbon/docs/edit/images/comet-workspace.png)
+![](docs/edit/images/comet-workspace.png)
 
 To get started with the **Comet**-**CodeCarbon** integration, make sure you have `comet-ml` installed:
 
@@ -185,11 +185,11 @@ Run your experiment and click on the link in stdout to be taken back to the Come
 
 From the Panel Gallery click the `Public` tab and search for `Emissions Tracker`. Once you've found it, add it to your Experiment.
 
-![](codecarbon/docs/edit/images/panel-gallery.gif)
+![](docs/edit/images/panel-gallery.gif)
 
 Now back in the `Panels` tab you'll see your Emissions Tracker visualization in the Comet UI. To render the Emissions Tracker visualization by default, save your `View`. And voilà! Every time you run your experiments, you'll be able to visualize your CodeCarbon emissions data alongside everything else you need to track for your research.
 
-![](codecarbon/docs/edit/images/codecarbon-panel.png)
+![](docs/edit/images/codecarbon-panel.png)
 
 
 # Generate Documentation
