@@ -5,7 +5,6 @@ with open("README.md", "r") as f:
 
 DEPENDENCIES = [
     "APScheduler",
-    "co2-tracker-utils",
     "dash",
     "dash_bootstrap_components",
     "dataclasses",
