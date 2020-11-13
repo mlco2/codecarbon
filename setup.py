@@ -12,7 +12,6 @@ DEPENDENCIES = [
     "pandas",
     "pynvml",
     "requests",
-    "typing>=3.7.4; python_version<'3.5'",
 ]
 
 TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]

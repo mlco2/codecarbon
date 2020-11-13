@@ -26,7 +26,6 @@ requirements:
     - pandas
     - requests
     - pynvml
-    - typing>=3.7.4
 
 test:
   imports:
