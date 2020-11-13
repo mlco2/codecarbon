@@ -13,7 +13,7 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 - [Installation](#installation)
   - [pip](#pip)
   - [conda](#conda)
-  - [latest](#latest)
+  - [Latest](#latest)
 - [Quickstart](#quickstart)
     - [Online mode](#online-mode)
     - [Offline mode](#offline-mode)
@@ -58,7 +58,7 @@ pip install codecarbon
 conda install -c codecarbon -c conda-forge codecarbon
 ```
 
-## latest
+## Latest
 
 ```
 git clone git@github.com:mlco2/codecarbon.git
@@ -66,7 +66,7 @@ cd codecarbon
 pip install .
 ```
 
-`codecarbon` will now be installed in your the local environment
+`codecarbon` is now installed in your local environment!
 
 # Quickstart
 
