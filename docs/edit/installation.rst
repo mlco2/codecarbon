@@ -23,7 +23,7 @@ To install the package, run the following command in your terminal.
 
 .. code-block::  bash
 
-    pconda install -c codecarbon -c conda-forge codecarbon
+    conda install -c codecarbon -c conda-forge codecarbon
 
 ..  note::
 
