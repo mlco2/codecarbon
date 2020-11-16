@@ -1,12 +1,13 @@
 APScheduler
-co2-tracker-utils
+black
 dash
 dash_bootstrap_components
 dataclasses
 fire
+isort
+mypy
 pandas
 pynvml
 requests
 sphinx
 sphinx-rtd-theme
-mypy
