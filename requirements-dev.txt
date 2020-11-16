@@ -4,6 +4,7 @@ dash
 dash_bootstrap_components
 dataclasses
 fire
+flake8
 isort
 mypy
 pandas
