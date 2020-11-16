@@ -13,8 +13,8 @@ from typing import Callable, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from codecarbon.core.emissions import Emissions
 from codecarbon.core import cpu, gpu
+from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata

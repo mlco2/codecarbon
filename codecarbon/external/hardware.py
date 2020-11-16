@@ -3,9 +3,10 @@ Encapsulates external dependencies to retrieve hardware metadata
 """
 
 import logging
+import re
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import re
 from typing import Dict, Iterable, List, Optional
 
 from codecarbon.core.cpu import IntelPowerGadget
