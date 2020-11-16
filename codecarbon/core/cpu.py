@@ -1,7 +1,9 @@
 from logging import getLogger
 import os
+import pandas as pd
 import shutil
 import sys
+from typing import Dict
 
 logger = getLogger(__name__)
 
@@ -15,6 +17,7 @@ def is_powergadget_available():
             f"Exception occurred while instantiating IntelPowerGadget : {e}",
             exc_info=True,
         )
+        print(e)
         return False
 
 
@@ -24,7 +27,7 @@ class IntelPowerGadget:
     _windows_exec = "PowerLog.exe"
     _linux_exec = "power_gadget"
 
-    def __init__(self, output_dir: str, duration=1, resolution=100):
+    def __init__(self, output_dir: str = ".", duration=1, resolution=100):
         self._log_file_path = os.path.join(output_dir, "intel_power_gadget_log.csv")
         self._system = sys.platform.lower()
         self._duration = duration
@@ -57,7 +60,7 @@ class IntelPowerGadget:
         else:
             raise Exception("Platform not supported by Intel Power Gadget")
 
-    def log_values(self):
+    def _log_values(self):
         """
         Logs output from Intel Power Gadget command line to a file
         """
@@ -71,6 +74,29 @@ class IntelPowerGadget:
             )
         elif self._system.startswith("darwin"):
             os.system(
-                f"'{self._cli}' -duration {self.duration} -resolution {self.resolution} -file {self._log_file_path} > /dev/null"
+                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null"
             )
         return
+
+    def get_cpu_details(self) -> Dict:
+        """
+        Fetches the CPU Power Details by fetching values from a logged csv file in _log_values function
+        :return:
+        """
+        self._log_values()
+        cpu_details = dict()
+        try:
+            cpu_data = pd.read_csv(self._log_file_path).dropna()
+            for col_name in cpu_data.columns:
+                if col_name in ["System Time", "Elapsed Time (sec)", "RDTSC"]:
+                    continue
+                if "Cumulative" in col_name:
+                    cpu_details[col_name] = cpu_data[col_name].iloc[-1]
+                else:
+                    cpu_details[col_name] = cpu_data[col_name].mean()
+        except FileNotFoundError:
+            logger.debug(
+                f"Intel Power Gadget logged file not found at {self._log_file_path}"
+            )
+
+        return cpu_details
