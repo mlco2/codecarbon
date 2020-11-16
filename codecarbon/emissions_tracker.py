@@ -58,9 +58,13 @@ class BaseEmissionsTracker(ABC):
         self._hardware = []
 
         if gpu.is_gpu_details_available():
+            logger.debug("Tracking Nvidia GPU")
             self._hardware.append(GPU.from_utils(gpu_ids))
         elif cpu.is_powergadget_available():
+            logger.debug("Tracking Intel CPU")
             self._hardware.append(CPU(self._output_dir))
+        else:
+            logger.debug("Not tracking any Processor")
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
@@ -178,9 +182,10 @@ class BaseEmissionsTracker(ABC):
 
         for hardware in self._hardware:
             self._total_energy += Energy.from_power_and_time(
-                power=hardware.total_power,
+                power=hardware.total_power(),
                 time=Time.from_seconds(last_duration),
             )
+            logger.debug(f"Energy consumed: {self._total_energy}")
         self._last_measured_time = time.time()
 
 
@@ -196,7 +201,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         country_name: Optional[str] = None,
         *args,
         region: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         :param country_iso_code: 3 letter ISO Code of the country where the experiment is being run
