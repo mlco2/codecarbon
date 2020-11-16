@@ -23,6 +23,6 @@ model.compile(optimizer="adam", loss=loss_fn, metrics=["accuracy"])
 
 tracker = EmissionsTracker()
 tracker.start()
-model.fit(x_train, y_train, epochs=10)
+model.fit(x_train, y_train, epochs=100)
 emissions: float = tracker.stop()
 print(f"Emissions: {emissions} kg")
