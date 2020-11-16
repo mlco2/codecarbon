@@ -56,12 +56,13 @@ class BaseEmissionsTracker(ABC):
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = []
+
         if gpu.is_gpu_details_available():
             self._hardware.append(GPU.from_utils(gpu_ids))
         elif cpu.is_powergadget_available():
             self._hardware.append(CPU())
 
-        # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
+        # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
             self._measure_power, "interval", seconds=measure_power_secs
         )
@@ -72,7 +73,7 @@ class BaseEmissionsTracker(ABC):
 
         if save_to_file:
             self.persistence_objs.append(
-                FileOutput(os.path.join(output_dir, "emissions.csv"))
+                FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
 
     @suppress(Exception)
@@ -175,10 +176,11 @@ class BaseEmissionsTracker(ABC):
             warn_msg = "Background scheduler didn't run for a long period (%ds), results might be inaccurate"
             logger.warning(warn_msg, last_duration)
 
-        self._total_energy += Energy.from_power_and_time(
-            power=self._hardware.total_power,
-            time=Time.from_seconds(last_duration),
-        )
+        for hardware in self._hardware:
+            self._total_energy += Energy.from_power_and_time(
+                power=hardware.total_power,
+                time=Time.from_seconds(last_duration),
+            )
         self._last_measured_time = time.time()
 
 
