@@ -14,11 +14,11 @@ from typing import Callable, List, Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from codecarbon.core.emissions import Emissions
-from codecarbon.core.gpu import is_gpu_details_available
+from codecarbon.core import cpu, gpu
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import GPU
+from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput
 
@@ -55,10 +55,11 @@ class BaseEmissionsTracker(ABC):
         self._output_dir: str = output_dir
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._is_gpu_available = is_gpu_details_available()
-        self._hardware = GPU.from_utils(
-            gpu_ids
-        )  # TODO: Change once CPU support is available
+        self._hardware = []
+        if gpu.is_gpu_details_available():
+            self._hardware.append(GPU.from_utils(gpu_ids))
+        elif cpu.is_powergadget_available():
+            self._hardware.append(CPU())
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread:
         self._scheduler.add_job(
@@ -171,7 +172,7 @@ class BaseEmissionsTracker(ABC):
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
-            warn_msg = "Background scheduler didn't run for a long period (%ds), results might be inacurate"
+            warn_msg = "Background scheduler didn't run for a long period (%ds), results might be inaccurate"
             logger.warning(warn_msg, last_duration)
 
         self._total_energy += Energy.from_power_and_time(

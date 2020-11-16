@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
+from codecarbon.core.cpu import IntelPowerGadget
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
 
@@ -67,6 +68,9 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
+    def __init__(self):
+        self.intel_power_gadget = IntelPowerGadget()
+
     @property
     def total_power(self) -> Power:
         pass
