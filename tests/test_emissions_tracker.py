@@ -18,7 +18,7 @@ def heavy_computation(run_time_secs: int = 3):
         pass
 
 
-@mock.patch("codecarbon.emissions_tracker.is_gpu_details_available", return_value=True)
+@mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
 @mock.patch(
     "codecarbon.external.hardware.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
