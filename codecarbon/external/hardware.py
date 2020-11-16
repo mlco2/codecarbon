@@ -5,6 +5,7 @@ Encapsulates external dependencies to retrieve hardware metadata
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import re
 from typing import Dict, Iterable, List, Optional
 
 from codecarbon.core.cpu import IntelPowerGadget
@@ -16,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BaseHardware(ABC):
-    @property
     @abstractmethod
     def total_power(self) -> Power:
         pass
@@ -36,7 +36,7 @@ class GPU(BaseHardware):
         """
         Get total power consumed by specific GPUs identified by `gpu_ids`
         :param gpu_ids:
-        :return:
+        :return: power in kW
         """
         all_gpu_details: List[Dict] = get_gpu_details()
         return Power.from_milli_watts(
@@ -49,7 +49,6 @@ class GPU(BaseHardware):
             )
         )
 
-    @property
     def total_power(self) -> Power:
         if self.gpu_ids is not None:
             gpu_ids = self.gpu_ids
@@ -72,6 +71,19 @@ class CPU(BaseHardware):
         self._output_dir = output_dir
         self._intel_power_gadget = IntelPowerGadget()
 
-    @property
+    def _get_power_from_cpus(self) -> Power:
+        """
+        Get CPU power from Intel Power Gadget
+        :return: power in kW
+        """
+        all_cpu_details: Dict = self._intel_power_gadget.get_cpu_details()
+
+        power = 0
+        for metric, value in all_cpu_details.items():
+            if re.match("^Processor Power_\d+\(Watt\)$", metric):
+                power += value
+        logger.debug(f"CPU Power Consumption : {power}")
+        return Power.from_watts(power)
+
     def total_power(self) -> Power:
-        pass
+        return self._get_power_from_cpus()
