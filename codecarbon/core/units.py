@@ -64,10 +64,14 @@ class Power:
     kw: float
 
     @classmethod
-    def from_milli_watts(cls, milli_wats: float) -> "Power":
+    def from_milli_watts(cls, milli_watts: float) -> "Power":
         return cls(
-            kw=milli_wats * Power.MILLI_WATTS_TO_WATTS * Power.WATTS_TO_KILO_WATTS
+            kw=milli_watts * Power.MILLI_WATTS_TO_WATTS * Power.WATTS_TO_KILO_WATTS
         )
+
+    @classmethod
+    def from_watts(cls, watts: float) -> "Power":
+        return cls(kw=watts * Power.WATTS_TO_KILO_WATTS)
 
 
 @dataclass
