@@ -60,7 +60,7 @@ class BaseEmissionsTracker(ABC):
         if gpu.is_gpu_details_available():
             self._hardware.append(GPU.from_utils(gpu_ids))
         elif cpu.is_powergadget_available():
-            self._hardware.append(CPU())
+            self._hardware.append(CPU(self._output_dir))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(

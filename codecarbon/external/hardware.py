@@ -68,8 +68,9 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
-    def __init__(self):
-        self.intel_power_gadget = IntelPowerGadget()
+    def __init__(self, output_dir: str):
+        self._output_dir = output_dir
+        self._intel_power_gadget = IntelPowerGadget()
 
     @property
     def total_power(self) -> Power:
