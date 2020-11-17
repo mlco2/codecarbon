@@ -54,7 +54,7 @@ class GPU(BaseHardware):
             gpu_ids = self.gpu_ids
             assert set(gpu_ids).issubset(
                 set(range(self.num_gpus))
-            ), f"Unknown GPU ids {gpu_ids}"
+            ), f"CODECARBON Unknown GPU ids {gpu_ids}"
         else:
             gpu_ids = set(range(self.num_gpus))
 
@@ -69,7 +69,7 @@ class GPU(BaseHardware):
 class CPU(BaseHardware):
     def __init__(self, output_dir: str):
         self._output_dir = output_dir
-        self._intel_power_gadget = IntelPowerGadget()
+        self._intel_power_gadget = IntelPowerGadget(self._output_dir)
 
     def _get_power_from_cpus(self) -> Power:
         """
@@ -82,7 +82,7 @@ class CPU(BaseHardware):
         for metric, value in all_cpu_details.items():
             if re.match("^Processor Power_\d+\(Watt\)$", metric):
                 power += value
-        logger.debug(f"CPU Power Consumption : {power}")
+        logger.info(f"CODECARBON CPU Power Consumption : {power}")
         return Power.from_watts(power)
 
     def total_power(self) -> Power:
