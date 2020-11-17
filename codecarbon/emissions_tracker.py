@@ -58,10 +58,10 @@ class BaseEmissionsTracker(ABC):
         self._hardware = []
 
         if gpu.is_gpu_details_available():
-            logger.debug("Tracking Nvidia GPU")
+            logger.info("CODECARBON Tracking Nvidia GPU")
             self._hardware.append(GPU.from_utils(gpu_ids))
         if cpu.is_powergadget_available():
-            logger.debug("Tracking Intel CPU")
+            logger.info("CODECARBON Tracking Intel CPU")
             self._hardware.append(CPU(self._output_dir))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
@@ -175,7 +175,7 @@ class BaseEmissionsTracker(ABC):
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
-            warn_msg = "Background scheduler didn't run for a long period (%ds), results might be inaccurate"
+            warn_msg = "CODECARBON Background scheduler didn't run for a long period (%ds), results might be inaccurate"
             logger.warning(warn_msg, last_duration)
 
         for hardware in self._hardware:
@@ -183,7 +183,7 @@ class BaseEmissionsTracker(ABC):
                 power=hardware.total_power(),
                 time=Time.from_seconds(last_duration),
             )
-            logger.debug(f"Energy consumed: {self._total_energy}")
+            logger.info(f"CODECARBON Energy consumed: {self._total_energy}")
         self._last_measured_time = time.time()
 
 
