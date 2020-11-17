@@ -43,7 +43,7 @@ class IntelPowerGadget:
             if shutil.which(IntelPowerGadget._windows_exec):
                 self._cli = IntelPowerGadget._windows_exec
             else:
-                raise Exception(
+                raise FileNotFoundError(
                     f"Intel Power Gadget executable not found on {self._system}"
                 )
         elif self._system.startswith("darwin"):
@@ -52,11 +52,11 @@ class IntelPowerGadget:
             elif shutil.which(IntelPowerGadget._osx_exec_backup):
                 self._cli = IntelPowerGadget._osx_exec_backup
             else:
-                raise Exception(
+                raise FileNotFoundError(
                     f"Intel Power Gadget executable not found on {self._system}"
                 )
         else:
-            raise Exception("Platform not supported by Intel Power Gadget")
+            raise SystemError("Platform not supported by Intel Power Gadget")
 
     def _log_values(self):
         """
