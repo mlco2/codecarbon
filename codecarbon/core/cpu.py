@@ -4,6 +4,7 @@ using Intel Power Gadget https://software.intel.com/content/www/us/en/develop/ar
 """
 import os
 import shutil
+import subprocess
 import sys
 from logging import getLogger
 from typing import Dict
@@ -62,12 +63,14 @@ class IntelPowerGadget:
         Logs output from Intel Power Gadget command line to a file
         """
         if self._system.startswith("windows"):
-            os.system(
-                f"{self._cli} -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > NUL 2>&1"
+            subprocess.call(
+                f"{self._cli} -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > NUL 2>&1",
+                shell=True,
             )
         elif self._system.startswith("darwin"):
-            os.system(
-                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null"
+            subprocess.call(
+                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",
+                shell=True,
             )
         return
 
@@ -87,9 +90,10 @@ class IntelPowerGadget:
                     cpu_details[col_name] = cpu_data[col_name].iloc[-1]
                 else:
                     cpu_details[col_name] = cpu_data[col_name].mean()
-        except FileNotFoundError:
+        except Exception as e:
             logger.debug(
-                f"Intel Power Gadget logged file not found at {self._log_file_path}"
+                f"CODECARBON Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
+                Exception occurred {e}"
             )
 
         return cpu_details
