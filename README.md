@@ -11,8 +11,11 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 
 - [About CodeCarbon](#about-codecarbon)
 - [Installation](#installation)
-  - [pip](#pip)
-  - [conda](#conda)
+    - [pip](#pip)
+    - [conda](#conda)
+- [Infrastructure Support](#infrastructure)
+    - [GPU](#gpu)
+    - [CPU](#cpu)
 - [Quickstart](#quickstart)
     - [Online mode](#online-mode)
     - [Offline mode](#offline-mode)
@@ -45,19 +48,30 @@ conda create --name codecarbon python=3.6
 conda activate codecarbon
 ```
 
-### Install from pypi repository
+### pip
 
 ```
 pip install codecarbon
 ```
 
-### Install from conda repository
+### conda
 
 ```
 conda install -c codecarbon -c conda-forge codecarbon
 ```
 
 `codecarbon` is now installed in your the local environment
+
+
+# Infrastructure Support
+Currently the package supports following hardware infrastructure.
+
+### GPU
+- Tracks Nvidia GPUs power consumption using pynvml library.
+
+### CPU
+- Tracks Intel Processors power consumption using Intel Power Gadget on Windows and MacOS.
+- Please install Intel Power Gadget [here](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html). 
 
 
 # Quickstart
