@@ -23,7 +23,6 @@ def is_powergadget_available():
             f"Exception occurred while instantiating IntelPowerGadget : {e}",
             exc_info=True,
         )
-        print(e)
         return False
 
 
@@ -93,7 +92,8 @@ class IntelPowerGadget:
         except Exception as e:
             logger.debug(
                 f"CODECARBON Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
-                Exception occurred {e}"
+                Exception occurred {e}",
+                exc_info=True,
             )
 
         return cpu_details

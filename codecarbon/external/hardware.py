@@ -82,7 +82,7 @@ class CPU(BaseHardware):
         for metric, value in all_cpu_details.items():
             if re.match("^Processor Power_\d+\(Watt\)$", metric):
                 power += value
-        logger.info(f"CODECARBON CPU Power Consumption : {power}")
+        logger.debug(f"CODECARBON CPU Power Consumption : {power}")
         return Power.from_watts(power)
 
     def total_power(self) -> Power:
