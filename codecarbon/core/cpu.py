@@ -38,7 +38,7 @@ class IntelPowerGadget:
         self._resolution = resolution
         self._cli = None
 
-        if self._system.startswith("windows"):
+        if self._system.startswith("win"):
             if shutil.which(IntelPowerGadget._windows_exec):
                 self._cli = IntelPowerGadget._windows_exec
             else:
@@ -61,7 +61,7 @@ class IntelPowerGadget:
         """
         Logs output from Intel Power Gadget command line to a file
         """
-        if self._system.startswith("windows"):
+        if self._system.startswith("win"):
             subprocess.call(
                 f"{self._cli} -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > NUL 2>&1",
                 shell=True,
