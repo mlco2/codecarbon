@@ -78,7 +78,8 @@ class GeoMetadata:
         except requests.exceptions.Timeout:
             # If there is a timeout, we default to Canada
             logger.info(
-                "Unable to access geographical location. Using 'Canada' as the default value"
+                "Unable to access geographical location. "
+                + "Using 'Canada' as the default value"
             )
             return cls(country_iso_code="CAN", country_name="Canada")
         return cls(
