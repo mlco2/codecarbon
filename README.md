@@ -152,7 +152,7 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
 @article{lacoste2019quantifying,
   title={Quantifying the Carbon Emissions of Machine Learning},
   author={Lacoste, Alexandre and Luccioni, Alexandra and Schmidt, Victor and Dandres, Thomas},
-  journal={arXiv preprint arXiv:1910.09700},
+  journal={Workshop on Tackling Climate Change with Machine Learning at NeurIPS 2019},
   year={2019}
 }
 
@@ -161,7 +161,7 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
   accountability},
     author={Kadan Lottick and Silvia Susai and Sorelle A. Friedler and Jonathan P. Wilson},
     year={2019},
-    journal={arXiv preprint arXiv:1911.08354}
+    journal={Workshop on Tackling Climate Change with Machine Learning at NeurIPS 2019}
 }
 ```
 
