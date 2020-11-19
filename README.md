@@ -6,8 +6,8 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 
 <br/>
 
-[![](https://img.shields.io/conda/v/codecarbon/codecarbon?style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
-[![](https://img.shields.io/pypi/v/codecarbon?style=for-the-badge)](https://pypi.org/project/codecarbon/)
+[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
 
 - [About CodeCarbon](#about-codecarbon)
 - [Installation](#installation)
