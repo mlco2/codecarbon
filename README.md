@@ -140,7 +140,7 @@ We believe that an important step towards reducing carbon emissions is the gener
 
 \subsection{CO2 Emission Related to Experiments}
 
-Experiments were conducted using {cloud provider} in region {region of compute}, which has a carbon efficiency of {carbon efficiency} kgCO$_2$eq/kWh. A cumulative of {hours used} hours of computation was performed on hardware of type {hardware type} (TDP of W).
+Experiments were conducted using {cloud provider} in {region}, which has a carbon efficiency of {carbon efficiency} kgCO$_2$eq/kWh. A cumulative of {hours used} hours of computation was performed on hardware of type {hardware type} (TDP of W).
 
 Total emissions are estimated to be {emission} kgCO$_2$eq of which {percentage offset} percents were directly offset by the cloud provider.
 
