@@ -5,6 +5,8 @@
 Track the carbon emissions of your machine learning code, quantify your impact (and log it all on [comet.ml](https://comet.ml)!)
 
 <br/>
+<p align="center"> <strong><a href="https://mlco2.github.io/codecarbon">Documentation</a></strong> </p>
+<br/>
 
 [![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
