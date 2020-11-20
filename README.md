@@ -22,7 +22,7 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 - [Contributing](#contributing)
 - [Built-in Visualization Tool](#built-in-visualization-tool)
 - [Comet Integration](#comet-integration)
-- [Generate Documentation](#generate-documentation)
+- [Build Documentation](#build-documentation)
 
 # About CodeCarbon
 
@@ -246,7 +246,7 @@ Now back in the `Panels` tab you'll see your CodeCarbon Footprint visualization 
 ![](docs/edit/images/codecarbon-panel.png)
 
 
-# Generate Documentation
+# Build Documentation
 No software is complete without great documentation!
 To make generating documentation easier, install the [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) and use it to edit and improve the existing documentation:
 ```
