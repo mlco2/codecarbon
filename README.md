@@ -71,7 +71,9 @@ Currently the package supports following hardware infrastructure.
 
 ### CPU
 - Tracks Intel Processors power consumption using Intel Power Gadget on Windows and MacOS.
-- Please install Intel Power Gadget [here](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html). 
+- Please install Intel Power Gadget [here](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html).
+*Note:* Please ensure that the Intel Power Gadget has the [required security permissions](https://osxdaily.com/2019/03/03/install-intel-power-gadget-mac/) on MacOS.
+
 
 
 # Quickstart

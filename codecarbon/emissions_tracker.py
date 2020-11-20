@@ -55,7 +55,7 @@ class BaseEmissionsTracker(ABC):
         self._output_dir: str = output_dir
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._hardware = []
+        self._hardware = list()
 
         if gpu.is_gpu_details_available():
             logger.info("CODECARBON Tracking Nvidia GPU")

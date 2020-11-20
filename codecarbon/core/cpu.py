@@ -31,13 +31,19 @@ class IntelPowerGadget:
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog.exe"
 
-    def __init__(self, output_dir: str = ".", duration=1, resolution=100):
-        self._log_file_path = os.path.join(output_dir, "intel_power_gadget_log.csv")
+    def __init__(
+        self, output_dir: str = ".",
+        duration=1,
+        resolution=100,
+        log_file_name="intel_power_gadget_log.csv"
+    ):
+        self._log_file_path = os.path.join(output_dir, log_file_name)
         self._system = sys.platform.lower()
         self._duration = duration
         self._resolution = resolution
-        self._cli = None
+        self._setup_cli()
 
+    def _setup_cli(self):
         if self._system.startswith("win"):
             if shutil.which(IntelPowerGadget._windows_exec):
                 self._cli = IntelPowerGadget._windows_exec
