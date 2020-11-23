@@ -1,7 +1,8 @@
+import os
 import unittest
 from unittest import mock
+
 import pytest
-import os
 
 from codecarbon.core.cpu import IntelPowerGadget
 from codecarbon.external.hardware import GPU
@@ -64,9 +65,9 @@ class TestIntelPowerGadget(unittest.TestCase):
 
         with mock.patch.object(
             IntelPowerGadget, "_log_values", return_value=None
-        ) as log_mock, mock.patch.object(
+        ) as _, mock.patch.object(
             IntelPowerGadget, "_setup_cli", return_value=None
-        ) as setup_mock:
+        ) as _:
             power_gadget = IntelPowerGadget(
                 output_dir=os.path.join(os.path.dirname(__file__), "test_data"),
                 log_file_name="mock_intel_power_gadget_data.csv",
