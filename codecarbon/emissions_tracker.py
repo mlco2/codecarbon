@@ -1,5 +1,6 @@
 """
-Contains implementations of the Public facing API: EmissionsTracker, OfflineEmissionsTracker and @track_emissions
+Contains implementations of the Public facing API: EmissionsTracker,
+OfflineEmissionsTracker and @track_emissions
 """
 
 import logging
@@ -29,7 +30,8 @@ class BaseEmissionsTracker(ABC):
     """
     Primary abstraction with Emissions Tracking functionality.
     Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata`
-    that are implemented by two concrete classes `OfflineCarbonTracker` and `CarbonTracker.`
+    that are implemented by two concrete classes `OfflineCarbonTracker`
+    and `CarbonTracker.`
     """
 
     def __init__(
@@ -41,11 +43,15 @@ class BaseEmissionsTracker(ABC):
         gpu_ids: Optional[List] = None,
     ):
         """
-        :param project_name: Project name for current experiment run, default name as "codecarbon"
-        :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
+        :param project_name: Project name for current experiment run, default name
+                             as "codecarbon"
+        :param measure_power_secs: Interval (in seconds) to measure hardware power
+                                   usage, defaults to 15
         :param output_dir: Directory path to which the experiment details are logged
-                           in a CSV file called `emissions.csv`, defaults to current directory
-        :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
+                           in a CSV file called `emissions.csv`, defaults to current
+                           directory
+        :param save_to_file: Indicates if the emission artifacts should be logged to a
+                             file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         """
         self._project_name: str = project_name
@@ -175,7 +181,10 @@ class BaseEmissionsTracker(ABC):
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
-            warn_msg = "CODECARBON Background scheduler didn't run for a long period (%ds), results might be inaccurate"
+            warn_msg = (
+                "CODECARBON Background scheduler didn't run for a long period"
+                + " (%ds), results might be inaccurate"
+            )
             logger.warning(warn_msg, last_duration)
 
         for hardware in self._hardware:
@@ -202,12 +211,14 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         **kwargs,
     ):
         """
-        :param country_iso_code: 3 letter ISO Code of the country where the experiment is being run
+        :param country_iso_code: 3 letter ISO Code of the country where the
+                                 experiment is being run
         :param country_name: Name of the country where the experiment is being run
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States
         """
-        # TODO: Currently we silently use a default value of Canada. Decide if we should fail with missing args.
+        # TODO: Currently we silently use a default value of Canada.
+        # Decide if we should fail with missing args.
         self._country_iso_code: str = (
             "CAN" if country_iso_code is None else country_iso_code
         )
@@ -253,14 +264,18 @@ def track_emissions(
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
     :param fn: Function to be decorated
-    :param project_name: Project name for current experiment run, default name as "codecarbon"
-    :param measure_power_secs: Interval (in seconds) to measure hardware power usage, defaults to 15
+    :param project_name: Project name for current experiment run,
+                         default name as "codecarbon"
+    :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
+                               defaults to 15
     :param output_dir: Directory path to which the experiment details are logged
-                       in a CSV file called `emissions.csv`, defaults to current directory
-    :param save_to_file: Indicates if the emission artifacts should be logged to a file, defaults to True
+                       in a CSV file called `emissions.csv`, defaults to current
+                       directory
+    :param save_to_file: Indicates if the emission artifacts should be logged to a file,
+                         defaults to True
     :param offline: Indicates if the tracker should be run in offline mode
-    :param country_iso_code: 3 letter ISO Code of the country where the experiment is being run,
-                             required if `offline=True`
+    :param country_iso_code: 3 letter ISO Code of the country where the experiment is
+                             being run, required if `offline=True`
     :param country_name: Name of the country where the experiment is being run,
                          required if `offline=True`
     :param region: The provincial region, for example, California in the US.

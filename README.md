@@ -6,13 +6,13 @@ Track the carbon emissions of your machine learning code, quantify your impact (
 
 <br/>
 
-[![](https://img.shields.io/conda/v/codecarbon/codecarbon?style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
-[![](https://img.shields.io/pypi/v/codecarbon?style=for-the-badge)](https://pypi.org/project/codecarbon/)
+[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
 
 - [About CodeCarbon](#about-codecarbon)
 - [Installation](#installation)
-    - [pip](#pip)
-    - [conda](#conda)
+    - [Install from PyPI repository](#install-from-pypi-repository)
+    - [Install from Conda repository](#install-from-conda-repository)
 - [Infrastructure Support](#infrastructure)
     - [GPU](#gpu)
     - [CPU](#cpu)
@@ -21,6 +21,7 @@ Track the carbon emissions of your machine learning code, quantify your impact (
     - [Offline mode](#offline-mode)
     - [Using comet.ml](#using-cometml)
 - [Examples](#examples)
+- [Report your emissions: LateX template](#report-your-emissions-latex-template)
 - [Contributing](#contributing)
 - [Built-in Visualization Tool](#built-in-visualization-tool)
 - [Comet Integration](#comet-integration)
@@ -48,13 +49,13 @@ conda create --name codecarbon python=3.6
 conda activate codecarbon
 ```
 
-### pip
+### Install from PyPI repository
 
 ```
 pip install codecarbon
 ```
 
-### conda
+### Install from Conda repository
 
 ```
 conda install -c codecarbon -c conda-forge codecarbon
@@ -145,6 +146,42 @@ python examples/mnist_decorator.py
 ```
 
 This will create a `.csv` file with information about the energy that you used to carry out the classification task, and an estimate of the CO<sub>2</sub> that you generated, complete with comparisons to common modes of transportation to give you a better idea of the order of magnitude of your emissions.
+
+# Report your emissions: LateX template
+
+We believe that an important step towards reducing carbon emissions is the generalization of emissions reporting in papers, blog posts and publications in general. Here's an example LateX snippet you might want to use:
+
+```latex
+\usepackage{hyperref}
+
+\subsection{CO2 Emission Related to Experiments}
+
+Experiments were conducted using {cloud provider} in {region}, which has a carbon efficiency of {carbon efficiency} kgCO$_2$eq/kWh. A cumulative of {hours used} hours of computation was performed on hardware of type {hardware type} (TDP of W).
+
+Total emissions are estimated to be {emission} kgCO$_2$eq of which {percentage offset} percents were directly offset by the cloud provider.
+
+%Uncomment if you bought additional offsets:
+%XX kg CO2eq were manually offset through \href{link}{Offset Provider}.
+
+Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{CodeCarbon emissions tracker}, a joint effort from authors of \cite{lacoste2019quantifying} and \cite{lottick2019nergy}.
+
+@article{lacoste2019quantifying,
+  title={Quantifying the Carbon Emissions of Machine Learning},
+  author={Lacoste, Alexandre and Luccioni, Alexandra and Schmidt, Victor and Dandres, Thomas},
+  journal={Workshop on Tackling Climate Change with Machine Learning at NeurIPS 2019},
+  year={2019}
+}
+
+@article{lottick2019nergy,
+    title={Energy Usage Reports: Environmental awareness as part of algorithmic
+  accountability},
+    author={Kadan Lottick and Silvia Susai and Sorelle A. Friedler and Jonathan P. Wilson},
+    year={2019},
+    journal={Workshop on Tackling Climate Change with Machine Learning at NeurIPS 2019}
+}
+```
+
+To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud). If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016). [A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
 
 # Contributing
 
