@@ -84,7 +84,8 @@ class IntelPowerGadget:
                 self._log_file_path,
             ],
             shell=True,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         logger.debug("PowerLog returncode %d", returncode)
         return
