@@ -29,13 +29,15 @@ def is_powergadget_available():
 class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
-    _windows_exec = "PowerLog.exe"
+    _windows_exec = "PowerLog3.0.exe"
+    _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\"
 
     def __init__(
-        self, output_dir: str = ".",
+        self,
+        output_dir: str = ".",
         duration=1,
         resolution=100,
-        log_file_name="intel_power_gadget_log.csv"
+        log_file_name="intel_power_gadget_log.csv",
     ):
         self._log_file_path = os.path.join(output_dir, log_file_name)
         self._system = sys.platform.lower()
@@ -45,17 +47,21 @@ class IntelPowerGadget:
 
     def _setup_cli(self):
         if self._system.startswith("win"):
-            if shutil.which(IntelPowerGadget._windows_exec):
-                self._cli = IntelPowerGadget._windows_exec
+            if shutil.which(self._windows_exec):
+                self._cli = self._windows_exec
+            elif shutil.which(self._windows_exec, path=self._windows_exec_backup):
+                self._cli = shutil.which(
+                    self._windows_exec, path=self._windows_exec_backup
+                )
             else:
                 raise FileNotFoundError(
                     f"Intel Power Gadget executable not found on {self._system}"
                 )
         elif self._system.startswith("darwin"):
-            if shutil.which(IntelPowerGadget._osx_exec):
-                self._cli = IntelPowerGadget._osx_exec
-            elif shutil.which(IntelPowerGadget._osx_exec_backup):
-                self._cli = IntelPowerGadget._osx_exec_backup
+            if shutil.which(self._osx_exec):
+                self._cli = self._osx_exec
+            elif shutil.which(self._osx_exec_backup):
+                self._cli = self._osx_exec_backup
             else:
                 raise FileNotFoundError(
                     f"Intel Power Gadget executable not found on {self._system}"
