@@ -35,11 +35,18 @@ class Energy:
     Measured in kwh
     """
 
+    UJOULES_TO_JOULES = 10 ** (-6)
+    JOULES_TO_KWH = 0.000000277777778
+
     kwh: float
 
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
         return cls(kwh=power.kW * time.hours)
+
+    @classmethod
+    def from_ujoules(cls, energy: float) -> "Power":
+        return cls(kwh=energy * Energy.UJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
 
     @classmethod
     def from_energy(cls, kwh: float) -> "Energy":
