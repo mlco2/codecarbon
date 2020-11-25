@@ -64,11 +64,16 @@ class BaseEmissionsTracker(ABC):
         self._hardware = list()
 
         if gpu.is_gpu_details_available():
-            logger.info("CODECARBON Tracking Nvidia GPU")
+            logger.info("CODECARBON Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(gpu_ids))
         if cpu.is_powergadget_available():
-            logger.info("CODECARBON Tracking Intel CPU")
-            self._hardware.append(CPU(self._output_dir))
+            logger.info("CODECARBON Tracking Intel CPU via Power Gadget")
+            self._hardware.append(
+                CPU.from_utils(self._output_dir, "intel_power_gadget")
+            )
+        elif cpu.is_rapl_available():
+            logger.info("CODECARBON Tracking Intel CPU via RAPL interface")
+            self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
