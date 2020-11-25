@@ -64,6 +64,7 @@ class Energy:
     def __float__(self) -> float:
         return float(self.kwh)
 
+
 @dataclass
 class Power:
     """
