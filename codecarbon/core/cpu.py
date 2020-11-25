@@ -26,6 +26,18 @@ def is_powergadget_available():
         return False
 
 
+def is_rapl_available():
+    try:
+        IntelRAPLInterface()
+        return True
+    except Exception as e:
+        logger.debug(
+            f"Exception occurred while instantiating RAPLInterface : {e}",
+            exc_info=True,
+        )
+        return False
+
+
 class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
@@ -114,3 +126,28 @@ class IntelPowerGadget:
             )
 
         return cpu_details
+
+
+class IntelRAPLInterface:
+    _lin_rapl_dir = "/sys/class/powercap/"
+
+    def __init__(
+        self,
+        output_dir: str = ".",
+        log_file_name="intel_rapl_log.csv",
+    ):
+        self._log_file_path = os.path.join(output_dir, log_file_name)
+        self._system = sys.platform.lower()
+        self._rapl_files = list()
+        self._setup_rapl()
+
+    def _setup_rapl(self):
+        if self._system.startswith("lin"):
+            if shutil.which(self._lin_rapl_dir):
+                self._rapl_files = self._get_rapl_files()
+            else:
+                raise FileNotFoundError(
+                    f"Intel RAPL files not found at {self._lin_rapl_dir} on {self._system}"
+                )
+        else:
+            raise SystemError("Platform not supported by Intel RAPL Interface")
