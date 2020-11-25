@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
-from codecarbon.core.cpu import IntelPowerGadget
+from codecarbon.core.cpu import IntelPowerGadget, IntelRAPLInterface
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
 
@@ -67,16 +67,20 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
-    def __init__(self, output_dir: str):
+    def __init__(self, output_dir: str, mode: str):
         self._output_dir = output_dir
-        self._intel_power_gadget = IntelPowerGadget(self._output_dir)
+        self._mode = mode
+        if self._mode == "intel_power_gadget":
+            self._intel_interface = IntelPowerGadget(self._output_dir)
+        elif self._mode == "intel_rapl":
+            self._intel_interface = IntelRAPLInterface(self._output_dir)
 
     def _get_power_from_cpus(self) -> Power:
         """
         Get CPU power from Intel Power Gadget
         :return: power in kW
         """
-        all_cpu_details: Dict = self._intel_power_gadget.get_cpu_details()
+        all_cpu_details: Dict = self._intel_interface.get_cpu_details()
 
         power = 0
         for metric, value in all_cpu_details.items():
@@ -87,3 +91,7 @@ class CPU(BaseHardware):
 
     def total_power(self) -> Power:
         return self._get_power_from_cpus()
+
+    @classmethod
+    def from_utils(cls, output_dir: str, mode: str) -> "CPU":
+        return cls(output_dir=output_dir, mode=mode)
