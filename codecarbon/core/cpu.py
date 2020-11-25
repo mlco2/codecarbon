@@ -2,14 +2,16 @@
 Implements tracking Intel CPU Power Consumption on Mac and Windows
 using Intel Power Gadget https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
-from logging import getLogger
 import os
-import pandas as pd
 import shutil
 import subprocess
 import sys
 import time
+
+from logging import getLogger
 from typing import Dict
+
+import pandas as pd
 
 from codecarbon.core.rapl import RAPLFile
 
