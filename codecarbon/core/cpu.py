@@ -30,13 +30,13 @@ def is_powergadget_available():
 
 
 def is_rapl_available():
+    import traceback
     try:
         IntelRAPLInterface()
         return True
     except Exception as e:
         logger.debug(
-            f"Exception occurred while instantiating RAPLInterface : {e}",
-            exc_info=True,
+            f"Exception occurred while instantiating RAPLInterface : {e}", exc_info=True
         )
         return False
 
@@ -136,11 +136,7 @@ class IntelPowerGadget:
 class IntelRAPLInterface:
     _lin_rapl_dir = "/sys/class/powercap/intel-rapl"
 
-    def __init__(
-        self,
-        output_dir: str = ".",
-        log_file_name="intel_rapl_log.csv",
-    ):
+    def __init__(self, output_dir: str = ".", log_file_name="intel_rapl_log.csv"):
         self._log_file_path = os.path.join(output_dir, log_file_name)
         self._system = sys.platform.lower()
         self._delay = 0.01  # 10 millisecond
@@ -172,7 +168,7 @@ class IntelRAPLInterface:
             with open(path) as f:
                 name = f.read()[:-1]
                 if "package" in name:
-                    renamed = f"Processor_Power_{i}(Watt)"
+                    renamed = f"Processor Power_{i}(Watt)"
                     i += 1
                 self._rapl_files.append(
                     RAPLFile(
@@ -186,7 +182,7 @@ class IntelRAPLInterface:
         """
         cpu_details = dict()
         try:
-            list(map(lambda rapl_file: rapl_file.start, self._rapl_files))
+            list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
             time.sleep(self._delay)
             list(map(lambda rapl_file: rapl_file.end(self._delay), self._rapl_files))
             for rapl_file in self._rapl_files:
@@ -198,5 +194,4 @@ class IntelRAPLInterface:
                 Exception occurred {e}",
                 exc_info=True,
             )
-
         return cpu_details

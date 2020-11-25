@@ -45,12 +45,15 @@ class Energy:
         return cls(kwh=power.kW * time.hours)
 
     @classmethod
-    def from_ujoules(cls, energy: float) -> "Power":
+    def from_ujoules(cls, energy: float) -> "Energy":
         return cls(kwh=energy * Energy.UJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
 
     @classmethod
     def from_energy(cls, kwh: float) -> "Energy":
         return cls(kwh=kwh)
+
+    def __sub__(self, other: "Energy") -> "Energy":
+        return Energy(self.kwh - other.kwh)
 
     def __add__(self, other: "Energy") -> "Energy":
         return Energy(self.kwh + other.kwh)
@@ -58,6 +61,8 @@ class Energy:
     def __iadd__(self, other: "Energy") -> "Energy":
         return Energy(self.kwh + other.kwh)
 
+    def __float__(self) -> float:
+        return float(self.kwh)
 
 @dataclass
 class Power:
