@@ -7,7 +7,6 @@ import shutil
 import subprocess
 import sys
 import time
-
 from logging import getLogger
 from typing import Dict
 
