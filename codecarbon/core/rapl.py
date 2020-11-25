@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from codecarbon.core.units import Energy, Time, Power
+from codecarbon.core.units import Energy, Time
 
 
 @dataclass

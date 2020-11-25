@@ -30,7 +30,6 @@ def is_powergadget_available():
 
 
 def is_rapl_available():
-    import traceback
     try:
         IntelRAPLInterface()
         return True
