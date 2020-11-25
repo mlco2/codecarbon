@@ -2,14 +2,16 @@
 Implements tracking Intel CPU Power Consumption on Mac and Windows
 using Intel Power Gadget https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
+from logging import getLogger
 import os
+import pandas as pd
 import shutil
 import subprocess
 import sys
-from logging import getLogger
+import time
 from typing import Dict
 
-import pandas as pd
+from codecarbon.core.rapl import RAPLFile
 
 logger = getLogger(__name__)
 
@@ -58,6 +60,9 @@ class IntelPowerGadget:
         self._setup_cli()
 
     def _setup_cli(self):
+        """
+        Setup cli command to run Intel Power Gadget
+        """
         if self._system.startswith("win"):
             if shutil.which(self._windows_exec):
                 self._cli = self._windows_exec
@@ -105,7 +110,6 @@ class IntelPowerGadget:
     def get_cpu_details(self) -> Dict:
         """
         Fetches the CPU Power Details by fetching values from a logged csv file in _log_values function
-        :return:
         """
         self._log_values()
         cpu_details = dict()
@@ -129,7 +133,7 @@ class IntelPowerGadget:
 
 
 class IntelRAPLInterface:
-    _lin_rapl_dir = "/sys/class/powercap/"
+    _lin_rapl_dir = "/sys/class/powercap/intel-rapl"
 
     def __init__(
         self,
@@ -138,16 +142,60 @@ class IntelRAPLInterface:
     ):
         self._log_file_path = os.path.join(output_dir, log_file_name)
         self._system = sys.platform.lower()
+        self._delay = 0.01  # 10 millisecond
         self._rapl_files = list()
         self._setup_rapl()
 
     def _setup_rapl(self):
         if self._system.startswith("lin"):
-            if shutil.which(self._lin_rapl_dir):
-                self._rapl_files = self._get_rapl_files()
+            if os.path.exists(self._lin_rapl_dir):
+                self._fetch_rapl_files()
             else:
                 raise FileNotFoundError(
                     f"Intel RAPL files not found at {self._lin_rapl_dir} on {self._system}"
                 )
         else:
             raise SystemError("Platform not supported by Intel RAPL Interface")
+
+    def _fetch_rapl_files(self):
+        """
+        Fetches RAPL files from the RAPL directory
+        """
+
+        # consider files like `intel-rapl:$i`
+        files = list(filter(lambda x: ":" in x, os.listdir(self._lin_rapl_dir)))
+
+        i = 0
+        for file in files:
+            path = os.path.join(self._lin_rapl_dir, file, "name")
+            with open(path) as f:
+                name = f.read()[:-1]
+                if "package" in name:
+                    renamed = f"Processor_Power_{i}(Watt)"
+                    i += 1
+                self._rapl_files.append(
+                    RAPLFile(
+                        renamed, os.path.join(self._lin_rapl_dir, file, "energy_uj")
+                    )
+                )
+
+    def get_cpu_details(self) -> Dict:
+        """
+        Fetches the CPU Power Details by fetching values from RAPL files
+        """
+        cpu_details = dict()
+        try:
+            list(map(lambda rapl_file: rapl_file.start, self._rapl_files))
+            time.sleep(self._delay)
+            list(map(lambda rapl_file: rapl_file.end(self._delay), self._rapl_files))
+            for rapl_file in self._rapl_files:
+                cpu_details[rapl_file.name] = rapl_file.power_measurement
+
+        except Exception as e:
+            logger.debug(
+                f"CODECARBON Unable to read Intel RAPL files at {self._rapl_files}\n \
+                Exception occurred {e}",
+                exc_info=True,
+            )
+
+        return cpu_details
