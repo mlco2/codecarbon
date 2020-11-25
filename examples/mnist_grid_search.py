@@ -24,7 +24,7 @@ def main():
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train, x_test = x_train / 255.0, x_test / 255.0
 
-    model = KerasClassifier(build_fn=build_model)
+    model = KerasClassifier(build_fn=build_model, epochs=10)
     param_grid = dict(batch_size=list(range(32, 256 + 32, 32)))
     grid = GridSearchCV(estimator=model, param_grid=param_grid)
 
