@@ -170,9 +170,7 @@ class IntelRAPLInterface:
                     name = f"Processor Power_{i}(Watt)"
                     i += 1
                 self._rapl_files.append(
-                    RAPLFile(
-                        name, os.path.join(self._lin_rapl_dir, file, "energy_uj")
-                    )
+                    RAPLFile(name, os.path.join(self._lin_rapl_dir, file, "energy_uj"))
                 )
 
     def get_cpu_details(self) -> Dict:
