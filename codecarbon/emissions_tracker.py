@@ -14,12 +14,12 @@ from typing import Callable, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
+from codecarbon.core import cpu, gpu
 from codecarbon.core.emissions import Emissions
-from codecarbon.core.gpu import is_gpu_details_available
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import GPU
+from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput
 
@@ -61,13 +61,16 @@ class BaseEmissionsTracker(ABC):
         self._output_dir: str = output_dir
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._is_gpu_available = is_gpu_details_available()
-        self._hardware = GPU.from_utils(
-            gpu_ids
-        )  # TODO: Change once CPU support is available
+        self._hardware = list()
 
-        # Run `self._measure_power` every `measure_power_secs`
-        # seconds in a background thread:
+        if gpu.is_gpu_details_available():
+            logger.info("CODECARBON Tracking Nvidia GPU")
+            self._hardware.append(GPU.from_utils(gpu_ids))
+        if cpu.is_powergadget_available():
+            logger.info("CODECARBON Tracking Intel CPU")
+            self._hardware.append(CPU(self._output_dir))
+
+        # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
             self._measure_power, "interval", seconds=measure_power_secs
         )
@@ -78,7 +81,7 @@ class BaseEmissionsTracker(ABC):
 
         if save_to_file:
             self.persistence_objs.append(
-                FileOutput(os.path.join(output_dir, "emissions.csv"))
+                FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
 
     @suppress(Exception)
@@ -179,14 +182,17 @@ class BaseEmissionsTracker(ABC):
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
             warn_msg = (
-                "Background scheduler didn't run for a "
-                + "long period (%ds), results might be inacurate"
+                "CODECARBON Background scheduler didn't run for a long period"
+                + " (%ds), results might be inaccurate"
             )
             logger.warning(warn_msg, last_duration)
 
-        self._total_energy += Energy.from_power_and_time(
-            power=self._hardware.total_power, time=Time.from_seconds(last_duration)
-        )
+        for hardware in self._hardware:
+            self._total_energy += Energy.from_power_and_time(
+                power=hardware.total_power(),
+                time=Time.from_seconds(last_duration),
+            )
+            logger.debug(f"CODECARBON Energy consumed: {self._total_energy}")
         self._last_measured_time = time.time()
 
 
@@ -202,7 +208,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         country_name: Optional[str] = None,
         *args,
         region: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         :param country_iso_code: 3 letter ISO Code of the country where the

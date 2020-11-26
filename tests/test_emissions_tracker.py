@@ -18,7 +18,7 @@ def heavy_computation(run_time_secs: int = 3):
         pass
 
 
-@mock.patch("codecarbon.emissions_tracker.is_gpu_details_available", return_value=True)
+@mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
 @mock.patch(
     "codecarbon.external.hardware.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
@@ -60,7 +60,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         # THEN
         self.assertGreaterEqual(
-            mocked_get_gpu_details.call_count, 3
+            mocked_get_gpu_details.call_count, 2
         )  # at least 2 times in 5 seconds + once for init >= 3
         self.assertEqual(1, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))

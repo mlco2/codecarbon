@@ -39,7 +39,7 @@ class Energy:
 
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
-        return cls(kwh=power.kw * time.hours)
+        return cls(kwh=power.kW * time.hours)
 
     @classmethod
     def from_energy(cls, kwh: float) -> "Energy":
@@ -61,13 +61,17 @@ class Power:
     MILLI_WATTS_TO_WATTS = 0.001
     WATTS_TO_KILO_WATTS = 0.001
 
-    kw: float
+    kW: float
 
     @classmethod
-    def from_milli_watts(cls, milli_wats: float) -> "Power":
+    def from_milli_watts(cls, milli_watts: float) -> "Power":
         return cls(
-            kw=milli_wats * Power.MILLI_WATTS_TO_WATTS * Power.WATTS_TO_KILO_WATTS
+            kW=milli_watts * Power.MILLI_WATTS_TO_WATTS * Power.WATTS_TO_KILO_WATTS
         )
+
+    @classmethod
+    def from_watts(cls, watts: float) -> "Power":
+        return cls(kW=watts * Power.WATTS_TO_KILO_WATTS)
 
 
 @dataclass

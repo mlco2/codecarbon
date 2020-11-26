@@ -22,7 +22,7 @@ from logging import getLogger
 
 import pynvml
 
-LOGGER = getLogger(__name__)
+logger = getLogger(__name__)
 
 
 def to_utf8(str_or_bytes):
@@ -147,7 +147,7 @@ def get_gpu_static_info():
         return devices
 
     except pynvml.NVMLError:
-        LOGGER.debug("Failed to retrieve gpu static info", exc_info=True)
+        logger.debug("Failed to retrieve gpu static info", exc_info=True)
         return []
 
 
@@ -199,7 +199,7 @@ def get_gpu_details():
         return devices
 
     except pynvml.NVMLError:
-        LOGGER.debug("Failed to retrieve gpu information", exc_info=True)
+        logger.debug("Failed to retrieve gpu information", exc_info=True)
         return []
 
 

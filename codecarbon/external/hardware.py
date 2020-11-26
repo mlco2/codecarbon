@@ -3,10 +3,12 @@ Encapsulates external dependencies to retrieve hardware metadata
 """
 
 import logging
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
+from codecarbon.core.cpu import IntelPowerGadget
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
 
@@ -15,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BaseHardware(ABC):
-    @property
     @abstractmethod
     def total_power(self) -> Power:
         pass
@@ -35,7 +36,7 @@ class GPU(BaseHardware):
         """
         Get total power consumed by specific GPUs identified by `gpu_ids`
         :param gpu_ids:
-        :return:
+        :return: power in kW
         """
         all_gpu_details: List[Dict] = get_gpu_details()
         return Power.from_milli_watts(
@@ -48,13 +49,12 @@ class GPU(BaseHardware):
             )
         )
 
-    @property
     def total_power(self) -> Power:
         if self.gpu_ids is not None:
             gpu_ids = self.gpu_ids
             assert set(gpu_ids).issubset(
                 set(range(self.num_gpus))
-            ), f"Unknown GPU ids {gpu_ids}"
+            ), f"CODECARBON Unknown GPU ids {gpu_ids}"
         else:
             gpu_ids = set(range(self.num_gpus))
 
@@ -67,6 +67,23 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
-    @property
+    def __init__(self, output_dir: str):
+        self._output_dir = output_dir
+        self._intel_power_gadget = IntelPowerGadget(self._output_dir)
+
+    def _get_power_from_cpus(self) -> Power:
+        """
+        Get CPU power from Intel Power Gadget
+        :return: power in kW
+        """
+        all_cpu_details: Dict = self._intel_power_gadget.get_cpu_details()
+
+        power = 0
+        for metric, value in all_cpu_details.items():
+            if re.match("^Processor Power_\d+\(Watt\)$", metric):
+                power += value
+        logger.debug(f"CODECARBON CPU Power Consumption : {power}")
+        return Power.from_watts(power)
+
     def total_power(self) -> Power:
-        pass
+        return self._get_power_from_cpus()
