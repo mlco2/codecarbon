@@ -44,7 +44,9 @@ class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
-    _windows_exec_backup = "CC:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
+    _windows_exec_backup = (
+        "CC:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
+    )
 
     def __init__(
         self,
