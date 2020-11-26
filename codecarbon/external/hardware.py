@@ -73,7 +73,7 @@ class CPU(BaseHardware):
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
-            self._intel_interface = IntelRAPLInterface(self._output_dir)
+            self._intel_interface = IntelRAPLInterface()
 
     def _get_power_from_cpus(self) -> Power:
         """

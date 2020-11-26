@@ -135,8 +135,7 @@ class IntelPowerGadget:
 class IntelRAPLInterface:
     _lin_rapl_dir = "/sys/class/powercap/intel-rapl"
 
-    def __init__(self, output_dir: str = ".", log_file_name="intel_rapl_log.csv"):
-        self._log_file_path = os.path.join(output_dir, log_file_name)
+    def __init__(self):
         self._system = sys.platform.lower()
         self._delay = 0.01  # 10 millisecond
         self._rapl_files = list()
