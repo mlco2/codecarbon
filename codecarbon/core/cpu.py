@@ -167,11 +167,11 @@ class IntelRAPLInterface:
             with open(path) as f:
                 name = f.read()[:-1]
                 if "package" in name:
-                    renamed = f"Processor Power_{i}(Watt)"
+                    name = f"Processor Power_{i}(Watt)"
                     i += 1
                 self._rapl_files.append(
                     RAPLFile(
-                        renamed, os.path.join(self._lin_rapl_dir, file, "energy_uj")
+                        name, os.path.join(self._lin_rapl_dir, file, "energy_uj")
                     )
                 )
 
