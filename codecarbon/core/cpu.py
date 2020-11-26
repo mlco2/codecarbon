@@ -44,7 +44,7 @@ class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
-    _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\"
+    _windows_exec_backup = "CC:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
 
     def __init__(
         self,
@@ -66,10 +66,8 @@ class IntelPowerGadget:
         if self._system.startswith("win"):
             if shutil.which(self._windows_exec):
                 self._cli = self._windows_exec
-            elif shutil.which(self._windows_exec, path=self._windows_exec_backup):
-                self._cli = shutil.which(
-                    self._windows_exec, path=self._windows_exec_backup
-                )
+            elif shutil.which(self._windows_exec_backup):
+                self._cli = self._windows_exec_backup
             else:
                 raise FileNotFoundError(
                     f"Intel Power Gadget executable not found on {self._system}"
