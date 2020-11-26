@@ -31,7 +31,7 @@ def is_powergadget_available():
 
 def is_rapl_available():
     try:
-        IntelRAPLInterface()
+        IntelRAPL()
         return True
     except Exception as e:
         logger.debug(
@@ -132,17 +132,19 @@ class IntelPowerGadget:
         return cpu_details
 
 
-class IntelRAPLInterface:
-    _lin_rapl_dir = "/sys/class/powercap/intel-rapl"
-
-    def __init__(self):
+class IntelRAPL:
+    def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
+        self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
         self._delay = 0.01  # 10 millisecond
         self._rapl_files = list()
         self._setup_rapl()
 
+    def _is_platform_supported(self) -> bool:
+        return self._system.startswith("lin")
+
     def _setup_rapl(self):
-        if self._system.startswith("lin"):
+        if self._is_platform_supported():
             if os.path.exists(self._lin_rapl_dir):
                 self._fetch_rapl_files()
             else:
