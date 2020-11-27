@@ -60,6 +60,7 @@ class GPU(BaseHardware):
 
         gpu_power = self._get_power_for_gpus(gpu_ids=gpu_ids)
         logger.info(f"CODECARBON GPU Power Consumption : {gpu_power}")
+        return gpu_power
 
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
