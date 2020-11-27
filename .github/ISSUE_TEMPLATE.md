@@ -1,4 +1,4 @@
-* CO2 Tracker Utils version:
+* CodeCarbon version:
 * Python version:
 * Operating System:
 
