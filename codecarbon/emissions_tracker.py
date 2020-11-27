@@ -26,6 +26,7 @@ from codecarbon.output import BaseOutput, EmissionsData, FileOutput
 logging.basicConfig(level=os.environ.get("CODECARBON_LOGLEVEL", "WARN"))
 logger = logging.getLogger(__name__)
 
+
 class BaseEmissionsTracker(ABC):
     """
     Primary abstraction with Emissions Tracking functionality.

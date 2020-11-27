@@ -12,7 +12,6 @@ from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
 
-
 logger = logging.getLogger(__name__)
 
 

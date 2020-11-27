@@ -42,7 +42,9 @@ def main():
         max_trials=3,
     )
 
-    tracker = OfflineEmissionsTracker(project_name="mnist_random_search", country_iso_code="USA")
+    tracker = OfflineEmissionsTracker(
+        project_name="mnist_random_search", country_iso_code="USA"
+    )
     tracker.start()
     tuner.search(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
     emissions = tracker.stop()

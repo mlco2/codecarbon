@@ -28,7 +28,9 @@ def main():
     param_grid = dict(batch_size=list(range(32, 256 + 32, 32)))
     grid = GridSearchCV(estimator=model, param_grid=param_grid)
 
-    tracker = OfflineEmissionsTracker(project_name="mnist_grid_search", country_iso_code="USA")
+    tracker = OfflineEmissionsTracker(
+        project_name="mnist_grid_search", country_iso_code="USA"
+    )
     tracker.start()
     grid_result = grid.fit(x_train, y_train)
     emissions = tracker.stop()
