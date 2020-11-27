@@ -12,6 +12,7 @@ from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +59,8 @@ class GPU(BaseHardware):
         else:
             gpu_ids = set(range(self.num_gpus))
 
-        return self._get_power_for_gpus(gpu_ids=gpu_ids)
+        gpu_power = self._get_power_for_gpus(gpu_ids=gpu_ids)
+        logger.info(f"CODECARBON GPU Power Consumption : {gpu_power}")
 
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
@@ -86,11 +88,12 @@ class CPU(BaseHardware):
         for metric, value in all_cpu_details.items():
             if re.match("^Processor Power_\d+\(Watt\)$", metric):
                 power += value
-        logger.debug(f"CODECARBON CPU Power Consumption : {power}")
         return Power.from_watts(power)
 
     def total_power(self) -> Power:
-        return self._get_power_from_cpus()
+        cpu_power = self._get_power_from_cpus()
+        logger.info(f"CODECARBON CPU Power Consumption : {cpu_power}")
+        return cpu_power
 
     @classmethod
     def from_utils(cls, output_dir: str, mode: str) -> "CPU":
