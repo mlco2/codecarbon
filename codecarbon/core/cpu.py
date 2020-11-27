@@ -35,7 +35,8 @@ def is_rapl_available():
         return True
     except Exception as e:
         logger.debug(
-            f"CODECARBON : Exception occurred while instantiating RAPLInterface : {e}", exc_info=True
+            f"CODECARBON : Exception occurred while instantiating RAPLInterface : {e}",
+            exc_info=True,
         )
         return False
 
@@ -44,9 +45,7 @@ class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
-    _windows_exec_backup = (
-        "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
-    )
+    _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
 
     def __init__(
         self,
@@ -84,7 +83,9 @@ class IntelPowerGadget:
                     f"CODECARBON : Intel Power Gadget executable not found on {self._system}"
                 )
         else:
-            raise SystemError("CODECARBON : Platform not supported by Intel Power Gadget")
+            raise SystemError(
+                "CODECARBON : Platform not supported by Intel Power Gadget"
+            )
 
     def _log_values(self):
         """
@@ -104,7 +105,6 @@ class IntelPowerGadget:
             f"CODECARBON : Returncode while logging power values using Intel Power Gadget {returncode}"
         )
         return
-
 
     def get_cpu_details(self) -> Dict:
         """
@@ -150,7 +150,9 @@ class IntelRAPL:
                     f"CODECARBON : Intel RAPL files not found at {self._lin_rapl_dir} on {self._system}"
                 )
         else:
-            raise SystemError("CODECARBON : Platform not supported by Intel RAPL Interface")
+            raise SystemError(
+                "CODECARBON : Platform not supported by Intel RAPL Interface"
+            )
         return
 
     def _fetch_rapl_files(self):

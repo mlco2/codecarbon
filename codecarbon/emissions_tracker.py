@@ -295,7 +295,9 @@ def track_emissions(
         def wrapped_fn(*args, **kwargs):
             if offline:
                 if country_iso_code is None:
-                    raise Exception("CODECARBON : Needs ISO Code of the Country for Offline mode")
+                    raise Exception(
+                        "CODECARBON : Needs ISO Code of the Country for Offline mode"
+                    )
                 tracker = OfflineEmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
