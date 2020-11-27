@@ -205,7 +205,6 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     def __init__(
         self,
         country_iso_code: str,
-        country_name: Optional[str] = None,
         *args,
         region: Optional[str] = None,
         **kwargs,
@@ -213,7 +212,6 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         """
         :param country_iso_code: 3 letter ISO Code of the country where the
                                  experiment is being run
-        :param country_name: Name of the country where the experiment is being run
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States
         """
@@ -222,7 +220,12 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         self._country_iso_code: str = (
             "CAN" if country_iso_code is None else country_iso_code
         )
-        self._country_name: str = "Canada" if country_name is None else country_name
+        self._country_name: str = (
+            DataSource()
+            .get_global_energy_mix_data()
+            .get(self._country_iso_code)
+            .get("countryName")
+        )
         self._region: Optional[str] = region if region is None else region.lower()
         super().__init__(*args, **kwargs)
 
@@ -258,7 +261,6 @@ def track_emissions(
     save_to_file: bool = True,
     offline: bool = False,
     country_iso_code: Optional[str] = None,
-    country_name: Optional[str] = None,
     region: Optional[str] = None,
 ):
     """
@@ -276,8 +278,6 @@ def track_emissions(
     :param offline: Indicates if the tracker should be run in offline mode
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
                              being run, required if `offline=True`
-    :param country_name: Name of the country where the experiment is being run,
-                         required if `offline=True`
     :param region: The provincial region, for example, California in the US.
                    Currently, this only affects calculations for the United States
     :return: The decorated function
@@ -295,7 +295,6 @@ def track_emissions(
                     output_dir=output_dir,
                     save_to_file=save_to_file,
                     country_iso_code=country_iso_code,
-                    country_name=country_name,
                     region=region,
                 )
                 tracker.start()

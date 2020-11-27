@@ -3,10 +3,15 @@ import time
 import unittest
 from unittest import mock
 
+import pandas as pd
 import requests
 import responses
 
-from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
+from codecarbon.emissions_tracker import (
+    EmissionsTracker,
+    OfflineEmissionsTracker,
+    track_emissions,
+)
 from codecarbon.external.geography import CloudMetadata
 from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
 from tests.testutils import get_test_data_source
@@ -193,6 +198,22 @@ class TestCarbonTracker(unittest.TestCase):
 
         dummy_train_model()
         self.verify_output_file(self.emissions_file_path)
+
+    def test_offline_tracker_country_name(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+    ):
+        tracker = OfflineEmissionsTracker(country_iso_code="USA")
+        tracker.start()
+        heavy_computation(run_time_secs=2)
+        tracker.stop()
+
+        emissions_df = pd.read_csv(self.emissions_file_path)
+
+        self.assertEqual("United States", emissions_df["country_name"].values[0])
+        self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
 
     def verify_output_file(self, file_path: str) -> None:
         with open(file_path, "r") as f:
