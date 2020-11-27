@@ -90,21 +90,16 @@ class IntelPowerGadget:
         """
         Logs output from Intel Power Gadget command line to a file
         """
-        returncode = subprocess.call(
-            [
-                self._cli,
-                "-duration",
-                str(self._duration),
-                "-resolution",
-                str(self._resolution),
-                "-file",
-                self._log_file_path,
-            ],
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        logger.debug("PowerLog returncode %d", returncode)
+        if self._system.startswith("windows"):
+            subprocess.call(
+                f"{self._cli} -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > NUL 2>&1",
+                shell=True,
+            )
+        elif self._system.startswith("darwin"):
+            subprocess.call(
+                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",
+                shell=True,
+            )
         return
 
     def get_cpu_details(self) -> Dict:
