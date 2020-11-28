@@ -30,6 +30,7 @@ def build_model(hp):
 
 def main():
     for country in ["CAN", "FRA", "GER", "USA"]:
+        print("••• Random Search Location:", country, end="\n\n")
         mnist = tf.keras.datasets.mnist
 
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
