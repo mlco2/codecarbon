@@ -1,7 +1,7 @@
 import kerastuner
 import tensorflow as tf
 
-from codecarbon import EmissionsTracker
+from codecarbon import OfflineEmissionsTracker
 
 
 class RandomSearchTuner(kerastuner.tuners.RandomSearch):
@@ -29,25 +29,26 @@ def build_model(hp):
 
 
 def main():
-    mnist = tf.keras.datasets.mnist
+    for country in ["CAN", "FRA", "GER", "USA"]:
+        mnist = tf.keras.datasets.mnist
 
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train, x_test = x_train / 255.0, x_test / 255.0
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        x_train, x_test = x_train / 255.0, x_test / 255.0
 
-    tuner = RandomSearchTuner(
-        build_model,
-        objective="val_accuracy",
-        directory="random_search_results",
-        project_name="codecarbon",
-        max_trials=3,
-    )
+        tuner = RandomSearchTuner(
+            build_model,
+            objective="val_accuracy",
+            directory="random_search_results",
+            project_name="codecarbon",
+            max_trials=3,
+        )
 
-    tracker = EmissionsTracker()
-    tracker.start()
-    tuner.search(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
-    emissions = tracker.stop()
+        tracker = OfflineEmissionsTracker(country_iso_code=country)
+        tracker.start()
+        tuner.search(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+        emissions = tracker.stop()
 
-    print(emissions)
+        print(emissions)
 
 
 if __name__ == "__main__":

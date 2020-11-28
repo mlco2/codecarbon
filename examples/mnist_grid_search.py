@@ -2,7 +2,7 @@ import tensorflow as tf
 from sklearn.model_selection import GridSearchCV
 from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 
-from codecarbon import EmissionsTracker
+from codecarbon import OfflineEmissionsTracker
 
 
 def build_model():
@@ -20,21 +20,23 @@ def build_model():
 
 
 def main():
-    mnist = tf.keras.datasets.mnist
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train, x_test = x_train / 255.0, x_test / 255.0
 
-    model = KerasClassifier(build_fn=build_model, epochs=10)
-    param_grid = dict(batch_size=list(range(32, 256 + 32, 32)))
-    grid = GridSearchCV(estimator=model, param_grid=param_grid)
+    for country in ["CAN", "FRA", "GER", "USA"]:
+        mnist = tf.keras.datasets.mnist
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        x_train, x_test = x_train / 255.0, x_test / 255.0
 
-    tracker = EmissionsTracker()
-    tracker.start()
-    grid_result = grid.fit(x_train, y_train)
-    emissions = tracker.stop()
+        model = KerasClassifier(build_fn=build_model, epochs=10)
+        param_grid = dict(batch_size=list(range(32, 256 + 32, 32)))
+        grid = GridSearchCV(estimator=model, param_grid=param_grid)
 
-    print(emissions)
-    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+        tracker = OfflineEmissionsTracker(country_iso_code=country)
+        tracker.start()
+        grid_result = grid.fit(x_train, y_train)
+        emissions = tracker.stop()
+
+        print(emissions)
+        print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
 
 
 if __name__ == "__main__":
