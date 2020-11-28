@@ -21,7 +21,7 @@ def build_model():
 
 def main():
 
-    for country in ["CAN", "FRA", "GER", "USA"]:
+    for country in ["CAN", "FRA", "DEU", "USA"]:
         print("••• Grid Search Location:", country, end="\n\n")
         mnist = tf.keras.datasets.mnist
         (x_train, y_train), (x_test, y_test) = mnist.load_data()

@@ -29,13 +29,15 @@ def build_model(hp):
 
 
 def main():
-    for country in ["CAN", "FRA", "GER", "USA"]:
+    for country in ["CAN", "FRA", "DEU", "USA"]:
         print("••• Random Search Location:", country, end="\n\n")
         mnist = tf.keras.datasets.mnist
 
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
         x_train, x_test = x_train / 255.0, x_test / 255.0
+        import shutil
 
+        shutil.rmtree("random_search_results", ignore_errors=True)
         tuner = RandomSearchTuner(
             build_model,
             objective="val_accuracy",
