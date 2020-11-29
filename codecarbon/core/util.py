@@ -9,5 +9,5 @@ def suppress(*exceptions):
     try:
         yield
     except exceptions:
-        logger.info(exceptions)
+        logger.info(exceptions, exc_info=True)
         pass

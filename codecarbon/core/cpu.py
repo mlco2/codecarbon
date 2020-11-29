@@ -108,8 +108,8 @@ class IntelPowerGadget:
                     cpu_details[col_name] = cpu_data[col_name].mean()
         except Exception as e:
             logger.debug(
-                f"CODECARBON Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
-                Exception occurred {e}",
+                f"CODECARBON Unable to read Intel Power Gadget logged file at {self._log_file_path}\n"
+                f"Exception occurred {e}",
                 exc_info=True,
             )
 

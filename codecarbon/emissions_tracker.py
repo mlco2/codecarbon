@@ -202,6 +202,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     In addition to the standard arguments, the following are required.
     """
 
+    @suppress(Exception)
     def __init__(
         self,
         country_iso_code: str,
@@ -220,12 +221,18 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         self._country_iso_code: str = (
             "CAN" if country_iso_code is None else country_iso_code
         )
-        self._country_name: str = (
-            DataSource()
-            .get_global_energy_mix_data()
-            .get(self._country_iso_code)
-            .get("countryName")
-        )
+        try:
+            self._country_name: str = (
+                DataSource()
+                .get_global_energy_mix_data()
+                .get(self._country_iso_code)
+                .get("countryName")
+            )
+        except Exception as e:
+            logger.error(f"CODECARBON : Does not support country with ISO code {self._country_iso_code} "
+                         f"Exception occured {e}")
+
+
         self._region: Optional[str] = region if region is None else region.lower()
         super().__init__(*args, **kwargs)
 
