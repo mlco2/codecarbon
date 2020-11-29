@@ -1,7 +1,6 @@
 ![banner](docs/edit/images/banner.png)
 
-
-Estimate and Track carbon emissions from the compute, quantify your impact and offset.
+Estimate and Track carbon emissions from the compute, quantify and analyze their impact.
 
 [Official Documentation](https://mlco2.github.io/codecarbon)
 
