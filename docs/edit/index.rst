@@ -25,9 +25,9 @@ CodeCarbon
 
    installation
    usage
-   comet
    parameters
    examples
+   comet
 
 .. toctree::
    :caption: Logging

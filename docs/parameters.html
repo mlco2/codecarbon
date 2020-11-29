@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Examples" href="examples.html" />
-    <link rel="prev" title="Comet Integration" href="comet.html" /> 
+    <link rel="prev" title="Quickstart" href="usage.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -93,7 +93,6 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Input Parameters</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#emissionstracker">EmissionsTracker</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#offlineemissionstracker">OfflineEmissionsTracker</a></li>
@@ -101,6 +100,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Logging</span></p>
 <ul>
@@ -177,8 +177,8 @@
 <div class="section" id="emissionstracker">
 <h2>EmissionsTracker<a class="headerlink" href="#emissionstracker" title="Permalink to this headline">¶</a></h2>
 <p>The online mode object <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> takes following input parameters:</p>
-<table class="colwidths-given docutils align-center" id="id2">
-<caption><span class="caption-text">Input Parameters to EmissionsTracker</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<table class="colwidths-given docutils align-center" id="id3">
+<caption><span class="caption-text">Input Parameters to EmissionsTracker</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -215,8 +215,8 @@
 <div class="section" id="offlineemissionstracker">
 <h2>OfflineEmissionsTracker<a class="headerlink" href="#offlineemissionstracker" title="Permalink to this headline">¶</a></h2>
 <p>The offline mode object <code class="docutils literal notranslate"><span class="pre">OfflineEmissionsTracker</span></code> takes following input parameters.</p>
-<table class="colwidths-given docutils align-center" id="id3">
-<caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<table class="colwidths-given docutils align-center" id="id4">
+<caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id4" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -234,10 +234,7 @@
 </div>
 </td>
 </tr>
-<tr class="row-odd"><td><p>country_name</p></td>
-<td><p>Name of the country where the experiment is being run</p></td>
-</tr>
-<tr class="row-even"><td><p>region</p></td>
+<tr class="row-odd"><td><p>region</p></td>
 <td><div class="line-block">
 <div class="line">Optional Name of the Province/State/City, where the infrastructure is hosted</div>
 <div class="line">Currently, supported only for US States</div>
@@ -245,20 +242,20 @@
 </div>
 </td>
 </tr>
-<tr class="row-odd"><td><p>project_name</p></td>
+<tr class="row-even"><td><p>project_name</p></td>
 <td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>measure_power_secs</p></td>
+<tr class="row-odd"><td><p>measure_power_secs</p></td>
 <td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>output_dir</p></td>
+<tr class="row-even"><td><p>output_dir</p></td>
 <td><div class="line-block">
 <div class="line">Directory path to which the experiment details are logged</div>
 <div class="line">in a CSV file called <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code>, defaults to current directory</div>
 </div>
 </td>
 </tr>
-<tr class="row-even"><td><p>save_to_file</p></td>
+<tr class="row-odd"><td><p>save_to_file</p></td>
 <td><div class="line-block">
 <div class="line">Boolean variable indicating if the emission artifacts should be logged</div>
 <div class="line">to a CSV file at <code class="docutils literal notranslate"><span class="pre">output_dir/emissions.csv</span></code>, defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code></div>
@@ -271,8 +268,8 @@
 <div class="section" id="track-emissions">
 <h2>&#64;track_emissions<a class="headerlink" href="#track-emissions" title="Permalink to this headline">¶</a></h2>
 <p>Decorator <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> takes following input parameters.</p>
-<table class="colwidths-given docutils align-center" id="id4">
-<caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id4" title="Permalink to this table">¶</a></caption>
+<table class="colwidths-given docutils align-center" id="id5">
+<caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id5" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -311,12 +308,13 @@
 </td>
 </tr>
 <tr class="row-odd"><td><p>country_iso_code</p></td>
-<td><p>3 letter ISO Code of the country where the experiment is being run</p></td>
+<td><div class="line-block">
+<div class="line">3 letter ISO Code of the country where the experiment is being run.</div>
+<div class="line">Available countries are listed in <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json">global_energy_mix.json</a></div>
+</div>
+</td>
 </tr>
-<tr class="row-even"><td><p>country_name</p></td>
-<td><p>Name of the country where the experiment is being run</p></td>
-</tr>
-<tr class="row-odd"><td><p>region</p></td>
+<tr class="row-even"><td><p>region</p></td>
 <td><div class="line-block">
 <div class="line">Optional Name of the Province/State/City, where the infrastructure is hosted</div>
 <div class="line">Currently, supported only for US States</div>
@@ -340,7 +338,7 @@
         <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="comet.html" class="btn btn-neutral float-left" title="Comet Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
