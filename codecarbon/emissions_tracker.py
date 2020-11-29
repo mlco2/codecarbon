@@ -229,9 +229,10 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 .get("countryName")
             )
         except Exception as e:
-            logger.error(f"CODECARBON : Does not support country with ISO code {self._country_iso_code} "
-                         f"Exception occured {e}")
-
+            logger.error(
+                f"CODECARBON : Does not support country with ISO code {self._country_iso_code} "
+                f"Exception occured {e}"
+            )
 
         self._region: Optional[str] = region if region is None else region.lower()
         super().__init__(*args, **kwargs)
