@@ -23,6 +23,7 @@ from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput
 
+logging.basicConfig(level=os.environ.get("CODECARBON_LOGLEVEL", "WARN"))
 logger = logging.getLogger(__name__)
 
 
@@ -64,11 +65,16 @@ class BaseEmissionsTracker(ABC):
         self._hardware = list()
 
         if gpu.is_gpu_details_available():
-            logger.info("CODECARBON Tracking Nvidia GPU")
+            logger.info("CODECARBON : Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(gpu_ids))
         if cpu.is_powergadget_available():
-            logger.info("CODECARBON Tracking Intel CPU")
-            self._hardware.append(CPU(self._output_dir))
+            logger.info("CODECARBON : Tracking Intel CPU via Power Gadget")
+            self._hardware.append(
+                CPU.from_utils(self._output_dir, "intel_power_gadget")
+            )
+        elif cpu.is_rapl_available():
+            logger.info("CODECARBON : Tracking Intel CPU via RAPL interface")
+            self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
@@ -93,7 +99,7 @@ class BaseEmissionsTracker(ABC):
         """
 
         if self._start_time is not None:
-            logger.warning("Already started tracking")
+            logger.warning("CODECARBON : Already started tracking")
             return
 
         self._last_measured_time = self._start_time = time.time()
@@ -106,7 +112,7 @@ class BaseEmissionsTracker(ABC):
         :return: CO2 emissions in kgs
         """
         if self._start_time is None:
-            logger.error("Need to first start the tracker")
+            logger.error("CODECARBON : Need to first start the tracker")
             return None
 
         self._scheduler.shutdown()
@@ -182,17 +188,18 @@ class BaseEmissionsTracker(ABC):
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
             warn_msg = (
-                "CODECARBON Background scheduler didn't run for a long period"
+                "CODECARBON : Background scheduler didn't run for a long period"
                 + " (%ds), results might be inaccurate"
             )
             logger.warning(warn_msg, last_duration)
 
         for hardware in self._hardware:
             self._total_energy += Energy.from_power_and_time(
-                power=hardware.total_power(),
-                time=Time.from_seconds(last_duration),
+                power=hardware.total_power(), time=Time.from_seconds(last_duration)
             )
-            logger.debug(f"CODECARBON Energy consumed: {self._total_energy}")
+            logger.info(
+                f"CODECARBON : Energy consumed {hardware.__class__.__name__} : {self._total_energy}"
+            )
         self._last_measured_time = time.time()
 
 
@@ -296,7 +303,9 @@ def track_emissions(
         def wrapped_fn(*args, **kwargs):
             if offline:
                 if country_iso_code is None:
-                    raise Exception("Needs ISO Code of the Country for Offline mode")
+                    raise Exception(
+                        "CODECARBON : Needs ISO Code of the Country for Offline mode"
+                    )
                 tracker = OfflineEmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
