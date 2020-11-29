@@ -20,6 +20,7 @@ Estimate and Track carbon emissions from the compute, quantify your impact and o
     - [Offline mode](#offline-mode)
     - [Using comet.ml](#using-cometml)
 - [Examples](#examples)
+- [DataSource](#data-source)
 - [Contributing](#contributing)
 - [Built-in Visualization Tool](#built-in-visualization-tool)
 - [Build Documentation](#build-documentation)
@@ -160,6 +161,14 @@ This will create a `.csv` file with information about the energy that you used t
 
 
 
+# Data Source
+
+To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud). 
+If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016). 
+[A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
+
+
+
 # Contributing
 
 We are hoping that the open-source community will help us edit our code and make it better!
@@ -293,4 +302,4 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
 }
 ```
 
-To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud). If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016). [A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
+
