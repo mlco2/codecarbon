@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from unittest import mock
 
@@ -51,11 +52,23 @@ class TestIntelPowerGadget(unittest.TestCase):
 
 
 class TestIntelRAPL(unittest.TestCase):
-    @mock.patch(
-        "codecarbon.core.cpu.IntelRAPL._is_platform_supported",
-        return_value=True,
-    )
-    def test_intel_rapl(self, mock_platform):
+    def setUp(self) -> None:
+        self.rapl_dir = os.path.join(os.path.dirname(__file__), "test_data", "rapl")
+        if sys.platform.lower().startswith("lin"):
+            os.makedirs(os.path.join(self.rapl_dir, "intel-rapl:0"), exist_ok=True)
+            with open(os.path.join(self.rapl_dir, "intel-rapl:0/name"), "w") as f:
+                f.write("package-0")
+            with open(os.path.join(self.rapl_dir, "intel-rapl:0/energy_uj"), "w") as f:
+                f.write("52649883221")
+
+            os.makedirs(os.path.join(self.rapl_dir, "intel-rapl:1"), exist_ok=True)
+            with open(os.path.join(self.rapl_dir, "intel-rapl:1/name"), "w") as f:
+                f.write("psys")
+            with open(os.path.join(self.rapl_dir, "intel-rapl:1/energy_uj"), "w") as f:
+                f.write("117870082040")
+
+    @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
+    def test_intel_rapl(self):
         expected_cpu_details = {"Processor Power_0(Watt)": 0.0, "psys": 0.0}
 
         rapl = IntelRAPL(
