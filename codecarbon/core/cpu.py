@@ -66,7 +66,9 @@ class IntelPowerGadget:
         """
         if self._system.startswith("win"):
             if shutil.which(self._windows_exec):
-                self._cli = self._windows_exec
+                self._cli = shutil.which(
+                    self._windows_exec
+                )  # Windows exec is a relative path
             elif shutil.which(self._windows_exec_backup):
                 self._cli = self._windows_exec_backup
             else:
@@ -93,8 +95,18 @@ class IntelPowerGadget:
         """
         if self._system.startswith("win"):
             returncode = subprocess.call(
-                f"{self._cli} -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > NUL 2>&1",
+                [
+                    self._cli,
+                    "-duration",
+                    str(self._duration),
+                    "-resolution",
+                    str(self._resolution),
+                    "-file",
+                    self._log_file_path,
+                ],
                 shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
         elif self._system.startswith("darwin"):
             returncode = subprocess.call(
