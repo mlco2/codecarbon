@@ -66,7 +66,9 @@ class IntelPowerGadget:
         """
         if self._system.startswith("win"):
             if shutil.which(self._windows_exec):
-                self._cli = self._windows_exec
+                self._cli = shutil.which(
+                    self._windows_exec
+                )  # Windows exec is a relative path
             elif shutil.which(self._windows_exec_backup):
                 self._cli = self._windows_exec_backup
             else:
@@ -91,16 +93,29 @@ class IntelPowerGadget:
         """
         Logs output from Intel Power Gadget command line to a file
         """
-        if self._system.startswith("windows"):
+        if self._system.startswith("win"):
             returncode = subprocess.call(
-                f"{self._cli} -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > NUL 2>&1",
+                [
+                    self._cli,
+                    "-duration",
+                    str(self._duration),
+                    "-resolution",
+                    str(self._resolution),
+                    "-file",
+                    self._log_file_path,
+                ],
                 shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
         elif self._system.startswith("darwin"):
             returncode = subprocess.call(
                 f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",
                 shell=True,
             )
+        else:
+            return None
+
         logger.info(
             f"CODECARBON : Returncode while logging power values using Intel Power Gadget {returncode}"
         )
@@ -167,7 +182,7 @@ class IntelRAPL:
         for file in files:
             path = os.path.join(self._lin_rapl_dir, file, "name")
             with open(path) as f:
-                name = f.read()[:-1]
+                name = f.read().strip()
                 if "package" in name:
                     name = f"Processor Power_{i}(Watt)"
                     i += 1

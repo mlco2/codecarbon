@@ -2,7 +2,7 @@ import tensorflow as tf
 from sklearn.model_selection import GridSearchCV
 from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
 
-from codecarbon import OfflineEmissionsTracker
+from codecarbon import EmissionsTracker
 
 
 def build_model():
@@ -28,15 +28,13 @@ def main():
     param_grid = dict(batch_size=list(range(32, 256 + 32, 32)))
     grid = GridSearchCV(estimator=model, param_grid=param_grid)
 
-    tracker = OfflineEmissionsTracker(
-        project_name="mnist_grid_search", country_iso_code="USA"
-    )
+    tracker = EmissionsTracker(project_name="mnist_grid_search")
     tracker.start()
     grid_result = grid.fit(x_train, y_train)
     emissions = tracker.stop()
 
-    print(emissions)
-    print(f"Best: {grid_result.best_score_} using {grid_result.best_params_}")
+    print(f"Best Accuracy : {grid_result.best_score_} using {grid_result.best_params_}")
+    print(f"Emissions : {emissions} kg CO₂")
 
 
 if __name__ == "__main__":
