@@ -182,7 +182,7 @@ class IntelRAPL:
         for file in files:
             path = os.path.join(self._lin_rapl_dir, file, "name")
             with open(path) as f:
-                name = f.read()[:-1]
+                name = f.read().strip()
                 if "package" in name:
                     name = f"Processor Power_{i}(Watt)"
                     i += 1
