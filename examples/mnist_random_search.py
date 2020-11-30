@@ -1,7 +1,7 @@
 import kerastuner
 import tensorflow as tf
 
-from codecarbon import OfflineEmissionsTracker
+from codecarbon import EmissionsTracker
 
 
 class RandomSearchTuner(kerastuner.tuners.RandomSearch):
@@ -42,14 +42,14 @@ def main():
         max_trials=3,
     )
 
-    tracker = OfflineEmissionsTracker(
-        project_name="mnist_random_search", country_iso_code="USA"
+    tracker = EmissionsTracker(
+        project_name="mnist_random_search"
     )
     tracker.start()
     tuner.search(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
     emissions = tracker.stop()
 
-    print(emissions)
+    print(f"Emissions : {emissions} kg CO₂")
 
 
 if __name__ == "__main__":
