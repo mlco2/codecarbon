@@ -101,6 +101,9 @@ class IntelPowerGadget:
                 f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",
                 shell=True,
             )
+        else:
+            return None
+
         logger.info(
             f"CODECARBON : Returncode while logging power values using Intel Power Gadget {returncode}"
         )
