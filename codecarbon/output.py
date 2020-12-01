@@ -15,8 +15,8 @@ class EmissionsData:
     Output object containg experiment data
     """
 
-    experiment_id: str
     timestamp: str
+    experiment_id: str
     project_name: str
     duration: float
     emissions: float

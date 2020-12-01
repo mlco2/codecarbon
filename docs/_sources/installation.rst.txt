@@ -40,7 +40,6 @@ The following pip packages are used by the CodeCarbon package, and will be insta
 .. code-block::  bash
 
     APScheduler
-    co2-tracker-utils
     dash
     dash_bootstrap_components
     dataclasses
