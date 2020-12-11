@@ -7,7 +7,6 @@ import logging
 import os
 import time
 import uuid
-import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
@@ -79,7 +78,7 @@ class BaseEmissionsTracker(ABC):
         
         # Print warning if no supported hardware is found'
         if not self._hardware:
-            warnings.warn('CODECARBON : No CPU/GPU tracking mode found. This '\
+            logger.warning('CODECARBON : No CPU/GPU tracking mode found. This '\
                 'may be due to your code running on Windows WSL, or due to '\
                 'unsupported hardware (see '\
                 'https://github.com/mlco2/codecarbon#infrastructure-support)')
