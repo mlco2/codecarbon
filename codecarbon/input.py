@@ -15,6 +15,7 @@ class DataSource:
             "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
             "cloud_emissions_path": "data/cloud/impact.csv",
             "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
+            "can_energy_mix_data_path": "data/private_infra/2016/canada_energy_mix.json",
             "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
         }
         self.module_name = "codecarbon"
@@ -36,6 +37,11 @@ class DataSource:
     def country_emissions_data_path(self, country: str):
         return pkg_resources.resource_filename(
             self.module_name, self.config[f"{country}_emissions_data_path"]
+        )
+
+    def country_energy_mix_data_path(self, country: str):
+        return pkg_resources.resource_filename(
+            self.module_name, self.config[f"{country}_energy_mix_data_path"]
         )
 
     @property
@@ -64,6 +70,23 @@ class DataSource:
         :param country_iso_code: ISO code similar to one used in file names
         :return: emissions in lbs/MWh and region code
         """
-        with open(self.country_emissions_data_path(country_iso_code)) as f:
-            country_emissions_data: Dict = json.load(f)
-        return country_emissions_data
+        try:
+            with open(self.country_emissions_data_path(country_iso_code)) as f:
+                country_emissions_data: Dict = json.load(f)
+            return country_emissions_data
+        except KeyError:
+            raise DataSourceException
+
+    def get_country_energy_mix_data(self, country_iso_code: str) -> Dict:
+        """
+        Returns Emissions Across Regions in a country
+        :param country_iso_code: ISO code similar to one used in file names
+        :return: emissions in lbs/MWh and region code
+        """
+        with open(self.country_energy_mix_data_path(country_iso_code)) as f:
+            country_energy_mix_data: Dict = json.load(f)
+        return country_energy_mix_data
+
+
+class DataSourceException(Exception):
+    pass

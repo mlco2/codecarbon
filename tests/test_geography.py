@@ -71,3 +71,4 @@ class TestGeoMetadata(unittest.TestCase):
         geo = GeoMetadata.from_geo_js(self.geo_js_url)
         self.assertEqual("CAN", geo.country_iso_code)
         self.assertEqual("Canada", geo.country_name)
+        self.assertEqual("ontario", geo.region)

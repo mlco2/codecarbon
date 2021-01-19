@@ -79,7 +79,7 @@ class TestEmissions(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 0.20, places=2)
 
-    def test_get_emissions_PRIVATE_INFRA_CANADA(self):
+    def test_get_emissions_PRIVATE_INFRA_CANADA_WITHOUT_REGION(self):
 
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
@@ -90,3 +90,15 @@ class TestEmissions(unittest.TestCase):
         # THEN
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 1.6, places=2)
+
+    def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
+
+        # WHEN
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kwh=3),
+            GeoMetadata(country_iso_code="CAN", country_name="Canada", region='ontario'),
+        )
+
+        # THEN
+        assert isinstance(emissions, float)
+        self.assertAlmostEqual(emissions, 0.12, places=2)
