@@ -87,8 +87,9 @@ class Emissions:
 
     def get_region_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
-        Computes emissions for a country on private infra,
-        given emissions per unit power consumed at a regional level
+        Computes emissions for a region on private infra.
+        Given an quantity of power consumed, use regional data
+         on emissions per unit power consumed or the mix of energy sources.
         https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
         :param energy: Mean power consumption of the process (kWh)
         :param geo: Country and region metadata.
@@ -111,15 +112,15 @@ class Emissions:
         except DataSourceException:  # This country has regional data at the energy mix level, not the emissions level
             country_energy_mix_data = self._data_source.get_country_energy_mix_data(geo.country_iso_code.lower())
             region_energy_mix_data = country_energy_mix_data[geo.region]
-            emissions_per_kwh: EmissionsPerKwh = self._energy_mix_to_emissions(region_energy_mix_data)
+            emissions_per_kwh: EmissionsPerKwh = self._energy_mix_to_emissions_rate(region_energy_mix_data)
 
         return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
 
     def get_country_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
         Computes emissions for a country on private infra,
-        given emissions per unit power consumed at a country level
-        https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
+        given a quantity of power consumed by
+        using data for the mix of energy sources of that country.
         :param energy: Mean power consumption of the process (kWh)
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
@@ -131,11 +132,18 @@ class Emissions:
             raise Exception()
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
-        emissions_per_kwh = self._energy_mix_to_emissions(country_energy_mix)
+        emissions_per_kwh = self._energy_mix_to_emissions_rate(country_energy_mix)
         return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
 
     @staticmethod
-    def _energy_mix_to_emissions(energy_mix: Dict) -> EmissionsPerKwh:
+    def _energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKwh:
+        """
+        Convert a mix of energy sources into emissions per kWh
+        https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
+        :param energy_mix: A dictionary that breaks down the energy produced into sources, with a total value.
+            Format will vary, but must have keys for "coal", "petroleum" and "naturalGas" and "total"
+        :return: an EmissionsPerKwh object representing the average emissions rate
+        """
         # source: https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
         emissions_by_source: Dict[str, EmissionsPerKwh] = {
             "coal": EmissionsPerKwh.from_kgs_per_kwh(0.995725971),

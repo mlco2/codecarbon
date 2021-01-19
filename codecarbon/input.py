@@ -79,9 +79,9 @@ class DataSource:
 
     def get_country_energy_mix_data(self, country_iso_code: str) -> Dict:
         """
-        Returns Emissions Across Regions in a country
+        Returns Energy Mix Across Regions in a country
         :param country_iso_code: ISO code similar to one used in file names
-        :return: emissions in lbs/MWh and region code
+        :return: energy mix by region code
         """
         with open(self.country_energy_mix_data_path(country_iso_code)) as f:
             country_energy_mix_data: Dict = json.load(f)
