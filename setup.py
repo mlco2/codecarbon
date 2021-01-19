@@ -7,7 +7,6 @@ DEPENDENCIES = [
     "APScheduler",
     "dash",
     "dash_bootstrap_components",
-    "dataclasses",
     "fire",
     "pandas",
     "pynvml",
