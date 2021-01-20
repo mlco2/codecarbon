@@ -32,6 +32,8 @@ def heavy_computation(run_time_secs: int = 3):
     "codecarbon.emissions_tracker.EmissionsTracker._get_cloud_metadata",
     return_value=CloudMetadata(provider=None, region=None),
 )
+@mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
+@mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
 class TestCarbonTracker(unittest.TestCase):
     def setUp(self) -> None:
         self.data_source = get_test_data_source()
@@ -48,6 +50,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
         # GIVEN
         responses.add(
@@ -82,6 +86,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
         # GIVEN
 
@@ -106,6 +112,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
 
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
@@ -123,6 +131,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
 
         # GIVEN
@@ -149,6 +159,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
         # GIVEN
         responses.add(
@@ -173,6 +185,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
         # WHEN
 
@@ -187,6 +201,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_cloud_metadata,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
         # GIVEN
 
@@ -204,6 +220,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_cloud_metadata,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
         tracker = OfflineEmissionsTracker(country_iso_code="USA")
         tracker.start()

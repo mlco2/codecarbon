@@ -78,7 +78,9 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
-        compute_with_regional_data: bool = (geo.region is not None) and (geo.country_iso_code.upper() in ["USA", "CAN"])
+        compute_with_regional_data: bool = (geo.region is not None) and (
+            geo.country_iso_code.upper() in ["USA", "CAN"]
+        )
 
         if compute_with_regional_data:
             return self.get_region_emissions(energy, geo)
@@ -110,9 +112,13 @@ class Emissions:
                 country_emissions_data[geo.region]["emissions"]
             )
         except DataSourceException:  # This country has regional data at the energy mix level, not the emissions level
-            country_energy_mix_data = self._data_source.get_country_energy_mix_data(geo.country_iso_code.lower())
+            country_energy_mix_data = self._data_source.get_country_energy_mix_data(
+                geo.country_iso_code.lower()
+            )
             region_energy_mix_data = country_energy_mix_data[geo.region]
-            emissions_per_kwh: EmissionsPerKwh = self._energy_mix_to_emissions_rate(region_energy_mix_data)
+            emissions_per_kwh: EmissionsPerKwh = self._energy_mix_to_emissions_rate(
+                region_energy_mix_data
+            )
 
         return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
 

@@ -96,7 +96,9 @@ class TestEmissions(unittest.TestCase):
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
             Energy.from_energy(kwh=3),
-            GeoMetadata(country_iso_code="CAN", country_name="Canada", region='ontario'),
+            GeoMetadata(
+                country_iso_code="CAN", country_name="Canada", region="ontario"
+            ),
         )
 
         # THEN

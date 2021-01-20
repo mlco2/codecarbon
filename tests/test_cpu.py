@@ -48,7 +48,9 @@ class TestIntelPowerGadget(unittest.TestCase):
             log_file_name="mock_intel_power_gadget_data.csv",
         )
         cpu_details = power_gadget.get_cpu_details()
-        cpu_details["Cumulative IA Energy_0(mWh)"] = round(cpu_details["Cumulative IA Energy_0(mWh)"], 3)
+        cpu_details["Cumulative IA Energy_0(mWh)"] = round(
+            cpu_details["Cumulative IA Energy_0(mWh)"], 3
+        )
         self.assertDictEqual(expected_cpu_details, cpu_details)
 
 
