@@ -117,6 +117,8 @@ class BaseEmissionsTracker(ABC):
 
         self._scheduler.shutdown()
 
+        self._measure_power()  # Run to calculate the power used from last scheduled measurement to shutdown
+
         emissions_data = self._prepare_emissions_data()
 
         for persistence in self.persistence_objs:
