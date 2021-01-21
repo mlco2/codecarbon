@@ -78,10 +78,12 @@ class BaseEmissionsTracker(ABC):
         
         # Print warning if no supported hardware is found'
         if not self._hardware:
-            logger.warning('CODECARBON : No CPU/GPU tracking mode found. This '\
-                'may be due to your code running on Windows WSL, or due to '\
-                'unsupported hardware (see '\
-                'https://github.com/mlco2/codecarbon#infrastructure-support)')
+            logger.warning(
+                "CODECARBON : No CPU/GPU tracking mode found. This "
+                "may be due to your code running on Windows WSL, or due to "
+                "unsupported hardware (see "
+                "https://github.com/mlco2/codecarbon#infrastructure-support)"
+            )
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
