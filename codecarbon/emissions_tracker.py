@@ -212,7 +212,6 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time = time.time()
 
 
-@suppress(Exception)
 class OfflineEmissionsTracker(BaseEmissionsTracker):
     """
     Offline implementation of the `EmissionsTracker`
