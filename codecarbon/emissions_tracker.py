@@ -137,10 +137,10 @@ class BaseEmissionsTracker(ABC):
 
     def _prepare_emissions_data(self) -> EmissionsData:
         cloud: CloudMetadata = self._get_cloud_metadata()
-        geo: GeoMetadata = self._get_geo_metadata()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
         if cloud.is_on_private_infra:
+            geo: GeoMetadata = self._get_geo_metadata()
             emissions = self._emissions.get_private_infra_emissions(
                 self._total_energy, geo
             )
@@ -223,36 +223,56 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     @suppress(Exception)
     def __init__(
         self,
-        country_iso_code: str,
         *args,
+        country_iso_code: Optional[str] = None,
         region: Optional[str] = None,
+        cloud_provider: Optional[str] = None,
+        cloud_region: Optional[str] = None,
         **kwargs,
     ):
         """
         :param country_iso_code: 3 letter ISO Code of the country where the
                                  experiment is being run
         :param region: The provincial region, for example, California in the US.
-                       Currently, this only affects calculations for the United States
+                       Currently, this only affects calculations for the United States and Canada
         """
-        # TODO: Currently we silently use a default value of Canada.
-        # Decide if we should fail with missing args.
-        self._country_iso_code: str = (
-            "CAN" if country_iso_code is None else country_iso_code
-        )
-        try:
-            self._country_name: str = (
-                DataSource()
-                .get_global_energy_mix_data()
-                .get(self._country_iso_code)
-                .get("countryName")
-            )
-        except Exception as e:
-            logger.error(
-                f"CODECARBON : Does not support country with ISO code {self._country_iso_code} "
-                f"Exception occured {e}"
-            )
-
+        self._cloud_provider: Optional[str] = cloud_provider
+        self._cloud_region: Optional[str] = cloud_region
+        self._country_iso_code: Optional[str] = country_iso_code
         self._region: Optional[str] = region if region is None else region.lower()
+
+        if self._cloud_provider:
+            if self._cloud_region is None:
+                logger.error(
+                    "CODECARBON : Cloud Region must not be None if cloud provider is set"
+                )
+
+            df = DataSource().get_cloud_emissions_data()
+            if (
+                len(
+                    df.loc[
+                        (df["provider"] == self._cloud_provider)
+                        & (df["region"] == self._cloud_region)
+                    ]
+                )
+                == 0
+            ):
+                logger.error(
+                    "CODECARBON : Cloud Provider/Region "
+                    f"{self._cloud_provider} {self._cloud_region} "
+                    "not found in cloud emissions data."
+                )
+        if self._country_iso_code:
+            try:
+                self._country_name: str = DataSource().get_global_energy_mix_data()[
+                    self._country_iso_code
+                ]["countryName"]
+            except KeyError as e:
+                logger.error(
+                    f"CODECARBON : Does not support country with ISO code {self._country_iso_code} "
+                    f"Exception occured {e}"
+                )
+
         super().__init__(*args, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -263,7 +283,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata(provider=None, region=None)
+        return CloudMetadata(provider=self._cloud_provider, region=self._cloud_region)
 
 
 class EmissionsTracker(BaseEmissionsTracker):
@@ -288,6 +308,8 @@ def track_emissions(
     offline: bool = False,
     country_iso_code: Optional[str] = None,
     region: Optional[str] = None,
+    cloud_provider: Optional[str] = None,
+    cloud_region: Optional[str] = None,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -313,7 +335,7 @@ def track_emissions(
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
             if offline:
-                if country_iso_code is None:
+                if country_iso_code is None and cloud_provider is None:
                     raise Exception(
                         "CODECARBON : Needs ISO Code of the Country for Offline mode"
                     )
@@ -324,6 +346,8 @@ def track_emissions(
                     save_to_file=save_to_file,
                     country_iso_code=country_iso_code,
                     region=region,
+                    cloud_provider=cloud_provider,
+                    cloud_region=cloud_region,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
