@@ -218,6 +218,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     In addition to the standard arguments, the following are required.
     """
     
+    @suppress(Exception)
     def __init__(
         self,
         country_iso_code: str,
