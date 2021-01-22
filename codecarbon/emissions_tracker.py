@@ -279,6 +279,7 @@ def track_emissions(
     offline: bool = False,
     country_iso_code: Optional[str] = None,
     region: Optional[str] = None,
+    gpu_ids: Optional[List] = None,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -297,6 +298,7 @@ def track_emissions(
                              being run, required if `offline=True`
     :param region: The provincial region, for example, California in the US.
                    Currently, this only affects calculations for the United States
+    :param gpu_ids: User-specified known gpu ids to track, defaults to None
     :return: The decorated function
     """
 
@@ -315,6 +317,7 @@ def track_emissions(
                     save_to_file=save_to_file,
                     country_iso_code=country_iso_code,
                     region=region,
+                    gpu_ids=gpu_ids,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
@@ -325,6 +328,7 @@ def track_emissions(
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
                     save_to_file=save_to_file,
+                    gpu_ids=gpu_ids,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
