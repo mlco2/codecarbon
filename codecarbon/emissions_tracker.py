@@ -75,7 +75,7 @@ class BaseEmissionsTracker(ABC):
         elif cpu.is_rapl_available():
             logger.info("CODECARBON : Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
-        
+
         # Print warning if no supported hardware is found'
         if not self._hardware:
             logger.warning(
@@ -217,7 +217,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     Offline implementation of the `EmissionsTracker`
     In addition to the standard arguments, the following are required.
     """
-    
+
     @suppress(Exception)
     def __init__(
         self,
