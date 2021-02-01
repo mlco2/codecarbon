@@ -21,7 +21,7 @@ requirements:
     - apscheduler
     - dash
     - dash-bootstrap-components
-    - dataclasses
+    - dataclasses;python_version<'3.7'
     - fire
     - pandas
     - requests
