@@ -60,6 +60,10 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
    * - save_to_file
      - | Boolean variable indicating if the emission artifacts should be logged
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
+   * - cloud_provider
+     - | The cloud provider specified for estimating emissions intensity, defaults to ``None``
+   * - cloud_region
+     - | The region of the cloud data center, defaults to ``None``
 
 
 @track_emissions
@@ -94,5 +98,9 @@ Decorator ``track_emissions`` takes following input parameters.
      - | Optional Name of the Province/State/City, where the infrastructure is hosted
        | Currently, supported only for US States
        | for example - California or New York, from the `list <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json>`_
+   * - cloud_provider
+     - | The cloud provider specified for estimating emissions intensity, defaults to ``None``
+   * - cloud_region
+     - | The region of the cloud data center, defaults to ``None``
    * - gpu_ids
      - | User-specified known gpu ids to track, defaults to ``None``

@@ -235,6 +235,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                  experiment is being run
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States and Canada
+        :param cloud_provider: The cloud provider specified for estimating emissions intensity, defaults to None
+        :param cloud_region: The region of the cloud data center, defaults to None
         """
         self._cloud_provider: Optional[str] = cloud_provider
         self._cloud_region: Optional[str] = cloud_region
