@@ -79,7 +79,7 @@ Currently the package supports following hardware infrastructure.
 *Note:* Please ensure that the Intel Power Gadget has the [required security permissions](https://osxdaily.com/2019/03/03/install-intel-power-gadget-mac/) on MacOS.
 
 
-#### On Liinux
+#### On Linux
 - Tracks Intel Processors power consumption from Intel RAPL files at `/sys/class/powercap/intel-rapl`, [reference](http://web.eece.maine.edu/~vweaver/projects/rapl/)
 
 *Note:* The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path.
