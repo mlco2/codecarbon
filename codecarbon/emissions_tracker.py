@@ -76,6 +76,15 @@ class BaseEmissionsTracker(ABC):
             logger.info("CODECARBON : Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
 
+        # Print warning if no supported hardware is found'
+        if not self._hardware:
+            logger.warning(
+                "CODECARBON : No CPU/GPU tracking mode found. This "
+                "may be due to your code running on Windows WSL, or due to "
+                "unsupported hardware (see "
+                "https://github.com/mlco2/codecarbon#infrastructure-support)"
+            )
+
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
             self._measure_power, "interval", seconds=measure_power_secs
@@ -116,6 +125,8 @@ class BaseEmissionsTracker(ABC):
             return None
 
         self._scheduler.shutdown()
+
+        self._measure_power()  # Run to calculate the power used from last scheduled measurement to shutdown
 
         emissions_data = self._prepare_emissions_data()
 
@@ -277,6 +288,7 @@ def track_emissions(
     offline: bool = False,
     country_iso_code: Optional[str] = None,
     region: Optional[str] = None,
+    gpu_ids: Optional[List] = None,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -295,6 +307,7 @@ def track_emissions(
                              being run, required if `offline=True`
     :param region: The provincial region, for example, California in the US.
                    Currently, this only affects calculations for the United States
+    :param gpu_ids: User-specified known gpu ids to track, defaults to None
     :return: The decorated function
     """
 
@@ -313,6 +326,7 @@ def track_emissions(
                     save_to_file=save_to_file,
                     country_iso_code=country_iso_code,
                     region=region,
+                    gpu_ids=gpu_ids,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
@@ -323,6 +337,7 @@ def track_emissions(
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
                     save_to_file=save_to_file,
+                    gpu_ids=gpu_ids,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
