@@ -1,3 +1,5 @@
+import json
+
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
@@ -545,17 +547,34 @@ class Components:
         self, choropleth_data, country_iso_code: str
     ):
         # add location_modes and scopes for other country codes
-        location_modes = {"usa": "USA-states"}
-        scopes = {"usa": "usa"}
-        try:
-            location_mode = location_modes[country_iso_code.lower()]
-            scope = scopes[country_iso_code.lower()]
-        except KeyError:
-            location_mode = None
-            scope = "world"
-        return px.choropleth(
+        location_modes = {"usa": "USA-states", "can": "geojson-id"}
+        scopes = {"usa": "usa", "can": "north america"}
+        locations = {"usa": "region_code", "can": "cartodb_id"}
+
+        # formatting required for geojson data (not required for USA regional map)
+        if country_iso_code.lower() == "can":
+            with open("codecarbon/data/canada_provinces.geojson", "r") as geo:
+                mp = json.load(geo)
+            for choropleth in choropleth_data:
+                region_name = choropleth["region_code"]
+                choropleth["cartodb_id"] = [
+                    m["properties"]["cartodb_id"]
+                    for m in mp["features"]
+                    if m["properties"]["name"].lower() == region_name
+                ][0]
+        else:
+            mp = None
+
+        # Get parameters, default to a blank world map if not in keys
+        location_mode = location_modes.get(country_iso_code.lower(), None)
+        scope = scopes.get(country_iso_code.lower(), "world")
+        location = locations.get(country_iso_code.lower(), None)
+
+        fig = px.choropleth(
             data_frame=choropleth_data,
-            locations="region_code",
+            locations=location,
+            geojson=mp,
+            featureidkey="properties.cartodb_id",
             locationmode=location_mode,
             scope=scope,
             color="emissions",
@@ -569,6 +588,9 @@ class Components:
             height=600,
             color_continuous_scale=self.colorscale,
         )
+        if country_iso_code.lower() != "usa":
+            fig.update_geos(fitbounds="locations", visible=True)
+        return fig
 
     @staticmethod
     def get_project_time_series():

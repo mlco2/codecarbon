@@ -164,7 +164,7 @@ def render_app(df: pd.DataFrame):
     def update_show_regional_comparison(hidden_project_summary: dcc.Store):
         country_iso_code = hidden_project_summary["country_iso_code"]
         # add country codes here to render for different countries
-        if country_iso_code.upper() in ["USA"]:
+        if country_iso_code.upper() in ["USA", "CAN"]:
             return {"display": "block"}
         else:
             return {"display": "none"}

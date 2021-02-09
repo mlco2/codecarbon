@@ -4,7 +4,7 @@ import dash_table as dt
 import pandas as pd
 
 from codecarbon.core.emissions import Emissions
-from codecarbon.input import DataSource
+from codecarbon.input import DataSource, DataSourceException
 
 
 class Data:
@@ -152,12 +152,21 @@ class Data:
     ) -> List[Dict]:
 
         # add country codes here to render for different countries
-        if country_iso_code.upper() not in ["USA"]:
+        if country_iso_code.upper() not in ["USA", "CAN"]:
             return [{"region_code": "", "region_name": "", "emissions": ""}]
 
-        region_emissions = self._data_source.get_country_emissions_data(
-            country_iso_code.lower()
-        )
+        try:
+            region_emissions = self._data_source.get_country_emissions_data(
+                country_iso_code.lower()
+            )
+        except DataSourceException:  # This country has regional data at the energy mix level, not the emissions level
+            country_energy_mix = self._data_source.get_country_energy_mix_data(
+                country_iso_code.lower()
+            )
+            region_emissions = {
+                region: {"regionCode": region}
+                for region, energy_mix in country_energy_mix.items()
+            }
         choropleth_data = []
         for region_name in region_emissions.keys():
 
