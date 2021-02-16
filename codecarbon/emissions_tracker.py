@@ -226,6 +226,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         country_iso_code: str,
         *args,
         region: Optional[str] = None,
+        country_2letter_iso_code: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -233,6 +234,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                  experiment is being run
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States
+        :param country_2letter_iso_code: For use with the CO2Signal emissions API.
+            See http://api.electricitymap.org/v3/zones for a list of codes and their corresponding locations.
         """
         # TODO: Currently we silently use a default value of Canada.
         # Decide if we should fail with missing args.
@@ -253,6 +256,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             )
 
         self._region: Optional[str] = region if region is None else region.lower()
+        self.country_2letter_iso_code: Optional[str] = (
+            country_2letter_iso_code.upper() if country_2letter_iso_code else None
+        )
         super().__init__(*args, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -260,6 +266,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             country_iso_code=self._country_iso_code,
             country_name=self._country_name,
             region=self._region,
+            country_2letter_iso_code=self.country_2letter_iso_code,
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
