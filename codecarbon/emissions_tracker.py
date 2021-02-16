@@ -21,7 +21,7 @@ from codecarbon.core.util import suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
-from codecarbon.output import BaseOutput, EmissionsData, FileOutput
+from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
 
 logging.basicConfig(level=os.environ.get("CODECARBON_LOGLEVEL", "WARN"))
 logger = logging.getLogger(__name__)
@@ -42,6 +42,7 @@ class BaseEmissionsTracker(ABC):
         output_dir: str = ".",
         save_to_file: bool = True,
         gpu_ids: Optional[List] = None,
+        emissions_endpoint: Optional[str] = None,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -98,6 +99,9 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(
                 FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
+
+        if emissions_endpoint:
+            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
     @suppress(Exception)
     def start(self) -> None:
