@@ -4,6 +4,7 @@ Provides functionality for persistence of data
 
 import csv
 import dataclasses
+import getpass
 import logging
 import os
 from abc import ABC, abstractmethod
@@ -79,7 +80,10 @@ class HTTPOutput(BaseOutput):
 
     def out(self, data: EmissionsData):
         payload = dataclasses.asdict(data)
-        resp = requests.post(self.endpoint_url, json=payload, verify=False)
+        payload["user"] = getpass.getuser()
+        resp = requests.post(
+            self.endpoint_url, json=payload, verify=False
+        )  # , verify=certifi.old_where())
         if resp.status_code != 201:
             LOGGER.warning(
                 "CODECARBON : HTTP Output returned an unexpected status code: ", resp
