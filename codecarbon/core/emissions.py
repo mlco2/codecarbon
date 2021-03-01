@@ -80,7 +80,10 @@ class Emissions:
         :return: CO2 emissions in kg
         """
         if co2_signal.is_available:
-            return co2_signal.get_emissions(energy, geo)
+            try:
+                return co2_signal.get_emissions(energy, geo)
+            except co2_signal.CO2SignalAPIError as e:
+                logger.error(e)
         compute_with_energy_mix: bool = geo.country_iso_code.upper() != "USA" or (
             geo.country_iso_code.upper() == "USA" and geo.region is None
         )

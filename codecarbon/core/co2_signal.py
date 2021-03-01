@@ -15,20 +15,21 @@ def is_available():
 
 
 def get_emissions(energy: Energy, geo: GeoMetadata):
-    print("getting data from api")
     if geo.latitude:
         params = {"lat": geo.latitude, "lon": geo.longitude}
     else:
         params = {"countryCode": geo.country_2letter_iso_code}
-    print(params)
-    data = requests.get(
+    resp = requests.get(
         URL, params=params, headers={"auth-token": CO2_SIGNAL_API_TOKEN}
     )
-    print(data.json())
-    carbon_intensity_g_per_kWh = data.json()["data"]["carbonIntensity"]
-    print(carbon_intensity_g_per_kWh)
+    if resp.status_code != 200:
+        raise CO2SignalAPIError(resp.json()["error"])
+    carbon_intensity_g_per_kWh = resp.json()["data"]["carbonIntensity"]
     emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_g_per_kwh(
         carbon_intensity_g_per_kWh
     )
-    print(emissions_per_kwh)
     return emissions_per_kwh.kgs_per_kwh * energy.kwh
+
+
+class CO2SignalAPIError(Exception):
+    pass
