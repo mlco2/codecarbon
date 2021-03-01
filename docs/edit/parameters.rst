@@ -60,6 +60,9 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
    * - save_to_file
      - | Boolean variable indicating if the emission artifacts should be logged
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
+   * - country_2letter_iso_code
+     - | For use with the CO2Signal emissions API.
+       | See http://api.electricitymap.org/v3/zones for a list of codes and their corresponding locations.
 
 
 @track_emissions
