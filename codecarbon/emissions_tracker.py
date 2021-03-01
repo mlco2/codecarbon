@@ -55,6 +55,7 @@ class BaseEmissionsTracker(ABC):
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
+        :param emissions_endpoint: Optional URL of http endpoint for sending emissions data
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
