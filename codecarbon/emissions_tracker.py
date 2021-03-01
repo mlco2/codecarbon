@@ -14,7 +14,7 @@ from typing import Callable, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from codecarbon.core import cpu, gpu
+from codecarbon.core import co2_signal, cpu, gpu
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import suppress
@@ -100,6 +100,9 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(
                 FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
+
+        if co2_signal_api_token:
+            co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
 
     @suppress(Exception)
     def start(self) -> None:
