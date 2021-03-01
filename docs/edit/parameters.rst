@@ -29,6 +29,8 @@ The online mode object ``EmissionsTracker`` takes following input parameters:
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
    * - gpu_ids
      - | User-specified known gpu ids to track, defaults to ``None``
+   * - co2_signal_api_token
+     - | API token for co2signal.com (requires sign-up for free beta)
 
 
 OfflineEmissionsTracker

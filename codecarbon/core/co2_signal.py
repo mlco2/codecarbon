@@ -4,7 +4,7 @@ from codecarbon.core.units import EmissionsPerKwh, Energy
 from codecarbon.external.geography import GeoMetadata
 
 URL = "https://api.co2signal.com/v1/latest"
-CO2_SIGNAL_API_TOKEN = "47605efa6b1a6dc4"
+CO2_SIGNAL_API_TOKEN = None
 
 
 def is_available():

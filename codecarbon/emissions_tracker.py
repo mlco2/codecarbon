@@ -42,6 +42,7 @@ class BaseEmissionsTracker(ABC):
         output_dir: str = ".",
         save_to_file: bool = True,
         gpu_ids: Optional[List] = None,
+        co2_signal_api_token: Optional[str] = None,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -54,6 +55,7 @@ class BaseEmissionsTracker(ABC):
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
+        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for free beta)
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
