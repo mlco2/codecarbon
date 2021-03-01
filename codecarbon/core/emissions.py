@@ -79,7 +79,7 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
-        if co2_signal.is_available:
+        if co2_signal.is_available():
             try:
                 return co2_signal.get_emissions(energy, geo)
             except co2_signal.CO2SignalAPIError as e:
