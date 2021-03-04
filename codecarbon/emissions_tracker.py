@@ -23,7 +23,9 @@ from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput
 
-logging.basicConfig(level=os.environ.get("CODECARBON_LOGLEVEL", "WARN"))
+logging.getLogger("codecarbon").setLevel(
+    level=os.environ.get("CODECARBON_LOGLEVEL", "WARN")
+)
 logger = logging.getLogger(__name__)
 
 
