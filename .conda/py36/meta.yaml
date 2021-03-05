@@ -5,11 +5,12 @@ package:
   version: {{ version }}
 
 source:
-  path: ..
+  path: ../..
 
 build:
   noarch: python
   number: 0
+  string: py36
   script: python -m pip install --no-deps --ignore-installed .
 
 requirements:
@@ -17,11 +18,11 @@ requirements:
     - python
     - pip
   run:
-    - python>3.6
+    - python=3.6.*
     - apscheduler
     - dash
     - dash-bootstrap-components
-    - dataclasses:python_version<3.7
+    - dataclasses
     - fire
     - pandas
     - requests
