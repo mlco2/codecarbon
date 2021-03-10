@@ -38,6 +38,7 @@ setuptools.setup(
         "codecarbon": [
             "data/cloud/impact.csv",
             "data/private_infra/2016/usa_emissions.json",
+            "data/private_infra/2016/canada_energy_mix.json",
             "data/private_infra/2016/global_energy_mix.json",
             "viz/assets/*.png",
         ],
