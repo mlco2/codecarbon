@@ -56,10 +56,18 @@ class GeoMetadata:
         country_iso_code: str,
         country_name: Optional[str] = None,
         region: Optional[str] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        country_2letter_iso_code: Optional[str] = None,
     ):
         self.country_iso_code = country_iso_code.upper()
         self.country_name = country_name
         self.region = region if region is None else region.lower()
+        self.latitude = latitude
+        self.longitude = longitude
+        self.country_2letter_iso_code = (
+            country_2letter_iso_code.upper() if country_2letter_iso_code else None
+        )
 
     def __repr__(self) -> str:
         return "GeoMetadata({}={}, {}={}, {}={})".format(
@@ -86,4 +94,7 @@ class GeoMetadata:
             country_iso_code=response["country_code3"].upper(),
             country_name=response["country"],
             region=response.get("region", "").lower(),
+            latitude=float(response.get("latitude")),
+            longitude=float(response.get("longitude")),
+            country_2letter_iso_code=response.get("country_code"),
         )
