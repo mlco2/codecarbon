@@ -89,4 +89,4 @@ class HTTPOutput(BaseOutput):
                     resp,
                 )
         except Exception as e:
-            LOGGER.error(e)
+            LOGGER.error(e, exc_info=True)
