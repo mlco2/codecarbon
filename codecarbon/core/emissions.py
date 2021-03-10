@@ -9,6 +9,7 @@ from typing import Dict
 
 import pandas as pd
 
+from codecarbon.core import co2_signal
 from codecarbon.core.units import EmissionsPerKwh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.input import DataSource, DataSourceException
@@ -78,6 +79,12 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
+        if co2_signal.is_available():
+            try:
+                return co2_signal.get_emissions(energy, geo)
+            except Exception as e:
+                logger.error(e)
+
         compute_with_regional_data: bool = (geo.region is not None) and (
             geo.country_iso_code.upper() in ["USA", "CAN"]
         )

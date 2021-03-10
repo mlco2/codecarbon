@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table as dt
+import numpy as np
 import pandas as pd
 import plotly.express as px
 
@@ -607,6 +608,20 @@ class Components:
         )
 
     @staticmethod
+    def get_project_emissions_bar_chart():
+        return html.Div(
+            dbc.Col(
+                [
+                    html.Br(),
+                    html.Br(),
+                    html.H2("Emissions Detail", style={"textAlign": "center"}),
+                    dcc.Graph(id="project_emissions_bar_chart"),
+                ]
+            ),
+            style={"paddingLeft": "3%"},
+        )
+
+    @staticmethod
     def get_project_time_series_figure(project_data: dt.DataTable):
         return (
             px.line(
@@ -622,6 +637,36 @@ class Components:
             .update_traces(line_color="green")
             .update_layout(plot_bgcolor="rgb(255,255,255)")
         )
+
+    @staticmethod
+    def get_project_emissions_bar_chart_figure(project_data: dt.DataTable):
+        # Note: necessary to both convert to pandas and replace null values for hover value
+        project_data = pd.DataFrame(project_data)
+        project_data = project_data.replace(np.nan, "", regex=True)
+        hover_data = {c: True for c in project_data.columns}
+        bar = (
+            px.bar(
+                project_data,
+                y="emissions",
+                hover_data=hover_data,
+                labels={
+                    "emissions": "Carbon Equivalent (kg)",
+                    "energy_consumed": "Energy Consumed (kWh)",
+                    "timestamp": "Timestamp",
+                    "project_name": "Project Name",
+                    "duration": "Duration",
+                    "emissions_detail": "Emissions Detail",
+                    "country_name": "Country Name",
+                    "country_iso_code": "Country ISO Code",
+                    "region": "Region",
+                    "cloud_provider": "Cloud Provider",
+                    "cloud_region": "Cloud Region",
+                },
+            )
+            .update_traces(marker_color="green")
+            .update_layout(plot_bgcolor="rgb(255,255,255)")
+        )
+        return bar
 
     @staticmethod
     def get_hidden_project_data():

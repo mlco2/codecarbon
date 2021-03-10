@@ -7,7 +7,7 @@ DEPENDENCIES = [
     "APScheduler",
     "dash",
     "dash_bootstrap_components",
-    "dataclasses",
+    "dataclasses;python_version<'3.7'",
     "fire",
     "pandas",
     "pynvml",
@@ -40,7 +40,8 @@ setuptools.setup(
             "data/private_infra/2016/usa_emissions.json",
             "data/private_infra/2016/canada_energy_mix.json",
             "data/private_infra/2016/global_energy_mix.json",
-        ]
+            "viz/assets/*.png",
+        ],
     },
     python_requires=">=3.6",
     entry_points={"console_scripts": ["carbonboard = codecarbon.viz.carbonboard:main"]},

@@ -196,7 +196,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         self.assertRaises(Exception, dummy_train_model)
 
-    def test_decorator_OFFLINE_WITH_ARGS(
+    def test_decorator_OFFLINE_WITH_LOC_ARGS(
         self,
         mocked_get_cloud_metadata,
         mocked_get_gpu_details,
@@ -209,6 +209,21 @@ class TestCarbonTracker(unittest.TestCase):
         @track_emissions(
             offline=True, country_iso_code="CAN", project_name=self.project_name
         )
+        def dummy_train_model():
+            return 42
+
+        dummy_train_model()
+        self.verify_output_file(self.emissions_file_path)
+
+    def test_decorator_OFFLINE_WITH_CLOUD_ARGS(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+    ):
+        # GIVEN
+
+        @track_emissions(offline=True, cloud_provider="gcp", cloud_region="us-central1")
         def dummy_train_model():
             return 42
 
