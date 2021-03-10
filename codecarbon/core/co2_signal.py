@@ -14,13 +14,16 @@ def is_available():
         return False
 
 
-def get_emissions(energy: Energy, geo: GeoMetadata):
+def get_emissions(energy: Energy, geo: GeoMetadata, timeout=60):
     if geo.latitude:
         params = {"lat": geo.latitude, "lon": geo.longitude}
     else:
         params = {"countryCode": geo.country_2letter_iso_code}
     resp = requests.get(
-        URL, params=params, headers={"auth-token": CO2_SIGNAL_API_TOKEN}, timeout=10
+        URL,
+        params=params,
+        headers={"auth-token": CO2_SIGNAL_API_TOKEN},
+        timeout=timeout,
     )
     if resp.status_code != 200:
         raise CO2SignalAPIError(resp.json()["error"])
