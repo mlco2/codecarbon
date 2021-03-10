@@ -34,18 +34,11 @@ class Data:
                 "duration": sum(
                     map(lambda experiment: experiment["duration"], project_data)
                 ),
-                "emissions": round(
-                    sum(map(lambda experiment: experiment["emissions"], project_data)),
-                    1,
+                "emissions": sum(
+                    map(lambda experiment: experiment["emissions"], project_data)
                 ),
-                "energy_consumed": round(
-                    sum(
-                        map(
-                            lambda experiment: experiment["energy_consumed"],
-                            project_data,
-                        )
-                    ),
-                    1,
+                "energy_consumed": sum(
+                    map(lambda experiment: experiment["energy_consumed"], project_data)
                 ),
             },
             "country_name": last_run["country_name"],

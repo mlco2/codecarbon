@@ -29,6 +29,8 @@ The online mode object ``EmissionsTracker`` takes following input parameters:
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
    * - gpu_ids
      - | User-specified known gpu ids to track, defaults to ``None``
+   * - emissions_endpoint
+     - | Optional URL of http endpoint for sending emissions data
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
 
@@ -62,6 +64,10 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
    * - save_to_file
      - | Boolean variable indicating if the emission artifacts should be logged
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
+   * - gpu_ids
+     - | User-specified known gpu ids to track, defaults to ``None``
+   * - emissions_endpoint
+     - | Optional URL of http endpoint for sending emissions data
    * - cloud_provider
      - | The cloud provider specified for estimating emissions intensity, defaults to ``None``
      - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
@@ -113,3 +119,5 @@ Decorator ``track_emissions`` takes following input parameters.
      - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
    * - gpu_ids
      - | User-specified known gpu ids to track, defaults to ``None``
+   * - emissions_endpoint
+     - | Optional URL of http endpoint for sending emissions data

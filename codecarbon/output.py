@@ -3,10 +3,17 @@ Provides functionality for persistence of data
 """
 
 import csv
+import dataclasses
+import getpass
+import logging
 import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
+
+import requests
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -61,3 +68,25 @@ class FileOutput(BaseOutput):
             if not file_exists:
                 writer.writeheader()
             writer.writerow(data.values)
+
+
+class HTTPOutput(BaseOutput):
+    """
+    Send emissions data to HTTP endpoint
+    """
+
+    def __init__(self, endpoint_url: str):
+        self.endpoint_url: str = endpoint_url
+
+    def out(self, data: EmissionsData):
+        try:
+            payload = dataclasses.asdict(data)
+            payload["user"] = getpass.getuser()
+            resp = requests.post(self.endpoint_url, json=payload, timeout=10)
+            if resp.status_code != 201:
+                LOGGER.warning(
+                    "CODECARBON : HTTP Output returned an unexpected status code: ",
+                    resp,
+                )
+        except Exception as e:
+            LOGGER.error(e, exc_info=True)

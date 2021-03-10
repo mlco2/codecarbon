@@ -21,7 +21,7 @@ from codecarbon.core.util import suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
-from codecarbon.output import BaseOutput, EmissionsData, FileOutput
+from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
 
 logging.getLogger("codecarbon").setLevel(
     level=os.environ.get("CODECARBON_LOGLEVEL", "WARN")
@@ -44,6 +44,7 @@ class BaseEmissionsTracker(ABC):
         output_dir: str = ".",
         save_to_file: bool = True,
         gpu_ids: Optional[List] = None,
+        emissions_endpoint: Optional[str] = None,
         co2_signal_api_token: Optional[str] = None,
     ):
         """
@@ -57,6 +58,7 @@ class BaseEmissionsTracker(ABC):
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
+        :param emissions_endpoint: Optional URL of http endpoint for sending emissions data
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for free beta)
         """
         self._project_name: str = project_name
@@ -102,6 +104,9 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(
                 FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
+
+        if emissions_endpoint:
+            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
         if co2_signal_api_token:
             co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
