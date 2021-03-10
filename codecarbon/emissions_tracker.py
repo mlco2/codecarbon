@@ -107,7 +107,7 @@ class BaseEmissionsTracker(ABC):
 
         if emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
-            
+
         if co2_signal_api_token:
             co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
 
