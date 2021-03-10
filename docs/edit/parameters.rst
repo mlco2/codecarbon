@@ -62,8 +62,10 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
        | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
    * - cloud_provider
      - | The cloud provider specified for estimating emissions intensity, defaults to ``None``
+     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
    * - cloud_region
      - | The region of the cloud data center, defaults to ``None``
+     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
 
 
 @track_emissions
@@ -99,8 +101,10 @@ Decorator ``track_emissions`` takes following input parameters.
        | Currently, supported only for US States
        | for example - California or New York, from the `list <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json>`_
    * - cloud_provider
-     - | The cloud provider specified for estimating emissions intensity, defaults to ``None``
+     - | The cloud provider specified for estimating emissions intensity, defaults to ``None``.
+     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
    * - cloud_region
-     - | The region of the cloud data center, defaults to ``None``
+     - | The region of the cloud data center, defaults to ``None``.
+     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
    * - gpu_ids
      - | User-specified known gpu ids to track, defaults to ``None``

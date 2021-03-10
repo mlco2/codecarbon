@@ -235,8 +235,10 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                  experiment is being run
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States and Canada
-        :param cloud_provider: The cloud provider specified for estimating emissions intensity, defaults to None
-        :param cloud_region: The region of the cloud data center, defaults to None
+        :param cloud_provider: The cloud provider specified for estimating emissions intensity, defaults to None.
+                               See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
+        :param cloud_region: The region of the cloud data center, defaults to None.
+                             See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
         """
         self._cloud_provider: Optional[str] = cloud_provider
         self._cloud_region: Optional[str] = cloud_region
@@ -331,8 +333,10 @@ def track_emissions(
                              being run, required if `offline=True`
     :param region: The provincial region, for example, California in the US.
                    Currently, this only affects calculations for the United States
-    :param cloud_provider: The cloud provider specified for estimating emissions intensity, defaults to None
-    :param cloud_region: The region of the cloud data center, defaults to None
+    :param cloud_provider: The cloud provider specified for estimating emissions intensity, defaults to None.
+                           See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
+    :param cloud_region: The region of the cloud data center, defaults to None.
+                         See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
     :param gpu_ids: User-specified known gpu ids to track, defaults to None
     :return: The decorated function
     """
