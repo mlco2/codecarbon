@@ -14,3 +14,4 @@ requests
 sphinx
 sphinx-rtd-theme
 tensorflow
+responses
