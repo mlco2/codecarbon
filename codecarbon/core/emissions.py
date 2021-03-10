@@ -82,7 +82,7 @@ class Emissions:
         if co2_signal.is_available():
             try:
                 return co2_signal.get_emissions(energy, geo)
-            except co2_signal.CO2SignalAPIError as e:
+            except Exception as e:
                 logger.error(e)
         compute_with_energy_mix: bool = geo.country_iso_code.upper() != "USA" or (
             geo.country_iso_code.upper() == "USA" and geo.region is None

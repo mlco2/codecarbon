@@ -20,7 +20,7 @@ def get_emissions(energy: Energy, geo: GeoMetadata):
     else:
         params = {"countryCode": geo.country_2letter_iso_code}
     resp = requests.get(
-        URL, params=params, headers={"auth-token": CO2_SIGNAL_API_TOKEN}
+        URL, params=params, headers={"auth-token": CO2_SIGNAL_API_TOKEN}, timeout=10
     )
     if resp.status_code != 200:
         raise CO2SignalAPIError(resp.json()["error"])
