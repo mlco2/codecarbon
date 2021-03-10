@@ -220,6 +220,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_cloud_metadata,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
     ):
         # GIVEN
 
