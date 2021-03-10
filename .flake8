@@ -2,7 +2,7 @@
 # Keep in sync with setup.cfg which is used for source packages.
 
 [flake8]
-ignore = E203, E266, E501, W503, W605
+ignore = E203, E266, E501, W503, W605, F811
 max-line-length = 80
 select = B,C,E,F,W,T4,B9
 copyright-check = True

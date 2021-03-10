@@ -25,6 +25,7 @@ def render_app(df: pd.DataFrame):
     global_comparison = components.get_global_comparison()
     regional_comparison = components.get_regional_emissions_comparison()
     project_time_series = components.get_project_time_series()
+    project_emissions_bar_chart = components.get_project_emissions_bar_chart()
     references = components.get_references()
 
     data = Data()
@@ -40,6 +41,7 @@ def render_app(df: pd.DataFrame):
             global_comparison,
             regional_comparison,
             project_time_series,
+            project_emissions_bar_chart,
             references,
             _hidden_project_data,
             _hidden_project_summary,
@@ -206,6 +208,15 @@ def render_app(df: pd.DataFrame):
     )
     def update_project_time_series(hidden_project_data: dt.DataTable):
         return components.get_project_time_series_figure(
+            hidden_project_data["props"]["data"]
+        )
+
+    @app.callback(
+        Output(component_id="project_emissions_bar_chart", component_property="figure"),
+        [Input(component_id="hidden_project_data", component_property="children")],
+    )
+    def update_project_time_series(hidden_project_data: dt.DataTable):
+        return components.get_project_emissions_bar_chart_figure(
             hidden_project_data["props"]["data"]
         )
 

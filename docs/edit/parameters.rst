@@ -31,6 +31,8 @@ The online mode object ``EmissionsTracker`` takes following input parameters:
      - | User-specified known gpu ids to track, defaults to ``None``
    * - emissions_endpoint
      - | Optional URL of http endpoint for sending emissions data
+   * - co2_signal_api_token
+     - | API token for co2signal.com (requires sign-up for free beta)
 
 
 OfflineEmissionsTracker
@@ -66,6 +68,9 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
      - | User-specified known gpu ids to track, defaults to ``None``
    * - emissions_endpoint
      - | Optional URL of http endpoint for sending emissions data
+   * - country_2letter_iso_code
+     - | For use with the CO2Signal emissions API.
+       | See http://api.electricitymap.org/v3/zones for a list of codes and their corresponding locations.
 
 
 @track_emissions

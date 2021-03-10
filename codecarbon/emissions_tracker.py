@@ -14,7 +14,7 @@ from typing import Callable, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from codecarbon.core import cpu, gpu
+from codecarbon.core import co2_signal, cpu, gpu
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import suppress
@@ -23,7 +23,9 @@ from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
 
-logging.basicConfig(level=os.environ.get("CODECARBON_LOGLEVEL", "WARN"))
+logging.getLogger("codecarbon").setLevel(
+    level=os.environ.get("CODECARBON_LOGLEVEL", "WARN")
+)
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +45,7 @@ class BaseEmissionsTracker(ABC):
         save_to_file: bool = True,
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
+        co2_signal_api_token: Optional[str] = None,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -56,6 +59,7 @@ class BaseEmissionsTracker(ABC):
                              file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions data
+        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for free beta)
         """
         self._project_name: str = project_name
         self._measure_power_secs: int = measure_power_secs
@@ -103,6 +107,9 @@ class BaseEmissionsTracker(ABC):
 
         if emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
+            
+        if co2_signal_api_token:
+            co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
 
     @suppress(Exception)
     def start(self) -> None:
@@ -231,6 +238,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         country_iso_code: str,
         *args,
         region: Optional[str] = None,
+        country_2letter_iso_code: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -238,6 +246,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                  experiment is being run
         :param region: The provincial region, for example, California in the US.
                        Currently, this only affects calculations for the United States
+        :param country_2letter_iso_code: For use with the CO2Signal emissions API.
+            See http://api.electricitymap.org/v3/zones for a list of codes and their corresponding locations.
         """
         # TODO: Currently we silently use a default value of Canada.
         # Decide if we should fail with missing args.
@@ -258,6 +268,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             )
 
         self._region: Optional[str] = region if region is None else region.lower()
+        self.country_2letter_iso_code: Optional[str] = (
+            country_2letter_iso_code.upper() if country_2letter_iso_code else None
+        )
         super().__init__(*args, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -265,6 +278,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             country_iso_code=self._country_iso_code,
             country_name=self._country_name,
             region=self._region,
+            country_2letter_iso_code=self.country_2letter_iso_code,
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
