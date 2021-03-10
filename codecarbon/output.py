@@ -79,10 +79,14 @@ class HTTPOutput(BaseOutput):
         self.endpoint_url: str = endpoint_url
 
     def out(self, data: EmissionsData):
-        payload = dataclasses.asdict(data)
-        payload["user"] = getpass.getuser()
-        resp = requests.post(self.endpoint_url, json=payload)
-        if resp.status_code != 201:
-            LOGGER.warning(
-                "CODECARBON : HTTP Output returned an unexpected status code: ", resp
-            )
+        try:
+            payload = dataclasses.asdict(data)
+            payload["user"] = getpass.getuser()
+            resp = requests.post(self.endpoint_url, json=payload, timeout=10)
+            if resp.status_code != 201:
+                LOGGER.warning(
+                    "CODECARBON : HTTP Output returned an unexpected status code: ",
+                    resp,
+                )
+        except Exception as e:
+            LOGGER.error(e)
