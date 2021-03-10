@@ -74,7 +74,7 @@ class DataSource:
             with open(self.country_emissions_data_path(country_iso_code)) as f:
                 country_emissions_data: Dict = json.load(f)
             return country_emissions_data
-        except KeyError:
+        except KeyError:  # KeyError raised from line 39, when there is no data path specified for the given country
             raise DataSourceException
 
     def get_country_energy_mix_data(self, country_iso_code: str) -> Dict:

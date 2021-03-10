@@ -83,9 +83,14 @@ class Emissions:
         )
 
         if compute_with_regional_data:
-            return self.get_region_emissions(energy, geo)
-        else:
-            return self.get_country_emissions(energy, geo)
+            try:
+                return self.get_region_emissions(energy, geo)
+            except Exception as e:
+                logger.error(e)
+                logger.warning(
+                    "CODECARBON : Regional emissions retrieval failed. Falling back on country emissions."
+                )
+        return self.get_country_emissions(energy, geo)
 
     def get_region_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
