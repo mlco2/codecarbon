@@ -109,7 +109,7 @@ class Emissions:
 
             if geo.region not in country_emissions_data:
                 # TODO: Deal with missing data, default to something
-                raise Exception(
+                raise ValueError(
                     f"Region: {geo.region} not found for Country with ISO CODE : {geo.country_iso_code}"
                 )
 
