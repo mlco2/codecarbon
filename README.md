@@ -301,4 +301,15 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
 }
 ```
 
+### Citing CodeCarbon
 
+```
+@misc{codecarbon,
+  author={Victor Schmidt and Kamal Goyal and Aditya Joshi and Boris Feld and Liam Conell and Nikolas Laskaris Doug Blank and Jonathan Wilson and Sorelle Friedler and Sasha Luccioni},
+  title={{CodeCarbon, Estimate and Track Carbon Emissions from Machine Learning Computing}},
+  month={March},
+  year={2021},
+  note={Version 1.1.1},
+  howpublished={\url{https://github.com/mlco2/codecarbon}},
+}
+```
