@@ -16,7 +16,7 @@ Estimate and track carbon emissions from your compute, quantify and analyze thei
 - [Infrastructure Support](#infrastructure)
 - [Quickstart](#quickstart)
 - [Examples](#examples)
-- [DataSource](#data-source)
+- [Data Sources](#data-source)
 - [Contributing](#contributing)
 - [Built-in Visualization Tool](#built-in-visualization-tool)
 - [Build Documentation](#build-documentation)
@@ -306,7 +306,7 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
   title={{CodeCarbon: Estimate and Track Carbon Emissions from Machine Learning Computing}},
   year={2021},
   howpublished={\url{https://github.com/mlco2/codecarbon}},
-  DOI={10.5281/zenodo.4658425},
+  DOI={10.5281/zenodo.4658424},
   publisher={Zenodo},
 }
 ```
