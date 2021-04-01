@@ -12,7 +12,7 @@ DEPENDENCIES = [
     "pandas",
     "pynvml",
     "requests",
-    "py-cpuinfo"
+    "py-cpuinfo",
 ]
 
 TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]

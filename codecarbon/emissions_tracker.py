@@ -92,9 +92,7 @@ class BaseEmissionsTracker(ABC):
         #     )
         else:
             logger.info("CODECARBON : Tracking using constant")
-            self._hardware.append(
-                CPU.from_utils(self._output_dir, "constant")
-            )
+            self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
         self._scheduler.add_job(
