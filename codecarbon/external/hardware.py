@@ -4,6 +4,7 @@ Encapsulates external dependencies to retrieve hardware metadata
 
 import logging
 import re
+import cpuinfo
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
@@ -11,6 +12,9 @@ from typing import Dict, Iterable, List, Optional
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
+from codecarbon.input import DataSource
+
+POWER_CONSTANT = 85
 
 logger = logging.getLogger(__name__)
 
@@ -82,12 +86,41 @@ class CPU(BaseHardware):
         Get CPU power from Intel Power Gadget
         :return: power in kW
         """
+        if self._mode == 'constant':
+            logger.warning(
+                "CODECARBON : No CPU/GPU tracking mode found. Falling back on CPU constant mode."
+            )
+            return self._get_power_from_constant()
+
         all_cpu_details: Dict = self._intel_interface.get_cpu_details()
 
         power = 0
         for metric, value in all_cpu_details.items():
             if re.match("^Processor Power_\d+\(Watt\)$", metric):
                 power += value
+        return Power.from_watts(power)
+
+    def _get_power_from_constant(self) -> Power:
+        """
+        Get CPU power from constant mode
+        :return: power in KW
+        """
+        cpu_info = cpuinfo.get_cpu_info()
+        if cpu_info:
+            model_raw = cpu_info['brand_raw']
+            model = model_raw.split(' CPU')[0].replace('(R)', '').replace('(TM)', '')
+            cpu_power_df = DataSource().get_cpu_power_data()
+            cpu_power_df_model = cpu_power_df[cpu_power_df['Name'] == model]
+            if len(cpu_power_df_model) > 0:
+                power = cpu_power_df_model['TDP'].tolist()[0]
+            else:
+                logger.warning(
+                    f"CPU : Failed to match CPU TDP constant. Falling back on global constant ({POWER_CONSTANT}w)."
+                )
+                power = POWER_CONSTANT
+        else:
+            power = POWER_CONSTANT
+        print('power looked up', power)
         return Power.from_watts(power)
 
     def total_power(self) -> Power:
