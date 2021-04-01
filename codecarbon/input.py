@@ -17,6 +17,7 @@ class DataSource:
             "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
             "can_energy_mix_data_path": "data/private_infra/2016/canada_energy_mix.json",
             "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
+            "cpu_power_path": "data/hardware/cpu_power.csv",
         }
         self.module_name = "codecarbon"
 
@@ -48,6 +49,12 @@ class DataSource:
     def global_energy_mix_data_path(self):
         return pkg_resources.resource_filename(
             self.module_name, self.config["global_energy_mix_data_path"]
+        )
+
+    @property
+    def cpu_power_path(self):
+        return pkg_resources.resource_filename(
+            self.module_name, self.config["cpu_power_path"]
         )
 
     def get_global_energy_mix_data(self) -> Dict:
@@ -87,6 +94,11 @@ class DataSource:
             country_energy_mix_data: Dict = json.load(f)
         return country_energy_mix_data
 
+    def get_cpu_power_data(self) -> pd.DataFrame:
+        """
+        Returns CPU power Data
+        """
+        return pd.read_csv(self.cpu_power_path)
 
 class DataSourceException(Exception):
     pass
