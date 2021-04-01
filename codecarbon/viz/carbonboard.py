@@ -189,10 +189,8 @@ def render_app(df: pd.DataFrame):
         country_name = hidden_project_summary["country_name"]
         country_iso_code = hidden_project_summary["country_iso_code"]
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
-        regional_emissions_choropleth_data = (
-            data.get_regional_emissions_choropleth_data(
-                net_energy_consumed, country_iso_code
-            )
+        regional_emissions_choropleth_data = data.get_regional_emissions_choropleth_data(
+            net_energy_consumed, country_iso_code
         )
 
         return (

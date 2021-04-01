@@ -100,5 +100,6 @@ class DataSource:
         """
         return pd.read_csv(self.cpu_power_path)
 
+
 class DataSourceException(Exception):
     pass
