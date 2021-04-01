@@ -1,23 +1,20 @@
 ![banner](docs/edit/images/banner.png)
 
-Estimate and Track carbon emissions from the compute, quantify and analyze their impact.
+Estimate and track carbon emissions from your compute, quantify and analyze their impact.
 
-[Official Documentation](https://mlco2.github.io/codecarbon)
+[**Documentation**](https://mlco2.github.io/codecarbon)
 
-[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
-[![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
+<br/>
+
+[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37)](https://anaconda.org/codecarbon/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
+[![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
+
 
 - [About CodeCarbon](#about-codecarbon)
 - [Installation](#installation)
-    - [Install from PyPI repository](#install-from-pypi-repository)
-    - [Install from Conda repository](#install-from-conda-repository)
 - [Infrastructure Support](#infrastructure)
-    - [GPU](#gpu)
-    - [CPU](#cpu)
 - [Quickstart](#quickstart)
-    - [Online mode](#online-mode)
-    - [Offline mode](#offline-mode)
-    - [Using comet.ml](#using-cometml)
 - [Examples](#examples)
 - [DataSource](#data-source)
 - [Contributing](#contributing)
@@ -304,12 +301,12 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
 ### Citing CodeCarbon
 
 ```
-@misc{codecarbon,
+@article{codecarbon,
   author={Victor Schmidt and Kamal Goyal and Aditya Joshi and Boris Feld and Liam Conell and Nikolas Laskaris and Doug Blank and Jonathan Wilson and Sorelle Friedler and Sasha Luccioni},
-  title={{CodeCarbon, Estimate and Track Carbon Emissions from Machine Learning Computing}},
-  month={March},
+  title={{CodeCarbon: Estimate and Track Carbon Emissions from Machine Learning Computing}},
   year={2021},
-  note={Version 1.1.1},
   howpublished={\url{https://github.com/mlco2/codecarbon}},
+  DOI={10.5281/zenodo.4658425},
+  publisher={Zenodo},
 }
 ```
