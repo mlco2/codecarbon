@@ -57,4 +57,3 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
         assert len(lines) == 2
-
