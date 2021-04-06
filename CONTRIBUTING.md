@@ -70,6 +70,9 @@ tox
 To test the API, see [how to deploy it](#local_deployement) first.
 
 
+Core & external classes are unit tested, with one test file per class. Mosts pull-requests are expected to contains new tests or test update, if you are unusure what to test / how to test it, please put it in the pull-request description and the maintainers will help you.
+
+
 ### Versionning
 
 
@@ -106,15 +109,44 @@ python -m uvicorn main:app --reload
 The API documentation is locally available at the following URL : http://localhost:8000/redoc and can be used for testing.
 
 
-### Coding style
+### Coding style && Linting
+
+The coding style and linting rules are automatically applied and enforce by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+
+```
+[INFO] Initializing environment for https://github.com/psf/black.
+[INFO] Initializing environment for https://gitlab.com/pycqa/flake8.
+[INFO] Installing environment for https://github.com/psf/black.
+[INFO] Once installed this environment will be reused.
+[INFO] This may take a few minutes...
+[INFO] Installing environment for https://gitlab.com/pycqa/flake8.
+[INFO] Once installed this environment will be reused.
+[INFO] This may take a few minutes...
+seed isort known_third_party.............................................Passed
+isort....................................................................Failed
+- hook id: isort
+- files were modified by this hook
+
+Fixing codecarbon/__init__.py
+
+black....................................................................Passed
+flake8...................................................................Passed
+```
+
+If any of the linters/formatters failed, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their jobs) with `git add` and finally try to commit again `git commit ...`.
+
+You can also run `pre-commit` with `pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
 
-Using shared code conventions might help maintainers review & integrate PRs.
-Rules that are actually observed : 
-- core & external classes are unit tested, with one test file per class.
-- naming & syntax follow the [PEP 8](https://pep8.org/) stle, tested with flake8 & black linters.
-- added dependencies must be referenced to the corresponding requirements.txt files.
+### Packaging
 
+Dependencies are defined in three different places:
+
+- In [setup.py](setup.py#L7), those are the dependencies for the Pypi package.
+- In [.conda/py36/meta.yaml](.conda/py36/meta.yaml#21), those are dependencies for the Conda package targeting Python 3.6.
+- In [.conda/py37-plus/meta.yaml](.conda/py37-plus/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
+
+We are currently support Python 3.6 at minimum and new dependencies must be compatible with Python 3.6.
 
 ### Alternative ways of contributing
 
