@@ -113,14 +113,14 @@ class CPU(BaseHardware):
             cpu_power_df = DataSource().get_cpu_power_data()
             cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
             if len(cpu_power_df_model) > 0:
-                power = cpu_power_df_model["TDP"].tolist()[0]
+                power = cpu_power_df_model["TDP"].tolist()[0] * 0.5
             else:
                 logger.warning(
                     f"CPU : Failed to match CPU TDP constant. Falling back on global constant ({POWER_CONSTANT}w)."
                 )
-                power = POWER_CONSTANT
+                power = POWER_CONSTANT * 0.5
         else:
-            power = POWER_CONSTANT
+            power = POWER_CONSTANT * 0.5
         return Power.from_watts(power)
 
     def total_power(self) -> Power:
