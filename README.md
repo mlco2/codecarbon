@@ -85,6 +85,10 @@ Currently the package supports following hardware infrastructure.
 *Note:* The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path.
 
 
+#### Fall back mode
+If none of those tools are available to track the power consumptions, CodeCarbon will be switched to a fall back mode: It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs). If the CPU is not found in the data source, a global constant (85 Watt) will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
+
+
 
 # Quickstart
 
@@ -162,8 +166,8 @@ This will create a `.csv` file with information about the energy that you used t
 
 # Data Source
 
-To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud). 
-If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016). 
+To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud).
+If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016).
 [A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
 
 
