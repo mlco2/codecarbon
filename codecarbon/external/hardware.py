@@ -121,7 +121,10 @@ class CPU(BaseHardware):
             cpu_power_df = DataSource().get_cpu_power_data()
             cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
             if len(cpu_power_df_model) > 0:
-                power = cpu_power_df_model["TDP"].tolist()[0] * CONSUMPTION_PERCENTAGE_CONSTANT
+                power = (
+                    cpu_power_df_model["TDP"].tolist()[0]
+                    * CONSUMPTION_PERCENTAGE_CONSTANT
+                )
             else:
                 logger.warning(
                     f"CPU : Failed to match CPU TDP constant. Falling back on global constant ({POWER_CONSTANT}w)."
