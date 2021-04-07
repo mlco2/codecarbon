@@ -16,6 +16,7 @@ from codecarbon.core.units import Power
 from codecarbon.input import DataSource
 
 POWER_CONSTANT = 85
+CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,13 @@ class CPU(BaseHardware):
                 power += value
         return Power.from_watts(power)
 
+    def _parse_cpu_model(self, raw_name) -> str:
+        """
+        Parse the model name from the raw name extracted from cpuinfo library
+        :return: parsed CPU name
+        """
+        return raw_name.split(" CPU")[0].replace("(R)", "").replace("(TM)", "")
+
     def _get_power_from_constant(self) -> Power:
         """
         Get CPU power from constant mode
@@ -109,18 +117,18 @@ class CPU(BaseHardware):
         cpu_info = cpuinfo.get_cpu_info()
         if cpu_info:
             model_raw = cpu_info["brand_raw"]
-            model = model_raw.split(" CPU")[0].replace("(R)", "").replace("(TM)", "")
+            model = self._parse_cpu_model(model_raw)
             cpu_power_df = DataSource().get_cpu_power_data()
             cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
             if len(cpu_power_df_model) > 0:
-                power = cpu_power_df_model["TDP"].tolist()[0] * 0.5
+                power = cpu_power_df_model["TDP"].tolist()[0] * CONSUMPTION_PERCENTAGE_CONSTANT
             else:
                 logger.warning(
                     f"CPU : Failed to match CPU TDP constant. Falling back on global constant ({POWER_CONSTANT}w)."
                 )
-                power = POWER_CONSTANT * 0.5
+                power = POWER_CONSTANT * CONSUMPTION_PERCENTAGE_CONSTANT
         else:
-            power = POWER_CONSTANT * 0.5
+            power = POWER_CONSTANT * CONSUMPTION_PERCENTAGE_CONSTANT
         return Power.from_watts(power)
 
     def total_power(self) -> Power:
