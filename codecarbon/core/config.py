@@ -52,4 +52,4 @@ full_config.read_dict(global_config)
 full_config.read_dict(local_config)
 full_config.read_dict(env_config)
 
-full_config = full_config["codecarbon"]
+config = full_config["codecarbon"]
