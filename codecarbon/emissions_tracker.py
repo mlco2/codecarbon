@@ -16,6 +16,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from codecarbon.core import co2_signal, cpu, gpu
 from codecarbon.core.emissions import Emissions
+from codecarbon.core.config import config
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
@@ -39,10 +40,10 @@ class BaseEmissionsTracker(ABC):
 
     def __init__(
         self,
-        project_name: str = "codecarbon",
-        measure_power_secs: int = 15,
-        output_dir: str = ".",
-        save_to_file: bool = True,
+        project_name: Optional[str] = None,
+        measure_power_secs: Optional[int] = None,
+        output_dir: Optional[str] = None,
+        save_to_file: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
         co2_signal_api_token: Optional[str] = None,
@@ -58,17 +59,32 @@ class BaseEmissionsTracker(ABC):
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
-        :param emissions_endpoint: Optional URL of http endpoint for sending emissions data
-        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for free beta)
+        :param emissions_endpoint: Optional URL of http endpoint for sending emissions
+                                   data
+        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
+                                     free beta)
         """
-        self._project_name: str = project_name
-        self._measure_power_secs: int = measure_power_secs
+        self._project_name: str = project_name or config.get(project_name, "codecarbon")
+        self._measure_power_secs: int = measure_power_secs or config.getint(
+            measure_power_secs, 15
+        )
+        self._output_dir: str = output_dir or config.get(output_dir, ".")
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
-        self._output_dir: str = output_dir
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = list()
+
+        emissions_endpoint = emissions_endpoint or config.getboolean(
+            "emissions_endpoint", None
+        )
+        co2_signal_api_token = co2_signal_api_token or config.getboolean(
+            "co2_signal_api_token", None
+        )
+        save_to_file = save_to_file or config.getboolean("save_to_file", True)
+        gpu_ids = gpu_ids or config.get("gpu_ids", None)
+        if isinstance(gpu_ids, str):
+            gpu_ids = list(map(lambda x: int(x.strip()), gpu_ids.split(",")))
 
         if gpu.is_gpu_details_available():
             logger.info("CODECARBON : Tracking Nvidia GPU via pynvml")
@@ -256,10 +272,17 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         :param country_2letter_iso_code: For use with the CO2Signal emissions API.
             See http://api.electricitymap.org/v3/zones for a list of codes and their corresponding locations.
         """
-        self._cloud_provider: Optional[str] = cloud_provider
-        self._cloud_region: Optional[str] = cloud_region
-        self._country_iso_code: Optional[str] = country_iso_code
-        self._region: Optional[str] = region if region is None else region.lower()
+        self._cloud_provider: Optional[str] = cloud_provider or config.get(
+            "cloud_provider"
+        )
+        self._country_iso_code: Optional[str] = country_iso_code or config.get(
+            "country_iso_code"
+        )
+        self._cloud_region: Optional[str] = cloud_region or config.get("cloud_region")
+        self._region: Optional[str] = region or config.get("cloud_region")
+        if self._region is not None:
+            assert isinstance(self._region, str)
+            self._region = self._region.lower()
 
         if self._cloud_provider:
             if self._cloud_region is None:
@@ -293,9 +316,13 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     f"Exception occured {e}"
                 )
 
-        self.country_2letter_iso_code: Optional[str] = (
-            country_2letter_iso_code.upper() if country_2letter_iso_code else None
-        )
+        self.country_2letter_iso_code: Optional[
+            str
+        ] = country_2letter_iso_code or config.get("country_2letter_iso_code")
+        if self.country_2letter_iso_code is not None:
+            assert isinstance(self.country_2letter_iso_code, str)
+            self.country_2letter_iso_code = self.country_2letter_iso_code.upper()
+
         super().__init__(*args, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -325,10 +352,10 @@ class EmissionsTracker(BaseEmissionsTracker):
 
 def track_emissions(
     fn: Callable = None,
-    project_name: str = "codecarbon",
-    measure_power_secs: int = 15,
-    output_dir: str = ".",
-    save_to_file: bool = True,
+    project_name: Optional[str] = None,
+    measure_power_secs: Optional[int] = None,
+    output_dir: Optional[str] = None,
+    save_to_file: Optional[bool] = None,
     offline: bool = False,
     country_iso_code: Optional[str] = None,
     region: Optional[str] = None,
