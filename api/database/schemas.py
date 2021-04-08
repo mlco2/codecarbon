@@ -8,6 +8,8 @@ These Pydantic models define more or less a "schema" (a valid data shape).
 So this will help us avoiding confusion while using both.
 """
 
+# TODO : Move this file in codecarbon package
+
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime

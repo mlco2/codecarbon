@@ -1,4 +1,5 @@
-# TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
+# read https://fastapi.tiangolo.com/tutorial/sql-databases/
+
 
 # Put here the structure of the database
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Float
