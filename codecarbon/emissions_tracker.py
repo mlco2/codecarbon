@@ -77,13 +77,15 @@ class BaseEmissionsTracker(ABC):
         self._scheduler = BackgroundScheduler()
         self._hardware = list()
 
-        emissions_endpoint = emissions_endpoint or config.getboolean(
+        emissions_endpoint = emissions_endpoint or config.get(
             "emissions_endpoint", None
         )
-        co2_signal_api_token = co2_signal_api_token or config.getboolean(
+        co2_signal_api_token = co2_signal_api_token or config.get(
             "co2_signal_api_token", None
         )
         save_to_file = save_to_file or config.getboolean("save_to_file", True)
+        if save_to_file == "False":
+            save_to_file = False
         gpu_ids = gpu_ids or config.get("gpu_ids", None)
         if isinstance(gpu_ids, str):
             gpu_ids = list(map(lambda x: int(x.strip()), gpu_ids.split(",")))
