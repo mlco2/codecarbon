@@ -5,7 +5,7 @@ from fastapi import APIRouter, Path, Depends, HTTPException
 # from datetime import datetime
 from dependencies import get_token_header
 from database import crud_emissions
-from database.schemas import Emission
+from database.schemas import EmissionCreate
 
 
 router = APIRouter(
@@ -17,7 +17,7 @@ emissions_temp_db = []
 
 
 @router.post("/emission", tags=["emissions"])
-def add_emission(emission: Emission):
+def add_emission(emission: EmissionCreate):
     # Remove next line when DB work
     emissions_temp_db.append(emission.dict())
     emission_id = crud_emissions.save_emission(emission)
