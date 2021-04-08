@@ -72,15 +72,12 @@ class Organization(Base):
     teams = relationship("Team", back_populates="organization")
 
 
+class User(Base):
+    __tablename__ = "users"
 
-# class User(Base):
-#     __tablename__ = "users"
-
-#     id = Column(Integer, primary_key=True, index=True)
-#     name = Column(String)
-#     email = Column(String, unique=True, index=True)
-#     hashed_password = Column(String)
-#     is_active = Column(Boolean, default=True)
-
-#     projects = relationship("Project", back_populates="team")
-#     organizations = relationship("Organization", back_populates="teams")
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
+    # TODO: Associate user with his entities

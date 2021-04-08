@@ -3,9 +3,9 @@ from uuid import uuid4 as uuid
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
 
-'''
+"""
 Here there is all the method to manipulate the emissions data
-'''
+"""
 
 
 def save_emission(emission):
