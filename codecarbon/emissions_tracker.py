@@ -64,11 +64,13 @@ class BaseEmissionsTracker(ABC):
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
         """
-        self._project_name: str = project_name or config.get(project_name, "codecarbon")
-        self._measure_power_secs: int = measure_power_secs or config.getint(
-            measure_power_secs, 15
+        self._project_name: str = project_name or config.get(
+            "project_name", "codecarbon"
         )
-        self._output_dir: str = output_dir or config.get(output_dir, ".")
+        self._measure_power_secs: int = measure_power_secs or config.getint(
+            "measure_power_secs", 15
+        )
+        self._output_dir: str = output_dir or config.get("output_dir", ".")
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
