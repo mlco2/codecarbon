@@ -107,7 +107,12 @@ class CPU(BaseHardware):
         Parse the model name from the raw name extracted from cpuinfo library
         :return: parsed CPU name
         """
-        return raw_name.split(" CPU")[0].replace("(R)", "").replace("(TM)", "")
+        return (
+            raw_name.split(" @")[0]
+            .replace("(R)", "")
+            .replace("(TM)", "")
+            .replace(" CPU", "")
+        )
 
     def _get_power_from_constant(self) -> Power:
         """
