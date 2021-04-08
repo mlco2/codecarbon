@@ -109,9 +109,10 @@ class BaseEmissionsTracker(ABC):
                 "https://github.com/mlco2/codecarbon#infrastructure-support)"
             )
 
-        # Run `self._measure_power` every `measure_power_secs` seconds in a background thread
+        # Run `self._measure_power` every `measure_power_secs` seconds in a
+        # background thread
         self._scheduler.add_job(
-            self._measure_power, "interval", seconds=measure_power_secs
+            self._measure_power, "interval", seconds=self._measure_power_secs
         )
 
         self._data_source = DataSource()
@@ -156,7 +157,9 @@ class BaseEmissionsTracker(ABC):
 
         self._scheduler.shutdown()
 
-        self._measure_power()  # Run to calculate the power used from last scheduled measurement to shutdown
+        # Run to calculate the power used from last
+        # scheduled measurement to shutdown
+        self._measure_power()
 
         emissions_data = self._prepare_emissions_data()
 
