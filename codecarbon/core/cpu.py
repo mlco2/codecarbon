@@ -224,7 +224,7 @@ class TDP:
         """
         return (
             raw_name.split(" @")[0]
-            .replace("(R1)", "")
+            .replace("(R)", "")
             .replace("(TM)", "")
             .replace(" CPU", "")
         )
