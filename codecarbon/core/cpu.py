@@ -11,8 +11,10 @@ from logging import getLogger
 from typing import Dict
 
 import pandas as pd
+import cpuinfo
 
 from codecarbon.core.rapl import RAPLFile
+from codecarbon.input import DataSource
 
 logger = getLogger(__name__)
 
@@ -209,3 +211,36 @@ class IntelRAPL:
                 exc_info=True,
             )
         return cpu_details
+
+
+class TDP:
+    def __init__(self):
+        self.tdp = self._get_power_from_constant()
+
+    def _parse_cpu_model(self, raw_name) -> str:
+        """
+        Parse the model name from the raw name extracted from cpuinfo library
+        :return: parsed CPU name
+        """
+        return (
+            raw_name.split(" @")[0]
+            .replace("(R1)", "")
+            .replace("(TM)", "")
+            .replace(" CPU", "")
+        )
+
+    def _get_power_from_constant(self) -> int:
+        """
+        Get CPU power from constant mode
+        :return: power in Watt
+        """
+        cpu_info = cpuinfo.get_cpu_info()
+        if cpu_info:
+            model_raw = cpu_info["brand_raw"]
+            model = self._parse_cpu_model(model_raw)
+            cpu_power_df = DataSource().get_cpu_power_data()
+            cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
+            if len(cpu_power_df_model) > 0:
+                power = cpu_power_df_model["TDP"].tolist()[0]
+                return power
+        return None
