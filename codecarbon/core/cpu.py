@@ -10,8 +10,8 @@ import time
 from logging import getLogger
 from typing import Dict
 
-import pandas as pd
 import cpuinfo
+import pandas as pd
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.input import DataSource
