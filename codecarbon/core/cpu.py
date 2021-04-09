@@ -48,12 +48,14 @@ def parse_cpu_model(raw_name) -> str:
     Parse the model name from the raw name extracted from cpuinfo library
     :return: parsed CPU name
     """
-    return (
-        raw_name.split(" @")[0]
-        .replace("(R)", "")
-        .replace("(TM)", "")
-        .replace(" CPU", "")
-    )
+    if type(raw_name) == str:
+        return (
+            raw_name.split(" @")[0]
+            .replace("(R)", "")
+            .replace("(TM)", "")
+            .replace(" CPU", "")
+        )
+    return ""
 
 
 class IntelPowerGadget:
@@ -237,7 +239,7 @@ class TDP:
         """
         cpu_info = cpuinfo.get_cpu_info()
         if cpu_info:
-            model_raw = cpu_info["brand_raw"]
+            model_raw = cpu_info.get("brand_raw", "")
             model = parse_cpu_model(model_raw)
             cpu_power_df = DataSource().get_cpu_power_data()
             cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
