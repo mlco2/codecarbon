@@ -91,7 +91,7 @@ class BaseEmissionsTracker(ABC):
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant", tdp))
             else:
                 logger.warning(
-                    f"CODECARBON : Failed to match CPU TDP constant. Falling back on a global constant."
+                    "CODECARBON : Failed to match CPU TDP constant. Falling back on a global constant."
                 )
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
 
