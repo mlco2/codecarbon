@@ -8,12 +8,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
-import cpuinfo
-
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
-from codecarbon.input import DataSource
 
 POWER_CONSTANT = 85
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
@@ -75,9 +72,10 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
-    def __init__(self, output_dir: str, mode: str):
+    def __init__(self, output_dir: str, mode: str, tdp: int):
         self._output_dir = output_dir
         self._mode = mode
+        self._tdp = tdp
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
@@ -89,10 +87,8 @@ class CPU(BaseHardware):
         :return: power in kW
         """
         if self._mode == "constant":
-            logger.warning(
-                "CODECARBON : No CPU/GPU tracking mode found. Falling back on CPU constant mode."
-            )
-            return self._get_power_from_constant()
+            power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
+            return Power.from_watts(power)
 
         all_cpu_details: Dict = self._intel_interface.get_cpu_details()
 
@@ -102,48 +98,13 @@ class CPU(BaseHardware):
                 power += value
         return Power.from_watts(power)
 
-    def _parse_cpu_model(self, raw_name) -> str:
-        """
-        Parse the model name from the raw name extracted from cpuinfo library
-        :return: parsed CPU name
-        """
-        return (
-            raw_name.split(" @")[0]
-            .replace("(R)", "")
-            .replace("(TM)", "")
-            .replace(" CPU", "")
-        )
-
-    def _get_power_from_constant(self) -> Power:
-        """
-        Get CPU power from constant mode
-        :return: power in KW
-        """
-        cpu_info = cpuinfo.get_cpu_info()
-        if cpu_info:
-            model_raw = cpu_info["brand_raw"]
-            model = self._parse_cpu_model(model_raw)
-            cpu_power_df = DataSource().get_cpu_power_data()
-            cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
-            if len(cpu_power_df_model) > 0:
-                power = (
-                    cpu_power_df_model["TDP"].tolist()[0]
-                    * CONSUMPTION_PERCENTAGE_CONSTANT
-                )
-            else:
-                logger.warning(
-                    f"CPU : Failed to match CPU TDP constant. Falling back on global constant ({POWER_CONSTANT}w)."
-                )
-                power = POWER_CONSTANT * CONSUMPTION_PERCENTAGE_CONSTANT
-        else:
-            power = POWER_CONSTANT * CONSUMPTION_PERCENTAGE_CONSTANT
-        return Power.from_watts(power)
-
     def total_power(self) -> Power:
         cpu_power = self._get_power_from_cpus()
         logger.info(f"CODECARBON CPU Power Consumption : {cpu_power}")
         return cpu_power
 
     @classmethod
-    def from_utils(cls, output_dir: str, mode: str) -> "CPU":
-        return cls(output_dir=output_dir, mode=mode)
+    def from_utils(
+        cls, output_dir: str, mode: str, tdp: Optional[int] = POWER_CONSTANT
+    ) -> "CPU":
+        return cls(output_dir=output_dir, mode=mode, tdp=tdp)
