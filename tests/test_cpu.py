@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 
-from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL, TDP, parse_cpu_model
+from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL, parse_cpu_model
 
 
 class TestIntelPowerGadget(unittest.TestCase):
@@ -82,8 +82,8 @@ class TestIntelRAPL(unittest.TestCase):
 
 class TestTDP(unittest.TestCase):
     def test_parse_cpu_model(self):
-        model_raw = 'Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz'
+        model_raw = "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz"
         model_parsed = parse_cpu_model(model_raw)
-        model_parsed_expected = 'Intel Core i7-8850H'
+        model_parsed_expected = "Intel Core i7-8850H"
         self.assertEqual(model_parsed, model_parsed_expected)
 
