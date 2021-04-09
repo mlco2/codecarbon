@@ -86,4 +86,3 @@ class TestTDP(unittest.TestCase):
         model_parsed = parse_cpu_model(model_raw)
         model_parsed_expected = "Intel Core i7-8850H"
         self.assertEqual(model_parsed, model_parsed_expected)
-
