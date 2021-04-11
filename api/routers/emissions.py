@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
-
-# from typing import Optional
-# from pydantic import BaseModel, Field
-# from datetime import datetime
-from dependencies import get_token_header
+from sqlalchemy.orm import Session
+from dependencies import get_token_header, get_db
 from database import crud_emissions
 from database.schemas import EmissionCreate
 
@@ -16,12 +13,11 @@ router = APIRouter(
 emissions_temp_db = []
 
 
-@router.post("/emission", tags=["emissions"])
-def add_emission(emission: EmissionCreate):
+@router.put("/emission", tags=["emissions"])
+def add_emission(emission: EmissionCreate, db: Session = Depends(get_db)):
     # Remove next line when DB work
     emissions_temp_db.append(emission.dict())
-    emission_id = crud_emissions.save_emission(emission)
-    return {"emission_id": emission_id}
+    crud_emissions.save_emission(db, emission)
 
 
 @router.get("/emission/{emission_id}", tags=["emissions"])
