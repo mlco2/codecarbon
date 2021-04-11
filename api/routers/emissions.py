@@ -22,19 +22,26 @@ def add_emission(emission: EmissionCreate, db: Session = Depends(get_db)):
 
 @router.get("/emission/{emission_id}", tags=["emissions"])
 async def read_emission(
-    emission_id: str = Path(..., title="The ID of the emission to get")
+    emission_id: str = Path(..., title="The ID of the emission to get"),
+    db: Session = Depends(get_db),
 ):
-    emission = crud_emissions.get_one_emission(emission_id)
-    if emission_id is False:
-        raise HTTPException(status_code=404, detail="Item not found")
+    emission = crud_emissions.get_one_emission(db, emission_id)
+    if emission is None:
+        raise HTTPException(status_code=404, detail="Emission not found")
     return emission
 
 
 @router.get("/emissions/{experiment_id}", tags=["emissions"])
 async def read_experiment_emissions(
-    experiment_id: str = Path(..., title="The ID of the experiment to get")
+    experiment_id: str = Path(..., title="The ID of the experiment to get"),
+    db: Session = Depends(get_db),
 ):
-    experiment_emissions = crud_emissions.get_emissions_from_experiment(experiment_id)
-    # Remove next line when DB work
-    experiment_emissions = emissions_temp_db
+    experiment_emissions = crud_emissions.get_emissions_from_experiment(
+        db, experiment_id
+    )
+    if experiment_emissions is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Emission not found for experiment_id {experiment_id}",
+        )
     return experiment_emissions

@@ -32,6 +32,4 @@ async def read_experiment_experiments(
     experiment_experiments = crud_experiments.get_experiments_from_experiment(
         experiment_id
     )
-    # Remove next line when DB work
-    experiment_experiments = experiments_temp_db
     return experiment_experiments

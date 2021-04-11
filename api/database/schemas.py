@@ -18,7 +18,6 @@ from datetime import datetime
 class EmissionBase(BaseModel):
     timestamp: datetime
     experiment_id: str
-    project_name: str
     duration: int = Field(
         ..., gt=0, description="The duration must be greater than zero"
     )
@@ -41,7 +40,6 @@ class EmissionBase(BaseModel):
             "example": {
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "experiment_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
-                "project_name": "skynet",
                 "duration": 98745,
                 "emissions": 1.548444,
                 "energy_consumed": 57.21874,
