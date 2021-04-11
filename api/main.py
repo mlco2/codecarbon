@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI
 from dependencies import get_query_token
-from routers import emissions, experiments
+from routers import emissions, experiments, projects
 from database.database import engine
 from database import models
 
@@ -16,6 +16,7 @@ app = FastAPI(dependencies=[Depends(get_query_token)])
 
 app.include_router(emissions.router)
 app.include_router(experiments.router)
+app.include_router(projects.router)
 
 
 @app.get("/")
