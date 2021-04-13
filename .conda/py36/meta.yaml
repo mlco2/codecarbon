@@ -27,6 +27,7 @@ requirements:
     - pandas
     - requests
     - pynvml
+    - py-cpuinfo
 
 test:
   imports:
