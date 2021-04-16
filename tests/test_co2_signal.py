@@ -39,5 +39,7 @@ class TestCO2Signal(unittest.TestCase):
         assert round(result, 5) == 0.58765
 
     def test_get_emissions_TIMEOUT(self):
-        with self.assertRaises(requests.exceptions.ConnectionError):
+        with self.assertRaises(
+            (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout)
+        ):
             co2_signal.get_emissions(self._energy, self._geo, timeout=0.000001)
