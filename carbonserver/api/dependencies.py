@@ -1,7 +1,6 @@
-from typing import Optional
-
-from database.database import SessionLocal
 from fastapi import Header, HTTPException
+from typing import Optional
+from carbonserver.api.database.database import SessionLocal
 
 # TODO : https://fastapi.tiangolo.com/tutorial/security/
 
