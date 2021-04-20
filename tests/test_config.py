@@ -43,18 +43,18 @@ class TestConfig(unittest.TestCase):
     def custom_mock_open(self, *args, **kwargs):
         global_config_data = dedent(
             """\
-        [codecarbon]
-        cool_key=2
-        test=path/to/test
-        this_is_a_key= no/space= problem
-        """
+            [codecarbon]
+            cool_key=2
+            test=path/to/test
+            this_is_a_key= no/space= problem
+            """
         )
         local_config_data = dedent(
             """\
-        [codecarbon]
-        cool_key=4
-        new_key=cool
-        """
+            [codecarbon]
+            cool_key=4
+            new_key=cool
+            """
         )
 
         def f(path, encoding=None):
