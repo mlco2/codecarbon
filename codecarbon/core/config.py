@@ -16,6 +16,7 @@ def clean_env_key(k: str) -> str:
     Returns:
         str: Cleaned str
     """
+    assert isinstance(k, str)
     return k.replace("CODECARBON_", "").lower()
 
 
@@ -38,17 +39,19 @@ def parse_env_config() -> dict:
     }
 
 
-cwd = Path.cwd()
-global_config = configparser.ConfigParser()
-local_config = configparser.ConfigParser()
-env_config = configparser.ConfigParser()
-full_config = configparser.ConfigParser()
+def get_hierarchical_config():
+    cwd = Path.cwd()
+    global_config = configparser.ConfigParser()
+    local_config = configparser.ConfigParser()
+    env_config = configparser.ConfigParser()
+    full_config = configparser.ConfigParser()
 
-global_config.read(Path("~/.codecarbon.config").expanduser().resolve())
-local_config.read(Path("./.codecarbon.config").expanduser().resolve())
-env_config.read_dict(parse_env_config())
+    global_config.read(Path("~/.codecarbon.config").expanduser().resolve())
+    local_config.read(Path("./.codecarbon.config").expanduser().resolve())
+    env_config.read_dict(parse_env_config())
 
-full_config.read_dict(global_config)
-full_config.read_dict(local_config)
-full_config.read_dict(env_config)
-config = full_config["codecarbon"]
+    full_config.read_dict(global_config)
+    full_config.read_dict(local_config)
+    full_config.read_dict(env_config)
+    config = full_config["codecarbon"]
+    return config
