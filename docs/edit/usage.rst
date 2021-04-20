@@ -132,3 +132,7 @@ Yields attributes:
         "gpu_ids": [0, 1],
     }
 
+.. |ConfigParser| replace:: ``ConfigParser``
+.. _ConfigParser: https://docs.python.org/3/library/configparser.html#module-configparser
+
+.. note:: If you're wondering about the configuration files' syntax, be aware that under the hood ``codecarbon`` uses |ConfigParser|_ which relies on the `INI syntax <https://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_
