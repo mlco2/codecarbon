@@ -39,25 +39,17 @@ def parse_env_config() -> dict:
     }
 
 
-try:
-    cwd = Path.cwd()
-    global_config = configparser.ConfigParser()
-    local_config = configparser.ConfigParser()
-    env_config = configparser.ConfigParser()
-    full_config = configparser.ConfigParser()
+cwd = Path.cwd()
+global_config = configparser.ConfigParser()
+local_config = configparser.ConfigParser()
+env_config = configparser.ConfigParser()
+full_config = configparser.ConfigParser()
 
-    global_config.read(Path("~/.codecarbon.config").expanduser().resolve())
-    local_config.read(Path("./.codecarbon.config").expanduser().resolve())
-    env_config.read_dict(parse_env_config())
+global_config.read(Path("~/.codecarbon.config").expanduser().resolve())
+local_config.read(Path("./.codecarbon.config").expanduser().resolve())
+env_config.read_dict(parse_env_config())
 
-    full_config.read_dict(global_config)
-    full_config.read_dict(local_config)
-    full_config.read_dict(env_config)
-except Exception:
-    print("[CODECARBON] Config exception caught:")
-    print(traceback.format_exc(), end="")
-    print("Ignoring configuration, falling back to arguments [/CODECARBON]\n")
-    full_config = configparser.ConfigParser()
-    full_config.read_dict({"codecarbon": {}})
-finally:
-    config = full_config["codecarbon"]
+full_config.read_dict(global_config)
+full_config.read_dict(local_config)
+full_config.read_dict(env_config)
+config = full_config["codecarbon"]
