@@ -1,7 +1,6 @@
 import configparser
 from pathlib import Path
 import os
-import traceback
 
 
 def clean_env_key(k: str) -> str:
