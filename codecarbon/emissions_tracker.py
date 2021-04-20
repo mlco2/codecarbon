@@ -76,20 +76,24 @@ class BaseEmissionsTracker(ABC):
         self._scheduler = BackgroundScheduler()
         self._hardware = list()
 
-        emissions_endpoint = emissions_endpoint or conf.get("emissions_endpoint", None)
-        co2_signal_api_token = co2_signal_api_token or conf.get(
+        self._emissions_endpoint = emissions_endpoint or conf.get(
+            "emissions_endpoint", None
+        )
+        self._co2_signal_api_token = co2_signal_api_token or conf.get(
             "co2_signal_api_token", None
         )
-        save_to_file = save_to_file or conf.getboolean("save_to_file", True)
-        if save_to_file == "False":
-            save_to_file = False
-        gpu_ids = gpu_ids or conf.get("gpu_ids", None)
-        if isinstance(gpu_ids, str):
-            gpu_ids = list(map(lambda x: int(x.strip()), gpu_ids.split(",")))
+        self._save_to_file = save_to_file or conf.getboolean("save_to_file", True)
+        if self._save_to_file == "False":
+            self._save_to_file = False
+        self._gpu_ids = gpu_ids or conf.get("gpu_ids", None)
+        if isinstance(self._gpu_ids, str):
+            self._gpu_ids = list(
+                map(lambda x: int(x.strip()), self._gpu_ids.split(","))
+            )
 
         if gpu.is_gpu_details_available():
             logger.info("CODECARBON : Tracking Nvidia GPU via pynvml")
-            self._hardware.append(GPU.from_utils(gpu_ids))
+            self._hardware.append(GPU.from_utils(self._gpu_ids))
         if cpu.is_powergadget_available():
             logger.info("CODECARBON : Tracking Intel CPU via Power Gadget")
             self._hardware.append(
@@ -118,15 +122,15 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(self._data_source)
         self.persistence_objs: List[BaseOutput] = list()
 
-        if save_to_file:
+        if self._save_to_file:
             self.persistence_objs.append(
                 FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
 
-        if emissions_endpoint:
+        if self._emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
-        if co2_signal_api_token:
+        if self._co2_signal_api_token:
             co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
 
     @suppress(Exception)
