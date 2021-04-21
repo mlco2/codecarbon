@@ -47,7 +47,7 @@ def get_hierarchical_config():
     full_config = configparser.ConfigParser()
 
     global_config.read(Path("~/.codecarbon.config").expanduser().resolve())
-    local_config.read(Path("./.codecarbon.config").expanduser().resolve())
+    local_config.read((cwd / ".codecarbon.config").expanduser().resolve())
     env_config.read_dict(parse_env_config())
 
     full_config.read_dict(global_config)
