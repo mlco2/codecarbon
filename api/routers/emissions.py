@@ -5,7 +5,9 @@ from datetime import datetime
 from dependencies import get_token_header
 from database import emissions
 
-router = APIRouter(dependencies=[Depends(get_token_header)],)
+router = APIRouter(
+    dependencies=[Depends(get_token_header)],
+)
 
 
 emissions_temp_db = []
@@ -15,9 +17,15 @@ class Emission(BaseModel):
     timestamp: datetime
     experiment_id: str
     project_name: str
-    duration: int = Field(..., gt=0, description="The duration must be greater than zero")
-    emissions: float = Field(..., gt=0, description="The emissions must be greater than zero")
-    energy_consumed: float = Field(..., gt=0, description="The energy_consumed must be greater than zero")
+    duration: int = Field(
+        ..., gt=0, description="The duration must be greater than zero"
+    )
+    emissions: float = Field(
+        ..., gt=0, description="The emissions must be greater than zero"
+    )
+    energy_consumed: float = Field(
+        ..., gt=0, description="The energy_consumed must be greater than zero"
+    )
     country_name: Optional[str] = None
     country_iso_code: Optional[str] = None
     region: Optional[str] = None
@@ -27,8 +35,7 @@ class Emission(BaseModel):
 
     class Config:
         schema_extra = {
-            "example":
-            {
+            "example": {
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "experiment_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
                 "project_name": "skynet",
@@ -40,7 +47,7 @@ class Emission(BaseModel):
                 "region": "france",
                 "on_cloud": True,
                 "cloud_provider": "aws",
-                "cloud_region": "eu-west-1a"
+                "cloud_region": "eu-west-1a",
             }
         }
 
@@ -54,7 +61,9 @@ def add_emission(emission: Emission):
 
 
 @router.get("/emission/{emission_id}", tags=["emissions"])
-async def read_emission(emission_id: str = Path(..., title="The ID of the emission to get")):
+async def read_emission(
+    emission_id: str = Path(..., title="The ID of the emission to get")
+):
     emission = emissions.get_one_emission(emission_id)
     if emission_id is False:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -62,7 +71,9 @@ async def read_emission(emission_id: str = Path(..., title="The ID of the emissi
 
 
 @router.get("/emissions/{experiment_id}", tags=["emissions"])
-async def read_experiment_emissions(experiment_id: str = Path(..., title="The ID of the experiment to get")):
+async def read_experiment_emissions(
+    experiment_id: str = Path(..., title="The ID of the experiment to get")
+):
     experiment_emissions = emissions.get_emissions_from_experiment(experiment_id)
     # Remove next line when DB work
     experiment_emissions = emissions_temp_db

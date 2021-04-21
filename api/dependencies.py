@@ -5,7 +5,11 @@ from typing import Optional
 # TODO : https://fastapi.tiangolo.com/tutorial/security/
 
 
-async def get_token_header(x_token: Optional[str] = Header("fake-super-secret-token", convert_underscores=False)):
+async def get_token_header(
+    x_token: Optional[str] = Header(
+        "fake-super-secret-token", convert_underscores=False
+    )
+):
     if x_token != "fake-super-secret-token":
         raise HTTPException(status_code=400, detail="X-Token header invalid")
 
