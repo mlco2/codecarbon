@@ -4,13 +4,14 @@ Provides functionality for persistence of data
 
 import csv
 import dataclasses
-import getpass
+import logging
 import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
 
-import requests
+# from core.schema import EmissionCreate, Emission
+from core.api_client import ApiClient
 
 from codecarbon.external.logger import logger
 
@@ -19,6 +20,7 @@ from codecarbon.external.logger import logger
 class EmissionsData:
     """
     Output object containg experiment data
+    # TODO : Replace by a pdantic BaseModel ?
     """
 
     timestamp: str
@@ -76,16 +78,10 @@ class HTTPOutput(BaseOutput):
 
     def __init__(self, endpoint_url: str):
         self.endpoint_url: str = endpoint_url
+        self.api = ApiClient(endpoint_url)
 
     def out(self, data: EmissionsData):
         try:
-            payload = dataclasses.asdict(data)
-            payload["user"] = getpass.getuser()
-            resp = requests.post(self.endpoint_url, json=payload, timeout=10)
-            if resp.status_code != 201:
-                logger.warning(
-                    "HTTP Output returned an unexpected status code: ",
-                    resp,
-                )
+            self.api.save_emission(dataclasses.asdict(data))
         except Exception as e:
             logger.error(e, exc_info=True)
