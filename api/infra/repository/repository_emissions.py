@@ -95,7 +95,7 @@ class SqlAlchemyRepository(AbstractRepository):
         if e is None:
             return None
         else:
-            return db_to_class(e)
+            return self.get_db_to_class(e)
 
     def get_emissions_from_experiment(
         self, db: Session, experiment_id
@@ -116,6 +116,6 @@ class SqlAlchemyRepository(AbstractRepository):
             # Convert the table of models.Emission to a table of schemas.Emission
             emissions = []
             for e in res:
-                emission = db_to_class(e)
+                emission = self.get_db_to_class(e)
                 emissions.append(emission)
             return emissions
