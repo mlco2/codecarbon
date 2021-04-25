@@ -13,7 +13,7 @@ Here there is all the method to manipulate the project data
 def save_organization(db: Session, organization: schemas.OrganizationCreate):
     # TODO : save Organization in database and get her ID
     db_organization = models.Organization(
-       name=organization.name,
+        name=organization.name,
         description=organization.description,
         team_id=organization.organization_id,
     )

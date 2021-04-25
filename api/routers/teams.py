@@ -1,13 +1,8 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dependencies import get_token_header, get_db
-<<<<<<< HEAD
-from database import crud_teams
-from database.schemas import TeamCreate
-=======
 from database.Infra.SqlAlchemy import repository_teams
 from database.Infra.Domain.schemas import TeamCreate
->>>>>>> 4eb7bf2... Init repository
 
 
 router = APIRouter(
@@ -26,9 +21,7 @@ def add_team(team: TeamCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/team/{team_id}", tags=["teams"])
-async def read_team(
-    team_id: str = Path(..., title="The ID of the team to get")
-):
+async def read_team(team_id: str = Path(..., title="The ID of the team to get")):
     team = crud_teams.get_one_team(team_id)
     if team_id is False:
         raise HTTPException(status_code=404, detail="Item not found")

@@ -1,13 +1,8 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dependencies import get_token_header, get_db
-<<<<<<< HEAD
-from database import crud_organizations
-from database.schemas import OrganizationCreate
-=======
 from database.Infra.SqlAlchemy import repository_organizations
 from database.Infra.Domain.schemas import OrganizationCreate
->>>>>>> 4eb7bf2... Init repository
 
 
 router = APIRouter(

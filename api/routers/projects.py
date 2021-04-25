@@ -1,13 +1,8 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dependencies import get_token_header, get_db
-<<<<<<< HEAD
-from database import crud_projects
-from database.schemas import ProjectCreate
-=======
-from database.Infra.SqlAlchemy  import repository_projects
+from database.Infra.SqlAlchemy import repository_projects
 from database.Infra.Domain.schemas import ProjectCreate
->>>>>>> 4eb7bf2... Init repository
 
 
 router = APIRouter(

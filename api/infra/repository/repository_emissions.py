@@ -2,7 +2,7 @@
 from domain import models, schemas
 from sqlalchemy.orm import Session
 from typing import List
-import abc 
+import abc
 
 
 """
@@ -15,33 +15,29 @@ Inspired by https://fastapi.tiangolo.com/tutorial/sql-databases/
 """
 
 
-class AbstractRepository(abc.ABC): 
-    
+class AbstractRepository(abc.ABC):
     @abc.abstractmethod
     def add_save_emission(self, db: Session, emission: schemas.EmissionCreate):
         raise NotImplementedError
-   
+
     @abc.abstractmethod
-    def get_db_to_class(self, emission: models.Emission) -> schemas.Emission: 
+    def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
         raise NotImplementedError
-    
+
     @abc.abstractmethod
     def get_one_emission(self, db: Session, emission_id) -> schemas.Emission:
         raise NotImplementedError
 
-    @abc.abstractmethod    
-    def get_emissions_from_experiment(self, db: Session, experiment_id) -> List[schemas.Emission]:  
-        raise NotImplementedError     
-
- 
-
+    @abc.abstractmethod
+    def get_emissions_from_experiment(
+        self, db: Session, experiment_id
+    ) -> List[schemas.Emission]:
+        raise NotImplementedError
 
 
 class SqlAlchemyRepository(AbstractRepository):
-
     def __init__(self, session):
-            self.session = session
-
+        self.session = session
 
     def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
         """Convert a models.Emission to a schemas.Emission
@@ -65,7 +61,6 @@ class SqlAlchemyRepository(AbstractRepository):
             experiment_id=emission.experiment_id,
         )
 
-
     def add_save_emission(self, db: Session, emission: schemas.EmissionCreate):
         """Save an emission to the database.
 
@@ -88,7 +83,6 @@ class SqlAlchemyRepository(AbstractRepository):
         db.add(db_emission)
         db.commit()
 
-
     def get_one_emission(self, db: Session, emission_id) -> schemas.Emission:
         """Find the emission in database and return it
 
@@ -103,8 +97,9 @@ class SqlAlchemyRepository(AbstractRepository):
         else:
             return db_to_class(e)
 
-
-    def get_emissions_from_experiment(self, db: Session, experiment_id) -> List[schemas.Emission]:
+    def get_emissions_from_experiment(
+        self, db: Session, experiment_id
+    ) -> List[schemas.Emission]:
         """Find the emissions from an experiment in database and return it
 
         :db: : A SQLAlchemy session.
