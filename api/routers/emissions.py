@@ -1,8 +1,13 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dependencies import get_token_header, get_db
+<<<<<<< HEAD
 from database import crud_emissions
 from database.schemas import EmissionCreate
+=======
+from infra.repository.repository_emissions import SqlAlchemyRepository
+from domain.schemas import EmissionCreate
+>>>>>>> 4eb7bf2... Init repository
 
 
 router = APIRouter(
@@ -17,7 +22,14 @@ emissions_temp_db = []
 def add_emission(emission: EmissionCreate, db: Session = Depends(get_db)):
     # Remove next line when DB work
     emissions_temp_db.append(emission.dict())
+<<<<<<< HEAD
     crud_emissions.save_emission(db, emission)
+=======
+    repository_emissions = SqlAlchemyRepository(db) 
+    repository_emissions.add_save_emission(db,emission)
+    
+    
+>>>>>>> 4eb7bf2... Init repository
 
 
 @router.get("/emission/{emission_id}", tags=["emissions"])
@@ -25,7 +37,11 @@ async def read_emission(
     emission_id: str = Path(..., title="The ID of the emission to get"),
     db: Session = Depends(get_db),
 ):
+<<<<<<< HEAD
     emission = crud_emissions.get_one_emission(db, emission_id)
+=======
+    emission = repository_emissions.get_one_emission(db, emission_id)
+>>>>>>> 4eb7bf2... Init repository
     if emission is None:
         raise HTTPException(status_code=404, detail="Emission not found")
     return emission
@@ -36,7 +52,11 @@ async def read_experiment_emissions(
     experiment_id: str = Path(..., title="The ID of the experiment to get"),
     db: Session = Depends(get_db),
 ):
+<<<<<<< HEAD
     experiment_emissions = crud_emissions.get_emissions_from_experiment(
+=======
+    experiment_emissions = repository_emissions.get_emissions_from_experiment(
+>>>>>>> 4eb7bf2... Init repository
         db, experiment_id
     )
     if experiment_emissions is None:
