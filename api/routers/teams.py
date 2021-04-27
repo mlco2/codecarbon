@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Path, Depends, HTTPException
-from sqlalchemy.orm import Session
-from dependencies import get_token_header, get_db
+from dependencies import get_db, get_token_header
 
 # from database.Infra.SqlAlchemy import repository_teams
 from domain.schemas import TeamCreate
-
+from fastapi import APIRouter, Depends, HTTPException, Path
+from sqlalchemy.orm import Session
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],

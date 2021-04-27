@@ -1,11 +1,11 @@
 # read https://fastapi.tiangolo.com/tutorial/sql-databases/
 
 
-# Put here the structure of the database
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Float
-from sqlalchemy.orm import relationship
-
 from database.database import Base
+
+# Put here the structure of the database
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
 
 class Emission(Base):

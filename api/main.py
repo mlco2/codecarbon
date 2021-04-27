@@ -1,9 +1,8 @@
-from fastapi import Depends, FastAPI
-from dependencies import get_query_token
-from routers import emissions  # , experiments, projects , organizations, teams
 from database.database import engine
+from dependencies import get_query_token
 from domain import models
-
+from fastapi import Depends, FastAPI
+from routers import emissions  # , experiments, projects , organizations, teams
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/bigger-applications/
 
