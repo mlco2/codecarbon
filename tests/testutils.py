@@ -17,8 +17,11 @@ def get_custom_mock_open(global_conf_str, local_conf_str) -> callable:
             p = Path(path).expanduser().resolve()
             if p.name == ".codecarbon.config":
                 if p.parent == Path.home():
+                    print(f"\nAsking for {path} returning GLOBAL\n")
                     return mock_open(read_data=global_conf_str)()
+                print(f"\nAsking for {path} returning LOCAL\n")
                 return mock_open(read_data=local_conf_str)()
+            print(f"\nAsking for {path} returning OPEN\n")
             return OPEN(path, *args, **kwargs)
 
         return conditional_open_func
