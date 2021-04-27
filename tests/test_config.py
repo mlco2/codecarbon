@@ -1,37 +1,20 @@
-from codecarbon.emissions_tracker import EmissionsTracker
-import unittest
-from unittest import mock
-from unittest.mock import patch, mock_open
-from textwrap import dedent
 import os
+import unittest
+from textwrap import dedent
+from unittest import mock
+from unittest.mock import patch
+
 from codecarbon.core.config import (
     clean_env_key,
-    parse_env_config,
     get_hierarchical_config,
+    parse_env_config,
+    parse_gpu_ids,
 )
-from pathlib import Path
-import builtins
-
-OPEN = builtins.open
+from codecarbon.emissions_tracker import EmissionsTracker
+from tests.testutils import get_custom_mock_open
 
 
 class TestConfig(unittest.TestCase):
-    def get_custom_mock_open(
-        self, global_conf_str="[codecarbon]", local_conf_str="[codecarbon]"
-    ):
-        def mocked_open():
-            def conditional_open_func(path, mode="r", encoding=None):
-                p = Path(path)
-                if p.name == ".codecarbon.config":
-                    if p.parent == Path(__file__).parent:
-                        return mock_open(read_data=local_conf_str)()
-                    return mock_open(read_data=global_conf_str)()
-                return OPEN(path, mode=mode, encoding=encoding)
-
-            return conditional_open_func
-
-        return mocked_open
-
     def test_clean_env_key(self):
         for key in [1, None, 0.2, [], set()]:
             with self.assertRaises(AssertionError):
@@ -45,6 +28,19 @@ class TestConfig(unittest.TestCase):
             ("CODECARBON_1", "1"),
         ]:
             self.assertEqual(clean_env_key(key), target)
+
+    def test_parse_gpu_ids(self):
+        for (ids, target) in [
+            ("0,1,2", [0, 1, 2]),
+            ("[0, 1, 2", [0, 1, 2]),
+            ("(0, 1, 2)", [0, 1, 2]),
+            ("[1]", [1]),
+            ("1", [1]),
+            ("0", [0]),
+            ("", []),
+            (1, 1),
+        ]:
+            self.assertEqual(parse_gpu_ids(ids), target)
 
     @mock.patch.dict(
         os.environ,
@@ -79,8 +75,7 @@ class TestConfig(unittest.TestCase):
         )
 
         with patch(
-            "builtins.open",
-            new_callable=self.get_custom_mock_open(global_conf, local_conf),
+            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
             conf = dict(get_hierarchical_config())
             target = {
@@ -120,8 +115,7 @@ class TestConfig(unittest.TestCase):
         )
 
         with patch(
-            "builtins.open",
-            new_callable=self.get_custom_mock_open(global_conf, local_conf),
+            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
             conf = dict(get_hierarchical_config())
             target = {
@@ -139,8 +133,7 @@ class TestConfig(unittest.TestCase):
         local_conf = ""
 
         with patch(
-            "builtins.open",
-            new_callable=self.get_custom_mock_open(global_conf, local_conf),
+            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
             conf = dict(get_hierarchical_config())
             target = {}
@@ -173,8 +166,7 @@ class TestConfig(unittest.TestCase):
         )
 
         with patch(
-            "builtins.open",
-            new_callable=self.get_custom_mock_open(global_conf, local_conf),
+            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
             tracker = EmissionsTracker(
                 project_name="test-project", co2_signal_api_token="signal-token"
