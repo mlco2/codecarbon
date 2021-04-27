@@ -37,6 +37,9 @@ logger = logging.getLogger(__name__)
 #   EmissionsTracker(emissions_endpoint=None) since the config logic will use the one in
 #   the config file.
 #
+# Alternative: EmissionsTracker(emissions_endpoint=False) would work
+# TODO: document this
+#
 # To fix this, a complex move would be to have default values set to the sentinel:
 # _sentinel = object()
 # see: https://stackoverflow.com/questions/67202314/
