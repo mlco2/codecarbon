@@ -94,7 +94,7 @@ class CPU(BaseHardware):
 
         power = 0
         for metric, value in all_cpu_details.items():
-            if re.match("^Processor Power_\d+\(Watt\)$", metric):
+            if re.match(r"^Processor Power_\d+\(Watt\)$", metric):
                 power += value
         return Power.from_watts(power)
 
