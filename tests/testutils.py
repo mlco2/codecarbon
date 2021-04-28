@@ -1,15 +1,17 @@
 import builtins
-from pathlib import Path
 import unittest
+from pathlib import Path
+
+from codecarbon.input import DataSource
+
 
 # don't use vanilla unittest.mock.mock_openfor <3.7 compatibility
 # https://stackoverflow.com/a/41656192/3867406
 def mock_open(*args, **kargs):
-  f_open = unittest.mock.mock_open(*args, **kargs)
-  f_open.return_value.__iter__ = lambda self : iter(self.readline, '')
-  return f_open
+    f_open = unittest.mock.mock_open(*args, **kargs)
+    f_open.return_value.__iter__ = lambda self: iter(self.readline, "")
+    return f_open
 
-from codecarbon.input import DataSource
 
 OPEN = builtins.open
 
