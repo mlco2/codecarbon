@@ -5,7 +5,7 @@ https://github.com/responsibleproblemsolving/energy-usage
 """
 
 import logging
-from typing import Dict
+from typing import Dict, Optional
 
 import pandas as pd
 
@@ -18,8 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 class Emissions:
-    def __init__(self, data_source: DataSource):
+    def __init__(
+        self, data_source: DataSource, co2_signal_api_token: Optional[str] = None
+    ):
         self._data_source = data_source
+        self._co2_signal_api_token = co2_signal_api_token
 
     def get_cloud_emissions(self, energy: Energy, cloud: CloudMetadata) -> float:
         """
@@ -79,9 +82,9 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
-        if co2_signal.is_available():
+        if self._co2_signal_api_token:
             try:
-                return co2_signal.get_emissions(energy, geo)
+                return co2_signal.get_emissions(energy, geo, self._co2_signal_api_token)
             except Exception as e:
                 logger.error(e)
 
