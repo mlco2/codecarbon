@@ -7,12 +7,10 @@ from sqlalchemy.orm import Session
 
 
 """
-Here there is all the method to manipulate the emissions data
-Inspired by https://fastapi.tiangolo.com/tutorial/sql-databases/
-# TODO:
- - Récupérationd d'une / des émission(s)
- - Pouvoir créer plusieurs émissions d'un coup
- - Créer crud_experiment, project, team, organizations
+The emissions are stored in the database by this repository class.
+The emission repository is implemented to facilitate tests & the switch of database backend.
+It relies on an abstract repository which exposes an interface of signatures shared by all repository implementations.
+
 """
 
 

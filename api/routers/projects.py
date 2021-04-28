@@ -29,7 +29,6 @@ async def read_project(
     #     raise HTTPException(status_code=404, detail="Item not found")
     # return project
     raise HTTPException(status_code=501, detail="Not Implemented")
-    return
 
 
 @router.get("/projects/{project_id}", tags=["projects"])
@@ -41,4 +40,3 @@ async def read_experiment_projects(
     # experiment_projects = projects_temp_db
     # return experiment_projects
     raise HTTPException(status_code=501, detail="Not Implemented")
-    return

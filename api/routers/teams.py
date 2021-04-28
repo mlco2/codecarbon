@@ -1,9 +1,9 @@
-from dependencies import get_db, get_token_header
-
-# from database.Infra.SqlAlchemy import repository_teams
-from domain.schemas import TeamCreate
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
+from dependencies import get_token_header, get_db
+from domain.schemas import TeamCreate
+
+from api.infra.repository.repository_teams import get_Project_from_Teams, save_team
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -28,7 +28,6 @@ async def read_team(team_id: str = Path(..., title="The ID of the team to get"))
     #     raise HTTPException(status_code=404, detail="Item not found")
     # return team
     raise HTTPException(status_code=501, detail="Not Implemented")
-    return
 
 
 @router.get("/teams/{team_id}", tags=["teams"])
