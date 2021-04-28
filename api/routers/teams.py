@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from dependencies import get_token_header, get_db
 from domain.schemas import TeamCreate
 
-from api.infra.repository.repository_teams import get_Project_from_Teams, save_team
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
