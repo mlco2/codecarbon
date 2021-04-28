@@ -2,11 +2,11 @@ from comet_ml import Experiment  # isort:skip
 
 import tensorflow as tf
 
-## Assumes Comet variable environment configuration.
-## See here to get your API_KEY:
-## https://www.comet.ml/user/settings/account#section-DEVELOPER_INFORMATION
-## And here for setup information:
-## https://www.comet.ml/docs/python-sdk/advanced/#experiment-configuration-parameters
+# Assumes Comet variable environment configuration.
+# See here to get your API_KEY:
+# https://www.comet.ml/user/settings/account#section-DEVELOPER_INFORMATION
+# And here for setup information:
+# https://www.comet.ml/docs/python-sdk/advanced/#experiment-configuration-parameters
 experiment = Experiment()
 
 mnist = tf.keras.datasets.mnist

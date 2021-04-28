@@ -156,8 +156,9 @@ class TestGpu(FakeGPUEnv):
         assert get_gpu_details() == self.expected
 
     def test_gpu_no_power_limit(self):
-        from codecarbon.core.gpu import get_gpu_details
         import pynvml
+
+        from codecarbon.core.gpu import get_gpu_details
 
         def raiseException(handle):
             raise Exception("Some bad exception")
