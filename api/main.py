@@ -1,9 +1,8 @@
-from fastapi import Depends, FastAPI
-from dependencies import get_query_token
-from routers import emissions, experiments, projects, organizations, teams
 from database.database import engine
-from database import models
-
+from dependencies import get_query_token
+from domain import models
+from fastapi import Depends, FastAPI
+from routers import emissions  # , experiments, projects , organizations, teams
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/bigger-applications/
 
@@ -15,10 +14,11 @@ app = FastAPI(dependencies=[Depends(get_query_token)])
 
 
 app.include_router(emissions.router)
-app.include_router(experiments.router)
-app.include_router(projects.router)
-app.include_router(teams.router)
-app.include_router(organisations.router)
+# app.include_router(experiments.router)
+# app.include_router(projects.router)
+# app.include_router(teams.router)
+# app.include_router(organisations.router)
+
 
 @app.get("/")
 def default():

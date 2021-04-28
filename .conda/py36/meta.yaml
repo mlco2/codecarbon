@@ -1,4 +1,4 @@
-{% set version = "1.1.0" %}
+{% set version = "1.2.0" %}
 
 package:
   name: codecarbon
@@ -27,6 +27,7 @@ requirements:
     - pandas
     - requests
     - pynvml
+    - py-cpuinfo
 
 test:
   imports:

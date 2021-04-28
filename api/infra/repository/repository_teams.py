@@ -1,5 +1,5 @@
 # from uuid import uuid4 as uuid
-from . import models, schemas
+from domain import models, schemas
 from sqlalchemy.orm import Session
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
@@ -13,7 +13,7 @@ Here there is all the method to manipulate the project data
 def save_team(db: Session, team: schemas.TeamCreate):
     # TODO : save Team in database and get her ID
     db_team = models.Team(
-       name=team.name,
+        name=team.name,
         description=team.description,
         team_id=team.team_id,
     )

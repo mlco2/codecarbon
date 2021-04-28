@@ -1,5 +1,5 @@
 # from uuid import uuid4 as uuid
-from . import models, schemas
+from domain import models, schemas
 from sqlalchemy.orm import Session
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/

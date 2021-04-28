@@ -12,6 +12,7 @@ DEPENDENCIES = [
     "pandas",
     "pynvml",
     "requests",
+    "py-cpuinfo",
 ]
 
 TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
@@ -19,7 +20,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
 
 setuptools.setup(
     name="codecarbon",
-    version="1.1.0",
+    version="1.2.0",
     author="BCG GAMMA, Comet.ml, Haverford College, MILA",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -37,6 +38,7 @@ setuptools.setup(
     package_data={
         "codecarbon": [
             "data/cloud/impact.csv",
+            "data/hardware/cpu_power.csv",
             "data/private_infra/2016/usa_emissions.json",
             "data/private_infra/2016/canada_energy_mix.json",
             "data/private_infra/2016/global_energy_mix.json",

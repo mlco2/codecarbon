@@ -1,25 +1,22 @@
 ![banner](docs/edit/images/banner.png)
 
-Estimate and Track carbon emissions from the compute, quantify and analyze their impact.
+Estimate and track carbon emissions from your compute, quantify and analyze their impact.
 
-[Official Documentation](https://mlco2.github.io/codecarbon)
+[**Documentation**](https://mlco2.github.io/codecarbon)
 
-[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
-[![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
+<br/>
+
+[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37)](https://anaconda.org/codecarbon/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
+[![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
+
 
 - [About CodeCarbon](#about-codecarbon)
 - [Installation](#installation)
-    - [Install from PyPI repository](#install-from-pypi-repository)
-    - [Install from Conda repository](#install-from-conda-repository)
 - [Infrastructure Support](#infrastructure)
-    - [GPU](#gpu)
-    - [CPU](#cpu)
 - [Quickstart](#quickstart)
-    - [Online mode](#online-mode)
-    - [Offline mode](#offline-mode)
-    - [Using comet.ml](#using-cometml)
 - [Examples](#examples)
-- [DataSource](#data-source)
+- [Data Sources](#data-source)
 - [Contributing](#contributing)
 - [Built-in Visualization Tool](#built-in-visualization-tool)
 - [Build Documentation](#build-documentation)
@@ -83,6 +80,10 @@ Currently the package supports following hardware infrastructure.
 - Tracks Intel Processors power consumption from Intel RAPL files at `/sys/class/powercap/intel-rapl`, [reference](http://web.eece.maine.edu/~vweaver/projects/rapl/)
 
 *Note:* The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path.
+
+
+#### Fall back mode
+If none of those tools are available to track the power consumptions, CodeCarbon will be switched to a fall back mode: It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs). If the CPU is not found in the data source, a global constant (85 Watt) will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
 
 
 
@@ -162,8 +163,8 @@ This will create a `.csv` file with information about the energy that you used t
 
 # Data Source
 
-To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud). 
-If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016). 
+To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud).
+If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016).
 [A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
 
 
@@ -304,12 +305,12 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
 ### Citing CodeCarbon
 
 ```
-@misc{codecarbon,
+@article{codecarbon,
   author={Victor Schmidt and Kamal Goyal and Aditya Joshi and Boris Feld and Liam Conell and Nikolas Laskaris and Doug Blank and Jonathan Wilson and Sorelle Friedler and Sasha Luccioni},
-  title={{CodeCarbon, Estimate and Track Carbon Emissions from Machine Learning Computing}},
-  month={March},
+  title={{CodeCarbon: Estimate and Track Carbon Emissions from Machine Learning Computing}},
   year={2021},
-  note={Version 1.1.1},
   howpublished={\url{https://github.com/mlco2/codecarbon}},
+  DOI={10.5281/zenodo.4658424},
+  publisher={Zenodo},
 }
 ```

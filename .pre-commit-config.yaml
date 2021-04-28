@@ -1,21 +1,21 @@
 repos:
--   repo: https://github.com/asottile/seed-isort-config
-    rev: v2.1.1
-    hooks:
-    -   id: seed-isort-config
--   repo: https://github.com/timothycrosley/isort
-    rev: 4.3.21
-    types: [python]
-    args: [--filter-files"]
-    hooks:
-    -   id: isort
--   repo: https://github.com/python/black
-    rev: stable
-    hooks:
-    - id: black
-      args: [--safe]
--   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.1
-    hooks:
-    -   id: flake8
-        args: ['--config=.flake8']
+    - repo: https://github.com/asottile/seed-isort-config
+      rev: v2.1.1
+      hooks:
+          - id: seed-isort-config
+    - repo: https://github.com/timothycrosley/isort
+      rev: 5.8.0
+      types: [python]
+      args: [--filter-files"]
+      hooks:
+          - id: isort
+    - repo: https://github.com/psf/black
+      rev: 21.4b1
+      hooks:
+          - id: black
+            args: [--safe]
+    - repo: https://gitlab.com/pycqa/flake8
+      rev: 3.8.1
+      hooks:
+          - id: flake8
+            args: ["--config=.flake8"]

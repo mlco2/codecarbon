@@ -1,6 +1,7 @@
-from fastapi import Header, HTTPException
 from typing import Optional
+
 from database.database import SessionLocal
+from fastapi import Header, HTTPException
 
 # TODO : https://fastapi.tiangolo.com/tutorial/security/
 
