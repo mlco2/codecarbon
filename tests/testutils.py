@@ -1,6 +1,13 @@
 import builtins
 from pathlib import Path
-from unittest.mock import mock_open
+import unittest
+
+# don't use vanilla unittest.mock.mock_openfor <3.7 compatibility
+# https://stackoverflow.com/a/41656192/3867406
+def mock_open(*args, **kargs):
+  f_open = unittest.mock.mock_open(*args, **kargs)
+  f_open.return_value.__iter__ = lambda self : iter(self.readline, '')
+  return f_open
 
 from codecarbon.input import DataSource
 
@@ -17,9 +24,7 @@ def get_custom_mock_open(global_conf_str, local_conf_str) -> callable:
             p = Path(path).expanduser().resolve()
             if p.name == ".codecarbon.config":
                 if p.parent == Path.home():
-                    print(f"\nAsking for {path} returning GLOBAL:\n{global_conf_str}")
                     return mock_open(read_data=global_conf_str)()
-                print(f"\nAsking for {path} returning LOCAL\n{local_conf_str}")
                 return mock_open(read_data=local_conf_str)()
             return OPEN(path, *args, **kwargs)
 

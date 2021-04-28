@@ -86,18 +86,15 @@ def get_hierarchical_config():
         configparser.SectionProxy: The final configuration dict parsed from global,
         local and environment configurations. All values are strings.
     """
+
+    config = configparser.ConfigParser()
+
     cwd = Path.cwd()
-    global_config = configparser.ConfigParser()
-    local_config = configparser.ConfigParser()
-    env_config = configparser.ConfigParser()
-    full_config = configparser.ConfigParser()
+    home = Path.home()
+    global_path = str((home / ".codecarbon.config").expanduser().resolve())
+    local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
 
-    global_config.read(Path("~/.codecarbon.config").expanduser().resolve())
-    local_config.read((cwd / ".codecarbon.config").expanduser().resolve())
-    env_config.read_dict(parse_env_config())
+    config.read([global_path, local_path])
+    config.read_dict(parse_env_config())
 
-    full_config.read_dict(global_config)
-    full_config.read_dict(local_config)
-    full_config.read_dict(env_config)
-    config = full_config["codecarbon"]
-    return config
+    return config["codecarbon"]
