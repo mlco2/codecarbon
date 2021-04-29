@@ -7,30 +7,6 @@ Estimate and Track carbon emissions from the compute, quantify and analyze their
 [![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
 
-- [About CodeCarbon](#about-codecarbon)
-- [Installation](#installation)
-    - [Install from PyPI repository](#install-from-pypi-repository)
-    - [Install from Conda repository](#install-from-conda-repository)
-- [Infrastructure Support](#infrastructure-support)
-    - [GPU](#gpu)
-    - [CPU](#cpu)
-      - [On Windows and Mac](#on-windows-and-mac)
-      - [On Linux](#on-linux)
-      - [On all platforms](#on-all-platforms)
-- [Quickstart](#quickstart)
-    - [Online mode](#online-mode)
-    - [Offline mode](#offline-mode)
-    - [Using comet.ml](#using-cometml)
-    - [Configuration](#configuration)
-- [Examples](#examples)
-- [Data Sources](#data-sources)
-- [Contributing](#contributing)
-- [Built-in Visualization Tool](#built-in-visualization-tool)
-- [Build Documentation](#build-documentation)
-- [Comet Integration](#comet-integration)
-- [Report your emissions: LateX template](#report-your-emissions-latex-template)
-    - [Citing CodeCarbon](#citing-codecarbon)
-
 
 # About CodeCarbon
 
