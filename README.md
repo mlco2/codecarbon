@@ -11,20 +11,25 @@ Estimate and Track carbon emissions from the compute, quantify and analyze their
 - [Installation](#installation)
     - [Install from PyPI repository](#install-from-pypi-repository)
     - [Install from Conda repository](#install-from-conda-repository)
-- [Infrastructure Support](#infrastructure)
+- [Infrastructure Support](#infrastructure-support)
     - [GPU](#gpu)
     - [CPU](#cpu)
+      - [On Windows and Mac](#on-windows-and-mac)
+      - [On Linux](#on-linux)
+      - [On all platforms](#on-all-platforms)
 - [Quickstart](#quickstart)
     - [Online mode](#online-mode)
     - [Offline mode](#offline-mode)
     - [Using comet.ml](#using-cometml)
+    - [Configuration](#configuration)
 - [Examples](#examples)
-- [DataSource](#data-source)
+- [Data Sources](#data-sources)
 - [Contributing](#contributing)
 - [Built-in Visualization Tool](#built-in-visualization-tool)
 - [Build Documentation](#build-documentation)
 - [Comet Integration](#comet-integration)
 - [Report your emissions: LateX template](#report-your-emissions-latex-template)
+    - [Citing CodeCarbon](#citing-codecarbon)
 
 
 # About CodeCarbon
@@ -33,7 +38,7 @@ While computing currently represents roughly 0.5% of the world’s energy consum
 
 For this purpose, we created **CodeCarbon**, a Python package for tracking the carbon emissions produced by various kinds of computer programs, from straightforward algorithms to deep neural networks.
 
-By taking into account your computing infrastructure, location, usage and running time, CodeCarbon can provide an estimate of how much CO<sub>2</sub> you produced, and give you some comparisons with common modes of transporation to give you an order of magnitude.
+By taking into account your computing infrastructure, location, usage and running time, CodeCarbon can provide an estimate of how much CO<sub>2</sub> you produced, and give you some comparisons with common modes of transportation to give you an order of magnitude.
 
 Our hope is that this package will be used widely for estimating the carbon footprint of computing, and for establishing best practices with regards to the disclosure and reduction of this footprint.
 
@@ -68,23 +73,28 @@ conda install -c codecarbon -c conda-forge codecarbon
 Currently the package supports following hardware infrastructure.
 
 ### GPU
-- Tracks Nvidia GPUs power consumption using pynvml library, pynvml is installed with the package install.
+- Tracks Nvidia GPUs power consumption using `pynvml` library, (which is installed with the package install).
 
 ### CPU
 
 #### On Windows and Mac
-- Tracks Intel Processors power consumption using Intel Power Gadget
-- Please install Intel Power Gadget [here](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html).
+- Tracks Intel processors power consumption using the `Intel Power Gadget`
+- You need to **[install it independently](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html)** for CodeCarbon to function.
 
 *Note:* Please ensure that the Intel Power Gadget has the [required security permissions](https://osxdaily.com/2019/03/03/install-intel-power-gadget-mac/) on MacOS.
 
 
 #### On Linux
-- Tracks Intel Processors power consumption from Intel RAPL files at `/sys/class/powercap/intel-rapl`, [reference](http://web.eece.maine.edu/~vweaver/projects/rapl/)
+- Tracks Intel Processors power consumption from Intel RAPL files at `/sys/class/powercap/intel-rapl` ([reference](http://web.eece.maine.edu/~vweaver/projects/rapl/))
 
 *Note:* The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path.
 
+#### On all platforms
 
+If CodeCarbon cannot find the appropriate software to track the CPUs' energy consumption, it will use a fallback strategy:
+
+* If it can match you cpu type to a [list of know CPUs](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/hardware/cpu_power.csv) it will use 50% of the CPU model's TDP as constant consumption
+* If it really can't tell anything about your CPU it will use a constant consumption of 85W
 
 # Quickstart
 
@@ -137,7 +147,23 @@ def training_loop():
 
 Nothing to do here 🚀 ! Comet automatically logs your emissions if you have CodeCarbon installed. More about comet and adding the CodeCarbon panel to your project in [Comet Integration](#comet-integration).
 
+### Configuration
 
+CodeCarbon is developed with flexibility in mind. This means you don't have to keep passing the same arguments over and over to `EmissionTracker` objects in your scripts. **Any and all arguments can be set from configuration files**. CodeCarbon will look sequentially for arguments in:
+
+- `~/.codecarbon.config` (global user config)
+- `./.codecarbon.config` (local directory config)
+- `CODECARBON_ARG` (environment variables)
+- `EmissionsTracker(arg=value)`
+
+Config files are INI text files which should look like:
+
+```ini
+[codecarbon]
+arg=value
+```
+
+More details in the [documentation](https://mlco2.github.io/codecarbon).
 
 # Examples
 
@@ -160,10 +186,10 @@ This will create a `.csv` file with information about the energy that you used t
 
 
 
-# Data Source
+# Data Sources
 
-To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud). 
-If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016). 
+To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud).
+If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016).
 [A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
 
 
@@ -171,18 +197,14 @@ If you are using a private infrastructure you can look into the [CodeCarbon's pr
 # Contributing
 
 We are hoping that the open-source community will help us edit our code and make it better!
-If you want to contribute, make sure that the [`tox` package](https://tox.readthedocs.io/en/latest/example/package.html) is available to run tests and debug:
 
-```
-pip install tox
-```
+You are welcome to open issues, even suggest solutions and better still contribute the fix/improvement! We can guide you if you're not sure where to start but want to help us out 🥇
 
-You can run tests by simply entering tox in the terminal when in the root package directory, and it will run the predefined tests.
 
-```
-tox
-```
 In order to contribute a change to our code base, please submit a pull request (PR) via GitHub and someone from our team will go over it and accept it.
+
+Check out our [contribution guidelines :arrow_upper_right:](https://github.com/mlco2/codecarbon/blob/master/CONTRIBUTING.md)
+
 
 
 
