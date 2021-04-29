@@ -4,8 +4,10 @@ Estimate and Track carbon emissions from the compute, quantify and analyze their
 
 [Official Documentation](https://mlco2.github.io/codecarbon)
 
-[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
-[![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
+[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37)](https://anaconda.org/codecarbon/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4699491.svg)](https://doi.org/10.5281/zenodo.4699491)
+
 
 - [About CodeCarbon 💡](#about-codecarbon-)
 - [Installation :battery:](#installation-battery)
