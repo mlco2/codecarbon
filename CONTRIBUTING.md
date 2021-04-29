@@ -1,3 +1,39 @@
+# Contribution process
+
+(New to open-source? [Here's a guide to help you](https://opensource.guide/how-to-contribute/))
+
+1. Fork `codecarbon`
+2. Create a branch to work from
+3. Create a Pull-Request on this repo **in draft mode**
+4. Contribute code (commit and push frquently, with intelligible commit messages)
+5. Write tests in `tests/` (duh ?).
+6. Explain the PR in its *Conversation* section
+
+### Tests
+
+If you want to contribute, make sure that the [`tox` package](https://tox.readthedocs.io/en/latest/example/package.html) is available to run tests and debug:
+
+```
+pip install tox
+```
+
+You can run tests by simply entering tox in the terminal when in the root package directory, and it will run the predefined tests.
+
+```
+tox
+```
+In order to contribute a change to our code base, please submit a pull request (PR) via GitHub and someone from our team will go over it and accept it.
+
+You can also test your specific test in an isolated fashion to develop and debug them:
+
+```
+$ python -m unittest tests.test_your_feature
+
+# or
+
+$ python -m unittest tests.test_your_feature.YourTestCase.test_function
+```
+
 # Release process
 
 - Merge all PRs
