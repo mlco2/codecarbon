@@ -62,6 +62,7 @@ Currently the package supports following hardware infrastructure.
 
 #### On Linux
 - Tracks Intel Processors power consumption from Intel RAPL files at `/sys/class/powercap/intel-rapl` ([reference](http://web.eece.maine.edu/~vweaver/projects/rapl/))
+- All CPUs listed in this :point_up: directory will be tracked. [Help us improve this and make it configurable.](https://github.com/mlco2/codecarbon/issues/156)
 
 *Note:* The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path.
 
