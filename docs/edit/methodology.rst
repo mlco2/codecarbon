@@ -69,6 +69,8 @@ Power Usage
 Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
 ``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions tracker.
 
+If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode: It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs). If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation. We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.
+
 The net Power Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
 

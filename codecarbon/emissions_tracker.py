@@ -132,15 +132,19 @@ class BaseEmissionsTracker(ABC):
         elif cpu.is_rapl_available():
             logger.info("CODECARBON : Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
-
-        # Print warning if no supported hardware is found'
-        if not self._hardware:
+        else:
             logger.warning(
-                "CODECARBON : No CPU/GPU tracking mode found. This "
-                "may be due to your code running on Windows WSL, or due to "
-                "unsupported hardware (see "
-                "https://github.com/mlco2/codecarbon#infrastructure-support)"
+                "CODECARBON : No CPU tracking mode found. Falling back on CPU constant mode."
             )
+            logger.info("CODECARBON : Tracking using constant")
+            tdp = cpu.TDP().tdp
+            if tdp:
+                self._hardware.append(CPU.from_utils(self._output_dir, "constant", tdp))
+            else:
+                logger.warning(
+                    "CODECARBON : Failed to match CPU TDP constant. Falling back on a global constant."
+                )
+                self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
