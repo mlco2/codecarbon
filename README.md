@@ -7,8 +7,31 @@ Estimate and Track carbon emissions from the compute, quantify and analyze their
 [![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37&style=for-the-badge)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758&style=for-the-badge)](https://pypi.org/project/codecarbon/)
 
+- [About CodeCarbon 💡](#about-codecarbon-)
+- [Installation :battery:](#installation-battery)
+      - [Install from PyPI repository](#install-from-pypi-repository)
+      - [Install from Conda repository](#install-from-conda-repository)
+- [Quickstart 🚀](#quickstart-)
+    - [Online mode](#online-mode)
+    - [Offline mode](#offline-mode)
+    - [Using comet.ml](#using-cometml)
+    - [Configuration](#configuration)
+- [Examples 🐤](#examples-)
+- [Built-in Visualization Tool :heart_eyes:](#built-in-visualization-tool-heart_eyes)
+- [Comet Integration 🥂](#comet-integration-)
+- [Report your emissions: LateX template 📻](#report-your-emissions-latex-template-)
+    - [Citing CodeCarbon](#citing-codecarbon)
+- [Infrastructure Support 🖥️](#infrastructure-support-️)
+    - [GPU](#gpu)
+    - [CPU](#cpu)
+      - [On Windows and Mac](#on-windows-and-mac)
+      - [On Linux](#on-linux)
+      - [On all platforms](#on-all-platforms)
+- [Data Sources 🗒️](#data-sources-️)
+- [Contributing](#contributing)
+- [Build Documentation 🖨️](#build-documentation-️)
 
-# About CodeCarbon
+# About CodeCarbon 💡
 
 While computing currently represents roughly 0.5% of the world’s energy consumption, that percentage is projected to grow beyond 2% in the coming years, which will entail a significant rise in global CO2 emissions if not done properly. Given this increase, it is important to quantify and track the extent and origin of this energy usage, and to minimize the emissions incurred as much as possible.
 
@@ -21,7 +44,7 @@ Our hope is that this package will be used widely for estimating the carbon foot
 Follow the steps below to set up the package and don't hesitate to open an issue if you need help!
 
 
-# Installation
+# Installation :battery:
 Create a virtual environment using `conda` for easier management of dependencies and packages.
 For installing conda, follow the instructions on the [official conda website](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
 
@@ -30,13 +53,13 @@ conda create --name codecarbon python=3.6
 conda activate codecarbon
 ```
 
-### Install from PyPI repository
+#### Install from PyPI repository
 
 ```
 pip install codecarbon
 ```
 
-### Install from Conda repository
+#### Install from Conda repository
 
 ```
 conda install -c codecarbon -c conda-forge codecarbon
@@ -44,36 +67,7 @@ conda install -c codecarbon -c conda-forge codecarbon
 
 `codecarbon` is now installed in your the local environment
 
-
-# Infrastructure Support
-Currently the package supports following hardware infrastructure.
-
-### GPU
-- Tracks Nvidia GPUs power consumption using `pynvml` library, (which is installed with the package install).
-
-### CPU
-
-#### On Windows and Mac
-- Tracks Intel processors power consumption using the `Intel Power Gadget`
-- You need to **[install it independently](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html)** for CodeCarbon to function.
-
-*Note:* Please ensure that the Intel Power Gadget has the [required security permissions](https://osxdaily.com/2019/03/03/install-intel-power-gadget-mac/) on MacOS.
-
-
-#### On Linux
-- Tracks Intel Processors power consumption from Intel RAPL files at `/sys/class/powercap/intel-rapl` ([reference](http://web.eece.maine.edu/~vweaver/projects/rapl/))
-- All CPUs listed in this :point_up: directory will be tracked. [Help us improve this and make it configurable.](https://github.com/mlco2/codecarbon/issues/156)
-
-*Note:* The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path.
-
-#### On all platforms
-
-If CodeCarbon cannot find the appropriate software to track the CPUs' energy consumption, it will use a fallback strategy:
-
-* If it can match you cpu type to a [list of know CPUs](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/hardware/cpu_power.csv) it will use 50% of the CPU model's TDP as constant consumption
-* If it really can't tell anything about your CPU it will use a constant consumption of 85W
-
-# Quickstart
+# Quickstart 🚀
 
 ### Online mode
 This is the most straightforward usage of the package, which is possible if you have access to the Internet, which is necessary to gather information regarding your geographical location.
@@ -122,7 +116,7 @@ def training_loop():
 
 ### Using comet.ml
 
-Nothing to do here 🚀 ! Comet automatically logs your emissions if you have CodeCarbon installed. More about comet and adding the CodeCarbon panel to your project in [Comet Integration](#comet-integration).
+Nothing to do here 💯 ! Comet automatically starts a tracker and logs your emissions if you have CodeCarbon installed. More about comet and adding the CodeCarbon panel to your project in [Comet Integration](#comet-integration).
 
 ### Configuration
 
@@ -142,7 +136,7 @@ arg=value
 
 More details in the [documentation](https://mlco2.github.io/codecarbon).
 
-# Examples
+# Examples 🐤
 
 As an illustration of how to use CodeCarbon, we created a simple example using TensorFlow for digit classification on the [MNIST dataset](http://yann.lecun.com/exdb/mnist/):
 
@@ -163,29 +157,7 @@ This will create a `.csv` file with information about the energy that you used t
 
 
 
-# Data Sources
-
-To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud).
-If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016).
-[A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
-
-
-
-# Contributing
-
-We are hoping that the open-source community will help us edit our code and make it better!
-
-You are welcome to open issues, even suggest solutions and better still contribute the fix/improvement! We can guide you if you're not sure where to start but want to help us out 🥇
-
-
-In order to contribute a change to our code base, please submit a pull request (PR) via GitHub and someone from our team will go over it and accept it.
-
-Check out our [contribution guidelines :arrow_upper_right:](https://github.com/mlco2/codecarbon/blob/master/CONTRIBUTING.md)
-
-
-
-
-# Built-in Visualization Tool
+# Built-in Visualization Tool :heart_eyes:
 To track the evolution of your CO<sub>2</sub> emissions or just to see some nice graphs and charts, you can use the visualization tool that we created.
 As input, it takes a .csv file in the format generated by the Emissions Tracker, and it generates a visualization of the emissions incurred.
 
@@ -214,23 +186,7 @@ As well as the relative carbon intensity of different compute regions of cloud p
 ![Cloud Emissions](docs/edit/images/cloud_emissions.png)
 
 
-
-# Build Documentation
-No software is complete without great documentation!
-To make generating documentation easier, install the [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) and use it to edit and improve the existing documentation:
-```
-pip install -U sphinx sphinx_rtd_theme
-cd docs/edit
-make docs
-```
-In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
-```
-make docs
-```
-to regenerate the html files.
-
-
-# Comet Integration
+# Comet Integration 🥂
 
 **CodeCarbon** automatically integrates with [Comet](https://www.comet.ml/site) for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with **CodeCarbon** you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
 
@@ -266,7 +222,7 @@ Now back in the `Panels` tab you'll see your CodeCarbon Footprint visualization 
 
 
 
-# Report your emissions: LateX template
+# Report your emissions: LateX template 📻
 
 We believe that an important step towards reducing carbon emissions is the generalization of emissions reporting in papers, blog posts and publications in general. Here's an example LateX snippet you might want to use:
 
@@ -312,3 +268,67 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
   howpublished={\url{https://github.com/mlco2/codecarbon}},
 }
 ```
+
+
+# Infrastructure Support 🖥️
+Currently the package supports following hardware infrastructure.
+
+### GPU
+- Tracks Nvidia GPUs power consumption using `pynvml` library, (which is installed with the package).
+
+### CPU
+
+#### On Windows and Mac
+- Tracks Intel processors power consumption using the `Intel Power Gadget`
+- You need to **[install it independently](https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html)** for CodeCarbon to function.
+
+*Note:* Please ensure that the Intel Power Gadget has the [required security permissions](https://osxdaily.com/2019/03/03/install-intel-power-gadget-mac/) on MacOS.
+
+
+#### On Linux
+- Tracks Intel Processors power consumption from Intel RAPL files at `/sys/class/powercap/intel-rapl` ([reference](http://web.eece.maine.edu/~vweaver/projects/rapl/))
+- All CPUs listed in this :point_up: directory will be tracked. [Help us improve this and make it configurable.](https://github.com/mlco2/codecarbon/issues/156)
+
+*Note:* The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path.
+
+#### On all platforms
+
+If CodeCarbon cannot find the appropriate software to track the CPUs' energy consumption, it will use a fallback strategy:
+
+* If it can match you cpu type to a [list of know CPUs](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/hardware/cpu_power.csv) it will use 50% of the CPU model's TDP as constant consumption
+* If it really can't tell anything about your CPU it will use a constant consumption of 85W
+
+
+# Data Sources 🗒️
+
+To find the carbon efficiency of your cloud region, you can look into [CodeCarbon's cloud data](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/cloud).
+If you are using a private infrastructure you can look into the [CodeCarbon's private infrastructure](https://github.com/mlco2/codecarbon/tree/master/codecarbon/data/private_infra/2016).
+[A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
+
+
+# Contributing
+
+We are hoping that the open-source community will help us edit the code and make it better!
+
+You are welcome to open issues, even suggest solutions and better still contribute the fix/improvement! We can guide you if you're not sure where to start but want to help us out 🥇
+
+In order to contribute a change to our code base, please submit a pull request (PR) via GitHub and someone from our team will go over it and accept it.
+
+Check out our [contribution guidelines :arrow_upper_right:](https://github.com/mlco2/codecarbon/blob/master/CONTRIBUTING.md)
+
+
+
+# Build Documentation 🖨️
+No software is complete without great documentation!
+To make generating documentation easier, install the [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) and use it to edit and improve the existing documentation:
+```
+pip install -U sphinx sphinx_rtd_theme
+cd docs/edit
+make docs
+```
+In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
+```
+make docs
+```
+to regenerate the html files.
+
