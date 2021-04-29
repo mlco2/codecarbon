@@ -9,26 +9,14 @@ Estimate and Track carbon emissions from the compute, quantify and analyze their
 
 - [About CodeCarbon 💡](#about-codecarbon-)
 - [Installation :battery:](#installation-battery)
-      - [Install from PyPI repository](#install-from-pypi-repository)
-      - [Install from Conda repository](#install-from-conda-repository)
 - [Quickstart 🚀](#quickstart-)
-    - [Online mode](#online-mode)
-    - [Offline mode](#offline-mode)
-    - [Using comet.ml](#using-cometml)
-    - [Configuration](#configuration)
 - [Examples 🐤](#examples-)
 - [Built-in Visualization Tool :heart_eyes:](#built-in-visualization-tool-heart_eyes)
 - [Comet Integration 🥂](#comet-integration-)
 - [Report your emissions: LateX template 📻](#report-your-emissions-latex-template-)
-    - [Citing CodeCarbon](#citing-codecarbon)
 - [Infrastructure Support 🖥️](#infrastructure-support-️)
-    - [GPU](#gpu)
-    - [CPU](#cpu)
-      - [On Windows and Mac](#on-windows-and-mac)
-      - [On Linux](#on-linux)
-      - [On all platforms](#on-all-platforms)
 - [Data Sources 🗒️](#data-sources-️)
-- [Contributing](#contributing)
+- [Contributing 🤝](#contributing-)
 - [Build Documentation 🖨️](#build-documentation-️)
 
 # About CodeCarbon 💡
@@ -306,7 +294,7 @@ If you are using a private infrastructure you can look into the [CodeCarbon's pr
 [A number of resources](https://github.com/mlco2/impact/tree/master/data#mlco2s-data) can help you find the carbon efficiency of you local grid if you cannot find it in the previous links.
 
 
-# Contributing
+# Contributing 🤝
 
 We are hoping that the open-source community will help us edit the code and make it better!
 
