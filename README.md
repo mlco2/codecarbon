@@ -1,12 +1,14 @@
 ![banner](docs/edit/images/banner.png)
 
-Estimate and Track carbon emissions from the compute, quantify and analyze their impact.
+Estimate and track carbon emissions from your compute, quantify and analyze their impact.
 
-[Official Documentation](https://mlco2.github.io/codecarbon)
+[**Documentation**](https://mlco2.github.io/codecarbon)
+
+<br/>
 
 [![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4699491.svg)](https://doi.org/10.5281/zenodo.4699491)
+[![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
 
 
 - [About CodeCarbon 💡](#about-codecarbon-)
@@ -249,13 +251,13 @@ Estimations were conducted using the \href{https://github.com/mlco2/codecarbon}{
 ### Citing CodeCarbon
 
 ```
-@misc{codecarbon,
+@article{codecarbon,
   author={Victor Schmidt and Kamal Goyal and Aditya Joshi and Boris Feld and Liam Conell and Nikolas Laskaris and Doug Blank and Jonathan Wilson and Sorelle Friedler and Sasha Luccioni},
-  title={{CodeCarbon, Estimate and Track Carbon Emissions from Machine Learning Computing}},
-  month={March},
+  title={{CodeCarbon: Estimate and Track Carbon Emissions from Machine Learning Computing}},
   year={2021},
-  note={Version 1.1.1},
   howpublished={\url{https://github.com/mlco2/codecarbon}},
+  DOI={10.5281/zenodo.4658424},
+  publisher={Zenodo},
 }
 ```
 
@@ -285,8 +287,10 @@ Currently the package supports following hardware infrastructure.
 
 If CodeCarbon cannot find the appropriate software to track the CPUs' energy consumption, it will use a fallback strategy:
 
-* If it can match you cpu type to a [list of know CPUs](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/hardware/cpu_power.csv) it will use 50% of the CPU model's TDP as constant consumption
-* If it really can't tell anything about your CPU it will use a constant consumption of 85W
+* Find TDP:
+  * If it can match your cpu type to a [list of 2000+ Intel and AMD CPUs](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/hardware/cpu_power.csv) it will retrieve its thermal design power (TDPs)
+  * If it really can't tell anything about your CPU it will use a constant TDP of 85W
+* CodeCarbon assumes that the (average) actual power consumption of CPUs will be 50% of their TDP.
 
 
 # Data Sources 🗒️

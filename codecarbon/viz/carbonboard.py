@@ -215,7 +215,7 @@ def render_app(df: pd.DataFrame):
         Output(component_id="project_emissions_bar_chart", component_property="figure"),
         [Input(component_id="hidden_project_data", component_property="children")],
     )
-    def update_project_time_series(hidden_project_data: dt.DataTable):
+    def update_project_bar_chart(hidden_project_data: dt.DataTable):
         return components.get_project_emissions_bar_chart_figure(
             hidden_project_data["props"]["data"]
         )
