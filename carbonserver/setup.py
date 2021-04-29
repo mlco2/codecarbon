@@ -4,9 +4,9 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 DEPENDENCIES = [
-    'uvicorn[standard]==0.13.4',
-    'fastapi==0.63.0',
-    'sqlalchemy',
+    "uvicorn[standard]==0.13.4",
+    "fastapi==0.63.0",
+    "sqlalchemy",
 ]
 
 TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
@@ -25,7 +25,7 @@ setuptools.setup(
     tests_require=TEST_DEPENDENCIES,
     classifiers=[
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.7"
+        "Programming Language :: Python :: 3.7",
     ],
     python_requires=">=3.7",
     entry_points={"console_scripts": ["carbonserver = carbonserver:main"]},

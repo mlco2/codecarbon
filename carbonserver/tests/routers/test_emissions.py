@@ -33,7 +33,7 @@ def test_post_emission_returns_success_with_correct_object(emissions_router):
 
 def test_read_emission_by_emission_id_returns_not_found_error(emissions_router):
     app, client = emissions_router
-    emission_id = '1'
+    emission_id = "1"
     response = client.get("/emission/{emission_id}".format(emission_id=emission_id))
 
     assert response.status_code == 404
@@ -41,7 +41,9 @@ def test_read_emission_by_emission_id_returns_not_found_error(emissions_router):
 
 def test_read_emission_returns_experiment_id_returns_not_found_error(emissions_router):
     app, client = emissions_router
-    experiment_id = '1'
-    response = client.get("/emissions/{experitment_id}".format(experitment_id=experiment_id))
+    experiment_id = "1"
+    response = client.get(
+        "/emissions/{experitment_id}".format(experitment_id=experiment_id)
+    )
 
     assert response.status_code == 404
