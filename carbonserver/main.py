@@ -1,6 +1,12 @@
 from fastapi import Depends, FastAPI
 from carbonserver.api.domain import models
-from carbonserver.api.routers import emissions, experiments, projects, organizations, teams
+from carbonserver.api.routers import (
+    emissions,
+    experiments,
+    projects,
+    organizations,
+    teams,
+)
 from carbonserver.api.dependencies import get_query_token
 from carbonserver.database.database import engine
 

@@ -28,9 +28,7 @@ class AbstractRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_emissions_from_experiment(
-        self, experiment_id
-    ) -> List[schemas.Emission]:
+    def get_emissions_from_experiment(self, experiment_id) -> List[schemas.Emission]:
         raise NotImplementedError
 
 
@@ -90,7 +88,11 @@ class SqlAlchemyRepository(AbstractRepository):
         :returns: An Emission in pyDantic BaseModel format.
         :rtype: schemas.Emission
         """
-        e = self.db.query(models.Emission).filter(models.Emission.id == emission_id).first()
+        e = (
+            self.db.query(models.Emission)
+            .filter(models.Emission.id == emission_id)
+            .first()
+        )
         if e is None:
             return None
         else:
@@ -124,20 +126,22 @@ class InMemoryRepository(AbstractRepository):
         self.id: int = 0
 
     def add_save_emission(self, emission: schemas.EmissionCreate):
-        self.emissions.append(models.Emission(
-            id=self.id + 1,
-            timestamp=emission.timestamp,
-            duration=emission.duration,
-            emissions=emission.emissions,
-            energy_consumed=emission.energy_consumed,
-            country_name=emission.country_name,
-            country_iso_code=emission.country_iso_code,
-            region=emission.region,
-            on_cloud=emission.on_cloud,
-            cloud_provider=emission.cloud_provider,
-            cloud_region=emission.cloud_region,
-            experiment_id=emission.experiment_id,
-        ))
+        self.emissions.append(
+            models.Emission(
+                id=self.id + 1,
+                timestamp=emission.timestamp,
+                duration=emission.duration,
+                emissions=emission.emissions,
+                energy_consumed=emission.energy_consumed,
+                country_name=emission.country_name,
+                country_iso_code=emission.country_iso_code,
+                region=emission.region,
+                on_cloud=emission.on_cloud,
+                cloud_provider=emission.cloud_provider,
+                cloud_region=emission.cloud_region,
+                experiment_id=emission.experiment_id,
+            )
+        )
 
     def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
         return schemas.Emission(
@@ -172,12 +176,13 @@ class InMemoryRepository(AbstractRepository):
             experiment_id=first_emission.experiment_id,
         )
 
-    def get_emissions_from_experiment(
-        self, experiment_id
-    ) -> List[schemas.Emission]:
+    def get_emissions_from_experiment(self, experiment_id) -> List[schemas.Emission]:
         print(len(self.emissions))
-        stored_emissions = [stored_emission for stored_emission in self.emissions
-                            if stored_emission.experiment_id == experiment_id]
+        stored_emissions = [
+            stored_emission
+            for stored_emission in self.emissions
+            if stored_emission.experiment_id == experiment_id
+        ]
         emissions: List[schemas.Emission] = []
         for emission in stored_emissions:
             emissions.append(self.get_db_to_class(emission))

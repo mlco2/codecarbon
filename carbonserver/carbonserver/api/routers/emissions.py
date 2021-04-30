@@ -34,7 +34,9 @@ async def read_experiment_emissions(
     db: Session = Depends(get_db),
 ):
     repository_emissions = SqlAlchemyRepository(db)
-    experiment_emissions = repository_emissions.get_emissions_from_experiment(experiment_id)
+    experiment_emissions = repository_emissions.get_emissions_from_experiment(
+        experiment_id
+    )
     if experiment_emissions is None:
         raise HTTPException(
             status_code=404,
