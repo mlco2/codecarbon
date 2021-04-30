@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
-from dependencies import get_token_header, get_db
-from domain.schemas import TeamCreate
+from carbonserver.api.dependencies import get_token_header, get_db
+from carbonserver.database.schemas import TeamCreate
 
 
 router = APIRouter(
@@ -34,7 +34,7 @@ async def read_project_teams(
     project_id: str = Path(..., title="The ID of the project to get")
 ):
     # project_teams = crud_teams.get_Project_from_Teams(team_id)
-    # # Remove next line when DB work
+    # Remove next line when DB work
     # project_teams = teams_temp_db
     # return project_teams
     raise HTTPException(status_code=501, detail="Not Implemented")

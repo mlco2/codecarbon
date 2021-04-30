@@ -1,12 +1,13 @@
 # from uuid import uuid4 as uuid
-from domain import models, schemas
+from carbonserver.api.domain import models
+from carbonserver.database import schemas
+
 from sqlalchemy.orm import Session
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
 
 """
 Here there is all the method to manipulate the project data
-
 """
 
 
@@ -25,10 +26,9 @@ def save_team(db: Session, team: schemas.TeamCreate):
 
 def get_one_Team(team_id):
     # TODO : find the Team in database and return it
-
-    return
+    pass
 
 
 def get_Project_from_Teams(team_id):
     # TODO : get Projects from Project id in database
-    return
+    pass

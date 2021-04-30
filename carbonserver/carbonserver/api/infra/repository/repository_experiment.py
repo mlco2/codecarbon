@@ -1,12 +1,13 @@
 # from uuid import uuid4 as uuid
-from domain import models, schemas
+from carbonserver.api.domain import models
+from carbonserver.database import schemas
+
 from sqlalchemy.orm import Session
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
 
 """
 Here there is all the method to manipulate the experiment data
-
 """
 
 

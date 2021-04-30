@@ -1,6 +1,5 @@
-# from infra.repository.repository_experiments import *
-from database.domain.schemas import ExperimentCreate
-from dependencies import get_db, get_token_header
+from carbonserver.database.schemas import ExperimentCreate
+from carbonserver.api.dependencies import get_db, get_token_header
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
