@@ -2,9 +2,9 @@
 import abc
 from typing import List
 
-from domain import models, schemas
+from carbonserver.api.domain import models
+from carbonserver.database import schemas
 from sqlalchemy.orm import Session
-
 
 """
 The emissions are stored in the database by this repository class.
@@ -16,7 +16,7 @@ It relies on an abstract repository which exposes an interface of signatures sha
 
 class AbstractRepository(abc.ABC):
     @abc.abstractmethod
-    def add_save_emission(self, db: Session, emission: schemas.EmissionCreate):
+    def add_save_emission(self, emission: schemas.EmissionCreate):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -24,19 +24,19 @@ class AbstractRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_one_emission(self, db: Session, emission_id) -> schemas.Emission:
+    def get_one_emission(self, emission_id) -> schemas.Emission:
         raise NotImplementedError
 
     @abc.abstractmethod
     def get_emissions_from_experiment(
-        self, db: Session, experiment_id
+        self, experiment_id
     ) -> List[schemas.Emission]:
         raise NotImplementedError
 
 
 class SqlAlchemyRepository(AbstractRepository):
-    def __init__(self, session):
-        self.session = session
+    def __init__(self, db: Session):
+        self.db = db
 
     def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
         """Convert a models.Emission to a schemas.Emission
@@ -60,7 +60,7 @@ class SqlAlchemyRepository(AbstractRepository):
             experiment_id=emission.experiment_id,
         )
 
-    def add_save_emission(self, db: Session, emission: schemas.EmissionCreate):
+    def add_save_emission(self, emission: schemas.EmissionCreate):
         """Save an emission to the database.
 
         :db: : A SQLAlchemy session.
@@ -79,10 +79,10 @@ class SqlAlchemyRepository(AbstractRepository):
             cloud_region=emission.cloud_region,
             experiment_id=emission.experiment_id,
         )
-        db.add(db_emission)
-        db.commit()
+        self.db.add(db_emission)
+        self.db.commit()
 
-    def get_one_emission(self, db: Session, emission_id) -> schemas.Emission:
+    def get_one_emission(self, emission_id) -> schemas.Emission:
         """Find the emission in database and return it
 
         :db: : A SQLAlchemy session.
@@ -90,15 +90,13 @@ class SqlAlchemyRepository(AbstractRepository):
         :returns: An Emission in pyDantic BaseModel format.
         :rtype: schemas.Emission
         """
-        e = db.query(models.Emission).filter(models.Emission.id == emission_id).first()
+        e = self.db.query(models.Emission).filter(models.Emission.id == emission_id).first()
         if e is None:
             return None
         else:
             return self.get_db_to_class(e)
 
-    def get_emissions_from_experiment(
-        self, db: Session, experiment_id
-    ) -> List[schemas.Emission]:
+    def get_emissions_from_experiment(self, experiment_id) -> List[schemas.Emission]:
         """Find the emissions from an experiment in database and return it
 
         :db: : A SQLAlchemy session.
@@ -106,11 +104,11 @@ class SqlAlchemyRepository(AbstractRepository):
         :returns: An Emission in pyDantic BaseModel format.
         :rtype: List[schemas.Emission]
         """
-        res = db.query(models.Emission).filter(
+        res = self.db.query(models.Emission).filter(
             models.Emission.experiment_id == experiment_id
         )
         if res.first() is None:
-            return None
+            return []
         else:
             # Convert the table of models.Emission to a table of schemas.Emission
             emissions = []
@@ -118,3 +116,69 @@ class SqlAlchemyRepository(AbstractRepository):
                 emission = self.get_db_to_class(e)
                 emissions.append(emission)
             return emissions
+
+
+class InMemoryRepository(AbstractRepository):
+    def __init__(self):
+        self.emissions: List = []
+        self.id: int = 0
+
+    def add_save_emission(self, emission: schemas.EmissionCreate):
+        self.emissions.append(models.Emission(
+            id=self.id + 1,
+            timestamp=emission.timestamp,
+            duration=emission.duration,
+            emissions=emission.emissions,
+            energy_consumed=emission.energy_consumed,
+            country_name=emission.country_name,
+            country_iso_code=emission.country_iso_code,
+            region=emission.region,
+            on_cloud=emission.on_cloud,
+            cloud_provider=emission.cloud_provider,
+            cloud_region=emission.cloud_region,
+            experiment_id=emission.experiment_id,
+        ))
+
+    def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
+        return schemas.Emission(
+            id=emission.id,
+            timestamp=emission.timestamp,
+            duration=emission.duration,
+            emissions=emission.emissions,
+            energy_consumed=emission.energy_consumed,
+            country_name=emission.country_name,
+            country_iso_code=emission.country_iso_code,
+            region=emission.region,
+            on_cloud=emission.on_cloud,
+            cloud_provider=emission.cloud_provider,
+            cloud_region=emission.cloud_region,
+            experiment_id=emission.experiment_id,
+        )
+
+    def get_one_emission(self, emission_id) -> schemas.Emission:
+        first_emission = self.emissions[0]
+        return schemas.Emission(
+            id=first_emission.id,
+            timestamp=first_emission.timestamp,
+            duration=first_emission.duration,
+            emissions=first_emission.emissions,
+            energy_consumed=first_emission.energy_consumed,
+            country_name=first_emission.country_name,
+            country_iso_code=first_emission.country_iso_code,
+            region=first_emission.region,
+            on_cloud=first_emission.on_cloud,
+            cloud_provider=first_emission.cloud_provider,
+            cloud_region=first_emission.cloud_region,
+            experiment_id=first_emission.experiment_id,
+        )
+
+    def get_emissions_from_experiment(
+        self, experiment_id
+    ) -> List[schemas.Emission]:
+        print(len(self.emissions))
+        stored_emissions = [stored_emission for stored_emission in self.emissions
+                            if stored_emission.experiment_id == experiment_id]
+        emissions: List[schemas.Emission] = []
+        for emission in stored_emissions:
+            emissions.append(self.get_db_to_class(emission))
+        return emissions

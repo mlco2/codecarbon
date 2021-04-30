@@ -1,7 +1,7 @@
 # read https://fastapi.tiangolo.com/tutorial/sql-databases/
 
 
-from carbonserver.api.database.database import Base
+from carbonserver.database.database import Base
 
 # Put here the structure of the database
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
