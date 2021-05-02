@@ -1,6 +1,9 @@
 import pytest
 
-from carbonserver.database.schemas import ExperimentCreate, Experiment as SchemaExperiment
+from carbonserver.database.schemas import (
+    ExperimentCreate,
+    Experiment as SchemaExperiment,
+)
 from carbonserver.database.models import Experiment as ModelExperiment
 
 from carbonserver.api.infra.repositories.repository_experiment import InMemoryRepository
@@ -17,10 +20,10 @@ def experiments_fixture() -> ExperimentCreate:
     experiment = ExperimentCreate.parse_obj(
         {
             "timestamp": "2021-04-04T08:43:00+02:00",
-            "name": 'experiment',
-            "description": 'Test experiment',
+            "name": "experiment",
+            "description": "Test experiment",
             "is_active": True,
-            "project_id": 1
+            "project_id": 1,
         }
     )
     return experiment
@@ -31,10 +34,10 @@ def model_experiment() -> ModelExperiment:
     model_experiment = ModelExperiment(
         **{
             "timestamp": "2021-04-04T08:43:00+02:00",
-            "name": 'experiment',
-            "description": 'Test experiment',
+            "name": "experiment",
+            "description": "Test experiment",
             "is_active": True,
-            "project_id": 1
+            "project_id": 1,
         }
     )
     return model_experiment
@@ -46,10 +49,10 @@ def test_experiment_repository_saves_correct_experiment(
     experiment = ExperimentCreate.parse_obj(
         {
             "timestamp": "2021-04-04T08:43:00+02:00",
-            "name": 'experiment',
-            "description": 'Test experiment',
+            "name": "experiment",
+            "description": "Test experiment",
             "is_active": True,
-            "project_id": 1
+            "project_id": 1,
         }
     )
     experiments_repository.save_experiment(experiment)
@@ -66,10 +69,10 @@ def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
         {
             "id": 1,
             "timestamp": "2021-04-04T08:43:00+02:00",
-            "name": 'experiment',
-            "description": 'Test experiment',
+            "name": "experiment",
+            "description": "Test experiment",
             "is_active": True,
-            "project_id": 1
+            "project_id": 1,
         }
     )
     experiments_repository.save_experiment(experiments_fixture)
@@ -88,15 +91,17 @@ def test_get_one_experiment_returns_the_correct_experiment_list_from_experiment_
             {
                 "id": 1,
                 "timestamp": "2021-04-04T08:43:00+02:00",
-                "name": 'experiment',
-                "description": 'Test experiment',
+                "name": "experiment",
+                "description": "Test experiment",
                 "is_active": True,
-                "project_id": 1
+                "project_id": 1,
             }
         )
     ]
     experiments_repository.save_experiment(experiments_fixture)
 
-    actual_emissions = experiments_repository.get_experiments_from_experiment(experiment_id)
+    actual_emissions = experiments_repository.get_experiments_from_experiment(
+        experiment_id
+    )
 
     assert expected_emissions == actual_emissions

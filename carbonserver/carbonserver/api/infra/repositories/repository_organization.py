@@ -19,8 +19,7 @@ class SqlAlchemyRepository(OrganizationInterface):
     def save_organization(self, organization: schemas.OrganizationCreate):
         # TODO : save Organization in database and get her ID
         db_organization = models.Organization(
-            name=organization.name,
-            description=organization.description
+            name=organization.name, description=organization.description
         )
         self.db.add(db_organization)
         self.db.commit()
@@ -46,7 +45,7 @@ class InMemoryRepository(OrganizationInterface):
             models.Experiment(
                 id=self.id + 1,
                 name=organization.name,
-                description=organization.description
+                description=organization.description,
             )
         )
 
@@ -55,15 +54,17 @@ class InMemoryRepository(OrganizationInterface):
         return schemas.Organization(
             id=organization.id,
             name=organization.name,
-            description=organization.description
+            description=organization.description,
         )
 
     def get_team_from_organizations(self, organization_name: str):
         organizations = []
         for organization in self.organizations:
-            organizations.append(schemas.Organization(
-                id=organization.id,
-                name=organization.name,
-                description=organization.description
-            ))
+            organizations.append(
+                schemas.Organization(
+                    id=organization.id,
+                    name=organization.name,
+                    description=organization.description,
+                )
+            )
         return organizations

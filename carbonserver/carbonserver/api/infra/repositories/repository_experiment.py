@@ -54,7 +54,7 @@ class InMemoryRepository(ExperimentInterface):
                 name=experiment.name,
                 description=experiment.description,
                 is_active=experiment.is_active,
-                project_id=experiment.project_id
+                project_id=experiment.project_id,
             )
         )
 
@@ -66,19 +66,20 @@ class InMemoryRepository(ExperimentInterface):
             name=experiment.name,
             description=experiment.description,
             is_active=experiment.is_active,
-            project_id=experiment.project_id
+            project_id=experiment.project_id,
         )
 
     def get_experiments_from_experiment(self, experiment_id):
         experiments = []
         for experiment in self.experiments:
-            experiments.append(schemas.Experiment(
-                id=experiment.id,
-                timestamp=experiment.timestamp,
-                name=experiment.name,
-                description=experiment.description,
-                is_active=experiment.is_active,
-                project_id=experiment.project_id
-            )
+            experiments.append(
+                schemas.Experiment(
+                    id=experiment.id,
+                    timestamp=experiment.timestamp,
+                    name=experiment.name,
+                    description=experiment.description,
+                    is_active=experiment.is_active,
+                    project_id=experiment.project_id,
+                )
             )
         return experiments
