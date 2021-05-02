@@ -1,9 +1,8 @@
 # from uuid import uuid4 as uuid
-import abc
 from typing import List
 
-from carbonserver.api.domain import models
-from carbonserver.database import schemas
+from carbonserver.api.domain.emissions import EmissionsInterface
+from carbonserver.database import schemas, models
 from sqlalchemy.orm import Session
 
 """
@@ -14,25 +13,7 @@ It relies on an abstract repository which exposes an interface of signatures sha
 """
 
 
-class AbstractRepository(abc.ABC):
-    @abc.abstractmethod
-    def add_save_emission(self, emission: schemas.EmissionCreate):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_one_emission(self, emission_id) -> schemas.Emission:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_emissions_from_experiment(self, experiment_id) -> List[schemas.Emission]:
-        raise NotImplementedError
-
-
-class SqlAlchemyRepository(AbstractRepository):
+class SqlAlchemyRepository(EmissionsInterface):
     def __init__(self, db: Session):
         self.db = db
 
@@ -61,7 +42,6 @@ class SqlAlchemyRepository(AbstractRepository):
     def add_save_emission(self, emission: schemas.EmissionCreate):
         """Save an emission to the database.
 
-        :db: : A SQLAlchemy session.
         :emission: An Emission in pyDantic BaseModel format.
         """
         db_emission = models.Emission(
@@ -83,7 +63,6 @@ class SqlAlchemyRepository(AbstractRepository):
     def get_one_emission(self, emission_id) -> schemas.Emission:
         """Find the emission in database and return it
 
-        :db: : A SQLAlchemy session.
         :emission_id: The id of the emission to retreive.
         :returns: An Emission in pyDantic BaseModel format.
         :rtype: schemas.Emission
@@ -101,7 +80,6 @@ class SqlAlchemyRepository(AbstractRepository):
     def get_emissions_from_experiment(self, experiment_id) -> List[schemas.Emission]:
         """Find the emissions from an experiment in database and return it
 
-        :db: : A SQLAlchemy session.
         :experiment_id: The id of the experiment to retreive emissions from.
         :returns: An Emission in pyDantic BaseModel format.
         :rtype: List[schemas.Emission]
@@ -120,7 +98,7 @@ class SqlAlchemyRepository(AbstractRepository):
             return emissions
 
 
-class InMemoryRepository(AbstractRepository):
+class InMemoryRepository(EmissionsInterface):
     def __init__(self):
         self.emissions: List = []
         self.id: int = 0

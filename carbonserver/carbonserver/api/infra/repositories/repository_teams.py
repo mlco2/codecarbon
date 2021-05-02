@@ -1,6 +1,5 @@
 # from uuid import uuid4 as uuid
-from carbonserver.api.domain import models
-from carbonserver.database import schemas
+from carbonserver.database import schemas, models
 
 from sqlalchemy.orm import Session
 

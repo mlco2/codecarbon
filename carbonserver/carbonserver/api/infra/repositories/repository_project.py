@@ -1,5 +1,4 @@
-from carbonserver.api.domain import models
-from carbonserver.database import schemas
+from carbonserver.database import schemas, models
 
 from sqlalchemy.orm import Session
 
@@ -25,9 +24,4 @@ def save_project(db: Session, project: schemas.ProjectCreate):
 
 def get_one_Project(project_id):
     # TODO : find the Project in database and return it
-    pass
-
-
-def get_Projects_from_Project(project_id):
-    # TODO : get Projects from Project id in database
     pass
