@@ -1,5 +1,6 @@
-from fastapi import Depends, FastAPI
-from carbonserver.api.domain import models
+from carbonserver.database.database import engine
+from carbonserver.database import models
+from carbonserver.api.dependencies import get_query_token
 from carbonserver.api.routers import (
     emissions,
     experiments,
@@ -7,9 +8,8 @@ from carbonserver.api.routers import (
     organizations,
     teams,
 )
-from carbonserver.api.dependencies import get_query_token
-from carbonserver.database.database import engine
 
+from fastapi import Depends, FastAPI
 
 # TODO : read https://fastapi.tiangolo.com/tutorial/bigger-applications/
 

@@ -1,6 +1,6 @@
 from carbonserver.api.dependencies import get_db, get_token_header
 from carbonserver.database.schemas import EmissionCreate
-from carbonserver.api.infra.repository.repository_emissions import SqlAlchemyRepository
+from carbonserver.api.infra.repositories.repository_emissions import SqlAlchemyRepository
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session

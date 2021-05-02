@@ -1,9 +1,9 @@
 import pytest
 
 from carbonserver.database.schemas import EmissionCreate, Emission as SchemaEmission
-from carbonserver.api.domain.models import Emission as ModelEmission
+from carbonserver.database.models import Emission as ModelEmission
 
-from carbonserver.api.infra.repository.repository_emissions import InMemoryRepository
+from carbonserver.api.infra.repositories.repository_emissions import InMemoryRepository
 
 
 @pytest.fixture()
