@@ -132,6 +132,8 @@ class BaseEmissionsTracker(ABC):
         elif cpu.is_rapl_available():
             logger.info("CODECARBON : Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
+        # TODO: else? in slurm rapl could be available but we'd rather use slurm ids and
+        # TODO: TDP mode instead of RAPL which can't be disentangled
         else:
             logger.warning(
                 "CODECARBON : No CPU tracking mode found. Falling back on CPU constant mode."
@@ -139,11 +141,13 @@ class BaseEmissionsTracker(ABC):
             logger.info("CODECARBON : Tracking using constant")
             tdp = cpu.TDP().tdp
             if tdp:
+                # TODO: handle multiple CPUs, map to SLURM_IDS
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant", tdp))
             else:
                 logger.warning(
                     "CODECARBON : Failed to match CPU TDP constant. Falling back on a global constant."
                 )
+                # TODO: handle multiple constant CPUs
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
