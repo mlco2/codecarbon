@@ -1,9 +1,9 @@
-from carbonserver.database import schemas
+from carbonserver.api import schemas
 
 import abc
 
 
-class OrganizationInterface(abc.ABC):
+class Organization(abc.ABC):
     @abc.abstractmethod
     def save_organization(self, organization: schemas.OrganizationCreate):
         raise NotImplementedError

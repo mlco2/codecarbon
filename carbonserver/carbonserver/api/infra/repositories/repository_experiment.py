@@ -1,8 +1,9 @@
 # from uuid import uuid4 as uuid
 from typing import List
 
-from carbonserver.api.domain.experiment import ExperimentInterface
-from carbonserver.database import schemas, models
+from carbonserver.api.domain.experiment import Experiment
+from carbonserver.database import models
+from carbonserver.api import schemas
 
 from sqlalchemy.orm import Session
 
@@ -13,7 +14,7 @@ Here there is all the method to manipulate the experiment data
 """
 
 
-class SqlAlchemyRepository(ExperimentInterface):
+class SqlAlchemyRepository(Experiment):
     def __init__(self, db: Session):
         self.db = db
 
@@ -41,7 +42,7 @@ class SqlAlchemyRepository(ExperimentInterface):
         return True
 
 
-class InMemoryRepository(ExperimentInterface):
+class InMemoryRepository(Experiment):
     def __init__(self):
         self.experiments: List = []
         self.id: int = 0

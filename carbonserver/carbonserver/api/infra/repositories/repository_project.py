@@ -1,4 +1,5 @@
-from carbonserver.database import schemas, models
+from carbonserver.database import models
+from carbonserver.api import schemas
 
 from sqlalchemy.orm import Session
 

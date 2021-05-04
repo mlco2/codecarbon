@@ -8,7 +8,7 @@ These Pydantic models define more or less a "schema" (a valid data shape).
 So this will help us avoiding confusion while using both.
 """
 
-# TODO : Move this file in codecarbon package
+# TODO : Share this file with codecarbon package
 
 from datetime import datetime
 from typing import List, Optional

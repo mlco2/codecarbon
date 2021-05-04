@@ -1,6 +1,6 @@
 import pytest
 
-from carbonserver.database.schemas import (
+from carbonserver.api.schemas import (
     OrganizationCreate,
     Organization as SchemaOrganization,
 )
@@ -45,11 +45,11 @@ def test_organizations_repository_saves_correct_organization(
     assert saved_experiments[0].name == "1"
 
 
-def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
+def test_get_one_organization_returns_the_correct_organization_from_organization_name(
     organizations_repository, organizations_fixture
 ):
     organization_name = "1"
-    expected_experiment = SchemaOrganization.parse_obj(
+    expected_organization = SchemaOrganization.parse_obj(
         {"id": 1, "name": "1", "description": "Test organization"}
     )
     organizations_repository.save_organization(organizations_fixture)
@@ -57,22 +57,22 @@ def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
     actual_organization = organizations_repository.get_one_organization(
         organization_name
     )
-    assert expected_experiment == actual_organization
+    assert expected_organization == actual_organization
 
 
-def test_get_one_experiment_returns_the_correct_experiment_list_from_experiment_id(
+def test_get_one_organization_returns_the_correct_organizations_list_from_organization_name(
     organizations_repository, organizations_fixture
 ):
-    experiment_name = "1"
-    expected_emissions = [
+    organization_name = "1"
+    expected_organizations = [
         SchemaOrganization.parse_obj(
             {"id": 1, "name": "1", "description": "Test organization"}
         )
     ]
     organizations_repository.save_organization(organizations_fixture)
 
-    actual_emissions = organizations_repository.get_team_from_organizations(
-        experiment_name
+    actual_organizations = organizations_repository.get_team_from_organizations(
+        organization_name
     )
 
-    assert expected_emissions == actual_emissions
+    assert expected_organizations == actual_organizations
