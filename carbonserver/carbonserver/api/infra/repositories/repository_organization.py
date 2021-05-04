@@ -1,7 +1,8 @@
 from typing import List
 
-from carbonserver.api.domain.organization import OrganizationInterface
-from carbonserver.database import schemas, models
+from carbonserver.api.domain.organization import Organization
+from carbonserver.database import models
+from carbonserver.api import schemas
 
 from sqlalchemy.orm import Session
 
@@ -12,7 +13,7 @@ Here there is all the method to manipulate the project data
 """
 
 
-class SqlAlchemyRepository(OrganizationInterface):
+class SqlAlchemyRepository(Organization):
     def __init__(self, db: Session):
         self.db = db
 
@@ -35,7 +36,7 @@ class SqlAlchemyRepository(OrganizationInterface):
         pass
 
 
-class InMemoryRepository(OrganizationInterface):
+class InMemoryRepository(Organization):
     def __init__(self):
         self.organizations: List = []
         self.id: int = 0

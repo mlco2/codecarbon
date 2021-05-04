@@ -1,8 +1,10 @@
 # from uuid import uuid4 as uuid
 from typing import List
 
-from carbonserver.api.domain.emissions import EmissionsInterface
-from carbonserver.database import schemas, models
+from carbonserver.api.domain.emissions import Emissions
+from carbonserver.database import models
+from carbonserver.api import schemas
+
 from sqlalchemy.orm import Session
 
 """
@@ -13,7 +15,7 @@ It relies on an abstract repository which exposes an interface of signatures sha
 """
 
 
-class SqlAlchemyRepository(EmissionsInterface):
+class SqlAlchemyRepository(Emissions):
     def __init__(self, db: Session):
         self.db = db
 
@@ -98,7 +100,7 @@ class SqlAlchemyRepository(EmissionsInterface):
             return emissions
 
 
-class InMemoryRepository(EmissionsInterface):
+class InMemoryRepository(Emissions):
     def __init__(self):
         self.emissions: List = []
         self.id: int = 0
