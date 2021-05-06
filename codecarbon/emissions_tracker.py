@@ -27,7 +27,7 @@ from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
 logging.getLogger("codecarbon").setLevel(
     level=os.environ.get("CODECARBON_LOGLEVEL", "WARN")
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("codecarbon")
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
