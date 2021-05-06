@@ -14,7 +14,10 @@ from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
 
+# default W value for a CPU if no model is found in the ref csv
 POWER_CONSTANT = 85
+
+#  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
 logger = logging.getLogger(__name__)
