@@ -4,6 +4,7 @@ Encapsulates external dependencies to retrieve hardware metadata
 
 import logging
 import re
+import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
@@ -147,6 +148,41 @@ class RAM(BaseHardware):
         current_process = psutil.Process(self._pid)
         children = current_process.children(recursive=True)
         return [child.memory_info().rss for child in children]
+
+    def _read_slurm_scontrol(self):
+        try:
+            return subprocess.check_output(
+                ["scontrol show job $SLURM_JOBID"], shell=True
+            ).decode()
+        except subprocess.CalledProcessError:
+            return None
+
+    def _parse_scontrol_memory(self, mem):
+        nb = int(mem[:-1])
+        unit = mem[-1]
+        if unit == "T":
+            return nb * 1024
+        if unit == "G":
+            return nb
+        if unit == "M":
+            return nb / 1024
+        if unit == "K":
+            return nb / (1024 ** 2)
+
+    def _parse_scontrol(self, scontrol_str):
+        lines = scontrol_str.split("\n")
+        memlines = [line for line in lines if "mem=" in line]
+        if not memlines:
+            return
+        memline = memlines[0]
+        mem = memline.split("mem=")[1].split(",")[0]
+        return mem
+
+    def _get_slurm_mem_gb(self):
+        scontrol_str = self._read_slurm_scontrol()
+        mem = self._parse_scontrol(scontrol_str)
+        mem_gb = self._parse_scontrol_memory(mem)
+        return mem_gb
 
     @property
     def total_memory(self):
