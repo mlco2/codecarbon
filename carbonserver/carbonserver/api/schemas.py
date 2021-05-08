@@ -135,7 +135,6 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     name: str
     password: str
-    api_key: str
     is_active: bool
 
 
