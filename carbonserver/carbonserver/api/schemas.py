@@ -28,7 +28,6 @@ class EmissionBase(BaseModel):
     )
 
     class Config:
-        # orm_mode = True
         schema_extra = {
             "example": {
                 "timestamp": "2021-04-04T08:43:00+02:00",
@@ -36,12 +35,6 @@ class EmissionBase(BaseModel):
                 "duration": 98745,
                 "emissions": 1.548444,
                 "energy_consumed": 57.21874,
-                # "country_name": "France",
-                # "country_iso_code": "FRA",
-                # "region": "france",
-                # "on_cloud": True,
-                # "cloud_provider": "aws",
-                # "cloud_region": "eu-west-1a",
             }
         }
 
@@ -58,7 +51,14 @@ class Emission(EmissionBase):
 class RunBase(BaseModel):
     timestamp: datetime
     experiment_id: str
-    emission_id: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "timestamp": "2021-04-04T08:43:00+02:00",
+                "experiment_id": "1",
+            }
+        }
 
 
 class RunCreate(RunBase):
@@ -81,8 +81,25 @@ class ExperimentBase(BaseModel):
     on_cloud: bool
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
-    emission_id: int
     project_id: int
+
+    class Config:
+        # orm_mode = True
+        schema_extra = {
+            "example": {
+                "name": "Run on AWS",
+                "description": "AWS API for Code Carbon",
+                "is_active": True,
+                "timestamp": "2021-04-04T08:43:00+02:00",
+                "country_name": "France",
+                "country_iso_code": "FRA",
+                "region": "france",
+                "on_cloud": True,
+                "cloud_provider": "aws",
+                "cloud_region": "eu-west-1a",
+                "project_id": "1",
+            }
+        }
 
 
 class ExperimentCreate(ExperimentBase):
@@ -100,6 +117,15 @@ class ProjectBase(BaseModel):
     description: str
     team_id: int
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "API Code Carbon",
+                "description": "API for Code Carbon",
+                "team_id": "1",
+            }
+        }
+
 
 class ProjectCreate(ProjectBase):
     pass
@@ -116,6 +142,15 @@ class TeamBase(BaseModel):
     description: str
     organization_id: int
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "Data For Good",
+                "description": "Data For Good France",
+                "organization_id": "1",
+            }
+        }
+
 
 class TeamCreate(TeamBase):
     pass
@@ -130,6 +165,14 @@ class Team(TeamBase):
 class OrganizationBase(BaseModel):
     name: str
     description: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "Code Carbon",
+                "description": "Save the world, one run at a time.",
+            }
+        }
 
 
 class OrganizationCreate(OrganizationBase):
