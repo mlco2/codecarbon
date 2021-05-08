@@ -13,7 +13,7 @@ So this will help us avoiding confusion while using both.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, EmailStr, SecretStr
 
 
 class EmissionBase(BaseModel):
@@ -141,7 +141,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     name: str
-    email: str
+    email: EmailStr
     password: SecretStr
     api_key: str
     is_active: bool
