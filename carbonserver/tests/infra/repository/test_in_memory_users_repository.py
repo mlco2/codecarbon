@@ -1,8 +1,6 @@
 import pytest
 
-from carbonserver.api.infra.repositories.repository_users import (
-    InMemoryRepository
-)
+from carbonserver.api.infra.repositories.repository_users import InMemoryRepository
 from carbonserver.api.schemas import UserCreate
 from carbonserver.database.models import User as ModelUser
 
@@ -35,7 +33,7 @@ def model_user() -> ModelUser:
             "name": "John McLane",
             "email": "mclane@grubber.io",
             "hashed_password": "john",
-            "api_key": "key"
+            "api_key": "key",
         }
     )
     return model_user
@@ -43,11 +41,7 @@ def model_user() -> ModelUser:
 
 def test_create_user_saves_correct_user(user_repository):
     user = UserCreate.parse_obj(
-        {
-            "name": "John McLane",
-            "email": "mclane@grubber.io",
-            "password": "john"
-        }
+        {"name": "John McLane", "email": "mclane@grubber.io", "password": "john"}
     )
 
     created_user = user_repository.create_user(user)
@@ -57,19 +51,11 @@ def test_create_user_saves_correct_user(user_repository):
 
 def test_list_users_returns_all_users(user_repository):
     user1 = UserCreate.parse_obj(
-        {
-            "name": "John McLane",
-            "email": "mclane@grubber.io",
-            "password": "john"
-        }
+        {"name": "John McLane", "email": "mclane@grubber.io", "password": "john"}
     )
 
     user2 = UserCreate.parse_obj(
-        {
-            "name": "Simon Gruber",
-            "email": "Simon@grubber.io",
-            "password": "john"
-        }
+        {"name": "Simon Gruber", "email": "Simon@grubber.io", "password": "john"}
     )
 
     user_repository.create_user(user1)
@@ -83,19 +69,11 @@ def test_list_users_returns_all_users(user_repository):
 
 def test_get_user_by_id_returns_correct_user(user_repository):
     user1 = UserCreate.parse_obj(
-        {
-            "name": "John McLane",
-            "email": "mclane@grubber.io",
-            "password": "john"
-        }
+        {"name": "John McLane", "email": "mclane@grubber.io", "password": "john"}
     )
 
     user2 = UserCreate.parse_obj(
-        {
-            "name": "Simon Gruber",
-            "email": "Simon@grubber.io",
-            "password": "john"
-        }
+        {"name": "Simon Gruber", "email": "Simon@grubber.io", "password": "john"}
     )
 
     user_repository.create_user(user1)

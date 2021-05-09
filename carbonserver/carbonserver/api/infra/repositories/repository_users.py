@@ -20,7 +20,7 @@ class InMemoryRepository(User):
                 user_id=self.id,
                 name=user.name,
                 email=user.email,
-                password= user.password,
+                password=user.password,
                 api_key=_api_key_generator(),
                 is_active=True,
             )

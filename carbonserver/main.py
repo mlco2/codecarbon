@@ -7,7 +7,8 @@ from carbonserver.api.routers import (
     projects,
     organizations,
     teams,
-    users)
+    users,
+)
 
 from fastapi import Depends, FastAPI
 
