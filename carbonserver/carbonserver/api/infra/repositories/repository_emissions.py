@@ -157,7 +157,6 @@ class InMemoryRepository(Emission):
         )
 
     def get_emissions_from_experiment(self, experiment_id) -> List[schemas.Emission]:
-        print(len(self.emissions))
         stored_emissions = [
             stored_emission
             for stored_emission in self.emissions

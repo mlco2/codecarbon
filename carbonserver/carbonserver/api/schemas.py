@@ -8,8 +8,6 @@ These Pydantic models define more or less a "schema" (a valid data shape).
 So this will help us avoiding confusion while using both.
 """
 
-# TODO : Share this file with codecarbon package
-
 from datetime import datetime
 from typing import List, Optional
 
@@ -134,8 +132,8 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     name: str
-    password: str
-    is_active: bool
+    email: EmailStr
+    password: SecretStr
 
 
 class User(UserBase):
@@ -144,7 +142,6 @@ class User(UserBase):
     email: EmailStr
     password: SecretStr
     api_key: str
-    is_active: bool
 
     class Config:
-        orm_mode = False
+        orm_mode = True

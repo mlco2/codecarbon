@@ -1,9 +1,5 @@
-# read https://fastapi.tiangolo.com/tutorial/sql-databases/
-
-
 from carbonserver.database.database import Base
 
-# Put here the structure of the database
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -79,7 +75,7 @@ class User(Base):
     user_id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    password = Column(String)
     api_key = Column(String)
     is_active = Column(Boolean, default=True)
     # TODO: Associate user with his entities

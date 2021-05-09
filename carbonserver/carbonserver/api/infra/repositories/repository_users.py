@@ -1,9 +1,6 @@
-import hashlib
-import os
 import secrets
 from typing import List
 
-from pydantic import SecretStr
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.user import User
@@ -23,9 +20,9 @@ class InMemoryRepository(User):
                 user_id=self.id,
                 name=user.name,
                 email=user.email,
-                hashed_password=_hash_password(user.password),
+                password= user.password,
                 api_key=_api_key_generator(),
-                is_active=user.is_active,
+                is_active=True,
             )
         )
         return self.users[self.id - 1]
@@ -35,20 +32,7 @@ class InMemoryRepository(User):
         return user
 
     def list_users(self):
-        user_ids = [user.user_id for user in self.users]
-        return user_ids
-
-
-def _hash_password(password: str) -> SecretStr:
-    salt = _random_generator()  # Extract random generation to make it easier to mock
-    key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
-    hashed_password = salt + key
-
-    return hashed_password
-
-
-def _random_generator():
-    return os.urandom(32)
+        return self.users
 
 
 def _api_key_generator():
