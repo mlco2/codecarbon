@@ -6,7 +6,7 @@
 
 ### Domain logic
 To test the interface exposed by entities, in memory repositories can be used to isolate the domain logic from technical implementation.
-Current entites tests are located in tests/infra/repositories
+Current entities tests are located in tests/infra/repositories
 
 
 ### Infrastructure
@@ -50,4 +50,4 @@ cd carbonserver/
 uvicorn main:app
 
 Swagger documentation is available at localhost:8000/docs.
-Collection of requests are available in carbonserver/collections to test with Postman-like tooling.
+Collection of example requests could be stored in carbonserver/collections to test with Postman-like tooling.

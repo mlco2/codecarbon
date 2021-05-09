@@ -23,7 +23,6 @@ class Emission(Base):
     experiment = relationship("Experiment", back_populates="emissions")
 
 
-# Un experiment = un run
 class Experiment(Base):
     __tablename__ = "experiments"
 
@@ -59,7 +58,6 @@ class Team(Base):
     organization = relationship("Organization", back_populates="teams")
 
 
-# Organization
 class Organization(Base):
     __tablename__ = "organizations"
 
