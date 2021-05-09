@@ -2,8 +2,6 @@ from fastapi import Header, HTTPException
 from typing import Optional
 from carbonserver.database.database import SessionLocal
 
-# TODO : https://fastapi.tiangolo.com/tutorial/security/
-
 
 async def get_token_header(
     x_token: Optional[str] = Header(

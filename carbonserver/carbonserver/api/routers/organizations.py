@@ -1,5 +1,5 @@
 # from database.Infra.SqlAlchemy import repository_organizations
-from carbonserver.database.schemas import OrganizationCreate
+from carbonserver.api.schemas import OrganizationCreate
 from carbonserver.api.dependencies import get_db, get_token_header
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
