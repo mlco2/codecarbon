@@ -11,22 +11,21 @@ class SqlAlchemyRepository(Teams):
     def __init__(self, db: Session):
         self.db = db
 
-    def add_team(db: Session, team: schemas.TeamCreate):
+    def add_team(self, team: schemas.TeamCreate):
         # TODO : save Team in database and get her ID
         db_team = models.Team(
             name=team.name,
             description=team.description,
-            team_id=team.team_id,
         )
-        db.add(db_team)
-        db.commit()
-        db.refresh(db_team)
+        self.db.add(db_team)
+        self.db.commit()
+        self.db.refresh(db_team)
         return db_team
 
-    def get_one_Team(team_id):
+    def get_one_team(self, team_id):
         # TODO : find the Team in database and return it
         pass
 
-    def get_Project_from_Teams(team_id):
+    def get_projects_from_team(self, team_id):
         # TODO : get Projects from Project id in database
         pass

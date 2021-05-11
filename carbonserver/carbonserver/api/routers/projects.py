@@ -17,8 +17,7 @@ projects_temp_db = []
 @router.put("/project", tags=["projects"])
 def add_project(project: ProjectCreate, db: Session = Depends(get_db)):
     repository_projects = SqlAlchemyRepository(db)
-    repository_projects.add_project(db, project)
-    raise HTTPException(status_code=501, detail="Not Implemented")
+    repository_projects.add_project(project)
 
 
 @router.get("/project/{project_id}", tags=["projects"])

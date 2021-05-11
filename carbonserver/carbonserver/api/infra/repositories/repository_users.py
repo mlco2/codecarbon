@@ -1,10 +1,7 @@
 import secrets
 from typing import List
-
-
-from carbonserver.api import schemas
 from carbonserver.api.domain.users import Users
-from carbonserver.database import models
+from carbonserver.database import models, schemas
 
 
 class InMemoryRepository(Users):

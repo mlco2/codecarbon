@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship
 
 class Emission(Base):
     __tablename__ = "emissions"
-
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime)
     duration = Column(Float)
@@ -18,41 +17,33 @@ class Emission(Base):
 
 class Run(Base):
     __tablename__ = "runs"
-
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime)
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="runs")
-    # emission_id = Column(Integer,ForeignKey("emissions.id"))
     emissions = relationship("Emission", back_populates="run")
 
 
 class Experiment(Base):
     __tablename__ = "experiments"
-
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime)
     name = Column(String)
     description = Column(String)
     is_active = Column(Boolean, default=True)
-    ########################
     country_name = Column(String)
     country_iso_code = Column(String)
     region = Column(String)
     on_cloud = Column(Boolean, default=False)
     cloud_provider = Column(String)
     cloud_region = Column(String)
-    # emission_id = Column(Integer,ForeignKey("emission.id"))
     project_id = Column(Integer, ForeignKey("projects.id"))
-    #########################
-    # emissions = relationship("Emission", back_populates="experiment")
     project = relationship("Project", back_populates="experiments")
     runs = relationship("Run", back_populates="experiment")
 
 
 class Project(Base):
     __tablename__ = "projects"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     description = Column(String)
@@ -63,7 +54,6 @@ class Project(Base):
 
 class Team(Base):
     __tablename__ = "teams"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     description = Column(String)
@@ -74,7 +64,6 @@ class Team(Base):
 
 class Organization(Base):
     __tablename__ = "organizations"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     description = Column(String)
@@ -83,7 +72,6 @@ class Organization(Base):
 
 class User(Base):
     __tablename__ = "users"
-
     user_id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
