@@ -1,18 +1,14 @@
-# from uuid import uuid4 as uuid
 from typing import List
-
-from carbonserver.api.domain.experiment import Experiment
+from carbonserver.api.domain.experiments import Experiments
 from carbonserver.database import schemas, models
 from sqlalchemy.orm import Session
-
-# TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
 
 """
 Here there is all the method to manipulate the experiment data
 """
 
 
-class SqlAlchemyRepository(Experiment):
+class SqlAlchemyRepository(Experiments):
     def __init__(self, db: Session):
         self.db = db
 
@@ -39,7 +35,7 @@ class SqlAlchemyRepository(Experiment):
             project_id=experiment.project_id,
         )
 
-    def save_experiment(self, experiment: schemas.ExperimentCreate):
+    def add_experiment(self, experiment: schemas.ExperimentCreate):
         # TODO : save experiment in database and get her ID
         db_experiment = models.Experiment(
             timestamp=experiment.timestamp,
@@ -102,7 +98,7 @@ class SqlAlchemyRepository(Experiment):
             return experiments
 
 
-class InMemoryRepository(Experiment):
+class InMemoryRepository(Experiments):
     def __init__(self):
         self.experiments: List = []
         self.id: int = 0

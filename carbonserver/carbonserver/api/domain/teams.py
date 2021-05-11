@@ -1,15 +1,15 @@
-from carbonserver.api import schemas
+from carbonserver.database import schemas
 
 import abc
 
 
-class Team(abc.ABC):
+class Teams(abc.ABC):
     @abc.abstractmethod
-    def save_organization(self, organization: schemas.OrganizationCreate):
+    def add_team(self, team: schemas.TeamCreate):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_one_organization(self, organization_id):
+    def get_one_team(self, team_id):
         raise NotImplementedError
 
     @abc.abstractmethod

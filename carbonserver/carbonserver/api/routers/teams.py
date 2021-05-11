@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
 from carbonserver.api.dependencies import get_token_header, get_db
-from carbonserver.api.schemas import TeamCreate
-
+from carbonserver.database.schemas import TeamCreate
+from carbonserver.api.infra.repositories.repository_teams import (
+    SqlAlchemyRepository,
+)
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -14,10 +16,8 @@ teams_temp_db = []
 
 @router.put("/team", tags=["teams"])
 def add_team(team: TeamCreate, db: Session = Depends(get_db)):
-    # Remove next line when DB work
-    # teams_temp_db.append(team.dict())
-    # crud_teams.save_team(db, team)
-    raise HTTPException(status_code=501, detail="Not Implemented")
+    repository_teams = SqlAlchemyRepository(db)
+    repository_teams.add_team(team)
 
 
 @router.get("/team/{team_id}", tags=["teams"])

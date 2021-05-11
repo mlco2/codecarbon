@@ -1,22 +1,18 @@
 from typing import List
-
-from carbonserver.api.domain.organization import Organization
+from carbonserver.api.domain.organizations import Organizations
 from carbonserver.database import models, schemas
-
 from sqlalchemy.orm import Session
 
-# TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
-
 """
-Here there is all the method to manipulate the project data
+Here there is all the method to manipulate the organization data
 """
 
 
-class SqlAlchemyRepository(Organization):
+class SqlAlchemyRepository(Organizations):
     def __init__(self, db: Session):
         self.db = db
 
-    def save_organization(self, organization: schemas.OrganizationCreate):
+    def add_organization(self, organization: schemas.OrganizationCreate):
         # TODO : save Organization in database and get her ID
         db_organization = models.Organization(
             name=organization.name, description=organization.description
@@ -35,7 +31,7 @@ class SqlAlchemyRepository(Organization):
         pass
 
 
-class InMemoryRepository(Organization):
+class InMemoryRepository(Organizations):
     def __init__(self):
         self.organizations: List = []
         self.id: int = 0

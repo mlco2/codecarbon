@@ -3,9 +3,9 @@ from carbonserver.database import schemas
 import abc
 
 
-class Organization(abc.ABC):
+class Organizations(abc.ABC):
     @abc.abstractmethod
-    def save_organization(self, organization: schemas.OrganizationCreate):
+    def add_organization(self, organization: schemas.OrganizationCreate):
         raise NotImplementedError
 
     @abc.abstractmethod

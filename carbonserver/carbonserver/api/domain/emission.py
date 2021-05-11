@@ -6,7 +6,7 @@ from carbonserver.database import models, schemas
 
 class Emission(abc.ABC):
     @abc.abstractmethod
-    def add_save_emission(self, emission: schemas.EmissionCreate):
+    def add_emission(self, emission: schemas.EmissionCreate):
         raise NotImplementedError
 
     @abc.abstractmethod

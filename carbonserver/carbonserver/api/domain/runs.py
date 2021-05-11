@@ -2,7 +2,7 @@ import abc
 from carbonserver.database import schemas
 
 
-class RunInterface(abc.ABC):
+class Runs(abc.ABC):
     @abc.abstractmethod
-    def add_save_run(self, run: schemas.RunCreate):
+    def add_run(self, run: schemas.RunCreate):
         raise NotImplementedError

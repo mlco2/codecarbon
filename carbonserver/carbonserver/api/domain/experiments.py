@@ -4,9 +4,9 @@ import abc
 from typing import List
 
 
-class Experiment(abc.ABC):
+class Experiments(abc.ABC):
     @abc.abstractmethod
-    def save_experiment(self, experiment: schemas.ExperimentCreate):
+    def add_experiment(self, experiment: schemas.ExperimentCreate):
         raise NotImplementedError
 
     @abc.abstractmethod

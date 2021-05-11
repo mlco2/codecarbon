@@ -15,7 +15,7 @@ router = APIRouter(
 @router.put("/emission", tags=["emissions"], status_code=201)
 def add_emission(emission: EmissionCreate, db: Session = Depends(get_db)):
     repository_emissions = SqlAlchemyRepository(db)
-    repository_emissions.add_save_emission(emission)
+    repository_emissions.add_emission(emission)
 
 
 @router.get("/emission/{emission_id}", tags=["emissions"])

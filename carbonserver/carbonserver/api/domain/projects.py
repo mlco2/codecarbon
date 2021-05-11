@@ -1,11 +1,10 @@
-from carbonserver.api import schemas
-
+from carbonserver.database import schemas
 import abc
 
 
-class Project(abc.ABC):
+class Projects(abc.ABC):
     @abc.abstractmethod
-    def save_project(self, project: schemas.ProjectCreate):
+    def add_project(self, project: schemas.ProjectCreate):
         raise NotImplementedError
 
     @abc.abstractmethod

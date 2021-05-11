@@ -37,7 +37,7 @@ class SqlAlchemyRepository(Emission):
             experiment_id=emission.experiment_id,
         )
 
-    def add_save_emission(self, emission: schemas.EmissionCreate):
+    def add_emission(self, emission: schemas.EmissionCreate):
         """Save an emission to the database.
 
         :emission: An Emission in pyDantic BaseModel format.

@@ -1,15 +1,13 @@
-from carbonserver.api.domain.run import RunInterface
+from carbonserver.api.domain.runs import Runs
 from carbonserver.database import schemas, models
 from sqlalchemy.orm import Session
-
-# TODO : read https://fastapi.tiangolo.com/tutorial/sql-databases/
 
 """
 Here there is all the method to manipulate the experiment data
 """
 
 
-class SqlAlchemyRepository(RunInterface):
+class SqlAlchemyRepository(Runs):
     def __init__(self, db: Session):
         self.db = db
 
@@ -27,7 +25,7 @@ class SqlAlchemyRepository(RunInterface):
             experiment_id=run.experiment_id,
         )
 
-    def add_save_run(self, run: schemas.RunCreate):
+    def add_run(self, run: schemas.RunCreate):
         """Save an Run to the database.
         :run: An Run in pyDantic BaseModel format.
         """
