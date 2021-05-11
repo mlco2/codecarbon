@@ -1,12 +1,14 @@
 import pytest
 
-from carbonserver.api.schemas import (
+from carbonserver.database.schemas import (
     ExperimentCreate,
     Experiment as SchemaExperiment,
 )
 from carbonserver.database.models import Experiment as ModelExperiment
 
-from carbonserver.api.infra.repositories.repository_experiment import InMemoryRepository
+from carbonserver.api.infra.repositories.repository_experiments import (
+    InMemoryRepository,
+)
 
 
 @pytest.fixture()
