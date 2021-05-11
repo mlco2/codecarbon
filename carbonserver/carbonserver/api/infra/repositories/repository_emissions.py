@@ -11,7 +11,7 @@ It relies on an abstract repository which exposes an interface of signatures sha
 """
 
 
-class SqlAlchemyRepository(Emission):
+class SqlAlchemyRepository(Emissions):
     def __init__(self, db: Session):
         self.db = db
 
@@ -94,7 +94,7 @@ class SqlAlchemyRepository(Emission):
             return emissions
 
 
-class InMemoryRepository(Emission):
+class InMemoryRepository(Emissions):
     def __init__(self):
         self.emissions: List = []
         self.id: int = 0

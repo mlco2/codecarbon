@@ -4,7 +4,7 @@ from typing import List
 from carbonserver.database import models, schemas
 
 
-class Emission(abc.ABC):
+class Emissions(abc.ABC):
     @abc.abstractmethod
     def add_emission(self, emission: schemas.EmissionCreate):
         raise NotImplementedError
