@@ -4,10 +4,10 @@ from sqlalchemy.orm import sessionmaker
 
 from carbonserver.config import settings
 
-# SQLALCHEMY_DATABASE_URL = "sqlite:///./code_carbon.db"
-# SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
-
-engine = create_engine(settings.db_url, connect_args={"check_same_thread": False})
+engine_kwargs = {}
+if "sqlite" in settings.db_url:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+engine = create_engine(settings.db_url, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # We will use the function declarative_base() that returns a class.

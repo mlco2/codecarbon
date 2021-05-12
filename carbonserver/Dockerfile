@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install dependencies
-RUN apt update && apt install -y gcc
+RUN apt update && apt install -y gcc libpq-dev
 COPY requirements-dev.txt .
 RUN pip install -r requirements-dev.txt
 

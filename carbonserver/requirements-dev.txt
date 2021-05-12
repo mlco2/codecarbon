@@ -2,3 +2,4 @@ uvicorn[standard]
 fastapi
 sqlalchemy
 pydantic[email]
+psycopg2

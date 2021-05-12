@@ -36,7 +36,8 @@ services:
     ports:
       - 8008:8000
     environment:
-      DATABASE_URL: sqlite:///./code_carbon.db
+      # DATABASE_URL: sqlite:///./code_carbon.db
+      DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@postgres/${DATABASE_NAME:-codecarbon_db}
     networks:
       - codecarbon_net
 
