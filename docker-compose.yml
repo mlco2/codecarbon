@@ -28,6 +28,18 @@ services:
   #     - codecarbon_api
   #   restart: unless-stopped
 
+  carbonserver:
+    build: ./carbonserver
+    command: uvicorn main:app --host 0.0.0.0
+    volumes:
+      - ./carbonserver:/carbonserver
+    ports:
+      - 8008:8000
+    environment:
+      DATABASE_URL: sqlite:///./code_carbon.db
+    networks:
+      - codecarbon_net
+
   postgres:
     container_name: ${DATABASE_HOST:-postgres_codecarbon}
     environment:
