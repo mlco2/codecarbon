@@ -1,7 +1,7 @@
 # Dockerfile
 
 # pull the official docker image
-FROM python:3.9.4-slim
+FROM python:3.8.10-slim
 
 # set work directory
 WORKDIR /carbonserver
