@@ -30,7 +30,7 @@ services:
 
   carbonserver:
     build: ./carbonserver
-    command: uvicorn main:app --host 0.0.0.0
+    command: uvicorn --reload main:app --host 0.0.0.0
     volumes:
       - ./carbonserver:/carbonserver
     ports:
