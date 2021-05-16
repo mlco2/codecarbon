@@ -22,13 +22,14 @@ def add_project(project: ProjectCreate, db: Session = Depends(get_db)):
 
 @router.get("/project/{project_id}", tags=["projects"])
 async def read_project(
-    project_id: str = Path(..., title="The ID of the project to get")
+    project_id: str = Path(..., title="The ID of the project to get"),
+    db: Session = Depends(get_db),
 ):
-    # project = crud_projects.get_one_project(project_id)
-    # if project_id is False:
-    #     raise HTTPException(status_code=404, detail="Item not found")
-    # return project
-    raise HTTPException(status_code=501, detail="Not Implemented")
+    repository_projects = SqlAlchemyRepository(db)
+    project = repository_projects.get_one_project(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    return project
 
 
 @router.get("/projects/{project_id}", tags=["projects"])
