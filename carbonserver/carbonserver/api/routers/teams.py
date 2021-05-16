@@ -21,12 +21,15 @@ def add_team(team: TeamCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/team/{team_id}", tags=["teams"])
-async def read_team(team_id: str = Path(..., title="The ID of the team to get")):
-    # team = crud_teams.get_one_team(team_id)
-    # if team_id is False:
-    #     raise HTTPException(status_code=404, detail="Item not found")
-    # return team
-    raise HTTPException(status_code=501, detail="Not Implemented")
+async def read_team(
+    team_id: str = Path(..., title="The ID of the team to get"),
+    db: Session = Depends(get_db),
+):
+    repository_teams = SqlAlchemyRepository(db)
+    team = repository_teams.get_one_team(team_id)
+    if team is None:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    return team
 
 
 @router.get("/teams/{team_id}", tags=["teams"])
