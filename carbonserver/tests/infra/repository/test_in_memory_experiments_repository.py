@@ -25,6 +25,12 @@ def experiments_fixture() -> ExperimentCreate:
             "name": "experiment",
             "description": "Test experiment",
             "is_active": True,
+            "country_name": "France",
+            "country_iso_code": "FRA",
+            "region": "FRA",
+            "on_cloud": True,
+            "cloud_provider": "AWS",
+            "cloud_region": "eu-west-1a",
             "project_id": 1,
         }
     )
@@ -39,6 +45,12 @@ def model_experiment() -> ModelExperiment:
             "name": "experiment",
             "description": "Test experiment",
             "is_active": True,
+            "country_name": "France",
+            "country_iso_code": "FRA",
+            "region": "FRA",
+            "on_cloud": True,
+            "cloud_provider": "AWS",
+            "cloud_region": "eu-west-1a",
             "project_id": 1,
         }
     )
@@ -54,10 +66,16 @@ def test_experiment_repository_saves_correct_experiment(
             "name": "experiment",
             "description": "Test experiment",
             "is_active": True,
+            "country_name": "France",
+            "country_iso_code": "FRA",
+            "region": "FRA",
+            "on_cloud": True,
+            "cloud_provider": "AWS",
+            "cloud_region": "eu-west-1a",
             "project_id": 1,
         }
     )
-    experiments_repository.save_experiment(experiment)
+    experiments_repository.add_experiment(experiment)
     saved_experiments = experiments_repository.experiments
     assert len(saved_experiments) == 1
     assert saved_experiments[0].id == 1
@@ -74,10 +92,16 @@ def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
             "name": "experiment",
             "description": "Test experiment",
             "is_active": True,
+            "country_name": "France",
+            "country_iso_code": "FRA",
+            "region": "FRA",
+            "on_cloud": True,
+            "cloud_provider": "AWS",
+            "cloud_region": "eu-west-1a",
             "project_id": 1,
         }
     )
-    experiments_repository.save_experiment(experiments_fixture)
+    experiments_repository.add_experiment(experiments_fixture)
 
     actual_experiment = experiments_repository.get_one_experiment(experiment_id)
     print(actual_experiment)
@@ -87,23 +111,27 @@ def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
 def test_get_one_experiment_returns_the_correct_experiment_list_from_experiment_id(
     experiments_repository, experiments_fixture
 ):
-    experiment_id = 1
+    project_id = 3
     expected_emissions = [
         SchemaExperiment.parse_obj(
             {
-                "id": 1,
+                "id": 133742,
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "name": "experiment",
                 "description": "Test experiment",
                 "is_active": True,
-                "project_id": 1,
+                "country_name": "France",
+                "country_iso_code": "FRA",
+                "region": "FRA",
+                "on_cloud": True,
+                "cloud_provider": "AWS",
+                "cloud_region": "eu-west-1a",
+                "project_id": project_id,
             }
         )
     ]
-    experiments_repository.save_experiment(experiments_fixture)
+    experiments_repository.add_experiment(expected_emissions[0])
 
-    actual_emissions = experiments_repository.get_experiments_from_experiment(
-        experiment_id
-    )
-
+    actual_emissions = experiments_repository.get_experiments_from_project(project_id)
+    actual_emissions[0].id = expected_emissions[0].id
     assert expected_emissions == actual_emissions

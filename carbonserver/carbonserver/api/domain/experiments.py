@@ -17,10 +17,6 @@ class Experiments(abc.ABC):
     def get_one_experiment(self, experiment_id):
         raise NotImplementedError
 
-    # @abc.abstractmethod
-    # def get_experiments_from_experiment(self, experiment_id):
-    #    raise NotImplementedError
-
     @abc.abstractmethod
-    def get_experiment_from_emission(self, emission_id) -> List[schemas.Experiment]:
+    def get_experiments_from_project(self, project_id) -> List[schemas.Experiment]:
         raise NotImplementedError

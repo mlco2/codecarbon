@@ -95,7 +95,7 @@ class InMemoryRepository(Emissions):
                 duration=emission.duration,
                 emissions=emission.emissions,
                 energy_consumed=emission.energy_consumed,
-                experiment_id=emission.experiment_id,
+                run_id=emission.run_id,
             )
         )
 
@@ -106,7 +106,7 @@ class InMemoryRepository(Emissions):
             duration=emission.duration,
             emissions=emission.emissions,
             energy_consumed=emission.energy_consumed,
-            experiment_id=emission.experiment_id,
+            run_id=emission.run_id,
         )
 
     def get_one_emission(self, emission_id) -> schemas.Emission:
@@ -117,7 +117,7 @@ class InMemoryRepository(Emissions):
             duration=first_emission.duration,
             emissions=first_emission.emissions,
             energy_consumed=first_emission.energy_consumed,
-            experiment_id=first_emission.experiment_id,
+            run_id=first_emission.run_id,
         )
 
     def get_emissions_from_run(self, run_id) -> List[schemas.Emission]:
