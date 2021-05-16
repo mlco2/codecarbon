@@ -23,14 +23,14 @@ def add_organization(organization: OrganizationCreate, db: Session = Depends(get
 
 @router.get("/organization/{organization_id}", tags=["organizations"])
 async def read_organization(
-    organization_id: str = Path(..., title="The ID of the organization to get")
+    organization_id: str = Path(..., title="The ID of the organization to get"),
+    db: Session = Depends(get_db),
 ):
-    # TODO : call get_one_organization(organization_id)
-    # organization = crud_organizations.get_one_organization(organization_id)
-    # if organization_id is False:
-    #     raise HTTPException(status_code=404, detail="Item not found")
-    # return organization
-    raise HTTPException(status_code=501, detail="Not Implemented")
+    repository_organizations = SqlAlchemyRepository(db)
+    organization = repository_organizations.get_one_organization(organization_id)
+    if organization is None:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    return organization
 
 
 @router.get("/organizations/{organization_id}", tags=["organizations"])

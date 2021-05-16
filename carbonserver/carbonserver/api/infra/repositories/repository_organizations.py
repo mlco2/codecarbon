@@ -12,6 +12,15 @@ class SqlAlchemyRepository(Organizations):
     def __init__(self, db: Session):
         self.db = db
 
+    def get_db_to_class(
+        self, organization: models.Organization
+    ) -> schemas.Organization:
+        return schemas.Organization(
+            id=organization.id,
+            name=organization.name,
+            description=organization.description,
+        )
+
     def add_organization(self, organization: schemas.OrganizationCreate):
         # TODO : save Organization in database and get her ID
         db_organization = models.Organization(
@@ -22,9 +31,22 @@ class SqlAlchemyRepository(Organizations):
         self.db.refresh(db_organization)
         return db_organization
 
-    def get_one_organization(self, organization_name: str):
-        # TODO : find the Organization in database and return it
-        pass
+    def get_one_organization(self, organization_id: str):
+        """Find the organization in database and return it
+
+        :organization_id: The id of the organization to retreive.
+        :returns: An Organization in pyDantic BaseModel format.
+        :rtype: schemas.Organization
+        """
+        e = (
+            self.db.query(models.Organization)
+            .filter(models.Organization.id == organization_id)
+            .first()
+        )
+        if e is None:
+            return None
+        else:
+            return self.get_db_to_class(e)
 
     def get_team_from_organizations(self, organization_name: str):
         # TODO : get Organization from team id in database
@@ -35,6 +57,15 @@ class InMemoryRepository(Organizations):
     def __init__(self):
         self.organizations: List = []
         self.id: int = 0
+
+    def get_db_to_class(
+        self, organization: models.Organization
+    ) -> schemas.Organization:
+        return schemas.Organization(
+            id=organization.id,
+            name=organization.name,
+            description=organization.description,
+        )
 
     def add_organization(self, organization: schemas.OrganizationCreate):
         self.organizations.append(

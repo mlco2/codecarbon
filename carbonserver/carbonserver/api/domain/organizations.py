@@ -1,4 +1,4 @@
-from carbonserver.database import schemas
+from carbonserver.database import models, schemas
 
 import abc
 
@@ -6,6 +6,12 @@ import abc
 class Organizations(abc.ABC):
     @abc.abstractmethod
     def add_organization(self, organization: schemas.OrganizationCreate):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_db_to_class(
+        self, organization: models.Organization
+    ) -> schemas.Organization:
         raise NotImplementedError
 
     @abc.abstractmethod
