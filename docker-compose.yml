@@ -1,20 +1,5 @@
 version: '3.7'
 services:
-  # codecarbon_api:
-  #   build:
-  #     context: .
-  #     dockerfile: ./docker/Dockerfile
-  #   networks:
-  #     - codecarbon_net
-  #   ports:
-  #   - 5080:5000
-  #   environment:
-  #     DATABASE_URL: ${DATABASE_URL}
-  #   volumes:
-  #     - .:/opt/codecarbon/api
-  #   depends_on:
-  #     - postgres
-  #   restart: unless-stopped
 
   # codecarbon_package:
   #   build:
@@ -29,8 +14,10 @@ services:
   #   restart: unless-stopped
 
   carbonserver:
-    build: ./carbonserver
-    command: uvicorn --reload main:app --host 0.0.0.0
+    build:
+      context: ./carbonserver/
+      dockerfile: ./docker/Dockerfile
+    #command: cd /carbonserver/carbonserver/database && python3 -m alembic upgrade head && cd ../.. && uvicorn --reload main:app --host 0.0.0.0
     volumes:
       - ./carbonserver:/carbonserver
     ports:
