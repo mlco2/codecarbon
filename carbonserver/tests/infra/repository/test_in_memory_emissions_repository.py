@@ -1,7 +1,7 @@
 import pytest
 
 from carbonserver.database.schemas import EmissionCreate, Emission as SchemaEmission
-from carbonserver.database.models import Emissions as ModelEmission
+from carbonserver.database.models import Emission as ModelEmission
 
 from carbonserver.api.infra.repositories.repository_emissions import InMemoryRepository
 
@@ -71,7 +71,7 @@ def test_emissions_repository_saves_correct_emission(
             "cloud_region": "eu-west-1a",
         }
     )
-    emissions_repository.add_save_emission(emission)
+    emissions_repository.add_emission(emission)
     saved_emissions = emissions_repository.emissions
 
     assert len(saved_emissions) == 1
@@ -123,7 +123,7 @@ def test_get_one_emission_returns_the_correct_emission_from_emission_id(
             "cloud_region": "eu-west-1a",
         }
     )
-    emissions_repository.add_save_emission(emission_fixture)
+    emissions_repository.add_emission(emission_fixture)
 
     actual_emission = emissions_repository.get_one_emission(emission_id)
 
@@ -152,7 +152,7 @@ def test_get_one_emission_returns_the_correct_emission_list_from_experiment_id(
             }
         )
     ]
-    emissions_repository.add_save_emission(emission_fixture)
+    emissions_repository.add_emission(emission_fixture)
 
     actual_emissions = emissions_repository.get_emissions_from_experiment(experiment_id)
 

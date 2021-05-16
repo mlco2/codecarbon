@@ -37,7 +37,7 @@ async def read_experiment_emissions(
 ):
     repository_emissions = SqlAlchemyRepository(db)
     experiment_emissions = repository_emissions.get_emissions_from_run(run_id)
-    if experiment_emissions is None:
+    if len(experiment_emissions) == 0:
         raise HTTPException(
             status_code=404,
             detail=f"Emission not found for run_id {run_id}",

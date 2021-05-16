@@ -28,13 +28,7 @@ class SqlAlchemyRepository(Emissions):
             duration=emission.duration,
             emissions=emission.emissions,
             energy_consumed=emission.energy_consumed,
-            # country_name=emission.country_name,
-            # country_iso_code=emission.country_iso_code,
-            # region=emission.region,
-            # on_cloud=emission.on_cloud,
-            # cloud_provider=emission.cloud_provider,
-            # cloud_region=emission.cloud_region,
-            experiment_id=emission.experiment_id,
+            run_id=emission.run_id,
         )
 
     def add_emission(self, emission: schemas.EmissionCreate):
@@ -47,12 +41,6 @@ class SqlAlchemyRepository(Emissions):
             duration=emission.duration,
             emissions=emission.emissions,
             energy_consumed=emission.energy_consumed,
-            # country_name=emission.country_name,
-            # country_iso_code=emission.country_iso_code,
-            # region=emission.region,
-            # on_cloud=emission.on_cloud,
-            # cloud_provider=emission.cloud_provider,
-            # cloud_region=emission.cloud_region,
             run_id=emission.run_id,
         )
         self.db.add(db_emission)
@@ -99,7 +87,7 @@ class InMemoryRepository(Emissions):
         self.emissions: List = []
         self.id: int = 0
 
-    def add_save_emission(self, emission: schemas.EmissionCreate):
+    def add_emission(self, emission: schemas.EmissionCreate):
         self.emissions.append(
             models.Emission(
                 id=self.id + 1,
@@ -107,12 +95,6 @@ class InMemoryRepository(Emissions):
                 duration=emission.duration,
                 emissions=emission.emissions,
                 energy_consumed=emission.energy_consumed,
-                # country_name=emission.country_name,
-                # country_iso_code=emission.country_iso_code,
-                # region=emission.region,
-                # on_cloud=emission.on_cloud,
-                # cloud_provider=emission.cloud_provider,
-                # cloud_region=emission.cloud_region,
                 experiment_id=emission.experiment_id,
             )
         )
@@ -124,12 +106,6 @@ class InMemoryRepository(Emissions):
             duration=emission.duration,
             emissions=emission.emissions,
             energy_consumed=emission.energy_consumed,
-            # country_name=emission.country_name,
-            # country_iso_code=emission.country_iso_code,
-            # region=emission.region,
-            # on_cloud=emission.on_cloud,
-            # cloud_provider=emission.cloud_provider,
-            # cloud_region=emission.cloud_region,
             experiment_id=emission.experiment_id,
         )
 
@@ -141,12 +117,6 @@ class InMemoryRepository(Emissions):
             duration=first_emission.duration,
             emissions=first_emission.emissions,
             energy_consumed=first_emission.energy_consumed,
-            # country_name=first_emission.country_name,
-            # country_iso_code=first_emission.country_iso_code,
-            # region=first_emission.region,
-            # on_cloud=first_emission.on_cloud,
-            # cloud_provider=first_emission.cloud_provider,
-            # cloud_region=first_emission.cloud_region,
             experiment_id=first_emission.experiment_id,
         )
 
