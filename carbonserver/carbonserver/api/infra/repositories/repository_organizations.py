@@ -36,7 +36,7 @@ class InMemoryRepository(Organizations):
         self.organizations: List = []
         self.id: int = 0
 
-    def save_organization(self, organization: schemas.OrganizationCreate):
+    def add_organization(self, organization: schemas.OrganizationCreate):
         self.organizations.append(
             models.Experiment(
                 id=self.id + 1,

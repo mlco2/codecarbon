@@ -39,7 +39,7 @@ def test_organizations_repository_saves_correct_organization(
     organization = OrganizationCreate.parse_obj(
         {"name": "1", "description": "Test organization"}
     )
-    organizations_repository.save_organization(organization)
+    organizations_repository.add_organization(organization)
     saved_experiments = organizations_repository.organizations
     assert len(saved_experiments) == 1
     assert saved_experiments[0].name == "1"
@@ -52,7 +52,7 @@ def test_get_one_organization_returns_the_correct_organization_from_organization
     expected_organization = SchemaOrganization.parse_obj(
         {"id": 1, "name": "1", "description": "Test organization"}
     )
-    organizations_repository.save_organization(organizations_fixture)
+    organizations_repository.add_organization(organizations_fixture)
 
     actual_organization = organizations_repository.get_one_organization(
         organization_name
@@ -69,7 +69,7 @@ def test_get_one_organization_returns_the_correct_organizations_list_from_organi
             {"id": 1, "name": "1", "description": "Test organization"}
         )
     ]
-    organizations_repository.save_organization(organizations_fixture)
+    organizations_repository.add_organization(organizations_fixture)
 
     actual_organizations = organizations_repository.get_team_from_organizations(
         organization_name
