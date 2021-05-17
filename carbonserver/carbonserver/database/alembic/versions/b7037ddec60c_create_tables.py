@@ -29,14 +29,14 @@ def upgrade():
         # TODO: Add RAM and CPU consumption
         sa.Column(
             "run_id",
-            sa.Integer,
+            sa.String,
             sa.ForeignKey("runs.id"),
         ),
     )
 
     op.create_table(
         "runs",
-        sa.Column("id", sa.Integer, primary_key=True, index=True),
+        sa.Column("id", sa.String, primary_key=True, index=True),
         sa.Column("timestamp", sa.DateTime),
         sa.Column(
             "experiment_id",

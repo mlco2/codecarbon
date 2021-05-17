@@ -11,13 +11,13 @@ class Emission(Base):
     duration = Column(Float)
     emissions = Column(Float)
     energy_consumed = Column(Float)
-    run_id = Column(Integer, ForeignKey("runs.id"))
+    run_id = Column(String, ForeignKey("runs.id"))
     run = relationship("Run", back_populates="emissions")
 
 
 class Run(Base):
     __tablename__ = "runs"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True)
     timestamp = Column(DateTime)
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="runs")
@@ -75,7 +75,7 @@ class User(Base):
     user_id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
-    password = Column(String)
+    hashed_password = Column(String)
     api_key = Column(String)
     is_active = Column(Boolean, default=True)
     # TODO: Associate user with his entities

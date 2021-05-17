@@ -66,7 +66,7 @@ class RunCreate(RunBase):
 
 
 class Run(RunBase):
-    id: int
+    id: str
 
 
 # Experiment
