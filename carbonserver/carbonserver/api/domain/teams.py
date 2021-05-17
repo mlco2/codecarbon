@@ -1,4 +1,4 @@
-from carbonserver.database import models, schemas
+from carbonserver.api import schemas
 
 import abc
 
@@ -6,10 +6,6 @@ import abc
 class Teams(abc.ABC):
     @abc.abstractmethod
     def add_team(self, team: schemas.TeamCreate):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_db_to_class(self, team: models.Team) -> schemas.Team:
         raise NotImplementedError
 
     @abc.abstractmethod

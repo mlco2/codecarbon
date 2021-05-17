@@ -1,4 +1,4 @@
-from carbonserver.database import schemas, models
+from carbonserver.api import schemas
 
 import abc
 from typing import List
@@ -7,10 +7,6 @@ from typing import List
 class Experiments(abc.ABC):
     @abc.abstractmethod
     def add_experiment(self, experiment: schemas.ExperimentCreate):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_db_to_class(self, experiment: models.Experiment) -> schemas.Experiment:
         raise NotImplementedError
 
     @abc.abstractmethod

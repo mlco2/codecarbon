@@ -1,6 +1,7 @@
 from typing import List
 from carbonserver.api.domain.experiments import Experiments
-from carbonserver.database import schemas, models
+from carbonserver.database import models
+from carbonserver.api import schemas
 from sqlalchemy.orm import Session
 
 """
@@ -12,7 +13,8 @@ class SqlAlchemyRepository(Experiments):
     def __init__(self, db: Session):
         self.db = db
 
-    def get_db_to_class(self, experiment: models.Experiment) -> schemas.Experiment:
+    @staticmethod
+    def get_db_to_class(experiment: models.Experiment) -> schemas.Experiment:
         """Convert a models.Experiment to a schemas.Experiment
 
         :experiment: An Experiment in SQLAlchemy format.

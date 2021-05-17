@@ -1,6 +1,7 @@
 from typing import List
 from carbonserver.api.domain.teams import Teams
-from carbonserver.database import models, schemas
+from carbonserver.database import models
+from carbonserver.api import schemas
 from sqlalchemy.orm import Session
 
 """
@@ -11,14 +12,6 @@ Here there is all the method to manipulate the project data
 class SqlAlchemyRepository(Teams):
     def __init__(self, db: Session):
         self.db = db
-
-    def get_db_to_class(self, team: models.Team) -> schemas.Team:
-        return schemas.Team(
-            id=team.id,
-            name=team.name,
-            description=team.description,
-            organization_id=team.organization_id,
-        )
 
     def add_team(self, team: schemas.TeamCreate):
         # TODO : save Team in database and get her ID
@@ -45,6 +38,15 @@ class SqlAlchemyRepository(Teams):
         else:
             return self.get_db_to_class(e)
 
+    @staticmethod
+    def get_db_to_class(team: models.Team) -> schemas.Team:
+        return schemas.Team(
+            id=team.id,
+            name=team.name,
+            description=team.description,
+            organization_id=team.organization_id,
+        )
+
     def get_projects_from_team(self, team_id):
         # TODO : get Projects from Project id in database
         pass
@@ -57,20 +59,12 @@ class InMemoryRepository(Teams):
 
     def add_team(self, team: schemas.TeamCreate):
         self.teams.append(
-            models.Teams(
+            models.Team(
                 id=self.id + 1,
                 name=team.name,
                 description=team.description,
                 organization_id=team.organization_id,
             )
-        )
-
-    def get_db_to_class(self, team: models.Team) -> schemas.Team:
-        return schemas.Team(
-            id=team.id,
-            name=team.name,
-            description=team.description,
-            organization_id=team.organization_id,
         )
 
     def get_one_team(self, team_id) -> schemas.Team:
@@ -80,4 +74,13 @@ class InMemoryRepository(Teams):
             name=first_team.name,
             description=first_team.description,
             organization_id=first_team.organization_id,
+        )
+
+    @staticmethod
+    def get_db_to_class(team: models.Team) -> schemas.Team:
+        return schemas.Team(
+            id=team.id,
+            name=team.name,
+            description=team.description,
+            organization_id=team.organization_id,
         )

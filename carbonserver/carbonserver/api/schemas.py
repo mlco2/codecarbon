@@ -201,6 +201,7 @@ class User(UserBase):
     email: EmailStr
     password: SecretStr
     api_key: str
+    is_active: Optional[bool]
 
     class Config:
         orm_mode = True

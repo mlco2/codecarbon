@@ -1,5 +1,6 @@
 from carbonserver.api.domain.runs import Runs
-from carbonserver.database import schemas, models
+from carbonserver.database import models
+from carbonserver.api import schemas
 from sqlalchemy.orm import Session
 
 """
@@ -11,6 +12,7 @@ class SqlAlchemyRepository(Runs):
     def __init__(self, db: Session):
         self.db = db
 
+    @staticmethod
     def get_db_to_class(self, run: models.Run) -> schemas.Run:
         """Convert a models.Run to a schemas.Run
 

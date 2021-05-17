@@ -1,6 +1,7 @@
 from typing import List
 from carbonserver.api.domain.projects import Projects
-from carbonserver.database import models, schemas
+from carbonserver.database import models
+from carbonserver.api import schemas
 from sqlalchemy.orm import Session
 
 """
@@ -12,6 +13,7 @@ class SqlAlchemyRepository(Projects):
     def __init__(self, db: Session):
         self.db = db
 
+    @staticmethod
     def get_db_to_class(self, project: models.Project) -> schemas.Project:
         """Convert a models.Project to a schemas.Project
 

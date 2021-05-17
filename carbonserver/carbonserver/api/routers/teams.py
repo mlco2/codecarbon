@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Path, Depends, HTTPException
 from sqlalchemy.orm import Session
 from carbonserver.api.dependencies import get_token_header, get_db
-from carbonserver.database.schemas import TeamCreate
+from carbonserver.api.schemas import TeamCreate
 from carbonserver.api.infra.repositories.repository_teams import (
     SqlAlchemyRepository,
 )

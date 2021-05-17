@@ -1,6 +1,7 @@
 from typing import List
 from carbonserver.api.domain.organizations import Organizations
-from carbonserver.database import models, schemas
+from carbonserver.database import models
+from carbonserver.api import schemas
 from sqlalchemy.orm import Session
 
 """
@@ -12,8 +13,8 @@ class SqlAlchemyRepository(Organizations):
     def __init__(self, db: Session):
         self.db = db
 
-    def get_db_to_class(
-        self, organization: models.Organization
+    @staticmethod
+    def get_db_to_class(organization: models.Organization
     ) -> schemas.Organization:
         return schemas.Organization(
             id=organization.id,

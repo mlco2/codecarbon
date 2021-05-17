@@ -1,4 +1,4 @@
-from carbonserver.database.schemas import ExperimentCreate
+from carbonserver.api.schemas import ExperimentCreate
 from carbonserver.api.dependencies import get_db, get_token_header
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,

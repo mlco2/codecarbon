@@ -1,6 +1,8 @@
 from typing import List
 from carbonserver.api.domain.emissions import Emissions
-from carbonserver.database import models, schemas
+from carbonserver.database import models
+from carbonserver.api import schemas
+
 from sqlalchemy.orm import Session
 
 """
@@ -15,7 +17,8 @@ class SqlAlchemyRepository(Emissions):
     def __init__(self, db: Session):
         self.db = db
 
-    def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
+    @staticmethod
+    def get_db_to_class(emission: models.Emission) -> schemas.Emission:
         """Convert a models.Emission to a schemas.Emission
 
         :emission: An Emission in SQLAlchemy format.

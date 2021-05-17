@@ -1,6 +1,6 @@
 import pytest
 
-from carbonserver.database.schemas import (
+from carbonserver.api.schemas import (
     OrganizationCreate,
     Organization as SchemaOrganization,
 )
