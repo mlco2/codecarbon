@@ -16,7 +16,7 @@ Current entities tests are located in tests/infra/repositories
 - Authentication / user management  
 
 ### Routers 
-- To test a router, validation parameters are ensured by pydantic, and logic is tested by interfaces.
+- To test a router, validation parameters are ensured by pydantic (available on the swagger documentation), and logic is tested by interfaces.
 We want to test different responses so clients can be informed of the handling of their request, and adapt it if necessary.
 
 ### Integration
