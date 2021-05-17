@@ -18,14 +18,14 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/users/", tags=["users"], status_code=200)
-def list_users():
+def list_users(db: Session = Depends(get_db)):
     repository_users = SqlAlchemyRepository(db)
     users = repository_users.list_users()
     return users
 
 
 @router.get("/user/", tags=["users"], status_code=200)
-def get_user_by_id(user_id: int):
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     repository_users = SqlAlchemyRepository(db)
     users = repository_users.get_user_by_id(user_id)
     return users

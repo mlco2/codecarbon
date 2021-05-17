@@ -18,7 +18,7 @@ class SqlAlchemyRepository(Users):
             email=user.email,
             hashed_password=user.password,
             api_key=_api_key_generator(),
-            is_active=True
+            is_active=True,
         )
 
         self.db.add(db_user)
@@ -27,11 +27,11 @@ class SqlAlchemyRepository(Users):
         return db_user
 
     def get_user_by_id(self, user_id):
-        """Find the team in database and return it
+        """Find an user in database and return it
 
-        :team_id: The id of the team to retreive.
-        :returns: An Team in pyDantic BaseModel format.
-        :rtype: schemas.Team
+        :user_id: The id of the user to retrieve.
+        :returns: An User in pyDantic BaseModel format.
+        :rtype: schemas.User
         """
         e = self.db.query(models.User).filter(models.User.id == user_id).first()
         if e is None:
@@ -57,7 +57,7 @@ class SqlAlchemyRepository(Users):
             email=user.email,
             password=user.password,
             api_key=user.api_key,
-            is_active=user.is_active
+            is_active=user.is_active,
         )
 
 
@@ -96,7 +96,7 @@ class InMemoryRepository(Users):
             email=user.email,
             password=user.password,
             api_key=user.api_key,
-            is_active=user.is_active
+            is_active=user.is_active,
         )
 
 

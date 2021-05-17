@@ -14,8 +14,7 @@ class SqlAlchemyRepository(Organizations):
         self.db = db
 
     @staticmethod
-    def get_db_to_class(organization: models.Organization
-    ) -> schemas.Organization:
+    def get_db_to_class(organization: models.Organization) -> schemas.Organization:
         return schemas.Organization(
             id=organization.id,
             name=organization.name,
