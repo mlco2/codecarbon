@@ -1,5 +1,7 @@
-uvicorn[standard]
+alembic
 fastapi
-sqlalchemy
-requests
 pydantic[email]
+psycopg2
+sqlalchemy
+tox
+uvicorn[standard]

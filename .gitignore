@@ -111,3 +111,6 @@ docs/_build/
 # OS generated files
 .DS_Store
 .DS_Store?
+
+# local database
+code_carbon.db
