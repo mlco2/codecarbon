@@ -13,22 +13,6 @@ class SqlAlchemyRepository(Projects):
     def __init__(self, db: Session):
         self.db = db
 
-    @staticmethod
-    def get_db_to_class(self, project: models.Project) -> schemas.Project:
-        """Convert a models.Project to a schemas.Project
-
-        :project: An Project in SQLAlchemy format.
-        :returns: An Project in pyDantic BaseModel format.
-        :rtype: schemas.Project
-        """
-        return schemas.Project(
-            id=project.id,
-            name=project.name,
-            description=project.description,
-            # isactive=experiment.is_active,
-            team_id=project.team_id,
-        )
-
     def add_project(self, project: schemas.ProjectCreate):
         # TODO : save Project in database and get her ID
         db_project = models.Project(
@@ -61,6 +45,22 @@ class SqlAlchemyRepository(Projects):
         # TODO : find the Project in database and return it
         # pass
 
+    @staticmethod
+    def get_db_to_class(project: models.Project) -> schemas.Project:
+        """Convert a models.Project to a schemas.Project
+
+        :project: An Project in SQLAlchemy format.
+        :returns: An Project in pyDantic BaseModel format.
+        :rtype: schemas.Project
+        """
+        return schemas.Project(
+            id=project.id,
+            name=project.name,
+            description=project.description,
+            # isactive=experiment.is_active,
+            team_id=project.team_id,
+        )
+
 
 class InMemoryRepository(Projects):
     def __init__(self):
@@ -77,14 +77,6 @@ class InMemoryRepository(Projects):
             )
         )
 
-    def get_db_to_class(self, project: models.Project) -> schemas.Project:
-        return schemas.Project(
-            id=project.id,
-            name=project.name,
-            description=project.description,
-            team_id=project.team_id,
-        )
-
     def get_one_project(self, project_id) -> schemas.Project:
         first_project = self.projects[0]
         return schemas.Project(
@@ -92,4 +84,13 @@ class InMemoryRepository(Projects):
             name=first_project.name,
             description=first_project.description,
             team_id=first_project.team_id,
+        )
+
+    @staticmethod
+    def get_db_to_class(self, project: models.Project) -> schemas.Project:
+        return schemas.Project(
+            id=project.id,
+            name=project.name,
+            description=project.description,
+            team_id=project.team_id,
         )

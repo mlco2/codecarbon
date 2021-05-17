@@ -15,12 +15,9 @@ def user_repository():
 def user_fixture() -> UserCreate:
     user = UserCreate.parse_obj(
         {
-            "user_id": 1,
             "name": "John McLane",
             "email": "mclane@grubber.io",
             "password": "john",
-            "api_key": "key",
-            "is_active": True,
         }
     )
     return user

@@ -38,6 +38,10 @@ class SqlAlchemyRepository(Teams):
         else:
             return self.get_db_to_class(e)
 
+    def get_projects_from_team(self, team_id):
+        # TODO : get Projects from Project id in database
+        pass
+
     @staticmethod
     def get_db_to_class(team: models.Team) -> schemas.Team:
         return schemas.Team(
@@ -46,10 +50,6 @@ class SqlAlchemyRepository(Teams):
             description=team.description,
             organization_id=team.organization_id,
         )
-
-    def get_projects_from_team(self, team_id):
-        # TODO : get Projects from Project id in database
-        pass
 
 
 class InMemoryRepository(Teams):
@@ -75,6 +75,10 @@ class InMemoryRepository(Teams):
             description=first_team.description,
             organization_id=first_team.organization_id,
         )
+
+    def get_projects_from_team(self, team_id):
+        # TODO : get Projects from Project id in database
+        pass
 
     @staticmethod
     def get_db_to_class(team: models.Team) -> schemas.Team:

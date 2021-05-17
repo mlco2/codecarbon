@@ -55,7 +55,7 @@ class SqlAlchemyRepository(Users):
             id=user.user_id,
             name=user.name,
             email=user.email,
-            password=user.password,
+            hashed_password=user.hashed_password,
             api_key=user.api_key,
             is_active=user.is_active,
         )
@@ -74,7 +74,7 @@ class InMemoryRepository(Users):
                 user_id=self.id,
                 name=user.name,
                 email=user.email,
-                password=user.password,
+                hashed_password=user.password,
                 api_key=_api_key_generator(),
                 is_active=True,
             )
@@ -94,7 +94,7 @@ class InMemoryRepository(Users):
             id=user.user_id,
             name=user.name,
             email=user.email,
-            password=user.password,
+            hashed_password=user.hashed_password,
             api_key=user.api_key,
             is_active=user.is_active,
         )

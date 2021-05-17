@@ -102,16 +102,6 @@ class InMemoryRepository(Emissions):
             )
         )
 
-    def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
-        return schemas.Emission(
-            id=emission.id,
-            timestamp=emission.timestamp,
-            duration=emission.duration,
-            emissions=emission.emissions,
-            energy_consumed=emission.energy_consumed,
-            run_id=emission.run_id,
-        )
-
     def get_one_emission(self, emission_id) -> schemas.Emission:
         first_emission = self.emissions[0]
         return schemas.Emission(
@@ -134,3 +124,14 @@ class InMemoryRepository(Emissions):
         for emission in stored_emissions:
             emissions.append(self.get_db_to_class(emission))
         return emissions
+
+    @staticmethod
+    def get_db_to_class(emission: models.Emission) -> schemas.Emission:
+        return schemas.Emission(
+            id=emission.id,
+            timestamp=emission.timestamp,
+            duration=emission.duration,
+            emissions=emission.emissions,
+            energy_consumed=emission.energy_consumed,
+            run_id=emission.run_id,
+        )
