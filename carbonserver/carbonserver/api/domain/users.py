@@ -1,9 +1,9 @@
 import abc
 
-from carbonserver.api import schemas
+from carbonserver.database import schemas
 
 
-class User(abc.ABC):
+class Users(abc.ABC):
     @abc.abstractmethod
     def create_user(self, user: schemas.UserCreate):
         raise NotImplementedError

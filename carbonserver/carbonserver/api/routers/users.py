@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import UserCreate
+from carbonserver.database.schemas import UserCreate
 from carbonserver.api.infra.repositories.repository_users import InMemoryRepository
 
 router = APIRouter(

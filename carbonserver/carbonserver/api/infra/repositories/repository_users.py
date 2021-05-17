@@ -1,15 +1,12 @@
 import secrets
 from typing import List
+from carbonserver.api.domain.users import Users
+from carbonserver.database import models, schemas
 
 
-from carbonserver.api import schemas
-from carbonserver.api.domain.user import User
-from carbonserver.database import models
-
-
-class InMemoryRepository(User):
+class InMemoryRepository(Users):
     def __init__(self):
-        self.users: List[User] = []
+        self.users: List[Users] = []
         self.id: int = 0
         self.inactive_users: List = []
 

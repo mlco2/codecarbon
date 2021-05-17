@@ -1,7 +1,7 @@
 import pytest
 
 from carbonserver.api.infra.repositories.repository_users import InMemoryRepository
-from carbonserver.api.schemas import UserCreate
+from carbonserver.database.schemas import UserCreate
 from carbonserver.database.models import User as ModelUser
 
 

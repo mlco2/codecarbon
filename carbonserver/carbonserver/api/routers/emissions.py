@@ -1,5 +1,5 @@
 from carbonserver.api.dependencies import get_db, get_token_header
-from carbonserver.api.schemas import EmissionCreate
+from carbonserver.database.schemas import EmissionCreate
 from carbonserver.api.infra.repositories.repository_emissions import (
     SqlAlchemyRepository,
 )
@@ -15,7 +15,7 @@ router = APIRouter(
 @router.put("/emission", tags=["emissions"], status_code=201)
 def add_emission(emission: EmissionCreate, db: Session = Depends(get_db)):
     repository_emissions = SqlAlchemyRepository(db)
-    repository_emissions.add_save_emission(emission)
+    repository_emissions.add_emission(emission)
 
 
 @router.get("/emission/{emission_id}", tags=["emissions"])
@@ -30,18 +30,16 @@ async def read_emission(
     return emission
 
 
-@router.get("/emissions/{experiment_id}", tags=["emissions"])
+@router.get("/emissions/{run_id}", tags=["emissions"])
 async def read_experiment_emissions(
-    experiment_id: str = Path(..., title="The ID of the experiment to get"),
+    run_id: str = Path(..., title="The ID of the experiment to get"),
     db: Session = Depends(get_db),
 ):
     repository_emissions = SqlAlchemyRepository(db)
-    experiment_emissions = repository_emissions.get_emissions_from_experiment(
-        experiment_id
-    )
-    if experiment_emissions is None:
+    experiment_emissions = repository_emissions.get_emissions_from_run(run_id)
+    if len(experiment_emissions) == 0:
         raise HTTPException(
             status_code=404,
-            detail=f"Emission not found for experiment_id {experiment_id}",
+            detail=f"Emission not found for run_id {run_id}",
         )
     return experiment_emissions

@@ -23,27 +23,68 @@ def emissions_router():
     return app, client
 
 
-def test_post_emission_returns_success_with_correct_object(emissions_router):
+def test_post_emission_not_implemented(emissions_router):
     app, client = emissions_router
-
     response = client.post("/emission")
-
     assert response.status_code == 405
+
+
+def test_put_emission_returns_success_with_correct_object(emissions_router):
+    app, client = emissions_router
+    response = client.put(
+        "/emission",
+        json={
+            "timestamp": "2021-04-04T08:43:00+02:00",
+            "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
+            "duration": 98745,
+            "emissions": 1.548444,
+            "energy_consumed": 57.21874,
+        },
+    )
+    assert response.status_code == 201
+
+
+def test_put_emission_empty_returns_unprocessable(emissions_router):
+    app, client = emissions_router
+    response = client.put("/emission")
+    assert response.status_code == 422
+
+
+def test_read_emission_by_emission_id_returns_emission(emissions_router):
+    app, client = emissions_router
+    emission_id = "1"
+    response = client.get("/emission/{emission_id}".format(emission_id=emission_id))
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "duration": 98745,
+        "emissions": 1.548444,
+        "energy_consumed": 57.21874,
+        "id": 1,
+        "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
+        "timestamp": "2021-04-04T08:43:00",
+    }
 
 
 def test_read_emission_by_emission_id_returns_not_found_error(emissions_router):
     app, client = emissions_router
-    emission_id = "1"
+    emission_id = "64565sd4f5g6sd4f65g4"
     response = client.get("/emission/{emission_id}".format(emission_id=emission_id))
+
+    assert response.status_code == 404
+
+
+def test_read_emissions_by_run_id_returns_not_found_error(emissions_router):
+    app, client = emissions_router
+    run_id = "1"
+    response = client.get("/emissions/{run_id}".format(run_id=run_id))
 
     assert response.status_code == 404
 
 
 def test_read_emission_returns_experiment_id_returns_not_found_error(emissions_router):
     app, client = emissions_router
-    experiment_id = "1"
-    response = client.get(
-        "/emissions/{experitment_id}".format(experitment_id=experiment_id)
-    )
+    run_id = "wxcb46554vb4651"
+    response = client.get("/emissions/{run_id}".format(run_id=run_id))
 
     assert response.status_code == 404
