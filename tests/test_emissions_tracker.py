@@ -119,10 +119,8 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIsInstance(emissions, float)
         self.assertAlmostEqual(1.1037980397280433e-05, emissions, places=2)
 
-    @mock.patch("codecarbon.emissions_tracker.time.time")
-    def test_graceful_failure(
+    def test_graceful_start_failure(
         self,
-        mocked_time,
         mocked_env_cloud_details,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
@@ -135,9 +133,29 @@ class TestCarbonTracker(unittest.TestCase):
         def raise_exception(*args, **kwargs):
             raise Exception()
 
-        mocked_time.side_effect = raise_exception
+        mocked_scheduler = mock.MagicMock()
+        mocked_scheduler.start = raise_exception
+        tracker._scheduler = mocked_scheduler
+        tracker.start()
+
+    def test_graceful_stop_failure(
+        self,
+        mocked_env_cloud_details,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        def raise_exception(*args, **kwargs):
+            raise Exception()
 
         tracker.start()
+        heavy_computation(1)
+        tracker._measure_power = raise_exception
+        tracker.stop()
 
     @responses.activate
     def test_decorator_ONLINE_NO_ARGS(

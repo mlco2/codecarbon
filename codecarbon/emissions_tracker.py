@@ -25,7 +25,7 @@ from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
 
 logging.getLogger("codecarbon").setLevel(
-    level=os.environ.get("CODECARBON_LOGLEVEL", "WARN")
+    level=os.environ.get("CODECARBON_LOG_LEVEL", "INFO")
 )
 logger = logging.getLogger("codecarbon")
 

@@ -9,13 +9,26 @@ def suppress(*exceptions):
     try:
         yield
     except exceptions:
-        logger.info(exceptions, exc_info=True)
+        logger.warning("CODECARBON: graceful shutdown. Exceptions:")
+        logger.warning(
+            exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
+        )
+        logger.warning("CODECARBON: stopping.")
         pass
 
 
 def set_log_level(level: str):
     level = level.upper()
-    levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+    levels = {
+        "CRITICAL",
+        "FATAL",
+        "ERROR",
+        "WARN",
+        "WARNING",
+        "INFO",
+        "DEBUG",
+        "NOTSET",
+    }
     assert level in levels
 
     for lev in levels:
