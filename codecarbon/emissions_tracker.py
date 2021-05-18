@@ -18,7 +18,7 @@ from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Time
-from codecarbon.core.util import suppress, set_log_level
+from codecarbon.core.util import set_log_level, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
 from codecarbon.input import DataSource
@@ -498,7 +498,7 @@ def track_emissions(
                     cloud_provider=cloud_provider,
                     cloud_region=cloud_region,
                     gpu_ids=gpu_ids,
-                    log_level=log_level
+                    log_level=log_level,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
@@ -510,7 +510,7 @@ def track_emissions(
                     output_dir=output_dir,
                     save_to_file=save_to_file,
                     gpu_ids=gpu_ids,
-                    log_level=log_level
+                    log_level=log_level,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
