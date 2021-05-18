@@ -3,6 +3,7 @@ Encapsulates external dependencies to retrieve hardware metadata
 """
 
 import logging
+import os
 import re
 import subprocess
 from abc import ABC, abstractmethod
@@ -121,7 +122,7 @@ class RAM(BaseHardware):
 
     # 3 watts of power for every 8GB of DDR3 or DDR4 memory
     # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
-    gb_consumption = 3 / 8  # W/GB
+    power_per_GB = 3 / 8  # W/GB
 
     def __init__(self, pid: int = psutil.Process().pid, children: bool = True):
         """
@@ -161,13 +162,13 @@ class RAM(BaseHardware):
         nb = int(mem[:-1])
         unit = mem[-1]
         if unit == "T":
-            return nb * 1024
+            return nb * 1000
         if unit == "G":
             return nb
         if unit == "M":
-            return nb / 1024
+            return nb / 1000
         if unit == "K":
-            return nb / (1024 ** 2)
+            return nb / (1000 ** 2)
 
     def _parse_scontrol(self, scontrol_str):
         lines = scontrol_str.split("\n")
@@ -178,14 +179,15 @@ class RAM(BaseHardware):
         mem = memline.split("mem=")[1].split(",")[0]
         return mem
 
-    def _get_slurm_mem_gb(self):
+    @property
+    def slurm_memory_GB(self):
         scontrol_str = self._read_slurm_scontrol()
         mem = self._parse_scontrol(scontrol_str)
-        mem_gb = self._parse_scontrol_memory(mem)
-        return mem_gb
+        mem_GB = self._parse_scontrol_memory(mem)
+        return mem_GB
 
     @property
-    def total_memory(self):
+    def process_memory_GB(self):
         """
         Property to compute the process's total memory usage in bytes.
 
@@ -195,7 +197,7 @@ class RAM(BaseHardware):
         children_memories = self._get_children_memories() if self._children else []
         main_memory = psutil.Process(self._pid).memory_info().rss
         memories = children_memories + [main_memory]
-        return sum([m for m in memories if m] + [0])
+        return sum([m for m in memories if m] + [0]) / 1e9
 
     def total_power(self) -> Power:
         """
@@ -203,14 +205,18 @@ class RAM(BaseHardware):
         `children` was True in __init__)
 
         Returns:
-            Power: kW of power consumption, using self.gb_consumption W/GB
+            Power: kW of power consumption, using self.power_per_GB W/GB
         """
         try:
-            memory_gb = self.total_memory / (1024 ** 3)
-            ram_power = Power.from_watts(memory_gb * self.gb_consumption)
+            memory_GB = (
+                self.slurm_memory_GB
+                if os.environ.get("SLURM_JOB_ID")
+                else self.process_memory_GB
+            )
+            ram_power = Power.from_watts(memory_GB * self.power_per_GB)
             logger.info(f"CODECARBON RAM Power Consumption : {ram_power}")
         except Exception as e:
             logger.warning(f"CODECARBON could not measure RAM Power ({str(e)})")
             ram_power = Power.from_watts(0)
-        finally:
-            return ram_power
+
+        return ram_power
