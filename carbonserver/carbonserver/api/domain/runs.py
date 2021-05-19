@@ -1,5 +1,5 @@
 import abc
-from carbonserver.database import schemas
+from carbonserver.api import schemas
 
 
 class Runs(abc.ABC):

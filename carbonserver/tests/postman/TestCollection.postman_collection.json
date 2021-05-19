@@ -1,0 +1,393 @@
+{
+	"info": {
+		"_postman_id": "0f05af20-07c9-4ce5-a0d3-06ef21364095",
+		"name": "Test Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Add Emission",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token\n",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"timestamp\":\"2021-04-04T08:43:00+02:00\",\"run_id\":\"40088f1a-d28e-4980-8d80-bf5600056a14\",\"duration\":98745,\"emissions\":1.548444,\"energy_consumed\":57.21874}"
+				},
+				"url": "http://localhost:8000/emission"
+			},
+			"response": []
+		},
+		{
+			"name": "Get emission by id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token\n",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/emission/1?id=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"emission",
+						"1"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1"
+						}
+					]
+				},
+				"description": "Get saved emission objects by id."
+			},
+			"response": []
+		},
+		{
+			"name": "Get emissions by run id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token\n",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/emissions/40088f1a-d28e-4980-8d80-bf5600056a14?id=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"emissions",
+						"40088f1a-d28e-4980-8d80-bf5600056a14"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1"
+						}
+					]
+				},
+				"description": "Get saved emission objects for example run id."
+			},
+			"response": []
+		},
+		{
+			"name": "Add Run",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "x_token\n",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"timestamp\": \"2021-04-04T08:43:00+02:00\",\n  \"experiment_id\": \"1\"\n}"
+				},
+				"url": "http://localhost:8000/run"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Experiment",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "x_token\n",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Run on AWS\",\n  \"description\": \"AWS API for Code Carbon\",\n  \"timestamp\": \"2021-04-04T08:43:00+02:00\",\n  \"country_name\": \"France\",\n  \"country_iso_code\": \"FRA\",\n  \"region\": \"france\",\n  \"on_cloud\": true,\n  \"cloud_provider\": \"aws\",\n  \"cloud_region\": \"eu-west-1a\",\n  \"project_id\": \"1\"\n}"
+				},
+				"url": "http://localhost:8000/experiment"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Experiment by id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token\n",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": "http://localhost:8000/experiment/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Organization",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"name\":\"Code Carbon\",\"description\":\"Save the world, one run at a time.\"}"
+				},
+				"url": "http://localhost:8000/organization"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Organization by Id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": "http://localhost:8000/organization/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Project",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"API Code Carbon\",\n  \"description\": \"API for Code Carbon\",\n  \"team_id\": \"1\"\n}\n"
+				},
+				"url": "http://localhost:8000/project"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Project",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": "http://localhost:8000/project/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Team",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Data For Good\",\n  \"description\": \"Data For Good France\",\n  \"organization_id\": \"1\"\n}"
+				},
+				"url": "http://localhost:8000/team"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Team",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": "http://localhost:8000/team/1"
+			},
+			"response": []
+		},
+		{
+			"name": "Add User",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": "C"
+			},
+			"response": []
+		},
+		{
+			"name": "Get User",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "C"
+			},
+			"response": []
+		}
+	]
+}

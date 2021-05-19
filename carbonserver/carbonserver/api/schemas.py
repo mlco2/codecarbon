@@ -44,7 +44,7 @@ class EmissionCreate(EmissionBase):
 
 
 class Emission(EmissionBase):
-    id: int
+    id: str
 
 
 # Run
@@ -66,7 +66,7 @@ class RunCreate(RunBase):
 
 
 class Run(RunBase):
-    id: int
+    id: str
 
 
 # Experiment
@@ -81,7 +81,7 @@ class ExperimentBase(BaseModel):
     on_cloud: bool
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
-    project_id: int
+    project_id: str
 
     class Config:
         # orm_mode = True
@@ -107,7 +107,7 @@ class ExperimentCreate(ExperimentBase):
 
 
 class Experiment(ExperimentBase):
-    id: int
+    id: str
     emissions: List[Emission] = []
 
 
@@ -115,7 +115,7 @@ class Experiment(ExperimentBase):
 class ProjectBase(BaseModel):
     name: str
     description: str
-    team_id: int
+    team_id: str
 
     class Config:
         schema_extra = {
@@ -132,7 +132,7 @@ class ProjectCreate(ProjectBase):
 
 
 class Project(ProjectBase):
-    id: int
+    id: str
     experiments: List[Experiment] = []
 
 
@@ -140,7 +140,7 @@ class Project(ProjectBase):
 class TeamBase(BaseModel):
     name: str
     description: str
-    organization_id: int
+    organization_id: str
 
     class Config:
         schema_extra = {
@@ -157,7 +157,7 @@ class TeamCreate(TeamBase):
 
 
 class Team(TeamBase):
-    id: int
+    id: str
     projects: List[Project] = []
 
 
@@ -180,7 +180,7 @@ class OrganizationCreate(OrganizationBase):
 
 
 class Organization(OrganizationBase):
-    id: int
+    id: str
     teams: List[Team] = []
 
 
@@ -196,11 +196,12 @@ class UserCreate(UserBase):
 
 
 class User(UserBase):
-    id: int
+    id: str
     name: str
     email: EmailStr
     password: SecretStr
     api_key: str
+    is_active: Optional[bool]
 
     class Config:
         orm_mode = True

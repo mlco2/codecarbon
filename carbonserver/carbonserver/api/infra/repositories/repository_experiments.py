@@ -1,6 +1,7 @@
 from typing import List
 from carbonserver.api.domain.experiments import Experiments
-from carbonserver.database import schemas, models
+from carbonserver.database import models
+from carbonserver.api import schemas
 from sqlalchemy.orm import Session
 
 """
@@ -11,28 +12,6 @@ Here there is all the method to manipulate the experiment data
 class SqlAlchemyRepository(Experiments):
     def __init__(self, db: Session):
         self.db = db
-
-    def get_db_to_class(self, experiment: models.Experiment) -> schemas.Experiment:
-        """Convert a models.Experiment to a schemas.Experiment
-
-        :experiment: An Experiment in SQLAlchemy format.
-        :returns: An Experiment in pyDantic BaseModel format.
-        :rtype: schemas.Experiment
-        """
-        return schemas.Experiment(
-            id=experiment.id,
-            timestamp=experiment.timestamp,
-            name=experiment.name,
-            description=experiment.description,
-            # isactive=experiment.is_active,
-            country_name=experiment.country_name,
-            country_iso_code=experiment.country_iso_code,
-            region=experiment.region,
-            on_cloud=experiment.on_cloud,
-            cloud_provider=experiment.cloud_provider,
-            cloud_region=experiment.cloud_region,
-            project_id=experiment.project_id,
-        )
 
     def add_experiment(self, experiment: schemas.ExperimentCreate):
         # TODO : save experiment in database and get her ID
@@ -92,19 +71,20 @@ class SqlAlchemyRepository(Experiments):
                 experiments.append(experiment)
             return experiments
 
+    @staticmethod
+    def get_db_to_class(experiment: models.Experiment) -> schemas.Experiment:
+        """Convert a models.Experiment to a schemas.Experiment
 
-class InMemoryRepository(Experiments):
-    def __init__(self):
-        self.experiments: List = []
-        self.id: int = 0
-
-    def get_db_to_class(self, experiment: models.Experiment) -> schemas.Experiment:
+        :experiment: An Experiment in SQLAlchemy format.
+        :returns: An Experiment in pyDantic BaseModel format.
+        :rtype: schemas.Experiment
+        """
         return schemas.Experiment(
             id=experiment.id,
             timestamp=experiment.timestamp,
             name=experiment.name,
             description=experiment.description,
-            isactive=experiment.energy_consumed,
+            # isactive=experiment.is_active,
             country_name=experiment.country_name,
             country_iso_code=experiment.country_iso_code,
             region=experiment.region,
@@ -113,6 +93,12 @@ class InMemoryRepository(Experiments):
             cloud_region=experiment.cloud_region,
             project_id=experiment.project_id,
         )
+
+
+class InMemoryRepository(Experiments):
+    def __init__(self):
+        self.experiments: List = []
+        self.id: int = 0
 
     def add_experiment(self, experiment: schemas.ExperimentCreate):
         self.experiments.append(
@@ -173,3 +159,20 @@ class InMemoryRepository(Experiments):
                     )
                 )
         return experiments
+
+    @staticmethod
+    def get_db_to_class(experiment: models.Experiment) -> schemas.Experiment:
+        return schemas.Experiment(
+            id=experiment.id,
+            timestamp=experiment.timestamp,
+            name=experiment.name,
+            description=experiment.description,
+            isactive=experiment.energy_consumed,
+            country_name=experiment.country_name,
+            country_iso_code=experiment.country_iso_code,
+            region=experiment.region,
+            on_cloud=experiment.on_cloud,
+            cloud_provider=experiment.cloud_provider,
+            cloud_region=experiment.cloud_region,
+            project_id=experiment.project_id,
+        )

@@ -2,6 +2,7 @@ alembic
 fastapi
 pydantic[email]
 psycopg2
+requests
 sqlalchemy
 tox
 uvicorn[standard]

@@ -1,7 +1,7 @@
 import pytest
 
 from carbonserver.api.infra.repositories.repository_users import InMemoryRepository
-from carbonserver.database.schemas import UserCreate
+from carbonserver.api.schemas import UserCreate
 from carbonserver.database.models import User as ModelUser
 
 
@@ -15,12 +15,9 @@ def user_repository():
 def user_fixture() -> UserCreate:
     user = UserCreate.parse_obj(
         {
-            "user_id": 1,
             "name": "John McLane",
             "email": "mclane@grubber.io",
             "password": "john",
-            "api_key": "key",
-            "is_active": True,
         }
     )
     return user

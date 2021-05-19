@@ -1,5 +1,5 @@
 from carbonserver.api.dependencies import get_db, get_token_header
-from carbonserver.database.schemas import ProjectCreate
+from carbonserver.api.schemas import ProjectCreate
 from carbonserver.api.infra.repositories.repository_projects import (
     SqlAlchemyRepository,
 )

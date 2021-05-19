@@ -1,4 +1,4 @@
-from carbonserver.database.schemas import OrganizationCreate
+from carbonserver.api.schemas import OrganizationCreate
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )

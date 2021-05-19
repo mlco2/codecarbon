@@ -1,16 +1,12 @@
 import abc
 from typing import List
 
-from carbonserver.database import models, schemas
+from carbonserver.api import schemas
 
 
 class Emissions(abc.ABC):
     @abc.abstractmethod
     def add_emission(self, emission: schemas.EmissionCreate):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_db_to_class(self, emission: models.Emission) -> schemas.Emission:
         raise NotImplementedError
 
     @abc.abstractmethod
