@@ -16,7 +16,8 @@ teams_temp_db = []
 @router.put("/team", tags=["teams"])
 def add_team(team: TeamCreate, db: Session = Depends(get_db)):
     repository_teams = SqlAlchemyRepository(db)
-    repository_teams.add_team(team)
+    team = repository_teams.add_team(team)
+    return {"id": team.id}
 
 
 @router.get("/team/{team_id}", tags=["teams"])

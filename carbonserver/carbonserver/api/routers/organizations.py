@@ -18,8 +18,8 @@ organizations_temp_db = []
 @router.put("/organization", tags=["organizations"])
 def add_organization(organization: OrganizationCreate, db: Session = Depends(get_db)):
     repository_organizations = SqlAlchemyRepository(db)
-    repository_organizations.add_organization(organization)
-    # TODO : return the id of the organization
+    org = repository_organizations.add_organization(organization)
+    return {"id": org.id}
 
 
 @router.get("/organization/{organization_id}", tags=["organizations"])

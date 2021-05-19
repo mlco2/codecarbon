@@ -27,8 +27,6 @@ class SqlAlchemyRepository(Experiments):
             on_cloud=experiment.on_cloud,
             cloud_provider=experiment.cloud_provider,
             cloud_region=experiment.cloud_region,
-            # is_active=experiment.is_active,
-            # emission_id=experiment.emission_id,
             project_id=experiment.project_id,
         )
         self.db.add(db_experiment)
@@ -86,7 +84,6 @@ class SqlAlchemyRepository(Experiments):
             timestamp=experiment.timestamp,
             name=experiment.name,
             description=experiment.description,
-            # isactive=experiment.is_active,
             country_name=experiment.country_name,
             country_iso_code=experiment.country_iso_code,
             region=experiment.region,
@@ -115,8 +112,6 @@ class InMemoryRepository(Experiments):
                 on_cloud=experiment.on_cloud,
                 cloud_provider=experiment.cloud_provider,
                 cloud_region=experiment.cloud_region,
-                # is_active=experiment.is_active,
-                # emission_id=experiment.emission_id,
                 project_id=experiment.project_id,
             )
         )
@@ -134,8 +129,6 @@ class InMemoryRepository(Experiments):
             on_cloud=experiment.on_cloud,
             cloud_provider=experiment.cloud_provider,
             cloud_region=experiment.cloud_region,
-            # is_active=experiment.is_active,
-            # emission_id=experiment.emission_id,
             project_id=experiment.project_id,
         )
 
@@ -156,7 +149,6 @@ class InMemoryRepository(Experiments):
                         on_cloud=experiment.on_cloud,
                         cloud_provider=experiment.cloud_provider,
                         cloud_region=experiment.cloud_region,
-                        is_active=experiment.is_active,
                         project_id=project_id,
                     )
                 )

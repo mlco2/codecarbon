@@ -10,8 +10,9 @@ router = APIRouter(
 )
 
 
-@router.put("/run", tags=["runs"], status_code=201)
+@router.put("/run", tags=["runs"])
 def add_run(run: RunCreate, db: Session = Depends(get_db)):
     repository_runs = SqlAlchemyRepository(db)
-    repository_runs.add_run(run)
+    db_run = repository_runs.add_run(run)
+    return {"id": db_run.id}
     # TODO : Return Error when experiment does not exist

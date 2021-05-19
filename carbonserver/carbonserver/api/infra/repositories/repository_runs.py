@@ -23,6 +23,8 @@ class SqlAlchemyRepository(Runs):
         )
         self.db.add(db_run)
         self.db.commit()
+        self.db.refresh(db_run)
+        return db_run
 
     @staticmethod
     def get_db_to_class(self, run: models.Run) -> schemas.Run:

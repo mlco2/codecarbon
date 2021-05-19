@@ -74,7 +74,6 @@ class ExperimentBase(BaseModel):
     timestamp: datetime
     name: str
     description: str
-    # is_active: bool
     country_name: Optional[str] = None
     country_iso_code: Optional[str] = None
     region: Optional[str] = None
@@ -89,7 +88,6 @@ class ExperimentBase(BaseModel):
             "example": {
                 "name": "Run on AWS",
                 "description": "AWS API for Code Carbon",
-                # "is_active": True,
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "country_name": "France",
                 "country_iso_code": "FRA",

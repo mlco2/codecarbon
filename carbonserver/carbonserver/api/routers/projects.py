@@ -16,7 +16,8 @@ projects_temp_db = []
 @router.put("/project", tags=["projects"])
 def add_project(project: ProjectCreate, db: Session = Depends(get_db)):
     repository_projects = SqlAlchemyRepository(db)
-    repository_projects.add_project(project)
+    project = repository_projects.add_project(project)
+    return {"id": project.id}
 
 
 @router.get("/project/{project_id}", tags=["projects"])

@@ -59,7 +59,6 @@ class SqlAlchemyRepository(Projects):
             id=project.id,
             name=project.name,
             description=project.description,
-            # isactive=experiment.is_active,
             team_id=project.team_id,
         )
 
