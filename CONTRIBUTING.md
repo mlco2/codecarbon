@@ -1,5 +1,6 @@
 # Contributing to Code Carbon
 
+(New to open-source? [Here's a guide to help you](https://opensource.guide/how-to-contribute/))
 
 - [I have a question...](#questions)
 - [I found a bug...](#bugs)
@@ -65,6 +66,16 @@ You can run tests by simply entering tox in the terminal when in the root packag
 
 ```
 tox
+```
+
+You can also test your specific test in an isolated fashion to develop and debug them:
+
+```
+$ python -m unittest tests.test_your_feature
+
+# or
+
+$ python -m unittest tests.test_your_feature.YourTestCase.test_function
 ```
 
 To test the API, see [how to deploy it](#local_deployement) first.
