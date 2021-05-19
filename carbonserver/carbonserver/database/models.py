@@ -1,12 +1,15 @@
+import uuid
+
 from carbonserver.database.database import Base
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class Emission(Base):
     __tablename__ = "emissions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
     duration = Column(Float)
     emissions = Column(Float)
@@ -17,7 +20,7 @@ class Emission(Base):
 
 class Run(Base):
     __tablename__ = "runs"
-    id = Column(String, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="runs")
@@ -26,7 +29,7 @@ class Run(Base):
 
 class Experiment(Base):
     __tablename__ = "experiments"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
     name = Column(String)
     description = Column(String)
@@ -44,7 +47,7 @@ class Experiment(Base):
 
 class Project(Base):
     __tablename__ = "projects"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
     team_id = Column(Integer, ForeignKey("teams.id"))
@@ -54,7 +57,7 @@ class Project(Base):
 
 class Team(Base):
     __tablename__ = "teams"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
     organization_id = Column(Integer, ForeignKey("organizations.id"))
@@ -64,7 +67,7 @@ class Team(Base):
 
 class Organization(Base):
     __tablename__ = "organizations"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
     teams = relationship("Team", back_populates="organization")
@@ -72,10 +75,11 @@ class Organization(Base):
 
 class User(Base):
     __tablename__ = "users"
-    user_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     api_key = Column(String)
     is_active = Column(Boolean, default=True)
+    organization = relationship("Organization", back_populates="users")
     # TODO: Associate user with his entities

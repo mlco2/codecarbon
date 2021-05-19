@@ -1,15 +1,17 @@
-"""create tables
+"""create_tables
 
-Revision ID: b7037ddec60c
-Revises:
-Create Date: 2021-05-09 08:44:29.554956
+Revision ID: 5abae4eb2079
+Revises: 
+Create Date: 2021-05-18 22:21:49.659708
 
 """
+import uuid
+
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import UUID
 
-# revision identifiers, used by Alembic.
-revision = "b7037ddec60c"
+revision = '5abae4eb2079'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,33 +23,28 @@ def upgrade():
     """
     op.create_table(
         "emissions",
-        sa.Column("id", sa.Integer, primary_key=True, index=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4),
         sa.Column("timestamp", sa.DateTime),
         sa.Column("duration", sa.Float),
         sa.Column("emissions", sa.Float),
         sa.Column("energy_consumed", sa.Float),
-        # TODO: Add RAM and CPU consumption
-        sa.Column(
-            "run_id",
-            sa.String,
-            sa.ForeignKey("runs.id"),
-        ),
+        sa.Column("run_id", UUID),
     )
 
     op.create_table(
         "runs",
-        sa.Column("id", sa.String, primary_key=True, index=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4),
         sa.Column("timestamp", sa.DateTime),
-        sa.Column(
-            "experiment_id",
-            sa.Integer,
-            sa.ForeignKey("experiments.id"),
-        ),
+        sa.Column("experiment_id", UUID),
     )
+
+    op.create_foreign_key(
+        "fk_emissions_runs", "emissions",
+        "runs", ["run_id"], ["id"])
 
     op.create_table(
         "experiments",
-        sa.Column("id", sa.Integer, primary_key=True, index=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4),
         sa.Column("timestamp", sa.DateTime),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
@@ -57,55 +54,61 @@ def upgrade():
         sa.Column("on_cloud", sa.Boolean, default=False),
         sa.Column("cloud_provider", sa.String),
         sa.Column("cloud_region", sa.String),
-        # TODO: Add RAM, GPU and CPU models and size
-        sa.Column(
-            "project_id",
-            sa.Integer,
-            sa.ForeignKey("projects.id"),
-        ),
+        sa.Column("project_id", UUID),
     )
+
+    op.create_foreign_key(
+        "fk_runs_experiments", "runs",
+        "experiments", ["experiment_id"], ["id"])
 
     op.create_table(
         "projects",
-        sa.Column("id", sa.Integer, primary_key=True, index=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
-        sa.Column(
-            "team_id",
-            sa.Integer,
-            sa.ForeignKey("teams.id"),
-        ),
+        sa.Column("team_id", UUID),
     )
+
+    op.create_foreign_key(
+        "fk_experiments_projects", "experiments",
+        "projects", ["project_id"], ["id"])
 
     op.create_table(
         "teams",
-        sa.Column("id", sa.Integer, primary_key=True, index=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
-        sa.Column(
-            "organization_id",
-            sa.Integer,
-            sa.ForeignKey("organizations.id"),
-        ),
+        sa.Column("organization_id", UUID),
     )
 
-    # Organization
+    op.create_foreign_key(
+        "fk_projects_teams", "projects",
+        "teams", ["team_id"], ["id"])
+
     op.create_table(
         "organizations",
-        sa.Column("id", sa.Integer, primary_key=True, index=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
     )
+
+    op.create_foreign_key(
+        "fk_teams_organizations", "teams",
+        "organizations", ["organization_id"], ["id"])
 
     op.create_table(
         "users",
-        sa.Column("id", sa.Integer, primary_key=True, index=True),
+        sa.Column("id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4),
         sa.Column("name", sa.String),
         sa.Column("api_key", sa.String),
         sa.Column("email", sa.String, unique=True, index=True),
         sa.Column("hashed_password", sa.String),
         sa.Column("is_active", sa.Boolean, default=True),
-    )
+        sa.Column("organization_id", UUID))
+
+    op.create_foreign_key(
+        "fk_users_organizations", "users",
+        "organizations", ["organization_id"], ["id"])
 
 
 def downgrade():

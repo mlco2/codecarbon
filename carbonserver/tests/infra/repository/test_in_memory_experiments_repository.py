@@ -51,7 +51,7 @@ def model_experiment() -> ModelExperiment:
             "on_cloud": True,
             "cloud_provider": "AWS",
             "cloud_region": "eu-west-1a",
-            "project_id": 1,
+            "project_id": "1",
         }
     )
     return model_experiment
@@ -72,7 +72,7 @@ def test_experiment_repository_saves_correct_experiment(
             "on_cloud": True,
             "cloud_provider": "AWS",
             "cloud_region": "eu-west-1a",
-            "project_id": 1,
+            "project_id": "1",
         }
     )
     experiments_repository.add_experiment(experiment)
@@ -84,10 +84,10 @@ def test_experiment_repository_saves_correct_experiment(
 def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
     experiments_repository, experiments_fixture
 ):
-    experiment_id = 1
+    experiment_id = "1"
     expected_experiment = SchemaExperiment.parse_obj(
         {
-            "id": 1,
+            "id": "1",
             "timestamp": "2021-04-04T08:43:00+02:00",
             "name": "experiment",
             "description": "Test experiment",
@@ -98,7 +98,7 @@ def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
             "on_cloud": True,
             "cloud_provider": "AWS",
             "cloud_region": "eu-west-1a",
-            "project_id": 1,
+            "project_id": "1",
         }
     )
     experiments_repository.add_experiment(experiments_fixture)
@@ -111,11 +111,11 @@ def test_get_one_experiment_returns_the_correct_experiment_from_experiment_id(
 def test_get_one_experiment_returns_the_correct_experiment_list_from_experiment_id(
     experiments_repository, experiments_fixture
 ):
-    project_id = 3
+    project_id = "3"
     expected_emissions = [
         SchemaExperiment.parse_obj(
             {
-                "id": 133742,
+                "id": "133742",
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "name": "experiment",
                 "description": "Test experiment",
