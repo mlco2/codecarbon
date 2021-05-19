@@ -7,7 +7,7 @@
 ### Domain logic
 To test the interface exposed by entities, in memory repositories can be used to isolate the domain logic from technical
  implementation.
-Current entities tests are located in tests/infra/repositories.
+Current entities tests are located in ```tests/infra/repositories```.
 
 
 ### Infrastructure
@@ -66,3 +66,16 @@ uvicorn main:app --reload
 ```
 
 Swagger documentation is available at http://localhost:8000/docs
+
+
+### Run locally the CI 
+
+
+To test the full build process, the Github Actions workflow can be executed locally with act ([install available here](https://raw.githubusercontent.com/nektos/act/master/install.sh)):
+```bash
+# Build patched dockerfile from project root
+docker build act -t local/ubuntu-builder:latest 
+
+# Run GA job from patched instance
+act -j build_server -P ubuntu-latest=local/ubuntu-builder:latest
+```
