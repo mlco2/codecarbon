@@ -1,8 +1,10 @@
 from typing import List
+
+from sqlalchemy.orm import Session
+
+from carbonserver.api import schemas
 from carbonserver.api.domain.teams import Teams
 from carbonserver.database import models
-from carbonserver.api import schemas
-from sqlalchemy.orm import Session
 
 """
 Here there is all the method to manipulate the project data

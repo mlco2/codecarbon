@@ -1,10 +1,10 @@
 import uuid
 
-from carbonserver.database.database import Base
-
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
+from carbonserver.database.database import Base
 
 
 class Emission(Base):

@@ -1,10 +1,11 @@
 import secrets
 from typing import List
-from carbonserver.api.domain.users import Users
-from carbonserver.database import models
-from carbonserver.api import schemas
 
 from sqlalchemy.orm import Session
+
+from carbonserver.api import schemas
+from carbonserver.api.domain.users import Users
+from carbonserver.database import models
 
 
 class SqlAlchemyRepository(Users):

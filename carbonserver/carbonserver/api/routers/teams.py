@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Path, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from carbonserver.api.dependencies import get_token_header, get_db
+
+from carbonserver.api.dependencies import get_db, get_token_header
+from carbonserver.api.infra.repositories.repository_teams import SqlAlchemyRepository
 from carbonserver.api.schemas import TeamCreate
-from carbonserver.api.infra.repositories.repository_teams import (
-    SqlAlchemyRepository,
-)
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],

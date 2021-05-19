@@ -1,14 +1,11 @@
 import pytest
 
-from carbonserver.api.schemas import (
-    OrganizationCreate,
-    Organization as SchemaOrganization,
-)
-from carbonserver.database.models import Organization as ModelOrganization
-
 from carbonserver.api.infra.repositories.repository_organizations import (
     InMemoryRepository,
 )
+from carbonserver.api.schemas import Organization as SchemaOrganization
+from carbonserver.api.schemas import OrganizationCreate
+from carbonserver.database.models import Organization as ModelOrganization
 
 
 @pytest.fixture()

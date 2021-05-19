@@ -1,17 +1,17 @@
-from carbonserver.database.database import engine
-from carbonserver.database import models
+from fastapi import Depends, FastAPI
+
 from carbonserver.api.dependencies import get_query_token
 from carbonserver.api.routers import (
     emissions,
-    runs,
     experiments,
-    projects,
     organizations,
+    projects,
+    runs,
     teams,
     users,
 )
-
-from fastapi import Depends, FastAPI
+from carbonserver.database import models
+from carbonserver.database.database import engine
 
 models.Base.metadata.create_all(bind=engine)
 

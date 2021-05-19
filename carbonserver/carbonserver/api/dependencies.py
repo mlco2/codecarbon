@@ -1,5 +1,7 @@
-from fastapi import Header, HTTPException
 from typing import Optional
+
+from fastapi import Header, HTTPException
+
 from carbonserver.database.database import SessionLocal
 
 

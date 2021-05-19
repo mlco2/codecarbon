@@ -1,6 +1,6 @@
-from carbonserver.api import schemas
-
 import abc
+
+from carbonserver.api import schemas
 
 
 class Organizations(abc.ABC):

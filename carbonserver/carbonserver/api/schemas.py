@@ -11,7 +11,7 @@ So this will help us avoiding confusion while using both.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, EmailStr, SecretStr
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 
 class EmissionBase(BaseModel):

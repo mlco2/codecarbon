@@ -7,8 +7,8 @@ Create Date: 2021-05-18 22:21:49.659708
 """
 import uuid
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 
 revision = "5abae4eb2079"
