@@ -1,7 +1,7 @@
 alembic
 fastapi
 pydantic[email]
-psycopg2
+psycopg2-binary
 requests
 sqlalchemy
 tox
