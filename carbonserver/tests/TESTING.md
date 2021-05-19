@@ -53,7 +53,7 @@ pip install -rrequirements-test.txt # Install test dependencies
 
 ### Run tests
 ```bash
-tox -e api # Unit tests on api
+tox -e unit # Unit tests on api
 tox -e integration # Integration tests
 ```
 

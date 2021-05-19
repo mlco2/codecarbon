@@ -75,11 +75,12 @@ class Organization(Base):
 
 class User(Base):
     __tablename__ = "users"
-    user_id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
+    )
     name = Column(String)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     api_key = Column(String)
     is_active = Column(Boolean, default=True)
-    organization = relationship("Organization", back_populates="users")
     # TODO: Associate user with his entities
