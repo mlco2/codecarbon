@@ -16,3 +16,4 @@ sphinx-rtd-theme
 tensorflow
 responses
 py-cpuinfo
+psutil

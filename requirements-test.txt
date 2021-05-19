@@ -3,3 +3,4 @@ pytest
 responses
 tox
 numpy
+psutil
