@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "Waiting for database to start..."
+sleep 3
 echo "Preparing database..."
 cd /carbonserver/carbonserver/database
 python3 -m alembic upgrade head

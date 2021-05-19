@@ -18,7 +18,7 @@ sqlalchemy.url = sqlite:///./code_carbon.db
 
 For Postgres:
 ```
-sqlalchemy.url = postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
+sqlalchemy.url = postgresql://codecarbon-user:supersecret@localhost:5432/codecarbon_db
 ```
 
 # Init the DB

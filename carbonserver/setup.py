@@ -4,8 +4,8 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 DEPENDENCIES = [
-    "uvicorn[standard]==0.13.4,<0.14",
-    "fastapi>=0.63.0,<0.7",
+    "uvicorn[standard] >= 0.13.0, < 0.14.0",
+    "fastapi >= 0.65.0, < 0.66.0",
     "sqlalchemy",
     "psycopg2-binary",
     "pydantic[email]",
