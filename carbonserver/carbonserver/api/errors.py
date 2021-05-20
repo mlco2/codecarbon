@@ -11,6 +11,7 @@ class ErrorBase:
 class DBErrorEnum(str, Enum):
     INTEGRITY_ERROR = "INTEGRITY_ERROR"
     DATA_ERROR = "DATA_ERROR"
+    PROGRAMMING_ERROR = "PROGRAMMING_ERROR"
 
 
 class DBError(ErrorBase):

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from carbonserver.api.dependencies import get_db, get_token_header
+from carbonserver.api.errors import DBError, DBException
 from carbonserver.api.infra.repositories.repository_emissions import (
     SqlAlchemyRepository,
 )
@@ -15,7 +16,9 @@ router = APIRouter(
 @router.put("/emission", tags=["emissions"], status_code=201)
 def add_emission(emission: EmissionCreate, db: Session = Depends(get_db)):
     repository_emissions = SqlAlchemyRepository(db)
-    repository_emissions.add_emission(emission)
+    res = repository_emissions.add_emission(emission)
+    if isinstance(res, DBError):
+        raise DBException(error=res)
 
 
 @router.get("/emission/{emission_id}", tags=["emissions"])

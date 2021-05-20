@@ -1,10 +1,12 @@
 import secrets
 from typing import List
 
+from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.users import Users
+from carbonserver.api.errors import DBError, DBErrorEnum, DBException
 from carbonserver.database import models
 
 
@@ -21,11 +23,31 @@ class SqlAlchemyRepository(Users):
             api_key=_api_key_generator(),
             is_active=True,
         )
-
-        self.db.add(db_user)
-        self.db.commit()
-        self.db.refresh(db_user)
-        return db_user
+        try:
+            self.db.add(db_user)
+            self.db.commit()
+            self.db.refresh(db_user)
+            return db_user
+        except exc.IntegrityError as e:
+            # Sample error : sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) insert or update on table "emissions" violates foreign key constraint "fk_emissions_runs"
+            self.db.rollback()
+            raise DBException(
+                error=DBError(code=DBErrorEnum.INTEGRITY_ERROR, message=e.orig.args[0])
+            )
+        except exc.DataError as e:
+            self.db.rollback()
+            # Sample error :  sqlalchemy.exc.DataError: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for type uuid: "5050f55-406d-495d-830e-4fd12c656bd1"
+            raise DBException(
+                error=DBError(code=DBErrorEnum.DATA_ERROR, message=e.orig.args[0])
+            )
+        except exc.ProgrammingError as e:
+            # sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) can't adapt type 'SecretStr'
+            self.db.rollback()
+            raise DBException(
+                error=DBError(
+                    code=DBErrorEnum.PROGRAMMING_ERROR, message=e.orig.args[0]
+                )
+            )
 
     def get_user_by_id(self, user_id):
         """Find an user in database and return it
