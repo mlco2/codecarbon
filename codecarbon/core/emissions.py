@@ -4,7 +4,6 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
-import logging
 from typing import Dict, Optional
 
 import pandas as pd
@@ -12,9 +11,8 @@ import pandas as pd
 from codecarbon.core import co2_signal
 from codecarbon.core.units import EmissionsPerKwh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
+from codecarbon.external.logger import logger
 from codecarbon.input import DataSource, DataSourceException
-
-logger = logging.getLogger("codecarbon")
 
 
 class Emissions:
@@ -98,7 +96,7 @@ class Emissions:
             except Exception as e:
                 logger.error(e)
                 logger.warning(
-                    "CODECARBON : Regional emissions retrieval failed. Falling back on country emissions."
+                    "Regional emissions retrieval failed. Falling back on country emissions."
                 )
         return self.get_country_emissions(energy, geo)
 

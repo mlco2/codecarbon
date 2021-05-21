@@ -3,7 +3,6 @@ Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
 
-import logging
 import os
 import time
 import uuid
@@ -21,13 +20,9 @@ from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import set_log_level, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
+from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
-
-logging.getLogger("codecarbon").setLevel(
-    level=os.environ.get("CODECARBON_LOG_LEVEL", "INFO")
-)
-logger = logging.getLogger("codecarbon")
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -140,28 +135,27 @@ class BaseEmissionsTracker(ABC):
 
         # Hardware detection
         if gpu.is_gpu_details_available():
-            logger.info("CODECARBON : Tracking Nvidia GPU via pynvml")
+            logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
         if cpu.is_powergadget_available():
-            logger.info("CODECARBON : Tracking Intel CPU via Power Gadget")
+            logger.info("Tracking Intel CPU via Power Gadget")
             self._hardware.append(
                 CPU.from_utils(self._output_dir, "intel_power_gadget")
             )
         elif cpu.is_rapl_available():
-            logger.info("CODECARBON : Tracking Intel CPU via RAPL interface")
+            logger.info("Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
         else:
             logger.warning(
-                "CODECARBON : No CPU tracking mode found. "
-                + "Falling back on CPU constant mode."
+                "No CPU tracking mode found. " + "Falling back on CPU constant mode."
             )
-            logger.info("CODECARBON : Tracking using constant")
+            logger.info("Tracking using constant")
             tdp = cpu.TDP().tdp
             if tdp:
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant", tdp))
             else:
                 logger.warning(
-                    "CODECARBON : Failed to match CPU TDP constant. "
+                    "Failed to match CPU TDP constant. "
                     + "Falling back on a global constant."
                 )
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
@@ -195,7 +189,7 @@ class BaseEmissionsTracker(ABC):
         """
 
         if self._start_time is not None:
-            logger.warning("CODECARBON : Already started tracking")
+            logger.warning("Already started tracking")
             return
 
         self._last_measured_time = self._start_time = time.time()
@@ -208,7 +202,7 @@ class BaseEmissionsTracker(ABC):
         :return: CO2 emissions in kgs
         """
         if self._start_time is None:
-            logger.error("CODECARBON : Need to first start the tracker")
+            logger.error("Need to first start the tracker")
             return None
 
         self._scheduler.shutdown()
@@ -288,7 +282,7 @@ class BaseEmissionsTracker(ABC):
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
             warn_msg = (
-                "CODECARBON : Background scheduler didn't run for a long period"
+                "Background scheduler didn't run for a long period"
                 + " (%ds), results might be inaccurate"
             )
             logger.warning(warn_msg, last_duration)
@@ -298,7 +292,7 @@ class BaseEmissionsTracker(ABC):
                 power=hardware.total_power(), time=Time.from_seconds(last_duration)
             )
             logger.info(
-                "CODECARBON : Energy consumed "
+                "Energy consumed "
                 + f"{hardware.__class__.__name__} : {self._total_energy}"
             )
         self._last_measured_time = time.time()
@@ -365,8 +359,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         if self._cloud_provider:
             if self._cloud_region is None:
                 logger.error(
-                    "CODECARBON : Cloud Region must be provided "
-                    + " if cloud provider is set"
+                    "Cloud Region must be provided " + " if cloud provider is set"
                 )
 
             df = DataSource().get_cloud_emissions_data()
@@ -380,7 +373,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 == 0
             ):
                 logger.error(
-                    "CODECARBON : Cloud Provider/Region "
+                    "Cloud Provider/Region "
                     f"{self._cloud_provider} {self._cloud_region} "
                     "not found in cloud emissions data."
                 )
@@ -391,7 +384,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 ]["countryName"]
             except KeyError as e:
                 logger.error(
-                    "CODECARBON : Does not support country"
+                    "Does not support country"
                     + f" with ISO code {self._country_iso_code} "
                     f"Exception occurred {e}"
                 )
@@ -485,9 +478,7 @@ def track_emissions(
         def wrapped_fn(*args, **kwargs):
             if offline:
                 if country_iso_code is None and cloud_provider is None:
-                    raise Exception(
-                        "CODECARBON : Needs ISO Code of the Country for Offline mode"
-                    )
+                    raise Exception("Needs ISO Code of the Country for Offline mode")
                 tracker = OfflineEmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,

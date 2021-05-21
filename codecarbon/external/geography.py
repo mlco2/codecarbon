@@ -2,7 +2,6 @@
 Encapsulates external dependencies to retrieve cloud and geographical metadata
 """
 
-import logging
 import re
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional
@@ -10,8 +9,7 @@ from typing import Callable, Dict, Optional
 import requests
 
 from codecarbon.core.cloud import get_env_cloud_details
-
-logger = logging.getLogger("codecarbon")
+from codecarbon.external.logger import logger
 
 
 @dataclass

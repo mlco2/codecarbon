@@ -17,15 +17,17 @@ def clean_env_key(k: str) -> str:
         str: Cleaned str
     """
     assert isinstance(k, str)
-    return k.replace("CODECARBON_", "").lower()
+    return k.lower().replace("codecarbon_", "").lower()
 
 
 def parse_env_config() -> dict:
     """
-    Get all environment variables starting with "CODECARBON_" mapped
-    to their values in a dict
+    Get all environment variables starting with "CODECARBON_" (also in lower caps)
+    mapped to their values in a dict
 
-    eg: "CODECARBON_PROJECT_NAME=deeplearning" -> {"project_name": "deeplearning"}
+    eg:
+        * "CODECARBON_PROJECT_NAME=DeepLearning" -> {"project_name": "DeepLearning"}
+        * "codecarbon_project_name=DeepLearning" -> {"project_name": "DeepLearning"}
 
     Returns:
         dict: existing relevant environment variables mapped into a dict
@@ -34,7 +36,7 @@ def parse_env_config() -> dict:
         "codecarbon": {
             clean_env_key(k): v
             for k, v in os.environ.items()
-            if k.startswith("CODECARBON_")
+            if k.lower().startswith("codecarbon_")
         }
     }
 

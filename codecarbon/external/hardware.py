@@ -2,7 +2,6 @@
 Encapsulates external dependencies to retrieve hardware metadata
 """
 
-import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -11,11 +10,10 @@ from typing import Dict, Iterable, List, Optional
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
+from codecarbon.external.logger import logger
 
 POWER_CONSTANT = 85
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
-
-logger = logging.getLogger("codecarbon")
 
 
 @dataclass
@@ -57,12 +55,12 @@ class GPU(BaseHardware):
             gpu_ids = self.gpu_ids
             assert set(gpu_ids).issubset(
                 set(range(self.num_gpus))
-            ), f"CODECARBON Unknown GPU ids {gpu_ids}"
+            ), f"Unknown GPU ids {gpu_ids}"
         else:
             gpu_ids = set(range(self.num_gpus))
 
         gpu_power = self._get_power_for_gpus(gpu_ids=gpu_ids)
-        logger.info(f"CODECARBON GPU Power Consumption : {gpu_power}")
+        logger.info(f"GPU Power Consumption : {gpu_power}")
         return gpu_power
 
     @classmethod
@@ -100,7 +98,7 @@ class CPU(BaseHardware):
 
     def total_power(self) -> Power:
         cpu_power = self._get_power_from_cpus()
-        logger.info(f"CODECARBON CPU Power Consumption : {cpu_power}")
+        logger.info(f"CPU Power Consumption : {cpu_power}")
         return cpu_power
 
     @classmethod

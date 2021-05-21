@@ -1,7 +1,7 @@
 import logging
 from contextlib import contextmanager
 
-logger = logging.getLogger("codecarbon")
+from codecarbon.external.logger import logger
 
 
 @contextmanager
@@ -9,11 +9,11 @@ def suppress(*exceptions):
     try:
         yield
     except exceptions:
-        logger.warning("CODECARBON: graceful shutdown. Exceptions:")
+        logger.warning("graceful shutdown. Exceptions:")
         logger.warning(
             exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
         )
-        logger.warning("CODECARBON: stopping.")
+        logger.warning("stopping.")
         pass
 
 
