@@ -33,7 +33,6 @@ class Experiment(Base):
     timestamp = Column(DateTime)
     name = Column(String)
     description = Column(String)
-    is_active = Column(Boolean, default=True)
     country_name = Column(String)
     country_iso_code = Column(String)
     region = Column(String)

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from carbonserver.api.dependencies import get_db, get_token_header
+from carbonserver.api.errors import DBError, DBException
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,
 )
@@ -14,11 +15,12 @@ router = APIRouter(
 
 @router.put("/experiment", tags=["experiments"], status_code=201)
 def add_experiment(experiment: ExperimentCreate, db: Session = Depends(get_db)):
-    # crud_experiments.save_experiment(db, experiment)
     repository_experiment = SqlAlchemyRepository(db)
-    repository_experiment.add_experiment(experiment)
-
-    # raise HTTPException(status_code=404, detail="Not Found")
+    res = repository_experiment.add_experiment(experiment)
+    if isinstance(res, DBError):
+        raise DBException(error=res)
+    else:
+        return {"id": res.id}
 
 
 @router.get("/experiment/{experiment_id}", tags=["experiments"])

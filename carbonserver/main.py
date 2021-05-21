@@ -1,6 +1,8 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from carbonserver.api.dependencies import get_query_token
+from carbonserver.api.errors import DBException, UserException
 from carbonserver.api.routers import (
     emissions,
     experiments,
@@ -16,6 +18,28 @@ from carbonserver.database.database import engine
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(dependencies=[Depends(get_query_token)])
+
+
+@app.exception_handler(DBException)
+async def db_exception_handler(request: Request, exc: DBException):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "code": exc.error.code,
+            "message": "Database error: " + exc.error.message,
+        },
+    )
+
+
+@app.exception_handler(UserException)
+async def user_exception_handler(request: Request, exc: UserException):
+    return JSONResponse(
+        status_code=403,
+        content={
+            "code": exc.error.code,
+            "message": "Authentification error: " + exc.error.message,
+        },
+    )
 
 
 app.include_router(emissions.router)

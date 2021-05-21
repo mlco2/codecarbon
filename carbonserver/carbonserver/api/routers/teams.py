@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from carbonserver.api.dependencies import get_db, get_token_header
+from carbonserver.api.errors import DBError, DBException
 from carbonserver.api.infra.repositories.repository_teams import SqlAlchemyRepository
 from carbonserver.api.schemas import TeamCreate
 
@@ -16,7 +17,11 @@ teams_temp_db = []
 @router.put("/team", tags=["teams"])
 def add_team(team: TeamCreate, db: Session = Depends(get_db)):
     repository_teams = SqlAlchemyRepository(db)
-    repository_teams.add_team(team)
+    res = repository_teams.add_team(team)
+    if isinstance(res, DBError):
+        raise DBException(error=res)
+    else:
+        return {"id": res.id}
 
 
 @router.get("/team/{team_id}", tags=["teams"])

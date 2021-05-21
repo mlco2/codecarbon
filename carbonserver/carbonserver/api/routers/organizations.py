@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from carbonserver.api.dependencies import get_db, get_token_header
+from carbonserver.api.errors import DBError, DBException
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
@@ -18,8 +19,11 @@ organizations_temp_db = []
 @router.put("/organization", tags=["organizations"])
 def add_organization(organization: OrganizationCreate, db: Session = Depends(get_db)):
     repository_organizations = SqlAlchemyRepository(db)
-    repository_organizations.add_organization(organization)
-    # TODO : return the id of the organization
+    res = repository_organizations.add_organization(organization)
+    if isinstance(res, DBError):
+        raise DBException(error=res)
+    else:
+        return {"id": res.id}
 
 
 @router.get("/organization/{organization_id}", tags=["organizations"])
