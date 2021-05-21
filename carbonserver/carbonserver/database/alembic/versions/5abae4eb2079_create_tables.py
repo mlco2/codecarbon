@@ -1,7 +1,7 @@
 """create_tables stateless script
 
 Revision ID: 5abae4eb2079
-Revises: Tables creation
+Revises: None
 Create Date: 2021-05-18 22:21:49.659708
 
 """
@@ -133,34 +133,40 @@ def upgrade():
     organizations_admin_uuid = uuid.uuid4().__str__()
     teams_admin_uuid = uuid.uuid4().__str__()
     projects_admin_uuid = uuid.uuid4().__str__()
-    op.bulk_insert(organizations,
-              [
-                  {
-                      'id': organizations_admin_uuid,
-                      'name': 'admin',
-                      'description': 'Administration organization',
-                  }
-              ])
+    op.bulk_insert(
+        organizations,
+        [
+            {
+                "id": organizations_admin_uuid,
+                "name": "admin",
+                "description": "Administration organization",
+            }
+        ],
+    )
 
-    op.bulk_insert(teams,
-              [
-                  {
-                      'id': teams_admin_uuid,
-                      'name': 'admin',
-                      'description': 'Administration team',
-                      'organization_id': organizations_admin_uuid
-                  }
-              ])
+    op.bulk_insert(
+        teams,
+        [
+            {
+                "id": teams_admin_uuid,
+                "name": "admin",
+                "description": "Administration team",
+                "organization_id": organizations_admin_uuid,
+            }
+        ],
+    )
 
-    op.bulk_insert(projects,
-              [
-                  {
-                      'id': projects_admin_uuid,
-                      'name': 'admin',
-                      'description': 'Administration project',
-                      'team_id': teams_admin_uuid
-                  }
-              ])
+    op.bulk_insert(
+        projects,
+        [
+            {
+                "id": projects_admin_uuid,
+                "name": "admin",
+                "description": "Administration project",
+                "team_id": teams_admin_uuid,
+            }
+        ],
+    )
 
 
 def downgrade():
