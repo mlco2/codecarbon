@@ -19,12 +19,11 @@
 # OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-from logging import getLogger
 from typing import Any, Dict, Optional
 
 import requests
 
-logger = getLogger("codecarbon")
+from codecarbon.external.logger import logger
 
 
 def postprocess_gcp_cloud_metadata(cloud_metadata):

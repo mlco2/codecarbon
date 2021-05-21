@@ -7,16 +7,14 @@ import shutil
 import subprocess
 import sys
 import time
-from logging import getLogger
 from typing import Dict
 
 import cpuinfo
 import pandas as pd
 
 from codecarbon.core.rapl import RAPLFile
+from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
-
-logger = getLogger("codecarbon")
 
 
 def is_powergadget_available():
