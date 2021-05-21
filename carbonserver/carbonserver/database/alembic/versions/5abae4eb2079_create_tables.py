@@ -1,4 +1,4 @@
-"""create_tables
+"""create_tables stateless script
 
 Revision ID: 5abae4eb2079
 Revises: Tables creation
@@ -21,6 +21,8 @@ def upgrade():
     """
     Create all tables
     """
+    downgrade()
+
     op.create_table(
         "emissions",
         sa.Column(
@@ -31,6 +33,7 @@ def upgrade():
         sa.Column("emissions", sa.Float),
         sa.Column("energy_consumed", sa.Float),
         sa.Column("run_id", UUID),
+        keep_existing=False,
     )
 
     op.create_table(
@@ -40,6 +43,7 @@ def upgrade():
         ),
         sa.Column("timestamp", sa.DateTime),
         sa.Column("experiment_id", UUID),
+        keep_existing=False,
     )
 
     op.create_foreign_key("fk_emissions_runs", "emissions", "runs", ["run_id"], ["id"])
@@ -59,13 +63,14 @@ def upgrade():
         sa.Column("cloud_provider", sa.String),
         sa.Column("cloud_region", sa.String),
         sa.Column("project_id", UUID),
+        keep_existing=False,
     )
 
     op.create_foreign_key(
         "fk_runs_experiments", "runs", "experiments", ["experiment_id"], ["id"]
     )
 
-    op.create_table(
+    projects = op.create_table(
         "projects",
         sa.Column(
             "id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
@@ -73,13 +78,14 @@ def upgrade():
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
         sa.Column("team_id", UUID),
+        keep_existing=False,
     )
 
     op.create_foreign_key(
         "fk_experiments_projects", "experiments", "projects", ["project_id"], ["id"]
     )
 
-    op.create_table(
+    teams = op.create_table(
         "teams",
         sa.Column(
             "id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
@@ -87,17 +93,19 @@ def upgrade():
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
         sa.Column("organization_id", UUID),
+        keep_existing=False,
     )
 
     op.create_foreign_key("fk_projects_teams", "projects", "teams", ["team_id"], ["id"])
 
-    op.create_table(
+    organizations = op.create_table(
         "organizations",
         sa.Column(
             "id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
         ),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
+        keep_existing=False,
     )
 
     op.create_foreign_key(
@@ -115,11 +123,44 @@ def upgrade():
         sa.Column("hashed_password", sa.String),
         sa.Column("is_active", sa.Boolean, default=True),
         sa.Column("organization_id", UUID),
+        keep_existing=False,
     )
 
     op.create_foreign_key(
         "fk_users_organizations", "users", "organizations", ["organization_id"], ["id"]
     )
+
+    organizations_admin_uuid = uuid.uuid4().__str__()
+    teams_admin_uuid = uuid.uuid4().__str__()
+    projects_admin_uuid = uuid.uuid4().__str__()
+    op.bulk_insert(organizations,
+              [
+                  {
+                      'id': organizations_admin_uuid,
+                      'name': 'admin',
+                      'description': 'Administration organization',
+                  }
+              ])
+
+    op.bulk_insert(teams,
+              [
+                  {
+                      'id': teams_admin_uuid,
+                      'name': 'admin',
+                      'description': 'Administration team',
+                      'organization_id': organizations_admin_uuid
+                  }
+              ])
+
+    op.bulk_insert(projects,
+              [
+                  {
+                      'id': projects_admin_uuid,
+                      'name': 'admin',
+                      'description': 'Administration project',
+                      'team_id': teams_admin_uuid
+                  }
+              ])
 
 
 def downgrade():
@@ -132,8 +173,8 @@ def downgrade():
         "experiments",
         "projects",
         "teams",
-        "organizations",
         "users",
+        "organizations",
     ]
     for t in tables:
         op.drop_table(t)
