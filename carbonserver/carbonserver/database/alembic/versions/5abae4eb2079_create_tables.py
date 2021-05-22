@@ -12,7 +12,7 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine.reflection import Inspector
 
-ADMIN_ORG_ID = 'f52fe339-164d-4c2b-a8c0-f562dfce066d'
+ADMIN_ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
 revision = "5abae4eb2079"
 down_revision = None
