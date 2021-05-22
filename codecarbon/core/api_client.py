@@ -2,64 +2,77 @@
 
 Based on https://kernelpanic.io/the-modern-way-to-call-apis-in-python
 
-
+TODO : use async call to API
 """
-from schema import EmissionCreate, ExperimentCreate
-from httpx import AsyncClient
+# from httpx import AsyncClient
+import dataclasses
 import logging
 from datetime import datetime
 
-IFCONFIG_URL = "https://localhost:8000/"
-LOGGER = logging.getLogger(__name__)
+import requests
+
+from codecarbon.core.schemas import EmissionCreate, RunCreate
+
+# from codecarbon.output import EmissionsData
+
+log = logging.getLogger("codecarbon")
 
 
-class ApiClient(AsyncClient):
+class ApiClient:  # (AsyncClient)
     """
     This class call the Code Carbon API
     Note : The project, team and organization must have been created in the interface.
     """
 
-    def __init__(self, project_id, api_key):
+    run_id = None
+
+    def __init__(self, experiment_id, endpoint_url, api_key):
         """
         :project_id: ID of the existing project
         :api_ley: Code Carbon API_KEY
         """
-        super().__init__(base_url=IFCONFIG_URL)
-        self.project_id = project_id
+        log.error("in __init__")
+        # super().__init__(base_url=endpoint_url) # (AsyncClient)
+        self.url = endpoint_url
+        self.experiment_id = experiment_id
         self.api_key = api_key
-        self.create_experiment()
+        self._create_run(self.experiment_id)
 
-    async def save_emission(self, emission: EmissionCreate):
+    def add_emission(self, carbon_emission: dict):
+        log.error("in add_emission")
+        emission = EmissionCreate(
+            timestamp=datetime.now().isoformat(),
+            run_id=self.run_id,
+            duration=carbon_emission["duration"],
+            emissions=carbon_emission["emissions"],
+            energy_consumed=carbon_emission["energy_consumed"],
+        )
         try:
-            payload = EmissionCreate.get_dict()
-            r = self.put(data=payload)
+            payload = dataclasses.asdict(emission)
+            r = requests.put(url=self.url + "/emission", json=payload)
             assert r.status_code == 201
         except Exception as e:
-            LOGGER.error(e, exc_info=True)
+            log.error(e, exc_info=True)
             return False
         return True
 
-    async def _create_experiment(self):
+    def _create_run(self, experiment_id):
         """
         Create the experiment for project_id
         # TODO : Allow to give an existing experiment_id
         """
+        log.error("BCODEBUG in _create_run")
         try:
-            experiment = ExperimentCreate(
-                timestamp=datetime.now(),
-                name="Random Name Run",
-                description="Rando description",
-                is_active=True,
-                project_id=self.project_id,
+            run = RunCreate(
+                timestamp=datetime.now().isoformat(), experiment_id=experiment_id
             )
-            payload = experiment.to_dict()
-            r = self.put(data=payload)
+            payload = dataclasses.asdict(run)
+            print("BCODEBUG payload", payload)
+            r = requests.put(url=self.url + "/run", json=payload)
             assert r.status_code == 200
-            experiment_id = r["experiment_id"]
+            self.run_id = r.json()["id"]
         except Exception as e:
-            LOGGER.error(e, exc_info=True)
-            return None
-        return experiment_id
+            log.error(e, exc_info=True)
 
     async def close_experiment(self):
         """

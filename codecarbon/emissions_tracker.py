@@ -5,7 +5,6 @@ OfflineEmissionsTracker and @track_emissions
 
 import os
 import time
-import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
@@ -187,7 +186,6 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
-
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -244,7 +242,6 @@ class BaseEmissionsTracker(ABC):
 
         return EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-            experiment_id=str(uuid.uuid4()),
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
@@ -432,6 +429,7 @@ def track_emissions(
     output_dir: Optional[str] = None,
     save_to_file: Optional[bool] = None,
     offline: Optional[bool] = None,
+    emissions_endpoint: Optional[str] = None,
     country_iso_code: Optional[str] = None,
     region: Optional[str] = None,
     cloud_provider: Optional[str] = None,
@@ -502,6 +500,7 @@ def track_emissions(
                     save_to_file=save_to_file,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
+                    emissions_endpoint=emissions_endpoint,
                 )
                 tracker.start()
                 fn(*args, **kwargs)

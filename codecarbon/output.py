@@ -11,7 +11,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 
 # from core.schema import EmissionCreate, Emission
-from core.api_client import ApiClient
+from codecarbon.core.api_client import ApiClient
 
 from codecarbon.external.logger import logger
 
@@ -24,7 +24,6 @@ class EmissionsData:
     """
 
     timestamp: str
-    experiment_id: str
     project_name: str
     duration: float
     emissions: float
@@ -78,10 +77,14 @@ class HTTPOutput(BaseOutput):
 
     def __init__(self, endpoint_url: str):
         self.endpoint_url: str = endpoint_url
-        self.api = ApiClient(endpoint_url)
+        self.api = ApiClient(
+            experiment_id="ab9e3f18-4a99-46f8-9c31-8b4c49a2752b",
+            endpoint_url=endpoint_url,
+            api_key="Toto",
+        )
 
     def out(self, data: EmissionsData):
         try:
-            self.api.save_emission(dataclasses.asdict(data))
+            self.api.add_emission(dataclasses.asdict(data))
         except Exception as e:
             logger.error(e, exc_info=True)
