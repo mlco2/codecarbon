@@ -13,6 +13,11 @@ router = APIRouter(
 
 @router.put("/users/", tags=["users"], status_code=201)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    user = 1
+    return create_user_db(db, user)
+
+
+def create_user_db(db, user):
     repository_users = SqlAlchemyRepository(db)
     res = repository_users.create_user(user)
     if isinstance(res, DBError):

@@ -1,5 +1,6 @@
 import secrets
-from typing import List
+from contextlib import AbstractContextManager
+from typing import List, Callable
 
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
@@ -28,6 +29,7 @@ class SqlAlchemyRepository(Users):
             self.db.commit()
             self.db.refresh(db_user)
             return db_user
+
         except exc.IntegrityError as e:
             # Sample error : sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) insert or update on table "emissions" violates foreign key constraint "fk_emissions_runs"
             self.db.rollback()
