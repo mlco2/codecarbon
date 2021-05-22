@@ -16,9 +16,7 @@ from carbonserver.database.database import engine
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(dependencies=[Depends(get_query_token)])
-
-routers = {
+routers = [
     emissions.router,
     runs.router,
     experiments.router,
@@ -26,7 +24,7 @@ routers = {
     organizations.router,
     teams.router,
     users.router
-}
+]
 
 
 def create_app() -> FastAPI:
@@ -42,6 +40,9 @@ def create_app() -> FastAPI:
     return app
 
 
+app = create_app()
+
+
 @app.get("/")
 def default():
     return {"docs": "Please go to /docs"}
@@ -50,3 +51,5 @@ def default():
 @app.get("/status")
 def status():
     return {"status": "OK"}
+
+

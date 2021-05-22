@@ -1,13 +1,12 @@
 import secrets
-from contextlib import AbstractContextManager
-from typing import List, Callable
+from typing import List
 
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.users import Users
-from carbonserver.api.errors import DBError, DBErrorEnum, DBException
+from carbonserver.api.errors import DBErrorEnum, DBError, DBException
 from carbonserver.database import models
 
 
