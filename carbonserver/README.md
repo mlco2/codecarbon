@@ -9,6 +9,7 @@ Documentation :
 - Alembic : https://youtu.be/36yw8VC3KU8
 - Deploy a full stack FastAPI / Vue.js app : https://github.com/tiangolo/full-stack-fastapi-postgresql
 - FastAPI + PG on docker : https://testdriven.io/blog/fastapi-docker-traefik
+- FastAPI db dependency injection: https://python-dependency-injector.ets-labs.org/examples/fastapi-sqlalchemy.html
 
 
 

@@ -34,8 +34,8 @@ setuptools.setup(
     tests_require=TEST_DEPENDENCIES,
     classifiers=[
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     entry_points={"console_scripts": ["carbonserver = carbonserver:main"]},
 )
