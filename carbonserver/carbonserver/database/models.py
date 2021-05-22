@@ -17,6 +17,12 @@ class Emission(Base):
     run_id = Column(String, ForeignKey("runs.id"))
     run = relationship("Run", back_populates="emissions")
 
+    def __repr__(self):
+        return f'<Emission(id="{self.id}", ' \
+               f'timestamp="{self.timestamp}", ' \
+               f'emissions="{self.emissions}", ' \
+               f'run_id="{self.run_id}")>'
+
 
 class Run(Base):
     __tablename__ = "runs"
@@ -25,6 +31,11 @@ class Run(Base):
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="runs")
     emissions = relationship("Emission", back_populates="run")
+
+    def __repr__(self):
+        return f'<Run(id="{self.id}", ' \
+               f'timestamp="{self.timestamp}", ' \
+               f'experiment_id="{self.run_id}")>'
 
 
 class Experiment(Base):
@@ -43,6 +54,16 @@ class Experiment(Base):
     project = relationship("Project", back_populates="experiments")
     runs = relationship("Run", back_populates="experiment")
 
+    def __repr__(self):
+        return f'<Experiment(id="{self.id}", ' \
+               f'timestamp="{self.timestamp}", ' \
+               f'name="{self.name}", ' \
+               f'description="{self.description}", ' \
+               f'region="{self.region}", ' \
+               f'cloud_provider="{self.cloud_provider}", ' \
+               f'cloud_region="{self.cloud_region}", ' \
+               f'project_id="{self.project_id}")>'
+
 
 class Project(Base):
     __tablename__ = "projects"
@@ -52,6 +73,12 @@ class Project(Base):
     team_id = Column(Integer, ForeignKey("teams.id"))
     experiments = relationship("Experiment", back_populates="project")
     team = relationship("Team", back_populates="projects")
+
+    def __repr__(self):
+        return f'<Project(id="{self.id}", ' \
+               f'name="{self.name}", ' \
+               f'description="{self.description}", ' \
+               f'team_id="{self.team_id}")>'
 
 
 class Team(Base):
@@ -63,6 +90,12 @@ class Team(Base):
     projects = relationship("Project", back_populates="team")
     organization = relationship("Organization", back_populates="teams")
 
+    def __repr__(self):
+        return f'<Team(id="{self.id}", ' \
+               f'name="{self.name}", ' \
+               f'description="{self.description}", ' \
+               f'organization_id="{self.organization_id}")>'
+
 
 class Organization(Base):
     __tablename__ = "organizations"
@@ -70,6 +103,11 @@ class Organization(Base):
     name = Column(String)
     description = Column(String)
     teams = relationship("Team", back_populates="organization")
+
+    def __repr__(self):
+        return f'<Team(id="{self.id}", ' \
+               f'name="{self.name}", ' \
+               f'description="{self.description}")>'
 
 
 class User(Base):
@@ -83,3 +121,9 @@ class User(Base):
     api_key = Column(String)
     is_active = Column(Boolean, default=True)
     # TODO: Associate user with his entities
+
+    def __repr__(self):
+        return f'<User(id="{self.id}", ' \
+               f'name="{self.name}", ' \
+               f'is_active="{self.is_active}", ' \
+               f'email="{self.email}")>'
