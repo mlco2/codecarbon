@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.emissions import Emissions
-from carbonserver.api.errors import DBError, DBErrorEnum, DBException
+from carbonserver.api.errors import DBErrorEnum, DBError, DBException
 from carbonserver.database import models
 
 """
