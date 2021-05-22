@@ -24,6 +24,7 @@ routers = {
     experiments.router,
     projects.router,
     organizations.router,
+    teams.router,
     users.router
 }
 
