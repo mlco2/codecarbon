@@ -10,6 +10,9 @@ import uuid
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.engine.reflection import Inspector
+
+ADMIN_ORG_ID = 'f52fe339-164d-4c2b-a8c0-f562dfce066d'
 
 revision = "5abae4eb2079"
 down_revision = None
@@ -19,8 +22,9 @@ depends_on = None
 
 def upgrade():
     """
-    Create all tables
+    Initial creation: removes all code carbon related tables & creates them with initial user / organization / team.
     """
+
     downgrade()
 
     op.create_table(
@@ -130,14 +134,13 @@ def upgrade():
         "fk_users_organizations", "users", "organizations", ["organization_id"], ["id"]
     )
 
-    organizations_admin_uuid = uuid.uuid4().__str__()
     teams_admin_uuid = uuid.uuid4().__str__()
     projects_admin_uuid = uuid.uuid4().__str__()
     op.bulk_insert(
         organizations,
         [
             {
-                "id": organizations_admin_uuid,
+                "id": ADMIN_ORG_ID,
                 "name": "admin",
                 "description": "Administration organization",
             }
@@ -151,7 +154,7 @@ def upgrade():
                 "id": teams_admin_uuid,
                 "name": "admin",
                 "description": "Administration team",
-                "organization_id": organizations_admin_uuid,
+                "organization_id": ADMIN_ORG_ID,
             }
         ],
     )
@@ -171,8 +174,12 @@ def upgrade():
 
 def downgrade():
     """
-    Remove all tables
+    Check if tables exists, and then removes them
     """
+
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+    sql_tables = inspector.get_table_names()
     tables = [
         "emissions",
         "runs",
@@ -183,4 +190,5 @@ def downgrade():
         "organizations",
     ]
     for t in tables:
-        op.drop_table(t)
+        if t in sql_tables:
+            op.drop_table(t)
