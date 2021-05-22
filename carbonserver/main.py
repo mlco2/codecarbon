@@ -1,8 +1,7 @@
-from fastapi import Depends, FastAPI, Request
-from fastapi.responses import JSONResponse
+from dependency_injector.containers import Container
+from fastapi import Depends, FastAPI
 
 from carbonserver.api.dependencies import get_query_token
-from carbonserver.api.errors import DBException, UserException
 from carbonserver.api.routers import (
     emissions,
     experiments,
@@ -19,36 +18,27 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(dependencies=[Depends(get_query_token)])
 
-
-@app.exception_handler(DBException)
-async def db_exception_handler(request: Request, exc: DBException):
-    return JSONResponse(
-        status_code=422,
-        content={
-            "code": exc.error.code,
-            "message": "Database error: " + exc.error.message,
-        },
-    )
+routers = {
+    emissions.router,
+    runs.router,
+    experiments.router,
+    projects.router,
+    organizations.router,
+    users.router
+}
 
 
-@app.exception_handler(UserException)
-async def user_exception_handler(request: Request, exc: UserException):
-    return JSONResponse(
-        status_code=403,
-        content={
-            "code": exc.error.code,
-            "message": "Authentification error: " + exc.error.message,
-        },
-    )
+def create_app() -> FastAPI:
+    container = Container()
+    container.config.from_yaml('config.yml')
+    container.wire(modules=[routers])
 
+    db = container.db()
+    db.create_database()
 
-app.include_router(emissions.router)
-app.include_router(runs.router)
-app.include_router(experiments.router)
-app.include_router(projects.router)
-app.include_router(teams.router)
-app.include_router(organizations.router)
-app.include_router(users.router)
+    app = FastAPI()
+    app.container = container
+    return app
 
 
 @app.get("/")
