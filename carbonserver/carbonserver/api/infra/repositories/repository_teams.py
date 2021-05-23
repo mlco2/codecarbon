@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.teams import Teams
-from carbonserver.api.errors import DBErrorEnum, DBError, DBException
-from carbonserver.database import models
+from carbonserver.api.errors import DBError, DBErrorEnum, DBException
+from carbonserver.database import sql_models
 
 """
 Here there is all the method to manipulate the project data
@@ -19,7 +19,7 @@ class SqlAlchemyRepository(Teams):
 
     def add_team(self, team: schemas.TeamCreate):
         # TODO : save Team in database and get her ID
-        db_team = models.Team(
+        db_team = sql_models.Team(
             name=team.name,
             description=team.description,
             organization_id=team.organization_id,
@@ -58,7 +58,7 @@ class SqlAlchemyRepository(Teams):
         :returns: An Team in pyDantic BaseModel format.
         :rtype: schemas.Team
         """
-        e = self.db.query(models.Team).filter(models.Team.id == team_id).first()
+        e = self.db.query(sql_models.Team).filter(sql_models.Team.id == team_id).first()
         if e is None:
             return None
         else:
@@ -69,7 +69,7 @@ class SqlAlchemyRepository(Teams):
         pass
 
     @staticmethod
-    def get_db_to_class(team: models.Team) -> schemas.Team:
+    def get_db_to_class(team: sql_models.Team) -> schemas.Team:
         return schemas.Team(
             id=team.id,
             name=team.name,
@@ -85,7 +85,7 @@ class InMemoryRepository(Teams):
 
     def add_team(self, team: schemas.TeamCreate):
         self.teams.append(
-            models.Team(
+            sql_models.Team(
                 id=self.id + 1,
                 name=team.name,
                 description=team.description,
@@ -107,7 +107,7 @@ class InMemoryRepository(Teams):
         pass
 
     @staticmethod
-    def get_db_to_class(team: models.Team) -> schemas.Team:
+    def get_db_to_class(team: sql_models.Team) -> schemas.Team:
         return schemas.Team(
             id=team.id,
             name=team.name,

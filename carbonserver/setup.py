@@ -5,6 +5,7 @@ with open("README.md", "r") as f:
 
 DEPENDENCIES = [
     "uvicorn[standard] >= 0.13.0, < 0.14.0",
+    "dependency-injector >= 4.3.2",
     "fastapi >= 0.65.0, < 0.66.0",
     "sqlalchemy",
     "psycopg2-binary",
@@ -37,5 +38,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
     ],
     python_requires=">=3.8",
-    entry_points={"console_scripts": ["carbonserver = carbonserver:main"]},
+    entry_points={"console_scripts": ["carbonserver = main:app"]},
 )

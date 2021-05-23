@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.runs import Runs
-from carbonserver.api.errors import DBErrorEnum, DBError, DBException
-from carbonserver.database import models
+from carbonserver.api.errors import DBError, DBErrorEnum, DBException
+from carbonserver.database import sql_models
 
 """
 Here there is all the method to manipulate the experiment data
@@ -15,13 +15,13 @@ class SqlAlchemyRepository(Runs):
     def __init__(self, db: Session):
         self.db = db
 
-    def add_run(self, run: schemas.RunCreate) -> models.Run:
+    def add_run(self, run: schemas.RunCreate) -> sql_models.Run:
         """Save an Run to the database.
         :run: An Run in pyDantic BaseModel format.
         :returns: An Run in SQLAlchemy Model format.
         :rtype: models.Run
         """
-        db_run = models.Run(
+        db_run = sql_models.Run(
             timestamp=run.timestamp,
             experiment_id=run.experiment_id,
         )
@@ -44,7 +44,7 @@ class SqlAlchemyRepository(Runs):
             )
 
     @staticmethod
-    def get_db_to_class(self, run: models.Run) -> schemas.Run:
+    def get_db_to_class(self, run: sql_models.Run) -> schemas.Run:
         """Convert a models.Run to a schemas.Run
 
         :emission: An Run in SQLAlchemy format.

@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.experiments import Experiments
-from carbonserver.api.errors import DBErrorEnum, DBError, DBException
-from carbonserver.database import models
+from carbonserver.api.errors import DBError, DBErrorEnum, DBException
+from carbonserver.database import sql_models
 
 """
 Here there is all the method to manipulate the experiment data
@@ -19,7 +19,7 @@ class SqlAlchemyRepository(Experiments):
 
     def add_experiment(self, experiment: schemas.ExperimentCreate):
         # TODO : save experiment in database and get her ID
-        db_experiment = models.Experiment(
+        db_experiment = sql_models.Experiment(
             timestamp=experiment.timestamp,
             name=experiment.name,
             description=experiment.description,
@@ -66,8 +66,8 @@ class SqlAlchemyRepository(Experiments):
         :rtype: schemas.Experiment
         """
         e = (
-            self.db.query(models.Experiment)
-            .filter(models.Experiment.id == experiment_id)
+            self.db.query(sql_models.Experiment)
+            .filter(sql_models.Experiment.id == experiment_id)
             .first()
         )
         if e is None:
@@ -82,8 +82,8 @@ class SqlAlchemyRepository(Experiments):
         :returns: An Experiment in pyDantic BaseModel format.
         :rtype: List[schemas.Experiment]
         """
-        res = self.db.query(models.Experiment).filter(
-            models.Experiment.project_id == project_id
+        res = self.db.query(sql_models.Experiment).filter(
+            sql_models.Experiment.project_id == project_id
         )
         if res.first() is None:
             return []
@@ -96,7 +96,7 @@ class SqlAlchemyRepository(Experiments):
             return experiments
 
     @staticmethod
-    def get_db_to_class(experiment: models.Experiment) -> schemas.Experiment:
+    def get_db_to_class(experiment: sql_models.Experiment) -> schemas.Experiment:
         """Convert a models.Experiment to a schemas.Experiment
 
         :experiment: An Experiment in SQLAlchemy format.
@@ -125,7 +125,7 @@ class InMemoryRepository(Experiments):
 
     def add_experiment(self, experiment: schemas.ExperimentCreate):
         self.experiments.append(
-            models.Experiment(
+            sql_models.Experiment(
                 id=self.id + 1,
                 timestamp=experiment.timestamp,
                 name=experiment.name,
@@ -179,7 +179,7 @@ class InMemoryRepository(Experiments):
         return experiments
 
     @staticmethod
-    def get_db_to_class(experiment: models.Experiment) -> schemas.Experiment:
+    def get_db_to_class(experiment: sql_models.Experiment) -> schemas.Experiment:
         return schemas.Experiment(
             id=experiment.id,
             timestamp=experiment.timestamp,
