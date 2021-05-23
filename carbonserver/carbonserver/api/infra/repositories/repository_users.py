@@ -64,7 +64,7 @@ class SqlAlchemyRepository(Users):
         else:
             return self.get_db_to_class(e)
 
-    def list_users(self):
+    def list_users(self) -> List[schemas.User]:
         e = self.db.query(Users)
         if e is None:
             return None

@@ -1,3 +1,6 @@
+from typing import List
+
+from carbonserver.api import schemas
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
 from carbonserver.api.schemas import UserCreate
 from carbonserver.database.sql_models import User
@@ -11,3 +14,8 @@ class UserService:
         created_user = self._repository.create_user(user)
 
         return created_user
+
+    def list_users(self) -> List[schemas.User]:
+        users_list = self._repository.list_users()
+
+        return users_list

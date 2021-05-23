@@ -58,9 +58,6 @@ def test_create_user(client, custom_test_server):
 
 
 def test_create_user_with_wrong_email_fails_at_http_layer(client, custom_test_server):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_user = USER
-    repository_mock.create_user.return_value = ModelUser(**expected_user)
 
     user_to_create = {
         "name": "Gontran Bonheur",
@@ -68,11 +65,9 @@ def test_create_user_with_wrong_email_fails_at_http_layer(client, custom_test_se
         "password": "pwd",
     }
 
-    container_mock = mock.Mock(spec=ServerContainer)
-    with custom_test_server.container.db.override(container_mock):
-        response = client.post("/users/", json=user_to_create)
-        actual_response = response.json()
-        print(actual_response)
+    response = client.post("/users/", json=user_to_create)
+    actual_response = response.json()
+    print(actual_response)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert actual_response["detail"][0]["type"] == "value_error.email"
