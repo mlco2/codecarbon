@@ -5,7 +5,7 @@ from requests import Session
 
 from carbonserver.api.dependencies import get_db, get_token_header
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
-from carbonserver.api.schemas import OrganizationCreate, TeamCreate, UserCreate
+from carbonserver.api.schemas import OrganizationCreate, TeamCreate, User, UserCreate
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 
@@ -19,7 +19,7 @@ router = APIRouter(
 def create_user(
     user: UserCreate,
     user_service: UserService = Depends(Provide[ServerContainer.user_service]),
-):
+) -> User:
     return user_service.create_user(user)
 
 
@@ -30,7 +30,7 @@ def sign_up(
     organization: OrganizationCreate,
     team: TeamCreate,
     signup_service: SignUpService = Depends(Provide[ServerContainer.user_service]),
-):
+) -> User:
     return signup_service.sign_up(user, organization, team)
 
 

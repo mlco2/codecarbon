@@ -1,17 +1,15 @@
 from typing import Optional
 
-from carbonserver.api.infra.repositories.repository_users import (
-    SqlAlchemyRepository as UserRepository,
-)
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
 )
 from carbonserver.api.infra.repositories.repository_teams import (
     SqlAlchemyRepository as TeamRepository,
 )
-from carbonserver.api.schemas import UserCreate, OrganizationCreate, TeamCreate
-
-from carbonserver.database.sql_models import User
+from carbonserver.api.infra.repositories.repository_users import (
+    SqlAlchemyRepository as UserRepository,
+)
+from carbonserver.api.schemas import OrganizationCreate, TeamCreate, User, UserCreate
 
 
 class SignUpService:
