@@ -124,6 +124,7 @@ class BaseEmissionsTracker(ABC):
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = list()
+        self._http_out = None
 
         if self._save_to_file == "False":
             self._save_to_file = False
@@ -176,8 +177,21 @@ class BaseEmissionsTracker(ABC):
                 FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
 
-        if self._emissions_endpoint:
-            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
+        if emissions_endpoint:
+            self._http_out = HTTPOutput(emissions_endpoint)
+            self.persistence_objs.append(self._http_out)
+            # self._scheduler.add_job(
+            #     self._intermediate_call_to_http_out, "interval", seconds=1
+            # )
+
+        if co2_signal_api_token:
+            co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
+
+    # def _intermediate_call_to_http_out(self) -> None:
+    #     self._measure_power()  # Run to calculate the power used from last mesure
+    #     emissions_data = self._prepare_emissions_data()
+    #     self._http_out.out(emissions_data)
+    #     self._start_time = time.time()
 
     @suppress(Exception)
     def start(self) -> None:
@@ -293,6 +307,8 @@ class BaseEmissionsTracker(ABC):
                 + f"{hardware.__class__.__name__} : {self._total_energy}"
             )
         self._last_measured_time = time.time()
+        if self._http_out is not None:
+            self._http_out.out(self._prepare_emissions_data())
 
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):

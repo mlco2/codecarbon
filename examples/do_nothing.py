@@ -6,9 +6,9 @@ from codecarbon import track_emissions
 
 @track_emissions(project_name="just_sleep", emissions_endpoint="http://localhost:8008")
 def train_model():
-    for i in range(1):
-        print("Waiting 1 more seconds...")
-        time.sleep(1)
+    for i in range(20):
+        print("Waiting 10 more seconds...")
+        time.sleep(10)
 
 
 if __name__ == "__main__":
