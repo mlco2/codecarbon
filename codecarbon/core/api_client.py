@@ -31,7 +31,6 @@ class ApiClient:  # (AsyncClient)
         :project_id: ID of the existing project
         :api_ley: Code Carbon API_KEY
         """
-        log.error("in __init__")
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
@@ -39,7 +38,6 @@ class ApiClient:  # (AsyncClient)
         self._create_run(self.experiment_id)
 
     def add_emission(self, carbon_emission: dict):
-        log.error("in add_emission")
         emission = EmissionCreate(
             timestamp=datetime.now().isoformat(),
             run_id=self.run_id,
@@ -61,13 +59,11 @@ class ApiClient:  # (AsyncClient)
         Create the experiment for project_id
         # TODO : Allow to give an existing experiment_id
         """
-        log.error("BCODEBUG in _create_run")
         try:
             run = RunCreate(
                 timestamp=datetime.now().isoformat(), experiment_id=experiment_id
             )
             payload = dataclasses.asdict(run)
-            print("BCODEBUG payload", payload)
             r = requests.put(url=self.url + "/run", json=payload)
             assert r.status_code == 200
             self.run_id = r.json()["id"]
