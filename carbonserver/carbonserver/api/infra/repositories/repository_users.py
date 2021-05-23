@@ -8,15 +8,15 @@ from sqlalchemy.orm import Session
 from carbonserver.api import schemas
 from carbonserver.api.domain.users import Users
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
-from carbonserver.database.sql_models import User
+from carbonserver.database.sql_models import User as ModelUser
 
 
 class SqlAlchemyRepository(Users):
     def __init__(self, db: Session):
         self.db = db
 
-    def create_user(self, user: schemas.UserCreate) -> User:
-        db_user = User(
+    def create_user(self, user: schemas.UserCreate) -> ModelUser:
+        db_user = ModelUser(
             user_id=uuid.uuid4(),
             name=user.name,
             email=user.email,
@@ -51,21 +51,21 @@ class SqlAlchemyRepository(Users):
                 )
             )
 
-    def get_user_by_id(self, user_id) -> User:
-        """Find an user in database and return it
+    def get_user_by_id(self, user_id) -> ModelUser:
+        """Find an user in database and ModelUser it
 
         :user_id: The id of the user to retrieve.
         :returns: An User in pyDantic BaseModel format.
         :rtype: schemas.User
         """
-        e = self.db.query(User).filter(User.id == user_id).first()
+        e = self.db.query(Users).filter(ModelUser.id == user_id).first()
         if e is None:
             return None
         else:
             return self.get_db_to_class(e)
 
     def list_users(self):
-        e = self.db.query(User)
+        e = self.db.query(Users)
         if e is None:
             return None
         else:
@@ -75,7 +75,7 @@ class SqlAlchemyRepository(Users):
             return users
 
     @staticmethod
-    def get_db_to_class(user: User) -> schemas.User:
+    def get_db_to_class(user: ModelUser) -> schemas.User:
         return schemas.User(
             id=user.user_id,
             name=user.name,
@@ -92,10 +92,10 @@ class InMemoryRepository(Users):
         self.id: int = 0
         self.inactive_users: List = []
 
-    def create_user(self, user: schemas.UserCreate) -> User:
+    def create_user(self, user: schemas.UserCreate) -> ModelUser:
         self.id += 1
         self.users.append(
-            User(
+            ModelUser(
                 user_id=self.id,
                 name=user.name,
                 email=user.email,
@@ -114,7 +114,7 @@ class InMemoryRepository(Users):
         return self.users
 
     @staticmethod
-    def get_db_to_class(user: User) -> schemas.User:
+    def get_db_to_class(user: ModelUser) -> schemas.User:
         return schemas.User(
             id=user.user_id,
             name=user.name,

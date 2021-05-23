@@ -5,15 +5,17 @@ from carbonserver.api.schemas import UserCreate
 from carbonserver.api.services.user_service import UserService
 from carbonserver.database.sql_models import User as ModelUser
 
+USER_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
-@mock.patch("uuid.uuid4", return_value="f52fe339-164d-4c2b-a8c0-f562dfce066d")
+
+@mock.patch("uuid.uuid4", return_value=USER_ID)
 def test_user_service_creates_correct_user_on_sign_up(_):
     # Given
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_id = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+    expected_id = USER_ID
     user_service = UserService(repository_mock)
     repository_mock.create_user.return_value = ModelUser(
-        user_id="f52fe339-164d-4c2b-a8c0-f562dfce066d",
+        user_id=expected_id,
         name="Gontran Bonheur",
         email="xyz@email.com",
         hashed_password="pwd",
