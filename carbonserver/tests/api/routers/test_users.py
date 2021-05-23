@@ -2,13 +2,12 @@ from unittest import mock
 
 import pytest
 from container import ServerContainer
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
-from carbonserver.database.sql_models import User as ModelUser
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
-from fastapi import status, FastAPI
-
 from carbonserver.api.routers import users
+from carbonserver.database.sql_models import User as ModelUser
 
 USER_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -76,4 +75,4 @@ def test_create_user_with_wrong_email_fails_at_http_layer(client, custom_test_se
         print(actual_response)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert actual_response['detail'][0]['type'] == "value_error.email"
+    assert actual_response["detail"][0]["type"] == "value_error.email"
