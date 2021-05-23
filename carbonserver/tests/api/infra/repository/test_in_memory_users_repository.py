@@ -2,7 +2,7 @@ import pytest
 
 from carbonserver.api.infra.repositories.repository_users import InMemoryRepository
 from carbonserver.api.schemas import UserCreate
-from carbonserver.database.models import User as ModelUser
+from carbonserver.database.sql_models import User as ModelUser
 
 
 @pytest.fixture()

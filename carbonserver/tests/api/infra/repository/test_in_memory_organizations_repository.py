@@ -5,7 +5,7 @@ from carbonserver.api.infra.repositories.repository_organizations import (
 )
 from carbonserver.api.schemas import Organization as SchemaOrganization
 from carbonserver.api.schemas import OrganizationCreate
-from carbonserver.database.models import Organization as ModelOrganization
+from carbonserver.database.sql_models import Organization as ModelOrganization
 
 
 @pytest.fixture()

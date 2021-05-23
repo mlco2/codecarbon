@@ -1,7 +1,6 @@
 from dependency_injector.containers import Container
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 
-from carbonserver.api.dependencies import get_query_token
 from carbonserver.api.routers import (
     emissions,
     experiments,
@@ -23,13 +22,13 @@ routers = [
     projects.router,
     organizations.router,
     teams.router,
-    users.router
+    users.router,
 ]
 
 
 def create_app() -> FastAPI:
     container = Container()
-    container.config.from_yaml('config.yml')
+    container.config.from_yaml("config.yml")
     container.wire(modules=[routers])
 
     db = container.db()
@@ -51,5 +50,3 @@ def default():
 @app.get("/status")
 def status():
     return {"status": "OK"}
-
-

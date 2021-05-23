@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from carbonserver.api import schemas
 from carbonserver.api.domain.organizations import Organizations
-from carbonserver.api.errors import DBErrorEnum, DBError, DBException
-from carbonserver.database import models
+from carbonserver.api.errors import DBError, DBErrorEnum, DBException
+from carbonserver.database import sql_models
 
 """
 Here there is all the method to manipulate the organization data
@@ -18,7 +18,7 @@ class SqlAlchemyRepository(Organizations):
         self.db = db
 
     @staticmethod
-    def get_db_to_class(organization: models.Organization) -> schemas.Organization:
+    def get_db_to_class(organization: sql_models.Organization) -> schemas.Organization:
         return schemas.Organization(
             id=organization.id,
             name=organization.name,
@@ -27,7 +27,7 @@ class SqlAlchemyRepository(Organizations):
 
     def add_organization(self, organization: schemas.OrganizationCreate):
         # TODO : save Organization in database and get her ID
-        db_organization = models.Organization(
+        db_organization = sql_models.Organization(
             name=organization.name, description=organization.description
         )
 
@@ -65,8 +65,8 @@ class SqlAlchemyRepository(Organizations):
         :rtype: schemas.Organization
         """
         e = (
-            self.db.query(models.Organization)
-            .filter(models.Organization.id == organization_id)
+            self.db.query(sql_models.Organization)
+            .filter(sql_models.Organization.id == organization_id)
             .first()
         )
         if e is None:
@@ -85,7 +85,7 @@ class InMemoryRepository(Organizations):
         self.id: int = 0
 
     def get_db_to_class(
-        self, organization: models.Organization
+        self, organization: sql_models.Organization
     ) -> schemas.Organization:
         return schemas.Organization(
             id=organization.id,
@@ -95,7 +95,7 @@ class InMemoryRepository(Organizations):
 
     def add_organization(self, organization: schemas.OrganizationCreate):
         self.organizations.append(
-            models.Experiment(
+            sql_models.Experiment(
                 id=self.id + 1,
                 name=organization.name,
                 description=organization.description,

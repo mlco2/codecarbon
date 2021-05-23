@@ -13,7 +13,6 @@ router = APIRouter(
 
 @router.put("/users/", tags=["users"], status_code=201)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    user = 1
     return create_user_db(db, user)
 
 
