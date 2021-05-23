@@ -1,5 +1,5 @@
-from carbonserver.api.schemas import UserCreate
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
+from carbonserver.api.schemas import UserCreate
 from carbonserver.database.sql_models import User
 
 
