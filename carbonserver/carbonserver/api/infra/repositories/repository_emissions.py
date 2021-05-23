@@ -97,7 +97,9 @@ class SqlAlchemyRepository(Emissions):
         :returns: An Emission in pyDantic BaseModel format.
         :rtype: List[schemas.Emission]
         """
-        res = self.db.query(sql_models.Emission).filter(sql_models.Emission.run_id == run_id)
+        res = self.db.query(sql_models.Emission).filter(
+            sql_models.Emission.run_id == run_id
+        )
         if res.first() is None:
             return []
         else:

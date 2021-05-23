@@ -13,6 +13,7 @@ DEPENDENCIES = [
 ]
 
 TEST_DEPENDENCIES = [
+    "dependency-injector",
     "mock",
     "pytest",
     "requests",

@@ -24,3 +24,5 @@ Database is a core part of the application, used with 2 different usages :
 The load of data would not be the same for those 2 usages, thus we must define 2 types of database connections for them.
 To handle properly the connexion / session, we could define it as part of the infrastructure & keep in the database 
 folder the high level functions that manipulates tested session building.
+A software based on dependency injector : 
+- https://github.com/bentoml/BentoML
