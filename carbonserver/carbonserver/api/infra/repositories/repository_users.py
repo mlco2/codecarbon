@@ -5,9 +5,9 @@ from typing import List
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
-from carbonserver.api import schemas
 from carbonserver.api.domain.users import Users
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
+from carbonserver.api.schemas import User, UserCreate
 from carbonserver.database.sql_models import User as ModelUser
 
 
@@ -15,7 +15,7 @@ class SqlAlchemyRepository(Users):
     def __init__(self, db: Session):
         self.db = db
 
-    def create_user(self, user: schemas.UserCreate) -> ModelUser:
+    def create_user(self, user: UserCreate) -> User:
         db_user = ModelUser(
             user_id=uuid.uuid4(),
             name=user.name,
@@ -28,7 +28,7 @@ class SqlAlchemyRepository(Users):
             self.db.add(db_user)
             self.db.commit()
             self.db.refresh(db_user)
-            return db_user
+            return self.get_db_to_class(db_user)
 
         except exc.IntegrityError as e:
             # Sample error : sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) insert or update on table "emissions" violates foreign key constraint "fk_emissions_runs"
@@ -64,7 +64,7 @@ class SqlAlchemyRepository(Users):
         else:
             return self.get_db_to_class(e)
 
-    def list_users(self) -> List[schemas.User]:
+    def list_users(self) -> List[User]:
         e = self.db.query(Users)
         if e is None:
             return None
@@ -75,8 +75,8 @@ class SqlAlchemyRepository(Users):
             return users
 
     @staticmethod
-    def get_db_to_class(user: ModelUser) -> schemas.User:
-        return schemas.User(
+    def get_db_to_class(user: ModelUser) -> User:
+        return User(
             id=user.user_id,
             name=user.name,
             email=user.email,
@@ -92,7 +92,7 @@ class InMemoryRepository(Users):
         self.id: int = 0
         self.inactive_users: List = []
 
-    def create_user(self, user: schemas.UserCreate) -> ModelUser:
+    def create_user(self, user: UserCreate) -> ModelUser:
         self.id += 1
         self.users.append(
             ModelUser(
@@ -114,8 +114,8 @@ class InMemoryRepository(Users):
         return self.users
 
     @staticmethod
-    def get_db_to_class(user: ModelUser) -> schemas.User:
-        return schemas.User(
+    def get_db_to_class(user: ModelUser) -> User:
+        return User(
             id=user.user_id,
             name=user.name,
             email=user.email,

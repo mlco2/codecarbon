@@ -19,6 +19,18 @@ USER = {
     "is_active": True,
 }
 
+USER_TO_CREATE = {
+    "name": "Gontran Bonheur",
+    "email": "xyz@email.com",
+    "password": "pwd",
+}
+
+USER_WITH_BAD_EMAIL = {
+    "name": "Gontran Bonheur",
+    "email": "xyz",
+    "password": "pwd",
+}
+
 
 @pytest.fixture
 def custom_test_server():
@@ -40,34 +52,21 @@ def test_create_user(client, custom_test_server):
     expected_user = USER
     repository_mock.create_user.return_value = ModelUser(**expected_user)
 
-    user_to_create = {
-        "name": "Gontran Bonheur",
-        "email": "xyz@email.com",
-        "password": "pwd",
-    }
-
     container_mock = mock.Mock(spec=ServerContainer)
     container_mock.db.return_value = True
     with custom_test_server.container.user_repository.override(repository_mock):
         with custom_test_server.container.db.override(container_mock):
-            response = client.post("/users/", json=user_to_create)
+            response = client.post("/users/", json=USER_TO_CREATE)
             actual_user = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
     assert actual_user == expected_user
 
 
-def test_create_user_with_wrong_email_fails_at_http_layer(client, custom_test_server):
+def test_create_user_with_bad_email_fails_at_http_layer(client, custom_test_server):
 
-    user_to_create = {
-        "name": "Gontran Bonheur",
-        "email": "xyz",
-        "password": "pwd",
-    }
-
-    response = client.post("/users/", json=user_to_create)
+    response = client.post("/users/", json=USER_WITH_BAD_EMAIL)
     actual_response = response.json()
-    print(actual_response)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     assert actual_response["detail"][0]["type"] == "value_error.email"
