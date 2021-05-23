@@ -43,6 +43,8 @@ def init_server(container):
     def status():
         return {"status": "OK"}
 
+    server.include_router(users.router)
+
     return server
 
 
