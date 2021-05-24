@@ -49,4 +49,4 @@ def init_server(container):
 
 
 if __name__ == "__main__":
-    app = init_server()
+    app = create_app()

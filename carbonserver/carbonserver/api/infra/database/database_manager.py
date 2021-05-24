@@ -1,5 +1,3 @@
-"""Database managment module."""
-
 import logging
 from contextlib import contextmanager
 
