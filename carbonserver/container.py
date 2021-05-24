@@ -1,9 +1,9 @@
-from carbonserver.config import settings
 from dependency_injector import containers, providers
 
 from carbonserver.api.infra.database.database_manager import Database
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
 from carbonserver.api.services.user_service import UserService
+from carbonserver.config import settings
 
 
 class ServerContainer(containers.DeclarativeContainer):

@@ -1,7 +1,7 @@
 import secrets
 import uuid
 from contextlib import AbstractContextManager
-from typing import List, Callable
+from typing import Callable, List
 
 from sqlalchemy import exc
 
@@ -26,7 +26,7 @@ class SqlAlchemyRepository(Users):
                 name=user.name,
                 email=user.email,
                 hashed_password=user.password,
-                api_key='AAAAAAAA',  # self.api_key_generator(),
+                api_key="AAAAAAAA",  # self.api_key_generator(),
                 is_active=True,
             )
             try:
@@ -39,7 +39,9 @@ class SqlAlchemyRepository(Users):
                 # Sample error : sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) insert or update on table "emissions" violates foreign key constraint "fk_emissions_runs"
                 session.rollback()
                 raise DBException(
-                    error=DBError(code=DBErrorEnum.INTEGRITY_ERROR, message=e.orig.args[0])
+                    error=DBError(
+                        code=DBErrorEnum.INTEGRITY_ERROR, message=e.orig.args[0]
+                    )
                 )
             except exc.DataError as e:
                 session.rollback()
