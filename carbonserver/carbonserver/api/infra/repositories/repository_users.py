@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from carbonserver.api.domain.users import Users
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
 from carbonserver.api.schemas import User, UserCreate
-from carbonserver.database.sql_models import User as ModelUser
+from carbonserver.database.sql_models import User as SqlModelUser
 
 
 class SqlAlchemyRepository(Users):
@@ -16,7 +16,11 @@ class SqlAlchemyRepository(Users):
         self.db = db
 
     def create_user(self, user: UserCreate) -> User:
-        db_user = ModelUser(
+        """Creates an user in the database
+        :returns: An User in pyDantic BaseModel format.
+        :rtype: schemas.User
+        """
+        db_user = SqlModelUser(
             user_id=uuid.uuid4(),
             name=user.name,
             email=user.email,
@@ -51,21 +55,21 @@ class SqlAlchemyRepository(Users):
                 )
             )
 
-    def get_user_by_id(self, user_id) -> ModelUser:
-        """Find an user in database and ModelUser it
+    def get_user_by_id(self, user_id: str) -> User:
+        """Find an user in database and retrieves it
 
         :user_id: The id of the user to retrieve.
         :returns: An User in pyDantic BaseModel format.
         :rtype: schemas.User
         """
-        e = self.db.query(Users).filter(ModelUser.id == user_id).first()
+        e = self.db.query(SqlModelUser).filter(SqlModelUser.id == user_id).first()
         if e is None:
             return None
         else:
             return self.get_db_to_class(e)
 
     def list_users(self) -> List[User]:
-        e = self.db.query(Users)
+        e = self.db.query(SqlModelUser)
         if e is None:
             return None
         else:
@@ -75,14 +79,19 @@ class SqlAlchemyRepository(Users):
             return users
 
     @staticmethod
-    def get_db_to_class(user: ModelUser) -> User:
+    def get_db_to_class(sql_user: SqlModelUser) -> User:
+        """Sql To Pydantic Mapper
+
+        :returns: An User in pyDantic BaseModel format.
+        :rtype: schemas.User
+        """
         return User(
-            id=user.user_id,
-            name=user.name,
-            email=user.email,
-            hashed_password=user.hashed_password,
-            api_key=user.api_key,
-            is_active=user.is_active,
+            id=sql_user.user_id,
+            name=sql_user.name,
+            email=sql_user.email,
+            hashed_password=sql_user.hashed_password,
+            api_key=sql_user.api_key,
+            is_active=sql_user.is_active,
         )
 
 
@@ -92,10 +101,10 @@ class InMemoryRepository(Users):
         self.id: int = 0
         self.inactive_users: List = []
 
-    def create_user(self, user: UserCreate) -> ModelUser:
+    def create_user(self, user: UserCreate) -> SqlModelUser:
         self.id += 1
         self.users.append(
-            ModelUser(
+            SqlModelUser(
                 user_id=self.id,
                 name=user.name,
                 email=user.email,
@@ -114,7 +123,7 @@ class InMemoryRepository(Users):
         return self.users
 
     @staticmethod
-    def get_db_to_class(user: ModelUser) -> User:
+    def get_db_to_class(user: SqlModelUser) -> User:
         return User(
             id=user.user_id,
             name=user.name,

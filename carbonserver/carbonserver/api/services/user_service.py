@@ -13,6 +13,11 @@ class UserService:
 
         return created_user
 
+    def get_user_by_id(self, user_id: str) -> User:
+        created_user = self._repository.get_user_by_id(user_id)
+
+        return created_user
+
     def list_users(self) -> List[User]:
         users_list = self._repository.list_users()
 

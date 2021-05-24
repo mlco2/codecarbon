@@ -1,5 +1,3 @@
-"""Containers module."""
-
 from dependency_injector import containers, providers
 
 from carbonserver.api.infra.database.database_manager import Database
@@ -10,9 +8,10 @@ from carbonserver.api.services.user_service import UserService
 class ServerContainer(containers.DeclarativeContainer):
 
     config = providers.Configuration()
+    db_url = "postgresql://codecarbon-user:supersecret@postgres:5480/codecarbon_db"
     db = providers.Singleton(
         Database,
-        db_url="postgresql://codecarbon-user:supersecret@localhost:5432/codecarbon_db",
+        db_url=db_url,
     )
     user_repository = providers.Factory(
         SqlAlchemyRepository,
