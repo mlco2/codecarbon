@@ -8,7 +8,7 @@ from codecarbon import track_emissions
     project_name="just_sleep",
     emissions_endpoint="http://localhost:8008",
     measure_power_secs=15,
-    measure_occurence_before_calling_api=4,
+    measure_occurrence_before_calling_api=4,
 )
 def train_model():
     occurence = 20
