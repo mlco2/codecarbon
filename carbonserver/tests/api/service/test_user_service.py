@@ -1,7 +1,5 @@
 from unittest import mock
 
-from pydantic.types import SecretStr
-
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
 from carbonserver.api.schemas import User, UserCreate
 from carbonserver.api.services.user_service import UserService

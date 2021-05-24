@@ -1,4 +1,3 @@
-import secrets
 from typing import List
 
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
@@ -23,4 +22,3 @@ class UserService:
         users_list = self._repository.list_users()
 
         return users_list
-
