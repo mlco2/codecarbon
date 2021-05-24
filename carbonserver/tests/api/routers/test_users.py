@@ -61,12 +61,9 @@ def test_create_user(client, custom_test_server):
     expected_user = USER
     repository_mock.create_user.return_value = ModelUser(**expected_user)
 
-    container_mock = mock.Mock(spec=ServerContainer)
-    container_mock.db.return_value = True
     with custom_test_server.container.user_repository.override(repository_mock):
-        with custom_test_server.container.db.override(container_mock):
-            response = client.post("/users/", json=USER_TO_CREATE)
-            actual_user = response.json()
+        response = client.post("/users/", json=USER_TO_CREATE)
+        actual_user = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
     assert actual_user == expected_user
@@ -90,10 +87,7 @@ def test_list_users_list_all_existing_users_with_200(client, custom_test_server)
         ModelUser(**expected_user_2),
     ]
 
-    # container_mock = mock.Mock(spec=ServerContainer)
-    # container_mock.db.return_value = True
     with custom_test_server.container.user_repository.override(repository_mock):
-        # with custom_test_server.container.db.override(container_mock):
         response = client.get("/users/")
         actual_user_list = response.json()
 
@@ -101,7 +95,9 @@ def test_list_users_list_all_existing_users_with_200(client, custom_test_server)
     assert actual_user_list == expected_user_list
 
 
-def test_get_user_by_id_returns_correct_user_with_correct_id(client, custom_test_server):
+def test_get_user_by_id_returns_correct_user_with_correct_id(
+    client, custom_test_server
+):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_user = USER
     repository_mock.get_user_by_id.return_value = ModelUser(**expected_user)
@@ -109,8 +105,7 @@ def test_get_user_by_id_returns_correct_user_with_correct_id(client, custom_test
     container_mock = mock.Mock(spec=ServerContainer)
     container_mock.db.return_value = True
     with custom_test_server.container.user_repository.override(repository_mock):
-        with custom_test_server.container.db.override(container_mock):
-            response = client.get("/users/get_user_by_id/", params={"user_id": USER_ID})
-            actual_user = response.json()
+        response = client.get("/users/get_user_by_id/", params={"user_id": USER_ID})
+        actual_user = response.json()
 
     assert actual_user == expected_user

@@ -2,12 +2,7 @@ from container import ServerContainer
 
 
 def test_container_exposes_correct_list_of_providers_at_initialisation():
-    expected_providers = [
-        'config',
-        'db',
-        'user_repository',
-        'user_service'
-    ]
+    expected_providers = ["config", "db", "user_repository", "user_service"]
 
     actual_providers = ServerContainer().providers.keys()
     diff = set(expected_providers) ^ set(actual_providers)
@@ -15,4 +10,3 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
     # Then
     assert not diff
     assert len(expected_providers) == len(actual_providers)
-
