@@ -1,7 +1,7 @@
-import secrets
 import uuid
 from typing import List
 
+from carbonserver.api.services.user_service import UserService
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
@@ -25,7 +25,7 @@ class SqlAlchemyRepository(Users):
             name=user.name,
             email=user.email,
             hashed_password=user.password,
-            api_key=_api_key_generator(),
+            api_key=UserService.api_key_generator(),
             is_active=True,
         )
         try:
@@ -132,8 +132,3 @@ class InMemoryRepository(Users):
             api_key=user.api_key,
             is_active=user.is_active,
         )
-
-
-def _api_key_generator():
-    generated_key = secrets.token_urlsafe(16)
-    return generated_key
