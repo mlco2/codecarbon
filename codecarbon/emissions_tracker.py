@@ -67,7 +67,7 @@ class BaseEmissionsTracker(ABC):
                              as "codecarbon"
         :param measure_power_secs: Interval (in seconds) to measure hardware power
                                    usage, defaults to 15
-        :param measure_occurence_before_calling_api: Occurence to wait before calling API :
+        :param measure_occurrence_before_calling_api: Occurence to wait before calling API :
                             1 : at every measure
                             2 : every 2 measure
         :param output_dir: Directory path to which the experiment details are logged
@@ -344,7 +344,7 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time = time.time()
         self._measure_occurence += 1
         if self._http_out is not None:
-            if self._measure_occurence >= self._measure_occurence_before_calling_api:
+            if self._measure_occurence >= self._measure_occurrence_before_calling_api:
                 self._http_out.out(self._prepare_emissions_data(delta=True))
                 self._measure_occurence = 0
 
