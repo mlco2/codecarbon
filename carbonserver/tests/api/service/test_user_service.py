@@ -13,7 +13,7 @@ USER_1 = User(
     id=USER_ID,
     name="Gontran Bonheur",
     email="xyz@email.com",
-    password=SecretStr("pwd"),
+    password="pwd",
     api_key="AZEZAEAZEAZE",
     is_active=True,
 )
@@ -22,7 +22,7 @@ USER_2 = User(
     id=USER_ID_2,
     name="Jonnhy Monnay",
     email="1234+1@email.fr",
-    password=SecretStr("password"),
+    password="password",
     api_key="BZEZBEBZEBZE",
     is_active=True,
 )

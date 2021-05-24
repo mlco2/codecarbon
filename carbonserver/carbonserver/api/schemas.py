@@ -11,7 +11,7 @@ So this will help us avoiding confusion while using both.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, SecretStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class EmissionBase(BaseModel):
@@ -184,14 +184,14 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     name: str
     email: EmailStr
-    password: SecretStr
+    password: str
 
 
 class User(UserBase):
     id: str
     name: str
     email: EmailStr
-    password: SecretStr
+    password: str
     api_key: str
     is_active: Optional[bool]
 

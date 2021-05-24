@@ -1,3 +1,4 @@
+from carbonserver.config import settings
 from dependency_injector import containers, providers
 
 from carbonserver.api.infra.database.database_manager import Database
@@ -8,7 +9,7 @@ from carbonserver.api.services.user_service import UserService
 class ServerContainer(containers.DeclarativeContainer):
 
     config = providers.Configuration()
-    db_url = "postgresql://codecarbon-user:supersecret@postgres:5480/codecarbon_db"
+    db_url = settings.db_url
     db = providers.Singleton(
         Database,
         db_url=db_url,
