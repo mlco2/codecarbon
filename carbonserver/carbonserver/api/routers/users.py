@@ -23,7 +23,9 @@ def create_user(
     return user_service.create_user(user)
 
 
-@router.post("/users/signup/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/users/signup/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+)
 @inject
 def sign_up(
     user: UserCreate,
