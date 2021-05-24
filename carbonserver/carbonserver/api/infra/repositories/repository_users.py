@@ -26,7 +26,7 @@ class SqlAlchemyRepository(Users):
                 name=user.name,
                 email=user.email,
                 hashed_password=user.password,
-                api_key="AAAAAAAA",  # self.api_key_generator(),
+                api_key=self.api_key_generator(),
                 is_active=True,
             )
             try:
@@ -103,7 +103,7 @@ class SqlAlchemyRepository(Users):
 
     @staticmethod
     def api_key_generator():
-        yield secrets.token_urlsafe(16)
+        return secrets.token_urlsafe(16)
 
 
 class InMemoryRepository(Users):
