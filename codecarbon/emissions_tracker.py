@@ -3,6 +3,8 @@ Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
 
+import dataclasses
+import logging
 import os
 import time
 from abc import ABC, abstractmethod
@@ -52,6 +54,7 @@ class BaseEmissionsTracker(ABC):
         self,
         project_name: Optional[str] = None,
         measure_power_secs: Optional[int] = None,
+        measure_occurence_before_calling_api: int = 2,
         output_dir: Optional[str] = None,
         save_to_file: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
@@ -64,6 +67,9 @@ class BaseEmissionsTracker(ABC):
                              as "codecarbon"
         :param measure_power_secs: Interval (in seconds) to measure hardware power
                                    usage, defaults to 15
+        :param measure_occurence_before_calling_api: Occurence to wait before calling API :
+                            1 : at every measure
+                            2 : every 2 measure
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current
                            directory
@@ -118,13 +124,18 @@ class BaseEmissionsTracker(ABC):
             if save_to_file is not None
             else conf.getboolean("save_to_file", True)
         )
-
+        self._measure_occurence_before_calling_api: int = (
+            measure_occurence_before_calling_api
+        )
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = list()
         self._http_out = None
+        self._measure_occurence: int = 0
+        self._cloud = None
+        self._previous_emissions = None
 
         if self._save_to_file == "False":
             self._save_to_file = False
@@ -187,12 +198,6 @@ class BaseEmissionsTracker(ABC):
         if co2_signal_api_token:
             co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
 
-    # def _intermediate_call_to_http_out(self) -> None:
-    #     self._measure_power()  # Run to calculate the power used from last mesure
-    #     emissions_data = self._prepare_emissions_data()
-    #     self._http_out.out(emissions_data)
-    #     self._start_time = time.time()
-
     @suppress(Exception)
     def start(self) -> None:
         """
@@ -226,11 +231,20 @@ class BaseEmissionsTracker(ABC):
         emissions_data = self._prepare_emissions_data()
 
         for persistence in self.persistence_objs:
+            if isinstance(persistence, HTTPOutput):
+                logger.error(
+                    f"BCODEBUG Duration {emissions_data.duration} emissions {emissions_data.emissions}"
+                )
+                emissions_data = self._prepare_emissions_data(delta=True)
+
             persistence.out(emissions_data)
 
         return emissions_data.emissions
 
-    def _prepare_emissions_data(self) -> EmissionsData:
+    def _prepare_emissions_data(self, delta=False) -> EmissionsData:
+        """
+        :delta: True to return only the delta comsumption since last call
+        """
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
@@ -254,7 +268,7 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = cloud.provider
             cloud_region = cloud.region
 
-        return EmissionsData(
+        total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
             duration=duration.seconds,
@@ -267,6 +281,27 @@ class BaseEmissionsTracker(ABC):
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
+        if delta:
+            if self._previous_emissions is None:
+                self._previous_emissions = total_emissions
+                return total_emissions
+            else:
+                delta_emissions = dataclasses.replace(total_emissions)
+                delta_emissions.duration = (
+                    total_emissions.duration - self._previous_emissions.duration
+                )
+                delta_emissions.emissions = (
+                    total_emissions.emissions - self._previous_emissions.emissions
+                )
+                delta_emissions.energy_consumed = (
+                    total_emissions.energy_consumed
+                    - self._previous_emissions.energy_consumed
+                )
+                # TODO : find a way to store _previous_emissions only when API call succeded
+                self._previous_emissions = total_emissions
+                return delta_emissions
+        else:
+            return total_emissions
 
     @abstractmethod
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -307,8 +342,11 @@ class BaseEmissionsTracker(ABC):
                 + f"{hardware.__class__.__name__} : {self._total_energy}"
             )
         self._last_measured_time = time.time()
+        self._measure_occurence += 1
         if self._http_out is not None:
-            self._http_out.out(self._prepare_emissions_data())
+            if self._measure_occurence >= self._measure_occurence_before_calling_api:
+                self._http_out.out(self._prepare_emissions_data(delta=True))
+                self._measure_occurence = 0
 
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):
@@ -422,7 +460,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata(provider=self._cloud_provider, region=self._cloud_region)
+        if self._cloud is None:
+            self._cloud = CloudMetadata(
+                provider=self._cloud_provider, region=self._cloud_region
+            )
+        return self._cloud
 
 
 class EmissionsTracker(BaseEmissionsTracker):
@@ -435,13 +477,16 @@ class EmissionsTracker(BaseEmissionsTracker):
         return GeoMetadata.from_geo_js(self._data_source.geo_js_url)
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata.from_utils()
+        if self._cloud is None:
+            self._cloud = CloudMetadata.from_utils()
+        return self._cloud
 
 
 def track_emissions(
     fn: Callable = None,
     project_name: Optional[str] = None,
     measure_power_secs: Optional[int] = None,
+    measure_occurence_before_calling_api: int = 2,
     output_dir: Optional[str] = None,
     save_to_file: Optional[bool] = None,
     offline: Optional[bool] = None,

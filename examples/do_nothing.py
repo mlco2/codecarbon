@@ -4,11 +4,18 @@ import time
 from codecarbon import track_emissions
 
 
-@track_emissions(project_name="just_sleep", emissions_endpoint="http://localhost:8008")
+@track_emissions(
+    project_name="just_sleep",
+    emissions_endpoint="http://localhost:8008",
+    measure_power_secs=15,
+    measure_occurence_before_calling_api=4,
+)
 def train_model():
-    for i in range(20):
-        print("Waiting 10 more seconds...")
-        time.sleep(10)
+    occurence = 20
+    delay = 10
+    for i in range(occurence):
+        print(f"{occurence * delay - i * delay} seconds before ending script...")
+        time.sleep(delay)
 
 
 if __name__ == "__main__":
@@ -19,9 +26,9 @@ if __name__ == "__main__":
     )
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.ERROR)
     print(logger.level)
-    logger.debug("DEBUG")
-    logger.info("INFO")
-    logger.error("ERROR")
+    logger.debug("DEBUG messages will be printed.")
+    logger.info("INFO messages will be printed.")
+    logger.error("ERROR messages will be printed.")
     model = train_model()
