@@ -124,7 +124,7 @@ class Organization(Base):
 
 class User(Base):
     __tablename__ = "users"
-    user_id = Column(
+    id = Column(
         UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
     )
     name = Column(String)
@@ -136,7 +136,7 @@ class User(Base):
 
     def __repr__(self):
         return (
-            f'<User(user_id="{self.user_id}", '
+            f'<User(id="{self.id}", '
             f'name="{self.name}", '
             f'is_active="{self.is_active}", '
             f'email="{self.email}")>'

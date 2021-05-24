@@ -1,5 +1,6 @@
+from carbonserver.api.dependencies import get_query_token
 from container import ServerContainer
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 
 from carbonserver.api.routers import users
 from carbonserver.database import sql_models
@@ -21,7 +22,7 @@ def create_app() -> FastAPI:
 
 def init_container():
     container = ServerContainer()
-    container.wire(modules=[routers])
+    container.wire(modules=[users])
     return container
 
 
@@ -32,21 +33,11 @@ def init_db(container):
 
 
 def init_server(container):
-    server = FastAPI()
+    server = FastAPI(dependencies=[Depends(get_query_token)])
     server.container = container
-
-    @app.get("/")
-    def default():
-        return {"docs": "Please go to /docs"}
-
-    @app.get("/status")
-    def status():
-        return {"status": "OK"}
-
     server.include_router(users.router)
 
     return server
 
 
-if __name__ == "__main__":
-    app = create_app()
+app = create_app()

@@ -24,6 +24,3 @@ class UserService:
 
         return users_list
 
-    @staticmethod
-    def api_key_generator():
-        yield secrets.token_urlsafe(16)

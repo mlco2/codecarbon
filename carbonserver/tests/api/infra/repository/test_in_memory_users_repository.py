@@ -43,7 +43,7 @@ def test_create_user_saves_correct_user(user_repository):
 
     created_user = user_repository.create_user(user)
 
-    assert created_user.user_id == 1
+    assert created_user.id == 1
 
 
 def test_list_users_returns_all_users(user_repository):
@@ -60,7 +60,7 @@ def test_list_users_returns_all_users(user_repository):
     expected_user_ids = [1, 2]
 
     actual_users = user_repository.list_users()
-    actual_user_ids = [user.user_id for user in actual_users]
+    actual_user_ids = [user.id for user in actual_users]
     assert expected_user_ids == actual_user_ids
 
 
