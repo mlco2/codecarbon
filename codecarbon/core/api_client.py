@@ -71,12 +71,6 @@ class ApiClient:  # (AsyncClient)
             return False
         return True
 
-    def _log_error(payload, response):
-        log.error(f" Error when calling the API with : {json.dumps(payload)}")
-        log.error(
-            f" API return http code {response.status_code} and answer : {response.json()}"
-        )
-
     def _create_run(self, experiment_id):
         """
         Create the experiment for project_id
@@ -94,6 +88,12 @@ class ApiClient:  # (AsyncClient)
             self.run_id = r.json()["id"]
         except Exception as e:
             log.error(e, exc_info=True)
+
+    def _log_error(self, payload, response):
+        log.error(f" Error when calling the API with : {json.dumps(payload)}")
+        log.error(
+            f" API return http code {response.status_code} and answer : {response.json()}"
+        )
 
     async def close_experiment(self):
         """
