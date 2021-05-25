@@ -59,6 +59,7 @@ class BaseEmissionsTracker(ABC):
         save_to_file: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
+        experiment_id: Optional[str] = None,
         co2_signal_api_token: Optional[str] = None,
         log_level: Optional[Union[int, str]] = None,
     ):
@@ -78,6 +79,7 @@ class BaseEmissionsTracker(ABC):
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data
+        :param experiment_id: Id of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
         :param log_level: Global codecarbon log level. Accepts one of:
@@ -189,7 +191,9 @@ class BaseEmissionsTracker(ABC):
             )
 
         if emissions_endpoint:
-            self._http_out = HTTPOutput(emissions_endpoint)
+            self._http_out = HTTPOutput(
+                endpoint_url=emissions_endpoint, experiment_id=experiment_id
+            )
             self.persistence_objs.append(self._http_out)
             # self._scheduler.add_job(
             #     self._intermediate_call_to_http_out, "interval", seconds=1
@@ -491,6 +495,7 @@ def track_emissions(
     save_to_file: Optional[bool] = None,
     offline: Optional[bool] = None,
     emissions_endpoint: Optional[str] = None,
+    experiment_id: Optional[str] = None,
     country_iso_code: Optional[str] = None,
     region: Optional[str] = None,
     cloud_provider: Optional[str] = None,
@@ -562,6 +567,7 @@ def track_emissions(
                     gpu_ids=gpu_ids,
                     log_level=log_level,
                     emissions_endpoint=emissions_endpoint,
+                    experiment_id=experiment_id,
                 )
                 tracker.start()
                 fn(*args, **kwargs)

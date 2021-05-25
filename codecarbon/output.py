@@ -75,10 +75,10 @@ class HTTPOutput(BaseOutput):
     Send emissions data to HTTP endpoint
     """
 
-    def __init__(self, endpoint_url: str):
+    def __init__(self, endpoint_url: str, experiment_id: str):
         self.endpoint_url: str = endpoint_url
         self.api = ApiClient(
-            experiment_id="ab9e3f18-4a99-46f8-9c31-8b4c49a2752b",
+            experiment_id=experiment_id,
             endpoint_url=endpoint_url,
             api_key="Toto",
         )
