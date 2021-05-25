@@ -6,7 +6,8 @@ from codecarbon import track_emissions
 
 @track_emissions(
     project_name="just_sleep",
-    emissions_endpoint="http://localhost:8008",
+    emissions_endpoint="http://app-d6bc59c3-0f69-4d8b-a6a3-bc39a9ceb0c2.cleverapps.io",
+    experiment_id="82ba0923-0713-4da1-9e57-cea70b460ee9",
     measure_power_secs=15,
     measure_occurrence_before_calling_api=4,
 )
