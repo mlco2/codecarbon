@@ -15,7 +15,7 @@ DEPENDENCIES = [
     "py-cpuinfo",
 ]
 
-TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox"]
+TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "requests-mock"]
 
 
 setuptools.setup(
