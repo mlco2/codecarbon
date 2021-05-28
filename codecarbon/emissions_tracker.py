@@ -59,6 +59,7 @@ class BaseEmissionsTracker(ABC):
         save_to_file: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
+        api_key: Optional[str] = None,
         experiment_id: Optional[str] = None,
         co2_signal_api_token: Optional[str] = None,
         log_level: Optional[Union[int, str]] = None,
@@ -192,7 +193,9 @@ class BaseEmissionsTracker(ABC):
 
         if emissions_endpoint:
             self._http_out = HTTPOutput(
-                endpoint_url=emissions_endpoint, experiment_id=experiment_id
+                endpoint_url=emissions_endpoint,
+                experiment_id=experiment_id,
+                api_key=api_key,
             )
             self.persistence_objs.append(self._http_out)
             # self._scheduler.add_job(
