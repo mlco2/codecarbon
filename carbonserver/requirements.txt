@@ -1,0 +1,8 @@
+alembic
+fastapi
+pydantic[email]
+psycopg2-binary
+requests
+sqlalchemy
+tox
+uvicorn[standard]
