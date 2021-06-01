@@ -1,4 +1,3 @@
-import logging
 import time
 
 from codecarbon import track_emissions
@@ -20,16 +19,4 @@ def train_model():
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger("codecarbon")
-    ch = logging.StreamHandler()
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-    logger.setLevel(logging.ERROR)
-    print(logger.level)
-    logger.debug("DEBUG messages will be printed.")
-    logger.info("INFO messages will be printed.")
-    logger.error("ERROR messages will be printed.")
     model = train_model()

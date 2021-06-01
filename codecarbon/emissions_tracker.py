@@ -513,6 +513,7 @@ def track_emissions(
                          default name as "codecarbon"
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15
+    :measure_occurrence_before_calling_api: Number of measure to make before calling the Code Carbon API.
     :param output_dir: Directory path to which the experiment details are logged
                        in a CSV file called `emissions.csv`, defaults to current
                        directory
@@ -571,6 +572,7 @@ def track_emissions(
                     log_level=log_level,
                     emissions_endpoint=emissions_endpoint,
                     experiment_id=experiment_id,
+                    measure_occurrence_before_calling_api=measure_occurrence_before_calling_api,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
