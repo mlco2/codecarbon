@@ -25,7 +25,7 @@ def upgrade():
     Initial creation: removes all code carbon related tables & creates them with initial user / organization / team.
     """
 
-    downgrade()
+    # downgrade()
 
     op.create_table(
         "emissions",
