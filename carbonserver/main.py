@@ -51,6 +51,11 @@ def init_server(container):
     server.include_router(organizations.router)
 
     server.include_router(users.router)
+
+    @app.get("/")
+    def default():
+        return {"status": "OK"}
+
     return server
 
 
