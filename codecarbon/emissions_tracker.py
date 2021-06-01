@@ -54,7 +54,7 @@ class BaseEmissionsTracker(ABC):
         self,
         project_name: Optional[str] = None,
         measure_power_secs: Optional[int] = None,
-        measure_occurence_before_calling_api: int = 2,
+        api_call_interval: int = 2,
         output_dir: Optional[str] = None,
         save_to_file: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
@@ -69,7 +69,7 @@ class BaseEmissionsTracker(ABC):
                              as "codecarbon"
         :param measure_power_secs: Interval (in seconds) to measure hardware power
                                    usage, defaults to 15
-        :param measure_occurrence_before_calling_api: Occurence to wait before calling API :
+        :param api_call_interval: Occurence to wait before calling API :
                             1 : at every measure
                             2 : every 2 measure
         :param output_dir: Directory path to which the experiment details are logged
@@ -127,9 +127,7 @@ class BaseEmissionsTracker(ABC):
             if save_to_file is not None
             else conf.getboolean("save_to_file", True)
         )
-        self._measure_occurence_before_calling_api: int = (
-            measure_occurence_before_calling_api
-        )
+        self._api_call_interval: int = api_call_interval
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
@@ -293,17 +291,10 @@ class BaseEmissionsTracker(ABC):
                 self._previous_emissions = total_emissions
                 return total_emissions
             else:
+                # Create a copy
                 delta_emissions = dataclasses.replace(total_emissions)
-                delta_emissions.duration = (
-                    total_emissions.duration - self._previous_emissions.duration
-                )
-                delta_emissions.emissions = (
-                    total_emissions.emissions - self._previous_emissions.emissions
-                )
-                delta_emissions.energy_consumed = (
-                    total_emissions.energy_consumed
-                    - self._previous_emissions.energy_consumed
-                )
+                # Compute delta
+                delta_emissions.substract_in_place(total_emissions)
                 # TODO : find a way to store _previous_emissions only when API call succeded
                 self._previous_emissions = total_emissions
                 return delta_emissions
@@ -351,7 +342,7 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time = time.time()
         self._measure_occurence += 1
         if self._http_out is not None:
-            if self._measure_occurence >= self._measure_occurrence_before_calling_api:
+            if self._measure_occurence >= self._api_call_interval:
                 self._http_out.out(self._prepare_emissions_data(delta=True))
                 self._measure_occurence = 0
 
@@ -493,7 +484,7 @@ def track_emissions(
     fn: Callable = None,
     project_name: Optional[str] = None,
     measure_power_secs: Optional[int] = None,
-    measure_occurence_before_calling_api: int = 2,
+    api_call_interval: int = 2,
     output_dir: Optional[str] = None,
     save_to_file: Optional[bool] = None,
     offline: Optional[bool] = None,
@@ -513,7 +504,7 @@ def track_emissions(
                          default name as "codecarbon"
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15
-    :measure_occurrence_before_calling_api: Number of measure to make before calling the Code Carbon API.
+    :api_call_interval: Number of measure to make before calling the Code Carbon API.
     :param output_dir: Directory path to which the experiment details are logged
                        in a CSV file called `emissions.csv`, defaults to current
                        directory
@@ -572,7 +563,7 @@ def track_emissions(
                     log_level=log_level,
                     emissions_endpoint=emissions_endpoint,
                     experiment_id=experiment_id,
-                    measure_occurrence_before_calling_api=measure_occurrence_before_calling_api,
+                    api_call_interval=api_call_interval,
                 )
                 tracker.start()
                 fn(*args, **kwargs)

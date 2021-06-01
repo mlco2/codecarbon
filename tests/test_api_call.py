@@ -1,13 +1,19 @@
-from codecarbon.core.api_client import ApiClient
-import requests_mock
-from codecarbon.output import EmissionsData
 import dataclasses
+
+import requests_mock
+
+from codecarbon.core.api_client import ApiClient
+from codecarbon.output import EmissionsData
 
 
 def test_call_api():
     # mock_path = 'codecarbon.core.api_client.requests'
     with requests_mock.Mocker() as m:
-        m.put("http://test.com/run", json={"id": "82ba0923-0713-4da1-9e57-cea70b460ee9"}, status_code=200)
+        m.put(
+            "http://test.com/run",
+            json={"id": "82ba0923-0713-4da1-9e57-cea70b460ee9"},
+            status_code=200,
+        )
         api = ApiClient(
             experiment_id="experiment_id",
             endpoint_url="http://test.com",

@@ -39,6 +39,11 @@ class EmissionsData:
     def values(self) -> OrderedDict:
         return OrderedDict(self.__dict__.items())
 
+    def substract_in_place(self, previous_emission):
+        self.duration = previous_emission.duration - self.duration
+        self.emissions = previous_emission.emissions - self.emissions
+        self.energy_consumed = previous_emission.energy_consumed - self.energy_consumed
+
 
 class BaseOutput(ABC):
     """
