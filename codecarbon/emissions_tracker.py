@@ -291,7 +291,6 @@ class BaseEmissionsTracker(ABC):
                 delta_emissions.substract_in_place(self._previous_emissions)
                 # TODO : find a way to store _previous_emissions only when API call succeded
                 self._previous_emissions = total_emissions
-                print(delta_emissions)
                 return delta_emissions
         else:
             return total_emissions
