@@ -147,7 +147,7 @@ class BaseEmissionsTracker(ABC):
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
         else:
             logger.warning(
-                "No CPU tracking mode found. " + "Falling back on CPU constant mode."
+                "No CPU tracking mode found. Falling back on CPU constant mode."
             )
             logger.info("Tracking using constant")
             tdp = cpu.TDP().tdp
