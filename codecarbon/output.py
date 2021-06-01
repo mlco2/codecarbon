@@ -6,6 +6,7 @@ import csv
 import dataclasses
 import logging
 import os
+import requests
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -40,9 +41,9 @@ class EmissionsData:
         return OrderedDict(self.__dict__.items())
 
     def substract_in_place(self, previous_emission):
-        self.duration = previous_emission.duration - self.duration
-        self.emissions = previous_emission.emissions - self.emissions
-        self.energy_consumed = previous_emission.energy_consumed - self.energy_consumed
+        self.duration = self.duration - previous_emission.duration
+        self.emissions = self.emissions - previous_emission.emissions
+        self.energy_consumed = self.energy_consumed - previous_emission.energy_consumed
 
 
 class BaseOutput(ABC):
@@ -76,6 +77,25 @@ class FileOutput(BaseOutput):
 
 
 class HTTPOutput(BaseOutput):
+    """
+    Send emissions data to HTTP endpoint
+    Warning : This is an empty model to guide you.
+    We do not provide a server.
+    """
+
+    def __init__(self, endpoint_url: str):
+        self.endpoint_url: str = endpoint_url
+
+    def out(self, data: EmissionsData):
+        payload = dataclasses.asdict(data)
+        resp = requests.post(self.endpoint_url, json=payload, verify=False)
+        if resp.status_code != 201:
+            LOGGER.warning(
+                "CODECARBON : HTTP Output returned an unexpected status code: ", resp
+            )
+
+
+class CodeCarbonAPIOutput(BaseOutput):
     """
     Send emissions data to HTTP endpoint
     """
