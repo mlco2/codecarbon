@@ -23,7 +23,7 @@ from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
-from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
+from codecarbon.output import BaseOutput, EmissionsData, FileOutput, CodeCarbonAPIOutput
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -133,7 +133,7 @@ class BaseEmissionsTracker(ABC):
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = list()
-        self._http_out = None
+        self._cc_api__out = None
         self._measure_occurence: int = 0
         self._cloud = None
         self._previous_emissions = None
@@ -190,15 +190,12 @@ class BaseEmissionsTracker(ABC):
             )
 
         if emissions_endpoint:
-            self._http_out = HTTPOutput(
+            self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=emissions_endpoint,
                 experiment_id=experiment_id,
                 api_key=api_key,
             )
-            self.persistence_objs.append(self._http_out)
-            # self._scheduler.add_job(
-            #     self._intermediate_call_to_http_out, "interval", seconds=1
-            # )
+            self.persistence_objs.append(self._cc_api__out)
 
         if co2_signal_api_token:
             co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
@@ -236,10 +233,7 @@ class BaseEmissionsTracker(ABC):
         emissions_data = self._prepare_emissions_data()
 
         for persistence in self.persistence_objs:
-            if isinstance(persistence, HTTPOutput):
-                logger.error(
-                    f"BCODEBUG Duration {emissions_data.duration} emissions {emissions_data.emissions}"
-                )
+            if isinstance(persistence, CodeCarbonAPIOutput):
                 emissions_data = self._prepare_emissions_data(delta=True)
 
             persistence.out(emissions_data)
@@ -294,9 +288,10 @@ class BaseEmissionsTracker(ABC):
                 # Create a copy
                 delta_emissions = dataclasses.replace(total_emissions)
                 # Compute delta
-                delta_emissions.substract_in_place(total_emissions)
+                delta_emissions.substract_in_place(self._previous_emissions)
                 # TODO : find a way to store _previous_emissions only when API call succeded
                 self._previous_emissions = total_emissions
+                print(delta_emissions)
                 return delta_emissions
         else:
             return total_emissions
@@ -341,9 +336,9 @@ class BaseEmissionsTracker(ABC):
             )
         self._last_measured_time = time.time()
         self._measure_occurence += 1
-        if self._http_out is not None:
+        if self._cc_api__out is not None:
             if self._measure_occurence >= self._api_call_interval:
-                self._http_out.out(self._prepare_emissions_data(delta=True))
+                self._cc_api__out.out(self._prepare_emissions_data(delta=True))
                 self._measure_occurence = 0
 
 
