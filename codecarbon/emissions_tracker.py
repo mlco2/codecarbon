@@ -3,14 +3,13 @@ Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
 
-import logging
 import os
 import time
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -18,16 +17,12 @@ from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Time
-from codecarbon.core.util import suppress
+from codecarbon.core.util import set_log_level, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
+from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
-
-logging.getLogger("codecarbon").setLevel(
-    level=os.environ.get("CODECARBON_LOGLEVEL", "WARN")
-)
-logger = logging.getLogger(__name__)
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -63,6 +58,7 @@ class BaseEmissionsTracker(ABC):
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
         co2_signal_api_token: Optional[str] = None,
+        log_level: Optional[Union[int, str]] = None,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -79,70 +75,88 @@ class BaseEmissionsTracker(ABC):
                                    data
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
+        :param log_level: Global codecarbon log level. Accepts one of:
+                            {"debug", "info", "warning", "error", "critical"}.
+                          Defaults to "info".
         """
         conf = get_hierarchical_config()
+
+        self._log_level = (
+            log_level if log_level is not None else conf.get("log_level", "info")
+        )
+        set_log_level(self._log_level)
+
         self._project_name: str = (
             project_name
             if project_name is not None
             else conf.get("project_name", "codecarbon")
         )
+
         self._measure_power_secs: int = (
             measure_power_secs
             if measure_power_secs is not None
             else conf.getint("measure_power_secs", 15)
         )
+
         self._output_dir: str = (
             output_dir if output_dir is not None else conf.get("output_dir", ".")
         )
-        self._start_time: Optional[float] = None
-        self._last_measured_time: float = time.time()
-        self._total_energy: Energy = Energy.from_energy(kwh=0)
-        self._scheduler = BackgroundScheduler()
-        self._hardware = list()
 
         self._emissions_endpoint = (
             emissions_endpoint
             if emissions_endpoint is not None
             else conf.get("emissions_endpoint", None)
         )
+
         self._co2_signal_api_token = (
             co2_signal_api_token
             if co2_signal_api_token is not None
             else conf.get("co2_signal_api_token", None)
         )
+
         self._save_to_file = (
             save_to_file
             if save_to_file is not None
             else conf.getboolean("save_to_file", True)
         )
+
+        self._start_time: Optional[float] = None
+        self._last_measured_time: float = time.time()
+        self._total_energy: Energy = Energy.from_energy(kwh=0)
+        self._scheduler = BackgroundScheduler()
+        self._hardware = list()
+
         if self._save_to_file == "False":
             self._save_to_file = False
+
         self._gpu_ids = gpu_ids if gpu_ids is not None else conf.get("gpu_ids", None)
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
 
+        # Hardware detection
         if gpu.is_gpu_details_available():
-            logger.info("CODECARBON : Tracking Nvidia GPU via pynvml")
+            logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
         if cpu.is_powergadget_available():
-            logger.info("CODECARBON : Tracking Intel CPU via Power Gadget")
+            logger.info("Tracking Intel CPU via Power Gadget")
             self._hardware.append(
                 CPU.from_utils(self._output_dir, "intel_power_gadget")
             )
         elif cpu.is_rapl_available():
-            logger.info("CODECARBON : Tracking Intel CPU via RAPL interface")
+            logger.info("Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
         else:
             logger.warning(
-                "CODECARBON : No CPU tracking mode found. Falling back on CPU constant mode."
+                "No CPU tracking mode found. Falling back on CPU constant mode."
             )
-            logger.info("CODECARBON : Tracking using constant")
+            logger.info("Tracking using constant")
             tdp = cpu.TDP().tdp
             if tdp:
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant", tdp))
             else:
                 logger.warning(
-                    "CODECARBON : Failed to match CPU TDP constant. Falling back on a global constant."
+                    "Failed to match CPU TDP constant. "
+                    + "Falling back on a global constant."
                 )
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
 
@@ -175,7 +189,7 @@ class BaseEmissionsTracker(ABC):
         """
 
         if self._start_time is not None:
-            logger.warning("CODECARBON : Already started tracking")
+            logger.warning("Already started tracking")
             return
 
         self._last_measured_time = self._start_time = time.time()
@@ -188,7 +202,7 @@ class BaseEmissionsTracker(ABC):
         :return: CO2 emissions in kgs
         """
         if self._start_time is None:
-            logger.error("CODECARBON : Need to first start the tracker")
+            logger.error("Need to first start the tracker")
             return None
 
         self._scheduler.shutdown()
@@ -268,7 +282,7 @@ class BaseEmissionsTracker(ABC):
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
             warn_msg = (
-                "CODECARBON : Background scheduler didn't run for a long period"
+                "Background scheduler didn't run for a long period"
                 + " (%ds), results might be inaccurate"
             )
             logger.warning(warn_msg, last_duration)
@@ -278,7 +292,7 @@ class BaseEmissionsTracker(ABC):
                 power=hardware.total_power(), time=Time.from_seconds(last_duration)
             )
             logger.info(
-                "CODECARBON : Energy consumed "
+                "Energy consumed "
                 + f"{hardware.__class__.__name__} : {self._total_energy}"
             )
         self._last_measured_time = time.time()
@@ -345,8 +359,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         if self._cloud_provider:
             if self._cloud_region is None:
                 logger.error(
-                    "CODECARBON : Cloud Region must be provided "
-                    + " if cloud provider is set"
+                    "Cloud Region must be provided " + " if cloud provider is set"
                 )
 
             df = DataSource().get_cloud_emissions_data()
@@ -360,7 +373,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 == 0
             ):
                 logger.error(
-                    "CODECARBON : Cloud Provider/Region "
+                    "Cloud Provider/Region "
                     f"{self._cloud_provider} {self._cloud_region} "
                     "not found in cloud emissions data."
                 )
@@ -371,7 +384,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 ]["countryName"]
             except KeyError as e:
                 logger.error(
-                    "CODECARBON : Does not support country"
+                    "Does not support country"
                     + f" with ISO code {self._country_iso_code} "
                     f"Exception occurred {e}"
                 )
@@ -424,6 +437,7 @@ def track_emissions(
     cloud_provider: Optional[str] = None,
     cloud_region: Optional[str] = None,
     gpu_ids: Optional[List] = None,
+    log_level: Optional[Union[int, str]] = None,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -452,6 +466,10 @@ def track_emissions(
                                             blob/master/codecarbon/data/cloud/impact.csv
                          for a list of cloud regions
     :param gpu_ids: User-specified known gpu ids to track, defaults to None
+    :param log_level: Global codecarbon log level. Accepts one of:
+                        {"debug", "info", "warning", "error", "critical"}.
+                      Defaults to "info".
+
     :return: The decorated function
     """
 
@@ -460,9 +478,7 @@ def track_emissions(
         def wrapped_fn(*args, **kwargs):
             if offline:
                 if country_iso_code is None and cloud_provider is None:
-                    raise Exception(
-                        "CODECARBON : Needs ISO Code of the Country for Offline mode"
-                    )
+                    raise Exception("Needs ISO Code of the Country for Offline mode")
                 tracker = OfflineEmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
@@ -473,6 +489,7 @@ def track_emissions(
                     cloud_provider=cloud_provider,
                     cloud_region=cloud_region,
                     gpu_ids=gpu_ids,
+                    log_level=log_level,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
@@ -484,6 +501,7 @@ def track_emissions(
                     output_dir=output_dir,
                     save_to_file=save_to_file,
                     gpu_ids=gpu_ids,
+                    log_level=log_level,
                 )
                 tracker.start()
                 fn(*args, **kwargs)

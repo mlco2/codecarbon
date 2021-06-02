@@ -5,7 +5,6 @@ Provides functionality for persistence of data
 import csv
 import dataclasses
 import getpass
-import logging
 import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -13,7 +12,7 @@ from dataclasses import dataclass
 
 import requests
 
-LOGGER = logging.getLogger(__name__)
+from codecarbon.external.logger import logger
 
 
 @dataclass
@@ -84,9 +83,9 @@ class HTTPOutput(BaseOutput):
             payload["user"] = getpass.getuser()
             resp = requests.post(self.endpoint_url, json=payload, timeout=10)
             if resp.status_code != 201:
-                LOGGER.warning(
-                    "CODECARBON : HTTP Output returned an unexpected status code: ",
+                logger.warning(
+                    "HTTP Output returned an unexpected status code: ",
                     resp,
                 )
         except Exception as e:
-            LOGGER.error(e, exc_info=True)
+            logger.error(e, exc_info=True)
