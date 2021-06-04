@@ -1,8 +1,12 @@
-from carbonserver.api.services.signup_service import SignUpService
 from dependency_injector import containers, providers
 
 from carbonserver.api.infra.database.database_manager import Database
-from carbonserver.api.infra.repositories import repository_users, repository_organizations, repository_teams
+from carbonserver.api.infra.repositories import (
+    repository_organizations,
+    repository_teams,
+    repository_users,
+)
+from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
 
@@ -40,5 +44,4 @@ class ServerContainer(containers.DeclarativeContainer):
         user_repository=user_repository,
         organization_repository=organization_repository,
         team_repository=team_repository,
-
     )
