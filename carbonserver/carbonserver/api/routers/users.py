@@ -31,7 +31,7 @@ def sign_up(
     user: UserCreate,
     organization: OrganizationCreate,
     team: TeamCreate,
-    signup_service: SignUpService = Depends(Provide[ServerContainer.user_service]),
+    signup_service: SignUpService = Depends(Provide[ServerContainer.sign_up]),
 ) -> User:
     return signup_service.sign_up(user, organization, team)
 
