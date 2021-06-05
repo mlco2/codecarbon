@@ -7,6 +7,7 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
         "db",
         "user_repository",
         "user_service",
+        "organization_service",
         "organization_repository",
         "sign_up",
         "team_repository",

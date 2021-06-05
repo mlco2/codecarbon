@@ -68,7 +68,7 @@ def test_get_one_organization_returns_the_correct_organizations_list_from_organi
     ]
     organizations_repository.add_organization(organizations_fixture)
 
-    actual_organizations = organizations_repository.get_team_from_organizations(
+    actual_organizations = organizations_repository.list_organization(
         organization_name
     )
 
