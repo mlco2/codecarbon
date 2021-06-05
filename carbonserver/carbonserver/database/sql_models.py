@@ -116,7 +116,7 @@ class Organization(Base):
 
     def __repr__(self):
         return (
-            f'<Team(id="{self.id}", '
+            f'<Organization(id="{self.id}", '
             f'name="{self.name}", '
             f'description="{self.description}")>'
         )

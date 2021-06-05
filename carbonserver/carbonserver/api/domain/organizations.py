@@ -13,5 +13,5 @@ class Organizations(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_team_from_organizations(self, organization_id):
+    def list_organization(self):
         raise NotImplementedError

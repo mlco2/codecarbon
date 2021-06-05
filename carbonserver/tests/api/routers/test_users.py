@@ -108,4 +108,5 @@ def test_get_user_by_id_returns_correct_user_with_correct_id(
         response = client.get("/users/get_user_by_id/", params={"user_id": USER_ID_1})
         actual_user = response.json()
 
+    assert response.status_code == status.HTTP_200_OK
     assert actual_user == expected_user

@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.orm import Session
+from typing import List
 
-from carbonserver.api.dependencies import get_db, get_token_header
-from carbonserver.api.errors import DBError, DBException
-from carbonserver.api.infra.repositories.repository_organizations import (
-    SqlAlchemyRepository,
-)
-from carbonserver.api.schemas import OrganizationCreate
+from carbonserver.api.services.organization_service import OrganizationService
+from container import ServerContainer
+from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends
+
+from carbonserver.api.dependencies import get_token_header
+from carbonserver.api.schemas import OrganizationCreate, Organization
+from starlette import status
+
+ORGANIZATIONS_ROUTER_TAGS = ["organizations"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -16,34 +19,28 @@ router = APIRouter(
 organizations_temp_db = []
 
 
-@router.put("/organization", tags=["organizations"])
-def add_organization(organization: OrganizationCreate, db: Session = Depends(get_db)):
-    repository_organizations = SqlAlchemyRepository(db)
-    res = repository_organizations.add_organization(organization)
-    if isinstance(res, DBError):
-        raise DBException(error=res)
-    else:
-        return {"id": res.id}
-
-
-@router.get("/organization/{organization_id}", tags=["organizations"])
-async def read_organization(
-    organization_id: str = Path(..., title="The ID of the organization to get"),
-    db: Session = Depends(get_db),
+@router.put("/organizations/", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@inject
+def add_organization(
+    organization: OrganizationCreate,
+    organization_service: OrganizationService = Depends(Provide[ServerContainer.organization_service]),
 ):
-    repository_organizations = SqlAlchemyRepository(db)
-    organization = repository_organizations.get_one_organization(organization_id)
-    if organization is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
-    return organization
+    print(type(organization_service))
+    return organization_service.add_organization(organization)
 
 
-@router.get("/organizations/{organization_id}", tags=["organizations"])
-async def read_teams_organizations(
-    team_id: str = Path(..., title="The ID of the team to get")
-):
-    # team_organizations = crud_organizations.get_Team_from_Organizations(team_id)
-    # # Remove next line when DB work
-    # team_organizations = organizations_temp_db
-    # return team_organizations
-    raise HTTPException(status_code=501, detail="Not Implemented")
+@router.get("/organizations/{organization_id}", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@inject
+def read_organization(
+    organization_id: str,
+    organization_service: OrganizationService = Depends(Provide[ServerContainer.organization_service]),
+) -> Organization:
+    return organization_service.read_organization(organization_id)
+
+
+@router.get("/organization/", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@inject
+def read_organizations(
+    organization_service: OrganizationService = Depends(Provide[ServerContainer.organization_service])
+) -> List[Organization]:
+    return organization_service.list_organization()

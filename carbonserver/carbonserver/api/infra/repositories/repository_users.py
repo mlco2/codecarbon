@@ -3,10 +3,8 @@ import uuid
 from contextlib import AbstractContextManager
 from typing import Callable, List
 
-from sqlalchemy import exc
 
 from carbonserver.api.domain.users import Users
-from carbonserver.api.errors import DBError, DBErrorEnum, DBException
 from carbonserver.api.schemas import User, UserCreate
 from carbonserver.database.sql_models import User as SqlModelUser
 
@@ -29,36 +27,10 @@ class SqlAlchemyRepository(Users):
                 api_key=self.api_key_generator(),
                 is_active=True,
             )
-            try:
-                session.add(db_user)
-                session.commit()
-                session.refresh(db_user)
-                return self.get_db_to_class(db_user)
-
-            except exc.IntegrityError as e:
-                # Sample error : sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) insert or update on table "emissions" violates foreign key constraint "fk_emissions_runs"
-                session.rollback()
-                raise DBException(
-                    error=DBError(
-                        code=DBErrorEnum.INTEGRITY_ERROR, message=e.orig.args[0]
-                    )
-                )
-            except exc.DataError as e:
-                session.rollback()
-                # Sample error :  sqlalchemy.exc.DataError: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for type uuid: "5050f55-406d-495d-830e-4fd12c656bd1"
-                raise DBException(
-                    error=DBError(code=DBErrorEnum.DATA_ERROR, message=e.orig.args[0])
-                )
-            except exc.ProgrammingError as e:
-                # sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) can't adapt type 'SecretStr'
-                print(user)
-                print(db_user)
-                session.rollback()
-                raise DBException(
-                    error=DBError(
-                        code=DBErrorEnum.PROGRAMMING_ERROR, message=e.orig.args[0]
-                    )
-                )
+            session.add(db_user)
+            session.commit()
+            session.refresh(db_user)
+            return self.get_db_to_class(db_user)
 
     def get_user_by_id(self, user_id: str) -> User:
         """Find an user in database and retrieves it
@@ -69,6 +41,7 @@ class SqlAlchemyRepository(Users):
         """
         with self.session_factory() as session:
             e = session.query(SqlModelUser).filter(SqlModelUser.id == user_id).first()
+            # noinspection PyPackageRequirements
             if e is None:
                 return None
             else:

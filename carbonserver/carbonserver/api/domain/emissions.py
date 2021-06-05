@@ -6,7 +6,7 @@ from carbonserver.api import schemas
 
 class Emissions(abc.ABC):
     @abc.abstractmethod
-    def add_emission(self, emission: schemas.EmissionCreate):
+    def add_emission(self, emission: schemas.EmissionCreate) -> schemas.Emission:
         raise NotImplementedError
 
     @abc.abstractmethod
