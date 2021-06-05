@@ -2,10 +2,11 @@ import logging
 from contextlib import AbstractContextManager, contextmanager
 from typing import Callable
 
-from carbonserver.api.errors import DBException, DBError, DBErrorEnum
-from sqlalchemy import create_engine, orm, exc
+from sqlalchemy import create_engine, exc, orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
+
+from carbonserver.api.errors import DBError, DBErrorEnum, DBException
 
 logger = logging.getLogger(__name__)
 
