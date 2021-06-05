@@ -3,7 +3,6 @@ import uuid
 from contextlib import AbstractContextManager
 from typing import Callable, List
 
-
 from carbonserver.api.domain.users import Users
 from carbonserver.api.schemas import User, UserCreate
 from carbonserver.database.sql_models import User as SqlModelUser

@@ -4,9 +4,10 @@ from typing import List
 
 from dependency_injector.providers import Callable
 
-from carbonserver.api.schemas import Organization, OrganizationCreate
 from carbonserver.api.domain.organizations import Organizations
-from carbonserver.database.sql_models import Organization as SqlModelOrganization, Experiment as SqlModelExperiment
+from carbonserver.api.schemas import Organization, OrganizationCreate
+from carbonserver.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.database.sql_models import Organization as SqlModelOrganization
 
 """
 Here there is all the method to manipulate the organization data
@@ -68,9 +69,7 @@ class InMemoryRepository(Organizations):
         self.id: int = 0
 
     @staticmethod
-    def get_db_to_class(
-        self, organization: SqlModelOrganization
-    ) -> Organization:
+    def get_db_to_class(self, organization: SqlModelOrganization) -> Organization:
         return Organization(
             id=organization.id,
             name=organization.name,
