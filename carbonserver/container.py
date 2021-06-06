@@ -8,6 +8,7 @@ from carbonserver.api.infra.repositories import (
 )
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.services.signup_service import SignUpService
+from carbonserver.api.services.team_service import TeamService
 from carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
 
@@ -43,6 +44,11 @@ class ServerContainer(containers.DeclarativeContainer):
     organization_service = providers.Factory(
         OrganizationService,
         organization_repository=organization_repository,
+    )
+
+    team_service = providers.Factory(
+        TeamService,
+        team_repository=team_repository,
     )
 
     sign_up = providers.Factory(
