@@ -4,16 +4,15 @@ Provides functionality for persistence of data
 
 import csv
 import dataclasses
-import logging
 import os
-import requests
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
 
+import requests
+
 # from core.schema import EmissionCreate, Emission
 from codecarbon.core.api_client import ApiClient
-
 from codecarbon.external.logger import logger
 
 
@@ -90,9 +89,7 @@ class HTTPOutput(BaseOutput):
         payload = dataclasses.asdict(data)
         resp = requests.post(self.endpoint_url, json=payload, verify=False)
         if resp.status_code != 201:
-            LOGGER.warning(
-                "CODECARBON : HTTP Output returned an unexpected status code: ", resp
-            )
+            logger.warning("HTTP Output returned an unexpected status code: ", resp)
 
 
 class CodeCarbonAPIOutput(BaseOutput):

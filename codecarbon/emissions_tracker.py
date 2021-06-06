@@ -4,7 +4,6 @@ OfflineEmissionsTracker and @track_emissions
 """
 
 import dataclasses
-import logging
 import os
 import time
 from abc import ABC, abstractmethod
@@ -23,7 +22,7 @@ from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
-from codecarbon.output import BaseOutput, EmissionsData, FileOutput, CodeCarbonAPIOutput
+from codecarbon.output import BaseOutput, CodeCarbonAPIOutput, EmissionsData, FileOutput
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -54,7 +53,7 @@ class BaseEmissionsTracker(ABC):
         self,
         project_name: Optional[str] = None,
         measure_power_secs: Optional[int] = None,
-        api_call_interval: int = 2,
+        api_call_interval: Optional[int] = None,
         output_dir: Optional[str] = None,
         save_to_file: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
@@ -127,7 +126,11 @@ class BaseEmissionsTracker(ABC):
             if save_to_file is not None
             else conf.getboolean("save_to_file", True)
         )
-        self._api_call_interval: int = api_call_interval
+        self._api_call_interval: int = (
+            api_call_interval
+            if api_call_interval is not None
+            else conf.getboolean("api_call_interval", True)
+        )
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
@@ -197,8 +200,8 @@ class BaseEmissionsTracker(ABC):
             )
             self.persistence_objs.append(self._cc_api__out)
 
-        if co2_signal_api_token:
-            co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
+        # if co2_signal_api_token:
+        #     co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
 
     @suppress(Exception)
     def start(self) -> None:
