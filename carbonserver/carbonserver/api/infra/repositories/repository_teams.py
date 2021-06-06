@@ -1,55 +1,34 @@
+import uuid
+from contextlib import AbstractContextManager
 from typing import List
 
-from sqlalchemy import exc
-from sqlalchemy.orm import Session
+from dependency_injector.providers import Callable
 
-from carbonserver.api import schemas
 from carbonserver.api.domain.teams import Teams
-from carbonserver.api.errors import DBError, DBErrorEnum, DBException
-from carbonserver.database import sql_models
+from carbonserver.api.schemas import Team, TeamCreate
+from carbonserver.database.sql_models import Team as SqlModelTeam
 
 """
-Here there is all the method to manipulate the project data
+Here there is all the method to manipulate the team data
 """
 
 
 class SqlAlchemyRepository(Teams):
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
+        self.session_factory = session_factory
 
-    def add_team(self, team: schemas.TeamCreate):
-        # TODO : save Team in database and get her ID
-        db_team = sql_models.Team(
-            name=team.name,
-            description=team.description,
-            organization_id=team.organization_id,
-        )
+    def add_team(self, team: TeamCreate) -> Team:
 
-        try:
-            self.db.add(db_team)
-            self.db.commit()
-            self.db.refresh(db_team)
-            return db_team
-        except exc.IntegrityError as e:
-            # Sample error : sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) insert or update on table "emissions" violates foreign key constraint "fk_emissions_runs"
-            self.db.rollback()
-            raise DBException(
-                error=DBError(code=DBErrorEnum.INTEGRITY_ERROR, message=e.orig.args[0])
+        with self.session_factory() as session:
+            db_team = SqlModelTeam(
+                id=uuid.uuid4(),
+                name=team.name,
+                description=team.description,
             )
-        except exc.DataError as e:
-            self.db.rollback()
-            # Sample error :  sqlalchemy.exc.DataError: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for type uuid: "5050f55-406d-495d-830e-4fd12c656bd1"
-            raise DBException(
-                error=DBError(code=DBErrorEnum.DATA_ERROR, message=e.orig.args[0])
-            )
-        except exc.ProgrammingError as e:
-            # sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) can't adapt type 'SecretStr'
-            self.db.rollback()
-            raise DBException(
-                error=DBError(
-                    code=DBErrorEnum.PROGRAMMING_ERROR, message=e.orig.args[0]
-                )
-            )
+            session.add(db_team)
+            session.commit()
+            session.refresh(db_team)
+            return self.get_db_to_class(db_team)
 
     def get_one_team(self, team_id):
         """Find the team in database and return it
@@ -58,18 +37,23 @@ class SqlAlchemyRepository(Teams):
         :returns: An Team in pyDantic BaseModel format.
         :rtype: schemas.Team
         """
-        e = self.db.query(sql_models.Team).filter(sql_models.Team.id == team_id).first()
-        if e is None:
-            return None
-        else:
-            return self.get_db_to_class(e)
+        with self.session_factory() as session:
+            e = session.query(SqlModelTeam).filter(SqlModelTeam.id == team_id).first()
+            if e is None:
+                return None
+            else:
+                return self.get_db_to_class(e)
 
-    def get_projects_from_team(self, team_id):
-        # TODO : get Projects from Project id in database
+    # def get_projects_from_team(self, team_id):
+    # TODO : get Projects from Project id in database
+    #    pass
+
+    def list_team(self):
+        # TODO : get Teams from Organization id in database
         pass
 
     @staticmethod
-    def get_db_to_class(team: sql_models.Team) -> schemas.Team:
+    def get_db_to_class(self, team: SqlModelTeam) -> Team:
         return schemas.Team(
             id=team.id,
             name=team.name,
@@ -83,34 +67,46 @@ class InMemoryRepository(Teams):
         self.teams: List = []
         self.id: int = 0
 
-    def add_team(self, team: schemas.TeamCreate):
+    def add_team(self, team: TeamCreate):
         self.teams.append(
             sql_models.Team(
                 id=self.id + 1,
                 name=team.name,
                 description=team.description,
-                organization_id=team.organization_id,
+                # organization_id=team.organization_id,
             )
         )
 
-    def get_one_team(self, team_id) -> schemas.Team:
+    def get_one_team(self, team_id) -> Team:
         first_team = self.teams[0]
         return schemas.Team(
             id=first_team.id,
             name=first_team.name,
             description=first_team.description,
-            organization_id=first_team.organization_id,
+            # organization_id=first_team.organization_id,
         )
 
-    def get_projects_from_team(self, team_id):
-        # TODO : get Projects from Project id in database
-        pass
+    # def get_projects_from_team(self, team_id):
+    # TODO : get Projects from Project id in database
+    #    pass
 
     @staticmethod
-    def get_db_to_class(team: sql_models.Team) -> schemas.Team:
+    def get_db_to_class(self, team: SqlModelTeam) -> Team:
         return schemas.Team(
             id=team.id,
             name=team.name,
             description=team.description,
-            organization_id=team.organization_id,
+            # organization_id=team.organization_id,
         )
+
+    def list_team(self, team_name: str):
+        teams = []
+        for team in self.teams:
+            teams.append(
+                Team(
+                    id=team.id,
+                    name=team.name,
+                    description=team.description,
+                )
+            )
+        return teams
