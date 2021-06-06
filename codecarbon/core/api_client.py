@@ -7,17 +7,15 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-import logging
 import time
 from datetime import datetime
 
 import requests
 
 from codecarbon.core.schemas import EmissionCreate, RunCreate
+from codecarbon.external.logger import logger
 
 # from codecarbon.output import EmissionsData
-
-log = logging.getLogger("codecarbon")
 
 
 class ApiClient:  # (AsyncClient)
@@ -44,12 +42,12 @@ class ApiClient:  # (AsyncClient)
         self._previous_call = time.time()
         if self.run_id is None:
             # TODO : raise an Exception ?
-            log.error(
+            logger.error(
                 "add_emissionadd_emission need a run_id : the initial call may have failed. Retrying..."
             )
             self._create_run(self.experiment_id)
         if carbon_emission["duration"] < 1:
-            log.warning(
+            logger.warning(
                 "Warning : emission not send because of a duration smaller than 1."
             )
             return False
@@ -67,7 +65,7 @@ class ApiClient:  # (AsyncClient)
                 self._log_error(payload, r)
             assert r.status_code == 201
         except Exception as e:
-            log.error(e, exc_info=True)
+            logger.error(e, exc_info=True)
             return False
         return True
 
@@ -87,11 +85,11 @@ class ApiClient:  # (AsyncClient)
             assert r.status_code == 200
             self.run_id = r.json()["id"]
         except Exception as e:
-            log.error(e, exc_info=True)
+            logger.error(e, exc_info=True)
 
     def _log_error(self, payload, response):
-        log.error(f" Error when calling the API with : {json.dumps(payload)}")
-        log.error(
+        logger.error(f" Error when calling the API with : {json.dumps(payload)}")
+        logger.error(
             f" API return http code {response.status_code} and answer : {response.json()}"
         )
 
