@@ -38,7 +38,7 @@ def add_team(
 @inject
 def read_team(
     team_id: str,
-    organization_service: TeamService = Depends(Provide[ServerContainer.team_service]),
+    team_service: TeamService = Depends(Provide[ServerContainer.team_service]),
 ) -> Team:
     return team_service.read_team(team_id)
 

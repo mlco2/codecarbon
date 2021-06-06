@@ -1,6 +1,4 @@
-from carbonserver.api.infra.repositories.repository_teams import (
-    SqlAlchemyRepository,
-)
+from carbonserver.api.infra.repositories.repository_teams import SqlAlchemyRepository
 from carbonserver.api.schemas import Team, TeamCreate
 
 
