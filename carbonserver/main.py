@@ -16,6 +16,8 @@ from carbonserver.database.database import engine
 
 routers = [
     users.router,
+    organizations.router,
+    teams.router,
 ]
 
 
