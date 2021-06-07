@@ -43,7 +43,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.01, places=2)
+        self.assertAlmostEqual(emissions, 0.0010, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_USA_WITH_REGION(self):
         # WHEN
