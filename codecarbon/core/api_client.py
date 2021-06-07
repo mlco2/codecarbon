@@ -8,8 +8,9 @@ TODO : use async call to API
 import dataclasses
 import json
 import time
-from datetime import datetime
+from datetime import timedelta, tzinfo
 
+import arrow
 import requests
 
 from codecarbon.core.schemas import EmissionCreate, RunCreate
@@ -52,7 +53,7 @@ class ApiClient:  # (AsyncClient)
             )
             return False
         emission = EmissionCreate(
-            timestamp=datetime.now().isoformat(),
+            timestamp=self.get_datetime_with_timezone(),
             run_id=self.run_id,
             duration=int(carbon_emission["duration"]),
             emissions=carbon_emission["emissions"],
@@ -76,7 +77,7 @@ class ApiClient:  # (AsyncClient)
         """
         try:
             run = RunCreate(
-                timestamp=datetime.now().isoformat(), experiment_id=experiment_id
+                timestamp=self.get_datetime_with_timezone(), experiment_id=experiment_id
             )
             payload = dataclasses.asdict(run)
             r = requests.put(url=self.url + "/run", json=payload)
@@ -84,6 +85,9 @@ class ApiClient:  # (AsyncClient)
                 self._log_error(payload, r)
             assert r.status_code == 200
             self.run_id = r.json()["id"]
+            logger.info(
+                f"Successfully registered your run on the API under the id {self.run_id}"
+            )
         except Exception as e:
             logger.error(e, exc_info=True)
 
@@ -93,8 +97,22 @@ class ApiClient:  # (AsyncClient)
             f" API return http code {response.status_code} and answer : {response.text}"
         )
 
-    async def close_experiment(self):
+    def close_experiment(self):
         """
         Tell the API that the experiment has ended.
         """
         pass
+
+    def get_datetime_with_timezone(self):
+        # return datetime.utcnow().replace(tzinfo=simple_utc()).isoformat()
+        timestamp = str(arrow.now().isoformat())
+        print(timestamp)
+        return timestamp
+
+
+class simple_utc(tzinfo):
+    def tzname(self, **kwargs):
+        return "UTC"
+
+    def utcoffset(self, dt):
+        return timedelta(0)
