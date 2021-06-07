@@ -4,6 +4,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 DEPENDENCIES = [
+    "arrow",
     "APScheduler",
     "dash",
     "dash_bootstrap_components",

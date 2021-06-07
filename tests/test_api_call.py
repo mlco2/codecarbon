@@ -36,4 +36,4 @@ def test_call_api():
             cloud_provider="",
             cloud_region="",
         )
-        assert api.add_emission(dataclasses.asdict(carbon_emission)) == True
+        assert api.add_emission(dataclasses.asdict(carbon_emission))
