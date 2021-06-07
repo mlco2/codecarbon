@@ -90,7 +90,7 @@ class ApiClient:  # (AsyncClient)
     def _log_error(self, payload, response):
         logger.error(f" Error when calling the API with : {json.dumps(payload)}")
         logger.error(
-            f" API return http code {response.status_code} and answer : {response.json()}"
+            f" API return http code {response.status_code} and answer : {response.text}"
         )
 
     async def close_experiment(self):
