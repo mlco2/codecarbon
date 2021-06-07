@@ -4,6 +4,7 @@ Provides functionality for persistence of data
 
 import csv
 import dataclasses
+import getpass
 import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -86,10 +87,17 @@ class HTTPOutput(BaseOutput):
         self.endpoint_url: str = endpoint_url
 
     def out(self, data: EmissionsData):
-        payload = dataclasses.asdict(data)
-        resp = requests.post(self.endpoint_url, json=payload, verify=False)
-        if resp.status_code != 201:
-            logger.warning("HTTP Output returned an unexpected status code: ", resp)
+        try:
+            payload = dataclasses.asdict(data)
+            payload["user"] = getpass.getuser()
+            resp = requests.post(self.endpoint_url, json=payload, timeout=10)
+            if resp.status_code != 201:
+                logger.warning(
+                    "HTTP Output returned an unexpected status code: ",
+                    resp,
+                )
+        except Exception as e:
+            logger.error(e, exc_info=True)
 
 
 class CodeCarbonAPIOutput(BaseOutput):

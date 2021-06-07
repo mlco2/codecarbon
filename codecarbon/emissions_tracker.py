@@ -22,7 +22,13 @@ from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
-from codecarbon.output import BaseOutput, CodeCarbonAPIOutput, EmissionsData, FileOutput
+from codecarbon.output import (
+    BaseOutput,
+    CodeCarbonAPIOutput,
+    EmissionsData,
+    FileOutput,
+    HTTPOutput,
+)
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -54,11 +60,12 @@ class BaseEmissionsTracker(ABC):
         project_name: Optional[str] = None,
         measure_power_secs: Optional[int] = None,
         api_call_interval: Optional[int] = None,
+        api_endpoint: Optional[str] = None,
+        api_key: Optional[str] = None,
         output_dir: Optional[str] = None,
         save_to_file: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
-        api_key: Optional[str] = None,
         experiment_id: Optional[str] = None,
         co2_signal_api_token: Optional[str] = None,
         log_level: Optional[Union[int, str]] = None,
@@ -78,6 +85,8 @@ class BaseEmissionsTracker(ABC):
                              file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
+                                   data
+        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending emissions
                                    data
         :param experiment_id: Id of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
@@ -114,7 +123,9 @@ class BaseEmissionsTracker(ABC):
             if emissions_endpoint is not None
             else conf.get("emissions_endpoint", None)
         )
-
+        self._api_endpoint = (
+            api_endpoint if api_endpoint is not None else conf.get("api_endpoint", None)
+        )
         self._co2_signal_api_token = (
             co2_signal_api_token
             if co2_signal_api_token is not None
@@ -192,16 +203,16 @@ class BaseEmissionsTracker(ABC):
                 FileOutput(os.path.join(self._output_dir, "emissions.csv"))
             )
 
-        if emissions_endpoint:
+        if self._emissions_endpoint:
+            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
+
+        if api_endpoint:
             self._cc_api__out = CodeCarbonAPIOutput(
-                endpoint_url=emissions_endpoint,
+                endpoint_url=api_endpoint,
                 experiment_id=experiment_id,
                 api_key=api_key,
             )
             self.persistence_objs.append(self._cc_api__out)
-
-        # if co2_signal_api_token:
-        #     co2_signal.CO2_SIGNAL_API_TOKEN = co2_signal_api_token
 
     @suppress(Exception)
     def start(self) -> None:
@@ -482,6 +493,8 @@ def track_emissions(
     project_name: Optional[str] = None,
     measure_power_secs: Optional[int] = None,
     api_call_interval: int = 2,
+    api_endpoint: Optional[str] = None,
+    api_key: Optional[str] = None,
     output_dir: Optional[str] = None,
     save_to_file: Optional[bool] = None,
     offline: Optional[bool] = None,
@@ -561,6 +574,8 @@ def track_emissions(
                     emissions_endpoint=emissions_endpoint,
                     experiment_id=experiment_id,
                     api_call_interval=api_call_interval,
+                    api_key=api_key,
+                    api_endpoint=api_endpoint,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
