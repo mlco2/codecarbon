@@ -1,14 +1,16 @@
+import logging
 import time
 
 from codecarbon import track_emissions
+from codecarbon.external.logger import logger
 
 
 @track_emissions(
     project_name="just_sleep",
     api_endpoint="http://app-d6bc59c3-0f69-4d8b-a6a3-bc39a9ceb0c2.cleverapps.io",
     experiment_id="82ba0923-0713-4da1-9e57-cea70b460ee9",
-    measure_power_secs=30,
-    api_call_interval=4,
+    measure_power_secs=120,
+    api_call_interval=1,
     api_key="12aaaaaa-0b23-1234-1234-abcdef123456",
 )
 def train_model():
@@ -24,4 +26,15 @@ def train_model():
 
 
 if __name__ == "__main__":
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler("codecarbon.log")
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
+    )
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    logger.debug("GO!")
     model = train_model()
+    logger.debug("THE END!")
