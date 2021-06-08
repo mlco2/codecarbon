@@ -18,7 +18,7 @@ teams_temp_db = []
 
 
 @router.put(
-    "/teams",
+    "/teams/",
     tags=TEAMS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -44,7 +44,7 @@ def read_team(
 
 
 @router.get(
-    "/teams/{team_id}",
+    "/teams/",
     tags=TEAMS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

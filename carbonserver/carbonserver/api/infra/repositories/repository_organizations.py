@@ -30,7 +30,7 @@ class SqlAlchemyRepository(Organizations):
             session.add(db_organization)
             session.commit()
             session.refresh(db_organization)
-            return self.get_db_to_class(db_organization)
+            return self.map_sql_to_schema(db_organization)
 
     def get_one_organization(self, organization_id: str) -> Organization:
         """Find the organization in database and return it
@@ -48,14 +48,21 @@ class SqlAlchemyRepository(Organizations):
             if e is None:
                 return None
             else:
-                return self.get_db_to_class(e)
+                return self.map_sql_to_schema(e)
 
     def list_organization(self):
-        # TODO : get Organization from team id in database
-        pass
+        with self.session_factory() as session:
+            e = session.query(SqlModelOrganization)
+            if e is None:
+                return None
+            else:
+                orgs: List[Organization] = []
+                for org in e:
+                    orgs.append(self.map_sql_to_schema(org))
+                return orgs
 
     @staticmethod
-    def get_db_to_class(organization: SqlModelOrganization) -> Organization:
+    def map_sql_to_schema(organization: SqlModelOrganization) -> Organization:
         return Organization(
             id=organization.id,
             name=organization.name,
@@ -69,7 +76,7 @@ class InMemoryRepository(Organizations):
         self.id: int = 0
 
     @staticmethod
-    def get_db_to_class(self, organization: SqlModelOrganization) -> Organization:
+    def get_db_to_class(organization: SqlModelOrganization) -> Organization:
         return Organization(
             id=organization.id,
             name=organization.name,
