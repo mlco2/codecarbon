@@ -29,7 +29,7 @@ class SqlAlchemyRepository(Users):
             session.add(db_user)
             session.commit()
             session.refresh(db_user)
-            return self.get_db_to_class(db_user)
+            return self.map_sql_to_schema(db_user)
 
     def get_user_by_id(self, user_id: str) -> User:
         """Find an user in database and retrieves it
@@ -44,7 +44,7 @@ class SqlAlchemyRepository(Users):
             if e is None:
                 return None
             else:
-                return self.get_db_to_class(e)
+                return self.map_sql_to_schema(e)
 
     def list_users(self) -> List[User]:
         with self.session_factory() as session:
@@ -52,13 +52,13 @@ class SqlAlchemyRepository(Users):
             if e is None:
                 return None
             else:
-                users = []
+                users: List[User] = []
                 for user in e:
-                    users.append(self.get_db_to_class(user))
+                    users.append(self.map_sql_to_schema(user))
                 return users
 
     @staticmethod
-    def get_db_to_class(sql_user: SqlModelUser) -> User:
+    def map_sql_to_schema(sql_user: SqlModelUser) -> User:
         """Sql To Pydantic Mapper
 
         :returns: An User in pyDantic BaseModel format.

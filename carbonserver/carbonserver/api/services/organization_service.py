@@ -1,3 +1,5 @@
+from typing import List
+
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
@@ -9,14 +11,21 @@ class OrganizationService:
         self._repository = organization_repository
 
     def add_organization(self, organization: OrganizationCreate) -> Organization:
+        created_organization: Organization = self._repository.add_organization(
+            organization
+        )
 
-        created_organization = self._repository.add_organization(organization)
         return created_organization
 
     def read_organization(self, organization_id: str) -> Organization:
+        organization: Organization = self._repository.get_one_organization(
+            organization_id
+        )
 
-        return self._repository.get_one_organization(organization_id)
+        return organization
 
-    def list_organization(self):
+    def list_organization(self) -> List[Organization]:
+        organizations: List[Organization] = self._repository.list_organization()
+        print("been called")
 
-        return self._repository.list_organization()
+        return organizations

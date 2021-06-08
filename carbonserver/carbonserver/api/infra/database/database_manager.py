@@ -29,7 +29,6 @@ class Database:
 
     # Les exceptions de la base de données sont remontées ici, un switch case peut être mis en place pour remonter
     # les exceptions connues pour la base de données
-    # TODO: Correct the type hint: Callable[..., AbstractContextManager[Session]]:
     @contextmanager
     def session(self) -> Callable[..., AbstractContextManager]:
         session: Session = self._session_factory()

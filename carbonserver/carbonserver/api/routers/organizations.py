@@ -31,7 +31,6 @@ def add_organization(
         Provide[ServerContainer.organization_service]
     ),
 ):
-    print(type(organization_service))
     return organization_service.add_organization(organization)
 
 
@@ -51,7 +50,7 @@ def read_organization(
 
 
 @router.get(
-    "/organization/", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK
+    "/organizations/", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK
 )
 @inject
 def read_organizations(

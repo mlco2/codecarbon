@@ -4,6 +4,7 @@ from typing import List
 
 from dependency_injector.providers import Callable
 
+from carbonserver.api import schemas
 from carbonserver.api.domain.teams import Teams
 from carbonserver.api.schemas import Team, TeamCreate
 from carbonserver.database.sql_models import Team as SqlModelTeam
@@ -28,7 +29,7 @@ class SqlAlchemyRepository(Teams):
             session.add(db_team)
             session.commit()
             session.refresh(db_team)
-            return self.get_db_to_class(db_team)
+            return self.map_sql_to_schema(db_team)
 
     def get_one_team(self, team_id):
         """Find the team in database and return it
@@ -42,19 +43,22 @@ class SqlAlchemyRepository(Teams):
             if e is None:
                 return None
             else:
-                return self.get_db_to_class(e)
+                return self.map_sql_to_schema(e)
 
-    # def get_projects_from_team(self, team_id):
-    # TODO : get Projects from Project id in database
-    #    pass
-
-    def list_team(self):
-        # TODO : get Teams from Organization id in database
-        pass
+    def list_teams(self):
+        with self.session_factory() as session:
+            e = session.query(SqlModelTeam)
+            if e is None:
+                return None
+            else:
+                teams: List[Team] = []
+                for team in e:
+                    teams.append(self.map_sql_to_schema(team))
+                return teams
 
     @staticmethod
-    def get_db_to_class(self, team: SqlModelTeam) -> Team:
-        return schemas.Team(
+    def map_sql_to_schema(team: SqlModelTeam) -> Team:
+        return Team(
             id=team.id,
             name=team.name,
             description=team.description,
@@ -69,7 +73,7 @@ class InMemoryRepository(Teams):
 
     def add_team(self, team: TeamCreate):
         self.teams.append(
-            sql_models.Team(
+            SqlModelTeam(
                 id=self.id + 1,
                 name=team.name,
                 description=team.description,
@@ -79,7 +83,7 @@ class InMemoryRepository(Teams):
 
     def get_one_team(self, team_id) -> Team:
         first_team = self.teams[0]
-        return schemas.Team(
+        return Team(
             id=first_team.id,
             name=first_team.name,
             description=first_team.description,
