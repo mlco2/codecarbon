@@ -81,6 +81,28 @@ def training_loop():
    pass
 ```
 
+This will write a csv file of the CO2 emissions in the current directory.
+
+#### Code Carbon API
+
+This mode use the Code Carbon API to upload the timeseries of your emissions. You will need an API key from [https://codecarbon.io](https://codecarbon.io)
+
+Here is how to use it:
+
+```python
+from codecarbon import track_emissions
+
+@track_emissions(api_key="12aaaaaa-0b23-1234-1234-abcdef123456")
+def train_model():
+    # Your code here
+
+if __name__ == "__main__":
+    train_model()
+```
+
+This is the simplest way. If you want to attach data to a specific experiment, you have to specify it with parameter `experiment_id="XXXXXXX-0713-4da1-9e57-cea70b460ee9"`
+
+
 ### Offline mode
 
 This mode can be used in setups without internet access, but requires a manual specification of your country code.
