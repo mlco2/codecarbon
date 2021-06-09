@@ -61,7 +61,7 @@ class ApiClient:  # (AsyncClient)
         )
         try:
             payload = dataclasses.asdict(emission)
-            r = requests.put(url=self.url + "/emission", json=payload)
+            r = requests.put(url=self.url + "/emission", json=payload, timeout=2)
             if r.status_code != 201:
                 self._log_error(payload, r)
             assert r.status_code == 201
@@ -80,7 +80,7 @@ class ApiClient:  # (AsyncClient)
                 timestamp=self.get_datetime_with_timezone(), experiment_id=experiment_id
             )
             payload = dataclasses.asdict(run)
-            r = requests.put(url=self.url + "/run", json=payload)
+            r = requests.put(url=self.url + "/run", json=payload, timeout=2)
             if r.status_code != 200:
                 self._log_error(payload, r)
             assert r.status_code == 200
