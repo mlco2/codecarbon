@@ -13,25 +13,12 @@ Estimate and track carbon emissions from your compute, quantify and analyze thei
 
 - [About CodeCarbon 💡](#about-codecarbon-)
 - [Installation :battery:](#installation-battery)
-      - [Install from PyPI repository](#install-from-pypi-repository)
-      - [Install from Conda repository](#install-from-conda-repository)
 - [Quickstart 🚀](#quickstart-)
-    - [Online mode](#online-mode)
-      - [Code Carbon API](#code-carbon-api)
-    - [Offline mode](#offline-mode)
-    - [Using comet.ml](#using-cometml)
-    - [Configuration](#configuration)
 - [Examples 🐤](#examples-)
 - [Built-in Visualization Tool :heart_eyes:](#built-in-visualization-tool-heart_eyes)
 - [Comet Integration 🥂](#comet-integration-)
 - [Report your emissions: LateX template 📻](#report-your-emissions-latex-template-)
-    - [Citing CodeCarbon](#citing-codecarbon)
 - [Infrastructure Support 🖥️](#infrastructure-support-️)
-    - [GPU](#gpu)
-    - [CPU](#cpu)
-      - [On Windows and Mac](#on-windows-and-mac)
-      - [On Linux](#on-linux)
-      - [On all platforms](#on-all-platforms)
 - [Data Sources 🗒️](#data-sources-️)
 - [Contributing 🤝](#contributing-)
 - [Build Documentation 🖨️](#build-documentation-️)
@@ -96,7 +83,7 @@ def training_loop():
 
 This will write a csv file of the CO2 emissions in the current directory.
 
-#### Code Carbon API
+#### Code Carbon API (BETA)
 
 This mode use the Code Carbon API to upload the timeseries of your emissions. You will need an API key from [https://codecarbon.io](https://codecarbon.io)
 
