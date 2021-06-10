@@ -83,7 +83,9 @@ def training_loop():
 
 This will write a csv file of the CO2 emissions in the current directory.
 
-#### Code Carbon API (BETA)
+#### Code Carbon API (ALPHA)
+
+*(This feature is currently in **ALPHA** stage, meaning it's only available after installing CodeCarbon from this repository. The documentation and implementation are is still under development.)*
 
 This mode use the Code Carbon API to upload the timeseries of your emissions. You will need an API key from [https://codecarbon.io](https://codecarbon.io)
 
