@@ -1,6 +1,7 @@
-import logging
 import time
+
 from codecarbon import track_emissions
+
 
 @track_emissions(
     project_name="just_sleep",

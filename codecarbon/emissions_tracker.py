@@ -77,7 +77,10 @@ class BaseEmissionsTracker(ABC):
                                    usage, defaults to 15
         :param api_call_interval: Occurence to wait before calling API :
                             1 : at every measure
-                            2 : every 2 measure
+                            2 : every 2 measure, etc...
+        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending emissions
+                                   data
+        :param api_key: API key for Code Carbon API, mandatory to use it !
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current
                            directory
@@ -85,8 +88,6 @@ class BaseEmissionsTracker(ABC):
                              file, defaults to True
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
-                                   data
-        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending emissions
                                    data
         :param experiment_id: Id of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
@@ -124,7 +125,9 @@ class BaseEmissionsTracker(ABC):
             else conf.get("emissions_endpoint", None)
         )
         self._api_endpoint = (
-            api_endpoint if api_endpoint is not None else conf.get("api_endpoint", None)
+            api_endpoint
+            if api_endpoint is not None
+            else conf.get("api_endpoint", "https://api.codecarbon.io")
         )
         self._co2_signal_api_token = (
             co2_signal_api_token
@@ -140,7 +143,7 @@ class BaseEmissionsTracker(ABC):
         self._api_call_interval: int = (
             api_call_interval
             if api_call_interval is not None
-            else conf.getboolean("api_call_interval", True)
+            else conf.getint("api_call_interval", 8)
         )
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
@@ -207,6 +210,8 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
         if api_endpoint:
+            if experiment_id is None:
+                experiment_id = "82ba0923-0713-4da1-9e57-cea70b460ee9"
             self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=api_endpoint,
                 experiment_id=experiment_id,
