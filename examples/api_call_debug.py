@@ -12,6 +12,7 @@ from codecarbon.external.logger import logger
     measure_power_secs=10,
     api_call_interval=2,
     api_key="12aaaaaa-0b23-1234-1234-abcdef123456",
+    save_to_api=True,
 )
 def train_model():
     """

@@ -13,12 +13,25 @@ Estimate and track carbon emissions from your compute, quantify and analyze thei
 
 - [About CodeCarbon 💡](#about-codecarbon-)
 - [Installation :battery:](#installation-battery)
+      - [Install from PyPI repository](#install-from-pypi-repository)
+      - [Install from Conda repository](#install-from-conda-repository)
 - [Quickstart 🚀](#quickstart-)
+    - [Online mode](#online-mode)
+      - [Code Carbon API](#code-carbon-api)
+    - [Offline mode](#offline-mode)
+    - [Using comet.ml](#using-cometml)
+    - [Configuration](#configuration)
 - [Examples 🐤](#examples-)
 - [Built-in Visualization Tool :heart_eyes:](#built-in-visualization-tool-heart_eyes)
 - [Comet Integration 🥂](#comet-integration-)
 - [Report your emissions: LateX template 📻](#report-your-emissions-latex-template-)
+    - [Citing CodeCarbon](#citing-codecarbon)
 - [Infrastructure Support 🖥️](#infrastructure-support-️)
+    - [GPU](#gpu)
+    - [CPU](#cpu)
+      - [On Windows and Mac](#on-windows-and-mac)
+      - [On Linux](#on-linux)
+      - [On all platforms](#on-all-platforms)
 - [Data Sources 🗒️](#data-sources-️)
 - [Contributing 🤝](#contributing-)
 - [Build Documentation 🖨️](#build-documentation-️)
@@ -92,7 +105,7 @@ Here is how to use it:
 ```python
 from codecarbon import track_emissions
 
-@track_emissions(api_key="12aaaaaa-0b23-1234-1234-abcdef123456")
+@track_emissions(api_key="12aaaaaa-0b23-1234-1234-abcdef123456", save_to_api=True)
 def train_model():
     # Your code here
 
