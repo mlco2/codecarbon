@@ -64,6 +64,7 @@ class BaseEmissionsTracker(ABC):
         api_key: Optional[str] = None,
         output_dir: Optional[str] = None,
         save_to_file: Optional[bool] = None,
+        save_to_api: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
         experiment_id: Optional[str] = None,
@@ -86,6 +87,7 @@ class BaseEmissionsTracker(ABC):
                            directory
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
+        :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data
@@ -140,6 +142,15 @@ class BaseEmissionsTracker(ABC):
             if save_to_file is not None
             else conf.getboolean("save_to_file", True)
         )
+        if self._save_to_file == "False":
+            self._save_to_file = False
+        self._save_to_api = (
+            save_to_api
+            if save_to_api is not None
+            else conf.getboolean("save_to_api", False)
+        )
+        if self._save_to_api == "False":
+            self._save_to_api = False
         self._api_call_interval: int = (
             api_call_interval
             if api_call_interval is not None
@@ -154,9 +165,6 @@ class BaseEmissionsTracker(ABC):
         self._measure_occurence: int = 0
         self._cloud = None
         self._previous_emissions = None
-
-        if self._save_to_file == "False":
-            self._save_to_file = False
 
         self._gpu_ids = gpu_ids if gpu_ids is not None else conf.get("gpu_ids", None)
         if isinstance(self._gpu_ids, str):
@@ -209,11 +217,11 @@ class BaseEmissionsTracker(ABC):
         if self._emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
-        if api_endpoint:
+        if self._save_to_api:
             if experiment_id is None:
                 experiment_id = "82ba0923-0713-4da1-9e57-cea70b460ee9"
             self._cc_api__out = CodeCarbonAPIOutput(
-                endpoint_url=api_endpoint,
+                endpoint_url=self._api_endpoint,
                 experiment_id=experiment_id,
                 api_key=api_key,
             )
@@ -502,6 +510,7 @@ def track_emissions(
     api_key: Optional[str] = None,
     output_dir: Optional[str] = None,
     save_to_file: Optional[bool] = None,
+    save_to_api: Optional[bool] = None,
     offline: Optional[bool] = None,
     emissions_endpoint: Optional[str] = None,
     experiment_id: Optional[str] = None,
@@ -525,6 +534,7 @@ def track_emissions(
                        directory
     :param save_to_file: Indicates if the emission artifacts should be logged to a file,
                          defaults to True
+    :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
     :param offline: Indicates if the tracker should be run in offline mode
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
                              being run, required if `offline=True`
@@ -581,6 +591,7 @@ def track_emissions(
                     api_call_interval=api_call_interval,
                     api_key=api_key,
                     api_endpoint=api_endpoint,
+                    save_to_api=save_to_api,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
