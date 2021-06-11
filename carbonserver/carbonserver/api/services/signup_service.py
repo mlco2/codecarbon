@@ -36,3 +36,11 @@ class SignUpService:
         created_user = self._user_repository.create_user(user)
 
         return created_user
+
+    def add_user_to_org(self, user: User, organization_id: str, organization_api_key: str):
+        joined = False
+        key_is_valid = self._organization_repository.is_api_key_valid(organization_id, organization_api_key)
+        if key_is_valid:
+            self._user_repository.add_user_to_org(user, organization_id)
+            joined = True
+        return joined

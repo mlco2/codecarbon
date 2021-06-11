@@ -7,8 +7,6 @@
 ### Domain logic
 To test the interface exposed by entities, in memory repositories can be used to isolate the domain logic from technical
  implementation.
-Current entities tests are located in ```tests/infra/repositories```.
-
 
 ### Infrastructure
 

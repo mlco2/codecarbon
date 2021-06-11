@@ -112,6 +112,7 @@ class Organization(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
+    api_key = Column(String)
     teams = relationship("Team", back_populates="organization")
 
     def __repr__(self):

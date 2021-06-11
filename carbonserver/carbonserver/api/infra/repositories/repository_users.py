@@ -1,8 +1,8 @@
-import secrets
 import uuid
 from contextlib import AbstractContextManager
 from typing import Callable, List
 
+from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.domain.users import Users
 from carbonserver.api.schemas import User, UserCreate
 from carbonserver.database.sql_models import User as SqlModelUser
@@ -23,7 +23,7 @@ class SqlAlchemyRepository(Users):
                 name=user.name,
                 email=user.email,
                 hashed_password=user.password,
-                api_key=self.api_key_generator(),
+                api_key=generate_api_key(),
                 is_active=True,
             )
             session.add(db_user)
@@ -57,6 +57,15 @@ class SqlAlchemyRepository(Users):
                     users.append(self.map_sql_to_schema(user))
                 return users
 
+    def add_user_to_org(self, user: User, organization_id: str):
+        with self.session_factory() as session:
+            e = (
+                session.query(SqlModelUser)
+                    .filter(SqlModelUser.id == user.id)
+                    .update({SqlModelUser.organizations: user.organizations.append(organization_id)}
+                            , synchronize_session=False)
+            )
+
     @staticmethod
     def map_sql_to_schema(sql_user: SqlModelUser) -> User:
         """Sql To Pydantic Mapper
@@ -71,47 +80,4 @@ class SqlAlchemyRepository(Users):
             password=sql_user.hashed_password,
             api_key=sql_user.api_key,
             is_active=sql_user.is_active,
-        )
-
-    @staticmethod
-    def api_key_generator():
-        return secrets.token_urlsafe(16)
-
-
-class InMemoryRepository(Users):
-    def __init__(self):
-        self.users: List[Users] = []
-        self.id: int = 0
-        self.inactive_users: List = []
-
-    def create_user(self, user: UserCreate) -> SqlModelUser:
-        self.id += 1
-        self.users.append(
-            SqlModelUser(
-                id=self.id,
-                name=user.name,
-                email=user.email,
-                hashed_password=user.password,
-                api_key=SqlAlchemyRepository.api_key_generator(),
-                is_active=True,
-            )
-        )
-        return self.users[self.id - 1]
-
-    def get_user_by_id(self, user_id: int):
-        user = [user for user in self.users if user.id == user_id][0]
-        return user
-
-    def list_users(self):
-        return self.users
-
-    @staticmethod
-    def get_db_to_class(user: SqlModelUser) -> User:
-        return User(
-            id=user.user_id,
-            name=user.name,
-            email=user.email,
-            hashed_password=user.hashed_password,
-            api_key=user.api_key,
-            is_active=user.is_active,
         )

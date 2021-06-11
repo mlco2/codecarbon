@@ -32,15 +32,15 @@ def test_organization_service_creates_correct_user_on_sign_up(_):
     expected_id = TEAM_ID
     user_service: TeamService = TeamService(repository_mock)
     repository_mock.add_team.return_value = TEAM_1
-    org_to_create = TeamCreate(
+    team_to_create = TeamCreate(
         name="DFG Code Carbon",
         description="DFG Code Carbon Team",
         organization_id=ORG_ID,
     )
 
-    actual_saved_org = user_service.add_team(org_to_create)
+    actual_saved_org = user_service.add_team(team_to_create)
 
-    repository_mock.add_team.assert_called_with(org_to_create)
+    repository_mock.add_team.assert_called_with(team_to_create)
     assert actual_saved_org.id == expected_id
 
 

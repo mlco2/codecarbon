@@ -104,7 +104,6 @@ class ExperimentCreate(ExperimentBase):
 
 class Experiment(ExperimentBase):
     id: str
-    emissions: List[Emission] = []
 
 
 class ProjectBase(BaseModel):
@@ -174,6 +173,7 @@ class OrganizationCreate(OrganizationBase):
 
 class Organization(OrganizationBase):
     id: str
+    api_key: str
     teams: Optional[List[Team]]
 
 
@@ -193,7 +193,8 @@ class User(UserBase):
     email: EmailStr
     password: str
     api_key: str
-    is_active: Optional[bool]
+    organizations: Optional[List]
+    is_active: bool
 
     class Config:
         orm_mode = True

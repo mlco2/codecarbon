@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID, uuid4
 from contextlib import AbstractContextManager
 from typing import List
 
@@ -22,9 +22,10 @@ class SqlAlchemyRepository(Teams):
 
         with self.session_factory() as session:
             db_team = SqlModelTeam(
-                id=uuid.uuid4(),
+                id=uuid4(),
                 name=team.name,
                 description=team.description,
+                organization_id=team.organization_id
             )
             session.add(db_team)
             session.commit()
@@ -71,13 +72,13 @@ class InMemoryRepository(Teams):
         self.teams: List = []
         self.id: int = 0
 
-    def add_team(self, team: TeamCreate):
+    def add_team(self, team: TeamCreate, organization_id: UUID):
         self.teams.append(
             SqlModelTeam(
                 id=self.id + 1,
                 name=team.name,
                 description=team.description,
-                # organization_id=team.organization_id,
+                organization_id=team.organization_id,
             )
         )
 
@@ -87,23 +88,19 @@ class InMemoryRepository(Teams):
             id=first_team.id,
             name=first_team.name,
             description=first_team.description,
-            # organization_id=first_team.organization_id,
+            organization_id=first_team.organization_id,
         )
 
-    # def get_projects_from_team(self, team_id):
-    # TODO : get Projects from Project id in database
-    #    pass
-
     @staticmethod
-    def get_db_to_class(self, team: SqlModelTeam) -> Team:
+    def get_db_to_class(team: SqlModelTeam) -> Team:
         return schemas.Team(
             id=team.id,
             name=team.name,
             description=team.description,
-            # organization_id=team.organization_id,
+            organization_id=team.organization_id,
         )
 
-    def list_team(self, team_name: str):
+    def list_team(self):
         teams = []
         for team in self.teams:
             teams.append(

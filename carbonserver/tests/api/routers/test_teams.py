@@ -28,8 +28,14 @@ TEAM_1 = {
     "organization_id": ORG_ID,
 }
 
+TEAM_WITH_NO_ORG = {
+    "id": TEAM_ID,
+    "name": "Data For Good Code Carbon",
+    "description": "Data For Good Code Carbon Team",
+}
 
-TEAM_2 = {
+
+ORG_2 = {
     "id": TEAM_ID_2,
     "name": "Data For Good Code Carbon 2",
     "description": "Data For Good Code Carbon Team 2",
@@ -65,25 +71,38 @@ def test_add_team(client, custom_test_server):
     assert actual_team == expected_team
 
 
-def test_get_team_by_id_returns_correct_team(client, custom_test_server):
+def test_add_team_with_no_org_links_to_data_for_good_org(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_team = TEAM_1
+    default_org_id = ORG_ID
+    repository_mock.add_team.return_value = SqlModelTeam(**TEAM_1)
+
+    with custom_test_server.container.team_repository.override(repository_mock):
+        response = client.put("/teams/", json=TEAM_TO_CREATE)
+        actual_team = response.json()
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert actual_team['organization_id'] == default_org_id
+
+
+def test_get_one_team_returns_correct_team(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_org = TEAM_1
     repository_mock.get_one_team.return_value = [
-        SqlModelTeam(**expected_team),
+        SqlModelTeam(**expected_org),
     ]
 
     with custom_test_server.container.team_repository.override(repository_mock):
         response = client.get("/teams/read_team/", params={"id": TEAM_ID})
-        actual_team = response.json()[0]
+        actual_org = response.json()[0]
 
     assert response.status_code == status.HTTP_200_OK
-    assert actual_team == expected_team
+    assert actual_org == expected_org
 
 
 def test_list_teams_returns_all_teams(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_team_1 = TEAM_1
-    expected_team_2 = TEAM_2
+    expected_team_2 = ORG_2
     expected_team_list = [expected_team_1, expected_team_2]
     repository_mock.list_teams.return_value = [
         SqlModelTeam(**expected_team_1),
