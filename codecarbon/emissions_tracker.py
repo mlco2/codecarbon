@@ -12,6 +12,7 @@ from functools import wraps
 from typing import Callable, List, Optional, Union
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from varname import argname
 
 from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
@@ -46,6 +47,8 @@ from codecarbon.output import (
 # see: https://stackoverflow.com/questions/67202314/
 #      python-distinguish-default-argument-and-argument-provided-with-default-value
 
+_sentinel = object()
+
 
 class BaseEmissionsTracker(ABC):
     """
@@ -55,21 +58,36 @@ class BaseEmissionsTracker(ABC):
     and `CarbonTracker.`
     """
 
+    def _get_conf(self, var, default=None, return_type=None):
+        assert hasattr(self, "_conf")
+        if var is not _sentinel:
+            return var
+
+        name = argname(var)
+        value = self._conf.get(name, default)
+
+        if return_type is not None:
+            if return_type is bool:
+                return str(value).lower() == "true"
+            return return_type(value)
+
+        return value
+
     def __init__(
         self,
-        project_name: Optional[str] = None,
-        measure_power_secs: Optional[int] = None,
-        api_call_interval: Optional[int] = None,
-        api_endpoint: Optional[str] = None,
-        api_key: Optional[str] = None,
-        output_dir: Optional[str] = None,
-        save_to_file: Optional[bool] = None,
-        save_to_api: Optional[bool] = None,
-        gpu_ids: Optional[List] = None,
-        emissions_endpoint: Optional[str] = None,
-        experiment_id: Optional[str] = None,
-        co2_signal_api_token: Optional[str] = None,
-        log_level: Optional[Union[int, str]] = None,
+        project_name: Optional[str] = _sentinel,
+        measure_power_secs: Optional[int] = _sentinel,
+        api_call_interval: Optional[int] = _sentinel,
+        api_endpoint: Optional[str] = _sentinel,
+        api_key: Optional[str] = _sentinel,
+        output_dir: Optional[str] = _sentinel,
+        save_to_file: Optional[bool] = _sentinel,
+        save_to_api: Optional[bool] = _sentinel,
+        gpu_ids: Optional[List] = _sentinel,
+        emissions_endpoint: Optional[str] = _sentinel,
+        experiment_id: Optional[str] = _sentinel,
+        co2_signal_api_token: Optional[str] = _sentinel,
+        log_level: Optional[Union[int, str]] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -98,64 +116,26 @@ class BaseEmissionsTracker(ABC):
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
         """
-        conf = get_hierarchical_config()
+        self._conf = get_hierarchical_config()
 
-        self._log_level = (
-            log_level if log_level is not None else conf.get("log_level", "info")
-        )
+        self._log_level = self._get_conf(log_level, "info")
         set_log_level(self._log_level)
 
-        self._project_name: str = (
-            project_name
-            if project_name is not None
-            else conf.get("project_name", "codecarbon")
-        )
+        self._project_name: str = self._get_conf(project_name, "codecarbon")
 
-        self._measure_power_secs: int = (
-            measure_power_secs
-            if measure_power_secs is not None
-            else conf.getint("measure_power_secs", 15)
-        )
+        self._measure_power_secs: int = self._get_conf(measure_power_secs, 15, int)
 
-        self._output_dir: str = (
-            output_dir if output_dir is not None else conf.get("output_dir", ".")
-        )
+        self._output_dir: str = self._get_conf(output_dir, ".")
 
-        self._emissions_endpoint = (
-            emissions_endpoint
-            if emissions_endpoint is not None
-            else conf.get("emissions_endpoint", None)
-        )
-        self._api_endpoint = (
-            api_endpoint
-            if api_endpoint is not None
-            else conf.get("api_endpoint", "https://api.codecarbon.io")
-        )
-        self._co2_signal_api_token = (
-            co2_signal_api_token
-            if co2_signal_api_token is not None
-            else conf.get("co2_signal_api_token", None)
-        )
+        self._emissions_endpoint = self._get_conf(emissions_endpoint)
+        self._api_endpoint = self._get_conf(api_endpoint, "https://api.codecarbon.io")
+        self._co2_signal_api_token = self._get_conf(co2_signal_api_token)
 
-        self._save_to_file = (
-            save_to_file
-            if save_to_file is not None
-            else conf.getboolean("save_to_file", True)
-        )
-        if self._save_to_file == "False":
-            self._save_to_file = False
-        self._save_to_api = (
-            save_to_api
-            if save_to_api is not None
-            else conf.getboolean("save_to_api", False)
-        )
-        if self._save_to_api == "False":
-            self._save_to_api = False
-        self._api_call_interval: int = (
-            api_call_interval
-            if api_call_interval is not None
-            else conf.getint("api_call_interval", 8)
-        )
+        self._save_to_file = self._get_conf(save_to_file, True, bool)
+
+        self._save_to_api = self._get_conf(save_to_api, False, bool)
+
+        self._api_call_interval: int = self._get_conf(api_call_interval, 8, int)
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
@@ -166,7 +146,8 @@ class BaseEmissionsTracker(ABC):
         self._cloud = None
         self._previous_emissions = None
 
-        self._gpu_ids = gpu_ids if gpu_ids is not None else conf.get("gpu_ids", None)
+        self._gpu_ids = self._get_conf(gpu_ids)
+
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
 
@@ -379,11 +360,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     def __init__(
         self,
         *args,
-        country_iso_code: Optional[str] = None,
-        region: Optional[str] = None,
-        cloud_provider: Optional[str] = None,
-        cloud_region: Optional[str] = None,
-        country_2letter_iso_code: Optional[str] = None,
+        country_iso_code: Optional[str] = _sentinel,
+        region: Optional[str] = _sentinel,
+        cloud_provider: Optional[str] = _sentinel,
+        cloud_region: Optional[str] = _sentinel,
+        country_2letter_iso_code: Optional[str] = _sentinel,
         **kwargs,
     ):
         """
@@ -406,23 +387,12 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                          a list of codes and their corresponding
                                          locations.
         """
-        conf = get_hierarchical_config()
-        self._cloud_provider: Optional[str] = (
-            cloud_provider
-            if cloud_provider is not None
-            else conf.get("cloud_provider", None)
-        )
-        self._country_iso_code: Optional[str] = (
-            country_iso_code
-            if country_iso_code is not None
-            else conf.get("country_iso_code", None)
-        )
-        self._cloud_region: Optional[str] = (
-            cloud_region if cloud_region is not None else conf.get("cloud_region", None)
-        )
-        self._region: Optional[str] = (
-            region if region is not None else conf.get("cloud_region", None)
-        )
+        self._conf = get_hierarchical_config()
+        self._cloud_provider: Optional[str] = self._get_conf(cloud_provider)
+        self._country_iso_code: Optional[str] = self._get_conf(country_iso_code)
+        self._cloud_region: Optional[str] = self._get_conf(cloud_region)
+        self._region: Optional[str] = self._get_conf(region)
+
         if self._region is not None:
             assert isinstance(self._region, str)
             self._region = self._region.lower()
@@ -460,10 +430,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     f"Exception occurred {e}"
                 )
 
-        self.country_2letter_iso_code: Optional[str] = (
+        self.country_2letter_iso_code: Optional[str] = self._get_conf(
             country_2letter_iso_code
-            if country_2letter_iso_code is not None
-            else conf.get("country_2letter_iso_code", None)
         )
         if self.country_2letter_iso_code:
             assert isinstance(self.country_2letter_iso_code, str)
@@ -504,23 +472,23 @@ class EmissionsTracker(BaseEmissionsTracker):
 
 def track_emissions(
     fn: Callable = None,
-    project_name: Optional[str] = None,
-    measure_power_secs: Optional[int] = None,
+    project_name: Optional[str] = _sentinel,
+    measure_power_secs: Optional[int] = _sentinel,
     api_call_interval: int = 2,
-    api_endpoint: Optional[str] = None,
-    api_key: Optional[str] = None,
-    output_dir: Optional[str] = None,
-    save_to_file: Optional[bool] = None,
-    save_to_api: Optional[bool] = None,
-    offline: Optional[bool] = None,
-    emissions_endpoint: Optional[str] = None,
-    experiment_id: Optional[str] = None,
-    country_iso_code: Optional[str] = None,
-    region: Optional[str] = None,
-    cloud_provider: Optional[str] = None,
-    cloud_region: Optional[str] = None,
-    gpu_ids: Optional[List] = None,
-    log_level: Optional[Union[int, str]] = None,
+    api_endpoint: Optional[str] = _sentinel,
+    api_key: Optional[str] = _sentinel,
+    output_dir: Optional[str] = _sentinel,
+    save_to_file: Optional[bool] = _sentinel,
+    save_to_api: Optional[bool] = _sentinel,
+    offline: Optional[bool] = _sentinel,
+    emissions_endpoint: Optional[str] = _sentinel,
+    experiment_id: Optional[str] = _sentinel,
+    country_iso_code: Optional[str] = _sentinel,
+    region: Optional[str] = _sentinel,
+    cloud_provider: Optional[str] = _sentinel,
+    cloud_region: Optional[str] = _sentinel,
+    gpu_ids: Optional[List] = _sentinel,
+    log_level: Optional[Union[int, str]] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -561,8 +529,10 @@ def track_emissions(
     def _decorate(fn: Callable):
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
-            if offline:
-                if country_iso_code is None and cloud_provider is None:
+            if offline and offline is not _sentinel:
+                if (country_iso_code is None or country_iso_code is _sentinel) and (
+                    cloud_provider is None or cloud_provider is _sentinel
+                ):
                     raise Exception("Needs ISO Code of the Country for Offline mode")
                 tracker = OfflineEmissionsTracker(
                     project_name=project_name,
