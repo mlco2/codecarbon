@@ -248,5 +248,8 @@ class TDP:
                 power = cpu_power_df_model["TDP"].tolist()[0]
                 logger.debug(f'CPU : We detect a {model_raw} with a TDP of {power} W')
                 return power
-        logger.warning('We were unable to detect your CPU !!!')
+            else:
+                logger.warning(f"We saw that you have a {model_raw} but we don't know it. Please contact us.")
+        else:
+            logger.warning('We were unable to detect your CPU !!!')
         return None
