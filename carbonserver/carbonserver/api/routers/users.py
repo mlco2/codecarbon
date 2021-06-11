@@ -3,7 +3,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import OrganizationCreate, TeamCreate, User, UserCreate
+from carbonserver.api.schemas import User, UserCreate
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 
@@ -29,11 +29,9 @@ def create_user(
 @inject
 def sign_up(
     user: UserCreate,
-    organization: OrganizationCreate,
-    team: TeamCreate,
     signup_service: SignUpService = Depends(Provide[ServerContainer.sign_up]),
 ) -> User:
-    return signup_service.sign_up(user, organization, team)
+    return signup_service.sign_up(user)
 
 
 @router.get("/users/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_200_OK)

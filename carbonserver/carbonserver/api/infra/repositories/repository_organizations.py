@@ -2,10 +2,10 @@ import uuid
 from contextlib import AbstractContextManager
 from typing import List
 
-from carbonserver.api.infra.api_key_service import generate_api_key
 from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.organizations import Organizations
+from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.schemas import Organization, OrganizationCreate
 from carbonserver.database.sql_models import Organization as SqlModelOrganization
 

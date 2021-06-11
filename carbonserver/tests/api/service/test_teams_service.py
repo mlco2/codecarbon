@@ -16,7 +16,7 @@ TEAM_1 = Team(
     id=TEAM_ID,
     name="DFG Code Carbon",
     description="DFG Code Carbon Team",
-    api_key = API_KEY,
+    api_key=API_KEY,
     organization_id=ORG_ID,
 )
 
@@ -24,7 +24,7 @@ ORG_2 = Team(
     id=TEAM_ID_2,
     name="DFG Code Carbon 2",
     description="DFG Code Carbon 2",
-    api_key = API_KEY,
+    api_key=API_KEY,
     organization_id=ORG_ID_2,
 )
 

@@ -81,7 +81,7 @@ def test_add_team_with_no_org_links_to_data_for_good_org(client, custom_test_ser
         actual_team = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert actual_team['organization_id'] == default_org_id
+    assert actual_team["organization_id"] == default_org_id
 
 
 def test_get_one_team_returns_correct_team(client, custom_test_server):

@@ -14,6 +14,16 @@ from sqlalchemy.engine.reflection import Inspector
 
 ADMIN_ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
+ADMIN_TEAM_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+ADMIN_TEAM_API_KEY = "supersecret"
+
+
+COMMUNITY_ORG_ID = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+COMMUNITY_ORG_API_KEY = "default"
+
+DFG_TEAM_ID = "8edb03e1-9a28-452a-9c93-a3b6560136d7"
+DFG_TEAM_API_KEY = "default"
+
 revision = "5abae4eb2079"
 down_revision = None
 branch_labels = None
@@ -25,7 +35,7 @@ def upgrade():
     Initial creation: removes all code carbon related tables & creates them with initial user / organization / team.
     """
 
-    # downgrade()
+    downgrade()
 
     op.create_table(
         "emissions",
@@ -74,7 +84,7 @@ def upgrade():
         "fk_runs_experiments", "runs", "experiments", ["experiment_id"], ["id"]
     )
 
-    projects = op.create_table(
+    op.create_table(
         "projects",
         sa.Column(
             "id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
@@ -96,6 +106,7 @@ def upgrade():
         ),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
+        sa.Column("api_key", sa.String),
         sa.Column("organization_id", UUID),
         keep_existing=False,
     )
@@ -109,6 +120,8 @@ def upgrade():
         ),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
+        sa.Column("api_key", sa.String),
+        sa.Column("teams", sa.types.ARRAY(sa.String, as_tuple=False, dimensions=1)),
         keep_existing=False,
     )
 
@@ -126,6 +139,10 @@ def upgrade():
         sa.Column("email", sa.String, unique=True, index=True),
         sa.Column("hashed_password", sa.String),
         sa.Column("is_active", sa.Boolean, default=True),
+        sa.Column("teams", sa.types.ARRAY(sa.String, as_tuple=False, dimensions=1)),
+        sa.Column(
+            "organizations", sa.types.ARRAY(sa.String, as_tuple=False, dimensions=1)
+        ),
         sa.Column("organization_id", UUID),
         keep_existing=False,
     )
@@ -134,8 +151,6 @@ def upgrade():
         "fk_users_organizations", "users", "organizations", ["organization_id"], ["id"]
     )
 
-    teams_admin_uuid = uuid.uuid4().__str__()
-    projects_admin_uuid = uuid.uuid4().__str__()
     op.bulk_insert(
         organizations,
         [
@@ -143,7 +158,13 @@ def upgrade():
                 "id": ADMIN_ORG_ID,
                 "name": "admin",
                 "description": "Administration organization",
-            }
+            },
+            {
+                "id": COMMUNITY_ORG_ID,
+                "name": "Community organization",
+                "description": "Community organization",
+                "api_key": COMMUNITY_ORG_API_KEY,
+            },
         ],
     )
 
@@ -151,22 +172,11 @@ def upgrade():
         teams,
         [
             {
-                "id": teams_admin_uuid,
+                "id": ADMIN_TEAM_ID,
                 "name": "admin",
                 "description": "Administration team",
+                "api_key": ADMIN_TEAM_API_KEY,
                 "organization_id": ADMIN_ORG_ID,
-            }
-        ],
-    )
-
-    op.bulk_insert(
-        projects,
-        [
-            {
-                "id": projects_admin_uuid,
-                "name": "admin",
-                "description": "Administration project",
-                "team_id": teams_admin_uuid,
             }
         ],
     )

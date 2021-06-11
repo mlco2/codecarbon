@@ -1,6 +1,6 @@
-from uuid import UUID, uuid4
 from contextlib import AbstractContextManager
 from typing import List
+from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
 
@@ -25,7 +25,7 @@ class SqlAlchemyRepository(Teams):
                 id=uuid4(),
                 name=team.name,
                 description=team.description,
-                organization_id=team.organization_id
+                organization_id=team.organization_id,
             )
             session.add(db_team)
             session.commit()
@@ -61,9 +61,9 @@ class SqlAlchemyRepository(Teams):
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelTeam)
-                    .filter(SqlModelTeam.id == organization_id)
-                    .filter(SqlModelTeam.api_key == api_key)
-                    .first()
+                .filter(SqlModelTeam.id == organization_id)
+                .filter(SqlModelTeam.api_key == api_key)
+                .first()
             )
             if e is None:
                 return False

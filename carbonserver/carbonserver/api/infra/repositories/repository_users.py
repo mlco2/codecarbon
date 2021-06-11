@@ -2,8 +2,8 @@ import uuid
 from contextlib import AbstractContextManager
 from typing import Callable, List
 
-from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.domain.users import Users
+from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.schemas import User, UserCreate
 from carbonserver.database.sql_models import User as SqlModelUser
 
@@ -25,6 +25,8 @@ class SqlAlchemyRepository(Users):
                 hashed_password=user.password,
                 api_key=generate_api_key(),
                 is_active=True,
+                teams=[],
+                organizations=[],
             )
             session.add(db_user)
             session.commit()
@@ -44,7 +46,9 @@ class SqlAlchemyRepository(Users):
             if e is None:
                 return None
             else:
-                return self.map_sql_to_schema(e)
+                print("printing user")
+                print(e)
+                return e  # self.map_sql_to_schema(e)
 
     def list_users(self) -> List[User]:
         with self.session_factory() as session:
@@ -59,20 +63,30 @@ class SqlAlchemyRepository(Users):
 
     def add_user_to_org(self, user: User, organization_id: str):
         with self.session_factory() as session:
-            (
+            e = (
                 session.query(SqlModelUser)
-                    .filter(SqlModelUser.id == user.id)
-                    .update({SqlModelUser.organizations: user.organizations.append(organization_id)}
-                            , synchronize_session=False)
+                .filter(SqlModelUser.id == user.id)
+                .update(
+                    {
+                        SqlModelUser.organizations: user.organizations.append(
+                            organization_id
+                        )
+                    },
+                    synchronize_session=False,
+                )
             )
+            print(e)
+            return e
 
     def add_user_to_team(self, user: User, team_id: str):
         with self.session_factory() as session:
-            (
+            return (
                 session.query(SqlModelUser)
-                    .filter(SqlModelUser.id == user.id)
-                    .update({SqlModelUser.organizations: user.teams.append(team_id)}
-                            , synchronize_session=False)
+                .filter(SqlModelUser.id == user.id)
+                .update(
+                    {SqlModelUser.organizations: user.teams.append(team_id)},
+                    synchronize_session=False,
+                )
             )
 
     @staticmethod
@@ -82,6 +96,8 @@ class SqlAlchemyRepository(Users):
         :returns: An User in pyDantic BaseModel format.
         :rtype: schemas.User
         """
+        print("I PRINT USER")
+        print(sql_user)
         return User(
             id=str(sql_user.id),
             name=sql_user.name,
@@ -89,4 +105,6 @@ class SqlAlchemyRepository(Users):
             password=sql_user.hashed_password,
             api_key=sql_user.api_key,
             is_active=sql_user.is_active,
+            teams=sql_user.teams,
+            organizations=sql_user.organizations,
         )

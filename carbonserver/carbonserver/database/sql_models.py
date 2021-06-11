@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import ARRAY
 
 from carbonserver.database.database import Base
 
@@ -96,6 +97,7 @@ class Team(Base):
     description = Column(String)
     organization_id = Column(Integer, ForeignKey("organizations.id"))
     projects = relationship("Project", back_populates="team")
+    api_key = Column(String)
     organization = relationship("Organization", back_populates="teams")
 
     def __repr__(self):
@@ -131,7 +133,8 @@ class User(Base):
     hashed_password = Column(String)
     api_key = Column(String)
     is_active = Column(Boolean, default=True)
-    # TODO: Associate user with his entities
+    teams = Column(ARRAY(String, as_tuple=False, dimensions=1))
+    organizations = Column(ARRAY(String, as_tuple=False, dimensions=1))
 
     def __repr__(self):
         return (

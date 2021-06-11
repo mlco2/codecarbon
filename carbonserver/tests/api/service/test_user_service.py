@@ -1,6 +1,8 @@
 from unittest import mock
 
-from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository as UserSqlRepository
+from carbonserver.api.infra.repositories.repository_users import (
+    SqlAlchemyRepository as UserSqlRepository,
+)
 from carbonserver.api.schemas import User, UserCreate
 from carbonserver.api.services.user_service import UserService
 
@@ -17,7 +19,7 @@ USER_1 = User(
     email="xyz@email.com",
     password="pwd",
     api_key=API_KEY,
-    organizations=['DataForGood'],
+    organizations=["DataForGood"],
     is_active=True,
 )
 
@@ -27,7 +29,7 @@ USER_2 = User(
     email="1234+1@email.fr",
     password="password",
     api_key=API_KEY,
-    organizations=['DataForGood'],
+    organizations=["DataForGood"],
     is_active=True,
 )
 
@@ -75,4 +77,3 @@ def test_user_service_retrieves_correct_user_by_id():
 
     assert actual_saved_user.id == expected_user.id
     assert actual_saved_user.name == expected_user.name
-
