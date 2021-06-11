@@ -10,7 +10,6 @@ from typing import Dict, Iterable, List, Optional
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
-from codecarbon.external.logger import logger
 
 POWER_CONSTANT = 85
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
