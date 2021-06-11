@@ -151,6 +151,7 @@ class TeamCreate(TeamBase):
 
 class Team(TeamBase):
     id: str
+    api_key: str
     projects: List[Project] = []
 
 
@@ -194,6 +195,7 @@ class User(UserBase):
     password: str
     api_key: str
     organizations: Optional[List]
+    teams: Optional[List]
     is_active: bool
 
     class Config:

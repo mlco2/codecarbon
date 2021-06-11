@@ -59,10 +59,19 @@ class SqlAlchemyRepository(Users):
 
     def add_user_to_org(self, user: User, organization_id: str):
         with self.session_factory() as session:
-            e = (
+            (
                 session.query(SqlModelUser)
                     .filter(SqlModelUser.id == user.id)
                     .update({SqlModelUser.organizations: user.organizations.append(organization_id)}
+                            , synchronize_session=False)
+            )
+
+    def add_user_to_team(self, user: User, team_id: str):
+        with self.session_factory() as session:
+            (
+                session.query(SqlModelUser)
+                    .filter(SqlModelUser.id == user.id)
+                    .update({SqlModelUser.organizations: user.teams.append(team_id)}
                             , synchronize_session=False)
             )
 

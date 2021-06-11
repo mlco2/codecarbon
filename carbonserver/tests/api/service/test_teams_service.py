@@ -4,6 +4,8 @@ from carbonserver.api.infra.repositories.repository_teams import SqlAlchemyRepos
 from carbonserver.api.schemas import Team, TeamCreate
 from carbonserver.api.services.team_service import TeamService
 
+API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
+
 ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce0org"
 ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce0org"
 
@@ -14,6 +16,7 @@ TEAM_1 = Team(
     id=TEAM_ID,
     name="DFG Code Carbon",
     description="DFG Code Carbon Team",
+    api_key = API_KEY,
     organization_id=ORG_ID,
 )
 
@@ -21,6 +24,7 @@ ORG_2 = Team(
     id=TEAM_ID_2,
     name="DFG Code Carbon 2",
     description="DFG Code Carbon 2",
+    api_key = API_KEY,
     organization_id=ORG_ID_2,
 )
 

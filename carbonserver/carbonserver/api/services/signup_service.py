@@ -9,7 +9,7 @@ from carbonserver.api.infra.repositories.repository_teams import (
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserRepository,
 )
-from carbonserver.api.schemas import OrganizationCreate, TeamCreate, User, UserCreate
+from carbonserver.api.schemas import OrganizationCreate, TeamCreate, User, UserCreate, Team
 
 
 class SignUpService:
@@ -42,5 +42,13 @@ class SignUpService:
         key_is_valid = self._organization_repository.is_api_key_valid(organization_id, organization_api_key)
         if key_is_valid:
             self._user_repository.add_user_to_org(user, organization_id)
+            joined = True
+        return joined
+
+    def add_user_to_team(self, user: User, team_id: str, team_api_key: str):
+        joined = False
+        key_is_valid = self._team_repository.is_api_key_valid(team_id, team_api_key)
+        if key_is_valid:
+            self._user_repository.add_user_to_org(user, team_id)
             joined = True
         return joined
