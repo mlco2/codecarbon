@@ -90,7 +90,7 @@ class Time:
     Measured in seconds
     """
 
-    SECONDS_TO_HOURS = 0.00027777778 # = 1h/(60s*60m)
+    SECONDS_TO_HOURS = 0.00027777778  # = 1h/(60s*60m)
 
     seconds: float
 
