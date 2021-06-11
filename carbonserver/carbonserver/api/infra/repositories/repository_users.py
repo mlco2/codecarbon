@@ -46,9 +46,7 @@ class SqlAlchemyRepository(Users):
             if e is None:
                 return None
             else:
-                print("printing user")
-                print(e)
-                return e  # self.map_sql_to_schema(e)
+                return self.map_sql_to_schema(e)
 
     def list_users(self) -> List[User]:
         with self.session_factory() as session:
@@ -96,8 +94,6 @@ class SqlAlchemyRepository(Users):
         :returns: An User in pyDantic BaseModel format.
         :rtype: schemas.User
         """
-        print("I PRINT USER")
-        print(sql_user)
         return User(
             id=str(sql_user.id),
             name=sql_user.name,
