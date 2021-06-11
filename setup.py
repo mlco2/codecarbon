@@ -14,6 +14,7 @@ DEPENDENCIES = [
     "pynvml",
     "requests",
     "py-cpuinfo",
+    "varname",
 ]
 
 TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "requests-mock"]
