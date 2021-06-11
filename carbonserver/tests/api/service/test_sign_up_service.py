@@ -9,14 +9,7 @@ from carbonserver.api.infra.repositories.repository_teams import (
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserSqlRepository,
 )
-from carbonserver.api.schemas import (
-    Organization,
-    OrganizationCreate,
-    Team,
-    TeamCreate,
-    User,
-    UserCreate,
-)
+from carbonserver.api.schemas import Organization, Team, User, UserCreate
 from carbonserver.api.services.signup_service import SignUpService
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
@@ -67,22 +60,11 @@ def test_sign_up_service_creates_full_new_user():
     signup_service: SignUpService = SignUpService(
         user_repository_mock, org_repository_mock, team_repository_mock
     )
-    org_to_create = OrganizationCreate(
-        name="Data For Good", description="Data For Good Organization"
-    )
-
-    team_to_create = TeamCreate(
-        name="DFG Code Carbon",
-        description="DFG Code Carbon Team",
-        organization_id=ORG_ID,
-    )
 
     user_to_create = UserCreate(
         name="Gontran Bonheur", email="xyz@email.com", password="pwd"
     )
-    actual_saved_user = signup_service.sign_up(
-        user_to_create, org_to_create, team_to_create
-    )
+    actual_saved_user = signup_service.sign_up(user_to_create)
 
     assert actual_saved_user.id == expected_id
 
@@ -99,22 +81,10 @@ def test_sign_up_service_creates_user_with_default():
     signup_service: SignUpService = SignUpService(
         user_repository_mock, org_repository_mock, team_mock_repository
     )
-    org_to_create = OrganizationCreate(
-        name="Data For Good", description="Data For Good Organization"
-    )
-
-    team_to_create = TeamCreate(
-        name="DFG Code Carbon",
-        description="DFG Code Carbon Team",
-        organization_id=ORG_ID,
-    )
-
     user_to_create = UserCreate(
         name="Gontran Bonheur", email="xyz@email.com", password="pwd"
     )
-    actual_saved_user = signup_service.sign_up(
-        user_to_create, org_to_create, team_to_create
-    )
+    actual_saved_user = signup_service.sign_up(user_to_create)
 
     assert actual_saved_user.id == expected_id
 
