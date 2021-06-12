@@ -85,7 +85,7 @@ def test_list_organizations_returns_all_orgs(client, custom_test_server):
     expected_org_1 = ORG_1
     expected_org_2 = ORG_2
     expected_org_list = [expected_org_1, expected_org_2]
-    repository_mock.list_organization.return_value = [
+    repository_mock.list_organizations.return_value = [
         ModelOrganization(**expected_org_1),
         ModelOrganization(**expected_org_2),
     ]

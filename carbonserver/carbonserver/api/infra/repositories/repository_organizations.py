@@ -51,7 +51,7 @@ class SqlAlchemyRepository(Organizations):
             else:
                 return self.map_sql_to_schema(e)
 
-    def list_organization(self):
+    def list_organizations(self):
         with self.session_factory() as session:
             e = session.query(SqlModelOrganization)
             if e is None:
@@ -64,16 +64,12 @@ class SqlAlchemyRepository(Organizations):
 
     def is_api_key_valid(self, organization_id: str, api_key: str):
         with self.session_factory() as session:
-            e = (
+            return bool(
                 session.query(SqlModelOrganization)
                 .filter(SqlModelOrganization.id == organization_id)
                 .filter(SqlModelOrganization.api_key == api_key)
                 .first()
             )
-            if e is None:
-                return False
-            else:
-                return True
 
     @staticmethod
     def map_sql_to_schema(organization: SqlModelOrganization) -> Organization:

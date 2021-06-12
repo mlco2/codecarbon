@@ -25,7 +25,6 @@ class OrganizationService:
         return organization
 
     def list_organization(self) -> List[Organization]:
-        organizations: List[Organization] = self._repository.list_organization()
-        print("been called")
+        organizations: List[Organization] = self._repository.list_organizations()
 
         return organizations

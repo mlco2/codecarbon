@@ -14,7 +14,6 @@ TEAMS_ROUTER_TAGS = ["teams"]
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
-teams_temp_db = []
 
 
 @router.put(

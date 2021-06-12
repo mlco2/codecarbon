@@ -48,7 +48,7 @@ def test_organiation_service_retrieves_all_existing_organizations():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org_ids_list = [ORG_ID, ORG_ID_2]
     organization_service: OrganizationService = OrganizationService(repository_mock)
-    repository_mock.list_organization.return_value = [ORG_1, ORG_2]
+    repository_mock.list_organizations.return_value = [ORG_1, ORG_2]
 
     org_list = organization_service.list_organization()
     actual_user_ids_list = map(lambda x: x.id, iter(org_list))

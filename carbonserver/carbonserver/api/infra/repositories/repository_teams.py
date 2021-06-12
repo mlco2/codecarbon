@@ -58,16 +58,12 @@ class SqlAlchemyRepository(Teams):
 
     def is_api_key_valid(self, organization_id: str, api_key: str):
         with self.session_factory() as session:
-            e = (
+            return bool(
                 session.query(SqlModelTeam)
                 .filter(SqlModelTeam.id == organization_id)
                 .filter(SqlModelTeam.api_key == api_key)
                 .first()
             )
-            if e is None:
-                return False
-            else:
-                return True
 
     @staticmethod
     def map_sql_to_schema(team: SqlModelTeam) -> Team:
