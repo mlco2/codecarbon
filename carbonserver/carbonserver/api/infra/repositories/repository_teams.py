@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from dependency_injector.providers import Callable
 
-from carbonserver.api import schemas
 from carbonserver.api.domain.teams import Teams
 from carbonserver.api.schemas import Team, TeamCreate
 from carbonserver.database.sql_models import Team as SqlModelTeam

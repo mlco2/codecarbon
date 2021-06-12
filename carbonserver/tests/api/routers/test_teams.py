@@ -35,7 +35,7 @@ TEAM_WITH_NO_ORG = {
 }
 
 
-ORG_2 = {
+TEAM_2 = {
     "id": TEAM_ID_2,
     "name": "Data For Good Code Carbon 2",
     "description": "Data For Good Code Carbon Team 2",
@@ -102,7 +102,7 @@ def test_get_one_team_returns_correct_team(client, custom_test_server):
 def test_list_teams_returns_all_teams(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_team_1 = TEAM_1
-    expected_team_2 = ORG_2
+    expected_team_2 = TEAM_2
     expected_team_list = [expected_team_1, expected_team_2]
     repository_mock.list_teams.return_value = [
         SqlModelTeam(**expected_team_1),
