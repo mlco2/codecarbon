@@ -42,7 +42,6 @@ class SqlAlchemyRepository(Users):
         """
         with self.session_factory() as session:
             e = session.query(SqlModelUser).filter(SqlModelUser.id == user_id).first()
-            # noinspection PyPackageRequirements
             if e is None:
                 return None
             else:
@@ -59,9 +58,9 @@ class SqlAlchemyRepository(Users):
                     users.append(self.map_sql_to_schema(user))
                 return users
 
-    def add_user_to_org(self, user: User, organization_id: str):
+    def subscribe_user_to_org(self, user: User, organization_id: str):
         with self.session_factory() as session:
-            e = (
+            return (
                 session.query(SqlModelUser)
                 .filter(SqlModelUser.id == user.id)
                 .update(
@@ -73,10 +72,8 @@ class SqlAlchemyRepository(Users):
                     synchronize_session=False,
                 )
             )
-            print(e)
-            return e
 
-    def add_user_to_team(self, user: User, team_id: str):
+    def subscribe_user_to_team(self, user: User, team_id: str):
         with self.session_factory() as session:
             return (
                 session.query(SqlModelUser)

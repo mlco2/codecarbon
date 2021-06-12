@@ -52,4 +52,4 @@ def read_team(
 def list_teams(
     team_service: TeamService = Depends(Provide[ServerContainer.team_service]),
 ) -> List[Team]:
-    return team_service.list_team()
+    return team_service.list_teams()

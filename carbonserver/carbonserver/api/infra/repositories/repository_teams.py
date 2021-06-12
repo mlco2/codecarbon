@@ -1,6 +1,6 @@
 from contextlib import AbstractContextManager
 from typing import List
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from dependency_injector.providers import Callable
 
@@ -78,49 +78,3 @@ class SqlAlchemyRepository(Teams):
             description=team.description,
             organization_id=team.organization_id,
         )
-
-
-class InMemoryRepository(Teams):
-    def __init__(self):
-        self.teams: List = []
-        self.id: int = 0
-
-    def add_team(self, team: TeamCreate, organization_id: UUID):
-        self.teams.append(
-            SqlModelTeam(
-                id=self.id + 1,
-                name=team.name,
-                description=team.description,
-                organization_id=team.organization_id,
-            )
-        )
-
-    def get_one_team(self, team_id) -> Team:
-        first_team = self.teams[0]
-        return Team(
-            id=first_team.id,
-            name=first_team.name,
-            description=first_team.description,
-            organization_id=first_team.organization_id,
-        )
-
-    @staticmethod
-    def get_db_to_class(team: SqlModelTeam) -> Team:
-        return schemas.Team(
-            id=team.id,
-            name=team.name,
-            description=team.description,
-            organization_id=team.organization_id,
-        )
-
-    def list_team(self):
-        teams = []
-        for team in self.teams:
-            teams.append(
-                Team(
-                    id=team.id,
-                    name=team.name,
-                    description=team.description,
-                )
-            )
-        return teams

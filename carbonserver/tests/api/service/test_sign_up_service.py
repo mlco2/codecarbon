@@ -99,7 +99,7 @@ def test_add_user_to_org_adds_user_if_api_key_is_correct():
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    joined_org = user_service.add_user_to_org(USER_1, ORG_ID, API_KEY)
+    joined_org = user_service.subscribe_user_to_org(USER_1, ORG_ID, API_KEY)
 
     org_mock_repository.is_api_key_valid.assert_called_with(ORG_ID, API_KEY)
     assert joined_org
@@ -116,7 +116,7 @@ def test_add_user_to_org_rejects_user_if_api_key_is_incorrect():
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    joined_org = user_service.add_user_to_org(USER_1, TEAM_ID, INVALID_API_KEY)
+    joined_org = user_service.subscribe_user_to_org(USER_1, TEAM_ID, INVALID_API_KEY)
 
     org_mock_repository.is_api_key_valid.assert_called_with(TEAM_ID, INVALID_API_KEY)
     assert not joined_org
@@ -132,7 +132,7 @@ def test_add_user_to_team_adds_user_if_api_key_is_correct():
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    joined_team = user_service.add_user_to_team(USER_1, TEAM_ID, API_KEY)
+    joined_team = user_service.subscribe_user_to_team(USER_1, TEAM_ID, API_KEY)
 
     team_mock_repository.is_api_key_valid.assert_called_with(TEAM_ID, API_KEY)
     assert joined_team
@@ -149,7 +149,7 @@ def test_add_user_to_team_rejects_user_if_api_key_is_incorrect():
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    joined_team = user_service.add_user_to_team(USER_1, TEAM_ID, INVALID_API_KEY)
+    joined_team = user_service.subscribe_user_to_team(USER_1, TEAM_ID, INVALID_API_KEY)
 
     team_mock_repository.is_api_key_valid.assert_called_with(TEAM_ID, INVALID_API_KEY)
     assert not joined_team

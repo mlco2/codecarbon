@@ -20,7 +20,7 @@ TEAM_1 = Team(
     organization_id=ORG_ID,
 )
 
-ORG_2 = Team(
+TEAM_2 = Team(
     id=TEAM_ID_2,
     name="DFG Code Carbon 2",
     description="DFG Code Carbon 2",
@@ -30,7 +30,7 @@ ORG_2 = Team(
 
 
 @mock.patch("uuid.uuid4", return_value=TEAM_ID)
-def test_organization_service_creates_correct_user_on_sign_up(_):
+def test_teams_service_creates_correct_team(_):
 
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_id = TEAM_ID
@@ -48,14 +48,14 @@ def test_organization_service_creates_correct_user_on_sign_up(_):
     assert actual_saved_org.id == expected_id
 
 
-def test_organiation_service_retrieves_all_existing_organizations():
+def test_teams_service_retrieves_all_existing_teams():
 
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_team_ids_list = [TEAM_ID, TEAM_ID_2]
     organization_service: TeamService = TeamService(repository_mock)
-    repository_mock.list_teams.return_value = [TEAM_1, ORG_2]
+    repository_mock.list_teams.return_value = [TEAM_1, TEAM_2]
 
-    team_list = organization_service.list_team()
+    team_list = organization_service.list_teams()
     actual_team_ids_list = map(lambda x: x.id, iter(team_list))
     diff = set(actual_team_ids_list) ^ set(expected_team_ids_list)
 
@@ -63,7 +63,7 @@ def test_organiation_service_retrieves_all_existing_organizations():
     assert len(team_list) == len(expected_team_ids_list)
 
 
-def test_organization_service_retrieves_correct_org_by_id():
+def test_teams_service_retrieves_correct_team_by_id():
 
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org: Team = TEAM_1
