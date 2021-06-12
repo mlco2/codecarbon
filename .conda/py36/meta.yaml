@@ -27,6 +27,7 @@ requirements:
     - fire
     - pandas
     - requests
+    - varname
     - pynvml
     - py-cpuinfo
 
