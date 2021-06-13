@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserSqlRepository,
@@ -8,10 +9,10 @@ from carbonserver.api.services.user_service import UserService
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
 
-ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+ORG_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 
-USER_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
-USER_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+USER_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
+USER_ID_2 = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 
 USER_1 = User(
     id=USER_ID,

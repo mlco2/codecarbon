@@ -56,7 +56,7 @@ def test_add_org(client, custom_test_server):
     repository_mock.add_organization.return_value = ModelOrganization(**ORG_1)
 
     with custom_test_server.container.organization_repository.override(repository_mock):
-        response = client.put("/organizations/", json=ORG_TO_CREATE)
+        response = client.post("/organizations/", json=ORG_TO_CREATE)
         actual_org = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED

@@ -15,7 +15,6 @@ class UserService:
 
     def get_user_by_id(self, user_id: str) -> User:
         user: User = self._repository.get_user_by_id(user_id)
-
         return user
 
     def list_users(self) -> List[User]:

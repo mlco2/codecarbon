@@ -9,11 +9,11 @@ from carbonserver.api.infra.repositories.repository_teams import SqlAlchemyRepos
 from carbonserver.api.routers import teams
 from carbonserver.database.sql_models import Team as SqlModelTeam
 
-ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce0org"
-ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce0org"
+ORG_ID = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+ORG_ID_2 = "f688133d-2cb9-41f0-9362-a4c05ceb0dd8"
 
-TEAM_ID = "f52fe339-164d-4c2b-a8c0-f562dfceteam"
-TEAM_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfceteam"
+TEAM_ID = "8edb03e1-9a28-452a-9c93-a3b6560136d7"
+TEAM_ID_2 = "8edb03e1-9a28-452a-9c93-a3b6560136d6"
 
 TEAM_TO_CREATE = {
     "name": "Data For Good Code Carbon",

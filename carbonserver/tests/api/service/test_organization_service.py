@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
@@ -6,8 +7,8 @@ from carbonserver.api.infra.repositories.repository_organizations import (
 from carbonserver.api.schemas import Organization, OrganizationCreate
 from carbonserver.api.services.organization_service import OrganizationService
 
-ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
-ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+ORG_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
+ORG_ID_2 = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
 
@@ -50,7 +51,7 @@ def test_organiation_service_retrieves_all_existing_organizations():
     organization_service: OrganizationService = OrganizationService(repository_mock)
     repository_mock.list_organizations.return_value = [ORG_1, ORG_2]
 
-    org_list = organization_service.list_organization()
+    org_list = organization_service.list_organizations()
     actual_user_ids_list = map(lambda x: x.id, iter(org_list))
     diff = set(actual_user_ids_list) ^ set(expected_org_ids_list)
 

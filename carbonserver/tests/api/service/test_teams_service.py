@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_teams import SqlAlchemyRepository
 from carbonserver.api.schemas import Team, TeamCreate
@@ -6,11 +7,11 @@ from carbonserver.api.services.team_service import TeamService
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
 
-ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce0org"
-ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce0org"
+ORG_ID = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
+ORG_ID_2 = UUID("e395767d-0255-40f3-a314-5d2e01f56fbd")
 
-TEAM_ID = "f52fe339-164d-4c2b-a8c0-f562dfceteam"
-TEAM_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfceteam"
+TEAM_ID = UUID("c13e851f-5c2f-403d-98d0-51fe15df3bc3")
+TEAM_ID_2 = UUID("dd011783-7d05-4376-ab60-9537738be25f")
 
 TEAM_1 = Team(
     id=TEAM_ID,

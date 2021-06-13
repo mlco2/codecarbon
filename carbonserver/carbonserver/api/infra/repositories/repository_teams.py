@@ -1,10 +1,11 @@
 from contextlib import AbstractContextManager
 from typing import List
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.teams import Teams
+from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.schemas import Team, TeamCreate
 from carbonserver.database.sql_models import Team as SqlModelTeam
 
@@ -24,6 +25,7 @@ class SqlAlchemyRepository(Teams):
                 id=uuid4(),
                 name=team.name,
                 description=team.description,
+                api_key=generate_api_key(),
                 organization_id=team.organization_id,
             )
             session.add(db_team)
@@ -56,7 +58,7 @@ class SqlAlchemyRepository(Teams):
                     teams.append(self.map_sql_to_schema(team))
                 return teams
 
-    def is_api_key_valid(self, organization_id: str, api_key: str):
+    def is_api_key_valid(self, organization_id: UUID, api_key: str):
         with self.session_factory() as session:
             return bool(
                 session.query(SqlModelTeam)
@@ -70,6 +72,7 @@ class SqlAlchemyRepository(Teams):
         return Team(
             id=team.id,
             name=team.name,
+            api_key=team.api_key,
             description=team.description,
             organization_id=team.organization_id,
         )

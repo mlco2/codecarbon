@@ -1,6 +1,6 @@
-import uuid
 from contextlib import AbstractContextManager
 from typing import List
+from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
 
@@ -22,7 +22,7 @@ class SqlAlchemyRepository(Organizations):
 
         with self.session_factory() as session:
             db_organization = SqlModelOrganization(
-                id=uuid.uuid4(),
+                id=uuid4(),
                 name=organization.name,
                 description=organization.description,
                 api_key=generate_api_key(),
@@ -62,7 +62,7 @@ class SqlAlchemyRepository(Organizations):
                     orgs.append(self.map_sql_to_schema(org))
                 return orgs
 
-    def is_api_key_valid(self, organization_id: str, api_key: str):
+    def is_api_key_valid(self, organization_id: UUID, api_key: str):
         with self.session_factory() as session:
             return bool(
                 session.query(SqlModelOrganization)

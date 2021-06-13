@@ -95,7 +95,7 @@ class Team(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
-    organization_id = Column(Integer, ForeignKey("organizations.id"))
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
     projects = relationship("Project", back_populates="team")
     api_key = Column(String)
     organization = relationship("Organization", back_populates="teams")
