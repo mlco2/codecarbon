@@ -185,7 +185,7 @@ class BaseEmissionsTracker(ABC):
             )
             logger.info("Tracking using constant")
             tdp = cpu.TDP()
-            power = tdp.power
+            power = tdp.tdp
             model = tdp.model
             if tdp:
                 self._hardware.append(
