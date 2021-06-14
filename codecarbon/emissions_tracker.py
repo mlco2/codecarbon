@@ -3,9 +3,9 @@ Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
 
+import dataclasses
 import os
 import time
-import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
@@ -22,7 +22,13 @@ from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
-from codecarbon.output import BaseOutput, EmissionsData, FileOutput, HTTPOutput
+from codecarbon.output import (
+    BaseOutput,
+    CodeCarbonAPIOutput,
+    EmissionsData,
+    FileOutput,
+    HTTPOutput,
+)
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -53,10 +59,15 @@ class BaseEmissionsTracker(ABC):
         self,
         project_name: Optional[str] = None,
         measure_power_secs: Optional[int] = None,
+        api_call_interval: Optional[int] = None,
+        api_endpoint: Optional[str] = None,
+        api_key: Optional[str] = None,
         output_dir: Optional[str] = None,
         save_to_file: Optional[bool] = None,
+        save_to_api: Optional[bool] = None,
         gpu_ids: Optional[List] = None,
         emissions_endpoint: Optional[str] = None,
+        experiment_id: Optional[str] = None,
         co2_signal_api_token: Optional[str] = None,
         log_level: Optional[Union[int, str]] = None,
     ):
@@ -65,14 +76,22 @@ class BaseEmissionsTracker(ABC):
                              as "codecarbon"
         :param measure_power_secs: Interval (in seconds) to measure hardware power
                                    usage, defaults to 15
+        :param api_call_interval: Occurence to wait before calling API :
+                            1 : at every measure
+                            2 : every 2 measure, etc...
+        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending emissions
+                                   data
+        :param api_key: API key for Code Carbon API, mandatory to use it !
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current
                            directory
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
+        :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data
+        :param experiment_id: Id of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
         :param log_level: Global codecarbon log level. Accepts one of:
@@ -107,7 +126,11 @@ class BaseEmissionsTracker(ABC):
             if emissions_endpoint is not None
             else conf.get("emissions_endpoint", None)
         )
-
+        self._api_endpoint = (
+            api_endpoint
+            if api_endpoint is not None
+            else conf.get("api_endpoint", "https://api.codecarbon.io")
+        )
         self._co2_signal_api_token = (
             co2_signal_api_token
             if co2_signal_api_token is not None
@@ -119,15 +142,29 @@ class BaseEmissionsTracker(ABC):
             if save_to_file is not None
             else conf.getboolean("save_to_file", True)
         )
-
+        if self._save_to_file == "False":
+            self._save_to_file = False
+        self._save_to_api = (
+            save_to_api
+            if save_to_api is not None
+            else conf.getboolean("save_to_api", False)
+        )
+        if self._save_to_api == "False":
+            self._save_to_api = False
+        self._api_call_interval: int = (
+            api_call_interval
+            if api_call_interval is not None
+            else conf.getint("api_call_interval", 8)
+        )
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = list()
-
-        if self._save_to_file == "False":
-            self._save_to_file = False
+        self._cc_api__out = None
+        self._measure_occurence: int = 0
+        self._cloud = None
+        self._previous_emissions = None
 
         self._gpu_ids = gpu_ids if gpu_ids is not None else conf.get("gpu_ids", None)
         if isinstance(self._gpu_ids, str):
@@ -180,6 +217,16 @@ class BaseEmissionsTracker(ABC):
         if self._emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
+        if self._save_to_api:
+            if experiment_id is None:
+                experiment_id = "82ba0923-0713-4da1-9e57-cea70b460ee9"
+            self._cc_api__out = CodeCarbonAPIOutput(
+                endpoint_url=self._api_endpoint,
+                experiment_id=experiment_id,
+                api_key=api_key,
+            )
+            self.persistence_objs.append(self._cc_api__out)
+
     @suppress(Exception)
     def start(self) -> None:
         """
@@ -187,7 +234,6 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
-
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -214,11 +260,17 @@ class BaseEmissionsTracker(ABC):
         emissions_data = self._prepare_emissions_data()
 
         for persistence in self.persistence_objs:
+            if isinstance(persistence, CodeCarbonAPIOutput):
+                emissions_data = self._prepare_emissions_data(delta=True)
+
             persistence.out(emissions_data)
 
         return emissions_data.emissions
 
-    def _prepare_emissions_data(self) -> EmissionsData:
+    def _prepare_emissions_data(self, delta=False) -> EmissionsData:
+        """
+        :delta: True to return only the delta comsumption since last call
+        """
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
@@ -241,10 +293,9 @@ class BaseEmissionsTracker(ABC):
             on_cloud = "Y"
             cloud_provider = cloud.provider
             cloud_region = cloud.region
-
-        return EmissionsData(
+        logger.debug(f"emissions={emissions}")
+        total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-            experiment_id=str(uuid.uuid4()),
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
@@ -256,6 +307,20 @@ class BaseEmissionsTracker(ABC):
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
+        if delta:
+            if self._previous_emissions is None:
+                self._previous_emissions = total_emissions
+                return total_emissions
+            else:
+                # Create a copy
+                delta_emissions = dataclasses.replace(total_emissions)
+                # Compute delta
+                delta_emissions.substract_in_place(self._previous_emissions)
+                # TODO : find a way to store _previous_emissions only when API call succeded
+                self._previous_emissions = total_emissions
+                return delta_emissions
+        else:
+            return total_emissions
 
     @abstractmethod
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -291,11 +356,17 @@ class BaseEmissionsTracker(ABC):
             self._total_energy += Energy.from_power_and_time(
                 power=hardware.total_power(), time=Time.from_seconds(last_duration)
             )
-            logger.info(
-                "Energy consumed "
+            logger.debug(
+                "Energy consumed for all "
                 + f"{hardware.__class__.__name__} : {self._total_energy}"
+                + f"={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
             )
         self._last_measured_time = time.time()
+        self._measure_occurence += 1
+        if self._cc_api__out is not None:
+            if self._measure_occurence >= self._api_call_interval:
+                self._cc_api__out.out(self._prepare_emissions_data(delta=True))
+                self._measure_occurence = 0
 
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):
@@ -409,7 +480,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata(provider=self._cloud_provider, region=self._cloud_region)
+        if self._cloud is None:
+            self._cloud = CloudMetadata(
+                provider=self._cloud_provider, region=self._cloud_region
+            )
+        return self._cloud
 
 
 class EmissionsTracker(BaseEmissionsTracker):
@@ -422,16 +497,24 @@ class EmissionsTracker(BaseEmissionsTracker):
         return GeoMetadata.from_geo_js(self._data_source.geo_js_url)
 
     def _get_cloud_metadata(self) -> CloudMetadata:
-        return CloudMetadata.from_utils()
+        if self._cloud is None:
+            self._cloud = CloudMetadata.from_utils()
+        return self._cloud
 
 
 def track_emissions(
     fn: Callable = None,
     project_name: Optional[str] = None,
     measure_power_secs: Optional[int] = None,
+    api_call_interval: int = 2,
+    api_endpoint: Optional[str] = None,
+    api_key: Optional[str] = None,
     output_dir: Optional[str] = None,
     save_to_file: Optional[bool] = None,
+    save_to_api: Optional[bool] = None,
     offline: Optional[bool] = None,
+    emissions_endpoint: Optional[str] = None,
+    experiment_id: Optional[str] = None,
     country_iso_code: Optional[str] = None,
     region: Optional[str] = None,
     cloud_provider: Optional[str] = None,
@@ -446,11 +529,13 @@ def track_emissions(
                          default name as "codecarbon"
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15
+    :api_call_interval: Number of measure to make before calling the Code Carbon API.
     :param output_dir: Directory path to which the experiment details are logged
                        in a CSV file called `emissions.csv`, defaults to current
                        directory
     :param save_to_file: Indicates if the emission artifacts should be logged to a file,
                          defaults to True
+    :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
     :param offline: Indicates if the tracker should be run in offline mode
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
                              being run, required if `offline=True`
@@ -502,6 +587,12 @@ def track_emissions(
                     save_to_file=save_to_file,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
+                    emissions_endpoint=emissions_endpoint,
+                    experiment_id=experiment_id,
+                    api_call_interval=api_call_interval,
+                    api_key=api_key,
+                    api_endpoint=api_endpoint,
+                    save_to_api=save_to_api,
                 )
                 tracker.start()
                 fn(*args, **kwargs)

@@ -47,12 +47,18 @@ def parse_cpu_model(raw_name) -> str:
     :return: parsed CPU name
     """
     if type(raw_name) == str:
-        return (
+        model = (
             raw_name.split(" @")[0]
             .replace("(R)", "")
             .replace("(TM)", "")
             .replace(" CPU", "")
         )
+        splitted = model.split(" ")
+        if splitted[2] == "Threadripper" and len(splitted) == 6:
+            model = (
+                splitted[0] + " " + splitted[1] + " " + splitted[2] + " " + splitted[3]
+            )
+        return model
     return ""
 
 
@@ -242,5 +248,12 @@ class TDP:
             cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
             if len(cpu_power_df_model) > 0:
                 power = cpu_power_df_model["TDP"].tolist()[0]
+                logger.debug(f"CPU : We detect a {model_raw} with a TDP of {power} W")
                 return power
+            else:
+                logger.warning(
+                    f"We saw that you have a {model_raw} but we don't know it. Please contact us."
+                )
+        else:
+            logger.warning("We were unable to detect your CPU !!!")
         return None
