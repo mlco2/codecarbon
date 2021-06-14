@@ -250,5 +250,14 @@ class TDP:
                 power = cpu_power_df_model["TDP"].tolist()[0]
                 logger.debug(f"CPU : We detect a {model_raw} with a TDP of {power} W")
                 return model, power
-        logger.warning("We were unable to detect your CPU !!!")
+            else:
+                logger.warning(
+                    f"We saw that you have a {model_raw} but we don't know it. Please contact us."
+                )
+                return model, None
+        else:
+            logger.warning(
+              "We were unable to detect your CPU using the `cpuinfo` package."
+              + " Resorting to a default power consumption of 85W."
+            )
         return model, None
