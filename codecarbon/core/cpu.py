@@ -238,7 +238,7 @@ class TDP:
     def _get_power_from_constant(self) -> int:
         """
         Get CPU power from constant mode
-        :return: power in Watt
+        :return: model name (str), power in Watt (int)
         """
         cpu_info = cpuinfo.get_cpu_info()
         if cpu_info:
@@ -252,12 +252,13 @@ class TDP:
                 return model, power
             else:
                 logger.warning(
-                    f"We saw that you have a {model_raw} but we don't know it. Please contact us."
+                    f"We saw that you have a {model_raw} but we don't know it."
+                    + " Please contact us."
                 )
                 return model, None
         else:
             logger.warning(
-              "We were unable to detect your CPU using the `cpuinfo` package."
-              + " Resorting to a default power consumption of 85W."
+                "We were unable to detect your CPU using the `cpuinfo` package."
+                + " Resorting to a default power consumption of 85W."
             )
-        return model, None
+        return "Unknown", None
