@@ -59,18 +59,31 @@ class BaseEmissionsTracker(ABC):
     """
 
     def _get_conf(self, var, default=None, return_type=None):
-        assert hasattr(self, "_conf")
-        if var is not _sentinel:
-            return var
+        assert hasattr(self, "_external_conf")
+        if not hasattr(self, "_conf"):
+            self._conf = {}
 
         name = argname(var)
-        value = self._conf.get(name, default)
+
+        if var is not _sentinel:
+            self._conf[name] = var
+            return var
+
+        value = self._external_conf.get(name, default)
 
         if return_type is not None:
             if return_type is bool:
-                return str(value).lower() == "true"
-            return return_type(value)
+                value = str(value).lower() == "true"
 
+                self._conf[name] = value
+                return value
+
+            value = return_type(value)
+
+            self._conf[name] = value
+            return value
+
+        self._conf[name] = value
         return value
 
     def __init__(
@@ -116,7 +129,7 @@ class BaseEmissionsTracker(ABC):
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
         """
-        self._conf = get_hierarchical_config()
+        self._external_conf = get_hierarchical_config()
 
         self._log_level = self._get_conf(log_level, "info")
         set_log_level(self._log_level)
@@ -140,7 +153,8 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._hardware = list()
+        self._hardware = []
+        self._conf["hardware"] = []
         self._cc_api__out = None
         self._measure_occurence: int = 0
         self._cloud = None
@@ -150,11 +164,13 @@ class BaseEmissionsTracker(ABC):
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
+            self._conf["gpu_ids"] = self._gpu_ids
 
         # Hardware detection
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
+
         if cpu.is_powergadget_available():
             logger.info("Tracking Intel CPU via Power Gadget")
             self._hardware.append(
@@ -168,15 +184,21 @@ class BaseEmissionsTracker(ABC):
                 "No CPU tracking mode found. Falling back on CPU constant mode."
             )
             logger.info("Tracking using constant")
-            tdp = cpu.TDP().tdp
+            tdp = cpu.TDP()
+            power = tdp.power
+            model = tdp.model
             if tdp:
-                self._hardware.append(CPU.from_utils(self._output_dir, "constant", tdp))
+                self._hardware.append(
+                    CPU.from_utils(self._output_dir, "constant", model, power)
+                )
             else:
                 logger.warning(
                     "Failed to match CPU TDP constant. "
                     + "Falling back on a global constant."
                 )
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
+
+        self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
