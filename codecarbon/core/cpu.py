@@ -233,7 +233,7 @@ class IntelRAPL:
 
 class TDP:
     def __init__(self):
-        self.tdp = self._get_power_from_constant()
+        self.model, self.tdp = self._get_power_from_constant()
 
     def _get_power_from_constant(self) -> int:
         """
@@ -249,6 +249,6 @@ class TDP:
             if len(cpu_power_df_model) > 0:
                 power = cpu_power_df_model["TDP"].tolist()[0]
                 logger.debug(f"CPU : We detect a {model_raw} with a TDP of {power} W")
-                return power
+                return model, power
         logger.warning("We were unable to detect your CPU !!!")
-        return None
+        return model, None
