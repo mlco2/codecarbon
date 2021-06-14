@@ -409,7 +409,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                          a list of codes and their corresponding
                                          locations.
         """
-        self._conf = get_hierarchical_config()
+        self._external_conf = get_hierarchical_config()
         self._cloud_provider: Optional[str] = self._get_conf(cloud_provider)
         self._country_iso_code: Optional[str] = self._get_conf(country_iso_code)
         self._cloud_region: Optional[str] = self._get_conf(cloud_region)
