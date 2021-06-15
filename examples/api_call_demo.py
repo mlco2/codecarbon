@@ -12,13 +12,14 @@ from codecarbon import track_emissions
 )
 def train_model():
     """
-    This function will do nothing during (occurence * delay) seconds.
-    The Code Carbon API will be called every (measure_power_secs * api_call_interval) seconds.
+    This function will do nothing during (occurrence * delay) seconds.
+    The Code Carbon API will be called every (measure_power_secs * api_call_interval)
+    seconds.
     """
-    occurence = 60 * 24
+    occurrence = 60 * 24
     delay = 60  # Seconds
-    for i in range(occurence):
-        print(f"{occurence * delay - i * delay} seconds before ending script...")
+    for i in range(occurrence):
+        print(f"{occurrence * delay - i * delay} seconds before ending script...")
         time.sleep(delay)
 
 
