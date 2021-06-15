@@ -1,97 +1,124 @@
+from unittest import mock
+
 import pytest
-from fastapi import Depends, FastAPI
+from container import ServerContainer
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from starlette import status
 
-from carbonserver.api.dependencies import get_query_token
+from carbonserver.api.infra.repositories.repository_emissions import (
+    SqlAlchemyRepository,
+)
 from carbonserver.api.routers import emissions
+from carbonserver.database.sql_models import Emission as SqlModelEmission
 
-"""
-Setting up a test client & a test server in specific states would be interesting.
-This setup may be extracted on a separate test container file to let developers ingest multiple / custom configurations.
-# Current state:
- - No actual database is plugged on unit tests
- - Client is emitting from same network as server
- - This test class tests only API handling (logic is mocked)
-"""
+RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
+RUN_2_ID = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
+
+EMISSION_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+EMISSION_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+EMISSION_ID_3 = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
+
+EMISSION_TO_CREATE = {
+    "timestamp": "2021-04-04T08:43:00+02:00",
+    "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
+    "duration": 98745,
+    "emissions": 1.548444,
+    "energy_consumed": 57.21874,
+}
+
+EMISSION_1 = {
+    "id": EMISSION_ID,
+    "timestamp": "2021-04-04T08:43:00+02:00",
+    "run_id": RUN_1_ID,
+    "duration": 98745,
+    "emissions": 1.548444,
+    "energy_consumed": 57.21874,
+}
+
+EMISSION_2 = {
+    "id": EMISSION_ID_2,
+    "timestamp": "2021-04-04T08:43:00+02:00",
+    "run_id": RUN_1_ID,
+    "duration": 98745,
+    "emissions": 1.548444,
+    "energy_consumed": 57.21874,
+}
 
 
-@pytest.fixture()
-def emissions_router():
-    app = FastAPI(dependencies=[Depends(get_query_token)])
+EMISSION_3 = {
+    "id": EMISSION_ID_3,
+    "timestamp": "2021-04-04T08:43:00+02:00",
+    "run_id": RUN_2_ID,
+    "duration": 98745,
+    "emissions": 1.548444,
+    "energy_consumed": 57.21874,
+}
+
+
+@pytest.fixture
+def custom_test_server():
+    container = ServerContainer()
+    container.wire(modules=[emissions])
+    app = FastAPI()
+    app.container = container
     app.include_router(emissions.router)
-    client = TestClient(app)
-    return app, client
+    yield app
 
 
-@pytest.mark.skip()
-def test_post_emission_not_implemented(emissions_router):
-    app, client = emissions_router
-    response = client.post("/emission")
-    assert response.status_code == 405
+@pytest.fixture
+def client(custom_test_server):
+    yield TestClient(custom_test_server)
 
 
-@pytest.mark.skip()
-def test_put_emission_returns_success_with_correct_object(emissions_router):
-    app, client = emissions_router
-    response = client.put(
-        "/emission",
-        json={
-            "timestamp": "2021-04-04T08:43:00+02:00",
-            "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
-            "duration": 98745,
-            "emissions": 1.548444,
-            "energy_consumed": 57.21874,
-        },
+def test_add_emission(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_emission = EMISSION_1
+    repository_mock.add_emission.return_value = SqlModelEmission(**EMISSION_1)
+
+    with custom_test_server.container.emission_repository.override(repository_mock):
+        response = client.put("/emissions/", json=EMISSION_TO_CREATE)
+        actual_emission = response.json()
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert actual_emission == expected_emission
+
+
+def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_emission = EMISSION_1
+    repository_mock.get_one_emission.return_value = SqlModelEmission(
+        **expected_emission
     )
-    assert response.status_code == 201
+
+    with custom_test_server.container.emission_repository.override(repository_mock):
+        response = client.get(
+            "/emissions/read_emission/", params={"emission_id": EMISSION_ID}
+        )
+        actual_emission = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_emission == expected_emission
 
 
-@pytest.mark.skip()
-def test_put_emission_empty_returns_unprocessable(emissions_router):
-    app, client = emissions_router
-    response = client.put("/emission")
-    assert response.status_code == 422
+def test_get_emissions_from_run_retreives_all_emissions_from_run(
+    client, custom_test_server
+):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_emissions_id_list = [EMISSION_ID, EMISSION_ID_2]
+    repository_mock.get_emissions_from_run.return_value = [
+        SqlModelEmission(**EMISSION_1),
+        SqlModelEmission(**EMISSION_2),
+    ]
 
+    with custom_test_server.container.emission_repository.override(repository_mock):
+        response = client.get(
+            "/emissions/run/get_emissions_from_run/", params={"run_id": RUN_1_ID}
+        )
+        actual_emission_list = response.json()
+        actual_emission_ids_list = [emission["id"] for emission in actual_emission_list]
+        diff = set(actual_emission_ids_list) ^ set(expected_emissions_id_list)
 
-@pytest.mark.skip()
-def test_read_emission_by_emission_id_returns_emission(emissions_router):
-    app, client = emissions_router
-    emission_id = "1"
-    response = client.get("/emission/{emission_id}".format(emission_id=emission_id))
-
-    assert response.status_code == 200
-    assert response.json() == {
-        "duration": 98745,
-        "emissions": 1.548444,
-        "energy_consumed": 57.21874,
-        "id": 1,
-        "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
-        "timestamp": "2021-04-04T08:43:00",
-    }
-
-
-@pytest.mark.skip()
-def test_read_emission_by_emission_id_returns_not_found_error(emissions_router):
-    app, client = emissions_router
-    emission_id = "64565sd4f5g6sd4f65g4"
-    response = client.get("/emission/{emission_id}".format(emission_id=emission_id))
-
-    assert response.status_code == 404
-
-
-@pytest.mark.skip()
-def test_read_emissions_by_run_id_returns_not_found_error(emissions_router):
-    app, client = emissions_router
-    run_id = "1"
-    response = client.get("/emissions/{run_id}".format(run_id=run_id))
-
-    assert response.status_code == 404
-
-
-@pytest.mark.skip()
-def test_read_emission_returns_experiment_id_returns_not_found_error(emissions_router):
-    app, client = emissions_router
-    run_id = "wxcb46554vb4651"
-    response = client.get("/emissions/{run_id}".format(run_id=run_id))
-
-    assert response.status_code == 404
+    assert not diff
+    assert len(actual_emission_ids_list) == len(set(actual_emission_ids_list))
+    assert EMISSION_3["id"] not in actual_emission_ids_list

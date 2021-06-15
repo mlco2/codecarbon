@@ -5,6 +5,8 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
     expected_providers = [
         "config",
         "db",
+        "emission_repository",
+        "emission_service",
         "user_repository",
         "user_service",
         "organization_service",
