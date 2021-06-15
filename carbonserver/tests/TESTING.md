@@ -26,10 +26,19 @@ Current entities tests are located in ```tests/infra/repositories```.
 - Http server setup in tests/api (TODO)
 - Authentication / user management (TODO)
 
+### Servcies & Use cases 
+
+Domain logic can be tested at a higher level, with more complex setups, in service/use cases tests.
+Use case tests mocks repositories returns to focus on 
+
+
+
 ### Routers 
 To test a router, validation parameters are ensured by pydantic (available on the swagger documentation), 
 and logic is tested by interfaces.
 A Postman collection of requests is available: ```carbonserver/tests/postman/TestCollection.postman_collection.json```.
+
+
 
 ### Integration
 - Database : in the CI, a prod-like database can be used to test features on real data (TODO)

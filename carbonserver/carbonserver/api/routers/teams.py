@@ -1,47 +1,55 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
-from sqlalchemy.orm import Session
+from typing import List
 
-from carbonserver.api.dependencies import get_db, get_token_header
-from carbonserver.api.errors import DBError, DBException
-from carbonserver.api.infra.repositories.repository_teams import SqlAlchemyRepository
-from carbonserver.api.schemas import TeamCreate
+from container import ServerContainer
+from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends
+from starlette import status
+
+from carbonserver.api.dependencies import get_token_header
+from carbonserver.api.schemas import Team, TeamCreate
+from carbonserver.api.services.team_service import TeamService
+
+TEAMS_ROUTER_TAGS = ["teams"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
-
-
 teams_temp_db = []
 
 
-@router.put("/team", tags=["teams"])
-def add_team(team: TeamCreate, db: Session = Depends(get_db)):
-    repository_teams = SqlAlchemyRepository(db)
-    res = repository_teams.add_team(team)
-    if isinstance(res, DBError):
-        raise DBException(error=res)
-    else:
-        return {"id": res.id}
-
-
-@router.get("/team/{team_id}", tags=["teams"])
-async def read_team(
-    team_id: str = Path(..., title="The ID of the team to get"),
-    db: Session = Depends(get_db),
+@router.put(
+    "/teams/",
+    tags=TEAMS_ROUTER_TAGS,
+    status_code=status.HTTP_201_CREATED,
+)
+@inject
+def add_team(
+    team: TeamCreate,
+    team_service: TeamService = Depends(Provide[ServerContainer.team_service]),
 ):
-    repository_teams = SqlAlchemyRepository(db)
-    team = repository_teams.get_one_team(team_id)
-    if team is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
-    return team
+    return team_service.add_team(team)
 
 
-@router.get("/teams/{team_id}", tags=["teams"])
-async def read_project_teams(
-    project_id: str = Path(..., title="The ID of the project to get")
-):
-    # project_teams = crud_teams.get_Project_from_Teams(team_id)
-    # Remove next line when DB work
-    # project_teams = teams_temp_db
-    # return project_teams
-    raise HTTPException(status_code=501, detail="Not Implemented")
+@router.get(
+    "/teams/{team_id}",
+    tags=TEAMS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def read_team(
+    team_id: str,
+    team_service: TeamService = Depends(Provide[ServerContainer.team_service]),
+) -> Team:
+    return team_service.read_team(team_id)
+
+
+@router.get(
+    "/teams/",
+    tags=TEAMS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def list_teams(
+    team_service: TeamService = Depends(Provide[ServerContainer.team_service]),
+) -> List[Team]:
+    return team_service.list_team()

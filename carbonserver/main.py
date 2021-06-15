@@ -1,8 +1,7 @@
-from fastapi import Depends, FastAPI, Request
-from fastapi.responses import JSONResponse
+from container import ServerContainer
+from fastapi import Depends, FastAPI
 
 from carbonserver.api.dependencies import get_query_token
-from carbonserver.api.errors import DBException, UserException
 from carbonserver.api.routers import (
     emissions,
     experiments,
@@ -12,50 +11,55 @@ from carbonserver.api.routers import (
     teams,
     users,
 )
-from carbonserver.database import models
+from carbonserver.database import sql_models
 from carbonserver.database.database import engine
 
-models.Base.metadata.create_all(bind=engine)
-
-app = FastAPI(dependencies=[Depends(get_query_token)])
-
-
-@app.exception_handler(DBException)
-async def db_exception_handler(request: Request, exc: DBException):
-    return JSONResponse(
-        status_code=422,
-        content={
-            "code": exc.error.code,
-            "message": "Database error: " + exc.error.message,
-        },
-    )
+routers = [
+    users.router,
+    organizations.router,
+    teams.router,
+]
 
 
-@app.exception_handler(UserException)
-async def user_exception_handler(request: Request, exc: UserException):
-    return JSONResponse(
-        status_code=403,
-        content={
-            "code": exc.error.code,
-            "message": "Authentification error: " + exc.error.message,
-        },
-    )
+def create_app() -> FastAPI:
+
+    container = init_container()
+
+    init_db(container)
+    server = init_server(container)
+    return server
 
 
-app.include_router(emissions.router)
-app.include_router(runs.router)
-app.include_router(experiments.router)
-app.include_router(projects.router)
-app.include_router(teams.router)
-app.include_router(organizations.router)
-app.include_router(users.router)
+def init_container():
+    container = ServerContainer()
+    container.wire(modules=[users])
+    return container
+
+
+def init_db(container):
+    db = container.db()
+    db.create_database()
+    sql_models.Base.metadata.create_all(bind=engine)
+
+
+def init_server(container):
+    server = FastAPI(dependencies=[Depends(get_query_token)])
+    server.container = container
+    server.include_router(emissions.router)
+    server.include_router(experiments.router)
+    server.include_router(runs.router)
+    server.include_router(projects.router)
+    server.include_router(teams.router)
+    server.include_router(organizations.router)
+
+    server.include_router(users.router)
+
+    return server
+
+
+app = create_app()
 
 
 @app.get("/")
 def default():
-    return {"docs": "Please go to /docs"}
-
-
-@app.get("/status")
-def status():
     return {"status": "OK"}

@@ -11,7 +11,7 @@ So this will help us avoiding confusion while using both.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, SecretStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class EmissionBase(BaseModel):
@@ -47,7 +47,6 @@ class Emission(EmissionBase):
     id: str
 
 
-# Run
 class RunBase(BaseModel):
     timestamp: datetime
     experiment_id: str
@@ -69,7 +68,6 @@ class Run(RunBase):
     id: str
 
 
-# Experiment
 class ExperimentBase(BaseModel):
     timestamp: datetime
     name: str
@@ -83,7 +81,7 @@ class ExperimentBase(BaseModel):
     project_id: str
 
     class Config:
-        # orm_mode = True
+        orm_mode = True
         schema_extra = {
             "example": {
                 "name": "Run on AWS",
@@ -109,7 +107,6 @@ class Experiment(ExperimentBase):
     emissions: List[Emission] = []
 
 
-# Project
 class ProjectBase(BaseModel):
     name: str
     description: str
@@ -134,7 +131,6 @@ class Project(ProjectBase):
     experiments: List[Experiment] = []
 
 
-# Team
 class TeamBase(BaseModel):
     name: str
     description: str
@@ -159,7 +155,6 @@ class Team(TeamBase):
     projects: List[Project] = []
 
 
-# Organization
 class OrganizationBase(BaseModel):
     name: str
     description: str
@@ -179,10 +174,9 @@ class OrganizationCreate(OrganizationBase):
 
 class Organization(OrganizationBase):
     id: str
-    teams: List[Team] = []
+    teams: Optional[List[Team]]
 
 
-# User
 class UserBase(BaseModel):
     email: str
 
@@ -190,14 +184,14 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     name: str
     email: EmailStr
-    password: SecretStr
+    password: str
 
 
 class User(UserBase):
     id: str
     name: str
     email: EmailStr
-    password: SecretStr
+    password: str
     api_key: str
     is_active: Optional[bool]
 

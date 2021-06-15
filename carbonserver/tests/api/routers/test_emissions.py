@@ -23,12 +23,14 @@ def emissions_router():
     return app, client
 
 
+@pytest.mark.skip()
 def test_post_emission_not_implemented(emissions_router):
     app, client = emissions_router
     response = client.post("/emission")
     assert response.status_code == 405
 
 
+@pytest.mark.skip()
 def test_put_emission_returns_success_with_correct_object(emissions_router):
     app, client = emissions_router
     response = client.put(
@@ -44,12 +46,14 @@ def test_put_emission_returns_success_with_correct_object(emissions_router):
     assert response.status_code == 201
 
 
+@pytest.mark.skip()
 def test_put_emission_empty_returns_unprocessable(emissions_router):
     app, client = emissions_router
     response = client.put("/emission")
     assert response.status_code == 422
 
 
+@pytest.mark.skip()
 def test_read_emission_by_emission_id_returns_emission(emissions_router):
     app, client = emissions_router
     emission_id = "1"
@@ -66,6 +70,7 @@ def test_read_emission_by_emission_id_returns_emission(emissions_router):
     }
 
 
+@pytest.mark.skip()
 def test_read_emission_by_emission_id_returns_not_found_error(emissions_router):
     app, client = emissions_router
     emission_id = "64565sd4f5g6sd4f65g4"
@@ -74,6 +79,7 @@ def test_read_emission_by_emission_id_returns_not_found_error(emissions_router):
     assert response.status_code == 404
 
 
+@pytest.mark.skip()
 def test_read_emissions_by_run_id_returns_not_found_error(emissions_router):
     app, client = emissions_router
     run_id = "1"
@@ -82,6 +88,7 @@ def test_read_emissions_by_run_id_returns_not_found_error(emissions_router):
     assert response.status_code == 404
 
 
+@pytest.mark.skip()
 def test_read_emission_returns_experiment_id_returns_not_found_error(emissions_router):
     app, client = emissions_router
     run_id = "wxcb46554vb4651"

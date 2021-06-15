@@ -114,3 +114,4 @@ docs/_build/
 
 # local database
 code_carbon.db
+.clever.json

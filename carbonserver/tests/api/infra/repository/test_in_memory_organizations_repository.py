@@ -5,7 +5,7 @@ from carbonserver.api.infra.repositories.repository_organizations import (
 )
 from carbonserver.api.schemas import Organization as SchemaOrganization
 from carbonserver.api.schemas import OrganizationCreate
-from carbonserver.database.models import Organization as ModelOrganization
+from carbonserver.database.sql_models import Organization as ModelOrganization
 
 
 @pytest.fixture()
@@ -68,8 +68,6 @@ def test_get_one_organization_returns_the_correct_organizations_list_from_organi
     ]
     organizations_repository.add_organization(organizations_fixture)
 
-    actual_organizations = organizations_repository.get_team_from_organizations(
-        organization_name
-    )
+    actual_organizations = organizations_repository.list_organization(organization_name)
 
     assert expected_organizations == actual_organizations

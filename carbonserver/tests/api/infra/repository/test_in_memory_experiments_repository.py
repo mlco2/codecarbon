@@ -5,7 +5,7 @@ from carbonserver.api.infra.repositories.repository_experiments import (
 )
 from carbonserver.api.schemas import Experiment as SchemaExperiment
 from carbonserver.api.schemas import ExperimentCreate
-from carbonserver.database.models import Experiment as ModelExperiment
+from carbonserver.database.sql_models import Experiment as ModelExperiment
 
 
 @pytest.fixture()

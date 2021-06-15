@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from carbonserver.api import schemas
 from carbonserver.api.domain.emissions import Emissions
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
-from carbonserver.database import models
+from carbonserver.database import sql_models
 
 """
 The emissions are stored in the database by this repository class.
@@ -21,7 +21,7 @@ class SqlAlchemyRepository(Emissions):
         self.db = db
 
     @staticmethod
-    def get_db_to_class(emission: models.Emission) -> schemas.Emission:
+    def get_db_to_class(emission: sql_models.Emission) -> schemas.Emission:
         """Convert a models.Emission to a schemas.Emission
 
         :emission: An Emission in SQLAlchemy format.
@@ -42,7 +42,7 @@ class SqlAlchemyRepository(Emissions):
 
         :emission: An Emission in pyDantic BaseModel format.
         """
-        db_emission = models.Emission(
+        db_emission = sql_models.Emission(
             timestamp=emission.timestamp,
             duration=emission.duration,
             emissions=emission.emissions,
@@ -81,8 +81,8 @@ class SqlAlchemyRepository(Emissions):
         :rtype: schemas.Emission
         """
         e = (
-            self.db.query(models.Emission)
-            .filter(models.Emission.id == emission_id)
+            self.db.query(sql_models.Emission)
+            .filter(sql_models.Emission.id == emission_id)
             .first()
         )
         if e is None:
@@ -97,7 +97,9 @@ class SqlAlchemyRepository(Emissions):
         :returns: An Emission in pyDantic BaseModel format.
         :rtype: List[schemas.Emission]
         """
-        res = self.db.query(models.Emission).filter(models.Emission.run_id == run_id)
+        res = self.db.query(sql_models.Emission).filter(
+            sql_models.Emission.run_id == run_id
+        )
         if res.first() is None:
             return []
         else:
@@ -116,7 +118,7 @@ class InMemoryRepository(Emissions):
 
     def add_emission(self, emission: schemas.EmissionCreate):
         self.emissions.append(
-            models.Emission(
+            sql_models.Emission(
                 id=self.id + 1,
                 timestamp=emission.timestamp,
                 duration=emission.duration,
@@ -150,7 +152,7 @@ class InMemoryRepository(Emissions):
         return emissions
 
     @staticmethod
-    def get_db_to_class(emission: models.Emission) -> schemas.Emission:
+    def get_db_to_class(emission: sql_models.Emission) -> schemas.Emission:
         return schemas.Emission(
             id=emission.id,
             timestamp=emission.timestamp,

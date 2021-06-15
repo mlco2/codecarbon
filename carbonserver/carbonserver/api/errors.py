@@ -8,7 +8,7 @@ class ErrorBase:
     message: str
 
 
-class DBErrorEnum(str, Enum):
+class DBErrorEnum(Enum):
     INTEGRITY_ERROR = "INTEGRITY_ERROR"
     DATA_ERROR = "DATA_ERROR"
     PROGRAMMING_ERROR = "PROGRAMMING_ERROR"
@@ -16,6 +16,11 @@ class DBErrorEnum(str, Enum):
 
 class DBError(ErrorBase):
     code: DBErrorEnum
+
+
+class DBException(Exception):
+    def __init__(self, error):
+        self.error = error
 
 
 class UserErrorEnum(str, Enum):
@@ -26,11 +31,6 @@ class UserErrorEnum(str, Enum):
 
 class UserError(ErrorBase):
     code: DBErrorEnum
-
-
-class DBException(Exception):
-    def __init__(self, error):
-        self.error = error
 
 
 class UserException(Exception):
