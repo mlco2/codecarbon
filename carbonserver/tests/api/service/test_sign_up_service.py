@@ -119,11 +119,11 @@ def test_add_user_to_org_adds_user_if_api_key_is_correct():
     team_mock_repository: TeamSqlRepository = mock.Mock(spec=TeamSqlRepository)
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
 
-    user_service: SignUpService = SignUpService(
+    signup_service: SignUpService = SignUpService(
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    user_service.subscribe_user_to_org(USER_1, ORG_ID_2, API_KEY)
+    signup_service.subscribe_user_to_org(USER_1, ORG_ID_2, API_KEY)
 
     org_mock_repository.is_api_key_valid.assert_called_with(ORG_ID_2, API_KEY)
     user_mock_repository.subscribe_user_to_org.assert_called_with(USER_1, ORG_ID_2)
@@ -140,11 +140,11 @@ def test_add_user_to_org_rejects_user_if_api_key_is_incorrect():
         USER_IN_DEFAULT_ORG_AND_TEAM
     )
 
-    user_service: SignUpService = SignUpService(
+    signup_service: SignUpService = SignUpService(
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    user_service.subscribe_user_to_org(USER_1, ORG_ID_2, INVALID_API_KEY)
+    signup_service.subscribe_user_to_org(USER_1, ORG_ID_2, INVALID_API_KEY)
     org_mock_repository.is_api_key_valid.assert_called_with(ORG_ID_2, INVALID_API_KEY)
     assert not user_mock_repository.subscribe_user_to_org.called
 
@@ -155,11 +155,11 @@ def test_add_user_to_team_adds_user_if_api_key_is_correct():
     team_mock_repository: TeamSqlRepository = mock.Mock(spec=TeamSqlRepository)
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
 
-    user_service: SignUpService = SignUpService(
+    signup_service: SignUpService = SignUpService(
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    user_service.subscribe_user_to_team(USER_1, TEAM_ID_2, API_KEY)
+    signup_service.subscribe_user_to_team(USER_1, TEAM_ID_2, API_KEY)
 
     user_mock_repository.subscribe_user_to_team.assert_called_with(USER_1, TEAM_ID_2)
 
@@ -171,11 +171,11 @@ def test_add_user_to_team_rejects_user_if_api_key_is_incorrect():
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
     team_mock_repository.is_api_key_valid.return_value = False
 
-    user_service: SignUpService = SignUpService(
+    signup_service: SignUpService = SignUpService(
         user_mock_repository, org_mock_repository, team_mock_repository
     )
 
-    user_service.subscribe_user_to_team(USER_1, TEAM_ID_2, INVALID_API_KEY)
+    signup_service.subscribe_user_to_team(USER_1, TEAM_ID_2, INVALID_API_KEY)
 
     team_mock_repository.is_api_key_valid.assert_called_with(TEAM_ID_2, INVALID_API_KEY)
     assert not user_mock_repository.subscribe_user_to_team.called

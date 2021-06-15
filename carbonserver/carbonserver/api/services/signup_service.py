@@ -31,10 +31,10 @@ class SignUpService:
         user: UserCreate,
     ) -> User:
         created_user = self._user_repository.create_user(user)
-        created_user = self.subscribe_user_to_org(
+        self.subscribe_user_to_org(
             created_user, self._default_org_id, self._default_api_key
         )
-        created_user = self.subscribe_user_to_team(
+        self.subscribe_user_to_team(
             created_user, self._default_team_id, self._default_api_key
         )
         return created_user

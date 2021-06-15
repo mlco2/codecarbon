@@ -5,6 +5,7 @@ Revises: None
 Create Date: 2021-05-18 22:21:49.659708
 
 """
+import os
 import uuid
 
 import sqlalchemy as sa
@@ -15,7 +16,7 @@ from sqlalchemy.engine.reflection import Inspector
 ADMIN_ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
 ADMIN_TEAM_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
-ADMIN_TEAM_API_KEY = "supersecret"
+ADMIN_TEAM_API_KEY = os.environ.get("ADMIN_TEAM_API_KEY", "supersecret")
 
 
 COMMUNITY_ORG_ID = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -158,6 +159,7 @@ def upgrade():
                 "id": ADMIN_ORG_ID,
                 "name": "admin",
                 "description": "Administration organization",
+                "api_key": ADMIN_TEAM_API_KEY,
             },
             {
                 "id": COMMUNITY_ORG_ID,
