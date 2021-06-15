@@ -34,10 +34,10 @@ class SignUpService:
         self.subscribe_user_to_org(
             created_user, self._default_org_id, self._default_api_key
         )
-        self.subscribe_user_to_team(
+        subscribed_user = self.subscribe_user_to_team(
             created_user, self._default_team_id, self._default_api_key
         )
-        return created_user
+        return subscribed_user
 
     def subscribe_user_to_org(
         self, user: User, organization_id: UUID, organization_api_key: str

@@ -109,6 +109,7 @@ def test_sign_up_service_creates_user_with_default_team_and_organisation():
         name="Gontran Bonheur", email="xyz@email.com", password="pwd"
     )
     actual_saved_user = signup_service.sign_up(user_to_create)
+    print(actual_saved_user)
 
     assert actual_saved_user == USER_IN_DEFAULT_ORG_AND_TEAM
 
