@@ -29,7 +29,7 @@ def create_user(
 @inject
 def sign_up(
     user: UserCreate,
-    signup_service: SignUpService = Depends(Provide[ServerContainer.sign_up]),
+    signup_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ) -> User:
     return signup_service.sign_up(user)
 

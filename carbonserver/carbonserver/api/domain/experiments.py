@@ -1,18 +1,18 @@
 import abc
 from typing import List
 
-from carbonserver.api import schemas
+from carbonserver.api.schemas import Experiment, ExperimentCreate
 
 
 class Experiments(abc.ABC):
     @abc.abstractmethod
-    def add_experiment(self, experiment: schemas.ExperimentCreate):
+    def add_experiment(self, experiment: ExperimentCreate) -> Experiment:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_one_experiment(self, experiment_id):
+    def get_one_experiment(self, experiment_id: str) -> Experiment:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_experiments_from_project(self, project_id) -> List[schemas.Experiment]:
+    def get_experiments_from_project(self, project_id) -> List[Experiment]:
         raise NotImplementedError
