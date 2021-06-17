@@ -39,7 +39,7 @@ def get_period_of_the_day(a):
         if i >= 12 and i < 18:
             l.append('Afternoon')
         elif i >= 18 and i < 24:
-            l.append('Eveving')
+            l.append('Evening')
         elif i >= 6 and i < 12:
             l.append('Morning')
         else:
@@ -50,7 +50,6 @@ df['Period'] = get_period_of_the_day(df)
 
 fig_conso_energy_period = px.bar(data_frame=df, x = 'Period', y = 'energy_consumed', color='Period',
                                  color_discrete_sequence=["#D95F02", "#764E9F"])
-
 
 
 
@@ -105,9 +104,9 @@ app.layout = html.Div([
     html.H1('Other Information :'),
 
     html.H3('Total Energy Consumed :'),
-    html.H3(df['energy_consumed'].sum()),
+    html.H3(f"{df['energy_consumed'].sum()} kWh"),
     html.H3('Total Emissions :'),
-    html.H3(df['emissions'].sum()),
+    html.H3(f"{df['emissions'].sum()} kg"),
     html.H3('Total duration :'),
     html.H3(format_timespan(df['duration'].sum())),
 
