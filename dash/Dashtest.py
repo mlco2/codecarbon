@@ -7,12 +7,28 @@ import dash_bootstrap_components as dbc
 from datetime import datetime as dt, timedelta
 import plotly.graph_objects as go
 import plotly.express as px
+from plotly.subplots import make_subplots
+from humanfriendly import format_timespan
 
 df = pd.read_csv('api_extract.csv', parse_dates=['timestamp'])
 df_api = pd.read_csv('api_extract.csv', parse_dates=['timestamp'])
 
 weeks = df_api['timestamp'].apply(lambda dt: dt.week).unique()  # 23, 24
 weeks.sort()
+
+
+fig_co2_energy = make_subplots(rows=1, cols=2)
+
+
+fig_co2_energy.add_trace(go.Line(x=df['timestamp'], y=df['energy_consumed'],
+                         marker_color='goldenrod',
+                         name='Energy'), row = 1, col=1)
+fig_co2_energy.add_trace(go.Line(x=df['timestamp'], y=df['emissions'],
+                         marker_color='#1B9E77',
+                         name='CO2'
+                         ), row= 1, col = 2)
+fig_co2_energy.update_layout(
+        title = 'Energy x CO2')
 
 def get_period_of_the_day(a):
     x = a.timestamp.astype('str').str.split(' ').str.get(1)
@@ -32,7 +48,11 @@ def get_period_of_the_day(a):
 
 df['Period'] = get_period_of_the_day(df)
 
-fig_conso_energy_period = px.bar(data_frame=df, x = 'Period', y = 'energy_consumed')
+fig_conso_energy_period = px.bar(data_frame=df, x = 'Period', y = 'energy_consumed', color='Period',
+                                 color_discrete_sequence=["#D95F02", "#764E9F"])
+
+
+
 
 app = dash.Dash(__name__)
 
@@ -76,7 +96,20 @@ app.layout = html.Div([
 
     html.H1('Energy Consumed'),
 
-    dcc.Graph(id="graph_conso_energy_period", figure = fig_conso_energy_period)
+    dcc.Graph(id="graph_conso_energy_period", figure = fig_conso_energy_period),
+
+    dcc.Graph(id="graph_co2_energy", figure=fig_co2_energy),
+
+    html.Br(),
+
+    html.H1('Other Information :'),
+
+    html.H3('Total Energy Consumed :'),
+    html.H3(df['energy_consumed'].sum()),
+    html.H3('Total Emissions :'),
+    html.H3(df['emissions'].sum()),
+    html.H3('Total duration :'),
+    html.H3(format_timespan(df['duration'].sum())),
 
 ],style={'textAlign':'center'})
 
