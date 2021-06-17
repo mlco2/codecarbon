@@ -70,9 +70,9 @@ class SqlAlchemyRepository(Teams):
     @staticmethod
     def map_sql_to_schema(team: SqlModelTeam) -> Team:
         return Team(
-            id=team.id,
+            id=str(team.id),
             name=team.name,
             api_key=team.api_key,
             description=team.description,
-            organization_id=team.organization_id,
+            organization_id=str(team.organization_id),
         )

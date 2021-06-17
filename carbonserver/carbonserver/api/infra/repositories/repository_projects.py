@@ -45,8 +45,8 @@ class SqlAlchemyRepository(Projects):
         :rtype: schemas.Project
         """
         return Project(
-            id=project.id,
+            id=str(project.id),
             name=project.name,
             description=project.description,
-            team_id=project.team_id,
+            team_id=str(project.team_id),
         )

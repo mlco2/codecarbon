@@ -14,7 +14,9 @@ router = APIRouter(
 )
 
 
-@router.put("/experiment", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@router.put(
+    "/experiment/", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+)
 @inject
 def add_experiment(
     experiment: ExperimentCreate,
@@ -25,7 +27,11 @@ def add_experiment(
     return experiment_service.add_experiment(experiment)
 
 
-@router.get("/experiment/{experiment_id}", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@router.get(
+    "/experiment/{experiment_id}",
+    tags=EXPERIMENTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
 @inject
 def read_experiment(
     experiment_id: str,
@@ -36,7 +42,11 @@ def read_experiment(
     return experiment_service.get_one_experiment(experiment_id)
 
 
-@router.get("/experiments/{experiment_id}", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@router.get(
+    "/experiments/{experiment_id}",
+    tags=EXPERIMENTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
 @inject
 def read_experiment_experiments(
     project_id: str,

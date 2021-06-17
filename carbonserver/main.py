@@ -27,7 +27,9 @@ def create_app() -> FastAPI:
 
 def init_container():
     container = ServerContainer()
-    container.wire(modules=[emissions, experiments, projects, users, organizations, teams, runs, authenticate])
+    container.wire(
+        modules=[emissions, experiments, projects, users, organizations, teams, runs, authenticate]
+    )
     return container
 
 
@@ -47,7 +49,6 @@ def init_server(container):
     server.include_router(projects.router)
     server.include_router(teams.router)
     server.include_router(organizations.router)
-
     server.include_router(users.router)
     server.include_router(authenticate.router)
 

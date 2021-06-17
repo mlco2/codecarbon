@@ -20,7 +20,7 @@ projects_temp_db = []
 @inject
 def add_project(
     project: ProjectCreate,
-    project_service = Depends(Provide[ServerContainer.project_service])
+    project_service=Depends(Provide[ServerContainer.project_service]),
 ):
     return project_service.add_project(project)
 
@@ -28,7 +28,6 @@ def add_project(
 @router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS)
 @inject
 def read_project(
-    project_id: str,
-    project_service = Depends(Provide[ServerContainer.project_service])
+    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
 ):
     return project_service.get_one_project(project_id)

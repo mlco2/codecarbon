@@ -76,7 +76,7 @@ class SqlAlchemyRepository(Organizations):
     @staticmethod
     def map_sql_to_schema(organization: SqlModelOrganization) -> Organization:
         return Organization(
-            id=organization.id,
+            id=str(organization.id),
             name=organization.name,
             description=organization.description,
             api_key=organization.api_key,

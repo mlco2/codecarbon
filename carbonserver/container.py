@@ -66,7 +66,7 @@ class ServerContainer(containers.DeclarativeContainer):
 
     experiment_service = providers.Factory(
         ExperimentService,
-        emission_repository=experiment_repository,
+        experiment_repository=experiment_repository,
     )
 
     project_service = providers.Factory(

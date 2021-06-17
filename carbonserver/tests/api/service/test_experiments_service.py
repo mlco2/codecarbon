@@ -22,7 +22,7 @@ EXPERIMENT_1 = Experiment(
     on_cloud=True,
     cloud_provider="AWS",
     cloud_region="aws-east-1",
-    project_id="1"
+    project_id="1",
 )
 
 EXPERIMENT_2 = Experiment(
@@ -36,7 +36,7 @@ EXPERIMENT_2 = Experiment(
     on_cloud=True,
     cloud_provider="AWS",
     cloud_region="aws-east-1",
-    project_id="1"
+    project_id="1",
 )
 
 
@@ -48,8 +48,8 @@ def test_emission_service_creates_correct_emission(_):
     repository_mock.add_experiment.return_value = EXPERIMENT_ID
 
     experiment_to_create = ExperimentCreate(
-        name= "Experiment",
-        description= "Description",
+        name="Experiment",
+        description="Description",
         timestamp="2021-04-04T08:43:00+02:00",
         country_name="France",
         country_iso_code="France",
@@ -57,7 +57,7 @@ def test_emission_service_creates_correct_emission(_):
         on_cloud=True,
         cloud_provider="AWS",
         cloud_region="aws-east-1",
-        project_id=""
+        project_id="",
     )
 
     actual_saved_emission_id = experiment_service.add_experiment(experiment_to_create)
@@ -69,14 +69,19 @@ def test_emission_service_retrieves_all_existing_emissions_for_one_run():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_experiments_ids = [EXPERIMENT_ID, EXPERIMENT_ID_2]
     emission_service: ExperimentService = ExperimentService(repository_mock)
-    repository_mock.get_experiments_from_project.return_value = [EXPERIMENT_1, EXPERIMENT_2]
+    repository_mock.get_experiments_from_project.return_value = [
+        EXPERIMENT_1,
+        EXPERIMENT_2,
+    ]
 
     experiments_list = emission_service.get_experiments_from_project(PROJECT_ID)
     actual_experiments_ids_list = map(lambda x: x.id, iter(experiments_list))
     diff = set(actual_experiments_ids_list) ^ set(expected_experiments_ids)
 
     assert not diff
-    assert len(list(actual_experiments_ids_list)) == len(set(actual_experiments_ids_list))
+    assert len(list(actual_experiments_ids_list)) == len(
+        set(actual_experiments_ids_list)
+    )
 
 
 def test_emission_service_retrives_correct_emission_by_id():
