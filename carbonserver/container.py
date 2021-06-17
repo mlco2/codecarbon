@@ -1,19 +1,19 @@
-from carbonserver.api.services.experiments_service import ExperimentService
-from carbonserver.api.services.project_service import ProjectService
 from dependency_injector import containers, providers
 
 from carbonserver.api.infra.database.database_manager import Database
 from carbonserver.api.infra.repositories import (
     repository_emissions,
     repository_experiments,
-    repository_projects,
     repository_organizations,
     repository_runs,
+    repository_projects,
     repository_teams,
     repository_users,
 )
 from carbonserver.api.services.emissions_service import EmissionService
+from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.services.organization_service import OrganizationService
+from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.team_service import TeamService

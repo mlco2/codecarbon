@@ -1,10 +1,10 @@
 from container import ServerContainer
-from dependency_injector.wiring import inject, Provide
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
+from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import ProjectCreate
-from starlette import status
 
 PROJECTS_ROUTER_TAGS = ["projects"]
 

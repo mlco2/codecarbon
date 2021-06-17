@@ -1,8 +1,9 @@
 from unittest import mock
+
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,
 )
-from carbonserver.api.schemas import ExperimentCreate, Experiment
+from carbonserver.api.schemas import Experiment, ExperimentCreate
 from carbonserver.api.services.experiments_service import ExperimentService
 
 EXPERIMENT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -22,7 +23,7 @@ EXPERIMENT_1 = Experiment(
     on_cloud=True,
     cloud_provider="AWS",
     cloud_region="aws-east-1",
-    project_id="1",
+    project_id=PROJECT_ID,
 )
 
 EXPERIMENT_2 = Experiment(
@@ -36,7 +37,7 @@ EXPERIMENT_2 = Experiment(
     on_cloud=True,
     cloud_provider="AWS",
     cloud_region="aws-east-1",
-    project_id="1",
+    project_id=PROJECT_ID,
 )
 
 
@@ -57,7 +58,7 @@ def test_emission_service_creates_correct_emission(_):
         on_cloud=True,
         cloud_provider="AWS",
         cloud_region="aws-east-1",
-        project_id="",
+        project_id=PROJECT_ID,
     )
 
     actual_saved_emission_id = experiment_service.add_experiment(experiment_to_create)

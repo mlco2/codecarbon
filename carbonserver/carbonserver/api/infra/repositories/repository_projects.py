@@ -2,8 +2,8 @@ from contextlib import AbstractContextManager
 
 from dependency_injector.providers import Callable
 
-from carbonserver.api.schemas import ProjectCreate, Project
 from carbonserver.api.domain.projects import Projects
+from carbonserver.api.schemas import Project, ProjectCreate
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 
 

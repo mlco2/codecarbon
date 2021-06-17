@@ -1,11 +1,11 @@
-from carbonserver.api.services.experiments_service import ExperimentService
 from container import ServerContainer
-from dependency_injector.wiring import inject, Provide
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
+from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import ExperimentCreate
-from starlette import status
+from carbonserver.api.services.experiments_service import ExperimentService
 
 EXPERIMENTS_ROUTER_TAGS = ["experiments"]
 

@@ -1,8 +1,7 @@
-from carbonserver.api.schemas import ProjectCreate
-
 from carbonserver.api.infra.repositories.repository_projects import (
     SqlAlchemyRepository as ProjectSqlRepository,
 )
+from carbonserver.api.schemas import ProjectCreate
 
 
 class ProjectService:
