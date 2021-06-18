@@ -3,10 +3,12 @@ from dependency_injector import containers, providers
 from carbonserver.api.infra.database.database_manager import Database
 from carbonserver.api.infra.repositories import (
     repository_organizations,
+    repository_runs,
     repository_teams,
     repository_users,
 )
 from carbonserver.api.services.organization_service import OrganizationService
+from carbonserver.api.services.run_service import RunService
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.team_service import TeamService
 from carbonserver.api.services.user_service import UserService
@@ -36,6 +38,11 @@ class ServerContainer(containers.DeclarativeContainer):
         session_factory=db.provided.session,
     )
 
+    run_repository = providers.Factory(
+        repository_runs.SqlAlchemyRepository,
+        session_factory=db.provided.session,
+    )
+
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository,
@@ -49,6 +56,11 @@ class ServerContainer(containers.DeclarativeContainer):
     team_service = providers.Factory(
         TeamService,
         team_repository=team_repository,
+    )
+
+    run_service = providers.Factory(
+        RunService,
+        user_repository=run_repository,
     )
 
     sign_up = providers.Factory(
