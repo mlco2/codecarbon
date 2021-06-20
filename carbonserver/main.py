@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI
 from carbonserver.api.dependencies import get_query_token
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
+    authenticate,
     emissions,
     experiments,
     organizations,
@@ -26,7 +27,7 @@ def create_app() -> FastAPI:
 
 def init_container():
     container = ServerContainer()
-    container.wire(modules=[users, organizations, teams, runs])
+    container.wire(modules=[users, organizations, teams, runs, authenticate])
     return container
 
 
@@ -48,6 +49,7 @@ def init_server(container):
     server.include_router(organizations.router)
 
     server.include_router(users.router)
+    server.include_router(authenticate.router)
 
     return server
 

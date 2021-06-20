@@ -190,6 +190,10 @@ class UserCreate(UserBase):
     password: SecretStr
 
 
+class UserAuthenticate(UserBase):
+    password: SecretStr
+
+
 class User(UserBase):
     id: UUID
     name: str
@@ -201,3 +205,8 @@ class User(UserBase):
 
     class Config:
         orm_mode = True
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

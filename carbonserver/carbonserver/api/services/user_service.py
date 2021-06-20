@@ -1,7 +1,7 @@
 from typing import List
 
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
-from carbonserver.api.schemas import User, UserCreate
+from carbonserver.api.schemas import User, UserAuthenticate, UserCreate
 
 
 class UserService:
@@ -21,3 +21,6 @@ class UserService:
         users_list = self._repository.list_users()
 
         return users_list
+
+    def verify_user(self, user: UserAuthenticate) -> bool:
+        return self._repository.verify_user(user)
