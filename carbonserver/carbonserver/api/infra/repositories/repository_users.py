@@ -2,10 +2,12 @@ from contextlib import AbstractContextManager
 from typing import Callable, List
 from uuid import UUID, uuid4
 
+import bcrypt
+
 from carbonserver.api.domain.users import Users
 from carbonserver.api.infra.api_key_service import generate_api_key
+from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from carbonserver.api.schemas import User, UserCreate
-from carbonserver.database.sql_models import User as SqlModelUser
 
 
 class SqlAlchemyRepository(Users):
@@ -22,12 +24,13 @@ class SqlAlchemyRepository(Users):
                 id=uuid4(),
                 name=user.name,
                 email=user.email,
-                hashed_password=user.password,
+                hashed_password=self._hash_password(user.password),
                 api_key=generate_api_key(),
                 is_active=True,
                 teams=[],
                 organizations=[],
             )
+            print(db_user)
             session.add(db_user)
             session.commit()
             session.refresh(db_user)
@@ -83,6 +86,10 @@ class SqlAlchemyRepository(Users):
                     synchronize_session=False,
                 )
             )
+
+    @staticmethod
+    def _hash_password(password):
+        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
     @staticmethod
     def map_sql_to_schema(sql_user: SqlModelUser) -> User:

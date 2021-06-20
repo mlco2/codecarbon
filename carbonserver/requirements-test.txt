@@ -1,4 +1,5 @@
 alembic
+bcrypt
 dependency-injector
 fastapi
 pydantic[email]

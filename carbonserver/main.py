@@ -2,6 +2,7 @@ from container import ServerContainer
 from fastapi import Depends, FastAPI
 
 from carbonserver.api.dependencies import get_query_token
+from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
     emissions,
     experiments,
@@ -11,7 +12,6 @@ from carbonserver.api.routers import (
     teams,
     users,
 )
-from carbonserver.database import sql_models
 from carbonserver.database.database import engine
 
 

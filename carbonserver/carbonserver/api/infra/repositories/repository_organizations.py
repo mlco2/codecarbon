@@ -6,8 +6,10 @@ from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.organizations import Organizations
 from carbonserver.api.infra.api_key_service import generate_api_key
+from carbonserver.api.infra.database.sql_models import (
+    Organization as SqlModelOrganization,
+)
 from carbonserver.api.schemas import Organization, OrganizationCreate
-from carbonserver.database.sql_models import Organization as SqlModelOrganization
 
 """
 Here there is all the method to manipulate the organization data

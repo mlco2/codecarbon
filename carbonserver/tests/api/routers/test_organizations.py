@@ -5,11 +5,11 @@ from container import ServerContainer
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
+from carbonserver.api.infra.database.sql_models import Organization as ModelOrganization
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.routers import organizations
-from carbonserver.database.sql_models import Organization as ModelOrganization
 
 ORG_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"

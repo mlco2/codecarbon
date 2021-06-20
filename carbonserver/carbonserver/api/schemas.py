@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 
 class EmissionBase(BaseModel):
@@ -187,14 +187,13 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     name: str
     email: EmailStr
-    password: str
+    password: SecretStr
 
 
 class User(UserBase):
     id: UUID
     name: str
     email: EmailStr
-    password: str
     api_key: str
     organizations: Optional[List]
     teams: Optional[List]

@@ -5,9 +5,11 @@ from container import ServerContainer
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
+from carbonserver.api.infra.database.sql_models import User as ModelUser
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
 from carbonserver.api.routers import users
-from carbonserver.database.sql_models import User as ModelUser
+
+API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
 
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 USER_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -16,7 +18,9 @@ USER_1 = {
     "id": USER_ID_1,
     "name": "Gontran Bonheur",
     "email": "xyz@email.com",
-    "hashed_password": "pwd",
+    "api_key": API_KEY,
+    "organizations": [],
+    "teams": [],
     "is_active": True,
 }
 
@@ -24,7 +28,9 @@ USER_2 = {
     "id": USER_ID_2,
     "name": "Jonnhy Monnay",
     "email": "1234+1@email.fr",
-    "hashed_password": "password",
+    "api_key": API_KEY,
+    "organizations": [],
+    "teams": [],
     "is_active": True,
 }
 
