@@ -7,7 +7,6 @@ class RunService:
         self._repository = run_repository
 
     def add_run(self, run: RunCreate) -> Run:
-
         created_run = self._repository.add_run(run)
         return created_run
 
