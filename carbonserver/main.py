@@ -14,13 +14,6 @@ from carbonserver.api.routers import (
 from carbonserver.database import sql_models
 from carbonserver.database.database import engine
 
-routers = [
-    users.router,
-    organizations.router,
-    teams.router,
-    runs.router,
-]
-
 
 def create_app() -> FastAPI:
 
@@ -33,7 +26,7 @@ def create_app() -> FastAPI:
 
 def init_container():
     container = ServerContainer()
-    container.wire(modules=[users])
+    container.wire(modules=[organizations, teams, runs, users])
     return container
 
 

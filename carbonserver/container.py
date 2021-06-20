@@ -60,7 +60,7 @@ class ServerContainer(containers.DeclarativeContainer):
 
     run_service = providers.Factory(
         RunService,
-        user_repository=run_repository,
+        run_repository=run_repository,
     )
 
     sign_up = providers.Factory(
