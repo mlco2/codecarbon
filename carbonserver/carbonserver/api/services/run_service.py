@@ -13,5 +13,5 @@ class RunService:
     def read_run(self, run_id: str) -> Run:
         return self._repository.get_one_run(run_id)
 
-    def list_run(self):
+    def list_runs(self):
         return self._repository.list_runs()

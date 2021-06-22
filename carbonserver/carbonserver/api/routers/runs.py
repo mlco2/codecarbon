@@ -52,7 +52,7 @@ def read_run(
 def list_runs(
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> List[Run]:
-    return run_service.list_run()
+    return run_service.list_runs()
 
 
 # @router.put("/run", tags=["runs"])

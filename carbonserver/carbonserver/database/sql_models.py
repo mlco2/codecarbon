@@ -38,7 +38,7 @@ class Run(Base):
         return (
             f'<Run(id="{self.id}", '
             f'timestamp="{self.timestamp}", '
-            f'experiment_id="{self.run_id}")>'
+            f'experiment_id="{self.experiment_id}")>'
         )
 
 
