@@ -18,6 +18,7 @@ from codecarbon.input import DataSource
 
 
 def is_powergadget_available():
+    a = 12
     try:
         IntelPowerGadget()
         return True
