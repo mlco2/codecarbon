@@ -12,6 +12,8 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
         "sign_up",
         "team_repository",
         "team_service",
+        "run_repository",
+        "run_service",
     ]
 
     actual_providers = ServerContainer().providers.keys()
