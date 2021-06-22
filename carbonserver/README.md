@@ -1,5 +1,7 @@
 ![](https://github.com/mlco2/codecarbon/blob/api/api/Images/CodecarbonDB.jpg)
 
+## Code Carbon architecture
+![Code Carbon architecture](Images/code_carbon_archi.png)
 
 Documentation :
 
@@ -10,6 +12,9 @@ Documentation :
 - Deploy a full stack FastAPI / Vue.js app : https://github.com/tiangolo/full-stack-fastapi-postgresql
 - FastAPI + PG on docker : https://testdriven.io/blog/fastapi-docker-traefik
 - FastAPI db dependency injection: https://python-dependency-injector.ets-labs.org/examples/fastapi-sqlalchemy.html
+
+## Schema of the database
+![DB Schema](Images/CodecarbonDB.jpg)
 
 
 
