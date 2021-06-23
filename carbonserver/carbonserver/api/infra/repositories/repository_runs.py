@@ -70,6 +70,5 @@ class SqlAlchemyRepository(Runs):
         return Run(
             id=run.id,
             timestamp=run.timestamp,
-            emission_id=run.emission_id,
             experiment_id=run.experiment_id,
         )

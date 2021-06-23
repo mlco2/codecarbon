@@ -6,11 +6,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from starlette import status
 
+from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.repositories.repository_emissions import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.routers import emissions
-from carbonserver.database.sql_models import Emission as SqlModelEmission
 
 RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
 RUN_2_ID = "07614c15-c5b0-4c9a-8101-6b6ad3733543"

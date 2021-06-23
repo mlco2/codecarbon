@@ -5,8 +5,8 @@ from carbonserver.api.infra.repositories import (
     repository_emissions,
     repository_experiments,
     repository_organizations,
-    repository_runs,
     repository_projects,
+    repository_runs,
     repository_teams,
     repository_users,
 )

@@ -4,8 +4,8 @@ from typing import List
 from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.experiments import Experiments
-from carbonserver.api.schemas import Experiment, ExperimentCreate
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.schemas import Experiment, ExperimentCreate
 
 
 class SqlAlchemyRepository(Experiments):

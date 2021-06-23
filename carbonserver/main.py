@@ -28,7 +28,16 @@ def create_app() -> FastAPI:
 def init_container():
     container = ServerContainer()
     container.wire(
-        modules=[emissions, experiments, projects, users, organizations, teams, runs, authenticate]
+        modules=[
+            emissions,
+            experiments,
+            projects,
+            users,
+            organizations,
+            teams,
+            runs,
+            authenticate,
+        ]
     )
     return container
 

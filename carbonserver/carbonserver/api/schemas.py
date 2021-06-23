@@ -17,7 +17,7 @@ from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 class EmissionBase(BaseModel):
     timestamp: datetime
-    run_id: str
+    run_id: UUID
     duration: int = Field(
         ..., gt=0, description="The duration must be greater than zero"
     )
@@ -45,7 +45,7 @@ class EmissionCreate(EmissionBase):
 
 
 class Emission(EmissionBase):
-    id: str
+    id: UUID
 
 
 class RunBase(BaseModel):
@@ -79,7 +79,7 @@ class ExperimentBase(BaseModel):
     on_cloud: bool
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
-    project_id: str
+    project_id: UUID
 
     class Config:
         orm_mode = True
@@ -104,13 +104,13 @@ class ExperimentCreate(ExperimentBase):
 
 
 class Experiment(ExperimentBase):
-    id: str
+    id: UUID
 
 
 class ProjectBase(BaseModel):
     name: str
     description: str
-    team_id: str
+    team_id: UUID
 
     class Config:
         schema_extra = {
@@ -127,7 +127,7 @@ class ProjectCreate(ProjectBase):
 
 
 class Project(ProjectBase):
-    id: str
+    id: UUID
     experiments: List[Experiment] = []
 
 
