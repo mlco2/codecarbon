@@ -52,8 +52,8 @@ def test_organiation_service_retrieves_all_existing_organizations():
     repository_mock.list_organizations.return_value = [ORG_1, ORG_2]
 
     org_list = organization_service.list_organizations()
-    actual_user_ids_list = map(lambda x: x.id, iter(org_list))
-    diff = set(actual_user_ids_list) ^ set(expected_org_ids_list)
+    actual_org_ids_list = map(lambda x: x.id, iter(org_list))
+    diff = set(actual_org_ids_list) ^ set(expected_org_ids_list)
 
     assert not diff
     assert len(org_list) == len(expected_org_ids_list)

@@ -5,15 +5,21 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
     expected_providers = [
         "config",
         "db",
-        "user_repository",
-        "user_service",
-        "organization_service",
-        "organization_repository",
-        "sign_up",
+        "emission_repository",
+        "experiment_repository",
+        "project_repository",
         "team_repository",
+        "organization_repository",
+        "user_repository",
+        "emission_service",
+        "experiment_service",
+        "project_service",
         "team_service",
         "run_repository",
         "run_service",
+        "organization_service",
+        "user_service",
+        "sign_up_service",
     ]
 
     actual_providers = ServerContainer().providers.keys()

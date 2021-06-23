@@ -17,7 +17,7 @@ from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 class EmissionBase(BaseModel):
     timestamp: datetime
-    run_id: str
+    run_id: UUID
     duration: int = Field(
         ..., gt=0, description="The duration must be greater than zero"
     )
@@ -45,7 +45,7 @@ class EmissionCreate(EmissionBase):
 
 
 class Emission(EmissionBase):
-    id: str
+    id: UUID
 
 
 class RunBase(BaseModel):
@@ -56,7 +56,7 @@ class RunBase(BaseModel):
         schema_extra = {
             "example": {
                 "timestamp": "2021-04-04T08:43:00+02:00",
-                "experiment_id": "1",
+                "experiment_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
             }
         }
 
@@ -79,7 +79,7 @@ class ExperimentBase(BaseModel):
     on_cloud: bool
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
-    project_id: str
+    project_id: UUID
 
     class Config:
         orm_mode = True
@@ -94,7 +94,7 @@ class ExperimentBase(BaseModel):
                 "on_cloud": True,
                 "cloud_provider": "aws",
                 "cloud_region": "eu-west-1a",
-                "project_id": "1",
+                "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
             }
         }
 
@@ -104,20 +104,20 @@ class ExperimentCreate(ExperimentBase):
 
 
 class Experiment(ExperimentBase):
-    id: str
+    id: UUID
 
 
 class ProjectBase(BaseModel):
     name: str
     description: str
-    team_id: str
+    team_id: UUID
 
     class Config:
         schema_extra = {
             "example": {
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
-                "team_id": "1",
+                "team_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
             }
         }
 
@@ -127,7 +127,7 @@ class ProjectCreate(ProjectBase):
 
 
 class Project(ProjectBase):
-    id: str
+    id: UUID
     experiments: List[Experiment] = []
 
 
@@ -141,7 +141,7 @@ class TeamBase(BaseModel):
             "example": {
                 "name": "Data For Good",
                 "description": "Data For Good France",
-                "organization_id": "1",
+                "organization_id": "e52fe339-164d-4c2b-a8c0-f562dfce066d",
                 "api_key": "default",
             }
         }
