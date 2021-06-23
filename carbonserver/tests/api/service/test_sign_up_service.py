@@ -105,10 +105,10 @@ def test_sign_up_service_creates_user_with_default_team_and_organisation():
     user_to_create = UserCreate(
         name="Gontran Bonheur", email="xyz@email.com", password="pwd"
     )
-    actual_saved_user = signup_service.sign_up(user_to_create)
-    print(actual_saved_user)
+    signup_service.sign_up(user_to_create)
 
-    assert actual_saved_user == USER_IN_DEFAULT_ORG_AND_TEAM
+    user_repository_mock.subscribe_user_to_org.assert_called_with(USER_1, ORG_ID)
+    user_repository_mock.subscribe_user_to_team.assert_called_with(USER_1, TEAM_ID)
 
 
 def test_add_user_to_org_adds_user_if_api_key_is_correct():

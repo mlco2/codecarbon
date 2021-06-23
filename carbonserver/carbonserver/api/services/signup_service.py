@@ -37,6 +37,7 @@ class SignUpService:
         subscribed_user = self.subscribe_user_to_team(
             created_user, self._default_team_id, self._default_api_key
         )
+        print(subscribed_user)
         return subscribed_user
 
     def subscribe_user_to_org(
@@ -53,4 +54,5 @@ class SignUpService:
         key_is_valid = self._team_repository.is_api_key_valid(team_id, team_api_key)
         if key_is_valid:
             self._user_repository.subscribe_user_to_team(user, team_id)
+        print(user)
         return user
