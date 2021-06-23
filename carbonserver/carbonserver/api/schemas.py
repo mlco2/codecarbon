@@ -142,7 +142,7 @@ class TeamBase(BaseModel):
                 "name": "Data For Good",
                 "description": "Data For Good France",
                 "organization_id": "1",
-                "api_key": "default"
+                "api_key": "default",
             }
         }
 
