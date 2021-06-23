@@ -5,12 +5,12 @@ from container import ServerContainer
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
+from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.routers import runs
-from carbonserver.database.sql_models import Run as SqlModelRun
 
-EXPE_ID = "f52fe339-164d-4c2b-a8c0-f562dfce0expe"
-EXPE_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce0expe"
+EXPE_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+EXPE_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
 
 RUN_ID = "f52fe339-164d-4c2b-a8c0-f562dfcerun"
 RUN_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfcerun"

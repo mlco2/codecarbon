@@ -50,7 +50,7 @@ class Emission(EmissionBase):
 
 class RunBase(BaseModel):
     timestamp: datetime
-    experiment_id: str
+    experiment_id: UUID
 
     class Config:
         schema_extra = {
@@ -66,7 +66,7 @@ class RunCreate(RunBase):
 
 
 class Run(RunBase):
-    id: str
+    id: UUID
 
 
 class ExperimentBase(BaseModel):

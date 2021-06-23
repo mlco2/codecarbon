@@ -5,8 +5,8 @@ from typing import List
 from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.runs import Runs
+from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import Run, RunCreate
-from carbonserver.database.sql_models import Run as SqlModelRun
 
 """
 Here there is all the methods to manipulate the run data
