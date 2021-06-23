@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,
@@ -6,10 +7,10 @@ from carbonserver.api.infra.repositories.repository_experiments import (
 from carbonserver.api.schemas import Experiment, ExperimentCreate
 from carbonserver.api.services.experiments_service import ExperimentService
 
-EXPERIMENT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
-EXPERIMENT_ID_2 = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
+EXPERIMENT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
+EXPERIMENT_ID_2 = UUID("07614c15-c5b0-4c9a-8101-6b6ad3733543")
 
-PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 
 
 EXPERIMENT_1 = Experiment(

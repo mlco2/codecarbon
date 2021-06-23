@@ -1,12 +1,13 @@
 from unittest import mock
+from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_projects import SqlAlchemyRepository
 from carbonserver.api.schemas import Project, ProjectCreate
 from carbonserver.api.services.project_service import ProjectService
 
-PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 
-TEAM_ID = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+TEAM_ID = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 
 PROJECT = Project(
     id=PROJECT_ID, name="Project", description="Description", team_id=TEAM_ID
