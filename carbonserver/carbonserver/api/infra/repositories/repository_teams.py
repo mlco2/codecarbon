@@ -1,13 +1,13 @@
-import uuid
 from contextlib import AbstractContextManager
 from typing import List
+from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
 
-from carbonserver.api import schemas
 from carbonserver.api.domain.teams import Teams
+from carbonserver.api.infra.api_key_service import generate_api_key
+from carbonserver.api.infra.database.sql_models import Team as SqlModelTeam
 from carbonserver.api.schemas import Team, TeamCreate
-from carbonserver.database.sql_models import Team as SqlModelTeam
 
 """
 Here there is all the method to manipulate the team data
@@ -22,9 +22,11 @@ class SqlAlchemyRepository(Teams):
 
         with self.session_factory() as session:
             db_team = SqlModelTeam(
-                id=uuid.uuid4(),
+                id=uuid4(),
                 name=team.name,
                 description=team.description,
+                api_key=generate_api_key(),
+                organization_id=team.organization_id,
             )
             session.add(db_team)
             session.commit()
@@ -56,61 +58,21 @@ class SqlAlchemyRepository(Teams):
                     teams.append(self.map_sql_to_schema(team))
                 return teams
 
+    def is_api_key_valid(self, organization_id: UUID, api_key: str):
+        with self.session_factory() as session:
+            return bool(
+                session.query(SqlModelTeam)
+                .filter(SqlModelTeam.id == organization_id)
+                .filter(SqlModelTeam.api_key == api_key)
+                .first()
+            )
+
     @staticmethod
     def map_sql_to_schema(team: SqlModelTeam) -> Team:
         return Team(
             id=team.id,
             name=team.name,
+            api_key=team.api_key,
             description=team.description,
             organization_id=team.organization_id,
         )
-
-
-class InMemoryRepository(Teams):
-    def __init__(self):
-        self.teams: List = []
-        self.id: int = 0
-
-    def add_team(self, team: TeamCreate):
-        self.teams.append(
-            SqlModelTeam(
-                id=self.id + 1,
-                name=team.name,
-                description=team.description,
-                # organization_id=team.organization_id,
-            )
-        )
-
-    def get_one_team(self, team_id) -> Team:
-        first_team = self.teams[0]
-        return Team(
-            id=first_team.id,
-            name=first_team.name,
-            description=first_team.description,
-            # organization_id=first_team.organization_id,
-        )
-
-    # def get_projects_from_team(self, team_id):
-    # TODO : get Projects from Project id in database
-    #    pass
-
-    @staticmethod
-    def get_db_to_class(self, team: SqlModelTeam) -> Team:
-        return schemas.Team(
-            id=team.id,
-            name=team.name,
-            description=team.description,
-            # organization_id=team.organization_id,
-        )
-
-    def list_team(self, team_name: str):
-        teams = []
-        for team in self.teams:
-            teams.append(
-                Team(
-                    id=team.id,
-                    name=team.name,
-                    description=team.description,
-                )
-            )
-        return teams

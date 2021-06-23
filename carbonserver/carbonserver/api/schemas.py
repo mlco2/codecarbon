@@ -10,8 +10,9 @@ So this will help us avoiding confusion while using both.
 
 from datetime import datetime
 from typing import List, Optional
+from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 
 class EmissionBase(BaseModel):
@@ -49,7 +50,7 @@ class Emission(EmissionBase):
 
 class RunBase(BaseModel):
     timestamp: datetime
-    experiment_id: str
+    experiment_id: UUID
 
     class Config:
         schema_extra = {
@@ -65,7 +66,7 @@ class RunCreate(RunBase):
 
 
 class Run(RunBase):
-    id: str
+    id: UUID
 
 
 class ExperimentBase(BaseModel):
@@ -104,7 +105,6 @@ class ExperimentCreate(ExperimentBase):
 
 class Experiment(ExperimentBase):
     id: str
-    emissions: List[Emission] = []
 
 
 class ProjectBase(BaseModel):
@@ -134,7 +134,7 @@ class Project(ProjectBase):
 class TeamBase(BaseModel):
     name: str
     description: str
-    organization_id: str
+    organization_id: UUID
 
     class Config:
         schema_extra = {
@@ -142,6 +142,7 @@ class TeamBase(BaseModel):
                 "name": "Data For Good",
                 "description": "Data For Good France",
                 "organization_id": "1",
+                "api_key": "default",
             }
         }
 
@@ -151,7 +152,9 @@ class TeamCreate(TeamBase):
 
 
 class Team(TeamBase):
-    id: str
+    id: UUID
+    api_key: str
+    organization_id: UUID
     projects: List[Project] = []
 
 
@@ -173,7 +176,8 @@ class OrganizationCreate(OrganizationBase):
 
 
 class Organization(OrganizationBase):
-    id: str
+    id: UUID
+    api_key: str
     teams: Optional[List[Team]]
 
 
@@ -184,16 +188,26 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     name: str
     email: EmailStr
-    password: str
+    password: SecretStr
+
+
+class UserAuthenticate(UserBase):
+    password: SecretStr
 
 
 class User(UserBase):
-    id: str
+    id: UUID
     name: str
     email: EmailStr
-    password: str
     api_key: str
-    is_active: Optional[bool]
+    organizations: Optional[List]
+    teams: Optional[List]
+    is_active: bool
 
     class Config:
         orm_mode = True
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

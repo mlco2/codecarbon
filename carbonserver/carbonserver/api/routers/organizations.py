@@ -16,10 +16,7 @@ router = APIRouter(
 )
 
 
-organizations_temp_db = []
-
-
-@router.put(
+@router.post(
     "/organizations/",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
@@ -53,9 +50,9 @@ def read_organization(
     "/organizations/", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK
 )
 @inject
-def read_organizations(
+def list_organizations(
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> List[Organization]:
-    return organization_service.list_organization()
+    return organization_service.list_organizations()

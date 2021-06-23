@@ -5,11 +5,11 @@ from container import ServerContainer
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
+from carbonserver.api.infra.database.sql_models import Organization as ModelOrganization
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.routers import organizations
-from carbonserver.database.sql_models import Organization as ModelOrganization
 
 ORG_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -56,7 +56,7 @@ def test_add_org(client, custom_test_server):
     repository_mock.add_organization.return_value = ModelOrganization(**ORG_1)
 
     with custom_test_server.container.organization_repository.override(repository_mock):
-        response = client.put("/organizations/", json=ORG_TO_CREATE)
+        response = client.post("/organizations/", json=ORG_TO_CREATE)
         actual_org = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -85,7 +85,7 @@ def test_list_organizations_returns_all_orgs(client, custom_test_server):
     expected_org_1 = ORG_1
     expected_org_2 = ORG_2
     expected_org_list = [expected_org_1, expected_org_2]
-    repository_mock.list_organization.return_value = [
+    repository_mock.list_organizations.return_value = [
         ModelOrganization(**expected_org_1),
         ModelOrganization(**expected_org_2),
     ]

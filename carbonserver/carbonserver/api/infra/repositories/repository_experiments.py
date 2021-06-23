@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from carbonserver.api import schemas
 from carbonserver.api.domain.experiments import Experiments
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
-from carbonserver.database import sql_models
+from carbonserver.api.infra.database import sql_models
 
 """
 Here there is all the method to manipulate the experiment data

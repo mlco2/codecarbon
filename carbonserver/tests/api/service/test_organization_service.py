@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
@@ -6,29 +7,32 @@ from carbonserver.api.infra.repositories.repository_organizations import (
 from carbonserver.api.schemas import Organization, OrganizationCreate
 from carbonserver.api.services.organization_service import OrganizationService
 
-ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
-ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+ORG_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
+ORG_ID_2 = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
+
+API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
 
 ORG_1 = Organization(
-    id=ORG_ID,
-    name="DFG",
-    description="Data For Good Organization",
+    id=ORG_ID, name="DFG", description="Data For Good Organization", api_key=API_KEY
 )
 
 ORG_2 = Organization(
     id=ORG_ID_2,
     name="Data For Good",
     description="Data For Good Organization 2",
+    api_key=API_KEY,
 )
 
 
 @mock.patch("uuid.uuid4", return_value=ORG_ID)
-def test_organization_service_creates_correct_user_on_sign_up(_):
+def test_organization_service_add_org_creates_correct_org(_):
 
-    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_id = ORG_ID
-    user_service: OrganizationService = OrganizationService(repository_mock)
+    expected_api_key = API_KEY
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     repository_mock.add_organization.return_value = ORG_1
+
+    user_service: OrganizationService = OrganizationService(repository_mock)
     org_to_create = OrganizationCreate(
         name="Data For Good", description="Data For Good Organization"
     )
@@ -37,6 +41,7 @@ def test_organization_service_creates_correct_user_on_sign_up(_):
 
     repository_mock.add_organization.assert_called_with(org_to_create)
     assert actual_saved_org.id == expected_id
+    assert actual_saved_org.api_key == expected_api_key
 
 
 def test_organiation_service_retrieves_all_existing_organizations():
@@ -44,11 +49,9 @@ def test_organiation_service_retrieves_all_existing_organizations():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org_ids_list = [ORG_ID, ORG_ID_2]
     organization_service: OrganizationService = OrganizationService(repository_mock)
-    repository_mock.list_organization.return_value = [ORG_1, ORG_2]
+    repository_mock.list_organizations.return_value = [ORG_1, ORG_2]
 
-    org_list = organization_service.list_organization()
-    print(org_list[0])
-    print(len(org_list))
+    org_list = organization_service.list_organizations()
     actual_user_ids_list = map(lambda x: x.id, iter(org_list))
     diff = set(actual_user_ids_list) ^ set(expected_org_ids_list)
 

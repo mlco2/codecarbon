@@ -1,13 +1,15 @@
-import uuid
 from contextlib import AbstractContextManager
 from typing import List
+from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.organizations import Organizations
+from carbonserver.api.infra.api_key_service import generate_api_key
+from carbonserver.api.infra.database.sql_models import (
+    Organization as SqlModelOrganization,
+)
 from carbonserver.api.schemas import Organization, OrganizationCreate
-from carbonserver.database.sql_models import Experiment as SqlModelExperiment
-from carbonserver.database.sql_models import Organization as SqlModelOrganization
 
 """
 Here there is all the method to manipulate the organization data
@@ -22,9 +24,10 @@ class SqlAlchemyRepository(Organizations):
 
         with self.session_factory() as session:
             db_organization = SqlModelOrganization(
-                id=uuid.uuid4(),
+                id=uuid4(),
                 name=organization.name,
                 description=organization.description,
+                api_key=generate_api_key(),
             )
 
             session.add(db_organization)
@@ -50,7 +53,7 @@ class SqlAlchemyRepository(Organizations):
             else:
                 return self.map_sql_to_schema(e)
 
-    def list_organization(self):
+    def list_organizations(self):
         with self.session_factory() as session:
             e = session.query(SqlModelOrganization)
             if e is None:
@@ -61,53 +64,20 @@ class SqlAlchemyRepository(Organizations):
                     orgs.append(self.map_sql_to_schema(org))
                 return orgs
 
+    def is_api_key_valid(self, organization_id: UUID, api_key: str):
+        with self.session_factory() as session:
+            return bool(
+                session.query(SqlModelOrganization)
+                .filter(SqlModelOrganization.id == organization_id)
+                .filter(SqlModelOrganization.api_key == api_key)
+                .first()
+            )
+
     @staticmethod
     def map_sql_to_schema(organization: SqlModelOrganization) -> Organization:
         return Organization(
             id=organization.id,
             name=organization.name,
             description=organization.description,
+            api_key=organization.api_key,
         )
-
-
-class InMemoryRepository(Organizations):
-    def __init__(self):
-        self.organizations: List = []
-        self.id: int = 0
-
-    @staticmethod
-    def get_db_to_class(organization: SqlModelOrganization) -> Organization:
-        return Organization(
-            id=organization.id,
-            name=organization.name,
-            description=organization.description,
-        )
-
-    def add_organization(self, organization: OrganizationCreate):
-        self.organizations.append(
-            SqlModelExperiment(
-                id=self.id + 1,
-                name=organization.name,
-                description=organization.description,
-            )
-        )
-
-    def get_one_organization(self, organization_name: str) -> Organization:
-        organization = self.organizations[0]
-        return Organization(
-            id=organization.id,
-            name=organization.name,
-            description=organization.description,
-        )
-
-    def list_organization(self, organization_name: str):
-        organizations = []
-        for organization in self.organizations:
-            organizations.append(
-                Organization(
-                    id=organization.id,
-                    name=organization.name,
-                    description=organization.description,
-                )
-            )
-        return organizations

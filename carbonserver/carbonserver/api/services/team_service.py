@@ -14,5 +14,5 @@ class TeamService:
     def read_team(self, team_id: str) -> Team:
         return self._repository.get_one_team(team_id)
 
-    def list_team(self):
+    def list_teams(self):
         return self._repository.list_teams()

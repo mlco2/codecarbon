@@ -14,7 +14,6 @@ TEAMS_ROUTER_TAGS = ["teams"]
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
-teams_temp_db = []
 
 
 @router.put(
@@ -52,4 +51,4 @@ def read_team(
 def list_teams(
     team_service: TeamService = Depends(Provide[ServerContainer.team_service]),
 ) -> List[Team]:
-    return team_service.list_team()
+    return team_service.list_teams()
