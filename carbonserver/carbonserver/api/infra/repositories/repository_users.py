@@ -30,13 +30,12 @@ class SqlAlchemyRepository(Users):
                 teams=[],
                 organizations=[],
             )
-            print(db_user)
             session.add(db_user)
             session.commit()
             session.refresh(db_user)
             return self.map_sql_to_schema(db_user)
 
-    def get_user_by_id(self, user_id: str) -> User:
+    def get_user_by_id(self, user_id: UUID) -> User:
         """Find an user in database and retrieves it
 
         :user_id: The id of the user to retrieve.
@@ -79,7 +78,7 @@ class SqlAlchemyRepository(Users):
 
     def subscribe_user_to_org(self, user: User, organization_id: UUID):
         with self.session_factory() as session:
-            return (
+            (
                 session.query(SqlModelUser)
                 .filter(SqlModelUser.id == user.id)
                 .update(
@@ -94,7 +93,7 @@ class SqlAlchemyRepository(Users):
 
     def subscribe_user_to_team(self, user: User, team_id: UUID):
         with self.session_factory() as session:
-            return (
+            (
                 session.query(SqlModelUser)
                 .filter(SqlModelUser.id == user.id)
                 .update(

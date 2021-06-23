@@ -46,11 +46,11 @@ class SignUpService:
             organization_id, organization_api_key
         )
         if key_is_valid:
-            user = self._user_repository.subscribe_user_to_org(user, organization_id)
+            self._user_repository.subscribe_user_to_org(user, organization_id)
         return user
 
     def subscribe_user_to_team(self, user: User, team_id: UUID, team_api_key: str):
         key_is_valid = self._team_repository.is_api_key_valid(team_id, team_api_key)
         if key_is_valid:
-            user = self._user_repository.subscribe_user_to_team(user, team_id)
+            self._user_repository.subscribe_user_to_team(user, team_id)
         return user
