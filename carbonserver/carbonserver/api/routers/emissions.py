@@ -7,7 +7,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
 
-EMISSIONS_ROUTER_TAGS = ["emissions"]
+EMISSIONS_ROUTER_TAGS = ["Emissions"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.put(
-    "/emission/", tags=EMISSIONS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+    "/emission", tags=EMISSIONS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
 )
 @inject
 def add_emission(

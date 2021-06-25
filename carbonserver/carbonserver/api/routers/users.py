@@ -7,14 +7,14 @@ from carbonserver.api.schemas import User, UserCreate
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 
-USERS_ROUTER_TAGS = ["users"]
+USERS_ROUTER_TAGS = ["Users"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
 
 
-@router.post("/user/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@router.post("/user", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
 @inject
 def create_user(
     user: UserCreate,
@@ -24,7 +24,7 @@ def create_user(
 
 
 @router.post(
-    "/user/signup/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+    "/user/signup", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
 )
 @inject
 def sign_up(
@@ -34,7 +34,7 @@ def sign_up(
     return signup_service.sign_up(user)
 
 
-@router.get("/users/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@router.get("/users", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
 @inject
 def list_users(
     user_service: UserService = Depends(Provide[ServerContainer.user_service]),

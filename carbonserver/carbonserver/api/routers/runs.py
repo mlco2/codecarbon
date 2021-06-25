@@ -9,7 +9,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Run, RunCreate
 from carbonserver.api.services.run_service import RunService
 
-RUNS_ROUTER_TAGS = ["runs"]
+RUNS_ROUTER_TAGS = ["Runs"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -18,7 +18,7 @@ runs_temp_db = []
 
 
 @router.put(
-    "/run/",
+    "/run",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -44,7 +44,7 @@ def read_run(
 
 
 @router.get(
-    "/runs/",
+    "/runs",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

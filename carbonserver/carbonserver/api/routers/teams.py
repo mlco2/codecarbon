@@ -9,7 +9,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Team, TeamCreate
 from carbonserver.api.services.team_service import TeamService
 
-TEAMS_ROUTER_TAGS = ["teams"]
+TEAMS_ROUTER_TAGS = ["Teams"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.put(
-    "/team/",
+    "/team",
     tags=TEAMS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -43,7 +43,7 @@ def read_team(
 
 
 @router.get(
-    "/teams/",
+    "/teams",
     tags=TEAMS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

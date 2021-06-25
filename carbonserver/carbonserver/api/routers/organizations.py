@@ -9,7 +9,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Organization, OrganizationCreate
 from carbonserver.api.services.organization_service import OrganizationService
 
-ORGANIZATIONS_ROUTER_TAGS = ["organizations"]
+ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/organization/",
+    "/organization",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -47,7 +47,7 @@ def read_organization(
 
 
 @router.get(
-    "/organizations/", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK
+    "/organizations", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK
 )
 @inject
 def list_organizations(

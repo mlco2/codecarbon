@@ -7,7 +7,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import ExperimentCreate
 from carbonserver.api.services.experiments_service import ExperimentService
 
-EXPERIMENTS_ROUTER_TAGS = ["experiments"]
+EXPERIMENTS_ROUTER_TAGS = ["Experiments"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.put(
-    "/experiment/", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+    "/experiment", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
 )
 @inject
 def add_experiment(

@@ -6,7 +6,7 @@ from starlette import status
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import ProjectCreate
 
-PROJECTS_ROUTER_TAGS = ["projects"]
+PROJECTS_ROUTER_TAGS = ["Projects"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
