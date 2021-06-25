@@ -16,7 +16,7 @@ router = APIRouter(
 projects_temp_db = []
 
 
-@router.put("/projects", tags=PROJECTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@router.put("/project", tags=PROJECTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
 @inject
 def add_project(
     project: ProjectCreate,
@@ -25,7 +25,7 @@ def add_project(
     return project_service.add_project(project)
 
 
-@router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS)
+@router.get("/project/{project_id}", tags=PROJECTS_ROUTER_TAGS)
 @inject
 def read_project(
     project_id: str, project_service=Depends(Provide[ServerContainer.project_service])

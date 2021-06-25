@@ -18,7 +18,7 @@ runs_temp_db = []
 
 
 @router.put(
-    "/runs/",
+    "/run/",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -31,7 +31,7 @@ def add_run(
 
 
 @router.get(
-    "/runs/{run_id}",
+    "/run/{run_id}",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
@@ -53,13 +53,3 @@ def list_runs(
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> List[Run]:
     return run_service.list_runs()
-
-
-# @router.put("/run", tags=["runs"])
-# def add_run(run: RunCreate, db: Session = Depends(get_db)):
-#     repository_runs = SqlAlchemyRepository(db)
-#     res = repository_runs.add_run(run)
-#     if isinstance(res, DBError):
-#         raise DBException(error=res)
-#     else:
-#         return {"id": res.id}

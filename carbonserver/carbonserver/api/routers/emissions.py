@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.put(
-    "/emissions/", tags=EMISSIONS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+    "/emission/", tags=EMISSIONS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
 )
 @inject
 def add_emission(
@@ -27,7 +27,7 @@ def add_emission(
     return emission_service.add_emission(emission)
 
 
-@router.get("/emissions/{emission_id}", tags=EMISSIONS_ROUTER_TAGS)
+@router.get("/emission/{emission_id}", tags=EMISSIONS_ROUTER_TAGS)
 @inject
 def read_emission(
     emission_id: str,

@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.put(
-    "/teams/",
+    "/team/",
     tags=TEAMS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -30,7 +30,7 @@ def add_team(
 
 
 @router.get(
-    "/teams/{team_id}",
+    "/team/{team_id}",
     tags=TEAMS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

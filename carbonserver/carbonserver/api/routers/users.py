@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.post("/users/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@router.post("/user/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
 @inject
 def create_user(
     user: UserCreate,
@@ -24,7 +24,7 @@ def create_user(
 
 
 @router.post(
-    "/users/signup/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+    "/user/signup/", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
 )
 @inject
 def sign_up(
@@ -42,7 +42,7 @@ def list_users(
     return user_service.list_users()
 
 
-@router.get("/users/{user_id}", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@router.get("/user/{user_id}", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
 @inject
 def get_user_by_id(
     user_id: str,

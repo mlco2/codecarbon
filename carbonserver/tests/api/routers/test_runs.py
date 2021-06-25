@@ -54,7 +54,7 @@ def test_add_run(client, custom_test_server):
     repository_mock.add_run.return_value = SqlModelRun(**RUN_1)
 
     with custom_test_server.container.run_repository.override(repository_mock):
-        response = client.put("/runs/", json=RUN_TO_CREATE)
+        response = client.put("/run/", json=RUN_TO_CREATE)
         actual_run = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -69,7 +69,7 @@ def test_get_run_by_id_returns_correct_run(client, custom_test_server):
     ]
 
     with custom_test_server.container.run_repository.override(repository_mock):
-        response = client.get("/runs/read_run/", params={"id": RUN_ID})
+        response = client.get("/run/read_run/", params={"id": RUN_ID})
         actual_run = response.json()[0]
 
     assert response.status_code == status.HTTP_200_OK

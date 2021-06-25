@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/organizations/",
+    "/organization/",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -32,7 +32,7 @@ def add_organization(
 
 
 @router.get(
-    "/organizations/{organization_id}",
+    "/organization/{organization_id}",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

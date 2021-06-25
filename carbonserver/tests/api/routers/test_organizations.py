@@ -56,7 +56,7 @@ def test_add_org(client, custom_test_server):
     repository_mock.add_organization.return_value = ModelOrganization(**ORG_1)
 
     with custom_test_server.container.organization_repository.override(repository_mock):
-        response = client.post("/organizations/", json=ORG_TO_CREATE)
+        response = client.post("/organization/", json=ORG_TO_CREATE)
         actual_org = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -72,7 +72,7 @@ def test_get_organizations_by_id_returns_correct_org(client, custom_test_server)
 
     with custom_test_server.container.organization_repository.override(repository_mock):
         response = client.get(
-            "/organizations/read_organization/", params={"organization_id": ORG_ID_1}
+            "/organization/read_organization/", params={"organization_id": ORG_ID_1}
         )
         actual_org = response.json()[0]
 

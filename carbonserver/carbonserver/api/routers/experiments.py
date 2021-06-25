@@ -43,7 +43,7 @@ def read_experiment(
 
 
 @router.get(
-    "/experiments/{experiment_id}",
+    "/experiments/project/{project_id}",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
