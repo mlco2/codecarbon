@@ -68,7 +68,7 @@ def test_create_user(client, custom_test_server):
     repository_mock.create_user.return_value = ModelUser(**expected_user)
 
     with custom_test_server.container.user_repository.override(repository_mock):
-        response = client.post("/users/", json=USER_TO_CREATE)
+        response = client.post("/user", json=USER_TO_CREATE)
         actual_user = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -76,7 +76,7 @@ def test_create_user(client, custom_test_server):
 
 
 def test_create_user_with_bad_email_fails_at_http_layer(client):
-    response = client.post("/users/", json=USER_WITH_BAD_EMAIL)
+    response = client.post("/user", json=USER_WITH_BAD_EMAIL)
     actual_response = response.json()
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -94,7 +94,7 @@ def test_list_users_list_all_existing_users_with_200(client, custom_test_server)
     ]
 
     with custom_test_server.container.user_repository.override(repository_mock):
-        response = client.get("/users/")
+        response = client.get("/users")
         actual_user_list = response.json()
 
     assert response.status_code == status.HTTP_200_OK
@@ -111,7 +111,7 @@ def test_get_user_by_id_returns_correct_user_with_correct_id(
     container_mock = mock.Mock(spec=ServerContainer)
     container_mock.db.return_value = True
     with custom_test_server.container.user_repository.override(repository_mock):
-        response = client.get("/users/get_user_by_id/", params={"user_id": USER_ID_1})
+        response = client.get("/user/get_user_by_id/", params={"user_id": USER_ID_1})
         actual_user = response.json()
 
     assert response.status_code == status.HTTP_200_OK

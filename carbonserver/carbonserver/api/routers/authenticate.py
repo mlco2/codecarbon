@@ -6,13 +6,13 @@ from starlette import status
 from carbonserver.api.schemas import Token, UserAuthenticate
 from carbonserver.api.services.user_service import UserService
 
-AUTHENTICATE_ROUTER_TAGS = ["/auth/"]
+AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
 
 router = APIRouter()
 
 
 @router.post(
-    "/authenticate/", tags=AUTHENTICATE_ROUTER_TAGS, status_code=status.HTTP_200_OK
+    "/authenticate", tags=AUTHENTICATE_ROUTER_TAGS, status_code=status.HTTP_200_OK
 )
 @inject
 def auth_user(

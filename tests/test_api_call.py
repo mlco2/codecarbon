@@ -12,7 +12,7 @@ def test_call_api():
         m.put(
             "http://test.com/run",
             json={"id": "82ba0923-0713-4da1-9e57-cea70b460ee9"},
-            status_code=200,
+            status_code=201,
         )
         api = ApiClient(
             experiment_id="experiment_id",

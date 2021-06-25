@@ -30,12 +30,12 @@ def init_container():
     container.wire(
         modules=[
             emissions,
+            runs,
             experiments,
             projects,
-            users,
-            organizations,
             teams,
-            runs,
+            organizations,
+            users,
             authenticate,
         ]
     )
@@ -51,15 +51,15 @@ def init_db(container):
 def init_server(container):
     server = FastAPI(dependencies=[Depends(get_query_token)])
     server.container = container
-    server.include_router(emissions.router)
-    server.include_router(experiments.router)
-    server.include_router(runs.router)
-    server.include_router(experiments.router)
-    server.include_router(projects.router)
-    server.include_router(teams.router)
-    server.include_router(organizations.router)
     server.include_router(users.router)
     server.include_router(authenticate.router)
+    server.include_router(organizations.router)
+    server.include_router(teams.router)
+    server.include_router(projects.router)
+    server.include_router(experiments.router)
+    server.include_router(experiments.router)
+    server.include_router(runs.router)
+    server.include_router(emissions.router)
 
     return server
 
