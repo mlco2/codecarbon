@@ -13,16 +13,16 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine.reflection import Inspector
 
-ADMIN_ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+ADMIN_ORG_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 
-ADMIN_TEAM_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+ADMIN_TEAM_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 ADMIN_TEAM_API_KEY = os.environ.get("ADMIN_TEAM_API_KEY", "supersecret")
 
 
-COMMUNITY_ORG_ID = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+COMMUNITY_ORG_ID = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 COMMUNITY_ORG_API_KEY = "default"
 
-DFG_TEAM_ID = "8edb03e1-9a28-452a-9c93-a3b6560136d7"
+DFG_TEAM_ID = UUID("8edb03e1-9a28-452a-9c93-a3b6560136d7")
 DFG_TEAM_API_KEY = "default"
 
 revision = "5abae4eb2079"
