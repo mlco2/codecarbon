@@ -5,11 +5,13 @@ Revises: 5abae4eb2079
 Create Date: 2021-05-20 11:34:59.174223
 
 """
+from uuid import UUID
+
 from alembic import op
 
-DFG_ORG_ID = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+DFG_ORG_ID = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 
-DFG_TEAM_ID = "8edb03e1-9a28-452a-9c93-a3b6560136d7"
+DFG_TEAM_ID = UUID("8edb03e1-9a28-452a-9c93-a3b6560136d7")
 DFG_TEAM_API_KEY = "default"
 
 revision = "73a394753d3a"
