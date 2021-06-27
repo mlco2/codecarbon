@@ -13,16 +13,16 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.engine.reflection import Inspector
 
-ADMIN_ORG_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+ADMIN_ORG_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 
-ADMIN_TEAM_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+ADMIN_TEAM_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 ADMIN_TEAM_API_KEY = os.environ.get("ADMIN_TEAM_API_KEY", "supersecret")
 
 
-COMMUNITY_ORG_ID = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+COMMUNITY_ORG_ID = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 COMMUNITY_ORG_API_KEY = "default"
 
-DFG_TEAM_ID = "8edb03e1-9a28-452a-9c93-a3b6560136d7"
+DFG_TEAM_ID = UUID("8edb03e1-9a28-452a-9c93-a3b6560136d7")
 DFG_TEAM_API_KEY = "default"
 
 revision = "5abae4eb2079"
@@ -47,7 +47,7 @@ def upgrade():
         sa.Column("duration", sa.Float),
         sa.Column("emissions", sa.Float),
         sa.Column("energy_consumed", sa.Float),
-        sa.Column("run_id", UUID),
+        sa.Column("run_id", UUID(as_uuid=True)),
         keep_existing=False,
     )
 
@@ -57,7 +57,7 @@ def upgrade():
             "id", UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
         ),
         sa.Column("timestamp", sa.DateTime),
-        sa.Column("experiment_id", UUID),
+        sa.Column("experiment_id", UUID(as_uuid=True)),
         keep_existing=False,
     )
 
@@ -77,7 +77,7 @@ def upgrade():
         sa.Column("on_cloud", sa.Boolean, default=False),
         sa.Column("cloud_provider", sa.String),
         sa.Column("cloud_region", sa.String),
-        sa.Column("project_id", UUID),
+        sa.Column("project_id", UUID(as_uuid=True)),
         keep_existing=False,
     )
 
@@ -92,7 +92,7 @@ def upgrade():
         ),
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
-        sa.Column("team_id", UUID),
+        sa.Column("team_id", UUID(as_uuid=True)),
         keep_existing=False,
     )
 
@@ -108,7 +108,7 @@ def upgrade():
         sa.Column("name", sa.String),
         sa.Column("description", sa.String),
         sa.Column("api_key", sa.String),
-        sa.Column("organization_id", UUID),
+        sa.Column("organization_id", UUID(as_uuid=True)),
         keep_existing=False,
     )
 
@@ -144,7 +144,7 @@ def upgrade():
         sa.Column(
             "organizations", sa.types.ARRAY(sa.String, as_tuple=False, dimensions=1)
         ),
-        sa.Column("organization_id", UUID),
+        sa.Column("organization_id", UUID(as_uuid=True)),
         keep_existing=False,
     )
 

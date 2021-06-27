@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import ARRAY
@@ -15,7 +15,7 @@ class Emission(Base):
     duration = Column(Float)
     emissions = Column(Float)
     energy_consumed = Column(Float)
-    run_id = Column(String, ForeignKey("runs.id"))
+    run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id"))
     run = relationship("Run", back_populates="emissions")
 
     def __repr__(self):
@@ -31,7 +31,7 @@ class Run(Base):
     __tablename__ = "runs"
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
-    experiment_id = Column(Integer, ForeignKey("experiments.id"))
+    experiment_id = Column(UUID(as_uuid=True), ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="runs")
     emissions = relationship("Emission", back_populates="run")
 
@@ -55,7 +55,7 @@ class Experiment(Base):
     on_cloud = Column(Boolean, default=False)
     cloud_provider = Column(String)
     cloud_region = Column(String)
-    project_id = Column(Integer, ForeignKey("projects.id"))
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     project = relationship("Project", back_populates="experiments")
     runs = relationship("Run", back_populates="experiment")
 
@@ -77,7 +77,7 @@ class Project(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
-    team_id = Column(Integer, ForeignKey("teams.id"))
+    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id"))
     experiments = relationship("Experiment", back_populates="project")
     team = relationship("Team", back_populates="projects")
 
