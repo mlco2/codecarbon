@@ -16,7 +16,7 @@ router = APIRouter(
 projects_temp_db = []
 
 
-@router.put("/project", tags=PROJECTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@router.post("/project", tags=PROJECTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
 @inject
 def add_project(
     project: ProjectCreate,

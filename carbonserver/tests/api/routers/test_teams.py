@@ -64,7 +64,7 @@ def test_add_team(client, custom_test_server):
     repository_mock.add_team.return_value = SqlModelTeam(**TEAM_1)
 
     with custom_test_server.container.team_repository.override(repository_mock):
-        response = client.put("/team", json=TEAM_TO_CREATE)
+        response = client.post("/team", json=TEAM_TO_CREATE)
         actual_team = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -77,7 +77,7 @@ def test_add_team_with_no_org_links_to_data_for_good_org(client, custom_test_ser
     repository_mock.add_team.return_value = SqlModelTeam(**TEAM_1)
 
     with custom_test_server.container.team_repository.override(repository_mock):
-        response = client.put("/team", json=TEAM_TO_CREATE)
+        response = client.post("/team", json=TEAM_TO_CREATE)
         actual_team = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED

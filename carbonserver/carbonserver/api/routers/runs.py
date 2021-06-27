@@ -17,7 +17,7 @@ router = APIRouter(
 runs_temp_db = []
 
 
-@router.put(
+@router.post(
     "/run",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
