@@ -77,7 +77,7 @@ def test_add_emission(client, custom_test_server):
     repository_mock.add_emission.return_value = SqlModelEmission(**EMISSION_1)
 
     with custom_test_server.container.emission_repository.override(repository_mock):
-        response = client.put("/emission", json=EMISSION_TO_CREATE)
+        response = client.post("/emission", json=EMISSION_TO_CREATE)
         actual_emission = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED

@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.put(
+@router.post(
     "/experiment", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
 )
 @inject

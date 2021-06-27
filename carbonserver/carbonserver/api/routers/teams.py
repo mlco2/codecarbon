@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.put(
+@router.post(
     "/team",
     tags=TEAMS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
