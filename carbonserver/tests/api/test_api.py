@@ -4,15 +4,32 @@ import requests
 
 URL = "http://localhost:8008"
 experiment_id = project_id = user_id = api_key = org_id = team_id = email = None
+org_name = org_description = org_new_id = None
+team_name = team_description = team_new_id = emission_id = None
 password = "Secret1!îstring"
 
 
-def test_create():
-    global user_id, api_key, org_id, team_id, email
-    email = f"test-{random.randint(1, 1000)}@test.com"
+def is_key_value_exist(list_of_dict, key, value):
+    for d in list_of_dict:
+        if d[key] == value:
+            return True
+    return False
+
+
+def test_user_create():
+    email = f"test-{random.randint(1, 20_000_000)}@test.com"
     payload = {"email": email, "name": "toto", "password": password}
-    r = requests.post(url=URL + "/users/signup/", json=payload, timeout=2)
-    print(r.json())
+    r = requests.post(url=URL + "/user", json=payload, timeout=2)
+    assert r.status_code == 201
+    assert r.json()["email"] == email
+    assert r.json()["is_active"] == True  # noqa
+
+
+def test_user_signup():
+    global user_id, api_key, org_id, team_id, email
+    email = f"test-{random.randint(1, 20_000_000)}@test.com"
+    payload = {"email": email, "name": "toto", "password": password}
+    r = requests.post(url=URL + "/user/signup/", json=payload, timeout=2)
     assert r.status_code == 201
     assert r.json()["email"] == email
     assert r.json()["is_active"] == True  # noqa
@@ -22,10 +39,21 @@ def test_create():
     team_id = r.json()["teams"][0]
 
 
+def test_users_list():
+    r = requests.get(url=URL + "/users", timeout=2)
+    assert r.status_code == 200
+    assert is_key_value_exist(r.json(), "id", user_id)
+
+
+def test_get_user():
+    r = requests.get(url=URL + "/user/" + user_id, timeout=2)
+    assert r.status_code == 200
+    assert r.json()["email"] == email
+
+
 def test_auth_success():
     payload = {"email": email, "password": password}
     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
-    print(r.json())
     assert r.status_code == 200
     assert r.json()["access_token"] == "a"
     assert r.json()["token_type"] == "access"
@@ -34,37 +62,85 @@ def test_auth_success():
 def test_auth_fail():
     payload = {"email": "toto@free.fr", "password": "password"}
     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
-    print(r.json())
     assert r.status_code == 401
 
 
-def test_list_organizations():
-    r = requests.get(url=URL + "/organizations/", timeout=2)
+def test_organization_create():
+    global org_name, org_description, org_new_id
+    org_name = "test_to_delete"
+    org_description = "test to delete"
+    payload = {"name": org_name, "description": org_description}
+    r = requests.post(url=URL + "/organization", json=payload, timeout=2)
+    assert r.status_code == 201
+    assert r.json()["name"] == org_name
+    assert r.json()["description"] == org_description
+    org_new_id = r.json()["id"]
+
+
+def test_organization_read():
+    r = requests.get(url=URL + "/organization/" + org_new_id, timeout=2)
+    assert r.status_code == 200
+    assert r.json()["name"] == org_name
+    assert r.json()["description"] == org_description
+
+
+def test_organization_list():
+    r = requests.get(url=URL + "/organizations", timeout=2)
     assert r.status_code == 200
     assert r.json()[1]["id"] == org_id
 
 
-def test_list_teams():
-    r = requests.get(url=URL + "/teams/", timeout=2)
+def test_team_create():
+    global team_name, team_description, team_new_id
+    team_name = "test_to_delete"
+    team_description = "test to delete"
+    payload = {
+        "name": team_name,
+        "description": team_description,
+        "organization_id": org_new_id,
+        "api_key": api_key,
+    }
+    r = requests.post(url=URL + "/team", json=payload, timeout=2)
+    assert r.status_code == 201
+    assert r.json()["name"] == team_name
+    assert r.json()["description"] == team_description
+    team_new_id = r.json()["id"]
+
+
+def test_team_read():
+    r = requests.get(url=URL + "/team/" + team_new_id, timeout=2)
     assert r.status_code == 200
-    assert r.json()[1]["id"] == team_id
+    assert r.json()["name"] == team_name
+    assert r.json()["description"] == team_description
 
 
-def test_create_project():
+def test_teams_list():
+    r = requests.get(url=URL + "/teams", timeout=2)
+    assert r.status_code == 200
+    is_key_value_exist(r.json(), "id", team_id)
+
+
+def test_project_create():
     global project_id
     payload = {
-        "name": f"test-{random.randint(1, 1000)}",
-        "description": "Test API for Code Carbon",
-        "team_id": team_id,
+        "name": "test_to_delete",
+        "description": "Test to delete",
+        "team_id": team_new_id,
     }
-    r = requests.put(url=URL + "/projects/", json=payload, timeout=2)
-    print(r.json())
+    r = requests.post(url=URL + "/project/", json=payload, timeout=2)
     assert r.status_code == 201
-    assert r.json()["team_id"] == team_id
+    assert r.json()["team_id"] == team_new_id
     project_id = r.json()["id"]
 
 
-def test_create_experiment():
+# Not implemented yet
+# def test_projects_list():
+#     r = requests.get(url=URL + "/projects", timeout=2)
+#     assert r.status_code == 200
+#     assert is_key_value_exist(r.json(),"id",project_id)
+
+
+def test_experiment_create():
     global experiment_id
     payload = {
         "name": "Run on Premise",
@@ -78,32 +154,62 @@ def test_create_experiment():
         "cloud_region": "eu-west-1a",
         "project_id": project_id,
     }
-    r = requests.put(url=URL + "/experiment/", json=payload, timeout=2)
-    print(r.json())
+    r = requests.post(url=URL + "/experiment", json=payload, timeout=2)
     assert r.status_code == 201
     assert r.json()["project_id"] == project_id
     experiment_id = r.json()["id"]
 
 
-def test_create_run():
+def test_experiment_read():
+    r = requests.get(url=URL + "/experiment/" + experiment_id, timeout=2)
+    assert r.status_code == 200
+
+
+def test_experiment_list():
+    r = requests.get(url=URL + "/experiments/project/" + project_id, timeout=2)
+    assert r.status_code == 200
+    assert is_key_value_exist(r.json(), "id", experiment_id)
+
+
+def test_run_create():
     global run_id
     payload = {"timestamp": "2021-04-04T08:43:00+02:00", "experiment_id": experiment_id}
-    r = requests.put(url=URL + "/runs/", json=payload, timeout=2)
-    print(r.json())
+    r = requests.post(url=URL + "/run/", json=payload, timeout=2)
     assert r.status_code == 201
     run_id = r.json()["id"]
 
 
-def test_create_emission():
-    global run_id
+def test_run_read():
+    r = requests.get(url=URL + "/run/" + run_id, timeout=2)
+    assert r.status_code == 200
+    assert r.json()["id"] == run_id
+
+
+def test_run_list():
+    r = requests.get(url=URL + "/runs", timeout=2)
+    assert r.status_code == 200
+    assert is_key_value_exist(r.json(), "id", run_id)
+
+
+def test_emission_create():
     payload = {
         "timestamp": "2021-04-04T08:43:00+02:00",
         "run_id": run_id,
-        "duration": random.randint(1, 100),
-        "emissions": random.random() * random.randint(1, 10000),
-        "energy_consumed": random.random() * random.randint(1, 10000),
+        "duration": 42,
+        "emissions": 487956487.654,
+        "energy_consumed": 8794512.6547,
     }
-    print(payload)
-    r = requests.put(url=URL + "/emissions/", json=payload, timeout=2)
-    print(r.json())
+    r = requests.post(url=URL + "/emission/", json=payload, timeout=2)
     assert r.status_code == 201
+
+
+def test_emission_list():
+    global emission_id
+    r = requests.get(url=URL + "/emissions/run/" + run_id, timeout=2)
+    assert r.status_code == 200
+    emission_id = r.json()[-1]["id"]
+
+
+def test_emission_read():
+    r = requests.get(url=URL + "/emission/" + emission_id, timeout=2)
+    assert r.status_code == 200
