@@ -149,7 +149,12 @@ class RAM(BaseHardware):
     # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
     power_per_GB = 3 / 8  # W/GB
 
-    def __init__(self, pid: int = psutil.Process().pid, children: bool = True):
+    def __init__(
+        self,
+        pid: int = psutil.Process().pid,
+        children: bool = True,
+        tracking_mode: str = "machine",
+    ):
         """
         Instantiate a RAM object from a reference pid. If none is provided, will use the
         current process's. The `pid` is used to find children processes if `children`
@@ -163,6 +168,7 @@ class RAM(BaseHardware):
         """
         self._pid = pid
         self._children = children
+        self._tracking_mode = tracking_mode
 
     def _get_children_memories(self):
         """
@@ -217,8 +223,10 @@ class RAM(BaseHardware):
         Property to compute the process's total memory usage in bytes.
 
         Returns:
-            float: RAM usage (bytes)
+            float: RAM usage (GB)
         """
+        if self._tracking_mode == "machine":
+            return psutil.virtual_memory().total / 1e9
         children_memories = self._get_children_memories() if self._children else []
         main_memory = psutil.Process(self._pid).memory_info().rss
         memories = children_memories + [main_memory]
