@@ -36,7 +36,7 @@ class Energy:
     """
 
     UJOULES_TO_JOULES = 10 ** (-6)
-    JOULES_TO_KWH = 0.000000277777778
+    JOULES_TO_KWH = 2.77778e-7
 
     kwh: float
 
@@ -96,7 +96,7 @@ class Time:
     Measured in seconds
     """
 
-    SECONDS_TO_HOURS = 0.00027777778
+    SECONDS_TO_HOURS = 1 / 3600
 
     seconds: float
 
