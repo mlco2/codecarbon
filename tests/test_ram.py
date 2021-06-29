@@ -28,6 +28,9 @@ class TestRAM(unittest.TestCase):
                 new_W = ram.total_power().W
                 n_gb = array.nbytes / (1000 ** 3)
                 n_gb_W = (new_W - ref_W) / ram.power_per_GB
-                print(array_size, n_gb, n_gb_W, np.isclose(n_gb, n_gb_W, atol=1e-4))
-                self.assertTrue(np.isclose(n_gb, n_gb_W, atol=1e-4))
+                is_close = np.isclose(n_gb, n_gb_W, atol=1e-3)
+                self.assertTrue(
+                    is_close,
+                    msg=f"{array_size}, {n_gb}, {n_gb_W}, {is_close}",
+                )
                 del array
