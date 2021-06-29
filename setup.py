@@ -4,6 +4,7 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 DEPENDENCIES = [
+    "arrow",
     "APScheduler",
     "dash",
     "dash_bootstrap_components",
@@ -16,7 +17,7 @@ DEPENDENCIES = [
     "py-cpuinfo",
 ]
 
-TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy"]
+TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy", "requests-mock"]
 
 
 setuptools.setup(

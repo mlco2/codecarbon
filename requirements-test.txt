@@ -4,3 +4,4 @@ responses
 tox
 numpy
 psutil
+requests-mock

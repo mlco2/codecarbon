@@ -4,7 +4,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*intel_power_gadget_log.csv
 # C extensions
 *.so
 
@@ -111,3 +111,7 @@ docs/_build/
 # OS generated files
 .DS_Store
 .DS_Store?
+
+# local database
+code_carbon.db
+.clever.json

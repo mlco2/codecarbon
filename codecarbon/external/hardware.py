@@ -22,14 +22,15 @@ POWER_CONSTANT = 85
 #  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
-logger = logging.getLogger(__name__)
-
 
 @dataclass
 class BaseHardware(ABC):
     @abstractmethod
     def total_power(self) -> Power:
         pass
+
+    def description(self) -> str:
+        return repr(self)
 
 
 @dataclass
@@ -64,12 +65,11 @@ class GPU(BaseHardware):
             gpu_ids = self.gpu_ids
             assert set(gpu_ids).issubset(
                 set(range(self.num_gpus))
-            ), f"CODECARBON Unknown GPU ids {gpu_ids}"
+            ), f"Unknown GPU ids {gpu_ids}"
         else:
             gpu_ids = set(range(self.num_gpus))
 
         gpu_power = self._get_power_for_gpus(gpu_ids=gpu_ids)
-        logger.info(f"CODECARBON GPU Power Consumption : {gpu_power}")
         return gpu_power
 
     @classmethod
@@ -79,14 +79,29 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
-    def __init__(self, output_dir: str, mode: str, tdp: int):
+    def __init__(self, output_dir: str, mode: str, model: str, tdp: int):
         self._output_dir = output_dir
         self._mode = mode
+        self._model = model
         self._tdp = tdp
+        self._is_generic_tdp = False
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
             self._intel_interface = IntelRAPL()
+
+    def __repr__(self) -> str:
+        if self._mode != "constant":
+            return "CPU({})".format(
+                " ".join(map(str.capitalize, self._mode.split("_")))
+            )
+
+        s = "CPU({} > {}W".format(self._model, self._tdp)
+
+        if self._is_generic_tdp:
+            s += " [generic]"
+
+        return s + ")"
 
     def _get_power_from_cpus(self) -> Power:
         """
@@ -107,16 +122,25 @@ class CPU(BaseHardware):
 
     def total_power(self) -> Power:
         cpu_power = self._get_power_from_cpus()
-        logger.info(f"CODECARBON CPU Power Consumption : {cpu_power}")
         return cpu_power
 
     @classmethod
     def from_utils(
-        cls, output_dir: str, mode: str, tdp: Optional[int] = POWER_CONSTANT
+        cls,
+        output_dir: str,
+        mode: str,
+        model: Optional[str] = None,
+        tdp: Optional[int] = None,
     ) -> "CPU":
-        return cls(output_dir=output_dir, mode=mode, tdp=tdp)
 
+        if tdp is None:
+            tdp = POWER_CONSTANT
+            cpu = cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
+            cpu._is_generic_tdp = True
+            return cpu
 
+        return cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
+      
 @dataclass
 class RAM(BaseHardware):
 

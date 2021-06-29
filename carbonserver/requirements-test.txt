@@ -1,0 +1,10 @@
+alembic
+bcrypt
+dependency-injector
+fastapi
+pydantic[email]
+psycopg2-binary
+requests
+sqlalchemy
+tox
+uvicorn[standard]

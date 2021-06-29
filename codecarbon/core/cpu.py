@@ -7,16 +7,14 @@ import shutil
 import subprocess
 import sys
 import time
-from logging import getLogger
 from typing import Dict
 
 import cpuinfo
 import pandas as pd
 
 from codecarbon.core.rapl import RAPLFile
+from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
-
-logger = getLogger(__name__)
 
 
 def is_powergadget_available():
@@ -25,7 +23,7 @@ def is_powergadget_available():
         return True
     except Exception as e:
         logger.debug(
-            f"CODECARBON : Exception occurred while instantiating IntelPowerGadget : {e}",
+            f"Exception occurred while instantiating IntelPowerGadget : {e}",
             exc_info=True,
         )
         return False
@@ -37,7 +35,7 @@ def is_rapl_available():
         return True
     except Exception as e:
         logger.debug(
-            f"CODECARBON : Exception occurred while instantiating RAPLInterface : {e}",
+            f"Exception occurred while instantiating RAPLInterface : {e}",
             exc_info=True,
         )
         return False
@@ -49,12 +47,18 @@ def parse_cpu_model(raw_name) -> str:
     :return: parsed CPU name
     """
     if type(raw_name) == str:
-        return (
+        model = (
             raw_name.split(" @")[0]
             .replace("(R)", "")
             .replace("(TM)", "")
             .replace(" CPU", "")
         )
+        splitted = model.split(" ")
+        if splitted[2] == "Threadripper" and len(splitted) == 6:
+            model = (
+                splitted[0] + " " + splitted[1] + " " + splitted[2] + " " + splitted[3]
+            )
+        return model
     return ""
 
 
@@ -90,7 +94,7 @@ class IntelPowerGadget:
                 self._cli = self._windows_exec_backup
             else:
                 raise FileNotFoundError(
-                    f"CODECARBON : Intel Power Gadget executable not found on {self._system}"
+                    f"Intel Power Gadget executable not found on {self._system}"
                 )
         elif self._system.startswith("darwin"):
             if shutil.which(self._osx_exec):
@@ -99,17 +103,16 @@ class IntelPowerGadget:
                 self._cli = self._osx_exec_backup
             else:
                 raise FileNotFoundError(
-                    f"CODECARBON : Intel Power Gadget executable not found on {self._system}"
+                    f"Intel Power Gadget executable not found on {self._system}"
                 )
         else:
-            raise SystemError(
-                "CODECARBON : Platform not supported by Intel Power Gadget"
-            )
+            raise SystemError("Platform not supported by Intel Power Gadget")
 
     def _log_values(self):
         """
         Logs output from Intel Power Gadget command line to a file
         """
+        returncode = None
         if self._system.startswith("win"):
             returncode = subprocess.call(
                 [
@@ -133,9 +136,11 @@ class IntelPowerGadget:
         else:
             return None
 
-        logger.info(
-            f"CODECARBON : Returncode while logging power values using Intel Power Gadget {returncode}"
-        )
+        if returncode != 0:
+            logger.warning(
+                "Returncode while logging power values using "
+                + f"Intel Power Gadget: {returncode}"
+            )
         return
 
     def get_cpu_details(self) -> Dict:
@@ -155,7 +160,7 @@ class IntelPowerGadget:
                     cpu_details[col_name] = cpu_data[col_name].mean()
         except Exception as e:
             logger.info(
-                f"CODECARBON : Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
+                f"Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
                 Exception occurred {e}",
                 exc_info=True,
             )
@@ -179,12 +184,10 @@ class IntelRAPL:
                 self._fetch_rapl_files()
             else:
                 raise FileNotFoundError(
-                    f"CODECARBON : Intel RAPL files not found at {self._lin_rapl_dir} on {self._system}"
+                    f"Intel RAPL files not found at {self._lin_rapl_dir} on {self._system}"
                 )
         else:
-            raise SystemError(
-                "CODECARBON : Platform not supported by Intel RAPL Interface"
-            )
+            raise SystemError("Platform not supported by Intel RAPL Interface")
         return
 
     def _fetch_rapl_files(self):
@@ -221,7 +224,7 @@ class IntelRAPL:
                 cpu_details[rapl_file.name] = rapl_file.power_measurement
         except Exception as e:
             logger.info(
-                f"CODECARBON : Unable to read Intel RAPL files at {self._rapl_files}\n \
+                f"Unable to read Intel RAPL files at {self._rapl_files}\n \
                 Exception occurred {e}",
                 exc_info=True,
             )
@@ -230,12 +233,12 @@ class IntelRAPL:
 
 class TDP:
     def __init__(self):
-        self.tdp = self._get_power_from_constant()
+        self.model, self.tdp = self._get_power_from_constant()
 
     def _get_power_from_constant(self) -> int:
         """
         Get CPU power from constant mode
-        :return: power in Watt
+        :return: model name (str), power in Watt (int)
         """
         cpu_info = cpuinfo.get_cpu_info()
         if cpu_info:
@@ -245,5 +248,17 @@ class TDP:
             cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
             if len(cpu_power_df_model) > 0:
                 power = cpu_power_df_model["TDP"].tolist()[0]
-                return power
-        return None
+                logger.debug(f"CPU : We detect a {model_raw} with a TDP of {power} W")
+                return model, power
+            else:
+                logger.warning(
+                    f"We saw that you have a {model_raw} but we don't know it."
+                    + " Please contact us."
+                )
+                return model, None
+        else:
+            logger.warning(
+                "We were unable to detect your CPU using the `cpuinfo` package."
+                + " Resorting to a default power consumption of 85W."
+            )
+        return "Unknown", None

@@ -96,8 +96,6 @@ class Time:
     Measured in seconds
     """
 
-    SECONDS_TO_HOURS = 1 / 3600
-
     seconds: float
 
     @property
