@@ -2,7 +2,6 @@
 Encapsulates external dependencies to retrieve hardware metadata
 """
 
-import logging
 import os
 import re
 import subprocess
@@ -15,6 +14,7 @@ import psutil
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
+from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
 POWER_CONSTANT = 85
@@ -140,7 +140,8 @@ class CPU(BaseHardware):
             return cpu
 
         return cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
-      
+
+
 @dataclass
 class RAM(BaseHardware):
 
@@ -238,9 +239,9 @@ class RAM(BaseHardware):
                 else self.process_memory_GB
             )
             ram_power = Power.from_watts(memory_GB * self.power_per_GB)
-            logger.info(f"CODECARBON RAM Power Consumption : {ram_power}")
+            logger.info(f"RAM Power Consumption : {ram_power}")
         except Exception as e:
-            logger.warning(f"CODECARBON could not measure RAM Power ({str(e)})")
+            logger.warning(f"Could not measure RAM Power ({str(e)})")
             ram_power = Power.from_watts(0)
 
         return ram_power
