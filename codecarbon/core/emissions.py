@@ -84,7 +84,7 @@ class Emissions:
             try:
                 return co2_signal.get_emissions(energy, geo, self._co2_signal_api_token)
             except Exception as e:
-                logger.error(e)
+                logger.error(e, exc_info=True)
 
         compute_with_regional_data: bool = (geo.region is not None) and (
             geo.country_iso_code.upper() in ["USA", "CAN"]
@@ -94,9 +94,10 @@ class Emissions:
             try:
                 return self.get_region_emissions(energy, geo)
             except Exception as e:
-                logger.error(e)
+                logger.error(e, exc_info=True)
                 logger.warning(
-                    "Regional emissions retrieval failed. Falling back on country emissions."
+                    "Regional emissions retrieval failed."
+                    + " Falling back on country emissions."
                 )
         return self.get_country_emissions(energy, geo)
 
