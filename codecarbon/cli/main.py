@@ -1,7 +1,8 @@
 import click
+
+from codecarbon.cli.cli_utils import get_existing_local_exp_id, write_local_exp_id
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate
-from codecarbon.cli.cli_utils import get_existing_local_exp_id, write_local_exp_id
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
