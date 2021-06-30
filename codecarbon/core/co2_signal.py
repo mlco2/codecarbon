@@ -19,7 +19,7 @@ def get_emissions(energy: Energy, geo: GeoMetadata, co2_signal_api_token: str = 
         timeout=CO2_SIGNAL_API_TIMEOUT,
     )
     if resp.status_code != 200:
-        raise CO2SignalAPIError(resp.json()["error"])
+        raise CO2SignalAPIError(resp.json().get("error"))
     carbon_intensity_g_per_kWh = resp.json()["data"]["carbonIntensity"]
     emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_g_per_kwh(
         carbon_intensity_g_per_kWh
