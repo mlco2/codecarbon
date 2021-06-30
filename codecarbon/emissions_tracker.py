@@ -371,7 +371,7 @@ class BaseEmissionsTracker(ABC):
             )
             logger.info(
                 "Energy consumed for all "
-                + f"{hardware.__class__.__name__} : {self._total_energy}"
+                + f"{hardware.__class__.__name__} :\n {self._total_energy}"
                 + f"={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
             )
         self._last_measured_time = time.time()
