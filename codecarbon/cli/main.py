@@ -15,6 +15,7 @@ def codecarbon():
 @codecarbon.command()
 def init():
     experiment_id = get_existing_local_exp_id()
+    new_local = False
     if experiment_id is None:
         api = ApiClient()
         experiment = ExperimentCreate(
@@ -29,5 +30,15 @@ def init():
         )
         experiment_id = api.add_experiment(experiment)
         write_local_exp_id(experiment_id)
+        new_local = True
 
-    click.echo(f"Welcome to CodeCarbon, here is your experiment id : {experiment_id}")
+    click.echo(
+        "\nWelcome to CodeCarbon, here is your experiment id : "
+        + click.style(f"{experiment_id}", fg="bright_green")
+    )
+    if new_local:
+        click.echo(
+            "\nCodeCarbon automatically added this id to your local config: "
+            + click.style("./.codecarbon.config", fg="bright_blue")
+            + "\n"
+        )
