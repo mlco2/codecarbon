@@ -230,8 +230,9 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
         if self._save_to_api:
-            if experiment_id is None:
-                experiment_id = "82ba0923-0713-4da1-9e57-cea70b460ee9"
+            experiment_id = self._get_conf(
+                experiment_id, "experiment_id", "82ba0923-0713-4da1-9e57-cea70b460ee9"
+            )
             self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
                 experiment_id=experiment_id,
@@ -523,6 +524,7 @@ def track_emissions(
     cloud_provider: Optional[str] = _sentinel,
     cloud_region: Optional[str] = _sentinel,
     gpu_ids: Optional[List] = _sentinel,
+    co2_signal_api_token: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
 ):
     """
@@ -580,6 +582,7 @@ def track_emissions(
                     cloud_region=cloud_region,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
+                    co2_signal_api_token=co2_signal_api_token,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
@@ -598,10 +601,18 @@ def track_emissions(
                     api_key=api_key,
                     api_endpoint=api_endpoint,
                     save_to_api=save_to_api,
+                    co2_signal_api_token=co2_signal_api_token,
                 )
                 tracker.start()
-                fn(*args, **kwargs)
-                tracker.stop()
+                try:
+                    fn(*args, **kwargs)
+                finally:
+                    logger.info(
+                        "\nGraceful stopping: collecting and writing information.\n"
+                        + "Please Allow for a few seconds..."
+                    )
+                    tracker.stop()
+                    logger.info("Done!\n")
 
         return wrapped_fn
 
