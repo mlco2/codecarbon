@@ -212,7 +212,10 @@ class BaseEmissionsTracker(ABC):
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
         self._scheduler.add_job(
-            self._measure_power, "interval", seconds=self._measure_power_secs
+            self._measure_power,
+            "interval",
+            seconds=self._measure_power_secs,
+            max_instances=1,
         )
 
         self._data_source = DataSource()

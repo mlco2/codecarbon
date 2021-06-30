@@ -21,7 +21,6 @@ from codecarbon.external.logger import logger
 
 def get_datetime_with_timezone():
     timestamp = str(arrow.now().isoformat())
-    print(timestamp)
     return timestamp
 
 
@@ -72,6 +71,7 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             r = requests.post(url=self.url + "/emission", json=payload, timeout=2)
+            logger.debug("Successful upload to " + self.url)
             if r.status_code != 201:
                 self._log_error(payload, r)
             assert r.status_code == 201
