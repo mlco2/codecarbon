@@ -84,7 +84,11 @@ class Emissions:
             try:
                 return co2_signal.get_emissions(energy, geo, self._co2_signal_api_token)
             except Exception as e:
-                logger.error(e, exc_info=True)
+                logger.error(
+                    "co2_signal.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
 
         compute_with_regional_data: bool = (geo.region is not None) and (
             geo.country_iso_code.upper() in ["USA", "CAN"]
