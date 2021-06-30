@@ -165,7 +165,7 @@ class BaseEmissionsTracker(ABC):
         self._hardware = []
         self._conf["hardware"] = []
         self._cc_api__out = None
-        self._measure_occurence: int = 0
+        self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
 
@@ -371,15 +371,17 @@ class BaseEmissionsTracker(ABC):
             )
             logger.info(
                 "Energy consumed for all "
-                + f"{hardware.__class__.__name__} :\n {self._total_energy}"
-                + f"={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
+                + f"{hardware.__class__.__name__} : {self._total_energy.kwh:.6f} kWh"
+            )
+            logger.debug(
+                f"\n={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
             )
         self._last_measured_time = time.time()
-        self._measure_occurence += 1
+        self._measure_occurrence += 1
         if self._cc_api__out is not None:
-            if self._measure_occurence >= self._api_call_interval:
+            if self._measure_occurrence >= self._api_call_interval:
                 self._cc_api__out.out(self._prepare_emissions_data(delta=True))
-                self._measure_occurence = 0
+                self._measure_occurrence = 0
 
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):
