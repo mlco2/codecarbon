@@ -100,7 +100,9 @@ class ApiClient:  # (AsyncClient)
             assert r.status_code == 201
             self.run_id = r.json()["id"]
             logger.info(
-                f"Successfully registered your run on the API under the id {self.run_id}"
+                "Successfully registered your run on the API.\n\n"
+                + f"Run ID: {self.run_id}\n"
+                + f"Experiment ID: {self.experiment_id}\n"
             )
             return self.run_id
         except Exception as e:
