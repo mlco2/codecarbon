@@ -1,4 +1,4 @@
-****![banner](docs/edit/images/banner.png)
+![banner](docs/edit/images/banner.png)
 
 Estimate and track carbon emissions from your compute, quantify and analyze their impact.
 
