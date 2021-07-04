@@ -234,7 +234,7 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_api:
             experiment_id = self._get_conf(
-                experiment_id, "experiment_id", "82ba0923-0713-4da1-9e57-cea70b460ee9"
+                experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
             )
             self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,

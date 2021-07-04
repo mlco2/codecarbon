@@ -70,11 +70,12 @@ class ApiClient:  # (AsyncClient)
         )
         try:
             payload = dataclasses.asdict(emission)
-            r = requests.post(url=self.url + "/emission", json=payload, timeout=2)
-            logger.debug("Successful upload to " + self.url)
+            url = self.url + "/emission"
+            r = requests.post(url=url, json=payload, timeout=2)
+            logger.debug(f"Successful upload emission {payload} to {url}")
             if r.status_code != 201:
-                self._log_error(payload, r)
-            assert r.status_code == 201
+                self._log_error(url, payload, r)
+                return False
         except Exception as e:
             logger.error(e, exc_info=True)
             return False
@@ -94,10 +95,11 @@ class ApiClient:  # (AsyncClient)
                 timestamp=get_datetime_with_timezone(), experiment_id=experiment_id
             )
             payload = dataclasses.asdict(run)
-            r = requests.post(url=self.url + "/run", json=payload, timeout=2)
+            url = self.url + "/run"
+            r = requests.post(url=url, json=payload, timeout=2)
             if r.status_code != 201:
-                self._log_error(payload, r)
-            assert r.status_code == 201
+                self._log_error(url, payload, r)
+                return None
             self.run_id = r.json()["id"]
             logger.info(
                 "Successfully registered your run on the API.\n\n"
@@ -114,15 +116,18 @@ class ApiClient:  # (AsyncClient)
         ::experiment:: The experiment to create.
         """
         payload = dataclasses.asdict(experiment)
-        r = requests.post(url=self.url + "/experiment", json=payload, timeout=2)
+        url = self.url + "/experiment"
+        r = requests.post(url=url, json=payload, timeout=2)
         if r.status_code != 201:
-            self._log_error(payload, r)
-        assert r.status_code == 201
+            self._log_error(url, payload, r)
+            return None
         self.experiment_id = r.json()["id"]
         return self.experiment_id
 
-    def _log_error(self, payload, response):
-        logger.error(f" Error when calling the API with : {json.dumps(payload)}")
+    def _log_error(self, url, payload, response):
+        logger.error(
+            f" Error when calling the API on {url} with : {json.dumps(payload)}"
+        )
         logger.error(
             f" API return http code {response.status_code} and answer : {response.text}"
         )
