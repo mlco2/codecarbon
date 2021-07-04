@@ -2,7 +2,6 @@
 Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
-
 import dataclasses
 import os
 import time
@@ -277,6 +276,7 @@ class BaseEmissionsTracker(ABC):
 
             persistence.out(emissions_data)
 
+        self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
@@ -379,6 +379,13 @@ class BaseEmissionsTracker(ABC):
             if self._measure_occurence >= self._api_call_interval:
                 self._cc_api__out.out(self._prepare_emissions_data(delta=True))
                 self._measure_occurence = 0
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb) -> None:
+        self.stop()
 
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):
