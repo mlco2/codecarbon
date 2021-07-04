@@ -42,4 +42,4 @@ class TestCO2Signal(unittest.TestCase):
         with self.assertRaises(
             (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout)
         ):
-            co2_signal.get_emissions(self._energy, self._geo, timeout=0.000001)
+            co2_signal.get_emissions(self._energy, self._geo)
