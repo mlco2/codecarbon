@@ -103,12 +103,17 @@ class BaseEmissionsTracker(ABC):
 
         value = _sentinel
 
+        # a value for the keyword argument `name` is provided in the constructor:
+        # use it
         if var is not _sentinel:
             value = var
         else:
 
+            # no value provided in the constructor for `name`: check in the conf
+            # (using the provided default value)
             value = self._external_conf.get(name, default)
 
+            # parse to `return_type` if needed
             if return_type is not None:
                 if return_type is bool:
                     value = str(value).lower() == "true"
@@ -116,9 +121,12 @@ class BaseEmissionsTracker(ABC):
                     assert callable(return_type)
                     value = return_type(value)
 
+        # store final value
         self._conf[name] = value
+        # set `self._{name}` to `value`
         if not prevent_setter:
             setattr(self, f"_{name}", value)
+        # return final value (why not?)
         return value
 
     def __init__(
