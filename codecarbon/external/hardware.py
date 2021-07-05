@@ -247,7 +247,6 @@ class RAM(BaseHardware):
                 else self.process_memory_GB
             )
             ram_power = Power.from_watts(memory_GB * self.power_per_GB)
-            logger.info(f"RAM Power Consumption : {ram_power}")
         except Exception as e:
             logger.warning(f"Could not measure RAM Power ({str(e)})")
             ram_power = Power.from_watts(0)
