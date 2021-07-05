@@ -161,6 +161,8 @@ class BaseEmissionsTracker(ABC):
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
+        self._total_cpu_power: Energy = Energy.from_energy(kwh=0)
+        self._total_gpu_power: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = []
         self._conf["hardware"] = []
@@ -311,6 +313,8 @@ class BaseEmissionsTracker(ABC):
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
+            cpu_power=self._total_cpu_power.kwh,
+            gpu_power=self._total_gpu_power.kwh,
             energy_consumed=self._total_energy.kwh,
             country_name=country_name,
             country_iso_code=country_iso_code,
@@ -365,9 +369,14 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         for hardware in self._hardware:
-            self._total_energy += Energy.from_power_and_time(
+            energy = Energy.from_power_and_time(
                 power=hardware.total_power(), time=Time.from_seconds(last_duration)
             )
+            self._total_energy += energy
+            if isinstance(hardware, CPU):
+                self._total_cpu_power += energy
+            if isinstance(hardware, GPU):
+                self._total_gpu_power += energy
             logger.debug(
                 "Energy consumed for all "
                 + f"{hardware.__class__.__name__} : {self._total_energy}"

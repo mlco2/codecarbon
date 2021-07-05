@@ -7,8 +7,8 @@ from codecarbon.external.logger import logger
 
 @track_emissions(
     project_name="just_sleep",
-    api_endpoint="http://app-d6bc59c3-0f69-4d8b-a6a3-bc39a9ceb0c2.cleverapps.io",
-    experiment_id="82ba0923-0713-4da1-9e57-cea70b460ee9",
+    api_endpoint="http://localhost:8008",
+    experiment_id="4763534b-386b-4d2c-b8e8-dc866859fa75",
     measure_power_secs=10,
     api_call_interval=2,
     api_key="12aaaaaa-0b23-1234-1234-abcdef123456",

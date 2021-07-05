@@ -61,7 +61,7 @@ class ApiClient:  # (AsyncClient)
         )
         try:
             payload = dataclasses.asdict(emission)
-            r = requests.put(url=self.url + "/emission", json=payload, timeout=2)
+            r = requests.put(url=self.url + "/emissions", json=payload, timeout=2)
             if r.status_code != 201:
                 self._log_error(payload, r)
             assert r.status_code == 201
@@ -80,10 +80,10 @@ class ApiClient:  # (AsyncClient)
                 timestamp=self.get_datetime_with_timezone(), experiment_id=experiment_id
             )
             payload = dataclasses.asdict(run)
-            r = requests.put(url=self.url + "/run", json=payload, timeout=2)
-            if r.status_code != 200:
+            r = requests.post(url=self.url + "/runs", json=payload, timeout=2)
+            if r.status_code != 201:
                 self._log_error(payload, r)
-            assert r.status_code == 200
+            assert r.status_code == 201
             self.run_id = r.json()["id"]
             logger.info(
                 f"Successfully registered your run on the API under the id {self.run_id}"
@@ -104,7 +104,6 @@ class ApiClient:  # (AsyncClient)
         pass
 
     def get_datetime_with_timezone(self):
-        # return datetime.utcnow().replace(tzinfo=simple_utc()).isoformat()
         timestamp = str(arrow.now().isoformat())
         print(timestamp)
         return timestamp

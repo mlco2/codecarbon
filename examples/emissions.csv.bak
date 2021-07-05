@@ -1,0 +1,2 @@
+timestamp,project_name,duration,emissions,cpu_power,gpu_power,energy_consumed,country_name,country_iso_code,region,on_cloud,cloud_provider,cloud_region
+2021-07-01T11:21:53,codecarbon,174.76814794540405,0.000839213537347589,0.0010734128963393592,0,0.0010734128963393592,Morocco,MAR,casablanca-settat,N,,

@@ -3,6 +3,8 @@ import time
 import unittest
 from pathlib import Path
 from unittest import mock
+import shutil
+import os
 
 import pandas as pd
 import requests
@@ -183,7 +185,7 @@ class TestCarbonTracker(unittest.TestCase):
         dummy_train_model()
 
         # THEN
-        self.verify_output_file(self.emissions_file_path)
+        self.verify_output_file(self.emissions_file_path, 2)
 
     @responses.activate
     def test_decorator_ONLINE_WITH_ARGS(
@@ -210,7 +212,7 @@ class TestCarbonTracker(unittest.TestCase):
         dummy_train_model()
 
         # THEN
-        self.verify_output_file(self.emissions_file_path)
+        self.verify_output_file(self.emissions_file_path, 2)
 
     def test_decorator_OFFLINE_NO_COUNTRY(
         self,
@@ -248,7 +250,7 @@ class TestCarbonTracker(unittest.TestCase):
             return 42
 
         dummy_train_model()
-        self.verify_output_file(self.emissions_file_path)
+        self.verify_output_file(self.emissions_file_path, 2)
 
     def test_decorator_OFFLINE_WITH_CLOUD_ARGS(
         self,
@@ -270,7 +272,7 @@ class TestCarbonTracker(unittest.TestCase):
             return 42
 
         dummy_train_model()
-        self.verify_output_file(self.emissions_file_path)
+        self.verify_output_file(self.emissions_file_path, 2)
 
     def test_offline_tracker_country_name(
         self,
@@ -292,7 +294,58 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
 
-    def verify_output_file(self, file_path: str) -> None:
+    def test_offline_tracker_invalid_headers(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA", output_dir=self.temp_path
+        )
+        emissions = os.path.join(os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv")
+        shutil.copyfile(emissions, self.emissions_file_path)
+        tracker.start()
+        heavy_computation(run_time_secs=2)
+        tracker.stop()
+
+        emissions_df = pd.read_csv(self.emissions_file_path)
+        emissions_backup_df = pd.read_csv(self.emissions_file_path.with_suffix('.csv.bak'))
+
+        self.verify_output_file(self.emissions_file_path, 2)
+        self.verify_output_file(self.emissions_file_path.with_suffix('.csv.bak'), 2)
+
+        self.assertEqual("United States", emissions_df["country_name"].values[0])
+        self.assertEqual("Morocco", emissions_backup_df["country_name"].values[0])
+
+    def test_offline_tracker_valid_headers(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA", output_dir=self.temp_path
+        )
+        emissions = os.path.join(os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv")
+        shutil.copyfile(emissions, self.emissions_file_path)
+        tracker.start()
+        heavy_computation(run_time_secs=2)
+        tracker.stop()
+
+        emissions_df = pd.read_csv(self.emissions_file_path)
+
+        self.verify_output_file(self.emissions_file_path, 3)
+
+        self.assertAlmostEqual(0.001308618772068, emissions_df["cpu_power"].values[0])
+        self.assertEqual("Morocco", emissions_df["country_name"].values[0])
+        self.assertEqual("United States", emissions_df["country_name"].values[1])
+
+    def verify_output_file(self, file_path: str, num_lines: int) -> None:
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
-        assert len(lines) == 2
+        assert len(lines) == num_lines

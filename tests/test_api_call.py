@@ -28,6 +28,8 @@ def test_call_api():
             project_name="",
             duration=1.5,
             emissions=2.0,
+            cpu_power=3.0,
+            gpu_power=0,
             energy_consumed=3.0,
             country_name="Groland",
             country_iso_code="GRD",

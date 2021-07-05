@@ -28,6 +28,8 @@ class EmissionsData:
     project_name: str
     duration: float
     emissions: float
+    cpu_power: float
+    gpu_power: float
     energy_consumed: float
     country_name: str
     country_iso_code: str
@@ -66,8 +68,19 @@ class FileOutput(BaseOutput):
     def __init__(self, save_file_path: str):
         self.save_file_path: str = save_file_path
 
+    def has_valid_headers(self, data: EmissionsData):
+        with open(self.save_file_path) as csv_file:
+            csv_reader = csv.DictReader(csv_file)
+            dict_from_csv = dict(list(csv_reader)[0])
+            list_of_column_names = list(dict_from_csv.keys())
+            return list(data.values.keys()) == list_of_column_names
+
     def out(self, data: EmissionsData):
         file_exists: bool = os.path.isfile(self.save_file_path)
+        if file_exists and not self.has_valid_headers(data):
+            logger.info('Backing up old emission file')
+            os.rename(self.save_file_path, self.save_file_path+'.bak')
+            file_exists = False
 
         with open(self.save_file_path, "a+") as f:
             writer = csv.DictWriter(f, fieldnames=data.values.keys())
