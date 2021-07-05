@@ -56,14 +56,17 @@ class BaseEmissionsTracker(ABC):
     and `CarbonTracker.`
     """
 
-    def _set_from_conf(self, var, name, default=None, return_type=None):
+    def _set_from_conf(
+        self, var, name, default=None, return_type=None, prevent_setter=False
+    ):
         assert hasattr(self, "_external_conf")
         if not hasattr(self, "_conf"):
             self._conf = {}
 
         if var is not _sentinel:
             self._conf[name] = var
-            setattr(self, f"_{name}", var)
+            if not prevent_setter:
+                setattr(self, f"_{name}", var)
             return var
 
         value = self._external_conf.get(name, default)
@@ -73,17 +76,20 @@ class BaseEmissionsTracker(ABC):
                 value = str(value).lower() == "true"
 
                 self._conf[name] = value
-                setattr(self, f"_{name}", value)
+                if not prevent_setter:
+                    setattr(self, f"_{name}", value)
                 return value
 
             value = return_type(value)
 
             self._conf[name] = value
-            setattr(self, f"_{name}", value)
+            if not prevent_setter:
+                setattr(self, f"_{name}", value)
             return value
 
         self._conf[name] = value
-        setattr(self, f"_{name}", value)
+        if not prevent_setter:
+            setattr(self, f"_{name}", value)
         return value
 
     def __init__(
