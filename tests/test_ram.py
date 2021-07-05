@@ -9,7 +9,7 @@ from codecarbon.external.hardware import RAM
 
 class TestRAM(unittest.TestCase):
     def test_ram_diff(self):
-        ram = RAM()
+        ram = RAM(tracking_mode="process")
 
         for array_size in [
             # (10, 10),  # too small to be noticed

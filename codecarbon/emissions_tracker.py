@@ -157,7 +157,7 @@ class BaseEmissionsTracker(ABC):
             co2_signal_api_token, "co2_signal_api_token"
         )
 
-        self._tracking_mode = self._get_conf(tracking_mode, "machine")
+        self._tracking_mode = self._get_conf(tracking_mode, "tracking_mode", "machine")
         assert self._tracking_mode in ["machine", "process"]
 
         self._save_to_file = self._get_conf(save_to_file, "save_to_file", True, bool)
