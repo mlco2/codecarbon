@@ -17,7 +17,7 @@ def clean_env_key(k: str) -> str:
         str: Cleaned str
     """
     assert isinstance(k, str)
-    return k.lower().replace("codecarbon_", "").lower()
+    return k.lower().replace("codecarbon_", "", 1)
 
 
 def parse_env_config() -> dict:
