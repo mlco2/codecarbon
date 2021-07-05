@@ -462,9 +462,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     f"Exception occurred {e}"
                 )
 
-        if self.country_2letter_iso_code:
-            assert isinstance(self.country_2letter_iso_code, str)
-            self.country_2letter_iso_code = self.country_2letter_iso_code.upper()
+        if self._country_2letter_iso_code:
+            assert isinstance(self._country_2letter_iso_code, str)
+            self._country_2letter_iso_code = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
 
@@ -473,7 +473,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             country_iso_code=self._country_iso_code,
             country_name=self._country_name,
             region=self._region,
-            country_2letter_iso_code=self.country_2letter_iso_code,
+            country_2letter_iso_code=self._country_2letter_iso_code,
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
