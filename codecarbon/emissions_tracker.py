@@ -18,7 +18,7 @@ from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import set_log_level, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU
+from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 from codecarbon.output import (
@@ -143,6 +143,7 @@ class BaseEmissionsTracker(ABC):
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
         co2_signal_api_token: Optional[str] = _sentinel,
+        tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
     ):
         """
@@ -153,21 +154,26 @@ class BaseEmissionsTracker(ABC):
         :param api_call_interval: Occurence to wait before calling API :
                             1 : at every measure
                             2 : every 2 measure, etc...
-        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending emissions
-                                   data
+        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
+                             emissions data
         :param api_key: API key for Code Carbon API, mandatory to use it !
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current
                            directory
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
-        :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
+        :param save_to_api: Indicates if the emission artifacts should be send to the
+                            CodeCarbon API, defaults to False
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data
         :param experiment_id: Id of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
+        :param tracking_mode: One of "process" or "machine" in order to measure the
+                              power consumptions due to the entire machine or try and
+                              isolate the tracked processe's in isolation.
+                              Defaults to "machine"
         :param log_level: Global codecarbon log level. Accepts one of:
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
@@ -185,14 +191,16 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(project_name, "project_name", "codecarbon")
         self._set_from_conf(save_to_api, "save_to_api", False, bool)
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
+        self._set_from_conf(tracking_mode, "tracking_mode", "machine")
 
+        assert self._tracking_mode in ["machine", "process"]
         set_log_level(self._log_level)
 
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._hardware = []
+        self._hardware = [RAM(self._tracking_mode)]
         self._conf["hardware"] = []
         self._cc_api__out = None
         self._measure_occurrence: int = 0
