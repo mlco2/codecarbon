@@ -59,33 +59,62 @@ class BaseEmissionsTracker(ABC):
     def _set_from_conf(
         self, var, name, default=None, return_type=None, prevent_setter=False
     ):
+        """
+        Method to standardize private argument setting. Generic flow is:
+
+        * If a value for the variable `var` with name `name` is provided in the
+          __init__ constructor: set the the private attribute `self._{name}` to
+          that value
+
+        * If no value is provided for `var`, i.e. `var is _sentinel` is True then
+          we try to assign a value to it:
+
+            * If there is a value for `name` in the external configuration (config
+              files or env variables), then we use it
+            * Otherwise `self._{name}` is set to the `default` value
+
+        Additionally, if `return_type` is provided and one of `float` `int` or `bool`,
+        the value for `self._{name}` will be parsed to this type.
+
+        Use `prevent_setter=True` for debugging purposes only.
+
+        Args:
+            var (Any): The variable's value to set as private attribute
+            name (str): The variable's name such that `self._{name}` will be set
+                to `var`
+            default (Any, optional): The value to use for self._name if no value
+                is provided in the constructor and no value is found in the external
+                configuration.
+                Defaults to None.
+            return_type (Any, optional): A type to parse the value to. Defaults to None.
+            prevent_setter (bool, optional): Whether to set the private attribute or
+                simply return the value. For debugging. Defaults to False.
+
+        Returns:
+            [Any]: The value used for `self._{name}`
+        """
+        # Check the hierarchical configuration has been read parsed and set.
         assert hasattr(self, "_external_conf")
+        assert isinstance(self._external_conf, dict)
+
+        # Store final values in _conf
         if not hasattr(self, "_conf"):
             self._conf = {}
 
+        value = _sentinel
+
         if var is not _sentinel:
-            self._conf[name] = var
-            if not prevent_setter:
-                setattr(self, f"_{name}", var)
-            return var
+            value = var
+        else:
 
-        value = self._external_conf.get(name, default)
+            value = self._external_conf.get(name, default)
 
-        if return_type is not None:
-            if return_type is bool:
-                value = str(value).lower() == "true"
-
-                self._conf[name] = value
-                if not prevent_setter:
-                    setattr(self, f"_{name}", value)
-                return value
-
-            value = return_type(value)
-
-            self._conf[name] = value
-            if not prevent_setter:
-                setattr(self, f"_{name}", value)
-            return value
+            if return_type is not None:
+                if return_type is bool:
+                    value = str(value).lower() == "true"
+                else:
+                    assert callable(return_type)
+                    value = return_type(value)
 
         self._conf[name] = value
         if not prevent_setter:
