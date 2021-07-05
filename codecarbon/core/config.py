@@ -69,7 +69,7 @@ def get_hierarchical_config():
     ```
     >>> from codecarbon.core.config import get_hierarchical_config
     >>> conf = get_hierarchical_config()
-    >>> print(dict(conf))
+    >>> print(conf)
     ```
 
     `conf` works like a regular dict + methods getint(key) getfloat(key)
@@ -85,8 +85,8 @@ def get_hierarchical_config():
     then the resulting configuration key `project_name` will have value `your-project`)
 
     Returns:
-        configparser.SectionProxy: The final configuration dict parsed from global,
-        local and environment configurations. All values are strings.
+        dict: The final configuration dict parsed from global,
+        local and environment configurations. **All values are strings**.
     """
 
     config = configparser.ConfigParser()
@@ -99,4 +99,4 @@ def get_hierarchical_config():
     config.read([global_path, local_path])
     config.read_dict(parse_env_config())
 
-    return config["codecarbon"]
+    return dict(config["codecarbon"])
