@@ -5,6 +5,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 *intel_power_gadget_log.csv
+.codecarbon.config
+
 # C extensions
 *.so
 
