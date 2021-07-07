@@ -1,10 +1,13 @@
 .vscode
 .flake8
+.codecarbon.config
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *intel_power_gadget_log.csv
+.codecarbon.config
+
 # C extensions
 *.so
 .codecarbon.config

@@ -54,7 +54,7 @@ def parse_cpu_model(raw_name) -> str:
             .replace(" CPU", "")
         )
         splitted = model.split(" ")
-        if splitted[2] == "Threadripper" and len(splitted) == 6:
+        if len(splitted) == 6 and splitted[2] == "Threadripper":
             model = (
                 splitted[0] + " " + splitted[1] + " " + splitted[2] + " " + splitted[3]
             )

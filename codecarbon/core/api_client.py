@@ -13,10 +13,15 @@ from datetime import timedelta, tzinfo
 import arrow
 import requests
 
-from codecarbon.core.schemas import EmissionCreate, RunCreate
+from codecarbon.core.schemas import EmissionCreate, ExperimentCreate, RunCreate
 from codecarbon.external.logger import logger
 
 # from codecarbon.output import EmissionsData
+
+
+def get_datetime_with_timezone():
+    timestamp = str(arrow.now().isoformat())
+    return timestamp
 
 
 class ApiClient:  # (AsyncClient)
@@ -28,7 +33,9 @@ class ApiClient:  # (AsyncClient)
     run_id = None
     _previous_call = time.time()
 
-    def __init__(self, experiment_id, endpoint_url, api_key):
+    def __init__(
+        self, endpoint_url="https://api.codecarbon.io", experiment_id=None, api_key=None
+    ):
         """
         :project_id: ID of the existing project
         :api_ley: Code Carbon API_KEY
@@ -37,9 +44,11 @@ class ApiClient:  # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
-        self._create_run(self.experiment_id)
+        if self.experiment_id is not None:
+            self._create_run(self.experiment_id)
 
     def add_emission(self, carbon_emission: dict):
+        assert self.experiment_id is not None
         self._previous_call = time.time()
         if self.run_id is None:
             # TODO : raise an Exception ?
@@ -53,7 +62,7 @@ class ApiClient:  # (AsyncClient)
             )
             return False
         emission = EmissionCreate(
-            timestamp=self.get_datetime_with_timezone(),
+            timestamp=get_datetime_with_timezone(),
             run_id=self.run_id,
             duration=int(carbon_emission["duration"]),
             emissions=carbon_emission["emissions"],
@@ -61,10 +70,12 @@ class ApiClient:  # (AsyncClient)
         )
         try:
             payload = dataclasses.asdict(emission)
-            r = requests.put(url=self.url + "/emissions", json=payload, timeout=2)
+            url = self.url + "/emission"
+            r = requests.post(url=url, json=payload, timeout=2)
+            logger.debug(f"Successful upload emission {payload} to {url}")
             if r.status_code != 201:
-                self._log_error(payload, r)
-            assert r.status_code == 201
+                self._log_error(url, payload, r)
+                return False
         except Exception as e:
             logger.error(e, exc_info=True)
             return False
@@ -75,24 +86,48 @@ class ApiClient:  # (AsyncClient)
         Create the experiment for project_id
         # TODO : Allow to give an existing experiment_id
         """
+        if self.experiment_id is None:
+            # TODO : raise an Exception ?
+            logger.error("FATAL The API _create_run need an experiment_id !")
+            return None
         try:
             run = RunCreate(
-                timestamp=self.get_datetime_with_timezone(), experiment_id=experiment_id
+                timestamp=get_datetime_with_timezone(), experiment_id=experiment_id
             )
             payload = dataclasses.asdict(run)
-            r = requests.post(url=self.url + "/runs", json=payload, timeout=2)
+            url = self.url + "/run"
+            r = requests.post(url=url, json=payload, timeout=2)
             if r.status_code != 201:
-                self._log_error(payload, r)
-            assert r.status_code == 201
+                self._log_error(url, payload, r)
+                return None
             self.run_id = r.json()["id"]
             logger.info(
-                f"Successfully registered your run on the API under the id {self.run_id}"
+                "Successfully registered your run on the API.\n\n"
+                + f"Run ID: {self.run_id}\n"
+                + f"Experiment ID: {self.experiment_id}\n"
             )
+            return self.run_id
         except Exception as e:
             logger.error(e, exc_info=True)
 
-    def _log_error(self, payload, response):
-        logger.error(f" Error when calling the API with : {json.dumps(payload)}")
+    def add_experiment(self, experiment: ExperimentCreate):
+        """
+        Create an experiment, used by the CLI, not the package.
+        ::experiment:: The experiment to create.
+        """
+        payload = dataclasses.asdict(experiment)
+        url = self.url + "/experiment"
+        r = requests.post(url=url, json=payload, timeout=2)
+        if r.status_code != 201:
+            self._log_error(url, payload, r)
+            return None
+        self.experiment_id = r.json()["id"]
+        return self.experiment_id
+
+    def _log_error(self, url, payload, response):
+        logger.error(
+            f" Error when calling the API on {url} with : {json.dumps(payload)}"
+        )
         logger.error(
             f" API return http code {response.status_code} and answer : {response.text}"
         )
@@ -102,12 +137,6 @@ class ApiClient:  # (AsyncClient)
         Tell the API that the experiment has ended.
         """
         pass
-
-    def get_datetime_with_timezone(self):
-        timestamp = str(arrow.now().isoformat())
-        print(timestamp)
-        return timestamp
-
 
 class simple_utc(tzinfo):
     def tzname(self, **kwargs):

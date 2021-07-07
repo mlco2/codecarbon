@@ -2,6 +2,9 @@
 Here is the schemas used to communicate with the API.
 """
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
 
 
 @dataclass
@@ -32,4 +35,26 @@ class RunCreate(RunBase):
 
 
 class Run(RunBase):
+    id: str
+
+
+@dataclass
+class ExperimentBase:
+    timestamp: datetime
+    name: str
+    description: str
+    on_cloud: bool
+    project_id: UUID
+    country_name: Optional[str] = None
+    country_iso_code: Optional[str] = None
+    region: Optional[str] = None
+    cloud_provider: Optional[str] = None
+    cloud_region: Optional[str] = None
+
+
+class ExperimentCreate(ExperimentBase):
+    pass
+
+
+class Experiment(ExperimentBase):
     id: str
