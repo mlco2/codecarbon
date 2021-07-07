@@ -68,12 +68,6 @@ You can run tests by simply entering tox in the terminal when in the root packag
 tox
 ```
 
-This will not run test that may failed because of your environment (no CO2 Signal API token, no PowerGadget...), if you want to run all package tests :
-
-```
-tox -e all
-```
-
 You can also test your specific test in an isolated fashion to develop and debug them:
 
 ```

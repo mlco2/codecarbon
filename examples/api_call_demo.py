@@ -4,10 +4,11 @@ from codecarbon import track_emissions
 
 
 @track_emissions(
-    # api_endpoint="http://your api if you want",
-    # experiment_id="3a202149-8be2-408c-a3d8-baeae2de2987",
-    # api_key="not used yet",
-    save_to_api=True,
+    # project_name="just_sleep",
+    # api_endpoint="http://app-d6bc59c3-0f69-4d8b-a6a3-bc39a9ceb0c2.cleverapps.io",
+    # experiment_id="82ba0923-0713-4da1-9e57-cea70b460ee9",
+    # api_key="12aaaaaa-0b23-1234-1234-abcdef123456",
+    save_to_api=True
 )
 def train_model():
     """

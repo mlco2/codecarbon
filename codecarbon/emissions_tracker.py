@@ -248,10 +248,7 @@ class BaseEmissionsTracker(ABC):
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
         self._scheduler.add_job(
-            self._measure_power,
-            "interval",
-            seconds=self._measure_power_secs,
-            max_instances=1,
+            self._measure_power, "interval", seconds=self._measure_power_secs
         )
 
         self._data_source = DataSource()
@@ -269,9 +266,8 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
         if self._save_to_api:
-            experiment_id = self._get_conf(
-                experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
-            )
+            if experiment_id is None:
+                experiment_id = "82ba0923-0713-4da1-9e57-cea70b460ee9"
             self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
                 experiment_id=experiment_id,
@@ -410,12 +406,10 @@ class BaseEmissionsTracker(ABC):
             self._total_energy += Energy.from_power_and_time(
                 power=hardware.total_power(), time=Time.from_seconds(last_duration)
             )
-            logger.info(
-                "Energy consumed for all "
-                + f"{hardware.__class__.__name__} : {self._total_energy.kwh:.6f} kWh"
-            )
             logger.debug(
-                f"\n={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
+                "Energy consumed for all "
+                + f"{hardware.__class__.__name__} : {self._total_energy}"
+                + f"={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
             )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
@@ -568,7 +562,6 @@ def track_emissions(
     cloud_provider: Optional[str] = _sentinel,
     cloud_region: Optional[str] = _sentinel,
     gpu_ids: Optional[List] = _sentinel,
-    co2_signal_api_token: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
 ):
     """
@@ -626,7 +619,6 @@ def track_emissions(
                     cloud_region=cloud_region,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
-                    co2_signal_api_token=co2_signal_api_token,
                 )
                 tracker.start()
                 fn(*args, **kwargs)
@@ -645,18 +637,10 @@ def track_emissions(
                     api_key=api_key,
                     api_endpoint=api_endpoint,
                     save_to_api=save_to_api,
-                    co2_signal_api_token=co2_signal_api_token,
                 )
                 tracker.start()
-                try:
-                    fn(*args, **kwargs)
-                finally:
-                    logger.info(
-                        "\nGraceful stopping: collecting and writing information.\n"
-                        + "Please Allow for a few seconds..."
-                    )
-                    tracker.stop()
-                    logger.info("Done!\n")
+                fn(*args, **kwargs)
+                tracker.stop()
 
         return wrapped_fn
 
