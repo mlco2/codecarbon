@@ -2,7 +2,6 @@
 Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
-
 import dataclasses
 import os
 import time
@@ -19,7 +18,7 @@ from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Time
 from codecarbon.core.util import set_log_level, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU
+from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 from codecarbon.output import (
@@ -57,30 +56,77 @@ class BaseEmissionsTracker(ABC):
     and `CarbonTracker.`
     """
 
-    def _get_conf(self, var, name, default=None, return_type=None):
+    def _set_from_conf(
+        self, var, name, default=None, return_type=None, prevent_setter=False
+    ):
+        """
+        Method to standardize private argument setting. Generic flow is:
+
+        * If a value for the variable `var` with name `name` is provided in the
+          __init__ constructor: set the the private attribute `self._{name}` to
+          that value
+
+        * If no value is provided for `var`, i.e. `var is _sentinel` is True then
+          we try to assign a value to it:
+
+            * If there is a value for `name` in the external configuration (config
+              files or env variables), then we use it
+            * Otherwise `self._{name}` is set to the `default` value
+
+        Additionally, if `return_type` is provided and one of `float` `int` or `bool`,
+        the value for `self._{name}` will be parsed to this type.
+
+        Use `prevent_setter=True` for debugging purposes only.
+
+        Args:
+            var (Any): The variable's value to set as private attribute
+            name (str): The variable's name such that `self._{name}` will be set
+                to `var`
+            default (Any, optional): The value to use for self._name if no value
+                is provided in the constructor and no value is found in the external
+                configuration.
+                Defaults to None.
+            return_type (Any, optional): A type to parse the value to. Defaults to None.
+            prevent_setter (bool, optional): Whether to set the private attribute or
+                simply return the value. For debugging. Defaults to False.
+
+        Returns:
+            [Any]: The value used for `self._{name}`
+        """
+        # Check the hierarchical configuration has been read parsed and set.
         assert hasattr(self, "_external_conf")
+        assert isinstance(self._external_conf, dict)
+
+        # Store final values in _conf
         if not hasattr(self, "_conf"):
             self._conf = {}
 
+        value = _sentinel
+
+        # a value for the keyword argument `name` is provided in the constructor:
+        # use it
         if var is not _sentinel:
-            self._conf[name] = var
-            return var
+            value = var
+        else:
 
-        value = self._external_conf.get(name, default)
+            # no value provided in the constructor for `name`: check in the conf
+            # (using the provided default value)
+            value = self._external_conf.get(name, default)
 
-        if return_type is not None:
-            if return_type is bool:
-                value = str(value).lower() == "true"
+            # parse to `return_type` if needed
+            if return_type is not None:
+                if return_type is bool:
+                    value = str(value).lower() == "true"
+                else:
+                    assert callable(return_type)
+                    value = return_type(value)
 
-                self._conf[name] = value
-                return value
-
-            value = return_type(value)
-
-            self._conf[name] = value
-            return value
-
+        # store final value
         self._conf[name] = value
+        # set `self._{name}` to `value`
+        if not prevent_setter:
+            setattr(self, f"_{name}", value)
+        # return final value (why not?)
         return value
 
     def __init__(
@@ -97,6 +143,7 @@ class BaseEmissionsTracker(ABC):
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
         co2_signal_api_token: Optional[str] = _sentinel,
+        tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
     ):
         """
@@ -107,69 +154,58 @@ class BaseEmissionsTracker(ABC):
         :param api_call_interval: Occurence to wait before calling API :
                             1 : at every measure
                             2 : every 2 measure, etc...
-        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending emissions
-                                   data
+        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
+                             emissions data
         :param api_key: API key for Code Carbon API, mandatory to use it !
         :param output_dir: Directory path to which the experiment details are logged
                            in a CSV file called `emissions.csv`, defaults to current
                            directory
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
-        :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
+        :param save_to_api: Indicates if the emission artifacts should be send to the
+                            CodeCarbon API, defaults to False
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data
         :param experiment_id: Id of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
+        :param tracking_mode: One of "process" or "machine" in order to measure the
+                              power consumptions due to the entire machine or try and
+                              isolate the tracked processe's in isolation.
+                              Defaults to "machine"
         :param log_level: Global codecarbon log level. Accepts one of:
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
         """
         self._external_conf = get_hierarchical_config()
 
-        self._log_level = self._get_conf(log_level, "log_level", "info")
+        self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
+        self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
+        self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
+        self._set_from_conf(emissions_endpoint, "emissions_endpoint")
+        self._set_from_conf(gpu_ids, "gpu_ids")
+        self._set_from_conf(log_level, "log_level", "info")
+        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, int)
+        self._set_from_conf(output_dir, "output_dir", ".")
+        self._set_from_conf(project_name, "project_name", "codecarbon")
+        self._set_from_conf(save_to_api, "save_to_api", False, bool)
+        self._set_from_conf(save_to_file, "save_to_file", True, bool)
+        self._set_from_conf(tracking_mode, "tracking_mode", "machine")
+
+        assert self._tracking_mode in ["machine", "process"]
         set_log_level(self._log_level)
 
-        self._project_name: str = self._get_conf(
-            project_name, "project_name", "codecarbon"
-        )
-
-        self._measure_power_secs: int = self._get_conf(
-            measure_power_secs, "measure_power_secs", 15, int
-        )
-
-        self._output_dir: str = self._get_conf(output_dir, "output_dir", ".")
-
-        self._emissions_endpoint = self._get_conf(
-            emissions_endpoint, "emissions_endpoint"
-        )
-        self._api_endpoint = self._get_conf(
-            api_endpoint, "api_endpoint", "https://api.codecarbon.io"
-        )
-        self._co2_signal_api_token = self._get_conf(
-            co2_signal_api_token, "co2_signal_api_token"
-        )
-
-        self._save_to_file = self._get_conf(save_to_file, "save_to_file", True, bool)
-
-        self._save_to_api = self._get_conf(save_to_api, "save_to_api", False, bool)
-
-        self._api_call_interval: int = self._get_conf(
-            api_call_interval, "api_call_interval", 8, int
-        )
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._hardware = []
+        self._hardware = [RAM(self._tracking_mode)]
         self._conf["hardware"] = []
         self._cc_api__out = None
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
-
-        self._gpu_ids = self._get_conf(gpu_ids, "gpu_ids")
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
@@ -281,6 +317,7 @@ class BaseEmissionsTracker(ABC):
 
             persistence.out(emissions_data)
 
+        self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
@@ -332,7 +369,8 @@ class BaseEmissionsTracker(ABC):
                 delta_emissions = dataclasses.replace(total_emissions)
                 # Compute delta
                 delta_emissions.substract_in_place(self._previous_emissions)
-                # TODO : find a way to store _previous_emissions only when API call succeded
+                # TODO : find a way to store _previous_emissions only when
+                # TODO : the API call succeded
                 self._previous_emissions = total_emissions
                 return delta_emissions
         else:
@@ -386,6 +424,13 @@ class BaseEmissionsTracker(ABC):
                 self._cc_api__out.out(self._prepare_emissions_data(delta=True))
                 self._measure_occurrence = 0
 
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb) -> None:
+        self.stop()
+
 
 class OfflineEmissionsTracker(BaseEmissionsTracker):
     """
@@ -425,14 +470,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                          locations.
         """
         self._external_conf = get_hierarchical_config()
-        self._cloud_provider: Optional[str] = self._get_conf(
-            cloud_provider, "cloud_provider"
-        )
-        self._country_iso_code: Optional[str] = self._get_conf(
-            country_iso_code, "country_iso_code"
-        )
-        self._cloud_region: Optional[str] = self._get_conf(cloud_region, "cloud_region")
-        self._region: Optional[str] = self._get_conf(region, "region")
+        self._set_from_conf(cloud_provider, "cloud_provider")
+        self._set_from_conf(cloud_region, "cloud_region")
+        self._set_from_conf(country_2letter_iso_code, "country_2letter_iso_code")
+        self._set_from_conf(country_iso_code, "country_iso_code")
+        self._set_from_conf(region, "region")
 
         if self._region is not None:
             assert isinstance(self._region, str)
@@ -471,12 +513,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     f"Exception occurred {e}"
                 )
 
-        self.country_2letter_iso_code: Optional[str] = self._get_conf(
-            country_2letter_iso_code, "country_2letter_iso_code"
-        )
-        if self.country_2letter_iso_code:
-            assert isinstance(self.country_2letter_iso_code, str)
-            self.country_2letter_iso_code = self.country_2letter_iso_code.upper()
+        if self._country_2letter_iso_code:
+            assert isinstance(self._country_2letter_iso_code, str)
+            self._country_2letter_iso_code = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
 
@@ -485,7 +524,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             country_iso_code=self._country_iso_code,
             country_name=self._country_name,
             region=self._region,
-            country_2letter_iso_code=self.country_2letter_iso_code,
+            country_2letter_iso_code=self._country_2letter_iso_code,
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:

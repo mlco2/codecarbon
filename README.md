@@ -66,6 +66,7 @@ This is the most straightforward usage of the package, which is possible if you 
 
 ```python
 from codecarbon import EmissionsTracker
+
 tracker = EmissionsTracker()
 tracker.start()
 # GPU Intensive code goes here
@@ -80,6 +81,16 @@ from codecarbon import track_emissions
 def training_loop():
    pass
 ```
+
+The `EmissionsTracker` also works as a context manager:
+
+```python
+from codecarbon import EmissionsTracker
+
+with EmissionsTracker() as tracker:
+    # GPU Intensive code goes here
+```
+
 
 This will write a csv file of the CO2 emissions in the current directory.
 
@@ -129,6 +140,16 @@ from codecarbon import track_emissions
 def training_loop():
    pass
 ```
+
+or by using the context manager:
+```python
+from codecarbon import EmissionsTracker
+
+with EmissionsTracker() as tracker:
+    # GPU Intensive code goes here
+```
+
+
 
 ### Using comet.ml
 
