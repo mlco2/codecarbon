@@ -1,5 +1,6 @@
 .vscode
 .flake8
+.codecarbon.config
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
