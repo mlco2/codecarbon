@@ -9,7 +9,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Run, RunCreate
 from carbonserver.api.services.run_service import RunService
 
-RUNS_ROUTER_TAGS = ["runs"]
+RUNS_ROUTER_TAGS = ["Runs"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
@@ -17,8 +17,8 @@ router = APIRouter(
 runs_temp_db = []
 
 
-@router.put(
-    "/runs/",
+@router.post(
+    "/run",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
 )
@@ -31,7 +31,7 @@ def add_run(
 
 
 @router.get(
-    "/runs/{run_id}",
+    "/run/{run_id}",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
@@ -44,7 +44,7 @@ def read_run(
 
 
 @router.get(
-    "/runs/",
+    "/runs",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
@@ -53,13 +53,3 @@ def list_runs(
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> List[Run]:
     return run_service.list_runs()
-
-
-# @router.put("/run", tags=["runs"])
-# def add_run(run: RunCreate, db: Session = Depends(get_db)):
-#     repository_runs = SqlAlchemyRepository(db)
-#     res = repository_runs.add_run(run)
-#     if isinstance(res, DBError):
-#         raise DBException(error=res)
-#     else:
-#         return {"id": res.id}

@@ -36,7 +36,7 @@ class Energy:
     """
 
     UJOULES_TO_JOULES = 10 ** (-6)
-    JOULES_TO_KWH = 0.000000277777778
+    JOULES_TO_KWH = 2.77778e-7
 
     kwh: float
 
@@ -83,6 +83,12 @@ class Power:
     def from_watts(cls, watts: float) -> "Power":
         return cls(kW=watts * Power.WATTS_TO_KILO_WATTS)
 
+    @property
+    def W(self):
+        if not isinstance(self.kW, float):
+            return self.kW
+        return self.kW * 1000
+
 
 @dataclass
 class Time:
@@ -90,9 +96,8 @@ class Time:
     Measured in seconds
     """
 
-    SECONDS_TO_HOURS = 0.00027777778  # = 1h/(60s*60m)
-
     seconds: float
+    SECONDS_TO_HOURS = 1 / 3600
 
     @property
     def hours(self) -> float:

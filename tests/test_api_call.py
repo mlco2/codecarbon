@@ -9,10 +9,10 @@ from codecarbon.output import EmissionsData
 def test_call_api():
     # mock_path = 'codecarbon.core.api_client.requests'
     with requests_mock.Mocker() as m:
-        m.put(
+        m.post(
             "http://test.com/run",
             json={"id": "82ba0923-0713-4da1-9e57-cea70b460ee9"},
-            status_code=200,
+            status_code=201,
         )
         api = ApiClient(
             experiment_id="experiment_id",
@@ -22,7 +22,7 @@ def test_call_api():
         assert api.run_id == "82ba0923-0713-4da1-9e57-cea70b460ee9"
 
     with requests_mock.Mocker() as m:
-        m.put("http://test.com/emission", status_code=201)
+        m.post("http://test.com/emission", status_code=201)
         carbon_emission = EmissionsData(
             timestamp="222",
             project_name="",

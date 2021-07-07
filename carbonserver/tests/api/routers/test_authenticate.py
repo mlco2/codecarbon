@@ -36,7 +36,7 @@ def test_authenticate_should_return_an_access_token_is_password_is_valid(
     repository_mock.verify_user.return_value = True
 
     with custom_test_server.container.user_repository.override(repository_mock):
-        response = client.post("/authenticate/", json=USER_TO_VERIFY)
+        response = client.post("/authenticate", json=USER_TO_VERIFY)
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -48,6 +48,6 @@ def test_authenticate_should_returns_an_error_if_password_is_invalid(
     repository_mock.verify_user.return_value = False
 
     with custom_test_server.container.user_repository.override(repository_mock):
-        response = client.post("/authenticate/", json=USER_TO_VERIFY_BAD_PASSWORD)
+        response = client.post("/authenticate", json=USER_TO_VERIFY_BAD_PASSWORD)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED

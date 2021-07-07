@@ -25,6 +25,8 @@ EMISSION_TO_CREATE = {
     "duration": 98745,
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
+    "cpu_power": 57.21874,
+    "gpu_power": 0.0
 }
 
 EMISSION_1 = {
@@ -34,6 +36,8 @@ EMISSION_1 = {
     "duration": 98745,
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
+    "cpu_power": 57.21874,
+    "gpu_power": 0.0
 }
 
 EMISSION_2 = {
@@ -43,6 +47,8 @@ EMISSION_2 = {
     "duration": 98745,
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
+    "cpu_power": 57.21874,
+    "gpu_power": 0.0
 }
 
 
@@ -53,6 +59,8 @@ EMISSION_3 = {
     "duration": 98745,
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
+    "cpu_power": 57.21874,
+    "gpu_power": 0.0
 }
 
 
@@ -77,7 +85,7 @@ def test_add_emission(client, custom_test_server):
     repository_mock.add_emission.return_value = SqlModelEmission(**EMISSION_1)
 
     with custom_test_server.container.emission_repository.override(repository_mock):
-        response = client.put("/emissions/", json=EMISSION_TO_CREATE)
+        response = client.post("/emission", json=EMISSION_TO_CREATE)
         actual_emission = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -93,7 +101,7 @@ def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.get(
-            "/emissions/read_emission/", params={"emission_id": EMISSION_ID}
+            "/emission/read_emission/", params={"emission_id": EMISSION_ID}
         )
         actual_emission = response.json()
 

@@ -349,3 +349,58 @@ class TestCarbonTracker(unittest.TestCase):
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
         assert len(lines) == num_lines
+
+
+    @responses.activate
+    def test_carbon_tracker_online_context_manager_TWO_GPU_PRIVATE_INFRA_CANADA(
+        self,
+        mocked_env_cloud_details,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+        # GIVEN
+        responses.add(
+            responses.GET,
+            "https://get.geojs.io/v1/ip/geo.json",
+            json=GEO_METADATA_CANADA,
+            status=200,
+        )
+
+        # WHEN
+        with EmissionsTracker(measure_power_secs=1, save_to_file=False) as tracker:
+            heavy_computation()
+
+        # THEN
+        self.assertGreaterEqual(
+            mocked_get_gpu_details.call_count, 2
+        )  # at least 2 times in 5 seconds + once for init >= 3
+        self.assertEqual(1, mocked_is_gpu_details_available.call_count)
+        self.assertEqual(1, len(responses.calls))
+        self.assertEqual(
+            "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
+        )
+        self.assertIsInstance(tracker.final_emissions, float)
+        self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
+
+    @responses.activate
+    def test_carbon_tracker_offline_context_manager(
+        self,
+        mocked_env_cloud_details,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+        with OfflineEmissionsTracker(
+            country_iso_code="USA", output_dir=self.temp_path
+        ) as tracker:
+            heavy_computation(run_time_secs=2)
+
+        emissions_df = pd.read_csv(self.emissions_file_path)
+
+        self.assertEqual("United States", emissions_df["country_name"].values[0])
+        self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
+        self.assertIsInstance(tracker.final_emissions, float)
+

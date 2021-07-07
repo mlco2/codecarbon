@@ -64,7 +64,7 @@ def test_add_team(client, custom_test_server):
     repository_mock.add_team.return_value = SqlModelTeam(**TEAM_1)
 
     with custom_test_server.container.team_repository.override(repository_mock):
-        response = client.put("/teams/", json=TEAM_TO_CREATE)
+        response = client.post("/team", json=TEAM_TO_CREATE)
         actual_team = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -77,7 +77,7 @@ def test_add_team_with_no_org_links_to_data_for_good_org(client, custom_test_ser
     repository_mock.add_team.return_value = SqlModelTeam(**TEAM_1)
 
     with custom_test_server.container.team_repository.override(repository_mock):
-        response = client.put("/teams/", json=TEAM_TO_CREATE)
+        response = client.post("/team", json=TEAM_TO_CREATE)
         actual_team = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -92,7 +92,7 @@ def test_get_one_team_returns_correct_team(client, custom_test_server):
     ]
 
     with custom_test_server.container.team_repository.override(repository_mock):
-        response = client.get("/teams/read_team/", params={"id": TEAM_ID})
+        response = client.get("/team/read_team/", params={"id": TEAM_ID})
         actual_org = response.json()[0]
 
     assert response.status_code == status.HTTP_200_OK
@@ -110,7 +110,7 @@ def test_list_teams_returns_all_teams(client, custom_test_server):
     ]
 
     with custom_test_server.container.team_repository.override(repository_mock):
-        response = client.get("/teams/")
+        response = client.get("/teams")
         actual_team_list = response.json()
 
     assert response.status_code == status.HTTP_200_OK

@@ -27,6 +27,8 @@ class EmissionBase(BaseModel):
     energy_consumed: float = Field(
         ..., gt=0, description="The energy_consumed must be greater than zero"
     )
+    cpu_power: float
+    gpu_power: float
 
     class Config:
         schema_extra = {
@@ -36,6 +38,8 @@ class EmissionBase(BaseModel):
                 "duration": 98745,
                 "emissions": 1.548444,
                 "energy_consumed": 57.21874,
+                "cpu_power": 57.21874,
+                "gpu_power": 0.0,
             }
         }
 

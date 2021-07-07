@@ -7,6 +7,7 @@ __pycache__/
 *intel_power_gadget_log.csv
 # C extensions
 *.so
+.codecarbon.config
 
 # Distribution / packaging
 .Python
