@@ -1,10 +1,10 @@
+import os
+import shutil
 import tempfile
 import time
 import unittest
 from pathlib import Path
 from unittest import mock
-import shutil
-import os
 
 import pandas as pd
 import requests
@@ -305,17 +305,21 @@ class TestCarbonTracker(unittest.TestCase):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA", output_dir=self.temp_path
         )
-        emissions = os.path.join(os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv")
+        emissions = os.path.join(
+            os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv"
+        )
         shutil.copyfile(emissions, self.emissions_file_path)
         tracker.start()
         heavy_computation(run_time_secs=2)
         tracker.stop()
 
         emissions_df = pd.read_csv(self.emissions_file_path)
-        emissions_backup_df = pd.read_csv(self.emissions_file_path.with_suffix('.csv.bak'))
+        emissions_backup_df = pd.read_csv(
+            self.emissions_file_path.with_suffix(".csv.bak")
+        )
 
         self.verify_output_file(self.emissions_file_path, 2)
-        self.verify_output_file(self.emissions_file_path.with_suffix('.csv.bak'), 2)
+        self.verify_output_file(self.emissions_file_path.with_suffix(".csv.bak"), 2)
 
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("Morocco", emissions_backup_df["country_name"].values[0])
@@ -331,7 +335,9 @@ class TestCarbonTracker(unittest.TestCase):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA", output_dir=self.temp_path
         )
-        emissions = os.path.join(os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv")
+        emissions = os.path.join(
+            os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv"
+        )
         shutil.copyfile(emissions, self.emissions_file_path)
         tracker.start()
         heavy_computation(run_time_secs=2)
@@ -349,7 +355,6 @@ class TestCarbonTracker(unittest.TestCase):
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
         assert len(lines) == num_lines
-
 
     @responses.activate
     def test_carbon_tracker_online_context_manager_TWO_GPU_PRIVATE_INFRA_CANADA(
@@ -403,4 +408,3 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
         self.assertIsInstance(tracker.final_emissions, float)
-

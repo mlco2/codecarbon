@@ -26,7 +26,7 @@ EMISSION_TO_CREATE = {
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
     "cpu_power": 57.21874,
-    "gpu_power": 0.0
+    "gpu_power": 0.0,
 }
 
 EMISSION_1 = {
@@ -37,7 +37,7 @@ EMISSION_1 = {
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
     "cpu_power": 57.21874,
-    "gpu_power": 0.0
+    "gpu_power": 0.0,
 }
 
 EMISSION_2 = {
@@ -48,7 +48,7 @@ EMISSION_2 = {
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
     "cpu_power": 57.21874,
-    "gpu_power": 0.0
+    "gpu_power": 0.0,
 }
 
 
@@ -60,7 +60,7 @@ EMISSION_3 = {
     "emissions": 1.548444,
     "energy_consumed": 57.21874,
     "cpu_power": 57.21874,
-    "gpu_power": 0.0
+    "gpu_power": 0.0,
 }
 
 

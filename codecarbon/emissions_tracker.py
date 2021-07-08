@@ -271,7 +271,7 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
 
         if self._save_to_api:
-            experiment_id = self._get_conf(
+            experiment_id = self._set_from_conf(
                 experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
             )
             self._cc_api__out = CodeCarbonAPIOutput(
@@ -348,7 +348,6 @@ class BaseEmissionsTracker(ABC):
             on_cloud = "Y"
             cloud_provider = cloud.provider
             cloud_region = cloud.region
-        logger.debug(f"emissions={emissions}")
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -367,7 +366,6 @@ class BaseEmissionsTracker(ABC):
         if delta:
             if self._previous_emissions is None:
                 self._previous_emissions = total_emissions
-                return total_emissions
             else:
                 # Create a copy
                 delta_emissions = dataclasses.replace(total_emissions)
@@ -376,9 +374,9 @@ class BaseEmissionsTracker(ABC):
                 # TODO : find a way to store _previous_emissions only when
                 # TODO : the API call succeded
                 self._previous_emissions = total_emissions
-                return delta_emissions
-        else:
-            return total_emissions
+                total_emissions = delta_emissions
+        logger.debug(total_emissions)
+        return total_emissions
 
     @abstractmethod
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -419,18 +417,23 @@ class BaseEmissionsTracker(ABC):
                 self._total_cpu_power += energy
             if isinstance(hardware, GPU):
                 self._total_gpu_power += energy
-            logger.info(
-                "Energy consumed for all "
-                + f"{hardware.__class__.__name__} : {self._total_energy.kwh:.6f} kWh"
-            )
+
             logger.debug(
-                f"\n={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
+                f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} W during {last_duration:,.2f} s"
             )
+        logger.info(
+            f"{self._total_energy.kwh:.6f} kWh of electricity used since the begining."
+        )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
         if self._cc_api__out is not None:
             if self._measure_occurrence >= self._api_call_interval:
-                self._cc_api__out.out(self._prepare_emissions_data(delta=True))
+                emissions = self._prepare_emissions_data(delta=True)
+                logger.info(
+                    f"{emissions.emissions:.6f} Kg.CO2eq in {emissions.duration:.2f} s = {emissions.emissions/emissions.duration:.6f} Kg.CO2eq/s"
+                    + f" = {(emissions.emissions/emissions.duration)*3600*24*365:,} Kg.CO2eq/year"
+                )
+                self._cc_api__out.out(emissions)
                 self._measure_occurrence = 0
 
     def __enter__(self):

@@ -21,7 +21,7 @@ EMISSION_1 = Emission(
     emissions=1.548444,
     energy_consumed=57.21874,
     cpu_power=57.21874,
-    gpu_power=0.0
+    gpu_power=0.0,
 )
 
 EMISSION_2 = Emission(
@@ -32,7 +32,7 @@ EMISSION_2 = Emission(
     emissions=1.548444,
     energy_consumed=57.21874,
     cpu_power=57.21874,
-    gpu_power=0.0
+    gpu_power=0.0,
 )
 
 EMISSION_3 = Emission(
@@ -43,7 +43,7 @@ EMISSION_3 = Emission(
     emissions=1.548444,
     energy_consumed=57.21874,
     cpu_power=57.21874,
-    gpu_power=0.0
+    gpu_power=0.0,
 )
 
 
@@ -61,7 +61,7 @@ def test_emission_service_creates_correct_emission(_):
         emissions=1.548444,
         energy_consumed=57.21874,
         cpu_power=57.21874,
-        gpu_power=0.0
+        gpu_power=0.0,
     )
 
     actual_saved_emission_id = emission_service.add_emission(emission_to_create)
