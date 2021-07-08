@@ -1,2 +1,101 @@
-timestamp,project_name,duration,emissions,cpu_power,gpu_power,energy_consumed,country_name,country_iso_code,region,on_cloud,cloud_provider,cloud_region
-2021-07-01T11:21:53,codecarbon,174.76814794540405,0.000839213537347589,0.0010734128963393592,0,0.0010734128963393592,Morocco,MAR,casablanca-settat,N,,
+timestamp,experiment_id,project_name,duration,emissions,energy_consumed,country_name,country_iso_code,region,on_cloud,cloud_provider,cloud_region
+2020-03-23T09:26:11,68f53844-f3af-48fb-971a-ffab844a6b6f,project_gamma,34,8,8,USA,USA,Ohio,Y,aws,us-east-2
+2020-03-24T15:26:11,9288b395-c196-45c3-9c5e-05a8c127f753,project_delta,16,1,3,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-03-25T21:26:11,ed2a22f1-aa97-4fe2-a52c-a985817b7493,project_alpha,19,1,1,Canada,CAN,Ontario,N,,
+2020-03-27T03:26:11,c9d83605-a95b-464c-94f4-f630dbdebb0d,project_theta,34,8,5,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-03-28T09:26:11,00604242-376c-4e73-8eb0-dacf223029bc,project_gamma,48,8,7,USA,USA,Ohio,Y,aws,us-east-2
+2020-03-29T15:26:11,001b2a28-5199-475c-835f-5894fde101b9,project_theta,25,7,6,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-03-30T21:26:11,9d9b5cb0-8e5b-4736-95e9-9a6567645af2,project_delta,29,6,8,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-04-01T03:26:11,dc64ca2e-fefb-45da-bda8-5eee1d6e588c,project_alpha,10,6,6,Canada,CAN,Ontario,N,,
+2020-04-02T09:26:11,f195944a-0ffc-4216-a90d-874fbc55abfe,project_alpha,13,9,9,Canada,CAN,Ontario,N,,
+2020-04-03T15:26:11,94a6178f-e144-4419-8cb3-b1f700f4641d,project_delta,35,2,4,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-04-04T21:26:11,e93e7b74-441a-41ff-a00f-bdd128ef7daa,project_beta,27,7,8,Canada,CAN,Ontario,N,,
+2020-04-06T03:26:11,5c01053f-a4c8-413c-b677-117dfb022310,project_delta,42,7,1,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-04-07T09:26:11,d41e582e-34eb-4f5a-9b32-41c8297cfd94,project_theta,49,7,6,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-04-08T15:26:11,79e9332e-56cd-4a7c-96d6-918c8365c1d6,project_gamma,49,3,9,USA,USA,Ohio,Y,aws,us-east-2
+2020-04-09T21:26:11,dc7f5b4a-84c9-4dd2-a318-89874316c31e,project_gamma,40,9,7,USA,USA,Ohio,Y,aws,us-east-2
+2020-04-11T03:26:11,c1abf2c5-b2f9-44b6-b6c1-c14c05e37807,project_beta,36,6,6,Canada,CAN,Ontario,N,,
+2020-04-12T09:26:11,da0a923b-d2ce-4cf6-bfe8-e0d9a8d799a1,project_beta,18,3,2,Canada,CAN,Ontario,N,,
+2020-04-13T15:26:11,1fac9aa8-607b-4b50-ba0a-739e87111ec5,project_theta,26,6,6,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-04-14T21:26:11,fc6ab08c-e032-413e-890c-f92c3e023ce9,project_alpha,39,8,6,Canada,CAN,Ontario,N,,
+2020-04-16T03:26:11,fa8532d7-71b0-4f36-8ae3-c658e146cb32,project_gamma,24,2,8,USA,USA,Ohio,Y,aws,us-east-2
+2020-04-17T09:26:11,1058e5c4-301a-4f49-a032-675a2b835c7f,project_theta,40,8,5,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-04-18T15:26:11,d9d753ac-b4ce-4bae-ad71-2e6f0e621688,project_gamma,42,4,1,USA,USA,Ohio,Y,aws,us-east-2
+2020-04-19T21:26:11,38719fcd-6ba4-4188-8742-04d41adb5a71,project_beta,12,5,4,Canada,CAN,Ontario,N,,
+2020-04-21T03:26:11,ef41c8ea-c249-48f8-86f4-70beef99b0e8,project_gamma,26,9,2,USA,USA,Ohio,Y,aws,us-east-2
+2020-04-22T09:26:11,db4d3d79-5401-48a1-9a3f-8f3cfd59a05c,project_beta,31,4,2,Canada,CAN,Ontario,N,,
+2020-04-23T15:26:11,700e1425-5417-42e3-9a9c-e80efd3144ff,project_gamma,29,4,4,USA,USA,Ohio,Y,aws,us-east-2
+2020-04-24T21:26:11,889a97c2-ada3-4dd9-9149-1e19ef7219e5,project_beta,19,2,7,Canada,CAN,Ontario,N,,
+2020-04-26T03:26:11,01f7cd91-a200-451c-bc21-795859772cbb,project_theta,39,1,4,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-04-27T09:26:11,3cb6b905-4355-443a-8f01-5a739a9c2b40,project_delta,43,4,2,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-04-28T15:26:11,12726352-06e6-4050-8924-f2d1b4667638,project_delta,10,8,4,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-04-29T21:26:11,8aff0992-9e1d-49ff-8d5c-02b797a4372a,project_gamma,19,7,9,USA,USA,Ohio,Y,aws,us-east-2
+2020-04-31T03:26:11,042a0aca-97b4-4782-9263-1fe66d630a6d,project_beta,49,2,3,Canada,CAN,Ontario,N,,
+2020-05-01T09:26:11,7c8896c1-64e7-4e26-a9b7-917e050bb6eb,project_alpha,37,3,2,Canada,CAN,Ontario,N,,
+2020-05-02T15:26:11,302776ba-4919-41de-96e8-090ad555700a,project_alpha,29,6,4,Canada,CAN,Ontario,N,,
+2020-05-03T21:26:11,cfa16447-9ecb-41d9-ae9c-2605be94b4ec,project_theta,38,7,8,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-05-05T03:26:11,26ab41dd-7cd1-4317-9540-e223c4b82326,project_alpha,32,8,4,Canada,CAN,Ontario,N,,
+2020-05-06T09:26:11,45ec5fc1-d120-4437-9eaa-64ed4ab16be1,project_beta,19,5,3,Canada,CAN,Ontario,N,,
+2020-05-07T15:26:11,b2616820-719f-429b-bfa2-4c52d4f8846e,project_delta,26,9,1,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-05-08T21:26:11,d25bb0a7-757a-428e-a22d-537c5c20a2e3,project_theta,20,7,8,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-05-10T03:26:11,09154017-c27b-4e27-a90d-e48b134bc7c7,project_gamma,24,6,5,USA,USA,Ohio,Y,aws,us-east-2
+2020-05-11T09:26:11,495151cf-3944-4416-9cf9-05434e5ff7fc,project_alpha,38,5,4,Canada,CAN,Ontario,N,,
+2020-05-12T15:26:11,6e1865b4-b210-4022-8a95-b431a2ee9775,project_alpha,41,3,5,Canada,CAN,Ontario,N,,
+2020-05-13T21:26:11,a673a232-7878-481c-98d9-29df56cddbe8,project_beta,47,4,3,Canada,CAN,Ontario,N,,
+2020-05-15T03:26:11,9a877fad-1de6-474a-a8d5-249deb478f5f,project_theta,24,9,4,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-05-16T09:26:11,9c8d974c-21e6-43a5-b7a2-c710aec9ef2a,project_delta,40,2,8,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-05-17T15:26:11,fc6f5fff-c7c0-49f4-8f9e-ccc3fd5b2bd2,project_delta,16,5,8,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-05-18T21:26:11,1f840670-8662-4069-9956-dad8f3fe22da,project_gamma,40,2,2,USA,USA,Ohio,Y,aws,us-east-2
+2020-05-20T03:26:11,05925b46-1ce8-4d53-a6f7-328aace4b30d,project_theta,13,5,5,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-05-21T09:26:11,1554f01e-8916-4896-ae3b-fdb76cfa6b70,project_theta,11,4,4,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-05-22T15:26:11,69aef481-e5a5-4d0f-a8df-42eaba2beb3e,project_delta,23,7,6,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-05-23T21:26:11,4d982b74-7a4b-4011-a5b4-646c1e8e3bec,project_alpha,45,8,5,Canada,CAN,Ontario,N,,
+2020-05-25T03:26:11,f99c75fe-77f4-4346-b8e3-e7c4af1d317a,project_delta,18,7,1,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-05-26T09:26:11,6a2a6c62-649e-43e6-bf07-80fef9dc3977,project_beta,19,9,8,Canada,CAN,Ontario,N,,
+2020-05-27T15:26:11,53fbb54c-dd01-416b-a857-1c5fc85161c8,project_delta,33,4,4,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-05-28T21:26:11,2b9a061a-08b1-417d-8ebf-1d838ced4db3,project_alpha,15,4,3,Canada,CAN,Ontario,N,,
+2020-05-30T03:26:11,6ba6b8c9-60bc-4dc7-aa5d-de2edb657bf5,project_gamma,45,4,2,USA,USA,Ohio,Y,aws,us-east-2
+2020-06-01T09:26:11,68493bcc-bf25-4566-83d3-576a928df62e,project_gamma,15,6,8,USA,USA,Ohio,Y,aws,us-east-2
+2020-06-02T15:26:11,1c3869bb-fc43-4716-87fd-caefa089ccb3,project_alpha,45,4,2,Canada,CAN,Ontario,N,,
+2020-06-03T21:26:11,a755ecd7-078f-44f6-8797-e07c55a18113,project_delta,44,1,3,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-06-05T03:26:11,5b7609a1-ad17-4dde-a944-8fda11bb7b75,project_delta,48,4,7,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-06-06T09:26:11,b09b3510-5860-40ad-95fd-62bd2beeefe4,project_delta,11,5,3,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-06-07T15:26:11,daa85d09-1d48-4b4e-b4a3-ab79a27eb1a2,project_delta,21,1,7,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-06-08T21:26:11,7055ff50-42e9-44eb-8b2b-79bced20ea26,project_theta,43,2,2,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-06-10T03:26:11,c15e7b61-7b89-45b1-ace9-66cfe62f1d78,project_alpha,19,8,5,Canada,CAN,Ontario,N,,
+2020-06-11T09:26:11,1d4c9213-9652-4d38-b6af-6c751e88030c,project_alpha,20,9,3,Canada,CAN,Ontario,N,,
+2020-06-12T15:26:11,225c99ed-6073-4138-bc67-11d571164180,project_theta,19,1,5,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-06-13T21:26:11,89e5f095-d1d8-4abe-adc9-56a36f4031a2,project_alpha,48,4,4,Canada,CAN,Ontario,N,,
+2020-06-15T03:26:11,56a8180b-4fc1-42ef-b999-37ec2fbc855b,project_alpha,48,2,9,Canada,CAN,Ontario,N,,
+2020-06-16T09:26:11,5a13a175-3a5e-43df-ace4-4c078db3a712,project_delta,18,9,3,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-06-17T15:26:11,4170e0b8-ce66-4c24-9c51-690bc18549b6,project_theta,38,7,7,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-06-18T21:26:11,cbf48a43-21b5-44b0-baa7-c58c82cc23e5,project_gamma,36,5,7,USA,USA,Ohio,Y,aws,us-east-2
+2020-06-20T03:26:11,c3de7b5b-cf45-4687-a975-0bcc648a0fda,project_delta,15,2,7,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-06-21T09:26:11,dc39635d-c9b7-4ecb-9bf3-5e726cf04723,project_alpha,41,4,6,Canada,CAN,Ontario,N,,
+2020-06-22T15:26:11,36f600c9-cd2b-4550-806a-a4fe33a50860,project_alpha,11,4,6,Canada,CAN,Ontario,N,,
+2020-06-23T21:26:11,c243c8af-3b2e-4f9c-840c-57b52442d5b6,project_beta,23,5,1,Canada,CAN,Ontario,N,,
+2020-06-25T03:26:11,2e00f329-55d2-46f4-bbd3-8eda3d3679d3,project_alpha,47,9,6,Canada,CAN,Ontario,N,,
+2020-06-26T09:26:11,4bc85d53-7c1f-457a-9cde-105bdcea0b71,project_beta,19,9,4,Canada,CAN,Ontario,N,,
+2020-06-27T15:26:11,72458b15-998a-459c-b09a-2ccc7a7d6587,project_alpha,39,2,7,Canada,CAN,Ontario,N,,
+2020-06-28T21:26:11,8b41a40f-2e0b-4c6d-8ea1-fb757e8e976d,project_alpha,11,7,1,Canada,CAN,Ontario,N,,
+2020-06-30T03:26:11,258b8bb9-a643-45d5-b3c0-ae2e7513cd07,project_gamma,46,9,1,USA,USA,Ohio,Y,aws,us-east-2
+2020-06-31T09:26:11,97ee03d2-1366-4987-95ea-7e8e0a8af252,project_alpha,23,2,9,Canada,CAN,Ontario,N,,
+2020-07-01T15:26:11,5326a613-358b-423f-85a4-b712a10bf8c8,project_beta,34,7,8,Canada,CAN,Ontario,N,,
+2020-07-02T21:26:11,82ee3c55-83d6-4a6e-bb8f-3dfc5e7d07ca,project_gamma,40,1,5,USA,USA,Ohio,Y,aws,us-east-2
+2020-07-04T03:26:11,31f7043d-d96d-4ef6-b8c5-3575f95a1104,project_gamma,34,7,7,USA,USA,Ohio,Y,aws,us-east-2
+2020-07-05T09:26:11,a5c8bf4c-3119-4c6a-9bd9-6d0eaf30108c,project_delta,39,9,3,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-07-06T15:26:11,816698dc-9b91-48d7-a8d4-0b9695cd2a89,project_theta,49,5,3,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-07-07T21:26:11,fefca44b-5493-4cac-8574-80783f880424,project_gamma,42,8,9,USA,USA,Ohio,Y,aws,us-east-2
+2020-07-09T03:26:11,64e325df-2552-43cd-91b4-6e1c562731c0,project_delta,48,8,6,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-07-10T09:26:11,4e1c4e47-25c3-4921-b19c-71e3727e7a18,project_theta,31,6,4,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-07-11T15:26:11,e29d8171-7e08-4fcf-ab3b-f88fc16237ee,project_delta,21,2,6,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-07-12T21:26:11,7c3c4266-0cfa-45cf-acd5-77feabad1db3,project_gamma,35,3,1,USA,USA,Ohio,Y,aws,us-east-2
+2020-07-14T03:26:11,516a14c3-4c39-4f14-be21-3bd77556b804,project_theta,20,1,8,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
+2020-07-15T09:26:11,a41f98a8-bdad-4f34-9cca-8aa2736cc45f,project_gamma,31,6,1,USA,USA,Ohio,Y,aws,us-east-2
+2020-07-16T15:26:11,0fa1657b-102a-4a58-b8cd-7c709b774a03,project_gamma,48,5,4,USA,USA,Ohio,Y,aws,us-east-2
+2020-07-17T21:26:11,664b02b5-bd94-4f87-9569-9728297f352a,project_beta,16,7,8,Canada,CAN,Ontario,N,,
+2020-07-19T03:26:11,eadd4540-a8ae-483f-a86c-6502383c5868,project_delta,38,9,2,Taiwan,TWN,Changhua County,Y,gcp,asia-east1
+2020-07-20T09:26:11,b87f203e-b8cc-434b-80a9-0df2bc2ebc9e,project_gamma,45,4,9,USA,USA,Ohio,Y,aws,us-east-2
+2020-07-21T15:26:11,29a689f4-f875-4e6e-bf8e-28c8f5e08781,project_beta,14,1,8,Canada,CAN,Ontario,N,,
+2020-07-22T21:26:11,dd0af408-06ea-440a-b99e-6358a9bc5711,project_alpha,48,4,6,Canada,CAN,Ontario,N,,
+2020-07-24T03:26:11,f65e46fc-298d-4f7a-9827-7f756b1d2f44,project_theta,32,8,5,Brazil,BRA,Sao Paulo,Y,azure,brazilsouth
