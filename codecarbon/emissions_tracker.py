@@ -202,7 +202,7 @@ class BaseEmissionsTracker(ABC):
         self._total_cpu_power: Energy = Energy.from_energy(kwh=0)
         self._total_gpu_power: Energy = Energy.from_energy(kwh=0)
         self._scheduler = BackgroundScheduler()
-        self._hardware = [RAM(self._tracking_mode)]
+        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
         self._conf["hardware"] = []
         self._cc_api__out = None
         self._measure_occurrence: int = 0
