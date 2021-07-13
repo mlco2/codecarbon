@@ -2,6 +2,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 def header():
+    """ Composition and settings of the page header """
     h = html.Div(
             children=[
                 html.H1(children="Evaluate CO2 Emissions",
@@ -17,11 +18,11 @@ def header():
     return h
 
 
-def body():
+def body(labels):
+    """ Composition of the layout page body """
     body = html.Div(
         children=[
-            card_graph(id="emissions-chart"),
-            card_graph(id="energy_consumed-chart"),
+            *[card_graph(id=label['y']) for label in labels],
         ],
         className="wrapper",
     )
@@ -29,6 +30,7 @@ def body():
 
 
 def card_graph(id):
+    """ Card composed of a single graph """
     card = html.Div(
         children=dcc.Graph(
             id=id,

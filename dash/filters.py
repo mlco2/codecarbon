@@ -1,10 +1,10 @@
 import numpy as np
-from turtle import xcor
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 
 def filter_data(data, run_id, start_date, end_date):
+    """ Filter data based on user choices """
     mask = (
         (data['run_id'] == run_id)
         & (data['timestamp'] >= start_date)

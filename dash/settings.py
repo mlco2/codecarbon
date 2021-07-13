@@ -7,3 +7,19 @@ EXT_STYLESHEET = [
         "rel": "stylesheet",
     },
 ]
+
+# Automatically define charts titles and Y label to filter data
+LABELS = [
+    {
+        'x': 'timestamp',
+        'y': 'emissions'
+    },
+    {
+        'x': 'timestamp',
+        'y': 'energy_consumed'
+    },
+    {
+        'x': 'timestamp',
+        'y': 'duration'
+    },
+]
