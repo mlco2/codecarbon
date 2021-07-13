@@ -1,7 +1,6 @@
 import dash_core_components as dcc
 import dash_html_components as html
 
-
 def header():
     h = html.Div(
             children=[
@@ -21,26 +20,20 @@ def header():
 def body():
     body = html.Div(
         children=[
-            # --------------- First card -----------------
-            html.Div(
-                # Only one graph for the card
-                children=dcc.Graph(
-                    id="emissions-chart",
-                    config={"displayModeBar": False},
-                ),
-                className="card",
-            ),
-
-            # --------------- Second card -----------------
-            html.Div(
-                # Only one graph for the card
-                children=dcc.Graph(
-                    id="energy_consumed-chart",
-                    config={"displayModeBar": False},
-                ),
-                className="card",
-            ),
+            card_graph(id="emissions-chart"),
+            card_graph(id="energy_consumed-chart"),
         ],
         className="wrapper",
     )
     return body
+
+
+def card_graph(id):
+    card = html.Div(
+        children=dcc.Graph(
+            id=id,
+            config={"displayModeBar": False},
+        ),
+        className="card",
+    )
+    return card
