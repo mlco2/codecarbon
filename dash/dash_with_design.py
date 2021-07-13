@@ -8,15 +8,14 @@ from dash.dependencies import Output, Input
 from sections import header, body
 from charts import build_emission_chart, build_consumed_chart
 from filters import filter_data, menu_filters
-from settings import EXT_STYLESHEET
+from settings import EXT_STYLESHEET, APP_TITLE
 from data_loader import load_data
 
 
 data = load_data()
 
-
 app = dash.Dash(__name__, external_stylesheets=EXT_STYLESHEET)
-app.title = "CodeCarbon Measure ML CO2 Emissions"
+app.title = APP_TITLE
 app.layout = html.Div(
     children=[
         header(),
@@ -24,7 +23,6 @@ app.layout = html.Div(
         body(),
     ],
 )
-
 
 @app.callback(
     [Output("emissions-chart", "figure"), Output("energy_consumed-chart", "figure")],
@@ -35,10 +33,11 @@ app.layout = html.Div(
     ],
 )
 def update_charts(run_id, start_date, end_date):
+    charts = []
     filtered_data = filter_data(data, run_id, start_date, end_date)
-    emission_chart = build_emission_chart(filtered_data)
-    energy_consumed_chart = build_consumed_chart(filtered_data)
-    return emission_chart, energy_consumed_chart
+    charts.append(build_emission_chart(filtered_data))
+    charts.append(build_consumed_chart(filtered_data))
+    return charts
 
 
 if __name__ == "__main__":
