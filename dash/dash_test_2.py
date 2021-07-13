@@ -65,29 +65,9 @@ app.layout = html.Div(
                 # --------------- First card -----------------
                 html.Div(
                     # Only one graph for the card
-                    dcc.Graph(
+                    children=dcc.Graph(
                         id="emissions-chart",
                         config={"displayModeBar": False},
-                        figure={
-                            "data": [
-                                {
-                                    "x": data["timestamp"],
-                                    "y": data["emissions"],
-                                    "type": "lines",
-                                    "hovertemplate": "%{y:.5f}<extra></extra>",
-                                },
-                            ],
-                            "layout": {
-                                "title": {
-                                    "text": "Emissions",
-                                    "x": .05,
-                                    "xanchor": "left",
-                                },
-                                "xaxis": {"fixedrange": True},
-                                "yaxis": {"fixedrange": True},
-                                "colorway": ["#17B897"],
-                            },
-                        },
                     ),
                     className="card",
                 ),
@@ -95,30 +75,9 @@ app.layout = html.Div(
                 # --------------- Second card -----------------
                 html.Div(
                     # Only one graph for the card
-                    dcc.Graph(
+                    children=dcc.Graph(
                         id="energy_consumed-chart",
                         config={"displayModeBar": False},
-                        figure={
-                            "data": [
-                                {
-                                    "x": data["timestamp"],
-                                    "y": data["energy_consumed"],
-                                    "type": "lines",
-                                    "hovertemplate": "$%{y:.2f}"
-                                                        "<extra></extra>",
-                                },
-                            ],
-                            "layout": {
-                                "title": {
-                                    "text": "Energy consumed",
-                                    "x": .05,
-                                    "xanchor": "left",
-                                },
-                                "xaxis": {"fixedrange": True},
-                                "yaxis": {"fixedrange": True},
-                                "colorway": ["#17B897"],
-                            },
-                        },
                     ),
                     className="card",
                 ),
@@ -128,6 +87,67 @@ app.layout = html.Div(
     ],
 )
 
+
+@app.callback(
+    [Output("emissions-chart", "figure"), Output("energy_consumed-chart", "figure")],
+    [
+        Input("run_id-filter", "value"),
+        Input("date-range", "start_date"),
+        Input("date-range", "end_date"),
+    ],
+)
+def update_charts(run_id, start_date, end_date):
+    mask = (
+        (data['run_id'] == run_id)
+        & (data['timestamp'] >= start_date)
+        & (data['timestamp'] <= end_date)
+    )
+    filtered_data = data.loc[mask, :]
+
+    emission_chart = {
+        "data": [
+            {
+                "x": filtered_data["timestamp"],
+                "y": filtered_data["emissions"],
+                "type": "lines",
+                "hovertemplate": "%{y:.5f}<extra></extra>",
+            },
+        ],
+        "layout": {
+            "title": {
+                "text": "Emissions",
+                "x": .05,
+                "xanchor": "left",
+            },
+            "xaxis": {"fixedrange": True},
+            "yaxis": {"fixedrange": True},
+            "colorway": ["#17B897"],
+        },
+    }
+
+    energy_consumed_chart = {
+        "data": [
+            {
+                "x": filtered_data["timestamp"],
+                "y": filtered_data["energy_consumed"],
+                "type": "lines",
+                "hovertemplate": "$%{y:.2f}"
+                                    "<extra></extra>",
+            },
+        ],
+        "layout": {
+            "title": {
+                "text": "Energy consumed",
+                "x": .05,
+                "xanchor": "left",
+            },
+            "xaxis": {"fixedrange": True},
+            "yaxis": {"fixedrange": True},
+            "colorway": ["#17B897"],
+        },
+
+    }
+    return emission_chart, energy_consumed_chart
 
 
 if __name__ == "__main__":
