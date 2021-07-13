@@ -56,8 +56,7 @@ fig_conso_energy_period = px.bar(data_frame=df, x = 'Period', y = 'energy_consum
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.Img(src='https://raw.githubusercontent.com/mlco2/codecarbon/master/docs/edit/images/banner.png', alt='codecarbon logo'
-             ),
+    html.Img(src='https://raw.githubusercontent.com/mlco2/codecarbon/master/docs/edit/images/banner.png', alt='codecarbon logo'),
     html.Br(),
     html.H1("Energy Consumed"),
 
