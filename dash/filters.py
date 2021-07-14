@@ -85,10 +85,16 @@ def filter_dropdown(data, col_name, type, text=None, default_val='first'):
 
 
 def menu_filters(data, FILTERS):
+    """
+    Yield filter components
+
+    Note: This is not automatic since it almost surely breaks the layout design
+          and should be treated along with the css
+    """
     filters = html.Div(
         children=[
             filter_dropdown(data, col_name='run_id', type='value', text='Run ID'),
-            filter_dropdown(data, col_name='duration', type='value'),
+            filter_dropdown(data, col_name='emissions', type='value'),
             filter_date(data, col_name='timestamp'),
         ],
         className="menu",

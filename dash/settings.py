@@ -8,6 +8,26 @@ EXT_STYLESHEET = [
     },
 ]
 
+# User menu filters
+# Note: Requires to add corresponding components in file "filters"
+# in function "menu_filters"
+FILTERS = [
+    {
+        'column': 'run_id',
+        'button_type': 'dropdown',
+        'sign': '==',
+    },
+    {
+        'column': 'emissions',
+        'button_type': 'dropdown',
+        'sign': '>=',
+    },
+    {
+        'column': 'timestamp',
+        'button_type': 'date-range',
+    },
+]
+
 # Automatically define charts titles and Y label to filter data
 LABELS = [
     {
@@ -21,22 +41,5 @@ LABELS = [
     {
         'x': 'timestamp',
         'y': 'duration',
-    },
-]
-
-FILTERS = [
-    {
-        'column': 'run_id',
-        'button_type': 'dropdown',
-        'sign': '==',
-    },
-    {
-        'column': 'duration',
-        'button_type': 'dropdown',
-        'sign': '>=',
-    },
-    {
-        'column': 'timestamp',
-        'button_type': 'date-range',
     },
 ]
