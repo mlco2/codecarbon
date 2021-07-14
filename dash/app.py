@@ -1,5 +1,10 @@
 """
 Define app along with its main components
+
+Note:
+    Although one could prefer using app within an overriding class, this
+    practice is not recommended by a core writer of the Dash user guide.
+    cf. @chriddyp: https://community.plotly.com/t/putting-a-dash-instance-inside-a-class/6097
 """
 import dash
 import dash_html_components as html
