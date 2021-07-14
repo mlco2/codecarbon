@@ -40,8 +40,7 @@ outputs = outputs_graphs(LABELS)
 def update_charts(*inputs):
     """ Update all graphs similarly based on user choices """
     filtered_data = filter_data(data, inputs, names, signs)
-    charts = [line_chart(filtered_data, labels['x'], labels['y'])
-              for labels in LABELS]
+    charts = [line_chart(filtered_data, l['x'], l['y']) for l in LABELS]
     return charts
 
 
