@@ -42,4 +42,12 @@ LABELS = [
         'x': 'timestamp',
         'y': 'duration',
     },
+    {
+        'x': 'timestamp',
+        'y': 'run_id',
+    },
+    {
+        'x': 'timestamp',
+        'y': 'id',
+    },
 ]
