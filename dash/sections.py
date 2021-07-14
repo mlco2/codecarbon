@@ -4,7 +4,6 @@ Define layout sections: header, menu, body
 import dash_core_components as dcc
 import dash_html_components as html
 
-
 def header():
     """ Composition and settings of the page header """
     component = html.Div(

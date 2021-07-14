@@ -38,16 +38,4 @@ LABELS = [
         'x': 'timestamp',
         'y': 'energy_consumed',
     },
-    {
-        'x': 'timestamp',
-        'y': 'duration',
-    },
-    {
-        'x': 'timestamp',
-        'y': 'run_id',
-    },
-    {
-        'x': 'timestamp',
-        'y': 'id',
-    },
 ]
