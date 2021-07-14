@@ -36,7 +36,7 @@ def filter_date(data, col_name, text='Date Range'):
                 className="menu-title"
                 ),
             dcc.DatePickerRange(
-                id="timestamp-filter",
+                id=f"{col_name}-filter",
                 min_date_allowed=data[col_name].min().date(),
                 max_date_allowed=data[col_name].max().date(),
                 start_date=data[col_name].min().date(),
