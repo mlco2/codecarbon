@@ -19,9 +19,13 @@ EMISSION_1 = Emission(
     run_id=RUN_1_ID,
     duration=98745,
     emissions=1.548444,
-    energy_consumed=57.21874,
-    cpu_power=57.21874,
+    cpu_power=0.3,
     gpu_power=0.0,
+    ram_power=0.15,
+    cpu_energy=55.21874,
+    gpu_energy=0.0,
+    ram_energy=2.0,
+    energy_consumed=57.21874,
 )
 
 EMISSION_2 = Emission(
@@ -30,9 +34,13 @@ EMISSION_2 = Emission(
     run_id=RUN_1_ID,
     duration=98745,
     emissions=1.548444,
-    energy_consumed=57.21874,
-    cpu_power=57.21874,
+    cpu_power=0.3,
     gpu_power=0.0,
+    ram_power=0.15,
+    cpu_energy=55.21874,
+    gpu_energy=0.0,
+    ram_energy=2.0,
+    energy_consumed=57.21874,
 )
 
 EMISSION_3 = Emission(
@@ -41,9 +49,13 @@ EMISSION_3 = Emission(
     run_id=RUN_1_ID,
     duration=98745,
     emissions=1.548444,
-    energy_consumed=57.21874,
-    cpu_power=57.21874,
+    cpu_power=0.3,
     gpu_power=0.0,
+    ram_power=0.15,
+    cpu_energy=55.21874,
+    gpu_energy=0.0,
+    ram_energy=2.0,
+    energy_consumed=57.21874,
 )
 
 
@@ -59,9 +71,13 @@ def test_emission_service_creates_correct_emission(_):
         run_id=RUN_1_ID,
         duration=98745,
         emissions=1.548444,
-        energy_consumed=57.21874,
-        cpu_power=57.21874,
+        cpu_power=0.3,
         gpu_power=0.0,
+        ram_power=0.15,
+        cpu_energy=55.21874,
+        gpu_energy=0.0,
+        ram_energy=2.0,
+        energy_consumed=57.21874,
     )
 
     actual_saved_emission_id = emission_service.add_emission(emission_to_create)

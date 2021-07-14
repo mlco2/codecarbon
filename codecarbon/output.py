@@ -30,6 +30,10 @@ class EmissionsData:
     emissions: float
     cpu_power: float
     gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
     energy_consumed: float
     country_name: str
     country_iso_code: str

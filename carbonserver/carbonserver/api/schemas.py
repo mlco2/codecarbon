@@ -29,6 +29,10 @@ class EmissionBase(BaseModel):
     )
     cpu_power: float
     gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
 
     class Config:
         schema_extra = {
@@ -37,9 +41,13 @@ class EmissionBase(BaseModel):
                 "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
                 "duration": 98745,
                 "emissions": 1.548444,
-                "energy_consumed": 57.21874,
-                "cpu_power": 57.21874,
+                "cpu_power": 0.3,
                 "gpu_power": 0.0,
+                "ram_power": 0.15,
+                "cpu_energy": 55.21874,
+                "gpu_energy": 0.0,
+                "ram_energy": 2.0,
+                "energy_consumed": 57.21874,
             }
         }
 

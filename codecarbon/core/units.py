@@ -89,6 +89,9 @@ class Power:
             return self.kW
         return self.kW * 1000
 
+    def __add__(self, other: "Power") -> "Power":
+        return Power(self.kW + other.kW)
+
 
 @dataclass
 class Time:

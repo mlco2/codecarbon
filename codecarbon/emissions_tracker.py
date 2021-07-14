@@ -15,7 +15,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
-from codecarbon.core.units import Energy, Time
+from codecarbon.core.units import Energy, Time, Power
 from codecarbon.core.util import set_log_level, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
@@ -199,8 +199,12 @@ class BaseEmissionsTracker(ABC):
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kwh=0)
-        self._total_cpu_power: Energy = Energy.from_energy(kwh=0)
-        self._total_gpu_power: Energy = Energy.from_energy(kwh=0)
+        self._total_cpu_energy: Energy = Energy.from_energy(kwh=0)
+        self._total_gpu_energy: Energy = Energy.from_energy(kwh=0)
+        self._total_ram_energy: Energy = Energy.from_energy(kwh=0)
+        self._cpu_power: Power = Power.from_watts(watts=0)
+        self._gpu_power: Power = Power.from_watts(watts=0)
+        self._ram_power: Power = Power.from_watts(watts=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = [RAM(tracking_mode=self._tracking_mode)]
         self._conf["hardware"] = []
@@ -353,8 +357,12 @@ class BaseEmissionsTracker(ABC):
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
-            cpu_power=self._total_cpu_power.kwh,
-            gpu_power=self._total_gpu_power.kwh,
+            cpu_power=self._cpu_power.kW,
+            gpu_power=self._gpu_power.kW,
+            ram_power=self._ram_power.kW,
+            cpu_energy=self._total_cpu_energy.kwh,
+            gpu_energy=self._total_gpu_energy.kwh,
+            ram_energy=self._total_ram_energy.kwh,
             energy_consumed=self._total_energy.kwh,
             country_name=country_name,
             country_iso_code=country_iso_code,
@@ -414,9 +422,14 @@ class BaseEmissionsTracker(ABC):
             )
             self._total_energy += energy
             if isinstance(hardware, CPU):
-                self._total_cpu_power += energy
+                self._total_cpu_energy += energy
+                self._cpu_power += hardware.total_power()
             if isinstance(hardware, GPU):
-                self._total_gpu_power += energy
+                self._total_gpu_energy += energy
+                self._gpu_power += hardware.total_power()
+            if isinstance(hardware, RAM):
+                self._total_ram_energy += energy
+                self._ram_power += hardware.total_power()
 
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} W during {last_duration:,.2f} s"
