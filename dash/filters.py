@@ -84,12 +84,13 @@ def filter_dropdown(data, col_name, type, text=None, default_val='first'):
     return f_vec
 
 
-def menu_filters(data, FILTERS):
+def menu_filters(data):
     """
-    Yield filter components
+    Generate a menu with filtering components (dropdwons, date ranges, etc.)
 
-    Note: This is not automatic since it almost surely breaks the layout design
-          and should be treated along with the css
+    Note: Elements are not added automatically with new FILTERS in settings
+          since it almost surely breaks the layout design and should be treated
+          along with the css.
     """
     filters = html.Div(
         children=[
