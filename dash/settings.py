@@ -12,14 +12,31 @@ EXT_STYLESHEET = [
 LABELS = [
     {
         'x': 'timestamp',
-        'y': 'emissions'
+        'y': 'emissions',
     },
     {
         'x': 'timestamp',
-        'y': 'energy_consumed'
+        'y': 'energy_consumed',
     },
     {
         'x': 'timestamp',
-        'y': 'duration'
+        'y': 'duration',
+    },
+]
+
+FILTERS = [
+    {
+        'column': 'run_id',
+        'button_type': 'dropdown',
+        'sign': '==',
+    },
+    {
+        'column': 'duration',
+        'button_type': 'dropdown',
+        'sign': '>=',
+    },
+    {
+        'column': 'timestamp',
+        'button_type': 'date-range',
     },
 ]
