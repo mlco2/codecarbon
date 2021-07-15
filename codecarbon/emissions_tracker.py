@@ -357,9 +357,10 @@ class BaseEmissionsTracker(ABC):
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
-            cpu_power=self._cpu_power.kW,
-            gpu_power=self._gpu_power.kW,
-            ram_power=self._ram_power.kW,
+            emissions_rate=emissions * 1000 / duration.seconds,
+            cpu_power=self._cpu_power.W,
+            gpu_power=self._gpu_power.W,
+            ram_power=self._ram_power.W,
             cpu_energy=self._total_cpu_energy.kwh,
             gpu_energy=self._total_gpu_energy.kwh,
             ram_energy=self._total_ram_energy.kwh,
@@ -377,8 +378,8 @@ class BaseEmissionsTracker(ABC):
             else:
                 # Create a copy
                 delta_emissions = dataclasses.replace(total_emissions)
-                # Compute delta
-                delta_emissions.substract_in_place(self._previous_emissions)
+                # Compute emissions rate from delta
+                delta_emissions.compute_emissions_rate(self._previous_emissions)
                 # TODO : find a way to store _previous_emissions only when
                 # TODO : the API call succeded
                 self._previous_emissions = total_emissions
@@ -423,13 +424,13 @@ class BaseEmissionsTracker(ABC):
             self._total_energy += energy
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
-                self._cpu_power += hardware.total_power()
+                self._cpu_power = hardware.total_power()
             if isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
-                self._gpu_power += hardware.total_power()
+                self._gpu_power = hardware.total_power()
             if isinstance(hardware, RAM):
                 self._total_ram_energy += energy
-                self._ram_power += hardware.total_power()
+                self._ram_power = hardware.total_power()
 
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} W during {last_duration:,.2f} s"
@@ -443,8 +444,8 @@ class BaseEmissionsTracker(ABC):
             if self._measure_occurrence >= self._api_call_interval:
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
-                    f"{emissions.emissions:.6f} Kg.CO2eq in {emissions.duration:.2f} s = {emissions.emissions/emissions.duration:.6f} Kg.CO2eq/s"
-                    + f" = {(emissions.emissions/emissions.duration)*3600*24*365:,} Kg.CO2eq/year"
+                    f"{emissions.emissions_rate:.6f} g.CO2eq/s mean an estimation of "
+                    + f"{emissions.emissions_rate*3600*24*365:,} Kg.CO2eq/year"
                 )
                 self._cc_api__out.out(emissions)
                 self._measure_occurrence = 0

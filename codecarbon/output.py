@@ -21,13 +21,13 @@ from codecarbon.external.logger import logger
 class EmissionsData:
     """
     Output object containg experiment data
-    # TODO : Replace by a pdantic BaseModel ?
     """
 
     timestamp: str
     project_name: str
     duration: float
     emissions: float
+    emissions_rate: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -50,6 +50,16 @@ class EmissionsData:
         self.duration = self.duration - previous_emission.duration
         self.emissions = self.emissions - previous_emission.emissions
         self.energy_consumed = self.energy_consumed - previous_emission.energy_consumed
+        self.emissions_rate = (self.emissions * 1000 / self.duration,)
+
+    def compute_emissions_rate(self, previous_emission):
+        delta_duration = self.duration - previous_emission.duration
+        delta_emissions = self.emissions - previous_emission.emissions
+        # delta_emissions in Kg.CO2/s * 1000 / duration in seconds = g.CO2/s
+        if delta_duration > 0:
+            self.emissions_rate = delta_emissions * 1000 / delta_duration
+        else:
+            self.emissions_rate = 0
 
 
 class BaseOutput(ABC):

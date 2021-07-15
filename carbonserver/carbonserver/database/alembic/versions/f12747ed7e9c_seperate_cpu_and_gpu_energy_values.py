@@ -22,6 +22,8 @@ def upgrade():
     op.add_column("emissions", sa.Column("cpu_energy", sa.Float))
     op.add_column("emissions", sa.Column("gpu_energy", sa.Float))
     op.add_column("emissions", sa.Column("ram_energy", sa.Float))
+    op.add_column("emissions", sa.Column("emissions_rate", sa.Float))
+    op.alter_column("emissions", "emissions", new_column_name="emissions_sum")
 
 
 def downgrade():
@@ -31,3 +33,5 @@ def downgrade():
     op.drop_column("emissions", "cpu_energy")
     op.drop_column("emissions", "gpu_energy")
     op.drop_column("emissions", "ram_energy")
+    op.drop_column("emissions", "emissions_rate")
+    op.alter_column("emissions", "emissions_sum", new_column_name="emissions")
