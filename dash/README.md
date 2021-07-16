@@ -16,11 +16,13 @@ main
     |
     -- fcts
     |
-    -- data_loader -- load_data
+    -- data_loader
     |
     -- app
         |
-        -- sections -- charts
+        -- sections
+        |
+        -- charts
         |
         -- filters
         |
