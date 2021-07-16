@@ -73,6 +73,10 @@ def line_chart(data, x, y, text=None):
                 "xaxis": {"fixedrange": True},
                 "yaxis": {"fixedrange": True},
                 "colorway": ["#17B897"],
+                'transition': {
+                    'duration': 500,
+                    'easing': 'cubic-in-out',
+                },
             },
         }
     return chart
@@ -80,6 +84,5 @@ def line_chart(data, x, y, text=None):
 
 def scatter_chart(data, x, y, transition=500):
     """ Build a scatter chart """
-    chart = px.scatter(data, x, y)
-    chart.update_layout(transition_duration=transition)
+    chart = line_chart(data, x, y)
     return chart
