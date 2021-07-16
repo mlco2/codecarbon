@@ -34,6 +34,7 @@ def fig_co2_energy(energies, emissions, timestamps):
     )
 
     fig_co2_energy.update_layout(title = 'Energy x CO2')
+    fig_co2_energy.update_xaxes(showline=True, linewidth=2, gridcolor='#EDEDED')
 
     return fig_co2_energy
 
@@ -47,11 +48,12 @@ def fig_energy_by_day_period(data):
         y = 'energy_consumed',
         color='period',
         color_discrete_sequence=["#D95F02", "#764E9F"],
+        title='Energy consumption during the day',
     )
     return fig_conso_energy_period
 
 
-def line_chart(data, x, y, text=None):
+def line_chart(data, x, y, text=None, transition=500):
     if not text:
         text = y
 
@@ -74,15 +76,9 @@ def line_chart(data, x, y, text=None):
                 "yaxis": {"fixedrange": True},
                 "colorway": ["#17B897"],
                 'transition': {
-                    'duration': 500,
+                    'duration': transition,
                     'easing': 'cubic-in-out',
                 },
             },
         }
-    return chart
-
-
-def scatter_chart(data, x, y, transition=500):
-    """ Build a scatter chart """
-    chart = line_chart(data, x, y)
     return chart
