@@ -76,3 +76,10 @@ def line_chart(data, x, y, text=None):
             },
         }
     return chart
+
+
+def scatter_chart(data, x, y, transition=500):
+    """ Build a scatter chart """
+    chart = px.scatter(data, x, y)
+    chart.update_layout(transition_duration=transition)
+    return chart

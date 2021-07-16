@@ -1,5 +1,8 @@
-from filters import filter_data
-from charts import line_chart
+from dash.dependencies import Output, Input
+import plotly.express as px
+
+from filters import filter_data, filter_week
+from charts import line_chart, scatter_chart
 from fcts import outputs_graphs, inputs_menu
 """
 Define callbacks to update Dash graphs and metrics on user event
@@ -17,4 +20,9 @@ def add_chart_series_callback(app, data, filters, labels):
         charts = [line_chart(filtered_data, l['x'], l['y']) for l in labels]
         return charts
 
-
+    @app.callback(Output('graph-with-slider', 'figure'),
+                  Input('week-slider', 'value'))
+    def update_figure(selected_week):
+        filtered_data = filter_week(data, 'timestamp', selected_week)
+        chart = scatter_chart(filtered_data, "timestamp", "energy_consumed")
+        return chart

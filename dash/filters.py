@@ -4,7 +4,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 from fcts import get_first_elem
 
-# def filter_data(data, run_id, start_date, end_date):
 def filter_data(data, inputs, names, signs):
     """ Filter data based on user choices """
     masks = []
@@ -46,7 +45,7 @@ def filter_date(data, col_name, text='Date Range'):
     return f_date
 
 
-def filter_dropdown(data, col_name, type, text=None, default_val='first'):
+def filter_dropdown(data, col_name, type_='value', text=None, default_val='first'):
     """
     Define a dropdown button for the provided column
 
@@ -70,10 +69,8 @@ def filter_dropdown(data, col_name, type, text=None, default_val='first'):
 
             dcc.Dropdown(
                 id = f"{col_name}-filter",
-                options=[
-                    {"label": vec, "value": vec}
-                    for vec in np.sort(data[col_name].unique())
-                ],
+                options=[{"label": vec, type_: vec}
+                         for vec in np.sort(data[col_name].unique())],
                 clearable=False,
                 className="dropdown",
                 value=default_val,
@@ -81,6 +78,12 @@ def filter_dropdown(data, col_name, type, text=None, default_val='first'):
         ],
     )
     return f_vec
+
+
+def filter_week(data, date_field, selected_week):
+    """ Filter data given a selected week """
+    mask = data[date_field].apply(lambda dt: dt.week) == selected_week
+    return data[mask]
 
 
 def menu_filters(data):
@@ -93,8 +96,8 @@ def menu_filters(data):
     """
     filters = html.Div(
         children=[
-            filter_dropdown(data, col_name='run_id', type='value', text='Run ID'),
-            filter_dropdown(data, col_name='emissions', type='value'),
+            filter_dropdown(data, col_name='run_id', type_='value', text='Run ID'),
+            filter_dropdown(data, col_name='emissions', type_='value'),
             filter_date(data, col_name='timestamp'),
         ],
         className="menu",

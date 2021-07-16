@@ -67,3 +67,8 @@ def outputs_graphs(labels):
     return outputs
 
 
+def unique_weeks(timestamps):
+    """ Extract unique weeks from a series of timestamps """
+    unique_weeks = timestamps.apply(lambda dt: dt.week).unique()
+    unique_weeks.sort()
+    return unique_weeks

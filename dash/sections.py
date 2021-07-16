@@ -7,6 +7,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from humanfriendly import format_timespan
 from charts import fig_energy_by_day_period, fig_co2_energy
+from fcts import unique_weeks
 
 
 def card(component):
@@ -48,6 +49,7 @@ def section_body(data, labels):
             *subsection_timeseries(labels),
             card(subsection_metrics(data)),
             *subsection_static_graphs(data),
+            *subsection_slider(data),
         ],
         className="wrapper",
     )
@@ -91,7 +93,7 @@ def subsection_timeseries(labels):
 
 
 def subsection_static_graphs(data):
-    """ Add Bruna's Graphs """
+    """ Add static graphs """
     graphs = [
         html.H1('Energy Consumed'),
         graph('graph_conso_energy_period', fig_energy_by_day_period(data)),
@@ -100,3 +102,23 @@ def subsection_static_graphs(data):
                                                  data['timestamp']))
     ]
     return graphs
+
+
+def subsection_slider(data):
+    """ Add graph with slider """
+    # Extract weeks from data
+    weeks = unique_weeks(data['timestamp'])
+    min_week = weeks.min()
+    max_week = weeks.max()
+
+    components = [
+        html.H1("Energy Consumed"),
+        dcc.Graph(id='graph-with-slider'),
+        dcc.Slider(id='week-slider',
+                   min=min_week,
+                   max=max_week,
+                   value=min_week,
+                   marks={str(week): str(week) for week in weeks},
+                   step=None),
+    ]
+    return components
