@@ -9,9 +9,31 @@ def build_id(d, sup):
     return id
 
 
+def day_period(hour):
+    """ Get the day period given an hour """
+    if hour >= 0 and hour < 6:
+        period = 'Night'
+    if hour >= 6 and hour < 12:
+        period = 'Morning'
+    if hour >= 12 and hour < 18:
+        period = 'Afternoon'
+    if hour >= 18 and hour <= 24:
+        period = 'Evening'
+    if hour < 0 or hour > 24:
+        raise ValueError(f"Hour should be within [0, 24], but is {hour}")
+    return period
+
+
 def get_first_elem(s):
     """ Get first alpha-numerical element of a Pandas Series """
     return s.sort_values().iloc[0]
+
+
+def period_of_the_day(timestamps):
+    """ Get day periods given a series of time """
+    hours = timestamps.apply(lambda d: d.hour)
+    day_periods = hours.apply(day_period)
+    return day_periods
 
 
 def inputs_menu(filters):
@@ -43,3 +65,5 @@ def outputs_graphs(labels):
         id = build_id(label, sup='graph')
         outputs.append(Output(label['y'], 'figure'))
     return outputs
+
+

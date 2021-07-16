@@ -10,7 +10,7 @@ import dash
 import dash_html_components as html
 
 from filters import menu_filters
-from sections import header, body
+from sections import section_header, section_body
 from callbacks import add_chart_series_callback
 
 
@@ -25,9 +25,9 @@ def build_layout(app, data, labels):
     """ Define layout sections and ordering """
     app.layout = html.Div(
         children=[
-            header(),
+            section_header(),
             menu_filters(data),
-            body(labels),
+            section_body(data, labels),
         ],
     )
 
