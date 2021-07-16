@@ -1,9 +1,8 @@
 from functools import reduce
 import numpy as np
-import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from fcts import get_first_elem, build_id
+from fcts import get_first_elem
 
 # def filter_data(data, run_id, start_date, end_date):
 def filter_data(data, inputs, names, signs):
