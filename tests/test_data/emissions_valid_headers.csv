@@ -1,2 +1,2 @@
-timestamp,project_name,duration,emissions,cpu_power,gpu_power,ram_power,cpu_energy,gpu_energy,ram_energy,energy_consumed,country_name,country_iso_code,region,on_cloud,cloud_provider,cloud_region
-2021-07-13T17:36:33,codecarbon,175.7496521472931,0.0013272064020301974,0.26999999999999996,0.0,0.15461882265600002,0.001079437044262886,0,0.0006181529070933335,0.0016975899513562193,Morocco,MAR,casablanca-settat,N,,
+timestamp,project_name,duration,emissions,emissions_rate,cpu_power,gpu_power,ram_power,cpu_energy,gpu_energy,ram_energy,energy_consumed,country_name,country_iso_code,region,on_cloud,cloud_provider,cloud_region
+2021-07-13T17:36:33,codecarbon,175.7496521,0.001327206,0.000663603,0.27,0,0.154618823,0.001079437,0,0.000618153,0.00169759,Morocco,MAR,casablanca-settat,N,,
