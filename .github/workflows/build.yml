@@ -79,7 +79,10 @@ jobs:
       - name: Setup PostgreSQL
         # Runs a script that creates a PostgreSQL table, populates
         # the table with data, and then retrieves the data.
-        run: python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
+        run:
+          - cd carbonserver
+          - python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
+
       - name: Run API tests
         run: |
           uvicorn --reload main:app --host 0.0.0.0 &
