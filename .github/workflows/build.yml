@@ -92,15 +92,14 @@ jobs:
       - name: Run API tests
         run: |
           cd carbonserver
-          uvicorn main:app --host 0.0.0.0 &
-          sleep 5
-          netstat -o -n -a | grep 8000
+          uvicorn main:app --host 0.0.0.0 --port 8008 &
+          sleep 2
+          netstat -o -n -a | grep 8008
           tox -e with_api_server
         # Environment variables used by the `client.js` script to create a new PostgreSQL table.
         env:
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5432/codecarbon_db
-          CODECARBON_API_URL: http://localhost:8000
 
 
 

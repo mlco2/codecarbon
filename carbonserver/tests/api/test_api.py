@@ -1,11 +1,13 @@
 import os
 import random
 
+import pytest
 import requests
 
 # Get the API utl to use from an env variable if exist
-url = os.getenv("CODECARBON_API_URL")
-URL = url if url else "http://localhost:8008"
+URL = os.getenv("CODECARBON_API_URL")
+if URL is None:
+    pytest.exit("CODECARBON_API_URL is not defined")
 
 experiment_id = project_id = user_id = api_key = org_id = team_id = email = None
 org_name = org_description = org_new_id = None
@@ -34,6 +36,7 @@ def is_key_all_values_equal(list_of_dict, key, value):
 
 
 def test_api_user_create():
+    assert URL is not None
     email = f"test-{random.randint(1, 20_000_000)}@test.com"
     payload = {"email": email, "name": "toto", "password": password}
     r = requests.post(url=URL + "/user", json=payload, timeout=2)
@@ -150,11 +153,11 @@ def test_api_project_create():
     project_id = r.json()["id"]
 
 
-# Not implemented yet
-# def test_api_projects_list():
-#     r = requests.get(url=URL + "/projects", timeout=2)
-#     assert r.status_code == 200
-#     assert is_key_value_exist(r.json(),"id",project_id)
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_api_projects_list():
+    r = requests.get(url=URL + "/projects", timeout=2)
+    assert r.status_code == 200
+    assert is_key_value_exist(r.json(), "id", project_id)
 
 
 def test_api_experiment_create():
