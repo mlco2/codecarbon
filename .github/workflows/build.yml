@@ -86,13 +86,14 @@ jobs:
           netstat -o -n -a | grep 5432 || true
           ping -c 1 postgres || true
           sleep 5
-          # python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
+          python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
         env:
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@postgres:5432/codecarbon_db
 
       - name: Run API tests
         run: |
+          cd carbonserver
           uvicorn --reload main:app --host 0.0.0.0 &
           sleep 5
           netstat -o -n -a | grep 8000
