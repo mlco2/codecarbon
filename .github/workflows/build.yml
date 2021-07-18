@@ -81,6 +81,8 @@ jobs:
         # the table with data, and then retrieves the data.
         run: |
           cd carbonserver
+          netstat -o -n -a | grep 5432
+          ping -c 1 postgres
           sleep 5
           python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
         env:
