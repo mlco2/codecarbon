@@ -81,6 +81,7 @@ jobs:
         # the table with data, and then retrieves the data.
         run: |
           cd carbonserver
+          sleep 5
           python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
         env:
           # The hostname used to communicate with the PostgreSQL service container
