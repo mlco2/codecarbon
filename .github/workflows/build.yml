@@ -82,6 +82,9 @@ jobs:
         run: |
           cd carbonserver
           python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          DATABASE_URL: postgresql://codecarbon-user:supersecret@postgres:5432/codecarbon_db
 
       - name: Run API tests
         run: |
