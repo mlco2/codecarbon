@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 from typing import Dict
+from fuzzywuzzy import process
 
 import cpuinfo
 import pandas as pd
@@ -231,23 +232,88 @@ class IntelRAPL:
         return cpu_details
 
 
+
 class TDP:
     def __init__(self):
         self.model, self.tdp = self._get_power_from_constant()
 
+
+    def _get_cpu_constant_power(self, raw_model):
+        """ Get CPU power from the best matching CPU (from known static data) """
+        cpu_power_df = DataSource().get_cpu_power_data()
+        cpu_model, match_found, _, _ = self._get_matching_cpu(cpu_power_df, raw_model)
+        if match_found:
+            power = self.get_match_power(cpu_power_df, cpu_model)
+            return cpu_model, power
+        else:
+            return None
+
+
+    @staticmethod
+    def _get_match_power(cpu_power_df, match):
+        """ Extract constant power from matched CPU """
+        return cpu_power_df[cpu_power_df['Name'] == match]['TDP'].values[0]
+
+
+    def _get_matching_cpu(self, cpu_power_df, raw_model, threshold=90):
+        """
+        Get the matching CPU name with its similarity ratio
+
+        :args:
+            cpu_power_df (DataFrame): data containing info on CPU names and power
+
+            model (str): the raw model detected on the machine
+
+            Threshold (float): limit on similarity under which no match is
+            considered valid. Default at 90% of similarity
+
+        :return:
+            closest_name (str), closest_ratio (float), match_found (bool)
+            i.e. the CPU match name along with its similarity ratio, or list of
+            poorly similar CPUs
+        """
+        top5 = self._get_top5_matching(cpu_power_df, raw_model)
+        closest_name = self._get_matching_name(top5[0])
+        closest_ratio = self._get_matching_ratio(top5[0])
+        match_found = closest_ratio > threshold
+        return closest_name, match_found, closest_ratio, top5
+
+
+    @staticmethod
+    def _get_matching_name(match):
+        """
+        Extract the matching name of the match output
+
+        :Note: Output form fuzzywuzzy process is of the form (Name, matching_ratio)
+        """
+        return match[0]
+
+
+    @staticmethod
+    def _get_matching_ratio(match):
+        """
+        Extract the matching ratio of the match output
+
+        :Note: Output form fuzzywuzzy process is of the form (Name, matching_ratio)
+        """
+        return match[1]
+
+
     def _get_power_from_constant(self) -> int:
         """
         Get CPU power from constant mode
+
         :return: model name (str), power in Watt (int)
+
+        :note: to investigate less similar CPUs, use _get_matching_cpu().
         """
         cpu_info = cpuinfo.get_cpu_info()
+
         if cpu_info:
             model_raw = cpu_info.get("brand_raw", "")
             model = parse_cpu_model(model_raw)
-            cpu_power_df = DataSource().get_cpu_power_data()
-            cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
-            if len(cpu_power_df_model) > 0:
-                power = cpu_power_df_model["TDP"].tolist()[0]
+            power = self._get_cpu_constant_power(model)
+            if power:
                 logger.debug(f"CPU : We detect a {model_raw} with a TDP of {power} W")
                 return model, power
             else:
@@ -262,3 +328,10 @@ class TDP:
                 + " Resorting to a default power consumption of 85W."
             )
         return "Unknown", None
+
+
+    @staticmethod
+    def _get_top5_matching(cpu_power_df, raw_model):
+        """ Extract top 5 closest matchings using fuzzy string matching """
+        top5 = process.extract(raw_model, cpu_power_df['Name'])
+        return top5
