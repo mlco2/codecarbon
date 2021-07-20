@@ -39,3 +39,12 @@ LABELS = [
         'y': 'energy_consumed',
     },
 ]
+
+
+# API
+API_PATH = 'http://api.codecarbon.io/'
+
+
+# Authentification
+USER = 'jessica'
+PSSD = 'fake-super-secret-token'
