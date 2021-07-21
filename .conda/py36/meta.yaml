@@ -30,6 +30,7 @@ requirements:
     - psutil
     - pynvml
     - py-cpuinfo
+    - fuzzywuzzy
 
 test:
   imports:
