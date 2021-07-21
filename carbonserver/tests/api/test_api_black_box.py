@@ -216,9 +216,16 @@ def test_api_emission_create():
     payload = {
         "timestamp": "2021-04-04T08:43:00+02:00",
         "run_id": run_id,
-        "duration": 42,
-        "emissions": 487956487.654,
-        "energy_consumed": 8794512.6547,
+        "duration": 98745,
+        "emissions_sum": 1544.54,
+        "emissions_rate": 1.548444,
+        "cpu_power": 0.3,
+        "gpu_power": 10.65,
+        "ram_power": 1.15,
+        "cpu_energy": 55.21874,
+        "gpu_energy": 106540.65484,
+        "ram_energy": 64.654688,
+        "energy_consumed": 57.21874,
     }
     r = requests.post(url=URL + "/emission/", json=payload, timeout=2)
     assert r.status_code == 201
