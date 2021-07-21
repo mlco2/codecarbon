@@ -6,6 +6,24 @@ from dataclasses import dataclass
 
 
 @dataclass
+class Time:
+    """
+    Measured in seconds
+    """
+
+    seconds: float
+    SECONDS_TO_HOURS = 1 / 3600
+
+    @property
+    def hours(self) -> float:
+        return self.seconds * Time.SECONDS_TO_HOURS
+
+    @classmethod
+    def from_seconds(cls, seconds: float) -> "Time":
+        return cls(seconds=seconds)
+
+
+@dataclass
 class EmissionsPerKwh:
     """
     Measured in kg/kwh
@@ -83,26 +101,26 @@ class Power:
     def from_watts(cls, watts: float) -> "Power":
         return cls(kW=watts * Power.WATTS_TO_KILO_WATTS)
 
+    @classmethod
+    def from_energies_and_delay(cls, e1: "Energy", e2: "Energy", delay: "Time"):
+        """
+        P = (E_{t1} - E_{t2}) / delay (=t2-t1)
+        kW      kWh       kWh     h
+
+        Args:
+            e1 (Energy): First measurement
+            e2 (Energy): Second measurement
+            delay (Time): Time between measurements
+
+        Returns:
+            Power: Resulting Power estimation
+        """
+        delta_energy = abs(e2.kwh - e1.kwh)
+        kw = delta_energy / delay.hours
+        return cls(kW=kw)
+
     @property
     def W(self):
         if not isinstance(self.kW, float):
             return self.kW
         return self.kW * 1000
-
-
-@dataclass
-class Time:
-    """
-    Measured in seconds
-    """
-
-    seconds: float
-    SECONDS_TO_HOURS = 1 / 3600
-
-    @property
-    def hours(self) -> float:
-        return self.seconds * Time.SECONDS_TO_HOURS
-
-    @classmethod
-    def from_seconds(cls, seconds: float) -> "Time":
-        return cls(seconds=seconds)
