@@ -54,11 +54,6 @@ def parse_cpu_model(raw_name) -> str:
             .replace("(TM)", "")
             .replace(" CPU", "")
         )
-        splitted = model.split(" ")
-        if len(splitted) == 6 and splitted[2] == "Threadripper":
-            model = (
-                splitted[0] + " " + splitted[1] + " " + splitted[2] + " " + splitted[3]
-            )
         return model
     return ""
 
@@ -243,8 +238,8 @@ class TDP:
         cpu_power_df = DataSource().get_cpu_power_data()
         cpu_model, match_found, _, _ = self._get_matching_cpu(cpu_power_df, raw_model)
         if match_found:
-            power = self.get_match_power(cpu_power_df, cpu_model)
-            return cpu_model, power
+            power = self._get_match_power(cpu_power_df, cpu_model)
+            return power
         else:
             return None
 
@@ -255,7 +250,7 @@ class TDP:
         return cpu_power_df[cpu_power_df['Name'] == match]['TDP'].values[0]
 
 
-    def _get_matching_cpu(self, cpu_power_df, raw_model, threshold=90):
+    def _get_matching_cpu(self, cpu_power_df, raw_model, threshold=80):
         """
         Get the matching CPU name with its similarity ratio
 
