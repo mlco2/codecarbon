@@ -15,12 +15,12 @@ class TestGPUMetadata(unittest.TestCase):
         self, mocked_get_gpu_details, mocked_is_gpu_details_available
     ):
         gpu = GPU.from_utils()
-        self.assertAlmostEqual(0.074318, gpu.total_power().kW, places=2)
+        self.assertAlmostEqual(0.074318, gpu.total_power().kw, places=2)
 
     def test_gpu_metadata_one_gpu_power(
         self, mocked_get_gpu_details, mocked_is_gpu_details_available
     ):
         gpu = GPU.from_utils()
         self.assertAlmostEqual(
-            0.032159, gpu._get_power_for_gpus(gpu_ids=[1]).kW, places=2
+            0.032159, gpu._get_power_for_gpus(gpu_ids=[1]).kw, places=2
         )

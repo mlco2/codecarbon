@@ -60,7 +60,7 @@ class Energy:
 
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
-        return cls(kwh=power.kW * time.hours)
+        return cls(kwh=power.kw * time.hours)
 
     @classmethod
     def from_ujoules(cls, energy: float) -> "Energy":
@@ -89,17 +89,17 @@ class Power:
     MILLI_WATTS_TO_WATTS = 0.001
     WATTS_TO_KILO_WATTS = 0.001
 
-    kW: float
+    kw: float
 
     @classmethod
     def from_milli_watts(cls, milli_watts: float) -> "Power":
         return cls(
-            kW=milli_watts * Power.MILLI_WATTS_TO_WATTS * Power.WATTS_TO_KILO_WATTS
+            kw=milli_watts * Power.MILLI_WATTS_TO_WATTS * Power.WATTS_TO_KILO_WATTS
         )
 
     @classmethod
     def from_watts(cls, watts: float) -> "Power":
-        return cls(kW=watts * Power.WATTS_TO_KILO_WATTS)
+        return cls(kw=watts * Power.WATTS_TO_KILO_WATTS)
 
     @classmethod
     def from_energies_and_delay(cls, e1: "Energy", e2: "Energy", delay: "Time"):
@@ -117,10 +117,10 @@ class Power:
         """
         delta_energy = abs(e2.kwh - e1.kwh)
         kw = delta_energy / delay.hours
-        return cls(kW=kw)
+        return cls(kw=kw)
 
     @property
     def W(self):
-        if not isinstance(self.kW, float):
-            return self.kW
-        return self.kW * 1000
+        if not isinstance(self.kw, float):
+            return self.kw
+        return self.kw * 1000
