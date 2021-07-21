@@ -8,7 +8,7 @@ class RAPLFile:
     name: str
     path: str
     energy_reading: Energy = Energy(0)
-    power_measurement: float = 0
+    power_measurement: float = 0  # kW
 
     def _get_value(self) -> float:
         """
@@ -29,5 +29,5 @@ class RAPLFile:
         """
         self.power_measurement = Power.from_energies_and_delay(
             self.energy_reading, self._get_value(), Time.from_seconds(delay)
-        )
+        ).kw
         return

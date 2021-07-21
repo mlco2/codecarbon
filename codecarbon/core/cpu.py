@@ -171,7 +171,7 @@ class IntelRAPL:
     def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
-        self._delay = 0.01  # 10 millisecond
+        self._delay = 0.01  # (s) -> 10 millisecond
         self._rapl_files = list()
         self._setup_rapl()
 
