@@ -22,7 +22,7 @@ docker-compose up -d
 This will run :
  - Postgresql on localhost:5480
  - PGAdmin 4 on [http://localhost:5080](http://localhost:5080) login : *test@test.com* , password : *test* (Dans PGAdmin, use the host *postgres_codecarbon* and port *5432* for in docker network access)
- - CodeCarbon API on [http://localhost:5080](http://localhost:5080)
+ - CodeCarbon API on [http://localhost:8008](http://localhost:8008)
  
 
 ## Stop

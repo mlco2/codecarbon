@@ -6,7 +6,7 @@ from codecarbon.external.logger import logger
 
 
 @track_emissions(
-    # api_endpoint="http://app-d6bc59c3-0f69-4d8b-a6a3-bc39a9ceb0c2.cleverapps.io",
+    api_endpoint="http://localhost:8008",
     measure_power_secs=30,
     api_call_interval=4,
     api_key="12aaaaaa-0b23-1234-1234-abcdef123456",

@@ -18,7 +18,14 @@ EMISSION_1 = Emission(
     timestamp="2021-04-04T08:43:00+02:00",
     run_id=RUN_1_ID,
     duration=98745,
-    emissions=1.548444,
+    emissions_sum=455.6544,
+    emissions_rate=1.548444,
+    cpu_power=0.3,
+    gpu_power=0.0,
+    ram_power=0.15,
+    cpu_energy=55.21874,
+    gpu_energy=0.0,
+    ram_energy=2.0,
     energy_consumed=57.21874,
 )
 
@@ -27,7 +34,14 @@ EMISSION_2 = Emission(
     timestamp="2021-04-04T08:43:00+02:00",
     run_id=RUN_1_ID,
     duration=98745,
-    emissions=1.548444,
+    emissions_sum=455.6544,
+    emissions_rate=0.548444,
+    cpu_power=0.3,
+    gpu_power=0.0,
+    ram_power=0.15,
+    cpu_energy=55.21874,
+    gpu_energy=0.0,
+    ram_energy=2.0,
     energy_consumed=57.21874,
 )
 
@@ -36,7 +50,14 @@ EMISSION_3 = Emission(
     timestamp="2021-04-04T08:43:00+02:00",
     run_id=RUN_1_ID,
     duration=98745,
-    emissions=1.548444,
+    emissions_sum=451.6544,
+    emissions_rate=1.5324,
+    cpu_power=0.3,
+    gpu_power=0.0,
+    ram_power=0.15,
+    cpu_energy=55.21874,
+    gpu_energy=0.0,
+    ram_energy=2.0,
     energy_consumed=57.21874,
 )
 
@@ -52,7 +73,14 @@ def test_emission_service_creates_correct_emission(_):
         timestamp="2021-04-04T08:43:00+02:00",
         run_id=RUN_1_ID,
         duration=98745,
-        emissions=1.548444,
+        emissions_sum=433.6544,
+        emissions_rate=1.548444,
+        cpu_power=0.3,
+        gpu_power=0.0,
+        ram_power=0.15,
+        cpu_energy=55.21874,
+        gpu_energy=0.0,
+        ram_energy=2.0,
         energy_consumed=57.21874,
     )
 

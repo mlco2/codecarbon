@@ -7,7 +7,6 @@ from codecarbon.output import EmissionsData
 
 
 def test_call_api():
-    # mock_path = 'codecarbon.core.api_client.requests'
     with requests_mock.Mocker() as m:
         m.post(
             "http://test.com/run",
@@ -28,6 +27,13 @@ def test_call_api():
             project_name="",
             duration=1.5,
             emissions=2.0,
+            emissions_rate=2.0,
+            cpu_energy=2,
+            gpu_energy=0,
+            ram_energy=1,
+            cpu_power=3.0,
+            gpu_power=0,
+            ram_power=0.15,
             energy_consumed=3.0,
             country_name="Groland",
             country_iso_code="GRD",

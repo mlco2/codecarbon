@@ -23,7 +23,14 @@ EMISSION_TO_CREATE = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 206.548444,
+    "emissions_rate": 89.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
@@ -32,7 +39,14 @@ EMISSION_1 = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": RUN_1_ID,
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 106.548444,
+    "emissions_rate": 0.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
@@ -41,7 +55,14 @@ EMISSION_2 = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": RUN_1_ID,
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 136.548444,
+    "emissions_rate": 5.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
@@ -51,7 +72,14 @@ EMISSION_3 = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": RUN_2_ID,
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 256.548444,
+    "emissions_rate": 98.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
