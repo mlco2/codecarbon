@@ -158,9 +158,9 @@ class BaseEmissionsTracker(ABC):
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
                              emissions data
         :param api_key: API key for Code Carbon API, mandatory to use it !
-        :param output_dir: Directory path to which the experiment details are logged
-                           in a CSV file called `emissions.csv`, defaults to current
-                           directory
+        :param output_dir: Directory path to which the experiment details are logged,
+                           defaults to current directory
+        :param output_file: Name of output CSV file, defaults to `emissions.csv`
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
         :param save_to_api: Indicates if the emission artifacts should be send to the
