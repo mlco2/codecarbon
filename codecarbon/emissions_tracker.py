@@ -137,6 +137,7 @@ class BaseEmissionsTracker(ABC):
         api_endpoint: Optional[str] = _sentinel,
         api_key: Optional[str] = _sentinel,
         output_dir: Optional[str] = _sentinel,
+        output_file: Optional[str] = _sentinel,
         save_to_file: Optional[bool] = _sentinel,
         save_to_api: Optional[bool] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
@@ -157,9 +158,9 @@ class BaseEmissionsTracker(ABC):
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
                              emissions data
         :param api_key: API key for Code Carbon API, mandatory to use it !
-        :param output_dir: Directory path to which the experiment details are logged
-                           in a CSV file called `emissions.csv`, defaults to current
-                           directory
+        :param output_dir: Directory path to which the experiment details are logged,
+                           defaults to current directory
+        :param output_file: Name of output CSV file, defaults to `emissions.csv`
         :param save_to_file: Indicates if the emission artifacts should be logged to a
                              file, defaults to True
         :param save_to_api: Indicates if the emission artifacts should be send to the
@@ -188,6 +189,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(log_level, "log_level", "info")
         self._set_from_conf(measure_power_secs, "measure_power_secs", 15, int)
         self._set_from_conf(output_dir, "output_dir", ".")
+        self._set_from_conf(output_file, "output_file", "emissions.csv")
         self._set_from_conf(project_name, "project_name", "codecarbon")
         self._set_from_conf(save_to_api, "save_to_api", False, bool)
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
@@ -268,7 +270,7 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_file:
             self.persistence_objs.append(
-                FileOutput(os.path.join(self._output_dir, "emissions.csv"))
+                FileOutput(os.path.join(self._output_dir, self._output_file))
             )
 
         if self._emissions_endpoint:
@@ -584,6 +586,7 @@ def track_emissions(
     api_endpoint: Optional[str] = _sentinel,
     api_key: Optional[str] = _sentinel,
     output_dir: Optional[str] = _sentinel,
+    output_file: Optional[str] = _sentinel,
     save_to_file: Optional[bool] = _sentinel,
     save_to_api: Optional[bool] = _sentinel,
     offline: Optional[bool] = _sentinel,
@@ -605,9 +608,9 @@ def track_emissions(
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15
     :api_call_interval: Number of measure to make before calling the Code Carbon API.
-    :param output_dir: Directory path to which the experiment details are logged
-                       in a CSV file called `emissions.csv`, defaults to current
-                       directory
+    :param output_dir: Directory path to which the experiment details are logged,
+                       defaults to current directory
+    :param output_file: Name of output CSV file, defaults to `emissions.csv`
     :param save_to_file: Indicates if the emission artifacts should be logged to a file,
                          defaults to True
     :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
@@ -645,6 +648,7 @@ def track_emissions(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
+                    output_file=output_file,
                     save_to_file=save_to_file,
                     country_iso_code=country_iso_code,
                     region=region,
@@ -662,6 +666,7 @@ def track_emissions(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
+                    output_file=output_file,
                     save_to_file=save_to_file,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
