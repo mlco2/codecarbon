@@ -20,6 +20,7 @@ router = APIRouter(
     "/organization",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
+    response_model=Organization,
 )
 @inject
 def add_organization(
@@ -27,7 +28,7 @@ def add_organization(
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
-):
+) -> Organization:
     return organization_service.add_organization(organization)
 
 
@@ -35,6 +36,7 @@ def add_organization(
     "/organization/{organization_id}",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
+    response_model=Organization,
 )
 @inject
 def read_organization(
@@ -47,7 +49,10 @@ def read_organization(
 
 
 @router.get(
-    "/organizations", tags=ORGANIZATIONS_ROUTER_TAGS, status_code=status.HTTP_200_OK
+    "/organizations",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=List[Organization],
 )
 @inject
 def list_organizations(
