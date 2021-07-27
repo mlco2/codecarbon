@@ -12,8 +12,8 @@ class EmissionService:
         self._repository = emission_repository
 
     def add_emission(self, emission: EmissionCreate) -> UUID:
-        emission = self._repository.add_emission(emission)
-        return emission
+        emission_id = self._repository.add_emission(emission)
+        return emission_id
 
     def get_one_emission(self, emission_id) -> Emission:
         emission = self._repository.get_one_emission(emission_id)

@@ -12,14 +12,16 @@ router = APIRouter()
 
 
 @router.post(
-    "/authenticate", tags=AUTHENTICATE_ROUTER_TAGS, status_code=status.HTTP_200_OK
+    "/authenticate",
+    tags=AUTHENTICATE_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=Token,
 )
 @inject
 def auth_user(
     user: UserAuthenticate,
     user_service: UserService = Depends(Provide[ServerContainer.user_service]),
-):
-
+) -> Token:
     verified_user = user_service.verify_user(user)
     if verified_user:
         return Token(access_token="a", token_type="access")

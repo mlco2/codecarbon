@@ -21,12 +21,13 @@ runs_temp_db = []
     "/run",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
+    response_model=Run,
 )
 @inject
 def add_run(
     run: RunCreate,
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
-):
+) -> Run:
     return run_service.add_run(run)
 
 
@@ -34,6 +35,7 @@ def add_run(
     "/run/{run_id}",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
+    response_model=Run,
 )
 @inject
 def read_run(
@@ -47,6 +49,7 @@ def read_run(
     "/runs",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
+    response_model=List[Run],
 )
 @inject
 def list_runs(

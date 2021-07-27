@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
@@ -15,5 +16,5 @@ class RunService:
     def read_run(self, run_id: UUID) -> Run:
         return self._repository.get_one_run(run_id)
 
-    def list_runs(self):
+    def list_runs(self) -> List[Run]:
         return self._repository.list_runs()

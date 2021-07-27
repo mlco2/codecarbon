@@ -171,7 +171,7 @@ class Team(TeamBase):
     id: UUID
     api_key: str
     organization_id: UUID
-    projects: List[Project] = []
+    projects: Optional[List[Project]]
 
 
 class OrganizationBase(BaseModel):

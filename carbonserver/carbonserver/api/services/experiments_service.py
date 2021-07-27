@@ -10,9 +10,9 @@ class ExperimentService:
     def __init__(self, experiment_repository: ExperimentSqlRepository):
         self._repository = experiment_repository
 
-    def add_experiment(self, experiment_id: ExperimentCreate) -> Experiment:
-        experiment_id = self._repository.add_experiment(experiment_id)
-        return experiment_id
+    def add_experiment(self, experiment: ExperimentCreate) -> Experiment:
+        experiment = self._repository.add_experiment(experiment)
+        return experiment
 
     def get_one_experiment(self, experiment_id) -> Experiment:
         experiment = self._repository.get_one_experiment(experiment_id)
