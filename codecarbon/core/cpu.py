@@ -267,7 +267,6 @@ class TDP:
 
 
     def _get_matching_cpu(self, model_raw:str, cpu_df:pd.DataFrame,
-                          threshold_direct=100, threshold_token_set=100,
                           greedy=False) -> str:
         """
         Get matching cpu name
@@ -276,12 +275,6 @@ class TDP:
             model_raw (str): raw name of the cpu model detected on the machine
 
             cpu_df (DataFrame): table containing cpu models along their tdp
-
-            threshold_direct (default 100): similiraty ratio value to consider
-            almost-exact matches.
-
-            threshold_token_set (defautl 100): similarity ratio value to
-            consider token_set matches (for more detail see fuzz.token_set_ratio).
 
             greedy (default False): if multiple cpu models match with an equal
             ratio of similarity, greedy (True) selects the first model,
@@ -295,21 +288,30 @@ class TDP:
             with a tdp very different from the actual tdp of current cpu, it
             still enables the relative comparison of models emissions running
             on the same machine.
+
+            THRESHOLD_DIRECT defines the similiraty ratio value to consider
+            almost-exact matches.
+
+            THRESHOLD_TOKEN_SET defines the similarity ratio value to consider
+            token_set matches (for more detail see fuzz.token_set_ratio).
         """
+        THRESHOLD_DIRECT=100
+        THRESHOLD_TOKEN_SET=100
+
         ratios_direct = self._get_direct_matches(model_raw, cpu_df)
         ratios_token_set = self._get_token_set_matches(model_raw, cpu_df)
         max_ratio_direct = max(ratios_direct)
         max_ratio_token_set = max(ratios_token_set)
 
         # Check if a direct match exists
-        if max_ratio_direct >= threshold_direct:
+        if max_ratio_direct >= THRESHOLD_DIRECT:
             cpu_matched = self._get_single_direct_match(ratios_direct,
                                                         max_ratio_direct,
                                                         cpu_df)
             return cpu_matched
 
         # Check if an indirect match exists
-        if max_ratio_token_set < threshold_token_set:
+        if max_ratio_token_set < THRESHOLD_TOKEN_SET:
             return None
         else:
             cpu_idxs = self._get_max_idxs(ratios_token_set, max_ratio_token_set)
