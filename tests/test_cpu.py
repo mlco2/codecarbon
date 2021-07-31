@@ -172,13 +172,12 @@ class TestTDP(unittest.TestCase):
         # /! LIMIT !\ The following matches with both:
         # "AMD Ryzen 3 1200", and "AMD Ryzen 3 PRO 1200"
         # However, it should only match with AMD Ryzen 3 PRO 1200
-        # (the words are in reversed order)
-
-        # model = "AMD Ryzen 3 1200 PRO"
-        # self.assertEqual(
-        #     tdp._get_matching_cpu(model, cpu_data, greedy=False),
-        #     "AMD Ryzen 3 PRO 1200",
-        # )
+        # (words are in reversed order)
+        model = "AMD Ryzen 3 1200 PRO"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD Ryzen 3 PRO 1200",
+        )
 
         # Compensates for the previous test failure using greedy mode
         model = "AMD Ryzen 3 1200 PRO"
