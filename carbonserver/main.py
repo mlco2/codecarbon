@@ -1,3 +1,4 @@
+from carbonserver.api.errors import DBException
 from container import ServerContainer
 from fastapi import Depends, FastAPI
 
@@ -14,6 +15,16 @@ from carbonserver.api.routers import (
     users,
 )
 from carbonserver.database.database import engine
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+
+async def db_exception_handler(request: Request, exc: DBException):
+    return JSONResponse({"detail": exc.error.message}, status_code=400)
+
+
+async def generic_exception_handler(request: Request, exc: Exception):
+    return JSONResponse({"detail": "Generic error"}, status_code=500)
 
 
 def create_app() -> FastAPI:
@@ -22,6 +33,9 @@ def create_app() -> FastAPI:
 
     init_db(container)
     server = init_server(container)
+    server.add_exception_handler(DBException, db_exception_handler)
+    server.add_exception_handler(Exception, generic_exception_handler)
+
     return server
 
 
@@ -69,4 +83,5 @@ app = create_app()
 
 @app.get("/")
 def default():
-    return {"status": "OK"}
+    raise Exception
+
