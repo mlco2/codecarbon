@@ -37,7 +37,9 @@ class Database:
             session.rollback()
             logger.error(e.orig.args[0], exc_info=True)
             raise DBException(
-                error=DBError(code=DBErrorEnum.INTEGRITY_ERROR, message="Relation not found")
+                error=DBError(
+                    code=DBErrorEnum.INTEGRITY_ERROR, message="Relation not found"
+                )
             )
         except exc.DataError as e:
             session.rollback()
