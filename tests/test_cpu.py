@@ -164,7 +164,7 @@ class TestTDP(unittest.TestCase):
         # ======= LIMITS ========
 
         # LIMIT 1a:
-        # The following matches with many "AMD Ryzen 3 ..." models.
+        # The following matches with many "AMD Ryzen 3 [...]" models.
         # Should return None in non-greedy mode
         model = "AMD Ryzen 3"
         self.assertIsNone(
