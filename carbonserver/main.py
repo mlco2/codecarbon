@@ -84,4 +84,3 @@ app = create_app()
 @app.get("/")
 def default():
     raise Exception
-
