@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 
-from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL, TDP
+from codecarbon.core.cpu import TDP, IntelPowerGadget, IntelRAPL
 from codecarbon.input import DataSource
 
 
@@ -81,7 +81,6 @@ class TestIntelRAPL(unittest.TestCase):
         self.assertDictEqual(expected_cpu_details, rapl.get_cpu_details())
 
 
-
 class TestTDP(unittest.TestCase):
     def test_get_cpu_power_from_registry(self):
         tdp = TDP()
@@ -91,7 +90,6 @@ class TestTDP(unittest.TestCase):
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
         model = "AMD Ryzen Threadripper 1950X 16-Core Processor"
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
-
 
     def test_get_matching_cpu(self):
         tdp = TDP()
@@ -181,7 +179,6 @@ class TestTDP(unittest.TestCase):
             r"AMD Ryzen 3.*",
         )
 
-
         # LIMIT 1b:
         # Since the following matches many models with varying tdps
         # In non-greedy mode: should return None.
@@ -197,7 +194,6 @@ class TestTDP(unittest.TestCase):
             tdp._get_matching_cpu(model, cpu_data, greedy=True),
             r"AMD Ryzen 3 PRO.*",
         )
-
 
         # LIMIT 2:
         # "AMD Ryzen 3 1200 PRO" matches with both:
@@ -218,7 +214,6 @@ class TestTDP(unittest.TestCase):
             r"AMD Ryzen 3.*1200",
         )
 
-
         # LIMIT 3:
         # Letter missing from a word (instead of "AMD A10-4600M")
         # Returns None since the ratio/score is below 100 (with threshold 100).
@@ -235,7 +230,6 @@ class TestTDP(unittest.TestCase):
             "AMD A10-4600M",
         )
 
-
         # LIMIT 4:
         # Wrong letter from a word (instead of "AMD A10-4600M")
         # Returns None since the ratio/score is below 100 (with threshold 100).
@@ -243,7 +237,6 @@ class TestTDP(unittest.TestCase):
         self.assertIsNone(
             tdp._get_matching_cpu(model, cpu_data, greedy=False),
         )
-
 
         # LIMIT 5:
         # Does not match when both a missing part and an additional part.

@@ -8,10 +8,10 @@ import subprocess
 import sys
 import time
 from typing import Dict, Union
-from fuzzywuzzy import fuzz
 
 import cpuinfo
 import pandas as pd
+from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.external.logger import logger
@@ -211,29 +211,25 @@ class IntelRAPL:
         return cpu_details
 
 
-
 class TDP:
     def __init__(self):
         self.model, self.tdp = self._main()
 
-
     @staticmethod
     def _detect_cpu_model() -> str:
-        try:
-            cpu_info = cpuinfo.get_cpu_info()
+        cpu_info = cpuinfo.get_cpu_info()
+        if cpu_info:
             cpu_model_detected = cpu_info.get("brand_raw", "")
             return cpu_model_detected
-        except:
+        else:
             return None
 
-
     @staticmethod
-    def _get_cpu_constant_power(match:str, cpu_power_df:pd.DataFrame) -> int:
-        """ Extract constant power from matched CPU """
-        return cpu_power_df[cpu_power_df['Name'] == match]['TDP'].values[0]
+    def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
+        """Extract constant power from matched CPU"""
+        return cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]
 
-
-    def _get_cpu_power_from_registry(self, cpu_model_raw:str) -> int:
+    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> int:
         cpu_power_df = DataSource().get_cpu_power_data()
         cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
         if cpu_matching:
@@ -242,32 +238,30 @@ class TDP:
         else:
             return None
 
-
     @staticmethod
     def _get_cpus(cpu_df, cpu_idxs) -> list:
-        return [cpu_df['Name'][idx] for idx in cpu_idxs]
-
+        return [cpu_df["Name"][idx] for idx in cpu_idxs]
 
     @staticmethod
-    def _get_direct_matches(moodel:str, cpu_df:pd.DataFrame) -> list:
+    def _get_direct_matches(moodel: str, cpu_df: pd.DataFrame) -> list:
         model_l = moodel.lower()
-        return [fuzz.ratio(model_l, cpu.lower()) for cpu in cpu_df['Name']]
-
-
-    @staticmethod
-    def _get_token_set_matches(model:str, cpu_df:pd.DataFrame) -> list:
-        return [fuzz.token_set_ratio(model, cpu) for cpu in cpu_df['Name']]
-
+        return [fuzz.ratio(model_l, cpu.lower()) for cpu in cpu_df["Name"]]
 
     @staticmethod
-    def _get_single_direct_match(ratios:list, max_ratio:int, cpu_df:pd.DataFrame) -> str:
+    def _get_token_set_matches(model: str, cpu_df: pd.DataFrame) -> list:
+        return [fuzz.token_set_ratio(model, cpu) for cpu in cpu_df["Name"]]
+
+    @staticmethod
+    def _get_single_direct_match(
+        ratios: list, max_ratio: int, cpu_df: pd.DataFrame
+    ) -> str:
         idx = ratios.index(max_ratio)
-        cpu_matched = cpu_df['Name'].iloc[idx]
+        cpu_matched = cpu_df["Name"].iloc[idx]
         return cpu_matched
 
-
-    def _get_matching_cpu(self, model_raw:str, cpu_df:pd.DataFrame,
-                          greedy=False) -> str:
+    def _get_matching_cpu(
+        self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
+    ) -> str:
         """
         Get matching cpu name
 
@@ -295,8 +289,8 @@ class TDP:
             THRESHOLD_TOKEN_SET defines the similarity ratio value to consider
             token_set matches (for more detail see fuzz.token_set_ratio).
         """
-        THRESHOLD_DIRECT=100
-        THRESHOLD_TOKEN_SET=100
+        THRESHOLD_DIRECT = 100
+        THRESHOLD_TOKEN_SET = 100
 
         ratios_direct = self._get_direct_matches(model_raw, cpu_df)
         ratios_token_set = self._get_token_set_matches(model_raw, cpu_df)
@@ -305,9 +299,9 @@ class TDP:
 
         # Check if a direct match exists
         if max_ratio_direct >= THRESHOLD_DIRECT:
-            cpu_matched = self._get_single_direct_match(ratios_direct,
-                                                        max_ratio_direct,
-                                                        cpu_df)
+            cpu_matched = self._get_single_direct_match(
+                ratios_direct, max_ratio_direct, cpu_df
+            )
             return cpu_matched
 
         # Check if an indirect match exists
@@ -323,11 +317,9 @@ class TDP:
             else:
                 return None
 
-
     @staticmethod
-    def _get_max_idxs(ratios:list, max_ratio:int) -> list:
-        return [idx for idx, ratio in enumerate(ratios) if ratio==max_ratio]
-
+    def _get_max_idxs(ratios: list, max_ratio: int) -> list:
+        return [idx for idx, ratio in enumerate(ratios) if ratio == max_ratio]
 
     def _main(self) -> Union[str, int]:
         """
@@ -341,7 +333,9 @@ class TDP:
             power = self._get_cpu_power_from_registry(cpu_model_detected)
 
             if power:
-                logger.debug(f"CPU : We detect a {cpu_model_detected} with a TDP of {power} W")
+                logger.debug(
+                    f"CPU : We detect a {cpu_model_detected} with a TDP of {power} W"
+                )
                 return cpu_model_detected, power
             else:
                 logger.warning(
