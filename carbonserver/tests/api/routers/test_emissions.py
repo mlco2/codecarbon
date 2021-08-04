@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 import pytest
 from container import ServerContainer
@@ -6,11 +7,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from starlette import status
 
-from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.repositories.repository_emissions import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.routers import emissions
+from carbonserver.api.schemas import Emission
 
 RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
 RUN_2_ID = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
@@ -101,8 +102,8 @@ def client(custom_test_server):
 
 def test_add_emission(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_emission = EMISSION_1
-    repository_mock.add_emission.return_value = SqlModelEmission(**EMISSION_1)
+    expected_emission = EMISSION_ID
+    repository_mock.add_emission.return_value = UUID(EMISSION_ID)
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.post("/emission", json=EMISSION_TO_CREATE)
@@ -115,9 +116,7 @@ def test_add_emission(client, custom_test_server):
 def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_emission = EMISSION_1
-    repository_mock.get_one_emission.return_value = SqlModelEmission(
-        **expected_emission
-    )
+    repository_mock.get_one_emission.return_value = Emission(**expected_emission)
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.get(
@@ -135,8 +134,8 @@ def test_get_emissions_from_run_retreives_all_emissions_from_run(
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_emissions_id_list = [EMISSION_ID, EMISSION_ID_2]
     repository_mock.get_emissions_from_run.return_value = [
-        SqlModelEmission(**EMISSION_1),
-        SqlModelEmission(**EMISSION_2),
+        Emission(**EMISSION_1),
+        Emission(**EMISSION_2),
     ]
 
     with custom_test_server.container.emission_repository.override(repository_mock):

@@ -14,17 +14,14 @@ class OrganizationService:
         created_organization: Organization = self._repository.add_organization(
             organization
         )
-
         return created_organization
 
     def read_organization(self, organization_id: str) -> Organization:
         organization: Organization = self._repository.get_one_organization(
             organization_id
         )
-
         return organization
 
     def list_organizations(self) -> List[Organization]:
         organizations: List[Organization] = self._repository.list_organizations()
-
         return organizations

@@ -5,11 +5,13 @@ from container import ServerContainer
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
-from carbonserver.api.infra.database.sql_models import Organization as ModelOrganization
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.routers import organizations
+from carbonserver.api.schemas import Organization
+
+API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
 
 ORG_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -21,6 +23,7 @@ ORG_TO_CREATE = {
 
 ORG_1 = {
     "id": ORG_ID_1,
+    "api_key": API_KEY,
     "name": "Data For Good",
     "description": "DFG Organization",
     "teams": [],
@@ -29,6 +32,7 @@ ORG_1 = {
 
 ORG_2 = {
     "id": ORG_ID_2,
+    "api_key": API_KEY,
     "name": "Code Carbon",
     "description": "Code Carbon Organization",
     "teams": [],
@@ -53,7 +57,7 @@ def client(custom_test_server):
 def test_add_org(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_org = ORG_1
-    repository_mock.add_organization.return_value = ModelOrganization(**ORG_1)
+    repository_mock.add_organization.return_value = Organization(**ORG_1)
 
     with custom_test_server.container.organization_repository.override(repository_mock):
         response = client.post("/organization", json=ORG_TO_CREATE)
@@ -63,18 +67,16 @@ def test_add_org(client, custom_test_server):
     assert actual_org == expected_org
 
 
-def test_get_organizations_by_id_returns_correct_org(client, custom_test_server):
+def test_get_organization_by_id_returns_correct_org(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_org = ORG_1
-    repository_mock.get_one_organization.return_value = [
-        ModelOrganization(**expected_org),
-    ]
+    repository_mock.get_one_organization.return_value = Organization(**expected_org)
 
     with custom_test_server.container.organization_repository.override(repository_mock):
         response = client.get(
             "/organization/read_organization/", params={"organization_id": ORG_ID_1}
         )
-        actual_org = response.json()[0]
+        actual_org = response.json()
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_org == expected_org
@@ -86,8 +88,8 @@ def test_list_organizations_returns_all_orgs(client, custom_test_server):
     expected_org_2 = ORG_2
     expected_org_list = [expected_org_1, expected_org_2]
     repository_mock.list_organizations.return_value = [
-        ModelOrganization(**expected_org_1),
-        ModelOrganization(**expected_org_2),
+        Organization(**expected_org_1),
+        Organization(**expected_org_2),
     ]
 
     with custom_test_server.container.organization_repository.override(repository_mock):

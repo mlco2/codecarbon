@@ -5,7 +5,8 @@ from unittest import mock
 
 import pytest
 
-from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL, parse_cpu_model
+from codecarbon.core.cpu import TDP, IntelPowerGadget, IntelRAPL
+from codecarbon.input import DataSource
 
 
 class TestIntelPowerGadget(unittest.TestCase):
@@ -81,8 +82,166 @@ class TestIntelRAPL(unittest.TestCase):
 
 
 class TestTDP(unittest.TestCase):
-    def test_parse_cpu_model(self):
-        model_raw = "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz"
-        model_parsed = parse_cpu_model(model_raw)
-        model_parsed_expected = "Intel Core i7-8850H"
-        self.assertEqual(model_parsed, model_parsed_expected)
+    def test_get_cpu_power_from_registry(self):
+        tdp = TDP()
+        model = "Intel Core i7-8850H"
+        self.assertEqual(tdp._get_cpu_power_from_registry(model), 45)
+        model = "AMD Ryzen Threadripper 1950X"
+        self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
+        model = "AMD Ryzen Threadripper 1950X 16-Core Processor"
+        self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
+
+    def test_get_matching_cpu(self):
+        tdp = TDP()
+        cpu_data = DataSource().get_cpu_power_data()
+
+        # ======= WORKING AS EXPECTED ========
+
+        # Exact match
+        model = "AMD Ryzen 3 1200"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD Ryzen 3 1200",
+        )
+
+        # Exact match with varying case
+        model = "amd ryzen 3 1200"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD Ryzen 3 1200",
+        )
+
+        # Match although have a missing part
+        model = "AMD Ryzen 1950"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD Ryzen Threadripper 1950",
+        )
+
+        # Match although have lot of missing parts
+        model = "5800K"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD A10-5800K",
+        )
+
+        # Match although have a missing part (tricky!)
+        model = "AMD Ryzen 1950x"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD Ryzen Threadripper 1950X",
+        )
+
+        # Match although (noisy) parts are added
+        model = "AMD Ryzen Threadripper 1950 16-Core Processor"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD Ryzen Threadripper 1950",
+        )
+
+        # Match although (noisy) parts are added (tricky again!)
+        model = "AMD Ryzen Threadripper 1950X 16-Core Processor"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD Ryzen Threadripper 1950X",
+        )
+
+        # Match although many (noisy) parts are added
+        model = "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "Intel Core i7-8850H",
+        )
+
+        # Does not match when missing part replaced by (here wrong) other part.
+        # Which here is good. Could happen if Intel creates a model with the
+        # same name than AMD ("5800K"), but only AMD exists in our cpu list.
+        model = "Intel 5800K"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+        )
+
+        # ======= LIMITS ========
+
+        # LIMIT 1a:
+        # The following matches with many "AMD Ryzen 3 [...]" models.
+        # Should return None in non-greedy mode
+        model = "AMD Ryzen 3"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+        )
+
+        # In greedy mode: should return the first model that contains the
+        # same words from the cpu list.
+        model = "AMD Ryzen 3"
+        self.assertRegex(
+            tdp._get_matching_cpu(model, cpu_data, greedy=True),
+            r"AMD Ryzen 3.*",
+        )
+
+        # LIMIT 1b:
+        # Since the following matches many models with varying tdps
+        # In non-greedy mode: should return None.
+        model = "AMD Ryzen PRO 3"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+        )
+
+        # In greedy mode: should return the first model that contains the
+        # same words from the cpu list.
+        model = "AMD Ryzen PRO 3"
+        self.assertRegex(
+            tdp._get_matching_cpu(model, cpu_data, greedy=True),
+            r"AMD Ryzen 3 PRO.*",
+        )
+
+        # LIMIT 2:
+        # "AMD Ryzen 3 1200 PRO" matches with both:
+        # - "AMD Ryzen 3 1200"
+        # - "AMD Ryzen 3 PRO 1200"
+        # We would expect it to only match with "AMD Ryzen 3 PRO 1200".
+        # In non-greedy mode: should return None.
+        model = "AMD Ryzen 3 1200 PRO"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+        )
+
+        # In greedy mode: should return the first model that contains almost
+        # all the same words from the cpu list.
+        model = "AMD Ryzen 3 1200 PRO"
+        self.assertRegex(
+            tdp._get_matching_cpu(model, cpu_data, greedy=True),
+            r"AMD Ryzen 3.*1200",
+        )
+
+        # LIMIT 3:
+        # Letter missing from a word (instead of "AMD A10-4600M")
+        # Returns None since the ratio/score is below 100 (with threshold 100).
+        model = "AMD A10-4600"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=True),
+        )
+
+        # However, "A10" and "4600" are considered two separate words when
+        # tokenized. In this case there is no issue.
+        model = "AMD 4600M"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "AMD A10-4600M",
+        )
+
+        # LIMIT 4:
+        # Wrong letter from a word (instead of "AMD A10-4600M")
+        # Returns None since the ratio/score is below 100 (with threshold 100).
+        model = "AMD A10-4650M"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+        )
+
+        # LIMIT 5:
+        # Does not match when both a missing part and an additional part.
+        # Which here is bad.
+        model = "AMD Threadripper 1950X 16-Core Processor"
+        self.assertIsNone(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+        )

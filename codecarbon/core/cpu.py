@@ -7,10 +7,11 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Dict
+from typing import Dict, Union
 
 import cpuinfo
 import pandas as pd
+from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.external.logger import logger
@@ -39,27 +40,6 @@ def is_rapl_available():
             exc_info=True,
         )
         return False
-
-
-def parse_cpu_model(raw_name) -> str:
-    """
-    Parse the model name from the raw name extracted from cpuinfo library
-    :return: parsed CPU name
-    """
-    if type(raw_name) == str:
-        model = (
-            raw_name.split(" @")[0]
-            .replace("(R)", "")
-            .replace("(TM)", "")
-            .replace(" CPU", "")
-        )
-        splitted = model.split(" ")
-        if len(splitted) == 6 and splitted[2] == "Threadripper":
-            model = (
-                splitted[0] + " " + splitted[1] + " " + splitted[2] + " " + splitted[3]
-            )
-        return model
-    return ""
 
 
 class IntelPowerGadget:
@@ -233,29 +213,136 @@ class IntelRAPL:
 
 class TDP:
     def __init__(self):
-        self.model, self.tdp = self._get_power_from_constant()
+        self.model, self.tdp = self._main()
 
-    def _get_power_from_constant(self) -> int:
-        """
-        Get CPU power from constant mode
-        :return: model name (str), power in Watt (int)
-        """
+    @staticmethod
+    def _detect_cpu_model() -> str:
         cpu_info = cpuinfo.get_cpu_info()
         if cpu_info:
-            model_raw = cpu_info.get("brand_raw", "")
-            model = parse_cpu_model(model_raw)
-            cpu_power_df = DataSource().get_cpu_power_data()
-            cpu_power_df_model = cpu_power_df[cpu_power_df["Name"] == model]
-            if len(cpu_power_df_model) > 0:
-                power = cpu_power_df_model["TDP"].tolist()[0]
-                logger.debug(f"CPU : We detect a {model_raw} with a TDP of {power} W")
-                return model, power
+            cpu_model_detected = cpu_info.get("brand_raw", "")
+            return cpu_model_detected
+        else:
+            return None
+
+    @staticmethod
+    def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
+        """Extract constant power from matched CPU"""
+        return cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]
+
+    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> int:
+        cpu_power_df = DataSource().get_cpu_power_data()
+        cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
+        if cpu_matching:
+            power = self._get_cpu_constant_power(cpu_matching, cpu_power_df)
+            return power
+        else:
+            return None
+
+    @staticmethod
+    def _get_cpus(cpu_df, cpu_idxs) -> list:
+        return [cpu_df["Name"][idx] for idx in cpu_idxs]
+
+    @staticmethod
+    def _get_direct_matches(moodel: str, cpu_df: pd.DataFrame) -> list:
+        model_l = moodel.lower()
+        return [fuzz.ratio(model_l, cpu.lower()) for cpu in cpu_df["Name"]]
+
+    @staticmethod
+    def _get_token_set_matches(model: str, cpu_df: pd.DataFrame) -> list:
+        return [fuzz.token_set_ratio(model, cpu) for cpu in cpu_df["Name"]]
+
+    @staticmethod
+    def _get_single_direct_match(
+        ratios: list, max_ratio: int, cpu_df: pd.DataFrame
+    ) -> str:
+        idx = ratios.index(max_ratio)
+        cpu_matched = cpu_df["Name"].iloc[idx]
+        return cpu_matched
+
+    def _get_matching_cpu(
+        self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
+    ) -> str:
+        """
+        Get matching cpu name
+
+        :args:
+            model_raw (str): raw name of the cpu model detected on the machine
+
+            cpu_df (DataFrame): table containing cpu models along their tdp
+
+            greedy (default False): if multiple cpu models match with an equal
+            ratio of similarity, greedy (True) selects the first model,
+            following the order of the cpu list provided, while non-greedy
+            returns None.
+
+        :return: name of the matching cpu model
+
+        :notes:
+            Thanks to the greedy mode, even though the match could be a model
+            with a tdp very different from the actual tdp of current cpu, it
+            still enables the relative comparison of models emissions running
+            on the same machine.
+
+            THRESHOLD_DIRECT defines the similiraty ratio value to consider
+            almost-exact matches.
+
+            THRESHOLD_TOKEN_SET defines the similarity ratio value to consider
+            token_set matches (for more detail see fuzz.token_set_ratio).
+        """
+        THRESHOLD_DIRECT = 100
+        THRESHOLD_TOKEN_SET = 100
+
+        ratios_direct = self._get_direct_matches(model_raw, cpu_df)
+        ratios_token_set = self._get_token_set_matches(model_raw, cpu_df)
+        max_ratio_direct = max(ratios_direct)
+        max_ratio_token_set = max(ratios_token_set)
+
+        # Check if a direct match exists
+        if max_ratio_direct >= THRESHOLD_DIRECT:
+            cpu_matched = self._get_single_direct_match(
+                ratios_direct, max_ratio_direct, cpu_df
+            )
+            return cpu_matched
+
+        # Check if an indirect match exists
+        if max_ratio_token_set < THRESHOLD_TOKEN_SET:
+            return None
+        else:
+            cpu_idxs = self._get_max_idxs(ratios_token_set, max_ratio_token_set)
+            cpu_machings = self._get_cpus(cpu_df, cpu_idxs)
+
+            if (cpu_machings and len(cpu_machings) == 1) or greedy:
+                cpu_matched = cpu_machings[0]
+                return cpu_matched
+            else:
+                return None
+
+    @staticmethod
+    def _get_max_idxs(ratios: list, max_ratio: int) -> list:
+        return [idx for idx, ratio in enumerate(ratios) if ratio == max_ratio]
+
+    def _main(self) -> Union[str, int]:
+        """
+        Get CPU power from constant mode
+
+        :return: model name (str), power in Watt (int)
+        """
+        cpu_model_detected = self._detect_cpu_model()
+
+        if cpu_model_detected:
+            power = self._get_cpu_power_from_registry(cpu_model_detected)
+
+            if power:
+                logger.debug(
+                    f"CPU : We detect a {cpu_model_detected} with a TDP of {power} W"
+                )
+                return cpu_model_detected, power
             else:
                 logger.warning(
-                    f"We saw that you have a {model_raw} but we don't know it."
+                    f"We saw that you have a {cpu_model_detected} but we don't know it."
                     + " Please contact us."
                 )
-                return model, None
+                return cpu_model_detected, None
         else:
             logger.warning(
                 "We were unable to detect your CPU using the `cpuinfo` package."

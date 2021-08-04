@@ -1,3 +1,5 @@
+from typing import List
+
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
@@ -14,7 +16,12 @@ router = APIRouter(
 )
 
 
-@router.post("/user", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/user",
+    tags=USERS_ROUTER_TAGS,
+    status_code=status.HTTP_201_CREATED,
+    response_model=User,
+)
 @inject
 def create_user(
     user: UserCreate,
@@ -24,7 +31,10 @@ def create_user(
 
 
 @router.post(
-    "/user/signup", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+    "/user/signup",
+    tags=USERS_ROUTER_TAGS,
+    status_code=status.HTTP_201_CREATED,
+    response_model=User,
 )
 @inject
 def sign_up(
@@ -34,19 +44,28 @@ def sign_up(
     return signup_service.sign_up(user)
 
 
-@router.get("/users", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@router.get(
+    "/users",
+    tags=USERS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=List[User],
+)
 @inject
 def list_users(
     user_service: UserService = Depends(Provide[ServerContainer.user_service]),
-):
+) -> List[User]:
     return user_service.list_users()
 
 
-@router.get("/user/{user_id}", tags=USERS_ROUTER_TAGS, status_code=status.HTTP_200_OK)
+@router.get(
+    "/user/{user_id}",
+    tags=USERS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=User,
+)
 @inject
 def get_user_by_id(
     user_id: str,
     user_service: UserService = Depends(Provide[ServerContainer.user_service]),
-):
-
+) -> User:
     return user_service.get_user_by_id(user_id)

@@ -34,7 +34,7 @@ class SqlAlchemyRepository(Runs):
             session.refresh(db_run)
             return self.map_sql_to_schema(db_run)
 
-    def get_one_run(self, run_id):
+    def get_one_run(self, run_id) -> Run:
         """Find the run in database and return it
 
         :run_id: The id of the run to retreive.
@@ -48,7 +48,7 @@ class SqlAlchemyRepository(Runs):
             else:
                 return self.map_sql_to_schema(e)
 
-    def list_runs(self):
+    def list_runs(self) -> List[Run]:
         with self.session_factory() as session:
             e = session.query(SqlModelRun)
             if e is None:

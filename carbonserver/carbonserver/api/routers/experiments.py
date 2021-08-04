@@ -1,10 +1,13 @@
+from typing import List
+from uuid import UUID
+
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import ExperimentCreate
+from carbonserver.api.schemas import Experiment, ExperimentCreate
 from carbonserver.api.services.experiments_service import ExperimentService
 
 EXPERIMENTS_ROUTER_TAGS = ["Experiments"]
@@ -15,7 +18,10 @@ router = APIRouter(
 
 
 @router.post(
-    "/experiment", tags=EXPERIMENTS_ROUTER_TAGS, status_code=status.HTTP_201_CREATED
+    "/experiment",
+    tags=EXPERIMENTS_ROUTER_TAGS,
+    status_code=status.HTTP_201_CREATED,
+    response_model=UUID,
 )
 @inject
 def add_experiment(
@@ -23,7 +29,7 @@ def add_experiment(
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
-):
+) -> Experiment:
     return experiment_service.add_experiment(experiment)
 
 
@@ -31,6 +37,7 @@ def add_experiment(
     "/experiment/{experiment_id}",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
+    response_model=Experiment,
 )
 @inject
 def read_experiment(
@@ -38,7 +45,7 @@ def read_experiment(
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
-):
+) -> Experiment:
     return experiment_service.get_one_experiment(experiment_id)
 
 
@@ -46,6 +53,7 @@ def read_experiment(
     "/experiments/project/{project_id}",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
+    response_model=List[Experiment],
 )
 @inject
 def read_experiment_experiments(
@@ -53,6 +61,6 @@ def read_experiment_experiments(
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
-):
+) -> List[Experiment]:
 
     return experiment_service.get_experiments_from_project(project_id)
