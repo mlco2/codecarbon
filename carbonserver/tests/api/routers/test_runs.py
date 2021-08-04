@@ -98,7 +98,7 @@ def test_get_runs_from_experiment_returns_correct_run(client, custom_test_server
     expected_run_1 = RUN_1
     expected_run_list = [RUN_1]
     repository_mock.get_runs_from_experiment.return_value = [
-        SqlModelRun(**expected_run_1),
+        Run(**expected_run_1),
     ]
 
     with custom_test_server.container.run_repository.override(repository_mock):

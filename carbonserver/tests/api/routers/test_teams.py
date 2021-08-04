@@ -125,7 +125,7 @@ def test_get_teams_from_organization_returns_correct_team(client, custom_test_se
     expected_team_1 = TEAM_1
     expected_team_list = [expected_team_1]
     repository_mock.get_teams_from_organization.return_value = [
-        SqlModelTeam(**expected_team_1),
+        Team(**expected_team_1),
     ]
 
     with custom_test_server.container.team_repository.override(repository_mock):
