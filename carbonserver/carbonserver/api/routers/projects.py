@@ -4,10 +4,8 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-
 from carbonserver.api.schemas import Project, ProjectCreate
 from carbonserver.api.services.project_service import ProjectService
-
 
 PROJECTS_ROUTER_TAGS = ["Projects"]
 
