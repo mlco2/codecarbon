@@ -5,6 +5,7 @@ from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import ProjectCreate
+from carbonserver.api.services.project_service import ProjectService
 
 PROJECTS_ROUTER_TAGS = ["Projects"]
 
@@ -31,3 +32,18 @@ def read_project(
     project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
 ):
     return project_service.get_one_project(project_id)
+
+
+@router.get(
+    "/projects/team/{team_id}",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def read_projects_from_team(
+    team_id: str,
+    project_service: ProjectService = Depends(
+        Provide[ServerContainer.project_service]
+    ),
+):
+    return project_service.list_projects_from_team(team_id)

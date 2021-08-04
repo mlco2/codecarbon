@@ -1,5 +1,5 @@
 from contextlib import AbstractContextManager
-
+from typing import List
 from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.projects import Projects
@@ -35,6 +35,26 @@ class SqlAlchemyRepository(Projects):
                 return None
             else:
                 return self.map_sql_to_schema(e)
+
+    def get_projects_from_team(self, team_id) -> List[Project]:
+        """Find the list of projects from a team in database and return it
+
+        :team_id: The id of the team to retreive projects from.
+        :returns: List of Projects in pyDantic BaseModel format.
+        :rtype: List[schemas.Project]
+        """
+        with self.session_factory() as session:
+            res = session.query(SqlModelProject).filter(
+                SqlModelProject.team_id == team_id
+            )
+            if res.first() is None:
+                return []
+            else:
+                projects = []
+                for e in res:
+                    project = self.map_sql_to_schema(e)
+                    projects.append(project)
+                return projects
 
     @staticmethod
     def map_sql_to_schema(project: SqlModelProject) -> Project:

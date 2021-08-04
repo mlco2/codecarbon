@@ -58,6 +58,26 @@ class SqlAlchemyRepository(Teams):
                     teams.append(self.map_sql_to_schema(team))
                 return teams
 
+    def get_teams_from_organization(self, organization_id) -> List[Team]:
+        """Find the list of teams from an organization in database and return it
+
+        :organization_id: The id of the organization to retreive teams from.
+        :returns: List of Teams in pyDantic BaseModel format.
+        :rtype: List[schemas.Team]
+        """
+        with self.session_factory() as session:
+            res = session.query(SqlModelTeam).filter(
+                SqlModelTeam.organization_id == organization_id
+            )
+            if res.first() is None:
+                return []
+            else:
+                teams = []
+                for e in res:
+                    team = self.map_sql_to_schema(e)
+                    teams.append(team)
+                return teams
+
     def is_api_key_valid(self, organization_id: UUID, api_key: str):
         with self.session_factory() as session:
             return bool(

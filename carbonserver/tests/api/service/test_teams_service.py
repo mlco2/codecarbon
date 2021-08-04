@@ -75,3 +75,16 @@ def test_teams_service_retrieves_correct_team_by_id():
 
     assert actual_saved_org.id == expected_org.id
     assert actual_saved_org.name == expected_org.name
+
+
+def test_teams_service_retrieves_correct_team_by_organization_id():
+
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    expected_organization_id = ORG_ID
+    team_service: TeamService = TeamService(repository_mock)
+    repository_mock.get_teams_from_organization.return_value = [TEAM_1]
+
+    actual_teams = team_service.list_teams_from_organization(ORG_ID)
+
+    assert actual_teams[0].organization_id == expected_organization_id
+

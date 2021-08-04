@@ -16,3 +16,6 @@ class TeamService:
 
     def list_teams(self):
         return self._repository.list_teams()
+
+    def list_teams_from_organization(self, organization_id: str):
+        return self._repository.get_teams_from_organization(organization_id)
