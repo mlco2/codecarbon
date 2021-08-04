@@ -62,9 +62,6 @@ def list_teams(
 @inject
 def read_teams_from_organization(
     organization_id: str,
-    team_service: TeamService = Depends(
-        Provide[ServerContainer.team_service]
-    ),
+    team_service: TeamService = Depends(Provide[ServerContainer.team_service]),
 ):
     return team_service.list_teams_from_organization(organization_id)
-

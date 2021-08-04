@@ -63,8 +63,6 @@ def list_runs(
 @inject
 def read_runs_from_experiment(
     experiment_id: str,
-    run_service: RunService = Depends(
-        Provide[ServerContainer.run_service]
-    ),
+    run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ):
     return run_service.list_runs_from_experiment(experiment_id)

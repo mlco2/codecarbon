@@ -42,8 +42,6 @@ def read_project(
 @inject
 def read_projects_from_team(
     team_id: str,
-    project_service: ProjectService = Depends(
-        Provide[ServerContainer.project_service]
-    ),
+    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
 ):
     return project_service.list_projects_from_team(team_id)

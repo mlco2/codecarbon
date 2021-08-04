@@ -1,5 +1,6 @@
 from contextlib import AbstractContextManager
 from typing import List
+
 from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.projects import Projects

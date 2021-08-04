@@ -87,4 +87,3 @@ def test_teams_service_retrieves_correct_team_by_organization_id():
     actual_teams = team_service.list_teams_from_organization(ORG_ID)
 
     assert actual_teams[0].organization_id == expected_organization_id
-
