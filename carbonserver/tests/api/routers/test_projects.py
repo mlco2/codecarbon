@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import UUID
 
 import pytest
 from container import ServerContainer
@@ -28,7 +27,7 @@ PROJECT_1 = {
     "name": "API Code Carbon",
     "description": "API for Code Carbon",
     "team_id": TEAM_ID,
-    "experiments": []
+    "experiments": [],
 }
 
 
