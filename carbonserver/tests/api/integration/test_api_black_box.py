@@ -6,9 +6,9 @@ import requests
 # from sqlalchemy import delete
 # from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from sqlalchemy import create_engine, text
-
-# from carbonserver.config import settings
 from sqlalchemy.orm import Session
+
+from carbonserver.config import settings
 
 # Get the API utl to use from an env variable if exist
 URL = os.getenv("CODECARBON_API_URL")
@@ -25,18 +25,10 @@ USER_EMAIL = "user@integration.test"
 # @pytest.fixture()
 def del_test_user():
     """Fixture to destroy user"""
-    # Setup: orm configuration
-
-    # yield # Test execution
-    DATABASE_URL = (
-        "postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db"
-    )
-
-    engine = create_engine(DATABASE_URL)  # settings.db_url
+    engine = create_engine(settings.db_url)  #
     stmt = text("DELETE FROM users WHERE email=:email").bindparams(email=USER_EMAIL)
     with Session(engine) as session:
-        result = session.execute(stmt)
-        print(result)
+        session.execute(stmt)
         session.commit()
     # Clean up user before ending test execution by pytest
     # delete(SqlModelUser).where(SqlModelUser.email == USER_EMAIL)
