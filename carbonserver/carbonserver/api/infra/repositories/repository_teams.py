@@ -72,11 +72,7 @@ class SqlAlchemyRepository(Teams):
             if res.first() is None:
                 return []
             else:
-                teams = []
-                for e in res:
-                    team = self.map_sql_to_schema(e)
-                    teams.append(team)
-                return teams
+                return [self.map_sql_to_schema(e) for e in res]
 
     def is_api_key_valid(self, organization_id: UUID, api_key: str):
         with self.session_factory() as session:

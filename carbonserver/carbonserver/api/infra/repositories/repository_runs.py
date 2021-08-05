@@ -73,11 +73,7 @@ class SqlAlchemyRepository(Runs):
             if res.first() is None:
                 return []
             else:
-                runs = []
-                for e in res:
-                    run = self.map_sql_to_schema(e)
-                    runs.append(run)
-                return runs
+                return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
     def map_sql_to_schema(run: SqlModelRun) -> Run:

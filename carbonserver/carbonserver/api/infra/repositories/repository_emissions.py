@@ -79,11 +79,7 @@ class SqlAlchemyRepository(Emissions):
             if res.first() is None:
                 return []
             else:
-                emissions = []
-                for e in res:
-                    emission = self.map_sql_to_schema(e)
-                    emissions.append(emission)
-                return emissions
+                return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
     def map_sql_to_schema(emission: sql_models.Emission) -> Emission:
