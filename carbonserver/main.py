@@ -1,8 +1,10 @@
-from carbonserver.api.errors import DBException
 from container import ServerContainer
 from fastapi import Depends, FastAPI
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from carbonserver.api.dependencies import get_query_token
+from carbonserver.api.errors import DBException
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
     authenticate,
@@ -15,8 +17,6 @@ from carbonserver.api.routers import (
     users,
 )
 from carbonserver.database.database import engine
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 
 
 async def db_exception_handler(request: Request, exc: DBException):
