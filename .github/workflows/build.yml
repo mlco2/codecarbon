@@ -38,7 +38,7 @@ jobs:
       run: |
         cd carbonserver/
         tox -e unit -vv
-  
+
   test_api_server:
     runs-on: ubuntu-latest
     # Service containers to run with `container-job`
@@ -95,7 +95,7 @@ jobs:
           uvicorn main:app --host 0.0.0.0 --port 8008 &
           sleep 2
           netstat -o -n -a | grep 8008
-          tox -e with_api_server
+          tox -e integration
         # Environment variables used by the `client.js` script to create a new PostgreSQL table.
         env:
           # The hostname used to communicate with the PostgreSQL service container

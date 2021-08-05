@@ -1,18 +1,45 @@
 import os
-import random
 
 import pytest
 import requests
+
+# from sqlalchemy import delete
+# from carbonserver.api.infra.database.sql_models import User as SqlModelUser
+from sqlalchemy import create_engine, text
+
+# from carbonserver.config import settings
+from sqlalchemy.orm import Session
 
 # Get the API utl to use from an env variable if exist
 URL = os.getenv("CODECARBON_API_URL")
 if URL is None:
     pytest.exit("CODECARBON_API_URL is not defined")
 
-experiment_id = project_id = user_id = api_key = org_id = team_id = email = None
+experiment_id = project_id = user_id = api_key = org_id = team_id = None
 org_name = org_description = org_new_id = None
 team_name = team_description = team_new_id = emission_id = None
-password = "Secret1!îstring"
+USER_PASSWORD = "Secret1!îstring"
+USER_EMAIL = "user@integration.test"
+
+
+# @pytest.fixture()
+def del_test_user():
+    """Fixture to destroy user"""
+    # Setup: orm configuration
+
+    # yield # Test execution
+    DATABASE_URL = (
+        "postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db"
+    )
+
+    engine = create_engine(DATABASE_URL)  # settings.db_url
+    stmt = text("DELETE FROM users WHERE email=:email").bindparams(email=USER_EMAIL)
+    with Session(engine) as session:
+        result = session.execute(stmt)
+        print(result)
+        session.commit()
+    # Clean up user before ending test execution by pytest
+    # delete(SqlModelUser).where(SqlModelUser.email == USER_EMAIL)
 
 
 def is_key_value_exist(list_of_dict, key, value):
@@ -37,21 +64,23 @@ def is_key_all_values_equal(list_of_dict, key, value):
 
 def test_api_user_create():
     assert URL is not None
-    email = f"test-{random.randint(1, 20_000_000)}@test.com"
-    payload = {"email": email, "name": "toto", "password": password}
+    # we delete it if exist
+    del_test_user()
+    payload = {"email": USER_EMAIL, "name": "toto", "password": USER_PASSWORD}
     r = requests.post(url=URL + "/user", json=payload, timeout=2)
     assert r.status_code == 201
-    assert r.json()["email"] == email
+    assert r.json()["email"] == USER_EMAIL
     assert r.json()["is_active"] == True  # noqa
 
 
 def test_api_user_signup():
-    global user_id, api_key, org_id, team_id, email
-    email = f"test-{random.randint(1, 20_000_000)}@test.com"
-    payload = {"email": email, "name": "toto", "password": password}
+    global user_id, api_key, org_id, team_id
+    # signup is creating a user, we delete it if exist
+    del_test_user()
+    payload = {"email": USER_EMAIL, "name": "toto", "password": USER_PASSWORD}
     r = requests.post(url=URL + "/user/signup/", json=payload, timeout=2)
     assert r.status_code == 201
-    assert r.json()["email"] == email
+    assert r.json()["email"] == USER_EMAIL
     assert r.json()["is_active"] == True  # noqa
     user_id = r.json()["id"]
     api_key = r.json()["api_key"]
@@ -68,19 +97,36 @@ def test_api_users_list():
 def test_api_get_user():
     r = requests.get(url=URL + "/user/" + user_id, timeout=2)
     assert r.status_code == 200
-    assert r.json()["email"] == email
+    assert r.json()["id"] == user_id
+    assert r.json()["email"] == USER_EMAIL
 
 
 def test_api_auth_success():
-    payload = {"email": email, "password": password}
+    payload = {"email": USER_EMAIL, "password": USER_PASSWORD}
     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
     assert r.status_code == 200
     assert r.json()["access_token"] == "a"
     assert r.json()["token_type"] == "access"
 
 
-def test_api_auth_fail():
-    payload = {"email": "toto@free.fr", "password": "password"}
+def test_api_auth_wrong_email():
+    payload = {
+        "email": "long.user.email.that.cant.exist.3495739@asdfijvneurvbier.fr",
+        "password": USER_PASSWORD,
+    }
+    r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
+    assert r.status_code == 401
+
+
+def test_api_auth_wrong_password():
+    payload = {"email": USER_EMAIL, "password": "wrong-password"}
+    r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
+    assert r.status_code == 401
+
+
+def test_api_user_deleted():
+    del_test_user()
+    payload = {"email": USER_EMAIL, "password": USER_PASSWORD}
     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
     assert r.status_code == 401
 
@@ -107,7 +153,7 @@ def test_api_organization_read():
 def test_api_organization_list():
     r = requests.get(url=URL + "/organizations", timeout=2)
     assert r.status_code == 200
-    assert r.json()[1]["id"] == org_id
+    assert r.json()[-1]["id"] == org_new_id
 
 
 def test_api_team_create():
@@ -137,7 +183,7 @@ def test_api_team_read():
 def test_api_teams_list():
     r = requests.get(url=URL + "/teams", timeout=2)
     assert r.status_code == 200
-    assert is_key_value_exist(r.json(), "id", team_id)
+    assert is_key_value_exist(r.json(), "id", team_new_id)
 
 
 def test_api_project_create():
