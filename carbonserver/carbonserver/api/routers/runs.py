@@ -56,3 +56,16 @@ def list_runs(
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> List[Run]:
     return run_service.list_runs()
+
+
+@router.get(
+    "/runs/experiment/{experiment_id}",
+    tags=RUNS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def read_runs_from_experiment(
+    experiment_id: str,
+    run_service: RunService = Depends(Provide[ServerContainer.run_service]),
+):
+    return run_service.list_runs_from_experiment(experiment_id)

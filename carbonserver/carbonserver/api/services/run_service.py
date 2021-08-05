@@ -18,3 +18,6 @@ class RunService:
 
     def list_runs(self) -> List[Run]:
         return self._repository.list_runs()
+
+    def list_runs_from_experiment(self, experiment_id: str):
+        return self._repository.get_runs_from_experiment(experiment_id)

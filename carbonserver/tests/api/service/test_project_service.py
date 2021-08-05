@@ -41,3 +41,15 @@ def test_project_service_retrieves_correct_project_by_id():
 
     assert actual_saved_project.id == expected_project.id
     assert actual_saved_project.name == expected_project.name
+
+
+def test_project_service_retrieves__correct_project_by_team_id():
+
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    expected_team_id = TEAM_ID
+    project_service: ProjectService = ProjectService(repository_mock)
+    repository_mock.get_projects_from_team.return_value = [PROJECT]
+
+    actual_projects = project_service.list_projects_from_team(TEAM_ID)
+
+    assert actual_projects[0].team_id == expected_team_id

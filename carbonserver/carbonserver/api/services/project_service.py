@@ -13,3 +13,6 @@ class ProjectService:
 
     def get_one_project(self, project_id):
         return self._repository.get_one_project(project_id)
+
+    def list_projects_from_team(self, team_id: str):
+        return self._repository.get_projects_from_team(team_id)

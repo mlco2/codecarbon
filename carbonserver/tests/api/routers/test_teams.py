@@ -118,3 +118,19 @@ def test_list_teams_returns_all_teams(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_team_list == expected_team_list
+
+
+def test_get_teams_from_organization_returns_correct_team(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_team_1 = TEAM_1
+    expected_team_list = [expected_team_1]
+    repository_mock.get_teams_from_organization.return_value = [
+        Team(**expected_team_1),
+    ]
+
+    with custom_test_server.container.team_repository.override(repository_mock):
+        response = client.get("/teams/organization/" + ORG_ID)
+        actual_team_list = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_team_list == expected_team_list

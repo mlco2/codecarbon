@@ -59,6 +59,22 @@ class SqlAlchemyRepository(Runs):
                     runs.append(self.map_sql_to_schema(run))
                 return runs
 
+    def get_runs_from_experiment(self, experiment_id) -> List[Run]:
+        """Find the list of runs from an experiment in database and return it
+
+        :experiment_id: The id of the experiment to retreive runs from.
+        :returns: List of Run in pyDantic BaseModel format.
+        :rtype: List[schemas.Run]
+        """
+        with self.session_factory() as session:
+            res = session.query(SqlModelRun).filter(
+                SqlModelRun.experiment_id == experiment_id
+            )
+            if res.first() is None:
+                return []
+            else:
+                return [self.map_sql_to_schema(e) for e in res]
+
     @staticmethod
     def map_sql_to_schema(run: SqlModelRun) -> Run:
         """Convert a models.Run to a schemas.Run

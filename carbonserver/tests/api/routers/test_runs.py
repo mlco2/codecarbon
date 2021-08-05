@@ -91,3 +91,19 @@ def test_list_runs_returns_all_runs(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_org_list == expected_org_list
+
+
+def test_get_runs_from_experiment_returns_correct_run(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_run_1 = RUN_1
+    expected_run_list = [RUN_1]
+    repository_mock.get_runs_from_experiment.return_value = [
+        Run(**expected_run_1),
+    ]
+
+    with custom_test_server.container.run_repository.override(repository_mock):
+        response = client.get("/runs/experiment/" + EXPE_ID)
+        actual_run_list = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_run_list == expected_run_list
