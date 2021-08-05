@@ -51,11 +51,7 @@ class SqlAlchemyRepository(Projects):
             if res.first() is None:
                 return []
             else:
-                projects = []
-                for e in res:
-                    project = self.map_sql_to_schema(e)
-                    projects.append(project)
-                return projects
+                return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
     def map_sql_to_schema(project: SqlModelProject) -> Project:
