@@ -192,8 +192,9 @@ def test_api_project_create():
 
 
 @pytest.mark.xfail(reason="Not implemented yet")
-def test_api_projects_list():
-    r = requests.get(url=URL + "/projects", timeout=2)
+def test_api_projects_team_list():
+    # Wait for https://github.com/mlco2/codecarbon/pull/227/
+    r = requests.get(url=URL + "/projects/team/" + team_new_id, timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", project_id)
 
