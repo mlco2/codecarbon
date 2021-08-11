@@ -7,6 +7,8 @@ import requests
 from carbonserver.api.schemas import Token
 from carbonserver.api.services.authentication.JWTBearer import JWKS, JWTBearer
 
+JWKS_URL = "http://localhost:8080/auth/realms/master/protocol/openid-connect/certs"
+
 ACCESS_TOKEN_URL = (
     "http://localhost:8080/auth/realms/master/protocol/openid-connect/token"
 )
@@ -18,11 +20,11 @@ class AuthenticationService:
     def __init__(self):
         self.grant_type = "password"
         self.client_id = "backend"
-        self.client_secret = "3d926a66-7e6d-4281-9a95-54f40d13bf49"
+        self.client_secret = SECRET_KEY
         self._login_url = (
             "http://localhost:8080/auth/realms/master/protocol/openid-connect/token"
         )
-        self.default_jwks = "http://localhost:8080/auth/realms/master/.well-known/openid-configuration/certs"
+        self.default_jwks = JWKS_URL
 
     def login(self, user_authenticate):
         login_request = requests.post(
@@ -43,7 +45,7 @@ class AuthenticationService:
         )
 
 
-jwks_url = "http://localhost:8080/auth/realms/master/protocol/openid-connect/certs"
+jwks_url = JWKS_URL
 jwks = JWKS.parse_obj(requests.get(jwks_url).json())
 
 auth = JWTBearer(jwks)
