@@ -10,6 +10,7 @@ DEPENDENCIES = [
     "sqlalchemy",
     "psycopg2-binary",
     "pydantic[email]",
+    "python-jose==3.3.0",
 ]
 
 TEST_DEPENDENCIES = [

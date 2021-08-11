@@ -1,4 +1,3 @@
-from carbonserver.api.services.authentication.authentication_service import auth
 from typing import List
 
 from container import ServerContainer
@@ -6,6 +5,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
 
 from carbonserver.api.schemas import User, UserCreate
+from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 

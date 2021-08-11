@@ -8,3 +8,4 @@ requests
 sqlalchemy
 tox
 uvicorn[standard]
+python-jose

@@ -1,8 +1,8 @@
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
 from fastapi import HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, jwk, JWTError
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwk, jwt
 from jose.utils import base64url_decode
 from pydantic import BaseModel
 from starlette.requests import Request
@@ -24,7 +24,9 @@ class JWTAuthorizationCredentials(BaseModel):
 
 
 class JWTBearer(HTTPBearer):
-    default_jwks = 'http://localhost:8080/auth/realms/master/protocol/openid-connect/certs'
+    default_jwks = (
+        "http://localhost:8080/auth/realms/master/protocol/openid-connect/certs"
+    )
 
     def __init__(self, jwks: JWKS, auto_error: bool = True):
         super().__init__(auto_error=auto_error)

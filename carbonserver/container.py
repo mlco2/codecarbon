@@ -1,4 +1,3 @@
-from carbonserver.api.services.authentication.authentication_service import AuthenticationService
 from dependency_injector import containers, providers
 
 from carbonserver.api.infra.database.database_manager import Database
@@ -10,6 +9,9 @@ from carbonserver.api.infra.repositories import (
     repository_runs,
     repository_teams,
     repository_users,
+)
+from carbonserver.api.services.authentication.authentication_service import (
+    AuthenticationService,
 )
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
@@ -107,6 +109,4 @@ class ServerContainer(containers.DeclarativeContainer):
         team_repository=team_repository,
     )
 
-    authentication_service = providers.Factory(
-        AuthenticationService
-    )
+    authentication_service = providers.Factory(AuthenticationService)

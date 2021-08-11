@@ -1,12 +1,12 @@
 from typing import List
 
-from carbonserver.api.services.authentication.authentication_service import auth
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Organization, OrganizationCreate
+from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.organization_service import OrganizationService
 
 ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]

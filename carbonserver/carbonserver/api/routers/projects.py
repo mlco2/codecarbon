@@ -1,10 +1,10 @@
-from carbonserver.api.services.authentication.authentication_service import auth
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Project, ProjectCreate
+from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.project_service import ProjectService
 
 PROJECTS_ROUTER_TAGS = ["Projects"]

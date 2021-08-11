@@ -1,10 +1,12 @@
-from carbonserver.api.services.authentication.authentication_service import AuthenticationService
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from carbonserver.api.schemas import Token, UserAuthenticate
+from carbonserver.api.services.authentication.authentication_service import (
+    AuthenticationService,
+)
 from carbonserver.api.services.user_service import UserService
 
 AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
@@ -34,12 +36,17 @@ def auth_user(
 
 
 @router.post(
-    "/login", tags=AUTHENTICATE_ROUTER_TAGS, status_code=status.HTTP_200_OK, response_model=Token
+    "/login",
+    tags=AUTHENTICATE_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=Token,
 )
 @inject
-def auth_user(
+def login(
     user: UserAuthenticate = Depends(),
-    authentication_service: AuthenticationService = Depends(Provide[ServerContainer.authentication_service]),
+    authentication_service: AuthenticationService = Depends(
+        Provide[ServerContainer.authentication_service]
+    ),
 ) -> Token:
 
     access_token = authentication_service.login(user)

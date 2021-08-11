@@ -1,4 +1,3 @@
-from carbonserver.api.services.authentication.authentication_service import auth
 from typing import List
 
 from container import ServerContainer
@@ -7,6 +6,7 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Experiment, ExperimentCreate
+from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.logger import logger
 
