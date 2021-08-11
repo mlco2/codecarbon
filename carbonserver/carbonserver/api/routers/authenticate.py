@@ -1,3 +1,4 @@
+from carbonserver.api.services.authentication.authentication_service import AuthenticationService
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException
@@ -24,9 +25,22 @@ def auth_user(
 ) -> Token:
     verified_user = user_service.verify_user(user)
     if verified_user:
-        return Token(access_token="a", token_type="access")
+        return Token(access_token="a", token_type="id")
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect password or email!",
         )
+
+
+@router.post(
+    "/login", tags=AUTHENTICATE_ROUTER_TAGS, status_code=status.HTTP_200_OK, response_model=Token
+)
+@inject
+def auth_user(
+    user: UserAuthenticate = Depends(),
+    authentication_service: AuthenticationService = Depends(Provide[ServerContainer.authentication_service]),
+) -> Token:
+
+    access_token = authentication_service.login(user)
+    return access_token

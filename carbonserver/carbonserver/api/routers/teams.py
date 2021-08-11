@@ -1,18 +1,18 @@
 from typing import List
 
+from carbonserver.api.services.authentication.authentication_service import auth
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Team, TeamCreate
 from carbonserver.api.services.team_service import TeamService
 
 TEAMS_ROUTER_TAGS = ["Teams"]
 
 router = APIRouter(
-    dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(auth)],
 )
 
 

@@ -1,19 +1,19 @@
 from typing import List
 from uuid import UUID
 
+from carbonserver.api.services.authentication.authentication_service import auth
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Emission, EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
 
 EMISSIONS_ROUTER_TAGS = ["Emissions"]
 
 router = APIRouter(
-    dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(auth)],
 )
 
 

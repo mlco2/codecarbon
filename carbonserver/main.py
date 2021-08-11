@@ -1,10 +1,9 @@
 from container import ServerContainer
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from pydantic import ValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from carbonserver.api.dependencies import get_query_token
 from carbonserver.api.errors import DBException
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
@@ -74,14 +73,14 @@ def init_db(container):
 
 
 def init_server(container):
-    server = FastAPI(dependencies=[Depends(get_query_token)])
+    server = FastAPI(dependencies=[])
+
     server.container = container
     server.include_router(users.router)
     server.include_router(authenticate.router)
     server.include_router(organizations.router)
     server.include_router(teams.router)
     server.include_router(projects.router)
-    server.include_router(experiments.router)
     server.include_router(experiments.router)
     server.include_router(runs.router)
     server.include_router(emissions.router)
