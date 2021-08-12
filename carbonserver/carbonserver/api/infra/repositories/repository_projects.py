@@ -23,7 +23,7 @@ class SqlAlchemyRepository(Projects):
             session.add(db_project)
             session.commit()
             session.refresh(db_project)
-            return db_project
+            return self.map_sql_to_schema(db_project)
 
     def get_one_project(self, project_id):
         with self.session_factory() as session:

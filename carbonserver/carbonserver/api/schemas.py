@@ -144,7 +144,7 @@ class ProjectCreate(ProjectBase):
 
 class Project(ProjectBase):
     id: UUID
-    experiments: List[Experiment] = []
+    experiments: Optional[List[Experiment]] = []
 
 
 class TeamBase(BaseModel):

@@ -12,7 +12,7 @@ class SqlAlchemyRepository(Experiments):
     def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
         self.session_factory = session_factory
 
-    def add_experiment(self, experiment: ExperimentCreate):
+    def add_experiment(self, experiment: ExperimentCreate) -> Experiment:
         with self.session_factory() as session:
             db_experiment = SqlModelExperiment(
                 timestamp=experiment.timestamp,
@@ -30,9 +30,10 @@ class SqlAlchemyRepository(Experiments):
             session.add(db_experiment)
             session.commit()
             session.refresh(db_experiment)
-            return db_experiment
+            schema = self.map_sql_to_schema(db_experiment)
+            return schema
 
-    def get_one_experiment(self, experiment_id):
+    def get_one_experiment(self, experiment_id) -> Experiment:
         """Find the experiment in database and return it
 
         :experiment_id: The id of the experiment to retreive.
@@ -48,7 +49,7 @@ class SqlAlchemyRepository(Experiments):
             if e is None:
                 return None
             else:
-                return self.get_db_to_class(e)
+                return self.map_sql_to_schema(e)
 
     def get_experiments_from_project(self, project_id) -> List[Experiment]:
         """Find the experiment from an emission in database and return it
@@ -66,12 +67,12 @@ class SqlAlchemyRepository(Experiments):
             else:
                 experiments = []
                 for e in res:
-                    experiment = self.get_db_to_class(e)
+                    experiment = self.map_sql_to_schema(e)
                     experiments.append(experiment)
                 return experiments
 
     @staticmethod
-    def get_db_to_class(experiment: SqlModelExperiment) -> Experiment:
+    def map_sql_to_schema(experiment: SqlModelExperiment) -> Experiment:
         """Convert a models.Experiment to a schemas.Experiment
 
         :experiment: An Experiment in SQLAlchemy format.
