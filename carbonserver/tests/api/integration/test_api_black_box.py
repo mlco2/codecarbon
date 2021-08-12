@@ -2,9 +2,6 @@ import os
 
 import pytest
 import requests
-
-# from sqlalchemy import delete
-# from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
@@ -178,6 +175,13 @@ def test_api_teams_list():
     assert is_key_value_exist(r.json(), "id", team_new_id)
 
 
+def test_api_teams_for_organization_list():
+    r = requests.get(url=URL + "/teams/organization/" + org_new_id, timeout=2)
+    assert r.status_code == 200
+    assert is_key_value_exist(r.json(), "id", team_new_id)
+    assert is_key_all_values_equal(r.json(), "organization_id", org_new_id)
+
+
 def test_api_project_create():
     global project_id
     payload = {
@@ -191,12 +195,11 @@ def test_api_project_create():
     project_id = r.json()["id"]
 
 
-@pytest.mark.xfail(reason="Not implemented yet")
-def test_api_projects_team_list():
-    # Wait for https://github.com/mlco2/codecarbon/pull/227/
+def test_api_projects_for_team_list():
     r = requests.get(url=URL + "/projects/team/" + team_new_id, timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", project_id)
+    assert is_key_all_values_equal(r.json(), "team_id", team_new_id)
 
 
 def test_api_experiment_create():
@@ -249,6 +252,13 @@ def test_api_run_list():
     r = requests.get(url=URL + "/runs", timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", run_id)
+
+
+def test_api_runs_for_team_list():
+    r = requests.get(url=URL + "/runs/experiment/" + experiment_id, timeout=2)
+    assert r.status_code == 200
+    assert is_key_value_exist(r.json(), "id", run_id)
+    assert is_key_all_values_equal(r.json(), "experiment_id", experiment_id)
 
 
 def test_api_emission_create():
