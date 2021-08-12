@@ -9,16 +9,16 @@ https://alembic.sqlalchemy.org/en/latest/tutorial.html#the-migration-environment
 
 ## Configure the database
 
-Put the url of the database in rhe config file:
+Put the url of the database in an env variable:
 
 For SQLite:
 ```
-sqlalchemy.url = sqlite:///./code_carbon.db
+export DATABASE_URL = sqlite:///./code_carbon.db
 ```
 
 For Postgres:
 ```
-sqlalchemy.url = postgresql://codecarbon-user:supersecret@localhost:5432/codecarbon_db
+export DATABASE_URL = postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
 ```
 
 # Init the DB
