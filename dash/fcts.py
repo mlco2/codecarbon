@@ -72,3 +72,13 @@ def unique_weeks(timestamps):
     unique_weeks = timestamps.apply(lambda dt: dt.week).unique()
     unique_weeks.sort()
     return unique_weeks
+
+
+def parse_input(input_value):
+    try:
+        parsed = int(input_value)
+        if not parsed in range(20):
+            parsed = 0
+    except:
+        parsed = 0
+    return parsed

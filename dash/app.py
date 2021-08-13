@@ -9,9 +9,12 @@ Note:
 import dash
 import dash_html_components as html
 
-from filters import menu_filters
-from sections import section_header, section_body
-from callbacks import add_chart_series_callback
+from filters import menu_graphs, menu_data
+from sections import (
+    section_header, section_graphs, section_data, section_metrics,
+    section_footer,
+)
+from callbacks import add_chart_series_callback, add_metrics_callback
 
 
 def init_app(title, stylesheet):
@@ -26,8 +29,19 @@ def build_layout(app, data, labels):
     app.layout = html.Div(
         children=[
             section_header(),
-            menu_filters(data),
-            section_body(data, labels),
+
+            menu_graphs(data),
+            section_graphs(data, labels),
+
+            menu_data('run_id', '0'),
+            section_data('runs'),
+
+            menu_data('experiment_id', '3a202149-8be2-408c-a3d8-baeae2de2987'),
+            section_data('experiment'),
+
+            section_metrics(data),
+
+            *section_footer(),
         ],
     )
 
@@ -35,3 +49,4 @@ def build_layout(app, data, labels):
 def build_callbacks(app, data, filters, labels):
     """ Define callbacks to update graphs and metrics on user event """
     add_chart_series_callback(app, data, filters, labels)
+    add_metrics_callback(app)

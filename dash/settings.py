@@ -10,7 +10,7 @@ EXT_STYLESHEET = [
 
 # User menu filters
 # Note: Requires to add corresponding components in file "filters"
-# in function "menu_filters"
+# in function "menu_graphs"
 FILTERS = [
     {
         'column': 'run_id',
@@ -42,7 +42,7 @@ LABELS = [
 
 
 # API
-API_PATH = 'http://api.codecarbon.io/'
+API_PATH = 'http://api.codecarbon.io'
 
 
 # Authentification

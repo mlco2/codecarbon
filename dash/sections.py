@@ -1,7 +1,7 @@
 """
 Define layout:
-- sections: section_header and section_body
-- subsections: subsection_metrics, subsection_timeseries, etc.
+- sections: section_header and section_graphs
+- subsections: section_metrics, subsection_timeseries, etc.
 """
 import dash_core_components as dcc
 import dash_html_components as html
@@ -36,7 +36,7 @@ def graph(identifier, figure=None):
     return graph
 
 
-def section_body(data, labels):
+def section_graphs(data, labels):
     """
     Composition of the layout page body
 
@@ -47,10 +47,16 @@ def section_body(data, labels):
     component = html.Div(
         children=[
             *subsection_timeseries(labels),
-            card(subsection_metrics(data)),
             card(subsection_static_graphs(data)),
             card(subsection_slider(data)),
         ],
+        className="wrapper",
+    )
+    return component
+
+def section_data(id):
+    component = html.Div(
+        id=id,
         className="wrapper",
     )
     return component
@@ -73,15 +79,25 @@ def section_header():
     return component
 
 
-def subsection_metrics(data):
+def section_footer():
+    return [html.Br() for i in range(5)]
+
+
+def section_metrics(data):
     """ General metrics on data """
-    components = [
-        html.H2('Metrics'),
-        html.H3(f"Total Energy Consumed : {round(data['energy_consumed'].sum(), 2)} kWh"),
-        html.H3(f"Total Emissions : {round(data['emissions'].sum(), 2)} kg"),
-        html.H3(f"Total duration : {format_timespan(data['duration'].sum())}"),
-    ]
-    return components
+    div = html.Div(
+        children = [
+            html.H3('Metrics'),
+            f"Total Energy Consumed : {round(data['energy_consumed'].sum(), 2)} kWh",
+            html.Br(),
+            f"Total Emissions : {round(data['emissions'].sum(), 2)} kg",
+            html.Br(),
+            f"Total duration : {format_timespan(data['duration'].sum())}",
+            html.Br(),
+        ],
+        className='wrapper'
+    )
+    return div
 
 
 def subsection_timeseries(labels):

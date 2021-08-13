@@ -86,7 +86,7 @@ def filter_week(data, date_field, selected_week):
     return data[mask]
 
 
-def menu_filters(data):
+def menu_graphs(data):
     """
     Generate a menu with filtering components (dropdwons, date ranges, etc.)
 
@@ -103,3 +103,25 @@ def menu_filters(data):
         className="menu",
     )
     return filters
+
+
+def menu_data(id, default_val):
+    filter = html.Div(
+        children=[
+            html.Div(
+                children=[
+                    html.Div(
+                        children=id,
+                        className="menu-title"
+                        ),
+                    dcc.Input(
+                        id=id,
+                        value=default_val,
+                        type='text',
+                    ),
+                ],
+            ),
+        ],
+        className="menu-data-box",
+    )
+    return filter
