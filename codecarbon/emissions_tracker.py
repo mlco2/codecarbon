@@ -302,7 +302,7 @@ class BaseEmissionsTracker(ABC):
         self._scheduler.start()
 
     @suppress(Exception)
-    def stop(self) -> Optional[float]:
+    def _stop(self, destroy: bool) -> Optional[float]:
         """
         Stops tracking the experiment
         :return: CO2 emissions in kgs
@@ -311,7 +311,10 @@ class BaseEmissionsTracker(ABC):
             logger.error("Need to first start the tracker")
             return None
 
-        self._scheduler.shutdown()
+        if destroy:
+            self._scheduler.shutdown()
+        else:
+            self._scheduler.pause()
 
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
@@ -327,6 +330,32 @@ class BaseEmissionsTracker(ABC):
 
         self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
+
+    @suppress(Exception)
+    def pause(self):
+        """
+        Temporarily halts tracking the experiment.
+        Logs intermediate experiment tracking results.
+        :return: CO2 emissions in kgs
+        """
+        return self._stop(destroy=False)
+
+    @suppress(Exception)
+    def restart(self):
+        """
+        Restarts
+        """
+        logger.info("Restarting tracker")
+        self._last_measured_time = self._start_time = time.time()
+        self._scheduler.resume()
+
+    @suppress(Exception)
+    def stop(self) -> Optional[float]:
+        """
+        Stops tracking the experiment
+        :return: CO2 emissions in kgs
+        """
+        return self._stop(destroy=True)
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
