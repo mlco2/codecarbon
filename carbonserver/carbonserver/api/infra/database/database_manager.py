@@ -1,4 +1,3 @@
-import logging
 from contextlib import AbstractContextManager, contextmanager
 from typing import Callable
 
@@ -7,8 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
-
-logger = logging.getLogger(__name__)
+from carbonserver.logger import logger
 
 Base = declarative_base()
 
@@ -38,7 +36,8 @@ class Database:
             logger.error(e.orig.args[0], exc_info=True)
             raise DBException(
                 error=DBError(
-                    code=DBErrorEnum.INTEGRITY_ERROR, message="Relation not found"
+                    code=DBErrorEnum.INTEGRITY_ERROR,
+                    message="Relation not found, or duplicate key",
                 )
             )
         except exc.DataError as e:

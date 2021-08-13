@@ -1,5 +1,6 @@
 from container import ServerContainer
 from fastapi import Depends, FastAPI
+from pydantic import ValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -27,6 +28,15 @@ async def generic_exception_handler(request: Request, exc: Exception):
     return JSONResponse({"detail": "Generic error"}, status_code=500)
 
 
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    return JSONResponse(
+        {
+            "detail": "Validation error : a data is missing or in wrong format. Could be an error in our answer, not only in your request"
+        },
+        status_code=400,
+    )
+
+
 def create_app() -> FastAPI:
 
     container = init_container()
@@ -34,6 +44,7 @@ def create_app() -> FastAPI:
     init_db(container)
     server = init_server(container)
     server.add_exception_handler(DBException, db_exception_handler)
+    server.add_exception_handler(ValidationError, validation_exception_handler)
     server.add_exception_handler(Exception, generic_exception_handler)
 
     return server
