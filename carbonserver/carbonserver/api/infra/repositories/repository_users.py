@@ -15,8 +15,8 @@ class SqlAlchemyRepository(Users):
         self.session_factory = session_factory
 
     def create_user(self, user: UserCreate) -> User:
-        """Creates an user in the database
-        :returns: An User in pyDantic BaseModel format.
+        """Creates a user in the database
+        :returns: A User in pyDantic BaseModel format.
         :rtype: schemas.User
         """
         with self.session_factory() as session:
