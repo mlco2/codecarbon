@@ -1,5 +1,4 @@
 from typing import List
-from uuid import UUID
 
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
@@ -9,6 +8,7 @@ from starlette import status
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Experiment, ExperimentCreate
 from carbonserver.api.services.experiments_service import ExperimentService
+from carbonserver.logger import logger
 
 EXPERIMENTS_ROUTER_TAGS = ["Experiments"]
 
@@ -21,7 +21,7 @@ router = APIRouter(
     "/experiment",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
-    response_model=UUID,
+    response_model=Experiment,
 )
 @inject
 def add_experiment(
@@ -30,7 +30,9 @@ def add_experiment(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> Experiment:
-    return experiment_service.add_experiment(experiment)
+    experiment = experiment_service.add_experiment(experiment)
+    logger.debug(f"Experiment added : {experiment}")
+    return experiment
 
 
 @router.get(

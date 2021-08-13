@@ -27,5 +27,6 @@ def auth_user(
         return Token(access_token="a", token_type="access")
     else:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password!"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password or email!",
         )
