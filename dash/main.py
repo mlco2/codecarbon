@@ -6,10 +6,9 @@ Note:
     practice is not recommended by a core writer of the Dash user guide.
     cf. @chriddyp: https://community.plotly.com/t/putting-a-dash-instance-inside-a-class/6097
 """
-from settings import APP_TITLE, EXT_STYLESHEET
-from settings import LABELS, FILTERS
+from app import build_callbacks, build_layout, init_app
 from data_loader import load_csv
-from app import init_app, build_layout, build_callbacks
+from settings import APP_TITLE, EXT_STYLESHEET, FILTERS, LABELS
 
 data = load_csv()
 

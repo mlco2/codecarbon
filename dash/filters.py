@@ -1,22 +1,24 @@
 from functools import reduce
-import numpy as np
+
 import dash_core_components as dcc
 import dash_html_components as html
+import numpy as np
 from fcts import get_first_elem
 
+
 def filter_data(data, inputs, names, signs):
-    """ Filter data based on user choices """
+    """Filter data based on user choices"""
     masks = []
     for name, input, sign in zip(names, inputs, signs):
-        if sign == '==':
+        if sign == "==":
             masks.append(data[name] == input)
-        if sign == '>':
+        if sign == ">":
             masks.append(data[name] > input)
-        if sign == '<':
+        if sign == "<":
             masks.append(data[name] < input)
-        if sign == '>=':
+        if sign == ">=":
             masks.append(data[name] >= input)
-        if sign == '<=':
+        if sign == "<=":
             masks.append(data[name] <= input)
 
     masks = reduce(np.logical_and, masks)
@@ -25,14 +27,11 @@ def filter_data(data, inputs, names, signs):
     return data_filtered
 
 
-def filter_date(data, col_name, text='Date Range'):
-    """ Filter a date vector and yield a calendar button """
+def filter_date(data, col_name, text="Date Range"):
+    """Filter a date vector and yield a calendar button"""
     f_date = html.Div(
         children=[
-            html.Div(
-                children=text,
-                className="menu-title"
-                ),
+            html.Div(children=text, className="menu-title"),
             dcc.DatePickerRange(
                 id=f"{col_name}-filter",
                 min_date_allowed=data[col_name].min().date(),
@@ -45,7 +44,7 @@ def filter_date(data, col_name, text='Date Range'):
     return f_date
 
 
-def filter_dropdown(data, col_name, type_='value', text=None, default_val='first'):
+def filter_dropdown(data, col_name, type_="value", text=None, default_val="first"):
     """
     Define a dropdown button for the provided column
 
@@ -57,20 +56,18 @@ def filter_dropdown(data, col_name, type_='value', text=None, default_val='first
     if not text:
         text = col_name
 
-    if default_val == 'first':
+    if default_val == "first":
         default_val = get_first_elem(data[col_name])
 
     f_vec = html.Div(
         children=[
-            html.Div(
-                children=text,
-                className="menu-title"
-            ),
-
+            html.Div(children=text, className="menu-title"),
             dcc.Dropdown(
-                id = f"{col_name}-filter",
-                options=[{"label": vec, type_: vec}
-                         for vec in np.sort(data[col_name].unique())],
+                id=f"{col_name}-filter",
+                options=[
+                    {"label": vec, type_: vec}
+                    for vec in np.sort(data[col_name].unique())
+                ],
                 clearable=False,
                 className="dropdown",
                 value=default_val,
@@ -81,7 +78,7 @@ def filter_dropdown(data, col_name, type_='value', text=None, default_val='first
 
 
 def filter_week(data, date_field, selected_week):
-    """ Filter data given a selected week """
+    """Filter data given a selected week"""
     mask = data[date_field].apply(lambda dt: dt.week) == selected_week
     return data[mask]
 
@@ -96,9 +93,9 @@ def menu_graphs(data):
     """
     filters = html.Div(
         children=[
-            filter_dropdown(data, col_name='run_id', type_='value', text='Run ID'),
-            filter_dropdown(data, col_name='emissions', type_='value'),
-            filter_date(data, col_name='timestamp'),
+            filter_dropdown(data, col_name="run_id", type_="value", text="Run ID"),
+            filter_dropdown(data, col_name="emissions", type_="value"),
+            filter_date(data, col_name="timestamp"),
         ],
         className="menu",
     )
@@ -110,14 +107,11 @@ def menu_data(id, default_val):
         children=[
             html.Div(
                 children=[
-                    html.Div(
-                        children=id,
-                        className="menu-title"
-                        ),
+                    html.Div(children=id, className="menu-title"),
                     dcc.Input(
                         id=id,
                         value=default_val,
-                        type='text',
+                        type="text",
                     ),
                 ],
             ),
