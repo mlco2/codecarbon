@@ -159,7 +159,7 @@ class Emissions:
 
         emissions_per_kWh = self._energy_mix_to_emissions_rate(country_energy_mix)
         logger.debug(
-            f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh:.6f} Kg.CO2eq/kWh for {geo.country_name}"
+            f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh:.6f} kg.CO2eq/kWh for {geo.country_name}"
         )
 
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs

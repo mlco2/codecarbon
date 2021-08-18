@@ -442,7 +442,7 @@ class BaseEmissionsTracker(ABC):
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} W during {last_duration:,.2f} s"
             )
         logger.info(
-            f"{self._total_energy.kwh:.6f} kWh of electricity used since the begining."
+            f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
