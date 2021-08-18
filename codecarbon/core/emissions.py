@@ -9,7 +9,7 @@ from typing import Dict, Optional
 import pandas as pd
 
 from codecarbon.core import co2_signal
-from codecarbon.core.units import EmissionsPerKwh, Energy
+from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource, DataSourceException
@@ -32,13 +32,13 @@ class Emissions:
 
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
 
-        emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_g_per_kwh(
+        emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
             df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)][
                 "impact"
             ].item()
         )
 
-        return emissions_per_kwh.kgs_per_kwh * energy.kWh  # kgs
+        return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
 
     def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
         """
@@ -126,7 +126,7 @@ class Emissions:
                     f"Region: {geo.region} not found for Country with ISO CODE : {geo.country_iso_code}"
                 )
 
-            emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_lbs_per_mwh(
+            emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_lbs_per_mWh(
                 country_emissions_data[geo.region]["emissions"]
             )
         except DataSourceException:  # This country has regional data at the energy mix level, not the emissions level
@@ -134,11 +134,11 @@ class Emissions:
                 geo.country_iso_code.lower()
             )
             region_energy_mix_data = country_energy_mix_data[geo.region]
-            emissions_per_kwh: EmissionsPerKwh = self._energy_mix_to_emissions_rate(
+            emissions_per_kWh: EmissionsPerKWh = self._energy_mix_to_emissions_rate(
                 region_energy_mix_data
             )
 
-        return emissions_per_kwh.kgs_per_kwh * energy.kWh  # kgs
+        return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
 
     def get_country_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
@@ -156,23 +156,23 @@ class Emissions:
             raise Exception()
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
-        emissions_per_kwh = self._energy_mix_to_emissions_rate(country_energy_mix)
-        return emissions_per_kwh.kgs_per_kwh * energy.kWh  # kgs
+        emissions_per_kWh = self._energy_mix_to_emissions_rate(country_energy_mix)
+        return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
 
     @staticmethod
-    def _energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKwh:
+    def _energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
         """
         Convert a mix of energy sources into emissions per kWh
         https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
         :param energy_mix: A dictionary that breaks down the energy produced into sources, with a total value.
             Format will vary, but must have keys for "coal", "petroleum" and "naturalGas" and "total"
-        :return: an EmissionsPerKwh object representing the average emissions rate
+        :return: an EmissionsPerKWh object representing the average emissions rate
         """
         # source: https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
-        emissions_by_source: Dict[str, EmissionsPerKwh] = {
-            "coal": EmissionsPerKwh.from_kgs_per_kwh(0.995725971),
-            "petroleum": EmissionsPerKwh.from_kgs_per_kwh(0.8166885263),
-            "naturalGas": EmissionsPerKwh.from_kgs_per_kwh(0.7438415916),
+        emissions_by_source: Dict[str, EmissionsPerKWh] = {
+            "coal": EmissionsPerKWh.from_kgs_per_kWh(0.995725971),
+            "petroleum": EmissionsPerKWh.from_kgs_per_kWh(0.8166885263),
+            "naturalGas": EmissionsPerKWh.from_kgs_per_kWh(0.7438415916),
         }
 
         emissions_percentage: Dict[str, float] = {}
@@ -185,17 +185,17 @@ class Emissions:
         #  Weighted sum of emissions by % of contributions
         # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
         # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916
-        # `emissions_per_kwh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916)
+        # `emissions_per_kWh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916)
         #  >> 0.5358309 kg/kWh
 
-        emissions_per_kwh = EmissionsPerKwh.from_kgs_per_kwh(
+        emissions_per_kWh = EmissionsPerKWh.from_kgs_per_kWh(
             sum(
                 [
                     emissions_percentage[source]
-                    * value.kgs_per_kwh  # % (0.x)  # kgs / kWh
+                    * value.kgs_per_kWh  # % (0.x)  # kgs / kWh
                     for source, value in emissions_by_source.items()
                 ]
             )
         )
 
-        return emissions_per_kwh
+        return emissions_per_kWh

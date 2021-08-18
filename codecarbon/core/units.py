@@ -24,7 +24,7 @@ class Time:
 
 
 @dataclass
-class EmissionsPerKwh:
+class EmissionsPerKWh:
     """
     Measured in kg/kWh
     """
@@ -32,19 +32,19 @@ class EmissionsPerKwh:
     LBS_MWH_TO_KG_KWH = 0.00045359237
     G_KWH_TO_KG_KWH = 0.001
 
-    kgs_per_kwh: float
+    kgs_per_kWh: float
 
     @classmethod
-    def from_lbs_per_mwh(cls, lbs_per_mwh: float) -> "EmissionsPerKwh":
-        return cls(kgs_per_kwh=lbs_per_mwh * EmissionsPerKwh.LBS_MWH_TO_KG_KWH)
+    def from_lbs_per_mWh(cls, lbs_per_mWh: float) -> "EmissionsPerKWh":
+        return cls(kgs_per_kWh=lbs_per_mWh * EmissionsPerKWh.LBS_MWH_TO_KG_KWH)
 
     @classmethod
-    def from_g_per_kwh(cls, g_per_kwh: float) -> "EmissionsPerKwh":
-        return cls(kgs_per_kwh=g_per_kwh * EmissionsPerKwh.G_KWH_TO_KG_KWH)
+    def from_g_per_kWh(cls, g_per_kWh: float) -> "EmissionsPerKWh":
+        return cls(kgs_per_kWh=g_per_kWh * EmissionsPerKWh.G_KWH_TO_KG_KWH)
 
     @classmethod
-    def from_kgs_per_kwh(cls, kgs_per_kwh: float) -> "EmissionsPerKwh":
-        return cls(kgs_per_kwh=kgs_per_kwh)
+    def from_kgs_per_kWh(cls, kgs_per_kWh: float) -> "EmissionsPerKWh":
+        return cls(kgs_per_kWh=kgs_per_kWh)
 
 
 @dataclass
