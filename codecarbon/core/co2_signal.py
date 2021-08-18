@@ -25,7 +25,7 @@ def get_emissions(energy: Energy, geo: GeoMetadata, co2_signal_api_token: str = 
     emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_g_per_kwh(
         carbon_intensity_g_per_kWh
     )
-    return emissions_per_kwh.kgs_per_kwh * energy.kwh
+    return emissions_per_kwh.kgs_per_kwh * energy.kWh
 
 
 class CO2SignalAPIError(Exception):

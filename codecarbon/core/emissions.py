@@ -38,7 +38,7 @@ class Emissions:
             ].item()
         )
 
-        return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
+        return emissions_per_kwh.kgs_per_kwh * energy.kWh  # kgs
 
     def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
         """
@@ -138,7 +138,7 @@ class Emissions:
                 region_energy_mix_data
             )
 
-        return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
+        return emissions_per_kwh.kgs_per_kwh * energy.kWh  # kgs
 
     def get_country_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
@@ -157,7 +157,7 @@ class Emissions:
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
         emissions_per_kwh = self._energy_mix_to_emissions_rate(country_energy_mix)
-        return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
+        return emissions_per_kwh.kgs_per_kwh * energy.kWh  # kgs
 
     @staticmethod
     def _energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKwh:
@@ -186,13 +186,13 @@ class Emissions:
         # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
         # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916
         # `emissions_per_kwh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916)
-        #  >> 0.5358309 kg/kwh
+        #  >> 0.5358309 kg/kWh
 
         emissions_per_kwh = EmissionsPerKwh.from_kgs_per_kwh(
             sum(
                 [
                     emissions_percentage[source]
-                    * value.kgs_per_kwh  # % (0.x)  # kgs / kwh
+                    * value.kgs_per_kwh  # % (0.x)  # kgs / kWh
                     for source, value in emissions_by_source.items()
                 ]
             )

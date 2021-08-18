@@ -16,7 +16,7 @@ class TestEmissions(unittest.TestCase):
         # WHEN
 
         emissions = self._emissions.get_cloud_emissions(
-            Energy.from_energy(kwh=0.6),
+            Energy.from_energy(kWh=0.6),
             CloudMetadata(provider="aws", region="us-east-1"),
         )
 
@@ -27,7 +27,7 @@ class TestEmissions(unittest.TestCase):
     def test_emissions_CLOUD_AZURE(self):
         # WHEN
         emissions = self._emissions.get_cloud_emissions(
-            Energy.from_energy(kwh=1.5),
+            Energy.from_energy(kWh=1.5),
             CloudMetadata(provider="azure", region="eastus"),
         )
 
@@ -37,7 +37,7 @@ class TestEmissions(unittest.TestCase):
 
     def test_emissions_CLOUD_GCP(self):
         emissions = self._emissions.get_cloud_emissions(
-            Energy.from_energy(kwh=0.01),
+            Energy.from_energy(kWh=0.01),
             CloudMetadata(provider="gcp", region="us-central1"),
         )
 
@@ -48,7 +48,7 @@ class TestEmissions(unittest.TestCase):
     def test_get_emissions_PRIVATE_INFRA_USA_WITH_REGION(self):
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
-            Energy.from_energy(kwh=0.3),
+            Energy.from_energy(kWh=0.3),
             GeoMetadata(
                 country_iso_code="USA", country_name="United States", region="Illinois"
             ),
@@ -61,7 +61,7 @@ class TestEmissions(unittest.TestCase):
     def test_get_emissions_PRIVATE_INFRA_USA_WITHOUT_REGION(self):
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
-            Energy.from_energy(kwh=0.3),
+            Energy.from_energy(kWh=0.3),
             GeoMetadata(country_iso_code="USA", country_name="United States"),
         )
 
@@ -72,7 +72,7 @@ class TestEmissions(unittest.TestCase):
     def test_get_emissions_PRIVATE_INFRA_USA_WITHOUT_COUNTRYNAME(self):
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
-            Energy.from_energy(kwh=0.3), GeoMetadata(country_iso_code="USA")
+            Energy.from_energy(kWh=0.3), GeoMetadata(country_iso_code="USA")
         )
 
         # THEN
@@ -83,7 +83,7 @@ class TestEmissions(unittest.TestCase):
 
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
-            Energy.from_energy(kwh=3),
+            Energy.from_energy(kWh=3),
             GeoMetadata(country_iso_code="CAN", country_name="Canada"),
         )
 
@@ -95,7 +95,7 @@ class TestEmissions(unittest.TestCase):
 
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
-            Energy.from_energy(kwh=3),
+            Energy.from_energy(kWh=3),
             GeoMetadata(
                 country_iso_code="CAN", country_name="Canada", region="ontario"
             ),

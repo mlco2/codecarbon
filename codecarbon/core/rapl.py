@@ -29,5 +29,5 @@ class RAPLFile:
         """
         self.power_measurement = Power.from_energies_and_delay(
             self.energy_reading, self._get_value(), Time.from_seconds(delay)
-        ).kw
+        ).kW
         return

@@ -12,7 +12,7 @@ from codecarbon.external.geography import GeoMetadata
 class TestCO2Signal(unittest.TestCase):
     def setUp(self) -> None:
         # GIVEN
-        self._energy = Energy.from_energy(kwh=10)
+        self._energy = Energy.from_energy(kWh=10)
         self._geo = GeoMetadata(
             country_iso_code="FRA",
             country_name="France",

@@ -108,7 +108,7 @@ class Data:
             if country_iso_code not in ["_define", "ATA"]:
                 from codecarbon.core.units import Energy
 
-                energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
+                energy_consumed = Energy.from_energy(kWh=net_energy_consumed)
 
                 from codecarbon.external.geography import GeoMetadata
 
@@ -167,7 +167,7 @@ class Data:
             if region_name not in ["_unit"]:
                 from codecarbon.core.units import Energy
 
-                energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
+                energy_consumed = Energy.from_energy(kWh=net_energy_consumed)
 
                 from codecarbon.external.geography import GeoMetadata
 

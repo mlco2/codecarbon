@@ -198,7 +198,7 @@ class BaseEmissionsTracker(ABC):
 
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
-        self._total_energy: Energy = Energy.from_energy(kwh=0)
+        self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._scheduler = BackgroundScheduler()
         self._hardware = [RAM(self._tracking_mode)]
         self._conf["hardware"] = []
@@ -352,7 +352,7 @@ class BaseEmissionsTracker(ABC):
             project_name=self._project_name,
             duration=duration.seconds,
             emissions=emissions,
-            energy_consumed=self._total_energy.kwh,
+            energy_consumed=self._total_energy.kWh,
             country_name=country_name,
             country_iso_code=country_iso_code,
             region=region,
@@ -412,7 +412,7 @@ class BaseEmissionsTracker(ABC):
             )
             logger.info(
                 "Energy consumed for all "
-                + f"{hardware.__class__.__name__} : {self._total_energy.kwh:.6f} kWh"
+                + f"{hardware.__class__.__name__} : {self._total_energy.kWh:.6f} kWh"
             )
             logger.debug(
                 f"\n={hardware.total_power()} power x {Time.from_seconds(last_duration)}"
