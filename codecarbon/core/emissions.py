@@ -182,7 +182,7 @@ class Emissions:
         """
         # source:
         # https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
-        emissions_by_source: Dict[str, EmissionsPerKwh] = {
+        emissions_by_source: Dict[str, EmissionsPerKWh] = {
             "coal": EmissionsPerKWh.from_kgs_per_kWh(0.995725971),
             "petroleum": EmissionsPerKWh.from_kgs_per_kWh(0.8166885263),
             "naturalGas": EmissionsPerKWh.from_kgs_per_kWh(0.7438415916),
