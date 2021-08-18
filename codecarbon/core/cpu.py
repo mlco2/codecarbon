@@ -7,11 +7,14 @@ import shutil
 import subprocess
 import sys
 import time
+import warnings
 from typing import Dict, Union
 
 import cpuinfo
 import pandas as pd
-from fuzzywuzzy import fuzz
+
+with warnings.catch_warnings(record=True) as w:
+    from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.external.logger import logger
