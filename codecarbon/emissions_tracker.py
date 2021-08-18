@@ -420,25 +420,26 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         for hardware in self._hardware:
+            power = hardware.total_power()
             energy = Energy.from_power_and_time(
-                power=hardware.total_power(), time=Time.from_seconds(last_duration)
+                power=power, time=Time.from_seconds(last_duration)
             )
             self._total_energy += energy
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
-                self._cpu_power = hardware.total_power()
+                self._cpu_power = power
             if isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
-                self._gpu_power = hardware.total_power()
+                self._gpu_power = power
             if isinstance(hardware, RAM):
                 self._total_ram_energy += energy
-                self._ram_power = hardware.total_power()
+                self._ram_power = power
 
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} W during {last_duration:,.2f} s"
             )
         logger.info(
-            f"{self._total_energy.kwh:.6f} kWh of electricity used since the begining."
+            f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
