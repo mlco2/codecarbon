@@ -9,6 +9,7 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
+from typing import Optional
 
 import requests
 
@@ -70,7 +71,7 @@ class BaseOutput(ABC):
     """
 
     @abstractmethod
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         pass
 
 
@@ -89,7 +90,7 @@ class FileOutput(BaseOutput):
             list_of_column_names = list(dict_from_csv.keys())
             return list(data.values.keys()) == list_of_column_names
 
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(data):
             logger.info("Backing up old emission file")
@@ -113,7 +114,7 @@ class HTTPOutput(BaseOutput):
     def __init__(self, endpoint_url: str):
         self.endpoint_url: str = endpoint_url
 
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         try:
             payload = dataclasses.asdict(data)
             payload["user"] = getpass.getuser()
@@ -140,7 +141,7 @@ class CodeCarbonAPIOutput(BaseOutput):
             api_key=api_key,
         )
 
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         try:
             self.api.add_emission(dataclasses.asdict(data))
         except Exception as e:

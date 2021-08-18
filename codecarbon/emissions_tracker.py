@@ -199,6 +199,7 @@ class BaseEmissionsTracker(ABC):
         set_log_level(self._log_level)
 
         self._start_time: Optional[float] = None
+        self._end_time: Optional[float] = None
         self._last_measured_time: float = time.time()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
@@ -214,6 +215,7 @@ class BaseEmissionsTracker(ABC):
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
+        self._previous_duration: float = 0
         self.final_emissions_data = None
 
         if isinstance(self._gpu_ids, str):
@@ -297,12 +299,17 @@ class BaseEmissionsTracker(ABC):
         """
 
         if self._start_time is not None:
-            logger.warning(
-                "Tracker has already started. Ignoring `start()` call.\n"
-                + "If you want to resume the tracker after a "
-                + "`stop()` call use `tracker.resume()`"
+            if self._end_time is None:
+                logger.warning(
+                    "You can only resume a tracker which has been started then stopped."
+                    + " The current tracker has been started but not stopped."
+                    + " Ignoring start() call."
+                )
+                return
+            logger.info("Resuming tracker.")
+            self._previous_duration = self._previous_duration + (
+                self._end_time - self._start_time
             )
-            return
 
         self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
@@ -322,6 +329,8 @@ class BaseEmissionsTracker(ABC):
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
         self._measure_power()
+
+        self._end_time = time.time()
 
         emissions_data = self._prepare_emissions_data()
 
@@ -382,6 +391,8 @@ class BaseEmissionsTracker(ABC):
             cloud_region=cloud_region,
         )
         if delta:
+            # sending to the API: we need to upload the relative change
+            # in measurements not the current absolute value
             if self._previous_emissions is None:
                 self._previous_emissions = total_emissions
             else:
@@ -393,6 +404,10 @@ class BaseEmissionsTracker(ABC):
                 # TODO : the API call succeeded
                 self._previous_emissions = total_emissions
                 total_emissions = delta_emissions
+        else:
+            # not sending to the API: duration has to be incremented by potential
+            # previous duration (if tracker was re-started)
+            total_emissions.duration += self._previous_duration
         logger.debug(total_emissions)
         return total_emissions
 
