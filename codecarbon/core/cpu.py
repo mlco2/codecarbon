@@ -1,6 +1,7 @@
 """
 Implements tracking Intel CPU Power Consumption on Mac and Windows
-using Intel Power Gadget https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
+using Intel Power Gadget
+https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
 import os
 import shutil
@@ -113,7 +114,7 @@ class IntelPowerGadget:
             )
         elif self._system.startswith("darwin"):
             returncode = subprocess.call(
-                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",
+                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",  # noqa: E501
                 shell=True,
             )
         else:
@@ -128,7 +129,8 @@ class IntelPowerGadget:
 
     def get_cpu_details(self) -> Dict:
         """
-        Fetches the CPU Power Details by fetching values from a logged csv file in _log_values function
+        Fetches the CPU Power Details by fetching values from a logged csv file
+        in _log_values function
         """
         self._log_values()
         cpu_details = dict()
@@ -167,7 +169,8 @@ class IntelRAPL:
                 self._fetch_rapl_files()
             else:
                 raise FileNotFoundError(
-                    f"Intel RAPL files not found at {self._lin_rapl_dir} on {self._system}"
+                    f"Intel RAPL files not found at {self._lin_rapl_dir} "
+                    + f"on {self._system}"
                 )
         else:
             raise SystemError("Platform not supported by Intel RAPL Interface")
@@ -286,7 +289,7 @@ class TDP:
             still enables the relative comparison of models emissions running
             on the same machine.
 
-            THRESHOLD_DIRECT defines the similiraty ratio value to consider
+            THRESHOLD_DIRECT defines the similarity ratio value to consider
             almost-exact matches.
 
             THRESHOLD_TOKEN_SET defines the similarity ratio value to consider

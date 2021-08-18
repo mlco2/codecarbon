@@ -15,8 +15,8 @@ class DataSource:
             "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
             "cloud_emissions_path": "data/cloud/impact.csv",
             "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
-            "can_energy_mix_data_path": "data/private_infra/2016/canada_energy_mix.json",
-            "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",
+            "can_energy_mix_data_path": "data/private_infra/2016/canada_energy_mix.json",  # noqa: E501
+            "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",  # noqa: E501
             "cpu_power_path": "data/hardware/cpu_power.csv",
         }
         self.module_name = "codecarbon"
@@ -81,7 +81,9 @@ class DataSource:
             with open(self.country_emissions_data_path(country_iso_code)) as f:
                 country_emissions_data: Dict = json.load(f)
             return country_emissions_data
-        except KeyError:  # KeyError raised from line 39, when there is no data path specified for the given country
+        except KeyError:
+            # KeyError raised from line 39, when there is no data path specified for
+            # the given country
             raise DataSourceException
 
     def get_country_energy_mix_data(self, country_iso_code: str) -> Dict:
