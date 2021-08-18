@@ -45,7 +45,7 @@ from codecarbon.output import (
 # see: https://stackoverflow.com/questions/67202314/
 #      python-distinguish-default-argument-and-argument-provided-with-default-value
 
-_sentinel = object()
+_sentinel = "93dc1470-9879-43ed-b11e-158bcc932a99"
 
 
 class BaseEmissionsTracker(ABC):
@@ -297,7 +297,7 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
-
+        resuming = False
         if self._start_time is not None:
             if self._end_time is None:
                 logger.warning(
@@ -307,10 +307,21 @@ class BaseEmissionsTracker(ABC):
                 )
                 return
             logger.info("Resuming tracker.")
+            resuming = True
             self._previous_duration = self._previous_duration + (
                 self._end_time - self._start_time
             )
 
+            self._scheduler = BackgroundScheduler()
+            self._scheduler.add_job(
+                self._measure_power,
+                "interval",
+                seconds=self._measure_power_secs,
+                max_instances=1,
+            )
+
+        if not resuming:
+            logger.info("Starting tracker.")
         self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
 
@@ -320,6 +331,7 @@ class BaseEmissionsTracker(ABC):
         Stops tracking the experiment
         :return: CO2 emissions in kgs
         """
+        logger.info("Stopping tracker")
         if self._start_time is None:
             logger.error("Need to first start the tracker")
             return None
@@ -338,7 +350,7 @@ class BaseEmissionsTracker(ABC):
             if isinstance(persistence, CodeCarbonAPIOutput):
                 emissions_data = self._prepare_emissions_data(delta=True)
 
-            persistence.out(emissions_data)
+            persistence.out(emissions_data, self.final_emissions_data)
 
         self.final_emissions_data = emissions_data
         # emissions are in emissions_data.emissions
