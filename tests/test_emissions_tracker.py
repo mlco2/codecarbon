@@ -80,7 +80,7 @@ class TestCarbonTracker(unittest.TestCase):
         # WHEN
         tracker.start()
         heavy_computation()
-        emissions = tracker.stop()
+        emissions = tracker.stop().emissions
 
         # THEN
         self.assertGreaterEqual(
@@ -116,7 +116,7 @@ class TestCarbonTracker(unittest.TestCase):
         # WHEN
         tracker.start()
         heavy_computation(run_time_secs=2)
-        emissions = tracker.stop()
+        emissions = tracker.stop().emissions
         self.assertEqual(1, mocked_requests_get.call_count)
         self.assertIsInstance(emissions, float)
         self.assertAlmostEqual(1.1037980397280433e-05, emissions, places=2)

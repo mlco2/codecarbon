@@ -45,7 +45,8 @@ def main():
     tracker = EmissionsTracker(project_name="mnist_random_search")
     tracker.start()
     tuner.search(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
-    emissions = tracker.stop()
+    emissions_data = tracker.stop()
+    emissions = emissions_data.emissions
 
     print(f"Emissions : {emissions} kg CO₂")
 

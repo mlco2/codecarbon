@@ -31,7 +31,8 @@ def main():
     tracker = EmissionsTracker(project_name="mnist_grid_search")
     tracker.start()
     grid_result = grid.fit(x_train, y_train)
-    emissions = tracker.stop()
+    emissions_data = tracker.stop()
+    emissions = emissions_data.emissions
 
     print(f"Best Accuracy : {grid_result.best_score_} using {grid_result.best_params_}")
     print(f"Emissions : {emissions} kg CO₂")

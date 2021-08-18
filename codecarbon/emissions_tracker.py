@@ -214,6 +214,7 @@ class BaseEmissionsTracker(ABC):
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
+        self.final_emissions_data = None
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
@@ -294,15 +295,20 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
+
         if self._start_time is not None:
-            logger.warning("Already started tracking")
+            logger.warning(
+                "Tracker has already started. Ignoring `start()` call.\n"
+                + "If you want to resume the tracker after a "
+                + "`stop()` call use `tracker.resume()`"
+            )
             return
 
         self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
 
     @suppress(Exception)
-    def stop(self) -> Optional[float]:
+    def stop(self) -> Optional[EmissionsData]:
         """
         Stops tracking the experiment
         :return: CO2 emissions in kgs
@@ -325,8 +331,9 @@ class BaseEmissionsTracker(ABC):
 
             persistence.out(emissions_data)
 
-        self.final_emissions = emissions_data.emissions
-        return emissions_data.emissions
+        self.final_emissions_data = emissions_data
+        # emissions are in emissions_data.emissions
+        return emissions_data
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
