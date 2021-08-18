@@ -200,10 +200,10 @@ class BaseEmissionsTracker(ABC):
 
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
-        self._total_energy: Energy = Energy.from_energy(kwh=0)
-        self._total_cpu_energy: Energy = Energy.from_energy(kwh=0)
-        self._total_gpu_energy: Energy = Energy.from_energy(kwh=0)
-        self._total_ram_energy: Energy = Energy.from_energy(kwh=0)
+        self._total_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
@@ -363,10 +363,10 @@ class BaseEmissionsTracker(ABC):
             cpu_power=self._cpu_power.W,
             gpu_power=self._gpu_power.W,
             ram_power=self._ram_power.W,
-            cpu_energy=self._total_cpu_energy.kwh,
-            gpu_energy=self._total_gpu_energy.kwh,
-            ram_energy=self._total_ram_energy.kwh,
-            energy_consumed=self._total_energy.kwh,
+            cpu_energy=self._total_cpu_energy.kWh,
+            gpu_energy=self._total_gpu_energy.kWh,
+            ram_energy=self._total_ram_energy.kWh,
+            energy_consumed=self._total_energy.kWh,
             country_name=country_name,
             country_iso_code=country_iso_code,
             region=region,
@@ -424,6 +424,10 @@ class BaseEmissionsTracker(ABC):
             energy = Energy.from_power_and_time(
                 power=power, time=Time.from_seconds(last_duration)
             )
+            logger.info(
+                "Energy consumed for all "
+                + f"{hardware.__class__.__name__} : {self._total_energy.kWh:.6f} kWh"
+            )
             self._total_energy += energy
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
@@ -444,7 +448,7 @@ class BaseEmissionsTracker(ABC):
                 + f"W during {last_duration:,.2f} s"
             )
         logger.info(
-            f"{self._total_energy.kwh:.6f} kWh of electricity used since the begining."
+            f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1

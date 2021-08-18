@@ -8,11 +8,14 @@ import shutil
 import subprocess
 import sys
 import time
+import warnings
 from typing import Dict, Union
 
 import cpuinfo
 import pandas as pd
-from fuzzywuzzy import fuzz
+
+with warnings.catch_warnings(record=True) as w:
+    from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.external.logger import logger
@@ -153,7 +156,7 @@ class IntelRAPL:
     def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
-        self._delay = 0.01  # 10 millisecond
+        self._delay = 0.01  # (s) -> 10 millisecond
         self._rapl_files = list()
         self._setup_rapl()
 
@@ -204,7 +207,7 @@ class IntelRAPL:
             time.sleep(self._delay)
             list(map(lambda rapl_file: rapl_file.end(self._delay), self._rapl_files))
             for rapl_file in self._rapl_files:
-                cpu_details[rapl_file.name] = rapl_file.power_measurement
+                cpu_details[rapl_file.name] = rapl_file.power_measurement.kW
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \
