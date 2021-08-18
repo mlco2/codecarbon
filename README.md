@@ -22,6 +22,7 @@ Estimate and track carbon emissions from your compute, quantify and analyze thei
 - [Data Sources 🗒️](#data-sources-️)
 - [Contributing 🤝](#contributing-)
 - [Build Documentation 🖨️](#build-documentation-️)
+- [Contact 📝](#contact-)
 
 # About CodeCarbon 💡
 
@@ -34,7 +35,6 @@ By taking into account your computing infrastructure, location, usage and runnin
 Our hope is that this package will be used widely for estimating the carbon footprint of computing, and for establishing best practices with regards to the disclosure and reduction of this footprint.
 
 Follow the steps below to set up the package and don't hesitate to open an issue if you need help!
-
 
 # Installation :battery:
 Create a virtual environment using `conda` for easier management of dependencies and packages.
@@ -355,6 +355,7 @@ In order to contribute a change to our code base, please submit a pull request (
 
 Check out our [contribution guidelines :arrow_upper_right:](https://github.com/mlco2/codecarbon/blob/master/CONTRIBUTING.md)
 
+Contact [@vict0rsch](https://github.com/vict0rsch) to be added to our slack workspace if you want to contribute regularly!
 
 
 # Build Documentation 🖨️
@@ -371,3 +372,6 @@ make docs
 ```
 to regenerate the html files.
 
+# Contact 📝
+
+Maintainers are [@vict0rsch](https://github.com/vict0rsch) [@benoit-cty](https://github.com/benoit-cty) and [@SaboniAmine](https://github.com/saboniamine). Codecarbon is developed by volunteers from [**Mila**](http://mila.quebec) and the [**DataForGoodFR**](https://twitter.com/dataforgood_fr) community alongside donated professional time of engineers at [**Comet.ml**](https://comet.ml) and [**BCG GAMMA**](https://www.bcg.com/en-nl/beyond-consulting/bcg-gamma/default).
