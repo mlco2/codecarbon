@@ -1,5 +1,7 @@
 """
-Provides functionality to compute emissions for cloud & private infra based on impact & energy Usage package
+Provides functionality to compute emissions for cloud & private infra
+based on impact & energy Usage package
+
 https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
@@ -123,13 +125,16 @@ class Emissions:
             if geo.region not in country_emissions_data:
                 # TODO: Deal with missing data, default to something
                 raise ValueError(
-                    f"Region: {geo.region} not found for Country with ISO CODE : {geo.country_iso_code}"
+                    f"Region: {geo.region} not found for Country"
+                    + f" with ISO CODE : {geo.country_iso_code}"
                 )
 
             emissions_per_kwh: EmissionsPerKwh = EmissionsPerKwh.from_lbs_per_mwh(
                 country_emissions_data[geo.region]["emissions"]
             )
-        except DataSourceException:  # This country has regional data at the energy mix level, not the emissions level
+        except DataSourceException:
+            # This country has regional data at the energy mix level,
+            # not the emissions level
             country_energy_mix_data = self._data_source.get_country_energy_mix_data(
                 geo.country_iso_code.lower()
             )
@@ -158,7 +163,8 @@ class Emissions:
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
         emissions_per_kwh = self._energy_mix_to_emissions_rate(country_energy_mix)
         logger.debug(
-            f"We apply an energy mix of {emissions_per_kwh.kgs_per_kwh:.6f} Kg.CO2eq/kWh for {geo.country_name}"
+            f"We apply an energy mix of {emissions_per_kwh.kgs_per_kwh:.6f}"
+            + f" Kg.CO2eq/kWh for {geo.country_name}"
         )
         return emissions_per_kwh.kgs_per_kwh * energy.kwh  # kgs
 
@@ -167,11 +173,13 @@ class Emissions:
         """
         Convert a mix of energy sources into emissions per kWh
         https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
-        :param energy_mix: A dictionary that breaks down the energy produced into sources, with a total value.
-            Format will vary, but must have keys for "coal", "petroleum" and "naturalGas" and "total"
+        :param energy_mix: A dictionary that breaks down the energy produced into
+            sources, with a total value. Format will vary, but must have keys for "coal"
+            "petroleum" and "naturalGas" and "total"
         :return: an EmissionsPerKwh object representing the average emissions rate
         """
-        # source: https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
+        # source:
+        # https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
         emissions_by_source: Dict[str, EmissionsPerKwh] = {
             "coal": EmissionsPerKwh.from_kgs_per_kwh(0.995725971),
             "petroleum": EmissionsPerKwh.from_kgs_per_kwh(0.8166885263),
@@ -187,8 +195,8 @@ class Emissions:
 
         #  Weighted sum of emissions by % of contributions
         # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
-        # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916
-        # `emissions_per_kwh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916)
+        # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916 # noqa: E501
+        # `emissions_per_kwh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916) # noqa: E501
         #  >> 0.5358309 kg/kwh
 
         emissions_per_kwh = EmissionsPerKwh.from_kgs_per_kwh(

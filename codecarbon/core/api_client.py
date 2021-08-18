@@ -53,7 +53,8 @@ class ApiClient:  # (AsyncClient)
         if self.run_id is None:
             # TODO : raise an Exception ?
             logger.error(
-                "add_emissionadd_emission need a run_id : the initial call may have failed. Retrying..."
+                "add_emissionadd_emission need a run_id : the initial call may "
+                + "have failed. Retrying..."
             )
             self._create_run(self.experiment_id)
         if carbon_emission["duration"] < 1:

@@ -152,7 +152,7 @@ class BaseEmissionsTracker(ABC):
                              as "codecarbon"
         :param measure_power_secs: Interval (in seconds) to measure hardware power
                                    usage, defaults to 15
-        :param api_call_interval: Occurence to wait before calling API :
+        :param api_call_interval: Occurrence to wait before calling API :
                             1 : at every measure
                             2 : every 2 measure, etc...
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
@@ -383,7 +383,7 @@ class BaseEmissionsTracker(ABC):
                 # Compute emissions rate from delta
                 delta_emissions.compute_emissions_rate(self._previous_emissions)
                 # TODO : find a way to store _previous_emissions only when
-                # TODO : the API call succeded
+                # TODO : the API call succeeded
                 self._previous_emissions = total_emissions
                 total_emissions = delta_emissions
         logger.debug(total_emissions)
@@ -440,10 +440,11 @@ class BaseEmissionsTracker(ABC):
                 )
 
             logger.debug(
-                f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} W during {last_duration:,.2f} s"
+                f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
+                + f"W during {last_duration:,.2f} s"
             )
         logger.info(
-            f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
+            f"{self._total_energy.kwh:.6f} kWh of electricity used since the begining."
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
@@ -618,7 +619,8 @@ def track_emissions(
     :param output_file: Name of output CSV file, defaults to `emissions.csv`
     :param save_to_file: Indicates if the emission artifacts should be logged to a file,
                          defaults to True
-    :param save_to_api: Indicates if the emission artifacts should be send to the CodeCarbon API, defaults to False
+    :param save_to_api: Indicates if the emission artifacts should be send to the
+                        CodeCarbon API, defaults to False
     :param offline: Indicates if the tracker should be run in offline mode
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
                              being run, required if `offline=True`
