@@ -428,12 +428,16 @@ class BaseEmissionsTracker(ABC):
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
-            if isinstance(hardware, GPU):
+            elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
-            if isinstance(hardware, RAM):
+            elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
                 self._ram_power = power
+            else:
+                raise ValueError(
+                    f"Unknown hardware type: {hardware} ({type(hardware)})"
+                )
 
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} W during {last_duration:,.2f} s"
