@@ -234,7 +234,7 @@ class RAM(BaseHardware):
 
     def total_power(self) -> Power:
         """
-        Compute the Power (kw) consumed by the current process (and its children if
+        Compute the Power (kW) consumed by the current process (and its children if
         `children` was True in __init__)
 
         Returns:

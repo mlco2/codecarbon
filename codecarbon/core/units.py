@@ -6,66 +6,84 @@ from dataclasses import dataclass
 
 
 @dataclass
-class EmissionsPerKwh:
+class Time:
     """
-    Measured in kg/kwh
+    Measured in seconds
+    """
+
+    seconds: float
+    SECONDS_TO_HOURS = 1 / 3600
+
+    @property
+    def hours(self) -> float:
+        return self.seconds * Time.SECONDS_TO_HOURS
+
+    @classmethod
+    def from_seconds(cls, seconds: float) -> "Time":
+        return cls(seconds=seconds)
+
+
+@dataclass
+class EmissionsPerKWh:
+    """
+    Measured in kg/kWh
     """
 
     LBS_MWH_TO_KG_KWH = 0.00045359237
     G_KWH_TO_KG_KWH = 0.001
 
-    kgs_per_kwh: float
+    kgs_per_kWh: float
 
     @classmethod
-    def from_lbs_per_mwh(cls, lbs_per_mwh: float) -> "EmissionsPerKwh":
-        return cls(kgs_per_kwh=lbs_per_mwh * EmissionsPerKwh.LBS_MWH_TO_KG_KWH)
+    def from_lbs_per_mWh(cls, lbs_per_mWh: float) -> "EmissionsPerKWh":
+        return cls(kgs_per_kWh=lbs_per_mWh * EmissionsPerKWh.LBS_MWH_TO_KG_KWH)
 
     @classmethod
-    def from_g_per_kwh(cls, g_per_kwh: float) -> "EmissionsPerKwh":
-        return cls(kgs_per_kwh=g_per_kwh * EmissionsPerKwh.G_KWH_TO_KG_KWH)
+    def from_g_per_kWh(cls, g_per_kWh: float) -> "EmissionsPerKWh":
+        return cls(kgs_per_kWh=g_per_kWh * EmissionsPerKWh.G_KWH_TO_KG_KWH)
 
     @classmethod
-    def from_kgs_per_kwh(cls, kgs_per_kwh: float) -> "EmissionsPerKwh":
-        return cls(kgs_per_kwh=kgs_per_kwh)
+    def from_kgs_per_kWh(cls, kgs_per_kWh: float) -> "EmissionsPerKWh":
+        return cls(kgs_per_kWh=kgs_per_kWh)
 
 
 @dataclass
 class Energy:
     """
-    Measured in kwh
+    Measured in kWh
     """
 
     UJOULES_TO_JOULES = 10 ** (-6)
     JOULES_TO_KWH = 2.77778e-7
 
-    kwh: float
+    kWh: float
 
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
-        return cls(kwh=power.kW * time.hours)
+        return cls(kWh=power.kW * time.hours)
 
     @classmethod
     def from_ujoules(cls, energy: float) -> "Energy":
-        return cls(kwh=energy * Energy.UJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
+        return cls(kWh=energy * Energy.UJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
 
     @classmethod
-    def from_energy(cls, kwh: float) -> "Energy":
-        return cls(kwh=kwh)
+    def from_energy(cls, kWh: float) -> "Energy":
+        return cls(kWh=kWh)
 
     def __sub__(self, other: "Energy") -> "Energy":
-        return Energy(self.kwh - other.kwh)
+        return Energy(self.kWh - other.kWh)
 
     def __add__(self, other: "Energy") -> "Energy":
-        return Energy(self.kwh + other.kwh)
+        return Energy(self.kWh + other.kWh)
 
     def __float__(self) -> float:
-        return float(self.kwh)
+        return float(self.kWh)
 
 
 @dataclass
 class Power:
     """
-    Measured in kw
+    Measured in kW
     """
 
     MILLI_WATTS_TO_WATTS = 0.001
@@ -83,6 +101,24 @@ class Power:
     def from_watts(cls, watts: float) -> "Power":
         return cls(kW=watts * Power.WATTS_TO_KILO_WATTS)
 
+    @classmethod
+    def from_energies_and_delay(cls, e1: "Energy", e2: "Energy", delay: "Time"):
+        """
+        P = (E_{t1} - E_{t2}) / delay (=t2-t1)
+        kW      kWh       kWh     h
+
+        Args:
+            e1 (Energy): First measurement
+            e2 (Energy): Second measurement
+            delay (Time): Time between measurements
+
+        Returns:
+            Power: Resulting Power estimation
+        """
+        delta_energy = abs(e2.kWh - e1.kWh)
+        kW = delta_energy / delay.hours
+        return cls(kW=kW)
+
     @property
     def W(self):
         if not isinstance(self.kW, float):
@@ -91,21 +127,3 @@ class Power:
 
     def __add__(self, other: "Power") -> "Power":
         return Power(self.kW + other.kW)
-
-
-@dataclass
-class Time:
-    """
-    Measured in seconds
-    """
-
-    seconds: float
-    SECONDS_TO_HOURS = 1 / 3600
-
-    @property
-    def hours(self) -> float:
-        return self.seconds * Time.SECONDS_TO_HOURS
-
-    @classmethod
-    def from_seconds(cls, seconds: float) -> "Time":
-        return cls(seconds=seconds)

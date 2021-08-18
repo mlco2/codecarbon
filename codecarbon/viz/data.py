@@ -108,7 +108,7 @@ class Data:
             if country_iso_code not in ["_define", "ATA"]:
                 from codecarbon.core.units import Energy
 
-                energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
+                energy_consumed = Energy.from_energy(kWh=net_energy_consumed)
 
                 from codecarbon.external.geography import GeoMetadata
 
@@ -167,7 +167,7 @@ class Data:
             if region_name not in ["_unit"]:
                 from codecarbon.core.units import Energy
 
-                energy_consumed = Energy.from_energy(kwh=net_energy_consumed)
+                energy_consumed = Energy.from_energy(kWh=net_energy_consumed)
 
                 from codecarbon.external.geography import GeoMetadata
 
@@ -202,10 +202,10 @@ class Data:
             ["provider", "providerName", "region", "impact", "countryName"]
         ]
 
-        from codecarbon.core.units import EmissionsPerKwh
+        from codecarbon.core.units import EmissionsPerKWh
 
         cloud_emissions["emissions"] = cloud_emissions.apply(
-            lambda row: EmissionsPerKwh.from_g_per_kwh(row.impact).kgs_per_kwh
+            lambda row: EmissionsPerKWh.from_g_per_kWh(row.impact).kgs_per_kWh
             * net_energy_consumed,
             axis=1,
         )
