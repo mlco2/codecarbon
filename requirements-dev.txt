@@ -4,7 +4,6 @@ black
 dash
 dash_bootstrap_components
 dataclasses
-keras-tuner
 fire
 flake8
 isort
@@ -14,7 +13,6 @@ pynvml
 requests
 sphinx
 sphinx-rtd-theme
-tensorflow
 responses
 py-cpuinfo
 psutil
