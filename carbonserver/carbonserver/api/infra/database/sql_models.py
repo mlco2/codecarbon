@@ -13,7 +13,14 @@ class Emission(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
     duration = Column(Float)
-    emissions = Column(Float)
+    emissions_sum = Column(Float)
+    emissions_rate = Column(Float)
+    cpu_power = Column(Float)
+    gpu_power = Column(Float)
+    ram_power = Column(Float)
+    cpu_energy = Column(Float)
+    gpu_energy = Column(Float)
+    ram_energy = Column(Float)
     energy_consumed = Column(Float)
     run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id"))
     run = relationship("Run", back_populates="emissions")
@@ -22,7 +29,7 @@ class Emission(Base):
         return (
             f'<Emission(id="{self.id}", '
             f'timestamp="{self.timestamp}", '
-            f'emissions="{self.emissions}", '
+            f'emissions_rate="{self.emissions_rate}", '
             f'run_id="{self.run_id}")>'
         )
 

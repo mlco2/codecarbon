@@ -38,3 +38,68 @@ jobs:
       run: |
         cd carbonserver/
         tox -e unit -vv
+
+  test_api_server:
+    runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:12
+        # Provide the password for postgres
+        env:
+          POSTGRES_DB: codecarbon_db
+          POSTGRES_PASSWORD: supersecret
+          POSTGRES_USER: codecarbon-user
+          POSTGRES_HOST: localhost
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5480:5432
+
+    steps:
+      # Downloads a copy of the code in your repository before running CI tests
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      # Performs a clean installation of all dependencies
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd carbonserver
+          pip install -r requirements-test.txt
+          pip install tox tox-gh-actions
+
+      - name: Setup PostgreSQL
+        # Runs a script that creates a PostgreSQL table, populates
+        # the table with data, and then retrieves the data.
+        run: |
+          cd carbonserver
+          python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
+
+      - name: Run API tests
+        run: |
+          cd carbonserver
+          uvicorn main:app --host 0.0.0.0 --port 8008 &
+          sleep 2
+          netstat -o -n -a | grep 8008
+          tox -e integration
+        # Environment variables used by the `client.js` script to create a new PostgreSQL table.
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
+
+
+

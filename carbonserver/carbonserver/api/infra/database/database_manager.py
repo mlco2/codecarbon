@@ -1,4 +1,3 @@
-import logging
 from contextlib import AbstractContextManager, contextmanager
 from typing import Callable
 
@@ -7,8 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
-
-logger = logging.getLogger(__name__)
+from carbonserver.logger import logger
 
 Base = declarative_base()
 
@@ -27,8 +25,6 @@ class Database:
     def create_database(self) -> None:
         Base.metadata.create_all(self._engine)
 
-    # Les exceptions de la base de données sont remontées ici, un switch case peut être mis en place pour remonter
-    # les exceptions connues pour la base de données
     @contextmanager
     def session(self) -> Callable[..., AbstractContextManager]:
         session: Session = self._session_factory()
@@ -37,23 +33,29 @@ class Database:
 
         except exc.IntegrityError as e:
             session.rollback()
+            logger.error(e.orig.args[0], exc_info=True)
             raise DBException(
-                error=DBError(code=DBErrorEnum.INTEGRITY_ERROR, message=e.orig.args[0])
+                error=DBError(
+                    code=DBErrorEnum.INTEGRITY_ERROR,
+                    message="Relation not found, or duplicate key",
+                )
             )
         except exc.DataError as e:
             session.rollback()
+            logger.error(e.orig.args[0], exc_info=True)
             raise DBException(
-                error=DBError(code=DBErrorEnum.DATA_ERROR, message=e.orig.args[0])
+                error=DBError(code=DBErrorEnum.DATA_ERROR, message="Invalid data")
             )
         except exc.ProgrammingError as e:
             session.rollback()
+            logger.error(e.orig.args[0], exc_info=True)
             raise DBException(
                 error=DBError(
-                    code=DBErrorEnum.PROGRAMMING_ERROR, message=e.orig.args[0]
+                    code=DBErrorEnum.PROGRAMMING_ERROR, message="Wrong schema"
                 )
             )
         except Exception:
-            logger.exception("Session rollback because of exception")
+            logger.error("Session rollback because of exception", exc_info=True)
             session.rollback()
             raise
         finally:

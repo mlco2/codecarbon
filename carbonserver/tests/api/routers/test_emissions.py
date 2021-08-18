@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 import pytest
 from container import ServerContainer
@@ -6,11 +7,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from starlette import status
 
-from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.repositories.repository_emissions import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.routers import emissions
+from carbonserver.api.schemas import Emission
 
 RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
 RUN_2_ID = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
@@ -23,7 +24,14 @@ EMISSION_TO_CREATE = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 206.548444,
+    "emissions_rate": 89.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
@@ -32,7 +40,14 @@ EMISSION_1 = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": RUN_1_ID,
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 106.548444,
+    "emissions_rate": 0.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
@@ -41,7 +56,14 @@ EMISSION_2 = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": RUN_1_ID,
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 136.548444,
+    "emissions_rate": 5.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
@@ -51,7 +73,14 @@ EMISSION_3 = {
     "timestamp": "2021-04-04T08:43:00+02:00",
     "run_id": RUN_2_ID,
     "duration": 98745,
-    "emissions": 1.548444,
+    "emissions_sum": 256.548444,
+    "emissions_rate": 98.548444,
+    "cpu_power": 0.3,
+    "gpu_power": 0.0,
+    "ram_power": 0.15,
+    "cpu_energy": 55.21874,
+    "gpu_energy": 0.0,
+    "ram_energy": 2.0,
     "energy_consumed": 57.21874,
 }
 
@@ -73,8 +102,8 @@ def client(custom_test_server):
 
 def test_add_emission(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_emission = EMISSION_1
-    repository_mock.add_emission.return_value = SqlModelEmission(**EMISSION_1)
+    expected_emission = EMISSION_ID
+    repository_mock.add_emission.return_value = UUID(EMISSION_ID)
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.post("/emission", json=EMISSION_TO_CREATE)
@@ -87,9 +116,7 @@ def test_add_emission(client, custom_test_server):
 def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_emission = EMISSION_1
-    repository_mock.get_one_emission.return_value = SqlModelEmission(
-        **expected_emission
-    )
+    repository_mock.get_one_emission.return_value = Emission(**expected_emission)
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.get(
@@ -107,8 +134,8 @@ def test_get_emissions_from_run_retreives_all_emissions_from_run(
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_emissions_id_list = [EMISSION_ID, EMISSION_ID_2]
     repository_mock.get_emissions_from_run.return_value = [
-        SqlModelEmission(**EMISSION_1),
-        SqlModelEmission(**EMISSION_2),
+        Emission(**EMISSION_1),
+        Emission(**EMISSION_2),
     ]
 
     with custom_test_server.container.emission_repository.override(repository_mock):

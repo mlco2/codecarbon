@@ -21,12 +21,21 @@ class EmissionBase(BaseModel):
     duration: int = Field(
         ..., gt=0, description="The duration must be greater than zero"
     )
-    emissions: float = Field(
-        ..., gt=0, description="The emissions must be greater than zero"
+    emissions_sum: float = Field(
+        ..., ge=0, description="The emissions must be greater than zero"
+    )
+    emissions_rate: float = Field(
+        ..., ge=0, description="The emissions rate must be greater than zero"
     )
     energy_consumed: float = Field(
         ..., gt=0, description="The energy_consumed must be greater than zero"
     )
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
 
     class Config:
         schema_extra = {
@@ -34,7 +43,14 @@ class EmissionBase(BaseModel):
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
                 "duration": 98745,
-                "emissions": 1.548444,
+                "emissions_sum": 1544.54,
+                "emissions_rate": 1.548444,
+                "cpu_power": 0.3,
+                "gpu_power": 0.0,
+                "ram_power": 0.15,
+                "cpu_energy": 55.21874,
+                "gpu_energy": 0.0,
+                "ram_energy": 2.0,
                 "energy_consumed": 57.21874,
             }
         }
@@ -128,7 +144,7 @@ class ProjectCreate(ProjectBase):
 
 class Project(ProjectBase):
     id: UUID
-    experiments: List[Experiment] = []
+    experiments: Optional[List[Experiment]] = []
 
 
 class TeamBase(BaseModel):
@@ -155,7 +171,7 @@ class Team(TeamBase):
     id: UUID
     api_key: str
     organization_id: UUID
-    projects: List[Project] = []
+    projects: Optional[List[Project]]
 
 
 class OrganizationBase(BaseModel):

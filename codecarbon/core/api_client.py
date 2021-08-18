@@ -65,7 +65,14 @@ class ApiClient:  # (AsyncClient)
             timestamp=get_datetime_with_timezone(),
             run_id=self.run_id,
             duration=int(carbon_emission["duration"]),
-            emissions=carbon_emission["emissions"],
+            emissions_sum=carbon_emission["emissions"],
+            emissions_rate=carbon_emission["emissions_rate"],
+            cpu_power=carbon_emission["cpu_power"],
+            gpu_power=carbon_emission["gpu_power"],
+            ram_power=carbon_emission["ram_power"],
+            cpu_energy=carbon_emission["cpu_energy"],
+            gpu_energy=carbon_emission["gpu_energy"],
+            ram_energy=carbon_emission["ram_energy"],
             energy_consumed=carbon_emission["energy_consumed"],
         )
         try:

@@ -34,7 +34,7 @@ class SqlAlchemyRepository(Runs):
             session.refresh(db_run)
             return self.map_sql_to_schema(db_run)
 
-    def get_one_run(self, run_id):
+    def get_one_run(self, run_id) -> Run:
         """Find the run in database and return it
 
         :run_id: The id of the run to retreive.
@@ -48,7 +48,7 @@ class SqlAlchemyRepository(Runs):
             else:
                 return self.map_sql_to_schema(e)
 
-    def list_runs(self):
+    def list_runs(self) -> List[Run]:
         with self.session_factory() as session:
             e = session.query(SqlModelRun)
             if e is None:
@@ -58,6 +58,22 @@ class SqlAlchemyRepository(Runs):
                 for run in e:
                     runs.append(self.map_sql_to_schema(run))
                 return runs
+
+    def get_runs_from_experiment(self, experiment_id) -> List[Run]:
+        """Find the list of runs from an experiment in database and return it
+
+        :experiment_id: The id of the experiment to retreive runs from.
+        :returns: List of Run in pyDantic BaseModel format.
+        :rtype: List[schemas.Run]
+        """
+        with self.session_factory() as session:
+            res = session.query(SqlModelRun).filter(
+                SqlModelRun.experiment_id == experiment_id
+            )
+            if res.first() is None:
+                return []
+            else:
+                return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
     def map_sql_to_schema(run: SqlModelRun) -> Run:

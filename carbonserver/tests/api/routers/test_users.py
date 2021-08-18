@@ -5,9 +5,9 @@ from container import ServerContainer
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
-from carbonserver.api.infra.database.sql_models import User as ModelUser
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
 from carbonserver.api.routers import users
+from carbonserver.api.schemas import User
 
 API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
 
@@ -65,7 +65,7 @@ def client(custom_test_server):
 def test_create_user(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_user = USER_1
-    repository_mock.create_user.return_value = ModelUser(**expected_user)
+    repository_mock.create_user.return_value = User(**expected_user)
 
     with custom_test_server.container.user_repository.override(repository_mock):
         response = client.post("/user", json=USER_TO_CREATE)
@@ -89,8 +89,8 @@ def test_list_users_list_all_existing_users_with_200(client, custom_test_server)
     expected_user_2 = USER_2
     expected_user_list = [expected_user, expected_user_2]
     repository_mock.list_users.return_value = [
-        ModelUser(**expected_user),
-        ModelUser(**expected_user_2),
+        User(**expected_user),
+        User(**expected_user_2),
     ]
 
     with custom_test_server.container.user_repository.override(repository_mock):
@@ -106,7 +106,7 @@ def test_get_user_by_id_returns_correct_user_with_correct_id(
 ):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_user = USER_1
-    repository_mock.get_user_by_id.return_value = ModelUser(**expected_user)
+    repository_mock.get_user_by_id.return_value = User(**expected_user)
 
     container_mock = mock.Mock(spec=ServerContainer)
     container_mock.db.return_value = True

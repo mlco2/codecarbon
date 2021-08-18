@@ -12,7 +12,14 @@ class EmissionBase:
     timestamp: str
     run_id: str
     duration: int
-    emissions: float
+    emissions_sum: float
+    emissions_rate: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
     energy_consumed: float
 
 

@@ -124,3 +124,24 @@ class Power:
         if not isinstance(self.kW, float):
             return self.kW
         return self.kW * 1000
+
+    def __add__(self, other: "Power") -> "Power":
+        return Power(self.kW + other.kW)
+
+
+@dataclass
+class Time:
+    """
+    Measured in seconds
+    """
+
+    seconds: float
+    SECONDS_TO_HOURS = 1 / 3600
+
+    @property
+    def hours(self) -> float:
+        return self.seconds * Time.SECONDS_TO_HOURS
+
+    @classmethod
+    def from_seconds(cls, seconds: float) -> "Time":
+        return cls(seconds=seconds)
