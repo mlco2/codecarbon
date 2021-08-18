@@ -201,7 +201,7 @@ class IntelRAPL:
             time.sleep(self._delay)
             list(map(lambda rapl_file: rapl_file.end(self._delay), self._rapl_files))
             for rapl_file in self._rapl_files:
-                cpu_details[rapl_file.name] = rapl_file.power_measurement
+                cpu_details[rapl_file.name] = rapl_file.power_measurement.kW
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \

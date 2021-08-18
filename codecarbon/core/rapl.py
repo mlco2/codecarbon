@@ -7,8 +7,8 @@ from codecarbon.core.units import Energy, Power, Time
 class RAPLFile:
     name: str
     path: str
-    energy_reading: Energy = Energy(0)
-    power_measurement: float = 0  # kW
+    energy_reading: Energy = Energy(0)  # kWh
+    power_measurement: Power = Power(0)  # kW
 
     def _get_value(self) -> float:
         """
@@ -29,5 +29,5 @@ class RAPLFile:
         """
         self.power_measurement = Power.from_energies_and_delay(
             self.energy_reading, self._get_value(), Time.from_seconds(delay)
-        ).kW
+        )
         return
