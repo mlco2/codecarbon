@@ -26,4 +26,4 @@ def train_model():
 if __name__ == "__main__":
     with EmissionsTracker(project_name="mnist") as tracker:
         model = train_model()
-    print(tracker.final_emissions)
+    print(tracker.final_emissions_data.emissions)

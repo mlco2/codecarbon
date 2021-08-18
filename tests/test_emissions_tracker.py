@@ -386,8 +386,10 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
         )
-        self.assertIsInstance(tracker.final_emissions, float)
-        self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
+        self.assertIsInstance(tracker.final_emissions_data.emissions, float)
+        self.assertAlmostEqual(
+            tracker.final_emissions_data.emissions, 6.262572537957655e-05, places=2
+        )
 
     @responses.activate
     def test_carbon_tracker_offline_context_manager(
@@ -407,4 +409,4 @@ class TestCarbonTracker(unittest.TestCase):
 
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
-        self.assertIsInstance(tracker.final_emissions, float)
+        self.assertIsInstance(tracker.final_emissions_data.emissions, float)
