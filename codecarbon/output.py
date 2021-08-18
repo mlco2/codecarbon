@@ -149,10 +149,7 @@ class FileOutput(BaseOutput):
                         previous_data.timestamp, previous_data.project_name
                     )
                 )
-                df.at[
-                    (df.timestamp == previous_data.timestamp)
-                    & (df.project_name == previous_data.project_name)
-                ] = dict(data.values)
+                df.at[loc, data.values.keys()] = data.values.values()
 
         df.to_csv(self.save_file_path, index=False)
 

@@ -349,7 +349,6 @@ class BaseEmissionsTracker(ABC):
         for persistence in self.persistence_objs:
             if isinstance(persistence, CodeCarbonAPIOutput):
                 emissions_data = self._prepare_emissions_data(delta=True)
-
             persistence.out(emissions_data, self.final_emissions_data)
 
         self.final_emissions_data = emissions_data
