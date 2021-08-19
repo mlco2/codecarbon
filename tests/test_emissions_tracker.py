@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import requests
 import responses
@@ -410,3 +411,167 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
         self.assertIsInstance(tracker.final_emissions_data.emissions, float)
+
+    def test_offline_tracker_start_stop_start_stop(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+        tracker = OfflineEmissionsTracker(
+            measure_power_secs=2, country_iso_code="USA", output_dir=self.temp_path
+        )
+
+        tracker.start()
+        heavy_computation(run_time_secs=5)
+        tracker.stop()
+
+        tracker.start()
+        heavy_computation(run_time_secs=5)
+        tracker.stop()
+
+    def test_online_tracker_start_stop_start_stop(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        tracker.start()
+        heavy_computation(run_time_secs=1.2)
+        tracker.stop()
+
+        tracker.start()
+        heavy_computation(run_time_secs=1.2)
+        tracker.stop()
+
+    def test_tracker_resume(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+
+        run_time = 3
+        pause_time = 2
+        keys = [
+            "timestamp",
+            "project_name",
+            "duration",
+            "emissions",
+            "energy_consumed",
+        ]
+        for tracker, name in [
+            (
+                OfflineEmissionsTracker(
+                    measure_power_secs=1,
+                    country_iso_code="USA",
+                    output_dir=self.temp_path,
+                    output_file="resume_emissions_offline.csv",
+                ),
+                "resume_emissions_offline.csv",
+            ),
+            (
+                EmissionsTracker(
+                    measure_power_secs=1,
+                    output_dir=self.temp_path,
+                    output_file="resume_emissions.csv",
+                ),
+                "resume_emissions.csv",
+            ),
+        ]:
+
+            with self.subTest(tracker=tracker):
+
+                path = self.temp_path / name
+
+                tracker.start()
+                heavy_computation(run_time_secs=run_time)
+                first_data = tracker.stop()
+                df1 = pd.read_csv(path)
+
+                heavy_computation(run_time_secs=pause_time)
+
+                tracker.start()
+                heavy_computation(run_time_secs=run_time)
+                second_data = tracker.stop()
+                df2 = pd.read_csv(path)
+
+                dict_df = dict(df2.iloc[-1].fillna(""))
+                dict_data = dict(second_data.values)
+
+                self.assertAlmostEqual(second_data.duration, 2 * run_time, delta=0.1)
+                self.assertGreater(second_data.emissions, first_data.emissions)
+                self.assertGreater(
+                    second_data.energy_consumed, first_data.energy_consumed
+                )
+                self.assertEqual(len(df1), len(df2))
+                for k in keys:
+                    if isinstance(dict_df[k], (float, int)):
+                        self.assertAlmostEqual(dict_df[k], dict_data[k])
+                    else:
+                        self.assertEqual(dict_df[k], dict_data[k])
+
+    def test_tracker_resume_update_row(
+        self,
+        mocked_get_cloud_metadata,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
+        mock_setup_intel_cli,
+        mock_log_values,
+    ):
+
+        n_trackers = 3
+        n_loops = 3
+
+        trackers = [
+            EmissionsTracker(
+                measure_power_secs=1,
+                output_dir=self.temp_path,
+                output_file="resume_emissions_update_row.csv",
+                log_level="error",
+            )
+            for _ in range(n_trackers)
+        ]
+
+        for i in range(n_loops):
+
+            print("\nLoop", i)
+
+            for t, tracker in enumerate(trackers):
+                print("Tracker", t)
+                tracker.start()
+                heavy_computation(2)
+                tracker.stop()
+
+            id_tracker = np.random.randint(0, n_trackers)
+            tracker = trackers[id_tracker]
+            keys = [
+                "timestamp",
+                "project_name",
+                "duration",
+                "emissions",
+                "energy_consumed",
+            ]
+            path = self.temp_path / "resume_emissions_update_row.csv"
+
+            df = pd.read_csv(path)
+
+            self.assertEqual(len(df), len(trackers))
+
+            dict_df = dict(df.iloc[id_tracker])
+            dict_data = dict(trackers[id_tracker].final_emissions_data.values)
+
+            for k in keys:
+                if isinstance(dict_df[k], (float, int)):
+                    self.assertAlmostEqual(dict_df[k], dict_data[k])
+                else:
+                    self.assertEqual(dict_df[k], dict_data[k])
