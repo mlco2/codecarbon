@@ -31,6 +31,20 @@ services:
     networks:
       - codecarbon_net
 
+  postgres_keycloak:
+    container_name: postgres_codecarbon_keycloak
+    environment:
+      HOSTNAME: postgres_codecarbon_keycloak
+      POSTGRES_DB: keycloak_db
+      POSTGRES_PASSWORD: keycloak_pwd
+      POSTGRES_USER: keycloak-user
+    image: postgres:12
+    networks:
+      - codecarbon_net
+    ports:
+    - 5484:5432
+    restart: unless-stopped
+  
   postgres:
     container_name: ${DATABASE_HOST:-postgres_codecarbon}
     environment:
@@ -46,6 +60,30 @@ services:
     restart: unless-stopped
     volumes:
     - postgres_data:/var/lib/postgresql/data:rw
+
+
+  keycloak:
+    image: jboss/keycloak
+    environment:
+      #DB_VENDOR: POSTGRES
+      #DB_ADDR: postgres_codecarbon
+      #DB_PORT: 5484
+      #DB_DATABASE: codecarbon_db
+      #DB_USER: codecarbon-user
+      #DB_SCHEMA: public
+      #DB_PASSWORD: supersecret
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    ports:
+      - 8084:8080
+    depends_on:
+      - postgres_keycloak
+      - smtp4dev
+
+  smtp4dev:
+      image: rnwood/smtp4dev
+      ports:
+        - 13000:80
 
   pgadmin:
     container_name: pgadmin_codecarbon
