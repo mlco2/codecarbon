@@ -288,6 +288,29 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(self._cc_api__out)
 
     @suppress(Exception)
+    def flush(self) -> Optional[float]:
+        """
+        Write emission to disk or call the API depending of the configuration
+        but keep running the experiment.
+        :return: CO2 emissions in kgs
+        """
+        if self._start_time is None:
+            logger.error("Need to first start the tracker")
+            return None
+
+        # Run to calculate the power used from last
+        # scheduled measurement to shutdown
+        self._measure_power()
+
+        emissions_data = self._prepare_emissions_data()
+        for persistence in self.persistence_objs:
+            if isinstance(persistence, CodeCarbonAPIOutput):
+                emissions_data = self._prepare_emissions_data(delta=True)
+            persistence.out(emissions_data)
+
+        return emissions_data.emissions
+
+    @suppress(Exception)
     def start(self) -> None:
         """
         Starts tracking the experiment.
