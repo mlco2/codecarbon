@@ -153,6 +153,7 @@ class BaseEmissionsTracker(ABC):
         :param measure_power_secs: Interval (in seconds) to measure hardware power
                                    usage, defaults to 15
         :param api_call_interval: Occurrence to wait before calling API :
+                            -1 : only call api on flush() and at the end.
                             1 : at every measure
                             2 : every 2 measure, etc...
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
@@ -475,7 +476,7 @@ class BaseEmissionsTracker(ABC):
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
-        if self._cc_api__out is not None:
+        if self._cc_api__out is not None and self._api_call_interval != -1:
             if self._measure_occurrence >= self._api_call_interval:
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(

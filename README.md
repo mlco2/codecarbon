@@ -149,7 +149,16 @@ with EmissionsTracker() as tracker:
     # GPU Intensive code goes here
 ```
 
+### Flush data when running
 
+By default, Code Carbon only write the CVS output file when it stop.
+But for long run you may want to get intermediate data.
+It is possible to call the flush() methode to do so.
+
+Have a look to [./examples/mnist_callback.py](./examples/mnist_callback.py) for an example.
+
+Note that if you use the API it will also call it when you call flush().
+You could set *api_call_interval* to -1, so that it will not be called automatically and then force a call at the end of each epoch to get the emission of each epoch.
 
 ### Using comet.ml
 
