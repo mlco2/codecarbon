@@ -291,29 +291,6 @@ class BaseEmissionsTracker(ABC):
         return value
 
     @suppress(Exception)
-    def flush(self) -> Optional[float]:
-        """
-        Write emission to disk or call the API depending of the configuration
-        but keep running the experiment.
-        :return: CO2 emissions in kgs
-        """
-        if self._start_time is None:
-            logger.error("Need to first start the tracker")
-            return None
-
-        # Run to calculate the power used from last
-        # scheduled measurement to shutdown
-        self._measure_power()
-
-        emissions_data = self._prepare_emissions_data()
-        for persistence in self.persistence_objs:
-            if isinstance(persistence, CodeCarbonAPIOutput):
-                emissions_data = self._prepare_emissions_data(delta=True)
-            persistence.out(emissions_data)
-
-        return emissions_data.emissions
-
-    @suppress(Exception)
     def start(self) -> None:
         """
         Starts tracking the experiment.
@@ -347,6 +324,29 @@ class BaseEmissionsTracker(ABC):
             logger.info("Starting tracker.")
         self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
+
+    @suppress(Exception)
+    def flush(self) -> Optional[float]:
+        """
+        Write emission to disk or call the API depending of the configuration
+        but keep running the experiment.
+        :return: CO2 emissions in kgs
+        """
+        if self._start_time is None:
+            logger.error("Need to first start the tracker")
+            return None
+
+        # Run to calculate the power used from last
+        # scheduled measurement to shutdown
+        self._measure_power()
+
+        emissions_data = self._prepare_emissions_data()
+        for persistence in self.persistence_objs:
+            if isinstance(persistence, CodeCarbonAPIOutput):
+                emissions_data = self._prepare_emissions_data(delta=True)
+            persistence.out(emissions_data)
+
+        return emissions_data.emissions
 
     @suppress(Exception)
     def stop(self) -> Optional[EmissionsData]:
