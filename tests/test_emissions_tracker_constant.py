@@ -28,7 +28,7 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         tracker = EmissionsTracker()
         tracker.start()
         heavy_computation(run_time_secs=1)
-        emissions = tracker.stop()
+        emissions = tracker.stop().emissions
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
@@ -38,7 +38,7 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         tracker = OfflineEmissionsTracker(country_iso_code="USA")
         tracker.start()
         heavy_computation(run_time_secs=1)
-        emissions = tracker.stop()
+        emissions = tracker.stop().emissions
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)

@@ -9,7 +9,9 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
+from typing import Optional
 
+import pandas as pd
 import requests
 
 # from core.schema import EmissionCreate, Emission
@@ -70,7 +72,7 @@ class BaseOutput(ABC):
     """
 
     @abstractmethod
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         pass
 
 
@@ -89,18 +91,67 @@ class FileOutput(BaseOutput):
             list_of_column_names = list(dict_from_csv.keys())
             return list(data.values.keys()) == list_of_column_names
 
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(data):
             logger.info("Backing up old emission file")
-            os.rename(self.save_file_path, self.save_file_path + ".bak")
+            new_name = self.save_file_path + ".bak"
+            idx = 1
+            while os.path.isfile(new_name):
+                new_name = self.save_file_path + f"_{idx}.bak"
+                idx += 1
+            os.rename(self.save_file_path, new_name)
             file_exists = False
 
-        with open(self.save_file_path, "a+") as f:
-            writer = csv.DictWriter(f, fieldnames=data.values.keys())
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(data.values)
+        if not file_exists:
+            df = pd.DataFrame(columns=data.values.keys())
+        else:
+            df = pd.read_csv(self.save_file_path)
+
+        if previous_data is None:
+            df = df.append(dict(data.values), ignore_index=True)
+            logger.info("Appending emissions data to {}".format(self.save_file_path))
+        else:
+            loc = (df.timestamp == previous_data.timestamp) & (
+                df.project_name == previous_data.project_name
+            )
+            if len(df.loc[loc]) < 1:
+                message = (
+                    "Looking for ({}, {}) in previous emissions data (tracker was"
+                    + " re-started) but CodeCarbon could not find a matching emissions "
+                    + "line in {}. Appending."
+                )
+                logger.warning(
+                    message.format(
+                        previous_data.timestamp,
+                        previous_data.project_name,
+                        self.save_file_path,
+                    )
+                )
+                df = df.append(dict(data.values), ignore_index=True)
+            elif len(df.loc[loc]) > 1:
+                message = (
+                    "Looking for ({}, {}) in previous emissions data (tracker was"
+                    + " re-started) but CodeCarbon found more than 1 matching emissions"
+                    + " line in {}. Appending."
+                )
+                logger.warning(
+                    message.format(
+                        previous_data.timestamp,
+                        previous_data.project_name,
+                        self.save_file_path,
+                    )
+                )
+                df = df.append(dict(data.values), ignore_index=True)
+            else:
+                logger.info(
+                    "Updating line ({}, {})".format(
+                        previous_data.timestamp, previous_data.project_name
+                    )
+                )
+                df.at[loc, data.values.keys()] = data.values.values()
+
+        df.to_csv(self.save_file_path, index=False)
 
 
 class HTTPOutput(BaseOutput):
@@ -113,7 +164,7 @@ class HTTPOutput(BaseOutput):
     def __init__(self, endpoint_url: str):
         self.endpoint_url: str = endpoint_url
 
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         try:
             payload = dataclasses.asdict(data)
             payload["user"] = getpass.getuser()
@@ -140,7 +191,7 @@ class CodeCarbonAPIOutput(BaseOutput):
             api_key=api_key,
         )
 
-    def out(self, data: EmissionsData):
+    def out(self, data: EmissionsData, previous_data: Optional[EmissionsData] = None):
         try:
             self.api.add_emission(dataclasses.asdict(data))
         except Exception as e:

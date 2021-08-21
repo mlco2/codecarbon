@@ -45,7 +45,7 @@ from codecarbon.output import (
 # see: https://stackoverflow.com/questions/67202314/
 #      python-distinguish-default-argument-and-argument-provided-with-default-value
 
-_sentinel = object()
+_sentinel = "93dc1470-9879-43ed-b11e-158bcc932a99"
 
 
 class BaseEmissionsTracker(ABC):
@@ -55,6 +55,167 @@ class BaseEmissionsTracker(ABC):
     that are implemented by two concrete classes `OfflineCarbonTracker`
     and `CarbonTracker.`
     """
+
+    def __init__(
+        self,
+        project_name: Optional[str] = _sentinel,
+        measure_power_secs: Optional[int] = _sentinel,
+        api_call_interval: Optional[int] = _sentinel,
+        api_endpoint: Optional[str] = _sentinel,
+        api_key: Optional[str] = _sentinel,
+        output_dir: Optional[str] = _sentinel,
+        output_file: Optional[str] = _sentinel,
+        save_to_file: Optional[bool] = _sentinel,
+        save_to_api: Optional[bool] = _sentinel,
+        gpu_ids: Optional[List] = _sentinel,
+        emissions_endpoint: Optional[str] = _sentinel,
+        experiment_id: Optional[str] = _sentinel,
+        co2_signal_api_token: Optional[str] = _sentinel,
+        tracking_mode: Optional[str] = _sentinel,
+        log_level: Optional[Union[int, str]] = _sentinel,
+    ):
+        """
+        :param project_name: Project name for current experiment run, default name
+                             as "codecarbon"
+        :param measure_power_secs: Interval (in seconds) to measure hardware power
+                                   usage, defaults to 15
+        :param api_call_interval: Occurrence to wait before calling API :
+                            1 : at every measure
+                            2 : every 2 measure, etc...
+        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
+                             emissions data
+        :param api_key: API key for Code Carbon API, mandatory to use it !
+        :param output_dir: Directory path to which the experiment details are logged,
+                           defaults to current directory
+        :param output_file: Name of output CSV file, defaults to `emissions.csv`
+        :param save_to_file: Indicates if the emission artifacts should be logged to a
+                             file, defaults to True
+        :param save_to_api: Indicates if the emission artifacts should be send to the
+                            CodeCarbon API, defaults to False
+        :param gpu_ids: User-specified known gpu ids to track, defaults to None
+        :param emissions_endpoint: Optional URL of http endpoint for sending emissions
+                                   data
+        :param experiment_id: Id of the experiment
+        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
+                                     free beta)
+        :param tracking_mode: One of "process" or "machine" in order to measure the
+                              power consumptions due to the entire machine or try and
+                              isolate the tracked processe's in isolation.
+                              Defaults to "machine"
+        :param log_level: Global codecarbon log level. Accepts one of:
+                            {"debug", "info", "warning", "error", "critical"}.
+                          Defaults to "info".
+        """
+        self._external_conf = get_hierarchical_config()
+
+        self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
+        self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
+        self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
+        self._set_from_conf(emissions_endpoint, "emissions_endpoint")
+        self._set_from_conf(gpu_ids, "gpu_ids")
+        self._set_from_conf(log_level, "log_level", "info")
+        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, int)
+        self._set_from_conf(output_dir, "output_dir", ".")
+        self._set_from_conf(output_file, "output_file", "emissions.csv")
+        self._set_from_conf(project_name, "project_name", "codecarbon")
+        self._set_from_conf(save_to_api, "save_to_api", False, bool)
+        self._set_from_conf(save_to_file, "save_to_file", True, bool)
+        self._set_from_conf(tracking_mode, "tracking_mode", "machine")
+
+        assert self._tracking_mode in ["machine", "process"]
+        set_log_level(self._log_level)
+
+        self._start_time: Optional[float] = None
+        self._end_time: Optional[float] = None
+        self._last_measured_time: float = time.time()
+        self._total_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
+        self._cpu_power: Power = Power.from_watts(watts=0)
+        self._gpu_power: Power = Power.from_watts(watts=0)
+        self._ram_power: Power = Power.from_watts(watts=0)
+        self._scheduler = BackgroundScheduler()
+        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
+        self._conf["hardware"] = []
+        self._cc_api__out = None
+        self._measure_occurrence: int = 0
+        self._cloud = None
+        self._previous_emissions = None
+        self._previous_duration: float = 0
+        self.final_emissions_data = None
+
+        if isinstance(self._gpu_ids, str):
+            self._gpu_ids = parse_gpu_ids(self._gpu_ids)
+            self._conf["gpu_ids"] = self._gpu_ids
+
+        # Hardware detection
+        if gpu.is_gpu_details_available():
+            logger.info("Tracking Nvidia GPU via pynvml")
+            self._hardware.append(GPU.from_utils(self._gpu_ids))
+
+        if cpu.is_powergadget_available():
+            logger.info("Tracking Intel CPU via Power Gadget")
+            self._hardware.append(
+                CPU.from_utils(self._output_dir, "intel_power_gadget")
+            )
+        elif cpu.is_rapl_available():
+            logger.info("Tracking Intel CPU via RAPL interface")
+            self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
+        else:
+            logger.warning(
+                "No CPU tracking mode found. Falling back on CPU constant mode."
+            )
+            logger.info("Tracking using constant")
+            tdp = cpu.TDP()
+            power = tdp.tdp
+            model = tdp.model
+            if tdp:
+                self._hardware.append(
+                    CPU.from_utils(self._output_dir, "constant", model, power)
+                )
+            else:
+                logger.warning(
+                    "Failed to match CPU TDP constant. "
+                    + "Falling back on a global constant."
+                )
+                self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
+
+        self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
+
+        # Run `self._measure_power` every `measure_power_secs` seconds in a
+        # background thread
+        self._scheduler.add_job(
+            self._measure_power,
+            "interval",
+            seconds=self._measure_power_secs,
+            max_instances=1,
+        )
+
+        self._data_source = DataSource()
+        self._emissions: Emissions = Emissions(
+            self._data_source, self._co2_signal_api_token
+        )
+        self.persistence_objs: List[BaseOutput] = list()
+
+        if self._save_to_file:
+            self.persistence_objs.append(
+                FileOutput(os.path.join(self._output_dir, self._output_file))
+            )
+
+        if self._emissions_endpoint:
+            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
+
+        if self._save_to_api:
+            experiment_id = self._set_from_conf(
+                experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
+            )
+            self._cc_api__out = CodeCarbonAPIOutput(
+                endpoint_url=self._api_endpoint,
+                experiment_id=experiment_id,
+                api_key=api_key,
+            )
+            self.persistence_objs.append(self._cc_api__out)
 
     def _set_from_conf(
         self, var, name, default=None, return_type=None, prevent_setter=False
@@ -129,164 +290,6 @@ class BaseEmissionsTracker(ABC):
         # return final value (why not?)
         return value
 
-    def __init__(
-        self,
-        project_name: Optional[str] = _sentinel,
-        measure_power_secs: Optional[int] = _sentinel,
-        api_call_interval: Optional[int] = _sentinel,
-        api_endpoint: Optional[str] = _sentinel,
-        api_key: Optional[str] = _sentinel,
-        output_dir: Optional[str] = _sentinel,
-        output_file: Optional[str] = _sentinel,
-        save_to_file: Optional[bool] = _sentinel,
-        save_to_api: Optional[bool] = _sentinel,
-        gpu_ids: Optional[List] = _sentinel,
-        emissions_endpoint: Optional[str] = _sentinel,
-        experiment_id: Optional[str] = _sentinel,
-        co2_signal_api_token: Optional[str] = _sentinel,
-        tracking_mode: Optional[str] = _sentinel,
-        log_level: Optional[Union[int, str]] = _sentinel,
-    ):
-        """
-        :param project_name: Project name for current experiment run, default name
-                             as "codecarbon"
-        :param measure_power_secs: Interval (in seconds) to measure hardware power
-                                   usage, defaults to 15
-        :param api_call_interval: Occurrence to wait before calling API :
-                            1 : at every measure
-                            2 : every 2 measure, etc...
-        :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
-                             emissions data
-        :param api_key: API key for Code Carbon API, mandatory to use it !
-        :param output_dir: Directory path to which the experiment details are logged,
-                           defaults to current directory
-        :param output_file: Name of output CSV file, defaults to `emissions.csv`
-        :param save_to_file: Indicates if the emission artifacts should be logged to a
-                             file, defaults to True
-        :param save_to_api: Indicates if the emission artifacts should be send to the
-                            CodeCarbon API, defaults to False
-        :param gpu_ids: User-specified known gpu ids to track, defaults to None
-        :param emissions_endpoint: Optional URL of http endpoint for sending emissions
-                                   data
-        :param experiment_id: Id of the experiment
-        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
-                                     free beta)
-        :param tracking_mode: One of "process" or "machine" in order to measure the
-                              power consumptions due to the entire machine or try and
-                              isolate the tracked processe's in isolation.
-                              Defaults to "machine"
-        :param log_level: Global codecarbon log level. Accepts one of:
-                            {"debug", "info", "warning", "error", "critical"}.
-                          Defaults to "info".
-        """
-        self._external_conf = get_hierarchical_config()
-
-        self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
-        self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
-        self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
-        self._set_from_conf(emissions_endpoint, "emissions_endpoint")
-        self._set_from_conf(gpu_ids, "gpu_ids")
-        self._set_from_conf(log_level, "log_level", "info")
-        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, int)
-        self._set_from_conf(output_dir, "output_dir", ".")
-        self._set_from_conf(output_file, "output_file", "emissions.csv")
-        self._set_from_conf(project_name, "project_name", "codecarbon")
-        self._set_from_conf(save_to_api, "save_to_api", False, bool)
-        self._set_from_conf(save_to_file, "save_to_file", True, bool)
-        self._set_from_conf(tracking_mode, "tracking_mode", "machine")
-
-        assert self._tracking_mode in ["machine", "process"]
-        set_log_level(self._log_level)
-
-        self._start_time: Optional[float] = None
-        self._last_measured_time: float = time.time()
-        self._total_energy: Energy = Energy.from_energy(kWh=0)
-        self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
-        self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
-        self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
-        self._cpu_power: Power = Power.from_watts(watts=0)
-        self._gpu_power: Power = Power.from_watts(watts=0)
-        self._ram_power: Power = Power.from_watts(watts=0)
-        self._scheduler = BackgroundScheduler()
-        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
-        self._conf["hardware"] = []
-        self._cc_api__out = None
-        self._measure_occurrence: int = 0
-        self._cloud = None
-        self._previous_emissions = None
-
-        if isinstance(self._gpu_ids, str):
-            self._gpu_ids = parse_gpu_ids(self._gpu_ids)
-            self._conf["gpu_ids"] = self._gpu_ids
-
-        # Hardware detection
-        if gpu.is_gpu_details_available():
-            logger.info("Tracking Nvidia GPU via pynvml")
-            self._hardware.append(GPU.from_utils(self._gpu_ids))
-
-        if cpu.is_powergadget_available():
-            logger.info("Tracking Intel CPU via Power Gadget")
-            self._hardware.append(
-                CPU.from_utils(self._output_dir, "intel_power_gadget")
-            )
-        elif cpu.is_rapl_available():
-            logger.info("Tracking Intel CPU via RAPL interface")
-            self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
-        else:
-            logger.warning(
-                "No CPU tracking mode found. Falling back on CPU constant mode."
-            )
-            logger.info("Tracking using constant")
-            tdp = cpu.TDP()
-            power = tdp.tdp
-            model = tdp.model
-            if tdp:
-                self._hardware.append(
-                    CPU.from_utils(self._output_dir, "constant", model, power)
-                )
-            else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
-                )
-                self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
-
-        self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
-
-        # Run `self._measure_power` every `measure_power_secs` seconds in a
-        # background thread
-        self._scheduler.add_job(
-            self._measure_power,
-            "interval",
-            seconds=self._measure_power_secs,
-            max_instances=1,
-        )
-
-        self._data_source = DataSource()
-        self._emissions: Emissions = Emissions(
-            self._data_source, self._co2_signal_api_token
-        )
-        self.persistence_objs: List[BaseOutput] = list()
-
-        if self._save_to_file:
-            self.persistence_objs.append(
-                FileOutput(os.path.join(self._output_dir, self._output_file))
-            )
-
-        if self._emissions_endpoint:
-            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
-
-        if self._save_to_api:
-            experiment_id = self._set_from_conf(
-                experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
-            )
-            self._cc_api__out = CodeCarbonAPIOutput(
-                endpoint_url=self._api_endpoint,
-                experiment_id=experiment_id,
-                api_key=api_key,
-            )
-            self.persistence_objs.append(self._cc_api__out)
-
     @suppress(Exception)
     def flush(self) -> Optional[float]:
         """
@@ -317,19 +320,41 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
+        resuming = False
         if self._start_time is not None:
-            logger.warning("Already started tracking")
-            return
+            if self._end_time is None:
+                logger.warning(
+                    "You can only resume a tracker which has been started then stopped."
+                    + " The current tracker has been started but not stopped."
+                    + " Ignoring start() call."
+                )
+                return
+            logger.info("Resuming tracker.")
+            resuming = True
+            self._previous_duration = self._previous_duration + (
+                self._end_time - self._start_time
+            )
 
+            self._scheduler = BackgroundScheduler()
+            self._scheduler.add_job(
+                self._measure_power,
+                "interval",
+                seconds=self._measure_power_secs,
+                max_instances=1,
+            )
+
+        if not resuming:
+            logger.info("Starting tracker.")
         self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
 
     @suppress(Exception)
-    def stop(self) -> Optional[float]:
+    def stop(self) -> Optional[EmissionsData]:
         """
         Stops tracking the experiment
         :return: CO2 emissions in kgs
         """
+        logger.info("Stopping tracker")
         if self._start_time is None:
             logger.error("Need to first start the tracker")
             return None
@@ -340,16 +365,18 @@ class BaseEmissionsTracker(ABC):
         # scheduled measurement to shutdown
         self._measure_power()
 
+        self._end_time = time.time()
+
         emissions_data = self._prepare_emissions_data()
 
         for persistence in self.persistence_objs:
             if isinstance(persistence, CodeCarbonAPIOutput):
                 emissions_data = self._prepare_emissions_data(delta=True)
+            persistence.out(emissions_data, self.final_emissions_data)
 
-            persistence.out(emissions_data)
-
-        self.final_emissions = emissions_data.emissions
-        return emissions_data.emissions
+        self.final_emissions_data = emissions_data
+        # emissions are in emissions_data.emissions
+        return emissions_data
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
@@ -398,6 +425,8 @@ class BaseEmissionsTracker(ABC):
             cloud_region=cloud_region,
         )
         if delta:
+            # sending to the API: we need to upload the relative change
+            # in measurements not the current absolute value
             if self._previous_emissions is None:
                 self._previous_emissions = total_emissions
             else:
@@ -409,6 +438,10 @@ class BaseEmissionsTracker(ABC):
                 # TODO : the API call succeeded
                 self._previous_emissions = total_emissions
                 total_emissions = delta_emissions
+        else:
+            # not sending to the API: duration has to be incremented by potential
+            # previous duration (if tracker was re-started)
+            total_emissions.duration += self._previous_duration
         logger.debug(total_emissions)
         return total_emissions
 
