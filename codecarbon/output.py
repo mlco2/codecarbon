@@ -25,6 +25,7 @@ class EmissionsData:
 
     timestamp: str
     project_name: str
+    run_id: str
     duration: float
     emissions: float
     emissions_rate: float
@@ -132,6 +133,8 @@ class CodeCarbonAPIOutput(BaseOutput):
     Send emissions data to HTTP endpoint
     """
 
+    run_id = None
+
     def __init__(self, endpoint_url: str, experiment_id: str, api_key: str):
         self.endpoint_url: str = endpoint_url
         self.api = ApiClient(
@@ -139,6 +142,7 @@ class CodeCarbonAPIOutput(BaseOutput):
             endpoint_url=endpoint_url,
             api_key=api_key,
         )
+        self.run_id = self.api.run_id
 
     def out(self, data: EmissionsData):
         try:

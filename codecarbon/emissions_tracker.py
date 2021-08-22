@@ -5,6 +5,7 @@ OfflineEmissionsTracker and @track_emissions
 import dataclasses
 import os
 import time
+import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
@@ -286,7 +287,10 @@ class BaseEmissionsTracker(ABC):
                 experiment_id=experiment_id,
                 api_key=api_key,
             )
+            self.run_id = self._cc_api__out.run_id
             self.persistence_objs.append(self._cc_api__out)
+        else:
+            self.run_id = uuid.uuid4()
 
     @suppress(Exception)
     def start(self) -> None:
@@ -381,6 +385,7 @@ class BaseEmissionsTracker(ABC):
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
+            run_id=self.run_id,
             duration=duration.seconds,
             emissions=emissions,
             emissions_rate=emissions * 1000 / duration.seconds,
