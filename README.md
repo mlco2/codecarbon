@@ -151,9 +151,9 @@ with EmissionsTracker() as tracker:
 
 ### Flush data when running
 
-By default, Code Carbon only write the CVS output file when it stop.
-But for long run you may want to get intermediate data.
-It is possible to call the flush() methode to do so.
+By default, Code Carbon only writes the CVS output file when it stops.
+But for a long run you may want to save intermediate data.
+It is possible to call the flush() method to do so.
 
 Have a look to [./examples/mnist_callback.py](./examples/mnist_callback.py) for an example.
 
