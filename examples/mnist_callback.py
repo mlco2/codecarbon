@@ -4,7 +4,7 @@ from tensorflow.keras.callbacks import Callback
 from codecarbon import EmissionsTracker
 
 """
-This sample code show how to use CodeCarbon as a Keras Callback
+This sample code shows how to use CodeCarbon as a Keras Callback
 to save emissions after each epoch.
 """
 
