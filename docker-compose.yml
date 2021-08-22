@@ -1,6 +1,14 @@
 version: '3.7'
 services:
 
+  codecarbon_front:
+    build:
+      context: ./docker/keycloak/dashapp
+      dockerfile: front.dockerfile
+    ports:
+      - 5081:5006
+    volumes:
+      - ./docker/keycloak/dashapp:/opt/codecarbon-front
   # codecarbon_package:
   #   build:
   #     context: ./codecarbon/
@@ -12,6 +20,12 @@ services:
   #   depends_on:
   #     - codecarbon_api
   #   restart: unless-stopped
+  nginx:
+      image: nginx
+      ports:
+        - 8081:80
+      volumes:
+        - ./docker/keycloak/myapp:/usr/share/nginx/html
 
   carbonserver:
     build:
@@ -76,6 +90,11 @@ services:
       KEYCLOAK_PASSWORD: admin
     ports:
       - 8084:8080
+    volumes:
+      - ./docker/keycloak/themes/Breizhcamp/:/opt/jboss/keycloak/themes/Breizhcamp/
+      - ./docker/keycloak/providers:/opt/jboss/keycloak/providers
+      - ./docker/keycloak/scripts:/opt/jboss/scripts/
+      - ./docker/keycloak/deploy:/opt/jboss/keycloak/standalone/deployments
     depends_on:
       - postgres_keycloak
       - smtp4dev

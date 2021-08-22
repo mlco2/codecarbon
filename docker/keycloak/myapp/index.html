@@ -1,0 +1,108 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script src="http://localhost:8084/auth/js/keycloak.js"></script>
+    <script>
+        var keycloak = Keycloak();
+
+        function login() {
+            keycloak.login();
+        }
+
+        function logout() {
+            keycloak.logout();
+        }
+
+        function accountManagement() {
+            keycloak.accountManagement();
+        }
+
+        function uma() {
+
+            var myRequest = new Request("http://localhost:8084/auth/realms/RennesDevOPS/.well-known/uma2-configuration");
+            fetch(myRequest).then(function (response) {
+                document.getElementById("resTitle").innerHTML = "Uma2-configuration";
+                response.json().then(function (json) {
+                    document.getElementById("resContent").innerHTML = JSON.stringify(json, null, 2);
+                });
+            });
+        }
+
+        function myBack(service) {
+
+            var monInit = {
+                method: 'GET',
+                headers: {
+                    Authorization: 'Bearer ' + keycloak.token
+                },
+                mode: 'cors',
+                cache: 'default'
+            };
+
+            var myRequest = new Request("http://localhost:3000/service/" + service, monInit);
+            fetch(myRequest).then(function (response) {
+                if (response.ok) {
+                    document.getElementById("resTitle").innerHTML = "Service " + service;
+                    response.json().then(function (json) {
+                        document.getElementById("resContent").innerHTML = JSON.stringify(json, null, 2);
+                    });
+                } else {
+                    console.log(response);
+                    document.getElementById("resTitle").innerHTML = "Error " + response.status + " " + response.statusText;
+                    document.getElementById("resContent").innerHTML = "";
+                }
+            });
+        }
+
+        function iAmAuthenticated() {
+            //console.log(keycloak);
+            document.getElementById("notConnected").style.display = "none";
+            document.getElementById("connected").style.display = "block";
+
+            document.getElementById("resTitle").innerHTML = "token Parsed";
+            document.getElementById("resContent").innerHTML = JSON.stringify(keycloak.tokenParsed, null, 2);
+        }
+
+        keycloak.init({
+            //onLoad: 'login-required' 
+            onLoad: 'check-sso'
+        }).success(function (authenticated) {
+            document.getElementById("notConnected").style.display = "block";
+            document.getElementById("connected").style.display = "none";
+
+            if (authenticated) {
+                iAmAuthenticated();
+            }
+        }).error(function () {
+            alert('failed to initialize');
+        });
+    </script>
+</head>
+
+<body>
+    <h1>My APP</h1>
+    <div id="notConnected">
+        <h2 id="isConnected">Not authenticated</h2>
+        <button onclick="login();">Login</button>
+        <button onclick="uma();">UMA2 configuration</button>
+        <button onclick="myBack('public');">MyBack public</button>
+    </div>
+    <div id="connected">
+        <h2 id="isConnected">Authenticated</h2>
+        <button onclick="logout();">Logout</button>
+        <button onclick="accountManagement();">accountManagement</button>
+
+        <br /><br />
+        <button onclick="myBack('public');">MyBack public</button>
+        <button onclick="myBack('secured');">MyBack secured</button>
+        <button onclick="myBack('admin');">MyBack admin</button>
+        <button onclick="myBack('getAccount');">MyBack getAccount</button>
+        <button onclick="myBack('validateToken');">MyBack validateToken</button>
+        <button onclick="myBack('getUsers');">MyBack getUsers</button>
+
+    </div>  
+    <h3 id="resTitle"></h3>
+    <pre id="resContent" />
+    </body>
+</html>

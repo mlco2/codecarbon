@@ -1,0 +1,225 @@
+{
+  "id": "RennesDevOPS",
+  "realm": "RennesDevOPS",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin"
+      },
+      {
+        "name": "user"
+      }
+    ],
+    "client": {
+      "myback": [
+        {
+          "name": "moderator"
+        }
+      ]
+    }
+  },
+  "groups": [
+    {
+      "name": "Groupe 1",
+      "path": "/Groupe 1",
+      "clientRoles": {
+        "myback": [
+          "moderator"
+        ]
+      },
+      "subGroups": [
+        {
+          "name": "Groupe 1.2",
+          "path": "/Groupe 1/Groupe 1.2"
+        },
+        {
+          "name": "Groupe 1.1",
+          "path": "/Groupe 1/Groupe 1.1"
+        }
+      ]
+    },
+    {
+      "name": "Groupe 2",
+      "path": "/Groupe 2",
+      "subGroups": [
+        {
+          "name": "Groupe 2.2",
+          "path": "/Groupe 2/Groupe 2.2"
+        },
+        {
+          "name": "Groupe 2.1",
+          "path": "/Groupe 2/Groupe 2.1"
+        }
+      ]
+    }
+  ],
+  "users": [{
+    "username" : "jerome",
+    "email": "jerome@local",
+    "enabled": true,
+    "credentials" : [{ 
+      "type" : "password",
+      "value" : "jerome" 
+    }],
+    "realmRoles": ["user"]
+  },
+  {
+    "username" : "admin",
+    "email": "admin@localdomain",
+    "enabled": true,
+    "credentials" : [{ 
+      "type" : "password",
+      "value" : "admin" 
+    }],
+    "realmRoles": ["admin"]
+  }],
+  "clients": [
+    {
+      "clientId": "myapp",
+      "name": "My Application",
+      "description": "Some description",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "http://localhost:8081",
+        "http://localhost:8081/"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "login_theme": "Breizhcamp"
+      }
+    },
+    {
+      "clientId": "myback",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [],
+      "webOrigins": [],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect"
+    }
+  ],
+  "smtpServer": {
+    "host": "smtp4dev",
+    "from": "admin@localdomain"
+  },
+  "eventsEnabled": true,
+  "eventsListeners": [
+    "jboss-logging"
+  ],
+  "enabledEventTypes": [
+    "SEND_RESET_PASSWORD",
+    "REGISTER_NODE_ERROR",
+    "REMOVE_TOTP",
+    "REVOKE_GRANT",
+    "UPDATE_TOTP",
+    "LOGIN_ERROR",
+    "PERMISSION_TOKEN_ERROR",
+    "CLIENT_LOGIN",
+    "IDENTITY_PROVIDER_RETRIEVE_TOKEN_ERROR",
+    "RESET_PASSWORD_ERROR",
+    "IMPERSONATE_ERROR",
+    "CODE_TO_TOKEN_ERROR",
+    "CUSTOM_REQUIRED_ACTION",
+    "RESTART_AUTHENTICATION",
+    "CLIENT_INFO",
+    "IMPERSONATE",
+    "UPDATE_PROFILE_ERROR",
+    "VALIDATE_ACCESS_TOKEN",
+    "LOGIN",
+    "UPDATE_PASSWORD_ERROR",
+    "CLIENT_INITIATED_ACCOUNT_LINKING",
+    "IDENTITY_PROVIDER_LOGIN",
+    "TOKEN_EXCHANGE",
+    "LOGOUT",
+    "REGISTER",
+    "CLIENT_INFO_ERROR",
+    "CLIENT_REGISTER",
+    "IDENTITY_PROVIDER_LINK_ACCOUNT",
+    "INTROSPECT_TOKEN_ERROR",
+    "REFRESH_TOKEN",
+    "UPDATE_PASSWORD",
+    "INTROSPECT_TOKEN",
+    "CLIENT_DELETE",
+    "FEDERATED_IDENTITY_LINK_ERROR",
+    "IDENTITY_PROVIDER_FIRST_LOGIN",
+    "CLIENT_DELETE_ERROR",
+    "VERIFY_EMAIL",
+    "CLIENT_LOGIN_ERROR",
+    "RESTART_AUTHENTICATION_ERROR",
+    "EXECUTE_ACTIONS",
+    "REMOVE_FEDERATED_IDENTITY_ERROR",
+    "TOKEN_EXCHANGE_ERROR",
+    "UNREGISTER_NODE",
+    "PERMISSION_TOKEN",
+    "SEND_IDENTITY_PROVIDER_LINK_ERROR",
+    "REGISTER_NODE",
+    "INVALID_SIGNATURE",
+    "USER_INFO_REQUEST_ERROR",
+    "EXECUTE_ACTION_TOKEN_ERROR",
+    "SEND_VERIFY_EMAIL",
+    "IDENTITY_PROVIDER_RESPONSE",
+    "EXECUTE_ACTIONS_ERROR",
+    "REMOVE_FEDERATED_IDENTITY",
+    "IDENTITY_PROVIDER_RETRIEVE_TOKEN",
+    "IDENTITY_PROVIDER_POST_LOGIN",
+    "IDENTITY_PROVIDER_LINK_ACCOUNT_ERROR",
+    "UNREGISTER_NODE_ERROR",
+    "VALIDATE_ACCESS_TOKEN_ERROR",
+    "UPDATE_EMAIL",
+    "REGISTER_ERROR",
+    "REVOKE_GRANT_ERROR",
+    "EXECUTE_ACTION_TOKEN",
+    "LOGOUT_ERROR",
+    "UPDATE_EMAIL_ERROR",
+    "CLIENT_UPDATE_ERROR",
+    "UPDATE_PROFILE",
+    "INVALID_SIGNATURE_ERROR",
+    "CLIENT_REGISTER_ERROR",
+    "FEDERATED_IDENTITY_LINK",
+    "USER_INFO_REQUEST",
+    "IDENTITY_PROVIDER_RESPONSE_ERROR",
+    "SEND_IDENTITY_PROVIDER_LINK",
+    "SEND_VERIFY_EMAIL_ERROR",
+    "IDENTITY_PROVIDER_LOGIN_ERROR",
+    "RESET_PASSWORD",
+    "CLIENT_INITIATED_ACCOUNT_LINKING_ERROR",
+    "REMOVE_TOTP_ERROR",
+    "VERIFY_EMAIL_ERROR",
+    "SEND_RESET_PASSWORD_ERROR",
+    "CLIENT_UPDATE",
+    "REFRESH_TOKEN_ERROR",
+    "CUSTOM_REQUIRED_ACTION_ERROR",
+    "IDENTITY_PROVIDER_POST_LOGIN_ERROR",
+    "UPDATE_TOTP_ERROR",
+    "CODE_TO_TOKEN",
+    "IDENTITY_PROVIDER_FIRST_LOGIN_ERROR"
+  ],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": false,
+
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "en",
+    "fr"
+  ],
+  "defaultLocale": "fr"
+}

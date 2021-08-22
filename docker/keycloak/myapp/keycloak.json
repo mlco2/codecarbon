@@ -1,0 +1,8 @@
+{
+  "realm": "RennesDevOPS",
+  "auth-server-url": "http://localhost:8084/auth",
+  "ssl-required": "external",
+  "resource": "myapp",
+  "public-client": true,
+  "confidential-port": 0
+}

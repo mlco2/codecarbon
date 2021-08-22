@@ -1,0 +1,12 @@
+{
+  "users": [{
+    "username" : "other",
+    "email": "other@local",
+    "enabled": true,
+    "credentials" : [{ 
+      "type" : "password",
+      "value" : "other" 
+    }],
+    "realmRoles": ["user"]
+  }]
+}

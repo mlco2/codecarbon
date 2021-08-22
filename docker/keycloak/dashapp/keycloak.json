@@ -1,0 +1,10 @@
+{
+  "realm": "RennesDevOPS",
+  "auth-server-url": "http://keycloak:8084/auth/",
+  "ssl-required": "external",
+  "resource": "codecarbon",
+  "credentials": {
+    "secret": "bd9f7947-04aa-465f-9261-4a444349abe0"
+  },
+  "confidential-port": 0
+}

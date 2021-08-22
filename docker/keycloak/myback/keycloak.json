@@ -1,0 +1,12 @@
+{
+  "realm": "RennesDevOPS",
+  "auth-server-url": "http://localhost:8080/auth",
+  "ssl-required": "external",
+  "resource": "myback",
+  "verify-token-audience": true,
+  "credentials": {
+    "secret": "6a245ed7-2da0-4eb7-bea2-1eaf82a697a3"
+  },
+  "use-resource-role-mappings": true,
+  "confidential-port": 0
+}

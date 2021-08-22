@@ -1,0 +1,53 @@
+# From 
+version: '3'
+
+volumes:
+  postgres_data:
+      driver: local
+
+services:
+  nginx:
+      image: nginx
+      ports:
+        - 8081:80
+      volumes:
+        - ./myapp:/usr/share/nginx/html
+
+  postgres:
+      image: postgres
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      environment:
+        POSTGRES_DB: keycloak
+        POSTGRES_USER: keycloak
+        POSTGRES_PASSWORD: password
+
+  keycloak:
+      image: jboss/keycloak
+      environment:
+        DB_VENDOR: POSTGRES
+        DB_ADDR: postgres
+        DB_DATABASE: keycloak
+        DB_USER: keycloak
+        DB_SCHEMA: public
+        DB_PASSWORD: password
+        KEYCLOAK_USER: admin
+        KEYCLOAK_PASSWORD: admin
+        # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the PostgreSQL JDBC driver documentation in order to use it.
+        #JDBC_PARAMS: "ssl=true"
+      ports:
+        - 8080:8080
+      volumes:
+        - ./themes/Breizhcamp/:/opt/jboss/keycloak/themes/Breizhcamp/
+        - ./providers:/opt/jboss/keycloak/providers
+        - ./scripts:/opt/jboss/scripts/
+        - ./deploy:/opt/jboss/keycloak/standalone/deployments
+      depends_on:
+        - postgres
+        - smtp4dev
+
+  smtp4dev:
+      image: rnwood/smtp4dev:linux-amd64-3.0.394-master
+      ports:
+        - 13000:80
+
