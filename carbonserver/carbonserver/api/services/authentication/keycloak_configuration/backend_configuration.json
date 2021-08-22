@@ -47,15 +47,15 @@
         "saml.onetimeuse.condition": "false"
     },
     "authenticationFlowBindingOverrides": {
-        "direct_grant": "9b30140d-dbf0-4703-b6b4-959b699b2b47",
-        "browser": "5332a3c7-aea7-4d00-bf64-35040ae42454"
+        "direct_grant": "a54d03af-52f2-4c93-9099-6b6617ed9cb3",
+        "browser": "0ca433dc-0c6d-4298-bac7-07579e75219f"
     },
     "fullScopeAllowed": true,
     "nodeReRegistrationTimeout": -1,
     "defaultClientScopes": [
         "web-origins",
-        "roles",
         "profile",
+        "roles",
         "email"
     ],
     "optionalClientScopes": [

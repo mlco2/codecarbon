@@ -52,7 +52,7 @@ class AuthenticationService:
             token_type=raw_response["token_type"],
         )
 
-    def login_without_password(self, client_id, client_secret):
+    def login_with_client_credentials(self, client_id, client_secret):
         login_request = requests.post(
             self._login_url,
             data={
@@ -83,10 +83,6 @@ class AuthenticationService:
                 "serviceAccountsEnabled": "true",
             },
         )
-        print(register_request.request.url)
-        print(register_request.request.body)
-        print(register_request.request.headers)
-        print(register_request.content)
         client_configuration = json.loads(register_request.content.decode("utf-8"))
 
         return client_configuration

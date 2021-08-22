@@ -66,7 +66,7 @@ def login_package(
         Provide[ServerContainer.authentication_service]
     ),
 ) -> Token:
-    access_token = authentication_service.login_without_password(
+    access_token = authentication_service.login_with_client_credentials(
         client_id, client_secret
     )
     return access_token
