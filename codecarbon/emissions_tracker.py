@@ -674,6 +674,7 @@ def track_emissions(
     def _decorate(fn: Callable):
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
+            fn_result = None
             if offline and offline is not _sentinel:
                 if (country_iso_code is None or country_iso_code is _sentinel) and (
                     cloud_provider is None or cloud_provider is _sentinel
@@ -694,7 +695,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                 )
                 tracker.start()
-                fn(*args, **kwargs)
+                fn_result = fn(*args, **kwargs)
                 tracker.stop()
             else:
                 tracker = EmissionsTracker(
@@ -715,7 +716,7 @@ def track_emissions(
                 )
                 tracker.start()
                 try:
-                    fn(*args, **kwargs)
+                    fn_result = fn(*args, **kwargs)
                 finally:
                     logger.info(
                         "\nGraceful stopping: collecting and writing information.\n"
@@ -723,6 +724,7 @@ def track_emissions(
                     )
                     tracker.stop()
                     logger.info("Done!\n")
+            return fn_result
 
         return wrapped_fn
 
