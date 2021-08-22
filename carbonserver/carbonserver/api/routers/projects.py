@@ -4,14 +4,11 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Project, ProjectCreate
-from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.project_service import ProjectService
 
 PROJECTS_ROUTER_TAGS = ["Projects"]
 
-router = APIRouter(
-    dependencies=[Depends(auth)],
-)
+router = APIRouter()
 
 
 projects_temp_db = []

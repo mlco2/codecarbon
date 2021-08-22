@@ -5,15 +5,12 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
 
 from carbonserver.api.schemas import User, UserCreate
-from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 
 USERS_ROUTER_TAGS = ["Users"]
 
-router = APIRouter(
-    dependencies=[Depends(auth)],
-)
+router = APIRouter()
 
 
 @router.post(

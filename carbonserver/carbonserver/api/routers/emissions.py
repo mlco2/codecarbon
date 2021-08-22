@@ -7,14 +7,11 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Emission, EmissionCreate
-from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.emissions_service import EmissionService
 
 EMISSIONS_ROUTER_TAGS = ["Emissions"]
 
-router = APIRouter(
-    dependencies=[Depends(auth)],
-)
+router = APIRouter()
 
 
 @router.post(

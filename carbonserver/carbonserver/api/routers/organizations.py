@@ -6,14 +6,11 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Organization, OrganizationCreate
-from carbonserver.api.services.authentication.authentication_service import auth
 from carbonserver.api.services.organization_service import OrganizationService
 
 ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
 
-router = APIRouter(
-    dependencies=[Depends(auth)],
-)
+router = APIRouter()
 
 
 @router.post(

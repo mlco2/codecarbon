@@ -43,11 +43,47 @@ def auth_user(
 )
 @inject
 def login(
-    user: UserAuthenticate = Depends(),
+    user: UserAuthenticate,
     authentication_service: AuthenticationService = Depends(
         Provide[ServerContainer.authentication_service]
     ),
 ) -> Token:
-
     access_token = authentication_service.login(user)
+    return access_token
+
+
+@router.post(
+    "/login_package",
+    tags=AUTHENTICATE_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=Token,
+)
+@inject
+def login_package(
+    client_id: str,
+    client_secret: str,
+    authentication_service: AuthenticationService = Depends(
+        Provide[ServerContainer.authentication_service]
+    ),
+) -> Token:
+    access_token = authentication_service.login_without_password(
+        client_id, client_secret
+    )
+    return access_token
+
+
+@router.post(
+    "/register_client",
+    tags=AUTHENTICATE_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def register_client(
+    client_id: str,
+    client_secret: str,
+    authentication_service: AuthenticationService = Depends(
+        Provide[ServerContainer.authentication_service]
+    ),
+) -> Token:
+    access_token = authentication_service.register_client(client_id, client_secret)
     return access_token
