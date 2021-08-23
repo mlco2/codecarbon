@@ -94,7 +94,12 @@ class FileOutput(BaseOutput):
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(data):
             logger.info("Backing up old emission file")
-            os.rename(self.save_file_path, self.save_file_path + ".bak")
+            new_name = self.save_file_path + ".bak"
+            idx = 1
+            while os.path.isfile(new_name):
+                new_name = self.save_file_path + f"_{idx}.bak"
+                idx += 1
+            os.rename(self.save_file_path, new_name)
             file_exists = False
 
         with open(self.save_file_path, "a+") as f:
