@@ -59,12 +59,12 @@ class ApiClient:  # (AsyncClient)
             self._create_run(self.experiment_id)
             if self.run_id is None:
                 logger.error(
-                    "ApiClient.add_emission still no run_id, arborting for this time !"
+                    "ApiClient.add_emission still no run_id, aborting for this time !"
                 )
             return False
         if carbon_emission["duration"] < 1:
             logger.warning(
-                "ApiClient : emissions not send because of a duration smaller than 1."
+                "ApiClient : emissions not sent because of a duration smaller than 1."
             )
             return False
         emission = EmissionCreate(
@@ -101,7 +101,7 @@ class ApiClient:  # (AsyncClient)
         """
         if self.experiment_id is None:
             # TODO : raise an Exception ?
-            logger.error("ApiClient FATAL The API _create_run need an experiment_id !")
+            logger.error("ApiClient FATAL The API _create_run needs an experiment_id !")
             return None
         try:
             run = RunCreate(

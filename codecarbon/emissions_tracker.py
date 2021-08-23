@@ -309,7 +309,7 @@ class BaseEmissionsTracker(ABC):
     @suppress(Exception)
     def flush(self) -> Optional[float]:
         """
-        Write emission to disk or call the API depending of the configuration
+        Write emission to disk or call the API depending on the configuration
         but keep running the experiment.
         :return: CO2 emissions in kgs
         """
