@@ -362,6 +362,7 @@ class BaseEmissionsTracker(ABC):
 
             persistence.out(emissions_data)
 
+        self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
 
