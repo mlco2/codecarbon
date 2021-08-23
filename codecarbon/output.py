@@ -81,7 +81,13 @@ class FileOutput(BaseOutput):
     Saves experiment artifacts to a file
     """
 
-    def __init__(self, save_file_path: str):
+    def __init__(self, save_file_path: str, on_flush: str = "append"):
+        if on_flush not in {"append", "update"}:
+            raise ValueError(
+                f"Unknown `on_flush` value: {on_flush}"
+                + " (should be one of 'append' or 'update'"
+            )
+        self.on_flush: str = on_flush
         self.save_file_path: str = save_file_path
 
     def has_valid_headers(self, data: EmissionsData):
@@ -105,6 +111,9 @@ class FileOutput(BaseOutput):
 
         if not file_exists:
             df = pd.DataFrame(columns=data.values.keys())
+            df = df.append(dict(data.values), ignore_index=True)
+        elif self.on_flush == "append":
+            df = pd.read_csv(self.save_file_path)
             df = df.append(dict(data.values), ignore_index=True)
         else:
             df = pd.read_csv(self.save_file_path)

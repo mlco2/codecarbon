@@ -147,6 +147,7 @@ class BaseEmissionsTracker(ABC):
         co2_signal_api_token: Optional[str] = _sentinel,
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
+        on_csv_write: Optional[str] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -180,6 +181,10 @@ class BaseEmissionsTracker(ABC):
         :param log_level: Global codecarbon log level. Accepts one of:
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
+        :param on_csv_write: "append" or "update". Whether to always append a new line
+                             to the csv when writing or to update the existing `run_id`
+                             row (useful when calling`tracker.flush()` manually).
+                             Accepts one of "append" or "update".
         """
         self._external_conf = get_hierarchical_config()
 
@@ -196,6 +201,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(save_to_api, "save_to_api", False, bool)
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
+        self._set_from_conf(on_csv_write, "on_csv_write", "append")
 
         assert self._tracking_mode in ["machine", "process"]
         set_log_level(self._log_level)
@@ -272,7 +278,11 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_file:
             self.persistence_objs.append(
-                FileOutput(os.path.join(self._output_dir, self._output_file))
+                FileOutput(
+                    os.path.join(
+                        self._output_dir, self._output_file, self._on_csv_write
+                    )
+                )
             )
 
         if self._emissions_endpoint:
