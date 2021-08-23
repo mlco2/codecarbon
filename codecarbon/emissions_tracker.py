@@ -279,9 +279,8 @@ class BaseEmissionsTracker(ABC):
         if self._save_to_file:
             self.persistence_objs.append(
                 FileOutput(
-                    os.path.join(
-                        self._output_dir, self._output_file, self._on_csv_write
-                    )
+                    os.path.join(self._output_dir, self._output_file),
+                    self._on_csv_write,
                 )
             )
 
