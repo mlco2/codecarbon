@@ -11,6 +11,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 
 import requests
+import pandas as pd
 
 # from core.schema import EmissionCreate, Emission
 from codecarbon.core.api_client import ApiClient
@@ -102,11 +103,27 @@ class FileOutput(BaseOutput):
             os.rename(self.save_file_path, new_name)
             file_exists = False
 
-        with open(self.save_file_path, "a+") as f:
-            writer = csv.DictWriter(f, fieldnames=data.values.keys())
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(data.values)
+        if not file_exists:
+            df = pd.DataFrame(columns=data.values.keys())
+            df = df.append(dict(data.values), ignore_index=True)
+        else:
+            df = pd.read_csv(self.save_file_path)
+            df_run = df.loc[df.run_id == data.run_id]
+            if len(df_run) < 1:
+                df = df.append(dict(data.values), ignore_index=True)
+            elif len(df_run) > 1:
+                logger.warning(
+                    f"CSV contains more than 1 ({len(len(df_run))})"
+                    + f" rows with current run ID ({data.run_id})."
+                    + "Appending instead of updating."
+                )
+                df = df.append(dict(data.values), ignore_index=True)
+            else:
+                df.at[
+                    df.run_id == data.run_id, data.values.keys()
+                ] = data.values.values()
+
+        df.to_csv(self.save_file_path, index=False)
 
 
 class HTTPOutput(BaseOutput):
