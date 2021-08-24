@@ -1,5 +1,7 @@
 import dataclasses
 
+from uuid import uuid4
+
 import requests_mock
 
 from codecarbon.core.api_client import ApiClient
@@ -25,6 +27,7 @@ def test_call_api():
         carbon_emission = EmissionsData(
             timestamp="222",
             project_name="",
+            run_id=uuid4(),
             duration=1.5,
             emissions=2.0,
             emissions_rate=2.0,
