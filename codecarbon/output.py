@@ -9,12 +9,14 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
+from pathlib import Path
 
 import requests
 import pandas as pd
 
 # from core.schema import EmissionCreate, Emission
 from codecarbon.core.api_client import ApiClient
+from codecarbon.core.util import backup
 from codecarbon.external.logger import logger
 
 
@@ -101,12 +103,7 @@ class FileOutput(BaseOutput):
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(data):
             logger.info("Backing up old emission file")
-            new_name = self.save_file_path + ".bak"
-            idx = 1
-            while os.path.isfile(new_name):
-                new_name = self.save_file_path + f"_{idx}.bak"
-                idx += 1
-            os.rename(self.save_file_path, new_name)
+            backup(self.save_file_path)
             file_exists = False
 
         if not file_exists:
