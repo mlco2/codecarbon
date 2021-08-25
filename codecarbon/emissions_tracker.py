@@ -5,6 +5,7 @@ OfflineEmissionsTracker and @track_emissions
 import dataclasses
 import os
 import time
+import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
@@ -146,6 +147,7 @@ class BaseEmissionsTracker(ABC):
         co2_signal_api_token: Optional[str] = _sentinel,
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
+        on_csv_write: Optional[str] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -153,6 +155,7 @@ class BaseEmissionsTracker(ABC):
         :param measure_power_secs: Interval (in seconds) to measure hardware power
                                    usage, defaults to 15
         :param api_call_interval: Occurrence to wait before calling API :
+                            -1 : only call api on flush() and at the end.
                             1 : at every measure
                             2 : every 2 measure, etc...
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
@@ -178,6 +181,10 @@ class BaseEmissionsTracker(ABC):
         :param log_level: Global codecarbon log level. Accepts one of:
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
+        :param on_csv_write: "append" or "update". Whether to always append a new line
+                             to the csv when writing or to update the existing `run_id`
+                             row (useful when calling`tracker.flush()` manually).
+                             Accepts one of "append" or "update".
         """
         self._external_conf = get_hierarchical_config()
 
@@ -194,6 +201,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(save_to_api, "save_to_api", False, bool)
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
+        self._set_from_conf(on_csv_write, "on_csv_write", "append")
 
         assert self._tracking_mode in ["machine", "process"]
         set_log_level(self._log_level)
@@ -270,7 +278,10 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_file:
             self.persistence_objs.append(
-                FileOutput(os.path.join(self._output_dir, self._output_file))
+                FileOutput(
+                    os.path.join(self._output_dir, self._output_file),
+                    self._on_csv_write,
+                )
             )
 
         if self._emissions_endpoint:
@@ -285,7 +296,10 @@ class BaseEmissionsTracker(ABC):
                 experiment_id=experiment_id,
                 api_key=api_key,
             )
+            self.run_id = self._cc_api__out.run_id
             self.persistence_objs.append(self._cc_api__out)
+        else:
+            self.run_id = uuid.uuid4()
 
     @suppress(Exception)
     def start(self) -> None:
@@ -300,6 +314,29 @@ class BaseEmissionsTracker(ABC):
 
         self._last_measured_time = self._start_time = time.time()
         self._scheduler.start()
+
+    @suppress(Exception)
+    def flush(self) -> Optional[float]:
+        """
+        Write emission to disk or call the API depending on the configuration
+        but keep running the experiment.
+        :return: CO2 emissions in kgs
+        """
+        if self._start_time is None:
+            logger.error("Need to first start the tracker")
+            return None
+
+        # Run to calculate the power used from last
+        # scheduled measurement to shutdown
+        self._measure_power()
+
+        emissions_data = self._prepare_emissions_data()
+        for persistence in self.persistence_objs:
+            if isinstance(persistence, CodeCarbonAPIOutput):
+                emissions_data = self._prepare_emissions_data(delta=True)
+            persistence.out(emissions_data)
+
+        return emissions_data.emissions
 
     @suppress(Exception)
     def stop(self) -> Optional[float]:
@@ -325,6 +362,7 @@ class BaseEmissionsTracker(ABC):
 
             persistence.out(emissions_data)
 
+        self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
 
@@ -357,6 +395,7 @@ class BaseEmissionsTracker(ABC):
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
+            run_id=self.run_id,
             duration=duration.seconds,
             emissions=emissions,
             emissions_rate=emissions * 1000 / duration.seconds,
@@ -452,7 +491,7 @@ class BaseEmissionsTracker(ABC):
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
-        if self._cc_api__out is not None:
+        if self._cc_api__out is not None and self._api_call_interval != -1:
             if self._measure_occurrence >= self._api_call_interval:
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
@@ -650,6 +689,7 @@ def track_emissions(
     def _decorate(fn: Callable):
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
+            fn_result = None
             if offline and offline is not _sentinel:
                 if (country_iso_code is None or country_iso_code is _sentinel) and (
                     cloud_provider is None or cloud_provider is _sentinel
@@ -670,7 +710,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                 )
                 tracker.start()
-                fn(*args, **kwargs)
+                fn_result = fn(*args, **kwargs)
                 tracker.stop()
             else:
                 tracker = EmissionsTracker(
@@ -691,7 +731,7 @@ def track_emissions(
                 )
                 tracker.start()
                 try:
-                    fn(*args, **kwargs)
+                    fn_result = fn(*args, **kwargs)
                 finally:
                     logger.info(
                         "\nGraceful stopping: collecting and writing information.\n"
@@ -699,6 +739,7 @@ def track_emissions(
                     )
                     tracker.stop()
                     logger.info("Done!\n")
+            return fn_result
 
         return wrapped_fn
 

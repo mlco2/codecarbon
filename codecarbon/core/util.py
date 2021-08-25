@@ -1,5 +1,8 @@
 import logging
 from contextlib import contextmanager
+from os.path import expandvars
+from pathlib import Path
+from typing import Optional, Union
 
 from codecarbon.external.logger import logger
 
@@ -36,3 +39,45 @@ def set_log_level(level: str):
             logger.setLevel(getattr(logging, level))
             return
     logger.error(f"Unknown log level: {level}")
+
+
+def resolve_path(path: Union[str, Path]) -> None:
+
+    """
+    Fully resolve a path:
+    resolve env vars ($HOME etc.) -> expand user (~) -> make absolute
+
+    Args:
+        path (Union[str, Path]): Path to a file or repository to resolve as
+            string or pathlib.Path
+
+    Returns:
+        pathlib.Path: resolved absolute path
+    """
+    return Path(expandvars(str(path))).expanduser().resolve()
+
+
+def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
+    """
+    Resolves the path to a path then backs it up, adding the extension provided.
+
+    Args:
+        file_path (Union[str, Path]): Path to a file to backup.
+        ext (Optional[str], optional): extension to append to the filename when
+            backing it up. Defaults to ".bak".
+    """
+    file_path = resolve_path(file_path)
+    if not file_path.exists():
+        return
+    assert file_path.is_file()
+    idx = 0
+    parent = file_path.parent
+    file_name = f"{file_path.name}{ext}"
+    backup = parent / file_name
+
+    while backup.exists():
+        file_name = f"{file_path.name}_{idx}{ext}"
+        backup = parent / file_name
+        idx += 1
+
+    file_path.rename(backup)

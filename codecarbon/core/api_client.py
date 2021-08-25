@@ -52,14 +52,19 @@ class ApiClient:  # (AsyncClient)
         self._previous_call = time.time()
         if self.run_id is None:
             # TODO : raise an Exception ?
-            logger.error(
-                "add_emissionadd_emission need a run_id : the initial call may "
+            logger.debug(
+                "ApiClient.add_emission need a run_id : the initial call may "
                 + "have failed. Retrying..."
             )
             self._create_run(self.experiment_id)
+            if self.run_id is None:
+                logger.error(
+                    "ApiClient.add_emission still no run_id, aborting for this time !"
+                )
+            return False
         if carbon_emission["duration"] < 1:
             logger.warning(
-                "Warning : emission not send because of a duration smaller than 1."
+                "ApiClient : emissions not sent because of a duration smaller than 1."
             )
             return False
         emission = EmissionCreate(
@@ -80,10 +85,10 @@ class ApiClient:  # (AsyncClient)
             payload = dataclasses.asdict(emission)
             url = self.url + "/emission"
             r = requests.post(url=url, json=payload, timeout=2)
-            logger.debug(f"Successful upload emission {payload} to {url}")
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return False
+            logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
         except Exception as e:
             logger.error(e, exc_info=True)
             return False
@@ -96,7 +101,7 @@ class ApiClient:  # (AsyncClient)
         """
         if self.experiment_id is None:
             # TODO : raise an Exception ?
-            logger.error("FATAL The API _create_run need an experiment_id !")
+            logger.error("ApiClient FATAL The API _create_run needs an experiment_id !")
             return None
         try:
             run = RunCreate(
@@ -110,7 +115,7 @@ class ApiClient:  # (AsyncClient)
                 return None
             self.run_id = r.json()["id"]
             logger.info(
-                "Successfully registered your run on the API.\n\n"
+                "ApiClient Successfully registered your run on the API.\n\n"
                 + f"Run ID: {self.run_id}\n"
                 + f"Experiment ID: {self.experiment_id}\n"
             )
@@ -134,10 +139,10 @@ class ApiClient:  # (AsyncClient)
 
     def _log_error(self, url, payload, response):
         logger.error(
-            f" Error when calling the API on {url} with : {json.dumps(payload)}"
+            f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
         )
         logger.error(
-            f" API return http code {response.status_code} and answer : {response.text}"
+            f"ApiClient API return http code {response.status_code} and answer : {response.text}"
         )
 
     def close_experiment(self):

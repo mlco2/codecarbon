@@ -10,10 +10,12 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
 
+import pandas as pd
 import requests
 
 # from core.schema import EmissionCreate, Emission
 from codecarbon.core.api_client import ApiClient
+from codecarbon.core.util import backup
 from codecarbon.external.logger import logger
 
 
@@ -25,6 +27,7 @@ class EmissionsData:
 
     timestamp: str
     project_name: str
+    run_id: str
     duration: float
     emissions: float
     emissions_rate: float
@@ -79,7 +82,13 @@ class FileOutput(BaseOutput):
     Saves experiment artifacts to a file
     """
 
-    def __init__(self, save_file_path: str):
+    def __init__(self, save_file_path: str, on_csv_write: str = "append"):
+        if on_csv_write not in {"append", "update"}:
+            raise ValueError(
+                f"Unknown `on_csv_write` value: {on_csv_write}"
+                + " (should be one of 'append' or 'update'"
+            )
+        self.on_csv_write: str = on_csv_write
         self.save_file_path: str = save_file_path
 
     def has_valid_headers(self, data: EmissionsData):
@@ -93,14 +102,33 @@ class FileOutput(BaseOutput):
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(data):
             logger.info("Backing up old emission file")
-            os.rename(self.save_file_path, self.save_file_path + ".bak")
+            backup(self.save_file_path)
             file_exists = False
 
-        with open(self.save_file_path, "a+") as f:
-            writer = csv.DictWriter(f, fieldnames=data.values.keys())
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(data.values)
+        if not file_exists:
+            df = pd.DataFrame(columns=data.values.keys())
+            df = df.append(dict(data.values), ignore_index=True)
+        elif self.on_csv_write == "append":
+            df = pd.read_csv(self.save_file_path)
+            df = df.append(dict(data.values), ignore_index=True)
+        else:
+            df = pd.read_csv(self.save_file_path)
+            df_run = df.loc[df.run_id == data.run_id]
+            if len(df_run) < 1:
+                df = df.append(dict(data.values), ignore_index=True)
+            elif len(df_run) > 1:
+                logger.warning(
+                    f"CSV contains more than 1 ({len(len(df_run))})"
+                    + f" rows with current run ID ({data.run_id})."
+                    + "Appending instead of updating."
+                )
+                df = df.append(dict(data.values), ignore_index=True)
+            else:
+                df.at[
+                    df.run_id == data.run_id, data.values.keys()
+                ] = data.values.values()
+
+        df.to_csv(self.save_file_path, index=False)
 
 
 class HTTPOutput(BaseOutput):
@@ -132,6 +160,8 @@ class CodeCarbonAPIOutput(BaseOutput):
     Send emissions data to HTTP endpoint
     """
 
+    run_id = None
+
     def __init__(self, endpoint_url: str, experiment_id: str, api_key: str):
         self.endpoint_url: str = endpoint_url
         self.api = ApiClient(
@@ -139,6 +169,7 @@ class CodeCarbonAPIOutput(BaseOutput):
             endpoint_url=endpoint_url,
             api_key=api_key,
         )
+        self.run_id = self.api.run_id
 
     def out(self, data: EmissionsData):
         try:
