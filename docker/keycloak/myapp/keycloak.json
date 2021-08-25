@@ -1,5 +1,5 @@
 {
-  "realm": "RennesDevOPS",
+  "realm": "CodeCarbon",
   "auth-server-url": "http://localhost:8084/auth",
   "ssl-required": "external",
   "resource": "myapp",

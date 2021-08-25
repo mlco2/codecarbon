@@ -9,6 +9,8 @@ services:
       - 5081:5006
     volumes:
       - ./docker/keycloak/dashapp:/opt/codecarbon-front
+    networks:
+      - codecarbon_net
   # codecarbon_package:
   #   build:
   #     context: ./codecarbon/
@@ -45,19 +47,6 @@ services:
     networks:
       - codecarbon_net
 
-  postgres_keycloak:
-    container_name: postgres_codecarbon_keycloak
-    environment:
-      HOSTNAME: postgres_codecarbon_keycloak
-      POSTGRES_DB: keycloak_db
-      POSTGRES_PASSWORD: keycloak_pwd
-      POSTGRES_USER: keycloak-user
-    image: postgres:12
-    networks:
-      - codecarbon_net
-    ports:
-    - 5484:5432
-    restart: unless-stopped
   
   postgres:
     container_name: ${DATABASE_HOST:-postgres_codecarbon}
@@ -75,22 +64,43 @@ services:
     volumes:
     - postgres_data:/var/lib/postgresql/data:rw
 
+  postgres_keycloak:
+    container_name: postgres_codecarbon_keycloak
+    environment:
+      HOSTNAME: postgres_codecarbon_keycloak
+      POSTGRES_DB: keycloak_db
+      POSTGRES_USER: keycloak-user
+      POSTGRES_PASSWORD: keycloak_pwd
+    image: postgres:12
+    networks:
+      - codecarbon_net
+    ports:
+    - 5484:5432
+    volumes:
+      - postgres_keycloak_data:/var/lib/postgresql/data:rw
+    restart: unless-stopped
 
   keycloak:
     image: jboss/keycloak
+    networks:
+      - codecarbon_net
     environment:
-      #DB_VENDOR: POSTGRES
-      #DB_ADDR: postgres_codecarbon
-      #DB_PORT: 5484
-      #DB_DATABASE: codecarbon_db
-      #DB_USER: codecarbon-user
-      #DB_SCHEMA: public
-      #DB_PASSWORD: supersecret
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres_codecarbon_keycloak
+      DB_PORT: 5432
+      DB_DATABASE: keycloak_db
+      DB_USER: keycloak-user
+      DB_SCHEMA: public
+      DB_PASSWORD: keycloak_pwd
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_IMPORT: /tmp/codecarbon-realm.json
     ports:
       - 8084:8080
     volumes:
+      - ./docker/keycloak/codecarbon-realm.json:/tmp/codecarbon-realm.json
+      - ./docker/keycloak/themes/Codecarbon/:/opt/jboss/keycloak/themes/Codecarbon/
+
       - ./docker/keycloak/themes/Breizhcamp/:/opt/jboss/keycloak/themes/Breizhcamp/
       - ./docker/keycloak/providers:/opt/jboss/keycloak/providers
       - ./docker/keycloak/scripts:/opt/jboss/scripts/
@@ -103,6 +113,8 @@ services:
       image: rnwood/smtp4dev
       ports:
         - 13000:80
+      networks:
+        - codecarbon_net
 
   pgadmin:
     container_name: pgadmin_codecarbon
@@ -125,7 +137,10 @@ volumes:
     name: postgres_codecarbon_data
   pgadmin:
     name: pgadmin_codecarbon_data
+  postgres_keycloak_data:
+    name: postgres_codecarbon_keycloak_data
 
 networks:
   codecarbon_net:
     name: codecarbon_network
+    driver: bridge

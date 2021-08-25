@@ -20,7 +20,7 @@
 
         function uma() {
 
-            var myRequest = new Request("http://localhost:8084/auth/realms/RennesDevOPS/.well-known/uma2-configuration");
+            var myRequest = new Request("http://localhost:8084/auth/realms/CodeCarbon/.well-known/uma2-configuration");
             fetch(myRequest).then(function (response) {
                 document.getElementById("resTitle").innerHTML = "Uma2-configuration";
                 response.json().then(function (json) {
