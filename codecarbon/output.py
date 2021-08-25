@@ -9,10 +9,9 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
-from pathlib import Path
 
-import requests
 import pandas as pd
+import requests
 
 # from core.schema import EmissionCreate, Emission
 from codecarbon.core.api_client import ApiClient

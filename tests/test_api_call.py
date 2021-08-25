@@ -1,5 +1,4 @@
 import dataclasses
-
 from uuid import uuid4
 
 import requests_mock

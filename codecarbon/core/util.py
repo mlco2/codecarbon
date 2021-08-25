@@ -2,7 +2,6 @@ import logging
 from contextlib import contextmanager
 from os.path import expandvars
 from pathlib import Path
-import pathlib
 from typing import Optional, Union
 
 from codecarbon.external.logger import logger
