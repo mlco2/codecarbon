@@ -100,7 +100,6 @@ services:
     volumes:
       - ./docker/keycloak/codecarbon-realm.json:/tmp/codecarbon-realm.json
       - ./docker/keycloak/themes/Codecarbon/:/opt/jboss/keycloak/themes/Codecarbon/
-
       - ./docker/keycloak/themes/Breizhcamp/:/opt/jboss/keycloak/themes/Breizhcamp/
       - ./docker/keycloak/providers:/opt/jboss/keycloak/providers
       - ./docker/keycloak/scripts:/opt/jboss/scripts/

@@ -1,10 +1,8 @@
 {
   "realm": "CodeCarbon",
   "auth-server-url": "http://keycloak:8080/auth/",
-  "ssl-required": "none",
+  "ssl-required": "external",
   "resource": "codecarbon-back",
-  "credentials": {
-    "secret": "eb1b56d3-d74a-4ea6-b412-263c126aefbb"
-  },
+  "public-client": true,
   "confidential-port": 0
 }

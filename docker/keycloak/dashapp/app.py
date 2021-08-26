@@ -153,7 +153,7 @@ class AuthMiddleWare:
         # On callback, request access token.
         if request.path == self.callback_path:
             kwargs = dict(
-                grant_type=["authorization_code"],
+                grant_type=["public"],
                 code=request.args.get("code", "unknown"),
                 redirect_uri=self.get_callback_uri(environ),
             )
@@ -197,9 +197,9 @@ class FlaskKeycloak:
         if login_path is not None:
             uri_whitelist = uri_whitelist + [login_path]
         # Bind secret key.
-        if keycloak_openid._client_secret_key is not None:
-            app.config["SECRET_KEY"] = keycloak_openid._client_secret_key
-        logger.debug(f"{app.config['SECRET_KEY']=}")
+        # if keycloak_openid._client_secret_key is not None:
+        #     app.config["SECRET_KEY"] = keycloak_openid._client_secret_key
+        # logger.debug(f"{app.config['SECRET_KEY']=}")
         # Add middleware.
         auth_handler = AuthHandler(
             app.wsgi_app, app.config, app.session_interface, keycloak_openid
@@ -275,7 +275,7 @@ class FlaskKeycloak:
                 server_url=config_data["auth-server-url"],
                 realm_name=config_data["realm"],
                 client_id=config_data["resource"],
-                client_secret_key=config_data["credentials"]["secret"],
+                # client_secret_key=config_data["credentials"]["secret"],
                 verify=config_data["ssl-required"] != "none",
             )
             if keycloak_kwargs is not None:
