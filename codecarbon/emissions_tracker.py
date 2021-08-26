@@ -17,10 +17,10 @@ from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import set_log_level, suppress
+from codecarbon.core.util import suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
-from codecarbon.external.logger import logger
+from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.input import DataSource
 from codecarbon.output import (
     BaseOutput,
@@ -148,6 +148,7 @@ class BaseEmissionsTracker(ABC):
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
+        logger_preamble: Optional[str] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -185,6 +186,8 @@ class BaseEmissionsTracker(ABC):
                              to the csv when writing or to update the existing `run_id`
                              row (useful when calling`tracker.flush()` manually).
                              Accepts one of "append" or "update".
+        :param logger_preamble: String to systematically include in the logger's.
+                                messages. Defaults to "".
         """
         self._external_conf = get_hierarchical_config()
 
@@ -202,9 +205,11 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
+        self._set_from_conf(logger_preamble, "logger_preamble", "")
 
         assert self._tracking_mode in ["machine", "process"]
-        set_log_level(self._log_level)
+        set_logger_level(self._log_level)
+        set_logger_format(self._logger_preamble)
 
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()

@@ -1,18 +1,48 @@
 import logging
 import os
+from typing import Optional
+
+
+def set_logger_format(custom_preamble: Optional[str] = ""):
+    logger = logging.getLogger("codecarbon")
+    format = f"[%(name)s %(levelname)s @ %(asctime)s]{custom_preamble} %(message)s"
+    formatter = logging.Formatter(format, datefmt="%H:%M:%S")
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    logger.addHandler(handler)
+
+
+def set_logger_level(level: Optional[str] = None):
+
+    if level is None:
+        lower_envs = {k.lower(): v for k, v in os.environ.items()}
+        level = lower_envs.get("codecarbon_log_level", "INFO")
+
+    level = level.upper()
+    known_levels = {
+        "CRITICAL",
+        "FATAL",
+        "ERROR",
+        "WARN",
+        "WARNING",
+        "INFO",
+        "DEBUG",
+        "NOTSET",
+    }
+
+    logger = logging.getLogger("codecarbon")
+
+    if level not in known_levels:
+        logger.error(f"Unknown log level: {level}. Doing nothing.")
+        return
+    logger.setLevel(level)
+
+
+set_logger_format()
+set_logger_level()
 
 logger = logging.getLogger("codecarbon")
-formatter = logging.Formatter(
-    "[%(name)s %(levelname)s @ %(asctime)s] %(message)s",
-    datefmt="%H:%M:%S",
-)
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-if not logger.handlers:
-    logger.addHandler(handler)
-env_level = os.environ.get("CODECARBON_LOG_LEVEL")
-if env_level is None:
-    env_level = os.environ.get("codecarbon_log_level")
-if env_level is None:
-    env_level = "INFO"
-logger.setLevel(level=env_level)

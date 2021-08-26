@@ -1,4 +1,3 @@
-import logging
 from contextlib import contextmanager
 from os.path import expandvars
 from pathlib import Path
@@ -18,27 +17,6 @@ def suppress(*exceptions):
         )
         logger.warning("stopping.")
         pass
-
-
-def set_log_level(level: str):
-    level = level.upper()
-    levels = {
-        "CRITICAL",
-        "FATAL",
-        "ERROR",
-        "WARN",
-        "WARNING",
-        "INFO",
-        "DEBUG",
-        "NOTSET",
-    }
-    assert level in levels
-
-    for lev in levels:
-        if level == lev:
-            logger.setLevel(getattr(logging, level))
-            return
-    logger.error(f"Unknown log level: {level}")
 
 
 def resolve_path(path: Union[str, Path]) -> None:
