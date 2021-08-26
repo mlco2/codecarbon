@@ -258,7 +258,7 @@ def test_api_runs_for_team_list():
     r = requests.get(url=URL + "/runs/experiment/" + experiment_id, timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", run_id)
-    assert is_key_all_values_equal(r.json(), "experiment_id", experiment_id)
+    assert is_key_all_values_equal(r.json()["items"], "experiment_id", experiment_id)
 
 
 def test_api_emission_create():
