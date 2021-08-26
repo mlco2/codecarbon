@@ -5,6 +5,7 @@ import pytest
 from container import ServerContainer
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from fastapi_pagination import add_pagination
 from starlette import status
 
 from carbonserver.api.infra.repositories.repository_emissions import (
@@ -92,6 +93,7 @@ def custom_test_server():
     app = FastAPI()
     app.container = container
     app.include_router(emissions.router)
+    add_pagination(app)
     yield app
 
 
@@ -142,7 +144,7 @@ def test_get_emissions_from_run_retreives_all_emissions_from_run(
         response = client.get(
             "/emissions/run/get_emissions_from_run/", params={"run_id": RUN_1_ID}
         )
-        actual_emission_list = response.json()
+        actual_emission_list = response.json()["items"]
         actual_emission_ids_list = [emission["id"] for emission in actual_emission_list]
         diff = set(actual_emission_ids_list) ^ set(expected_emissions_id_list)
 

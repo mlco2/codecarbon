@@ -6,3 +6,4 @@ requests
 sqlalchemy
 tox
 uvicorn[standard]
+fastapi-pagination
