@@ -192,9 +192,15 @@ class IntelRAPL:
                 if "package" in name:
                     name = f"Processor Power_{i}(Watt)"
                     i += 1
-                self._rapl_files.append(
-                    RAPLFile(name, os.path.join(self._lin_rapl_dir, file, "energy_uj"))
-                )
+                rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
+                try:
+                    # Try to read the file to be sure we can
+                    with open(rapl_file, "r") as f:
+                        _ = float(f.read())
+                    self._rapl_files.append(RAPLFile(name=name, path=rapl_file))
+                    logger.debug(f"We will read Intel RAPL files at {rapl_file}")
+                except PermissionError as e:
+                    logger.warning(f"Unable to read Intel RAPL files : {e}")
         return
 
     def get_cpu_details(self) -> Dict:
