@@ -149,6 +149,7 @@ class BaseEmissionsTracker(ABC):
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
+        misfire_grace_time: Optional[int] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -188,6 +189,8 @@ class BaseEmissionsTracker(ABC):
                              Accepts one of "append" or "update".
         :param logger_preamble: String to systematically include in the logger's.
                                 messages. Defaults to "".
+        :param misfire_grace_time: Parameter to configure the BackgroundScheduler's
+                                   `misfire_grace_time` argument.
         """
         self._external_conf = get_hierarchical_config()
 
@@ -206,6 +209,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
+        self._set_from_conf(misfire_grace_time, "misfire_grace_time", 1, int)
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -273,6 +277,7 @@ class BaseEmissionsTracker(ABC):
             "interval",
             seconds=self._measure_power_secs,
             max_instances=1,
+            misfire_grace_time=self._misfire_grace_time,
         )
 
         self._data_source = DataSource()
