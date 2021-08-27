@@ -1,9 +1,9 @@
-from typing import List
 from uuid import UUID
 
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
+from fastapi_pagination import Page, paginate
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
@@ -50,7 +50,7 @@ def read_emission(
 
 
 @router.get(
-    "/emissions/run/{run_id}", tags=EMISSIONS_ROUTER_TAGS, response_model=List[Emission]
+    "/emissions/run/{run_id}", tags=EMISSIONS_ROUTER_TAGS, response_model=Page[Emission]
 )
 @inject
 def get_emissions_from_run(
@@ -58,5 +58,5 @@ def get_emissions_from_run(
     emission_service: EmissionService = Depends(
         Provide[ServerContainer.emission_service]
     ),
-) -> List[Emission]:
-    return emission_service.get_emissions_from_run(run_id)
+) -> Page[Emission]:
+    return paginate(emission_service.get_emissions_from_run(run_id))

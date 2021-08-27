@@ -284,8 +284,8 @@ def test_api_emission_list():
     global emission_id
     r = requests.get(url=URL + "/emissions/run/" + run_id, timeout=2)
     assert r.status_code == 200
-    assert is_key_all_values_equal(r.json(), "run_id", run_id)
-    emission_id = r.json()[-1]["id"]
+    assert is_key_all_values_equal(r.json()["items"], "run_id", run_id)
+    emission_id = r.json()["items"][-1]["id"]
 
 
 def test_api_emission_read():
