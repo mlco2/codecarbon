@@ -58,3 +58,4 @@ set_logger_format()
 set_logger_level()
 
 logger = logging.getLogger("codecarbon")
+logger.propagate = False
