@@ -469,6 +469,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         for hardware in self._hardware:
+            h_time = time.time()
             power = hardware.total_power()
             energy = Energy.from_power_and_time(
                 power=power, time=Time.from_seconds(last_duration)
@@ -491,10 +492,10 @@ class BaseEmissionsTracker(ABC):
                 raise ValueError(
                     f"Unknown hardware type: {hardware} ({type(hardware)})"
                 )
-
+            h_time = time.time() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
-                + f"W during {last_duration:,.2f} s"
+                + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.2f}]"
             )
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
