@@ -86,12 +86,11 @@ def init_server(container):
     server.include_router(experiments.router)
     server.include_router(runs.router)
     server.include_router(emissions.router)
-
+    add_pagination(server)
     return server
 
 
 app = create_app()
-add_pagination(app)
 
 
 @app.get("/")
