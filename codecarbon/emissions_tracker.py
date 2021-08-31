@@ -493,9 +493,7 @@ class BaseEmissionsTracker(ABC):
                 self._total_ram_energy += energy
                 self._ram_power = power
             else:
-                logger.error(
-                    f"Unknown hardware type: {hardware} ({type(hardware)})"
-                )
+                logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.time() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
