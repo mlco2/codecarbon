@@ -5,7 +5,10 @@ from typing import Optional
 
 def set_logger_format(custom_preamble: Optional[str] = ""):
     logger = logging.getLogger("codecarbon")
-    format = f"[%(name)s %(levelname)s @ %(asctime)s]{custom_preamble} %(message)s"
+    format = "[%(name)s %(levelname)s @ %(asctime)s]"
+    if custom_preamble:
+        format += f"[{custom_preamble}]"
+    format += " %(message)s"
     formatter = logging.Formatter(format, datefmt="%H:%M:%S")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
