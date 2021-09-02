@@ -200,7 +200,11 @@ class IntelRAPL:
                     self._rapl_files.append(RAPLFile(name=name, path=rapl_file))
                     logger.debug(f"We will read Intel RAPL files at {rapl_file}")
                 except PermissionError as e:
-                    logger.warning(f"Unable to read Intel RAPL files : {e}")
+                    logger.error(
+                        "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
+                        + " Please view https://github.com/mlco2/codecarbon/issues/232#issuecomment-910394964"
+                        + f" for workaround : {e}"
+                    )
         return
 
     def get_cpu_details(self) -> Dict:
