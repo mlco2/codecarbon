@@ -185,6 +185,35 @@ You have a cool idea, but do not know know if it fits with Code Carbon ? You can
 - In a python environment, install and update twine with `pip install -U twine`. Unzip the `pypi_dist.zip` archive in a temporary directory with `unzip pypi_dist.zip` and upload all files inside with `twine upload codecarbon*`.
 - Unzip the `conda_dist.zip` in a temporary directory with `unzip conda_dist.zip`. Start a Docker image in the same directory and bind-mount the current directory with: `docker run -ti --rm=true -v (pwd):/data:z  continuumio/anaconda3:2020.02`. Inside the docker container, run `anaconda upload --user codecarbon /data/noarch/codecarbon-*.tar.bz2`.
 
+### API Deployment
+
+The API is availiable to everyone from https://api.codecarbon.io but if you want to deploy it for yourself, here is the instructions.
+
+To deploy the API we use (Clever Cloud)[https://www.clever-cloud.com/] , an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
+
+Here is the Clever Cloud configuration if you want to reproduce it :
+```
+APP_FOLDER="carbonserver"
+CC_PIP_REQUIREMENTS_FILE="requirements.txt"
+CC_POST_BUILD_HOOK="cd $APP_HOME/carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
+CC_PYTHON_BACKEND="uvicorn"
+CC_PYTHON_MODULE="main:app"
+CC_PYTHON_VERSION="3.8"
+DATABASE_URL="postgresql://secret_do_not_publish_this"
+PORT="8080"
+```
+_CC stand here for Clever Cloud, not Code Carbon_ 😉
+
+To deploy, 
+```
+git remote add deploy git+ssh://git@push-n2-par-clevercloud-customers.services.clever-cloud.com/app_<secret_do_not_share>.git
+git push deploy master:master
+```
+Yeah, no so hard, isn't it ?
+
+See (the doc)[https://www.clever-cloud.com/doc/getting-started/quickstart/] for more informations.
+
+Please note that Clever Cloud host Code Carbon for free because they like our project.
 
 ### License
 
