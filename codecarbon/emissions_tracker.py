@@ -7,12 +7,12 @@ import os
 import platform
 import time
 import uuid
-import psutil
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
 from typing import Callable, List, Optional, Union
 
+import psutil
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from codecarbon.core import cpu, gpu
@@ -239,23 +239,25 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_ids"] = self._gpu_ids
             self.gpu_count = len(self._gpu_ids)
 
-            logger.info("GPU count: " + str(self.gpu_count))
         # Hardware detection
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
-            logger.info("GPU Model: "+GPU.description())
+            logger.info(
+                "GPU Model: " + "-".join([n["name"] for n in gpu.get_gpu_static_info()])
+            )
+            logger.info("GPU count: " + str(len(gpu.get_gpu_static_info())))
 
         if cpu.is_powergadget_available():
             logger.info("Tracking Intel CPU via Power Gadget")
             self._hardware.append(
                 CPU.from_utils(self._output_dir, "intel_power_gadget")
             )
-            logger.info("CPU Model: "+CPU.get_model())
+            logger.info("CPU Model: " + CPU.get_model())
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
-            logger.info("CPU Model: "+CPU.get_model())
+            logger.info("CPU Model: " + CPU.get_model())
         else:
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
@@ -264,7 +266,7 @@ class BaseEmissionsTracker(ABC):
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
-            logger.info("CPU Model on constant mode:"+model)
+            logger.info("CPU Model on constant mode:" + model)
             if tdp:
                 self._hardware.append(
                     CPU.from_utils(self._output_dir, "constant", model, power)
