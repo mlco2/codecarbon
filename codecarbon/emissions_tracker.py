@@ -4,8 +4,10 @@ OfflineEmissionsTracker and @track_emissions
 """
 import dataclasses
 import os
+import platform
 import time
 import uuid
+import psutil
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
@@ -235,24 +237,38 @@ class BaseEmissionsTracker(ABC):
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
+        self.os = platform.system()
+        self.python_version = platform.python_version()
+        self.cpu_count = psutil.cpu_count()
+
+        logger.info("##### PRINTING METADATA ######")
+        logger.info("Platform system: " + platform.system())
+        logger.info("Platform: " + platform.platform())
+        logger.info("Python version: " + platform.python_version())
+        logger.info("CPU count: " + str(psutil.cpu_count()))
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
             self._conf["gpu_ids"] = self._gpu_ids
+            self.gpu_count = len(self._gpu_ids)
 
+            logger.info("GPU count: " + str(self.gpu_count))
         # Hardware detection
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
+            logger.info("GPU Model: "+GPU.description())
 
         if cpu.is_powergadget_available():
             logger.info("Tracking Intel CPU via Power Gadget")
             self._hardware.append(
                 CPU.from_utils(self._output_dir, "intel_power_gadget")
             )
+            logger.info("CPU Model: "+CPU.get_model())
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
+            logger.info("CPU Model: "+CPU.get_model())
         else:
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
@@ -261,6 +277,7 @@ class BaseEmissionsTracker(ABC):
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
+            logger.info("CPU Model on constant mode:"+model)
             if tdp:
                 self._hardware.append(
                     CPU.from_utils(self._output_dir, "constant", model, power)
@@ -285,6 +302,17 @@ class BaseEmissionsTracker(ABC):
         )
 
         self._data_source = DataSource()
+        self.longitude = self._get_geo_metadata().longitude
+        self.latitude = self._get_geo_metadata().latitude
+        self.region = self._get_cloud_metadata().region
+        self.provider = self._get_cloud_metadata().provider
+
+        logger.info("Longitude:" + str(self.longitude))
+        logger.info("latitude:" + str(self.latitude))
+        if self.region is not None:
+            logger.info("region:" + self.region)
+        if self.provider is not None:
+            logger.info("provider:" + self.provider)
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
         )
