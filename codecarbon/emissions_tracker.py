@@ -8,6 +8,7 @@ import platform
 import time
 import uuid
 from abc import ABC, abstractmethod
+from collections import Counter
 from datetime import datetime
 from functools import wraps
 from typing import Callable, List, Optional, Union
@@ -243,8 +244,11 @@ class BaseEmissionsTracker(ABC):
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
+            gpu_names = [n["name"] for n in gpu.get_gpu_static_info()]
+            gpu_names_dict = Counter(gpu_names)
             logger.info(
-                "GPU Model: " + "-".join([n["name"] for n in gpu.get_gpu_static_info()])
+                "GPU Model: "
+                + " ".join([f"{i} x {name}" for name, i in gpu_names_dict.items()])
             )
             logger.info("GPU count: " + str(len(gpu.get_gpu_static_info())))
 
