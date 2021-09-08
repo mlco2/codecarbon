@@ -124,6 +124,9 @@ class CPU(BaseHardware):
         cpu_power = self._get_power_from_cpus()
         return cpu_power
 
+    def get_model(self):
+        return self._model
+
     @classmethod
     def from_utils(
         cls,
