@@ -17,8 +17,8 @@ with warnings.catch_warnings(record=True) as w:
     from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
+from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
-from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
 
 
@@ -324,7 +324,7 @@ class TDP:
 
         :return: model name (str), power in Watt (int)
         """
-        cpu_model_detected = CPU._detect_cpu_model()
+        cpu_model_detected = detect_cpu_model()
 
         if cpu_model_detected:
             power = self._get_cpu_power_from_registry(cpu_model_detected)

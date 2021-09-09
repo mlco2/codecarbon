@@ -9,12 +9,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
-import cpuinfo
 import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Power
+from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -91,15 +91,6 @@ class CPU(BaseHardware):
         elif self._mode == "intel_rapl":
             self._intel_interface = IntelRAPL()
 
-    @staticmethod
-    def _detect_cpu_model() -> str:
-        cpu_info = cpuinfo.get_cpu_info()
-        if cpu_info:
-            cpu_model_detected = cpu_info.get("brand_raw", "")
-            return cpu_model_detected
-        else:
-            return None
-
     def __repr__(self) -> str:
         if self._mode != "constant":
             return "CPU({})".format(
@@ -147,7 +138,7 @@ class CPU(BaseHardware):
     ) -> "CPU":
 
         if model is None:
-            model = CPU._detect_cpu_model()
+            model = detect_cpu_model()
             if model is None:
                 logger.warning("Could not read CPU model.")
 

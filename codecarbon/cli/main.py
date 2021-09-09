@@ -35,10 +35,11 @@ def init():
     click.echo(
         "\nWelcome to CodeCarbon, here is your experiment id : "
         + click.style(f"{experiment_id}", fg="bright_green")
+        + "\n"
     )
     if new_local:
         click.echo(
-            "\nCodeCarbon automatically added this id to your local config: "
+            "CodeCarbon automatically added this id to your local config: "
             + click.style("./.codecarbon.config", fg="bright_blue")
             + "\n"
         )
