@@ -256,12 +256,12 @@ class BaseEmissionsTracker(ABC):
             logger.info("Tracking Intel CPU via Power Gadget")
             hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
             self._hardware.append(hardware)
-            logger.info("CPU Model: " + hardware.get_model())
+            logger.info(f"CPU Model: {hardware.get_model()}")
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
-            logger.info("CPU Model: " + hardware.get_model())
+            logger.info(f"CPU Model: {hardware.get_model()}")
         else:
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
@@ -270,7 +270,7 @@ class BaseEmissionsTracker(ABC):
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
-            logger.info("CPU Model on constant mode:" + model)
+            logger.info(f"CPU Model on constant mode: {model}")
             if tdp:
                 hardware = CPU.from_utils(self._output_dir, "constant", model, power)
                 self._hardware.append(hardware)
