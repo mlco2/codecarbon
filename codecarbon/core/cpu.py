@@ -28,8 +28,8 @@ def is_powergadget_available():
         return True
     except Exception as e:
         logger.debug(
-            f"Exception occurred while instantiating IntelPowerGadget : {e}",
-            exc_info=True,
+            "Not using PowerGadget, an exception occurred while instantiating"
+            + f" IntelPowerGadget : {e}",
         )
         return False
 
@@ -40,8 +40,8 @@ def is_rapl_available():
         return True
     except Exception as e:
         logger.debug(
-            f"Exception occurred while instantiating RAPLInterface : {e}",
-            exc_info=True,
+            "Not using the RAPL interface, an exception occurred while instantiating "
+            + f"IntelRAPL : {e}",
         )
         return False
 
