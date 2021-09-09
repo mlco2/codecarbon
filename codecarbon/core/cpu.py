@@ -18,7 +18,7 @@ with warnings.catch_warnings(record=True) as w:
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.external.logger import logger
-from codecarbon.hardware import CPU
+from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
 
 
