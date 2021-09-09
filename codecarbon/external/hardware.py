@@ -234,12 +234,18 @@ class RAM(BaseHardware):
         Returns:
             float: RAM usage (GB)
         """
-        if self._tracking_mode == "machine":
-            return psutil.virtual_memory().total / 1e9
         children_memories = self._get_children_memories() if self._children else []
         main_memory = psutil.Process(self._pid).memory_info().rss
         memories = children_memories + [main_memory]
         return sum([m for m in memories if m] + [0]) / 1e9
+
+    @property
+    def machine_memory_GB(self):
+        return (
+            self.slurm_memory_GB
+            if os.environ.get("SLURM_JOB_ID")
+            else psutil.virtual_memory().total / 1e9
+        )
 
     def total_power(self) -> Power:
         """
@@ -251,8 +257,8 @@ class RAM(BaseHardware):
         """
         try:
             memory_GB = (
-                self.slurm_memory_GB
-                if os.environ.get("SLURM_JOB_ID")
+                self.machine_memory_GB
+                if self._tracking_mode == "machine"
                 else self.process_memory_GB
             )
             ram_power = Power.from_watts(memory_GB * self.power_per_GB)
