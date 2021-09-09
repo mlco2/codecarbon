@@ -1,2 +1,4 @@
 tensorflow
 keras-tuner
+torch
+torchvision
