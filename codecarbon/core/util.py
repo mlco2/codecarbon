@@ -15,7 +15,6 @@ def suppress(*exceptions):
         logger.warning(
             exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
         )
-        logger.warning("stopping.")
         pass
 
 
