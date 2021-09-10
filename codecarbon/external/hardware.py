@@ -39,9 +39,7 @@ class GPU(BaseHardware):
     gpu_ids: Optional[List]
 
     def __repr__(self) -> str:
-        return super().__repr__() + " ({})".format(
-            ", ".join([d["name"] for d in get_gpu_details()])
-        )
+        return "GPU ({})".format(", ".join([d["name"] for d in get_gpu_details()]))
 
     def _get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
         """
@@ -96,7 +94,7 @@ class CPU(BaseHardware):
                 " ".join(map(str.capitalize, self._mode.split("_")))
             )
 
-        s = "CPU({} > {}W".format(self._model, self._tdp)
+        s = "CPU([tdp] {} -> {}W".format(self._model, self._tdp)
 
         if self._is_generic_tdp:
             s += " [generic]"
