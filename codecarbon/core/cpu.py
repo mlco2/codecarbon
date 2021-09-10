@@ -144,11 +144,11 @@ class IntelPowerGadget:
                 else:
                     cpu_details[col_name] = cpu_data[col_name].mean()
         except Exception as e:
-            logger.info(
-                f"Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
-                Exception occurred {e}",
-                exc_info=True,
+            logger.warning(
+                f"Unable to read Intel Power Gadget logged file. Exception:\n{e}"
             )
+            logger.debug("Full error:\n", exc_info=True)
+
         return cpu_details
 
 
@@ -219,11 +219,11 @@ class IntelRAPL:
             for rapl_file in self._rapl_files:
                 cpu_details[rapl_file.name] = rapl_file.power_measurement.kW
         except Exception as e:
-            logger.info(
-                f"Unable to read Intel RAPL files at {self._rapl_files}\n \
-                Exception occurred {e}",
-                exc_info=True,
+            logger.warning(
+                f"Unable to read Intel RAPL files at {self._rapl_files}."
+                + f" Exception:\n {e}"
             )
+            logger.debug("Full error:\n", exc_info=True)
         return cpu_details
 
 
