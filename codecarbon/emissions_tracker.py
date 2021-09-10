@@ -166,10 +166,8 @@ class BaseEmissionsTracker(ABC):
             logger.info("Tracking Intel CPU via RAPL interface")
             self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
         else:
-            logger.warning(
-                "No CPU tracking mode found. Falling back on CPU constant mode."
-            )
-            logger.info("Tracking using constant")
+            logger.warning("No Intel CPU tracking mode found.")
+            logger.info("Falling back to TDP-based constant consumption mode.")
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
@@ -180,7 +178,7 @@ class BaseEmissionsTracker(ABC):
             else:
                 logger.warning(
                     "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
+                    + "Falling back on a global constant consumption of 85W."
                 )
                 self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
 
