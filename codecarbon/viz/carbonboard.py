@@ -16,16 +16,16 @@ def render_app(df: pd.DataFrame):
     components = Components()
     header = components.get_header()
     net_summary = components.get_net_summary()
-    project_dropdown = components.get_project_dropdown(df)
-    project_details = components.get_project_details()
+    experiment_dropdown = components.get_experiment_dropdown(df)
+    experiment_details = components.get_experiment_details()
     exemplary_equivalents = components.get_exemplary_equivalents()
-    _hidden_project_data = components.get_hidden_project_data()
-    _hidden_project_summary = components.get_hidden_project_summary()
+    _hidden_experiment_data = components.get_hidden_experiment_data()
+    _hidden_experiment_summary = components.get_hidden_experiment_summary()
     cloud_emissions_comparison = components.get_cloud_emissions_comparison()
     global_comparison = components.get_global_comparison()
     regional_comparison = components.get_regional_emissions_comparison()
-    project_time_series = components.get_project_time_series()
-    project_emissions_bar_chart = components.get_project_emissions_bar_chart()
+    experiment_time_series = components.get_experiment_time_series()
+    experiment_emissions_bar_chart = components.get_experiment_emissions_bar_chart()
     references = components.get_references()
 
     data = Data()
@@ -34,36 +34,36 @@ def render_app(df: pd.DataFrame):
         [
             header,
             net_summary,
-            project_dropdown,
-            project_details,
+            experiment_dropdown,
+            experiment_details,
             exemplary_equivalents,
             cloud_emissions_comparison,
             global_comparison,
             regional_comparison,
-            project_time_series,
-            project_emissions_bar_chart,
+            experiment_time_series,
+            experiment_emissions_bar_chart,
             references,
-            _hidden_project_data,
-            _hidden_project_summary,
+            _hidden_experiment_data,
+            _hidden_experiment_summary,
         ],
         style={"padding-top": "50px"},
     )
 
     @app.callback(
         [
-            Output(component_id="hidden_project_data", component_property="children"),
-            Output(component_id="hidden_project_summary", component_property="data"),
+            Output(component_id="hidden_experiment_data", component_property="children"),
+            Output(component_id="hidden_experiment_summary", component_property="data"),
             Output(component_id="net_power_consumption", component_property="children"),
             Output(component_id="net_carbon_equivalent", component_property="children"),
             Output(
-                component_id="project_infrastructure_location",
+                component_id="experiment_infrastructure_location",
                 component_property="children",
             ),
             Output(
-                component_id="project_power_consumption", component_property="children"
+                component_id="experiment_power_consumption", component_property="children"
             ),
             Output(
-                component_id="project_carbon_equivalent", component_property="children"
+                component_id="experiment_carbon_equivalent", component_property="children"
             ),
             Output(
                 component_id="last_run_power_consumption", component_property="children"
@@ -72,38 +72,38 @@ def render_app(df: pd.DataFrame):
                 component_id="last_run_carbon_equivalent", component_property="children"
             ),
         ],
-        [Input(component_id="project_name", component_property="value")],
+        [Input(component_id="experiment_name", component_property="value")],
     )
-    def update_project_data(project_name: str):
-        project_data = data.get_project_data(df, project_name)
-        project_summary = data.get_project_summary(project_data.data)
+    def update_experiment_data(experiment_name: str):
+        experiment_data = data.get_experiment_data(df, experiment_name)
+        experiment_summary = data.get_experiment_summary(experiment_data.data)
         net_power_consumption = f"{'{:.1f}'.format(sum(df['energy_consumed']))} kWh"
         net_carbon_equivalent = f"{'{:.1f}'.format(sum(df['emissions']))} kg"
-        if {project_summary["region"]} == "":
-            project_infrastructure_location = f"{project_summary['country_name']}"
+        if {experiment_summary["region"]} == "":
+            experiment_infrastructure_location = f"{experiment_summary['country_name']}"
         else:
-            project_infrastructure_location = (
-                f"{project_summary['region']}, {project_summary['country_name']}"
+            experiment_infrastructure_location = (
+                f"{experiment_summary['region']}, {experiment_summary['country_name']}"
             )
-        project_power_consumption = (
-            f"{round(project_summary['total']['energy_consumed'],1)} kWh"
+        experiment_power_consumption = (
+            f"{round(experiment_summary['total']['energy_consumed'],1)} kWh"
         )
-        project_carbon_equivalent = (
-            f"{round(project_summary['total']['emissions'],1)} kg"
+        experiment_carbon_equivalent = (
+            f"{round(experiment_summary['total']['emissions'],1)} kg"
         )
         last_run_power_consumption = (
-            f"{project_summary['last_run']['energy_consumed']} kWh"
+            f"{experiment_summary['last_run']['energy_consumed']} kWh"
         )
-        last_run_carbon_equivalent = f"{project_summary['last_run']['emissions']} kg"
+        last_run_carbon_equivalent = f"{experiment_summary['last_run']['emissions']} kg"
 
         return (
-            project_data,
-            project_summary,
+            experiment_data,
+            experiment_summary,
             net_power_consumption,
             net_carbon_equivalent,
-            project_infrastructure_location,
-            project_power_consumption,
-            project_carbon_equivalent,
+            experiment_infrastructure_location,
+            experiment_power_consumption,
+            experiment_carbon_equivalent,
             last_run_power_consumption,
             last_run_carbon_equivalent,
         )
@@ -117,17 +117,17 @@ def render_app(df: pd.DataFrame):
             Output(component_id="tv_time", component_property="children"),
             Output(component_id="household_fraction", component_property="children"),
         ],
-        [Input(component_id="hidden_project_summary", component_property="data")],
+        [Input(component_id="hidden_experiment_summary", component_property="data")],
     )
-    def update_exemplary_equivalents(hidden_project_summary: dcc.Store):
-        project_carbon_equivalent = hidden_project_summary["total"]["emissions"]
+    def update_exemplary_equivalents(hidden_experiment_summary: dcc.Store):
+        experiment_carbon_equivalent = hidden_experiment_summary["total"]["emissions"]
         house_icon = app.get_asset_url("house_icon.png")
         car_icon = app.get_asset_url("car_icon.png")
         tv_icon = app.get_asset_url("tv_icon.png")
-        car_miles = f"{data.get_car_miles(project_carbon_equivalent)} miles"
-        tv_time = data.get_tv_time(project_carbon_equivalent)
+        car_miles = f"{data.get_car_miles(experiment_carbon_equivalent)} miles"
+        tv_time = data.get_tv_time(experiment_carbon_equivalent)
         household_fraction = (
-            f"{data.get_household_fraction(project_carbon_equivalent)} %"
+            f"{data.get_household_fraction(experiment_carbon_equivalent)} %"
         )
         return house_icon, car_icon, tv_icon, car_miles, tv_time, household_fraction
 
@@ -141,12 +141,12 @@ def render_app(df: pd.DataFrame):
             ),
         ],
         [
-            Input(component_id="hidden_project_summary", component_property="data"),
+            Input(component_id="hidden_experiment_summary", component_property="data"),
             Input(component_id="energy_type", component_property="value"),
         ],
     )
-    def update_global_comparisons(hidden_project_summary: dcc.Store, energy_type: str):
-        net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
+    def update_global_comparisons(hidden_experiment_summary: dcc.Store, energy_type: str):
+        net_energy_consumed = hidden_experiment_summary["total"]["energy_consumed"]
         global_emissions_choropleth_data = data.get_global_emissions_choropleth_data(
             net_energy_consumed
         )
@@ -165,10 +165,10 @@ def render_app(df: pd.DataFrame):
             component_id="regional_emissions_comparison_component",
             component_property="style",
         ),
-        [Input(component_id="hidden_project_summary", component_property="data")],
+        [Input(component_id="hidden_experiment_summary", component_property="data")],
     )
-    def update_show_regional_comparison(hidden_project_summary: dcc.Store):
-        country_iso_code = hidden_project_summary["country_iso_code"]
+    def update_show_regional_comparison(hidden_experiment_summary: dcc.Store):
+        country_iso_code = hidden_experiment_summary["country_iso_code"]
         # add country codes here to render for different countries
         if country_iso_code.upper() in ["USA", "CAN"]:
             return {"display": "block"}
@@ -183,12 +183,12 @@ def render_app(df: pd.DataFrame):
                 component_property="figure",
             ),
         ],
-        [Input(component_id="hidden_project_summary", component_property="data")],
+        [Input(component_id="hidden_experiment_summary", component_property="data")],
     )
-    def update_regional_comparison_choropleth(hidden_project_summary: dcc.Store):
-        country_name = hidden_project_summary["country_name"]
-        country_iso_code = hidden_project_summary["country_iso_code"]
-        net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
+    def update_regional_comparison_choropleth(hidden_experiment_summary: dcc.Store):
+        country_name = hidden_experiment_summary["country_name"]
+        country_iso_code = hidden_experiment_summary["country_iso_code"]
+        net_energy_consumed = hidden_experiment_summary["total"]["energy_consumed"]
         regional_emissions_choropleth_data = (
             data.get_regional_emissions_choropleth_data(
                 net_energy_consumed, country_iso_code
@@ -203,21 +203,21 @@ def render_app(df: pd.DataFrame):
         )
 
     @app.callback(
-        Output(component_id="project_time_series", component_property="figure"),
-        [Input(component_id="hidden_project_data", component_property="children")],
+        Output(component_id="experiment_time_series", component_property="figure"),
+        [Input(component_id="hidden_experiment_data", component_property="children")],
     )
-    def update_project_time_series(hidden_project_data: dt.DataTable):
-        return components.get_project_time_series_figure(
-            hidden_project_data["props"]["data"]
+    def update_experiment_time_series(hidden_experiment_data: dt.DataTable):
+        return components.get_experiment_time_series_figure(
+            hidden_experiment_data["props"]["data"]
         )
 
     @app.callback(
-        Output(component_id="project_emissions_bar_chart", component_property="figure"),
-        [Input(component_id="hidden_project_data", component_property="children")],
+        Output(component_id="experiment_emissions_bar_chart", component_property="figure"),
+        [Input(component_id="hidden_experiment_data", component_property="children")],
     )
-    def update_project_bar_chart(hidden_project_data: dt.DataTable):
-        return components.get_project_emissions_bar_chart_figure(
-            hidden_project_data["props"]["data"]
+    def update_experiment_bar_chart(hidden_experiment_data: dt.DataTable):
+        return components.get_experiment_emissions_bar_chart_figure(
+            hidden_experiment_data["props"]["data"]
         )
 
     @app.callback(
@@ -225,10 +225,10 @@ def render_app(df: pd.DataFrame):
             component_id="cloud_emissions_comparison_component",
             component_property="style",
         ),
-        [Input(component_id="hidden_project_summary", component_property="data")],
+        [Input(component_id="hidden_experiment_summary", component_property="data")],
     )
-    def update_on_cloud(hidden_project_summary: dcc.Store):
-        on_cloud = hidden_project_summary["on_cloud"]
+    def update_on_cloud(hidden_experiment_summary: dcc.Store):
+        on_cloud = hidden_experiment_summary["on_cloud"]
         if on_cloud == "Y":
             return {"display": "block"}
         else:
@@ -242,13 +242,13 @@ def render_app(df: pd.DataFrame):
             ),
             Output(component_id="cloud_recommendation", component_property="children"),
         ],
-        [Input(component_id="hidden_project_summary", component_property="data")],
+        [Input(component_id="hidden_experiment_summary", component_property="data")],
     )
-    def update_cloud_emissions_barchart(hidden_project_summary: dcc.Store):
-        on_cloud = hidden_project_summary["on_cloud"]
-        net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
-        cloud_provider = hidden_project_summary["cloud_provider"]
-        cloud_region = hidden_project_summary["cloud_region"]
+    def update_cloud_emissions_barchart(hidden_experiment_summary: dcc.Store):
+        on_cloud = hidden_experiment_summary["on_cloud"]
+        net_energy_consumed = hidden_experiment_summary["total"]["energy_consumed"]
+        cloud_provider = hidden_experiment_summary["cloud_provider"]
+        cloud_region = hidden_experiment_summary["cloud_region"]
         (
             cloud_provider_name,
             cloud_emissions_barchart_data,

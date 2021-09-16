@@ -13,17 +13,17 @@ class Data:
         self._emissions = Emissions(self._data_source)
 
     @staticmethod
-    def get_project_data(df: pd.DataFrame, project_name) -> dt.DataTable:
-        project_df = df[df.project_name == project_name]
-        project_df = project_df.sort_values(by="timestamp")
-        project_data = project_df.to_dict("rows")
-        columns = [{"name": column, "id": column} for column in project_df.columns]
-        return dt.DataTable(data=project_data, columns=columns)
+    def get_experiment_data(df: pd.DataFrame, experiment_name) -> dt.DataTable:
+        experiment_df = df[df.experiment_name == experiment_name]
+        experiment_df = experiment_df.sort_values(by="timestamp")
+        experiment_data = experiment_df.to_dict("rows")
+        columns = [{"name": column, "id": column} for column in experiment_df.columns]
+        return dt.DataTable(data=experiment_data, columns=columns)
 
     @staticmethod
-    def get_project_summary(project_data: List[Dict]):
-        last_run = project_data[-1]
-        project_summary = {
+    def get_experiment_summary(experiment_data: List[Dict]):
+        last_run = experiment_data[-1]
+        experiment_summary = {
             "last_run": {
                 "timestamp": last_run["timestamp"],
                 "duration": last_run["duration"],
@@ -32,13 +32,13 @@ class Data:
             },
             "total": {
                 "duration": sum(
-                    map(lambda experiment: experiment["duration"], project_data)
+                    map(lambda run: run["duration"], experiment_data)
                 ),
                 "emissions": sum(
-                    map(lambda experiment: experiment["emissions"], project_data)
+                    map(lambda run: run["emissions"], experiment_data)
                 ),
                 "energy_consumed": sum(
-                    map(lambda experiment: experiment["energy_consumed"], project_data)
+                    map(lambda run: run["energy_consumed"], experiment_data)
                 ),
             },
             "country_name": last_run["country_name"],
@@ -48,9 +48,9 @@ class Data:
             "cloud_provider": last_run["cloud_provider"],
             "cloud_region": last_run["cloud_region"],
         }
-        return project_summary
+        return experiment_summary
 
-    def get_car_miles(self, project_carbon_equivalent: float):
+    def get_car_miles(self, experiment_carbon_equivalent: float):
         """
         8.89 × 10-3 metric tons CO2/gallon gasoline ×
         1/22.0 miles per gallon car/truck average ×
@@ -58,21 +58,21 @@ class Data:
         = 4.09 x 10-4 metric tons CO2E/mile
         = 0.409 kg CO2E/mile
         Source: EPA
-        :param project_carbon_equivalent: total project emissions in kg CO2E
+        :param experiment_carbon_equivalent: total experiment emissions in kg CO2E
         :return: number of miles driven by avg car
         """
-        return "{:.0f}".format(project_carbon_equivalent / 0.409)
+        return "{:.0f}".format(experiment_carbon_equivalent / 0.409)
 
-    def get_tv_time(self, project_carbon_equivalent: float):
+    def get_tv_time(self, experiment_carbon_equivalent: float):
         """
         Gives the amount of time
         a 32-inch LCD flat screen TV will emit
         an equivalent amount of carbon
         Ratio is 0.097 kg CO2 / 1 hour tv
-        :param project_carbon_equivalent: total project emissions in kg CO2E
+        :param experiment_carbon_equivalent: total experiment emissions in kg CO2E
         :return: equivalent TV time
         """
-        time_in_minutes = project_carbon_equivalent * (1 / 0.097) * 60
+        time_in_minutes = experiment_carbon_equivalent * (1 / 0.097) * 60
         formated_value = "{:.0f} minutes".format(time_in_minutes)
         if time_in_minutes >= 60:
             time_in_hours = time_in_minutes / 60
@@ -82,17 +82,17 @@ class Data:
                 formated_value = "{:.0f} days".format(time_in_days)
         return formated_value
 
-    def get_household_fraction(self, project_carbon_equivalent: float):
+    def get_household_fraction(self, experiment_carbon_equivalent: float):
         """
         Total CO2 emissions for energy use per home: 5.734 metric tons CO2 for electricity
         + 2.06 metric tons CO2 for natural gas + 0.26 metric tons CO2 for liquid petroleum gas
          + 0.30 metric tons CO2 for fuel oil  = 8.35 metric tons CO2 per home per year / 52 weeks
          = 160.58 kg CO2/week on average
         Source: EPA
-        :param project_carbon_equivalent: total project emissions in kg CO2E
+        :param experiment_carbon_equivalent: total experiment emissions in kg CO2E
         :return: % of weekly emissions re: an average American household
         """
-        return "{:.2f}".format((project_carbon_equivalent / 160.58) * 100)
+        return "{:.2f}".format((experiment_carbon_equivalent / 160.58) * 100)
 
     def get_global_emissions_choropleth_data(
         self, net_energy_consumed: float
@@ -210,7 +210,7 @@ class Data:
             axis=1,
         )
 
-        cloud_emissions_project_region = cloud_emissions[
+        cloud_emissions_experiment_region = cloud_emissions[
             cloud_emissions.region == cloud_region
         ]
         cloud_emissions = cloud_emissions[
@@ -219,6 +219,6 @@ class Data:
         ].sort_values(by="emissions")
 
         return (
-            cloud_emissions_project_region.iloc[0, :].providerName,
-            pd.concat([cloud_emissions_project_region, cloud_emissions]),
+            cloud_emissions_experiment_region.iloc[0, :].providerName,
+            pd.concat([cloud_emissions_experiment_region, cloud_emissions]),
         )
