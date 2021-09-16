@@ -1,4 +1,4 @@
-timestamp,project_name,duration,emissions,emissions_rate,cpu_power,gpu_power,ram_power,cpu_energy,gpu_energy,ram_energy,energy_consumed,country_name,country_iso_code,region,on_cloud,cloud_provider,cloud_region,,,,,,,,,,,,,,
+timestamp,experiment_name,duration,emissions,emissions_rate,cpu_power,gpu_power,ram_power,cpu_energy,gpu_energy,ram_energy,energy_consumed,country_name,country_iso_code,region,on_cloud,cloud_provider,cloud_region,,,,,,,,,,,,,,
 2020-03-23T09:26:11,project_gamma,34,8,4,8,0,1.234535,8,0,0.1565332,8,USA,USA,Ohio,Y,aws,us-east-2,,,,,,,,,,,,,,
 2020-03-24T15:26:11,project_delta,16,1,0.5,3,0,1.234535034,3,0,0.156533207,3,Taiwan,TWN,Changhua County,Y,gcp,asia-east1,,,,,,,,,,,,,,
 2020-03-25T21:26:11,project_alpha,19,1,0.5,1,0,1.234535069,1,0,0.156533215,1,Canada,CAN,Ontario,N,,,,,,,,,,,,,,,,

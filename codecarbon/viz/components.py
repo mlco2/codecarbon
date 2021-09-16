@@ -71,17 +71,17 @@ class Components:
         )
 
     @staticmethod
-    def get_project_dropdown(df: pd.DataFrame):
-        projects = sorted(list(df["project_name"].unique()))
+    def get_experiment_dropdown(df: pd.DataFrame):
+        experiments = sorted(list(df["experiment_name"].unique()))
         return html.Div(
             dbc.Col(
                 [
                     html.Br(),
                     html.H3("Select a Project", style={"textAlign": "left"}),
                     dcc.Dropdown(
-                        id="project_name",
-                        options=[{"label": i, "value": i} for i in projects],
-                        value=projects[0],
+                        id="experiment_name",
+                        options=[{"label": i, "value": i} for i in experiments],
+                        value=experiments[0],
                     ),
                 ],
                 style={"display": "inline-block"},
@@ -89,7 +89,7 @@ class Components:
         )
 
     @staticmethod
-    def get_project_details():
+    def get_experiment_details():
         return html.Div(
             [
                 html.Br(),
@@ -99,7 +99,7 @@ class Components:
                             [
                                 "Infrastructure Hosted at ",
                                 html.Strong(
-                                    id="project_infrastructure_location",
+                                    id="experiment_infrastructure_location",
                                     style={"fontWeight": "normal", "color": "green"},
                                 ),
                             ],
@@ -115,7 +115,7 @@ class Components:
                             [
                                 "Power Consumption Across All Experiments : ",
                                 html.Strong(
-                                    id="project_power_consumption",
+                                    id="experiment_power_consumption",
                                     style={"fontWeight": "normal", "color": "green"},
                                 ),
                             ],
@@ -140,7 +140,7 @@ class Components:
                             [
                                 "Carbon Equivalent Across All Experiments : ",
                                 html.Strong(
-                                    id="project_carbon_equivalent",
+                                    id="experiment_carbon_equivalent",
                                     style={"color": "green", "fontWeight": "bold"},
                                 ),
                             ],
@@ -350,17 +350,17 @@ class Components:
     ):
         if on_cloud == "N":
             return html.H4()
-        cloud_emissions_project_region = cloud_emissions_barchart_data.iloc[0, :]
+        cloud_emissions_experiment_region = cloud_emissions_barchart_data.iloc[0, :]
         cloud_emissions_minimum_region = cloud_emissions_barchart_data.iloc[1, :]
         if (
             cloud_emissions_minimum_region.emissions
-            > cloud_emissions_project_region.emissions
+            > cloud_emissions_experiment_region.emissions
         ):
             return html.H4(
                 [
                     f"Already running on {cloud_provider_name}'s least emissions region ",
                     html.Strong(
-                        f"{cloud_emissions_project_region.region}",
+                        f"{cloud_emissions_experiment_region.region}",
                         style={"fontWeight": "normal", "color": "green"},
                     ),
                 ]
@@ -390,7 +390,7 @@ class Components:
                     [
                         "Reducing the current  emissions by ",
                         html.Strong(
-                            f"{'{:.1f}'.format(cloud_emissions_project_region.emissions - cloud_emissions_minimum_region.emissions)} kg",
+                            f"{'{:.1f}'.format(cloud_emissions_experiment_region.emissions - cloud_emissions_minimum_region.emissions)} kg",
                             style={"fontWeight": "normal", "color": "green"},
                         ),
                     ]
@@ -594,38 +594,38 @@ class Components:
         return fig
 
     @staticmethod
-    def get_project_time_series():
+    def get_experiment_time_series():
         return html.Div(
             dbc.Col(
                 [
                     html.Br(),
                     html.Br(),
                     html.H2("Emissions Timeline", style={"textAlign": "center"}),
-                    dcc.Graph(id="project_time_series"),
+                    dcc.Graph(id="experiment_time_series"),
                 ]
             ),
             style={"paddingLeft": "3%"},
         )
 
     @staticmethod
-    def get_project_emissions_bar_chart():
+    def get_experiment_emissions_bar_chart():
         return html.Div(
             dbc.Col(
                 [
                     html.Br(),
                     html.Br(),
                     html.H2("Emissions Detail", style={"textAlign": "center"}),
-                    dcc.Graph(id="project_emissions_bar_chart"),
+                    dcc.Graph(id="experiment_emissions_bar_chart"),
                 ]
             ),
             style={"paddingLeft": "3%"},
         )
 
     @staticmethod
-    def get_project_time_series_figure(project_data: dt.DataTable):
+    def get_experiment_time_series_figure(experiment_data: dt.DataTable):
         return (
             px.line(
-                project_data,
+                experiment_data,
                 x="timestamp",
                 y="emissions",
                 hover_data=["emissions"],
@@ -639,21 +639,21 @@ class Components:
         )
 
     @staticmethod
-    def get_project_emissions_bar_chart_figure(project_data: dt.DataTable):
+    def get_experiment_emissions_bar_chart_figure(experiment_data: dt.DataTable):
         # Note: necessary to both convert to pandas and replace null values for hover value
-        project_data = pd.DataFrame(project_data)
-        project_data = project_data.replace(np.nan, "", regex=True)
-        hover_data = {c: True for c in project_data.columns}
+        experiment_data = pd.DataFrame(experiment_data)
+        experiment_data = experiment_data.replace(np.nan, "", regex=True)
+        hover_data = {c: True for c in experiment_data.columns}
         bar = (
             px.bar(
-                project_data,
+                experiment_data,
                 y="emissions",
                 hover_data=hover_data,
                 labels={
                     "emissions": "Carbon Equivalent (kg)",
                     "energy_consumed": "Energy Consumed (kWh)",
                     "timestamp": "Timestamp",
-                    "project_name": "Project Name",
+                    "experiment_name": "Project Name",
                     "duration": "Duration",
                     "emissions_detail": "Emissions Detail",
                     "country_name": "Country Name",
@@ -669,13 +669,13 @@ class Components:
         return bar
 
     @staticmethod
-    def get_hidden_project_data():
-        return html.Div(id="hidden_project_data", style={"display": "none"})
+    def get_hidden_experiment_data():
+        return html.Div(id="hidden_experiment_data", style={"display": "none"})
 
     @staticmethod
-    def get_hidden_project_summary():
+    def get_hidden_experiment_summary():
         return html.Div(
-            dcc.Store(id="hidden_project_summary"), style={"display": "none"}
+            dcc.Store(id="hidden_experiment_summary"), style={"display": "none"}
         )
 
     @staticmethod
