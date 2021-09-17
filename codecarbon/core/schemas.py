@@ -35,9 +35,21 @@ class Emission(EmissionBase):
 class RunBase:
     timestamp: str
     experiment_id: str
+    os: Optional[str]
+    python_version: Optional[str]
+    cpu_count: Optional[int]
+    cpu_model: Optional[str]
+    gpu_count: Optional[int]
+    gpu_model: Optional[str]
+    longitude: Optional[float]
+    latitude: Optional[float]
+    region: Optional[str]
+    provider: Optional[str]
+    ram_total_size: Optional[float]
+    tracking_mode: Optional[str]
 
 
-class RunCreate(RunBase):
+class       RunCreate(RunBase):
     pass
 
 
