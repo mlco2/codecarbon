@@ -67,12 +67,36 @@ class Emission(EmissionBase):
 class RunBase(BaseModel):
     timestamp: datetime
     experiment_id: UUID
+    os: Optional[str]
+    python_version: Optional[str]
+    cpu_count: Optional[int]
+    cpu_model: Optional[str]
+    gpu_count: Optional[int]
+    gpu_model: Optional[str]
+    longitude: Optional[float]
+    latitude: Optional[float]
+    region: Optional[str]
+    provider: Optional[str]
+    ram_total_size: Optional[float]
+    tracking_mode: Optional[str]
 
     class Config:
         schema_extra = {
             "example": {
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "experiment_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "os": "macOS-10.15.7-x86_64-i386-64bit",
+                "python_version": "3.8.0",
+                "cpu_count": 12,
+                "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+                "gpu_count": 4,
+                "gpu_model": "NVIDIA",
+                "longitude": -7.6174,
+                "latitude": 33.5822,
+                "region": "EUROPE",
+                "provider": "AWS",
+                "ram_total_size": 83948.22,
+                "tracking_mode": "Machine"
             }
         }
 

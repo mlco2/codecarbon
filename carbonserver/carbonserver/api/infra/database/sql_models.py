@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import ARRAY
@@ -39,6 +39,18 @@ class Run(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
     experiment_id = Column(UUID(as_uuid=True), ForeignKey("experiments.id"))
+    os = Column(String, nullable=True)
+    python_version = Column(String, nullable=True)
+    cpu_count = Column(Integer, nullable=True)
+    cpu_model = Column(String, nullable=True)
+    gpu_count = Column(Integer, nullable=True)
+    gpu_model = Column(String, nullable=True)
+    longitude = Column(Float, nullable=True)
+    latitude = Column(Float, nullable=True)
+    region = Column(String, nullable=True)
+    provider = Column(String, nullable=True)
+    ram_total_size = Column(Float, nullable=True)
+    tracking_mode = Column(String, nullable=True)
     experiment = relationship("Experiment", back_populates="runs")
     emissions = relationship("Emission", back_populates="run")
 
@@ -46,7 +58,19 @@ class Run(Base):
         return (
             f'<Run(id="{self.id}", '
             f'timestamp="{self.timestamp}", '
-            f'experiment_id="{self.experiment_id}")>'
+            f'experiment_id="{self.experiment_id}")>,'
+            f'os="{self.os}")>,'
+            f'python_version="{self.python_version}")>,'
+            f'cpu_count="{self.cpu_count}")>,'
+            f'cpu_model="{self.cpu_model}")>,'
+            f'gpu_count="{self.gpu_count}")>,'
+            f'gpu_model="{self.gpu_model}")>,'
+            f'longitude="{self.longitude}")>,'
+            f'latitude="{self.latitude}")>,'
+            f'region="{self.region}")>,'
+            f'provider="{self.provider}")>,'
+            f'ram_total_size="{self.ram_total_size}")>,'
+            f'tracking_mode="{self.tracking_mode}")>,'
         )
 
 
