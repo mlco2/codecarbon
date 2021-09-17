@@ -28,6 +28,18 @@ class SqlAlchemyRepository(Runs):
                 id=uuid.uuid4(),
                 timestamp=run.timestamp,
                 experiment_id=run.experiment_id,
+                os=run.os,
+                python_version=run.python_version,
+                cpu_count=run.cpu_count,
+                cpu_model=run.cpu_model,
+                gpu_count=run.gpu_count,
+                gpu_model=run.gpu_model,
+                longitude=run.longitude,
+                latitude=run.latitude,
+                region=run.region,
+                provider=run.provider,
+                ram_total_size=run.ram_total_size,
+                tracking_mode=run.tracking_mode
             )
             session.add(db_run)
             session.commit()
@@ -87,4 +99,16 @@ class SqlAlchemyRepository(Runs):
             id=run.id,
             timestamp=run.timestamp,
             experiment_id=run.experiment_id,
+            os=run.os,
+            python_version=run.python_version,
+            cpu_count=run.cpu_count,
+            cpu_model=run.cpu_model,
+            gpu_count=run.gpu_count,
+            gpu_model=run.gpu_model,
+            longitude=run.longitude,
+            latitude=run.latitude,
+            region=run.region,
+            provider=run.provider,
+            ram_total_size=run.ram_total_size,
+            tracking_mode=run.tracking_mode
         )

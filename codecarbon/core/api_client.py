@@ -34,7 +34,7 @@ class ApiClient:  # (AsyncClient)
     _previous_call = time.time()
 
     def __init__(
-        self, endpoint_url="https://api.codecarbon.io", experiment_id=None, api_key=None
+        self, endpoint_url="https://api.codecarbon.io", experiment_id=None, api_key=None, conf=None
     ):
         """
         :project_id: ID of the existing project
@@ -44,6 +44,7 @@ class ApiClient:  # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
+        self.conf = conf
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
 
@@ -105,7 +106,20 @@ class ApiClient:  # (AsyncClient)
             return None
         try:
             run = RunCreate(
-                timestamp=get_datetime_with_timezone(), experiment_id=experiment_id
+                timestamp=get_datetime_with_timezone(),
+                experiment_id=experiment_id,
+                os=self.conf.get("os"),
+                python_version=self.conf.get("python_version"),
+                cpu_count=self.conf.get("cpu_count"),
+                cpu_model=self.conf.get("cpu_model"),
+                gpu_count=self.conf.get("gpu_count"),
+                gpu_model=self.conf.get("gpu_model"),
+                longitude=self.conf.get("longitude"),
+                latitude=self.conf.get("latitude"),
+                region=self.conf.get("region"),
+                provider=self.conf.get("provider"),
+                ram_total_size=self.conf.get("ram_total_size"),
+                tracking_mode=self.conf.get("tracking_mode")
             )
             payload = dataclasses.asdict(run)
             url = self.url + "/run"

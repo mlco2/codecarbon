@@ -18,12 +18,36 @@ RUN_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
 RUN_TO_CREATE = {
     "timestamp": "2021-06-22 14:15:15",
     "experiment_id": EXPE_ID,
+    "os": "macOS-10.15.7-x86_64-i386-64bit",
+    "python_version": "3.8.0",
+    "cpu_count": 12,
+    "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+    "gpu_count": 4,
+    "gpu_model": "NVIDIA",
+    "longitude": -7.6174,
+    "latitude": 33.5822,
+    "region": "EUROPE",
+    "provider": "AWS",
+    "ram_total_size": 83948.22,
+    "tracking_mode": "Machine"
 }
 
 RUN_1 = {
     "id": RUN_ID,
     "timestamp": "2021-04-04T08:43:00+02:00",
     "experiment_id": EXPE_ID,
+    "os": "macOS-10.15.7-x86_64-i386-64bit",
+    "python_version": "3.8.0",
+    "cpu_count": 12,
+    "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+    "gpu_count": 4,
+    "gpu_model": "NVIDIA",
+    "longitude": -7.6174,
+    "latitude": 33.5822,
+    "region": "EUROPE",
+    "provider": "AWS",
+    "ram_total_size": 83948.22,
+    "tracking_mode": "Machine"
 }
 
 
@@ -31,6 +55,18 @@ RUN_2 = {
     "id": RUN_ID_2,
     "timestamp": "2021-04-04T08:43:00+02:00",
     "experiment_id": EXPE_ID_2,
+    "os": "macOS-10.15.7-x86_64-i386-64bit",
+    "python_version": "3.8.0",
+    "cpu_count": 12,
+    "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+    "gpu_count": 4,
+    "gpu_model": "NVIDIA",
+    "longitude": -7.6174,
+    "latitude": 33.5822,
+    "region": "EUROPE",
+    "provider": "AWS",
+    "ram_total_size": 83948.22,
+    "tracking_mode": "Machine"
 }
 
 
