@@ -108,7 +108,7 @@ class RunBase(BaseModel):
                 "region": "EUROPE",
                 "provider": "AWS",
                 "ram_total_size": 83948.22,
-                "tracking_mode": "Machine"
+                "tracking_mode": "Machine",
             }
         }
 

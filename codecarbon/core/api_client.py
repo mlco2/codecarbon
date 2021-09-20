@@ -34,7 +34,11 @@ class ApiClient:  # (AsyncClient)
     _previous_call = time.time()
 
     def __init__(
-        self, endpoint_url="https://api.codecarbon.io", experiment_id=None, api_key=None, conf=None
+        self,
+        endpoint_url="https://api.codecarbon.io",
+        experiment_id=None,
+        api_key=None,
+        conf=None,
     ):
         """
         :project_id: ID of the existing project
@@ -119,7 +123,7 @@ class ApiClient:  # (AsyncClient)
                 region=self.conf.get("region"),
                 provider=self.conf.get("provider"),
                 ram_total_size=self.conf.get("ram_total_size"),
-                tracking_mode=self.conf.get("tracking_mode")
+                tracking_mode=self.conf.get("tracking_mode"),
             )
             payload = dataclasses.asdict(run)
             url = self.url + "/run"
