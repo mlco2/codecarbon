@@ -49,7 +49,7 @@ class RunBase:
     tracking_mode: Optional[str]
 
 
-class       RunCreate(RunBase):
+class RunCreate(RunBase):
     pass
 
 

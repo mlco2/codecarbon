@@ -260,7 +260,9 @@ class BaseEmissionsTracker(ABC):
             self._hardware.append(GPU.from_utils(self._gpu_ids))
             gpu_names = [n["name"] for n in gpu.get_gpu_static_info()]
             gpu_names_dict = Counter(gpu_names)
-            self._conf["gpu_model"] = "".join([f"{i} x {name}" for name, i in gpu_names_dict.items()])
+            self._conf["gpu_model"] = "".join(
+                [f"{i} x {name}" for name, i in gpu_names_dict.items()]
+            )
             self._conf["gpu_count"] = len(gpu.get_gpu_static_info())
             logger.info(f"GPU model: {self._conf['gpu_model']}")
             logger.info(f"GPU count: {self._conf['gpu_count']}")
@@ -356,7 +358,7 @@ class BaseEmissionsTracker(ABC):
                 endpoint_url=self._api_endpoint,
                 experiment_id=experiment_id,
                 api_key=api_key,
-                conf=self._conf
+                conf=self._conf,
             )
             self.run_id = self._cc_api__out.run_id
             self.persistence_objs.append(self._cc_api__out)
