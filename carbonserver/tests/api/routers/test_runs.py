@@ -29,7 +29,7 @@ RUN_TO_CREATE = {
     "region": "EUROPE",
     "provider": "AWS",
     "ram_total_size": 83948.22,
-    "tracking_mode": "Machine"
+    "tracking_mode": "Machine",
 }
 
 RUN_1 = {
@@ -47,7 +47,7 @@ RUN_1 = {
     "region": "EUROPE",
     "provider": "AWS",
     "ram_total_size": 83948.22,
-    "tracking_mode": "Machine"
+    "tracking_mode": "Machine",
 }
 
 
@@ -66,7 +66,7 @@ RUN_2 = {
     "region": "EUROPE",
     "provider": "AWS",
     "ram_total_size": 83948.22,
-    "tracking_mode": "Machine"
+    "tracking_mode": "Machine",
 }
 
 

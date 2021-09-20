@@ -168,7 +168,7 @@ class CodeCarbonAPIOutput(BaseOutput):
             experiment_id=experiment_id,
             endpoint_url=endpoint_url,
             api_key=api_key,
-            conf=conf
+            conf=conf,
         )
         self.run_id = self.api.run_id
 
