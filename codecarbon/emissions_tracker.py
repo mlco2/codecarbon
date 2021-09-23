@@ -234,8 +234,6 @@ class BaseEmissionsTracker(ABC):
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
         self._scheduler = BackgroundScheduler()
-        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
-        self._conf["hardware"] = []
         self._cc_api__out = None
         self._measure_occurrence: int = 0
         self._cloud = None
@@ -256,6 +254,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_count"] = len(self._gpu_ids)
 
         # Hardware detection
+        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
@@ -300,7 +299,10 @@ class BaseEmissionsTracker(ABC):
                 self._hardware.append(hardware)
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
+        self._conf["available_ram_GB"] = self._hardware[0].machine_memory_GB
+
         logger.info(f"CPU Model: {self._conf['cpu_model']}")
+        logger.info(f"Available RAM : {self._conf['available_ram_GB']}")
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
