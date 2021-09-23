@@ -41,9 +41,20 @@ class EmissionsData:
     country_name: str
     country_iso_code: str
     region: str
+    cloud_provider: str
+    cloud_region: str
+    os: str
+    python_version: str
+    cpu_count: float
+    cpu_model: str
+    gpu_count: float
+    gpu_model: str
+    longitude: float
+    latitude: float
+    ram_total_size: float
+    tracking_mode: str
     on_cloud: str = "N"
-    cloud_provider: str = ""
-    cloud_region: str = ""
+
 
     @property
     def values(self) -> OrderedDict:
