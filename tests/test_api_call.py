@@ -75,5 +75,15 @@ def test_call_api():
             on_cloud="N",
             cloud_provider="",
             cloud_region="",
+            os="Linux",
+            python_version="3.8.0",
+            gpu_count=4,
+            gpu_model="NVIDIA",
+            cpu_count=12,
+            cpu_model="Intel",
+            longitude=-7.6174,
+            latitude=33.5822,
+            ram_total_size=83948.22,
+            tracking_mode="Machine",
         )
         assert api.add_emission(dataclasses.asdict(carbon_emission))

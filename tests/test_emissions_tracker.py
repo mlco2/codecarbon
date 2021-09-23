@@ -348,6 +348,8 @@ class TestCarbonTracker(unittest.TestCase):
 
         self.verify_output_file(self.emissions_file_path, 3)
 
+        print(emissions_df["cpu_power"].values[0])
+
         self.assertAlmostEqual(0.269999999999999, emissions_df["cpu_power"].values[0])
         self.assertEqual("Morocco", emissions_df["country_name"].values[0])
         self.assertEqual("United States", emissions_df["country_name"].values[1])
