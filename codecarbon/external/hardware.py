@@ -196,9 +196,9 @@ class RAM(BaseHardware):
                 ["scontrol show job $SLURM_JOBID"], shell=True
             ).decode()
         except subprocess.CalledProcessError:
-            return None
+            return
 
-    def _parse_scontrol_memory(self, mem):
+    def _parse_scontrol_memory_GB(self, mem):
         nb = int(mem[:-1])
         unit = mem[-1]
         if unit == "T":
@@ -211,20 +211,36 @@ class RAM(BaseHardware):
             return nb / (1000 ** 2)
 
     def _parse_scontrol(self, scontrol_str):
-        lines = scontrol_str.split("\n")
-        memlines = [line for line in lines if "mem=" in line]
-        if not memlines:
-            return
-        memline = memlines[0]
-        mem = memline.split("mem=")[1].split(",")[0]
-        return mem
+        mem_matches = re.findall(r"mem=\d+[A-Z]", scontrol_str)
+        if len(mem_matches) == 0:
+            logger.warning(
+                "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
+                + "to count SLURM-available RAM. Using the machine's total RAM."
+            )
+            return psutil.virtual_memory().total / 1e9
+        if len(mem_matches) > 1:
+            logger.warning(
+                "Unexpected output after running `scontrol show job $SLURM_JOBID` "
+                + "to count SLURM-available RAM. Using the machine's total RAM."
+            )
+            return psutil.virtual_memory().total / 1e9
+
+        return mem_matches[0].replace("mem=", "")
 
     @property
     def slurm_memory_GB(self):
         scontrol_str = self._read_slurm_scontrol()
+        if scontrol_str is None:
+            logger.warning(
+                "Error running `scontrol show job $SLURM_JOBID` "
+                + "to retrieve SLURM-available RAM."
+                + "Using the machine's total RAM."
+            )
+            return psutil.virtual_memory().total / 1e9
         mem = self._parse_scontrol(scontrol_str)
-        mem_GB = self._parse_scontrol_memory(mem)
-        return mem_GB
+        if isinstance(mem, str):
+            return self._parse_scontrol_memory_GB(mem)
+        return mem
 
     @property
     def process_memory_GB(self):
