@@ -293,7 +293,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  Python version: {self._conf['python_version']}")
         logger.info(f"  CPU count: {self._conf['cpu_count']}")
         logger.info(f"  CPU Model: {self._conf['cpu_model']}")
-        logger.info(f"  Available RAM : {self._conf['available_ram_GB']}")
+        logger.info(f"  Available RAM : {self._conf['available_ram_GB']} GB")
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
