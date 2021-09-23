@@ -230,6 +230,7 @@ class BaseEmissionsTracker(ABC):
         self._conf["os"] = platform.platform()
         self._conf["python_version"] = platform.python_version()
         self._conf["cpu_count"] = psutil.cpu_count()
+        self._geo = None
 
         logger.info("Printing metadata")
         logger.info(f"Platform system: {self._conf['os']}")
@@ -302,23 +303,14 @@ class BaseEmissionsTracker(ABC):
         cloud: CloudMetadata = self._get_cloud_metadata()
 
         if cloud.is_on_private_infra:
-            self._conf["longitude"] = self._get_geo_metadata().longitude
-            self._conf["latitude"] = self._get_geo_metadata().latitude
-            self._conf["region"] = self._get_cloud_metadata().region
-            self._conf["provider"] = self._get_cloud_metadata().provider
+            self._geo = self._get_geo_metadata()
+            self._conf["longitude"] = self._geo.longitude
+            self._conf["latitude"] = self._geo.latitude
+            self._conf["region"] = cloud.region
+            self._conf["provider"] = cloud.provider
         else:
             self._conf["region"] = cloud.region
             self._conf["provider"] = cloud.provider
-
-        # if self._get_geo_metadata() is not None:
-        #     self._conf["longitude"] = self._get_geo_metadata().longitude
-        #     self._conf["latitude"] = self._get_geo_metadata().latitude
-        #     self._conf["region"] = self._get_cloud_metadata().region
-        #     self._conf["provider"] = self._get_cloud_metadata().provider
-        #     logger.info(f"Longitude: {self._conf.get('longitude')}")
-        #     logger.info(f"Latitude: {self._conf.get('latitude')}")
-        #     logger.info(f"Region: {self._conf.get('region')}")
-        #     logger.info(f"Provider: + {self._conf.get('provider')}")
 
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
@@ -424,13 +416,12 @@ class BaseEmissionsTracker(ABC):
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
         if cloud.is_on_private_infra:
-            geo: GeoMetadata = self._get_geo_metadata()
             emissions = self._emissions.get_private_infra_emissions(
-                self._total_energy, geo
+                self._total_energy, self._geo
             )
-            country_name = geo.country_name
-            country_iso_code = geo.country_iso_code
-            region = geo.region
+            country_name = self._geo.country_name
+            country_iso_code = self._geo.country_iso_code
+            region = self._geo.region
             on_cloud = "N"
             cloud_provider = ""
             cloud_region = ""
@@ -462,6 +453,17 @@ class BaseEmissionsTracker(ABC):
             on_cloud=on_cloud,
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
+            os=self._conf["os"],
+            python_version=self._conf["python_version"],
+            gpu_count=self._conf["gpu_count"],
+            gpu_model=self._conf["gpu_model"],
+            cpu_count=self._conf["cpu_count"],
+            cpu_model=self._conf["cpu_model"],
+            longitude=self._conf["longitude"],
+            latitude=self._conf["latitude"],
+            ram_total_size=self._conf["ram_total_size"],
+            tracking_mode=self._conf["tracking_mode"]
+
         )
         if delta:
             if self._previous_emissions is None:
