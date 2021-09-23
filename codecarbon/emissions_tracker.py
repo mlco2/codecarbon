@@ -476,8 +476,7 @@ class BaseEmissionsTracker(ABC):
             longitude=self._conf.get("longitude"),
             latitude=self._conf.get("latitude"),
             ram_total_size=self._conf.get("ram_total_size"),
-            tracking_mode=self._conf.get("tracking_mode")
-
+            tracking_mode=self._conf.get("tracking_mode"),
         )
         if delta:
             if self._previous_emissions is None:
