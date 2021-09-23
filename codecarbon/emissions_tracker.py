@@ -13,14 +13,13 @@ from datetime import datetime
 from functools import wraps
 from typing import Callable, List, Optional, Union
 
-import psutil
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import suppress
+from codecarbon.core.util import suppress, count_cpus
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
@@ -240,21 +239,20 @@ class BaseEmissionsTracker(ABC):
         self._previous_emissions = None
         self._conf["os"] = platform.platform()
         self._conf["python_version"] = platform.python_version()
-        self._conf["cpu_count"] = psutil.cpu_count()
+        self._conf["cpu_count"] = count_cpus()
         self._geo = None
-
-        logger.info("Printing metadata")
-        logger.info(f"Platform system: {self._conf['os']}")
-        logger.info(f"Python version: {self._conf['python_version']}")
-        logger.info(f"CPU count: {self._conf['cpu_count']}")
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
             self._conf["gpu_ids"] = self._gpu_ids
             self._conf["gpu_count"] = len(self._gpu_ids)
 
-        # Hardware detection
+        logger.info("[setup] RAM Tracking...")
         self._hardware = [RAM(tracking_mode=self._tracking_mode)]
+        self._conf["available_ram_GB"] = self._hardware[0].machine_memory_GB
+
+        # Hardware detection
+        logger.info("[setup] GPU Tracking...")
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
@@ -266,7 +264,10 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_count"] = len(gpu.get_gpu_static_info())
             logger.info(f"GPU model: {self._conf['gpu_model']}")
             logger.info(f"GPU count: {self._conf['gpu_count']}")
+        else:
+            logger.info("No GPU found.")
 
+        logger.info("[setup] CPU Tracking...")
         if cpu.is_powergadget_available():
             logger.info("Tracking Intel CPU via Power Gadget")
             hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
@@ -299,8 +300,11 @@ class BaseEmissionsTracker(ABC):
                 self._hardware.append(hardware)
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
-        self._conf["available_ram_GB"] = self._hardware[0].machine_memory_GB
 
+        logger.info("Tracker's metadata")
+        logger.info(f"Platform system: {self._conf['os']}")
+        logger.info(f"Python version: {self._conf['python_version']}")
+        logger.info(f"CPU count: {self._conf['cpu_count']}")
         logger.info(f"CPU Model: {self._conf['cpu_model']}")
         logger.info(f"Available RAM : {self._conf['available_ram_GB']}")
 
