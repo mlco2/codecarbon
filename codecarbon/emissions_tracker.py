@@ -249,8 +249,6 @@ class BaseEmissionsTracker(ABC):
                 [f"{i} x {name}" for name, i in gpu_names_dict.items()]
             )
             self._conf["gpu_count"] = len(gpu.get_gpu_static_info())
-            logger.info(f"GPU model: {self._conf['gpu_model']}")
-            logger.info(f"GPU count: {self._conf['gpu_count']}")
         else:
             logger.info("No GPU found.")
 
@@ -291,9 +289,11 @@ class BaseEmissionsTracker(ABC):
         logger.info(">>> Tracker's metadata:")
         logger.info(f"  Platform system: {self._conf['os']}")
         logger.info(f"  Python version: {self._conf['python_version']}")
-        logger.info(f"  CPU count: {self._conf['cpu_count']}")
-        logger.info(f"  CPU Model: {self._conf['cpu_model']}")
         logger.info(f"  Available RAM : {self._conf['available_ram_GB']} GB")
+        logger.info(f"  CPU count: {self._conf['cpu_count']}")
+        logger.info(f"  CPU model: {self._conf['cpu_model']}")
+        logger.info(f"  GPU count: {self._conf['gpu_count']}")
+        logger.info(f"  GPU model: {self._conf['gpu_model']}")
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
