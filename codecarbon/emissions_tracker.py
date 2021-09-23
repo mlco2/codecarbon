@@ -301,12 +301,12 @@ class BaseEmissionsTracker(ABC):
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
-        logger.info("Tracker's metadata")
-        logger.info(f"Platform system: {self._conf['os']}")
-        logger.info(f"Python version: {self._conf['python_version']}")
-        logger.info(f"CPU count: {self._conf['cpu_count']}")
-        logger.info(f"CPU Model: {self._conf['cpu_model']}")
-        logger.info(f"Available RAM : {self._conf['available_ram_GB']}")
+        logger.info(">>> Tracker's metadata:")
+        logger.info(f"  Platform system: {self._conf['os']}")
+        logger.info(f"  Python version: {self._conf['python_version']}")
+        logger.info(f"  CPU count: {self._conf['cpu_count']}")
+        logger.info(f"  CPU Model: {self._conf['cpu_model']}")
+        logger.info(f"  Available RAM : {self._conf['available_ram_GB']}")
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
