@@ -55,7 +55,6 @@ class EmissionsData:
     tracking_mode: str
     on_cloud: str = "N"
 
-
     @property
     def values(self) -> OrderedDict:
         return OrderedDict(self.__dict__.items())
