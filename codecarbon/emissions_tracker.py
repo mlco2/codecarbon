@@ -453,16 +453,16 @@ class BaseEmissionsTracker(ABC):
             on_cloud=on_cloud,
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
-            os=self._conf["os"],
-            python_version=self._conf["python_version"],
-            gpu_count=self._conf["gpu_count"],
-            gpu_model=self._conf["gpu_model"],
-            cpu_count=self._conf["cpu_count"],
-            cpu_model=self._conf["cpu_model"],
-            longitude=self._conf["longitude"],
-            latitude=self._conf["latitude"],
-            ram_total_size=self._conf["ram_total_size"],
-            tracking_mode=self._conf["tracking_mode"]
+            os=self._conf.get("os"),
+            python_version=self._conf.get("python_version"),
+            gpu_count=self._conf.get("gpu_count"),
+            gpu_model=self._conf.get("gpu_model"),
+            cpu_count=self._conf.get("cpu_count"),
+            cpu_model=self._conf.get("cpu_model"),
+            longitude=self._conf.get("longitude"),
+            latitude=self._conf.get("latitude"),
+            ram_total_size=self._conf.get("ram_total_size"),
+            tracking_mode=self._conf.get("tracking_mode")
 
         )
         if delta:
