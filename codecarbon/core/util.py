@@ -1,10 +1,14 @@
 import logging
+import os
+import re
+import subprocess
 from contextlib import contextmanager
 from os.path import expandvars
 from pathlib import Path
 from typing import Optional, Union
 
 import cpuinfo
+import psutil
 
 from codecarbon.external.logger import logger
 
@@ -92,3 +96,38 @@ def detect_cpu_model() -> str:
         return cpu_model_detected
     else:
         return None
+
+
+def count_cpus() -> int:
+    if os.environ.get("SLURM_JOB_ID") is None:
+        return psutil.cpu_count()
+
+    try:
+        scontrol = subprocess.check_output(
+            ["scontrol show job $SLURM_JOBID"], shell=True
+        ).decode()
+    except subprocess.CalledProcessError:
+        logger.warning(
+            "Error running `scontrol show job $SLURM_JOBID` "
+            + "to count SLURM-available cpus. Using the machine's cpu count."
+        )
+        return psutil.cpu_count()
+
+    num_cpus_matches = re.findall(r"NumCPUs=\d+", scontrol)
+
+    if len(num_cpus_matches) == 0:
+        logger.warning(
+            "Could not find NumCPUs= after running `scontrol show job $SLURM_JOBID` "
+            + "to count SLURM-available cpus. Using the machine's cpu count."
+        )
+        return psutil.cpu_count()
+
+    if len(num_cpus_matches) > 1:
+        logger.warning(
+            "Unexpected output after running `scontrol show job $SLURM_JOBID` "
+            + "to count SLURM-available cpus. Using the machine's cpu count."
+        )
+        return psutil.cpu_count()
+
+    num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
+    return int(num_cpus)
