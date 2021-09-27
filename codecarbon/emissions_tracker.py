@@ -236,7 +236,7 @@ class BaseEmissionsTracker(ABC):
 
         logger.info("[setup] RAM Tracking...")
         self._hardware = [RAM(tracking_mode=self._tracking_mode)]
-        self._conf["available_ram_GB"] = self._hardware[0].machine_memory_GB
+        self._conf["ram_total_size"] = self._hardware[0].machine_memory_GB
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
@@ -287,13 +287,13 @@ class BaseEmissionsTracker(ABC):
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
         logger.info(">>> Tracker's metadata:")
-        logger.info(f"  Platform system: {self._conf['os']}")
-        logger.info(f"  Python version: {self._conf['python_version']}")
-        logger.info(f"  Available RAM : {self._conf['available_ram_GB']} GB")
-        logger.info(f"  CPU count: {self._conf['cpu_count']}")
-        logger.info(f"  CPU model: {self._conf['cpu_model']}")
-        logger.info(f"  GPU count: {self._conf['gpu_count']}")
-        logger.info(f"  GPU model: {self._conf['gpu_model']}")
+        logger.info(f"  Platform system: {self._conf.get('os')}")
+        logger.info(f"  Python version: {self._conf.get('python_version')}")
+        logger.info(f"  Available RAM : {self._conf.get('ram_total_size')} GB")
+        logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
+        logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
+        logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
+        logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
