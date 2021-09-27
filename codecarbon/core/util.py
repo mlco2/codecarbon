@@ -1,3 +1,6 @@
+import os
+import re
+import subprocess
 from contextlib import contextmanager
 from os.path import expandvars
 from pathlib import Path

@@ -19,7 +19,7 @@ from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import suppress, count_cpus
+from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
