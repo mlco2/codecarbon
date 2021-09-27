@@ -28,8 +28,8 @@ def is_powergadget_available():
         return True
     except Exception as e:
         logger.debug(
-            f"Exception occurred while instantiating IntelPowerGadget : {e}",
-            exc_info=True,
+            "Not using PowerGadget, an exception occurred while instantiating"
+            + f" IntelPowerGadget : {e}",
         )
         return False
 
@@ -40,8 +40,8 @@ def is_rapl_available():
         return True
     except Exception as e:
         logger.debug(
-            f"Exception occurred while instantiating RAPLInterface : {e}",
-            exc_info=True,
+            "Not using the RAPL interface, an exception occurred while instantiating "
+            + f"IntelRAPL : {e}",
         )
         return False
 
@@ -192,9 +192,19 @@ class IntelRAPL:
                 if "package" in name:
                     name = f"Processor Power_{i}(Watt)"
                     i += 1
-                self._rapl_files.append(
-                    RAPLFile(name, os.path.join(self._lin_rapl_dir, file, "energy_uj"))
-                )
+                rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
+                try:
+                    # Try to read the file to be sure we can
+                    with open(rapl_file, "r") as f:
+                        _ = float(f.read())
+                    self._rapl_files.append(RAPLFile(name=name, path=rapl_file))
+                    logger.debug(f"We will read Intel RAPL files at {rapl_file}")
+                except PermissionError as e:
+                    logger.error(
+                        "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
+                        + " Please view https://github.com/mlco2/codecarbon/issues/244"
+                        + f" for workarounds : {e}"
+                    )
         return
 
     def get_cpu_details(self) -> Dict:

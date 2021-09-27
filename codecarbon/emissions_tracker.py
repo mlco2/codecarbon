@@ -20,9 +20,10 @@ from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, set_log_level, suppress
+
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
-from codecarbon.external.logger import logger
+from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.input import DataSource
 from codecarbon.output import (
     BaseOutput,
@@ -150,6 +151,9 @@ class BaseEmissionsTracker(ABC):
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
+        logger_preamble: Optional[str] = _sentinel,
+        misfire_grace_time: Optional[int] = _sentinel,
+        max_instances: Optional[int] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -187,6 +191,12 @@ class BaseEmissionsTracker(ABC):
                              to the csv when writing or to update the existing `run_id`
                              row (useful when calling`tracker.flush()` manually).
                              Accepts one of "append" or "update".
+        :param logger_preamble: String to systematically include in the logger's.
+                                messages. Defaults to "".
+        :param misfire_grace_time: Parameter to configure the BackgroundScheduler's
+                                   `misfire_grace_time` argument.
+        :param max_instances: Parameter to configure the BackgroundScheduler's
+                              `max_instances` argument
         """
 
         logger.info("base tracker init")
@@ -206,9 +216,13 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
+        self._set_from_conf(logger_preamble, "logger_preamble", "")
+        self._set_from_conf(misfire_grace_time, "misfire_grace_time", 1, int)
+        self._set_from_conf(max_instances, "max_instances", 1, int)
 
         assert self._tracking_mode in ["machine", "process"]
-        set_log_level(self._log_level)
+        set_logger_level(self._log_level)
+        set_logger_format(self._logger_preamble)
 
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.time()
@@ -301,7 +315,8 @@ class BaseEmissionsTracker(ABC):
             self._measure_power,
             "interval",
             seconds=self._measure_power_secs,
-            max_instances=1,
+            max_instances=self._max_instances,
+            misfire_grace_time=self._misfire_grace_time,
         )
 
         self._data_source = DataSource()
@@ -516,6 +531,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         for hardware in self._hardware:
+            h_time = time.time()
             power = hardware.total_power()
             energy = Energy.from_power_and_time(
                 power=power, time=Time.from_seconds(last_duration)
@@ -535,13 +551,11 @@ class BaseEmissionsTracker(ABC):
                 self._total_ram_energy += energy
                 self._ram_power = power
             else:
-                raise ValueError(
-                    f"Unknown hardware type: {hardware} ({type(hardware)})"
-                )
-
+                logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
+            h_time = time.time() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
-                + f"W during {last_duration:,.2f} s"
+                + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
             )
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."

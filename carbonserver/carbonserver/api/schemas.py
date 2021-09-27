@@ -21,21 +21,33 @@ class EmissionBase(BaseModel):
     duration: int = Field(
         ..., gt=0, description="The duration must be greater than zero"
     )
-    emissions_sum: float = Field(
+    emissions_sum: Optional[float] = Field(
         ..., ge=0, description="The emissions must be greater than zero"
     )
-    emissions_rate: float = Field(
+    emissions_rate: Optional[float] = Field(
         ..., ge=0, description="The emissions rate must be greater than zero"
     )
-    energy_consumed: float = Field(
-        ..., gt=0, description="The energy_consumed must be greater than zero"
+    energy_consumed: Optional[float] = Field(
+        ..., ge=0, description="The energy_consumed must be greater than zero"
     )
-    cpu_power: float
-    gpu_power: float
-    ram_power: float
-    cpu_energy: float
-    gpu_energy: float
-    ram_energy: float
+    cpu_power: Optional[float] = Field(
+        ..., ge=0, description="The cpu_power must be greater than zero"
+    )
+    gpu_power: Optional[float] = Field(
+        ..., ge=0, description="The gpu_power must be greater than zero"
+    )
+    ram_power: Optional[float] = Field(
+        ..., ge=0, description="The ram_power must be greater than zero"
+    )
+    cpu_energy: Optional[float] = Field(
+        ..., ge=0, description="The cpu_energy must be greater than zero"
+    )
+    gpu_energy: Optional[float] = Field(
+        ..., ge=0, description="The gpu_energy must be greater than zero"
+    )
+    ram_energy: Optional[float] = Field(
+        ..., ge=0, description="The ram_energy must be greater than zero"
+    )
 
     class Config:
         schema_extra = {
