@@ -198,7 +198,7 @@ class BaseEmissionsTracker(ABC):
                               `max_instances` argument
         """
 
-        logger.info("base tracker init")
+        # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
