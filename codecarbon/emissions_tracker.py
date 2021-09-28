@@ -537,7 +537,10 @@ class BaseEmissionsTracker(ABC):
             )
             logger.info(
                 "Energy consumed for all "
-                + f"{hardware.__class__.__name__} : {self._total_energy.kWh:.6f} kWh"
+                + hardware.__class__.__name__
+                + ("s" if hardware.__class__.__name__ != "RAM" else "")
+                + " : "
+                + f"{self._total_energy.kWh:.6f} kWh"
             )
             self._total_energy += energy
             if isinstance(hardware, CPU):
