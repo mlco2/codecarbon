@@ -1,2 +1,4 @@
+torch==1.8.1
 tensorflow
 keras-tuner
+torchvision
