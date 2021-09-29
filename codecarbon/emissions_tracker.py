@@ -280,7 +280,6 @@ class BaseEmissionsTracker(ABC):
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
             )
-            logger.info("Tracking using constant")
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
