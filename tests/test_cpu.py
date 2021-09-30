@@ -73,12 +73,12 @@ class TestIntelRAPL(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
     def test_intel_rapl(self):
-        expected_cpu_details = {"Processor Power_0(Watt)": 0.0, "psys": 0.0}
+        expected_cpu_details = {"Processor Energy Delta_0(kWh)": 0.0, "psys": 0.0}
 
         rapl = IntelRAPL(
             rapl_dir=os.path.join(os.path.dirname(__file__), "test_data", "rapl")
         )
-        self.assertDictEqual(expected_cpu_details, rapl.get_cpu_details())
+        self.assertDictEqual(expected_cpu_details, rapl.get_cpu_details(delay=0.01))
 
 
 class TestTDP(unittest.TestCase):
