@@ -156,7 +156,6 @@ class IntelRAPL:
     def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
-        self._delay = 0.01  # (s) -> 10 millisecond
         self._rapl_files = list()
         self._setup_rapl()
 
@@ -190,7 +189,7 @@ class IntelRAPL:
             with open(path) as f:
                 name = f.read().strip()
                 if "package" in name:
-                    name = f"Processor Power_{i}(Watt)"
+                    name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
                 rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
                 try:
@@ -207,17 +206,17 @@ class IntelRAPL:
                     )
         return
 
-    def get_cpu_details(self) -> Dict:
+    def get_cpu_details(self, delay: float) -> Dict:
         """
-        Fetches the CPU Power Details by fetching values from RAPL files
+        Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
         cpu_details = dict()
         try:
             list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
-            time.sleep(self._delay)
-            list(map(lambda rapl_file: rapl_file.end(self._delay), self._rapl_files))
+            time.sleep(delay)
+            list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
             for rapl_file in self._rapl_files:
-                cpu_details[rapl_file.name] = rapl_file.power_measurement.kW
+                cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \
