@@ -1,11 +1,11 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from torchvision import datasets
-from torchvision.transforms import ToTensor
+from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
-from torch import optim
+from torchvision import datasets
+from torchvision.transforms import ToTensor
 
 from codecarbon import EmissionsTracker
 
@@ -105,7 +105,7 @@ bidx = 0
 for epoch in range(10):
     cnn.train()
     # train for 1 epoch
-    for i, (image, label) in enumerate(loaders["train"]):
+    for _, (image, label) in enumerate(loaders["train"]):
         print(f"\rBatch {bidx} | Epoch {epoch}", end="")
         bidx += 1
         input = image.to(device)
