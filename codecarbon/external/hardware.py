@@ -7,13 +7,13 @@ import re
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
-from codecarbon.core.units import Power
+from codecarbon.core.units import Energy, Power, Time
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -31,6 +31,17 @@ class BaseHardware(ABC):
 
     def description(self) -> str:
         return repr(self)
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        """
+        Base implementation: we get the power from the
+        hardware and convert it to energy.
+        """
+        power = self.total_power()
+        energy = Energy.from_power_and_time(
+            power=power, time=Time.from_seconds(last_duration)
+        )
+        return power, energy
 
 
 @dataclass

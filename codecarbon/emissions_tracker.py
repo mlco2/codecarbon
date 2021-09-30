@@ -474,9 +474,8 @@ class BaseEmissionsTracker(ABC):
 
         for hardware in self._hardware:
             h_time = time.time()
-            power = hardware.total_power()
-            energy = Energy.from_power_and_time(
-                power=power, time=Time.from_seconds(last_duration)
+            power, energy = hardware.measure_power_and_energy(
+                last_duration=last_duration
             )
             logger.info(
                 "Energy consumed for all "
