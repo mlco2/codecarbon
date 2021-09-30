@@ -185,11 +185,38 @@ You have a cool idea, but do not know know if it fits with Code Carbon ? You can
 - In a python environment, install and update twine with `pip install -U twine`. Unzip the `pypi_dist.zip` archive in a temporary directory with `unzip pypi_dist.zip` and upload all files inside with `twine upload codecarbon*`.
 - Unzip the `conda_dist.zip` in a temporary directory with `unzip conda_dist.zip`. Start a Docker image in the same directory and bind-mount the current directory with: `docker run -ti --rm=true -v (pwd):/data:z  continuumio/anaconda3:2020.02`. Inside the docker container, run `anaconda upload --user codecarbon /data/noarch/codecarbon-*.tar.bz2`.
 
-### API Deployment
+### API
+
+To run the API locally, the easiest way is Docker. Launch this command in the project directory:
+```
+docker-compose up -d
+```
+Please see [Docker specific documentation](./docker/README.md) for more informations.
+
+Create a file `.codecarbon.config` with the content:
+```
+[codecarbon]
+api_endpoint = http://localhost:8008
+```
+
+Before using it, you need an experiment_id, to get one, run:
+```
+codecarbon init
+```
+
+It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.
+
+Then you could run an example:
+```
+python examples/api_call_debug.py
+```
+
+📝 Edit the line `occurence = 60 * 24 * 365 * 100` to specify the number of minutes you want to run it.
+#### Deployment
 
 The API is availiable to everyone from https://api.codecarbon.io but if you want to deploy it for yourself, here is the instructions.
 
-To deploy the API we use (Clever Cloud)[https://www.clever-cloud.com/] , an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
+To deploy the API we use [Clever Cloud](https://www.clever-cloud.com/) , an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
 
 Here is the Clever Cloud configuration if you want to reproduce it :
 ```
