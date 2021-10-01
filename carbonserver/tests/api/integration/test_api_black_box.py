@@ -236,7 +236,22 @@ def test_api_experiment_list():
 
 def test_api_run_create():
     global run_id
-    payload = {"timestamp": "2021-04-04T08:43:00+02:00", "experiment_id": experiment_id}
+    payload = {
+        "timestamp": "2021-04-04T08:43:00+02:00",
+        "experiment_id": experiment_id,
+        "os": "macOS-10.15.7-x86_64-i386-64bit",
+        "python_version": "3.8.0",
+        "cpu_count": 12,
+        "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+        "gpu_count": 4,
+        "gpu_model": "NVIDIA",
+        "longitude": -7.6174,
+        "latitude": 33.5822,
+        "region": "EUROPE",
+        "provider": "AWS",
+        "ram_total_size": 83948.22,
+        "tracking_mode": "Machine",
+    }
     r = requests.post(url=URL + "/run/", json=payload, timeout=2)
     assert r.status_code == 201
     run_id = r.json()["id"]
