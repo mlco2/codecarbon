@@ -283,22 +283,17 @@ class BaseEmissionsTracker(ABC):
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
-            cpu_count = self._conf["cpu_count"]
-            logger.info(f"CPU Model on constant consumption mode: {cpu_count}x {model}")
+            logger.info(f"CPU Model on constant consumption mode: {model}")
             self._conf["cpu_model"] = model
             if tdp:
-                hardware = CPU.from_utils(
-                    self._output_dir, "constant", model, power, cpu_count
-                )
+                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
                 self._hardware.append(hardware)
             else:
                 logger.warning(
                     "Failed to match CPU TDP constant. "
                     + "Falling back on a global constant."
                 )
-                hardware = CPU.from_utils(
-                    self._output_dir, "constant", cpu_count=cpu_count
-                )
+                hardware = CPU.from_utils(self._output_dir, "constant")
                 self._hardware.append(hardware)
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
