@@ -143,6 +143,7 @@ class CPU(BaseHardware):
                 logger.warning("Could not read CPU model.")
 
         if tdp is None:
+            tdp = POWER_CONSTANT
             cpu = cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
             cpu._is_generic_tdp = True
             return cpu
