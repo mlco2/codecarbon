@@ -135,7 +135,6 @@ class CPU(BaseHardware):
         mode: str,
         model: Optional[str] = None,
         tdp: Optional[int] = None,
-        cpu_count: Optional[int] = 1,
     ) -> "CPU":
 
         if model is None:
@@ -144,7 +143,7 @@ class CPU(BaseHardware):
                 logger.warning("Could not read CPU model.")
 
         if tdp is None:
-            tdp = POWER_CONSTANT * cpu_count
+            tdp = POWER_CONSTANT
             cpu = cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
             cpu._is_generic_tdp = True
             return cpu
