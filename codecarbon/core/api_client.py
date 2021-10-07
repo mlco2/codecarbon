@@ -44,6 +44,7 @@ class ApiClient:  # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
+        self.token = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJPZ20tY1F6bjVzazFzWm1ra2R3ZkFmWnpGWmNGaHlfNDlIR3V4MWcydlBNIn0.eyJleHAiOjE2MzA1MDE2NDUsImlhdCI6MTYzMDUwMTU4NSwianRpIjoiMDhlNDZlOWMtMDRmZC00ZjQ5LWEyZTEtNjQxODgyYTg5ZDNiIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL21hc3RlciIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIxYjJlNTkwZi1iYzkxLTQxYzAtYmQ4OS03ZTk3OTU1MDQxMmUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJiYWNrZW5kIiwic2Vzc2lvbl9zdGF0ZSI6IjYyNDk4MWE3LTA1OTItNDgzNy05ZGNmLTFmZjUwMTMyOTE4NSIsImFjciI6IjEiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGVmYXVsdC1yb2xlcy1tYXN0ZXIiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwic2lkIjoiNjI0OTgxYTctMDU5Mi00ODM3LTlkY2YtMWZmNTAxMzI5MTg1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6InRlc3QifQ.JVLK9XhWAzveC94QCtIeMUK55WP8rAa65ZbRAKTJHl_Hm_0xSGzhdz7XnP2YSwKdilQtFSP9-m_YfANzOYIoBX5jYrLq-noUkYiXCh7szMqj9bdRnTLL96SGbIYK3TEPCmRH3SocIeOwTwUmt7fatX9Q1QKpXqvzHfRjVmOnr_wI1VhyHhOFPcxH1UWgDoA52SL9c19z5O10lI4laiseFdzMIXLieCaJdqT2OVfOao63WSasPDL4f4OId62rQpxXmwdpxLZid4QyPsTfqwJCqa1kolbjoveaiBovckBjaz7_ix23PGMfzc3OXqs3Q5v9ysLXJmh27ZK8DkjL3VQIEw"
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
 
@@ -79,7 +80,14 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             url = self.url + "/emission"
-            r = requests.post(url=url, json=payload, timeout=2)
+            r = requests.post(
+                url=url,
+                json=payload,
+                timeout=2,
+                headers={
+                    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJPZ20tY1F6bjVzazFzWm1ra2R3ZkFmWnpGWmNGaHlfNDlIR3V4MWcydlBNIn0.eyJleHAiOjE2MzA1MDE2NDUsImlhdCI6MTYzMDUwMTU4NSwianRpIjoiMDhlNDZlOWMtMDRmZC00ZjQ5LWEyZTEtNjQxODgyYTg5ZDNiIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL21hc3RlciIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIxYjJlNTkwZi1iYzkxLTQxYzAtYmQ4OS03ZTk3OTU1MDQxMmUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJiYWNrZW5kIiwic2Vzc2lvbl9zdGF0ZSI6IjYyNDk4MWE3LTA1OTItNDgzNy05ZGNmLTFmZjUwMTMyOTE4NSIsImFjciI6IjEiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGVmYXVsdC1yb2xlcy1tYXN0ZXIiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwic2lkIjoiNjI0OTgxYTctMDU5Mi00ODM3LTlkY2YtMWZmNTAxMzI5MTg1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6InRlc3QifQ.JVLK9XhWAzveC94QCtIeMUK55WP8rAa65ZbRAKTJHl_Hm_0xSGzhdz7XnP2YSwKdilQtFSP9-m_YfANzOYIoBX5jYrLq-noUkYiXCh7szMqj9bdRnTLL96SGbIYK3TEPCmRH3SocIeOwTwUmt7fatX9Q1QKpXqvzHfRjVmOnr_wI1VhyHhOFPcxH1UWgDoA52SL9c19z5O10lI4laiseFdzMIXLieCaJdqT2OVfOao63WSasPDL4f4OId62rQpxXmwdpxLZid4QyPsTfqwJCqa1kolbjoveaiBovckBjaz7_ix23PGMfzc3OXqs3Q5v9ysLXJmh27ZK8DkjL3VQIEw"
+                },
+            )
             logger.debug(f"Successful upload emission {payload} to {url}")
             if r.status_code != 201:
                 self._log_error(url, payload, r)

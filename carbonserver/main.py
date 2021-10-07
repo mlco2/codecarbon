@@ -73,7 +73,7 @@ def init_db(container):
 
 
 def init_server(container):
-    server = FastAPI(dependencies=[])
+    server = FastAPI()
 
     server.container = container
     server.include_router(users.router)

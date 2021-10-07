@@ -4,8 +4,8 @@ from codecarbon import track_emissions
 
 
 @track_emissions(
-    # api_endpoint="http://your api if you want",
-    # experiment_id="3a202149-8be2-408c-a3d8-baeae2de2987",
+    api_endpoint="http://localhost:8000",
+    experiment_id="369d900d-f30d-4a02-aa6a-c10af0fcb861",
     # api_key="not used yet",
     save_to_api=True,
 )

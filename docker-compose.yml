@@ -11,17 +11,7 @@ services:
       - ./docker/keycloak/dashapp:/opt/codecarbon-front
     networks:
       - codecarbon_net
-  # codecarbon_package:
-  #   build:
-  #     context: ./codecarbon/
-  #     dockerfile: ./docker/Dockerfile
-  #   networks:
-  #     - codecarbon_net
-  #   volumes:
-  #     - ./codecarbon:/opt/codecarbon
-  #   depends_on:
-  #     - codecarbon_api
-  #   restart: unless-stopped
+
   nginx:
       image: nginx
       ports:
@@ -98,7 +88,7 @@ services:
     ports:
       - 8084:8080
     volumes:
-      - ./docker/keycloak/codecarbon-realm.json:/tmp/codecarbon-realm.json
+      - ./docker/keycloak/test_backend_export.json:/tmp/codecarbon-realm.json
       - ./docker/keycloak/themes/Codecarbon/:/opt/jboss/keycloak/themes/Codecarbon/
       - ./docker/keycloak/themes/Breizhcamp/:/opt/jboss/keycloak/themes/Breizhcamp/
       - ./docker/keycloak/providers:/opt/jboss/keycloak/providers
