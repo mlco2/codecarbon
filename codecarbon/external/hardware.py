@@ -14,6 +14,7 @@ import psutil
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
 from codecarbon.core.units import Energy, Power, Time
+from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -155,6 +156,9 @@ class CPU(BaseHardware):
             return power, energy
         return super().measure_power_and_energy(last_duration=last_duration)
 
+    def get_model(self):
+        return self._model
+
     @classmethod
     def from_utils(
         cls,
@@ -163,6 +167,11 @@ class CPU(BaseHardware):
         model: Optional[str] = None,
         tdp: Optional[int] = None,
     ) -> "CPU":
+
+        if model is None:
+            model = detect_cpu_model()
+            if model is None:
+                logger.warning("Could not read CPU model.")
 
         if tdp is None:
             tdp = POWER_CONSTANT
@@ -218,9 +227,9 @@ class RAM(BaseHardware):
                 ["scontrol show job $SLURM_JOBID"], shell=True
             ).decode()
         except subprocess.CalledProcessError:
-            return None
+            return
 
-    def _parse_scontrol_memory(self, mem):
+    def _parse_scontrol_memory_GB(self, mem):
         nb = int(mem[:-1])
         unit = mem[-1]
         if unit == "T":
@@ -233,20 +242,36 @@ class RAM(BaseHardware):
             return nb / (1000 ** 2)
 
     def _parse_scontrol(self, scontrol_str):
-        lines = scontrol_str.split("\n")
-        memlines = [line for line in lines if "mem=" in line]
-        if not memlines:
-            return
-        memline = memlines[0]
-        mem = memline.split("mem=")[1].split(",")[0]
-        return mem
+        mem_matches = re.findall(r"mem=\d+[A-Z]", scontrol_str)
+        if len(mem_matches) == 0:
+            logger.warning(
+                "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
+                + "to count SLURM-available RAM. Using the machine's total RAM."
+            )
+            return psutil.virtual_memory().total / 1e9
+        if len(mem_matches) > 1:
+            logger.warning(
+                "Unexpected output after running `scontrol show job $SLURM_JOBID` "
+                + "to count SLURM-available RAM. Using the machine's total RAM."
+            )
+            return psutil.virtual_memory().total / 1e9
+
+        return mem_matches[0].replace("mem=", "")
 
     @property
     def slurm_memory_GB(self):
         scontrol_str = self._read_slurm_scontrol()
+        if scontrol_str is None:
+            logger.warning(
+                "Error running `scontrol show job $SLURM_JOBID` "
+                + "to retrieve SLURM-available RAM."
+                + "Using the machine's total RAM."
+            )
+            return psutil.virtual_memory().total / 1e9
         mem = self._parse_scontrol(scontrol_str)
-        mem_GB = self._parse_scontrol_memory(mem)
-        return mem_GB
+        if isinstance(mem, str):
+            return self._parse_scontrol_memory_GB(mem)
+        return mem
 
     @property
     def process_memory_GB(self):
@@ -256,12 +281,18 @@ class RAM(BaseHardware):
         Returns:
             float: RAM usage (GB)
         """
-        if self._tracking_mode == "machine":
-            return psutil.virtual_memory().total / 1e9
         children_memories = self._get_children_memories() if self._children else []
         main_memory = psutil.Process(self._pid).memory_info().rss
         memories = children_memories + [main_memory]
         return sum([m for m in memories if m] + [0]) / 1e9
+
+    @property
+    def machine_memory_GB(self):
+        return (
+            self.slurm_memory_GB
+            if os.environ.get("SLURM_JOB_ID")
+            else psutil.virtual_memory().total / 1e9
+        )
 
     def total_power(self) -> Power:
         """
@@ -273,8 +304,8 @@ class RAM(BaseHardware):
         """
         try:
             memory_GB = (
-                self.slurm_memory_GB
-                if os.environ.get("SLURM_JOB_ID")
+                self.machine_memory_GB
+                if self._tracking_mode == "machine"
                 else self.process_memory_GB
             )
             ram_power = Power.from_watts(memory_GB * self.power_per_GB)

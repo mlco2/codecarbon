@@ -1,6 +1,10 @@
 import click
 
-from codecarbon.cli.cli_utils import get_existing_local_exp_id, write_local_exp_id
+from codecarbon.cli.cli_utils import (
+    get_api_endpoint,
+    get_existing_local_exp_id,
+    write_local_exp_id,
+)
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate
 
@@ -17,7 +21,7 @@ def init():
     experiment_id = get_existing_local_exp_id()
     new_local = False
     if experiment_id is None:
-        api = ApiClient()
+        api = ApiClient(endpoint_url=get_api_endpoint())
         experiment = ExperimentCreate(
             timestamp=get_datetime_with_timezone(),
             name="Code Carbon user test",
@@ -33,8 +37,15 @@ def init():
         new_local = True
 
     click.echo(
-        "\nWelcome to CodeCarbon, here is your experiment id : "
+        "\nWelcome to CodeCarbon, here is your experiment id:\n"
         + click.style(f"{experiment_id}", fg="bright_green")
+        + (
+            ""
+            if new_local
+            else " (from "
+            + click.style("./.codecarbon.config", fg="bright_blue")
+            + ")\n"
+        )
     )
     if new_local:
         click.echo(

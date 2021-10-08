@@ -62,11 +62,11 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_carbon_tracker_TWO_GPU_PRIVATE_INFRA_CANADA(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         # GIVEN
         responses.add(
@@ -76,7 +76,6 @@ class TestCarbonTracker(unittest.TestCase):
             status=200,
         )
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
-
         # WHEN
         tracker.start()
         heavy_computation()
@@ -98,13 +97,15 @@ class TestCarbonTracker(unittest.TestCase):
     def test_carbon_tracker_timeout(
         self,
         mocked_requests_get,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         # GIVEN
+
+        # breakpoint()
 
         def raise_timeout_exception(*args, **kwargs):
             raise requests.exceptions.Timeout()
@@ -123,11 +124,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_graceful_start_failure(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
 
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
@@ -142,11 +143,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_graceful_stop_failure(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
 
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
@@ -162,11 +163,11 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_decorator_ONLINE_NO_ARGS(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
 
         # GIVEN
@@ -190,11 +191,11 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_decorator_ONLINE_WITH_ARGS(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         # GIVEN
         responses.add(
@@ -216,11 +217,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_NO_COUNTRY(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         # WHEN
 
@@ -232,11 +233,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_WITH_LOC_ARGS(
         self,
-        mocked_get_cloud_metadata,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         # GIVEN
 
@@ -254,11 +255,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_WITH_CLOUD_ARGS(
         self,
-        mocked_get_cloud_metadata,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         # GIVEN
 
@@ -276,11 +277,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_offline_tracker_country_name(
         self,
-        mocked_get_cloud_metadata,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA", output_dir=self.temp_path
@@ -296,11 +297,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_offline_tracker_invalid_headers(
         self,
-        mocked_get_cloud_metadata,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA", output_dir=self.temp_path
@@ -326,11 +327,11 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_offline_tracker_valid_headers(
         self,
-        mocked_get_cloud_metadata,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA", output_dir=self.temp_path
@@ -347,6 +348,8 @@ class TestCarbonTracker(unittest.TestCase):
 
         self.verify_output_file(self.emissions_file_path, 3)
 
+        print(emissions_df["cpu_power"].values[0])
+
         self.assertAlmostEqual(0.269999999999999, emissions_df["cpu_power"].values[0])
         self.assertEqual("Morocco", emissions_df["country_name"].values[0])
         self.assertEqual("United States", emissions_df["country_name"].values[1])
@@ -359,11 +362,11 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_carbon_tracker_online_context_manager_TWO_GPU_PRIVATE_INFRA_CANADA(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         # GIVEN
         responses.add(
@@ -392,11 +395,11 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_carbon_tracker_offline_context_manager(
         self,
-        mocked_env_cloud_details,
-        mocked_get_gpu_details,
-        mocked_is_gpu_details_available,
         mock_setup_intel_cli,
         mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
     ):
         with OfflineEmissionsTracker(
             country_iso_code="USA", output_dir=self.temp_path

@@ -11,13 +11,13 @@ import time
 import warnings
 from typing import Dict, Union
 
-import cpuinfo
 import pandas as pd
 
 with warnings.catch_warnings(record=True) as w:
     from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
+from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 
@@ -231,15 +231,6 @@ class TDP:
         self.model, self.tdp = self._main()
 
     @staticmethod
-    def _detect_cpu_model() -> str:
-        cpu_info = cpuinfo.get_cpu_info()
-        if cpu_info:
-            cpu_model_detected = cpu_info.get("brand_raw", "")
-            return cpu_model_detected
-        else:
-            return None
-
-    @staticmethod
     def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
         """Extract constant power from matched CPU"""
         return cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]
@@ -342,7 +333,7 @@ class TDP:
 
         :return: model name (str), power in Watt (int)
         """
-        cpu_model_detected = self._detect_cpu_model()
+        cpu_model_detected = detect_cpu_model()
 
         if cpu_model_detected:
             power = self._get_cpu_power_from_registry(cpu_model_detected)

@@ -98,14 +98,21 @@ This will write a csv file of the CO2 emissions in the current directory.
 
 *(This feature is currently in **ALPHA** stage, meaning it's only available for developers installing CodeCarbon from this repository. The documentation and implementation are is still under development.)*
 
-This mode use the Code Carbon API to upload the timeseries of your emissions. You will need an API key from [https://codecarbon.io](https://codecarbon.io)
+This mode use the Code Carbon API to upload the timeseries of your emissions.
 
-Here is how to use it:
+Before using it, you need an experiment_id, to get one, run:
+```
+codecarbon init
+```
+
+It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.
+
+Then, you could tell Code Carbon to use the API in your code:
 
 ```python
 from codecarbon import track_emissions
 
-@track_emissions(api_key="12aaaaaa-0b23-1234-1234-abcdef123456", save_to_api=True)
+@track_emissions(save_to_api=True)
 def train_model():
     # Your code here
 
@@ -113,7 +120,7 @@ if __name__ == "__main__":
     train_model()
 ```
 
-This is the simplest way. If you want to attach data to a specific experiment, you have to specify it with parameter `experiment_id="XXXXXXX-0713-4da1-9e57-cea70b460ee9"`
+This is the simplest way. You could specify others options in `@track_emissions` or in `.codecarbon.config`.
 
 
 ### Offline mode
@@ -178,6 +185,19 @@ Config files are INI text files which should look like:
 ```ini
 [codecarbon]
 arg=value
+```
+
+You can specify many parameters, for example :
+```
+[codecarbon]
+experiment_id = 3f53714b-c1ed-4bc7-b791-0b3f076b81a2
+api_endpoint = http://localhost:8008
+#api_endpoint = https://api.codecarbon.io
+log_level = DEBUG
+save_to_api = True
+api_call_interval = 600
+logger_preamble = MySuperServer
+misfire_grace_time = 15
 ```
 
 More details in the [documentation](https://mlco2.github.io/codecarbon).

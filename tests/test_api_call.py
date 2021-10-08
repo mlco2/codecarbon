@@ -6,18 +6,50 @@ import requests_mock
 from codecarbon.core.api_client import ApiClient
 from codecarbon.output import EmissionsData
 
+conf = {
+    "os": "macOS-10.15.7-x86_64-i386-64bit",
+    "python_version": "3.8.0",
+    "cpu_count": 12,
+    "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+    "gpu_count": 4,
+    "gpu_model": "NVIDIA",
+    "longitude": -7.6174,
+    "latitude": 33.5822,
+    "region": "EUROPE",
+    "provider": "AWS",
+    "ram_total_size": 83948.22,
+    "tracking_mode": "Machine",
+}
+
 
 def test_call_api():
     with requests_mock.Mocker() as m:
         m.post(
             "http://test.com/run",
-            json={"id": "82ba0923-0713-4da1-9e57-cea70b460ee9"},
+            json={
+                "id": "82ba0923-0713-4da1-9e57-cea70b460ee9",
+                "timestamp": "2021-04-04T08:43:00+02:00",
+                "experiment_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "os": "macOS-10.15.7-x86_64-i386-64bit",
+                "python_version": "3.8.0",
+                "cpu_count": 12,
+                "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+                "gpu_count": 4,
+                "gpu_model": "NVIDIA",
+                "longitude": -7.6174,
+                "latitude": 33.5822,
+                "region": "EUROPE",
+                "provider": "AWS",
+                "ram_total_size": 83948.22,
+                "tracking_mode": "Machine",
+            },
             status_code=201,
         )
         api = ApiClient(
             experiment_id="experiment_id",
             endpoint_url="http://test.com",
             api_key="Toto",
+            conf=conf,
         )
         assert api.run_id == "82ba0923-0713-4da1-9e57-cea70b460ee9"
 
@@ -43,5 +75,15 @@ def test_call_api():
             on_cloud="N",
             cloud_provider="",
             cloud_region="",
+            os="Linux",
+            python_version="3.8.0",
+            gpu_count=4,
+            gpu_model="NVIDIA",
+            cpu_count=12,
+            cpu_model="Intel",
+            longitude=-7.6174,
+            latitude=33.5822,
+            ram_total_size=83948.22,
+            tracking_mode="Machine",
         )
         assert api.add_emission(dataclasses.asdict(carbon_emission))

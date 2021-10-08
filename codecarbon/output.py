@@ -41,9 +41,19 @@ class EmissionsData:
     country_name: str
     country_iso_code: str
     region: str
+    cloud_provider: str
+    cloud_region: str
+    os: str
+    python_version: str
+    cpu_count: float
+    cpu_model: str
+    gpu_count: float
+    gpu_model: str
+    longitude: float
+    latitude: float
+    ram_total_size: float
+    tracking_mode: str
     on_cloud: str = "N"
-    cloud_provider: str = ""
-    cloud_region: str = ""
 
     @property
     def values(self) -> OrderedDict:
@@ -162,12 +172,13 @@ class CodeCarbonAPIOutput(BaseOutput):
 
     run_id = None
 
-    def __init__(self, endpoint_url: str, experiment_id: str, api_key: str):
+    def __init__(self, endpoint_url: str, experiment_id: str, api_key: str, conf):
         self.endpoint_url: str = endpoint_url
         self.api = ApiClient(
             experiment_id=experiment_id,
             endpoint_url=endpoint_url,
             api_key=api_key,
+            conf=conf,
         )
         self.run_id = self.api.run_id
 

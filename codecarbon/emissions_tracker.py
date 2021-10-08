@@ -4,9 +4,11 @@ OfflineEmissionsTracker and @track_emissions
 """
 import dataclasses
 import os
+import platform
 import time
 import uuid
 from abc import ABC, abstractmethod
+from collections import Counter
 from datetime import datetime
 from functools import wraps
 from typing import Callable, List, Optional, Union
@@ -17,7 +19,7 @@ from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import suppress
+from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
@@ -195,6 +197,8 @@ class BaseEmissionsTracker(ABC):
         :param max_instances: Parameter to configure the BackgroundScheduler's
                               `max_instances` argument
         """
+
+        # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
@@ -229,50 +233,79 @@ class BaseEmissionsTracker(ABC):
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
         self._scheduler = BackgroundScheduler()
-        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
-        self._conf["hardware"] = []
         self._cc_api__out = None
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
+        self._conf["os"] = platform.platform()
+        self._conf["python_version"] = platform.python_version()
+        self._conf["cpu_count"] = count_cpus()
+        self._geo = None
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids = parse_gpu_ids(self._gpu_ids)
             self._conf["gpu_ids"] = self._gpu_ids
+            self._conf["gpu_count"] = len(self._gpu_ids)
+
+        logger.info("[setup] RAM Tracking...")
+        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
+        self._conf["ram_total_size"] = self._hardware[0].machine_memory_GB
 
         # Hardware detection
+        logger.info("[setup] GPU Tracking...")
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             self._hardware.append(GPU.from_utils(self._gpu_ids))
+            gpu_names = [n["name"] for n in gpu.get_gpu_static_info()]
+            gpu_names_dict = Counter(gpu_names)
+            self._conf["gpu_model"] = "".join(
+                [f"{i} x {name}" for name, i in gpu_names_dict.items()]
+            )
+            self._conf["gpu_count"] = len(gpu.get_gpu_static_info())
+        else:
+            logger.info("No GPU found.")
 
+        logger.info("[setup] CPU Tracking...")
         if cpu.is_powergadget_available():
             logger.info("Tracking Intel CPU via Power Gadget")
-            self._hardware.append(
-                CPU.from_utils(self._output_dir, "intel_power_gadget")
-            )
+            hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
-            self._hardware.append(CPU.from_utils(self._output_dir, "intel_rapl"))
+            hardware = CPU.from_utils(self._output_dir, "intel_rapl")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
         else:
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
             )
-            logger.info("Tracking using constant")
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
+            logger.info(f"CPU Model on constant consumption mode: {model}")
+            self._conf["cpu_model"] = model
             if tdp:
-                self._hardware.append(
-                    CPU.from_utils(self._output_dir, "constant", model, power)
-                )
+                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
+                self._hardware.append(hardware)
             else:
                 logger.warning(
                     "Failed to match CPU TDP constant. "
                     + "Falling back on a global constant."
                 )
-                self._hardware.append(CPU.from_utils(self._output_dir, "constant"))
+                hardware = CPU.from_utils(self._output_dir, "constant")
+                self._hardware.append(hardware)
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
+
+        logger.info(">>> Tracker's metadata:")
+        logger.info(f"  Platform system: {self._conf.get('os')}")
+        logger.info(f"  Python version: {self._conf.get('python_version')}")
+        logger.info(f"  Available RAM : {self._conf.get('ram_total_size')} GB")
+        logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
+        logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
+        logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
+        logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
@@ -285,6 +318,19 @@ class BaseEmissionsTracker(ABC):
         )
 
         self._data_source = DataSource()
+
+        cloud: CloudMetadata = self._get_cloud_metadata()
+
+        if cloud.is_on_private_infra:
+            self._geo = self._get_geo_metadata()
+            self._conf["longitude"] = self._geo.longitude
+            self._conf["latitude"] = self._geo.latitude
+            self._conf["region"] = cloud.region
+            self._conf["provider"] = cloud.provider
+        else:
+            self._conf["region"] = cloud.region
+            self._conf["provider"] = cloud.provider
+
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
         )
@@ -309,6 +355,7 @@ class BaseEmissionsTracker(ABC):
                 endpoint_url=self._api_endpoint,
                 experiment_id=experiment_id,
                 api_key=api_key,
+                conf=self._conf,
             )
             self.run_id = self._cc_api__out.run_id
             self.persistence_objs.append(self._cc_api__out)
@@ -388,13 +435,12 @@ class BaseEmissionsTracker(ABC):
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
         if cloud.is_on_private_infra:
-            geo: GeoMetadata = self._get_geo_metadata()
             emissions = self._emissions.get_private_infra_emissions(
-                self._total_energy, geo
+                self._total_energy, self._geo
             )
-            country_name = geo.country_name
-            country_iso_code = geo.country_iso_code
-            region = geo.region
+            country_name = self._geo.country_name
+            country_iso_code = self._geo.country_iso_code
+            region = self._geo.region
             on_cloud = "N"
             cloud_provider = ""
             cloud_region = ""
@@ -426,6 +472,16 @@ class BaseEmissionsTracker(ABC):
             on_cloud=on_cloud,
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
+            os=self._conf.get("os"),
+            python_version=self._conf.get("python_version"),
+            gpu_count=self._conf.get("gpu_count"),
+            gpu_model=self._conf.get("gpu_model"),
+            cpu_count=self._conf.get("cpu_count"),
+            cpu_model=self._conf.get("cpu_model"),
+            longitude=self._conf.get("longitude"),
+            latitude=self._conf.get("latitude"),
+            ram_total_size=self._conf.get("ram_total_size"),
+            tracking_mode=self._conf.get("tracking_mode"),
         )
         if delta:
             if self._previous_emissions is None:
@@ -479,7 +535,10 @@ class BaseEmissionsTracker(ABC):
             )
             logger.info(
                 "Energy consumed for all "
-                + f"{hardware.__class__.__name__} : {self._total_energy.kWh:.6f} kWh"
+                + hardware.__class__.__name__
+                + ("s" if hardware.__class__.__name__ != "RAM" else "")
+                + " : "
+                + f"{self._total_energy.kWh:.6f} kWh"
             )
             self._total_energy += energy
             if isinstance(hardware, CPU):
@@ -564,6 +623,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         self._set_from_conf(country_2letter_iso_code, "country_2letter_iso_code")
         self._set_from_conf(country_iso_code, "country_iso_code")
         self._set_from_conf(region, "region")
+
+        logger.info("offline tracker init")
 
         if self._region is not None:
             assert isinstance(self._region, str)
