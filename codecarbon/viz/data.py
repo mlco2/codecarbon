@@ -5,6 +5,9 @@ import pandas as pd
 
 from codecarbon.core.emissions import Emissions
 from codecarbon.input import DataSource, DataSourceException
+from codecarbon.viz.data_api_loader import load_experiment_metadata
+
+import reverse_geocoder as rg
 
 
 class Data:
@@ -13,21 +16,32 @@ class Data:
         self._emissions = Emissions(self._data_source)
 
     @staticmethod
-    def get_experiment_data(df: pd.DataFrame, experiment_name) -> dt.DataTable:
-        experiment_df = df[df.experiment_name == experiment_name]
-        experiment_df = experiment_df.sort_values(by="timestamp")
+    def format_experiment_df(df: pd.DataFrame) -> dt.DataTable:
+        experiment_df = df.sort_values(by="timestamp")
         experiment_data = experiment_df.to_dict("rows")
         columns = [{"name": column, "id": column} for column in experiment_df.columns]
         return dt.DataTable(data=experiment_data, columns=columns)
 
     @staticmethod
-    def get_experiment_summary(experiment_data: List[Dict]):
+    def get_experiment_summary(experiment_id, experiment_data: List[Dict]):
         last_run = experiment_data[-1]
+        experiment_metadata = load_experiment_metadata(experiment_id)[0]
+
+        print('\n\n\n')
+        print(experiment_id)
+        print(experiment_metadata)
+        print('\n\n\n')
+
+        country = {'cc': None, 'admin1': None}
+        if experiment_metadata['latitude'] is not None:
+            country = rg.search((experiment_metadata['latitude'], experiment_metadata['longitude']))
+
+
         experiment_summary = {
             "last_run": {
                 "timestamp": last_run["timestamp"],
                 "duration": last_run["duration"],
-                "emissions": round(last_run["emissions"], 1),
+                "emissions": round(last_run["emissions_sum"], 1),
                 "energy_consumed": round((last_run["energy_consumed"]), 1),
             },
             "total": {
@@ -35,18 +49,18 @@ class Data:
                     map(lambda run: run["duration"], experiment_data)
                 ),
                 "emissions": sum(
-                    map(lambda run: run["emissions"], experiment_data)
+                    map(lambda run: run["emissions_sum"], experiment_data)
                 ),
                 "energy_consumed": sum(
                     map(lambda run: run["energy_consumed"], experiment_data)
                 ),
             },
-            "country_name": last_run["country_name"],
-            "country_iso_code": last_run["country_iso_code"],
-            "region": last_run["region"],
-            "on_cloud": last_run["on_cloud"],
-            "cloud_provider": last_run["cloud_provider"],
-            "cloud_region": last_run["cloud_region"],
+            "country_name": country['admin1'],
+            "country_iso_code": country["cc"],
+            "region": experiment_metadata["region"],
+            "on_cloud": True if experiment_metadata["region"] is not None else False,
+            "cloud_provider": experiment_metadata["provider"],
+            "cloud_region": experiment_metadata["region"],
         }
         return experiment_summary
 

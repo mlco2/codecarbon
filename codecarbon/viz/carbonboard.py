@@ -5,10 +5,21 @@ import dash_table as dt
 import fire
 import pandas as pd
 from dash.dependencies import Input, Output
+from dash.exceptions import PreventUpdate
 
 from codecarbon.viz.components import Components
 from codecarbon.viz.data import Data
 
+def adapt_new_version(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adapt DataFrame (from csv) to new system
+    by renaming "experiment" into "run" and "project" into "experiment"
+    and "experiment_name" into "experiment_id"
+    """
+    # df['']=='project*' => 'experiment*'
+    # TODO: continue to implement modifications
+    df.rename(columns={"experiment_name":"experiment_id"}, inplace=True)
+    return df
 
 def render_app(df: pd.DataFrame):
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
@@ -16,7 +27,7 @@ def render_app(df: pd.DataFrame):
     components = Components()
     header = components.get_header()
     net_summary = components.get_net_summary()
-    experiment_dropdown = components.get_experiment_dropdown(df)
+    experiment_dropdown = components.get_experiment_dropdown()
     experiment_details = components.get_experiment_details()
     exemplary_equivalents = components.get_exemplary_equivalents()
     _hidden_experiment_data = components.get_hidden_experiment_data()
@@ -72,13 +83,27 @@ def render_app(df: pd.DataFrame):
                 component_id="last_run_carbon_equivalent", component_property="children"
             ),
         ],
-        [Input(component_id="experiment_name", component_property="value")],
+        [Input(component_id="experiment_id", component_property="value")],
     )
-    def update_experiment_data(experiment_name: str):
-        experiment_data = data.get_experiment_data(df, experiment_name)
-        experiment_summary = data.get_experiment_summary(experiment_data.data)
-        net_power_consumption = f"{'{:.1f}'.format(sum(df['energy_consumed']))} kWh"
-        net_carbon_equivalent = f"{'{:.1f}'.format(sum(df['emissions']))} kg"
+    def update_experiment_data(experiment: dict):
+        # Get experiment data from api or csv
+        if not experiment:
+            raise PreventUpdate
+
+        if df.empty:
+            experiment_df = components.get_experiment(experiment['id'])
+        else:
+            experiment_df = df[df.experiment_id == experiment['id']]
+
+        experiment_data = data.format_experiment_df(experiment_df)
+        experiment_summary = data.get_experiment_summary(experiment['id'], experiment_data.data)
+
+        #TODO: Correct issues working with csv
+        print('\n\n\n')
+        print(experiment_summary)
+        print('\n\n\n')
+        net_power_consumption = f"{'{:.1f}'.format(experiment_summary['total']['energy_consumed'])} kWh"
+        net_carbon_equivalent = f"{'{:.1f}'.format(experiment_summary['total']['emissions'])} kg"
         if {experiment_summary["region"]} == "":
             experiment_infrastructure_location = f"{experiment_summary['country_name']}"
         else:
@@ -146,6 +171,9 @@ def render_app(df: pd.DataFrame):
         ],
     )
     def update_global_comparisons(hidden_experiment_summary: dcc.Store, energy_type: str):
+        if not hidden_experiment_summary: # or len(experiment_id) != 36:
+            raise PreventUpdate
+
         net_energy_consumed = hidden_experiment_summary["total"]["energy_consumed"]
         global_emissions_choropleth_data = data.get_global_emissions_choropleth_data(
             net_energy_consumed
@@ -269,8 +297,12 @@ def render_app(df: pd.DataFrame):
     return app
 
 
-def viz(filepath: str, port: int = 8050, debug: bool = False) -> None:
-    df = pd.read_csv(filepath)
+def viz(filepath: str = None, port: int = 8050, debug: bool = False) -> None:
+    if filepath:
+        df = pd.read_csv(filepath)
+        df = adapt_new_version(df)
+    else:
+        df = pd.DataFrame()
     app = render_app(df)
     app.run_server(port=port, debug=debug)
 

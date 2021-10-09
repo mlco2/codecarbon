@@ -4,10 +4,16 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table as dt
+from dash.exceptions import PreventUpdate
 import numpy as np
 import pandas as pd
 import plotly.express as px
-
+from codecarbon.viz.data_api_loader import (
+    load_experiment_runs,
+    load_experiment,
+    load_run_emissions,
+    load_project_experiments,
+)
 
 class Components:
     def __init__(self):
@@ -27,6 +33,24 @@ class Components:
             "rgb(253, 174, 107)",
             "rgb(253, 141, 60)",
         ]  # px.colors.sequential.Greens_r,
+
+
+    @staticmethod
+    def get_experiment_input():
+        return html.Div(
+            dbc.Col(
+                [
+                    html.Br(),
+                    html.H3("Experiment id", style={"textAlign": "left"}),
+                    dcc.Input(
+                        id="experiment_id",
+                        type="text",
+                        placeholder="0bfa2432-efda-4656-bdb4-f72d15866b0b",
+                    ),
+                ],
+                style={"display": "inline-block"},
+            )
+        )
 
     @staticmethod
     def get_header():
@@ -71,16 +95,19 @@ class Components:
         )
 
     @staticmethod
-    def get_experiment_dropdown(df: pd.DataFrame):
-        experiments = sorted(list(df["experiment_name"].unique()))
+    def get_experiment_dropdown():
+        # PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
+        # PROJECT_ID = "20eaf4aa-ba1a-4f1a-9463-d680aff970bc"
+        PROJECT_ID = "225904ca-f741-477c-83f5-d61587d6286c"
+        experiments = load_project_experiments(PROJECT_ID)
         return html.Div(
             dbc.Col(
                 [
                     html.Br(),
                     html.H3("Select an Experiment", style={"textAlign": "left"}),
                     dcc.Dropdown(
-                        id="experiment_name",
-                        options=[{"label": i, "value": i} for i in experiments],
+                        id="experiment_id",
+                        options=[{"label": i['name'], "value": i['id']} for i in experiments],
                         value=experiments[0],
                     ),
                 ],
@@ -653,7 +680,7 @@ class Components:
                     "emissions": "Carbon Equivalent (kg)",
                     "energy_consumed": "Energy Consumed (kWh)",
                     "timestamp": "Timestamp",
-                    "experiment_name": "Experiment Name",
+                    "experiment_id": "Experiment Name",
                     "duration": "Duration",
                     "emissions_detail": "Emissions Detail",
                     "country_name": "Country Name",
@@ -705,3 +732,42 @@ class Components:
                 html.Br(),
             ]
         )
+
+    @staticmethod
+    def get_runs(experiment_id: str) -> pd.DataFrame:
+        if not experiment_id: # or len(experiment_id) != 36:
+            raise PreventUpdate
+
+        runs_from_api = load_experiment_runs(experiment_id)
+        print("type", type(runs_from_api))
+        print("runs!", runs_from_api)
+
+        if not runs_from_api:
+            raise PreventUpdate("Invalid experiment id")
+
+        # runs = [run['id'] for run in runs_from_api]
+        return runs_from_api
+
+    @staticmethod
+    def get_experiment(experiment_id: str) -> pd.DataFrame:
+        """
+        Retrieve experiment
+
+        1. get id of all the runs for the experiment
+        2. get data of the runs (using their id)
+        3. aggregate
+        """
+        experiment_runs = load_experiment_runs(experiment_id)
+        run_ids = [run_meta_data['id'] for run_meta_data in experiment_runs]
+        runs = []
+        for run_id in run_ids:
+            runs = runs + load_run_emissions(run_id)['items']
+
+        cols = [col for col in runs[0]]
+        print(cols)
+        print("\n\n\n\n\n\n")
+
+        df_runs = pd.DataFrame(runs, columns=cols)
+
+        # TODO: modify to have the same shape than the csv dataframe
+        return df_runs
