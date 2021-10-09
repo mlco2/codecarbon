@@ -2,9 +2,12 @@ from contextlib import AbstractContextManager
 from typing import List
 
 from dependency_injector.providers import Callable
+from sqlalchemy import func
 
 from carbonserver.api.domain.experiments import Experiments
+from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import Experiment, ExperimentCreate
 
 
@@ -70,6 +73,39 @@ class SqlAlchemyRepository(Experiments):
                     experiment = self.map_sql_to_schema(e)
                     experiments.append(experiment)
                 return experiments
+
+    def get_project_global_sums_by_experiment(self, project_id):
+        with self.session_factory() as session:
+            res = (
+                session.query(
+                    SqlModelExperiment.id.label("experiment_id"),
+                    SqlModelExperiment.timestamp,
+                    SqlModelExperiment.name,
+                    SqlModelExperiment.description,
+                    func.sum(SqlModelEmission.emissions_sum).label("emission_sum"),
+                    func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
+                    func.sum(SqlModelEmission.duration).label("duration"),
+                )
+                .join(
+                    SqlModelRun,
+                    SqlModelExperiment.id == SqlModelRun.experiment_id,
+                    isouter=True,
+                )
+                .join(
+                    SqlModelEmission,
+                    SqlModelRun.id == SqlModelEmission.run_id,
+                    isouter=True,
+                )
+                .filter(SqlModelExperiment.project_id == project_id)
+                .group_by(
+                    SqlModelExperiment.id,
+                    SqlModelExperiment.timestamp,
+                    SqlModelExperiment.name,
+                    SqlModelExperiment.description,
+                )
+                .all()
+            )
+            return res
 
     @staticmethod
     def map_sql_to_schema(experiment: SqlModelExperiment) -> Experiment:

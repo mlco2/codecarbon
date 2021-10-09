@@ -7,6 +7,8 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
         "db",
         "emission_repository",
         "experiment_repository",
+        "experiment_repository",
+        "project_global_sum_by_experiment_usecase",
         "project_repository",
         "team_repository",
         "organization_repository",

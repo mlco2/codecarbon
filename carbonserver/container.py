@@ -18,6 +18,9 @@ from carbonserver.api.services.run_service import RunService
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.team_service import TeamService
 from carbonserver.api.services.user_service import UserService
+from carbonserver.api.usecases.experiment.project_global_sum_by_experiment import (
+    ProjectGlobalSumsByExperimentUsecase,
+)
 from carbonserver.config import settings
 
 
@@ -66,6 +69,11 @@ class ServerContainer(containers.DeclarativeContainer):
 
     experiment_service = providers.Factory(
         ExperimentService,
+        experiment_repository=experiment_repository,
+    )
+
+    project_global_sum_by_experiment_usecase = providers.Factory(
+        ProjectGlobalSumsByExperimentUsecase,
         experiment_repository=experiment_repository,
     )
 
