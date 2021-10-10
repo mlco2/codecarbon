@@ -310,7 +310,7 @@ class BaseEmissionsTracker(ABC):
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
         self._scheduler.add_job(
-            self._measure_power,
+            self._measure_power_and_energy,
             "interval",
             seconds=self._measure_power_secs,
             max_instances=self._max_instances,
@@ -389,7 +389,7 @@ class BaseEmissionsTracker(ABC):
 
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
-        self._measure_power()
+        self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
         for persistence in self.persistence_objs:
@@ -413,7 +413,7 @@ class BaseEmissionsTracker(ABC):
 
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
-        self._measure_power()
+        self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
 
@@ -512,10 +512,10 @@ class BaseEmissionsTracker(ABC):
         """
         pass
 
-    def _measure_power(self) -> None:
+    def _measure_power_and_energy(self) -> None:
         """
         A function that is periodically run by the `BackgroundScheduler`
-        every `self._measure_power` seconds.
+        every `self._measure_power_secs` seconds.
         :return: None
         """
         last_duration = time.time() - self._last_measured_time
@@ -530,9 +530,8 @@ class BaseEmissionsTracker(ABC):
 
         for hardware in self._hardware:
             h_time = time.time()
-            power = hardware.total_power()
-            energy = Energy.from_power_and_time(
-                power=power, time=Time.from_seconds(last_duration)
+            power, energy = hardware.measure_power_and_energy(
+                last_duration=last_duration
             )
             logger.info(
                 "Energy consumed for all "

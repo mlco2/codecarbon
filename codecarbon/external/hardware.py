@@ -7,13 +7,13 @@ import re
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import get_gpu_details
-from codecarbon.core.units import Power
+from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 
@@ -32,6 +32,17 @@ class BaseHardware(ABC):
 
     def description(self) -> str:
         return repr(self)
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        """
+        Base implementation: we get the power from the
+        hardware and convert it to energy.
+        """
+        power = self.total_power()
+        energy = Energy.from_power_and_time(
+            power=power, time=Time.from_seconds(last_duration)
+        )
+        return power, energy
 
 
 @dataclass
@@ -121,9 +132,29 @@ class CPU(BaseHardware):
                 power += value
         return Power.from_watts(power)
 
+    def _get_energy_from_cpus(self, delay: float) -> Energy:
+        """
+        Get CPU energy deltas from RAPL files
+        :return: energy in kWh
+        """
+        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay=delay)
+
+        energy = 0
+        for metric, value in all_cpu_details.items():
+            if re.match(r"^Processor Energy Delta_\d+\(Watt\)$", metric):
+                energy += value
+        return Energy.from_energy(energy)
+
     def total_power(self) -> Power:
         cpu_power = self._get_power_from_cpus()
         return cpu_power
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        if self._mode == "intel_rapl":
+            energy = self._get_energy_from_cpus(delay=last_duration)
+            power = Power.from_energy_delta_and_delay(energy, last_duration)
+            return power, energy
+        return super().measure_power_and_energy(last_duration=last_duration)
 
     def get_model(self):
         return self._model

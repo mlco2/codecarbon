@@ -119,6 +119,10 @@ class Power:
         kW = delta_energy / delay.hours
         return cls(kW=kW)
 
+    @classmethod
+    def from_energy_delta_and_delay(cls, e: "Energy", delay: "Time"):
+        return cls.from_energies_and_delay(e, Energy(0), delay)
+
     @property
     def W(self):
         if not isinstance(self.kW, float):

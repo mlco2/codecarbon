@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from codecarbon.core.units import Energy, Power, Time
+from codecarbon.core.units import Energy
 
 
 @dataclass
@@ -8,7 +8,7 @@ class RAPLFile:
     name: str
     path: str
     energy_reading: Energy = Energy(0)  # kWh
-    power_measurement: Power = Power(0)  # kW
+    energy_delta: Energy = Energy(0)  # kWh
 
     def _get_value(self) -> float:
         """
@@ -18,16 +18,10 @@ class RAPLFile:
             micro_joules = float(f.read())
             return Energy.from_ujoules(micro_joules)
 
-    def start(self):
+    def start(self) -> None:
         self.energy_reading = self._get_value()
         return
 
-    def end(self, delay: int) -> None:
-        """
-        Args:
-            delay (int): energy measurement delay in seconds
-        """
-        self.power_measurement = Power.from_energies_and_delay(
-            self.energy_reading, self._get_value(), Time.from_seconds(delay)
-        )
+    def end(self) -> None:
+        self.energy_delta = self.energy_reading - self._get_value()
         return
