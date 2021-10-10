@@ -1,17 +1,17 @@
 from unittest import mock
 
 import pytest
-from carbonserver.api.infra.repositories.repository_experiments import (
-    SqlAlchemyRepository,
-)
-from carbonserver.api.schemas import Experiment
 from container import ServerContainer
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from starlette import status
-
-from carbonserver.api.routers import experiments
 from starlette.testclient import TestClient
+
+from carbonserver.api.infra.repositories.repository_experiments import (
+    SqlAlchemyRepository,
+)
+from carbonserver.api.routers import experiments
+from carbonserver.api.schemas import Experiment
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -68,6 +68,30 @@ EXPERIMENT_2 = {
     "cloud_provider": "AWS",
     "cloud_region": "eu-west-1",
     "project_id": PROJECT_ID,
+}
+
+EXPERIMENT_WITH_DETAILS = {
+    "experiment_id": "943b2aa5-9e21-41a9-8a38-562505b4b2aa",
+    "timestamp": "2021-10-07T20:19:27.716693",
+    "name": "Code Carbon user test",
+    "description": "Code Carbon user test with default project",
+    "country_name": "France",
+    "country_iso_code": "FRA",
+    "region": "france",
+    "on_cloud": False,
+    "cloud_provider": None,
+    "cloud_region": None,
+    "emission": 152.28955200363455,
+    "cpu_power": 5760,
+    "gpu_power": 2983.9739999999993,
+    "ram_power": 806.0337192959997,
+    "cpu_energy": 191.8251863024175,
+    "gpu_energy": 140.01098718681496,
+    "ram_energy": 26.84332784201141,
+    "energy_consumed": 358.6795013312438,
+    "duration": 7673204,
+    "emissions_rate_sum": 1.0984556074701752,
+    "emissions_rate_count": 64,
 }
 
 

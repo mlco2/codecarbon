@@ -77,10 +77,25 @@ def read_project_experiments(
     status_code=status.HTTP_200_OK,
 )
 @inject
-def compute_project_sums_by_experiment(
+def read_project_sums_by_experiment(
     project_id: str,
     project_global_sum_by_experiment_usecase: ProjectGlobalSumsByExperimentUsecase = Depends(
         Provide[ServerContainer.project_global_sum_by_experiment_usecase]
     ),
 ) -> Any:
     return project_global_sum_by_experiment_usecase.compute(project_id)
+
+
+@router.get(
+    "/experiments/{project_id}/detailed_sums/",
+    tags=EXPERIMENTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def read_project_detailed_sums_by_experiment(
+    project_id: str,
+    project_global_sum_by_experiment_usecase: ProjectGlobalSumsByExperimentUsecase = Depends(
+        Provide[ServerContainer.project_global_sum_by_experiment_usecase]
+    ),
+) -> Any:
+    return project_global_sum_by_experiment_usecase.compute_with_details(project_id)

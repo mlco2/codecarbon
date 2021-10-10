@@ -8,7 +8,13 @@ class ProjectGlobalSumsByExperimentUsecase:
         self._experiment_repository = experiment_repository
 
     def compute(self, project_id: str):
-        sum = self._experiment_repository.get_project_global_sums_by_experiment(
+        sums = self._experiment_repository.get_project_global_sums_by_experiment(
             project_id
         )
-        return sum
+        return sums
+
+    def compute_with_details(self, project_id: str):
+        sums = self._experiment_repository.get_project_detailed_sums_by_experiment(
+            project_id
+        )
+        return sums

@@ -107,6 +107,63 @@ class SqlAlchemyRepository(Experiments):
             )
             return res
 
+    def get_project_detailed_sums_by_experiment(self, project_id):
+        with self.session_factory() as session:
+            res = (
+                session.query(
+                    SqlModelExperiment.id.label("experiment_id"),
+                    SqlModelExperiment.timestamp,
+                    SqlModelExperiment.name,
+                    SqlModelExperiment.description,
+                    SqlModelExperiment.country_name,
+                    SqlModelExperiment.country_iso_code,
+                    SqlModelExperiment.region,
+                    SqlModelExperiment.on_cloud,
+                    SqlModelExperiment.cloud_provider,
+                    SqlModelExperiment.cloud_region,
+                    func.sum(SqlModelEmission.emissions_sum).label("emissions"),
+                    func.sum(SqlModelEmission.cpu_power).label("cpu_power"),
+                    func.sum(SqlModelEmission.gpu_power).label("gpu_power"),
+                    func.sum(SqlModelEmission.ram_power).label("ram_power"),
+                    func.sum(SqlModelEmission.cpu_energy).label("cpu_energy"),
+                    func.sum(SqlModelEmission.gpu_energy).label("gpu_energy"),
+                    func.sum(SqlModelEmission.ram_energy).label("ram_energy"),
+                    func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
+                    func.sum(SqlModelEmission.duration).label("duration"),
+                    func.sum(SqlModelEmission.emissions_rate).label(
+                        "emissions_rate_sum"
+                    ),
+                    func.count(SqlModelEmission.emissions_rate).label(
+                        "emissions_rate_count"
+                    ),
+                )
+                .join(
+                    SqlModelRun,
+                    SqlModelExperiment.id == SqlModelRun.experiment_id,
+                    isouter=True,
+                )
+                .join(
+                    SqlModelEmission,
+                    SqlModelRun.id == SqlModelEmission.run_id,
+                    isouter=True,
+                )
+                .filter(SqlModelExperiment.project_id == project_id)
+                .group_by(
+                    SqlModelExperiment.id,
+                    SqlModelExperiment.timestamp,
+                    SqlModelExperiment.name,
+                    SqlModelExperiment.description,
+                    SqlModelExperiment.country_name,
+                    SqlModelExperiment.country_iso_code,
+                    SqlModelExperiment.region,
+                    SqlModelExperiment.on_cloud,
+                    SqlModelExperiment.cloud_provider,
+                    SqlModelExperiment.cloud_region,
+                )
+                .all()
+            )
+            return res
+
     @staticmethod
     def map_sql_to_schema(experiment: SqlModelExperiment) -> Experiment:
         """Convert a models.Experiment to a schemas.Experiment

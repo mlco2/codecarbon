@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 
 import dash_table as dt
 import pandas as pd
+import requests
 
 from codecarbon.core.emissions import Emissions
 from codecarbon.input import DataSource, DataSourceException
@@ -229,3 +230,48 @@ class Data:
             cloud_emissions_project_region.iloc[0, :].providerName,
             pd.concat([cloud_emissions_project_region, cloud_emissions]),
         )
+
+    @staticmethod
+    def get_data_from_api(host):
+        transformed_projects = []
+        project_list = Data.list_projects(host)
+        for project in project_list:
+            project_sum_by_experiments_url = (
+                host
+                + "/experiments/{project_id}/detailed_sums".format(
+                    project_id=project["id"]
+                )
+            )
+            project_name = project["name"]
+            sums = requests.get(project_sum_by_experiments_url).json()
+            for experiment in sums:
+                experiment["project_name"] = project_name
+                experiment["emission_rate"] = 0
+                if experiment["emissions_rate_count"] > 0:
+                    experiment["emission_rate"] = (
+                        experiment["emissions_rate_sum"]
+                        / experiment["emissions_rate_count"]
+                    )
+                transformed_projects.append(experiment)
+        df_projects = pd.DataFrame(transformed_projects)
+        return df_projects
+
+    @staticmethod
+    def list_projects(host):
+        projects = []
+        teams_url = host + "/teams"
+        teams = requests.get(teams_url).json()
+        for team in teams:
+            projets_url = host + "/projects/team/{team_id}".format(team_id=team["id"])
+            team_projects = requests.get(projets_url).json()
+            if team_projects:
+                projects.append(
+                    list(
+                        map(
+                            lambda x: {"id": x["id"], "name": x["name"]},
+                            iter(team_projects),
+                        )
+                    )
+                )
+        project_list = sum(projects, [])
+        return project_list
