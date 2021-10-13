@@ -20,7 +20,6 @@ requirements:
   run:
     - python=3.6.*
     - arrow
-    - apscheduler
     - dash
     - dash-bootstrap-components
     - dataclasses

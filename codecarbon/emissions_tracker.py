@@ -13,8 +13,6 @@ from datetime import datetime
 from functools import wraps
 from typing import Callable, List, Optional, Union
 
-from apscheduler.schedulers.background import BackgroundScheduler
-
 from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
@@ -23,6 +21,7 @@ from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
+from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.input import DataSource
 from codecarbon.output import (
     BaseOutput,
@@ -151,8 +150,6 @@ class BaseEmissionsTracker(ABC):
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
-        misfire_grace_time: Optional[int] = _sentinel,
-        max_instances: Optional[int] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -192,10 +189,6 @@ class BaseEmissionsTracker(ABC):
                              Accepts one of "append" or "update".
         :param logger_preamble: String to systematically include in the logger's.
                                 messages. Defaults to "".
-        :param misfire_grace_time: Parameter to configure the BackgroundScheduler's
-                                   `misfire_grace_time` argument.
-        :param max_instances: Parameter to configure the BackgroundScheduler's
-                              `max_instances` argument
         """
 
         # logger.info("base tracker init")
@@ -216,8 +209,6 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
-        self._set_from_conf(misfire_grace_time, "misfire_grace_time", 1, int)
-        self._set_from_conf(max_instances, "max_instances", 1, int)
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -232,7 +223,6 @@ class BaseEmissionsTracker(ABC):
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
-        self._scheduler = BackgroundScheduler()
         self._cc_api__out = None
         self._measure_occurrence: int = 0
         self._cloud = None
@@ -309,12 +299,9 @@ class BaseEmissionsTracker(ABC):
 
         # Run `self._measure_power` every `measure_power_secs` seconds in a
         # background thread
-        self._scheduler.add_job(
-            self._measure_power_and_energy,
-            "interval",
-            seconds=self._measure_power_secs,
-            max_instances=self._max_instances,
-            misfire_grace_time=self._misfire_grace_time,
+        self._scheduler = PeriodicScheduler(
+            function=self._measure_power_and_energy,
+            interval=self._measure_power_secs,
         )
 
         self._data_source = DataSource()
@@ -409,7 +396,7 @@ class BaseEmissionsTracker(ABC):
             logger.error("Need to first start the tracker")
             return None
 
-        self._scheduler.shutdown()
+        self._scheduler.stop()
 
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
@@ -704,7 +691,7 @@ def track_emissions(
     fn: Callable = None,
     project_name: Optional[str] = _sentinel,
     measure_power_secs: Optional[int] = _sentinel,
-    api_call_interval: int = 2,
+    api_call_interval: int = _sentinel,
     api_endpoint: Optional[str] = _sentinel,
     api_key: Optional[str] = _sentinel,
     output_dir: Optional[str] = _sentinel,

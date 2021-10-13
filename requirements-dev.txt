@@ -1,5 +1,4 @@
 arrow
-APScheduler
 black
 dash
 dash_bootstrap_components
