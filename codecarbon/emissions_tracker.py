@@ -396,7 +396,8 @@ class BaseEmissionsTracker(ABC):
             logger.error("Need to first start the tracker")
             return None
 
-        self._scheduler.stop()
+        if self._scheduler:
+            self._scheduler.stop()
 
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
