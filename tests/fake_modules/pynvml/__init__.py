@@ -19,9 +19,10 @@
 # OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+from typing import Any, Dict
 from unittest.mock import Mock
 
-DETAILS = {}
+DETAILS: Dict[Any, Any] = {}
 
 NVML_TEMPERATURE_GPU = 0
 INIT_MOCK = Mock()
