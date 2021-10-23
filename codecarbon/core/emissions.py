@@ -139,7 +139,7 @@ class Emissions:
                 geo.country_iso_code.lower()
             )
             region_energy_mix_data = country_energy_mix_data[geo.region]
-            emissions_per_kWh = self._region_energy_mix_to_emissions_rate(
+            emissions_per_kWh = self._energy_mix_to_emissions_rate(
                 region_energy_mix_data
             )
 
