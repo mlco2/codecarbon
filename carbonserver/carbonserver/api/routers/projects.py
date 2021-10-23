@@ -14,9 +14,6 @@ router = APIRouter(
 )
 
 
-projects_temp_db = []
-
-
 @router.post(
     "/project",
     tags=PROJECTS_ROUTER_TAGS,

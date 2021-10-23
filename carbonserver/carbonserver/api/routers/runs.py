@@ -14,7 +14,7 @@ RUNS_ROUTER_TAGS = ["Runs"]
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
-runs_temp_db = []
+# runs_temp_db = []
 
 
 @router.post(
