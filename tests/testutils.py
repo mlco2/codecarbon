@@ -20,7 +20,7 @@ def get_test_data_source() -> DataSource:
     return DataSource()
 
 
-def get_custom_mock_open(global_conf_str, local_conf_str) -> callable:
+def get_custom_mock_open(global_conf_str, local_conf_str) -> callable:  # type: ignore
     def mocked_open():
         def conditional_open_func(path, *args, **kwargs):
             p = Path(path).expanduser().resolve()
