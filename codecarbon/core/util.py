@@ -25,7 +25,7 @@ def suppress(*exceptions):
         pass
 
 
-def resolve_path(path: Union[str, Path]) -> None:
+def resolve_path(path: Union[str, Path]) -> Path:
 
     """
     Fully resolve a path:
@@ -67,7 +67,7 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     file_path.rename(backup)
 
 
-def detect_cpu_model() -> str:
+def detect_cpu_model() -> Optional[str]:
     cpu_info = cpuinfo.get_cpu_info()
     if cpu_info:
         cpu_model_detected = cpu_info.get("brand_raw", "")
