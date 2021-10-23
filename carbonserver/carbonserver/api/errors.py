@@ -4,7 +4,7 @@ from enum import Enum
 
 @dataclass
 class ErrorBase:
-    code: str
+    code: Enum
     message: str
 
 
