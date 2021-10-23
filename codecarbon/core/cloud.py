@@ -37,7 +37,7 @@ def postprocess_gcp_cloud_metadata(cloud_metadata):
     return cloud_metadata
 
 
-CLOUD_METADATA_MAPPING = {
+CLOUD_METADATA_MAPPING: Dict[str, Dict[str, Any]] = {
     "AWS": {
         "url": "http://169.254.169.254/latest/dynamic/instance-identity/document",
         "headers": {},
