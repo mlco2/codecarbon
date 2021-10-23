@@ -58,6 +58,26 @@ class BaseEmissionsTracker(ABC):
     and `CarbonTracker.`
     """
 
+    _tracking_mode: str
+    _log_level: str
+    _logger_preamble: str
+    _output_dir: str
+    _hardware: List[Union[RAM, CPU, GPU]]
+    _gpu_ids: Union[str, List[int]]
+    _measure_power_secs: int
+    _co2_signal_api_token: str
+    _save_to_file: bool
+    _output_file: str
+    _on_csv_write: str
+    _emissions_endpoint: str
+    _save_to_api: bool
+    _api_endpoint: str
+    _experiment_id: str
+    _project_name: str
+    _previous_emissions: Optional[EmissionsData]
+    _api_call_interval: int
+    _cloud: Optional[CloudMetadata]
+
     def _set_from_conf(
         self, var, name, default=None, return_type=None, prevent_setter=False
     ):
@@ -238,8 +258,9 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_count"] = len(self._gpu_ids)
 
         logger.info("[setup] RAM Tracking...")
-        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
-        self._conf["ram_total_size"] = self._hardware[0].machine_memory_GB
+        ram = RAM(tracking_mode=self._tracking_mode)
+        self._hardware = [ram]
+        self._conf["ram_total_size"] = ram.machine_memory_GB
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
@@ -332,15 +353,15 @@ class BaseEmissionsTracker(ABC):
             )
 
         if self._emissions_endpoint:
-            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
+            self.persistence_objs.append(HTTPOutput(self._emissions_endpoint))
 
-        if self._save_to_api:
+        if self._save_to_api and api_key:
             experiment_id = self._set_from_conf(
                 experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
             )
             self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
-                experiment_id=experiment_id,
+                experiment_id=self._experiment_id,
                 api_key=api_key,
                 conf=self._conf,
             )
@@ -420,9 +441,12 @@ class BaseEmissionsTracker(ABC):
         :delta: True to return only the delta comsumption since last call
         """
         cloud: CloudMetadata = self._get_cloud_metadata()
+        if self._start_time is None:
+            logger.error("Tracker wasn't started")
+            self._start_time = time.time()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
 
-        if cloud.is_on_private_infra:
+        if cloud.is_on_private_infra and self._geo:
             emissions = self._emissions.get_private_infra_emissions(
                 self._total_energy, self._geo
             )
@@ -438,12 +462,12 @@ class BaseEmissionsTracker(ABC):
             country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
             region = self._emissions.get_cloud_geo_region(cloud)
             on_cloud = "Y"
-            cloud_provider = cloud.provider
-            cloud_region = cloud.region
+            cloud_provider = cloud.provider or ""
+            cloud_region = cloud.region or ""
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
-            run_id=self.run_id,
+            run_id=str(self.run_id),
             duration=duration.seconds,
             emissions=emissions,
             emissions_rate=emissions * 1000 / duration.seconds,
@@ -454,9 +478,9 @@ class BaseEmissionsTracker(ABC):
             gpu_energy=self._total_gpu_energy.kWh,
             ram_energy=self._total_ram_energy.kWh,
             energy_consumed=self._total_energy.kWh,
-            country_name=country_name,
+            country_name=country_name or "",
             country_iso_code=country_iso_code,
-            region=region,
+            region=region or "",
             on_cloud=on_cloud,
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
@@ -574,15 +598,21 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     In addition to the standard arguments, the following are required.
     """
 
+    _region: Optional[str]
+    _cloud_provider: Optional[str]
+    _cloud_region: Optional[str]
+    _country_iso_code: Optional[str]
+    _country_2letter_iso_code: Optional[str]
+
     @suppress(Exception)
     def __init__(
         self,
         *args,
-        country_iso_code: Optional[str] = _sentinel,
-        region: Optional[str] = _sentinel,
-        cloud_provider: Optional[str] = _sentinel,
-        cloud_region: Optional[str] = _sentinel,
-        country_2letter_iso_code: Optional[str] = _sentinel,
+        country_iso_code: Optional[str] = _sentinel,  # type: ignore
+        region: Optional[str] = _sentinel,  # type: ignore
+        cloud_provider: Optional[str] = _sentinel,  # type: ignore
+        cloud_region: Optional[str] = _sentinel,  # type: ignore
+        country_2letter_iso_code: Optional[str] = _sentinel,  # type: ignore
         **kwargs,
     ):
         """
@@ -659,7 +689,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
     def _get_geo_metadata(self) -> GeoMetadata:
         return GeoMetadata(
-            country_iso_code=self._country_iso_code,
+            country_iso_code=self._country_iso_code or "",
             country_name=self._country_name,
             region=self._region,
             country_2letter_iso_code=self._country_2letter_iso_code,
@@ -690,25 +720,25 @@ class EmissionsTracker(BaseEmissionsTracker):
 
 def track_emissions(
     fn: Callable = None,
-    project_name: Optional[str] = _sentinel,
-    measure_power_secs: Optional[int] = _sentinel,
-    api_call_interval: int = _sentinel,
-    api_endpoint: Optional[str] = _sentinel,
-    api_key: Optional[str] = _sentinel,
-    output_dir: Optional[str] = _sentinel,
-    output_file: Optional[str] = _sentinel,
-    save_to_file: Optional[bool] = _sentinel,
-    save_to_api: Optional[bool] = _sentinel,
-    offline: Optional[bool] = _sentinel,
-    emissions_endpoint: Optional[str] = _sentinel,
-    experiment_id: Optional[str] = _sentinel,
-    country_iso_code: Optional[str] = _sentinel,
-    region: Optional[str] = _sentinel,
-    cloud_provider: Optional[str] = _sentinel,
-    cloud_region: Optional[str] = _sentinel,
-    gpu_ids: Optional[List] = _sentinel,
-    co2_signal_api_token: Optional[str] = _sentinel,
-    log_level: Optional[Union[int, str]] = _sentinel,
+    project_name: Optional[str] = _sentinel,  # type: ignore
+    measure_power_secs: Optional[int] = _sentinel,  # type: ignore
+    api_call_interval: int = _sentinel,  # type: ignore
+    api_endpoint: Optional[str] = _sentinel,  # type: ignore
+    api_key: Optional[str] = _sentinel,  # type: ignore
+    output_dir: Optional[str] = _sentinel,  # type: ignore
+    output_file: Optional[str] = _sentinel,  # type: ignore
+    save_to_file: Optional[bool] = _sentinel,  # type: ignore
+    save_to_api: Optional[bool] = _sentinel,  # type: ignore
+    offline: Optional[bool] = _sentinel,  # type: ignore
+    emissions_endpoint: Optional[str] = _sentinel,  # type: ignore
+    experiment_id: Optional[str] = _sentinel,  # type: ignore
+    country_iso_code: Optional[str] = _sentinel,  # type: ignore
+    region: Optional[str] = _sentinel,  # type: ignore
+    cloud_provider: Optional[str] = _sentinel,  # type: ignore
+    cloud_region: Optional[str] = _sentinel,  # type: ignore
+    gpu_ids: Optional[List] = _sentinel,  # type: ignore
+    co2_signal_api_token: Optional[str] = _sentinel,  # type: ignore
+    log_level: Optional[Union[int, str]] = _sentinel,  # type: ignore
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
