@@ -1,7 +1,4 @@
-from contextlib import AbstractContextManager
 from typing import List
-
-from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.projects import Projects
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
@@ -9,7 +6,7 @@ from carbonserver.api.schemas import Project, ProjectCreate
 
 
 class SqlAlchemyRepository(Projects):
-    def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
+    def __init__(self, session_factory):
         self.session_factory = session_factory
 
     def add_project(self, project: ProjectCreate):
