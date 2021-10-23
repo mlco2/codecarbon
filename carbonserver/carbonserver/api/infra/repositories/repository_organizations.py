@@ -1,8 +1,5 @@
-from contextlib import AbstractContextManager
 from typing import List
 from uuid import UUID, uuid4
-
-from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.organizations import Organizations
 from carbonserver.api.infra.api_key_service import generate_api_key
@@ -17,7 +14,7 @@ Here there is all the method to manipulate the organization data
 
 
 class SqlAlchemyRepository(Organizations):
-    def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
+    def __init__(self, session_factory):
         self.session_factory = session_factory
 
     def add_organization(self, organization: OrganizationCreate) -> Organization:

@@ -1,5 +1,4 @@
-from contextlib import AbstractContextManager
-from typing import Callable, List
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 import bcrypt
@@ -11,7 +10,7 @@ from carbonserver.api.schemas import User, UserAuthenticate, UserCreate
 
 
 class SqlAlchemyRepository(Users):
-    def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
+    def __init__(self, session_factory):
         self.session_factory = session_factory
 
     def create_user(self, user: UserCreate) -> User:
@@ -49,7 +48,7 @@ class SqlAlchemyRepository(Users):
             else:
                 return self.map_sql_to_schema(e)
 
-    def list_users(self) -> List[User]:
+    def list_users(self) -> Optional[List[User]]:
         with self.session_factory() as session:
             e = session.query(SqlModelUser)
             if e is None:
@@ -60,7 +59,7 @@ class SqlAlchemyRepository(Users):
                     users.append(self.map_sql_to_schema(user))
                 return users
 
-    def verify_user(self, user: UserAuthenticate) -> bool:
+    def verify_user(self, user: UserAuthenticate) -> Optional[bool]:
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelUser)

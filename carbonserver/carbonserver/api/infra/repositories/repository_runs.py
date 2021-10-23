@@ -1,8 +1,5 @@
 import uuid
-from contextlib import AbstractContextManager
-from typing import List
-
-from dependency_injector.providers import Callable
+from typing import List, Optional
 
 from carbonserver.api.domain.runs import Runs
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
@@ -14,7 +11,7 @@ Here there is all the methods to manipulate the run data
 
 
 class SqlAlchemyRepository(Runs):
-    def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
+    def __init__(self, session_factory):
         self.session_factory = session_factory
 
     def add_run(self, run: RunCreate) -> Run:
@@ -60,7 +57,7 @@ class SqlAlchemyRepository(Runs):
             else:
                 return self.map_sql_to_schema(e)
 
-    def list_runs(self) -> List[Run]:
+    def list_runs(self) -> Optional[List[Run]]:
         with self.session_factory() as session:
             e = session.query(SqlModelRun)
             if e is None:

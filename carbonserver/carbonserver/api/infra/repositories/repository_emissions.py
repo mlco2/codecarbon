@@ -1,9 +1,7 @@
-from contextlib import AbstractContextManager
 from typing import List
 from uuid import uuid4
 
 from click import UUID
-from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.emissions import Emissions
 from carbonserver.api.infra.database import sql_models
@@ -18,10 +16,10 @@ It relies on an abstract repository which exposes an interface of signatures sha
 
 
 class SqlAlchemyRepository(Emissions):
-    def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
+    def __init__(self, session_factory):
         self.session_factory = session_factory
 
-    def add_emission(self, emission: EmissionCreate) -> UUID:
+    def add_emission(self, emission: EmissionCreate) -> UUID:  # type: ignore
         """Save an emission to the database.
 
         :emission: An Emission in pyDantic BaseModel format.

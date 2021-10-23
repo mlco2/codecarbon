@@ -1,7 +1,4 @@
-from contextlib import AbstractContextManager
 from typing import List
-
-from dependency_injector.providers import Callable
 
 from carbonserver.api.domain.experiments import Experiments
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
@@ -9,7 +6,7 @@ from carbonserver.api.schemas import Experiment, ExperimentCreate
 
 
 class SqlAlchemyRepository(Experiments):
-    def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
+    def __init__(self, session_factory):
         self.session_factory = session_factory
 
     def add_experiment(self, experiment: ExperimentCreate) -> Experiment:
