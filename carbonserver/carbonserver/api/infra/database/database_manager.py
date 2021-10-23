@@ -1,5 +1,5 @@
-from contextlib import AbstractContextManager, contextmanager
-from typing import Callable
+from collections.abc import Generator
+from contextlib import contextmanager
 
 from sqlalchemy import create_engine, exc, orm
 from sqlalchemy.ext.declarative import declarative_base
@@ -26,7 +26,7 @@ class Database:
         Base.metadata.create_all(self._engine)
 
     @contextmanager
-    def session(self) -> Callable[..., AbstractContextManager]:
+    def session(self) -> Generator[Session, None, None]:
         session: Session = self._session_factory()
         try:
             yield session
