@@ -172,8 +172,10 @@ class CPU(BaseHardware):
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         if self._mode == "intel_rapl":
-            energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
-            power = self.total_power()
+            energy = self._get_energy_from_cpus(delay=last_duration)
+            power = Power.from_energy_delta_and_delay(
+                energy, Time.from_seconds(last_duration)
+            )
             return power, energy
         # If not intel_rapl
         return super().measure_power_and_energy(last_duration=last_duration)
