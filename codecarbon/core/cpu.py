@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import warnings
-from typing import Dict, Union
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -235,7 +235,7 @@ class TDP:
         """Extract constant power from matched CPU"""
         return cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]
 
-    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> int:
+    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
         cpu_power_df = DataSource().get_cpu_power_data()
         cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
         if cpu_matching:
@@ -267,7 +267,7 @@ class TDP:
 
     def _get_matching_cpu(
         self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
-    ) -> str:
+    ) -> Optional[str]:
         """
         Get matching cpu name
 
@@ -327,7 +327,7 @@ class TDP:
     def _get_max_idxs(ratios: list, max_ratio: int) -> list:
         return [idx for idx, ratio in enumerate(ratios) if ratio == max_ratio]
 
-    def _main(self) -> Union[str, int]:
+    def _main(self) -> Tuple[str, Optional[int]]:
         """
         Get CPU power from constant mode
 
