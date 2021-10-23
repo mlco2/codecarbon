@@ -133,23 +133,23 @@ class BaseEmissionsTracker(ABC):
 
     def __init__(
         self,
-        project_name: Optional[str] = _sentinel,
-        measure_power_secs: Optional[int] = _sentinel,
-        api_call_interval: Optional[int] = _sentinel,
-        api_endpoint: Optional[str] = _sentinel,
-        api_key: Optional[str] = _sentinel,
-        output_dir: Optional[str] = _sentinel,
-        output_file: Optional[str] = _sentinel,
-        save_to_file: Optional[bool] = _sentinel,
-        save_to_api: Optional[bool] = _sentinel,
-        gpu_ids: Optional[List] = _sentinel,
-        emissions_endpoint: Optional[str] = _sentinel,
-        experiment_id: Optional[str] = _sentinel,
-        co2_signal_api_token: Optional[str] = _sentinel,
-        tracking_mode: Optional[str] = _sentinel,
-        log_level: Optional[Union[int, str]] = _sentinel,
-        on_csv_write: Optional[str] = _sentinel,
-        logger_preamble: Optional[str] = _sentinel,
+        project_name: Optional[str] = _sentinel,  # type: ignore
+        measure_power_secs: Optional[int] = _sentinel,  # type: ignore
+        api_call_interval: Optional[int] = _sentinel,  # type: ignore
+        api_endpoint: Optional[str] = _sentinel,  # type: ignore
+        api_key: Optional[str] = _sentinel,  # type: ignore
+        output_dir: Optional[str] = _sentinel,  # type: ignore
+        output_file: Optional[str] = _sentinel,  # type: ignore
+        save_to_file: Optional[bool] = _sentinel,  # type: ignore
+        save_to_api: Optional[bool] = _sentinel,  # type: ignore
+        gpu_ids: Optional[List] = _sentinel,  # type: ignore
+        emissions_endpoint: Optional[str] = _sentinel,  # type: ignore
+        experiment_id: Optional[str] = _sentinel,  # type: ignore
+        co2_signal_api_token: Optional[str] = _sentinel,  # type: ignore
+        tracking_mode: Optional[str] = _sentinel,  # type: ignore
+        log_level: Optional[Union[int, str]] = _sentinel,  # type: ignore
+        on_csv_write: Optional[str] = _sentinel,  # type: ignore
+        logger_preamble: Optional[str] = _sentinel,  # type: ignore
     ):
         """
         :param project_name: Project name for current experiment run, default name
