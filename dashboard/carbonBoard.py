@@ -130,7 +130,20 @@ app.layout = dbc.Container([
          #holding line chart
                dbc.Col(dcc.Graph(id='lineChart', config=config),  width=6)
                         
-    ])
+    ]),
+         #holding carbon emission map
+    html.Br(),
+    dcc.Dropdown(id="slct_kpi",
+                 options=[
+                     {"label": "CO2_Emission", "value": "CO2_Emission"},
+                     {"label": "Duration", "value": "Duration"},
+                     {"label": "Ratio", "value": "Ratio"}],
+                 multi=False,
+                 value="CO2_Emission",
+                 style={'width': "40%"}
+                 ),
+    html.Div(id='output_container', children=[]),
+    dcc.Graph(id='my_emission_map', figure={})    
 
     ])
 
@@ -336,8 +349,71 @@ def uppdate_linechart(clickPoint, start_date, end_date,experiment_clickPoint,pro
     
     return line
 
+<<<<<<< HEAD
 #****************************************************************************************
 #***************************************************************************************
+=======
+# Carbon Emission Map
+#---------------------------------------------------------------------------------
+@app.callback(
+    [Output(component_id='output_container', component_property='children'),
+     Output(component_id='my_emission_map', component_property='figure')],
+    [Input(component_id='periode', component_property='start_date'),
+    Input(component_id='periode', component_property='end_date'),
+    Input(component_id='projectPicked', component_property='value'),
+    Input(component_id='slct_kpi', component_property='value')]
+)
+def update_map(start_date,end_date,project,kpi):
+        
+    dff = df.copy()
+    dff = dff[dff['timestamp'] > start_date][dff['timestamp'] < end_date]
+    dff = dff[dff['project_name'] == project]
+    dff = dff.groupby(['project_name','country_iso_code','country_name']).agg({'emissions_sum':'sum','duration':'sum'})
+    dff['ratio'] = dff['emissions_sum']/dff['duration']*3600*24
+    dff = dff.reset_index()
+
+    container = ""
+    # Plotly Express
+    if kpi == 'CO2_Emission':
+        fig = px.choropleth(
+            data_frame=dff,
+            locationmode='ISO-3',
+            locations='country_iso_code',
+            scope="world",
+            color='emissions_sum',
+            hover_data=['country_name', 'emissions_sum', 'project_name'],
+            color_continuous_scale=px.colors.sequential.YlOrRd,
+            labels={'emissions_sum': 'Carbon Emission'},
+#            template='plotly_white'
+        )
+    elif kpi == 'Duration':
+        fig = px.choropleth(
+            data_frame=dff,
+            locationmode='ISO-3',
+            locations='country_iso_code',
+            scope="world",
+            color='duration',
+            hover_data=['country_name', 'duration', 'project_name'],
+            color_continuous_scale=px.colors.sequential.YlOrRd,
+            labels={'duration': 'Duration'},
+#            template='plotly_white'
+        )
+    elif kpi == 'Ratio':        
+        fig = px.choropleth(
+            data_frame=dff,
+            locationmode='ISO-3',
+            locations='country_iso_code',
+            scope="world",
+            color='ratio',
+            hover_data=['country_name', 'ratio', 'project_name'],
+            color_continuous_scale=px.colors.sequential.YlOrRd,
+            labels={'ratio': 'Ratio'},
+#            template='plotly_white'
+        )
+
+    return container, fig
+
+>>>>>>> 3350a4d (Dashboard : add carbon emission map)
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader=False)
 
