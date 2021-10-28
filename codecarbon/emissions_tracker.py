@@ -617,7 +617,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._region is not None:
             assert isinstance(self._region, str)
-            self._region = self._region.lower()
+            self._region: str = self._region.lower()
 
         if self._cloud_provider:
             if self._cloud_region is None:
@@ -654,7 +654,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._country_2letter_iso_code:
             assert isinstance(self._country_2letter_iso_code, str)
-            self._country_2letter_iso_code = self._country_2letter_iso_code.upper()
+            self._country_2letter_iso_code: str = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
 
