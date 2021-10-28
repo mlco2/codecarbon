@@ -233,7 +233,7 @@ class BaseEmissionsTracker(ABC):
         self._geo = None
 
         if isinstance(self._gpu_ids, str):
-            self._gpu_ids = parse_gpu_ids(self._gpu_ids)
+            self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
             self._conf["gpu_ids"] = self._gpu_ids
             self._conf["gpu_count"] = len(self._gpu_ids)
 
