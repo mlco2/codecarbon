@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import warnings
-from typing import Dict, Union
+from typing import Dict, Tuple
 
 import pandas as pd
 
@@ -327,7 +327,7 @@ class TDP:
     def _get_max_idxs(ratios: list, max_ratio: int) -> list:
         return [idx for idx, ratio in enumerate(ratios) if ratio == max_ratio]
 
-    def _main(self) -> Union[str, int]:
+    def _main(self) -> Tuple[str, int]:
         """
         Get CPU power from constant mode
 
