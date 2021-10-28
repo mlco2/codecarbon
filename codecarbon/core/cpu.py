@@ -222,7 +222,7 @@ class IntelRAPL:
                     )
         return
 
-    def get_cpu_details(self, duration: Time, **kwargs) -> Dict:
+    def get_cpu_details(self, delay: float, **kwargs) -> Dict:
         """
         Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
