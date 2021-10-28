@@ -25,7 +25,7 @@ def suppress(*exceptions):
         pass
 
 
-def resolve_path(path: Union[str, Path]) -> None:
+def resolve_path(path: Union[str, Path]) -> Path:
 
     """
     Fully resolve a path:
