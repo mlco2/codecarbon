@@ -238,8 +238,9 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_count"] = len(self._gpu_ids)
 
         logger.info("[setup] RAM Tracking...")
-        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
-        self._conf["ram_total_size"] = self._hardware[0].machine_memory_GB
+        ram = RAM(tracking_mode=self._tracking_mode)
+        self._conf["ram_total_size"] = ram.machine_memory_GB
+        self._hardware: List[Union[RAM, CPU, GPU]] = [ram]
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
