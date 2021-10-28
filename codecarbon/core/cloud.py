@@ -37,7 +37,7 @@ def postprocess_gcp_cloud_metadata(cloud_metadata):
     return cloud_metadata
 
 
-CLOUD_METADATA_MAPPING = {
+CLOUD_METADATA_MAPPING: Dict[str, Dict[str, Any]] = {
     "AWS": {
         "url": "http://169.254.169.254/latest/dynamic/instance-identity/document",
         "headers": {},
@@ -55,7 +55,7 @@ CLOUD_METADATA_MAPPING = {
 
 
 def get_env_cloud_details(timeout=1):
-    # type: (int) -> Optional[Any]
+    # type: (int) -> Optional[Dict[str, Any]]
     """
     >>> get_env_cloud_details()
     {'provider': 'AWS',

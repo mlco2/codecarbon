@@ -4,7 +4,7 @@ Encapsulates external dependencies to retrieve cloud and geographical metadata
 
 import re
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import requests
 
@@ -24,12 +24,15 @@ class CloudMetadata:
 
     @classmethod
     def from_utils(cls) -> "CloudMetadata":
-        def extract_gcp_region(zone: str) -> str:
+        def extract_gcp_region(zone: str) -> Optional[str]:
             """
             projects/705208488469/zones/us-central1-a -> us-central1
             """
             google_region_regex = r"[a-z]+-[a-z]+[0-9]"
-            return re.search(google_region_regex, zone).group(0)
+            matches = re.search(google_region_regex, zone)
+            if matches:
+                return matches.group(0)
+            return None
 
         extract_region_for_provider: Dict[str, Callable] = {
             "aws": lambda x: x["metadata"]["region"],
@@ -37,13 +40,16 @@ class CloudMetadata:
             "gcp": lambda x: extract_gcp_region(x["metadata"]["zone"]),
         }
 
-        cloud_metadata: Dict = get_env_cloud_details()
+        cloud_metadata: Optional[Dict[str, Any]] = get_env_cloud_details()
 
         if cloud_metadata is None:
             return cls(provider=None, region=None)
 
-        provider: str = cloud_metadata["provider"].lower()
-        region: str = extract_region_for_provider.get(provider)(cloud_metadata)
+        provider: str = cloud_metadata.get("provider", "").lower()
+        region = ""
+        region_provider = extract_region_for_provider.get(provider)
+        if region_provider:
+            region = region_provider(cloud_metadata)
 
         return cls(provider=provider, region=region)
 
@@ -92,7 +98,7 @@ class GeoMetadata:
             country_iso_code=response["country_code3"].upper(),
             country_name=response["country"],
             region=response.get("region", "").lower(),
-            latitude=float(response.get("latitude")),
-            longitude=float(response.get("longitude")),
+            latitude=float(response.get("latitude", 0)),
+            longitude=float(response.get("longitude", 0)),
             country_2letter_iso_code=response.get("country_code"),
         )

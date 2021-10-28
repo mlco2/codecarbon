@@ -11,7 +11,7 @@ def get_emissions(energy: Energy, geo: GeoMetadata, co2_signal_api_token: str = 
     if geo.latitude:
         params = {"lat": geo.latitude, "lon": geo.longitude}
     else:
-        params = {"countryCode": geo.country_2letter_iso_code}
+        params = {"countryCode": geo.country_2letter_iso_code}  # type: ignore
     resp = requests.get(
         URL,
         params=params,

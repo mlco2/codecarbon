@@ -24,7 +24,7 @@ POWER_CONSTANT = 85
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
 
-@dataclass
+@dataclass  # type: ignore
 class BaseHardware(ABC):
     @abstractmethod
     def total_power(self) -> Power:
@@ -79,7 +79,7 @@ class GPU(BaseHardware):
                 set(range(self.num_gpus))
             ), f"Unknown GPU ids {gpu_ids}"
         else:
-            gpu_ids = set(range(self.num_gpus))
+            gpu_ids = list(set(range(self.num_gpus)))
 
         gpu_power = self._get_power_for_gpus(gpu_ids=gpu_ids)
         return gpu_power
@@ -91,7 +91,7 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
-    def __init__(self, output_dir: str, mode: str, model: str, tdp: int):
+    def __init__(self, output_dir: str, mode: str, model: Optional[str], tdp: int):
         self._output_dir = output_dir
         self._mode = mode
         self._model = model
@@ -100,7 +100,7 @@ class CPU(BaseHardware):
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
-            self._intel_interface = IntelRAPL()
+            self._intel_interface = IntelRAPL()  # type: ignore
 
     def __repr__(self) -> str:
         if self._mode != "constant":
@@ -137,7 +137,7 @@ class CPU(BaseHardware):
         Get CPU energy deltas from RAPL files
         :return: energy in kWh
         """
-        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay=delay)
+        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay=delay)  # type: ignore
 
         energy = 0
         for metric, value in all_cpu_details.items():

@@ -77,8 +77,10 @@ def render_app(df: pd.DataFrame):
     def update_project_data(project_name: str):
         project_data = data.get_project_data(df, project_name)
         project_summary = data.get_project_summary(project_data.data)
-        net_power_consumption = f"{'{:.1f}'.format(sum(df['energy_consumed']))} kWh"
-        net_carbon_equivalent = f"{'{:.1f}'.format(sum(df['emissions']))} kg"
+        net_power_consumption = (
+            f"{'{:.1f}'.format(float(sum(df['energy_consumed'])))} kWh"
+        )
+        net_carbon_equivalent = f"{'{:.1f}'.format(float(sum(df['emissions'])))} kg"
         if {project_summary["region"]} == "":
             project_infrastructure_location = f"{project_summary['country_name']}"
         else:
