@@ -127,7 +127,7 @@ class IntelPowerGadget:
             )
         return
 
-    def get_cpu_details(self) -> Dict:
+    def get_cpu_details(self, **kwargs) -> Dict:
         """
         Fetches the CPU Power Details by fetching values from a logged csv file
         in _log_values function
@@ -206,7 +206,7 @@ class IntelRAPL:
                     )
         return
 
-    def get_cpu_details(self, delay: float) -> Dict:
+    def get_cpu_details(self, delay: float, **kwargs) -> Dict:
         """
         Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
