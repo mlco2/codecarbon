@@ -444,7 +444,7 @@ class BaseEmissionsTracker(ABC):
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
-            run_id=self.run_id,
+            run_id=str(self.run_id),
             duration=duration.seconds,
             emissions=emissions,
             emissions_rate=emissions * 1000 / duration.seconds,
