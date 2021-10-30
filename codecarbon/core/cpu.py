@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import warnings
-from typing import Dict, Union
+from typing import Dict, Tuple
 
 import pandas as pd
 
@@ -127,7 +127,7 @@ class IntelPowerGadget:
             )
         return
 
-    def get_cpu_details(self) -> Dict:
+    def get_cpu_details(self, **kwargs) -> Dict:
         """
         Fetches the CPU Power Details by fetching values from a logged csv file
         in _log_values function
@@ -206,7 +206,7 @@ class IntelRAPL:
                     )
         return
 
-    def get_cpu_details(self, delay: float) -> Dict:
+    def get_cpu_details(self, delay: float, **kwargs) -> Dict:
         """
         Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
@@ -327,7 +327,7 @@ class TDP:
     def _get_max_idxs(ratios: list, max_ratio: int) -> list:
         return [idx for idx, ratio in enumerate(ratios) if ratio == max_ratio]
 
-    def _main(self) -> Union[str, int]:
+    def _main(self) -> Tuple[str, int]:
         """
         Get CPU power from constant mode
 

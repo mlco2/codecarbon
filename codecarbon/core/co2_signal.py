@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import requests
 
 from codecarbon.core.units import EmissionsPerKWh, Energy
@@ -8,6 +10,7 @@ CO2_SIGNAL_API_TIMEOUT = 30
 
 
 def get_emissions(energy: Energy, geo: GeoMetadata, co2_signal_api_token: str = ""):
+    params: Dict[str, Any]
     if geo.latitude:
         params = {"lat": geo.latitude, "lon": geo.longitude}
     else:

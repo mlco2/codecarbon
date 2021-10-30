@@ -233,13 +233,14 @@ class BaseEmissionsTracker(ABC):
         self._geo = None
 
         if isinstance(self._gpu_ids, str):
-            self._gpu_ids = parse_gpu_ids(self._gpu_ids)
+            self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
             self._conf["gpu_ids"] = self._gpu_ids
             self._conf["gpu_count"] = len(self._gpu_ids)
 
         logger.info("[setup] RAM Tracking...")
-        self._hardware = [RAM(tracking_mode=self._tracking_mode)]
-        self._conf["ram_total_size"] = self._hardware[0].machine_memory_GB
+        ram = RAM(tracking_mode=self._tracking_mode)
+        self._conf["ram_total_size"] = ram.machine_memory_GB
+        self._hardware: List[Union[RAM, CPU, GPU]] = [ram]
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
@@ -443,7 +444,7 @@ class BaseEmissionsTracker(ABC):
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
-            run_id=self.run_id,
+            run_id=str(self.run_id),
             duration=duration.seconds,
             emissions=emissions,
             emissions_rate=emissions * 1000 / duration.seconds,
@@ -616,7 +617,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._region is not None:
             assert isinstance(self._region, str)
-            self._region = self._region.lower()
+            self._region: str = self._region.lower()
 
         if self._cloud_provider:
             if self._cloud_region is None:
@@ -653,7 +654,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._country_2letter_iso_code:
             assert isinstance(self._country_2letter_iso_code, str)
-            self._country_2letter_iso_code = self._country_2letter_iso_code.upper()
+            self._country_2letter_iso_code: str = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
 

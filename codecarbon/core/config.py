@@ -1,6 +1,7 @@
 import configparser
 import os
 from pathlib import Path
+from typing import List
 
 
 def clean_env_key(k: str) -> str:
@@ -41,7 +42,7 @@ def parse_env_config() -> dict:
     }
 
 
-def parse_gpu_ids(gpu_ids_str):
+def parse_gpu_ids(gpu_ids_str: str) -> List[int]:
     """
     Transforms the potential gpu_ids string into a list of int values
 

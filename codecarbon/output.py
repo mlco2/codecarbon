@@ -128,7 +128,7 @@ class FileOutput(BaseOutput):
                 df = df.append(dict(data.values), ignore_index=True)
             elif len(df_run) > 1:
                 logger.warning(
-                    f"CSV contains more than 1 ({len(len(df_run))})"
+                    f"CSV contains more than 1 ({len(df_run)})"
                     + f" rows with current run ID ({data.run_id})."
                     + "Appending instead of updating."
                 )

@@ -10,7 +10,7 @@ class RAPLFile:
     energy_reading: Energy = Energy(0)  # kWh
     energy_delta: Energy = Energy(0)  # kWh
 
-    def _get_value(self) -> float:
+    def _get_value(self) -> Energy:
         """
         Reads the value in the file at the path
         """
