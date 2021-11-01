@@ -97,12 +97,7 @@ class GPU(BaseHardware):
 @dataclass
 class CPU(BaseHardware):
     def __init__(
-        self,
-        output_dir: str,
-        mode: str,
-        model: str,
-        tdp: int,
-        rapl_dir: str = "/sys/class/powercap/intel-rapl",
+        self, output_dir: str, mode: str, model: str, tdp: int, rapl_dir: str = None
     ):
         self._output_dir = output_dir
         self._mode = mode
