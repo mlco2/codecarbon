@@ -6,6 +6,8 @@ from unittest import mock
 import pytest
 
 from codecarbon.core.cpu import TDP, IntelPowerGadget, IntelRAPL
+from codecarbon.core.units import Energy, Power
+from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
 
 
@@ -75,10 +77,23 @@ class TestIntelRAPL(unittest.TestCase):
     def test_intel_rapl(self):
         expected_cpu_details = {"Processor Energy Delta_0(kWh)": 0.0, "psys": 0.0}
 
-        rapl = IntelRAPL(
-            rapl_dir=os.path.join(os.path.dirname(__file__), "test_data", "rapl")
-        )
+        rapl = IntelRAPL(rapl_dir=self.rapl_dir)
         self.assertDictEqual(expected_cpu_details, rapl.get_cpu_details(delay=0.01))
+
+    @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
+    def test_rapl_cpu_hardware(self):
+        cpu = CPU(
+            output_dir="",
+            mode="intel_rapl",
+            model=None,
+            tdp=None,
+            rapl_dir=self.rapl_dir,
+        )
+        expected_energy = Energy(0)
+        expected_power = Power(0)
+        assert expected_power, expected_energy == cpu.measure_power_and_energy(
+            last_duration=0.01
+        )
 
 
 class TestTDP(unittest.TestCase):

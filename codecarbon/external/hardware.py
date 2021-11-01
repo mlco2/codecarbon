@@ -91,7 +91,9 @@ class GPU(BaseHardware):
 
 @dataclass
 class CPU(BaseHardware):
-    def __init__(self, output_dir: str, mode: str, model: str, tdp: int):
+    def __init__(
+        self, output_dir: str, mode: str, model: str, tdp: int, rapl_dir: str = None
+    ):
         self._output_dir = output_dir
         self._mode = mode
         self._model = model
@@ -100,7 +102,7 @@ class CPU(BaseHardware):
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
-            self._intel_interface = IntelRAPL()
+            self._intel_interface = IntelRAPL(rapl_dir=rapl_dir)
 
     def __repr__(self) -> str:
         if self._mode != "constant":
