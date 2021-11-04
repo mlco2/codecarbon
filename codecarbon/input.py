@@ -16,7 +16,7 @@ class DataSource:
             "cloud_emissions_path": "data/cloud/impact.csv",
             "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
             "can_energy_mix_data_path": "data/private_infra/2016/canada_energy_mix.json",  # noqa: E501
-            "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",  # noqa: E501
+            "global_energy_mix_data_path": "data/private_infra/global_energy_mix.json",  # noqa: E501
             "cpu_power_path": "data/hardware/cpu_power.csv",
         }
         self.module_name = "codecarbon"
