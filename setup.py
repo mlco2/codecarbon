@@ -5,6 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 DEPENDENCIES = [
     "arrow",
+    "dataclasses;python_version<'3.7'",
     "pandas",
     "pynvml",
     "requests",
