@@ -30,7 +30,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
                 )
 
 colors = {
-    'background': '#024758',
+    'background': darkgreen,
     'text': 'white'
 }
 
@@ -90,9 +90,11 @@ app.layout = dbc.Container([
                         end_date=date.today())
         ], xs=12, sm=12, md=12, lg=4, xl=4),  # if small screen the col would take the full width
         # holding indicators cards
-        dbc.Col(dbc.Card([dbc.CardBody([html.P("Energy consumed", style={'textAlign':'center'}), html.H3(id='Tot_Energy_Consumed', style={'textAlign':'center'}),html.P("kWh", style={'textAlign':'center'})])], color=darkgreen), xs=4, sm=4, md=4, lg=2, xl=2),
-        dbc.Col(dbc.Card([dbc.CardBody([html.P("Emissions produced", style={'textAlign':'center'}),html.H4(id='Tot_Emissions', style={'textAlign':'center'}),html.P("Kg. Eq. CO2", style={'textAlign':'center'})])], color=darkgreen), width={"size": 2, "offset": 1}),
-        dbc.Col(dbc.Card([dbc.CardBody([html.P("Cumulative duration", style={'textAlign':'center'}),html.H4(id='Tot_Duration', style={'textAlign':'center'}),html.P(id='Tot_Duration_unit', style={'textAlign':'center'})])], color=darkgreen),width={"size": 2, "offset": 1})
+        dbc.Col(dbc.CardGroup([
+            dbc.Card([dbc.CardBody([html.P("Energy consumed", style={'textAlign':'center'}), html.H3(id='Tot_Energy_Consumed', style={'textAlign':'center'}),html.P("kWh", style={'textAlign':'center'})])], color=darkgreen),
+            dbc.Card([dbc.CardBody([html.P("Emissions produced", style={'textAlign':'center'}),html.H4(id='Tot_Emissions', style={'textAlign':'center'}),html.P("Kg. Eq. CO2", style={'textAlign':'center'})])], color=darkgreen),
+            dbc.Card([dbc.CardBody([html.P("Cumulative duration", style={'textAlign':'center'}),html.H4(id='Tot_Duration', style={'textAlign':'center'}),html.P(id='Tot_Duration_unit', style={'textAlign':'center'})])], color=darkgreen)
+            ]))
     ]),
 
     dbc.Row([
@@ -336,6 +338,7 @@ def uppdate_linechart(clickPoint, start_date, end_date,experiment_selected):
 
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader=False)
+
 
 
 
