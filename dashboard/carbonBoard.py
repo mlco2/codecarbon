@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -11,9 +15,9 @@ from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
 # colors
-color1 = '#024758'
-color2 = '#c9fb37'
-color3 = '#226a7a'
+
+
+
 darkgreen = '#024758'
 vividgreen = '#c9fb37'
 color3 = '#226a7a'
@@ -45,7 +49,7 @@ card_household = dbc.Card([
                             dbc.CardBody([
                                 html.H4(id='houseHold'),
                                 html.P("of an american household weekly energy consumption", className="card-title")])
-                        ], color=color1, outline=False)
+                        ], color=darkgreen, outline=False)
 
 card_car = dbc.Card([
                             dbc.CardImg(src="/assets/car_icon.png",
@@ -53,7 +57,7 @@ card_car = dbc.Card([
                             dbc.CardBody([
                                 html.H4(id='car'),
                                 html.P("miles driven", className="card-title")])
-                        ], color=color1, outline=False)
+                        ], color=darkgreen, outline=False)
 
 card_tv = dbc.Card([
                             dbc.CardImg(src="/assets/tv_icon.png",
@@ -62,7 +66,7 @@ card_tv = dbc.Card([
                                 html.H4(id='tv'),
                                 html.P("of TV", className="card-title")])
 
-                    ], color=color1, outline=False)
+                    ], color=darkgreen, outline=False)
 
 
 # Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
@@ -85,9 +89,10 @@ app.layout = dbc.Container([
                         initial_visible_month=date.today(),
                         end_date=date.today())
         ], xs=12, sm=12, md=12, lg=4, xl=4),  # if small screen the col would take the full width
-        # holding indicators graph
-       dbc.Col(dcc.Graph(id='indicators'), xs=12, sm=12, md=12, lg=8, xl=8
-       )
+        # holding indicators cards
+        dbc.Col(dbc.Card([dbc.CardBody([html.P("Energy consumed", style={'textAlign':'center'}), html.H3(id='Tot_Energy_Consumed', style={'textAlign':'center'}),html.P("kWh", style={'textAlign':'center'})])], color=darkgreen), xs=4, sm=4, md=4, lg=2, xl=2),
+        dbc.Col(dbc.Card([dbc.CardBody([html.P("Emissions produced", style={'textAlign':'center'}),html.H4(id='Tot_Emissions', style={'textAlign':'center'}),html.P("Kg. Eq. CO2", style={'textAlign':'center'})])], color=darkgreen), width={"size": 2, "offset": 1}),
+        dbc.Col(dbc.Card([dbc.CardBody([html.P("Cumulative duration", style={'textAlign':'center'}),html.H4(id='Tot_Duration', style={'textAlign':'center'}),html.P(id='Tot_Duration_unit', style={'textAlign':'center'})])], color=darkgreen),width={"size": 2, "offset": 1})
     ]),
 
     dbc.Row([
@@ -104,7 +109,7 @@ app.layout = dbc.Container([
         ),
         # horlding pieCharts
         dbc.Col(
-                dcc.Graph(id='pieCharts'), xs=12, sm=12, md=12, lg=8, xl=8
+                dcc.Graph(id='pieCharts', config={'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}), xs=12, sm=12, md=12, lg=8, xl=8
         )
     ]),
 
@@ -115,16 +120,16 @@ app.layout = dbc.Container([
                     dbc.Col(card_car, width=2),
                     dbc.Col(card_tv, width=2),
                     #holding bar graph
-                    dbc.Col(dcc.Graph(id='barChart',clickData=None,config={'scrollZoom':False, 'doubleClick':'reset'}),width={"size":6,"offset":0})
+                    dbc.Col(dcc.Graph(id='barChart',clickData=None,config={'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}),width={"size":6,"offset":0})
     ]),
     
     
      dbc.Row([
          #holding bubble chart
                 dbc.Col(dcc.Graph(id='bubbleChart', clickData=None, hoverData=None, figure={}, 
-                          config={'scrollZoom':False, 'doubleClick':'reset'}),width=6),
+                          config={'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}),width=6),
          #holding line chart
-               dbc.Col(id='line_container', children=[], width=6)
+               dbc.Col(id='line_container',  width=6)
                         
     ])
 
@@ -137,7 +142,10 @@ app.layout = dbc.Container([
 # indicators
 # -------------------------------------------------------------------------
 @ app.callback(
-    Output(component_id='indicators', component_property='figure'),
+    [Output(component_id='Tot_Energy_Consumed', component_property='children'),
+    Output(component_id='Tot_Emissions', component_property='children'),
+    Output(component_id='Tot_Duration', component_property='children'),
+    Output(component_id='Tot_Duration_unit', component_property='children')],
     [Input(component_id='periode', component_property='start_date'),
     Input(component_id='periode', component_property='end_date')]
 )
@@ -146,41 +154,30 @@ def update_indicator(start_date, end_date):
     dff = df.copy()
     dff = dff[dff['timestamp'] > start_date][dff['timestamp'] < end_date]
 
-    # graph
-    figIndic = make_subplots(rows=1, cols=3, specs=[
-                    [{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]])
+    # Tot_Energy consumed card
+    
+    Tot_energy_consumed = str(round(dff.energy_consumed.sum(),2)) 
+    
+    # Tot Emissions card
+    
+    Tot_emissions = str(round(dff.emissions_sum.sum(),2)) 
+    
+    # Tot_Duration cards
+    
+    tot_duration_min = round(dff.duration.sum()/60)
+    tot_duration = str(tot_duration_min) 
+    tot_duration_unit = 'min'
+    if tot_duration_min >= 60:
+        tot_duration_hours = round(tot_duration_min / 60)
+        tot_duration= str(tot_duration_hours) 
+        tot_duration_unit = 'H'
+        if tot_duration_hours >= 24:
+            tot_duration_days = round(tot_duration_hours / 24)
+            tot_duration = str(tot_duration_days) 
+            tot_duration_unit = 'days'
+            
 
-    figIndic.add_trace(go.Indicator(value=dff.energy_consumed.sum(),
-                         title={
-                             "text": "Energy Consumed<br><span style='font-size:0.8em;color:gray'>kWh</span>"},
-                          ), row=1, col=1)
-    figIndic.add_trace(go.Indicator(value=dff.emissions_sum.sum(),
-                           title={
-                               "text": "Emissions<br><span style='font-size:0.8em;color:gray'>kg eq.C02</span>"},
-                          ), row=1, col=2)
-    figIndic.add_trace(go.Indicator(value=round(dff.duration.sum()/60, 0),
-                           title={
-                               "text": "Duration<br><span style='font-size:0.8em;color:gray'>min.</span>"},
-                          ), 1, 3)
-
-    figIndic.update_layout(
-                    title_text="GLOBAL ",
-                    title_font_color='#d8d8d8',
-
-                    font=dict(color='white'),
-                    height=250,
-                    margin=dict(
-                    l=10,
-                    r=10,
-                    b=10,
-                    t=40,
-                    pad=4
-                    ),
-                    paper_bgcolor=color1,
-                    showlegend=False,
-                    )
-
-    return figIndic
+    return Tot_energy_consumed, Tot_emissions, tot_duration, tot_duration_unit
 
 
 # pieCharts and cards
@@ -233,25 +230,27 @@ def update_Charts(start_date, end_date, project):
     ##PieChart
     figPie=make_subplots(rows=1, cols=3, specs=[
                         [{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]])
-    figPie.add_trace(go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], name="energy consumed",
-                     textinfo='none', hole=.8, marker=dict(colors=[color2, color3]), title=''), row=1, col=1)
+    figPie.add_trace(go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], name="",
+                     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip'), row=1, col=1)
     figPie.add_trace(go.Pie(values=[emission, dff.emissions_sum.sum(
-    )-emission], name="emission", textinfo='none', hole=.8, marker=dict(colors=[color2, color3])), row=1, col=2)
-    figPie.add_trace(go.Pie(values=[duration, (dff.duration.sum()-duration)], name="duration",
-                     textinfo='none', hole=.8, marker=dict(colors=[color2, color3])), row=1, col=3)
+    )-emission], name="", textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo='skip'), row=1, col=2)
+    figPie.add_trace(go.Pie(values=[duration, (dff.duration.sum()-duration)], name="",
+                     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo="skip"), row=1, col=3)
 
 
     figPie.update_layout(
         title_text=project,
-        title_font_color='#d8d8d8',
+        title_font_color=titleColor,
         font=dict(color='white'),
-        paper_bgcolor=color1,
+        paper_bgcolor=darkgreen,
         showlegend=False,
-        annotations=[dict(text=string1, font=dict(color='white',), x=0.05, y=0.5, font_size=20, showarrow=False), dict(
-            text=string2, x=0.5, y=0.5, font_size=20, showarrow=False), dict(text=string3, font=dict(color='white',), x=0.93, y=0.5, font_size=20, showarrow=False), ],
+        annotations=[dict(text=string1, font=dict(color='white',), x=0.07, y=0.5, font_size=20, showarrow=False), dict(
+            text=string2, x=0.5, y=0.5, font_size=20, showarrow=False), dict(text=string3, font=dict(color='white',), x=0.92, y=0.5, font_size=20, showarrow=False), ],
         margin=dict(l=10, r=10, b=10, t=40, pad=4),
         height=200)
+    
     #barChart
+    
     dfBar = dff[dff['project_name']==project].groupby('experiment_name').agg({'timestamp': min, 'duration': sum, 'emissions_sum':sum, 'energy_consumed':sum, 'experiment_description': lambda x: x.iloc[0]}).reset_index()
     
     figBar = px.bar(dfBar, x='experiment_name', y='emissions_sum', text='emissions_sum')
@@ -337,3 +336,9 @@ def uppdate_linechart(clickPoint, start_date, end_date,experiment_selected):
 
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader=False)
+
+
+
+
+
+
