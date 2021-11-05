@@ -50,7 +50,11 @@ conda activate codecarbon
 ```
 pip install codecarbon
 ```
-
+or
+```
+pip install codecarbon[viz]
+```
+if you wish to use the built-in visualization tool described below.
 #### Install from Conda repository
 
 ```

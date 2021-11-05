@@ -5,10 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 DEPENDENCIES = [
     "arrow",
-    "dash",
-    "dash_bootstrap_components",
     "dataclasses;python_version<'3.7'",
-    "fire",
     "pandas",
     "pynvml",
     "requests",
@@ -31,6 +28,7 @@ setuptools.setup(
     ),
     install_requires=DEPENDENCIES,
     tests_require=TEST_DEPENDENCIES,
+    extras_require={"viz": ["dash", "dash_bootstrap_components", "fire"]},
     classifiers=[
         "Natural Language :: English",
         "Programming Language :: Python :: 3.6",
