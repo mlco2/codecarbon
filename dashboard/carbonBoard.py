@@ -13,16 +13,22 @@ import numpy as np
 from datetime import date
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-
+#Common variables
+#******************************************************************************
 # colors
-
-
 
 darkgreen = '#024758'
 vividgreen = '#c9fb37'
 color3 = '#226a7a'
 titleColor = '#d8d8d8'
+# config (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
 
+config = {'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}
+
+
+# App
+#*******************************************************************************
+#*******************************************************************************
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
                 meta_tags=[{'name': 'viewport',
@@ -44,28 +50,23 @@ df.timestamp = pd.to_datetime(df.timestamp)
 # ******************************************************************************
 
 card_household = dbc.Card([
-                            dbc.CardImg(src="/assets/house_icon.png",
-                                        top=True, bottom=False),
-                            dbc.CardBody([
-                                html.H4(id='houseHold'),
+                            dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False),
+                            dbc.CardBody([html.H4(id='houseHold'),
                                 html.P("of an american household weekly energy consumption", className="card-title")])
                         ], color=darkgreen, outline=False)
 
 card_car = dbc.Card([
-                            dbc.CardImg(src="/assets/car_icon.png",
-                                        top=True, bottom=False),
+                            dbc.CardImg(src="/assets/car_icon.png",top=True, bottom=False),
                             dbc.CardBody([
                                 html.H4(id='car'),
                                 html.P("miles driven", className="card-title")])
                         ], color=darkgreen, outline=False)
 
 card_tv = dbc.Card([
-                            dbc.CardImg(src="/assets/tv_icon.png",
-                                        top=True, bottom=False),
+                            dbc.CardImg(src="/assets/tv_icon.png",top=True, bottom=False),
                             dbc.CardBody([
                                 html.H4(id='tv'),
                                 html.P("of TV", className="card-title")])
-
                     ], color=darkgreen, outline=False)
 
 
@@ -101,18 +102,14 @@ app.layout = dbc.Container([
         # holding project selector
         dbc.Col(
                 dcc.RadioItems(id='projectPicked',
-                            options=[{'label': projectName, 'value': projectName}
-                                for projectName in df.project_name.unique()],
-                            value=df.project_name.unique().tolist()[0],
-                            labelClassName="mr-3"
+                            options=[{'label': projectName, 'value': projectName} for projectName in df.project_name.unique()],
+                            value=df.project_name.unique().tolist()[0], labelClassName="mr-3"
                              ), xs=12, sm=12, md=12, lg=4, xl=4
-
-
-        ),
+                ),
         # horlding pieCharts
         dbc.Col(
-                dcc.Graph(id='pieCharts', config={'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}), xs=12, sm=12, md=12, lg=8, xl=8
-        )
+                dcc.Graph(id='pieCharts', config=config), xs=12, sm=12, md=12, lg=8, xl=8
+                )
     ]),
 
     dbc.Row([
@@ -121,15 +118,15 @@ app.layout = dbc.Container([
                     dbc.Col(card_household, width={"size": 2, "offset": 0}),
                     dbc.Col(card_car, width=2),
                     dbc.Col(card_tv, width=2),
-                    #holding bar graph
-                    dbc.Col(dcc.Graph(id='barChart',clickData=None,config={'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}),width={"size":6,"offset":0})
+         #holding bar graph
+                    dbc.Col(dcc.Graph(id='barChart',clickData=None,config=config),width={"size":6,"offset":0})
     ]),
     
     
      dbc.Row([
          #holding bubble chart
                 dbc.Col(dcc.Graph(id='bubbleChart', clickData=None, hoverData=None, figure={}, 
-                          config={'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}),width=6),
+                          config=config),width=6),
          #holding line chart
                dbc.Col(id='line_container',  width=6)
                         
@@ -336,6 +333,8 @@ def uppdate_linechart(clickPoint, start_date, end_date,experiment_selected):
     
     return dcc.Graph(id='lineChart', figure=line)
 
+#****************************************************************************************
+#***************************************************************************************
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader=False)
 
