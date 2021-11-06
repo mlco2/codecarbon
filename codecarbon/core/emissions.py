@@ -139,7 +139,7 @@ class Emissions:
                 geo.country_iso_code.lower()
             )
             region_energy_mix_data = country_energy_mix_data[geo.region]
-            emissions_per_kWh = self._energy_mix_to_emissions_rate(
+            emissions_per_kWh = self._region_energy_mix_to_emissions_rate(
                 region_energy_mix_data
             )
 
@@ -183,51 +183,6 @@ class Emissions:
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
 
     @staticmethod
-    def _global_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
-        """
-        Convert a mix of electricity sources into emissions per kWh.
-        :param energy_mix: A dictionary that breaks down the electricity produced into
-            energy sources, with a total value. Format will vary, but must have keys for "total_TWh"
-        :return: an EmissionsPerKwh object representing the average emissions rate
-            in Kgs.CO2 / kWh
-        """
-        # If we have the chance to have the carbon intensity for this country
-        if energy_mix.get("carbon_intensity"):
-            return EmissionsPerKWh.from_g_per_kWh(energy_mix.get("carbon_intensity"))
-
-        # Else we compute it from the energy mix.
-        # Read carbon_intensity from the json data file.
-        carbon_intensity_per_source = (
-            DataSource().get_carbon_intensity_per_source_data()
-        )
-        carbon_intensity = 0
-        energy_sum = energy_mix["total_TWh"]
-        energy_sum_computed = 0
-        # Iterate through each source of energy in the country
-        for energy_type, energy_per_year in energy_mix.items():
-            if "_TWh" in energy_type:
-                # Compute the carbon intensity ratio of this source for this country
-                carbon_intensity_for_type = carbon_intensity_per_source.get(
-                    energy_type[: -len("_TWh")]
-                )
-                if carbon_intensity_for_type:  # to ignore "total_TWh"
-                    carbon_intensity += (
-                        energy_per_year / energy_sum
-                    ) * carbon_intensity_for_type
-                    energy_sum_computed += energy_per_year
-
-        # Sanity check
-        if energy_sum_computed != energy_sum:
-            logger.error(
-                f"We find {energy_sum_computed} TWh instead of {energy_sum} TWh for {energy_mix.get('official_name_en')}, using world average."
-            )
-            return EmissionsPerKWh.from_g_per_kWh(
-                carbon_intensity_per_source.get("world_average")
-            )
-
-        return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
-
-    @staticmethod
     def _region_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
         """
         Convert a mix of energy sources into emissions per kWh
@@ -266,3 +221,22 @@ class Emissions:
         )
 
         return emissions_per_kWh
+
+    @staticmethod
+    def _global_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
+        """
+        Convert a mix of electricity sources into emissions per kWh.
+        :param electricity_mix: A dictionary that breaks down the electricity produced into
+            energy sources, with a total value. Format will vary, but must have keys for "fossil"
+            and "total"
+        :return: an EmissionsPerKwh object representing the average emissions rate
+        """
+        # source:
+        # https://www.epa.gov/egrid/data-explorer
+        fossil_emissions_rate = EmissionsPerKWh.from_lbs_per_mWh(1401)
+        fossil_mix_percentage = energy_mix["fossil"] / energy_mix["total"]
+
+        return EmissionsPerKWh.from_kgs_per_kWh(
+            fossil_mix_percentage
+            * fossil_emissions_rate.kgs_per_kWh  # % (0.x)  # kgs / kWh
+        )
