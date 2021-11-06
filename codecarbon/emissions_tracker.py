@@ -644,7 +644,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             try:
                 self._country_name: str = DataSource().get_global_energy_mix_data()[
                     self._country_iso_code
-                ]["countryName"]
+                ]["country_name"]
             except KeyError as e:
                 logger.error(
                     "Does not support country"

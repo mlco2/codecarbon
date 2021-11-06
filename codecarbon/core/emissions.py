@@ -139,7 +139,7 @@ class Emissions:
                 geo.country_iso_code.lower()
             )
             region_energy_mix_data = country_energy_mix_data[geo.region]
-            emissions_per_kWh = self._energy_mix_to_emissions_rate(
+            emissions_per_kWh = self._region_energy_mix_to_emissions_rate(
                 region_energy_mix_data
             )
 
@@ -162,7 +162,9 @@ class Emissions:
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
 
-        emissions_per_kWh = self._energy_mix_to_emissions_rate(country_energy_mix)
+        emissions_per_kWh = self._global_energy_mix_to_emissions_rate(
+            country_energy_mix
+        )
         logger.debug(
             f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh:.6f}"
             + f" Kg.CO2eq/kWh for {geo.country_name}"
@@ -171,7 +173,7 @@ class Emissions:
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
 
     @staticmethod
-    def _energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
+    def _region_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
         """
         Convert a mix of energy sources into emissions per kWh
         https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
@@ -212,3 +214,22 @@ class Emissions:
         )
 
         return emissions_per_kWh
+
+    @staticmethod
+    def _global_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
+        """
+        Convert a mix of electricity sources into emissions per kWh.
+        :param electricity_mix: A dictionary that breaks down the electricity produced into
+            energy sources, with a total value. Format will vary, but must have keys for "fossil"
+            and "total"
+        :return: an EmissionsPerKwh object representing the average emissions rate
+        """
+        # source:
+        # https://www.epa.gov/egrid/data-explorer
+        fossil_emissions_rate = EmissionsPerKWh.from_lbs_per_mWh(1401)
+        fossil_mix_percentage = energy_mix["fossil"] / energy_mix["total"]
+
+        return EmissionsPerKWh.from_kgs_per_kWh(
+            fossil_mix_percentage
+            * fossil_emissions_rate.kgs_per_kWh  # % (0.x)  # kgs / kWh
+        )

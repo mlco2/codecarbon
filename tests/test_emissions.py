@@ -67,7 +67,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.20, places=2)
+        self.assertAlmostEqual(emissions, 0.115, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_USA_WITHOUT_COUNTRYNAME(self):
         # WHEN
@@ -77,7 +77,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.20, places=2)
+        self.assertAlmostEqual(emissions, 0.115, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITHOUT_REGION(self):
 
@@ -89,7 +89,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 1.6, places=2)
+        self.assertAlmostEqual(emissions, 0.32, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
 
