@@ -219,7 +219,7 @@ class Emissions:
     def _global_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
         """
         Convert a mix of electricity sources into emissions per kWh.
-        :param electricity_mix: A dictionary that breaks down the electricity produced into
+        :param energy_mix: A dictionary that breaks down the electricity produced into
             energy sources, with a total value. Format will vary, but must have keys for "fossil"
             and "total"
         :return: an EmissionsPerKwh object representing the average emissions rate
