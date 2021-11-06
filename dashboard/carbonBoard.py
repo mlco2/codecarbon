@@ -128,7 +128,7 @@ app.layout = dbc.Container([
                 dbc.Col(dcc.Graph(id='bubbleChart', clickData=None, hoverData=None, figure={}, 
                           config=config),width=6),
          #holding line chart
-               dbc.Col(id='line_container',  width=6)
+               dbc.Col(dcc.Graph(id='lineChart', config=config),  width=6)
                         
     ])
 
@@ -306,19 +306,22 @@ def uppdate_bubblechart(clickPoint, start_date, end_date,project):
 # Line Chart
 #---------------------------------------------------------------------------------
 @ app.callback(
-    Output(component_id='line_container', component_property='children'),
+    Output(component_id='lineChart', component_property='figure'),
     Input(component_id='bubbleChart', component_property='clickData'),
      Input(component_id='periode', component_property='start_date'),
      Input(component_id='periode', component_property='end_date'),
      Input(component_id='barChart', component_property='clickData'),
-     prevent_initial_call=True
+     Input(component_id='projectPicked', component_property='value')
     )
 
-def uppdate_linechart(clickPoint, start_date, end_date,experiment_selected):
+def uppdate_linechart(clickPoint, start_date, end_date,experiment_clickPoint,project):
     dff = df.copy()
     dff = dff[dff['timestamp'] > start_date][dff['timestamp'] < end_date]
-    
-    if clickPoint is None:
+    if experiment_clickPoint is None:
+        default_experiment_name = dff[dff['project_name']==project]['experiment_name'].unique()[0] 
+        run_name = dff[dff['experiment_name']==default_experiment_name]['run_id'].unique()[-1] #showing the last run of default project
+    elif clickPoint is None:
+        experiment_selected = experiment_clickPoint['points'][0]['x']
         run_name = dff[dff['experiment_name']==experiment_selected]['run_id'].unique()[0]
     else:
         run_name= clickPoint['points'][0]['customdata']
@@ -331,7 +334,7 @@ def uppdate_linechart(clickPoint, start_date, end_date,experiment_selected):
     line.update_yaxes(showgrid=False, visible=False, title="emissions (kg eq. C02)")
     
     
-    return dcc.Graph(id='lineChart', figure=line)
+    return line
 
 #****************************************************************************************
 #***************************************************************************************
