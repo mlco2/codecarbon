@@ -338,7 +338,7 @@ def uppdate_linechart(clickPoint, start_date, end_date,experiment_clickPoint,pro
         run_name = dff[dff['experiment_name']==experiment_selected]['run_id'].unique()[0]
     else:
         run_name= clickPoint['points'][0]['customdata']
-    line = px.line(dff[dff['run_id']==run_name], x='timestamp', y ='emissions_sum',color_discrete_sequence=[vividgreen], markers=True)
+    line = px.line(dff[dff['run_id']==run_name], x='timestamp', y ='emissions_sum',color_discrete_sequence=[vividgreen], markers=True, symbol_sequence=['circle-open'])
     line.update_layout(
         title_text= run_name +"<br><span style='font-size:0.8em;color:gray' >emissions (kg eq. C02)</span>",
         title_font_color= titleColor,
