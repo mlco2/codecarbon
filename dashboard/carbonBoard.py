@@ -273,9 +273,12 @@ def update_Charts(start_date, end_date, project):
         font= dict(color='white'),
         paper_bgcolor=darkgreen,
         plot_bgcolor=darkgreen,
+        width=500,
+        height=300,
+
         )
     figBar.update_traces(marker_color='#226a7a', marker_line_color=vividgreen,
-                  marker_line_width=3, texttemplate='%{text:.2f} Kg eq CO2', textposition='outside')
+                  marker_line_width=3, texttemplate='%{text:.2f} Kg eq CO2', textposition='inside')
     figBar.update_yaxes(showgrid=False, visible=False, title="")
     figBar.update_xaxes(showgrid=False, showline=True, linewidth=2, linecolor='white', title='')
     
