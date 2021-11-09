@@ -103,8 +103,10 @@ app.layout = dbc.Container([
         dbc.Col(
                 dcc.RadioItems(id='projectPicked',
                             options=[{'label': projectName, 'value': projectName} for projectName in df.project_name.unique()],
-                            value=df.project_name.unique().tolist()[0], labelClassName="mr-3"
+                            value=df.project_name.unique().tolist()[0], labelStyle={'display': 'block'}, style={'padding-top':10}, inputStyle={"margin-right": "20px"}
                              ), xs=12, sm=12, md=12, lg=4, xl=4
+                            
+                            
                 ),
         # horlding pieCharts
         dbc.Col(
