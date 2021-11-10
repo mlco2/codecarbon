@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-
 import dash
 from dash import dcc
 from dash import html
@@ -13,6 +9,8 @@ import numpy as np
 from datetime import date
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
+import CodeCarbon_template
+
 #Common variables
 #******************************************************************************
 # colors
@@ -255,8 +253,7 @@ def update_Charts(start_date, end_date, project):
     figPie.update_layout(
         title_text=project,
         title_font_color=titleColor,
-        font=dict(color='white'),
-        paper_bgcolor=darkgreen,
+        template = 'CodeCarbonTemplate' ,
         showlegend=False,
         annotations=[dict(text=string1, font=dict(color='white',), x=0.07, y=0.5, font_size=20, showarrow=False), dict(
             text=string2, x=0.5, y=0.5, font_size=20, showarrow=False), dict(text=string3, font=dict(color='white',), x=0.92, y=0.5, font_size=20, showarrow=False), ],
@@ -272,10 +269,7 @@ def update_Charts(start_date, end_date, project):
 
     figBar.update_layout(
         title_text= project + " experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart below </span>",
-        title_font_color= titleColor,
-        font= dict(color='white'),
-        paper_bgcolor=darkgreen,
-        plot_bgcolor=darkgreen,
+        template = 'CodeCarbonTemplate' ,
         width=500,
         height=300,
 
@@ -313,10 +307,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date,project):
     bubble.update_traces(customdata=df1.run_id,
                         marker=dict(line=dict(color=vividgreen, width=3)))
     bubble.update_layout(title_text= experiment_name +"<br><span style='font-size:0.6em'>click a run to see timeseries</span>",
-                        title_font_color=titleColor,
-                        font=dict(color='white'),
-                        paper_bgcolor=darkgreen,
-                        plot_bgcolor=darkgreen)
+                        template = 'CodeCarbonTemplate' )
     bubble.update_xaxes(showgrid=False, showline=False, linewidth=2, linecolor='white', title='')
     bubble.update_yaxes(showgrid=False, title="emissions (kg eq.CO2)")
     bubble.update_coloraxes(colorbar_title_side='right', colorbar_title_text='energy consumed (KwH)')
@@ -348,7 +339,7 @@ def uppdate_linechart(clickPoint, start_date, end_date,experiment_clickPoint,pro
     line.update_layout(
         title_text= run_name +"<br><span style='font-size:0.8em;color:gray' >emissions (kg eq. C02)</span>",
         title_font_color= titleColor,
-        font= dict(color='white'),paper_bgcolor=darkgreen,plot_bgcolor=darkgreen)
+        template = 'CodeCarbonTemplate' ,)
     line.update_xaxes(showgrid=False, showline=True, linewidth=2, linecolor='white',title='')
     line.update_yaxes(showgrid=False, visible=False, title="emissions (kg eq. C02)")
     
@@ -386,7 +377,7 @@ def update_map(start_date,end_date,project,kpi):
             hover_data=['country_name', 'emissions_sum', 'project_name'],
             color_continuous_scale=px.colors.sequential.YlOrRd,
             labels={'emissions_sum': 'Carbon Emission'},
-#            template='plotly_white'
+            template='CodeCarbonTemplate'
         )
     elif kpi == 'Duration':
         fig = px.choropleth(
@@ -398,7 +389,7 @@ def update_map(start_date,end_date,project,kpi):
             hover_data=['country_name', 'duration', 'project_name'],
             color_continuous_scale=px.colors.sequential.YlOrRd,
             labels={'duration': 'Duration'},
-#            template='plotly_white'
+            template='CodeCarbonTemplate'
         )
     elif kpi == 'Ratio':        
         fig = px.choropleth(
@@ -410,17 +401,10 @@ def update_map(start_date,end_date,project,kpi):
             hover_data=['country_name', 'ratio', 'project_name'],
             color_continuous_scale=px.colors.sequential.YlOrRd,
             labels={'ratio': 'Ratio'},
-#            template='plotly_white'
+            template='CodeCarbonTemplate'
         )
 
     return container, fig
 
 if __name__ == '__main__':
     app.run_server(debug=True, use_reloader=False)
-
-
-
-
-
-
-
