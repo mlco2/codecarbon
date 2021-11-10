@@ -3,8 +3,8 @@
 
 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -103,10 +103,8 @@ app.layout = dbc.Container([
         dbc.Col(
                 dcc.RadioItems(id='projectPicked',
                             options=[{'label': projectName, 'value': projectName} for projectName in df.project_name.unique()],
-                            value=df.project_name.unique().tolist()[0], labelStyle={'display': 'block'}, style={'padding-top':10}, inputStyle={"margin-right": "20px"}
-                             ), xs=12, sm=12, md=12, lg=4, xl=4
-                            
-                            
+                            value=df.project_name.unique().tolist()[0], labelStyle={'display': 'block'}, style={'padding-top':10}, inputStyle={"margin-right": "10px"}
+                             ), xs=12, sm=12, md=12, lg=4, xl=4       
                 ),
         # horlding pieCharts
         dbc.Col(
@@ -218,6 +216,7 @@ def update_Charts(start_date, end_date, project):
     duration = dff[dff['project_name'] == project].duration.sum()
     
     ##Cards
+    #--------------------------------------------------------------
     houseHold = str(round(100*emission/160.58, 2)) + " %"
     car = str(round(emission / 0.409, ))
     time_in_minutes = (emission * (1 / 0.097) * 60)
@@ -242,6 +241,7 @@ def update_Charts(start_date, end_date, project):
                     string3='{:.0f} years'.format(duration_in_years)
 
     ##PieChart
+    #----------------------------------------------------------------
     figPie=make_subplots(rows=1, cols=3, specs=[
                         [{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]])
     figPie.add_trace(go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], name="",
@@ -264,6 +264,7 @@ def update_Charts(start_date, end_date, project):
         height=200)
     
     #barChart
+    #--------------------------------------------------------------------
     
     dfBar = dff[dff['project_name']==project].groupby('experiment_name').agg({'timestamp': min, 'duration': sum, 'emissions_sum':sum, 'energy_consumed':sum, 'experiment_description': lambda x: x.iloc[0]}).reset_index()
     
