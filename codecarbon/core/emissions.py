@@ -166,8 +166,8 @@ class Emissions:
             country_energy_mix
         )
         logger.debug(
-            f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh:.6f}"
-            + f" Kg.CO2eq/kWh for {geo.country_name}"
+            f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh*1000:.0f}"
+            + f" g.CO2eq/kWh for {geo.country_name}"
         )
 
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
@@ -229,7 +229,51 @@ class Emissions:
         fossil_emissions_rate = EmissionsPerKWh.from_lbs_per_mWh(1401)
         fossil_mix_percentage = energy_mix["fossil"] / energy_mix["total"]
 
+        # Source : https://www.world-nuclear.org/information-library/energy-and-the-environment/carbon-dioxide-emissions-from-electricity.aspx
+        geothermal_emissions_rate = EmissionsPerKWh.from_g_per_kWh(38)
+        geothermal_mix_percentage = energy_mix["geothermal"] / energy_mix["total"]
+
+        # Source : http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf
+        hydroelectricity_emissions_rate = EmissionsPerKWh.from_g_per_kWh(26)
+        hydroelectricity_mix_percentage = (
+            energy_mix["hydroelectricity"] / energy_mix["total"]
+        )
+
+        nuclear_emissions_rate = EmissionsPerKWh.from_g_per_kWh(29)
+        nuclear_mix_percentage = energy_mix["nuclear"] / energy_mix["total"]
+
+        solar_emissions_rate = EmissionsPerKWh.from_g_per_kWh(48)
+        solar_mix_percentage = energy_mix["solar"] / energy_mix["total"]
+
+        wind_emissions_rate = EmissionsPerKWh.from_g_per_kWh(26)
+        wind_mix_percentage = energy_mix["wind"] / energy_mix["total"]
+        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+        logger.debug("Code Carbon hypothesis for carbon intensity :")
+        logger.debug(
+            f"Fossil : {fossil_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
+        )
+        logger.debug(
+            f"Geothermal : {geothermal_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
+        )
+        logger.debug(
+            f"hydroelectricity : {hydroelectricity_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
+        )
+        logger.debug(
+            f"nuclear : {nuclear_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
+        )
+        logger.debug(
+            f"solar : {solar_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
+        )
+        logger.debug(
+            f"wind : {wind_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
+        )
         return EmissionsPerKWh.from_kgs_per_kWh(
             fossil_mix_percentage
             * fossil_emissions_rate.kgs_per_kWh  # % (0.x)  # kgs / kWh
+            + geothermal_mix_percentage * geothermal_emissions_rate.kgs_per_kWh
+            + hydroelectricity_mix_percentage
+            * hydroelectricity_emissions_rate.kgs_per_kWh
+            + nuclear_mix_percentage * nuclear_emissions_rate.kgs_per_kWh
+            + solar_mix_percentage * solar_emissions_rate.kgs_per_kWh
+            + wind_mix_percentage * wind_emissions_rate.kgs_per_kWh
         )
