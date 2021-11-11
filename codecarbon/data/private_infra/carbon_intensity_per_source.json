@@ -8,8 +8,13 @@
     "petroleum_source": "https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2",
     "natural_gas": 743,
     "natural_gas_source": "https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2",
+<<<<<<< HEAD
     "fossil": 635,
     "fossil_source": "https://www.epa.gov/egrid/data-explorer",
+=======
+    "fossil_average": 635,
+    "fossil_average_source": "https://www.epa.gov/egrid/data-explorer",
+>>>>>>> 5908735 (WIP: Add EU carbon_intensity)
     "geothermal": 38,
     "geothermal_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf",
     "hydroelectricity": 26,
