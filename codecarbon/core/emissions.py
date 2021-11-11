@@ -158,6 +158,7 @@ class Emissions:
 
         if geo.country_iso_code not in energy_mix:
             # TODO: Deal with missing data, default to something
+            # TODO: return annual mean and log an error
             raise Exception()
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
@@ -173,49 +174,6 @@ class Emissions:
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
 
     @staticmethod
-    def _region_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
-        """
-        Convert a mix of energy sources into emissions per kWh
-        https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
-        :param energy_mix: A dictionary that breaks down the energy produced into
-            sources, with a total value. Format will vary, but must have keys for "coal"
-            "petroleum" and "naturalGas" and "total"
-        :return: an EmissionsPerKwh object representing the average emissions rate
-        """
-        # source:
-        # https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
-        emissions_by_source: Dict[str, EmissionsPerKWh] = {
-            "coal": EmissionsPerKWh.from_kgs_per_kWh(0.995725971),
-            "petroleum": EmissionsPerKWh.from_kgs_per_kWh(0.8166885263),
-            "naturalGas": EmissionsPerKWh.from_kgs_per_kWh(0.7438415916),
-        }
-
-        emissions_percentage: Dict[str, float] = {}
-        for energy_type in energy_mix.keys():
-            if energy_type not in ["total", "isoCode", "countryName"]:
-                emissions_percentage[energy_type] = (
-                    energy_mix[energy_type] / energy_mix["total"]
-                )
-
-        #  Weighted sum of emissions by % of contributions
-        # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
-        # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916 # noqa: E501
-        # `emissions_per_kWh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916) # noqa: E501
-        #  >> 0.5358309 kg/kWh
-
-        emissions_per_kWh = EmissionsPerKWh.from_kgs_per_kWh(
-            sum(
-                [
-                    emissions_percentage[source]
-                    * value.kgs_per_kWh  # % (0.x)  # kgs / kWh
-                    for source, value in emissions_by_source.items()
-                ]
-            )
-        )
-
-        return emissions_per_kWh
-
-    @staticmethod
     def _global_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
         """
         Convert a mix of electricity sources into emissions per kWh.
@@ -224,8 +182,20 @@ class Emissions:
             and "total"
         :return: an EmissionsPerKwh object representing the average emissions rate
         """
-        # source:
-        # https://www.epa.gov/egrid/data-explorer
+        # TODO:
+        # try/excep and return default value and log error
+        # Des tests unitaires
+        # Externaliser les valeur d'intensité carbone, avec la source pour chaque valeur.
+
+        # If we have the chance to have the carbon intensity for this country
+        if energy_mix.get("carbon_intensity"):
+            return EmissionsPerKWh.from_kgs_per_kWh(
+                energy_mix.get("carbon_intensity") / 1000
+            )
+
+        # Else we compute it from the energy mix.
+
+        # source: https://www.epa.gov/egrid/data-explorer
         fossil_emissions_rate = EmissionsPerKWh.from_lbs_per_mWh(1401)
         fossil_mix_percentage = energy_mix["fossil"] / energy_mix["total"]
 
@@ -247,7 +217,6 @@ class Emissions:
 
         wind_emissions_rate = EmissionsPerKWh.from_g_per_kWh(26)
         wind_mix_percentage = energy_mix["wind"] / energy_mix["total"]
-        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
         logger.debug("Code Carbon hypothesis for carbon intensity :")
         logger.debug(
             f"Fossil : {fossil_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
