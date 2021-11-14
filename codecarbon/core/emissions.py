@@ -157,9 +157,18 @@ class Emissions:
         energy_mix = self._data_source.get_global_energy_mix_data()
 
         if geo.country_iso_code not in energy_mix:
-            # TODO: Deal with missing data, default to something
-            # TODO: return annual mean and log an error
-            raise Exception()
+            logger.warning(
+                f"We do not have data for {geo.country_iso_code}, using world average."
+            )
+            carbon_intensity_per_source = (
+                DataSource().get_carbon_intensity_per_source_data()
+            )
+            return (
+                EmissionsPerKWh.from_g_per_kWh(
+                    carbon_intensity_per_source.get("world_average")
+                ).kgs_per_kWh
+                * energy.kWh
+            )  # kgs
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
 
@@ -178,71 +187,42 @@ class Emissions:
         """
         Convert a mix of electricity sources into emissions per kWh.
         :param energy_mix: A dictionary that breaks down the electricity produced into
-            energy sources, with a total value. Format will vary, but must have keys for "fossil"
-            and "total"
+            energy sources, with a total value. Format will vary, but must have keys for "total_TWh"
         :return: an EmissionsPerKwh object representing the average emissions rate
+            in Kgs.CO2 / kWh
         """
-        # TODO:
-        # try/excep and return default value and log error
-        # Des tests unitaires
-        # Externaliser les valeur d'intensité carbone, avec la source pour chaque valeur.
-
         # If we have the chance to have the carbon intensity for this country
         if energy_mix.get("carbon_intensity"):
-            return EmissionsPerKWh.from_kgs_per_kWh(
-                energy_mix.get("carbon_intensity") / 1000
-            )
+            return EmissionsPerKWh.from_g_per_kWh(energy_mix.get("carbon_intensity"))
 
         # Else we compute it from the energy mix.
+        # Read carbon_intensity from the json data file.
+        carbon_intensity_per_source = (
+            DataSource().get_carbon_intensity_per_source_data()
+        )
+        carbon_intensity = 0
+        energy_sum = energy_mix["total_TWh"]
+        energy_sum_computed = 0
+        # Iterate through each source of energy in the country
+        for energy_type, energy_per_year in energy_mix.items():
+            if "_TWh" in energy_type:
+                # Compute the carbon intensity ratio of this source for this country
+                carbon_intensity_for_type = carbon_intensity_per_source.get(
+                    energy_type[: -len("_Twh")]
+                )
+                if carbon_intensity_for_type:  # to ignore "total_TWh"
+                    carbon_intensity += (
+                        energy_per_year / energy_sum
+                    ) * carbon_intensity_for_type
+                    energy_sum_computed += energy_per_year
 
-        # source: https://www.epa.gov/egrid/data-explorer
-        fossil_emissions_rate = EmissionsPerKWh.from_lbs_per_mWh(1401)
-        fossil_mix_percentage = energy_mix["fossil"] / energy_mix["total"]
+        # Sanity check
+        if energy_sum_computed != energy_sum:
+            logger.error(
+                f"We find {energy_sum_computed} TWh instead of {energy_sum} TWh for {energy_mix.get('official_name_en')}, using world average."
+            )
+            return EmissionsPerKWh.from_g_per_kWh(
+                carbon_intensity_per_source.get("world_average")
+            )
 
-        # Source : https://www.world-nuclear.org/information-library/energy-and-the-environment/carbon-dioxide-emissions-from-electricity.aspx
-        geothermal_emissions_rate = EmissionsPerKWh.from_g_per_kWh(38)
-        geothermal_mix_percentage = energy_mix["geothermal"] / energy_mix["total"]
-
-        # Source : http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf
-        hydroelectricity_emissions_rate = EmissionsPerKWh.from_g_per_kWh(26)
-        hydroelectricity_mix_percentage = (
-            energy_mix["hydroelectricity"] / energy_mix["total"]
-        )
-
-        nuclear_emissions_rate = EmissionsPerKWh.from_g_per_kWh(29)
-        nuclear_mix_percentage = energy_mix["nuclear"] / energy_mix["total"]
-
-        solar_emissions_rate = EmissionsPerKWh.from_g_per_kWh(48)
-        solar_mix_percentage = energy_mix["solar"] / energy_mix["total"]
-
-        wind_emissions_rate = EmissionsPerKWh.from_g_per_kWh(26)
-        wind_mix_percentage = energy_mix["wind"] / energy_mix["total"]
-        logger.debug("Code Carbon hypothesis for carbon intensity :")
-        logger.debug(
-            f"Fossil : {fossil_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
-        )
-        logger.debug(
-            f"Geothermal : {geothermal_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
-        )
-        logger.debug(
-            f"hydroelectricity : {hydroelectricity_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
-        )
-        logger.debug(
-            f"nuclear : {nuclear_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
-        )
-        logger.debug(
-            f"solar : {solar_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
-        )
-        logger.debug(
-            f"wind : {wind_emissions_rate.kgs_per_kWh*1000:.0f} CO2.eq gs / kWh"
-        )
-        return EmissionsPerKWh.from_kgs_per_kWh(
-            fossil_mix_percentage
-            * fossil_emissions_rate.kgs_per_kWh  # % (0.x)  # kgs / kWh
-            + geothermal_mix_percentage * geothermal_emissions_rate.kgs_per_kWh
-            + hydroelectricity_mix_percentage
-            * hydroelectricity_emissions_rate.kgs_per_kWh
-            + nuclear_mix_percentage * nuclear_emissions_rate.kgs_per_kWh
-            + solar_mix_percentage * solar_emissions_rate.kgs_per_kWh
-            + wind_mix_percentage * wind_emissions_rate.kgs_per_kWh
-        )
+        return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
