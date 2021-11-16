@@ -16,7 +16,8 @@ class DataSource:
             "cloud_emissions_path": "data/cloud/impact.csv",
             "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
             "can_energy_mix_data_path": "data/private_infra/2016/canada_energy_mix.json",  # noqa: E501
-            "global_energy_mix_data_path": "data/private_infra/2016/global_energy_mix.json",  # noqa: E501
+            "global_energy_mix_data_path": "data/private_infra/global_energy_mix.json",  # noqa: E501
+            "carbon_intensity_per_source_path": "data/private_infra/carbon_intensity_per_source.json",
             "cpu_power_path": "data/hardware/cpu_power.csv",
         }
         self.module_name = "codecarbon"
@@ -33,6 +34,15 @@ class DataSource:
         """
         return pkg_resources.resource_filename(
             self.module_name, self.config["cloud_emissions_path"]
+        )
+
+    @property
+    def carbon_intensity_per_source_path(self):
+        """
+        Get the path from the package resources.
+        """
+        return pkg_resources.resource_filename(
+            self.module_name, self.config["carbon_intensity_per_source_path"]
         )
 
     def country_emissions_data_path(self, country: str):
@@ -95,6 +105,14 @@ class DataSource:
         with open(self.country_energy_mix_data_path(country_iso_code)) as f:
             country_energy_mix_data: Dict = json.load(f)
         return country_energy_mix_data
+
+    def get_carbon_intensity_per_source_data(self) -> Dict:
+        """
+        Returns Carbon intensity per source. In gCO2.eq/kWh.
+        """
+        with open(self.carbon_intensity_per_source_path) as f:
+            carbon_intensity_per_source: Dict = json.load(f)
+        return carbon_intensity_per_source
 
     def get_cpu_power_data(self) -> pd.DataFrame:
         """

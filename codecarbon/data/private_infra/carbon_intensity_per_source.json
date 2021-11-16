@@ -1,0 +1,23 @@
+{
+    "unit": "gCO2.eq/kWh",
+    "world_average": 475,
+    "world_average_source":"https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions",
+    "coal": 995,
+    "coal_source": "https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2",
+    "petroleum": 816,
+    "petroleum_source": "https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2",
+    "natural_gas": 743,
+    "natural_gas_source": "https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2",
+    "fossil": 635,
+    "fossil_source": "https://www.epa.gov/egrid/data-explorer",
+    "geothermal": 38,
+    "geothermal_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf",
+    "hydroelectricity": 26,
+    "hydroelectricity_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf",
+    "nuclear": 29,
+    "nuclear_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf",
+    "solar": 48,
+    "solar_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf",
+    "wind": 26,
+    "wind_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf"
+}
