@@ -208,7 +208,7 @@ class Emissions:
             if "_TWh" in energy_type:
                 # Compute the carbon intensity ratio of this source for this country
                 carbon_intensity_for_type = carbon_intensity_per_source.get(
-                    energy_type[: -len("_Twh")]
+                    energy_type[: -len("_TWh")]
                 )
                 if carbon_intensity_for_type:  # to ignore "total_TWh"
                     carbon_intensity += (
