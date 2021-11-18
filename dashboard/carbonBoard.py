@@ -134,14 +134,13 @@ app.layout = dbc.Container([
     dcc.Dropdown(id="slct_kpi",
                  options=[
                      {"label": "CO2_Emission", "value": "CO2_Emission"},
-                     {"label": "Duration", "value": "Duration"},
-                     {"label": "Ratio", "value": "Ratio"}],
+                     {"label": "CO2_TempRatio", "value": "CO2_TempRatio"}],
                  multi=False,
                  value="CO2_Emission",
                  style={'width': "40%"}
                  ),
     html.Div(id='output_container', children=[]),
-    dcc.Graph(id='my_emission_map', figure={})    
+    dcc.Graph(id='my_emission_map', figure={}, config=config)    
 
     ])
 
@@ -382,20 +381,8 @@ def update_map(start_date,end_date,project,kpi):
             color_continuous_scale=px.colors.sequential.YlOrRd,
             labels={'emissions_sum': 'Carbon Emission'},
             template='CodeCarbonTemplate'
-        )
-    elif kpi == 'Duration':
-        fig = px.choropleth(
-            data_frame=dff,
-            locationmode='ISO-3',
-            locations='country_iso_code',
-            scope="world",
-            color='duration',
-            hover_data=['country_name', 'duration', 'project_name'],
-            color_continuous_scale=px.colors.sequential.YlOrRd,
-            labels={'duration': 'Duration'},
-            template='CodeCarbonTemplate'
-        )
-    elif kpi == 'Ratio':        
+        )       
+    elif kpi == 'CO2_TempRatio':        
         fig = px.choropleth(
             data_frame=dff,
             locationmode='ISO-3',
@@ -404,7 +391,7 @@ def update_map(start_date,end_date,project,kpi):
             color='ratio',
             hover_data=['country_name', 'ratio', 'project_name'],
             color_continuous_scale=px.colors.sequential.YlOrRd,
-            labels={'ratio': 'Ratio'},
+            labels={'ratio': 'Carbon Temporal Ratio'},
             template='CodeCarbonTemplate'
         )
 
