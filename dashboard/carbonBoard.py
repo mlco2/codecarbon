@@ -89,11 +89,13 @@ app.layout = dbc.Container([
                         end_date=date.today())
         ], xs=12, sm=12, md=12, lg=4, xl=4),  # if small screen the col would take the full width
         # holding indicators cards
-        dbc.Col(dbc.CardGroup([
+        dbc.Col([
+            html.H5('Global', style={'color':titleColor}),
+            dbc.CardGroup([
             dbc.Card([dbc.CardBody([html.P("Energy consumed", style={'textAlign':'center'}), html.H3(id='Tot_Energy_Consumed', style={'textAlign':'center'}),html.P("kWh", style={'textAlign':'center'})])], color=darkgreen),
             dbc.Card([dbc.CardBody([html.P("Emissions produced", style={'textAlign':'center'}),html.H4(id='Tot_Emissions', style={'textAlign':'center'}),html.P("Kg. Eq. CO2", style={'textAlign':'center'})])], color=darkgreen),
             dbc.Card([dbc.CardBody([html.P("Cumulative duration", style={'textAlign':'center'}),html.H4(id='Tot_Duration', style={'textAlign':'center'}),html.P(id='Tot_Duration_unit', style={'textAlign':'center'})])], color=darkgreen)
-            ]))
+            ])])
     ]),
 
     dbc.Row([
