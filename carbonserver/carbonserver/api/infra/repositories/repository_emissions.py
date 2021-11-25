@@ -73,8 +73,10 @@ class SqlAlchemyRepository(Emissions):
         """
         with self.session_factory() as session:
 
-            res = session.query(sql_models.Emission).filter(
-                sql_models.Emission.run_id == run_id
+            res = (
+                session.query(sql_models.Emission)
+                .filter(sql_models.Emission.run_id == run_id)
+                .order_by(sql_models.Emission.timestamp.desc())
             )
             if res.first() is None:
                 return []
