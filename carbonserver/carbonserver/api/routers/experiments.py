@@ -11,7 +11,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Experiment, ExperimentCreate
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.usecases.experiment.project_global_sum_by_experiment import (
-    ProjectGlobalSumsByExperimentUsecase,
+    ProjectGlobalSumByExperimentUsecase,
 )
 from carbonserver.logger import logger
 
@@ -81,7 +81,7 @@ def read_project_experiments(
 @inject
 def read_project_sums_by_experiment(
     project_id: str,
-    project_global_sum_by_experiment_usecase: ProjectGlobalSumsByExperimentUsecase = Depends(
+    project_global_sum_by_experiment_usecase: ProjectGlobalSumByExperimentUsecase = Depends(
         Provide[ServerContainer.project_global_sum_by_experiment_usecase]
     ),
 ) -> Any:
@@ -99,7 +99,7 @@ def read_project_detailed_sums_by_experiment(
     start_date: Optional[datetime] = datetime.now()
     - dateutil.relativedelta.relativedelta(months=3),
     end_date: Optional[datetime] = datetime.now(),
-    project_global_sum_by_experiment_usecase: ProjectGlobalSumsByExperimentUsecase = Depends(
+    project_global_sum_by_experiment_usecase: ProjectGlobalSumByExperimentUsecase = Depends(
         Provide[ServerContainer.project_global_sum_by_experiment_usecase]
     ),
 ) -> Any:
