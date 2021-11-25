@@ -1,5 +1,7 @@
-from typing import Any, List
+from datetime import datetime
+from typing import Any, List, Optional
 
+import dateutil.relativedelta
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
@@ -94,8 +96,13 @@ def read_project_sums_by_experiment(
 @inject
 def read_project_detailed_sums_by_experiment(
     project_id: str,
+    start_date: Optional[datetime] = datetime.now()
+    - dateutil.relativedelta.relativedelta(months=3),
+    end_date: Optional[datetime] = datetime.now(),
     project_global_sum_by_experiment_usecase: ProjectGlobalSumsByExperimentUsecase = Depends(
         Provide[ServerContainer.project_global_sum_by_experiment_usecase]
     ),
 ) -> Any:
-    return project_global_sum_by_experiment_usecase.compute_with_details(project_id)
+    return project_global_sum_by_experiment_usecase.compute_with_details(
+        project_id, start_date, end_date
+    )

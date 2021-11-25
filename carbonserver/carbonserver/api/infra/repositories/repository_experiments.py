@@ -2,7 +2,7 @@ from contextlib import AbstractContextManager
 from typing import List
 
 from dependency_injector.providers import Callable
-from sqlalchemy import func
+from sqlalchemy import and_, func
 
 from carbonserver.api.domain.experiments import Experiments
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
@@ -107,7 +107,7 @@ class SqlAlchemyRepository(Experiments):
             )
             return res
 
-    def get_project_detailed_sums_by_experiment(self, project_id):
+    def get_project_detailed_sums_by_experiment(self, project_id, start_date, end_date):
         with self.session_factory() as session:
             res = (
                 session.query(
@@ -148,6 +148,10 @@ class SqlAlchemyRepository(Experiments):
                     isouter=True,
                 )
                 .filter(SqlModelExperiment.project_id == project_id)
+                .filter(
+                    and_(SqlModelExperiment.timestamp >= start_date),
+                    (SqlModelExperiment.timestamp < end_date),
+                )
                 .group_by(
                     SqlModelExperiment.id,
                     SqlModelExperiment.timestamp,

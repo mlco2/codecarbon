@@ -4,7 +4,7 @@ from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.usecases.experiment.project_global_sum_by_experiment import (
-    ProjectGlobalSumsByExperimentUsecase,
+    ProjectGlobalSumByExperimentUsecase,
 )
 
 EXPERIMENT_ID = "10276e58-6df7-42cf-abb8-429773a35eb5"
@@ -52,7 +52,7 @@ EXPERIMENT_WITH_DETAILS = {
 def test_global_sum_computes_for_project_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     project_id = PROJECT_ID
-    project_global_sum_usecase = ProjectGlobalSumsByExperimentUsecase(repository_mock)
+    project_global_sum_usecase = ProjectGlobalSumByExperimentUsecase(repository_mock)
 
     expected_emission_sum = EMISSIONS_SUM
     repository_mock.get_project_global_sums_by_experiment.return_value = [
@@ -69,7 +69,7 @@ def test_global_sum_computes_for_project_id():
 def test_detailed_sum_computes_for_project_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     project_id = PROJECT_ID
-    project_global_sum_usecase = ProjectGlobalSumsByExperimentUsecase(repository_mock)
+    project_global_sum_usecase = ProjectGlobalSumByExperimentUsecase(repository_mock)
 
     expected_emission_sum = EMISSIONS_SUM_WITH_DETAILS
     repository_mock.get_project_global_sums_by_experiment.return_value = [
