@@ -19,6 +19,7 @@ darkgreen = '#024758'
 vividgreen = '#c9fb37'
 color3 = '#226a7a'
 titleColor = '#d8d8d8'
+
 # config (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
 
 config = {'displayModeBar': False,'scrollZoom':False, 'doubleClick':'reset'}
@@ -49,22 +50,22 @@ df.timestamp = pd.to_datetime(df.timestamp)
 
 card_household = dbc.Card([
                             dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False),
-                            dbc.CardBody([html.H4(id='houseHold'),
-                                html.P("of an american household weekly energy consumption", className="card-title")])
+                            dbc.CardBody([html.H4(id='houseHold',style={'textAlign':'center'}),
+                                html.P("of an american household weekly energy consumption",style={'textAlign':'center', 'fontSize':12}, className="card-title")])
                         ], color=darkgreen, outline=False)
 
 card_car = dbc.Card([
                             dbc.CardImg(src="/assets/car_icon.png",top=True, bottom=False),
                             dbc.CardBody([
-                                html.H4(id='car'),
-                                html.P("miles driven", className="card-title")])
+                                html.H4(id='car',style={'textAlign':'center'}),
+                                html.P("miles driven",style={'textAlign':'center', 'fontSize':12}, className="card-title")])
                         ], color=darkgreen, outline=False)
 
 card_tv = dbc.Card([
                             dbc.CardImg(src="/assets/tv_icon.png",top=True, bottom=False),
                             dbc.CardBody([
-                                html.H4(id='tv'),
-                                html.P("of TV", className="card-title")])
+                                html.H4(id='tv',style={'textAlign':'center'}),
+                                html.P("of TV", style={'textAlign':'center', 'fontSize':12},className="card-title")])
                     ], color=darkgreen, outline=False)
 
 
@@ -97,20 +98,23 @@ app.layout = dbc.Container([
             dbc.Card([dbc.CardBody([html.P("Cumulative duration", style={'textAlign':'center'}),html.H4(id='Tot_Duration', style={'textAlign':'center'}),html.P(id='Tot_Duration_unit', style={'textAlign':'center'})])], color=darkgreen)
             ])])
     ]),
-    dbc.Row(
-            dbc.Col([html.H5('Project :', style={'color':titleColor}),
-                dcc.RadioItems(id='projectPicked',
+    dbc.Row(html.P('')),
+    dbc.Row([
+            dbc.Col(html.H5('Project :', style={'color':titleColor}),width=1 ),
+            dbc.Col(dcc.RadioItems(id='projectPicked',
                             options=[{'label': projectName, 'value': projectName} for projectName in df.project_name.unique()],
                             value=df.project_name.unique().tolist()[0], labelStyle={'display': 'inline'}, style={'padding-top':10}, inputStyle={"margin-right": "10px", 'margin-left':'10px'}
-                             )      
-                ], width={'size':6,'offset':4})
-        ),
+                             ) , width=8     
+            )
+        ],justify='center'),
 
     dbc.Row([
         
         # holding pieCharts
-        dbc.Col( dcc.Graph(id='pieCharts', config=config)
-
+        dbc.Col( dcc.Graph(id='pieCharts', config=config),xs=12, sm=12, md=12, lg=6, xl=6
+            # -------------------------------------------------------------------------
+            #                            Code for holding pieCharts into card
+            # -------------------------------------------------------------------------
             # dbc.CardGroup([
             #     dbc.Card(
             #         dcc.Graph(id='pieChartEnergy', config=config), color=darkgreen
@@ -122,14 +126,20 @@ app.layout = dbc.Container([
             #         dcc.Graph(id='pieChartDuration', config=config) , color=darkgreen
             #             )
             #             ])
+            #------------------------------------------------------------------------
+            #------------------------------------------------------------------------
             ),
         dbc.Col([ 
                 dbc.CardGroup([card_household , card_car, card_tv]),
-                dbc.Col(dcc.Graph(id='barChart',clickData=None,config=config))       
+                dbc.Col(dcc.Graph(id='barChart',clickData=None,config=config),xs=12, sm=12, md=12, lg=6, xl=6)       
                 ])
 
         ]),
-
+    #-----------------------------------------------------------------------------
+    #-----------------------------------------------------------------------------
+    #                      Former layout with icon cards and bar chart beneath pieChart
+    #--------------------------------------------------------------------------------
+    #-------------------------------------------------------------------------------
     # dbc.Row([
     #     # holding cards
 
@@ -139,7 +149,8 @@ app.layout = dbc.Container([
     #      #holding bar graph
     #                 dbc.Col(dcc.Graph(id='barChart',clickData=None,config=config),width={"size":6,"offset":0})
     # ]),
-    
+    #-------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------
     
      dbc.Row([
          #holding bubble chart
@@ -214,6 +225,9 @@ def update_indicator(start_date, end_date):
 
 @ app.callback(
     [Output(component_id='barChart', component_property='figure'),
+    #----------------------------------------------------------------------------------------
+    #               output if cards for pie chart are used
+    #------------------------------------------------------------------------------------
     # Output(component_id='pieChartEnergy', component_property='figure'),
     # Output(component_id='pieChartEmissions', component_property='figure'),
     # Output(component_id='pieChartDuration', component_property='figure'),
@@ -264,7 +278,7 @@ def update_Charts(start_date, end_date, project):
                     duration_project='{:.0f}'.format(duration_in_years)
                     duration_project_unit='year'
 
-    ##PieCharts
+    ##PieCharts in cards OUTPUT in return has to be changed
     #----------------------------------------------------------------
     # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], 
     #     textinfo='none',hole=.8, 
@@ -283,24 +297,27 @@ def update_Charts(start_date, end_date, project):
     #     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieDuration.update_layout(title_text=duration_project_unit, title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,margin=dict(r=0,l=0,t=0,b=0))
     # figPieDuration.add_annotation(text=duration_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
+    #
+    ## PieCharts in a subplot
+    #-------------------------------------------------------------------
     figPie=make_subplots(rows=1, cols=3, specs=[
-                        [{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]],subplot_titles=('KwH','Kg eq. CO2', duration_project_unit))
-    figPie.add_trace(go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], title="KwH",
+                        [{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]])
+    figPie.add_trace(go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], title="KwH", title_position='bottom center',
                      textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo='skip'), row=1, col=1)
     figPie.add_trace(go.Pie(values=[emission, dff.emissions_sum.sum(
-    )-emission],  textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo='skip', title='Kg eq.CO2'), row=1, col=2)
+    )-emission],  textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo='skip', title='Kg eq.CO2', title_position='bottom center'), row=1, col=2)
     figPie.add_trace(go.Pie(values=[duration, (dff.duration.sum()-duration)],
-                     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo="skip", title=duration_project_unit), row=1, col=3)
+                     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo="skip", title=duration_project_unit, title_position='bottom center'), row=1, col=3)
 
 
     figPie.update_layout(
         
         template = 'CodeCarbonTemplate' ,
         showlegend=False,
-        annotations=[dict(text=energy_project, font=dict(color='white',), x=0.15, y=0.5, font_size=20, showarrow=False), dict(
-            text=emissions_project, x=0.5, y=0.5, font_size=20, showarrow=False), dict(text=duration_project, font=dict(color='white',), x=0.85, y=0.5, font_size=20, showarrow=False), ],
+        annotations=[dict(text=energy_project, font=dict(color='white',), x=0.09, y=0.5, font_size=20, showarrow=False), dict(
+            text=emissions_project, x=0.5, y=0.5, font_size=20, showarrow=False), dict(text=duration_project, font=dict(color='white',), x=0.88, y=0.5, font_size=20, showarrow=False), ],
         margin=dict(l=10, r=10, b=10, t=10),
-        height=200)
+        )
     
     #barChart
     #--------------------------------------------------------------------
