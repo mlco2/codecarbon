@@ -85,12 +85,12 @@ card_tv = dbc.Card([
 =======
 card_household = dbc.Card(
     [
-        dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False),
+        dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False,style={"textAlign":"center"}),
         dbc.CardBody(
             [
-                html.H4(id="houseHold"),
+                html.H4(id="houseHold", style={"textAlign":"center"}),
                 html.P(
-                    "of an american household weekly energy consumption",
+                    "of an american household weekly energy consumption", style={'textAlign':'center','fontSize':10},
                     className="card-title",
                 ),
             ]
@@ -104,7 +104,7 @@ card_car = dbc.Card(
     [
         dbc.CardImg(src="/assets/car_icon.png", top=True, bottom=False),
         dbc.CardBody(
-            [html.H4(id="car"), html.P("miles driven", className="card-title")]
+            [html.H4(id="car", style={"textAlign":"center"}), html.P("miles driven",style={'textAlign':'center','fontSize':10}, className="card-title")]
         ),
     ],
     color=darkgreen,
@@ -113,8 +113,8 @@ card_car = dbc.Card(
 
 card_tv = dbc.Card(
     [
-        dbc.CardImg(src="/assets/tv_icon.png", top=True, bottom=False),
-        dbc.CardBody([html.H4(id="tv"), html.P("of TV", className="card-title")]),
+        dbc.CardImg(src="/assets/tv_icon.png", top=True, bottom=False,style={"textAlign":"center"}),
+        dbc.CardBody([html.H4(id="tv",style={"textAlign":"center"}), html.P("of TV",style={'textAlign':'center','fontSize':10}, className="card-title")]),
     ],
     color=darkgreen,
     outline=False,
@@ -608,6 +608,7 @@ def update_Charts(start_date, end_date, project):
         go.Pie(
             values=[energyConsumed, dff.energy_consumed.sum() - energyConsumed],
             title="KwH",
+            title_position="bottom center",
             textinfo="none",
             hole=0.8,
             marker=dict(colors=[vividgreen, color3]),
@@ -624,6 +625,7 @@ def update_Charts(start_date, end_date, project):
             marker=dict(colors=[vividgreen, color3]),
             hoverinfo="skip",
             title="Kg eq.CO2",
+            title_position="bottom center"
         ),
         row=1,
         col=2,
@@ -635,7 +637,8 @@ def update_Charts(start_date, end_date, project):
             hole=0.8,
             marker=dict(colors=[vividgreen, color3]),
             hoverinfo="skip",
-            title=duration_project_unit,
+            title=duration_project_unit ,
+            title_position="bottom center"
         ),
         row=1,
         col=3,
