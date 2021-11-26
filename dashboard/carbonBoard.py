@@ -56,7 +56,7 @@ df.timestamp = pd.to_datetime(df.timestamp)
 
 card_household = dbc.Card(
     [
-        dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False,style={"textAlign":"center"}),
+        dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False,className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
         dbc.CardBody(
             [
                 html.H4(id="houseHold", style={"textAlign":"center"}),
@@ -68,12 +68,12 @@ card_household = dbc.Card(
         ),
     ],
     color=darkgreen,
-    outline=False,
+    outline=False, 
 )
 
 card_car = dbc.Card(
     [
-        dbc.CardImg(src="/assets/car_icon.png", top=True, bottom=False),
+        dbc.CardImg(src="/assets/car_icon.png", top=True, bottom=False, className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
         dbc.CardBody(
             [html.H4(id="car", style={"textAlign":"center"}), html.P("miles driven",style={'textAlign':'center','fontSize':10}, className="card-title")]
         ),
@@ -84,7 +84,7 @@ card_car = dbc.Card(
 
 card_tv = dbc.Card(
     [
-        dbc.CardImg(src="/assets/tv_icon.png", top=True, bottom=False,style={"textAlign":"center"}),
+        dbc.CardImg(src="/assets/tv_icon.png", top=True, bottom=False,className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
         dbc.CardBody([html.H4(id="tv",style={"textAlign":"center"}), html.P("of TV",style={'textAlign':'center','fontSize':10}, className="card-title")]),
     ],
     color=darkgreen,
