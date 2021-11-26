@@ -55,8 +55,8 @@ colors = {"background": darkgreen, "text": "white"}
 # *******************************************************************************
 # df = pd.read_csv('new_emissions_df.csv')
 
-file_path = currentdir + "\\dashboard\\new_emissions_df.csv"
-df = pd.read_csv(file_path)
+#file_path = currentdir + "\\dashboard\\new_emissions_df.csv"
+df = pd.read_csv('https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv')
 df.timestamp = pd.to_datetime(df.timestamp)
 
 # cards
