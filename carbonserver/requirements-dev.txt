@@ -4,6 +4,7 @@ dependency-injector
 fastapi
 pydantic[email]
 psycopg2-binary
+python-dateutil
 requests
 sqlalchemy
 tox
