@@ -13,6 +13,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Emission, EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
 
+# T, Params and Page are needed to override default pagination of get_emissions_from_run
 T = TypeVar("T")
 
 
