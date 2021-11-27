@@ -18,7 +18,8 @@ T = TypeVar("T")
 
 
 class Params(BaseParams):
-    size: int = Query(1_000, ge=1, le=10_000, description="Page size")
+    # Default results to 100 to avoid crash in /docs
+    size: int = Query(100, ge=1, le=10_000, description="Page size")
 
 
 class Page(BasePage[T], Generic[T]):  # noqa: F811
