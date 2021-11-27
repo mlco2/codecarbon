@@ -8,7 +8,7 @@ from dash.dependencies import Input, Output
 
 from codecarbon.viz.components import Components
 from codecarbon.viz.data import Data
-
+from codecarbon.core.config import get_hierarchical_config
 
 def render_app(df: pd.DataFrame):
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
@@ -270,7 +270,8 @@ def render_app(df: pd.DataFrame):
 
 
 def viz(port: int = 8051, debug: bool = False) -> None:
-    df = Data.get_data_from_api("http://localhost:8000")
+    conf = get_hierarchical_config()
+    df = Data.get_data_from_api(conf.get("api_endpoint", "http://localhost:8000"))
     app = render_app(df)
     app.run_server(port=port, debug=debug)
 
