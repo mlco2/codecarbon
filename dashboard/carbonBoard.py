@@ -17,10 +17,14 @@ from plotly.subplots import make_subplots
 # colors
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 darkgreen = '#024758'
 vividgreen = '#c9fb37'
 color3 = '#226a7a'
 titleColor = '#d8d8d8'
+=======
+
+>>>>>>> d2765bb (erase duplicate)
 
 =======
 darkgreen = "#024758"
