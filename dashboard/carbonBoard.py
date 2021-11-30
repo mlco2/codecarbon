@@ -1,4 +1,3 @@
-import os
 from datetime import date
 
 import CodeCarbon_template
@@ -24,9 +23,12 @@ color3 = '#226a7a'
 titleColor = '#d8d8d8'
 =======
 
+<<<<<<< HEAD
 >>>>>>> d2765bb (erase duplicate)
 
 =======
+=======
+>>>>>>> 282b744 (Commit clean df import)
 darkgreen = "#024758"
 vividgreen = "#c9fb37"
 color3 = "#226a7a"
@@ -36,9 +38,6 @@ titleColor = "#d8d8d8"
 
 config = {"displayModeBar": False, "scrollZoom": False, "doubleClick": "reset"}
 CodeCarbon_template
-
-# get current directory with CodeCarbon project
-currentdir = os.getcwd()
 
 # App
 # *******************************************************************************
@@ -57,10 +56,10 @@ colors = {"background": darkgreen, "text": "white"}
 
 # data
 # *******************************************************************************
-# df = pd.read_csv('new_emissions_df.csv')
 
-#file_path = currentdir + "\\dashboard\\new_emissions_df.csv"
-df = pd.read_csv('https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv')
+df = pd.read_csv(
+    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
+)
 df.timestamp = pd.to_datetime(df.timestamp)
 
 # cards
@@ -89,26 +88,46 @@ card_tv = dbc.Card([
 =======
 card_household = dbc.Card(
     [
-        dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False,className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
+        dbc.CardImg(
+            src="/assets/house_icon.png",
+            top=True,
+            bottom=False,
+            className="align-self-center",
+            style={"textAlign": "center", "width": "50%"},
+        ),
         dbc.CardBody(
             [
-                html.H4(id="houseHold", style={"textAlign":"center"}),
+                html.H4(id="houseHold", style={"textAlign": "center"}),
                 html.P(
-                    "of an american household weekly energy consumption", style={'textAlign':'center','fontSize':10},
+                    "of an american household weekly energy consumption",
+                    style={"textAlign": "center", "fontSize": 10},
                     className="card-title",
                 ),
             ]
         ),
     ],
     color=darkgreen,
-    outline=False, 
+    outline=False,
 )
 
 card_car = dbc.Card(
     [
-        dbc.CardImg(src="/assets/car_icon.png", top=True, bottom=False, className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
+        dbc.CardImg(
+            src="/assets/car_icon.png",
+            top=True,
+            bottom=False,
+            className="align-self-center",
+            style={"textAlign": "center", "width": "50%"},
+        ),
         dbc.CardBody(
-            [html.H4(id="car", style={"textAlign":"center"}), html.P("miles driven",style={'textAlign':'center','fontSize':10}, className="card-title")]
+            [
+                html.H4(id="car", style={"textAlign": "center"}),
+                html.P(
+                    "miles driven",
+                    style={"textAlign": "center", "fontSize": 10},
+                    className="card-title",
+                ),
+            ]
         ),
     ],
     color=darkgreen,
@@ -117,8 +136,23 @@ card_car = dbc.Card(
 
 card_tv = dbc.Card(
     [
-        dbc.CardImg(src="/assets/tv_icon.png", top=True, bottom=False,className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
-        dbc.CardBody([html.H4(id="tv",style={"textAlign":"center"}), html.P("of TV",style={'textAlign':'center','fontSize':10}, className="card-title")]),
+        dbc.CardImg(
+            src="/assets/tv_icon.png",
+            top=True,
+            bottom=False,
+            className="align-self-center",
+            style={"textAlign": "center", "width": "50%"},
+        ),
+        dbc.CardBody(
+            [
+                html.H4(id="tv", style={"textAlign": "center"}),
+                html.P(
+                    "of TV",
+                    style={"textAlign": "center", "fontSize": 10},
+                    className="card-title",
+                ),
+            ]
+        ),
     ],
     color=darkgreen,
     outline=False,
@@ -568,11 +602,18 @@ def update_Charts(start_date, end_date, project):
                 duration_project = "{:.0f}".format(duration_in_years)
                 duration_project_unit = "year"
 
+<<<<<<< HEAD
     # PieCharts
     # ----------------------------------------------------------------
     # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
     #     textinfo='none',hole=.8,
 >>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
+=======
+    # #PieCharts in cards OUTPUT in return has to be changed
+    # ----------------------------------------------------------------
+    # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
+    #     textinfo='none',hole=.8,
+>>>>>>> 282b744 (Commit clean df import)
     #     marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieEnergy.update_layout(title_text='KwH',title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,
     #     margin=dict(r=0,l=0,t=0,b=0))
@@ -629,7 +670,7 @@ def update_Charts(start_date, end_date, project):
             marker=dict(colors=[vividgreen, color3]),
             hoverinfo="skip",
             title="Kg eq.CO2",
-            title_position="bottom center"
+            title_position="bottom center",
         ),
         row=1,
         col=2,
@@ -641,8 +682,8 @@ def update_Charts(start_date, end_date, project):
             hole=0.8,
             marker=dict(colors=[vividgreen, color3]),
             hoverinfo="skip",
-            title=duration_project_unit ,
-            title_position="bottom center"
+            title=duration_project_unit,
+            title_position="bottom center",
         ),
         row=1,
         col=3,
