@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from carbonserver.config import settings
 
-# Get the API utl to use from an env variable if exist
+# Get the API url to use from an env variable if exist
 URL = os.getenv("CODECARBON_API_URL")
 if URL is None:
     pytest.exit("CODECARBON_API_URL is not defined")
+
 
 experiment_id = project_id = user_id = api_key = org_id = team_id = None
 org_name = org_description = org_new_id = None
@@ -19,7 +20,6 @@ USER_PASSWORD = "Secret1!îstring"
 USER_EMAIL = "user@integration.test"
 
 
-# @pytest.fixture()
 def del_test_user():
     """Fixture to destroy user"""
     engine = create_engine(settings.db_url)  #
@@ -51,22 +51,30 @@ def is_key_all_values_equal(list_of_dict, key, value):
     return True
 
 
-def test_api_user_create():
+def test_api01_user_create():
     assert URL is not None
     # we delete it if exist
     del_test_user()
-    payload = {"email": USER_EMAIL, "name": "toto", "password": USER_PASSWORD}
+    payload = {
+        "email": USER_EMAIL,
+        "name": "toto",
+        "password": USER_PASSWORD,
+    }
     r = requests.post(url=URL + "/user", json=payload, timeout=2)
     assert r.status_code == 201
     assert r.json()["email"] == USER_EMAIL
     assert r.json()["is_active"] == True  # noqa
 
 
-def test_api_user_signup():
-    global user_id, api_key, org_id, team_id
+def test_api02_user_signup():
+    global user_id, org_id, team_id, api_key
     # signup is creating a user, we delete it if exist
     del_test_user()
-    payload = {"email": USER_EMAIL, "name": "toto", "password": USER_PASSWORD}
+    payload = {
+        "email": USER_EMAIL,
+        "name": "toto",
+        "password": USER_PASSWORD,
+    }
     r = requests.post(url=URL + "/user/signup/", json=payload, timeout=2)
     assert r.status_code == 201
     assert r.json()["email"] == USER_EMAIL
@@ -77,20 +85,20 @@ def test_api_user_signup():
     team_id = r.json()["teams"][0]
 
 
-def test_api_users_list():
+def test_api03_users_list():
     r = requests.get(url=URL + "/users", timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", user_id)
 
 
-def test_api_get_user():
+def test_api04_get_user():
     r = requests.get(url=URL + "/user/" + user_id, timeout=2)
     assert r.status_code == 200
     assert r.json()["id"] == user_id
     assert r.json()["email"] == USER_EMAIL
 
 
-def test_api_auth_success():
+def test_api05_auth_success():
     payload = {"email": USER_EMAIL, "password": USER_PASSWORD}
     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
     assert r.status_code == 200
@@ -98,7 +106,7 @@ def test_api_auth_success():
     assert r.json()["token_type"] == "access"
 
 
-def test_api_auth_wrong_email():
+def test_api06_auth_wrong_email():
     payload = {
         "email": "long.user.email.that.cant.exist.3495739@asdfijvneurvbier.fr",
         "password": USER_PASSWORD,
@@ -107,21 +115,21 @@ def test_api_auth_wrong_email():
     assert r.status_code == 401
 
 
-def test_api_auth_wrong_password():
+def test_api07_auth_wrong_password():
     payload = {"email": USER_EMAIL, "password": "wrong-password"}
     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
     assert r.status_code == 401
 
 
-def test_api_user_deleted():
+def test_api08_user_deleted():
     del_test_user()
     payload = {"email": USER_EMAIL, "password": USER_PASSWORD}
     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
     assert r.status_code == 401
 
 
-def test_api_organization_create():
-    global org_name, org_description, org_new_id
+def test_api09_organization_create():
+    global org_new_id, org_name, org_description
     org_name = "test_to_delete"
     org_description = "test to delete"
     payload = {"name": org_name, "description": org_description}
@@ -132,21 +140,21 @@ def test_api_organization_create():
     org_new_id = r.json()["id"]
 
 
-def test_api_organization_read():
+def test_api10_organization_read():
     r = requests.get(url=URL + "/organization/" + org_new_id, timeout=2)
     assert r.status_code == 200
     assert r.json()["name"] == org_name
     assert r.json()["description"] == org_description
 
 
-def test_api_organization_list():
+def test_api11_organization_list():
     r = requests.get(url=URL + "/organizations", timeout=2)
     assert r.status_code == 200
     assert r.json()[-1]["id"] == org_new_id
 
 
-def test_api_team_create():
-    global team_name, team_description, team_new_id
+def test_api12_team_create():
+    global team_new_id, team_name, team_description
     team_name = "test_to_delete"
     team_description = "test to delete"
     payload = {
@@ -162,27 +170,27 @@ def test_api_team_create():
     team_new_id = r.json()["id"]
 
 
-def test_api_team_read():
+def test_api13_team_read():
     r = requests.get(url=URL + "/team/" + team_new_id, timeout=2)
     assert r.status_code == 200
     assert r.json()["name"] == team_name
     assert r.json()["description"] == team_description
 
 
-def test_api_teams_list():
+def test_api14_teams_list():
     r = requests.get(url=URL + "/teams", timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", team_new_id)
 
 
-def test_api_teams_for_organization_list():
+def test_api15_teams_for_organization_list():
     r = requests.get(url=URL + "/teams/organization/" + org_new_id, timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", team_new_id)
     assert is_key_all_values_equal(r.json(), "organization_id", org_new_id)
 
 
-def test_api_project_create():
+def test_api16_project_create():
     global project_id
     payload = {
         "name": "test_to_delete",
@@ -195,14 +203,14 @@ def test_api_project_create():
     project_id = r.json()["id"]
 
 
-def test_api_projects_for_team_list():
+def test_api17_projects_for_team_list():
     r = requests.get(url=URL + "/projects/team/" + team_new_id, timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", project_id)
     assert is_key_all_values_equal(r.json(), "team_id", team_new_id)
 
 
-def test_api_experiment_create():
+def test_api18_experiment_create():
     global experiment_id
     payload = {
         "name": "Run on Premise",
@@ -222,19 +230,19 @@ def test_api_experiment_create():
     experiment_id = r.json()["id"]
 
 
-def test_api_experiment_read():
+def test_api19_experiment_read():
     r = requests.get(url=URL + "/experiment/" + experiment_id, timeout=2)
     assert r.status_code == 200
     assert r.json()["id"] == experiment_id
 
 
-def test_api_experiment_list():
+def test_api20_experiment_list():
     r = requests.get(url=URL + "/experiments/project/" + project_id, timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", experiment_id)
 
 
-def test_api_run_create():
+def test_api21_run_create():
     global run_id
     payload = {
         "timestamp": "2021-04-04T08:43:00+02:00",
@@ -257,26 +265,26 @@ def test_api_run_create():
     run_id = r.json()["id"]
 
 
-def test_api_run_read():
+def test_api22_run_read():
     r = requests.get(url=URL + "/run/" + run_id, timeout=2)
     assert r.status_code == 200
     assert r.json()["id"] == run_id
 
 
-def test_api_run_list():
+def test_api23_run_list():
     r = requests.get(url=URL + "/runs", timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", run_id)
 
 
-def test_api_runs_for_team_list():
+def test_api24_runs_for_team_list():
     r = requests.get(url=URL + "/runs/experiment/" + experiment_id, timeout=2)
     assert r.status_code == 200
     assert is_key_value_exist(r.json(), "id", run_id)
     assert is_key_all_values_equal(r.json(), "experiment_id", experiment_id)
 
 
-def test_api_emission_create():
+def test_api25_emission_create():
     payload = {
         "timestamp": "2021-04-04T08:43:00+02:00",
         "run_id": run_id,
@@ -295,7 +303,7 @@ def test_api_emission_create():
     assert r.status_code == 201
 
 
-def test_api_emission_list():
+def test_api26_emission_list():
     global emission_id
     r = requests.get(url=URL + "/emissions/run/" + run_id, timeout=2)
     assert r.status_code == 200
@@ -303,8 +311,26 @@ def test_api_emission_list():
     emission_id = r.json()["items"][-1]["id"]
 
 
-def test_api_emission_read():
+def test_api27_emission_read():
     r = requests.get(url=URL + "/emission/" + emission_id, timeout=2)
     assert r.status_code == 200
     assert r.json()["id"] == emission_id
     assert r.json()["run_id"] == run_id
+
+
+def test_api28_experiment_read_global_sums():
+    r = requests.get(url=f"{URL}/experiments/{project_id}/global_sums/", timeout=2)
+    assert r.status_code == 200
+    assert r.json()[0]["experiment_id"] == experiment_id
+    assert r.json()[0]["duration"] == 98745.0
+
+
+def test_api29_experiment_read_detailed_sums():
+    url = f"{URL}/experiments/{project_id}/detailed_sums/"
+    r = requests.get(url, timeout=2)
+    assert r.status_code == 200
+    print("project_id=", project_id)
+    print("JSON=", r.json())
+    assert len(r.json()) > 0
+    assert r.json()["experiment_id"] == experiment_id
+    assert r.json()[0]["duration"] == 50
