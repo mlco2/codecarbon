@@ -1,4 +1,3 @@
-import os
 from datetime import date
 
 import CodeCarbon_template
@@ -17,7 +16,6 @@ from plotly.subplots import make_subplots
 # colors
 
 
-
 darkgreen = "#024758"
 vividgreen = "#c9fb37"
 color3 = "#226a7a"
@@ -26,9 +24,6 @@ titleColor = "#d8d8d8"
 
 config = {"displayModeBar": False, "scrollZoom": False, "doubleClick": "reset"}
 CodeCarbon_template
-
-# get current directory with CodeCarbon project
-currentdir = os.getcwd()
 
 # App
 # *******************************************************************************
@@ -47,10 +42,10 @@ colors = {"background": darkgreen, "text": "white"}
 
 # data
 # *******************************************************************************
-# df = pd.read_csv('new_emissions_df.csv')
 
-#file_path = currentdir + "\\dashboard\\new_emissions_df.csv"
-df = pd.read_csv('https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv')
+df = pd.read_csv(
+    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
+)
 df.timestamp = pd.to_datetime(df.timestamp)
 
 # cards
@@ -58,26 +53,46 @@ df.timestamp = pd.to_datetime(df.timestamp)
 
 card_household = dbc.Card(
     [
-        dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False,className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
+        dbc.CardImg(
+            src="/assets/house_icon.png",
+            top=True,
+            bottom=False,
+            className="align-self-center",
+            style={"textAlign": "center", "width": "50%"},
+        ),
         dbc.CardBody(
             [
-                html.H4(id="houseHold", style={"textAlign":"center"}),
+                html.H4(id="houseHold", style={"textAlign": "center"}),
                 html.P(
-                    "of an american household weekly energy consumption", style={'textAlign':'center','fontSize':10},
+                    "of an american household weekly energy consumption",
+                    style={"textAlign": "center", "fontSize": 10},
                     className="card-title",
                 ),
             ]
         ),
     ],
     color=darkgreen,
-    outline=False, 
+    outline=False,
 )
 
 card_car = dbc.Card(
     [
-        dbc.CardImg(src="/assets/car_icon.png", top=True, bottom=False, className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
+        dbc.CardImg(
+            src="/assets/car_icon.png",
+            top=True,
+            bottom=False,
+            className="align-self-center",
+            style={"textAlign": "center", "width": "50%"},
+        ),
         dbc.CardBody(
-            [html.H4(id="car", style={"textAlign":"center"}), html.P("miles driven",style={'textAlign':'center','fontSize':10}, className="card-title")]
+            [
+                html.H4(id="car", style={"textAlign": "center"}),
+                html.P(
+                    "miles driven",
+                    style={"textAlign": "center", "fontSize": 10},
+                    className="card-title",
+                ),
+            ]
         ),
     ],
     color=darkgreen,
@@ -86,8 +101,23 @@ card_car = dbc.Card(
 
 card_tv = dbc.Card(
     [
-        dbc.CardImg(src="/assets/tv_icon.png", top=True, bottom=False,className = 'align-self-center',style={"textAlign":"center", "width":"50%"}),
-        dbc.CardBody([html.H4(id="tv",style={"textAlign":"center"}), html.P("of TV",style={'textAlign':'center','fontSize':10}, className="card-title")]),
+        dbc.CardImg(
+            src="/assets/tv_icon.png",
+            top=True,
+            bottom=False,
+            className="align-self-center",
+            style={"textAlign": "center", "width": "50%"},
+        ),
+        dbc.CardBody(
+            [
+                html.H4(id="tv", style={"textAlign": "center"}),
+                html.P(
+                    "of TV",
+                    style={"textAlign": "center", "fontSize": 10},
+                    className="card-title",
+                ),
+            ]
+        ),
     ],
     color=darkgreen,
     outline=False,
@@ -402,7 +432,7 @@ def update_Charts(start_date, end_date, project):
                 duration_project = "{:.0f}".format(duration_in_years)
                 duration_project_unit = "year"
 
-    # PieCharts
+    # #PieCharts in cards OUTPUT in return has to be changed
     # ----------------------------------------------------------------
     # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
     #     textinfo='none',hole=.8,
@@ -448,7 +478,7 @@ def update_Charts(start_date, end_date, project):
             marker=dict(colors=[vividgreen, color3]),
             hoverinfo="skip",
             title="Kg eq.CO2",
-            title_position="bottom center"
+            title_position="bottom center",
         ),
         row=1,
         col=2,
@@ -460,8 +490,8 @@ def update_Charts(start_date, end_date, project):
             hole=0.8,
             marker=dict(colors=[vividgreen, color3]),
             hoverinfo="skip",
-            title=duration_project_unit ,
-            title_position="bottom center"
+            title=duration_project_unit,
+            title_position="bottom center",
         ),
         row=1,
         col=3,
