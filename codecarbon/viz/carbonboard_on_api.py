@@ -6,9 +6,10 @@ import fire
 import pandas as pd
 from dash.dependencies import Input, Output
 
+from codecarbon.core.config import get_hierarchical_config
 from codecarbon.viz.components import Components
 from codecarbon.viz.data import Data
-from codecarbon.core.config import get_hierarchical_config
+
 
 def render_app(df: pd.DataFrame):
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])

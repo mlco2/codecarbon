@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import pytest
 import requests
@@ -18,6 +19,11 @@ org_name = org_description = org_new_id = None
 team_name = team_description = team_new_id = emission_id = None
 USER_PASSWORD = "Secret1!îstring"
 USER_EMAIL = "user@integration.test"
+
+
+def get_datetime():
+    t = datetime.timestamp(datetime.now())
+    return str(datetime.fromtimestamp(t).isoformat())
 
 
 def del_test_user():
@@ -215,7 +221,7 @@ def test_api18_experiment_create():
     payload = {
         "name": "Run on Premise",
         "description": "Premise API for Code Carbon",
-        "timestamp": "2021-04-04T08:43:00+02:00",
+        "timestamp": get_datetime(),
         "country_name": "France",
         "country_iso_code": "FRA",
         "region": "france",
@@ -245,7 +251,7 @@ def test_api20_experiment_list():
 def test_api21_run_create():
     global run_id
     payload = {
-        "timestamp": "2021-04-04T08:43:00+02:00",
+        "timestamp": get_datetime(),
         "experiment_id": experiment_id,
         "os": "macOS-10.15.7-x86_64-i386-64bit",
         "python_version": "3.8.0",
@@ -286,7 +292,7 @@ def test_api24_runs_for_team_list():
 
 def test_api25_emission_create():
     payload = {
-        "timestamp": "2021-04-04T08:43:00+02:00",
+        "timestamp": get_datetime(),
         "run_id": run_id,
         "duration": 98745,
         "emissions_sum": 1544.54,
@@ -329,8 +335,6 @@ def test_api29_experiment_read_detailed_sums():
     url = f"{URL}/experiments/{project_id}/detailed_sums/"
     r = requests.get(url, timeout=2)
     assert r.status_code == 200
-    print("project_id=", project_id)
-    print("JSON=", r.json())
     assert len(r.json()) > 0
-    assert r.json()["experiment_id"] == experiment_id
-    assert r.json()[0]["duration"] == 50
+    assert r.json()[0]["experiment_id"] == experiment_id
+    assert r.json()[0]["duration"] == 98745.0

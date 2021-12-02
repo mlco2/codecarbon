@@ -17,5 +17,5 @@ This is to start using `docker-compose` to run the carbonserver app.
 You could run a command in the running container, for example to run test on API:
 
 ```
-docker exec -e CODECARBON_API_URL=http://localhost:8000  codecarbon_carbonserver_1 python3 -m pytest tests/api/integration/test_api_black_box.py
+docker exec -e CODECARBON_API_URL=http://localhost:8000  codecarbon_carbonserver_1 python3 -m pytest -v tests/api/integration/test_api_black_box.py
 ```
