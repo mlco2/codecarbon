@@ -62,6 +62,10 @@ df = pd.read_csv(
 )
 df.timestamp = pd.to_datetime(df.timestamp)
 
+df_mix = pd.read_csv(
+    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
+)
+
 # cards
 # ******************************************************************************
 
@@ -447,6 +451,7 @@ app.layout = dbc.Container(
             options=[
                 {"label": "CO2_Emission", "value": "CO2_Emission"},
                 {"label": "CO2_TempRatio", "value": "CO2_TempRatio"},
+                {"label": "Country_EnergyMix", "value": "Country_EnergyMix"},
             ],
             multi=False,
             value="CO2_Emission",
@@ -921,6 +926,8 @@ def update_map(start_date, end_date, project, kpi):
     dff["ratio"] = dff["emissions_sum"] / dff["duration"] * 3600 * 24
     dff = dff.reset_index()
 
+    dff_mix = df_mix.copy()
+
     container = ""
     # Plotly Express
     if kpi == "CO2_Emission":
@@ -945,6 +952,31 @@ def update_map(start_date, end_date, project, kpi):
             hover_data=["country_name", "ratio", "project_name"],
             color_continuous_scale=px.colors.sequential.YlOrRd,
             labels={"ratio": "Carbon Temporal Ratio"},
+            template="CodeCarbonTemplate",
+        )
+    elif kpi == "Country_EnergyMix":
+        fig = px.choropleth(
+            data_frame=dff_mix,
+            locationmode="ISO-3",
+            #            locations="Code",
+            locations="ISO",
+            #            scope="europe",
+            scope="world",
+            color="Carbon intensity of electricity (gCO2/kWh)",
+            hover_data=[
+                "Country",
+                "Carbon intensity of electricity (gCO2/kWh)",
+                "% Fossil",
+                "% Geothermal",
+                "% Hydro",
+                "% Nuclear",
+                "% Solar",
+                "% Wind",
+            ],
+            color_continuous_scale=px.colors.sequential.YlOrRd,
+            labels={
+                "Carbon intensity of electricity (gCO2/kWh)": "Carbon intensity (gCO2/kWh)"
+            },
             template="CodeCarbonTemplate",
         )
 
