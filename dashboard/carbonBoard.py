@@ -1,5 +1,4 @@
 from datetime import date
-
 import CodeCarbon_template
 import dash
 import dash_bootstrap_components as dbc
@@ -10,27 +9,19 @@ import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
-import requests
-import csv
-import json
 # Common variables
 # ******************************************************************************
 # colors
-
-
 darkgreen = "#024758"
 vividgreen = "#c9fb37"
 color3 = "#226a7a"
 titleColor = "#d8d8d8"
 # config (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
-
 config = {"displayModeBar": False, "scrollZoom": False, "doubleClick": "reset"}
 CodeCarbon_template
-
 # App
 # *******************************************************************************
 # *******************************************************************************
-
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -38,21 +29,13 @@ app = dash.Dash(
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
     ],
 )
-
 colors = {"background": darkgreen, "text": "white"}
-
-
 # data
 # *******************************************************************************
-
 df = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
 )
 df.timestamp = pd.to_datetime(df.timestamp)
-
-
-def load_emission(run_id, page) :
-    return f"https://api.codecarbon.io/emissions/run/{run_id}?token=jessica&page={page}&size=100"
 
 df_mix = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
@@ -84,7 +67,6 @@ card_household = dbc.Card(
     color=darkgreen,
     outline=False,
 )
-
 card_car = dbc.Card(
     [
         dbc.CardImg(
@@ -108,7 +90,6 @@ card_car = dbc.Card(
     color=darkgreen,
     outline=False,
 )
-
 card_tv = dbc.Card(
     [
         dbc.CardImg(
@@ -132,11 +113,8 @@ card_tv = dbc.Card(
     color=darkgreen,
     outline=False,
 )
-
-
 # Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
 # *******************************************************************************
-
 app.layout = dbc.Container(
     [
         dbc.Row(
@@ -327,11 +305,8 @@ app.layout = dbc.Container(
         dcc.Graph(id="my_emission_map", figure={}, config=config),
     ]
 )
-
-
 # callback section: connecting the components
 # ************************************************************************
-
 # indicators
 # -------------------------------------------------------------------------
 @app.callback(
@@ -347,20 +322,13 @@ app.layout = dbc.Container(
     ],
 )
 def update_indicator(start_date, end_date):
-
     dff = df.copy()
     dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
-
     # Tot_Energy consumed card
-
     Tot_energy_consumed = str(round(dff.energy_consumed.sum(), 2))
-
     # Tot Emissions card
-
     Tot_emissions = str(round(dff.emissions_sum.sum(), 2))
-
     # Tot_Duration cards
-
     tot_duration_min = round(dff.duration.sum() / 60)
     tot_duration = str(tot_duration_min)
     tot_duration_unit = "min"
@@ -372,14 +340,9 @@ def update_indicator(start_date, end_date):
             tot_duration_days = round(tot_duration_hours / 24)
             tot_duration = str(tot_duration_days)
             tot_duration_unit = "days"
-
     return Tot_energy_consumed, Tot_emissions, tot_duration, tot_duration_unit
-
-
 # pieCharts and cards
 # -----------------------------------------------------------------------------------
-
-
 @app.callback(
     [
         Output(component_id="barChart", component_property="figure"),
@@ -398,14 +361,11 @@ def update_indicator(start_date, end_date):
     ],
 )
 def update_Charts(start_date, end_date, project):
-
     dff = df.copy()
     dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
-
     energyConsumed = dff[dff["project_name"] == project].energy_consumed.sum()
     emission = dff[dff["project_name"] == project].emissions_sum.sum()
     duration = dff[dff["project_name"] == project].duration.sum()
-
     # Cards
     # --------------------------------------------------------------
     houseHold = str(round(100 * emission / 160.58, 2)) + " %"
@@ -442,7 +402,6 @@ def update_Charts(start_date, end_date, project):
                 duration_in_years = duration_in_days / 365
                 duration_project = "{:.0f}".format(duration_in_years)
                 duration_project_unit = "year"
-
     # #PieCharts in cards OUTPUT in return has to be changed
     # ----------------------------------------------------------------
     # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
@@ -450,14 +409,11 @@ def update_Charts(start_date, end_date, project):
     #     marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieEnergy.update_layout(title_text='KwH',title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,
     #     margin=dict(r=0,l=0,t=0,b=0))
-
     # figPieEnergy.add_annotation(text=energy_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
-
     # figPieEmissions = go.Figure([go.Pie(values=[emission, dff.emissions_sum.sum()-emission],
     #     textinfo='none',hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieEmissions.update_layout(title_text='kg eq.CO2',title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,margin=dict(r=0,l=0,t=0,b=0))
     # figPieEmissions.add_annotation(text=emissions_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
-
     # figPieDuration = go.Figure([go.Pie(values=[duration, (dff.duration.sum()-duration)],
     #     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieDuration.update_layout(title_text=duration_project_unit, title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,margin=dict(r=0,l=0,t=0,b=0))
@@ -507,7 +463,6 @@ def update_Charts(start_date, end_date, project):
         row=1,
         col=3,
     )
-
     figPie.update_layout(
         template="CodeCarbonTemplate",
         showlegend=False,
@@ -537,10 +492,8 @@ def update_Charts(start_date, end_date, project):
         margin=dict(l=10, r=10, b=10, t=10),
         height=200,
     )
-
     # barChart
     # --------------------------------------------------------------------
-
     dfBar = (
         dff[dff["project_name"] == project]
         .groupby("experiment_name")
@@ -555,9 +508,7 @@ def update_Charts(start_date, end_date, project):
         )
         .reset_index()
     )
-
     figBar = px.bar(dfBar, x="experiment_name", y="emissions_sum", text="emissions_sum")
-
     figBar.update_layout(
         title_text=project
         + " experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart below </span>",
@@ -576,10 +527,7 @@ def update_Charts(start_date, end_date, project):
     figBar.update_xaxes(
         showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
     )
-
     return figBar, figPie, houseHold, car, tvTime
-
-
 # BubbleCharts
 # ---------------------------------------------------------------------------------------
 @app.callback(
@@ -613,7 +561,6 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
         )
         .reset_index()
     )
-
     bubble = px.scatter(
         df1,
         x=df1.timestamp,
@@ -638,10 +585,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     bubble.update_coloraxes(
         colorbar_title_side="right", colorbar_title_text="energy consumed (KwH)"
     )
-
     return bubble
-
-
 # Line Chart
 # ---------------------------------------------------------------------------------
 @app.callback(
@@ -671,24 +615,8 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         ].unique()[0]
     else:
         run_name = clickPoint["points"][0]["customdata"]
-
-    url_login = load_emission(run_name,1)
-    client = requests.session()
-    response=client.get(url_login)
-    dic=response.json()["items"]
-    df_run = pd.DataFrame.from_dict(dic)
-    num_page = 2
-    while len(dic)!=0 :
-        url_login = load_emission(run_name, num_page)
-        client = requests.session()
-        response=client.get(url_login)
-        dic = response.json()["items"]
-        dft = pd.DataFrame.from_dict(dic)
-        df_run = df_run.append(dft)
-        num_page = num_page + 1
-
     line = px.line(
-        df_run,
+        dff[dff["run_id"] == run_name],
         x="timestamp",
         y="emissions_sum",
         color_discrete_sequence=[vividgreen],
@@ -705,10 +633,7 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
     )
     line.update_yaxes(showgrid=False, visible=False, title="emissions (kg eq. C02)")
-
     return line
-
-
 # Carbon Emission Map
 # ---------------------------------------------------------------------------------
 @app.callback(
@@ -724,7 +649,6 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     ],
 )
 def update_map(start_date, end_date, project, kpi):
-
     dff = df.copy()
     dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
     dff = dff[dff["project_name"] == project]
@@ -789,7 +713,6 @@ def update_map(start_date, end_date, project, kpi):
         )
 
     return container, fig
-
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=False)
