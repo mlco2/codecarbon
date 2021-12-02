@@ -10,7 +10,9 @@ import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
-
+import requests
+import csv
+import json
 # Common variables
 # ******************************************************************************
 # colors
@@ -61,6 +63,10 @@ df = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
 )
 df.timestamp = pd.to_datetime(df.timestamp)
+
+
+def load_emission(run_id, page) :
+    return f"https://api.codecarbon.io/emissions/run/{run_id}?token=jessica&page={page}&size=100"
 
 df_mix = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
@@ -872,8 +878,24 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         ].unique()[0]
     else:
         run_name = clickPoint["points"][0]["customdata"]
+
+    url_login = load_emission(run_name,1)
+    client = requests.session()
+    response=client.get(url_login)
+    dic=response.json()["items"]
+    df_run = pd.DataFrame.from_dict(dic)
+    num_page = 2
+    while len(dic)!=0 :
+        url_login = load_emission(run_name, num_page)
+        client = requests.session()
+        response=client.get(url_login)
+        dic = response.json()["items"]
+        dft = pd.DataFrame.from_dict(dic)
+        df_run = df_run.append(dft)
+        num_page = num_page + 1
+
     line = px.line(
-        dff[dff["run_id"] == run_name],
+        df_run,
         x="timestamp",
         y="emissions_sum",
         color_discrete_sequence=[vividgreen],
