@@ -64,8 +64,10 @@ def test_detailed_sum_computes_for_project_id():
         EXPERIMENT_WITH_DETAILS
     ]
 
-    actual_project_global_sum_by_experiment = project_global_sum_usecase.compute_detailed_sum(
-        project_id, START_DATE, END_DATE
+    actual_project_global_sum_by_experiment = (
+        project_global_sum_usecase.compute_detailed_sum(
+            project_id, START_DATE, END_DATE
+        )
     )
 
     assert actual_project_global_sum_by_experiment.emission_sum == expected_emission_sum

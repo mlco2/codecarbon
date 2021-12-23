@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Experiment, ExperimentCreate
+from carbonserver.api.schemas import Experiment, ExperimentCreate, ExperimentReport
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
@@ -86,7 +86,7 @@ def read_project_detailed_sums_by_experiment(
     project_global_sum_by_experiment_usecase: ProjectSumsByExperimentUsecase = Depends(
         Provide[ServerContainer.project_sums_by_experiment_usecase]
     ),
-) -> Any:
+) -> List[ExperimentReport]:
     start_date = (
         start_date
         if start_date

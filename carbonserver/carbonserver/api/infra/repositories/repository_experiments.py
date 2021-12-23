@@ -8,7 +8,7 @@ from carbonserver.api.domain.experiments import Experiments
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
-from carbonserver.api.schemas import Experiment, ExperimentCreate
+from carbonserver.api.schemas import Experiment, ExperimentCreate, ExperimentReport
 
 
 class SqlAlchemyRepository(Experiments):
@@ -107,7 +107,9 @@ class SqlAlchemyRepository(Experiments):
             )
             return res
 
-    def get_project_detailed_sums_by_experiment(self, project_id, start_date, end_date):
+    def get_project_detailed_sums_by_experiment(
+        self, project_id, start_date, end_date
+    ) -> List[ExperimentReport]:
         with self.session_factory() as session:
             res = (
                 session.query(
