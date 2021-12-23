@@ -1,14 +1,19 @@
+from datetime import datetime
 from unittest import mock
 
+import dateutil
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,
 )
-from carbonserver.api.usecases.experiment.project_global_sum_by_experiment import (
-    ProjectGlobalSumByExperimentUsecase,
+from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
+    ProjectSumsByExperimentUsecase,
 )
 
 EXPERIMENT_ID = "10276e58-6df7-42cf-abb8-429773a35eb5"
 EXPERIMENT_WITH_DETAILS_ID = "943b2aa5-9e21-41a9-8a38-562505b4b2aa"
+END_DATE = datetime.timestamp(datetime.now())
+START_DATE = END_DATE - dateutil.relativedelta.relativedelta(months=3)
+
 
 EMISSIONS_SUM = 1544.54
 EMISSIONS_SUM_WITH_DETAILS = 152.28955200363455
@@ -49,35 +54,18 @@ EXPERIMENT_WITH_DETAILS = {
 }
 
 
-def test_global_sum_computes_for_project_id():
-    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
-    project_id = PROJECT_ID
-    project_global_sum_usecase = ProjectGlobalSumByExperimentUsecase(repository_mock)
-
-    expected_emission_sum = EMISSIONS_SUM
-    repository_mock.get_project_global_sums_by_experiment.return_value = [
-        EXPERIMENT_GLOBAL_SUM
-    ]
-
-    actual_project_global_sum_by_experiment = project_global_sum_usecase.compute(
-        project_id
-    )
-
-    assert actual_project_global_sum_by_experiment.emission_sum == expected_emission_sum
-
-
 def test_detailed_sum_computes_for_project_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     project_id = PROJECT_ID
-    project_global_sum_usecase = ProjectGlobalSumByExperimentUsecase(repository_mock)
+    project_global_sum_usecase = ProjectSumsByExperimentUsecase(repository_mock)
 
     expected_emission_sum = EMISSIONS_SUM_WITH_DETAILS
     repository_mock.get_project_global_sums_by_experiment.return_value = [
         EXPERIMENT_WITH_DETAILS
     ]
 
-    actual_project_global_sum_by_experiment = project_global_sum_usecase.compute(
-        project_id
+    actual_project_global_sum_by_experiment = project_global_sum_usecase.compute_detailed_sum(
+        project_id, START_DATE, END_DATE
     )
 
     assert actual_project_global_sum_by_experiment.emission_sum == expected_emission_sum

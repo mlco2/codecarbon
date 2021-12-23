@@ -10,8 +10,8 @@ from starlette import status
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Experiment, ExperimentCreate
 from carbonserver.api.services.experiments_service import ExperimentService
-from carbonserver.api.usecases.experiment.project_global_sum_by_experiment import (
-    ProjectGlobalSumByExperimentUsecase,
+from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
+    ProjectSumsByExperimentUsecase,
 )
 from carbonserver.logger import logger
 
@@ -74,22 +74,7 @@ def read_project_experiments(
 
 
 @router.get(
-    "/experiments/{project_id}/global_sums/",
-    tags=EXPERIMENTS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-)
-@inject
-def read_project_sums_by_experiment(
-    project_id: str,
-    project_global_sum_by_experiment_usecase: ProjectGlobalSumByExperimentUsecase = Depends(
-        Provide[ServerContainer.project_global_sum_by_experiment_usecase]
-    ),
-) -> Any:
-    return project_global_sum_by_experiment_usecase.compute(project_id)
-
-
-@router.get(
-    "/experiments/{project_id}/detailed_sums/",
+    "/experiments/{project_id}/sums/",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
@@ -98,8 +83,8 @@ def read_project_detailed_sums_by_experiment(
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    project_global_sum_by_experiment_usecase: ProjectGlobalSumByExperimentUsecase = Depends(
-        Provide[ServerContainer.project_global_sum_by_experiment_usecase]
+    project_global_sum_by_experiment_usecase: ProjectSumsByExperimentUsecase = Depends(
+        Provide[ServerContainer.project_sums_by_experiment_usecase]
     ),
 ) -> Any:
     start_date = (
@@ -108,6 +93,6 @@ def read_project_detailed_sums_by_experiment(
         else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
     )
     end_date = end_date if end_date else datetime.now()
-    return project_global_sum_by_experiment_usecase.compute_with_details(
+    return project_global_sum_by_experiment_usecase.compute_detailed_sum(
         project_id, start_date, end_date
     )

@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -21,7 +22,7 @@ EXPERIMENT_ID_3 = "c13e851f-5c2f-403d-98d0-51fe15df3bc3"
 
 EXPERIMENT_GLOBAL_SUM = {
     "id": EXPERIMENT_ID,
-    "timestamp": "2021-04-04T06:43:00",
+    "timestamp": datetime.now().isoformat(),
     "name": "Run on Premise",
     "description": "Premise API for Code Carbon",
     "emission_sum": 1544.54,
@@ -156,7 +157,6 @@ def test_get_experiment_of_project_retrieves_all_experiments_of_project(
             params={"project_id": PROJECT_ID},
         )
         actual_experiments_list = response.json()
-        print(actual_experiments_list)
         actual_experiments_ids_list = [
             experiment["id"] for experiment in actual_experiments_list
         ]
@@ -165,22 +165,3 @@ def test_get_experiment_of_project_retrieves_all_experiments_of_project(
     assert not diff
     assert len(actual_experiments_ids_list) == len(set(actual_experiments_ids_list))
     assert EXPERIMENT_ID_3 not in actual_experiments_ids_list
-
-
-def test_compute_project_sums_by_experiment_returns_correct_sums(
-    client, custom_test_server
-):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_global_sums = [EXPERIMENT_GLOBAL_SUM]
-    repository_mock.get_project_global_sums_by_experiment.return_value = [
-        EXPERIMENT_GLOBAL_SUM
-    ]
-
-    with custom_test_server.container.experiment_repository.override(repository_mock):
-        response = client.get(
-            "/experiments/{project_id}/global_sums/".format(project_id=PROJECT_ID)
-        )
-        actual_global_sum = response.json()
-
-    assert response.status_code == status.HTTP_200_OK
-    assert actual_global_sum == expected_global_sums
