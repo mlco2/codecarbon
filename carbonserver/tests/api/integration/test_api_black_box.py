@@ -324,15 +324,8 @@ def test_api27_emission_read():
     assert r.json()["run_id"] == run_id
 
 
-def test_api28_experiment_read_global_sums():
-    r = requests.get(url=f"{URL}/experiments/{project_id}/global_sums/", timeout=2)
-    assert r.status_code == 200
-    assert r.json()[0]["experiment_id"] == experiment_id
-    assert r.json()[0]["duration"] == 98745.0
-
-
 def test_api29_experiment_read_detailed_sums():
-    url = f"{URL}/experiments/{project_id}/detailed_sums/"
+    url = f"{URL}/experiments/{project_id}/sums/"
     r = requests.get(url, timeout=2)
     assert r.status_code == 200
     assert len(r.json()) > 0
