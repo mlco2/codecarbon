@@ -159,6 +159,56 @@ class Experiment(ExperimentBase):
     id: UUID
 
 
+class ExperimentReport(ExperimentBase):
+    experiment_id: UUID
+    timestamp: datetime
+    name: str
+    description: str
+    country_name: str
+    country_iso_code: str
+    region: str
+    on_cloud: str
+    cloud_provider: str
+    cloud_region: str
+    emission: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate_sum: float
+    emissions_rate_count: int
+
+    class Config:
+
+        schema_extra = {
+            "experiment_id": "943b2aa5-9e21-41a9-8a38-562505b4b2aa",
+            "timestamp": "2021-10-07T20:19:27.716693",
+            "name": "Code Carbon user test",
+            "description": "Code Carbon user test with default project",
+            "country_name": "France",
+            "country_iso_code": "FRA",
+            "region": "france",
+            "on_cloud": False,
+            "cloud_provider": None,
+            "cloud_region": None,
+            "emission": 152.28955200363455,
+            "cpu_power": 5760,
+            "gpu_power": 2983.9739999999993,
+            "ram_power": 806.0337192959997,
+            "cpu_energy": 191.8251863024175,
+            "gpu_energy": 140.01098718681496,
+            "ram_energy": 26.84332784201141,
+            "energy_consumed": 358.6795013312438,
+            "duration": 7673204,
+            "emissions_rate_sum": 1.0984556074701752,
+            "emissions_rate_count": 64,
+        }
+
+
 class ProjectBase(BaseModel):
     name: str
     description: str

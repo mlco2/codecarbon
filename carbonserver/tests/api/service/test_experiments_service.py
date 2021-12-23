@@ -41,6 +41,19 @@ EXPERIMENT_2 = Experiment(
     project_id=PROJECT_ID,
 )
 
+EXPERIMENT_CREATE = ExperimentCreate(
+    name="Experiment",
+    description="Description",
+    timestamp="2021-04-04T08:43:00+02:00",
+    country_name="France",
+    country_iso_code="France",
+    region="Berry",
+    on_cloud=True,
+    cloud_provider="AWS",
+    cloud_region="aws-east-1",
+    project_id=PROJECT_ID,
+)
+
 
 @mock.patch("uuid.uuid4", return_value=EXPERIMENT_ID)
 def test_emission_service_creates_correct_emission(_):
@@ -49,18 +62,7 @@ def test_emission_service_creates_correct_emission(_):
     experiment_service: ExperimentService = ExperimentService(repository_mock)
     repository_mock.add_experiment.return_value = EXPERIMENT_ID
 
-    experiment_to_create = ExperimentCreate(
-        name="Experiment",
-        description="Description",
-        timestamp="2021-04-04T08:43:00+02:00",
-        country_name="France",
-        country_iso_code="France",
-        region="Berry",
-        on_cloud=True,
-        cloud_provider="AWS",
-        cloud_region="aws-east-1",
-        project_id=PROJECT_ID,
-    )
+    experiment_to_create = EXPERIMENT_CREATE
 
     actual_saved_emission_id = experiment_service.add_experiment(experiment_to_create)
 

@@ -7,6 +7,7 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
         "db",
         "emission_repository",
         "experiment_repository",
+        "project_global_sum_by_experiment_usecase",
         "project_repository",
         "team_repository",
         "organization_repository",
@@ -25,6 +26,5 @@ def test_container_exposes_correct_list_of_providers_at_initialisation():
     actual_providers = ServerContainer().providers.keys()
     diff = set(expected_providers) ^ set(actual_providers)
 
-    # Then
     assert not diff
     assert len(expected_providers) == len(actual_providers)
