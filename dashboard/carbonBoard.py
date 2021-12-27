@@ -300,6 +300,7 @@ app.layout = dbc.Container(
             multi=False,
             value="CO2_Emission",
             style={"width": "40%"},
+            clearable=False
         ),
         html.Div(id="output_container", children=[]),
         dcc.Graph(id="my_emission_map", figure={}, config=config),
