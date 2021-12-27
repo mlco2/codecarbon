@@ -926,10 +926,17 @@ def update_map(start_date, end_date, project, kpi):
             scope="world",
             color="emissions_sum",
             hover_data=["country_name", "emissions_sum", "project_name"],
-            color_continuous_scale=px.colors.sequential.YlOrRd,
+            color_continuous_scale=[darkgreen, vividgreen],
             labels={"emissions_sum": "Carbon Emission"},
             template="CodeCarbonTemplate",
         )
+        fig.update_coloraxes(
+        colorbar_title_side="right", colorbar_title_text="CO2 emissions"
+        )
+        fig.update_geos(
+            showland=True, landcolor="#898381",
+            showocean=True, oceancolor="#759FA8"
+        )   
     elif kpi == "CO2_TempRatio":
         fig = px.choropleth(
             data_frame=dff,
@@ -938,10 +945,17 @@ def update_map(start_date, end_date, project, kpi):
             scope="world",
             color="ratio",
             hover_data=["country_name", "ratio", "project_name"],
-            color_continuous_scale=px.colors.sequential.YlOrRd,
+            color_continuous_scale=[darkgreen, vividgreen],
             labels={"ratio": "Carbon Temporal Ratio"},
             template="CodeCarbonTemplate",
         )
+        fig.update_coloraxes(
+        colorbar_title_side="right", colorbar_title_text="CO2 per H"
+        )
+        fig.update_geos(
+            showland=True, landcolor="#898381",
+            showocean=True, oceancolor="#759FA8"
+        )  
     elif kpi == "Country_EnergyMix":
         fig = px.choropleth(
             data_frame=dff_mix,
@@ -961,12 +975,19 @@ def update_map(start_date, end_date, project, kpi):
                 "% Solar",
                 "% Wind",
             ],
-            color_continuous_scale=px.colors.sequential.YlOrRd,
+            color_continuous_scale=[darkgreen, vividgreen],
             labels={
                 "Carbon intensity of electricity (gCO2/kWh)": "Carbon intensity (gCO2/kWh)"
             },
             template="CodeCarbonTemplate",
         )
+        fig.update_coloraxes(
+        colorbar_title_side="right", colorbar_title_text="Carbon intensity (gCO2/KwH)"
+        )
+        fig.update_geos(
+            showland=True, landcolor="#898381",
+            showocean=True, oceancolor="#759FA8"
+        )  
 
     return container, fig
 
