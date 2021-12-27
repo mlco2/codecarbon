@@ -299,7 +299,7 @@ app.layout = dbc.Container(
             ],
             multi=False,
             value="CO2_Emission",
-            style={"width": "40%"},
+            style={"width": "40%", "color":"black"},
             clearable=False
         ),
         html.Div(id="output_container", children=[]),
