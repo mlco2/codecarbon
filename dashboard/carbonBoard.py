@@ -392,8 +392,8 @@ app.layout = dbc.Container(
         dbc.Row(
             [
                 # holding pieCharts
-                dbc.Col(
-                    dcc.Graph(id="pieCharts", config=config)
+                dbc.Col(dbc.Spinner(
+                    dcc.Graph(id="pieCharts", config=config))
                     # dbc.CardGroup([
                     #     dbc.Card(
                     #         dcc.Graph(id='pieChartEnergy', config=config), color=darkgreen
@@ -427,18 +427,18 @@ app.layout = dbc.Container(
         dbc.Row(
             [
                 # holding bubble chart
-                dbc.Col(
+                dbc.Col(dbc.Spinner(
                     dcc.Graph(
                         id="bubbleChart",
                         clickData=None,
                         hoverData=None,
                         figure={},
                         config=config,
-                    ),
+                    )),
                     width=6,
                 ),
                 # holding line chart
-                dbc.Col(dcc.Graph(id="lineChart", config=config), width=6),
+                dbc.Col(dbc.Spinner(dcc.Graph(id="lineChart", config=config)), width=6),
             ]
         ),
         # holding carbon emission map
@@ -456,7 +456,7 @@ app.layout = dbc.Container(
             clearable=False
         ),
         html.Div(id="output_container", children=[]),
-        dcc.Graph(id="my_emission_map", figure={}, config=config),
+        dbc.Spinner(dcc.Graph(id="my_emission_map", figure={}, config=config)),
     ]
 )
 <<<<<<< HEAD
