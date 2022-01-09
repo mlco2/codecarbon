@@ -1,4 +1,5 @@
 from datetime import date
+
 import CodeCarbon_template
 import dash
 import dash_bootstrap_components as dbc
@@ -6,13 +7,11 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import requests
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
 
-import requests
-import csv
-import json
 # Common variables
 # ******************************************************************************
 # colors
@@ -42,8 +41,9 @@ df = pd.read_csv(
 df.timestamp = pd.to_datetime(df.timestamp)
 
 
-def load_emission(run_id, page) :
-    return f"https://api.codecarbon.io/emissions/run/{run_id}?token=jessica&page={page}&size=100"
+def load_emission(run_id, page):
+    return f"https://api.codecarbon.io/emissions/run/{run_id}?token=jessica&page={page}&size=10000"
+
 
 df_mix = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
@@ -299,13 +299,16 @@ app.layout = dbc.Container(
         dcc.Dropdown(
             id="slct_kpi",
             options=[
-                {"label": "CO2_Emission", "value": "CO2_Emission"},
-                {"label": "CO2_TempRatio", "value": "CO2_TempRatio"},
-                {"label": "Country_EnergyMix", "value": "Country_EnergyMix"},
+                {
+                    "label": "Global Carbon Intensity",
+                    "value": "Global Carbon Intensity",
+                },
+                {"label": "My Carbon Emissions", "value": "My Carbon Emissions"},
             ],
             multi=False,
-            value="CO2_Emission",
-            style={"width": "40%"},
+            value="Global Carbon Intensity",
+            style={"width": "50%", "color": "black"},
+            clearable=False,
         ),
         html.Div(id="output_container", children=[]),
         dcc.Graph(id="my_emission_map", figure={}, config=config),
@@ -315,6 +318,8 @@ app.layout = dbc.Container(
 # ************************************************************************
 # indicators
 # -------------------------------------------------------------------------
+
+
 @app.callback(
     [
         Output(component_id="Tot_Energy_Consumed", component_property="children"),
@@ -347,6 +352,8 @@ def update_indicator(start_date, end_date):
             tot_duration = str(tot_duration_days)
             tot_duration_unit = "days"
     return Tot_energy_consumed, Tot_emissions, tot_duration, tot_duration_unit
+
+
 # pieCharts and cards
 # -----------------------------------------------------------------------------------
 @app.callback(
@@ -534,6 +541,8 @@ def update_Charts(start_date, end_date, project):
         showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
     )
     return figBar, figPie, houseHold, car, tvTime
+
+
 # BubbleCharts
 # ---------------------------------------------------------------------------------------
 @app.callback(
@@ -592,6 +601,8 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
         colorbar_title_side="right", colorbar_title_text="energy consumed (KwH)"
     )
     return bubble
+
+
 # Line Chart
 # ---------------------------------------------------------------------------------
 @app.callback(
@@ -622,23 +633,23 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     else:
         run_name = clickPoint["points"][0]["customdata"]
 
-    url_login = load_emission(run_name,1)
+    # API integration to get emissions at "run level"
+    url_login = load_emission(run_name, 1)
     client = requests.session()
-    response=client.get(url_login)
-    dic=response.json()["items"]
+    response = client.get(url_login)
+    dic = response.json()["items"]
     df_run = pd.DataFrame.from_dict(dic)
     num_page = 2
-    while len(dic)!=0 :
+    while len(dic) != 0:
         url_login = load_emission(run_name, num_page)
         client = requests.session()
-        response=client.get(url_login)
+        response = client.get(url_login)
         dic = response.json()["items"]
         dft = pd.DataFrame.from_dict(dic)
         df_run = df_run.append(dft)
         num_page = num_page + 1
 
     line = px.line(
-        
         df_run,
         x="timestamp",
         y="emissions_sum",
@@ -657,6 +668,8 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     )
     line.update_yaxes(showgrid=False, visible=False, title="emissions (kg eq. C02)")
     return line
+
+
 # Carbon Emission Map
 # ---------------------------------------------------------------------------------
 @app.callback(
@@ -678,12 +691,12 @@ def update_map(start_date, end_date, project, kpi):
     dff = dff.groupby(["project_name", "country_iso_code", "country_name"]).agg(
         {"emissions_sum": "sum", "duration": "sum"}
     )
-    dff["ratio"] = dff["emissions_sum"] / dff["duration"] * 3600 * 24
+    #    dff["ratio"] = dff["emissions_sum"] / dff["duration"] * 3600 * 24
     dff = dff.reset_index()
     dff_mix = df_mix.copy()
     container = ""
     # Plotly Express
-    if kpi == "CO2_Emission":
+    if kpi == "My Carbon Emissions":
         fig = px.choropleth(
             data_frame=dff,
             locationmode="ISO-3",
@@ -691,23 +704,11 @@ def update_map(start_date, end_date, project, kpi):
             scope="world",
             color="emissions_sum",
             hover_data=["country_name", "emissions_sum", "project_name"],
-            color_continuous_scale=px.colors.sequential.YlOrRd,
+            color_continuous_scale=[vividgreen, darkgreen],
             labels={"emissions_sum": "Carbon Emission"},
             template="CodeCarbonTemplate",
         )
-    elif kpi == "CO2_TempRatio":
-        fig = px.choropleth(
-            data_frame=dff,
-            locationmode="ISO-3",
-            locations="country_iso_code",
-            scope="world",
-            color="ratio",
-            hover_data=["country_name", "ratio", "project_name"],
-            color_continuous_scale=px.colors.sequential.YlOrRd,
-            labels={"ratio": "Carbon Temporal Ratio"},
-            template="CodeCarbonTemplate",
-        )
-    elif kpi == "Country_EnergyMix":
+    elif kpi == "Global Carbon Intensity":
         fig = px.choropleth(
             data_frame=dff_mix,
             locationmode="ISO-3",
@@ -733,5 +734,7 @@ def update_map(start_date, end_date, project, kpi):
             template="CodeCarbonTemplate",
         )
     return container, fig
+
+
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=False)
