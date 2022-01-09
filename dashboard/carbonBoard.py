@@ -14,29 +14,10 @@ from plotly.subplots import make_subplots
 # Common variables
 # ******************************************************************************
 # colors
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-darkgreen = '#024758'
-vividgreen = '#c9fb37'
-color3 = '#226a7a'
-titleColor = '#d8d8d8'
-=======
-
-<<<<<<< HEAD
->>>>>>> d2765bb (erase duplicate)
-
-=======
-=======
->>>>>>> 282b744 (Commit clean df import)
-=======
->>>>>>> c056b2a (cancel previous commit)
 darkgreen = "#024758"
 vividgreen = "#c9fb37"
 color3 = "#226a7a"
 titleColor = "#d8d8d8"
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
 # config (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
 config = {"displayModeBar": False, "scrollZoom": False, "doubleClick": "reset"}
 CodeCarbon_template
@@ -65,27 +46,6 @@ df_mix = pd.read_csv(
 # cards
 # ******************************************************************************
 
-<<<<<<< HEAD
-card_household = dbc.Card([
-                            dbc.CardImg(src="/assets/house_icon.png", top=True, bottom=False),
-                            dbc.CardBody([html.H4(id='houseHold',style={'textAlign':'center'}),
-                                html.P("of an american household weekly energy consumption",style={'textAlign':'center', 'fontSize':12}, className="card-title")])
-                        ], color=darkgreen, outline=False)
-
-card_car = dbc.Card([
-                            dbc.CardImg(src="/assets/car_icon.png",top=True, bottom=False),
-                            dbc.CardBody([
-                                html.H4(id='car',style={'textAlign':'center'}),
-                                html.P("miles driven",style={'textAlign':'center', 'fontSize':12}, className="card-title")])
-                        ], color=darkgreen, outline=False)
-
-card_tv = dbc.Card([
-                            dbc.CardImg(src="/assets/tv_icon.png",top=True, bottom=False),
-                            dbc.CardBody([
-                                html.H4(id='tv',style={'textAlign':'center'}),
-                                html.P("of TV", style={'textAlign':'center', 'fontSize':12},className="card-title")])
-                    ], color=darkgreen, outline=False)
-=======
 card_household = dbc.Card(
     [
         dbc.CardImg(
@@ -155,121 +115,8 @@ card_tv = dbc.Card(
     color=darkgreen,
     outline=False,
 )
-<<<<<<< HEAD
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
-
-
 # Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
 # *******************************************************************************
-
-<<<<<<< HEAD
-app.layout = dbc.Container([
-    dbc.Row([
-        # holding logo, subtitle, date selector
-        dbc.Col([
-                html.Img(src='/assets/logo.png'),
-                html.P('Track and reduce CO2 emissions from your computing'),
-                dcc.DatePickerRange(id='periode',
-                        day_size=39,
-                        month_format='MMMM Y',
-                        end_date_placeholder_text='MMMM Y',
-                        # should be calculated from today() like minus 1 week
-                        start_date=date(2020, 1, 1),
-                        min_date_allowed=date(2000, 1, 1),
-                        max_date_allowed=date.today(),
-                        initial_visible_month=date.today(),
-                        end_date=date.today())
-        ], xs=12, sm=12, md=12, lg=4, xl=4),  # if small screen the col would take the full width
-        # holding indicators cards
-        dbc.Col([
-            html.H5('Global', style={'color':titleColor}),
-            dbc.CardGroup([
-            dbc.Card([dbc.CardBody([html.P("Energy consumed", style={'textAlign':'center'}), html.H3(id='Tot_Energy_Consumed', style={'textAlign':'center'}),html.P("kWh", style={'textAlign':'center'})])], color=darkgreen),
-            dbc.Card([dbc.CardBody([html.P("Emissions produced", style={'textAlign':'center'}),html.H4(id='Tot_Emissions', style={'textAlign':'center'}),html.P("Kg. Eq. CO2", style={'textAlign':'center'})])], color=darkgreen),
-            dbc.Card([dbc.CardBody([html.P("Cumulative duration", style={'textAlign':'center'}),html.H4(id='Tot_Duration', style={'textAlign':'center'}),html.P(id='Tot_Duration_unit', style={'textAlign':'center'})])], color=darkgreen)
-            ])])
-    ]),
-    dbc.Row(html.P('')),
-    dbc.Row([
-            dbc.Col(html.H5('Project :', style={'color':titleColor}),width=1 ),
-            dbc.Col(dcc.RadioItems(id='projectPicked',
-                            options=[{'label': projectName, 'value': projectName} for projectName in df.project_name.unique()],
-                            value=df.project_name.unique().tolist()[0], labelStyle={'display': 'inline'}, style={'padding-top':10}, inputStyle={"margin-right": "10px", 'margin-left':'10px'}
-                             ) , width=8     
-            )
-        ],justify='center'),
-
-    dbc.Row([
-        
-        # holding pieCharts
-        dbc.Col( dcc.Graph(id='pieCharts', config=config),xs=12, sm=12, md=12, lg=6, xl=6
-            # -------------------------------------------------------------------------
-            #                            Code for holding pieCharts into card
-            # -------------------------------------------------------------------------
-            # dbc.CardGroup([
-            #     dbc.Card(
-            #         dcc.Graph(id='pieChartEnergy', config=config), color=darkgreen
-            #             ),
-            #     dbc.Card(
-            #         dcc.Graph(id='pieChartEmissions', config=config), color=darkgreen
-            #             ),
-            #     dbc.Card(
-            #         dcc.Graph(id='pieChartDuration', config=config) , color=darkgreen
-            #             )
-            #             ])
-            #------------------------------------------------------------------------
-            #------------------------------------------------------------------------
-            ),
-        dbc.Col([ 
-                dbc.CardGroup([card_household , card_car, card_tv]),
-                dbc.Col(dcc.Graph(id='barChart',clickData=None,config=config),xs=12, sm=12, md=12, lg=6, xl=6)       
-                ])
-
-        ]),
-    #-----------------------------------------------------------------------------
-    #-----------------------------------------------------------------------------
-    #                      Former layout with icon cards and bar chart beneath pieChart
-    #--------------------------------------------------------------------------------
-    #-------------------------------------------------------------------------------
-    # dbc.Row([
-    #     # holding cards
-
-    #                 dbc.Col(card_household, width={"size": 2, "offset": 0}),
-    #                 dbc.Col(card_car, width=2),
-    #                 dbc.Col(card_tv, width=2),
-    #      #holding bar graph
-    #                 dbc.Col(dcc.Graph(id='barChart',clickData=None,config=config),width={"size":6,"offset":0})
-    # ]),
-    #-------------------------------------------------------------------------
-    #---------------------------------------------------------------------------------
-    
-     dbc.Row([
-         #holding bubble chart
-                dbc.Col(dcc.Graph(id='bubbleChart', clickData=None, hoverData=None, figure={}, 
-                          config=config),width=6),
-         #holding line chart
-               dbc.Col(dcc.Graph(id='lineChart', config=config),  width=6)
-                        
-    ]),
-         #holding carbon emission map
-    html.Br(),
-    dcc.Dropdown(id="slct_kpi",
-                 options=[
-                     {"label": "CO2_Emission", "value": "CO2_Emission"},
-                     {"label": "CO2_TempRatio", "value": "CO2_TempRatio"}],
-                 multi=False,
-                 value="CO2_Emission",
-                 style={'width': "40%"}
-                 ),
-    html.Div(id='output_container', children=[]),
-    dcc.Graph(id='my_emission_map', figure={}, config=config)    
-
-    ])
-=======
-=======
-# Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
-# *******************************************************************************
->>>>>>> c056b2a (cancel previous commit)
 app.layout = dbc.Container(
     [
         dbc.Row(
@@ -476,12 +323,6 @@ app.layout = dbc.Container(
         # ),
     ]
 )
-<<<<<<< HEAD
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
-
-
-=======
->>>>>>> c056b2a (cancel previous commit)
 # callback section: connecting the components
 # ************************************************************************
 # indicators
@@ -524,25 +365,6 @@ def update_indicator(start_date, end_date):
 
 # pieCharts and cards
 # -----------------------------------------------------------------------------------
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-@ app.callback(
-    [Output(component_id='barChart', component_property='figure'),
-    #----------------------------------------------------------------------------------------
-    #               output if cards for pie chart are used
-    #------------------------------------------------------------------------------------
-    # Output(component_id='pieChartEnergy', component_property='figure'),
-    # Output(component_id='pieChartEmissions', component_property='figure'),
-    # Output(component_id='pieChartDuration', component_property='figure'),
-    Output(component_id='pieCharts', component_property='figure'),
-    Output(component_id='houseHold', component_property='children'),
-    Output(component_id='car', component_property='children'),
-    Output(component_id='tv', component_property='children')
-=======
-
-=======
->>>>>>> c056b2a (cancel previous commit)
 @app.callback(
     [
         Output(component_id="barChart", component_property="figure"),
@@ -558,7 +380,6 @@ def update_indicator(start_date, end_date):
         Input(component_id="periode", component_property="start_date"),
         Input(component_id="periode", component_property="end_date"),
         Input(component_id="projectPicked", component_property="value"),
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
     ],
 )
 def update_Charts(start_date, end_date, project):
@@ -596,20 +417,6 @@ def update_Charts(start_date, end_date, project):
         duration_project = "{:.0f}".format(duration_in_hours)
         duration_project_unit = "H"
         if duration_in_hours >= 24:
-<<<<<<< HEAD
-                duration_in_days=duration_in_hours/24
-                duration_in_years="{:.0f}".format(duration_in_days)
-                duration_project_unit='days'
-                if duration_in_days>=365:
-                    duration_in_years = duration_in_days/365
-                    duration_project='{:.0f}'.format(duration_in_years)
-                    duration_project_unit='year'
-
-    ##PieCharts in cards OUTPUT in return has to be changed
-    #----------------------------------------------------------------
-    # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], 
-    #     textinfo='none',hole=.8, 
-=======
             duration_in_days = duration_in_hours / 24
             duration_in_years = "{:.0f}".format(duration_in_days)
             duration_project_unit = "days"
@@ -617,22 +424,10 @@ def update_Charts(start_date, end_date, project):
                 duration_in_years = duration_in_days / 365
                 duration_project = "{:.0f}".format(duration_in_years)
                 duration_project_unit = "year"
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-    # PieCharts
-    # ----------------------------------------------------------------
-    # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
-    #     textinfo='none',hole=.8,
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
-=======
-=======
->>>>>>> c056b2a (cancel previous commit)
     # #PieCharts in cards OUTPUT in return has to be changed
     # ----------------------------------------------------------------
     # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
     #     textinfo='none',hole=.8,
->>>>>>> 282b744 (Commit clean df import)
     #     marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieEnergy.update_layout(title_text='KwH',title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,
     #     margin=dict(r=0,l=0,t=0,b=0))
@@ -645,20 +440,6 @@ def update_Charts(start_date, end_date, project):
     #     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieDuration.update_layout(title_text=duration_project_unit, title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,margin=dict(r=0,l=0,t=0,b=0))
     # figPieDuration.add_annotation(text=duration_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
-<<<<<<< HEAD
-    #
-    ## PieCharts in a subplot
-    #-------------------------------------------------------------------
-    figPie=make_subplots(rows=1, cols=3, specs=[
-                        [{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]])
-    figPie.add_trace(go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed], title="KwH", title_position='bottom center',
-                     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo='skip'), row=1, col=1)
-    figPie.add_trace(go.Pie(values=[emission, dff.emissions_sum.sum(
-    )-emission],  textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo='skip', title='Kg eq.CO2', title_position='bottom center'), row=1, col=2)
-    figPie.add_trace(go.Pie(values=[duration, (dff.duration.sum()-duration)],
-                     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), hoverinfo="skip", title=duration_project_unit, title_position='bottom center'), row=1, col=3)
-
-=======
     figPie = make_subplots(
         rows=1,
         cols=3,
@@ -704,27 +485,9 @@ def update_Charts(start_date, end_date, project):
         row=1,
         col=3,
     )
-<<<<<<< HEAD
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
-
-=======
->>>>>>> c056b2a (cancel previous commit)
     figPie.update_layout(
         template="CodeCarbonTemplate",
         showlegend=False,
-<<<<<<< HEAD
-        annotations=[dict(text=energy_project, font=dict(color='white',), x=0.09, y=0.5, font_size=20, showarrow=False), dict(
-            text=emissions_project, x=0.5, y=0.5, font_size=20, showarrow=False), dict(text=duration_project, font=dict(color='white',), x=0.88, y=0.5, font_size=20, showarrow=False), ],
-        margin=dict(l=10, r=10, b=10, t=10),
-        )
-    
-    #barChart
-    #--------------------------------------------------------------------
-    
-    dfBar = dff[dff['project_name']==project].groupby('experiment_name').agg({'timestamp': min, 'duration': sum, 'emissions_sum':sum, 'energy_consumed':sum, 'experiment_description': lambda x: x.iloc[0]}).reset_index()
-    
-    figBar = px.bar(dfBar, x='experiment_name', y='emissions_sum', text='emissions_sum')
-=======
         annotations=[
             dict(
                 text=energy_project,
@@ -768,11 +531,6 @@ def update_Charts(start_date, end_date, project):
         .reset_index()
     )
     figBar = px.bar(dfBar, x="experiment_name", y="emissions_sum", text="emissions_sum")
-<<<<<<< HEAD
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
-
-=======
->>>>>>> c056b2a (cancel previous commit)
     figBar.update_layout(
         title_text=project
         + " experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart below </span>",
@@ -901,24 +659,9 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
     )
     line.update_yaxes(showgrid=False, visible=False, title="emissions (kg eq. C02)")
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-#****************************************************************************************
-#***************************************************************************************
-=======
-=======
     return line
 
 
-<<<<<<< HEAD
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
-=======
-    return line
->>>>>>> c056b2a (cancel previous commit)
-=======
->>>>>>> 36e2da0 (Adjust CarbonBoard)
 # Carbon Emission Map
 # ---------------------------------------------------------------------------------
 @app.callback(
@@ -998,22 +741,6 @@ def update_map(start_date, end_date, project, kpi):
 
     return container, fig
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 3350a4d (Dashboard : add carbon emission map)
-if __name__ == '__main__':
-=======
-
-if __name__ == "__main__":
->>>>>>> d6c5f41 (Dynamic read_csv + PreCommit adjustments)
-    app.run_server(debug=True, use_reloader=False)
-=======
-if __name__ == "__main__":
-    app.run_server(debug=True, use_reloader=False)
->>>>>>> c056b2a (cancel previous commit)
-=======
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=False)
->>>>>>> 36e2da0 (Adjust CarbonBoard)
