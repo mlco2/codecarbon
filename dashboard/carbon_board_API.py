@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import requests
 from dash import dcc, html
 from dash.dependencies import Input, Output
+from data.data import get_concat_run_data
 from plotly.subplots import make_subplots
 
 # Common variables
@@ -616,7 +616,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
 def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, project):
     dff = df.copy()
     dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
-    if experiment_clickPoint is None:
+    if experiment_clickPoint is None and clickPoint is None:
         default_experiment_name = dff[dff["project_name"] == project][
             "experiment_name"
         ].unique()[0]
@@ -633,21 +633,24 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     else:
         run_name = clickPoint["points"][0]["customdata"]
 
-    # API integration to get emissions at "run level"
-    url_login = load_emission(run_name, 1)
-    client = requests.session()
-    response = client.get(url_login)
-    dic = response.json()["items"]
-    df_run = pd.DataFrame.from_dict(dic)
-    num_page = 2
-    while len(dic) != 0:
-        url_login = load_emission(run_name, num_page)
-        client = requests.session()
-        response = client.get(url_login)
-        dic = response.json()["items"]
-        dft = pd.DataFrame.from_dict(dic)
-        df_run = df_run.append(dft)
-        num_page = num_page + 1
+    # INITIAL CODE : API integration to get emissions at "run level"
+    # url_login = load_emission(run_name, 1)
+    # client = requests.session()
+    # response = client.get(url_login)
+    # dic = response.json()["items"]
+    # df_run = pd.DataFrame.from_dict(dic)
+    # num_page = 2
+    # while len(dic) != 0:
+    #    url_login = load_emission(run_name, num_page)
+    #    client = requests.session()
+    #    response = client.get(url_login)
+    #    dic = response.json()["items"]
+    #    dft = pd.DataFrame.from_dict(dic)
+    #    df_run = df_run.append(dft)
+    #    num_page = num_page + 1
+
+    # REDUCED CODE : API integration to get emissions at "run level"
+    df_run, total_run = get_concat_run_data(run_name)
 
     line = px.line(
         df_run,
