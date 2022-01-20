@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
-from data.data import get_concat_run_data, get_experiments_data
+from data.data import get_experiment_runs, get_project_experiments, get_run_emissions
 from plotly.subplots import make_subplots
 
 # Common variables
@@ -566,12 +566,10 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     dff = df.copy()
     dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
     if clickPoint is None:
-        experiment_name = get_experiments_data(project)["name"][0]
-    #        experiment_name = dff[dff["project_name"] == project][
-    #            "experiment_name"
-    #        ].unique()[0]
+        experiment_name = get_project_experiments(project)["name"].iloc[-1]
     else:
         experiment_name = clickPoint["points"][0]["x"]
+
     df1 = (
         dff[dff["experiment_name"] == experiment_name]
         .groupby("run_id")
@@ -630,44 +628,19 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     ],
 )
 def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, project):
-    dff = df.copy()
-    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
+    #    => ADD TIMESTAMP FILTERING
     if experiment_clickPoint is None and clickPoint is None:
-        default_experiment_name = get_experiments_data(project)["name"][0]
-        #        default_experiment_name = dff[dff["project_name"] == project][
-        #            "experiment_name"
-        #        ].unique()[0]
-        run_name = dff[dff["experiment_name"] == default_experiment_name][
-            "run_id"
-        ].unique()[
-            -1
-        ]  # showing the last run of default project
+        default_experiment_id = get_project_experiments(project)["id"].iloc[-1]
+        run_name = get_experiment_runs(default_experiment_id)["id"].iloc[-1]
     elif clickPoint is None:
+        #    => GET EXPERIMENT_ID (NOT EXP_NAME)
         experiment_selected = experiment_clickPoint["points"][0]["x"]
-        run_name = dff[dff["experiment_name"] == experiment_selected][
-            "run_id"
-        ].unique()[0]
+        run_name = get_experiment_runs(experiment_selected)["id"].iloc[-1]
     else:
         run_name = clickPoint["points"][0]["customdata"]
 
-    # INITIAL CODE : API integration to get emissions at "run level"
-    # url_login = load_emission(run_name, 1)
-    # client = requests.session()
-    # response = client.get(url_login)
-    # dic = response.json()["items"]
-    # df_run = pd.DataFrame.from_dict(dic)
-    # num_page = 2
-    # while len(dic) != 0:
-    #    url_login = load_emission(run_name, num_page)
-    #    client = requests.session()
-    #    response = client.get(url_login)
-    #    dic = response.json()["items"]
-    #    dft = pd.DataFrame.from_dict(dic)
-    #    df_run = df_run.append(dft)
-    #    num_page = num_page + 1
-
-    # REDUCED CODE : API integration to get emissions at "run level"
-    df_run, total_run = get_concat_run_data(run_name)
+    #   API integration to get emissions at "run level"
+    df_run, total_run = get_run_emissions(run_name)
 
     line = px.line(
         df_run,
