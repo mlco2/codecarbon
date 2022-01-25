@@ -13,7 +13,7 @@ from codecarbon.external.logger import logger
 )
 def train_model():
     """
-    This function will do nothing during (occurence * delay) seconds.
+    This function will do nothing during (occurrence * delay) seconds.
     The Code Carbon API will be called every (measure_power_secs * api_call_interval) seconds.
     """
     occurence = 60 * 24 * 365 * 100  # Run for 100 years !
