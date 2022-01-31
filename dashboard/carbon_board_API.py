@@ -642,6 +642,10 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     #   API integration to get emissions at "run level"
     df_run, total_run = get_run_emissions(run_name)
 
+    if(df_run.empty):
+        df_run["timestamp"]=0
+        df_run["emissions_sum"]=0
+
     line = px.line(
         df_run,
         x="timestamp",

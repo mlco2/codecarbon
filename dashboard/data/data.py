@@ -14,7 +14,8 @@ from data.data_loader import (
 def get_run_data(run_id, page_api, size_api) -> pd.DataFrame:
     run_from_api = load_run_emissions(run_id, page=page_api, size=size_api)
     run_df = pd.DataFrame(run_from_api["items"])
-    run_df = run_df.sort_values(by="timestamp")
+    if not(run_df.empty):
+        run_df = run_df.sort_values(by="timestamp")
     run_total = run_from_api["total"]
     return run_df, run_total
 
@@ -41,7 +42,8 @@ def get_run_emissions(run_id, size=10000) -> pd.DataFrame:
 def get_project_experiments(project_id):
     dict = load_project_experiments(project_id)
     df = pd.DataFrame.from_dict(dict)
-    df = df.sort_values(by="timestamp")
+    if not(df.empty):
+        df = df.sort_values(by="timestamp")
     return df
 
 
@@ -52,7 +54,8 @@ def get_project_experiments(project_id):
 def get_experiment_runs(experiment_id):
     dict = load_experiment_runs(experiment_id)
     df = pd.DataFrame.from_dict(dict)
-    df = df.sort_values(by="timestamp")
+    if not(df.empty):
+        df = df.sort_values(by="timestamp")
     return df
 
 
