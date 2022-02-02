@@ -1,4 +1,5 @@
 import click
+import time
 
 from codecarbon.cli.cli_utils import (
     get_api_endpoint,
@@ -7,6 +8,7 @@ from codecarbon.cli.cli_utils import (
 )
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate
+from codecarbon import EmissionsTracker
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
@@ -53,3 +55,15 @@ def init():
             + click.style("./.codecarbon.config", fg="bright_blue")
             + "\n"
         )
+
+@codecarbon.command()
+def monitor():
+    init()
+    click.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
+    with EmissionsTracker(
+        measure_power_secs=10,
+        api_call_interval=30,
+        save_to_api=True) as tracker:
+        # Infinite loop
+        while True:
+            time.sleep(300)
