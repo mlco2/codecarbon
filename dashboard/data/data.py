@@ -3,18 +3,21 @@ from math import ceil
 import pandas as pd
 from data.data_loader import (
     load_experiment_runs,
+    load_experiment_sums,
     load_project_experiments,
     load_run_emissions,
 )
 
 # from data_loader import load_run_emissions
 # from data_loader import load_project_experiments
+# from data_loader import load_experiment_runs
+# from data_loader import load_experiment_sums
 
 
 def get_run_data(run_id, page_api, size_api) -> pd.DataFrame:
     run_from_api = load_run_emissions(run_id, page=page_api, size=size_api)
     run_df = pd.DataFrame(run_from_api["items"])
-    if not(run_df.empty):
+    if not (run_df.empty):
         run_df = run_df.sort_values(by="timestamp")
     run_total = run_from_api["total"]
     return run_df, run_total
@@ -42,7 +45,7 @@ def get_run_emissions(run_id, size=10000) -> pd.DataFrame:
 def get_project_experiments(project_id):
     dict = load_project_experiments(project_id)
     df = pd.DataFrame.from_dict(dict)
-    if not(df.empty):
+    if not (df.empty):
         df = df.sort_values(by="timestamp")
     return df
 
@@ -54,10 +57,22 @@ def get_project_experiments(project_id):
 def get_experiment_runs(experiment_id):
     dict = load_experiment_runs(experiment_id)
     df = pd.DataFrame.from_dict(dict)
-    if not(df.empty):
+    if not (df.empty):
         df = df.sort_values(by="timestamp")
     return df
 
 
 # experiment_id = '0bfa2432-efda-4656-bdb4-f72d15866b0b'
 # print(get_experiment_runs(experiment_id)['id'][0])
+
+
+def get_experiment_sums(project_id):
+    dict = load_experiment_sums(project_id)
+    df = pd.DataFrame.from_dict(dict)
+    if not (df.empty):
+        df = df.sort_values(by="timestamp")
+    return df
+
+
+# project_name = 'e60afa92-17b7-4720-91a0-1ae91e409ba1'
+# print(get_experiment_sums(project_name))

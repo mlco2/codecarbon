@@ -9,7 +9,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import dcc, html
 from dash.dependencies import Input, Output
-from data.data import get_experiment_runs, get_project_experiments, get_run_emissions
+from data.data import (
+    get_experiment_runs,
+    get_experiment_sums,
+    get_project_experiments,
+    get_run_emissions,
+)
 from plotly.subplots import make_subplots
 
 # Common variables
@@ -513,21 +518,27 @@ def update_Charts(start_date, end_date, project):
     )
     # barChart
     # --------------------------------------------------------------------
-    dfBar = (
-        dff[dff["project_id"] == project]
-        .groupby("experiment_name")
-        .agg(
-            {
-                "timestamp": min,
-                "duration": sum,
-                "emissions_sum": sum,
-                "energy_consumed": sum,
-                "experiment_description": lambda x: x.iloc[0],
-            }
-        )
-        .reset_index()
-    )
-    figBar = px.bar(dfBar, x="experiment_name", y="emissions_sum", text="emissions_sum")
+    #    dfBar = (
+    #        dff[dff["project_id"] == project]
+    #        .groupby("experiment_name")
+    #        .agg(
+    #            {
+    #                "timestamp": min,
+    #                "duration": sum,
+    #                "emissions_sum": sum,
+    #                "energy_consumed": sum,
+    #                "experiment_description": lambda x: x.iloc[0],
+    #            }
+    #        )
+    #        .reset_index()
+    #    )
+    #    figBar = px.bar(dfBar, x="experiment_name", y="emissions_sum", text="emissions_sum")
+    # ADJUST WITH TIMESTAMP FILTER (start_date / end_date)
+    dfBar = get_experiment_sums(project)
+    if dfBar.empty:
+        dfBar["name"] = ""
+        dfBar["emissions"] = 0
+    figBar = px.bar(dfBar, x="name", y="emissions", text="emissions")
     figBar.update_layout(
         title_text="Experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart below </span>",
         template="CodeCarbonTemplate",
@@ -642,9 +653,9 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     #   API integration to get emissions at "run level"
     df_run, total_run = get_run_emissions(run_name)
 
-    if(df_run.empty):
-        df_run["timestamp"]=0
-        df_run["emissions_sum"]=0
+    if df_run.empty:
+        df_run["timestamp"] = 0
+        df_run["emissions_sum"] = 0
 
     line = px.line(
         df_run,
