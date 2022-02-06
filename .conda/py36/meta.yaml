@@ -12,6 +12,9 @@ build:
   number: 0
   string: py36
   script: python -m pip install --no-deps --ignore-installed .
+  entry_points:
+    - carbonboard = codecarbon.viz.carbonboard:main
+    - codecarbon = codecarbon.cli.main:codecarbon
 
 requirements:
   host:
@@ -20,6 +23,7 @@ requirements:
   run:
     - python=3.6.*
     - arrow
+    - click
     - dash
     - dash-bootstrap-components
     - dataclasses
