@@ -3,9 +3,9 @@ name: package
 on: [push, pull_request]
 
 jobs:
-    build:
+    build-package:
         runs-on: ubuntu-latest
-
+        if: github.ref == 'refs/heads/master' # Only triggered for the `master` branch
         steps:
             - uses: actions/checkout@v2
             - name: Set up Python 3.8
