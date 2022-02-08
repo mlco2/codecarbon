@@ -59,16 +59,10 @@ class EmissionsData:
     def values(self) -> OrderedDict:
         return OrderedDict(self.__dict__.items())
 
-    def substract_in_place(self, previous_emission):
-        self.duration = self.duration - previous_emission.duration
-        self.emissions = self.emissions - previous_emission.emissions
-        self.energy_consumed = self.energy_consumed - previous_emission.energy_consumed
-        self.emissions_rate = (self.emissions * 1000 / self.duration,)
-
     def compute_emissions_rate(self, previous_emission):
         delta_duration = self.duration - previous_emission.duration
         delta_emissions = self.emissions - previous_emission.emissions
-        # delta_emissions in Kg.CO2/s * 1000 / duration in seconds = g.CO2/s
+        # delta_emissions in kg.CO2 => * 1000 to convert in g
         if delta_duration > 0:
             self.emissions_rate = delta_emissions * 1000 / delta_duration
         else:
