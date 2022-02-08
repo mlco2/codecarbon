@@ -1,5 +1,8 @@
+import time
+
 import click
 
+from codecarbon import EmissionsTracker
 from codecarbon.cli.cli_utils import (
     get_api_endpoint,
     get_existing_local_exp_id,
@@ -16,7 +19,7 @@ def codecarbon():
     pass
 
 
-@codecarbon.command()
+@codecarbon.command("init", short_help="Create an experiment id in a public project.")
 def init():
     experiment_id = get_existing_local_exp_id()
     new_local = False
@@ -53,3 +56,33 @@ def init():
             + click.style("./.codecarbon.config", fg="bright_blue")
             + "\n"
         )
+
+
+@codecarbon.command(
+    "monitor", short_help="Run an infinite loop to monitor this machine."
+)
+@click.option(
+    "--measure_power_secs", default=10, help="Interval between two measures. (10)"
+)
+@click.option(
+    "--api_call_interval",
+    default=30,
+    help="Number of measures before calling API. (30).",
+)
+@click.option(
+    "--api/--no-api", default=True, help="Choose to call Code Carbon API or not. (yes)"
+)
+def monitor(measure_power_secs, api_call_interval, api):
+    experiment_id = get_existing_local_exp_id()
+    if api and experiment_id is None:
+        click.echo("ERROR: No experiment id, call 'codecarbon init' first.")
+        exit(1)
+    click.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
+    with EmissionsTracker(
+        measure_power_secs=measure_power_secs,
+        api_call_interval=api_call_interval,
+        save_to_api=api,
+    ):
+        # Infinite loop
+        while True:
+            time.sleep(300)

@@ -13,12 +13,26 @@ Estimate and track carbon emissions from your compute, quantify and analyze thei
 
 - [About CodeCarbon 💡](#about-codecarbon-)
 - [Installation :battery:](#installation-battery)
+      - [Install from PyPI repository](#install-from-pypi-repository)
+      - [Install from Conda repository](#install-from-conda-repository)
 - [Quickstart 🚀](#quickstart-)
+    - [Online mode](#online-mode)
+      - [Code Carbon API (ALPHA)](#code-carbon-api-alpha)
+    - [Offline mode](#offline-mode)
+    - [Flush data when running](#flush-data-when-running)
+    - [Using comet.ml](#using-cometml)
+    - [Configuration](#configuration)
 - [Examples 🐤](#examples-)
 - [Built-in Visualization Tool :heart_eyes:](#built-in-visualization-tool-heart_eyes)
 - [Comet Integration 🥂](#comet-integration-)
 - [Report your emissions: LateX template 📻](#report-your-emissions-latex-template-)
+    - [Citing CodeCarbon](#citing-codecarbon)
 - [Infrastructure Support 🖥️](#infrastructure-support-️)
+    - [GPU](#gpu)
+    - [CPU](#cpu)
+      - [On Windows and Mac](#on-windows-and-mac)
+      - [On Linux](#on-linux)
+      - [On all platforms](#on-all-platforms)
 - [Data Sources 🗒️](#data-sources-️)
 - [Contributing 🤝](#contributing-)
 - [Build Documentation 🖨️](#build-documentation-️)
@@ -111,7 +125,12 @@ codecarbon init
 
 It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.
 
-Then, you could tell Code Carbon to use the API in your code:
+Then, you could tell Code Carbon to monitor your machine:
+```
+codecarbon monitor
+```
+
+Or use the API in your code:
 
 ```python
 from codecarbon import track_emissions
