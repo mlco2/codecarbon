@@ -61,13 +61,21 @@ def init():
 @codecarbon.command(
     "monitor", short_help="Run an infinite loop to monitor this machine."
 )
-@click.option("--measure_power_secs", default=10)
-@click.option("--api_call_interval", default=30)
-@click.option("--api/--no-api", default=True)
+@click.option(
+    "--measure_power_secs", default=10, help="Interval between two measures. (10)"
+)
+@click.option(
+    "--api_call_interval",
+    default=30,
+    help="Number of measures before calling API. (30).",
+)
+@click.option(
+    "--api/--no-api", default=True, help="Choose to call Code Carbon API or not. (yes)"
+)
 def monitor(measure_power_secs, api_call_interval, api):
     experiment_id = get_existing_local_exp_id()
     if api and experiment_id is None:
-        click.echo("ERROR: No experiment id, call with init option first.")
+        click.echo("ERROR: No experiment id, call 'codecarbon init' first.")
         exit(1)
     click.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
