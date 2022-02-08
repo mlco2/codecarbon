@@ -103,6 +103,3 @@ jobs:
         env:
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
-
-
-
