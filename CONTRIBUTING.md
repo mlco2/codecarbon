@@ -114,18 +114,6 @@ If you have the package installed, you can run the CLI command:
 carbonboard --filepath="examples/emissions.csv" --port=xxxx
 ```
 
-
-To test the API (under development), switch to the api branch :
-```bash
-git checkout api
-cd api
-python -m pip install -r requirements.txt
-python -m uvicorn main:app --reload
-```
-
-The API documentation is locally available at the following URL : http://localhost:8000/redoc and can be used for testing.
-
-
 ### Coding style && Linting
 
 The coding style and linting rules are automatically applied and enforce by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
@@ -192,8 +180,10 @@ To run the API locally, the easiest way is Docker. Launch this command in the pr
 docker-compose up -d
 ```
 Please see [Docker specific documentation](./docker/README.md) for more informations.
+When up, the API documentation is locally available at the following URL : http://localhost:8008/redoc and can be used for testing.
 
-Create a file `.codecarbon.config` with the content:
+
+In order to connect make codecarbon automatically connect to the local API, create a file `.codecarbon.config` with the content:
 ```
 [codecarbon]
 api_endpoint = http://localhost:8008
