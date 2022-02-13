@@ -114,6 +114,12 @@ If you have the package installed, you can run the CLI command:
 carbonboard --filepath="examples/emissions.csv" --port=xxxx
 ```
 
+To test the current version of the dashboard, switch to the dashboard branch and run
+
+```bash
+python carbon_board_API.py
+```
+
 ### Coding style && Linting
 
 The coding style and linting rules are automatically applied and enforce by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
