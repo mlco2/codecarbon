@@ -387,6 +387,8 @@ def update_indicator(start_date, end_date):
 def update_Charts(start_date, end_date, project):
     dff = df.copy()
     dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
     energyConsumed = dff[dff["project_id"] == project].energy_consumed.sum()
     emission = dff[dff["project_id"] == project].emissions_sum.sum()
     duration = dff[dff["project_id"] == project].duration.sum()
@@ -534,7 +536,7 @@ def update_Charts(start_date, end_date, project):
     #    )
     #    figBar = px.bar(dfBar, x="experiment_name", y="emissions_sum", text="emissions_sum")
     # ADJUST WITH TIMESTAMP FILTER (start_date / end_date)
-    dfBar = get_experiment_sums(project)
+    dfBar = get_experiment_sums(project, start_date, end_date)
     if dfBar.empty:
         dfBar["name"] = ""
         dfBar["emissions"] = 0

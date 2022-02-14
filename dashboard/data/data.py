@@ -66,8 +66,8 @@ def get_experiment_runs(experiment_id):
 # print(get_experiment_runs(experiment_id)['id'][0])
 
 
-def get_experiment_sums(project_id):
-    dict = load_experiment_sums(project_id)
+def get_experiment_sums(project_id, date_from, date_to):
+    dict = load_experiment_sums(project_id, start_date=date_from, end_date=date_to)
     df = pd.DataFrame.from_dict(dict)
     if not (df.empty):
         df = df.sort_values(by="timestamp")
