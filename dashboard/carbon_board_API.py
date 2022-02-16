@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from components import Components
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from data.data import (
@@ -37,7 +38,7 @@ app = dash.Dash(
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
     ],
 )
-colors = {"background": darkgreen, "text": "white"}
+
 # data
 # *******************************************************************************
 df = pd.read_csv(
@@ -55,70 +56,56 @@ card_household = dbc.Card(
     [
         dbc.CardImg(
             src="/assets/house_icon.png",
-            top=True,
-            bottom=False,
             className="align-self-center",
-            style={"textAlign": "center", "width": "50%"},
         ),
         dbc.CardBody(
             [
-                html.H4(id="houseHold", style={"textAlign": "center"}),
+                html.H4(id="houseHold", ),
                 html.P(
                     "of an american household weekly energy consumption",
-                    style={"textAlign": "center", "fontSize": 10},
+                   
                     className="card-title",
                 ),
             ]
         ),
     ],
-    color=darkgreen,
-    outline=False,
+    
 )
 card_car = dbc.Card(
     [
         dbc.CardImg(
             src="/assets/car_icon.png",
-            top=True,
-            bottom=False,
             className="align-self-center",
-            style={"textAlign": "center", "width": "50%"},
         ),
         dbc.CardBody(
             [
-                html.H4(id="car", style={"textAlign": "center"}),
+                html.H4(id="car", ),
                 html.P(
                     "miles driven",
-                    style={"textAlign": "center", "fontSize": 10},
                     className="card-title",
                 ),
             ]
         ),
     ],
-    color=darkgreen,
-    outline=False,
+    
 )
 card_tv = dbc.Card(
     [
         dbc.CardImg(
             src="/assets/tv_icon.png",
-            top=True,
-            bottom=False,
             className="align-self-center",
-            style={"textAlign": "center", "width": "50%"},
         ),
         dbc.CardBody(
             [
-                html.H4(id="tv", style={"textAlign": "center"}),
+                html.H4(id="tv", ),
                 html.P(
                     "of TV",
-                    style={"textAlign": "center", "fontSize": 10},
                     className="card-title",
                 ),
             ]
         ),
     ],
-    color=darkgreen,
-    outline=False,
+    
 )
 # Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
 # *******************************************************************************
@@ -147,13 +134,13 @@ app.layout = dbc.Container(
                     xs=12,
                     sm=12,
                     md=12,
-                    lg=4,
-                    xl=4,
+                    lg=5,
+                    xl=5,
                 ),  # if small screen the col would take the full width
                 # holding indicators cards
                 dbc.Col(
                     [
-                        html.H5("Global", style={"color": titleColor}),
+                        html.H5("Global", ),
                         dbc.CardGroup(
                             [
                                 dbc.Card(
@@ -162,19 +149,18 @@ app.layout = dbc.Container(
                                             [
                                                 html.P(
                                                     "Energy consumed",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                                 html.H3(
                                                     id="Tot_Energy_Consumed",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                                 html.P(
-                                                    "kWh", style={"textAlign": "center"}
+                                                    "kWh", className="text-center"
                                                 ),
                                             ]
                                         )
                                     ],
-                                    color=darkgreen,
                                 ),
                                 dbc.Card(
                                     [
@@ -182,20 +168,20 @@ app.layout = dbc.Container(
                                             [
                                                 html.P(
                                                     "Emissions produced",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                                 html.H4(
                                                     id="Tot_Emissions",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                                 html.P(
                                                     "Kg. Eq. CO2",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                             ]
                                         )
                                     ],
-                                    color=darkgreen,
+                                   
                                 ),
                                 dbc.Card(
                                     [
@@ -203,20 +189,20 @@ app.layout = dbc.Container(
                                             [
                                                 html.P(
                                                     "Cumulative duration",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                                 html.H4(
                                                     id="Tot_Duration",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                                 html.P(
                                                     id="Tot_Duration_unit",
-                                                    style={"textAlign": "center"},
+                                                    className="text-center",
                                                 ),
                                             ]
                                         )
                                     ],
-                                    color=darkgreen,
+                                    
                                 ),
                             ]
                         ),
@@ -227,8 +213,8 @@ app.layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 [
-                    html.H5("Project :", style={"color": titleColor}),
-                    dcc.RadioItems(
+                    html.H5("Project :", ),
+                    dbc.RadioItems(
                         id="projectPicked",
                         options=[
                             {"label": projectName, "value": projectId}
@@ -243,9 +229,9 @@ app.layout = dbc.Container(
                             #                            for projectName, projectId in df[['project_name','project_id']].drop_duplicates().iteritems()
                         ],
                         value=df.project_id.unique().tolist()[0],
-                        labelStyle={"display": "inline"},
-                        style={"padding-top": 10},
-                        inputStyle={"margin-right": "10px", "margin-left": "10px"},
+                        inline=True,
+                        labelCheckedClassName="text-primary",
+                        inputCheckedClassName="border border-primary bg-primary",
                     ),
                 ],
                 width={"size": 6, "offset": 4},

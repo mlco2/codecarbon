@@ -1,3 +1,173 @@
+
+:root {
+--primary: #c9fb37;
+--secondary: #226a7a;
+--info: #01525F;
+}
+
+
 body {
   color: rgb(250, 250,250);
   background-color: rgb(2, 71, 88);}
+a {
+  color: #c9fb37;
+  text-decoration: none;
+  background-color: transparent; }
+a:hover {
+  color: #a9e105;
+  text-decoration: underline; }
+a:not([href]) {
+  color: inherit;
+  text-decoration: none; }
+a:not([href]):hover {
+  color: inherit;
+  text-decoration: none; }
+caption {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  color: #6c757d;
+  text-align: left;
+  caption-side: bottom; }
+h1, h2, h3, h4, h5, h6,.h1, .h2, .h3, .h4, .h5, .h6 {
+  color: #d8d8d8; }
+h4{
+  text-align: center;
+}
+.blockquote-footer {
+  display: block;
+  font-size: 80%;
+  color: #6c757d; }
+.img-thumbnail {
+  padding: 0.25rem;
+  background-color: #024758;
+  border: 1px solid #dee2e6;}
+.figure-caption {
+  font-size: 90%;
+  color: #6c757d; }
+.btn-primary {
+  color: #212529;
+  background-color: #c9fb37;
+  border-color: #c9fb37; }
+  .btn-primary:hover {
+    color: #212529;
+    background-color: #bffa12;
+    border-color: #bcfa05; }
+  .btn-primary:focus, .btn-primary.focus {
+    color: #212529;
+    background-color: #bffa12;
+    border-color: #bcfa05;
+    box-shadow: 0 0 0 0.2rem rgba(176, 219, 53, 0.5); }
+  .btn-primary.disabled, .btn-primary:disabled {
+    color: #212529;
+    background-color: #c9fb37;
+    border-color: #c9fb37; }
+  .btn-primary:not(:disabled):not(.disabled):active, .btn-primary:not(:disabled):not(.disabled).active,
+  .show > .btn-primary.dropdown-toggle {
+    color: #212529;
+    background-color: #bcfa05;
+    border-color: #b2ee05; }
+    .btn-primary:not(:disabled):not(.disabled):active:focus, .btn-primary:not(:disabled):not(.disabled).active:focus,
+    .show > .btn-primary.dropdown-toggle:focus {
+    box-shadow: 0 0 0 0.2rem rgba(176, 219, 53, 0.5); }
+
+.dropdown-item:hover, .dropdown-item:focus {
+  color: #16181b;
+  text-decoration: none;
+  background-color: #f8f9fa; }
+.dropdown-item.active, .dropdown-item:active {
+  color: #226a7a;
+  text-decoration: none;
+  background-color: #c9fb37; }
+.dropdown-item.disabled, .dropdown-item:disabled {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: transparent; }
+.custom-control-input {
+  position: absolute;
+  left: 0;
+  z-index: -1;
+  width: 1rem;
+  height: 1.25rem;
+  opacity: 0; }
+.custom-control-input:checked ~ .custom-control-label::before {
+  color: #226a7a;
+  border-color: #c9fb37;
+  background-color: #c9fb37; }
+.custom-checkbox .custom-control-input:indeterminate ~ .custom-control-label::before {
+    border-color: #c9fb37;
+    background-color: #c9fb37; }
+.valid-feedback {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 80%;
+  color: #b9dd1d; }
+.btn-link {
+  font-weight: 400;
+  color: #c9fb37;
+  text-decoration: none; }
+.btn-link:hover {
+  color: #a9e105;
+  text-decoration: underline; }
+.btn-link:focus, .btn-link.focus {
+      text-decoration: underline; }
+.btn-link:disabled, .btn-link.disabled {
+        color: #6c757d;
+        pointer-events: none; }
+
+.custom-range::-webkit-slider-thumb {
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.25rem;
+  background-color: #c9fb37;}
+.page-link {
+  color: #c9fb37;
+}
+  .page-link:hover{
+    color: #a9e105;
+  }
+.page-item.active .page-link {
+  z-index: 3;
+  color: #226a7a;
+  background-color: #c9fb37;
+  border-color: #c9fb37; }
+
+.list-group-item.active {
+  z-index: 2;
+  color: #226a7a;
+  background-color: #c9fb37;
+  border-color: #c9fb37; }
+.bg-primary {
+  background-color: #c9fb37 !important; }
+  
+a.bg-primary:hover, a.bg-primary:focus,
+button.bg-primary:hover,
+button.bg-primary:focus {
+  background-color: #bcfa05 !important; }
+  
+.bg-secondary {
+  background-color: #226a7a !important; }
+  
+a.bg-secondary:hover, a.bg-secondary:focus,
+button.bg-secondary:hover,
+button.bg-secondary:focus {
+    background-color: #174752 !important; }
+
+.text-primary {
+    color: #c9fb37 !important; }
+    
+a.text-primary:hover, a.text-primary:focus {
+  color: #a9e105 !important; }
+
+.card{
+background-color: #024758;
+border: none;
+}
+.card-img {
+text-align: center;
+width: 50%; 
+}
+.card-title {
+  text-align: center;
+  font-size: x-small;
+}
