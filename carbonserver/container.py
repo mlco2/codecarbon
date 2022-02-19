@@ -21,6 +21,7 @@ from carbonserver.api.services.user_service import UserService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
 )
+from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
 from carbonserver.config import settings
 
 
@@ -75,6 +76,11 @@ class ServerContainer(containers.DeclarativeContainer):
     project_sums_by_experiment_usecase = providers.Factory(
         ProjectSumsByExperimentUsecase,
         experiment_repository=experiment_repository,
+    )
+
+    project_sums_usecase = providers.Factory(
+        ProjectSumsUsecase,
+        project_repository = project_repository
     )
 
     project_service = providers.Factory(

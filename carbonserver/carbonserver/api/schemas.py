@@ -232,6 +232,21 @@ class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[Experiment]] = []
 
+class ProjectReport(ExperimentBase):
+    project_id: UUID
+    name: str
+    description: str
+    emission: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate_sum: float
+    emissions_rate_count: int
 
 class TeamBase(BaseModel):
     name: str
