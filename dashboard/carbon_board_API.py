@@ -121,8 +121,8 @@ app.layout = dbc.Container(
                         dcc.DatePickerRange(
                             id="periode",
                             day_size=39,
-                            month_format="MMMM Y",
-                            end_date_placeholder_text="MMMM Y",
+                            display_format="DD MM Y",
+                            end_date_placeholder_text="DD MMMM Y",
                             # should be calculated from today() like minus 1 week
                             start_date=date(2020, 1, 1),
                             min_date_allowed=date(2000, 1, 1),
