@@ -55,7 +55,7 @@ Create a virtual environment using `conda` for easier management of dependencies
 For installing conda, follow the instructions on the [official conda website](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
 
 ```
-conda create --name codecarbon python=3.6
+conda create --name codecarbon
 conda activate codecarbon
 ```
 
