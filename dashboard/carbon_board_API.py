@@ -39,6 +39,7 @@ app = dash.Dash(
     ],
 )
 
+components = Components()
 # data
 # *******************************************************************************
 df = pd.read_csv(
@@ -50,164 +51,15 @@ df_mix = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
 )
 
-# cards
-# ******************************************************************************
-card_household = dbc.Card(
-    [
-        dbc.CardImg(
-            src="/assets/house_icon.png",
-            className="align-self-center",
-        ),
-        dbc.CardBody(
-            [
-                html.H4(id="houseHold", ),
-                html.P(
-                    "of an american household weekly energy consumption",
-                   
-                    className="card-title",
-                ),
-            ]
-        ),
-    ],
-    
-)
-card_car = dbc.Card(
-    [
-        dbc.CardImg(
-            src="/assets/car_icon.png",
-            className="align-self-center",
-        ),
-        dbc.CardBody(
-            [
-                html.H4(id="car", ),
-                html.P(
-                    "miles driven",
-                    className="card-title",
-                ),
-            ]
-        ),
-    ],
-    
-)
-card_tv = dbc.Card(
-    [
-        dbc.CardImg(
-            src="/assets/tv_icon.png",
-            className="align-self-center",
-        ),
-        dbc.CardBody(
-            [
-                html.H4(id="tv", ),
-                html.P(
-                    "of TV",
-                    className="card-title",
-                ),
-            ]
-        ),
-    ],
-    
-)
+
 # Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
 # *******************************************************************************
 app.layout = dbc.Container(
     [
         dbc.Row(
             [
-                # holding logo, subtitle, date selector
-                dbc.Col(
-                    [
-                        html.Img(src="/assets/logo.png"),
-                        html.P("Track and reduce CO2 emissions from your computing"),
-                        dcc.DatePickerRange(
-                            id="periode",
-                            day_size=39,
-                            display_format="DD MM Y",
-                            end_date_placeholder_text="DD MMMM Y",
-                            # should be calculated from today() like minus 1 week
-                            start_date=date(2020, 1, 1),
-                            min_date_allowed=date(2000, 1, 1),
-                            max_date_allowed=date.today(),
-                            initial_visible_month=date.today(),
-                            end_date=date.today(),
-                        ),
-                    ],
-                    xs=12,
-                    sm=12,
-                    md=12,
-                    lg=5,
-                    xl=5,
-                ),  # if small screen the col would take the full width
-                # holding indicators cards
-                dbc.Col(
-                    [
-                        html.H5("Global", ),
-                        dbc.CardGroup(
-                            [
-                                dbc.Card(
-                                    [
-                                        dbc.CardBody(
-                                            [
-                                                html.P(
-                                                    "Energy consumed",
-                                                    className="text-center",
-                                                ),
-                                                html.H3(
-                                                    id="Tot_Energy_Consumed",
-                                                    className="text-center",
-                                                ),
-                                                html.P(
-                                                    "kWh", className="text-center"
-                                                ),
-                                            ]
-                                        )
-                                    ],
-                                ),
-                                dbc.Card(
-                                    [
-                                        dbc.CardBody(
-                                            [
-                                                html.P(
-                                                    "Emissions produced",
-                                                    className="text-center",
-                                                ),
-                                                html.H4(
-                                                    id="Tot_Emissions",
-                                                    className="text-center",
-                                                ),
-                                                html.P(
-                                                    "Kg. Eq. CO2",
-                                                    className="text-center",
-                                                ),
-                                            ]
-                                        )
-                                    ],
-                                   
-                                ),
-                                dbc.Card(
-                                    [
-                                        dbc.CardBody(
-                                            [
-                                                html.P(
-                                                    "Cumulative duration",
-                                                    className="text-center",
-                                                ),
-                                                html.H4(
-                                                    id="Tot_Duration",
-                                                    className="text-center",
-                                                ),
-                                                html.P(
-                                                    id="Tot_Duration_unit",
-                                                    className="text-center",
-                                                ),
-                                            ]
-                                        )
-                                    ],
-                                    
-                                ),
-                            ]
-                        ),
-                    ]
-                ),
+            components.get_header(),
+            components.get_global_summary()
             ]
         ),
         dbc.Row(
@@ -256,7 +108,7 @@ app.layout = dbc.Container(
                 ),
                 dbc.Col(
                     [
-                        dbc.CardGroup([card_household, card_car, card_tv]),
+                        dbc.CardGroup([components.get_household_equivalent(), components.get_car_equivalent(),components.get_tv_equivalent()]),
                         # dbc.Col(
                         #    dcc.Graph(id="barChart", clickData=None, config=config)
                         # ),
