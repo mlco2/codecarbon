@@ -120,6 +120,20 @@ class RunCreate(RunBase):
 class Run(RunBase):
     id: UUID
 
+class RunReport(RunBase):
+    timestamp: datetime
+    emission: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate_sum: float
+    emissions_rate_count: int
+
 
 class ExperimentBase(BaseModel):
     timestamp: datetime

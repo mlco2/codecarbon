@@ -1,4 +1,7 @@
-from typing import List
+from datetime import datetime
+from typing import List, Optional
+
+import dateutil.relativedelta
 
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
@@ -6,8 +9,11 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Run, RunCreate
+from carbonserver.api.schemas import Run, RunCreate, RunReport
 from carbonserver.api.services.run_service import RunService
+from carbonserver.api.usecases.run.experiment_sum_by_run import (
+    ExperimentSumsByRunUsecase,
+)
 
 RUNS_ROUTER_TAGS = ["Runs"]
 
@@ -69,3 +75,28 @@ def read_runs_from_experiment(
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ):
     return run_service.list_runs_from_experiment(experiment_id)
+
+
+@router.get(
+    "/runs/{experiment_id}/sums/",
+    tags=RUNS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def read_experiment_detailed_sums_by_run(
+    experiment_id: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    experiment_global_sum_by_run_usecase: ExperimentSumsByRunUsecase = Depends(
+        Provide[ServerContainer.experiment_sums_by_run_usecase]
+    ),
+) -> List[RunReport]:
+    start_date = (
+        start_date
+        if start_date
+        else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
+    )
+    end_date = end_date if end_date else datetime.now()
+    return experiment_global_sum_by_run_usecase.compute_detailed_sum(
+        experiment_id, start_date, end_date
+    ) 
