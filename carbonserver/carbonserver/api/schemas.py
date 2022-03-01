@@ -312,6 +312,23 @@ class Organization(OrganizationBase):
     teams: Optional[List[Team]]
 
 
+class OrganizationReport(OrganizationBase):
+    organization_id: UUID
+    name: str
+    description: str
+    emission: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate_sum: float
+    emissions_rate_count: int
+
+
 class UserBase(BaseModel):
     email: str
 

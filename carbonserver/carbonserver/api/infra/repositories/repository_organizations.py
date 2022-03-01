@@ -3,13 +3,17 @@ from typing import List
 from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
+from sqlalchemy import func, and_
 
 from carbonserver.api.domain.organizations import Organizations
 from carbonserver.api.infra.api_key_service import generate_api_key
-from carbonserver.api.infra.database.sql_models import (
-    Organization as SqlModelOrganization,
-)
-from carbonserver.api.schemas import Organization, OrganizationCreate
+from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
+from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
+from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
+from carbonserver.api.infra.database.sql_models import Team as SqlModelTeam
+from carbonserver.api.infra.database.sql_models import Organization as SqlModelOrganization
+from carbonserver.api.schemas import Organization, OrganizationCreate, OrganizationReport
 
 """
 Here there is all the method to manipulate the organization data
@@ -72,6 +76,79 @@ class SqlAlchemyRepository(Organizations):
                 .filter(SqlModelOrganization.api_key == api_key)
                 .first()
             )
+
+    def get_organization_detailed_sums(
+        self, organization_id, start_date, end_date
+    ) -> List[OrganizationReport]:
+        """Find the emissions of an organization in database between two dates and return
+        a report containing their sum
+
+        :project_id: The id of the project to retrieve emissions from
+        :start_date: the lower bound of the time interval which contains sought emissions
+        :end_date: the upper bound of the time interval which contains sought emissions
+        :returns: A report containing the sums of emissions
+        :rtype: schemas.ProjectReport
+        """
+        with self.session_factory() as session:
+            res = (
+                session.query(
+                    SqlModelOrganization.id.label("organization_id"),
+                    SqlModelOrganization.name,
+                    SqlModelOrganization.description,
+                    func.sum(SqlModelEmission.emissions_sum).label("emissions"),
+                    func.sum(SqlModelEmission.cpu_power).label("cpu_power"),
+                    func.sum(SqlModelEmission.gpu_power).label("gpu_power"),
+                    func.sum(SqlModelEmission.ram_power).label("ram_power"),
+                    func.sum(SqlModelEmission.cpu_energy).label("cpu_energy"),
+                    func.sum(SqlModelEmission.gpu_energy).label("gpu_energy"),
+                    func.sum(SqlModelEmission.ram_energy).label("ram_energy"),
+                    func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
+                    func.sum(SqlModelEmission.duration).label("duration"),
+                    func.sum(SqlModelEmission.emissions_rate).label(
+                        "emissions_rate_sum"
+                    ),
+                    func.count(SqlModelEmission.emissions_rate).label(
+                        "emissions_rate_count"
+                    ),
+                )
+                .join(
+                    SqlModelTeam,
+                    SqlModelOrganization.id == SqlModelTeam.organization_id,
+                    isouter = True,
+                )
+                .join(
+                    SqlModelProject,
+                    SqlModelTeam.id == SqlModelProject.team_id,
+                    isouter = True,
+                )
+                .join(
+                    SqlModelExperiment,
+                    SqlModelProject.id == SqlModelExperiment.project_id,
+                    isouter = True,
+                )
+                .join(
+                    SqlModelRun,
+                    SqlModelExperiment.id == SqlModelRun.experiment_id,
+                    isouter=True,
+                )
+                .join(
+                    SqlModelEmission,
+                    SqlModelRun.id == SqlModelEmission.run_id,
+                    isouter=True,
+                )
+                .filter(SqlModelOrganization.id == organization_id)
+                .filter(
+                    and_(SqlModelEmission.timestamp >= start_date),
+                    (SqlModelEmission.timestamp < end_date),
+                )
+                .group_by(
+                    SqlModelOrganization.id,
+                    SqlModelOrganization.name,
+                    SqlModelOrganization.description
+                )
+                .all()
+            )
+            return res
 
     @staticmethod
     def map_sql_to_schema(organization: SqlModelOrganization) -> Organization:

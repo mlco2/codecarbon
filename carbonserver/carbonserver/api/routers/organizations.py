@@ -1,13 +1,18 @@
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 
+import dateutil.relativedelta
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Organization, OrganizationCreate
+from carbonserver.api.schemas import Organization, OrganizationCreate, OrganizationReport
 from carbonserver.api.services.organization_service import OrganizationService
+from carbonserver.api.usecases.organization.organization_sum import (
+    OrganizationSumsUsecase,
+)
 
 ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
 
@@ -61,3 +66,28 @@ def list_organizations(
     ),
 ) -> List[Organization]:
     return organization_service.list_organizations()
+
+
+@router.get(
+    "/project/{organization_id}/sums/",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def read_organization_detailed_sums(
+    organization_id: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    organization_global_sum_usecase: OrganizationSumsUsecase = Depends(
+        Provide[ServerContainer.organization_sums_usecase]
+    ),
+) -> List[OrganizationReport]:
+    start_date = (
+        start_date
+        if start_date
+        else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
+    )
+    end_date = end_date if end_date else datetime.now()
+    return organization_global_sum_usecase.compute_detailed_sum(
+        organization_id, start_date, end_date
+    )

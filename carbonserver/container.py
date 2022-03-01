@@ -24,6 +24,9 @@ from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
     ExperimentSumsByRunUsecase,
 )
+from carbonserver.api.usecases.organization.organization_sum import (
+    OrganizationSumsUsecase,
+)
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
 from carbonserver.config import settings
 
@@ -108,6 +111,11 @@ class ServerContainer(containers.DeclarativeContainer):
 
     organization_service = providers.Factory(
         OrganizationService,
+        organization_repository=organization_repository,
+    )
+    
+    organization_sums_usecase = providers.Factory(
+        OrganizationSumsUsecase,
         organization_repository=organization_repository,
     )
 
