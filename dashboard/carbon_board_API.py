@@ -100,7 +100,9 @@ app.layout = dbc.Container(
                 dbc.Col(
                     [
                         dbc.CardGroup([components.get_household_equivalent(), components.get_car_equivalent(),components.get_tv_equivalent()]),
-                        
+                        # dbc.Col(
+                        #    dcc.Graph(id="barChart", clickData=None, config=config)
+                        # ),
                     ]
                 ),
             ], 
