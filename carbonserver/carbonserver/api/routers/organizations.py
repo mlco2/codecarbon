@@ -69,7 +69,7 @@ def list_organizations(
 
 
 @router.get(
-    "/project/{organization_id}/sums/",
+    "/organization/{organization_id}/sums/",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
@@ -81,7 +81,7 @@ def read_organization_detailed_sums(
     organization_global_sum_usecase: OrganizationSumsUsecase = Depends(
         Provide[ServerContainer.organization_sums_usecase]
     ),
-) -> List[OrganizationReport]:
+) -> OrganizationReport:
     start_date = (
         start_date
         if start_date

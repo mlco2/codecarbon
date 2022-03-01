@@ -79,7 +79,7 @@ class SqlAlchemyRepository(Organizations):
 
     def get_organization_detailed_sums(
         self, organization_id, start_date, end_date
-    ) -> List[OrganizationReport]:
+    ) -> OrganizationReport:
         """Find the emissions of an organization in database between two dates and return
         a report containing their sum
 
@@ -146,7 +146,7 @@ class SqlAlchemyRepository(Organizations):
                     SqlModelOrganization.name,
                     SqlModelOrganization.description
                 )
-                .all()
+                .first()
             )
             return res
 

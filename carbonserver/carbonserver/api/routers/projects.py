@@ -72,7 +72,7 @@ def read_project_detailed_sums(
     project_global_sum_usecase: ProjectSumsUsecase = Depends(
         Provide[ServerContainer.project_sums_usecase]
     ),
-) -> List[ProjectReport]:
+) -> ProjectReport:
     start_date = (
         start_date
         if start_date
