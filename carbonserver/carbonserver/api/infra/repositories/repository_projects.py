@@ -59,7 +59,7 @@ class SqlAlchemyRepository(Projects):
 
     def get_project_detailed_sums(
         self, project_id, start_date, end_date
-    ) -> ProjectReport:
+    ) -> List[ProjectReport]:
         """Find the experiments of a project in database between two dates and return
         a report containing the sum of their emissions
 
