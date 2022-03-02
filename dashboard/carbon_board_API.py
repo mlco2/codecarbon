@@ -62,6 +62,7 @@ app.layout = dbc.Container(
             components.get_global_summary()
             ]
         ),
+        html.Div([  #hold project level information
         dbc.Row(
             dbc.Col(
                 [
@@ -82,8 +83,8 @@ app.layout = dbc.Container(
                         ],
                         value=df.project_id.unique().tolist()[0],
                         inline=True,
-                        labelCheckedClassName="text-primary",
-                        inputCheckedClassName="border border-primary bg-primary",
+                        label_checked_class_name="text-primary",
+                        input_checked_class_name="border border-primary bg-primary",
                     ),
                 ],
                 width={"size": 6, "offset": 4},
@@ -94,41 +95,20 @@ app.layout = dbc.Container(
                 # holding pieCharts
                 dbc.Col(
                     dcc.Graph(id="pieCharts", config=config)
-                    # dbc.CardGroup([
-                    #     dbc.Card(
-                    #         dcc.Graph(id='pieChartEnergy', config=config), color=darkgreen
-                    #             ),
-                    #     dbc.Card(
-                    #         dcc.Graph(id='pieChartEmissions', config=config), color=darkgreen
-                    #             ),
-                    #     dbc.Card(
-                    #         dcc.Graph(id='pieChartDuration', config=config) , color=darkgreen
-                    #             )
-                    #             ])
+                    
                 ),
                 dbc.Col(
                     [
                         dbc.CardGroup([components.get_household_equivalent(), components.get_car_equivalent(),components.get_tv_equivalent()]),
-                        # dbc.Col(
-                        #    dcc.Graph(id="barChart", clickData=None, config=config)
-                        # ),
+                        
                     ]
                 ),
-            ]
-        ),
-        # holding barChart
-        dbc.Row([dbc.Col(dcc.Graph(id="barChart", clickData=None, config=config))]),
-        # dbc.Row([
-        #     # holding cards
-        #                 dbc.Col(card_household, width={"size": 2, "offset": 0}),
-        #                 dbc.Col(card_car, width=2),
-        #                 dbc.Col(card_tv, width=2),
-        #      #holding bar graph
-        #                 dbc.Col(dcc.Graph(id='barChart',clickData=None,config=config),width={"size":6,"offset":0})
-        # ]),
-        dbc.Row(
-            [
-                # holding bubble chart
+            ], 
+            )
+        ], className="shadow"),
+
+        html.Div( # holding experiment related graph
+        dbc.Row([dbc.Col(dcc.Graph(id="barChart", clickData=None, config=config)), # holding barChart
                 dbc.Col(
                     dcc.Graph(
                         id="bubbleChart",
@@ -136,11 +116,27 @@ app.layout = dbc.Container(
                         hoverData=None,
                         figure={},
                         config=config,
-                    ),
-                    width=6,
-                ),
+                    ))
+                    
+            ]), className="shadow"),
+        
+        dbc.Row(
+            [
+                # holding bubble chart
+                # dbc.Col(
+                #     dcc.Graph(
+                #         id="bubbleChart",
+                #         clickData=None,
+                #         hoverData=None,
+                #         figure={},
+                #         config=config,
+                #     ),
+                #     width=6,
+                # ),
                 # holding line chart
-                dbc.Col(dcc.Graph(id="lineChart", config=config), width=6),
+                #dbc.Col(
+                    dcc.Graph(id="lineChart", config=config)
+                    #, width=6),
             ]
         ),
         # holding carbon emission map
@@ -380,7 +376,7 @@ def update_Charts(start_date, end_date, project):
         dfBar["emissions"] = 0
     figBar = px.bar(dfBar, x="name", y="emissions", text="emissions")
     figBar.update_layout(
-        title_text="Experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart below </span>",
+        title_text="Experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart on the right side</span>",
         template="CodeCarbonTemplate",
         width=500,
         height=300,
@@ -449,6 +445,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     bubble.update_layout(
         title_text=experiment_name
         + "<br><span style='font-size:0.6em'>click a run to see timeseries</span>",
+        height=300,
         template="CodeCarbonTemplate",
     )
     bubble.update_xaxes(
