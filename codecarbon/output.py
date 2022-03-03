@@ -181,3 +181,18 @@ class CodeCarbonAPIOutput(BaseOutput):
             self.api.add_emission(dataclasses.asdict(data))
         except Exception as e:
             logger.error(e, exc_info=True)
+
+class CloudLoggingOutput(BaseOutput):
+    """
+    Send emissions data to Cloud Logging GCP
+    """
+
+    def __init__(self, CloudLogger):
+        self.CloudLogger = CloudLogger
+
+    def out(self, data: EmissionsData):
+        try:
+            payload = dataclasses.asdict(data)
+            self.CloudLogger.log_struct(payload, severity="WARNING")
+        except Exception as e:
+            logger.error(e, exc_info=True)
