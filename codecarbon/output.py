@@ -5,6 +5,7 @@ Provides functionality for persistence of data
 import csv
 import dataclasses
 import getpass
+import logging
 import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -182,17 +183,37 @@ class CodeCarbonAPIOutput(BaseOutput):
         except Exception as e:
             logger.error(e, exc_info=True)
 
-class CloudLoggingOutput(BaseOutput):
+
+class LoggingOutput(BaseOutput):
     """
-    Send emissions data to Cloud Logging GCP
+    Send emissions data to a logger
     """
 
-    def __init__(self, CloudLogger):
-        self.CloudLogger = CloudLogger
+    def __init__(self, logger, severity=logging.INFO):
+        self.logger = logger
+        self.logging_severity = severity
+        # if severity is None:
+        #     self.logging_severity = self.logger.getEffectiveLevel() # KO avec Cloud Logging
+        # else:
+        #     self.logging_severity = severity
 
     def out(self, data: EmissionsData):
         try:
             payload = dataclasses.asdict(data)
-            self.CloudLogger.log_struct(payload, severity="WARNING")
+            self.logger.log(self.logging_severity, "{}".format(payload))
+        except Exception as e:
+            logger.error(e, exc_info=True)
+
+
+class CloudLoggerOutput(LoggingOutput):
+    """
+    Send emissions data to GCP Cloud Logging
+    """
+
+    def out(self, data: EmissionsData):
+        try:
+            payload = dataclasses.asdict(data)
+            self.logger.log_struct(payload, severity=self.logging_severity)
+            print('Cloud Logging: {}'.format(payload))
         except Exception as e:
             logger.error(e, exc_info=True)

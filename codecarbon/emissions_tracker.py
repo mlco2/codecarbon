@@ -3,6 +3,7 @@ Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
 import dataclasses
+import logging
 import os
 import platform
 import time
@@ -29,7 +30,8 @@ from codecarbon.output import (
     EmissionsData,
     FileOutput,
     HTTPOutput,
-    CloudLoggingOutput,
+    LoggingOutput,
+    CloudLoggerOutput,
 )
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
@@ -143,8 +145,8 @@ class BaseEmissionsTracker(ABC):
         output_file: Optional[str] = _sentinel,
         save_to_file: Optional[bool] = _sentinel,
         save_to_api: Optional[bool] = _sentinel,
-        write_to_cloud_logging: Optional[bool] = _sentinel,
-        cloud_logger=None,
+        write_to_logger: Optional[bool] = _sentinel,
+        logging_logger: Optional[logging.Logger] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
@@ -209,8 +211,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(project_name, "project_name", "codecarbon")
         self._set_from_conf(save_to_api, "save_to_api", False, bool)
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
-        self._set_from_conf(write_to_cloud_logging, "write_to_cloud_logging", False, bool)
-        self._set_from_conf(cloud_logger, "cloud_logger")
+        self._set_from_conf(write_to_logger, "write_to_logger", False, bool)
+        self._set_from_conf(logging_logger, "logging_logger")
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
@@ -337,10 +339,14 @@ class BaseEmissionsTracker(ABC):
                 )
             )
 
-        if self._write_to_cloud_logging:
-            print("entering write_to_cloud_logging")
-            print(cloud_logger)
-            self.persistence_objs.append(CloudLoggingOutput(cloud_logger))
+        if self._write_to_logger:
+            logging.debug("entering write_to_cloud_logging")
+            logging.debug(logging_logger)
+            # TODO: improve class creation
+            if isinstance(self._logging_logger, logging.Logger):
+                self.persistence_objs.append(LoggingOutput(self._logging_logger))
+            else:
+                self.persistence_objs.append(CloudLoggerOutput(self._logging_logger))
 
         if self._emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
