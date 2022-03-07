@@ -1,5 +1,3 @@
-from typing import List
-
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )

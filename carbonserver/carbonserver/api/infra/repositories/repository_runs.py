@@ -6,8 +6,8 @@ from dependency_injector.providers import Callable
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.runs import Runs
-from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
+from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import Run, RunCreate, RunReport
 
 """

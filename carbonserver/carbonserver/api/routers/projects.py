@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 import dateutil.relativedelta
 from container import ServerContainer
@@ -10,9 +10,7 @@ from starlette import status
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Project, ProjectCreate, ProjectReport
 from carbonserver.api.services.project_service import ProjectService
-from carbonserver.api.usecases.project.project_sum import (
-    ProjectSumsUsecase,
-)
+from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
 
 PROJECTS_ROUTER_TAGS = ["Projects"]
 

@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List, Optional
 
 import dateutil.relativedelta
-
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
@@ -99,4 +98,4 @@ def read_experiment_detailed_sums_by_run(
     end_date = end_date if end_date else datetime.now()
     return experiment_global_sum_by_run_usecase.compute_detailed_sum(
         experiment_id, start_date, end_date
-    ) 
+    )

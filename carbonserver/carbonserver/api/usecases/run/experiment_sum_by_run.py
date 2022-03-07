@@ -1,8 +1,6 @@
 from typing import List
 
-from carbonserver.api.infra.repositories.repository_runs import (
-    SqlAlchemyRepository,
-)
+from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.schemas import RunReport
 
 

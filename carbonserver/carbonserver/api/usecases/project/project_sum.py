@@ -1,8 +1,4 @@
-from typing import List
-
-from carbonserver.api.infra.repositories.repository_projects import (
-    SqlAlchemyRepository,
-)
+from carbonserver.api.infra.repositories.repository_projects import SqlAlchemyRepository
 from carbonserver.api.schemas import ProjectReport
 
 

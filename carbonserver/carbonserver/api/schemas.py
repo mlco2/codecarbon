@@ -120,6 +120,7 @@ class RunCreate(RunBase):
 class Run(RunBase):
     id: UUID
 
+
 class RunReport(RunBase):
     timestamp: datetime
     emission: float
@@ -246,6 +247,7 @@ class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[Experiment]] = []
 
+
 class ProjectReport(ExperimentBase):
     project_id: UUID
     name: str
@@ -261,6 +263,7 @@ class ProjectReport(ExperimentBase):
     duration: int
     emissions_rate_sum: float
     emissions_rate_count: int
+
 
 class TeamBase(BaseModel):
     name: str

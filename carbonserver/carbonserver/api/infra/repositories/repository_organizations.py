@@ -3,17 +3,23 @@ from typing import List
 from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
-from sqlalchemy import func, and_
+from sqlalchemy import and_, func
 
 from carbonserver.api.domain.organizations import Organizations
 from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
-from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.infra.database.sql_models import (
+    Organization as SqlModelOrganization,
+)
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
+from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.infra.database.sql_models import Team as SqlModelTeam
-from carbonserver.api.infra.database.sql_models import Organization as SqlModelOrganization
-from carbonserver.api.schemas import Organization, OrganizationCreate, OrganizationReport
+from carbonserver.api.schemas import (
+    Organization,
+    OrganizationCreate,
+    OrganizationReport,
+)
 
 """
 Here there is all the method to manipulate the organization data
@@ -114,17 +120,17 @@ class SqlAlchemyRepository(Organizations):
                 .join(
                     SqlModelTeam,
                     SqlModelOrganization.id == SqlModelTeam.organization_id,
-                    isouter = True,
+                    isouter=True,
                 )
                 .join(
                     SqlModelProject,
                     SqlModelTeam.id == SqlModelProject.team_id,
-                    isouter = True,
+                    isouter=True,
                 )
                 .join(
                     SqlModelExperiment,
                     SqlModelProject.id == SqlModelExperiment.project_id,
-                    isouter = True,
+                    isouter=True,
                 )
                 .join(
                     SqlModelRun,
@@ -144,7 +150,7 @@ class SqlAlchemyRepository(Organizations):
                 .group_by(
                     SqlModelOrganization.id,
                     SqlModelOrganization.name,
-                    SqlModelOrganization.description
+                    SqlModelOrganization.description,
                 )
                 .first()
             )

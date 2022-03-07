@@ -2,12 +2,12 @@ from contextlib import AbstractContextManager
 from typing import List
 
 from dependency_injector.providers import Callable
-from sqlalchemy import func, and_
+from sqlalchemy import and_, func
 
 from carbonserver.api.domain.projects import Projects
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
-from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import Project, ProjectCreate, ProjectReport
 
@@ -94,7 +94,7 @@ class SqlAlchemyRepository(Projects):
                 .join(
                     SqlModelExperiment,
                     SqlModelProject.id == SqlModelExperiment.project_id,
-                    isouter = True,
+                    isouter=True,
                 )
                 .join(
                     SqlModelRun,
@@ -114,7 +114,7 @@ class SqlAlchemyRepository(Projects):
                 .group_by(
                     SqlModelProject.id,
                     SqlModelProject.name,
-                    SqlModelProject.description
+                    SqlModelProject.description,
                 )
                 .first()
             )

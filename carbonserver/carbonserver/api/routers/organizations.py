@@ -8,7 +8,11 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Organization, OrganizationCreate, OrganizationReport
+from carbonserver.api.schemas import (
+    Organization,
+    OrganizationCreate,
+    OrganizationReport,
+)
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.usecases.organization.organization_sum import (
     OrganizationSumsUsecase,
