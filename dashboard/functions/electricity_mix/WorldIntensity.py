@@ -1,16 +1,14 @@
-import pandas as pd
-
-from codecarbon.core.emissions import Emissions
-from codecarbon.core.units import Energy
-from codecarbon.external.geography import GeoMetadata
-from codecarbon.input import DataSource
-
 # import os
 # import sys
 # currentdir = os.getcwd()
 # currentdir = 'c:\\Users\\Client\\Desktop\\Projet CodeCarbon\\codecarbon'
 # sys.path.append(os.path.abspath(currentdir))
 
+import pandas as pd
+from codecarbon.core.emissions import Emissions
+from codecarbon.core.units import Energy
+from codecarbon.external.geography import GeoMetadata
+from codecarbon.input import DataSource
 
 DS = DataSource()
 EM = Emissions(DS)

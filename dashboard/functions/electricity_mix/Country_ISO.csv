@@ -43,10 +43,10 @@ CCK;Cocos Islands
 CHE;Switzerland
 CHL;Chile
 CHN;China
-CIV;Cote d'Ivoire
+CIV;Ivory Coast
 CMR;Cameroon
 COD;Democratic Republic of the Congo
-COG;Congo
+COG;Republic of the Congo
 COK;Cook Islands
 COL;Colombia
 COM;Comoros
@@ -121,7 +121,7 @@ KGZ;Kyrgyzstan
 KHM;Cambodia
 KIR;Kiribati
 KNA;Saint Kitts and Nevis
-KOR;Korea
+KOR;South Korea
 KWT;Kuwait
 LAO;Laos
 LBN;Lebanon
@@ -146,7 +146,7 @@ MHL;Marshall Islands
 MKD;North Macedonia
 MLI;Mali
 MLT;Malta
-MMR;Myanmar
+MMR;Burma (Myanmar)
 MNE;Montenegro
 MNG;Mongolia
 MNP;Northern Mariana Islands
@@ -210,10 +210,10 @@ SUR;Suriname
 SVK;Slovakia
 SVN;Slovenia
 SWE;Sweden
-SWZ;Eswatini
+SWZ;Swaziland
 SXM;Sint Maarten
 SYC;Seychelles
-SYR;Syrian Arab Republic
+SYR;Syria
 TCA;Turks and Caicos Islands
 TCD;Chad
 TGO;Togo
@@ -240,7 +240,7 @@ VCT;Saint Vincent and the Grenadines
 VEN;Venezuela
 VGB;Virgin Islands (British)
 VIR;Virgin Islands (US)
-VNM;Viet Nam
+VNM;Vietnam
 VUT;Vanuatu
 WLF;Wallis and Futuna
 WSM;Samoa
