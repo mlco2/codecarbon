@@ -340,13 +340,7 @@ class BaseEmissionsTracker(ABC):
             )
 
         if self._write_to_logger:
-            logging.debug("entering write_to_cloud_logging")
-            logging.debug(logging_logger)
-            # TODO: improve class creation
-            if isinstance(self._logging_logger, logging.Logger):
-                self.persistence_objs.append(LoggingOutput(self._logging_logger))
-            else:
-                self.persistence_objs.append(CloudLoggerOutput(self._logging_logger))
+            self.persistence_objs.append(LoggingOutput(self._logging_logger)) if isinstance(self._logging_logger, logging.Logger) else self.persistence_objs.append(CloudLoggerOutput(self._logging_logger))
 
         if self._emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
