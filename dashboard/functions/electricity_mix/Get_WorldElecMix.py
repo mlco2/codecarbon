@@ -12,7 +12,7 @@ df2 = pd.read_csv("dashboard/functions/electricity_mix/WorldIntensity.csv").rena
 df2.iloc[:, 2] = round(df2.iloc[:, 2], 0)
 
 # Agregation des intensités carbone et des mixs électrique
-df = pd.merge(df2, df1, on=["Country"], how="right")
+df = pd.merge(df2, df1, on=["Country"], how="outer")
 
 df = df.drop(["Unnamed: 0", "country_id"], axis=1)
 df["Total electricity generation"] = (
@@ -24,7 +24,11 @@ df["Total electricity generation"] = (
     + df["Wind electricity generation"]
 )
 
-# Sélection des dernières données disponibles (last measure)
+# Sélection des codes ISO sans aucunes données (intensité = moyenne mondiale)
+default_ISO = df[df['Year'].isna()].iloc[:,:4]
+default_ISO = default_ISO.fillna('/')
+
+# Sélection des dernières données disponibles pour les autres pays (last measure)
 
 df = df.dropna(how='any')
 measure = df.groupby('ISO',as_index = False).agg({'Year':'max'}).rename(columns={"Year": "Last Year"})
@@ -34,12 +38,14 @@ select = select[select['Year']==select['Last Year']].drop('Last Year', axis=1) #
 
 # Préparation du fichier final pour le Mix électrique mondial
 
-mix = select.iloc[:, :4].copy()
+mix = pd.concat([select.iloc[:, :4].copy(),default_ISO])
 mix["% Fossil"] = round(select.iloc[:, 4] / select.iloc[:, 10] * 100, 1)
 mix["% Geothermal"] = round(select.iloc[:, 5] / select.iloc[:, 10] * 100, 1)
 mix["% Hydro"] = round(select.iloc[:, 6] / select.iloc[:, 10] * 100, 1)
 mix["% Nuclear"] = round(select.iloc[:, 7] / select.iloc[:, 10] * 100, 1)
 mix["% Solar"] = round(select.iloc[:, 8] / select.iloc[:, 10] * 100, 1)
 mix["% Wind"] = round(select.iloc[:, 9] / select.iloc[:, 10] * 100, 1)
+
+mix = mix.fillna('/')
 
 mix.to_csv("dashboard/WorldElectricityMix.csv", index=False)
