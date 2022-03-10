@@ -15,8 +15,8 @@ jobs:
               python-version: 3.8
         - name: Build pip package
           run: |
-              pip install -U pip wheel
-              python setup.py sdist bdist_wheel
+              pip install -U pip build
+              python3 -m build
         - name: Archive Pypi artifacts
           uses: actions/upload-artifact@v1
           with:
