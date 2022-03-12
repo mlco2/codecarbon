@@ -38,7 +38,7 @@ select = select[select['Year']==select['Last Year']].drop('Last Year', axis=1) #
 
 # Préparation du fichier final pour le Mix électrique mondial
 
-mix = pd.concat([select.iloc[:, :4].copy(),default_ISO])
+mix = select.iloc[:, :4].copy()
 mix["% Fossil"] = round(select.iloc[:, 4] / select.iloc[:, 10] * 100, 1)
 mix["% Geothermal"] = round(select.iloc[:, 5] / select.iloc[:, 10] * 100, 1)
 mix["% Hydro"] = round(select.iloc[:, 6] / select.iloc[:, 10] * 100, 1)
@@ -46,6 +46,13 @@ mix["% Nuclear"] = round(select.iloc[:, 7] / select.iloc[:, 10] * 100, 1)
 mix["% Solar"] = round(select.iloc[:, 8] / select.iloc[:, 10] * 100, 1)
 mix["% Wind"] = round(select.iloc[:, 9] / select.iloc[:, 10] * 100, 1)
 
-mix = mix.fillna('/')
+default_ISO["% Fossil"] = '/'
+default_ISO["% Geothermal"] = '/'
+default_ISO["% Hydro"] = '/'
+default_ISO["% Nuclear"] = '/'
+default_ISO["% Solar"] = '/'
+default_ISO["% Wind"] = '/'
+
+mix = pd.concat([mix,default_ISO])
 
 mix.to_csv("dashboard/WorldElectricityMix.csv", index=False)

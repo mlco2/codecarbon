@@ -1,17 +1,14 @@
-from math import ceil
-
 import pandas as pd
+from math import ceil
 from data.data_loader import (
     load_experiment_runs,
     load_experiment_sums,
     load_project_experiments,
     load_run_emissions,
+    load_run_sums,
 )
 
-# from data_loader import load_run_emissions
-# from data_loader import load_project_experiments
-# from data_loader import load_experiment_runs
-# from data_loader import load_experiment_sums
+# from data_loader import load_run_emissions, load_project_experiments, load_experiment_runs, load_experiment_sums, load_run_sums
 
 
 def get_run_data(run_id, page_api, size_api) -> pd.DataFrame:
@@ -76,3 +73,15 @@ def get_experiment_sums(project_id, date_from, date_to):
 
 # project_name = 'e60afa92-17b7-4720-91a0-1ae91e409ba1'
 # print(get_experiment_sums(project_name))
+
+
+def get_run_sums(experiment_id, date_from, date_to):
+    dict = load_run_sums(experiment_id, start_date=date_from, end_date=date_to)
+    df = pd.DataFrame.from_dict(dict)
+    if not (df.empty):
+        df = df.sort_values(by="timestamp")
+    return df
+
+
+# experiment_id = '0bfa2432-efda-4656-bdb4-f72d15866b0b'
+# print(get_run_sums(experiment_id,'2020-01-01 00:00:00','2022-01-01 00:00:00'))

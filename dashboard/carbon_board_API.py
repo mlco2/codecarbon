@@ -15,6 +15,7 @@ from data.data import (
     get_experiment_sums,
     get_project_experiments,
     get_run_emissions,
+    get_run_sums,
 )
 from plotly.subplots import make_subplots
 
@@ -361,9 +362,8 @@ def update_Charts(start_date, end_date, project):
     # ADJUST WITH TIMESTAMP FILTER (start_date / end_date)
     dfBar = get_experiment_sums(project, start_date, end_date)
     if dfBar.empty:
-        dfBar["name"] = ""
-        dfBar["emissions"] = 0
-    figBar = px.bar(dfBar, x="name", y="emissions", text="emissions")
+        dfBar = pd.DataFrame([["","",0]],columns=["name","experiment_id","emissions"])
+    figBar = px.bar(dfBar, x="name", y="emissions", text="emissions", hover_name="experiment_id")
     figBar.update_layout(
         title_text="Experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart on the right side</span>",
         template="CodeCarbonTemplate",
@@ -399,30 +399,37 @@ def update_Charts(start_date, end_date, project):
     ],
 )
 def uppdate_bubblechart(clickPoint, start_date, end_date, project):
-    dff = df.copy()
-    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
+#    dff = df.copy()
+#    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
     if clickPoint is None:
+        experiment_id = get_project_experiments(project)["id"].iloc[-1]
         experiment_name = get_project_experiments(project)["name"].iloc[-1]
     else:
-        experiment_name = clickPoint["points"][0]["x"]
+        experiment_id = clickPoint["points"][0]["hovertext"]
+        experiment_name = clickPoint["points"][0]["label"]
 
-    df1 = (
-        dff[dff["experiment_name"] == experiment_name]
-        .groupby("run_id")
-        .agg(
-            {
-                "timestamp": "min",
-                "duration": "sum",
-                "emissions_sum": "sum",
-                "energy_consumed": "sum",
-            }
-        )
-        .reset_index()
-    )
+#    df1 = (
+#        dff[dff["experiment_name"] == experiment_name]
+#        .groupby("run_id")
+#        .agg(
+#            {
+#                "timestamp": "min",
+#                "duration": "sum",
+#                "emissions_sum": "sum",
+#                "energy_consumed": "sum",
+#            }
+#        )
+#        .reset_index()
+#    )
+    df1 = get_run_sums(experiment_id, start_date, end_date)
+    if df1.empty:
+        df1 = pd.DataFrame([[start_date,0,0,1,"/"],[end_date,0,0,1,"/"]],columns=["timestamp","emissions","energy_consumed","duration","run_id"])
     bubble = px.scatter(
         df1,
         x=df1.timestamp,
-        y=df1.emissions_sum,
+        y=df1.emissions,
         color=df1.energy_consumed,
         color_continuous_scale=[darkgreen, vividgreen],
         size=np.log(df1.duration),
@@ -467,11 +474,13 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
 def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, project):
     #    => ADD TIMESTAMP FILTERING
     if experiment_clickPoint is None and clickPoint is None:
-        default_experiment_id = get_project_experiments(project)["id"].iloc[-1]
+#        default_experiment_id = get_project_experiments(project)["id"].iloc[-1]
+#        Problem with experiment 'f763e8c0-c14e-40a1-a47c-b7106ef70378' => No Run!
+        default_experiment_id = get_project_experiments(project)["id"].iloc[0]
         run_name = get_experiment_runs(default_experiment_id)["id"].iloc[-1]
     elif clickPoint is None:
-        #    => GET EXPERIMENT_ID (NOT EXP_NAME)
-        experiment_selected = experiment_clickPoint["points"][0]["x"]
+        #    => CHECK EXPERIMENT_CLICK_POINT
+        experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
         run_name = get_experiment_runs(experiment_selected)["id"].iloc[-1]
     else:
         run_name = clickPoint["points"][0]["customdata"]
@@ -480,13 +489,12 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     df_run, total_run = get_run_emissions(run_name)
 
     if df_run.empty:
-        df_run["timestamp"] = 0
-        df_run["emissions_sum"] = 0
+        df_run = pd.DataFrame([[start_date,0],[end_date,0]],columns=["timestamp","emissions_rate"])
 
     line = px.line(
         df_run,
         x="timestamp",
-        y="emissions_sum",
+        y="emissions_rate",
         color_discrete_sequence=[vividgreen],
         markers=True,
         symbol_sequence=["circle-open"],
@@ -500,7 +508,7 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     line.update_xaxes(
         showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
     )
-    line.update_yaxes(showgrid=False, visible=False, title="emissions (kg eq. C02)")
+    line.update_yaxes(showgrid=False, showline=True, linewidth=2, linecolor="white", title="emission rate")
     clickPoint = None
     #    experiment_clickPoint = None
     return line, clickPoint  # , experiment_clickPoint

@@ -190,12 +190,11 @@ AIA,Anguilla,475.0,/,/,/,/,/,/,/
 ALA,Aland Islands,475.0,/,/,/,/,/,/,/
 AND,Andorra,475.0,/,/,/,/,/,/,/
 ASM,American Samoa,475.0,/,/,/,/,/,/,/
-ATA,Antarctica,475.0,/,/,/,/,/,/,/
 ATF,French Southern Territories,475.0,/,/,/,/,/,/,/
 BES,Bonaire,475.0,/,/,/,/,/,/,/
 BLM,Saint Barthelemy,475.0,/,/,/,/,/,/,/
 BRN,Brunei Darussalam,635.0,/,/,/,/,/,/,/
-BVT,Bouvet Island,475.0,/,0.7,0.0,99.3,0.0,0.0,0.0
+BVT,Bouvet Island,475.0,/,/,/,/,/,/,/
 CCK,Cocos Islands,475.0,/,/,/,/,/,/,/
 COK,Cook Islands,475.0,/,/,/,/,/,/,/
 CPV,Cabo Verde,525.0,/,/,/,/,/,/,/
@@ -208,7 +207,6 @@ FLK,Falkland Islands,475.0,/,/,/,/,/,/,/
 FSM,Micronesia,475.0,/,/,/,/,/,/,/
 GGY,Guernsey,475.0,/,/,/,/,/,/,/
 GLP,Guadeloupe,475.0,/,/,/,/,/,/,/
-GRL,Greenland,475.0,/,/,/,/,/,/,/
 GUF,French Guiana,475.0,/,/,/,/,/,/,/
 GUM,Guam,475.0,/,/,/,/,/,/,/
 HMD,Heard Island and McDonald Islands,475.0,/,/,/,/,/,/,/
@@ -236,7 +234,7 @@ SHN,Saint Helena,475.0,/,/,/,/,/,/,/
 SJM,Svalbard and Jan Mayen,475.0,/,/,/,/,/,/,/
 SMR,San Marino,475.0,/,/,/,/,/,/,/
 SPM,Saint Pierre and Miquelon,475.0,/,/,/,/,/,/,/
-SSD,South Sudan,475.0,/,91.3,0.0,4.8,0.0,2.9,1.0
+SSD,South Sudan,475.0,/,/,/,/,/,/,/
 SXM,Sint Maarten,475.0,/,/,/,/,/,/,/
 TCA,Turks and Caicos Islands,475.0,/,/,/,/,/,/,/
 TKL,Tokelau,475.0,/,/,/,/,/,/,/

@@ -118,3 +118,16 @@ def load_experiment_sums(project_id: str, **kwargs) -> tuple:
     """
     path = f"{API_PATH}/experiments/{project_id}/sums/"
     return path, kwargs
+
+
+@api_loader
+def load_run_sums(experiment_id: str, **kwargs) -> tuple:
+    """
+    Get sums by run of a given experiment
+    :params:
+        kwargs: can be any parameter available for the query
+    :example:
+        experiment_id = '0bfa2432-efda-4656-bdb4-f72d15866b0b'
+    """
+    path = f"{API_PATH}/runs/{experiment_id}/sums/"
+    return path, kwargs
