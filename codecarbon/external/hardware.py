@@ -23,7 +23,7 @@ POWER_CONSTANT = 85
 #  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
-
+B_TO_GB = 1024*1024*1024  # Or 1e9 ?
 @dataclass
 class BaseHardware(ABC):
     @abstractmethod
@@ -257,13 +257,13 @@ class RAM(BaseHardware):
                 "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
-            return psutil.virtual_memory().total / 1e9
+            return psutil.virtual_memory().total / B_TO_GB
         if len(mem_matches) > 1:
             logger.warning(
                 "Unexpected output after running `scontrol show job $SLURM_JOBID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
-            return psutil.virtual_memory().total / 1e9
+            return psutil.virtual_memory().total / B_TO_GB
 
         return mem_matches[0].replace("mem=", "")
 
@@ -276,7 +276,7 @@ class RAM(BaseHardware):
                 + "to retrieve SLURM-available RAM."
                 + "Using the machine's total RAM."
             )
-            return psutil.virtual_memory().total / 1e9
+            return psutil.virtual_memory().total / B_TO_GB
         mem = self._parse_scontrol(scontrol_str)
         if isinstance(mem, str):
             return self._parse_scontrol_memory_GB(mem)
@@ -293,14 +293,14 @@ class RAM(BaseHardware):
         children_memories = self._get_children_memories() if self._children else []
         main_memory = psutil.Process(self._pid).memory_info().rss
         memories = children_memories + [main_memory]
-        return sum([m for m in memories if m] + [0]) / 1e9
+        return sum([m for m in memories if m] + [0]) / B_TO_GB
 
     @property
     def machine_memory_GB(self):
         return (
             self.slurm_memory_GB
             if os.environ.get("SLURM_JOB_ID")
-            else psutil.virtual_memory().total / 1e9
+            else psutil.virtual_memory().total / B_TO_GB
         )
 
     def total_power(self) -> Power:
