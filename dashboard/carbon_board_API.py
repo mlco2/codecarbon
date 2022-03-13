@@ -489,7 +489,7 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     df_run, total_run = get_run_emissions(run_name)
 
     if df_run.empty:
-        df_run = pd.DataFrame([[start_date,0],[end_date,0]],columns=["timestamp","emissions_rate"])
+        df_run = pd.DataFrame([[start_date,None],[end_date,None]],columns=["timestamp","emissions_rate"])
 
     line = px.line(
         df_run,
