@@ -7,7 +7,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
 import warnings
 from typing import Dict, Tuple
 
@@ -159,6 +158,8 @@ class IntelRAPL:
         self._rapl_files = list()
         self._setup_rapl()
 
+        self._last_mesure = 0
+
     def _is_platform_supported(self) -> bool:
         return self._system.startswith("lin")
 
@@ -212,9 +213,11 @@ class IntelRAPL:
         """
         cpu_details = dict()
         try:
-            list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
-            time.sleep(delay)
-            list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
+            # list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
+            # time.sleep(delay)  # BCO !!!
+            # list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
+            list(map(lambda rapl_file: rapl_file.delta(), self._rapl_files))
+
             for rapl_file in self._rapl_files:
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
         except Exception as e:

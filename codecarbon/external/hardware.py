@@ -23,7 +23,9 @@ POWER_CONSTANT = 85
 #  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
-B_TO_GB = 1024*1024*1024  # Or 1e9 ?
+B_TO_GB = 1024 * 1024 * 1024  # Or 1e9 ?
+
+
 @dataclass
 class BaseHardware(ABC):
     @abstractmethod
@@ -137,6 +139,11 @@ class CPU(BaseHardware):
         for metric, value in all_cpu_details.items():
             if re.match(r"^Processor Power_\d+\(Watt\)$", metric):
                 power += value
+                logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
+
+            else:
+                logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
+
         return Power.from_watts(power)
 
     def _get_energy_from_cpus(self, delay: float) -> Energy:
@@ -148,8 +155,11 @@ class CPU(BaseHardware):
 
         energy = 0
         for metric, value in all_cpu_details.items():
-            if re.match(r"^Processor Energy Delta_\d+\(Watt\)$", metric):
+            if re.match(r"^Processor Energy Delta_\d", metric):
                 energy += value
+                logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
+            else:
+                logger.debug(f"_get_energy_from_cpus - DONT MATCH {metric} : {value}")
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
