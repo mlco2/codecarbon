@@ -292,7 +292,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(">>> Tracker's metadata:")
         logger.info(f"  Platform system: {self._conf.get('os')}")
         logger.info(f"  Python version: {self._conf.get('python_version')}")
-        logger.info(f"  Available RAM : {self._conf.get('ram_total_size')} GB")
+        logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
         logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
@@ -522,23 +522,28 @@ class BaseEmissionsTracker(ABC):
             power, energy = hardware.measure_power_and_energy(
                 last_duration=last_duration
             )
-            logger.info(
-                "Energy consumed for all "
-                + hardware.__class__.__name__
-                + ("s" if hardware.__class__.__name__ != "RAM" else "")
-                + " : "
-                + f"{self._total_energy.kWh:.6f} kWh"
-            )
             self._total_energy += energy
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
+                logger.info(
+                    f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
+                    + f". All CPUs Power : {self._cpu_power} W"
+                )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
+                logger.info(
+                    f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
+                    + f". All GPUs Power : {self._gpu_power} W"
+                )
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
                 self._ram_power = power
+                logger.info(
+                    f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
+                    + f". RAM Power : {self._ram_power} W"
+                )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.time() - h_time
