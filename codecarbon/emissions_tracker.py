@@ -528,21 +528,21 @@ class BaseEmissionsTracker(ABC):
                 self._cpu_power = power
                 logger.info(
                     f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
-                    + f". All CPUs Power : {self._cpu_power} W"
+                    + f". All CPUs Power : {self._cpu_power.W} W"
                 )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
                 logger.info(
                     f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
-                    + f". All GPUs Power : {self._gpu_power} W"
+                    + f". All GPUs Power : {self._gpu_power.W} W"
                 )
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
                 self._ram_power = power
                 logger.info(
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
-                    + f". RAM Power : {self._ram_power} W"
+                    + f". RAM Power : {self._ram_power.W} W"
                 )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
