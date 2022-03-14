@@ -29,9 +29,9 @@ from plotly.subplots import make_subplots
 darkgreen = "#024758"
 vividgreen = "#c9fb37"
 color3 = "#226a7a"
-titleColor = "#d8d8d8"
+
 # config (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
-config = {"displayModeBar": False, "scrollZoom": False, "doubleClick": "reset"}
+config = {"displayModeBar": True, "scrollZoom": False, "doubleClick": "reset", "displaylogo":False, "modeBarButtonsToRemove":["zoom","pan","select","zoomIn","zoomOut","autoScale","lasso2d"]}
 CodeCarbon_template
 # App
 # *******************************************************************************
@@ -312,44 +312,29 @@ def update_Charts(start_date, end_date, project):
         go.Pie(
             values=[energyConsumed, Total_orga_energy - energyConsumed],
             title="KwH",
-            title_position="bottom center",
-            textinfo="none",
-            hole=0.8,
-            marker=dict(colors=[vividgreen, color3]),
-            hoverinfo="skip",
+            
         ),
         row=1,
         col=1,
     )
     figPie.add_trace(
         go.Pie(
-            values=[emission, Total_orga_emission - emission],
-            textinfo="none",
-            hole=0.8,
-            marker=dict(colors=[vividgreen, color3]),
-            hoverinfo="skip",
+            values=[emission, dff.emissions_sum.sum() - emission],
             title="Kg eq.CO2",
-            title_position="bottom center",
         ),
         row=1,
         col=2,
     )
     figPie.add_trace(
         go.Pie(
-            values=[duration, (Total_orga_duration - duration)],
-            textinfo="none",
-            hole=0.8,
-            marker=dict(colors=[vividgreen, color3]),
-            hoverinfo="skip",
+            values=[duration, (dff.duration.sum() - duration)],
             title=duration_project_unit,
-            title_position="bottom center",
         ),
         row=1,
         col=3,
     )
     figPie.update_layout(
         template="CodeCarbonTemplate",
-        showlegend=False,
         annotations=[
             dict(
                 text=energy_project,
@@ -542,7 +527,7 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     line.update_layout(
         title_text=run_name
         + "<br><span style='font-size:0.8em;color:gray' >emissions (kg eq. C02)</span>",
-        title_font_color=titleColor,
+        
         template="CodeCarbonTemplate",
     )
     line.update_xaxes(
