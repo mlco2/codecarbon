@@ -85,8 +85,8 @@ app.layout = dbc.Container(
                         ],
                         value=df.id.unique().tolist()[0],
                         inline=True,
-#                        label_checked_class_name="text-primary",
-#                        input_checked_class_name="border border-primary bg-primary",
+                        label_checked_class_name="text-primary",
+                        input_checked_class_name="border border-primary bg-primary",
                     ),
                 ],
                 width={"size": 6, "offset": 4},
@@ -96,7 +96,7 @@ app.layout = dbc.Container(
             [
                 # holding pieCharts
                 dbc.Col(
-                    dcc.Graph(id="pieCharts", config=config)
+                    dbc.Spinner(dcc.Graph(id="pieCharts", config=config))
                     
                 ),
                 dbc.Col(
@@ -111,13 +111,13 @@ app.layout = dbc.Container(
         html.Div( # holding experiment related graph
         dbc.Row([dbc.Col(dcc.Graph(id="barChart", clickData=None, config=config)), # holding barChart
                 dbc.Col(
-                    dcc.Graph(
+                    dbc.Spinner(dcc.Graph(
                         id="bubbleChart",
                         clickData=None,
                         hoverData=None,
                         figure={},
                         config=config,
-                    ))
+                    )))
                     
             ]), className="shadow"),
         
@@ -126,7 +126,7 @@ app.layout = dbc.Container(
                 
                 # holding line chart
                 #dbc.Col(
-                    dcc.Graph(id="lineChart", config=config)
+                    dbc.Spinner(dcc.Graph(id="lineChart", config=config))
                     #, width=6),
             ]
         ),
