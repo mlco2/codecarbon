@@ -124,27 +124,29 @@ class CPU(BaseHardware):
 
         return s + ")"
 
-    def _get_power_from_cpus(self) -> Power:
+    def _get_power_from_cpus(self, last_duration: float) -> Power:
         """
-        Get CPU power from Intel Power Gadget
+        Get CPU power
         :return: power in kW
         """
         if self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
-
-        all_cpu_details: Dict = self._intel_interface.get_cpu_details()
+        elif self._mode == "intel_rapl":
+            # Don't call get_cpu_details to avoid computing energy twice and loosing data.
+            all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()
+        else:
+            all_cpu_details: Dict = self._intel_interface.get_cpu_details()
 
         power = 0
         for metric, value in all_cpu_details.items():
-            if re.match(r"^Processor Power_\d+\(Watt\)$", metric):
+            if re.match(r"^Processor Power\d", metric):
                 power += value
                 logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
 
             else:
                 logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
-
-        return Power.from_watts(power)
+            return Power.from_watts(power)
 
     def _get_energy_from_cpus(self, delay: float) -> Energy:
         """
@@ -169,10 +171,9 @@ class CPU(BaseHardware):
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         if self._mode == "intel_rapl":
             energy = self._get_energy_from_cpus(delay=last_duration)
-            power = Power.from_energy_delta_and_delay(
-                energy, Time.from_seconds(last_duration)
-            )
+            power = self.total_power()
             return power, energy
+        # If not intel_rapl
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def get_model(self):

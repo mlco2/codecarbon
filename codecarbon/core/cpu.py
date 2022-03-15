@@ -49,6 +49,7 @@ class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
+    # TODO: There is now a 3.6 version.
     _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
 
     def __init__(
@@ -157,6 +158,7 @@ class IntelRAPL:
         self._system = sys.platform.lower()
         self._rapl_files = list()
         self._setup_rapl()
+        self._cpu_details: Dict = dict()
 
         self._last_mesure = 0
 
@@ -207,7 +209,7 @@ class IntelRAPL:
                     )
         return
 
-    def get_cpu_details(self, delay: float = 0.01, **kwargs) -> Dict:
+    def get_cpu_details(self, duration: float, **kwargs) -> Dict:
         """
         Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
@@ -216,17 +218,28 @@ class IntelRAPL:
             # list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
             # time.sleep(delay)  # BCO !!!
             # list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
-            list(map(lambda rapl_file: rapl_file.delta(), self._rapl_files))
+            list(map(lambda rapl_file: rapl_file.delta(duration), self._rapl_files))
 
             for rapl_file in self._rapl_files:
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
+                # We fake the name used by Power Gadget when using RAPL
+                cpu_details[
+                    rapl_file.name.replace("Energy", "Power")
+                ] = rapl_file.power.W
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \
                 Exception occurred {e}",
                 exc_info=True,
             )
+        self.cpu_details = cpu_details
         return cpu_details
+
+    def get_static_cpu_details(self) -> Dict:
+        """
+        Return CPU details without computing them.
+        """
+        return self.cpu_details
 
 
 class TDP:
