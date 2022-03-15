@@ -17,7 +17,6 @@ pio.templates["CodeCarbonTemplate"] = go.layout.Template(
 						"color":"#d8d8d8"}},
 		'colorway':['#c9fb37', '#36c9fb','#fb36c9','#fb6836','#6836fb','#cb36fb','#67fb36'],
 		
-	
 	},		
 	data ={
 		"pie":[go.Pie(marker={'colors':["#c9fb37","#226a7a"]},
@@ -26,8 +25,9 @@ pio.templates["CodeCarbonTemplate"] = go.layout.Template(
             hole=0.8,
             hoverinfo="skip",
             showlegend=False,
-			)]	,
 
+			)],
+		
 
 	}
 	

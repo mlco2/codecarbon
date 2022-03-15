@@ -121,6 +121,7 @@ app.layout = dbc.Container(
                     
             ]), className="shadow"),
         
+        html.Div( # holding run level graph
         dbc.Row(
             [
                 
@@ -129,7 +130,7 @@ app.layout = dbc.Container(
                     dbc.Spinner(dcc.Graph(id="lineChart", config=config))
                     #, width=6),
             ]
-        ),
+        ),className="shadow"),
         # holding carbon emission map
         html.Br(),
         dcc.Dropdown(
@@ -338,22 +339,16 @@ def update_Charts(start_date, end_date, project):
         annotations=[
             dict(
                 text=energy_project,
-                font=dict(
-                    color="white",
-                ),
                 x=0.15,
-                y=0.5,
+                y=0.45,
                 font_size=20,
                 showarrow=False,
             ),
-            dict(text=emissions_project, x=0.5, y=0.5, font_size=20, showarrow=False),
+            dict(text=emissions_project, x=0.5, y=0.45, font_size=20, showarrow=False),
             dict(
                 text=duration_project,
-                font=dict(
-                    color="white",
-                ),
                 x=0.85,
-                y=0.5,
+                y=0.45,
                 font_size=20,
                 showarrow=False,
             ),
@@ -604,7 +599,7 @@ def update_map(start_date, end_date, project, kpi):
                 "% Solar",
                 "% Wind",
             ],
-            color_continuous_scale=px.colors.sequential.YlOrRd,
+            color_continuous_scale=["#c9fb37","#024758",'#fb36c9'],
             labels={
                 "Carbon intensity of electricity (gCO2/kWh)": "CO2 intensity (gCO2/kWh)"
             },
@@ -614,7 +609,7 @@ def update_map(start_date, end_date, project, kpi):
             colorbar_title_side="right", colorbar_title_text="CO2 intensity (gCO2/KwH)"
         )
         fig.update_geos(
-            showland=True, landcolor="#898381", showocean=True, oceancolor="#759FA8"
+            showland=True, landcolor="#6f898e", showocean=True, oceancolor="#759FA8"
         )
     return container, fig
 
