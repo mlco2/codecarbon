@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-from numpy import power
-
 from codecarbon.core.units import Energy, Power, Time
 
 
@@ -41,7 +39,10 @@ class RAPLFile:
         Compute the energy used since last call.
         """
         energy = self._get_value()
+        self.power = self.power.from_energies_and_delay(
+            energy, self.last_energy, duration
+        )
         self.energy_delta = energy - self.last_energy
         self.last_energy = energy
-        self.power = power.from_energy_delta_and_delay(energy, duration)
+
         return

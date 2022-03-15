@@ -16,6 +16,7 @@ with warnings.catch_warnings(record=True) as w:
     from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
+from codecarbon.core.units import Time
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
@@ -191,6 +192,7 @@ class IntelRAPL:
             path = os.path.join(self._lin_rapl_dir, file, "name")
             with open(path) as f:
                 name = f.read().strip()
+                # Fake the name used by Power Gadget
                 if "package" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
@@ -209,7 +211,7 @@ class IntelRAPL:
                     )
         return
 
-    def get_cpu_details(self, duration: float, **kwargs) -> Dict:
+    def get_cpu_details(self, duration: Time, **kwargs) -> Dict:
         """
         Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
@@ -218,14 +220,17 @@ class IntelRAPL:
             # list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
             # time.sleep(delay)  # BCO !!!
             # list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
+            # Call delta() on all RAPLFile()
             list(map(lambda rapl_file: rapl_file.delta(duration), self._rapl_files))
 
             for rapl_file in self._rapl_files:
+                logger.debug(rapl_file)
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
                 # We fake the name used by Power Gadget when using RAPL
-                cpu_details[
-                    rapl_file.name.replace("Energy", "Power")
-                ] = rapl_file.power.W
+                if "Energy" in rapl_file.name:
+                    cpu_details[
+                        rapl_file.name.replace("Energy", "Power")
+                    ] = rapl_file.power.W
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \
@@ -233,12 +238,15 @@ class IntelRAPL:
                 exc_info=True,
             )
         self.cpu_details = cpu_details
+        logger.debug(f"get_cpu_details {self.cpu_details}")
         return cpu_details
 
     def get_static_cpu_details(self) -> Dict:
         """
         Return CPU details without computing them.
         """
+        logger.debug(f"get_static_cpu_details {self.cpu_details}")
+
         return self.cpu_details
 
 

@@ -124,7 +124,7 @@ class CPU(BaseHardware):
 
         return s + ")"
 
-    def _get_power_from_cpus(self, last_duration: float) -> Power:
+    def _get_power_from_cpus(self) -> Power:
         """
         Get CPU power
         :return: power in kW
@@ -140,20 +140,21 @@ class CPU(BaseHardware):
 
         power = 0
         for metric, value in all_cpu_details.items():
-            if re.match(r"^Processor Power\d", metric):
+            # "^Processor Power_\d+\(Watt\)$" for Inter Power Gadget
+            if re.match(r"^Processor Power", metric):
                 power += value
                 logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
 
             else:
                 logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
-            return Power.from_watts(power)
+        return Power.from_watts(power)
 
-    def _get_energy_from_cpus(self, delay: float) -> Energy:
+    def _get_energy_from_cpus(self, delay: Time) -> Energy:
         """
         Get CPU energy deltas from RAPL files
         :return: energy in kWh
         """
-        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay=delay)
+        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay)
 
         energy = 0
         for metric, value in all_cpu_details.items():
@@ -170,7 +171,7 @@ class CPU(BaseHardware):
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         if self._mode == "intel_rapl":
-            energy = self._get_energy_from_cpus(delay=last_duration)
+            energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
             power = self.total_power()
             return power, energy
         # If not intel_rapl
