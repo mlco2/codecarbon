@@ -131,3 +131,42 @@ def load_run_sums(experiment_id: str, **kwargs) -> tuple:
     """
     path = f"{API_PATH}/runs/{experiment_id}/sums/"
     return path, kwargs
+
+
+@api_loader
+def load_project_sums(project_id: str, **kwargs) -> tuple:
+    """
+    Get sums of a given project
+    :params:
+        kwargs: can be any parameter available for the query
+    :example:
+        project_id = 'e60afa92-17b7-4720-91a0-1ae91e409ba1'
+    """
+    path = f"{API_PATH}/project/{project_id}/sums/"
+    return path, kwargs
+
+
+@api_loader
+def load_orga_sums(organization_id: str, **kwargs) -> tuple:
+    """
+    Get sums of a given organization
+    :params:
+        kwargs: can be any parameter available for the query
+    :example:
+        organization_id = 'e52fe339-164d-4c2b-a8c0-f562dfce066d'
+    """
+    path = f"{API_PATH}/organization/{organization_id}/sums/"
+    return path, kwargs
+
+
+@api_loader
+def load_project(project_id: str, **kwargs) -> tuple:
+    """
+    Get project description
+    :params:
+        kwargs: can be any parameter available for the query
+    :example:
+        project_id = 'e60afa92-17b7-4720-91a0-1ae91e409ba1'
+    """
+    path = f"{API_PATH}/project/{project_id}"
+    return path, kwargs

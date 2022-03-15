@@ -1,14 +1,20 @@
 import pandas as pd
 from math import ceil
+
 from data.data_loader import (
     load_experiment_runs,
     load_experiment_sums,
     load_project_experiments,
     load_run_emissions,
     load_run_sums,
+    load_project_sums,
+    load_orga_sums,
+    load_project,
+    load_organization_teams,
+    load_team_projects,
 )
 
-# from data_loader import load_run_emissions, load_project_experiments, load_experiment_runs, load_experiment_sums, load_run_sums
+# from data_loader import load_run_emissions, load_project_experiments, load_experiment_runs, load_experiment_sums, load_run_sums, load_project_sums, load_orga_sums, load_project, load_organization_teams, load_team_projects
 
 
 def get_run_data(run_id, page_api, size_api) -> pd.DataFrame:
@@ -85,3 +91,43 @@ def get_run_sums(experiment_id, date_from, date_to):
 
 # experiment_id = '0bfa2432-efda-4656-bdb4-f72d15866b0b'
 # print(get_run_sums(experiment_id,'2020-01-01 00:00:00','2022-01-01 00:00:00'))
+
+
+def get_project_sums(project_id, date_from, date_to):
+    dict = load_project_sums(project_id, start_date=date_from, end_date=date_to)
+    return dict
+
+
+# project_id = 'e60afa92-17b7-4720-91a0-1ae91e409ba1'
+# print(get_project_sums(project_id,'2020-01-01 00:00:00','2022-01-01 00:00:00'))
+
+
+def get_orga_sums(organization_id, date_from, date_to):
+    dict = load_orga_sums(organization_id, start_date=date_from, end_date=date_to)
+    return dict
+
+
+# organization_id = 'e52fe339-164d-4c2b-a8c0-f562dfce066d'
+# print(get_orga_sums(organization_id,'2020-01-01 00:00:00','2022-01-01 00:00:00'))
+
+
+def get_project(project_id):
+    dict = load_project(project_id)
+    return dict
+
+
+# project_id = 'e60afa92-17b7-4720-91a0-1ae91e409ba1'
+# print(get_project(project_id))
+
+
+def get_project_list(organization_id):
+    teams = pd.DataFrame.from_dict(load_organization_teams(organization_id))
+    projects = pd.DataFrame()
+    for i in teams["id"]:
+        projects_to_add = pd.DataFrame.from_dict(load_team_projects(i))
+        projects = pd.concat([projects,projects_to_add])
+    return projects
+
+
+# organization_id = 'e52fe339-164d-4c2b-a8c0-f562dfce066d'
+# print(get_project_list(organization_id))

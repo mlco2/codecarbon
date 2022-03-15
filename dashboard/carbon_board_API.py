@@ -16,6 +16,10 @@ from data.data import (
     get_project_experiments,
     get_run_emissions,
     get_run_sums,
+    get_project_sums,
+    get_orga_sums,
+    get_project,
+    get_project_list,
 )
 from plotly.subplots import make_subplots
 
@@ -43,10 +47,14 @@ app = dash.Dash(
 components = Components()
 # data
 # *******************************************************************************
-df = pd.read_csv(
-    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
-)
-df.timestamp = pd.to_datetime(df.timestamp)
+#df = pd.read_csv(
+#    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
+#)
+#df.timestamp = pd.to_datetime(df.timestamp)
+
+#SET ORGA_ID ans associated projects
+orga_id = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+df = get_project_list(orga_id)
 
 df_mix = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
@@ -72,17 +80,10 @@ app.layout = dbc.Container(
                         id="projectPicked",
                         options=[
                             {"label": projectName, "value": projectId}
-                            for projectName, projectId in zip(
-                                df[["project_name", "project_id"]]
-                                .drop_duplicates()
-                                .iloc[:, 0],
-                                df[["project_name", "project_id"]]
-                                .drop_duplicates()
-                                .iloc[:, 1],
-                            )
-                            #                            for projectName, projectId in df[['project_name','project_id']].drop_duplicates().iteritems()
+                            for projectName, projectId in zip(df.name,df.id)
+                            # for projectName, projectId in df[['project_name','project_id']].drop_duplicates().iteritems()
                         ],
-                        value=df.project_id.unique().tolist()[0],
+                        value=df.id.unique().tolist()[0],
                         inline=True,
 #                        label_checked_class_name="text-primary",
 #                        input_checked_class_name="border border-primary bg-primary",
@@ -138,7 +139,7 @@ app.layout = dbc.Container(
                     "label": "Global Carbon Intensity",
                     "value": "Global Carbon Intensity",
                 },
-                {"label": "My Carbon Emissions", "value": "My Carbon Emissions"},
+                {"label": "My Project Emissions", "value": "My Project Emissions"},
             ],
             multi=False,
             value="Global Carbon Intensity",
@@ -168,14 +169,21 @@ app.layout = dbc.Container(
     ],
 )
 def update_indicator(start_date, end_date):
-    dff = df.copy()
-    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
-    # Tot_Energy consumed card
-    Tot_energy_consumed = str(round(dff.energy_consumed.sum(), 2))
-    # Tot Emissions card
-    Tot_emissions = str(round(dff.emissions_sum.sum(), 2))
-    # Tot_Duration cards
-    tot_duration_min = round(dff.duration.sum() / 60)
+#    dff = df.copy()
+#    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
+    orga_id = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+    df_orga = get_orga_sums(orga_id,start_date,end_date)
+    # Tot_Energy consumed card / Tot Emissions card / Tot_Duration cards
+    if df_orga == None:
+        Tot_energy_consumed = 0
+        Tot_emissions = 0
+        tot_duration_min = 0
+    else:
+        Tot_energy_consumed = str(round(df_orga["energy_consumed"], 2))
+        Tot_emissions = str(round(df_orga["emissions"], 2))
+        tot_duration_min = round(df_orga["duration"]/ 60)
     tot_duration = str(tot_duration_min)
     tot_duration_unit = "min"
     if tot_duration_min >= 60:
@@ -209,13 +217,23 @@ def update_indicator(start_date, end_date):
     ],
 )
 def update_Charts(start_date, end_date, project):
-    dff = df.copy()
-    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
+#    dff = df.copy()
+#    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
-    energyConsumed = dff[dff["project_id"] == project].energy_consumed.sum()
-    emission = dff[dff["project_id"] == project].emissions_sum.sum()
-    duration = dff[dff["project_id"] == project].duration.sum()
+#    energyConsumed = dff[dff["project_id"] == project].energy_consumed.sum()
+#    emission = dff[dff["project_id"] == project].emissions_sum.sum()
+#    duration = dff[dff["project_id"] == project].duration.sum()
+    df_project = get_project_sums(project,start_date,end_date)
+    if df_project == None:
+        energyConsumed = 0
+        emission = 0
+        duration = 0
+    else:
+        energyConsumed = df_project["energy_consumed"]
+        emission = df_project["emissions"]
+        duration = df_project["duration"]
+        
     # Cards
     # --------------------------------------------------------------
     houseHold = str(round(100 * emission / 160.58, 2)) + " %"
@@ -268,6 +286,22 @@ def update_Charts(start_date, end_date, project):
     #     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
     # figPieDuration.update_layout(title_text=duration_project_unit, title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,margin=dict(r=0,l=0,t=0,b=0))
     # figPieDuration.add_annotation(text=duration_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
+    
+    # ALL PROJECTS
+#    Total_project_en = dff.energy_consumed.sum()
+#    Total_project_em = dff.emissions_sum.sum()
+#    Total_project_du = dff.duration.sum()
+    orga_id = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+    df_orga = get_orga_sums(orga_id,start_date,end_date)
+    if df_orga == None:
+        Total_orga_energy = 1
+        Total_orga_emission = 1
+        Total_orga_duration = 1
+    else:
+        Total_orga_energy = df_orga["energy_consumed"]
+        Total_orga_emission = df_orga["emissions"]
+        Total_orga_duration = df_orga["duration"]
+    
     figPie = make_subplots(
         rows=1,
         cols=3,
@@ -276,7 +310,7 @@ def update_Charts(start_date, end_date, project):
     )
     figPie.add_trace(
         go.Pie(
-            values=[energyConsumed, dff.energy_consumed.sum() - energyConsumed],
+            values=[energyConsumed, Total_orga_energy - energyConsumed],
             title="KwH",
             title_position="bottom center",
             textinfo="none",
@@ -289,7 +323,7 @@ def update_Charts(start_date, end_date, project):
     )
     figPie.add_trace(
         go.Pie(
-            values=[emission, dff.emissions_sum.sum() - emission],
+            values=[emission, Total_orga_emission - emission],
             textinfo="none",
             hole=0.8,
             marker=dict(colors=[vividgreen, color3]),
@@ -302,7 +336,7 @@ def update_Charts(start_date, end_date, project):
     )
     figPie.add_trace(
         go.Pie(
-            values=[duration, (dff.duration.sum() - duration)],
+            values=[duration, (Total_orga_duration - duration)],
             textinfo="none",
             hole=0.8,
             marker=dict(colors=[vividgreen, color3]),
@@ -404,8 +438,13 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     if clickPoint is None:
-        experiment_id = get_project_experiments(project)["id"].iloc[-1]
-        experiment_name = get_project_experiments(project)["name"].iloc[-1]
+        experiment = get_project_experiments(project)
+        if not(experiment.empty):            
+            experiment_id = experiment["id"].iloc[-1]
+            experiment_name = experiment["name"].iloc[-1]
+        else:
+            experiment_id = None
+            experiment_name = None
     else:
         experiment_id = clickPoint["points"][0]["hovertext"]
         experiment_name = clickPoint["points"][0]["label"]
@@ -423,8 +462,9 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
 #        )
 #        .reset_index()
 #    )
-    df1 = get_run_sums(experiment_id, start_date, end_date)
-    if df1.empty:
+    if experiment_id != None:
+        df1 = get_run_sums(experiment_id, start_date, end_date)
+    if df1.empty or experiment_id == None:
         df1 = pd.DataFrame([[start_date,0,0,1,"/"],[end_date,0,0,1,"/"]],columns=["timestamp","emissions","energy_consumed","duration","run_id"])
     bubble = px.scatter(
         df1,
@@ -529,27 +569,31 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     ],
 )
 def update_map(start_date, end_date, project, kpi):
-    dff = df.copy()
-    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
-    dff = dff[dff["project_id"] == project]
-    dff = dff.groupby(["project_name", "country_iso_code", "country_name"]).agg(
-        {"emissions_sum": "sum", "duration": "sum"}
-    )
-    #    dff["ratio"] = dff["emissions_sum"] / dff["duration"] * 3600 * 24
-    dff = dff.reset_index()
-    dff_mix = df_mix.copy()
     container = ""
     # Plotly Express
-    if kpi == "My Carbon Emissions":
+    if kpi == "My Project Emissions":
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
+        df_em = get_experiment_sums(project,start_date,end_date)
+        if not(df_em.empty):
+            df_em = df_em.groupby(["country_iso_code", "country_name"]).agg({"emissions": "sum"}).reset_index()
+            df_em["emissions"] = round(df_em["emissions"],2)
+            df_em["project_name"] = get_project(project)["name"]
+            orga_id = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+            project_em = get_orga_sums(orga_id,start_date,end_date)["emissions"]
+        else:
+            df_em = pd.DataFrame(columns=["country_iso_code","country_name","project_name","emissions"])
+            project_em = 100
         fig = px.choropleth(
-            data_frame=dff,
+            data_frame=df_em,
             locationmode="ISO-3",
             locations="country_iso_code",
             scope="world",
-            color="emissions_sum",
-            hover_data=["country_name", "emissions_sum", "project_name"],
+            color="emissions",
+            hover_data=["country_name", "project_name", "emissions"],
             color_continuous_scale=[vividgreen, darkgreen],
-            labels={"emissions_sum": "CO2 emissions"},
+            range_color=[0,project_em],
+            labels={"emissions": "CO2 emissions"},
             template="CodeCarbonTemplate",
         )
         fig.update_coloraxes(
@@ -560,7 +604,7 @@ def update_map(start_date, end_date, project, kpi):
         )
     elif kpi == "Global Carbon Intensity":
         fig = px.choropleth(
-            data_frame=dff_mix,
+            data_frame=df_mix,
             locationmode="ISO-3",
             locations="ISO",
             scope="world",
