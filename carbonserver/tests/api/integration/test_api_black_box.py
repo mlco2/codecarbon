@@ -331,3 +331,30 @@ def test_api29_experiment_read_detailed_sums():
     assert len(r.json()) > 0
     assert r.json()[0]["experiment_id"] == experiment_id
     assert r.json()[0]["duration"] == 98745.0
+
+
+def test_api30_run_read_detailed_sums():
+    url = f"{URL}/runs/{experiment_id}/sums/"
+    r = requests.get(url, timeout=2)
+    assert r.status_code == 200
+    assert len(r.json()) > 0
+    assert r.json()[0]["run_id"] == run_id
+    assert r.json()[0]["duration"] == 98745.0
+
+
+def test_api31_project_read_detailed_sums():
+    url = f"{URL}/project/{project_id}/sums/"
+    r = requests.get(url, timeout=2)
+    assert r.status_code == 200
+    assert len(r.json()) > 0
+    assert r.json()["project_id"] == project_id
+    assert r.json()["duration"] == 98745.0
+
+
+def test_api32_organization_read_detailed_sums():
+    url = f"{URL}/organization/{org_new_id}/sums/"
+    r = requests.get(url, timeout=2)
+    assert r.status_code == 200
+    assert len(r.json()) > 0
+    assert r.json()["organization_id"] == org_new_id
+    assert r.json()["duration"] == 98745.0
