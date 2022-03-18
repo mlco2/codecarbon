@@ -111,22 +111,22 @@ class FileOutput(BaseOutput):
 
         if not file_exists:
             df = pd.DataFrame(columns=data.values.keys())
-            df = df.append(dict(data.values), ignore_index=True)
+            df = pd.concat([df, pd.DataFrame.from_records([dict(data.values)])])
         elif self.on_csv_write == "append":
             df = pd.read_csv(self.save_file_path)
-            df = df.append(dict(data.values), ignore_index=True)
+            df = pd.concat([df, pd.DataFrame.from_records([dict(data.values)])])
         else:
             df = pd.read_csv(self.save_file_path)
             df_run = df.loc[df.run_id == data.run_id]
             if len(df_run) < 1:
-                df = df.append(dict(data.values), ignore_index=True)
+                df = pd.concat([df, pd.DataFrame.from_records([dict(data.values)])])
             elif len(df_run) > 1:
                 logger.warning(
                     f"CSV contains more than 1 ({len(df_run)})"
                     + f" rows with current run ID ({data.run_id})."
                     + "Appending instead of updating."
                 )
-                df = df.append(dict(data.values), ignore_index=True)
+                df = pd.concat([df, pd.DataFrame.from_records([dict(data.values)])])
             else:
                 df.at[
                     df.run_id == data.run_id, data.values.keys()

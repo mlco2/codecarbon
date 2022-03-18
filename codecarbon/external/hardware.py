@@ -23,6 +23,8 @@ POWER_CONSTANT = 85
 #  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
+B_TO_GB = 1024 * 1024 * 1024  # Or 1e9 ?
+
 
 @dataclass
 class BaseHardware(ABC):
@@ -124,32 +126,43 @@ class CPU(BaseHardware):
 
     def _get_power_from_cpus(self) -> Power:
         """
-        Get CPU power from Intel Power Gadget
+        Get CPU power
         :return: power in kW
         """
         if self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
-
-        all_cpu_details: Dict = self._intel_interface.get_cpu_details()
+        elif self._mode == "intel_rapl":
+            # Don't call get_cpu_details to avoid computing energy twice and loosing data.
+            all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()
+        else:
+            all_cpu_details: Dict = self._intel_interface.get_cpu_details()
 
         power = 0
         for metric, value in all_cpu_details.items():
-            if re.match(r"^Processor Power_\d+\(Watt\)$", metric):
+            # "^Processor Power_\d+\(Watt\)$" for Inter Power Gadget
+            if re.match(r"^Processor Power", metric):
                 power += value
+                logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
+
+            else:
+                logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
         return Power.from_watts(power)
 
-    def _get_energy_from_cpus(self, delay: float) -> Energy:
+    def _get_energy_from_cpus(self, delay: Time) -> Energy:
         """
         Get CPU energy deltas from RAPL files
         :return: energy in kWh
         """
-        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay=delay)
+        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay)
 
         energy = 0
         for metric, value in all_cpu_details.items():
-            if re.match(r"^Processor Energy Delta_\d+\(Watt\)$", metric):
+            if re.match(r"^Processor Energy Delta_\d", metric):
                 energy += value
+                logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
+            else:
+                logger.debug(f"_get_energy_from_cpus - DONT MATCH {metric} : {value}")
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
@@ -158,11 +171,10 @@ class CPU(BaseHardware):
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         if self._mode == "intel_rapl":
-            energy = self._get_energy_from_cpus(delay=last_duration)
-            power = Power.from_energy_delta_and_delay(
-                energy, Time.from_seconds(last_duration)
-            )
+            energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
+            power = self.total_power()
             return power, energy
+        # If not intel_rapl
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def get_model(self):
@@ -257,13 +269,13 @@ class RAM(BaseHardware):
                 "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
-            return psutil.virtual_memory().total / 1e9
+            return psutil.virtual_memory().total / B_TO_GB
         if len(mem_matches) > 1:
             logger.warning(
                 "Unexpected output after running `scontrol show job $SLURM_JOBID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
-            return psutil.virtual_memory().total / 1e9
+            return psutil.virtual_memory().total / B_TO_GB
 
         return mem_matches[0].replace("mem=", "")
 
@@ -276,7 +288,7 @@ class RAM(BaseHardware):
                 + "to retrieve SLURM-available RAM."
                 + "Using the machine's total RAM."
             )
-            return psutil.virtual_memory().total / 1e9
+            return psutil.virtual_memory().total / B_TO_GB
         mem = self._parse_scontrol(scontrol_str)
         if isinstance(mem, str):
             return self._parse_scontrol_memory_GB(mem)
@@ -293,14 +305,14 @@ class RAM(BaseHardware):
         children_memories = self._get_children_memories() if self._children else []
         main_memory = psutil.Process(self._pid).memory_info().rss
         memories = children_memories + [main_memory]
-        return sum([m for m in memories if m] + [0]) / 1e9
+        return sum([m for m in memories if m] + [0]) / B_TO_GB
 
     @property
     def machine_memory_GB(self):
         return (
             self.slurm_memory_GB
             if os.environ.get("SLURM_JOB_ID")
-            else psutil.virtual_memory().total / 1e9
+            else psutil.virtual_memory().total / B_TO_GB
         )
 
     def total_power(self) -> Power:

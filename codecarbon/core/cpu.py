@@ -7,7 +7,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
 import warnings
 from typing import Dict, Tuple
 
@@ -17,6 +16,7 @@ with warnings.catch_warnings(record=True) as w:
     from fuzzywuzzy import fuzz
 
 from codecarbon.core.rapl import RAPLFile
+from codecarbon.core.units import Time
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
@@ -50,6 +50,7 @@ class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
+    # TODO: There is now a 3.6 version.
     _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
 
     def __init__(
@@ -158,6 +159,9 @@ class IntelRAPL:
         self._system = sys.platform.lower()
         self._rapl_files = list()
         self._setup_rapl()
+        self._cpu_details: Dict = dict()
+
+        self._last_mesure = 0
 
     def _is_platform_supported(self) -> bool:
         return self._system.startswith("lin")
@@ -188,6 +192,7 @@ class IntelRAPL:
             path = os.path.join(self._lin_rapl_dir, file, "name")
             with open(path) as f:
                 name = f.read().strip()
+                # Fake the name used by Power Gadget
                 if "package" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
@@ -206,24 +211,43 @@ class IntelRAPL:
                     )
         return
 
-    def get_cpu_details(self, delay: float = 0.01, **kwargs) -> Dict:
+    def get_cpu_details(self, duration: Time, **kwargs) -> Dict:
         """
         Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
         cpu_details = dict()
         try:
-            list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
-            time.sleep(delay)
-            list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
+            # list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
+            # time.sleep(delay)  # BCO !!!
+            # list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
+            # Call delta() on all RAPLFile()
+            list(map(lambda rapl_file: rapl_file.delta(duration), self._rapl_files))
+
             for rapl_file in self._rapl_files:
+                logger.debug(rapl_file)
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
+                # We fake the name used by Power Gadget when using RAPL
+                if "Energy" in rapl_file.name:
+                    cpu_details[
+                        rapl_file.name.replace("Energy", "Power")
+                    ] = rapl_file.power.W
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \
                 Exception occurred {e}",
                 exc_info=True,
             )
+        self.cpu_details = cpu_details
+        logger.debug(f"get_cpu_details {self.cpu_details}")
         return cpu_details
+
+    def get_static_cpu_details(self) -> Dict:
+        """
+        Return CPU details without computing them.
+        """
+        logger.debug(f"get_static_cpu_details {self.cpu_details}")
+
+        return self.cpu_details
 
 
 class TDP:

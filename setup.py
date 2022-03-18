@@ -20,7 +20,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy", "requests-mo
 
 setuptools.setup(
     name="codecarbon",
-    version="2.0.0a2",
+    version="2.0.0a3",
     author="Mila, DataForGood, BCG GAMMA, Comet.ml, Haverford College",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -43,7 +43,7 @@ setuptools.setup(
             "data/hardware/cpu_power.csv",
             "data/private_infra/2016/usa_emissions.json",
             "data/private_infra/2016/canada_energy_mix.json",
-            "data/private_infra/carbon_intensity_per_source.json"
+            "data/private_infra/carbon_intensity_per_source.json",
             "data/private_infra/global_energy_mix.json",
             "viz/assets/*.png",
         ],
