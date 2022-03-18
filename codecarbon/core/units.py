@@ -116,7 +116,7 @@ class Power:
             Power: Resulting Power estimation
         """
         delta_energy = abs(e2.kWh - e1.kWh)
-        kW = delta_energy / delay.hours
+        kW = delta_energy / delay.hours if delay.hours != 0.0 else 0.0
         return cls(kW=kW)
 
     @classmethod
