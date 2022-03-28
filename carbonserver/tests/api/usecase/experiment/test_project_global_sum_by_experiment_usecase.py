@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest import mock
 
-from dateutil import relativedelta
+import dateutil.relativedelta
 
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,
@@ -13,7 +13,7 @@ from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
 EXPERIMENT_ID = "10276e58-6df7-42cf-abb8-429773a35eb5"
 EXPERIMENT_WITH_DETAILS_ID = "943b2aa5-9e21-41a9-8a38-562505b4b2aa"
 END_DATE = datetime.now()
-START_DATE = END_DATE - relativedelta.relativedelta(months=3)
+START_DATE = END_DATE - dateutil.relativedelta.relativedelta(months=3)
 
 
 EMISSIONS_SUM = 1544.54
