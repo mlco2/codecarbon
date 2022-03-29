@@ -22,7 +22,7 @@ from codecarbon.external.logger import logger
 @dataclass
 class EmissionsData:
     """
-    Output object containg experiment data
+    Output object containg run data
     """
 
     timestamp: str

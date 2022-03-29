@@ -160,9 +160,7 @@ class CPU(BaseHardware):
         for metric, value in all_cpu_details.items():
             if re.match(r"^Processor Energy Delta_\d", metric):
                 energy += value
-                logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
-            else:
-                logger.debug(f"_get_energy_from_cpus - DONT MATCH {metric} : {value}")
+                # logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
