@@ -5,7 +5,6 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 DEPENDENCIES = [
     "arrow",
-    "dataclasses;python_version<'3.7'",
     "pandas",
     "pynvml",
     "requests",
@@ -20,7 +19,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy", "requests-mo
 
 setuptools.setup(
     name="codecarbon",
-    version="2.0.0a3",
+    version="2.0.0a4",
     author="Mila, DataForGood, BCG GAMMA, Comet.ml, Haverford College",
     long_description=long_description,
     long_description_content_type="text/markdown",
