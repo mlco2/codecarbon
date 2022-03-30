@@ -571,6 +571,7 @@ class BaseEmissionsTracker(ABC):
                 )
                 self._cc_api__out.out(emissions)
                 self._measure_occurrence = 0
+        logger.debug(f"last_duration={last_duration}\n------------------------")
 
     def __enter__(self):
         self.start()
