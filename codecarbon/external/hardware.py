@@ -46,6 +46,9 @@ class BaseHardware(ABC):
         )
         return power, energy
 
+    def start(self) -> None:
+        pass
+
 
 @dataclass
 class GPU(BaseHardware):
@@ -174,6 +177,10 @@ class CPU(BaseHardware):
             return power, energy
         # If not intel_rapl
         return super().measure_power_and_energy(last_duration=last_duration)
+
+    def start(self):
+        self._intel_interface.start()
+        pass
 
     def get_model(self):
         return self._model

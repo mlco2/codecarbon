@@ -152,6 +152,10 @@ class IntelPowerGadget:
             )
         return cpu_details
 
+    def start():
+        # TODO: Read energy
+        pass
+
 
 class IntelRAPL:
     def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
@@ -217,10 +221,6 @@ class IntelRAPL:
         """
         cpu_details = dict()
         try:
-            # list(map(lambda rapl_file: rapl_file.start(), self._rapl_files))
-            # time.sleep(delay)  # BCO !!!
-            # list(map(lambda rapl_file: rapl_file.end(), self._rapl_files))
-            # Call delta() on all RAPLFile()
             list(map(lambda rapl_file: rapl_file.delta(duration), self._rapl_files))
 
             for rapl_file in self._rapl_files:
@@ -248,6 +248,10 @@ class IntelRAPL:
         logger.debug(f"get_static_cpu_details {self.cpu_details}")
 
         return self.cpu_details
+
+    def start(self):
+        for rapl_file in self._rapl_files:
+            rapl_file.start()
 
 
 class TDP:
@@ -379,3 +383,6 @@ class TDP:
                 + " Resorting to a default power consumption of 85W."
             )
         return "Unknown", None
+
+    def start():
+        pass
