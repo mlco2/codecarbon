@@ -519,6 +519,7 @@ class BaseEmissionsTracker(ABC):
 
         for hardware in self._hardware:
             h_time = time.time()
+            # Compute last_duration again for more accuracy
             last_duration = time.time() - self._last_measured_time
             power, energy = hardware.measure_power_and_energy(
                 last_duration=last_duration
@@ -555,7 +556,6 @@ class BaseEmissionsTracker(ABC):
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
         )
-        last_duration = time.time() - self._last_measured_time
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
         if self._cc_api__out is not None and self._api_call_interval != -1:
