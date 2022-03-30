@@ -362,6 +362,10 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._last_measured_time = self._start_time = time.time()
+        # Read initial energy for hardware
+        for hardware in self._hardware:
+            hardware.start()
+
         self._scheduler.start()
 
     @suppress(Exception)

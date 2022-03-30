@@ -30,10 +30,6 @@ class RAPLFile:
         self.last_energy = self._get_value()
         return
 
-    def end(self) -> None:
-        self.energy_delta = self.energy_reading - self._get_value()
-        return
-
     def delta(self, duration: Time) -> None:
         """
         Compute the energy used since last call.
