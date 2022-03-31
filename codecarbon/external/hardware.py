@@ -266,7 +266,7 @@ class RAM(BaseHardware):
         if unit == "M":
             return nb / 1000
         if unit == "K":
-            return nb / (1000 ** 2)
+            return nb / (1000**2)
 
     def _parse_scontrol(self, scontrol_str):
         mem_matches = re.findall(r"mem=\d+[A-Z]", scontrol_str)

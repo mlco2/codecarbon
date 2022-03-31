@@ -1,16 +1,16 @@
 repos:
     - repo: https://github.com/pycqa/isort
-      rev: 5.8.0
+      rev: 5.10.1
       hooks:
           - id: isort
             args: ["--filter-files"]
     - repo: https://github.com/psf/black
-      rev: 21.4b1
+      rev: 22.3.0
       hooks:
           - id: black
             args: [--safe]
     - repo: https://gitlab.com/pycqa/flake8
-      rev: 3.9.1
+      rev: 4.0.1
       hooks:
           - id: flake8
             args: ["--config=.flake8"]
