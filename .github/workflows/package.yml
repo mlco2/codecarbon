@@ -30,7 +30,6 @@ jobs:
           run: |
               conda install conda-build conda-verify
               mkdir -p conda_dist
-              conda build --python 3.6 .conda/py36/ -c conda-forge --output-folder conda_dist
               conda build --python 3.8 .conda/py37-plus/ -c conda-forge --output-folder conda_dist
         - name: Archive Conda artifacts
           uses: actions/upload-artifact@v1

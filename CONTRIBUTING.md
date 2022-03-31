@@ -34,7 +34,7 @@ Before submitting a new issue, please search the issues to make sure there isn't
 New issues can be created with in the [GitHub repo](https://github.com/mlco2/codecarbon/issues/new).
 
 
-### Installation 
+### Installation
 
 
 Create a virtual environment using `conda` for easier management of dependencies and packages.
@@ -155,10 +155,9 @@ You can also run `pre-commit` with `pre-commit run -v` if you have some changes 
 Dependencies are defined in three different places:
 
 - In [setup.py](setup.py#L7), those are the dependencies for the Pypi package.
-- In [.conda/py36/meta.yaml](.conda/py36/meta.yaml#21), those are dependencies for the Conda package targeting Python 3.6.
 - In [.conda/py37-plus/meta.yaml](.conda/py37-plus/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
-We are currently support Python 3.6 at minimum and new dependencies must be compatible with Python 3.6.
+We drop support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
 ### Alternative ways of contributing
 
@@ -228,7 +227,7 @@ PORT="8080"
 ```
 _CC stand here for Clever Cloud, not Code Carbon_ 😉
 
-To deploy, 
+To deploy,
 ```
 git remote add deploy git+ssh://git@push-n2-par-clevercloud-customers.services.clever-cloud.com/app_<secret_do_not_share>.git
 git push deploy master:master
