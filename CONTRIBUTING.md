@@ -155,7 +155,7 @@ You can also run `pre-commit` with `pre-commit run -v` if you have some changes 
 Dependencies are defined in three different places:
 
 - In [setup.py](setup.py#L7), those are the dependencies for the Pypi package.
-- In [.conda/py37-plus/meta.yaml](.conda/py37-plus/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
+- In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
 We drop support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
@@ -172,7 +172,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon ? You can
 
 
 - Merge all PRs
-- Create and Merge a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py and https://github.com/mlco2/codecarbon/blob/master/meta.yaml.
+- Create and Merge a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py and https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - Edit the Draft release on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it.
 - Go to the `package` Github action for the merge commit, wait for the run to finish, then download the two artifacts `pypi_dist` and `conda_dist`.
