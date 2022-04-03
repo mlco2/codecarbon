@@ -21,3 +21,6 @@ class RunService:
 
     def list_runs_from_experiment(self, experiment_id: str):
         return self._repository.get_runs_from_experiment(experiment_id)
+
+    def read_project_last_run(self, project_id: str, start_date, end_date) -> Run:
+        return self._repository.get_project_last_run(project_id, start_date, end_date)

@@ -7,6 +7,8 @@ from sqlalchemy import and_, func
 
 from carbonserver.api.domain.runs import Runs
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
+from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import Run, RunCreate, RunReport
 
@@ -165,3 +167,37 @@ class SqlAlchemyRepository(Runs):
                 .all()
             )
             return res
+
+    def get_project_last_run(self, project_id, start_date, end_date) -> Run:
+        """TODO Find the last run of a project in database between two dates and return it
+
+        :project_id: The id of the project to retrieve runs from
+        :start_date: the lower bound of the time interval which contains sought runs
+        :end_date: the upper bound of the time interval which contains sought runs
+        :returns: A Run object
+        :rtype: schemas.Run
+        """
+        with self.session_factory() as session:
+            res = (
+                session.query(SqlModelRun)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelExperiment.id == SqlModelRun.experiment_id,
+                    isouter=True,
+                )
+                .join(
+                    SqlModelProject, SqlModelProject.id == SqlModelExperiment.project_id
+                )
+                .filter(SqlModelProject.id == project_id)
+                .filter(
+                    and_(SqlModelRun.timestamp >= start_date),
+                    (SqlModelRun.timestamp < end_date),
+                )
+                .order_by(SqlModelRun.timestamp.desc())
+                .first()
+            )
+
+            if res is None:
+                return None
+            else:
+                return self.map_sql_to_schema(res)

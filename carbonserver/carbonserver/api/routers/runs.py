@@ -99,3 +99,25 @@ def read_experiment_detailed_sums_by_run(
     return experiment_global_sum_by_run_usecase.compute_detailed_sum(
         experiment_id, start_date, end_date
     )
+
+
+@router.get(
+    "/lastrun/project/{project_id}",
+    tags=RUNS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=Run,
+)
+@inject
+def read_project_last_run(
+    project_id: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    run_service: RunService = Depends(Provide[ServerContainer.run_service]),
+) -> Run:
+    start_date = (
+        start_date
+        if start_date
+        else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
+    )
+    end_date = end_date if end_date else datetime.now()
+    return run_service.read_project_last_run(project_id, start_date, end_date)

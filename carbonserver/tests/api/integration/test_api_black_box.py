@@ -358,3 +358,12 @@ def test_api32_organization_read_detailed_sums():
     assert len(r.json()) > 0
     assert r.json()["organization_id"] == org_new_id
     assert r.json()["duration"] == 98745.0
+
+
+def test_api33_project_read_last_run():
+    url = f"{URL}/lastrun/project/{project_id}/"
+    r = requests.get(url, timeout=2)
+    assert r.status_code == 200
+    assert len(r.json()) > 0
+    assert r.json()["id"] == run_id
+    assert r.json()["experiment_id"] == experiment_id
