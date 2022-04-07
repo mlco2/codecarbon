@@ -46,6 +46,9 @@ class BaseHardware(ABC):
         )
         return power, energy
 
+    def start(self) -> None:
+        pass
+
 
 @dataclass
 class GPU(BaseHardware):
@@ -160,9 +163,7 @@ class CPU(BaseHardware):
         for metric, value in all_cpu_details.items():
             if re.match(r"^Processor Energy Delta_\d", metric):
                 energy += value
-                logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
-            else:
-                logger.debug(f"_get_energy_from_cpus - DONT MATCH {metric} : {value}")
+                # logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
@@ -176,6 +177,11 @@ class CPU(BaseHardware):
             return power, energy
         # If not intel_rapl
         return super().measure_power_and_energy(last_duration=last_duration)
+
+    def start(self):
+        if self._mode in ["intel_power_gadget", "intel_rapl"]:
+            self._intel_interface.start()
+        pass
 
     def get_model(self):
         return self._model
@@ -260,7 +266,7 @@ class RAM(BaseHardware):
         if unit == "M":
             return nb / 1000
         if unit == "K":
-            return nb / (1000 ** 2)
+            return nb / (1000**2)
 
     def _parse_scontrol(self, scontrol_str):
         mem_matches = re.findall(r"mem=\d+[A-Z]", scontrol_str)

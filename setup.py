@@ -5,7 +5,6 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 DEPENDENCIES = [
     "arrow",
-    "dataclasses;python_version<'3.7'",
     "pandas",
     "pynvml",
     "requests",
@@ -20,7 +19,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy", "requests-mo
 
 setuptools.setup(
     name="codecarbon",
-    version="2.0.0a3",
+    version="2.0.0",
     author="Mila, DataForGood, BCG GAMMA, Comet.ml, Haverford College",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -32,7 +31,6 @@ setuptools.setup(
     extras_require={"viz": ["dash", "dash_bootstrap_components", "fire"]},
     classifiers=[
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -48,7 +46,7 @@ setuptools.setup(
             "viz/assets/*.png",
         ],
     },
-    python_requires=">=3.6",
+    python_requires=">3.6",
     entry_points={
         "console_scripts": [
             "carbonboard = codecarbon.viz.carbonboard:main",

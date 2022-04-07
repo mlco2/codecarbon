@@ -362,6 +362,10 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._last_measured_time = self._start_time = time.time()
+        # Read initial energy for hardware
+        for hardware in self._hardware:
+            hardware.start()
+
         self._scheduler.start()
 
     @suppress(Exception)
@@ -519,6 +523,8 @@ class BaseEmissionsTracker(ABC):
 
         for hardware in self._hardware:
             h_time = time.time()
+            # Compute last_duration again for more accuracy
+            last_duration = time.time() - self._last_measured_time
             power, energy = hardware.measure_power_and_energy(
                 last_duration=last_duration
             )
@@ -565,6 +571,7 @@ class BaseEmissionsTracker(ABC):
                 )
                 self._cc_api__out.out(emissions)
                 self._measure_occurrence = 0
+        logger.debug(f"last_duration={last_duration}\n------------------------")
 
     def __enter__(self):
         self.start()
