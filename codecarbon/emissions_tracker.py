@@ -3,7 +3,6 @@ Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
 import dataclasses
-import logging
 import os
 import platform
 import time
@@ -30,8 +29,7 @@ from codecarbon.output import (
     EmissionsData,
     FileOutput,
     HTTPOutput,
-    LoggingOutput,
-    CloudLoggerOutput,
+    LoggerOutput,
 )
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
@@ -145,8 +143,8 @@ class BaseEmissionsTracker(ABC):
         output_file: Optional[str] = _sentinel,
         save_to_file: Optional[bool] = _sentinel,
         save_to_api: Optional[bool] = _sentinel,
-        write_to_logger: Optional[bool] = _sentinel,
-        logging_logger: Optional[logging.Logger] = _sentinel,
+        save_to_logger: Optional[bool] = _sentinel,
+        logging_logger: Optional[LoggerOutput] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
@@ -175,6 +173,10 @@ class BaseEmissionsTracker(ABC):
                              file, defaults to True
         :param save_to_api: Indicates if the emission artifacts should be send to the
                             CodeCarbon API, defaults to False
+        :param save_to_logger: Indicates if the emission artifacts should be written
+                            to a dedicated logger, defaults to False
+        :param logging_logger: LoggerOutput object encapsulating a logging.logger
+                            or a Google Cloud logger
         :param gpu_ids: User-specified known gpu ids to track, defaults to None
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data
@@ -211,7 +213,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(project_name, "project_name", "codecarbon")
         self._set_from_conf(save_to_api, "save_to_api", False, bool)
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
-        self._set_from_conf(write_to_logger, "write_to_logger", False, bool)
+        self._set_from_conf(save_to_logger, "save_to_logger", False, bool)
         self._set_from_conf(logging_logger, "logging_logger")
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
@@ -339,8 +341,8 @@ class BaseEmissionsTracker(ABC):
                 )
             )
 
-        if self._write_to_logger:
-            self.persistence_objs.append(LoggingOutput(self._logging_logger)) if isinstance(self._logging_logger, logging.Logger) else self.persistence_objs.append(CloudLoggerOutput(self._logging_logger))
+        if self._save_to_logger:
+            self.persistence_objs.append(self._logging_logger)
 
         if self._emissions_endpoint:
             self.persistence_objs.append(HTTPOutput(emissions_endpoint))
@@ -711,6 +713,8 @@ def track_emissions(
     output_file: Optional[str] = _sentinel,
     save_to_file: Optional[bool] = _sentinel,
     save_to_api: Optional[bool] = _sentinel,
+    save_to_logger: Optional[bool] = _sentinel,
+    logging_logger: Optional[LoggerOutput] = _sentinel,
     offline: Optional[bool] = _sentinel,
     emissions_endpoint: Optional[str] = _sentinel,
     experiment_id: Optional[str] = _sentinel,
@@ -737,6 +741,10 @@ def track_emissions(
                          defaults to True
     :param save_to_api: Indicates if the emission artifacts should be send to the
                         CodeCarbon API, defaults to False
+    :param save_to_logger: Indicates if the emission artifacts should be written
+                        to a dedicated logger, defaults to False
+    :param logging_logger: LoggerOutput object encapsulating a logging.logger
+                        or a Google Cloud logger
     :param offline: Indicates if the tracker should be run in offline mode
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
                              being run, required if `offline=True`
@@ -774,6 +782,8 @@ def track_emissions(
                     output_dir=output_dir,
                     output_file=output_file,
                     save_to_file=save_to_file,
+                    save_to_logger=save_to_logger,
+                    logging_logger=logging_logger,
                     country_iso_code=country_iso_code,
                     region=region,
                     cloud_provider=cloud_provider,
@@ -792,6 +802,8 @@ def track_emissions(
                     output_dir=output_dir,
                     output_file=output_file,
                     save_to_file=save_to_file,
+                    save_to_logger=save_to_logger,
+                    logging_logger=logging_logger,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
                     emissions_endpoint=emissions_endpoint,
