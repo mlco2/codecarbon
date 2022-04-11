@@ -5,6 +5,7 @@ Provides functionality for persistence of data
 import csv
 import dataclasses
 import getpass
+import json
 import logging
 import os
 from abc import ABC, abstractmethod
@@ -190,7 +191,7 @@ class CodeCarbonAPIOutput(BaseOutput):
             logger.error(e, exc_info=True)
 
 
-class LoggingOutput(BaseOutput):
+class LoggerOutput(BaseOutput):
     """
     Send emissions data to a logger
     """
@@ -198,20 +199,16 @@ class LoggingOutput(BaseOutput):
     def __init__(self, logger, severity=logging.INFO):
         self.logger = logger
         self.logging_severity = severity
-        # if severity is None:
-        #     self.logging_severity = self.logger.getEffectiveLevel() # KO avec Cloud Logging
-        # else:
-        #     self.logging_severity = severity
 
     def out(self, data: EmissionsData):
         try:
             payload = dataclasses.asdict(data)
-            self.logger.log(self.logging_severity, "{}".format(payload))
+            self.logger.log(self.logging_severity, msg=json.dumps(payload))
         except Exception as e:
             logger.error(e, exc_info=True)
 
 
-class CloudLoggerOutput(LoggingOutput):
+class GoogleCloudLoggerOutput(LoggerOutput):
     """
     Send emissions data to GCP Cloud Logging
     """
@@ -220,6 +217,5 @@ class CloudLoggerOutput(LoggingOutput):
         try:
             payload = dataclasses.asdict(data)
             self.logger.log_struct(payload, severity=self.logging_severity)
-            print('Cloud Logging: {}'.format(payload))
         except Exception as e:
             logger.error(e, exc_info=True)
