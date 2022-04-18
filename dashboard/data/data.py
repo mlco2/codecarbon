@@ -1,16 +1,17 @@
-import pandas as pd
 from math import ceil
 
+import pandas as pd
 from data.data_loader import (
     load_experiment_runs,
     load_experiment_sums,
+    load_orga_sums,
+    load_organization_teams,
+    load_organizations,
+    load_project,
     load_project_experiments,
+    load_project_sums,
     load_run_emissions,
     load_run_sums,
-    load_project_sums,
-    load_orga_sums,
-    load_project,
-    load_organization_teams,
     load_team_projects,
 )
 
@@ -120,12 +121,18 @@ def get_project(project_id):
 # print(get_project(project_id))
 
 
+def get_organization_list():
+    return pd.DataFrame.from_dict(load_organizations())
+
+
 def get_project_list(organization_id):
     teams = pd.DataFrame.from_dict(load_organization_teams(organization_id))
-    projects = pd.DataFrame()
+    projects = pd.DataFrame(columns=["name", "id"])
+    if len(teams) == 0:
+        return projects
     for i in teams["id"]:
         projects_to_add = pd.DataFrame.from_dict(load_team_projects(i))
-        projects = pd.concat([projects,projects_to_add])
+        projects = pd.concat([projects, projects_to_add])
     return projects
 
 

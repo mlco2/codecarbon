@@ -21,6 +21,17 @@ def api_loader(fn_request_path):
 
 
 @api_loader
+def load_organizations(**kwargs) -> tuple:
+    """
+    Get all the organizations
+    :params:
+        kwargs: can be any parameter available for the query
+    """
+    path = f"{API_PATH}/organizations"
+    return path, kwargs
+
+
+@api_loader
 def load_runs(**kwargs) -> tuple:
     """
     Get all the runs
