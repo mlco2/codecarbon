@@ -96,6 +96,10 @@ def update_indicator(start_date, end_date):
             tot_duration_days = round(tot_duration_hours / 24)
             tot_duration = str(tot_duration_days)
             tot_duration_unit = "days"
+            if tot_duration_days >= 365:
+                tot_duration_years = round(tot_duration_days / 365, 2)
+                tot_duration = str(tot_duration_years)
+                tot_duration_unit = "years"
     return Tot_energy_consumed, Tot_emissions, tot_duration, tot_duration_unit
 
 
@@ -159,19 +163,24 @@ def update_Charts(start_date, end_date, project):
             duration,
         )
     )
-    duration_project_unit = "min"
+    duration_project = "{:.0f}".format(duration)
+    duration_project_unit = "sec"
     if duration >= 60:
-        duration_in_hours = duration / 60
-        duration_project = "{:.0f}".format(duration_in_hours)
-        duration_project_unit = "H"
-        if duration_in_hours >= 24:
-            duration_in_days = duration_in_hours / 24
-            duration_in_years = "{:.0f}".format(duration_in_days)
-            duration_project_unit = "days"
-            if duration_in_days >= 365:
-                duration_in_years = duration_in_days / 365
-                duration_project = "{:.0f}".format(duration_in_years)
-                duration_project_unit = "year"
+        duration_in_min = duration / 60
+        duration_project = "{:.0f}".format(duration_in_min)
+        duration_project_unit = "min"
+        if duration_in_min >= 60: 
+            duration_in_hours = duration_in_min / 60
+            duration_project = "{:.0f}".format(duration_in_hours)
+            duration_project_unit = "H"
+            if duration_in_hours >= 24:
+                duration_in_days = duration_in_hours / 24
+                duration_project = "{:.0f}".format(duration_in_days)
+                duration_project_unit = "days"
+                if duration_in_days >= 365:
+                    duration_in_years = duration_in_days / 365
+                    duration_project = "{:.0f}".format(duration_in_years)
+                    duration_project_unit = "years"
     # #PieCharts in cards OUTPUT in return has to be changed
     # ----------------------------------------------------------------
     # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
