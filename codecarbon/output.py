@@ -59,9 +59,15 @@ class EmissionsData:
     def values(self) -> OrderedDict:
         return OrderedDict(self.__dict__.items())
 
-    def compute_emissions_rate(self, previous_emission):
+    def compute_delta_emission(self, previous_emission):
         delta_duration = self.duration - previous_emission.duration
+        self.duration = delta_duration
         delta_emissions = self.emissions - previous_emission.emissions
+        self.emissions = delta_emissions
+        self.cpu_energy -= previous_emission.cpu_energy
+        self.gpu_energy -= previous_emission.gpu_energy
+        self.ram_energy -= previous_emission.ram_energy
+        self.energy_consumed -= previous_emission.energy_consumed
         # delta_emissions in kg.CO2 => * 1000 to convert in g
         if delta_duration > 0:
             self.emissions_rate = delta_emissions * 1000 / delta_duration
