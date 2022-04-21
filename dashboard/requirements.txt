@@ -1,3 +1,4 @@
 codecarbon>=2.0.0
 dash>=2.2.0
 plotly>=5.6.0
+gunicorn
