@@ -100,7 +100,7 @@ app.layout = dbc.Container(
                                     )
                                     # for projectName, projectId in df[['project_name','project_id']].drop_duplicates().iteritems()
                                 ],
-                                value=df_project.id.unique().tolist()[0]
+                                value=df_project.id.unique().tolist()[-1]
                                 if len(df_project) > 0
                                 else "No projects in this organization !",
                                 inline=True,
