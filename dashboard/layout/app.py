@@ -45,7 +45,7 @@ df_org = get_organization_list()
 orga_id = df_org.id.unique().tolist()[1]
 # df_project = pd.DataFrame(columns=["name", "id"])
 df_project = get_project_list(orga_id)
-#print(f"orga_id={orga_id}")
+# print(f"orga_id={orga_id}")
 df_mix = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
 )
@@ -58,7 +58,7 @@ app = dash.Dash(
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
     ],
 )
-
+app.title = "Code Carbon"
 components = Components()
 
 # Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
@@ -104,8 +104,8 @@ app.layout = dbc.Container(
                                 if len(df_project) > 0
                                 else "No projects in this organization !",
                                 inline=True,
-#                                label_checked_class_name="text-primary",
-#                                input_checked_class_name="border border-primary bg-primary",
+                                #                                label_checked_class_name="text-primary",
+                                #                                input_checked_class_name="border border-primary bg-primary",
                             ),
                         ],
                         width={"size": 6, "offset": 4},
@@ -115,10 +115,10 @@ app.layout = dbc.Container(
                     [
                         # holding pieCharts
                         dbc.Col(
-                            #dbc.Spinner(
-                                dcc.Graph(id="pieCharts", config=config)
+                            # dbc.Spinner(
+                            dcc.Graph(id="pieCharts", config=config)
                             #    )
-                                ),
+                        ),
                         dbc.Col(
                             [
                                 dbc.CardGroup(
@@ -142,15 +142,15 @@ app.layout = dbc.Container(
                         dcc.Graph(id="barChart", clickData=None, config=config)
                     ),  # holding barChart
                     dbc.Col(
-                        #dbc.Spinner(
-                            dcc.Graph(
-                                id="bubbleChart",
-                                clickData=None,
-                                hoverData=None,
-                                figure={},
-                                config=config,
-                            )
-                        #)
+                        # dbc.Spinner(
+                        dcc.Graph(
+                            id="bubbleChart",
+                            clickData=None,
+                            hoverData=None,
+                            figure={},
+                            config=config,
+                        )
+                        # )
                     ),
                 ]
             ),
@@ -161,8 +161,8 @@ app.layout = dbc.Container(
                 [
                     # holding line chart
                     # dbc.Col(
-                    #dbc.Spinner(
-                        dcc.Graph(id="lineChart", config=config)
+                    # dbc.Spinner(
+                    dcc.Graph(id="lineChart", config=config)
                     #    )
                     # , width=6),
                 ]
