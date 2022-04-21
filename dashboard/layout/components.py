@@ -30,7 +30,9 @@ class Components:
                     ],
                     className="banner",
                 ),
-                html.Img(src="/assets/logo.png"),
+                html.A(
+                    [html.Img(src="/assets/logo.png")], href="https://codecarbon.io"
+                ),
                 html.P("Track and reduce CO2 emissions from your computing"),
                 dcc.DatePickerRange(
                     id="periode",
