@@ -17,6 +17,19 @@ class Components:
     def get_header():
         return dbc.Col(
             [
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.P(
+                                    "WARNING : This is an alpha preview version released for Earth Day 2022. Some metrics are not accurate."
+                                )
+                            ],
+                            className="inner",
+                        )
+                    ],
+                    className="banner",
+                ),
                 html.Img(src="/assets/logo.png"),
                 html.P("Track and reduce CO2 emissions from your computing"),
                 dcc.DatePickerRange(

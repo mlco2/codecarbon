@@ -187,5 +187,17 @@ app.layout = dbc.Container(
         ),
         html.Div(id="output_container", children=[]),
         dcc.Graph(id="my_emission_map", figure={}, config=config),
+        html.Div(
+            [
+                html.Span("Powered by "),
+                html.A(
+                    "Clever Cloud",
+                    href="https://www.clever-cloud.com/",
+                    target="_blank",
+                ),
+                html.Span("."),
+            ],
+            className="sponsor",
+        ),
     ]
 )

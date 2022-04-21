@@ -9,6 +9,25 @@
 body {
   color: rgb(250, 250,250);
   background-color: rgb(2, 71, 88);}
+.banner {
+  position:fixed;
+  width:100%;
+  left:0;
+  bottom:0;
+  z-index: 1;
+  background-color: orange;
+  border-bottom: 3px solid #4B5460;
+}
+.banner .inner{ 
+  padding: 1rem 0rem;
+  text-align: center;
+}
+
+.sponsor{
+  text-align: center;
+  margin-bottom:5em;
+}
+
 a {
   color: #c9fb37;
   text-decoration: none;
