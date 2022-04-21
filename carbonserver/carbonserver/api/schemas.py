@@ -133,7 +133,7 @@ class RunReport(RunBase):
     energy_consumed: float
     duration: int
     emissions_rate_sum: float
-    emissions_rate_count: int
+    emissions_count: int
 
 
 class ExperimentBase(BaseModel):
@@ -195,7 +195,7 @@ class ExperimentReport(ExperimentBase):
     energy_consumed: float
     duration: int
     emissions_rate_sum: float
-    emissions_rate_count: int
+    emissions_count: int
 
     class Config:
 
@@ -220,7 +220,7 @@ class ExperimentReport(ExperimentBase):
             "energy_consumed": 358.6795013312438,
             "duration": 7673204,
             "emissions_rate_sum": 1.0984556074701752,
-            "emissions_rate_count": 64,
+            "emissions_count": 64,
         }
 
 
@@ -262,7 +262,7 @@ class ProjectReport(ExperimentBase):
     energy_consumed: float
     duration: int
     emissions_rate_sum: float
-    emissions_rate_count: int
+    emissions_count: int
 
 
 class TeamBase(BaseModel):
@@ -329,7 +329,7 @@ class OrganizationReport(OrganizationBase):
     energy_consumed: float
     duration: int
     emissions_rate_sum: float
-    emissions_rate_count: int
+    emissions_count: int
 
 
 class UserBase(BaseModel):

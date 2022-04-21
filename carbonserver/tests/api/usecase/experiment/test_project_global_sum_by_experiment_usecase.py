@@ -51,7 +51,7 @@ EXPERIMENT_WITH_DETAILS = {
     "energy_consumed": 358.6795013312438,
     "duration": 7673204,
     "emissions_rate_sum": 1.0984556074701752,
-    "emissions_rate_count": 64,
+    "emissions_count": 64,
 }
 
 

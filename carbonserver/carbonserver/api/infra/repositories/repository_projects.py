@@ -88,7 +88,7 @@ class SqlAlchemyRepository(Projects):
                         "emissions_rate_sum"
                     ),
                     func.count(SqlModelEmission.emissions_rate).label(
-                        "emissions_rate_count"
+                        "emissions_count"
                     ),
                 )
                 .join(
