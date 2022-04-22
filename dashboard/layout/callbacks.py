@@ -68,12 +68,13 @@ def update_project_from_organization(value):
     [
         Input(component_id="periode", component_property="start_date"),
         Input(component_id="periode", component_property="end_date"),
+        Input(component_id="org-dropdown", component_property="value")
     ],
 )
-def update_indicator(start_date, end_date):
+def update_indicator(start_date, end_date, organization_id):
     #    dff = df.copy()
     #    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
-    orga_id = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+    orga_id = organization_id
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     df_orga = get_orga_sums(orga_id, start_date, end_date)
