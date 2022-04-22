@@ -483,7 +483,7 @@ class BaseEmissionsTracker(ABC):
                 # Create a copy
                 delta_emissions = dataclasses.replace(total_emissions)
                 # Compute emissions rate from delta
-                delta_emissions.compute_emissions_rate(self._previous_emissions)
+                delta_emissions.compute_delta_emission(self._previous_emissions)
                 # TODO : find a way to store _previous_emissions only when
                 # TODO : the API call succeeded
                 self._previous_emissions = total_emissions
