@@ -132,7 +132,7 @@ class RunReport(RunBase):
     ram_energy: float
     energy_consumed: float
     duration: int
-    emissions_rate_sum: float
+    emissions_rate: float
     emissions_count: int
 
 
@@ -194,7 +194,7 @@ class ExperimentReport(ExperimentBase):
     ram_energy: float
     energy_consumed: float
     duration: int
-    emissions_rate_sum: float
+    emissions_rate: float
     emissions_count: int
 
     class Config:
@@ -219,7 +219,7 @@ class ExperimentReport(ExperimentBase):
             "ram_energy": 26.84332784201141,
             "energy_consumed": 358.6795013312438,
             "duration": 7673204,
-            "emissions_rate_sum": 1.0984556074701752,
+            "emissions_rate": 1.0984556074701752,
             "emissions_count": 64,
         }
 
@@ -261,7 +261,7 @@ class ProjectReport(ExperimentBase):
     ram_energy: float
     energy_consumed: float
     duration: int
-    emissions_rate_sum: float
+    emissions_rate: float
     emissions_count: int
 
 
@@ -328,7 +328,7 @@ class OrganizationReport(OrganizationBase):
     ram_energy: float
     energy_consumed: float
     duration: int
-    emissions_rate_sum: float
+    emissions_rate: float
     emissions_count: int
 
 

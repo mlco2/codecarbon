@@ -101,20 +101,16 @@ class SqlAlchemyRepository(Organizations):
                     SqlModelOrganization.id.label("organization_id"),
                     SqlModelOrganization.name,
                     SqlModelOrganization.description,
-                    # TODO : replace max by sum before release !
-                    func.max(SqlModelEmission.emissions_sum).label("emissions"),
-                    func.max(SqlModelEmission.cpu_power).label("cpu_power"),
-                    func.max(SqlModelEmission.gpu_power).label("gpu_power"),
-                    func.max(SqlModelEmission.ram_power).label("ram_power"),
-                    # TODO : replace max by sum before release !
-                    func.max(SqlModelEmission.cpu_energy).label("cpu_energy"),
-                    func.max(SqlModelEmission.gpu_energy).label("gpu_energy"),
-                    func.max(SqlModelEmission.ram_energy).label("ram_energy"),
-                    func.max(SqlModelEmission.energy_consumed).label("energy_consumed"),
-                    func.max(SqlModelEmission.duration).label("duration"),
-                    func.sum(SqlModelEmission.emissions_rate).label(
-                        "emissions_rate_sum"
-                    ),
+                    func.sum(SqlModelEmission.emissions_sum).label("emissions"),
+                    func.mean(SqlModelEmission.cpu_power).label("cpu_power"),
+                    func.mean(SqlModelEmission.gpu_power).label("gpu_power"),
+                    func.mean(SqlModelEmission.ram_power).label("ram_power"),
+                    func.sum(SqlModelEmission.cpu_energy).label("cpu_energy"),
+                    func.sum(SqlModelEmission.gpu_energy).label("gpu_energy"),
+                    func.sum(SqlModelEmission.ram_energy).label("ram_energy"),
+                    func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
+                    func.sum(SqlModelEmission.duration).label("duration"),
+                    func.mean(SqlModelEmission.emissions_rate).label("emissions_rate"),
                     func.count(SqlModelEmission.emissions_rate).label(
                         "emissions_count"
                     ),

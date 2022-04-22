@@ -26,7 +26,7 @@ PROJECT_WITH_DETAILS = {
     "ram_energy": 26.84332784201141,
     "energy_consumed": 358.6795013312438,
     "duration": 7673204,
-    "emissions_rate_sum": 1.0984556074701752,
+    "emissions_rate": 1.0984556074701752,
     "emissions_count": 64,
 }
 
