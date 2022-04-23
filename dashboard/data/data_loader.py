@@ -2,10 +2,16 @@
 Api calls
 """
 import json
+import os
 
 import requests
 
-API_PATH = "http://api.codecarbon.io"
+API_PATH = os.getenv("CODECARBON_API_URL")
+if API_PATH is None:
+    API_PATH = "http://carbonserver.cleverapps.io"
+# API_PATH = "https://api.codecarbon.io"
+# API_PATH = "http://localhost:8008"
+# API_PATH = "http://carbonserver.cleverapps.io"
 USER = "jessica"
 PSSD = "fake-super-secret-token"
 
