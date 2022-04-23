@@ -294,11 +294,11 @@ def test_api25_emission_create():
     payload = {
         "timestamp": get_datetime(),
         "run_id": run_id,
-        "duration": 98745,
+        "duration": 10,
         "emissions_sum": 1544.54,
         "emissions_rate": 1.548444,
         "cpu_power": 0.3,
-        "gpu_power": 10.65,
+        "gpu_power": 210.65,
         "ram_power": 1.15,
         "cpu_energy": 55.21874,
         "gpu_energy": 106540.65484,
@@ -307,6 +307,9 @@ def test_api25_emission_create():
     }
     r = requests.post(url=URL + "/emission/", json=payload, timeout=2)
     assert r.status_code == 201
+
+
+# TODO: Add more emissions
 
 
 def test_api26_emission_list():
@@ -333,6 +336,7 @@ def test_api29_experiment_read_detailed_sums():
     assert r.json()[0]["duration"] == 98745.0
 
 
+# TODO: Do assert on all results
 def test_api30_run_read_detailed_sums():
     url = f"{URL}/runs/{experiment_id}/sums/"
     r = requests.get(url, timeout=2)
