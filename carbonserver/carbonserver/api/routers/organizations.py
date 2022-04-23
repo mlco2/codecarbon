@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import dateutil.relativedelta
@@ -91,7 +91,7 @@ def read_organization_detailed_sums(
         if start_date
         else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
     )
-    end_date = end_date if end_date else datetime.now()
+    end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return organization_global_sum_usecase.compute_detailed_sum(
         organization_id, start_date, end_date
     )

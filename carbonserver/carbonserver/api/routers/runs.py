@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 import dateutil.relativedelta
@@ -95,7 +95,7 @@ def read_experiment_detailed_sums_by_run(
         if start_date
         else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
     )
-    end_date = end_date if end_date else datetime.now()
+    end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return experiment_global_sum_by_run_usecase.compute_detailed_sum(
         experiment_id, start_date, end_date
     )
@@ -119,5 +119,5 @@ def read_project_last_run(
         if start_date
         else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
     )
-    end_date = end_date if end_date else datetime.now()
+    end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return run_service.read_project_last_run(project_id, start_date, end_date)
