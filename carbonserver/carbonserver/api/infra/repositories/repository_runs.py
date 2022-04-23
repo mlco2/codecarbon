@@ -156,7 +156,7 @@ class SqlAlchemyRepository(Runs):
                 .filter(SqlModelRun.experiment_id == experiment_id)
                 .filter(
                     and_(SqlModelEmission.timestamp >= start_date),
-                    (SqlModelEmission.timestamp < end_date),
+                    (SqlModelEmission.timestamp <= end_date),
                 )
                 .group_by(
                     SqlModelRun.id,
@@ -189,7 +189,7 @@ class SqlAlchemyRepository(Runs):
                 .filter(SqlModelProject.id == project_id)
                 .filter(
                     and_(SqlModelRun.timestamp >= start_date),
-                    (SqlModelRun.timestamp < end_date),
+                    (SqlModelRun.timestamp <= end_date),
                 )
                 .order_by(SqlModelRun.timestamp.desc())
                 .first()

@@ -107,7 +107,7 @@ class SqlAlchemyRepository(Projects):
                 .filter(SqlModelProject.id == project_id)
                 .filter(
                     and_(SqlModelEmission.timestamp >= start_date),
-                    (SqlModelEmission.timestamp < end_date),
+                    (SqlModelEmission.timestamp <= end_date),
                 )
                 .group_by(
                     SqlModelProject.id,

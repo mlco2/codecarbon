@@ -89,7 +89,7 @@ class SqlAlchemyRepository(Organizations):
         """Find the emissions of an organization in database between two dates and return
         a report containing their sum
 
-        :project_id: The id of the project to retrieve emissions from
+        :organization_id: The id of the organization to retrieve emissions from
         :start_date: the lower bound of the time interval which contains sought emissions
         :end_date: the upper bound of the time interval which contains sought emissions
         :returns: A report containing the sums of emissions
@@ -143,7 +143,7 @@ class SqlAlchemyRepository(Organizations):
                 .filter(SqlModelOrganization.id == organization_id)
                 .filter(
                     and_(SqlModelEmission.timestamp >= start_date),
-                    (SqlModelEmission.timestamp < end_date),
+                    (SqlModelEmission.timestamp <= end_date),
                 )
                 .group_by(
                     SqlModelOrganization.id,
