@@ -150,7 +150,7 @@ def update_Charts(start_date, end_date, project):
         )
     )
     time_in_minutes = emission * (1 / 0.097) * 60
-    tvTime = str(time_in_minutes) + " min"
+    tvTime = "{:.0f} min".format(time_in_minutes)
     if time_in_minutes >= 60:
         time_in_hours = time_in_minutes / 60
         tvTime = "{:.0f} hours".format(time_in_hours)
