@@ -1,32 +1,34 @@
-"""Script to check version in pyproject.toml and
+"""Script to check version and
 compare it to versions in PyPi JSON API.
 
 If the version exist, exit with 1 to break CI.
 
 Sample call:
-python3 deploy/check_version.py -p leximpact-socio-fisca-simu-etat
+python3 github/check_version.py
 """
 
 import argparse
+import re
 
 import requests
 
 
-def get_local_version():
+def get_local_version(filepath="codecarbon/__init__.py"):
     """
     Read the version in pyproject.toml
     :return: The version
     """
-    import re
 
-    VERSIONFILE = "codecarbon/__init__.py"
-    verstrline = open(VERSIONFILE, "rt").read()
-    VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
-    mo = re.search(VSRE, verstrline, re.M)
+    filecontent = open(filepath, "rt").read()
+    mo = re.search(r"version(?:_*)\s?=\s?['\"]([^'\"]*)['\"]", filecontent, re.M)
     if mo:
         return mo.group(1)
     else:
-        raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+        # mo = re.search(r"version=['\"]([^'\"]*)['\"]", filecontent, re.M)
+        # if mo:
+        #     return mo.group(1)
+        # else:
+        raise RuntimeError(f"Unable to find version string in {filepath}")
 
 
 def get_versions_from_pypi(package_name: str = "") -> dict:
@@ -45,19 +47,11 @@ def get_versions_from_pypi(package_name: str = "") -> dict:
     versions = []
     for v in resp["releases"]:
         versions.append(v.lower().strip())
-    return v
+    return versions
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-p",
-        "--package",
-        type=str,
-        default="",
-        required=True,
-        help="The name of the package",
-    )
     parser.add_argument(
         "-o",
         "--onlyprintversion",
@@ -66,11 +60,22 @@ if __name__ == "__main__":
         help="Only print the local version of the package.",
     )
     args = parser.parse_args()
-    versions = get_versions_from_pypi(args.package)
-    local_version = get_local_version()
+    versions = get_versions_from_pypi("codecarbon")
+    module_version = get_local_version()
+    meta_version = get_local_version(".conda/meta.yaml")
+    setup_version = get_local_version("setup.py")
+    local_versions = [module_version, meta_version, setup_version]
+    if local_versions.count(local_versions[0]) != len(local_versions):
+        print("All local versions did not match !")
+        print(f"__init__.py : {module_version}")
+        print(f"setup.py : {setup_version}")
+        print(f"meta.yaml : {meta_version}")
+        exit(1)
     if args.onlyprintversion:
-        print(local_version)
-    elif local_version.lower().strip() in versions:
-        print(f"Version {local_version} already exist on PyPi !")
+        print(setup_version)
+    elif module_version.lower().strip() in versions:
+        print(f"Version {setup_version} already exist on PyPi !")
         print("Please run 'poetry version patch && make precommit' and commit changes.")
         exit(1)
+    else:
+        print(f"Local version is {setup_version}\nPyPi versions are {versions}")
