@@ -1,11 +1,16 @@
+from datetime import datetime
 from unittest import mock
 from uuid import UUID
+
+import dateutil.relativedelta
 
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.schemas import Run, RunCreate
 from carbonserver.api.services.run_service import RunService
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
+
+PROJECT_ID = UUID("ab6b7dda-c94d-4c87-a570-2651137492d2")
 
 EXPERIMENT_ID = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 EXPERIMENT_ID_2 = UUID("e395767d-0255-40f3-a314-5d2e01f56fbd")
@@ -82,3 +87,17 @@ def test_run_service_retrieves_correct_run_by_experiment_id():
     actual_runs = run_service.list_runs_from_experiment(EXPERIMENT_ID)
 
     assert actual_runs[0].experiment_id == expected_experiment_id
+
+
+def test_run_service_retrieves_correct_last_run_for_project_id():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    expected_run_id = RUN_ID
+    run_service: RunService = RunService(repository_mock)
+    repository_mock.get_project_last_run.return_value = RUN_1
+
+    END_DATE = datetime.now()
+    START_DATE = END_DATE - dateutil.relativedelta.relativedelta(months=3)
+
+    actual_run = run_service.read_project_last_run(PROJECT_ID, START_DATE, END_DATE)
+
+    assert actual_run.id == expected_run_id

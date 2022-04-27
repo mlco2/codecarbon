@@ -21,6 +21,13 @@ from carbonserver.api.services.user_service import UserService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
 )
+from carbonserver.api.usecases.organization.organization_sum import (
+    OrganizationSumsUsecase,
+)
+from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
+from carbonserver.api.usecases.run.experiment_sum_by_run import (
+    ExperimentSumsByRunUsecase,
+)
 from carbonserver.config import settings
 
 
@@ -77,6 +84,10 @@ class ServerContainer(containers.DeclarativeContainer):
         experiment_repository=experiment_repository,
     )
 
+    project_sums_usecase = providers.Factory(
+        ProjectSumsUsecase, project_repository=project_repository
+    )
+
     project_service = providers.Factory(
         ProjectService,
         project_repository=project_repository,
@@ -87,6 +98,11 @@ class ServerContainer(containers.DeclarativeContainer):
         session_factory=db.provided.session,
     )
 
+    experiment_sums_by_run_usecase = providers.Factory(
+        ExperimentSumsByRunUsecase,
+        run_repository=run_repository,
+    )
+
     user_service = providers.Factory(
         UserService,
         user_repository=user_repository,
@@ -94,6 +110,11 @@ class ServerContainer(containers.DeclarativeContainer):
 
     organization_service = providers.Factory(
         OrganizationService,
+        organization_repository=organization_repository,
+    )
+
+    organization_sums_usecase = providers.Factory(
+        OrganizationSumsUsecase,
         organization_repository=organization_repository,
     )
 

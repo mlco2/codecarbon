@@ -124,19 +124,17 @@ class SqlAlchemyRepository(Experiments):
                     SqlModelExperiment.cloud_provider,
                     SqlModelExperiment.cloud_region,
                     func.sum(SqlModelEmission.emissions_sum).label("emissions"),
-                    func.sum(SqlModelEmission.cpu_power).label("cpu_power"),
-                    func.sum(SqlModelEmission.gpu_power).label("gpu_power"),
-                    func.sum(SqlModelEmission.ram_power).label("ram_power"),
+                    func.avg(SqlModelEmission.cpu_power).label("cpu_power"),
+                    func.avg(SqlModelEmission.gpu_power).label("gpu_power"),
+                    func.avg(SqlModelEmission.ram_power).label("ram_power"),
                     func.sum(SqlModelEmission.cpu_energy).label("cpu_energy"),
                     func.sum(SqlModelEmission.gpu_energy).label("gpu_energy"),
                     func.sum(SqlModelEmission.ram_energy).label("ram_energy"),
                     func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
                     func.sum(SqlModelEmission.duration).label("duration"),
-                    func.sum(SqlModelEmission.emissions_rate).label(
-                        "emissions_rate_sum"
-                    ),
+                    func.avg(SqlModelEmission.emissions_rate).label("emissions_rate"),
                     func.count(SqlModelEmission.emissions_rate).label(
-                        "emissions_rate_count"
+                        "emissions_count"
                     ),
                 )
                 .join(
@@ -152,7 +150,7 @@ class SqlAlchemyRepository(Experiments):
                 .filter(SqlModelExperiment.project_id == project_id)
                 .filter(
                     and_(SqlModelEmission.timestamp >= start_date),
-                    (SqlModelEmission.timestamp < end_date),
+                    (SqlModelEmission.timestamp <= end_date),
                 )
                 .group_by(
                     SqlModelExperiment.id,

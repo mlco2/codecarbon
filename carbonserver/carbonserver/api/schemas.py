@@ -121,6 +121,21 @@ class Run(RunBase):
     id: UUID
 
 
+class RunReport(RunBase):
+    timestamp: datetime
+    emission: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate: float
+    emissions_count: int
+
+
 class ExperimentBase(BaseModel):
     timestamp: datetime
     name: str
@@ -179,8 +194,8 @@ class ExperimentReport(ExperimentBase):
     ram_energy: float
     energy_consumed: float
     duration: int
-    emissions_rate_sum: float
-    emissions_rate_count: int
+    emissions_rate: float
+    emissions_count: int
 
     class Config:
 
@@ -204,8 +219,8 @@ class ExperimentReport(ExperimentBase):
             "ram_energy": 26.84332784201141,
             "energy_consumed": 358.6795013312438,
             "duration": 7673204,
-            "emissions_rate_sum": 1.0984556074701752,
-            "emissions_rate_count": 64,
+            "emissions_rate": 1.0984556074701752,
+            "emissions_count": 64,
         }
 
 
@@ -231,6 +246,23 @@ class ProjectCreate(ProjectBase):
 class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[Experiment]] = []
+
+
+class ProjectReport(ExperimentBase):
+    project_id: UUID
+    name: str
+    description: str
+    emission: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate: float
+    emissions_count: int
 
 
 class TeamBase(BaseModel):
@@ -281,6 +313,23 @@ class Organization(OrganizationBase):
     id: UUID
     api_key: str
     teams: Optional[List[Team]]
+
+
+class OrganizationReport(OrganizationBase):
+    organization_id: UUID
+    name: str
+    description: str
+    emission: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate: float
+    emissions_count: int
 
 
 class UserBase(BaseModel):

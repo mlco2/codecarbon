@@ -26,13 +26,15 @@ jobs:
           with:
               activate-conda: true
               conda-channels: conda-forge
-        - name: Build conda package
-          run: |
-              conda install conda-build conda-verify
-              mkdir -p conda_dist
-              conda build --python 3.8 .conda/ -c conda-forge --output-folder conda_dist
-        - name: Archive Conda artifacts
-          uses: actions/upload-artifact@v1
-          with:
-              name: conda_dist
-              path: conda_dist
+        # Conda package is now build by Conda-forge
+        # See https://github.com/conda-forge/codecarbon-feedstock
+        # - name: Build conda package
+        #   run: |
+        #       conda install conda-build conda-verify
+        #       mkdir -p conda_dist
+        #       conda build --python 3.8 .conda/ -c conda-forge --output-folder conda_dist
+        # - name: Archive Conda artifacts
+        #   uses: actions/upload-artifact@v1
+        #   with:
+        #       name: conda_dist
+        #       path: conda_dist

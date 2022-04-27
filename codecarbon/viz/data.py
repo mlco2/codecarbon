@@ -246,12 +246,11 @@ class Data:
             sums = requests.get(project_sum_by_experiments_url).json()
             for experiment in sums:
                 experiment["project_name"] = project_name
-                experiment["emission_rate"] = 0
-                if experiment["emissions_rate_count"] > 0:
-                    experiment["emission_rate"] = (
-                        experiment["emissions_rate_sum"]
-                        / experiment["emissions_rate_count"]
-                    )
+                # experiment["emission_rate"] = 0
+                # if experiment["emissions_count"] > 0:
+                #     experiment["emission_rate"] = (
+                #         experiment["emissions_rate"] / experiment["emissions_count"]
+                #     )
                 transformed_projects.append(experiment)
         df_projects = pd.DataFrame(transformed_projects)
         return df_projects

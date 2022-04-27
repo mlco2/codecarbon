@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest import mock
 
-import dateutil
+import dateutil.relativedelta
 
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository,
@@ -12,7 +12,7 @@ from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
 
 EXPERIMENT_ID = "10276e58-6df7-42cf-abb8-429773a35eb5"
 EXPERIMENT_WITH_DETAILS_ID = "943b2aa5-9e21-41a9-8a38-562505b4b2aa"
-END_DATE = datetime.timestamp(datetime.now())
+END_DATE = datetime.now()
 START_DATE = END_DATE - dateutil.relativedelta.relativedelta(months=3)
 
 
@@ -41,7 +41,7 @@ EXPERIMENT_WITH_DETAILS = {
     "on_cloud": False,
     "cloud_provider": None,
     "cloud_region": None,
-    "emission": 152.28955200363455,
+    "emissions": 152.28955200363455,
     "cpu_power": 5760,
     "gpu_power": 2983.9739999999993,
     "ram_power": 806.0337192959997,
@@ -50,8 +50,8 @@ EXPERIMENT_WITH_DETAILS = {
     "ram_energy": 26.84332784201141,
     "energy_consumed": 358.6795013312438,
     "duration": 7673204,
-    "emissions_rate_sum": 1.0984556074701752,
-    "emissions_rate_count": 64,
+    "emissions_rate": 1.0984556074701752,
+    "emissions_count": 64,
 }
 
 
@@ -61,7 +61,7 @@ def test_detailed_sum_computes_for_project_id():
     project_global_sum_usecase = ProjectSumsByExperimentUsecase(repository_mock)
 
     expected_emission_sum = EMISSIONS_SUM_WITH_DETAILS
-    repository_mock.get_project_global_sums_by_experiment.return_value = [
+    repository_mock.get_project_detailed_sums_by_experiment.return_value = [
         EXPERIMENT_WITH_DETAILS
     ]
 
@@ -71,4 +71,6 @@ def test_detailed_sum_computes_for_project_id():
         )
     )
 
-    assert actual_project_global_sum_by_experiment.emission_sum == expected_emission_sum
+    assert (
+        actual_project_global_sum_by_experiment[0]["emissions"] == expected_emission_sum
+    )
