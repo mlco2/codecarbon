@@ -187,3 +187,16 @@ def load_project(project_id: str, **kwargs) -> tuple:
     """
     path = f"{API_PATH}/project/{project_id}"
     return path, kwargs
+
+
+@api_loader
+def load_lastrun(project_id: str, **kwargs) -> tuple:
+    """
+    Get last run for a given project
+    :params:
+        kwargs: can be any parameter available for the query
+    :example:
+        project_id = '225904ca-f741-477c-83f5-d61587d6286c'
+    """
+    path = f"{API_PATH}/lastrun/project/{project_id}"
+    return path, kwargs

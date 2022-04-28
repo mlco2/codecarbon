@@ -13,9 +13,11 @@ from data.data_loader import (
     load_run_emissions,
     load_run_sums,
     load_team_projects,
+    load_lastrun,
+    load_experiment,
 )
 
-# from data_loader import load_run_emissions, load_project_experiments, load_experiment_runs, load_experiment_sums, load_run_sums, load_project_sums, load_orga_sums, load_project, load_organization_teams, load_team_projects
+# from data_loader import load_run_emissions, load_project_experiments, load_experiment_runs, load_experiment_sums, load_run_sums, load_project_sums, load_orga_sums, load_project, load_organization_teams, load_team_projects, load_organizations, load_lastrun
 
 
 def get_run_data(run_id, page_api, size_api) -> pd.DataFrame:
@@ -46,7 +48,7 @@ def get_run_emissions(run_id, size=10000) -> pd.DataFrame:
 # print(df.iloc[:5,:3], '\n', df.iloc[total-5:,:3], '\n\nRun_data :', df.shape, '\n\nTotal :', total)
 
 
-def get_project_experiments(project_id):
+def get_project_experiments(project_id) -> pd.DataFrame:
     dict = load_project_experiments(project_id)
     df = pd.DataFrame.from_dict(dict)
     if not (df.empty):
@@ -58,19 +60,21 @@ def get_project_experiments(project_id):
 # print(get_project_experiments(project_name)['id'][0])
 
 
-def get_experiment_runs(experiment_id):
+def get_experiment_runs(experiment_id, date_from, date_to) -> pd.DataFrame:
     dict = load_experiment_runs(experiment_id)
     df = pd.DataFrame.from_dict(dict)
     if not (df.empty):
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df = df[(df["timestamp"]>=date_from)&(df["timestamp"]<=date_to)]
         df = df.sort_values(by="timestamp")
     return df
 
 
 # experiment_id = '0bfa2432-efda-4656-bdb4-f72d15866b0b'
-# print(get_experiment_runs(experiment_id)['id'][0])
+# print(get_experiment_runs(experiment_id,"2022-01-01 00:00:00","2022-04-28 00:00:00")['id'])
 
 
-def get_experiment_sums(project_id, date_from, date_to):
+def get_experiment_sums(project_id, date_from, date_to) -> pd.DataFrame:
     dict = load_experiment_sums(project_id, start_date=date_from, end_date=date_to)
     df = pd.DataFrame.from_dict(dict)
     if not (df.empty):
@@ -82,7 +86,7 @@ def get_experiment_sums(project_id, date_from, date_to):
 # print(get_experiment_sums(project_name))
 
 
-def get_run_sums(experiment_id, date_from, date_to):
+def get_run_sums(experiment_id, date_from, date_to) -> pd.DataFrame:
     dict = load_run_sums(experiment_id, start_date=date_from, end_date=date_to)
     df = pd.DataFrame.from_dict(dict)
     if not (df.empty):
@@ -94,7 +98,7 @@ def get_run_sums(experiment_id, date_from, date_to):
 # print(get_run_sums(experiment_id,'2020-01-01 00:00:00','2022-01-01 00:00:00'))
 
 
-def get_project_sums(project_id, date_from, date_to):
+def get_project_sums(project_id, date_from, date_to) -> tuple:
     dict = load_project_sums(project_id, start_date=date_from, end_date=date_to)
     return dict
 
@@ -103,7 +107,7 @@ def get_project_sums(project_id, date_from, date_to):
 # print(get_project_sums(project_id,'2020-01-01 00:00:00','2022-01-01 00:00:00'))
 
 
-def get_orga_sums(organization_id, date_from, date_to):
+def get_orga_sums(organization_id, date_from, date_to) -> tuple:
     dict = load_orga_sums(organization_id, start_date=date_from, end_date=date_to)
     return dict
 
@@ -112,20 +116,30 @@ def get_orga_sums(organization_id, date_from, date_to):
 # print(get_orga_sums(organization_id,'2020-01-01 00:00:00','2022-01-01 00:00:00'))
 
 
-def get_project(project_id):
+def get_experiment(experiment_id) -> tuple:
+    dict = load_experiment(experiment_id)
+    return dict
+
+
+def get_project(project_id) -> tuple:
     dict = load_project(project_id)
     return dict
 
 
-# project_id = 'e60afa92-17b7-4720-91a0-1ae91e409ba1'
-# print(get_project(project_id))
+def get_lastrun(project_id, date_from, date_to) -> tuple:
+    dict = load_lastrun(project_id, start_date=date_from, end_date=date_to)
+    return dict
 
 
-def get_organization_list():
+# project_id = '225904ca-f741-477c-83f5-d61587d6286c'
+# print(get_project(project_id), '\n', get_lastrun(project_id, '2020-01-01 00:00:00','2022-04-26 00:00:00'))
+
+
+def get_organization_list() -> pd.DataFrame:
     return pd.DataFrame.from_dict(load_organizations())
 
 
-def get_project_list(organization_id):
+def get_project_list(organization_id) -> pd.DataFrame:
     teams = pd.DataFrame.from_dict(load_organization_teams(organization_id))
     projects = pd.DataFrame(columns=["name", "id"])
     if len(teams) == 0:

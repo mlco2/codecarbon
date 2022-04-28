@@ -13,6 +13,8 @@ from data.data import (
     get_project_sums,
     get_run_emissions,
     get_run_sums,
+    get_lastrun,
+    get_experiment,
 )
 
 # callback section: connecting the components
@@ -332,10 +334,11 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     if clickPoint is None:
-        experiment = get_project_experiments(project)
-        if not (experiment.empty):
-            experiment_id = experiment["id"].iloc[-1]
-            experiment_name = experiment["name"].iloc[-1]
+        #experiment = get_project_experiments(project)
+        lastrun = get_lastrun(project, start_date, end_date)
+        if not (lastrun == None):
+            experiment_id = lastrun["experiment_id"]
+            experiment_name = get_experiment(experiment_id)["name"]
         else:
             experiment_id = None
             experiment_name = None
@@ -356,13 +359,15 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     #        )
     #        .reset_index()
     #    )
+    df1 = pd.DataFrame()
     if experiment_id is not None:
         df1 = get_run_sums(experiment_id, start_date, end_date)
-    if df1.empty or experiment_id is None:
+    if experiment_id is None or df1.empty:
         df1 = pd.DataFrame(
             [[start_date, 0, 0, 1, "/"], [end_date, 0, 0, 1, "/"]],
             columns=["timestamp", "emissions", "energy_consumed", "duration", "run_id"],
         )
+        experiment_name = ''
     bubble = px.scatter(
         df1,
         x=df1.timestamp,
@@ -410,26 +415,38 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
 )
 def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, project):
     #    => ADD TIMESTAMP FILTERING
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+    df_run = pd.DataFrame()
     if experiment_clickPoint is None and clickPoint is None:
         #        default_experiment_id = get_project_experiments(project)["id"].iloc[-1]
         #        Problem with experiment 'f763e8c0-c14e-40a1-a47c-b7106ef70378' => No Run!
-        default_experiment_id = get_project_experiments(project)["id"].iloc[0]
-        run_name = get_experiment_runs(default_experiment_id)["id"].iloc[-1]
+        #default_experiment_id = get_project_experiments(project)["id"].iloc[0]
+        #run_name = get_experiment_runs(default_experiment_id)["id"].iloc[-1]
+        last_run = get_lastrun(project, start_date, end_date)
+        if not (last_run == None):
+            run_name = last_run["id"]
+            df_run, total_run = get_run_emissions(run_name)
     elif clickPoint is None:
         #    => CHECK EXPERIMENT_CLICK_POINT
         experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
-        run_name = get_experiment_runs(experiment_selected)["id"].iloc[-1]
+        run_list = get_experiment_runs(experiment_selected, start_date, end_date)
+        if not (run_list.empty):
+            run_name = run_list["id"].iloc[-1]
+            df_run, total_run = get_run_emissions(run_name)
     else:
         run_name = clickPoint["points"][0]["customdata"]
+        df_run, total_run = get_run_emissions(run_name)
 
     #   API integration to get emissions at "run level"
-    df_run, total_run = get_run_emissions(run_name)
+    #df_run, total_run = get_run_emissions(run_name)
 
     if df_run.empty:
         df_run = pd.DataFrame(
             [[start_date, None], [end_date, None]],
             columns=["timestamp", "emissions_rate"],
         )
+        run_name = ''
 
     line = px.line(
         df_run,
