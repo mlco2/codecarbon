@@ -1,10 +1,12 @@
 """
-Api calls
+API calls
 """
+
+
 import json
 import os
-
 import requests
+
 
 API_PATH = os.getenv("CODECARBON_API_URL")
 if API_PATH is None:

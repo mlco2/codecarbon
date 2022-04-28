@@ -3,33 +3,19 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-from data.data import (
-    get_experiment_runs,
-    get_experiment_sums,
-    get_orga_sums,
-    get_project,
-    get_project_experiments,
-    get_project_list,
-    get_project_sums,
-    get_run_emissions,
-    get_run_sums,
-    get_lastrun,
-    get_experiment,
-)
+from data.data_functions import *
+
+from plotly.subplots import make_subplots
+from layout.app import app, df_mix
+from layout.template import darkgreen, vividgreen
+
 
 # callback section: connecting the components
 # ************************************************************************
+# ************************************************************************
+
 # indicators
 # -------------------------------------------------------------------------
-from layout.app import app, df_mix
-
-# colors
-from layout.template import darkgreen, vividgreen
-from plotly.subplots import make_subplots
-
-# from layout.components import Components
-
-
 @app.callback(
     [
         Output(component_id="projectPicked", component_property="options"),
@@ -74,12 +60,11 @@ def update_project_from_organization(value):
     ],
 )
 def update_indicator(start_date, end_date, organization_id):
-    #    dff = df.copy()
-    #    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
     orga_id = organization_id
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     df_orga = get_orga_sums(orga_id, start_date, end_date)
+    
     # Tot_Energy consumed card / Tot Emissions card / Tot_Duration cards
     if df_orga is None:
         Tot_energy_consumed = 0
@@ -126,14 +111,10 @@ def update_indicator(start_date, end_date, organization_id):
     ],
 )
 def update_Charts(start_date, end_date, project):
-    #    dff = df.copy()
-    #    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
-    #    energyConsumed = dff[dff["project_id"] == project].energy_consumed.sum()
-    #    emission = dff[dff["project_id"] == project].emissions_sum.sum()
-    #    duration = dff[dff["project_id"] == project].duration.sum()
     df_project = get_project_sums(project, start_date, end_date)
+
     if df_project is None:
         energyConsumed = 0
         emission = 0
@@ -186,25 +167,6 @@ def update_Charts(start_date, end_date, project):
                     duration_project_unit = "years"
     # #PieCharts in cards OUTPUT in return has to be changed
     # ----------------------------------------------------------------
-    # figPieEnergy = go.Figure([go.Pie(values=[energyConsumed, dff.energy_consumed.sum()-energyConsumed],
-    #     textinfo='none',hole=.8,
-    #     marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
-    # figPieEnergy.update_layout(title_text='KwH',title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,
-    #     margin=dict(r=0,l=0,t=0,b=0))
-    # figPieEnergy.add_annotation(text=energy_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
-    # figPieEmissions = go.Figure([go.Pie(values=[emission, dff.emissions_sum.sum()-emission],
-    #     textinfo='none',hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
-    # figPieEmissions.update_layout(title_text='kg eq.CO2',title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,margin=dict(r=0,l=0,t=0,b=0))
-    # figPieEmissions.add_annotation(text=emissions_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
-    # figPieDuration = go.Figure([go.Pie(values=[duration, (dff.duration.sum()-duration)],
-    #     textinfo='none', hole=.8, marker=dict(colors=[vividgreen, color3]), title='',hoverinfo='skip')])
-    # figPieDuration.update_layout(title_text=duration_project_unit, title_y=0.1,template = 'CodeCarbonTemplate' ,showlegend=False,margin=dict(r=0,l=0,t=0,b=0))
-    # figPieDuration.add_annotation(text=duration_project,font=dict(color='white',), x=0.5, y=0.5, font_size=20, showarrow=False)
-
-    # ALL PROJECTS
-    #    Total_project_en = dff.energy_consumed.sum()
-    #    Total_project_em = dff.emissions_sum.sum()
-    #    Total_project_du = dff.duration.sum()
     orga_id = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
     df_orga = get_orga_sums(orga_id, start_date, end_date)
     if df_orga is None:
@@ -268,24 +230,8 @@ def update_Charts(start_date, end_date, project):
         margin=dict(l=10, r=10, b=10, t=10),
         height=200,
     )
-    # barChart
+    # BarChart
     # --------------------------------------------------------------------
-    #    dfBar = (
-    #        dff[dff["project_id"] == project]
-    #        .groupby("experiment_name")
-    #        .agg(
-    #            {
-    #                "timestamp": min,
-    #                "duration": sum,
-    #                "emissions_sum": sum,
-    #                "energy_consumed": sum,
-    #                "experiment_description": lambda x: x.iloc[0],
-    #            }
-    #        )
-    #        .reset_index()
-    #    )
-    #    figBar = px.bar(dfBar, x="experiment_name", y="emissions_sum", text="emissions_sum")
-    # ADJUST WITH TIMESTAMP FILTER (start_date / end_date)
     dfBar = get_experiment_sums(project, start_date, end_date)
     if dfBar.empty:
         dfBar = pd.DataFrame(
@@ -329,12 +275,10 @@ def update_Charts(start_date, end_date, project):
     ],
 )
 def uppdate_bubblechart(clickPoint, start_date, end_date, project):
-    #    dff = df.copy()
-    #    dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
+
     if clickPoint is None:
-        #experiment = get_project_experiments(project)
         lastrun = get_lastrun(project, start_date, end_date)
         if not (lastrun == None):
             experiment_id = lastrun["experiment_id"]
@@ -346,28 +290,16 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
         experiment_id = clickPoint["points"][0]["hovertext"]
         experiment_name = clickPoint["points"][0]["label"]
 
-    #    df1 = (
-    #        dff[dff["experiment_name"] == experiment_name]
-    #        .groupby("run_id")
-    #        .agg(
-    #            {
-    #                "timestamp": "min",
-    #                "duration": "sum",
-    #                "emissions_sum": "sum",
-    #                "energy_consumed": "sum",
-    #            }
-    #        )
-    #        .reset_index()
-    #    )
     df1 = pd.DataFrame()
     if experiment_id is not None:
         df1 = get_run_sums(experiment_id, start_date, end_date)
     if experiment_id is None or df1.empty:
+        experiment_name = ''
         df1 = pd.DataFrame(
             [[start_date, 0, 0, 1, "/"], [end_date, 0, 0, 1, "/"]],
             columns=["timestamp", "emissions", "energy_consumed", "duration", "run_id"],
         )
-        experiment_name = ''
+    
     bubble = px.scatter(
         df1,
         x=df1.timestamp,
@@ -414,21 +346,16 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     ],
 )
 def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, project):
-    #    => ADD TIMESTAMP FILTERING
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     df_run = pd.DataFrame()
+
     if experiment_clickPoint is None and clickPoint is None:
-        #        default_experiment_id = get_project_experiments(project)["id"].iloc[-1]
-        #        Problem with experiment 'f763e8c0-c14e-40a1-a47c-b7106ef70378' => No Run!
-        #default_experiment_id = get_project_experiments(project)["id"].iloc[0]
-        #run_name = get_experiment_runs(default_experiment_id)["id"].iloc[-1]
         last_run = get_lastrun(project, start_date, end_date)
         if not (last_run == None):
             run_name = last_run["id"]
             df_run, total_run = get_run_emissions(run_name)
     elif clickPoint is None:
-        #    => CHECK EXPERIMENT_CLICK_POINT
         experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
         run_list = get_experiment_runs(experiment_selected, start_date, end_date)
         if not (run_list.empty):
@@ -438,15 +365,12 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         run_name = clickPoint["points"][0]["customdata"]
         df_run, total_run = get_run_emissions(run_name)
 
-    #   API integration to get emissions at "run level"
-    #df_run, total_run = get_run_emissions(run_name)
-
     if df_run.empty:
+        run_name = ''
         df_run = pd.DataFrame(
             [[start_date, None], [end_date, None]],
             columns=["timestamp", "emissions_rate"],
         )
-        run_name = ''
 
     line = px.line(
         df_run,

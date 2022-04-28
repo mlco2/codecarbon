@@ -2,14 +2,16 @@ import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import dcc, html
-from data.data import get_organization_list, get_project_list
+from data.data_functions import get_organization_list, get_project_list
 from layout.components import Components
+
 
 # Common variables
 # ******************************************************************************
+# *******************************************************************************
 
 
-# config (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
+# Set configuration (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
 config = {
     "displayModeBar": True,
     "scrollZoom": False,
@@ -25,32 +27,24 @@ config = {
         "lasso2d",
     ],
 }
-# CodeCarbon_template
+
+
 # App
 # *******************************************************************************
 # *******************************************************************************
 
 
-# data
-# *******************************************************************************
-# df = pd.read_csv(
-#    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
-# )
-# df.timestamp = pd.to_datetime(df.timestamp)
-
-# SET ORGA_ID ans associated projects
-# orga_id = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+# Get organizations ans associated projects
 df_org = get_organization_list()
-# print(df_org)
 orga_id = df_org.id.unique().tolist()[1]
-# df_project = pd.DataFrame(columns=["name", "id"])
 df_project = get_project_list(orga_id)
-# print(f"orga_id={orga_id}")
+
+# Load WorldElectricityMix
 df_mix = pd.read_csv(
     "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
 )
 
-
+# Define application
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -61,7 +55,9 @@ app = dash.Dash(
 app.title = "Code Carbon"
 components = Components()
 
+
 # Layout section: Bootstrap (https://hackerthemes.com/bootstrap-cheatsheet/)
+# *******************************************************************************
 # *******************************************************************************
 app.layout = dbc.Container(
     [
@@ -98,7 +94,6 @@ app.layout = dbc.Container(
                                     for projectName, projectId in zip(
                                         df_project.name, df_project.id
                                     )
-                                    # for projectName, projectId in df[['project_name','project_id']].drop_duplicates().iteritems()
                                 ],
                                 value=df_project.id.unique().tolist()[-1]
                                 if len(df_project) > 0
