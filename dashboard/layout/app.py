@@ -110,9 +110,9 @@ app.layout = dbc.Container(
                     [
                         # holding pieCharts
                         dbc.Col(
-                            # dbc.Spinner(
+                             dbc.Spinner(
                             dcc.Graph(id="pieCharts", config=config)
-                            #    )
+                                )
                         ),
                         dbc.Col(
                             [
@@ -137,7 +137,7 @@ app.layout = dbc.Container(
                         dcc.Graph(id="barChart", clickData=None, config=config)
                     ),  # holding barChart
                     dbc.Col(
-                        # dbc.Spinner(
+                         dbc.Spinner(
                         dcc.Graph(
                             id="bubbleChart",
                             clickData=None,
@@ -145,7 +145,7 @@ app.layout = dbc.Container(
                             figure={},
                             config=config,
                         )
-                        # )
+                         )
                     ),
                 ]
             ),
@@ -156,9 +156,9 @@ app.layout = dbc.Container(
                 [
                     # holding line chart
                     # dbc.Col(
-                    # dbc.Spinner(
+                     dbc.Spinner(
                     dcc.Graph(id="lineChart", config=config)
-                    #    )
+                        )
                     # , width=6),
                 ]
             ),
