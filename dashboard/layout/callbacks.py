@@ -45,6 +45,17 @@ def update_project_from_organization(value):
     # return project_id, [options]
     return [options]
 
+@app.callback(
+    [
+        Output(component_id="projectPicked", component_property="value"),
+
+    ],
+    [
+        Input(component_id="projectPicked", component_property="options"),
+    ]
+)
+def update_project_default_value(options):
+    return [options[0]["value"]]
 
 @app.callback(
     [
