@@ -104,7 +104,7 @@ class Data:
         global_energy_mix = self._data_source.get_global_energy_mix_data()
         choropleth_data = []
         for country_iso_code in global_energy_mix.keys():
-            country_name = global_energy_mix[country_iso_code]["countryName"]
+            country_name = global_energy_mix[country_iso_code]["country_name"]
 
             if country_iso_code not in ["_define", "ATA"]:
                 from codecarbon.core.units import Energy
@@ -119,30 +119,30 @@ class Data:
                         country_name=country_name, country_iso_code=country_iso_code
                     ),
                 )
-                total = global_energy_mix[country_iso_code]["total"]
+                total = global_energy_mix[country_iso_code]["total_TWh"]
                 choropleth_data.append(
                     {
                         "iso_code": country_iso_code,
                         "emissions": country_emissions,
                         "country": country_name,
                         "fossil": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["fossil"], total
+                            global_energy_mix[country_iso_code]["fossil_TWh"], total
                         ),
                         "geothermal": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["geothermal"], total
+                            global_energy_mix[country_iso_code]["geothermal_TWh"], total
                         ),
                         "hydroelectricity": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["hydroeletricity"],
+                            global_energy_mix[country_iso_code]["hydroelectricity_TWh"],
                             total,
                         ),
                         "nuclear": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["nuclear"], total
+                            global_energy_mix[country_iso_code]["nuclear_TWh"], total
                         ),
                         "solar": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["solar"], total
+                            global_energy_mix[country_iso_code]["solar_TWh"], total
                         ),
                         "wind": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["wind"], total
+                            global_energy_mix[country_iso_code]["wind_TWh"], total
                         ),
                     }
                 )
@@ -203,11 +203,11 @@ class Data:
         if on_cloud == "N":
             return (
                 "",
-                pd.DataFrame(data={"region": [], "emissions": [], "countryName": []}),
+                pd.DataFrame(data={"region": [], "emissions": [], "country_name": []}),
             )
         cloud_emissions = self._data_source.get_cloud_emissions_data()
         cloud_emissions = cloud_emissions[
-            ["provider", "providerName", "region", "impact", "countryName"]
+            ["provider", "providerName", "region", "impact", "country_name"]
         ]
 
         from codecarbon.core.units import EmissionsPerKWh
