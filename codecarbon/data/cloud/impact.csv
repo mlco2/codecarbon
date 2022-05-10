@@ -1,4 +1,4 @@
-provider,providerName,offsetRatio,region,regionName,countryName,countryIsoCode,state,city,impact,source,comment
+provider,providerName,offsetRatio,region,regionName,country_name,countryIsoCode,state,city,impact,source,comment
 gcp,Google Cloud Platform,100,asia-east1,,Taiwan,TWN,,Changhua County,438.2,https://cloud.google.com/sustainability/region-carbon?hl=fr,
 gcp,Google Cloud Platform,100,asia-east2,,China,CHN,,Hong Kong,626.0,https://cloud.google.com/sustainability/region-carbon?hl=fr,
 gcp,Google Cloud Platform,100,asia-northeast1,,Japan,JPN,,Tokyo,524.0,https://cloud.google.com/sustainability/region-carbon?hl=fr,
