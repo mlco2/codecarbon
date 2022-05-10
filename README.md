@@ -6,7 +6,7 @@ Estimate and track carbon emissions from your compute, quantify and analyze thei
 
 <br/>
 
-[![](https://img.shields.io/conda/v/codecarbon/codecarbon?color=C9FB37)](https://anaconda.org/codecarbon/codecarbon)
+[![](https://anaconda.org/conda-forge/codecarbon/badges/version.svg)](https://anaconda.org/conda-forge/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
 
@@ -72,7 +72,7 @@ if you wish to use the built-in visualization tool described below.
 #### Install from Conda repository
 
 ```
-conda install -c codecarbon -c conda-forge codecarbon
+conda install -c conda-forge codecarbon
 ```
 
 `codecarbon` is now installed in your the local environment
