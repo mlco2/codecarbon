@@ -71,7 +71,9 @@ if __name__ == "__main__":
         print(setup_version)
     elif module_version.lower().strip() in versions:
         print(f"Version {setup_version} already exist on PyPi !")
-        print("Please run 'poetry version patch && make precommit' and commit changes.")
+        print("Please bump the version in setup.py, __init__.py and meta.yaml !.")
         exit(1)
     else:
-        print(f"Local version is {setup_version}\nPyPi versions are {versions}")
+        print(
+            f"All good !\nLocal version is {setup_version}\nPyPi versions are {versions}"
+        )
