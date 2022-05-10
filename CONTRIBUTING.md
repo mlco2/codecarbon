@@ -176,7 +176,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon ? You can
 - Create and Merge a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py and https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
-- Go to [Github Action](https://github.com/mlco2/codecarbon/actions) and run the workflow named _Upload to PyPi_.
+- A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
 - For conda, we now have a [feedstock](https://github.com/conda-forge/codecarbon-feedstock/pulls) to publish to Conda-Forge channel.
 
 
