@@ -1,8 +1,8 @@
 from typing import Dict, List, Tuple
 
-import dash_table as dt
 import pandas as pd
 import requests
+from dash import dash_table as dt
 
 from codecarbon.core.emissions import Emissions
 from codecarbon.input import DataSource, DataSourceException
