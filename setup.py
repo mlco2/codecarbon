@@ -19,7 +19,7 @@ TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy", "requests-mo
 
 setuptools.setup(
     name="codecarbon",
-    version="2.1.0",
+    version="2.1.1",
     author="Mila, DataForGood, BCG GAMMA, Comet.ml, Haverford College",
     long_description=long_description,
     long_description_content_type="text/markdown",
