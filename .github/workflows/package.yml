@@ -13,6 +13,10 @@ jobs:
           uses: actions/setup-python@v1
           with:
               python-version: 3.8
+        - name: Check versions
+          run: |
+              pip install -U pip requests
+              python3 .github/check_version.py
         - name: Build pip package
           run: |
               pip install -U pip build
