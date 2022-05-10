@@ -49,7 +49,7 @@ class Emissions:
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         return df.loc[
             (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        ]["countryName"].item()
+        ]["country_name"].item()
 
     def get_cloud_country_iso_code(self, cloud: CloudMetadata) -> str:
         """
@@ -226,3 +226,43 @@ class Emissions:
             )
 
         return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
+
+    @staticmethod
+    def _region_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
+        """
+        Convert a mix of energy sources into emissions per kWh
+        https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
+        :param energy_mix: A dictionary that breaks down the energy produced into
+            sources, with a total value. Format will vary, but must have keys for "coal"
+            "petroleum" and "naturalGas" and "total"
+        :return: an EmissionsPerKwh object representing the average emissions rate
+        """
+        # source:
+        # https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
+        emissions_by_source: Dict[str, EmissionsPerKWh] = {
+            "coal": EmissionsPerKWh.from_kgs_per_kWh(0.995725971),
+            "petroleum": EmissionsPerKWh.from_kgs_per_kWh(0.8166885263),
+            "naturalGas": EmissionsPerKWh.from_kgs_per_kWh(0.7438415916),
+        }
+        emissions_percentage: Dict[str, float] = {}
+        for energy_type in energy_mix.keys():
+            if energy_type not in ["total", "isoCode", "country_name"]:
+                emissions_percentage[energy_type] = (
+                    energy_mix[energy_type] / energy_mix["total"]
+                )
+        #  Weighted sum of emissions by % of contributions
+        # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
+        # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916 # noqa: E501
+        # `emissions_per_kWh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916) # noqa: E501
+        #  >> 0.5358309 kg/kWh
+        emissions_per_kWh = EmissionsPerKWh.from_kgs_per_kWh(
+            sum(
+                [
+                    emissions_percentage[source]
+                    * value.kgs_per_kWh  # % (0.x)  # kgs / kWh
+                    for source, value in emissions_by_source.items()
+                ]
+            )
+        )
+
+        return emissions_per_kWh

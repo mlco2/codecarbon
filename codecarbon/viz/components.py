@@ -1,12 +1,11 @@
 import json
 
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-import dash_table as dt
 import numpy as np
 import pandas as pd
 import plotly.express as px
+from dash import dash_table as dt
+from dash import dcc, html
 
 
 class Components:
@@ -430,7 +429,10 @@ class Components:
                                 options=[
                                     {"label": "Fossil", "value": "fossil"},
                                     {"label": "Geothermal", "value": "geothermal"},
-                                    {"label": "Hydroelectricity", "value": "hydroelectricity"},
+                                    {
+                                        "label": "Hydroelectricity",
+                                        "value": "hydroelectricity",
+                                    },
                                     {"label": "Nuclear", "value": "nuclear"},
                                     {"label": "Solar", "value": "solar"},
                                     {"label": "Wind", "value": "wind"},
