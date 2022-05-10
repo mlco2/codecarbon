@@ -26,10 +26,10 @@ jobs:
           with:
               name: pypi_dist
               path: dist
-        - uses: s-weigand/setup-conda@v1
-          with:
-              activate-conda: true
-              conda-channels: conda-forge
+        # - uses: s-weigand/setup-conda@v1
+        #   with:
+        #       activate-conda: true
+        #       conda-channels: conda-forge
         # Conda package is now build by Conda-forge
         # See https://github.com/conda-forge/codecarbon-feedstock
         # - name: Build conda package
