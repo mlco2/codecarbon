@@ -15,7 +15,7 @@ import requests
 
 def get_local_version(filepath="codecarbon/__init__.py"):
     """
-    Read the version in pyproject.toml
+    Read the version in the file given in parameter
     :return: The version
     """
 
@@ -24,10 +24,6 @@ def get_local_version(filepath="codecarbon/__init__.py"):
     if mo:
         return mo.group(1)
     else:
-        # mo = re.search(r"version=['\"]([^'\"]*)['\"]", filecontent, re.M)
-        # if mo:
-        #     return mo.group(1)
-        # else:
         raise RuntimeError(f"Unable to find version string in {filepath}")
 
 
