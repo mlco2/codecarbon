@@ -184,11 +184,11 @@ If you still want to publish to the Anaconda Codecarbon channel:
 
 Start a Docker image in the same directory and bind-mount the current directory with:
 
-`docker run -ti --rm=true -v (pwd):/data:z continuumio/anaconda3:2020.02`.
+`docker run -ti --rm=true -v $PWD:/data continuumio/anaconda3`.
 
 Inside the docker container, run:
 - `conda install conda-build conda-verify`
-- `mkdir -p conda_dist`
+- `cd /data && mkdir -p conda_dist`
 - `conda build --python 3.8 .conda/ -c conda-forge --output-folder conda_dist`
 - `anaconda upload --user codecarbon /data/noarch/codecarbon-*.tar.bz2`
 
