@@ -804,9 +804,6 @@ def track_emissions(
                     log_level=log_level,
                     co2_signal_api_token=co2_signal_api_token,
                 )
-                tracker.start()
-                fn_result = fn(*args, **kwargs)
-                tracker.stop()
             else:
                 tracker = EmissionsTracker(
                     project_name=project_name,
@@ -826,16 +823,16 @@ def track_emissions(
                     save_to_api=save_to_api,
                     co2_signal_api_token=co2_signal_api_token,
                 )
-                tracker.start()
-                try:
-                    fn_result = fn(*args, **kwargs)
-                finally:
-                    logger.info(
-                        "\nGraceful stopping: collecting and writing information.\n"
-                        + "Please Allow for a few seconds..."
-                    )
-                    tracker.stop()
-                    logger.info("Done!\n")
+            tracker.start()
+            try:
+                fn_result = fn(*args, **kwargs)
+            finally:
+                logger.info(
+                    "\nGraceful stopping: collecting and writing information.\n"
+                    + "Please Allow for a few seconds..."
+                )
+                tracker.stop()
+                logger.info("Done!\n")
             return fn_result
 
         return wrapped_fn
