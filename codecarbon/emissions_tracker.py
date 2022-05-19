@@ -805,8 +805,15 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                 )
                 tracker.start()
-                fn_result = fn(*args, **kwargs)
-                tracker.stop()
+                try:
+                    fn_result = fn(*args, **kwargs)
+                finally:
+                    logger.info(
+                        "\nGraceful stopping: collecting and writing information.\n"
+                        + "Please Allow for a few seconds..."
+                    )
+                    tracker.stop()
+                    logger.info("Done!\n")
             else:
                 tracker = EmissionsTracker(
                     project_name=project_name,
