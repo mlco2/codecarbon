@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from codecarbon.core.units import Energy, Power, Time
+from codecarbon.external.logger import logger
 
 
 @dataclass
@@ -35,6 +36,12 @@ class RAPLFile:
         Compute the energy used since last call.
         """
         energy = self._get_value()
+        if self.last_energy > energy:
+            logger.error(
+                f"In RAPLFile : Current energy value ({energy}) is lower than previous value ({self.last_energy}) ! Source file : {self.path}"
+            )
+            self.power = Power(0)
+            self.energy_delta = Energy(0)
         self.power = self.power.from_energies_and_delay(
             energy, self.last_energy, duration
         )
