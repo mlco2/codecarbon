@@ -2,7 +2,7 @@
 Provides functionality for unit conversions
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -47,7 +47,7 @@ class EmissionsPerKWh:
         return cls(kgs_per_kWh=kgs_per_kWh)
 
 
-@dataclass
+@dataclass(order=True)
 class Energy:
     """
     Measured in kWh
@@ -56,7 +56,7 @@ class Energy:
     UJOULES_TO_JOULES = 10 ** (-6)
     JOULES_TO_KWH = 2.77778e-7
 
-    kWh: float
+    kWh: float = field(compare=True)
 
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
