@@ -16,6 +16,13 @@ def get_run_data(run_id, page_api, size_api) -> pd.DataFrame:
     run_total = run_from_api["total"]
     return run_df, run_total
 
+def get_run_info(run_id) -> pd.DataFrame:
+    run_from_api = load_run_infos(run_id)
+    col = ['os','python_version','cpu_count','cpu_model','gpu_count','gpu_model', 'longitude','latitude','region','provider','ram_total_size','tracking_mode']
+    filtered_d = dict((k, run_from_api[k]) for k in col if k in run_from_api)
+    
+
+    return filtered_d
 
 def get_run_emissions(run_id, size=10000) -> pd.DataFrame:
     run_df, run_total = get_run_data(run_id, 1, size)

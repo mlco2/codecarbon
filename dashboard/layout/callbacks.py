@@ -1,3 +1,4 @@
+import dash
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -346,7 +347,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     [
         Output(component_id="lineChart", component_property="figure"),
         Output(component_id="bubbleChart", component_property="clickData"),
-        #        Output(component_id="barChart", component_property="clickData"),
+        #Output(component_id="runMetadataTable", component_property="children"),
     ],
     [
         Input(component_id="bubbleChart", component_property="clickData"),
@@ -366,23 +367,25 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         if not (last_run == None):
             run_name = last_run["id"]
             df_run, total_run = get_run_emissions(run_name)
+           
     elif clickPoint is None:
         experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
         run_list = get_experiment_runs(experiment_selected, start_date, end_date)
         if not (run_list.empty):
             run_name = run_list["id"].iloc[-1]
             df_run, total_run = get_run_emissions(run_name)
+            
     else:
         run_name = clickPoint["points"][0]["customdata"]
         df_run, total_run = get_run_emissions(run_name)
-
+     
     if df_run.empty:
         run_name = ''
         df_run = pd.DataFrame(
             [[start_date, None], [end_date, None]],
             columns=["timestamp", "emissions_rate"],
         )
-
+  
     line = px.line(
         df_run,
         x="timestamp",
@@ -406,10 +409,70 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         linecolor="white",
         title="emission rate",
     )
-    clickPoint = None
-    #    experiment_clickPoint = None
-    return line, clickPoint  # , experiment_clickPoint
+   
 
+    clickPoint = None
+    
+
+    
+
+    return line, clickPoint
+
+## Metadata 
+##__________________________________________________________________________________________________
+@app.callback(
+    [
+        Output(component_id="OS", component_property="children"),
+        Output(component_id="python_version", component_property="children"),
+        Output(component_id="CPU_count", component_property="children"),
+        Output(component_id="CPU_model", component_property="children"),
+        Output(component_id="GPU_count", component_property="children"),
+        Output(component_id="GPU_model", component_property="children"),
+        Output(component_id="longitude", component_property="children"),
+        Output(component_id="latitude", component_property="children"),
+        Output(component_id="region", component_property="children"),
+        Output(component_id="provider", component_property="children"),
+        Output(component_id="ram_tot", component_property="children"),
+        Output(component_id="tracking_mode", component_property="children"),
+    ],
+    [
+        Input(component_id="bubbleChart", component_property="clickData"),
+        Input(component_id="periode", component_property="start_date"),
+        Input(component_id="periode", component_property="end_date"),
+        Input(component_id="barChart", component_property="clickData"),
+        Input(component_id="projectPicked", component_property="value"),
+    ],
+)
+
+def get_metadata_table(clickPoint, start_date, end_date, experiment_clickPoint, project):
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+   
+    dic_table={'os':'','python_version':'','cpu_count':'','cpu_model':'','gpu_count':'','gpu_model':'', 'longitude':'','latitude':'','region':'','provider':'','ram_total_size':0,'tracking_mode':''}
+    if experiment_clickPoint is None and clickPoint is None:
+        last_run = get_lastrun(project, start_date, end_date)
+        if not (last_run == None):
+            run_name = last_run["id"]
+            dic_table = get_run_info(run_name)
+    elif clickPoint is None:
+        experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
+        run_list = get_experiment_runs(experiment_selected, start_date, end_date)
+        if not (run_list.empty):
+            run_name = run_list["id"].iloc[-1]
+            dic_table = get_run_info(run_name)
+    else:
+        run_name = clickPoint["points"][0]["customdata"]
+        dic_table = get_run_info(run_name)
+
+    
+    # if dic_table.empty:
+    #    dic_table={'os':'','python_version':'','cpu_count':'','cpu_model':'','gpu_count':'','gpu_model':'', 'longitude':'','latitude':'','region':'','provider':'','ram_total_size':'','tracking_mode':''}
+    
+     
+    
+
+    return  dic_table["os"],dic_table["python_version"],dic_table["cpu_count"],dic_table["cpu_model"],dic_table["gpu_count"],dic_table["gpu_model"],dic_table['longitude'],dic_table['latitude'],dic_table['region'],dic_table["provider"],round(dic_table["ram_total_size"],2),dic_table["tracking_mode"] 
+    
 
 # Carbon Emission Map
 # ---------------------------------------------------------------------------------

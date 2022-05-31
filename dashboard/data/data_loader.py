@@ -202,3 +202,15 @@ def load_lastrun(project_id: str, **kwargs) -> tuple:
     """
     path = f"{API_PATH}/lastrun/project/{project_id}"
     return path, kwargs
+
+@api_loader
+def load_run_infos(run_id: str, **kwargs) -> tuple:
+    """
+    Get emissions of a given run
+    :params:
+        kwargs: can be any parameter available for the query
+    :example:
+        run_id = '58e2c11e-b91f-4adb-b0e0-7e91b72ffb80'
+    """
+    path = f"{API_PATH}/run/{run_id}"
+    return path, kwargs
