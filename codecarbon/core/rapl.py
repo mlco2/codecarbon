@@ -42,10 +42,12 @@ class RAPLFile:
             )
             self.power = Power(0)
             self.energy_delta = Energy(0)
-        self.power = self.power.from_energies_and_delay(
-            energy, self.last_energy, duration
-        )
-        self.energy_delta = energy - self.last_energy
-        self.last_energy = energy
+            return
+        else:
+            self.power = self.power.from_energies_and_delay(
+                energy, self.last_energy, duration
+            )
+            self.energy_delta = energy - self.last_energy
+            self.last_energy = energy
 
-        return
+            return
