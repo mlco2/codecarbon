@@ -10,4 +10,4 @@ from .emissions_tracker import (
 
 __all__ = ["EmissionsTracker", "OfflineEmissionsTracker", "track_emissions"]
 
-__version__ = "2.1.2"
+__version__ = "2.1.3"
