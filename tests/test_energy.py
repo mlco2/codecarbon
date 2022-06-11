@@ -2,8 +2,7 @@ import os.path
 import unittest
 from os import path
 
-from core.rapl import RAPLFile
-
+from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Energy, Time
 
 
