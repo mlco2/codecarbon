@@ -20,7 +20,7 @@ from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task

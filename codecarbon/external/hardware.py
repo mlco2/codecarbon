@@ -25,6 +25,8 @@ CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
 B_TO_GB = 1024 * 1024 * 1024
 
+MODE_CPU_LOAD = "cpu_load"
+
 
 @dataclass
 class BaseHardware(ABC):
@@ -174,7 +176,10 @@ class CPU(BaseHardware):
         Get CPU power
         :return: power in kW
         """
-        if self._mode == "constant":
+        if self._mode == MODE_CPU_LOAD:
+            power = self._tdp * psutil.cpu_percent(interval=None)
+            return Power.from_watts(power)
+        elif self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
         if self._mode == "intel_rapl":
@@ -222,6 +227,10 @@ class CPU(BaseHardware):
     def start(self):
         if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
             self._intel_interface.start()
+        if self._mode == MODE_CPU_LOAD:
+            # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
+            psutil.cpu_percent(interval=None)
+        pass
 
     def get_model(self):
         return self._model
