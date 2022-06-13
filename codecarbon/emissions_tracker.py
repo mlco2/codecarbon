@@ -28,7 +28,7 @@ from codecarbon.core.util import (
     suppress,
 )
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
@@ -462,15 +462,34 @@ class BaseEmissionsTracker(ABC):
             logger.info(f"CPU Model on constant consumption mode: {model}")
             self._conf["cpu_model"] = model
             if tdp:
-                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU load mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self._output_dir, MODE_CPU_LOAD, model, power
+                    )
+                else:
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU constant mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self._output_dir, "constant", model, power
+                    )
                 self._hardware.append(hardware)
             else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
-                )
-                cpu_tracker = "global constant"
-                hardware = CPU.from_utils(self._output_dir, "constant")
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on CPU load mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self._output_dir, MODE_CPU_LOAD, model, power
+                    )
+                else:
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on a global constant."
+                    )
+                    hardware = CPU.from_utils(self._output_dir, "constant")
                 self._hardware.append(hardware)
         logger.debug(
             f"""The below tracking methods have been set up:
