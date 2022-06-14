@@ -177,7 +177,9 @@ class CPU(BaseHardware):
         :return: power in kW
         """
         if self._mode == MODE_CPU_LOAD:
-            power = self._tdp * psutil.cpu_percent(interval=None)
+            cpu_load = psutil.cpu_percent(interval=None)
+            power = self._tdp * cpu_load / 100
+            logger.debug(f"CPU load {self._tdp} W x {cpu_load}% = {power}")
             return Power.from_watts(power)
         elif self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
