@@ -14,7 +14,7 @@ from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
+from codecarbon.core.util import SLURM_JOB_ID, count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -149,12 +149,19 @@ class CPU(BaseHardware):
         model: str,
         tdp: int,
         rapl_dir: str = "/sys/class/powercap/intel-rapl",
+        tracking_mode: str = "machine",
     ):
+        assert tracking_mode in ["machine", "process"]
         self._output_dir = output_dir
         self._mode = mode
         self._model = model
         self._tdp = tdp
         self._is_generic_tdp = False
+        self._tracking_mode = tracking_mode
+        self._pid = psutil.Process().pid
+        self._cpu_count = count_cpus()
+        self._process = psutil.Process(self._pid)
+
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
@@ -171,14 +178,36 @@ class CPU(BaseHardware):
 
         return s + ")"
 
+    def _get_power_from_cpu_load(self):
+        """
+        When in MODE_CPU_LOAD
+        """
+        if self._tracking_mode == "machine":
+            cpu_load = psutil.cpu_percent(interval=None)
+            # We add a minimum of 10% of TDP
+            power = max(self._tdp * 0.1, self._tdp * cpu_load / 100)
+            logger.debug(
+                f"CPU load {self._tdp} W x {cpu_load}% = {power} for whole machine."
+            )
+        elif self._tracking_mode == "process":
+
+            cpu_load = self._process.cpu_percent(interval=None) / self._cpu_count
+            power = self._tdp * cpu_load / 100
+            logger.debug(
+                f"CPU load {self._tdp} W x {cpu_load}% = {power} for process {self._pid}."
+            )
+        else:
+            raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
+        return Power.from_watts(power)
+
     def _get_power_from_cpus(self) -> Power:
         """
         Get CPU power
         :return: power in kW
         """
         if self._mode == MODE_CPU_LOAD:
-            power = self._tdp * psutil.cpu_percent(interval=None)
-            return Power.from_watts(power)
+            power = self._get_power_from_cpu_load()
+            return power
         elif self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
@@ -229,8 +258,7 @@ class CPU(BaseHardware):
             self._intel_interface.start()
         if self._mode == MODE_CPU_LOAD:
             # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
-            psutil.cpu_percent(interval=None)
-        pass
+            _ = self._get_power_from_cpu_load()
 
     def get_model(self):
         return self._model
@@ -242,6 +270,7 @@ class CPU(BaseHardware):
         mode: str,
         model: Optional[str] = None,
         tdp: Optional[int] = None,
+        tracking_mode: str = "machine",
     ) -> "CPU":
         if model is None:
             model = detect_cpu_model()
@@ -254,7 +283,13 @@ class CPU(BaseHardware):
             cpu._is_generic_tdp = True
             return cpu
 
-        return cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
+        return cls(
+            output_dir=output_dir,
+            mode=mode,
+            model=model,
+            tdp=tdp,
+            tracking_mode=tracking_mode,
+        )
 
 
 @dataclass
