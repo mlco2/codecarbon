@@ -11,8 +11,8 @@ import sys
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
-from rapidfuzz import fuzz, process, utils
 import psutil
+from rapidfuzz import fuzz, process, utils
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
@@ -310,7 +310,7 @@ class IntelRAPL:
                     logger.debug("We will read Intel RAPL files at %s", rapl_file)
                 except PermissionError as e:
                     raise PermissionError(
-                        "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
+                        "PermissionError : Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
                         + " for workarounds : %s",
                         e,

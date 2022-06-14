@@ -48,6 +48,8 @@ def resolve_path(path: Union[str, Path]) -> Path:
 def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     """
     Resolves the path to a path then backs it up, adding the extension provided.
+    Warning : this function will rename the file in place, it's the calling function that will write a new file at the original path.
+    This function will not overwrite existing backups but add a number.
 
     Args:
         file_path (Union[str, Path]): Path to a file to backup.
@@ -111,7 +113,7 @@ def count_cpus() -> int:
             "Error running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     num_cpus_matches = re.findall(r"NumCPUs=\d+", scontrol)
 
@@ -120,14 +122,14 @@ def count_cpus() -> int:
             "Could not find NumCPUs= after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     if len(num_cpus_matches) > 1:
         logger.warning(
             "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
     logger.debug(f"Detected {num_cpus} cpus available on SLURM.")
