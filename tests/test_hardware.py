@@ -30,7 +30,7 @@ class TestCPULoad(unittest.TestCase):
         mocked_is_powergadget_available,
         mocked_is_rapl_available,
     ):
-        tracker = OfflineEmissionsTracker()
+        tracker = OfflineEmissionsTracker(country_iso_code="FRA")
         for hardware in tracker._hardware:
             if isinstance(hardware, CPU) and hardware._mode == MODE_CPU_LOAD:
                 break
