@@ -170,6 +170,7 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
+        force_add_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
@@ -225,6 +226,7 @@ class BaseEmissionsTracker(ABC):
                                 messages. Defaults to "".
         :param default_cpu_power: cpu power to be used as default if the cpu is not known.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+        :param force_add_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
@@ -274,6 +276,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(default_cpu_power, "default_cpu_power")
         self._set_from_conf(pue, "pue", 1.0, float)
+        self._set_from_conf(force_add_mode_cpu_load, "force_add_mode_cpu_load", False)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -689,8 +692,11 @@ class BaseEmissionsTracker(ABC):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
                 logger.info(
-                    f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
-                    + f". Total CPU Power : {self._cpu_power.W} W"
+                    f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
+                    + f", power : {self._cpu_power.W} W"
+                )
+                logger.info(
+                    f"Energy consumed for All CPU : {self._total_cpu_energy.kWh:.6f} kWh"
                 )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
@@ -725,8 +731,7 @@ class BaseEmissionsTracker(ABC):
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.perf_counter() - h_time
             logger.debug(
-                f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
-                + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
+                f"Done measure for {hardware.__class__.__name__} - measurement time: {h_time:,.4f} s - last call {last_duration:,.2f} s"
             )
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."

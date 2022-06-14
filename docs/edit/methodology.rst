@@ -133,6 +133,46 @@ If none of the tracking tools are available on a computing resource, CodeCarbon 
 
 The net Energy Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
+CPU hardware
+------------
+
+The CPU die is the processing unit itself. It’s a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible1. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.
+
+In Linux kernel, energy_uj is a current energy counter in micro joules. It is used to measure CPU cores’ energy consumption.
+
+Micro joules is then converted in kWh, with formulas kWh=energy * 10 ** (-6) * 2.77778e-7
+
+For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read two files :
+/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj
+
+
+RAPL Metrics
+------------
+RAPL stand for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
+
+See https://blog.chih.me/read-cpu-power-with-RAPL.html
+
+Despite the name Intel RAPL, it support AMD processors since kernel 5.8.
+
+Metric comparison
+
+Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
+Power plug measure when idle (10% CPU): 125 W
+package-0-die-0 : 68 W
+package-0-die-1 : 68 W
+CodeCarbon : 137 W
+
+Power plug measure when loaded (100% CPU): 256 W - 125W in idle = 131 W
+CorWatt	PkgWatt
+	133.13	169.82
+	7.54	169.82
+CodeCarbon : 330 W
+package-0-die-0 : 166 W
+package-0-die-1 : 166 W
+
+RAPL: 234 sec. Joule Counter Range, at 280 Watts
+
+
 ``Energy = Power * Time``
 
 References
