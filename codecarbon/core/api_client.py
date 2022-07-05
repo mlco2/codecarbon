@@ -118,6 +118,7 @@ class ApiClient:  # (AsyncClient)
                 cpu_model=self.conf.get("cpu_model"),
                 gpu_count=self.conf.get("gpu_count"),
                 gpu_model=self.conf.get("gpu_model"),
+                # Reduce precision for Privacy
                 longitude=round(self.conf.get("longitude"), 1),
                 latitude=round(self.conf.get("latitude"), 1),
                 region=self.conf.get("region"),
