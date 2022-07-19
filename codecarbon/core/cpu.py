@@ -200,12 +200,19 @@ class IntelRAPL:
                 if "package" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
+                # RAPL file to take measurement from
                 rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
+                # RAPL file containing maximum possible value of energy_uj above which it wraps
+                rapl_file_max = os.path.join(
+                    self._lin_rapl_dir, file, "max_energy_range_uj"
+                )
                 try:
                     # Try to read the file to be sure we can
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
-                    self._rapl_files.append(RAPLFile(name=name, path=rapl_file))
+                    self._rapl_files.append(
+                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
+                    )
                     logger.debug(f"We will read Intel RAPL files at {rapl_file}")
                 except PermissionError as e:
                     logger.error(

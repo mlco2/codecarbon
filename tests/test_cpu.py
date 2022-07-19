@@ -66,12 +66,20 @@ class TestIntelRAPL(unittest.TestCase):
                 f.write("package-0")
             with open(os.path.join(self.rapl_dir, "intel-rapl:0/energy_uj"), "w") as f:
                 f.write("52649883221")
+            with open(
+                os.path.join(self.rapl_dir, "intel-rapl:0/max_energy_range_uj"), "w"
+            ) as f:
+                f.write("262143328850")
 
             os.makedirs(os.path.join(self.rapl_dir, "intel-rapl:1"), exist_ok=True)
             with open(os.path.join(self.rapl_dir, "intel-rapl:1/name"), "w") as f:
                 f.write("psys")
             with open(os.path.join(self.rapl_dir, "intel-rapl:1/energy_uj"), "w") as f:
                 f.write("117870082040")
+            with open(
+                os.path.join(self.rapl_dir, "intel-rapl:1/max_energy_range_uj"), "w"
+            ) as f:
+                f.write("262143328850")
 
     @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
     def test_intel_rapl(self):
