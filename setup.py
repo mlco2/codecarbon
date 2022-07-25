@@ -61,4 +61,11 @@ setuptools.setup(
             "codecarbon = codecarbon.cli.main:codecarbon",
         ]
     },
+    ext_modules=[
+        setuptools.Extension(
+            name="codecarbon.core.perf",
+            sources=["codecarbon/core/Modules/perfmodule.c"],
+            optional=True,
+        )
+    ],
 )
