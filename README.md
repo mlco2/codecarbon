@@ -181,7 +181,7 @@ with EmissionsTracker() as tracker:
 
 ### Flush data when running
 
-By default, Code Carbon only writes the CVS output file when it stops.
+By default, Code Carbon only writes the CSV output file when it stops.
 But for a long run you may want to save intermediate data.
 It is possible to call the flush() method to do so.
 
