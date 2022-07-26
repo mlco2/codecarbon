@@ -4,17 +4,17 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 from data.data_functions import (
-    get_project_list, 
-    get_orga_sums, 
-    get_project_sums, 
-    get_experiment_sums, 
-    get_lastrun, 
-    get_experiment, 
-    get_run_sums, 
-    get_run_emissions, 
-    get_experiment_runs, 
-    get_run_info, 
+    get_experiment,
+    get_experiment_runs,
+    get_experiment_sums,
+    get_lastrun,
+    get_orga_sums,
     get_project,
+    get_project_list,
+    get_project_sums,
+    get_run_emissions,
+    get_run_info,
+    get_run_sums,    
 )
 from layout.app import app, df_mix
 from layout.template import darkgreen, vividgreen

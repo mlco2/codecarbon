@@ -7,16 +7,19 @@ from math import ceil
 
 import pandas as pd
 from data.data_loader import (
-    load_run_emissions, 
-    load_run_infos, 
-    load_project_experiments, 
-    load_experiment_runs, 
-    load_experiment_sums, 
-    load_run_sums, load_project_sums, 
-    load_orga_sums, load_experiment, 
-    load_project, load_lastrun, 
-    load_organizations, 
-    load_organization_teams, 
+    load_experiment,
+    load_experiment_runs,
+    load_experiment_sums,
+    load_lastrun,
+    load_orga_sums,
+    load_organization_teams,
+    load_organizations,
+    load_project,
+    load_project_experiments,
+    load_project_sums,
+    load_run_emissions,
+    load_run_infos,
+    load_run_sums,
     load_team_projects,
 )
 
