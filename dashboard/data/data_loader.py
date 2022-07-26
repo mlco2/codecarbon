@@ -5,8 +5,8 @@ API calls
 
 import json
 import os
-import requests
 
+import requests
 
 API_PATH = os.getenv("CODECARBON_API_URL")
 if API_PATH is None:
@@ -202,6 +202,7 @@ def load_lastrun(project_id: str, **kwargs) -> tuple:
     """
     path = f"{API_PATH}/lastrun/project/{project_id}"
     return path, kwargs
+
 
 @api_loader
 def load_run_infos(run_id: str, **kwargs) -> tuple:

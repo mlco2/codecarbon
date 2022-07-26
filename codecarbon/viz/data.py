@@ -132,7 +132,7 @@ class Data:
                             global_energy_mix[country_iso_code]["geothermal_TWh"], total
                         ),
                         "hydroelectricity": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["hydroeletricity_TWh"],
+                            global_energy_mix[country_iso_code]["hydroelectricity_TWh"],
                             total,
                         ),
                         "nuclear": formatted_energy_percentage(

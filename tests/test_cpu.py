@@ -94,9 +94,6 @@ class TestIntelRAPL(unittest.TestCase):
             expected_cpu_details, rapl.get_cpu_details(duration=Time(0))
         )
 
-        rapl = IntelRAPL(rapl_dir=self.rapl_dir)
-        self.assertDictEqual(expected_cpu_details, rapl.get_cpu_details(delay=0.01))
-
     @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
     def test_rapl_cpu_hardware(self):
         cpu = CPU(

@@ -5,11 +5,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 from data.data_functions import *
-
-from plotly.subplots import make_subplots
 from layout.app import app, df_mix
 from layout.template import darkgreen, vividgreen
-
+from plotly.subplots import make_subplots
 
 # callback section: connecting the components
 # ************************************************************************
@@ -46,17 +44,18 @@ def update_project_from_organization(value):
     # return project_id, [options]
     return [options]
 
+
 @app.callback(
     [
         Output(component_id="projectPicked", component_property="value"),
-
     ],
     [
         Input(component_id="projectPicked", component_property="options"),
-    ]
+    ],
 )
 def update_project_default_value(options):
     return [options[0]["value"]]
+
 
 @app.callback(
     [
@@ -68,7 +67,7 @@ def update_project_default_value(options):
     [
         Input(component_id="periode", component_property="start_date"),
         Input(component_id="periode", component_property="end_date"),
-        Input(component_id="org-dropdown", component_property="value")
+        Input(component_id="org-dropdown", component_property="value"),
     ],
 )
 def update_indicator(start_date, end_date, organization_id):
@@ -76,7 +75,7 @@ def update_indicator(start_date, end_date, organization_id):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     df_orga = get_orga_sums(orga_id, start_date, end_date)
-    
+
     # Tot_Energy consumed card / Tot Emissions card / Tot_Duration cards
     if df_orga is None:
         Tot_energy_consumed = 0
@@ -165,7 +164,7 @@ def update_Charts(start_date, end_date, project):
         duration_in_min = duration / 60
         duration_project = "{:.0f}".format(duration_in_min)
         duration_project_unit = "min"
-        if duration_in_min >= 60: 
+        if duration_in_min >= 60:
             duration_in_hours = duration_in_min / 60
             duration_project = "{:.0f}".format(duration_in_hours)
             duration_project_unit = "H"
@@ -306,12 +305,12 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     if experiment_id is not None:
         df1 = get_run_sums(experiment_id, start_date, end_date)
     if experiment_id is None or df1.empty:
-        experiment_name = ''
+        experiment_name = ""
         df1 = pd.DataFrame(
             [[start_date, 0, 0, 1, "/"], [end_date, 0, 0, 1, "/"]],
             columns=["timestamp", "emissions", "energy_consumed", "duration", "run_id"],
         )
-    
+
     bubble = px.scatter(
         df1,
         x=df1.timestamp,
@@ -347,7 +346,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
     [
         Output(component_id="lineChart", component_property="figure"),
         Output(component_id="bubbleChart", component_property="clickData"),
-        #Output(component_id="runMetadataTable", component_property="children"),
+        # Output(component_id="runMetadataTable", component_property="children"),
     ],
     [
         Input(component_id="bubbleChart", component_property="clickData"),
@@ -367,25 +366,25 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         if not (last_run == None):
             run_name = last_run["id"]
             df_run, total_run = get_run_emissions(run_name)
-           
+
     elif clickPoint is None:
         experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
         run_list = get_experiment_runs(experiment_selected, start_date, end_date)
         if not (run_list.empty):
             run_name = run_list["id"].iloc[-1]
             df_run, total_run = get_run_emissions(run_name)
-            
+
     else:
         run_name = clickPoint["points"][0]["customdata"]
         df_run, total_run = get_run_emissions(run_name)
-     
+
     if df_run.empty:
-        run_name = ''
+        run_name = ""
         df_run = pd.DataFrame(
             [[start_date, None], [end_date, None]],
             columns=["timestamp", "emissions_rate"],
         )
-  
+
     line = px.line(
         df_run,
         x="timestamp",
@@ -409,16 +408,13 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         linecolor="white",
         title="emission rate",
     )
-   
 
     clickPoint = None
-    
-
-    
 
     return line, clickPoint
 
-## Metadata 
+
+## Metadata
 ##__________________________________________________________________________________________________
 @app.callback(
     [
@@ -443,12 +439,26 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         Input(component_id="projectPicked", component_property="value"),
     ],
 )
-
-def get_metadata_table(clickPoint, start_date, end_date, experiment_clickPoint, project):
+def get_metadata_table(
+    clickPoint, start_date, end_date, experiment_clickPoint, project
+):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
-   
-    dic_table={'os':'','python_version':'','cpu_count':'','cpu_model':'','gpu_count':'','gpu_model':'', 'longitude':'','latitude':'','region':'','provider':'','ram_total_size':0,'tracking_mode':''}
+
+    dic_table = {
+        "os": "",
+        "python_version": "",
+        "cpu_count": "",
+        "cpu_model": "",
+        "gpu_count": "",
+        "gpu_model": "",
+        "longitude": "",
+        "latitude": "",
+        "region": "",
+        "provider": "",
+        "ram_total_size": 0,
+        "tracking_mode": "",
+    }
     if experiment_clickPoint is None and clickPoint is None:
         last_run = get_lastrun(project, start_date, end_date)
         if not (last_run == None):
@@ -464,15 +474,24 @@ def get_metadata_table(clickPoint, start_date, end_date, experiment_clickPoint, 
         run_name = clickPoint["points"][0]["customdata"]
         dic_table = get_run_info(run_name)
 
-    
     # if dic_table.empty:
     #    dic_table={'os':'','python_version':'','cpu_count':'','cpu_model':'','gpu_count':'','gpu_model':'', 'longitude':'','latitude':'','region':'','provider':'','ram_total_size':'','tracking_mode':''}
-    
-     
-    
 
-    return  dic_table["os"],dic_table["python_version"],dic_table["cpu_count"],dic_table["cpu_model"],dic_table["gpu_count"],dic_table["gpu_model"],dic_table['longitude'],dic_table['latitude'],dic_table['region'],dic_table["provider"],round(dic_table["ram_total_size"],2),dic_table["tracking_mode"] 
-    
+    return (
+        dic_table["os"],
+        dic_table["python_version"],
+        dic_table["cpu_count"],
+        dic_table["cpu_model"],
+        dic_table["gpu_count"],
+        dic_table["gpu_model"],
+        dic_table["longitude"],
+        dic_table["latitude"],
+        dic_table["region"],
+        dic_table["provider"],
+        round(dic_table["ram_total_size"], 2),
+        dic_table["tracking_mode"],
+    )
+
 
 # Carbon Emission Map
 # ---------------------------------------------------------------------------------

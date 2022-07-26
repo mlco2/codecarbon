@@ -5,7 +5,6 @@ from dash import dcc, html
 from data.data_functions import get_organization_list, get_project_list
 from layout.components import Components
 
-
 # Common variables
 # ******************************************************************************
 # *******************************************************************************
@@ -109,11 +108,7 @@ app.layout = dbc.Container(
                 dbc.Row(
                     [
                         # holding pieCharts
-                        dbc.Col(
-                             dbc.Spinner(
-                            dcc.Graph(id="pieCharts", config=config)
-                                )
-                        ),
+                        dbc.Col(dbc.Spinner(dcc.Graph(id="pieCharts", config=config))),
                         dbc.Col(
                             [
                                 dbc.CardGroup(
@@ -137,15 +132,15 @@ app.layout = dbc.Container(
                         dcc.Graph(id="barChart", clickData=None, config=config)
                     ),  # holding barChart
                     dbc.Col(
-                         dbc.Spinner(
-                        dcc.Graph(
-                            id="bubbleChart",
-                            clickData=None,
-                            hoverData=None,
-                            figure={},
-                            config=config,
+                        dbc.Spinner(
+                            dcc.Graph(
+                                id="bubbleChart",
+                                clickData=None,
+                                hoverData=None,
+                                figure={},
+                                config=config,
+                            )
                         )
-                         )
                     ),
                 ]
             ),
@@ -156,30 +151,173 @@ app.layout = dbc.Container(
                 [
                     # holding line chart
                     dbc.Col(
-                     dbc.Spinner(
-                    dcc.Graph(id="lineChart", config=config)
-                        )
-                    , width=6),
+                        dbc.Spinner(dcc.Graph(id="lineChart", config=config)), width=6
+                    ),
                     dbc.Col(
                         dbc.Spinner(
-                            html.Table([
-                                html.Tr([html.Th("Metadata", colSpan=2)]),
-                                html.Tr([html.Td("O.S."), html.Td(id="OS", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Python Version"), html.Td(id="python_version", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Number of C.P.U."), html.Td(id="CPU_count", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("C.P.U. model"), html.Td(id="CPU_model", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Number of G.P.U."), html.Td(id="GPU_count", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("G.P.U. model"), html.Td(id="GPU_model", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Longitude"), html.Td(id="longitude", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Latitude"), html.Td(id="latitude", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Region"), html.Td(id="region", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Provider"), html.Td(id="provider", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("RAM total size"), html.Td(id="ram_tot", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                html.Tr([html.Td("Tracking mode"), html.Td(id="tracking_mode", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
-                                
-                            ])
+                            html.Table(
+                                [
+                                    html.Tr([html.Th("Metadata", colSpan=2)]),
+                                    html.Tr(
+                                        [
+                                            html.Td("O.S."),
+                                            html.Td(
+                                                id="OS",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Python Version"),
+                                            html.Td(
+                                                id="python_version",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Number of C.P.U."),
+                                            html.Td(
+                                                id="CPU_count",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("C.P.U. model"),
+                                            html.Td(
+                                                id="CPU_model",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Number of G.P.U."),
+                                            html.Td(
+                                                id="GPU_count",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("G.P.U. model"),
+                                            html.Td(
+                                                id="GPU_model",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Longitude"),
+                                            html.Td(
+                                                id="longitude",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Latitude"),
+                                            html.Td(
+                                                id="latitude",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Region"),
+                                            html.Td(
+                                                id="region",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Provider"),
+                                            html.Td(
+                                                id="provider",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("RAM total size"),
+                                            html.Td(
+                                                id="ram_tot",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                    html.Tr(
+                                        [
+                                            html.Td("Tracking mode"),
+                                            html.Td(
+                                                id="tracking_mode",
+                                                style={
+                                                    "padding-top": "2px",
+                                                    "padding-bottom": "2px",
+                                                    "text-align": "right",
+                                                },
+                                            ),
+                                        ]
+                                    ),
+                                ]
+                            )
                         )
-                    )
+                    ),
                 ]
             ),
             className="shadow",
