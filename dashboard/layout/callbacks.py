@@ -3,7 +3,19 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-from data.data_functions import get_project_list, get_orga_sums, get_project_sums, get_experiment_sums, get_lastrun, get_experiment, get_run_sums, get_run_emissions, get_experiment_runs, get_run_info, get_project
+from data.data_functions import (
+    get_project_list, 
+    get_orga_sums, 
+    get_project_sums, 
+    get_experiment_sums, 
+    get_lastrun, 
+    get_experiment, 
+    get_run_sums, 
+    get_run_emissions, 
+    get_experiment_runs, 
+    get_run_info, 
+    get_project,
+)
 from layout.app import app, df_mix
 from layout.template import darkgreen, vividgreen
 from plotly.subplots import make_subplots
