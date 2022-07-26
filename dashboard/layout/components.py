@@ -13,7 +13,7 @@ class Components:
                         html.Div(
                             [
                                 html.P(
-                                    "WARNING : This is an alpha preview version released for Earth Day 2022. Some metrics are not accurate."
+                                    "WARNING : This is an alpha preview version. Some metrics are not accurate."
                                 )
                             ],
                             className="inner",

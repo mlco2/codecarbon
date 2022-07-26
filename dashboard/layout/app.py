@@ -163,7 +163,7 @@ app.layout = dbc.Container(
                     dbc.Col(
                         dbc.Spinner(
                             html.Table([
-                                html.Tr([html.Th("Metadatas", colSpan=2)]),
+                                html.Tr([html.Th("Metadata", colSpan=2)]),
                                 html.Tr([html.Td("O.S."), html.Td(id="OS", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
                                 html.Tr([html.Td("Python Version"), html.Td(id="python_version", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
                                 html.Tr([html.Td("Number of C.P.U."), html.Td(id="CPU_count", style={"padding-top":"2px", "padding-bottom":"2px","text-align":"right"})]),
