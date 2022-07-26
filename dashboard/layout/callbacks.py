@@ -26,6 +26,8 @@ from plotly.subplots import make_subplots
 
 # indicators
 # -------------------------------------------------------------------------
+
+
 @app.callback(
     [
         Output(component_id="projectPicked", component_property="options"),
