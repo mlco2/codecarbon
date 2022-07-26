@@ -126,23 +126,23 @@ class Data:
                         "emissions": country_emissions,
                         "country": country_name,
                         "fossil": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["fossil"], total
+                            global_energy_mix[country_iso_code]["fossil_TWh"], total
                         ),
                         "geothermal": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["geothermal"], total
+                            global_energy_mix[country_iso_code]["geothermal_TWh"], total
                         ),
                         "hydroelectricity": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["hydroeletricity"],
+                            global_energy_mix[country_iso_code]["hydroeletricity_TWh"],
                             total,
                         ),
                         "nuclear": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["nuclear"], total
+                            global_energy_mix[country_iso_code]["nuclear_TWh"], total
                         ),
                         "solar": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["solar"], total
+                            global_energy_mix[country_iso_code]["solar_TWh"], total
                         ),
                         "wind": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["wind"], total
+                            global_energy_mix[country_iso_code]["wind_TWh"], total
                         ),
                     }
                 )

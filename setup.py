@@ -43,6 +43,7 @@ setuptools.setup(
             "data/hardware/cpu_power.csv",
             "data/private_infra/2016/usa_emissions.json",
             "data/private_infra/2016/canada_energy_mix.json",
+            "data/private_infra/carbon_intensity_per_source.json",
             "data/private_infra/global_energy_mix.json",
             "viz/assets/*.png",
         ],

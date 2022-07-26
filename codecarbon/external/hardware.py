@@ -97,7 +97,12 @@ class GPU(BaseHardware):
 @dataclass
 class CPU(BaseHardware):
     def __init__(
-        self, output_dir: str, mode: str, model: str, tdp: int, rapl_dir: str = None
+        self,
+        output_dir: str,
+        mode: str,
+        model: str,
+        tdp: int,
+        rapl_dir: str = "/sys/class/powercap/intel-rapl",
     ):
         self._output_dir = output_dir
         self._mode = mode
@@ -167,10 +172,8 @@ class CPU(BaseHardware):
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         if self._mode == "intel_rapl":
-            energy = self._get_energy_from_cpus(delay=last_duration)
-            power = Power.from_energy_delta_and_delay(
-                energy, Time.from_seconds(last_duration)
-            )
+            energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
+            power = self.total_power()
             return power, energy
         # If not intel_rapl
         return super().measure_power_and_energy(last_duration=last_duration)
