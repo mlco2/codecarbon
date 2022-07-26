@@ -1,10 +1,9 @@
-import dash
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-from data.data_functions import *
+from data.data_functions import get_project_list, get_orga_sums, get_project_sums, get_experiment_sums, get_lastrun, get_experiment, get_run_sums, get_run_emissions, get_experiment_runs, get_run_info, get_project
 from layout.app import app, df_mix
 from layout.template import darkgreen, vividgreen
 from plotly.subplots import make_subplots
@@ -291,7 +290,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
 
     if clickPoint is None:
         lastrun = get_lastrun(project, start_date, end_date)
-        if not (lastrun == None):
+        if not (lastrun is None):
             experiment_id = lastrun["experiment_id"]
             experiment_name = get_experiment(experiment_id)["name"]
         else:
@@ -363,7 +362,7 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
 
     if experiment_clickPoint is None and clickPoint is None:
         last_run = get_lastrun(project, start_date, end_date)
-        if not (last_run == None):
+        if not (last_run is None):
             run_name = last_run["id"]
             df_run, total_run = get_run_emissions(run_name)
 
@@ -414,8 +413,8 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     return line, clickPoint
 
 
-## Metadata
-##__________________________________________________________________________________________________
+# Metadata
+# __________________________________________________________________________________________________
 @app.callback(
     [
         Output(component_id="OS", component_property="children"),
@@ -461,7 +460,7 @@ def get_metadata_table(
     }
     if experiment_clickPoint is None and clickPoint is None:
         last_run = get_lastrun(project, start_date, end_date)
-        if not (last_run == None):
+        if not (last_run is None):
             run_name = last_run["id"]
             dic_table = get_run_info(run_name)
     elif clickPoint is None:
