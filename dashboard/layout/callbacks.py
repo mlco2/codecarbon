@@ -14,7 +14,7 @@ from data.data_functions import (
     get_project_sums,
     get_run_emissions,
     get_run_info,
-    get_run_sums,    
+    get_run_sums,
 )
 from layout.app import app, df_mix
 from layout.template import darkgreen, vividgreen
