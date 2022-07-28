@@ -2,3 +2,4 @@ torch>1.13.0  # PyTorch vulnerable to arbitrary code execution, see https://gith
 tensorflow
 keras-tuner
 torchvision
+sklearn
