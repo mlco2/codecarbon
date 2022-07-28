@@ -7,7 +7,8 @@ from .emissions_tracker import (
     OfflineEmissionsTracker,
     track_emissions,
 )
+from ._version import __version__
 
 __all__ = ["EmissionsTracker", "OfflineEmissionsTracker", "track_emissions"]
 
-__version__ = "2.1.4"
+__version__ = __version__
