@@ -103,9 +103,7 @@ class BaseEmissionsTracker(ABC):
 
         # Store final values in _conf
         if not hasattr(self, "_conf"):
-            self._conf = {
-                "codecarbon_version": __version__
-            }
+            self._conf = {"codecarbon_version": __version__}
 
         value = _sentinel
 
