@@ -103,7 +103,9 @@ class BaseEmissionsTracker(ABC):
 
         # Store final values in _conf
         if not hasattr(self, "_conf"):
-            self._conf = {"codecarbon_version": __version__}
+            self._conf = {
+                "codecarbon_version": __version__
+            }
 
         value = _sentinel
 
@@ -302,7 +304,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(">>> Tracker's metadata:")
         logger.info(f"  Platform system: {self._conf.get('os')}")
         logger.info(f"  Python version: {self._conf.get('python_version')}")
-        logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
+        logger.info(f"  codecarbon version: {self._conf.get('codecarbon_version')}")
         logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
         logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
