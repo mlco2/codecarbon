@@ -47,6 +47,7 @@ class EmissionsData:
     cloud_region: str
     os: str
     python_version: str
+    codecarbon_version: str
     cpu_count: float
     cpu_model: str
     gpu_count: float
