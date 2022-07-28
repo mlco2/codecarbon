@@ -77,6 +77,7 @@ def test_call_api():
             cloud_region="",
             os="Linux",
             python_version="3.8.0",
+            codecarbon_version="2.1.3",
             gpu_count=4,
             gpu_model="NVIDIA",
             cpu_count=12,
