@@ -37,6 +37,7 @@ class RunBase:
     experiment_id: str
     os: Optional[str]
     python_version: Optional[str]
+    codecarbon_version: Optional[str]
     cpu_count: Optional[int]
     cpu_model: Optional[str]
     gpu_count: Optional[int]
