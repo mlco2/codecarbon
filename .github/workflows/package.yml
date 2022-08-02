@@ -16,7 +16,7 @@ jobs:
         - name: Check versions
           run: |
               pip install -U pip requests
-              python3 .github/check_version.py
+              python3 .github/check_version.py -o
         - name: Build pip package
           run: |
               pip install -U pip build
