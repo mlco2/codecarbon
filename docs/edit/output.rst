@@ -30,7 +30,7 @@ input parameter [defaults to current directory], for each experiment tracked acr
      - CPU power (W)
    * - gpu_power
      - GPU power (W)
-   * - ram_power 
+   * - ram_power
      - RAM power (W)
    * - cpu_energy
      - Energy used per CPU (kW)
@@ -74,7 +74,7 @@ input parameter [defaults to current directory], for each experiment tracked acr
      -  total RAM aviable (Go)
    * - Tracking_mode:
      - ``machin`` or ``process``(default to ``machin``)
-   
+
 
 ..  note::
 
