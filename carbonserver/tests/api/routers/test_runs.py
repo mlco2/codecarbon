@@ -59,6 +59,7 @@ RUN_2 = {
     "experiment_id": EXPE_ID_2,
     "os": "macOS-10.15.7-x86_64-i386-64bit",
     "python_version": "3.8.0",
+    "codecarbon_version": "2.1.3",
     "cpu_count": 12,
     "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
     "gpu_count": 4,
