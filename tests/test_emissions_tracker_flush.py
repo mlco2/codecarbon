@@ -40,6 +40,10 @@ class TestCarbonTrackerFlush(unittest.TestCase):
         tracker.flush()
         heavy_computation(run_time_secs=1)
         emissions = tracker.stop()
+
+        if not isinstance(emissions, float):
+            print(emissions)
+
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
