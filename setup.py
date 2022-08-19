@@ -12,6 +12,7 @@ DEPENDENCIES = [
     "py-cpuinfo",
     "fuzzywuzzy",
     "click",
+    "dataclasses",
 ]
 
 TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy", "requests-mock"]
