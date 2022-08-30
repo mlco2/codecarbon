@@ -26,7 +26,7 @@ energy sources that are used to generate electricity, including fossil fuels and
 
 When aviable, CodeCarbon use global carbon intensity of electricity per cloud providers ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ ) or per countries ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/eu-carbon-intensity-electricity.csv>`_ ).
 
-If we don't have the global carbon intensity or electricity of a country but we have it's electricity mix, we calculate the carbon intensity of electricity using this table :
+If we don't have the global carbon intensity or electricity of a country but we have it's electricity mix, we compute the carbon intensity of electricity using this table :
 
 .. list-table:: Carbon Intensity Across Energy Sources
    :widths: 50 50
