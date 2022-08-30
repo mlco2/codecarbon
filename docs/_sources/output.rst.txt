@@ -14,18 +14,32 @@ input parameter [defaults to current directory], for each experiment tracked acr
 
    * - Fields
      - Description
-   * - experiment_id
-     - A unique identifier using uuid library
    * - timestamp
      - Time of the experiment in ``%Y-%m-%dT%H:%M:%S`` format
    * - project_name
      - Name of the project, defaults to ``codecarbon``
+   * - run-id
+     - id of the run
    * - duration
      - Duration of the compute, in seconds
    * - emissions
      - Emissions as CO₂-equivalents [CO₂eq], in kg
+   * - emissions_rate
+     - emissions divided per duration
+   * - cpu_power
+     - CPU power 
+   * - gpu_power
+     - GPU power 
+   * - ram_power
+     - RAM power 
+   * - cpu_energy
+     - Energy used per CPU
+   * - gpu_energy
+     - Energy used per GPU
+   * - ram_energy
+     - Energy used per RAM
    * - energy_consumed
-     - Total Power consumed by the underlying infrastructure, in kWh
+     - sum of cpu_energy, gpu_energy and ram_energy
    * - country_name
      - Name of the country where the infrastructure is hosted
    * - country_iso_code
@@ -39,6 +53,28 @@ input parameter [defaults to current directory], for each experiment tracked acr
    * - cloud_region
      - | Geographical Region for respective cloud provider,
        | examples ``us-east-2 for aws, brazilsouth for azure, asia-east1 for gcp``
+   * - os
+     - | os on the device
+       | example ``Windows-10-10.0.19044-SP0``
+   * - python_version
+     - example ``3.8.10``
+   * - cpu_count:
+     - number of CPU
+   * - cpu_model
+     - exemple ``Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz``
+   * - gpu_count
+     - number of GPU
+   * - gpu_model
+     - model of gpu
+   * - longitude
+     - longitude
+   * - latitude
+     - latitude
+   * - ram_total_size
+     -  total RAM aviable
+   * - Tracking_mode:
+     - default to machin
+   
 
 ..  note::
 
