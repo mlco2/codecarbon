@@ -3,7 +3,16 @@
 Installing CodeCarbon
 =====================
 
-From pypi repository
+Create a virtual environment using `conda` for easier management of dependencies and packages.
+For installing conda, follow the instructions on the 
+`official conda website <https://docs.conda.io/projects/conda/en/latest/user-guide/installl>`__
+
+.. code-block::  bash
+
+    conda create --name codecarbon
+    conda activate codecarbon
+
+From PyPi repository
 --------------------
 
 The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`_.
