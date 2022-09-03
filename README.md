@@ -410,20 +410,6 @@ Check out our [contribution guidelines :arrow_upper_right:](https://github.com/m
 Contact [@vict0rsch](https://github.com/vict0rsch) to be added to our slack workspace if you want to contribute regularly!
 
 
-# Build Documentation 🖨️
-No software is complete without great documentation!
-To make generating documentation easier, install the [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) and use it to edit and improve the existing documentation:
-```
-pip install -U sphinx sphinx_rtd_theme
-cd docs/edit
-make docs
-```
-In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
-```
-make docs
-```
-to regenerate the html files.
-
 # Contact 📝
 
 Maintainers are [@vict0rsch](https://github.com/vict0rsch) [@benoit-cty](https://github.com/benoit-cty) and [@SaboniAmine](https://github.com/saboniamine). Codecarbon is developed by volunteers from [**Mila**](http://mila.quebec) and the [**DataForGoodFR**](https://twitter.com/dataforgood_fr) community alongside donated professional time of engineers at [**Comet.ml**](https://comet.ml) and [**BCG GAMMA**](https://www.bcg.com/en-nl/beyond-consulting/bcg-gamma/default).

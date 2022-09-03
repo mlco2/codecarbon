@@ -76,3 +76,63 @@ The ``track_emissions`` decorator in offline mode requires following two paramet
 
 The Carbon emissions will be saved to a ``emissions.csv`` file in the same directory. Please refer to the :ref:`complete API <parameters>` for
 additional parameters and configuration options.
+
+
+Configuration
+=============
+
+Codecarbon is structured so that you can configure it in a hierarchical manner: you can set *global* parameters in ``~/.codecarbon.config``, *local* parameters (with respect to the current working directory) in ``./.codecarbon.config``, *shell* parameters as environment variables  starting with ``CODECABON_`` and finally *script* parameters in the tracker's initialization as ``EmissionsTracker(param=value)``.
+
+.. warning:: Configuration files **must** be named ``.codecarbon.config`` and start with a section header ``[codecarbon]`` as the first line in the file.
+
+For instance:
+
+* ``~/.codecarbon.config``
+
+    .. code-block:: bash
+
+            [codecarbon]
+            measure_power_secs=10
+            save_to_file=local-overwrite
+            emissions_endpoint=localhost:7777
+
+
+* ``./.codecarbon.config``
+
+	.. code-block:: bash
+
+            [codecarbon]
+            save_to_file=true
+            output_dir=/Users/victor/emissions
+            co2_signal_api_token=script-overwrite
+
+
+* environment variables
+
+	.. code-block:: bash
+
+	    export CODECARBON_GPU_IDS="0, 1"
+
+* script:
+
+	.. code-block:: python
+
+	     EmissionsTracker(co2_signal_api_token="some-token")
+
+Yields attributes:
+
+.. code-block:: python
+
+    {
+        "measure_power_secs": 10,
+        "save_to_file": True,
+        "emissions_endpoint": "localhost:7777",
+        "output_dir": "/Users/victor/emissions",
+        "co2_signal_api_token": "some-token",
+        "gpu_ids": [0, 1],
+    }
+
+.. |ConfigParser| replace:: ``ConfigParser``
+.. _ConfigParser: https://docs.python.org/3/library/configparser.html#module-configparser
+
+.. note:: If you're wondering about the configuration files' syntax, be aware that under the hood ``codecarbon`` uses |ConfigParser|_ which relies on the `INI syntax <https://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_
