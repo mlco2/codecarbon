@@ -75,7 +75,6 @@ input parameter [defaults to current directory], for each experiment tracked acr
    * - Tracking_mode:
      - ``machin`` or ``process``(default to ``machin``)
 
-
 ..  note::
 
     Developers can enhance the Output interface, based on requirements for example to log into a database, by implementing a custom Class
