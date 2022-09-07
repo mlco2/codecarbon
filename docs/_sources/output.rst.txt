@@ -27,19 +27,19 @@ input parameter [defaults to current directory], for each experiment tracked acr
    * - emissions_rate
      - emissions divided per duration
    * - cpu_power
-     - CPU power 
+     - CPU power (W)
    * - gpu_power
-     - GPU power 
-   * - ram_power
-     - RAM power 
+     - GPU power (W)
+   * - ram_power 
+     - RAM power (W)
    * - cpu_energy
-     - Energy used per CPU
+     - Energy used per CPU (kW)
    * - gpu_energy
-     - Energy used per GPU
+     - Energy used per GPU (kW)
    * - ram_energy
-     - Energy used per RAM
+     - Energy used per RAM (kW)
    * - energy_consumed
-     - sum of cpu_energy, gpu_energy and ram_energy
+     - sum of cpu_energy, gpu_energy and ram_energy (kW)
    * - country_name
      - Name of the country where the infrastructure is hosted
    * - country_iso_code
@@ -61,19 +61,19 @@ input parameter [defaults to current directory], for each experiment tracked acr
    * - cpu_count:
      - number of CPU
    * - cpu_model
-     - exemple ``Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz``
+     - example ``Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz``
    * - gpu_count
      - number of GPU
    * - gpu_model
-     - model of gpu
+     - example ``1 x NVIDIA GeForce GTX 1080 Ti``
    * - longitude
      - longitude
    * - latitude
      - latitude
    * - ram_total_size
-     -  total RAM aviable
+     -  total RAM aviable (Go)
    * - Tracking_mode:
-     - default to machin
+     - ``machin`` or ``process``(default to ``machin``)
    
 
 ..  note::
