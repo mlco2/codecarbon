@@ -6,7 +6,7 @@ Model Comparisons
 The following table shows the different electricity consumption of popular NLP and Computer visions models
 
 .. list-table:: Electricity consumtion of AI cloud instance
-   :widths: 20 20 20 20 20 
+   :widths: 20 20 20 20  
    :align: center
    :header-rows: 1
 
