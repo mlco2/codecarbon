@@ -21,9 +21,19 @@ pass it as a parameter to function calls to start and stop the emissions trackin
    from codecarbon import EmissionsTracker
    tracker = EmissionsTracker()
    tracker.start()
-   # GPU intensive training code
-   emissions = tracker.stop()
+   # GPU intensive code goes here
+   tracker.stop()
 
+Context manager
+~~~~~~~~~~~~~~~~
+The ``Emissions tracker`` also works as a context manager
+
+.. code-block:: python
+
+    from codecarbon import EmissionsTracker
+
+    with EmissionsTracker() as tracker:
+    # GPU intensive training code  goes here
 
 Decorator
 ~~~~~~~~~
@@ -33,13 +43,47 @@ emissions of the training code.
 .. code-block:: python
 
    from codecarbon import track_emissions
-   # Results are saved to a `emissions.csv` file
-   # in the same directory by default.
+   
    @track_emissions
-   def training_function():
-       # training code goes here
+   def training_loop():
+       pass
 
+.. note::
+    This will write a csv file named emissions.csv in the current directory
 
+Code Carbon API (ALPHA)
+~~~~~~~~~~~~~~~~~~~~~~~~
+*(This feature is currently in ALPHA stage, meaning it's only avaible for Developers installing code carbon from github repo)*
+
+This mode use the Code Carbon API to upload the timeseries of your emissions.
+
+Before using it, you need an experiment_id, to get one, run:
+
+.. code-block:: console
+    
+    codecarbon init
+
+It will create a experiment_id on the default project and save it to ``codecarbon.config``
+
+Then you could tell Code Carbon to monitor your machine :
+
+.. code-block:: console
+
+    codecarbon monitor
+
+Or use the API in your code
+
+.. code-block:: python
+
+    from codecarbon import track_emissions
+
+    @track_emissions(save_to_api=True)
+    def train_model():
+        # GPU intensive training code  goes here
+    if __name__ =="__main__":
+        train_model()
+
+More options could be specified in ``@track_emissions`` or in ``.codecarbon.config``
 
 Offline Mode
 ------------
@@ -57,6 +101,17 @@ Developers can use the ``OfflineEmissionsTracker`` object to track emissions as 
    tracker.start()
    # GPU intensive training code
    tracker.stop()
+   
+Context manager
+~~~~~~~~~~~~~~~~
+The ``Emissions tracker`` also works as a context manager
+
+.. code-block:: python
+
+    from codecarbon import EmissionsTracker
+
+    with EmissionsTracker() as tracker:
+    # GPU intensive training code  goes here
 
 
 Decorator
@@ -70,8 +125,9 @@ The ``track_emissions`` decorator in offline mode requires following two paramet
 
    from codecarbon import track_emissions
    @track_emissions(offline=True, country_iso_code="CAN")
-   def training_function():
+   def training_loop():
        # training code goes here
+       pass
 
 
 The Carbon emissions will be saved to a ``emissions.csv`` file in the same directory. Please refer to the :ref:`complete API <parameters>` for
