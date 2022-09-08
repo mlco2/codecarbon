@@ -168,12 +168,31 @@ You have a cool idea, but do not know know if it fits with Code Carbon ? You can
 - a webapp, using [Voilà](https://github.com/voila-dashboards/voila), [Dash](https://github.com/plotly/dash) or [Streamlit](https://github.com/streamlit/streamlit)
 - ideas for improvement about the tool or its documentation
 
+### <a name="documentation"></a>Build Documentation 🖨️
+No software is complete without great documentation!
+To make generating documentation easier, install the [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) and use it to edit and improve the existing documentation:
+```
+cd docs/edit
+python -m venv .venv
+source .venv/bin/activate
+pip install -U sphinx sphinx_rtd_theme
+
+```
+In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
+```
+cd docs/edit
+source .venv/bin/activate
+make docs
+```
+to regenerate the html files.
 
 ### Release process
 
-
-- Merge all PRs
-- Create and Merge a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py and https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
+- Merge all PRs.
+- Create a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py, https://github.com/mlco2/codecarbon/blob/master/codecarbon/__init__.py and https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
+- Run `python3 .github/check_version.py` to check version consistancy.
+- [Build Documentation](#documentation) if needed.
+- Merge the PR.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 - A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
