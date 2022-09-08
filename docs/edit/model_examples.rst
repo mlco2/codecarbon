@@ -6,7 +6,7 @@ Model Comparisons
 The following table shows the different electricity consumption of popular NLP and Computer visions models
 
 .. list-table:: Electricity consumtion of AI cloud instance
-   :widths: 16 16 16 16 16 
+   :widths: 20 20 20 20 20 
    :align: center
    :header-rows: 1
 
@@ -42,19 +42,19 @@ The following table shows the different electricity consumption of popular NLP a
      - 1 V100
      - 19
      - 1.7
-* - ViT\ :sub:`Small`\
+   * - ViT\ :sub:`Small`\
      - 1 V100
      - 19
      - 2.2
-* - ViT\ :sub:`Base`\
+   * - ViT\ :sub:`Base`\
      - 1 V100
      - 21
      - 4.7
-* - ViT\ :sub:`Large`\
+   * - ViT\ :sub:`Large`\
      - 4 V100
      - 90
      - 93.3
-* - ViT\ :sub:`Huge`\
+   * - ViT\ :sub:`Huge`\
      - 4 V100
      - 216
      - 237.6
