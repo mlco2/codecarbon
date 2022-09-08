@@ -60,7 +60,7 @@ The following table shows the different electricity consumption of popular NLP a
      - 237.6
 
 Impact of time of year and regions
----------------------
+---------------------------------------
 
 Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) :
 
