@@ -108,7 +108,7 @@ The ``Emissions tracker`` also works as a context manager
 
 .. code-block:: python
 
-    from codecarbon import EmissionsTracker
+    from codecarbon import OfflineEmissionsTracker
 
     with EmissionsTracker() as tracker:
     # GPU intensive training code  goes here
