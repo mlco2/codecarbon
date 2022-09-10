@@ -173,7 +173,7 @@ def training_loop():
 
 or by using the context manager:
 ```python
-from codecarbon import EmissionsTracker
+from codecarbon import OfflineEmissionsTracker
 
 with EmissionsTracker() as tracker:
     # GPU Intensive code goes here
