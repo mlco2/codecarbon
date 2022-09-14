@@ -62,7 +62,7 @@ The following table shows the different electricity consumption of popular NLP a
 Impact of time of year and regions
 ---------------------------------------
 
-Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) :
+Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) in different location :
 
 
 .. image:: ./images/CO2_emitted_BERT.png
@@ -70,6 +70,8 @@ Carbon emissions that would be emitted from training BERT (language modeling on 
             :alt: Models emissions comparison
             :height: 430px
             :width: 633px
+
+In this case study, time of year might not be relevant in most of case but localisation can have a great impact on carbon emissions.
 
 Here and in the graph below emissions equivalent are estimated using Microsoft Azure cloud tools. 
 Code Carbon had developped its own mesuring tools. The result could be different.
