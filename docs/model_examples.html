@@ -92,67 +92,91 @@
   <section id="model-comparisons">
 <span id="model-examples"></span><h1>Model Comparisons<a class="headerlink" href="#model-comparisons" title="Permalink to this heading"></a></h1>
 <p>The following table shows the different electricity consumption of popular NLP and Computer visions models</p>
-<ul class="simple">
-<li><ul>
-<li><dl class="simple">
-<dt>ViT<sub>Small</sub></dt><dd><ul>
-<li><p>1 V100</p></li>
-<li><p>19</p></li>
-<li><p>2.2</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</li>
-<li><ul>
-<li><dl class="simple">
-<dt>ViT<sub>Base</sub></dt><dd><ul>
-<li><p>1 V100</p></li>
-<li><p>21</p></li>
-<li><p>4.7</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</li>
-<li><ul>
-<li><dl class="simple">
-<dt>ViT<sub>Large</sub></dt><dd><ul>
-<li><p>4 V100</p></li>
-<li><p>90</p></li>
-<li><p>93.3</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</li>
-<li><ul>
-<li><dl class="simple">
-<dt>ViT<sub>Huge</sub></dt><dd><ul>
-<li><p>4 V100</p></li>
-<li><p>216</p></li>
-<li><p>237.6</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</li>
-</ul>
+<table class="colwidths-given docutils align-center" id="id1">
+<caption><span class="caption-text">Electricity consumtion of AI cloud instance</span><a class="headerlink" href="#id1" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Model</p></th>
+<th class="head"><p>GPU</p></th>
+<th class="head"><p>Training Time (H)</p></th>
+<th class="head"><p>Consumption (kWh)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BERT<sub>fintetune</sub></p></td>
+<td><p>4 V100</p></td>
+<td><p>6</p></td>
+<td><p>3.1</p></td>
+</tr>
+<tr class="row-odd"><td><p>BERT<sub>pretrain</sub></p></td>
+<td><p>8 V100</p></td>
+<td><p>36</p></td>
+<td><p>37.3</p></td>
+</tr>
+<tr class="row-even"><td><p>6B<sub>Transf.</sub></p></td>
+<td><p>256 A100</p></td>
+<td><p>192</p></td>
+<td><p>13 812.4</p></td>
+</tr>
+<tr class="row-odd"><td><p>Dense<sub>121</sub></p></td>
+<td><p>1 P40</p></td>
+<td><p>0.3</p></td>
+<td><p>0.02</p></td>
+</tr>
+<tr class="row-even"><td><p>Dense<sub>169</sub></p></td>
+<td><p>1 P40</p></td>
+<td><p>0.3</p></td>
+<td><p>0.03</p></td>
+</tr>
+<tr class="row-odd"><td><p>Dense<sub>201</sub></p></td>
+<td><p>1 P40</p></td>
+<td><p>0.4</p></td>
+<td><p>0.04</p></td>
+</tr>
+<tr class="row-even"><td><p>ViT<sub>Tiny</sub></p></td>
+<td><p>1 V100</p></td>
+<td><p>19</p></td>
+<td><p>1.7</p></td>
+</tr>
+<tr class="row-odd"><td><p>ViT<sub>Small</sub></p></td>
+<td><p>1 V100</p></td>
+<td><p>19</p></td>
+<td><p>2.2</p></td>
+</tr>
+<tr class="row-even"><td><p>ViT<sub>Base</sub></p></td>
+<td><p>1 V100</p></td>
+<td><p>21</p></td>
+<td><p>4.7</p></td>
+</tr>
+<tr class="row-odd"><td><p>ViT<sub>Large</sub></p></td>
+<td><p>4 V100</p></td>
+<td><p>90</p></td>
+<td><p>93.3</p></td>
+</tr>
+<tr class="row-even"><td><p>ViT<sub>Huge</sub></p></td>
+<td><p>4 V100</p></td>
+<td><p>216</p></td>
+<td><p>237.6</p></td>
+</tr>
+</tbody>
+</table>
 <section id="impact-of-time-of-year-and-regions">
 <h2>Impact of time of year and regions<a class="headerlink" href="#impact-of-time-of-year-and-regions" title="Permalink to this heading"></a></h2>
-<p>Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) :</p>
-<a class="reference internal image-reference" href="_images/CO2_emitted_BERT.png"><img alt="Models emissions comparison" class="align-center" src="_images/CO2_emitted_BERT.png" style="width: 633px; height: 430px;" /></a>
+<p>Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) in different location :</p>
+<img alt="Models emissions comparison" class="align-center" src="_images/CO2_emitted_BERT.png" />
+<p>In this case study, time of year might not be relevant in most of case but localisation can have a great impact on carbon emissions.</p>
 <p>Here and in the graph below emissions equivalent are estimated using Microsoft Azure cloud tools.
 Code Carbon had developped its own mesuring tools. The result could be different.</p>
 </section>
 <section id="comparisons">
 <h2>Comparisons<a class="headerlink" href="#comparisons" title="Permalink to this heading"></a></h2>
 <p>Emissions for the 11 described models can be desplayed as below:</p>
-<a class="reference internal image-reference" href="_images/model_emission_comparison.png"><img alt="Models emissions comparison" class="align-center" src="_images/model_emission_comparison.png" style="width: 633px; height: 430px;" /></a>
+<img alt="Models emissions comparison" class="align-center" src="_images/model_emission_comparison.png" />
 <p>The black line represent the average emissions (across regions and time of year).
 The light blue represent the firts and fourth quartiles.
 On the right side, equivalent sources of emissions are displayed as comparating points (source : <a class="reference external" href="https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator">US Environmental Protection Agency</a>)

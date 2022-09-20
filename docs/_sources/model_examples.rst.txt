@@ -6,7 +6,7 @@ Model Comparisons
 The following table shows the different electricity consumption of popular NLP and Computer visions models
 
 .. list-table:: Electricity consumtion of AI cloud instance
-   :widths: 16 16 16 16 16 
+   :widths: 20 20 20 20  
    :align: center
    :header-rows: 1
 
@@ -42,34 +42,34 @@ The following table shows the different electricity consumption of popular NLP a
      - 1 V100
      - 19
      - 1.7
-* - ViT\ :sub:`Small`\
+   * - ViT\ :sub:`Small`\
      - 1 V100
      - 19
      - 2.2
-* - ViT\ :sub:`Base`\
+   * - ViT\ :sub:`Base`\
      - 1 V100
      - 21
      - 4.7
-* - ViT\ :sub:`Large`\
+   * - ViT\ :sub:`Large`\
      - 4 V100
      - 90
      - 93.3
-* - ViT\ :sub:`Huge`\
+   * - ViT\ :sub:`Huge`\
      - 4 V100
      - 216
      - 237.6
 
 Impact of time of year and regions
----------------------
+---------------------------------------
 
-Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) :
+Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) in different location :
 
 
 .. image:: ./images/CO2_emitted_BERT.png
             :align: center
             :alt: Models emissions comparison
-            :height: 430px
-            :width: 633px
+
+In this case study, time of year might not be relevant in most of case but localisation can have a great impact on carbon emissions.
 
 Here and in the graph below emissions equivalent are estimated using Microsoft Azure cloud tools. 
 Code Carbon had developped its own mesuring tools. The result could be different.
@@ -82,8 +82,6 @@ Emissions for the 11 described models can be desplayed as below:
 .. image:: ./images/model_emission_comparison.png
             :align: center
             :alt: Models emissions comparison
-            :height: 430px
-            :width: 633px
 
 The black line represent the average emissions (across regions and time of year). 
 The light blue represent the firts and fourth quartiles.
