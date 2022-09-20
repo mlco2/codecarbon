@@ -57,9 +57,13 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Visualize</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#summary-and-equivalents">Summary and Equivalents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#regional-comparisons">Regional Comparisons</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cloud-regions">Cloud Regions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#offline">Offline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#summary-and-equivalents">Summary and Equivalents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#regional-comparisons">Regional Comparisons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cloud-regions">Cloud Regions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#online-alpha">Online (alpha)</a></li>
 </ul>
 </li>
 </ul>
@@ -90,6 +94,8 @@
              
   <section id="visualize">
 <span id="id1"></span><h1>Visualize<a class="headerlink" href="#visualize" title="Permalink to this heading"></a></h1>
+<section id="offline">
+<h2>Offline<a class="headerlink" href="#offline" title="Permalink to this heading"></a></h2>
 <p>The package also comes with a <code class="docutils literal notranslate"><span class="pre">Dash</span> <span class="pre">App</span></code> containing illustrations to understand the emissions logged from various experiments across projects.
 The App currently consumes logged information from a CSV file, generated from an in-built logger in the package.</p>
 <p>The App can be run by executing the below CLI command that needs following arguments:</p>
@@ -101,7 +107,7 @@ The App currently consumes logged information from a CSV file, generated from an
 </pre></div>
 </div>
 <section id="summary-and-equivalents">
-<h2>Summary and Equivalents<a class="headerlink" href="#summary-and-equivalents" title="Permalink to this heading"></a></h2>
+<h3>Summary and Equivalents<a class="headerlink" href="#summary-and-equivalents" title="Permalink to this heading"></a></h3>
 <p>Users can get an understanding into net power consumption and emissions generated across projects and can dive into a particular project.
 The App also provides exemplary equivalents from daily life, for example:</p>
 <ul class="simple">
@@ -112,15 +118,21 @@ The App also provides exemplary equivalents from daily life, for example:</p>
 <a class="reference internal image-reference" href="_images/summary.png"><img alt="Summary" class="align-center" src="_images/summary.png" style="width: 700px; height: 400px;" /></a>
 </section>
 <section id="regional-comparisons">
-<h2>Regional Comparisons<a class="headerlink" href="#regional-comparisons" title="Permalink to this heading"></a></h2>
+<h3>Regional Comparisons<a class="headerlink" href="#regional-comparisons" title="Permalink to this heading"></a></h3>
 <p>The App also provides a comparative visual to benchmark emissions and energy mix of the electricity from the grid across different countries.</p>
 <a class="reference internal image-reference" href="_images/global_equivalents.png"><img alt="Global Equivalents" class="align-center" src="_images/global_equivalents.png" style="width: 750px; height: 480px;" /></a>
 </section>
 <section id="cloud-regions">
-<h2>Cloud Regions<a class="headerlink" href="#cloud-regions" title="Permalink to this heading"></a></h2>
+<h3>Cloud Regions<a class="headerlink" href="#cloud-regions" title="Permalink to this heading"></a></h3>
 <p>The App also benchmarks equivalent emissions across different regions of the cloud provider being used and recommends the most eco-friendly
 region to host infrastructure for the concerned cloud provider.</p>
 <a class="reference internal image-reference" href="_images/cloud_emissions.png"><img alt="Cloud Emissions" class="align-center" src="_images/cloud_emissions.png" style="width: 750px; height: 450px;" /></a>
+</section>
+</section>
+<section id="online-alpha">
+<h2>Online (alpha)<a class="headerlink" href="#online-alpha" title="Permalink to this heading"></a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">Dash</span> <span class="pre">App</span></code> is also aviable for those who chose to connect the package to the API then datas are public and aviable for all to explore.
+<a class="reference external" href="https://dashboard.codecarbon.io/">preview</a></p>
 </section>
 </section>
 
