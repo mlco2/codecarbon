@@ -50,12 +50,9 @@ The following pip packages are used by the CodeCarbon package, and will be insta
 
     arrow
     click
-    dash
-    dash_bootstrap_components
-    dataclasses
-    fire
+    fuzzywuzzy
     pandas
     psutil
-    pynvml
     py-cpuinfo
-    requests
+    pynvml
+    requests  

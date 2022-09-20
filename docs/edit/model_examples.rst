@@ -68,8 +68,6 @@ Carbon emissions that would be emitted from training BERT (language modeling on 
 .. image:: ./images/CO2_emitted_BERT.png
             :align: center
             :alt: Models emissions comparison
-            :height: 430px
-            :width: 633px
 
 In this case study, time of year might not be relevant in most of case but localisation can have a great impact on carbon emissions.
 
@@ -84,8 +82,6 @@ Emissions for the 11 described models can be desplayed as below:
 .. image:: ./images/model_emission_comparison.png
             :align: center
             :alt: Models emissions comparison
-            :height: 430px
-            :width: 633px
 
 The black line represent the average emissions (across regions and time of year). 
 The light blue represent the firts and fourth quartiles.

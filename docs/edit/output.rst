@@ -67,9 +67,11 @@ input parameter [defaults to current directory], for each experiment tracked acr
    * - gpu_model
      - example ``1 x NVIDIA GeForce GTX 1080 Ti``
    * - longitude
-     - longitude
+     - | Longitude, with reduced precision to a range of 11.1 km / 123 km².
+       | This is done for privacy protection.
    * - latitude
-     - latitude
+     - | Latitude, with reduced precision to a range of 11.1 km / 123 km².
+       | This is done for privacy protection.
    * - ram_total_size
      -  total RAM aviable (Go)
    * - Tracking_mode:

@@ -21,19 +21,23 @@ pass it as a parameter to function calls to start and stop the emissions trackin
    from codecarbon import EmissionsTracker
    tracker = EmissionsTracker()
    tracker.start()
-   # GPU intensive code goes here
+   # Compute intensive code goes here
    tracker.stop()
+
+This mode is recommended when using a Jupyter Notebook. You call ``tracker.start()`` at the beginning of the Notebook, and call ``tracker.stop()`` in the last cell.
 
 Context manager
 ~~~~~~~~~~~~~~~~
-The ``Emissions tracker`` also works as a context manager
+The ``Emissions tracker`` also works as a context manager.
 
 .. code-block:: python
 
     from codecarbon import EmissionsTracker
 
     with EmissionsTracker() as tracker:
-    # GPU intensive training code  goes here
+        # Compute intensive training code goes here
+
+This mode is recommended when you want to monitor a specific block of code.
 
 Decorator
 ~~~~~~~~~
@@ -46,16 +50,19 @@ emissions of the training code.
    
    @track_emissions
    def training_loop():
-       pass
+       # Compute intensive training code goes here
+
+This mode is recommended if you have a training function.
 
 .. note::
     This will write a csv file named emissions.csv in the current directory
 
-Code Carbon API (ALPHA)
+Code Carbon API (BETA)
 ~~~~~~~~~~~~~~~~~~~~~~~~
-*(This feature is currently in ALPHA stage, meaning it's only avaible for Developers installing code carbon from github repo)*
+*(This feature is currently in BETA stage, meaning all features are not available)*
 
-This mode use the Code Carbon API to upload the timeseries of your emissions.
+.. warning::
+    This mode use the Code Carbon API to upload the timeseries of your emissions on a central server. All data will be public!
 
 Before using it, you need an experiment_id, to get one, run:
 
@@ -137,7 +144,11 @@ additional parameters and configuration options.
 Configuration
 =============
 
-Codecarbon is structured so that you can configure it in a hierarchical manner: you can set *global* parameters in ``~/.codecarbon.config``, *local* parameters (with respect to the current working directory) in ``./.codecarbon.config``, *shell* parameters as environment variables  starting with ``CODECABON_`` and finally *script* parameters in the tracker's initialization as ``EmissionsTracker(param=value)``.
+Codecarbon is structured so that you can configure it in a hierarchical manner:
+    * *global* parameters in your home folder ``~/.codecarbon.config``
+    * *local* parameters (with respect to the current working directory) in ``./.codecarbon.config``
+    * *environment variables* parameters starting with ``CODECABON_``
+    * *script* parameters in the tracker's initialization as ``EmissionsTracker(param=value)``
 
 .. warning:: Configuration files **must** be named ``.codecarbon.config`` and start with a section header ``[codecarbon]`` as the first line in the file.
 
@@ -158,10 +169,12 @@ For instance:
 	.. code-block:: bash
 
             [codecarbon]
-            save_to_file=true
-            output_dir=/Users/victor/emissions
+            save_to_file = true
+            output_dir = /Users/victor/emissions
             co2_signal_api_token=script-overwrite
-
+            experiment_id = 235b1da5-aaaa-aaaa-aaaa-893681599d2c
+            log_level = DEBUG
+            tracking_mode = process
 
 * environment variables
 
@@ -173,7 +186,10 @@ For instance:
 
 	.. code-block:: python
 
-	     EmissionsTracker(co2_signal_api_token="some-token")
+	     EmissionsTracker(
+            api_call_interval=4,
+            save_to_api=True,
+            co2_signal_api_token="some-token")
 
 Yields attributes:
 
@@ -182,6 +198,11 @@ Yields attributes:
     {
         "measure_power_secs": 10,
         "save_to_file": True,
+        "api_call_interval": 4,
+        "save_to_api": True,
+        "experiment_id": "235b1da5-aaaa-aaaa-aaaa-893681599d2c",
+        "log_level": "DEBUG",
+        "tracking_mode": "process",
         "emissions_endpoint": "localhost:7777",
         "output_dir": "/Users/victor/emissions",
         "co2_signal_api_token": "some-token",
@@ -191,4 +212,4 @@ Yields attributes:
 .. |ConfigParser| replace:: ``ConfigParser``
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html#module-configparser
 
-.. note:: If you're wondering about the configuration files' syntax, be aware that under the hood ``codecarbon`` uses |ConfigParser|_ which relies on the `INI syntax <https://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_
+.. note:: If you're wondering about the configuration files' syntax, be aware that under the hood ``codecarbon`` uses |ConfigParser|_ which relies on the `INI syntax <https://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_.
