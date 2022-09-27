@@ -64,7 +64,11 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-priority">Configuration priority</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#access-internet-through-proxy-server">Access internet through proxy server</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Input Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
@@ -223,6 +227,8 @@ additional parameters and configuration options.</p>
 </section>
 <section id="configuration">
 <h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading"></a></h1>
+<section id="configuration-priority">
+<h2>Configuration priority<a class="headerlink" href="#configuration-priority" title="Permalink to this heading"></a></h2>
 <dl class="simple">
 <dt>Codecarbon is structured so that you can configure it in a hierarchical manner:</dt><dd><ul class="simple">
 <li><p><em>global</em> parameters in your home folder <code class="docutils literal notranslate"><span class="pre">~/.codecarbon.config</span></code></p></li>
@@ -299,6 +305,21 @@ additional parameters and configuration options.</p>
 <p class="admonition-title">Note</p>
 <p>If you’re wondering about the configuration files’ syntax, be aware that under the hood <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code> uses <a class="reference external" href="https://docs.python.org/3/library/configparser.html#module-configparser"><code class="docutils literal notranslate"><span class="pre">ConfigParser</span></code></a> which relies on the <a class="reference external" href="https://docs.python.org/3/library/configparser.html#supported-ini-file-structure">INI syntax</a>.</p>
 </div>
+</section>
+<section id="access-internet-through-proxy-server">
+<h2>Access internet through proxy server<a class="headerlink" href="#access-internet-through-proxy-server" title="Permalink to this heading"></a></h2>
+<p>If you need a proxy to access internet, which is needed to call a Web API, like <a class="reference external" href="https://api.codecarbon.io/docs">Codecarbon API</a>, you have to set environment variable <code class="docutils literal notranslate"><span class="pre">HTTPS_PROXY</span></code>, or <em>HTTP_PROXY</em> if calling an <code class="docutils literal notranslate"><span class="pre">http://</span></code> enpoint.</p>
+<p>You could do it in your shell:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">HTTPS_PROXY</span><span class="o">=</span><span class="s2">&quot;http://0.0.0.0:0000&quot;</span>
+</pre></div>
+</div>
+<p>Or in your Python code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HTTPS_PROXY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://0.0.0.0:0000&quot;</span>
+</pre></div>
+</div>
+<p>For more information, please read the <a class="reference external" href="https://requests.readthedocs.io/en/latest/user/advanced/#proxies">requests library proxy documentation</a></p>
+</section>
 </section>
 
 

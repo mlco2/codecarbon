@@ -47,7 +47,7 @@ emissions of the training code.
 .. code-block:: python
 
    from codecarbon import track_emissions
-   
+
    @track_emissions
    def training_loop():
        # Compute intensive training code goes here
@@ -67,7 +67,7 @@ Code Carbon API (BETA)
 Before using it, you need an experiment_id, to get one, run:
 
 .. code-block:: console
-    
+
     codecarbon init
 
 It will create a experiment_id on the default project and save it to ``codecarbon.config``
@@ -108,7 +108,7 @@ Developers can use the ``OfflineEmissionsTracker`` object to track emissions as 
    tracker.start()
    # GPU intensive training code
    tracker.stop()
-   
+
 Context manager
 ~~~~~~~~~~~~~~~~
 The ``Emissions tracker`` also works as a context manager
@@ -143,6 +143,9 @@ additional parameters and configuration options.
 
 Configuration
 =============
+
+Configuration priority
+----------------------
 
 Codecarbon is structured so that you can configure it in a hierarchical manner:
     * *global* parameters in your home folder ``~/.codecarbon.config``
@@ -213,3 +216,23 @@ Yields attributes:
 .. _ConfigParser: https://docs.python.org/3/library/configparser.html#module-configparser
 
 .. note:: If you're wondering about the configuration files' syntax, be aware that under the hood ``codecarbon`` uses |ConfigParser|_ which relies on the `INI syntax <https://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_.
+
+Access internet through proxy server
+------------------------------------
+
+If you need a proxy to access internet, which is needed to call a Web API, like `Codecarbon API <https://api.codecarbon.io/docs>`_, you have to set environment variable ``HTTPS_PROXY``, or *HTTP_PROXY* if calling an ``http://`` enpoint.
+
+You could do it in your shell:
+
+.. code-block:: shell
+
+    export HTTPS_PROXY="http://0.0.0.0:0000"
+
+Or in your Python code:
+
+.. code-block:: python
+
+    import os
+    os.environ["HTTPS_PROXY"] = "http://0.0.0.0:0000"
+
+For more information, please read the `requests library proxy documentation <https://requests.readthedocs.io/en/latest/user/advanced/#proxies>`_
