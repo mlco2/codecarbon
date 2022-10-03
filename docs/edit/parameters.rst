@@ -1,16 +1,14 @@
 .. _parameters:
 
-Input Parameters
+Parameters
 ================
 
 A set of parameters are supported by API to help users provide additional details per project.
 
-BaseEmissionsTracker
---------------------
+Input parameters
+-----------------
 
-Base on which other trackers are built.
-
-.. list-table:: Input Parameters to BaseEmissionsTracker
+.. list-table:: Input Parameters 
    :widths: 20 80
    :align: center
    :header-rows: 1
@@ -19,62 +17,67 @@ Base on which other trackers are built.
      - Description
    * - project_name
      - Name of the project, defaults to ``codecarbon``
+   * - experiment_id
+     - Id of the experiment
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
-   * - api_call_interval
-     - | Occurence to wait before calling API (defaults to 8):
-       | -1 : call API on flush() and at the end
-       | 1 : at every measure
-       | 2 : at every 2 measure, and so on
-   * - api_endpoint:
-     - | Optional URL of Code Carbon API endpoint for sending emissions data
-       | defaults to "https://api.codecarbon.io"
-   * - api_key
-     - API key for code carbon API (mandatory to use this API!)
+   * - tracking_mode 
+     - | ``machine`` mesure the power consumptions of the entire machine (defaults)
+       | ``process`` try and isolate the tracked processes in isolation
+   * - gpu_ids
+     - User-specified known gpu ids to track, defaults to ``None``
+   * - log_level
+     - | Global codecarbon log level : "info" (defaults), "debug", "warning", 
+       | "error", or "critical"
+   * - co2_signal_api_token
+     - | API token for co2signal.com (requires sign-up for free beta)
+
+Output parameters
+-----------------
+
+.. list-table:: Output Parameters 
+   :widths: 20 80
+   :align: center
+   :header-rows: 1
+
+   * - Parameters
+     - Description
+   * - **save_to_file**
+     - | Boolean variable indicating if the emission artifacts should be logged
+       | to a CSV file, defaults to ``True``
    * - output_dir
      - | Directory path to which the experiment details are logged
        | defaults to current directory
    * - output_file
      - | Name of output CSV file 
        | default to ``emissions.csv``
-   * - save_to_file
-     - | Boolean variable indicating if the emission artifacts should be logged
-       | to a CSV file, defaults to ``True``
-   * - save_to_api
-     - | Boolean variable indicating if emissions artifacts should be logged
-       | to the CodeCarbon API, defaults to ``False``
-   * - save_to_logger
-     - | Boolean variable indicating if the emission artifacts should be written
-       | to a dedicated logger, defaults to ``False``
-   * - logging_logger
-     - LoggerOutput object encapsulating a logging.logger or a Google Cloud logger
-   * - gpu_ids
-     - User-specified known gpu ids to track, defaults to ``None``
-   * - emissions_endpoint
-     - Optional URL of http endpoint for sending emissions data
-   * - experiment_id
-     - Id of the experiment
-   * - co2_signal_api_token
-     - | API token for co2signal.com (requires sign-up for free beta)
-   * - tracking_mode 
-     - | ``machine`` mesure the power consumptions of the entire machine (defaults)
-       | ``process`` try and isolate the tracked processes in isolation
-   * - log_level
-     - | Global codecarbon log level : "info" (defaults), "debug", "warning", 
-       | "error", or "critical"
    * - on_csv_write
      - | When calling ``tracker.flush()`` manually choose if
        | - ``update`` the existing ``run_id`` row (erasing former data)
        | - ``append`` add a new row to CSV file (defaults)
+   * - **save_to_api**
+     - | Boolean variable indicating if emissions artifacts should be logged
+       | to the CodeCarbon API, defaults to ``False``
+   * - api_endpoint:
+     - | Optional URL of Code Carbon API endpoint for sending emissions data
+       | defaults to "https://api.codecarbon.io"
+   * - api_key
+     - API key for code carbon API (mandatory to use this API!)
+   * - api_call_interval
+     - | Occurence to wait before calling API (defaults to 8):
+       | -1 : call API on flush() and at the end
+       | 1 : at every measure
+       | 2 : at every 2 measure, and so on
+   * - **save_to_logger**
+     - | Boolean variable indicating if the emission artifacts should be written
+       | to a dedicated logger, defaults to ``False``
+   * - logging_logger
+     - LoggerOutput object encapsulating a logging.logger or a Google Cloud logger
    * - logger_preamble
-     - String to systematically include in the logger's messages (defaults to "")
+     - String to systematically include in the logger's messages (defaults to "")    
 
-
-OfflineEmissionsTracker
------------------------
-
-For the offline mode object ``OfflineEmissionsTracker``, in addition to standard arguments, requires the following parameters:
-
+Specific parameters for offline mode
+------------------------------------
 .. list-table:: Input Parameters to OfflineEmissionsTracker
    :widths: 20 80
    :align: center
@@ -130,4 +133,3 @@ Decorator ``track_emissions`` in addition to standard arguments, requires the fo
    * - cloud_region
      - | The region of the cloud data center, defaults to ``None``.
        | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
-
