@@ -21,9 +21,6 @@ class RAPLFile:
 
             self.max_energy_reading = Energy.from_ujoules(max_micro_joules)
 
-    def __post_init__(self):
-        self.last_energy = self._get_value()
-
     def _get_value(self) -> Energy:
         """
         Reads the value in the file at the path
