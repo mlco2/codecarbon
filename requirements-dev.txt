@@ -8,6 +8,7 @@ flake8
 isort
 mypy
 pandas
+plotly
 pynvml
 requests
 sphinx

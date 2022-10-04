@@ -28,7 +28,10 @@ setuptools.setup(
     ),
     install_requires=DEPENDENCIES,
     tests_require=TEST_DEPENDENCIES,
-    extras_require={"viz": ["dash", "dash_bootstrap_components < 1.0.0", "fire"]},
+    extras_require={
+        "viz": ["dash", "dash_bootstrap_components < 1.0.0", "fire"],
+        "dashboard": ["dash>=2.2.0", "plotly>=5.6.0", "dash_bootstrap_components"],
+    },
     classifiers=[
         "Natural Language :: English",
         "Programming Language :: Python :: 3.7",
