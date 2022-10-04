@@ -12,11 +12,7 @@ class Components:
                 html.Div(
                     [
                         html.Div(
-                            [
-                                html.P(
-                                    "This is a beta version."
-                                )
-                            ],
+                            [html.P("This is a beta version.")],
                             className="inner",
                         )
                     ],
