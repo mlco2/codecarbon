@@ -14,7 +14,7 @@ class Components:
                         html.Div(
                             [
                                 html.P(
-                                    "WARNING : This is an alpha preview version. Some metrics are not accurate."
+                                    "This is a beta version."
                                 )
                             ],
                             className="inner",

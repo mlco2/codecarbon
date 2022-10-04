@@ -17,6 +17,7 @@ body {
   z-index: 1;
   background-color: orange;
   border-bottom: 3px solid #4B5460;
+  opacity: 0.7;
 }
 .banner .inner{ 
   padding: 1rem 0rem;
