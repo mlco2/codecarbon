@@ -1,7 +1,8 @@
-from layout.app import app
+from layout.app import app, serve_layout
 from layout.callbacks import *  # noqa
 
 server = app.server
+app.layout = serve_layout
 
 if __name__ == "__main__":
     app.run_server(

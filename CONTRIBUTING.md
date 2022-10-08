@@ -103,7 +103,14 @@ To add a new feature to codecarbon, the following workflow is applied :
 
 ### <a name="local_deployement"></a> Local deployment
 
-To test locally the dashboard application, you can run try it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
+## CSV Dashboard
+
+To install dependencies:
+```
+pip install codecarbon["viz"]
+```
+
+To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
 ```bash
 python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
@@ -114,12 +121,19 @@ If you have the package installed, you can run the CLI command:
 carbonboard --filepath="examples/emissions.csv" --port=xxxx
 ```
 
-To test the new dashboard that uses the API, switch to the `dashboard` branch and run:
+## API Dashboard
+
+To install dependencies:
+```
+pip install codecarbon["dashboard"]
+```
+
+To test the new dashboard that uses the API, run:
 
 ```bash
-git checkout dashboard
 python carbon_board_API.py
 ```
+
 Then, click on the url displayed in the terminal.
 
 ### Coding style && Linting
