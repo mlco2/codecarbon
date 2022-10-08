@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import dash_bootstrap_components as dbc
 from dash import dcc, html
@@ -29,11 +29,11 @@ class Components:
                     end_date_placeholder_text="MMMM Y",
                     display_format="DD/MM/YYYY",
                     # should be calculated from today() like minus 1 week
-                    start_date=date(2020, 1, 1),
-                    min_date_allowed=date(2000, 1, 1),
-                    max_date_allowed=date.today(),
+                    start_date=date(2021, 1, 1),
+                    min_date_allowed=date(2021, 1, 1),
+                    max_date_allowed=date.today() + timedelta(days=1),
                     initial_visible_month=date.today(),
-                    end_date=date.today(),
+                    end_date=date.today() + timedelta(days=1),
                 ),
             ],
             xs=12,
