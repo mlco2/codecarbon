@@ -56,9 +56,57 @@ region to host infrastructure for the concerned cloud provider.
             :height: 450px
             :width: 750px
 
-Online (alpha)
+Online (Beta)
 --------------
 
 A ``Dash App`` is also aviable for those who chose to connect the package to the API then datas are public and aviable for all to explore.
 `preview <https://dashboard.codecarbon.io/>`_
+
+from global...
+~~~~~~~~~~~~~~
+
+Showing on the top the global energy consumed and emissions produced at an organisation level and the share of each project in this.
+The App also provides comparisons points with daily life activity to get a better understanding of the amount generated.
+
+.. image:: ./images/codecarbon-API-dashboard.png
+            :align: center
+            :alt: Summary
+            :width: 750px
+
+
+to more and more...
+~~~~~~~~~~~~~~~~~~~~
+
+Each project can be devided in several experiments and in each experiment several runs can happen.
+The total emission of experiments is showing on the barchart on the right hand side and the runs on the bubble chart on the left hand side.
+If ever your project has several experiment you can switch from one experiment's runs in the bubble chart to an other's by clicking the bar chart.
+
+.. image:: ./images/Experiment-run.png
+            :align: center
+            :alt: experiment and run
+            :width: 750px
+
+
+detailed
+~~~~~~~~
+
+Clicking on one bubble you can display the run time serie and see its metadata.
+
+.. image:: ./images/run&metadata.png
+            :align: center
+            :alt: run time serie and metadata
+            :width: 750px
+
+Electricity production carbon intensity per country
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The app also provides a visualization of regional carbon intensity of electricity production.
+
+.. image:: ./images/carbon_map.png
+            :align: center
+            :alt: carbon intensity carbon_map
+            :width: 750px
+
+Note that for now all datas send to code carbon API are public.
+
 
