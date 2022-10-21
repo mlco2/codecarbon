@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Input Parameters &mdash; CodeCarbon 2.0.0 documentation</title>
+  <title>Parameters &mdash; CodeCarbon 2.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -50,14 +50,16 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Input Parameters</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#baseemissionstracker">BaseEmissionsTracker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#offlineemissionstracker">OfflineEmissionsTracker</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Parameters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#input-parameters">Input parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-parameters">Output parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#specific-parameters-for-offline-mode">Specific parameters for offline mode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#track-emissions">&#64;track_emissions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -79,7 +81,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Input Parameters</li>
+      <li>Parameters</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/parameters.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,14 +91,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="input-parameters">
-<span id="parameters"></span><h1>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this heading"></a></h1>
+  <section id="parameters">
+<span id="id1"></span><h1>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h1>
 <p>A set of parameters are supported by API to help users provide additional details per project.</p>
-<section id="baseemissionstracker">
-<h2>BaseEmissionsTracker<a class="headerlink" href="#baseemissionstracker" title="Permalink to this heading"></a></h2>
-<p>Base on which other trackers are built.</p>
-<table class="colwidths-given docutils align-center" id="id3">
-<caption><span class="caption-text">Input Parameters to BaseEmissionsTracker</span><a class="headerlink" href="#id3" title="Permalink to this table"></a></caption>
+<section id="input-parameters">
+<h2>Input parameters<a class="headerlink" href="#input-parameters" title="Permalink to this heading"></a></h2>
+<table class="colwidths-given docutils align-center" id="id4">
+<caption><span class="caption-text">Input Parameters</span><a class="headerlink" href="#id4" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -110,27 +111,58 @@
 <tr class="row-even"><td><p>project_name</p></td>
 <td><p>Name of the project, defaults to <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>measure_power_secs</p></td>
+<tr class="row-odd"><td><p>experiment_id</p></td>
+<td><p>Id of the experiment</p></td>
+</tr>
+<tr class="row-even"><td><p>measure_power_secs</p></td>
 <td><p>Interval (in seconds) to measure hardware power usage, defaults to <code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p>api_call_interval</p></td>
+<tr class="row-odd"><td><p>tracking_mode</p></td>
 <td><div class="line-block">
-<div class="line">Occurence to wait before calling API (defaults to 8):</div>
-<div class="line">-1 : call API on flush() and at the end</div>
-<div class="line">1 : at every measure</div>
-<div class="line">2 : at every 2 measure, and so on</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">machine</span></code> mesure the power consumptions of the entire machine (defaults)</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">process</span></code> try and isolate the tracked processes in isolation</div>
 </div>
 </td>
 </tr>
-<tr class="row-odd"><td><p>api_endpoint:</p></td>
+<tr class="row-even"><td><p>gpu_ids</p></td>
+<td><p>User-specified known gpu ids to track, defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>log_level</p></td>
 <td><div class="line-block">
-<div class="line">Optional URL of Code Carbon API endpoint for sending emissions data</div>
-<div class="line">defaults to “<a class="reference external" href="https://api.codecarbon.io">https://api.codecarbon.io</a>”</div>
+<div class="line">Global codecarbon log level : “info” (defaults), “debug”, “warning”,</div>
+<div class="line">“error”, or “critical”</div>
 </div>
 </td>
 </tr>
-<tr class="row-even"><td><p>api_key</p></td>
-<td><p>API key for code carbon API (mandatory to use this API!)</p></td>
+<tr class="row-even"><td><p>co2_signal_api_token</p></td>
+<td><div class="line-block">
+<div class="line">API token for co2signal.com (requires sign-up for free beta)</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="output-parameters">
+<h2>Output parameters<a class="headerlink" href="#output-parameters" title="Permalink to this heading"></a></h2>
+<table class="colwidths-given docutils align-center" id="id5">
+<caption><span class="caption-text">Output Parameters</span><a class="headerlink" href="#id5" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 80%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameters</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>save_to_file</strong></p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if the emission artifacts should be logged</div>
+<div class="line">to a CSV file, defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code></div>
+</div>
+</td>
 </tr>
 <tr class="row-odd"><td><p>output_dir</p></td>
 <td><div class="line-block">
@@ -146,59 +178,6 @@
 </div>
 </td>
 </tr>
-<tr class="row-odd"><td><p>save_to_file</p></td>
-<td><div class="line-block">
-<div class="line">Boolean variable indicating if the emission artifacts should be logged</div>
-<div class="line">to a CSV file, defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code></div>
-</div>
-</td>
-</tr>
-<tr class="row-even"><td><p>save_to_api</p></td>
-<td><div class="line-block">
-<div class="line">Boolean variable indicating if emissions artifacts should be logged</div>
-<div class="line">to the CodeCarbon API, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></div>
-</div>
-</td>
-</tr>
-<tr class="row-odd"><td><p>save_to_logger</p></td>
-<td><div class="line-block">
-<div class="line">Boolean variable indicating if the emission artifacts should be written</div>
-<div class="line">to a dedicated logger, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></div>
-</div>
-</td>
-</tr>
-<tr class="row-even"><td><p>logging_logger</p></td>
-<td><p>LoggerOutput object encapsulating a logging.logger or a Google Cloud logger</p></td>
-</tr>
-<tr class="row-odd"><td><p>gpu_ids</p></td>
-<td><p>User-specified known gpu ids to track, defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p>emissions_endpoint</p></td>
-<td><p>Optional URL of http endpoint for sending emissions data</p></td>
-</tr>
-<tr class="row-odd"><td><p>experiment_id</p></td>
-<td><p>Id of the experiment</p></td>
-</tr>
-<tr class="row-even"><td><p>co2_signal_api_token</p></td>
-<td><div class="line-block">
-<div class="line">API token for co2signal.com (requires sign-up for free beta)</div>
-</div>
-</td>
-</tr>
-<tr class="row-odd"><td><p>tracking_mode</p></td>
-<td><div class="line-block">
-<div class="line"><code class="docutils literal notranslate"><span class="pre">machine</span></code> mesure the power consumptions of the entire machine (defaults)</div>
-<div class="line"><code class="docutils literal notranslate"><span class="pre">process</span></code> try and isolate the tracked processes in isolation</div>
-</div>
-</td>
-</tr>
-<tr class="row-even"><td><p>log_level</p></td>
-<td><div class="line-block">
-<div class="line">Global codecarbon log level : “info” (defaults), “debug”, “warning”,</div>
-<div class="line">“error”, or “critical”</div>
-</div>
-</td>
-</tr>
 <tr class="row-odd"><td><p>on_csv_write</p></td>
 <td><div class="line-block">
 <div class="line">When calling <code class="docutils literal notranslate"><span class="pre">tracker.flush()</span></code> manually choose if</div>
@@ -207,17 +186,52 @@
 </div>
 </td>
 </tr>
+<tr class="row-even"><td><p><strong>save_to_api</strong></p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if emissions artifacts should be logged</div>
+<div class="line">to the CodeCarbon API, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p>api_endpoint:</p></td>
+<td><div class="line-block">
+<div class="line">Optional URL of Code Carbon API endpoint for sending emissions data</div>
+<div class="line">defaults to “<a class="reference external" href="https://api.codecarbon.io">https://api.codecarbon.io</a>”</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p>api_key</p></td>
+<td><p>API key for code carbon API (mandatory to use this API!)</p></td>
+</tr>
+<tr class="row-odd"><td><p>api_call_interval</p></td>
+<td><div class="line-block">
+<div class="line">Occurence to wait before calling API (defaults to 8):</div>
+<div class="line">-1 : call API on flush() and at the end</div>
+<div class="line">1 : at every measure</div>
+<div class="line">2 : at every 2 measure, and so on</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><strong>save_to_logger</strong></p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if the emission artifacts should be written</div>
+<div class="line">to a dedicated logger, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p>logging_logger</p></td>
+<td><p>LoggerOutput object encapsulating a logging.logger or a Google Cloud logger</p></td>
+</tr>
 <tr class="row-even"><td><p>logger_preamble</p></td>
 <td><p>String to systematically include in the logger’s messages (defaults to “”)</p></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="offlineemissionstracker">
-<h2>OfflineEmissionsTracker<a class="headerlink" href="#offlineemissionstracker" title="Permalink to this heading"></a></h2>
-<p>For the offline mode object <code class="docutils literal notranslate"><span class="pre">OfflineEmissionsTracker</span></code>, in addition to standard arguments, requires the following parameters:</p>
-<table class="colwidths-given docutils align-center" id="id4">
-<caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id4" title="Permalink to this table"></a></caption>
+<section id="specific-parameters-for-offline-mode">
+<h2>Specific parameters for offline mode<a class="headerlink" href="#specific-parameters-for-offline-mode" title="Permalink to this heading"></a></h2>
+<table class="colwidths-given docutils align-center" id="id6">
+<caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id6" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
@@ -270,8 +284,8 @@
 <section id="track-emissions">
 <h2>&#64;track_emissions<a class="headerlink" href="#track-emissions" title="Permalink to this heading"></a></h2>
 <p>Decorator <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> in addition to standard arguments, requires the following parameters:</p>
-<table class="colwidths-given docutils align-center" id="id5">
-<caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id5" title="Permalink to this table"></a></caption>
+<table class="colwidths-given docutils align-center" id="id7">
+<caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id7" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 20%" />
 <col style="width: 80%" />
