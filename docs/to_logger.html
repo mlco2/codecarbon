@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collecting emissions to a logger &mdash; CodeCarbon 2.0.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Output" href="output.html" />
+    <link rel="prev" title="Comet Integration" href="comet.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> CodeCarbon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Collecting emissions to a logger</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#create-a-logger">Create a logger</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#python-logger">Python logger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#google-cloud-logging">Google Cloud Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#authentication">Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-an-emissiontracker">Create an EmissionTracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Logging</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize.html">Visualize</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">CodeCarbon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Collecting emissions to a logger</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/to_logger.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="collecting-emissions-to-a-logger">
+<span id="id1"></span><h1>Collecting emissions to a logger<a class="headerlink" href="#collecting-emissions-to-a-logger" title="Permalink to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">LoggerOutput</span></code> class (and <code class="docutils literal notranslate"><span class="pre">GoogleCloudLoggerOutput</span></code> subclass) allows to send emissions tracking to a logger.
+This is a specific, distinct logger than the one used by the Code Carbon package for its ‘private’ logs.
+It allows to leverage powerful logging systems, to centralize emissions to some central or cloud-based system, and build reports, triggers, etc. based on these data.</p>
+<p>This logging output can be used in parallel of other output options provided by Code Carbon.</p>
+<section id="create-a-logger">
+<h2>Create a logger<a class="headerlink" href="#create-a-logger" title="Permalink to this heading"></a></h2>
+<p>In order to send emissions tracking data to the logger, first create a logger and then create an <cite>EmissionTracker</cite>. <cite>OfflineEmissionTracker</cite>
+is also supported but lack of network connectivity may forbid to stream tracking data to some central or cloud-based collector.</p>
+<section id="python-logger">
+<h3>Python logger<a class="headerlink" href="#python-logger" title="Permalink to this heading"></a></h3>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="c1"># Create a dedicated logger (log name can be the Code Carbon project name for example)</span>
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">log_name</span><span class="p">)</span>
+
+<span class="c1"># Add a handler, see Python logging for various handlers (here a local file named after log_name)</span>
+<span class="n">_channel</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">log_name</span> <span class="o">+</span> <span class="s1">&#39;.log&#39;</span><span class="p">)</span>
+<span class="n">_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">_channel</span><span class="p">)</span>
+
+<span class="c1"># Set logging level from DEBUG to CRITICAL (typically INFO)</span>
+<span class="c1"># This level can be used in the logging process to filter emissions messages</span>
+<span class="n">_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="c1"># Create a Code Carbon LoggerOutput with the logger, specifying the logging level to be used for emissions data messages</span>
+<span class="n">my_logger</span> <span class="o">=</span> <span class="n">LoggerOutput</span><span class="p">(</span><span class="n">_logger</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="google-cloud-logging">
+<h3>Google Cloud Logging<a class="headerlink" href="#google-cloud-logging" title="Permalink to this heading"></a></h3>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">google.cloud.logging</span>
+
+
+<span class="c1"># Create a Cloud Logging client (specify project name if needed, otherwise Google SDK default project name is used)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">google_project_name</span><span class="p">)</span>
+
+<span class="c1"># Create a Code Carbon GoogleCloudLoggerOutput with the Cloud Logging logger, with the logging level to be used for emissions data messages</span>
+<span class="n">my_logger</span> <span class="o">=</span> <span class="n">GoogleCloudLoggerOutput</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">logger</span><span class="p">(</span><span class="n">log_name</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="authentication">
+<h3>Authentication<a class="headerlink" href="#authentication" title="Permalink to this heading"></a></h3>
+<p>Please refer to Google Cloud documentation <a class="reference external" href="https://cloud.google.com/logging/docs/reference/libraries#setting_up_authentication">here</a>.</p>
+</section>
+<section id="create-an-emissiontracker">
+<h3>Create an EmissionTracker<a class="headerlink" href="#create-an-emissiontracker" title="Permalink to this heading"></a></h3>
+<p>Create an EmissionTracker saving output to the logger. Other save options are still usable and valid.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">save_to_logger</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logging_logger</span><span class="o">=</span><span class="n">my_logger</span><span class="p">)</span>
+<span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="o">...</span>
+<span class="n">emissions</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</section>
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this heading"></a></h3>
+<p>A demonstration is available in <cite>codecarbon/examples/logging_demo.py</cite>.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="comet.html" class="btn btn-neutral float-left" title="Comet Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="output.html" class="btn btn-neutral float-right" title="Output" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, BCG GAMMA, Comet.ml, Haverford College, MILA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
