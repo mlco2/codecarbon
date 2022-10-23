@@ -69,7 +69,7 @@ Carbon emissions that would be emitted from training BERT (language modeling on 
             :align: center
             :alt: Models emissions comparison
 
-In this case study, time of year might not be relevant in most of case but localisation can have a great impact on carbon emissions.
+In this case study, time of year might not be relevant in most cases, but localisation can have a great impact on carbon emissions.
 
 Here and in the graph below emissions equivalent are estimated using Microsoft Azure cloud tools. 
 Code Carbon had developped its own mesuring tools. The result could be different.
@@ -83,9 +83,9 @@ Emissions for the 11 described models can be desplayed as below:
             :align: center
             :alt: Models emissions comparison
 
-The black line represent the average emissions (across regions and time of year). 
-The light blue represent the firts and fourth quartiles.
-On the right side, equivalent sources of emissions are displayed as comparating points (source : `US Environmental Protection Agency <https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator>`_)
+The black line represents the average emissions (across regions and time of year). 
+The light blue represents the firts and fourth quartiles.
+On the right side, equivalent sources of emissions are displayed as comparating points (source : `US Environmental Protection Agency <https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator>`_).
 NB : presented on a log scale
 
 

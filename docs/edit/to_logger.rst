@@ -7,7 +7,7 @@ The ``LoggerOutput`` class (and ``GoogleCloudLoggerOutput`` subclass) allows to 
 This is a specific, distinct logger than the one used by the Code Carbon package for its 'private' logs.
 It allows to leverage powerful logging systems, to centralize emissions to some central or cloud-based system, and build reports, triggers, etc. based on these data.
 
-This logging output can be used in parallel of other output options provided by Code Carbon.
+This logging output can be used in parallel with other output options provided by Code Carbon.
 
 
 Create a logger

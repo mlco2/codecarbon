@@ -59,7 +59,7 @@ region to host infrastructure for the concerned cloud provider.
 Online (Beta)
 --------------
 
-A ``Dash App`` is also aviable for those who chose to connect the package to the API then datas are public and aviable for all to explore.
+A ``Dash App`` is also aviable for those who chose to connect the package to the API then data are public and aviable for all to explore.
 `preview <https://dashboard.codecarbon.io/>`_
 
 from global...

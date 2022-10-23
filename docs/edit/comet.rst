@@ -4,7 +4,7 @@ Comet Integration
 ===========================
 
 
-CodeCarbon automatically integrates with `Comet <https://www.comet.ml/site/>`_ for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with CodeCarbon you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
+CodeCarbon can be automatically integrated with `Comet <https://www.comet.ml/site/>`_ for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with CodeCarbon you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
 
 .. image:: ./images/comet-workspace.png
             :align: center
