@@ -5,7 +5,7 @@ Installing CodeCarbon
 
 Create a virtual environment using `conda` for easier management of dependencies and packages.
 For installing conda, follow the instructions on the
-`official conda website <https://docs.conda.io/projects/conda/en/latest/user-guide/installl>`__
+`official conda website <https://docs.conda.io/projects/conda/en/latest/user-guide/install>`__
 
 .. code-block::  bash
 

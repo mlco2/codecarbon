@@ -12,7 +12,7 @@ input parameter [defaults to current directory], for each experiment tracked acr
    :align: center
    :header-rows: 1
 
-   * - Fields
+   * - Field
      - Description
    * - timestamp
      - Time of the experiment in ``%Y-%m-%dT%H:%M:%S`` format
