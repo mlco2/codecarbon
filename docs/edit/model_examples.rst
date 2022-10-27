@@ -59,10 +59,10 @@ The following table shows the different electricity consumption of popular NLP a
      - 216
      - 237.6
 
-Impact of time of year and regions
+Impact of time of year and region
 ---------------------------------------
 
-Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) in different location :
+Carbon emissions that would be emitted from training BERT (language modeling on 8 V100s for 36 hours) in different locations:
 
 
 .. image:: ./images/CO2_emitted_BERT.png
@@ -71,13 +71,13 @@ Carbon emissions that would be emitted from training BERT (language modeling on 
 
 In this case study, time of year might not be relevant in most cases, but localisation can have a great impact on carbon emissions.
 
-Here and in the graph below emissions equivalent are estimated using Microsoft Azure cloud tools. 
-Code Carbon had developped its own mesuring tools. The result could be different.
+Here, and in the graph below, emissions equivalent are estimated using Microsoft Azure cloud tools. 
+CodeCarbon has developped its own mesuring tools. The result could be different.
 
 Comparisons
 ---------------------
 
-Emissions for the 11 described models can be desplayed as below:
+Emissions for the 11 described models can be displayed as below:
 
 .. image:: ./images/model_emission_comparison.png
             :align: center
@@ -94,5 +94,5 @@ References
 ----------
 `Mesuring the Carbon intensity of AI in Cloud Instance <https://facctconference.org/static/pdfs_2022/facct22-145.pdf>`_
 
-Other source comparing models carbon intensity : 
+Another source comparing models carbon intensity : 
 `Energy and Policy Considerations for Deep Learning in NLP <https://arxiv.org/pdf/1906.02243.pdf>`_

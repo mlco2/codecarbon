@@ -2,7 +2,7 @@
 
 Methodology
 ===========
-Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [CO₂eq], are the products of two main factors :
+Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [CO₂eq], are the product of two main factors :
 
 .. code-block:: text
 
@@ -15,7 +15,7 @@ Carbon dioxide emissions (CO₂eq) can then be calculated as ``C * P``
 
 Carbon Intensity
 ----------------
-Carbon Intensity of the consumed electricity is calculated as a weighted average of the emissions from different
+Carbon Intensity of the consumed electricity is calculated as a weighted average of the emissions from the different
 energy sources that are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, and natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, this package calculates the Carbon Intensity of the electricity consumed.
 
 .. image:: ./images/grid_energy_mix.png
@@ -24,7 +24,7 @@ energy sources that are used to generate electricity, including fossil fuels and
             :height: 300px
             :width: 350px
 
-When available, CodeCarbon uses global carbon intensity of electricity per cloud providers ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ ) or per countries ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/eu-carbon-intensity-electricity.csv>`_ ).
+When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ ) or per country ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/eu-carbon-intensity-electricity.csv>`_ ).
 
 If we don't have the global carbon intensity or electricity of a country, but we have its electricity mix, we compute the carbon intensity of electricity using this table :
 
@@ -52,7 +52,7 @@ If we don't have the global carbon intensity or electricity of a country, but we
    * - Wind
      - 26
    
-sources: 
+Sources: 
  -  `for fossil energies <https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2>`_ 
  - `for renewables energies <http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf>`_  
 
@@ -73,7 +73,7 @@ Power Usage
 Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
 ``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions tracker.
 
-Currently the package supports the following hardware infrastructure.
+Currently, the package supports the following hardware infrastructure.
 
 GPU 
 ~~~~

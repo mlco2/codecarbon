@@ -106,4 +106,4 @@ Using the Decorator
         model = train_model()
 
 
-Others examples are available in the `project GitHub repository  <https://github.com/mlco2/codecarbon/tree/master/examples>`_.
+Other examples are available in the `project GitHub repository  <https://github.com/mlco2/codecarbon/tree/master/examples>`_.

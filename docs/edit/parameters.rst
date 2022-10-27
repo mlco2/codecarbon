@@ -5,7 +5,7 @@ Parameters
 
 A set of parameters are supported by API to help users provide additional details per project.
 
-Input parameters
+Input Parameters
 -----------------
 
 .. list-table:: Input Parameters 
@@ -62,7 +62,7 @@ Output parameters
      - | Optional URL of Code Carbon API endpoint for sending emissions data
        | defaults to "https://api.codecarbon.io"
    * - api_key
-     - API key for code carbon API (mandatory to use this API!)
+     - API key for the code carbon API (mandatory to use this API!)
    * - api_call_interval
      - | Occurence to wait before calling API (defaults to 8):
        | -1 : call API on flush() and at the end

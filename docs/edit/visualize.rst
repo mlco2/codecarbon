@@ -20,7 +20,7 @@ The App can be run by executing the below CLI command that needs following argum
 
 Summary and Equivalents
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Users can get an understanding into net power consumption and emissions generated across projects and can dive into a particular project.
+Users can get an understanding of net power consumption and emissions generated across projects and can dive into a particular project.
 The App also provides exemplary equivalents from daily life, for example:
 
 - Weekly Share of an average American household
@@ -66,7 +66,7 @@ from global...
 ~~~~~~~~~~~~~~
 
 Showing on the top the global energy consumed and emissions produced at an organisation level and the share of each project in this.
-The App also provides comparisons points with daily life activity to get a better understanding of the amount generated.
+The App also provides comparison points with daily life activity to get a better understanding of the amount generated.
 
 .. image:: ./images/codecarbon-API-dashboard.png
             :align: center
@@ -77,9 +77,9 @@ The App also provides comparisons points with daily life activity to get a bette
 to more and more...
 ~~~~~~~~~~~~~~~~~~~~
 
-Each project can be devided in several experiments and in each experiment several runs can happen.
-The total emission of experiments is showing on the barchart on the right hand side and the runs on the bubble chart on the left hand side.
-If ever your project has several experiment you can switch from one experiment's runs in the bubble chart to an other's by clicking the bar chart.
+Each project can be divided into several experiments, and in each experiment several runs can happen.
+The total emissions of experiments is shown on the barchart on the right hand side, and the runs on the bubble chart on the left hand side.
+If ever your project has several experiments you can switch from one experiment's runs in the bubble chart to another's by clicking the bar chart.
 
 .. image:: ./images/Experiment-run.png
             :align: center
@@ -90,7 +90,7 @@ If ever your project has several experiment you can switch from one experiment's
 detailed
 ~~~~~~~~
 
-Clicking on one bubble you can display the run time serie and see its metadata.
+Clicking on one bubble, you can display the runtime series and see its metadata.
 
 .. image:: ./images/run&metadata.png
             :align: center
@@ -107,6 +107,6 @@ The app also provides a visualization of regional carbon intensity of electricit
             :alt: carbon intensity carbon_map
             :width: 750px
 
-Note that for now all datas send to code carbon API are public.
+Note that for now, all data sent to code carbon API are public.
 
 
