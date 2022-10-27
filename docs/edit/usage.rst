@@ -3,7 +3,7 @@
 Quickstart
 ==========
 The CO2 tracking tool can be used along with any computing framework. It supports both ``online`` (with internet access) and
-``offline`` (without internet access) modes. The tracker can be used in following ways:
+``offline`` (without internet access) modes. The tracker can be used in the following ways:
 
 
 Online Mode
@@ -147,7 +147,7 @@ Configuration
 Configuration priority
 ----------------------
 
-Codecarbon is structured so that you can configure it in a hierarchical manner:
+CodeCarbon is structured so that you can configure it in a hierarchical manner:
     * *global* parameters in your home folder ``~/.codecarbon.config``
     * *local* parameters (with respect to the current working directory) in ``./.codecarbon.config``
     * *environment variables* parameters starting with ``CODECABON_``
