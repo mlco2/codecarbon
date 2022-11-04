@@ -34,14 +34,10 @@ app = dash.Dash(
 colors = {"background": darkgreen, "text": "white"}
 # data
 # *******************************************************************************
-df = pd.read_csv(
-    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/new_emissions_df.csv"
-)
+df = pd.read_csv("./new_emissions_df.csv")
 df.timestamp = pd.to_datetime(df.timestamp)
 
-df_mix = pd.read_csv(
-    "https://raw.githubusercontent.com/mlco2/codecarbon/dashboard/dashboard/WorldElectricityMix.csv"
-)
+df_mix = pd.read_csv("./WorldElectricityMix.csv")
 
 # cards
 # ******************************************************************************
