@@ -23,7 +23,9 @@ Estimate and track carbon emissions from your compute, quantify and analyze thei
 
 # About CodeCarbon 💡
 
-**CodeCarbon** started with a quite simple question: **What is the carbon emission impact of my computer program? :shrug:**
+**CodeCarbon** started with a quite simple question: 
+
+**What is the carbon emission impact of my computer program? :shrug:**
 
 We found some global datas like "computing currently represents roughly 0.5% of the world’s energy consumption" but nothing on our individual/organisation level impact.
 
