@@ -87,7 +87,7 @@
              
   <section id="comet-integration">
 <span id="comet"></span><h1>Comet Integration<a class="headerlink" href="#comet-integration" title="Permalink to this heading"></a></h1>
-<p>CodeCarbon automatically integrates with <a class="reference external" href="https://www.comet.ml/site/">Comet</a> for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with CodeCarbon you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.</p>
+<p>CodeCarbon can be automatically integrated with <a class="reference external" href="https://www.comet.ml/site/">Comet</a> for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain, and reproduce their experiments. Now, with CodeCarbon you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts, and more.</p>
 <a class="reference internal image-reference" href="_images/comet-workspace.png"><img alt="Summary" class="align-center" src="_images/comet-workspace.png" style="width: 700px; height: 400px;" /></a>
 <p>To get started with the Comet-CodeCarbon integration, make sure you have comet-ml installed:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">comet_ml</span><span class="o">&gt;=</span><span class="mf">3.2.2</span>
@@ -98,7 +98,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">experiment</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;YOUR API KEY&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Run your experiment and click on the link in stdout to be taken back to the Comet UI. Automatically you’ll see your metrics, hyperparameters, graph definition, system and environment details and more.</p>
+<p>Run your experiment and click on the link in stdout to be taken back to the Comet UI. You’ll automatically see your metrics, hyperparameters, graph definition, system and environment details, and more.</p>
 <p>Comet will automatically create an <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object from the <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code> package when your code runs. To visualize the carbon footprint of your experiment, go to the <code class="docutils literal notranslate"><span class="pre">Panel</span></code> tab in the left sidebar and click <code class="docutils literal notranslate"><span class="pre">Add</span> <span class="pre">Panel</span></code>.</p>
 <p>From the Panel Gallery click the <code class="docutils literal notranslate"><span class="pre">Public</span></code> tab and search for <code class="docutils literal notranslate"><span class="pre">CodeCarbon</span> <span class="pre">Footprint</span></code>. Once you’ve found it, add it to your Experiment.</p>
 <a class="reference internal image-reference" href="_images/panel-gallery.gif"><img alt="Summary" class="align-center" src="_images/panel-gallery.gif" style="width: 700px; height: 400px;" /></a>

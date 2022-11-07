@@ -3,7 +3,7 @@
 Examples
 ========
 
-Following are examples to train an Deep Learning model on MNIST Data to recognize digits in images using TensorFlow.
+Following are examples to train a Deep Learning model on MNIST Data to recognize digits in images using TensorFlow.
 
 Using the Explicit Object
 -------------------------
@@ -106,4 +106,4 @@ Using the Decorator
         model = train_model()
 
 
-Others examples are available in the `project GitHub repository  <https://github.com/mlco2/codecarbon/tree/master/examples>`_.
+Other examples are available in the `project GitHub repository  <https://github.com/mlco2/codecarbon/tree/master/examples>`_.

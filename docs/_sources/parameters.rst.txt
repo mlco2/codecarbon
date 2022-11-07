@@ -5,7 +5,7 @@ Parameters
 
 A set of parameters are supported by API to help users provide additional details per project.
 
-Input parameters
+Input Parameters
 -----------------
 
 .. list-table:: Input Parameters 
@@ -13,7 +13,7 @@ Input parameters
    :align: center
    :header-rows: 1
 
-   * - Parameters
+   * - Parameter
      - Description
    * - project_name
      - Name of the project, defaults to ``codecarbon``
@@ -22,7 +22,7 @@ Input parameters
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
    * - tracking_mode 
-     - | ``machine`` mesure the power consumptions of the entire machine (defaults)
+     - | ``machine`` measure the power consumptions of the entire machine (defaults)
        | ``process`` try and isolate the tracked processes in isolation
    * - gpu_ids
      - User-specified known gpu ids to track, defaults to ``None``
@@ -40,7 +40,7 @@ Output parameters
    :align: center
    :header-rows: 1
 
-   * - Parameters
+   * - Parameter
      - Description
    * - **save_to_file**
      - | Boolean variable indicating if the emission artifacts should be logged
@@ -50,7 +50,7 @@ Output parameters
        | defaults to current directory
    * - output_file
      - | Name of output CSV file 
-       | default to ``emissions.csv``
+       | defaults to ``emissions.csv``
    * - on_csv_write
      - | When calling ``tracker.flush()`` manually choose if
        | - ``update`` the existing ``run_id`` row (erasing former data)
@@ -62,7 +62,7 @@ Output parameters
      - | Optional URL of Code Carbon API endpoint for sending emissions data
        | defaults to "https://api.codecarbon.io"
    * - api_key
-     - API key for code carbon API (mandatory to use this API!)
+     - API key for the code carbon API (mandatory to use this API!)
    * - api_call_interval
      - | Occurence to wait before calling API (defaults to 8):
        | -1 : call API on flush() and at the end
@@ -83,7 +83,7 @@ Specific parameters for offline mode
    :align: center
    :header-rows: 1
 
-   * - Parameters
+   * - Parameter
      - Description
    * - country_iso_code
      - | 3 letter ISO Code of the country where the experiment is being run.
@@ -113,7 +113,7 @@ Decorator ``track_emissions`` in addition to standard arguments, requires the fo
    :align: center
    :header-rows: 1
 
-   * - Parameters
+   * - Parameter
      - Description
    * - fn 
      - function to be decorated

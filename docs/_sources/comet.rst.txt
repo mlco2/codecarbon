@@ -4,7 +4,7 @@ Comet Integration
 ===========================
 
 
-CodeCarbon automatically integrates with `Comet <https://www.comet.ml/site/>`_ for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain and reproduce their experiments, and now with CodeCarbon you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts and more.
+CodeCarbon can be automatically integrated with `Comet <https://www.comet.ml/site/>`_ for experiment tracking and visualization. Comet provides data scientists with powerful tools to track, compare, explain, and reproduce their experiments. Now, with CodeCarbon you can easily track the carbon footprint of your jobs along with your training metrics, hyperparameters, dataset samples, artifacts, and more.
 
 .. image:: ./images/comet-workspace.png
             :align: center
@@ -28,7 +28,7 @@ In the `mnist-comet.py <https://github.com/mlco2/codecarbon/blob/master/examples
 	experiment = Experiment(api_key="YOUR API KEY")
 
 
-Run your experiment and click on the link in stdout to be taken back to the Comet UI. Automatically you'll see your metrics, hyperparameters, graph definition, system and environment details and more.
+Run your experiment and click on the link in stdout to be taken back to the Comet UI. You'll automatically see your metrics, hyperparameters, graph definition, system and environment details, and more.
 
 Comet will automatically create an ``EmissionsTracker`` object from the ``codecarbon`` package when your code runs. To visualize the carbon footprint of your experiment, go to the ``Panel`` tab in the left sidebar and click ``Add Panel``.
 
