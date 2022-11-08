@@ -30,7 +30,7 @@ input parameter (defaults to the current directory), for each experiment tracked
      - CPU power (W)
    * - gpu_power
      - GPU power (W)
-   * - ram_power 
+   * - ram_power
      - RAM power (W)
    * - cpu_energy
      - Energy used per CPU (kW)
@@ -68,15 +68,14 @@ input parameter (defaults to the current directory), for each experiment tracked
      - example ``1 x NVIDIA GeForce GTX 1080 Ti``
    * - longitude
      - | Longitude, with reduced precision to a range of 11.1 km / 123 km².
-       | This is done for privacy protection. 
+       | This is done for privacy protection.
    * - latitude
      - | Latitude, with reduced precision to a range of 11.1 km / 123 km².
-       | This is done for privacy protection. 
+       | This is done for privacy protection.
    * - ram_total_size
-     - total RAM aviable (Go)
-   * - tracking_mode:
-     - ``machine`` or ``process`` (default to ``machine``)
-   
+     -  total RAM aviable (Go)
+   * - Tracking_mode:
+     - ``machine`` or ``process``(default to ``machine``)
 
 ..  note::
 

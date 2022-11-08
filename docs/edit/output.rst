@@ -75,7 +75,7 @@ input parameter (defaults to the current directory), for each experiment tracked
    * - ram_total_size
      -  total RAM aviable (Go)
    * - Tracking_mode:
-     - ``machin`` or ``process``(default to ``machin``)
+     - ``machine`` or ``process``(default to ``machine``)
 
 ..  note::
 
