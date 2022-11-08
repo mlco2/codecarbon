@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Examples &mdash; CodeCarbon 1.1.0 documentation</title>
+  <title>Examples &mdash; CodeCarbon 2.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Comet Integration" href="comet.html" />
-    <link rel="prev" title="Input Parameters" href="parameters.html" /> 
+    <link rel="prev" title="Parameters" href="parameters.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -50,13 +50,15 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">Input Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#using-the-explicit-object">Using the Explicit Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-the-context-manager">Using the Context Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-the-decorator">Using the Decorator</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -90,7 +92,7 @@
              
   <section id="examples">
 <span id="id1"></span><h1>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h1>
-<p>Following are examples to train an Deep Learning model on MNIST Data to recognize digits in images using TensorFlow.</p>
+<p>Following are examples to train a Deep Learning model on MNIST Data to recognize digits in images using TensorFlow.</p>
 <section id="using-the-explicit-object">
 <h2>Using the Explicit Object<a class="headerlink" href="#using-the-explicit-object" title="Permalink to this heading"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
@@ -121,6 +123,35 @@
 <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">emissions</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">emissions</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="using-the-context-manager">
+<h2>Using the Context Manager<a class="headerlink" href="#using-the-context-manager" title="Permalink to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+<span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">EmissionsTracker</span>
+
+<span class="n">mnist</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">mnist</span>
+
+<span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+<span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span> <span class="o">=</span> <span class="n">x_train</span> <span class="o">/</span> <span class="mf">255.0</span><span class="p">,</span> <span class="n">x_test</span> <span class="o">/</span> <span class="mf">255.0</span>
+
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)),</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">),</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.2</span><span class="p">),</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">loss_fn</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">SparseCategoricalCrossentropy</span><span class="p">(</span><span class="n">from_logits</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">EmissionsTracker</span><span class="p">()</span> <span class="k">as</span> <span class="n">tracker</span><span class="p">:</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s2">&quot;adam&quot;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">])</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -157,6 +188,7 @@
     <span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>Other examples are available in the <a class="reference external" href="https://github.com/mlco2/codecarbon/tree/master/examples">project GitHub repository</a>.</p>
 </section>
 </section>
 
@@ -164,7 +196,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="parameters.html" class="btn btn-neutral float-left" title="Input Parameters" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="parameters.html" class="btn btn-neutral float-left" title="Parameters" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="comet.html" class="btn btn-neutral float-right" title="Comet Integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

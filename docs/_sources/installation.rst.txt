@@ -4,8 +4,8 @@ Installing CodeCarbon
 =====================
 
 Create a virtual environment using `conda` for easier management of dependencies and packages.
-For installing conda, follow the instructions on the 
-`official conda website <https://docs.conda.io/projects/conda/en/latest/user-guide/installl>`__
+For installing conda, follow the instructions on the
+`official conda website <https://docs.conda.io/projects/conda/en/latest/user-guide/install>`__
 
 .. code-block::  bash
 
@@ -36,7 +36,7 @@ To install the package, run the following command in your terminal.
 
 ..  note::
 
-    We recommend using Python 3.6 or above.
+    We recommend using Python 3.7 or above.
 
 
 Dependencies
@@ -48,11 +48,11 @@ The following pip packages are used by the CodeCarbon package, and will be insta
 
 .. code-block::  bash
 
-    dash
-    dash_bootstrap_components
-    dataclasses
-    fire
+    arrow
+    click
+    fuzzywuzzy
     pandas
-    pynvml
-    requests
+    psutil
     py-cpuinfo
+    pynvml
+    requests  

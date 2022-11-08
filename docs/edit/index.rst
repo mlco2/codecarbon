@@ -28,6 +28,7 @@ CodeCarbon
    parameters
    examples
    comet
+   to_logger
 
 .. toctree::
    :caption: Logging

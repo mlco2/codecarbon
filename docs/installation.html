@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installing CodeCarbon &mdash; CodeCarbon 1.1.0 documentation</title>
+  <title>Installing CodeCarbon &mdash; CodeCarbon 2.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -58,9 +58,10 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">Input Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -96,7 +97,7 @@
 <span id="installation"></span><h1>Installing CodeCarbon<a class="headerlink" href="#installing-codecarbon" title="Permalink to this heading"></a></h1>
 <p>Create a virtual environment using <cite>conda</cite> for easier management of dependencies and packages.
 For installing conda, follow the instructions on the
-<a class="reference external" href="https://docs.conda.io/projects/conda/en/latest/user-guide/installl">official conda website</a></p>
+<a class="reference external" href="https://docs.conda.io/projects/conda/en/latest/user-guide/install">official conda website</a></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create --name codecarbon
 conda activate codecarbon
 </pre></div>
@@ -118,7 +119,7 @@ conda activate codecarbon
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>We recommend using Python 3.6 or above.</p>
+<p>We recommend using Python 3.7 or above.</p>
 </div>
 </section>
 <section id="dependencies">
@@ -126,14 +127,14 @@ conda activate codecarbon
 <section id="pip">
 <h3>pip<a class="headerlink" href="#pip" title="Permalink to this heading"></a></h3>
 <p>The following pip packages are used by the CodeCarbon package, and will be installed along with the package itself:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dash
-dash_bootstrap_components
-dataclasses
-fire
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrow
+click
+fuzzywuzzy
 pandas
+psutil
+py-cpuinfo
 pynvml
 requests
-py-cpuinfo
 </pre></div>
 </div>
 </section>

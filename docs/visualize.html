@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualize &mdash; CodeCarbon 1.1.0 documentation</title>
+  <title>Visualize &mdash; CodeCarbon 2.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -49,17 +49,28 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">Input Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Visualize</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#summary-and-equivalents">Summary and Equivalents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#regional-comparisons">Regional Comparisons</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cloud-regions">Cloud Regions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#offline">Offline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#summary-and-equivalents">Summary and Equivalents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#regional-comparisons">Regional Comparisons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cloud-regions">Cloud Regions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#online-beta">Online (Beta)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#from-global">from global…</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#to-more-and-more">to more and more…</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#detailed">detailed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#electricity-production-carbon-intensity-per-country">Electricity production carbon intensity per country</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -90,6 +101,8 @@
              
   <section id="visualize">
 <span id="id1"></span><h1>Visualize<a class="headerlink" href="#visualize" title="Permalink to this heading"></a></h1>
+<section id="offline">
+<h2>Offline<a class="headerlink" href="#offline" title="Permalink to this heading"></a></h2>
 <p>The package also comes with a <code class="docutils literal notranslate"><span class="pre">Dash</span> <span class="pre">App</span></code> containing illustrations to understand the emissions logged from various experiments across projects.
 The App currently consumes logged information from a CSV file, generated from an in-built logger in the package.</p>
 <p>The App can be run by executing the below CLI command that needs following arguments:</p>
@@ -101,8 +114,8 @@ The App currently consumes logged information from a CSV file, generated from an
 </pre></div>
 </div>
 <section id="summary-and-equivalents">
-<h2>Summary and Equivalents<a class="headerlink" href="#summary-and-equivalents" title="Permalink to this heading"></a></h2>
-<p>Users can get an understanding into net power consumption and emissions generated across projects and can dive into a particular project.
+<h3>Summary and Equivalents<a class="headerlink" href="#summary-and-equivalents" title="Permalink to this heading"></a></h3>
+<p>Users can get an understanding of net power consumption and emissions generated across projects and can dive into a particular project.
 The App also provides exemplary equivalents from daily life, for example:</p>
 <ul class="simple">
 <li><p>Weekly Share of an average American household</p></li>
@@ -112,15 +125,45 @@ The App also provides exemplary equivalents from daily life, for example:</p>
 <a class="reference internal image-reference" href="_images/summary.png"><img alt="Summary" class="align-center" src="_images/summary.png" style="width: 700px; height: 400px;" /></a>
 </section>
 <section id="regional-comparisons">
-<h2>Regional Comparisons<a class="headerlink" href="#regional-comparisons" title="Permalink to this heading"></a></h2>
+<h3>Regional Comparisons<a class="headerlink" href="#regional-comparisons" title="Permalink to this heading"></a></h3>
 <p>The App also provides a comparative visual to benchmark emissions and energy mix of the electricity from the grid across different countries.</p>
 <a class="reference internal image-reference" href="_images/global_equivalents.png"><img alt="Global Equivalents" class="align-center" src="_images/global_equivalents.png" style="width: 750px; height: 480px;" /></a>
 </section>
 <section id="cloud-regions">
-<h2>Cloud Regions<a class="headerlink" href="#cloud-regions" title="Permalink to this heading"></a></h2>
+<h3>Cloud Regions<a class="headerlink" href="#cloud-regions" title="Permalink to this heading"></a></h3>
 <p>The App also benchmarks equivalent emissions across different regions of the cloud provider being used and recommends the most eco-friendly
 region to host infrastructure for the concerned cloud provider.</p>
 <a class="reference internal image-reference" href="_images/cloud_emissions.png"><img alt="Cloud Emissions" class="align-center" src="_images/cloud_emissions.png" style="width: 750px; height: 450px;" /></a>
+</section>
+</section>
+<section id="online-beta">
+<h2>Online (Beta)<a class="headerlink" href="#online-beta" title="Permalink to this heading"></a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">Dash</span> <span class="pre">App</span></code> is also aviable for those who chose to connect the package to the API then data are public and aviable for all to explore.
+<a class="reference external" href="https://dashboard.codecarbon.io/">preview</a></p>
+<section id="from-global">
+<h3>from global…<a class="headerlink" href="#from-global" title="Permalink to this heading"></a></h3>
+<p>Showing on the top the global energy consumed and emissions produced at an organisation level and the share of each project in this.
+The App also provides comparison points with daily life activity to get a better understanding of the amount generated.</p>
+<a class="reference internal image-reference" href="_images/codecarbon-API-dashboard.png"><img alt="Summary" class="align-center" src="_images/codecarbon-API-dashboard.png" style="width: 750px;" /></a>
+</section>
+<section id="to-more-and-more">
+<h3>to more and more…<a class="headerlink" href="#to-more-and-more" title="Permalink to this heading"></a></h3>
+<p>Each project can be divided into several experiments, and in each experiment several runs can happen.
+The total emissions of experiments is shown on the barchart on the right hand side, and the runs on the bubble chart on the left hand side.
+If ever your project has several experiments you can switch from one experiment’s runs in the bubble chart to another’s by clicking the bar chart.</p>
+<a class="reference internal image-reference" href="_images/Experiment-run.png"><img alt="experiment and run" class="align-center" src="_images/Experiment-run.png" style="width: 750px;" /></a>
+</section>
+<section id="detailed">
+<h3>detailed<a class="headerlink" href="#detailed" title="Permalink to this heading"></a></h3>
+<p>Clicking on one bubble, you can display the runtime series and see its metadata.</p>
+<a class="reference internal image-reference" href="_images/run&amp;metadata.png"><img alt="run time serie and metadata" class="align-center" src="_images/run&amp;metadata.png" style="width: 750px;" /></a>
+</section>
+<section id="electricity-production-carbon-intensity-per-country">
+<h3>Electricity production carbon intensity per country<a class="headerlink" href="#electricity-production-carbon-intensity-per-country" title="Permalink to this heading"></a></h3>
+<p>The app also provides a visualization of regional carbon intensity of electricity production.</p>
+<a class="reference internal image-reference" href="_images/carbon_map.png"><img alt="carbon intensity carbon_map" class="align-center" src="_images/carbon_map.png" style="width: 750px;" /></a>
+<p>Note that for now, all data sent to code carbon API are public.</p>
+</section>
 </section>
 </section>
 

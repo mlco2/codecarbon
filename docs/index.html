@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CodeCarbon &mdash; CodeCarbon 1.1.0 documentation</title>
+  <title>CodeCarbon &mdash; CodeCarbon 2.0.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -49,9 +49,10 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">Input Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -97,6 +98,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="model_examples.html#impact-of-time-of-year-and-region">Impact of time of year and region</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model_examples.html#comparisons">Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="model_examples.html#references">References</a></li>
 </ul>
@@ -118,19 +120,29 @@
 <li class="toctree-l2"><a class="reference internal" href="usage.html#offline-mode">Offline Mode</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">Input Parameters</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="parameters.html#emissionstracker">EmissionsTracker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parameters.html#offlineemissionstracker">OfflineEmissionsTracker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#configuration-priority">Configuration priority</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#access-internet-through-proxy-server">Access internet through proxy server</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="parameters.html#input-parameters">Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parameters.html#output-parameters">Output parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parameters.html#specific-parameters-for-offline-mode">Specific parameters for offline mode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="parameters.html#track-emissions">&#64;track_emissions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#using-the-explicit-object">Using the Explicit Object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#using-the-context-manager">Using the Context Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#using-the-decorator">Using the Decorator</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="to_logger.html#create-a-logger">Create a logger</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
@@ -138,9 +150,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize.html">Visualize</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="visualize.html#summary-and-equivalents">Summary and Equivalents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualize.html#regional-comparisons">Regional Comparisons</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualize.html#cloud-regions">Cloud Regions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualize.html#offline">Offline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualize.html#online-beta">Online (Beta)</a></li>
 </ul>
 </li>
 </ul>

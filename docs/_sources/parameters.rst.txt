@@ -1,79 +1,103 @@
 .. _parameters:
 
-Input Parameters
+Parameters
 ================
 
 A set of parameters are supported by API to help users provide additional details per project.
 
-EmissionsTracker
-----------------
+Input Parameters
+-----------------
 
-The online mode object ``EmissionsTracker`` takes following input parameters:
-
-.. list-table:: Input Parameters to EmissionsTracker
+.. list-table:: Input Parameters 
    :widths: 20 80
    :align: center
    :header-rows: 1
 
-   * - Parameters
+   * - Parameter
      - Description
    * - project_name
      - Name of the project, defaults to ``codecarbon``
+   * - experiment_id
+     - Id of the experiment
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
-   * - output_dir
-     - | Directory path to which the experiment details are logged
-       | in a CSV file called ``emissions.csv``, defaults to current directory
-   * - save_to_file
-     - | Boolean variable indicating if the emission artifacts should be logged
-       | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
+   * - tracking_mode 
+     - | ``machine`` measure the power consumptions of the entire machine (defaults)
+       | ``process`` try and isolate the tracked processes in isolation
    * - gpu_ids
-     - | User-specified known gpu ids to track, defaults to ``None``
-   * - emissions_endpoint
-     - | Optional URL of http endpoint for sending emissions data
+     - User-specified known gpu ids to track, defaults to ``None``
+   * - log_level
+     - | Global codecarbon log level : "info" (defaults), "debug", "warning", 
+       | "error", or "critical"
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
 
+Output parameters
+-----------------
 
-OfflineEmissionsTracker
------------------------
+.. list-table:: Output Parameters 
+   :widths: 20 80
+   :align: center
+   :header-rows: 1
 
-The offline mode object ``OfflineEmissionsTracker`` takes following input parameters.
+   * - Parameter
+     - Description
+   * - **save_to_file**
+     - | Boolean variable indicating if the emission artifacts should be logged
+       | to a CSV file, defaults to ``True``
+   * - output_dir
+     - | Directory path to which the experiment details are logged
+       | defaults to current directory
+   * - output_file
+     - | Name of output CSV file 
+       | defaults to ``emissions.csv``
+   * - on_csv_write
+     - | When calling ``tracker.flush()`` manually choose if
+       | - ``update`` the existing ``run_id`` row (erasing former data)
+       | - ``append`` add a new row to CSV file (defaults)
+   * - **save_to_api**
+     - | Boolean variable indicating if emissions artifacts should be logged
+       | to the CodeCarbon API, defaults to ``False``
+   * - api_endpoint:
+     - | Optional URL of Code Carbon API endpoint for sending emissions data
+       | defaults to "https://api.codecarbon.io"
+   * - api_key
+     - API key for the code carbon API (mandatory to use this API!)
+   * - api_call_interval
+     - | Occurence to wait before calling API (defaults to 8):
+       | -1 : call API on flush() and at the end
+       | 1 : at every measure
+       | 2 : at every 2 measure, and so on
+   * - **save_to_logger**
+     - | Boolean variable indicating if the emission artifacts should be written
+       | to a dedicated logger, defaults to ``False``
+   * - logging_logger
+     - LoggerOutput object encapsulating a logging.logger or a Google Cloud logger
+   * - logger_preamble
+     - String to systematically include in the logger's messages (defaults to "")    
 
+Specific parameters for offline mode
+------------------------------------
 .. list-table:: Input Parameters to OfflineEmissionsTracker
    :widths: 20 80
    :align: center
    :header-rows: 1
 
-   * - Parameters
+   * - Parameter
      - Description
    * - country_iso_code
      - | 3 letter ISO Code of the country where the experiment is being run.
        | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json>`_
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted
-       | Currently, supported only for US States
+       | Currently, supported only for US States and Canada
        | for example - California or New York, from the `list <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json>`_
-   * - project_name
-     - Name of the project, defaults to ``codecarbon``
-   * - measure_power_secs
-     - Interval (in seconds) to measure hardware power usage, defaults to ``15``
-   * - output_dir
-     - | Directory path to which the experiment details are logged
-       | in a CSV file called ``emissions.csv``, defaults to current directory
-   * - save_to_file
-     - | Boolean variable indicating if the emission artifacts should be logged
-       | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
-   * - gpu_ids
-     - | User-specified known gpu ids to track, defaults to ``None``
-   * - emissions_endpoint
-     - | Optional URL of http endpoint for sending emissions data
    * - cloud_provider
      - | The cloud provider specified for estimating emissions intensity, defaults to ``None``
-     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
+       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
    * - cloud_region
      - | The region of the cloud data center, defaults to ``None``
-     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
+       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
    * - country_2letter_iso_code
      - | For use with the CO2Signal emissions API.
        | See http://api.electricitymap.org/v3/zones for a list of codes and their corresponding locations.
@@ -82,25 +106,17 @@ The offline mode object ``OfflineEmissionsTracker`` takes following input parame
 @track_emissions
 ----------------
 
-Decorator ``track_emissions`` takes following input parameters.
+Decorator ``track_emissions`` in addition to standard arguments, requires the following parameters:
 
 .. list-table:: Input Parameters to @track_emissions
    :widths: 20 80
    :align: center
    :header-rows: 1
 
-   * - Parameters
+   * - Parameter
      - Description
-   * - project_name
-     - Name of the project, defaults to ``codecarbon``
-   * - measure_power_secs
-     - Interval (in seconds) to measure hardware power usage, defaults to ``15``
-   * - output_dir
-     - | Directory path to which the experiment details are logged
-       | in a CSV file called ``emissions.csv``, defaults to current directory
-   * - save_to_file
-     - | Boolean variable indicating if the emission artifacts should be logged
-       | to a CSV file at ``output_dir/emissions.csv``, defaults to ``True``
+   * - fn 
+     - function to be decorated
    * - offline
      - | Boolean variable indicating if the tracker should be run in offline mode
        | defaults to ``False``
@@ -113,11 +129,7 @@ Decorator ``track_emissions`` takes following input parameters.
        | for example - California or New York, from the `list <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json>`_
    * - cloud_provider
      - | The cloud provider specified for estimating emissions intensity, defaults to ``None``.
-     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
+       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
    * - cloud_region
      - | The region of the cloud data center, defaults to ``None``.
-     - | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
-   * - gpu_ids
-     - | User-specified known gpu ids to track, defaults to ``None``
-   * - emissions_endpoint
-     - | Optional URL of http endpoint for sending emissions data
+       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
