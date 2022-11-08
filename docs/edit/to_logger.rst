@@ -73,4 +73,4 @@ Create an EmissionTracker saving output to the logger. Other save options are st
 Example
 ~~~~~~~
 
-A demonstration is available in `codecarbon/examples/logging_demo.py`.
+A demonstration is available in ``codecarbon/examples/logging_demo.py``.
