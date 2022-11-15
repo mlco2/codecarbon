@@ -25,7 +25,7 @@ input parameter (defaults to the current directory), for each experiment tracked
    * - emissions
      - Emissions as CO₂-equivalents [CO₂eq], in kg
    * - emissions_rate
-     - emissions divided per duration
+     - emissions divided per duration, in g/s
    * - cpu_power
      - CPU power (W)
    * - gpu_power

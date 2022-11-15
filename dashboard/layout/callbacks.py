@@ -409,7 +409,7 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     )
     line.update_layout(
         title_text=run_name
-        + "<br><span style='font-size:0.8em;color:gray' >emissions (kg eq. C02)</span>",
+        + "<br><span style='font-size:0.8em;color:gray' >emissions rate (g eq. C02 per second)</span>",
         template="CodeCarbonTemplate",
     )
     line.update_xaxes(
