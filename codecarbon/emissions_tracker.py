@@ -463,8 +463,8 @@ class BaseEmissionsTracker(ABC):
             project_name=self._project_name,
             run_id=str(self.run_id),
             duration=duration.seconds,
-            emissions=emissions,
-            emissions_rate=emissions * 1000 / duration.seconds,  # g/s
+            emissions=emissions,                          # kg
+            emissions_rate=emissions / duration.seconds,  # kg/s
             cpu_power=self._cpu_power.W,
             gpu_power=self._gpu_power.W,
             ram_power=self._ram_power.W,
@@ -579,8 +579,8 @@ class BaseEmissionsTracker(ABC):
             if self._measure_occurrence >= self._api_call_interval:
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
-                    f"{emissions.emissions_rate:.6f} g.CO2eq/s mean an estimation of "
-                    + f"{emissions.emissions_rate*3600*24*365/1000:,} kg.CO2eq/year"
+                    f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
+                    + f"{emissions.emissions_rate*3600*24*365:,} kg.CO2eq/year"
                 )
                 self._cc_api__out.out(emissions)
                 self._measure_occurrence = 0
