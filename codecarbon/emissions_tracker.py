@@ -463,7 +463,7 @@ class BaseEmissionsTracker(ABC):
             project_name=self._project_name,
             run_id=str(self.run_id),
             duration=duration.seconds,
-            emissions=emissions,                          # kg
+            emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
             cpu_power=self._cpu_power.W,
             gpu_power=self._gpu_power.W,
