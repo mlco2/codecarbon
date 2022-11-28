@@ -842,6 +842,11 @@ AMD Ryzen Threadripper PRO 3945WX,280
 AMD Ryzen Threadripper PRO 3955WX,280
 AMD Ryzen Threadripper PRO 3975WX,280
 AMD Ryzen Threadripper PRO 3995WX,280
+AMD Ryzen Threadripper PRO 5945WX,280
+AMD Ryzen Threadripper PRO 5955WX,280
+AMD Ryzen Threadripper PRO 5965WX,280
+AMD Ryzen Threadripper PRO 5975WX,280
+AMD Ryzen Threadripper PRO 5995WX,280
 AMD Sempron 130,45
 AMD Sempron 140,45
 AMD Sempron 145,45
@@ -2047,6 +2052,7 @@ Intel Xeon E7-8890 v3,165
 Intel Xeon E7-8891 v3,165
 Intel Xeon E7-8893 v3,140
 Intel Xeon Gold 6154,200
+Intel Xeon Gold 6144,150
 Intel Xeon Gold 6230N,125
 Intel Xeon L5506,60
 Intel Xeon L5508,38
