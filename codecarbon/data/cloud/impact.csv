@@ -47,7 +47,7 @@ aws,Amazon Web Services,0,ap-northeast-1,Asia Pacific (Tokyo),Japan,USA,,Tokyo,5
 aws,Amazon Web Services,100,ca-central-1,Canada (Central),Canada,USA,,Montreal,20,Hydro-QuŽbec,
 aws,Amazon Web Services,0,cn-north-1,China (Beijing),China,USA,,Beijing,680,https://www.carbonfootprint.com/docs/2018_8_electricity_factors_august_2018_-_online_sources.pdf,
 aws,Amazon Web Services,0,cn-northwest-1,China (Ningxia),China,USA,,Zhongwei,680,https://www.carbonfootprint.com/docs/2018_8_electricity_factors_august_2018_-_online_sources.pdf,
-aws,Amazon Web Services,100,eu-central-1,EU (Frankfurt),Germany,DEU,,Frankfurt am Main,615,measured on  July 2, 2019 between 8 and 9 PM, EST on www.electricitymap.org,
+aws,Amazon Web Services,100,eu-central-1,EU (Frankfurt),Germany,DEU,,Frankfurt am Main,615,measured on  July 2  2019 between 8 and 9 PM  EST on www.electricitymap.org,
 aws,Amazon Web Services,100,eu-west-1,EU (Ireland),Ireland,IRL,,Dublin,617,https://www.sciencedirect.com/science/article/pii/S1361920916307933,
 aws,Amazon Web Services,0,eu-west-2,EU (London),United Kingdom,GBR,,London,623,https://www.sciencedirect.com/science/article/pii/S1361920916307933,
 aws,Amazon Web Services,0,eu-west-3,EU (Paris),France,FRA,,Paris,105,https://www.sciencedirect.com/science/article/pii/S1361920916307933,
