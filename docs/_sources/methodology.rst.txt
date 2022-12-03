@@ -6,7 +6,7 @@ Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [C
 
 .. code-block:: text
 
-    C = Carbon Intensity of the electricity consumed for computation: quantified as kg of CO₂ emitted per kilowatt-hour of electricity.
+    C = Carbon Intensity of the electricity consumed for computation: quantified as g of CO₂ emitted per kilowatt-hour of electricity.
 
     P = Power Consumed by the computational infrastructure: quantified as kilowatt-hours.
 
