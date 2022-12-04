@@ -70,9 +70,9 @@ class EmissionsData:
         self.gpu_energy -= previous_emission.gpu_energy
         self.ram_energy -= previous_emission.ram_energy
         self.energy_consumed -= previous_emission.energy_consumed
-        # delta_emissions in kg.CO2 => * 1000 to convert in g
         if delta_duration > 0:
-            self.emissions_rate = delta_emissions * 1000 / delta_duration
+            # emissions_rate in g/s : delta_emissions in kg.CO2 / delta_duration in s
+            self.emissions_rate = delta_emissions / delta_duration
         else:
             self.emissions_rate = 0
 
