@@ -257,6 +257,8 @@ python examples/api_call_debug.py
 📝 Edit the line `occurence = 60 * 24 * 365 * 100` to specify the number of minutes you want to run it.
 #### Deployment
 
+##### API
+
 The API is availiable to everyone from https://api.codecarbon.io but if you want to deploy it for yourself, here is the instructions.
 
 To deploy the API we use [Clever Cloud](https://www.clever-cloud.com/) , an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
@@ -284,6 +286,23 @@ Yeah, no so hard, isn't it ?
 See (the doc)[https://www.clever-cloud.com/doc/getting-started/quickstart/] for more informations.
 
 Please note that Clever Cloud host Code Carbon for free because they like our project.
+
+##### Dashboard
+
+Same as for the API, for example to deploy the branh `fix-unit` to CleverCloud:
+```sh
+git push clever-dashboard fix-unit:master
+```
+
+Config on CleverCloud:
+```sh
+APP_FOLDER="dashboard"
+CC_PIP_REQUIREMENTS_FILE="requirements-new.txt"
+CC_PYTHON_MODULE="carbon_board_API:server"
+CC_PYTHON_VERSION="3.8"
+CODECARBON_API_URL="https://api.codecarbon.io"
+PORT="8000"
+```
 
 ### License
 
