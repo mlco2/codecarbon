@@ -1,7 +1,7 @@
 from threading import Lock, Timer
 
 
-class PeriodicScheduler(object):
+class PeriodicScheduler():
     """
     A periodic task running in threading.Timers
     From https://stackoverflow.com/a/18906292/14541668

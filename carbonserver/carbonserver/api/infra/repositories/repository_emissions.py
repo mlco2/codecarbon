@@ -61,8 +61,7 @@ class SqlAlchemyRepository(Emissions):
             )
             if e is None:
                 return None
-            else:
-                return self.map_sql_to_schema(e)
+            return self.map_sql_to_schema(e)
 
     def get_emissions_from_run(self, run_id) -> List[Emission]:
         """Find the emissions from an run in database and return it
@@ -80,8 +79,7 @@ class SqlAlchemyRepository(Emissions):
             )
             if res.first() is None:
                 return []
-            else:
-                return [self.map_sql_to_schema(e) for e in res]
+            return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
     def map_sql_to_schema(emission: sql_models.Emission) -> Emission:

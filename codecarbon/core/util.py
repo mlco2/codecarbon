@@ -72,8 +72,7 @@ def detect_cpu_model() -> str:
     if cpu_info:
         cpu_model_detected = cpu_info.get("brand_raw", "")
         return cpu_model_detected
-    else:
-        return None
+    return None
 
 
 def count_cpus() -> int:

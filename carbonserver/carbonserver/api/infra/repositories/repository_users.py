@@ -46,19 +46,17 @@ class SqlAlchemyRepository(Users):
             e = session.query(SqlModelUser).filter(SqlModelUser.id == user_id).first()
             if e is None:
                 return None
-            else:
-                return self.map_sql_to_schema(e)
+            return self.map_sql_to_schema(e)
 
     def list_users(self) -> List[User]:
         with self.session_factory() as session:
             e = session.query(SqlModelUser)
             if e is None:
                 return None
-            else:
-                users: List[User] = []
-                for user in e:
-                    users.append(self.map_sql_to_schema(user))
-                return users
+            users: List[User] = []
+            for user in e:
+                users.append(self.map_sql_to_schema(user))
+            return users
 
     def verify_user(self, user: UserAuthenticate) -> bool:
         with self.session_factory() as session:
@@ -69,12 +67,11 @@ class SqlAlchemyRepository(Users):
             )
             if e is None:
                 return None
-            else:
-                is_verified = bcrypt.checkpw(
-                    user.password.get_secret_value().encode("utf-8"),
-                    e.hashed_password.encode("utf-8"),
-                )
-                return is_verified
+            is_verified = bcrypt.checkpw(
+                user.password.get_secret_value().encode("utf-8"),
+                e.hashed_password.encode("utf-8"),
+            )
+            return is_verified
 
     def subscribe_user_to_org(self, user: User, organization_id: UUID):
         with self.session_factory() as session:

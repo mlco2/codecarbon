@@ -62,7 +62,7 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: number of miles driven by avg car
         """
-        return "{:.0f}".format(project_carbon_equivalent / 0.409)
+        return f"{project_carbon_equivalent / 0.409:.0f}"
 
     def get_tv_time(self, project_carbon_equivalent: float):
         """
@@ -74,13 +74,13 @@ class Data:
         :return: equivalent TV time
         """
         time_in_minutes = project_carbon_equivalent * (1 / 0.097) * 60
-        formated_value = "{:.0f} minutes".format(time_in_minutes)
+        formated_value = f"{time_in_minutes:.0f} minutes"
         if time_in_minutes >= 60:
             time_in_hours = time_in_minutes / 60
-            formated_value = "{:.0f} hours".format(time_in_hours)
+            formated_value = f"{time_in_hours:.0f} hours"
             if time_in_hours >= 24:
                 time_in_days = time_in_hours / 24
-                formated_value = "{:.0f} days".format(time_in_days)
+                formated_value = f"{time_in_days:.0f} days"
         return formated_value
 
     def get_household_fraction(self, project_carbon_equivalent: float):
@@ -93,13 +93,13 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: % of weekly emissions re: an average American household
         """
-        return "{:.2f}".format((project_carbon_equivalent / 160.58) * 100)
+        return f"{project_carbon_equivalent / 160.58 * 100:.2f}"
 
     def get_global_emissions_choropleth_data(
         self, net_energy_consumed: float
     ) -> List[Dict]:
         def formatted_energy_percentage(energy_type: float, total: float) -> float:
-            return float("{:.1f}".format((energy_type / total) * 100))
+            return float(f"{energy_type / total * 100:.1f}")
 
         global_energy_mix = self._data_source.get_global_energy_mix_data()
         choropleth_data = []
@@ -238,9 +238,7 @@ class Data:
         for project in project_list:
             project_sum_by_experiments_url = (
                 host
-                + "/experiments/{project_id}/detailed_sums".format(
-                    project_id=project["id"]
-                )
+                + f"/experiments/{project['id']}/detailed_sums"
             )
             project_name = project["name"]
             sums = requests.get(project_sum_by_experiments_url).json()
@@ -261,7 +259,7 @@ class Data:
         teams_url = host + "/teams"
         teams = requests.get(teams_url).json()
         for team in teams:
-            projets_url = host + "/projects/team/{team_id}".format(team_id=team["id"])
+            projets_url = host + f"/projects/team/{team['id']}"
             team_projects = requests.get(projets_url).json()
             if team_projects:
                 projects.append(

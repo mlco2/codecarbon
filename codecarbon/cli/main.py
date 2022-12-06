@@ -1,4 +1,5 @@
 import time
+import sys
 
 import click
 
@@ -76,7 +77,7 @@ def monitor(measure_power_secs, api_call_interval, api):
     experiment_id = get_existing_local_exp_id()
     if api and experiment_id is None:
         click.echo("ERROR: No experiment id, call 'codecarbon init' first.")
-        exit(1)
+        sys.exit(1)
     click.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
         measure_power_secs=measure_power_secs,

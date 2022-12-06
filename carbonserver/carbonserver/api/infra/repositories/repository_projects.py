@@ -38,8 +38,7 @@ class SqlAlchemyRepository(Projects):
             )
             if e is None:
                 return None
-            else:
-                return self.map_sql_to_schema(e)
+            return self.map_sql_to_schema(e)
 
     def get_projects_from_team(self, team_id) -> List[Project]:
         """Find the list of projects from a team in database and return it
@@ -54,8 +53,7 @@ class SqlAlchemyRepository(Projects):
             )
             if res.first() is None:
                 return []
-            else:
-                return [self.map_sql_to_schema(e) for e in res]
+            return [self.map_sql_to_schema(e) for e in res]
 
     def get_project_detailed_sums(
         self, project_id, start_date, end_date

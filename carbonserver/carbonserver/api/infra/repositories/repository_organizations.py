@@ -60,19 +60,17 @@ class SqlAlchemyRepository(Organizations):
             )
             if e is None:
                 return None
-            else:
-                return self.map_sql_to_schema(e)
+            return self.map_sql_to_schema(e)
 
     def list_organizations(self):
         with self.session_factory() as session:
             e = session.query(SqlModelOrganization)
             if e is None:
                 return None
-            else:
-                orgs: List[Organization] = []
-                for org in e:
-                    orgs.append(self.map_sql_to_schema(org))
-                return orgs
+            orgs: List[Organization] = []
+            for org in e:
+                orgs.append(self.map_sql_to_schema(org))
+            return orgs
 
     def is_api_key_valid(self, organization_id: UUID, api_key: str):
         with self.session_factory() as session:
