@@ -396,10 +396,10 @@ def update_Charts(start_date, end_date, project):
     tvTime = str(time_in_minutes) + " min"
     if time_in_minutes >= 60:
         time_in_hours = time_in_minutes / 60
-        tvTime = "{:.0f} hours".format(time_in_hours)
+        tvTime = f"{time_in_hours:.0f} hours"
         if time_in_hours >= 24:
             time_in_days = time_in_hours / 24
-            tvTime = "{:.0f} days".format(time_in_days)
+            tvTime = f"{time_in_days:.0f} days"
     energy_project = str(round(energyConsumed, 2))
     emissions_project = str(round(emission, 2))
     duration_project = str(
@@ -410,15 +410,15 @@ def update_Charts(start_date, end_date, project):
     duration_project_unit = "min"
     if duration >= 60:
         duration_in_hours = duration / 60
-        duration_project = "{:.0f}".format(duration_in_hours)
+        duration_project = f"{duration_in_hours:.0f}"
         duration_project_unit = "H"
         if duration_in_hours >= 24:
             duration_in_days = duration_in_hours / 24
-            duration_in_years = "{:.0f}".format(duration_in_days)
+            duration_in_years = f"{duration_in_days:.0f}"
             duration_project_unit = "days"
             if duration_in_days >= 365:
                 duration_in_years = duration_in_days / 365
-                duration_project = "{:.0f}".format(duration_in_years)
+                duration_project = f"{duration_in_years:.0f}"
                 duration_project_unit = "year"
     # #PieCharts in cards OUTPUT in return has to be changed
     # ----------------------------------------------------------------

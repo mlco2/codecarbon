@@ -173,8 +173,7 @@ def render_app(df: pd.DataFrame):
         # add country codes here to render for different countries
         if country_iso_code.upper() in ["USA", "CAN"]:
             return {"display": "block"}
-        else:
-            return {"display": "none"}
+        return {"display": "none"}
 
     @app.callback(
         [
@@ -232,8 +231,7 @@ def render_app(df: pd.DataFrame):
         on_cloud = hidden_project_summary["on_cloud"]
         if on_cloud == "Y":
             return {"display": "block"}
-        else:
-            return {"display": "none"}
+        return {"display": "none"}
 
     @app.callback(
         [

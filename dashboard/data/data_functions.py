@@ -27,7 +27,7 @@ from data.data_loader import (
 def get_run_data(run_id, page_api, size_api) -> pd.DataFrame:
     run_from_api = load_run_emissions(run_id, page=page_api, size=size_api)
     run_df = pd.DataFrame(run_from_api["items"])
-    if not (run_df.empty):
+    if not run_df.empty:
         run_df = run_df.sort_values(by="timestamp")
     run_total = run_from_api["total"]
     return run_df, run_total
@@ -66,7 +66,7 @@ def get_run_emissions(run_id, size=10000) -> pd.DataFrame:
 def get_project_experiments(project_id) -> pd.DataFrame:
     dict = load_project_experiments(project_id)
     df = pd.DataFrame.from_dict(dict)
-    if not (df.empty):
+    if not df.empty:
         df = df.sort_values(by="timestamp")
     return df
 
@@ -74,7 +74,7 @@ def get_project_experiments(project_id) -> pd.DataFrame:
 def get_experiment_runs(experiment_id, date_from, date_to) -> pd.DataFrame:
     dict = load_experiment_runs(experiment_id)
     df = pd.DataFrame.from_dict(dict)
-    if not (df.empty):
+    if not df.empty:
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         df = df[(df["timestamp"] >= date_from) & (df["timestamp"] <= date_to)]
         df = df.sort_values(by="timestamp")
@@ -84,7 +84,7 @@ def get_experiment_runs(experiment_id, date_from, date_to) -> pd.DataFrame:
 def get_experiment_sums(project_id, date_from, date_to) -> pd.DataFrame:
     dict = load_experiment_sums(project_id, start_date=date_from, end_date=date_to)
     df = pd.DataFrame.from_dict(dict)
-    if not (df.empty):
+    if not df.empty:
         df = df.sort_values(by="timestamp")
     return df
 
@@ -92,7 +92,7 @@ def get_experiment_sums(project_id, date_from, date_to) -> pd.DataFrame:
 def get_run_sums(experiment_id, date_from, date_to) -> pd.DataFrame:
     dict = load_run_sums(experiment_id, start_date=date_from, end_date=date_to)
     df = pd.DataFrame.from_dict(dict)
-    if not (df.empty):
+    if not df.empty:
         df = df.sort_values(by="timestamp")
     return df
 

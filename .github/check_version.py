@@ -9,6 +9,7 @@ python3 github/check_version.py
 
 import argparse
 import re
+import sys
 
 import requests
 
@@ -23,8 +24,7 @@ def get_local_version(filepath="codecarbon/__init__.py"):
     mo = re.search(r"version(?:_*)\s?=\s?['\"]([^'\"]*)['\"]", filecontent, re.M)
     if mo:
         return mo.group(1)
-    else:
-        raise RuntimeError(f"Unable to find version string in {filepath}")
+    raise RuntimeError(f"Unable to find version string in {filepath}")
 
 
 def get_versions_from_pypi(package_name: str = "") -> dict:
@@ -66,13 +66,13 @@ if __name__ == "__main__":
         print(f"__init__.py : {module_version}")
         print(f"setup.py : {setup_version}")
         print(f"meta.yaml : {meta_version}")
-        exit(1)
+        sys.exit(1)
     if args.onlyprintversion:
         print(setup_version)
     elif module_version.lower().strip() in versions:
         print(f"Version {setup_version} already exist on PyPi !")
         print("Please bump the version in setup.py, __init__.py and meta.yaml !.")
-        exit(1)
+        sys.exit(1)
     else:
         print(
             f"All good !\nLocal version is {setup_version}\nPyPi versions are {versions}"

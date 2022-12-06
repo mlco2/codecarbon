@@ -51,8 +51,7 @@ class SqlAlchemyRepository(Experiments):
             )
             if e is None:
                 return None
-            else:
-                return self.map_sql_to_schema(e)
+            return self.map_sql_to_schema(e)
 
     def get_experiments_from_project(self, project_id) -> List[Experiment]:
         """Find the experiment from an emission in database and return it
@@ -67,12 +66,11 @@ class SqlAlchemyRepository(Experiments):
             )
             if res.first() is None:
                 return []
-            else:
-                experiments = []
-                for e in res:
-                    experiment = self.map_sql_to_schema(e)
-                    experiments.append(experiment)
-                return experiments
+            experiments = []
+            for e in res:
+                experiment = self.map_sql_to_schema(e)
+                experiments.append(experiment)
+            return experiments
 
     def get_project_global_sums_by_experiment(self, project_id):
         with self.session_factory() as session:

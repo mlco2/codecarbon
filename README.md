@@ -77,7 +77,7 @@ Now you have 2 main options:
 
 In your command prompt use:
 ```codecarbon monitor```
-The package will track your emissions independantly from your code.
+The package will track your emissions independently from your code.
 
 ### In your Python code 🐍
 ```python

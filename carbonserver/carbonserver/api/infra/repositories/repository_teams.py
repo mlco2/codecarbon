@@ -44,19 +44,17 @@ class SqlAlchemyRepository(Teams):
             e = session.query(SqlModelTeam).filter(SqlModelTeam.id == team_id).first()
             if e is None:
                 return None
-            else:
-                return self.map_sql_to_schema(e)
+            return self.map_sql_to_schema(e)
 
     def list_teams(self):
         with self.session_factory() as session:
             e = session.query(SqlModelTeam)
             if e is None:
                 return None
-            else:
-                teams: List[Team] = []
-                for team in e:
-                    teams.append(self.map_sql_to_schema(team))
-                return teams
+            teams: List[Team] = []
+            for team in e:
+                teams.append(self.map_sql_to_schema(team))
+            return teams
 
     def get_teams_from_organization(self, organization_id) -> List[Team]:
         """Find the list of teams from an organization in database and return it
@@ -71,8 +69,7 @@ class SqlAlchemyRepository(Teams):
             )
             if res.first() is None:
                 return []
-            else:
-                return [self.map_sql_to_schema(e) for e in res]
+            return [self.map_sql_to_schema(e) for e in res]
 
     def is_api_key_valid(self, organization_id: UUID, api_key: str):
         with self.session_factory() as session:

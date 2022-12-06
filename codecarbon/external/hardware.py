@@ -116,11 +116,9 @@ class CPU(BaseHardware):
 
     def __repr__(self) -> str:
         if self._mode != "constant":
-            return "CPU({})".format(
-                " ".join(map(str.capitalize, self._mode.split("_")))
-            )
+            return f"CPU({' '.join(map(str.capitalize, self._mode.split('_')))})"
 
-        s = "CPU({} > {}W".format(self._model, self._tdp)
+        s = f"CPU({self._model} > {self._tdp}W"
 
         if self._is_generic_tdp:
             s += " [generic]"
@@ -135,7 +133,7 @@ class CPU(BaseHardware):
         if self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
-        elif self._mode == "intel_rapl":
+        if self._mode == "intel_rapl":
             # Don't call get_cpu_details to avoid computing energy twice and loosing data.
             all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()
         else:

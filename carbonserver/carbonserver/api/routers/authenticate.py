@@ -25,8 +25,7 @@ def auth_user(
     verified_user = user_service.verify_user(user)
     if verified_user:
         return Token(access_token="a", token_type="access")
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect password or email!",
-        )
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect password or email!",
+    )

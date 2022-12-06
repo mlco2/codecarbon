@@ -61,19 +61,17 @@ class SqlAlchemyRepository(Runs):
             e = session.query(SqlModelRun).filter(SqlModelRun.id == run_id).first()
             if e is None:
                 return None
-            else:
-                return self.map_sql_to_schema(e)
+            return self.map_sql_to_schema(e)
 
     def list_runs(self) -> List[Run]:
         with self.session_factory() as session:
             e = session.query(SqlModelRun)
             if e is None:
                 return None
-            else:
-                runs: List[Run] = []
-                for run in e:
-                    runs.append(self.map_sql_to_schema(run))
-                return runs
+            runs: List[Run] = []
+            for run in e:
+                runs.append(self.map_sql_to_schema(run))
+            return runs
 
     def get_runs_from_experiment(self, experiment_id) -> List[Run]:
         """Find the list of runs from an experiment in database and return it
@@ -88,8 +86,7 @@ class SqlAlchemyRepository(Runs):
             )
             if res.first() is None:
                 return []
-            else:
-                return [self.map_sql_to_schema(e) for e in res]
+            return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
     def map_sql_to_schema(run: SqlModelRun) -> Run:
@@ -197,5 +194,4 @@ class SqlAlchemyRepository(Runs):
 
             if res is None:
                 return None
-            else:
-                return self.map_sql_to_schema(res)
+            return self.map_sql_to_schema(res)

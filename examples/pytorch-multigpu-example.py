@@ -1,7 +1,6 @@
 import numpy as np
 import torch
-import torch.nn as nn
-from torch import optim
+from torch import nn, optim
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets
@@ -58,7 +57,7 @@ loaders = {
 
 class CNN(nn.Module):
     def __init__(self):
-        super(CNN, self).__init__()
+        super().__init__()
         self.conv1 = nn.Sequential(
             nn.Conv2d(
                 in_channels=1,

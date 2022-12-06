@@ -364,37 +364,36 @@ class Components:
                     ),
                 ]
             )
-        else:
-            return (
-                html.H4(
-                    [
-                        "Had this been run in ",
-                        html.Strong(
-                            f"{cloud_emissions_minimum_region.region}",
-                            style={"fontWeight": "normal", "color": "green"},
-                        ),
-                        " region, ",
-                    ]
-                ),
-                html.H4(
-                    [
-                        "then the emitted carbon would have been ",
-                        html.Strong(
-                            f"{'{:.1f}'.format(cloud_emissions_minimum_region.emissions)} kg",
-                            style={"fontWeight": "normal", "color": "green"},
-                        ),
-                    ]
-                ),
-                html.H4(
-                    [
-                        "Reducing the current  emissions by ",
-                        html.Strong(
-                            f"{'{:.1f}'.format(cloud_emissions_project_region.emissions - cloud_emissions_minimum_region.emissions)} kg",
-                            style={"fontWeight": "normal", "color": "green"},
-                        ),
-                    ]
-                ),
-            )
+        return (
+            html.H4(
+                [
+                    "Had this been run in ",
+                    html.Strong(
+                        f"{cloud_emissions_minimum_region.region}",
+                        style={"fontWeight": "normal", "color": "green"},
+                    ),
+                    " region, ",
+                ]
+            ),
+            html.H4(
+                [
+                    "then the emitted carbon would have been ",
+                    html.Strong(
+                        f"{'{:.1f}'.format(cloud_emissions_minimum_region.emissions)} kg",
+                        style={"fontWeight": "normal", "color": "green"},
+                    ),
+                ]
+            ),
+            html.H4(
+                [
+                    "Reducing the current  emissions by ",
+                    html.Strong(
+                        f"{'{:.1f}'.format(cloud_emissions_project_region.emissions - cloud_emissions_minimum_region.emissions)} kg",
+                        style={"fontWeight": "normal", "color": "green"},
+                    ),
+                ]
+            ),
+        )
 
     @staticmethod
     def get_emissions_tab():

@@ -10,7 +10,7 @@ class RandomSearchTuner(kerastuner.tuners.RandomSearch):
         # via overriding `run_trial`
         kwargs["batch_size"] = trial.hyperparameters.Int("batch_size", 32, 256, step=32)
 
-        super(RandomSearchTuner, self).run_trial(trial, *args, **kwargs)
+        super().run_trial(trial, *args, **kwargs)
 
 
 def build_model(hp):

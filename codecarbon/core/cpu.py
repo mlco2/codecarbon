@@ -276,8 +276,7 @@ class TDP:
         if cpu_matching:
             power = self._get_cpu_constant_power(cpu_matching, cpu_power_df)
             return power
-        else:
-            return None
+        return None
 
     @staticmethod
     def _get_cpus(cpu_df, cpu_idxs) -> list:
@@ -348,15 +347,13 @@ class TDP:
         # Check if an indirect match exists
         if max_ratio_token_set < THRESHOLD_TOKEN_SET:
             return None
-        else:
-            cpu_idxs = self._get_max_idxs(ratios_token_set, max_ratio_token_set)
-            cpu_machings = self._get_cpus(cpu_df, cpu_idxs)
+        cpu_idxs = self._get_max_idxs(ratios_token_set, max_ratio_token_set)
+        cpu_machings = self._get_cpus(cpu_df, cpu_idxs)
 
-            if (cpu_machings and len(cpu_machings) == 1) or greedy:
-                cpu_matched = cpu_machings[0]
-                return cpu_matched
-            else:
-                return None
+        if (cpu_machings and len(cpu_machings) == 1) or greedy:
+            cpu_matched = cpu_machings[0]
+            return cpu_matched
+        return None
 
     @staticmethod
     def _get_max_idxs(ratios: list, max_ratio: int) -> list:
@@ -378,17 +375,15 @@ class TDP:
                     f"CPU : We detect a {cpu_model_detected} with a TDP of {power} W"
                 )
                 return cpu_model_detected, power
-            else:
-                logger.warning(
-                    f"We saw that you have a {cpu_model_detected} but we don't know it."
-                    + " Please contact us."
-                )
-                return cpu_model_detected, None
-        else:
             logger.warning(
-                "We were unable to detect your CPU using the `cpuinfo` package."
-                + " Resorting to a default power consumption of 85W."
+                f"We saw that you have a {cpu_model_detected} but we don't know it."
+                + " Please contact us."
             )
+            return cpu_model_detected, None
+        logger.warning(
+            "We were unable to detect your CPU using the `cpuinfo` package."
+            + " Resorting to a default power consumption of 85W."
+        )
         return "Unknown", None
 
     def start(self):

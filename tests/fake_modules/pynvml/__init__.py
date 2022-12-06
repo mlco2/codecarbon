@@ -40,7 +40,7 @@ def nvmlDeviceGetCount():
 
 
 def nvmlDeviceGetHandleByIndex(index):
-    return "handle_%s" % index
+    return f"handle_{index}"
 
 
 def nvmlDeviceGetName(handle):

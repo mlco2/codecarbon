@@ -158,13 +158,13 @@ def update_Charts(start_date, end_date, project):
         )
     )
     time_in_minutes = emission * (1 / 0.097) / 60
-    tvTime = "{:.0f} min".format(time_in_minutes)
+    tvTime = f"{time_in_minutes:.0f} min"
     if time_in_minutes >= 60:
         time_in_hours = time_in_minutes / 60
-        tvTime = "{:.0f} hours".format(time_in_hours)
+        tvTime = f"{time_in_hours:.0f} hours"
         if time_in_hours >= 24:
             time_in_days = time_in_hours / 24
-            tvTime = "{:.0f} days".format(time_in_days)
+            tvTime = f"{time_in_days:.0f} days"
     energy_project = str(round(energyConsumed, 2))
     emissions_project = str(round(emission, 2))
     duration_project = str(
@@ -172,23 +172,23 @@ def update_Charts(start_date, end_date, project):
             duration,
         )
     )
-    duration_project = "{:.0f}".format(duration)
+    duration_project = f"{duration:.0f}"
     duration_project_unit = "sec"
     if duration >= 60:
         duration_in_min = duration / 60
-        duration_project = "{:.0f}".format(duration_in_min)
+        duration_project = f"{duration_in_min:.0f}"
         duration_project_unit = "min"
         if duration_in_min >= 60:
             duration_in_hours = duration_in_min / 60
-            duration_project = "{:.0f}".format(duration_in_hours)
+            duration_project = f"{duration_in_hours:.0f}"
             duration_project_unit = "H"
             if duration_in_hours >= 24:
                 duration_in_days = duration_in_hours / 24
-                duration_project = "{:.0f}".format(duration_in_days)
+                duration_project = f"{duration_in_days:.0f}"
                 duration_project_unit = "days"
                 if duration_in_days >= 365:
                     duration_in_years = duration_in_days / 365
-                    duration_project = "{:.0f}".format(duration_in_years)
+                    duration_project = f"{duration_in_years:.0f}"
                     duration_project_unit = "years"
     # #PieCharts in cards OUTPUT in return has to be changed
     # ----------------------------------------------------------------
@@ -305,7 +305,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
 
     if clickPoint is None:
         lastrun = get_lastrun(project, start_date, end_date)
-        if not (lastrun is None):
+        if lastrun is not None:
             experiment_id = lastrun["experiment_id"]
             experiment_name = get_experiment(experiment_id)["name"]
         else:
@@ -377,14 +377,14 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
 
     if experiment_clickPoint is None and clickPoint is None:
         last_run = get_lastrun(project, start_date, end_date)
-        if not (last_run is None):
+        if last_run is not None:
             run_name = last_run["id"]
             df_run, total_run = get_run_emissions(run_name)
 
     elif clickPoint is None:
         experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
         run_list = get_experiment_runs(experiment_selected, start_date, end_date)
-        if not (run_list.empty):
+        if not run_list.empty:
             run_name = run_list["id"].iloc[-1]
             df_run, total_run = get_run_emissions(run_name)
 
@@ -475,13 +475,13 @@ def get_metadata_table(
     }
     if experiment_clickPoint is None and clickPoint is None:
         last_run = get_lastrun(project, start_date, end_date)
-        if not (last_run is None):
+        if last_run is not None:
             run_name = last_run["id"]
             dic_table = get_run_info(run_name)
     elif clickPoint is None:
         experiment_selected = experiment_clickPoint["points"][0]["hovertext"]
         run_list = get_experiment_runs(experiment_selected, start_date, end_date)
-        if not (run_list.empty):
+        if not run_list.empty:
             run_name = run_list["id"].iloc[-1]
             dic_table = get_run_info(run_name)
     else:
@@ -528,7 +528,7 @@ def update_map(start_date, end_date, project, kpi):
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
         df_em = get_experiment_sums(project, start_date, end_date)
-        if not (df_em.empty):
+        if not df_em.empty:
             df_em = (
                 df_em.groupby(["country_iso_code", "country_name"])
                 .agg({"emissions": "sum"})
