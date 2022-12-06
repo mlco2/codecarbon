@@ -26,7 +26,7 @@ from copy import copy, deepcopy
 import pynvml as real_pynvml
 
 
-class FakeGPUEnv():
+class FakeGPUEnv:
     def setup_method(self):
         self.old_sys_path = copy(sys.path)
         fake_module_path = os.path.join(os.path.dirname(__file__), "fake_modules")
@@ -172,7 +172,7 @@ class TestGpu(FakeGPUEnv):
         assert get_gpu_details() == expected_power_limit
 
 
-class TestGpuNotAvailable():
+class TestGpuNotAvailable:
     def setup_method(self):
         self.old_sys_path = copy(sys.path)
         fake_module_path = os.path.join(os.path.dirname(__file__), "fake_modules")

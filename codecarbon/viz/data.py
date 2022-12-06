@@ -237,8 +237,7 @@ class Data:
         project_list = Data.list_projects(host)
         for project in project_list:
             project_sum_by_experiments_url = (
-                host
-                + f"/experiments/{project['id']}/detailed_sums"
+                host + f"/experiments/{project['id']}/detailed_sums"
             )
             project_name = project["name"]
             sums = requests.get(project_sum_by_experiments_url).json()

@@ -1,7 +1,6 @@
 import numpy as np
 import torch
-from torch import nn
-from torch import optim
+from torch import nn, optim
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets
