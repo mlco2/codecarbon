@@ -100,10 +100,14 @@ def test_sign_up_service_creates_user_with_default_team_and_organisation():
     )
 
     signup_service: SignUpService = SignUpService(
-        user_repository_mock, org_repository_mock, team_mock_repository
+        user_repository_mock,
+        org_repository_mock,
+        team_mock_repository,
     )
     user_to_create = UserCreate(
-        name="Gontran Bonheur", email="xyz@email.com", password="pwd"
+        name="Gontran Bonheur",
+        email="xyz@email.com",
+        password="pwd",
     )
     signup_service.sign_up(user_to_create)
 
@@ -118,7 +122,9 @@ def test_add_user_to_org_adds_user_if_api_key_is_correct():
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
 
     signup_service: SignUpService = SignUpService(
-        user_mock_repository, org_mock_repository, team_mock_repository
+        user_mock_repository,
+        org_mock_repository,
+        team_mock_repository,
     )
 
     signup_service.subscribe_user_to_org(USER_1, ORG_ID_2, API_KEY)
@@ -139,7 +145,9 @@ def test_add_user_to_org_rejects_user_if_api_key_is_incorrect():
     )
 
     signup_service: SignUpService = SignUpService(
-        user_mock_repository, org_mock_repository, team_mock_repository
+        user_mock_repository,
+        org_mock_repository,
+        team_mock_repository,
     )
 
     signup_service.subscribe_user_to_org(USER_1, ORG_ID_2, INVALID_API_KEY)
@@ -154,7 +162,9 @@ def test_add_user_to_team_adds_user_if_api_key_is_correct():
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
 
     signup_service: SignUpService = SignUpService(
-        user_mock_repository, org_mock_repository, team_mock_repository
+        user_mock_repository,
+        org_mock_repository,
+        team_mock_repository,
     )
 
     signup_service.subscribe_user_to_team(USER_1, TEAM_ID_2, API_KEY)
@@ -170,7 +180,9 @@ def test_add_user_to_team_rejects_user_if_api_key_is_incorrect():
     team_mock_repository.is_api_key_valid.return_value = False
 
     signup_service: SignUpService = SignUpService(
-        user_mock_repository, org_mock_repository, team_mock_repository
+        user_mock_repository,
+        org_mock_repository,
+        team_mock_repository,
     )
 
     signup_service.subscribe_user_to_team(USER_1, TEAM_ID_2, INVALID_API_KEY)

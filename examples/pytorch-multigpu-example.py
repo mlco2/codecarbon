@@ -50,7 +50,11 @@ loaders = {
         pin_memory=True,
     ),
     "test": DataLoader(
-        test_data, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True
+        test_data,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=2,
+        pin_memory=True,
     ),
 }
 

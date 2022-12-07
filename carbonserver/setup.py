@@ -30,7 +30,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(
-        exclude=["*.tests", "*.tests.*", "tests.*", "tests"]
+        exclude=["*.tests", "*.tests.*", "tests.*", "tests"],
     ),
     install_requires=DEPENDENCIES,
     tests_require=TEST_DEPENDENCIES,

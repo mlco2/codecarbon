@@ -91,14 +91,14 @@ CLOUD_METADATA_AZURE = {
                             {
                                 "privateIpAddress": "10.0.0.23",
                                 "publicIpAddress": "104.211.33.237",
-                            }
+                            },
                         ],
                         "subnet": [{"address": "10.0.0.0", "prefix": "24"}],
                     },
                     "ipv6": {"ipAddress": []},
                     "macAddress": "000D3A1FEDC1",
-                }
-            ]
+                },
+            ],
         },
     },
     "provider": "Azure",
@@ -116,7 +116,7 @@ CLOUD_METADATA_GCP = {
                 "index": 0,
                 "mode": "READ_WRITE",
                 "type": "PERSISTENT",
-            }
+            },
         ],
         "guestAttributes": {},
         "hostname": "instance-2.c.onprem-test-214916.internal",
@@ -130,7 +130,7 @@ CLOUD_METADATA_GCP = {
         "networkInterfaces": [
             {
                 "accessConfigs": [
-                    {"externalIp": "34.71.112.18", "type": "ONE_TO_ONE_NAT"}
+                    {"externalIp": "34.71.112.18", "type": "ONE_TO_ONE_NAT"},
                 ],
                 "dnsServers": ["169.254.169.254"],
                 "forwardedIps": [],
@@ -142,7 +142,7 @@ CLOUD_METADATA_GCP = {
                 "network": "projects/705208488469/networks/default",
                 "subnetmask": "255.255.240.0",
                 "targetInstanceIps": [],
-            }
+            },
         ],
         "preempted": "FALSE",
         "remainingCpuTime": -1,
@@ -199,7 +199,7 @@ SINGLE_GPU_DETAILS_RESPONSE = [
         "compute_mode": 0,
         "compute_processes": [],
         "graphics_processes": [],
-    }
+    },
 ]
 
 TWO_GPU_DETAILS_RESPONSE = [

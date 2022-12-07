@@ -32,7 +32,7 @@ router = APIRouter(
 def add_experiment(
     experiment: ExperimentCreate,
     experiment_service: ExperimentService = Depends(
-        Provide[ServerContainer.experiment_service]
+        Provide[ServerContainer.experiment_service],
     ),
 ) -> Experiment:
     experiment = experiment_service.add_experiment(experiment)
@@ -50,7 +50,7 @@ def add_experiment(
 def read_experiment(
     experiment_id: str,
     experiment_service: ExperimentService = Depends(
-        Provide[ServerContainer.experiment_service]
+        Provide[ServerContainer.experiment_service],
     ),
 ) -> Experiment:
     return experiment_service.get_one_experiment(experiment_id)
@@ -66,7 +66,7 @@ def read_experiment(
 def read_project_experiments(
     project_id: str,
     experiment_service: ExperimentService = Depends(
-        Provide[ServerContainer.experiment_service]
+        Provide[ServerContainer.experiment_service],
     ),
 ) -> List[Experiment]:
 
@@ -84,7 +84,7 @@ def read_project_detailed_sums_by_experiment(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     project_global_sum_by_experiment_usecase: ProjectSumsByExperimentUsecase = Depends(
-        Provide[ServerContainer.project_sums_by_experiment_usecase]
+        Provide[ServerContainer.project_sums_by_experiment_usecase],
     ),
 ) -> List[ExperimentReport]:
     start_date = (
@@ -94,5 +94,7 @@ def read_project_detailed_sums_by_experiment(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return project_global_sum_by_experiment_usecase.compute_detailed_sum(
-        project_id, start_date, end_date
+        project_id,
+        start_date,
+        end_date,
     )

@@ -25,7 +25,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     license_files=("LICENSE",),
     packages=setuptools.find_packages(
-        exclude=["*.tests", "*.tests.*", "tests.*", "tests"]
+        exclude=["*.tests", "*.tests.*", "tests.*", "tests"],
     ),
     install_requires=DEPENDENCIES,
     tests_require=TEST_DEPENDENCIES,
@@ -56,6 +56,6 @@ setuptools.setup(
         "console_scripts": [
             "carbonboard = codecarbon.viz.carbonboard:main",
             "codecarbon = codecarbon.cli.main:codecarbon",
-        ]
+        ],
     },
 )

@@ -19,7 +19,8 @@ def suppress(*exceptions):
     except exceptions:
         logger.warning("graceful shutdown. Exceptions:")
         logger.warning(
-            exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
+            exceptions if len(exceptions) != 1 else exceptions[0],
+            exc_info=True,
         )
         logger.warning("stopping.")
         pass
@@ -81,12 +82,13 @@ def count_cpus() -> int:
 
     try:
         scontrol = subprocess.check_output(
-            ["scontrol show job $SLURM_JOBID"], shell=True
+            ["scontrol show job $SLURM_JOBID"],
+            shell=True,
         ).decode()
     except subprocess.CalledProcessError:
         logger.warning(
             "Error running `scontrol show job $SLURM_JOBID` "
-            + "to count SLURM-available cpus. Using the machine's cpu count."
+            + "to count SLURM-available cpus. Using the machine's cpu count.",
         )
         return psutil.cpu_count()
 
@@ -95,14 +97,14 @@ def count_cpus() -> int:
     if len(num_cpus_matches) == 0:
         logger.warning(
             "Could not find NumCPUs= after running `scontrol show job $SLURM_JOBID` "
-            + "to count SLURM-available cpus. Using the machine's cpu count."
+            + "to count SLURM-available cpus. Using the machine's cpu count.",
         )
         return psutil.cpu_count()
 
     if len(num_cpus_matches) > 1:
         logger.warning(
             "Unexpected output after running `scontrol show job $SLURM_JOBID` "
-            + "to count SLURM-available cpus. Using the machine's cpu count."
+            + "to count SLURM-available cpus. Using the machine's cpu count.",
         )
         return psutil.cpu_count()
 

@@ -133,7 +133,8 @@ def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_ser
 
     with custom_test_server.container.experiment_repository.override(repository_mock):
         response = client.get(
-            "/experiment/read_experiment/", params={"experiment_id": EXPERIMENT_ID}
+            "/experiment/read_experiment/",
+            params={"experiment_id": EXPERIMENT_ID},
         )
         actual_experiment = response.json()
 
@@ -142,7 +143,8 @@ def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_ser
 
 
 def test_get_experiment_of_project_retrieves_all_experiments_of_project(
-    client, custom_test_server
+    client,
+    custom_test_server,
 ):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_experiments_id_list = [EXPERIMENT_ID, EXPERIMENT_ID_2]

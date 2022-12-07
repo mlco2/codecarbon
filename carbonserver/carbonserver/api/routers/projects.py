@@ -39,7 +39,8 @@ def add_project(
 @router.get("/project/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
 @inject
 def read_project(
-    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+    project_id: str,
+    project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
     return project_service.get_one_project(project_id)
 
@@ -68,7 +69,7 @@ def read_project_detailed_sums(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     project_global_sum_usecase: ProjectSumsUsecase = Depends(
-        Provide[ServerContainer.project_sums_usecase]
+        Provide[ServerContainer.project_sums_usecase],
     ),
 ) -> ProjectReport:
     start_date = (
@@ -78,5 +79,7 @@ def read_project_detailed_sums(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return project_global_sum_usecase.compute_detailed_sum(
-        project_id, start_date, end_date
+        project_id,
+        start_date,
+        end_date,
     )

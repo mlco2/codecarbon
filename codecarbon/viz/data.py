@@ -33,13 +33,13 @@ class Data:
             },
             "total": {
                 "duration": sum(
-                    map(lambda experiment: experiment["duration"], project_data)
+                    map(lambda experiment: experiment["duration"], project_data),
                 ),
                 "emissions": sum(
-                    map(lambda experiment: experiment["emissions"], project_data)
+                    map(lambda experiment: experiment["emissions"], project_data),
                 ),
                 "energy_consumed": sum(
-                    map(lambda experiment: experiment["energy_consumed"], project_data)
+                    map(lambda experiment: experiment["energy_consumed"], project_data),
                 ),
             },
             "country_name": last_run["country_name"],
@@ -96,7 +96,8 @@ class Data:
         return f"{project_carbon_equivalent / 160.58 * 100:.2f}"
 
     def get_global_emissions_choropleth_data(
-        self, net_energy_consumed: float
+        self,
+        net_energy_consumed: float,
     ) -> List[Dict]:
         def formatted_energy_percentage(energy_type: float, total: float) -> float:
             return float(f"{energy_type / total * 100:.1f}")
@@ -116,7 +117,8 @@ class Data:
                 country_emissions = self._emissions.get_country_emissions(
                     energy_consumed,
                     GeoMetadata(
-                        country_name=country_name, country_iso_code=country_iso_code
+                        country_name=country_name,
+                        country_iso_code=country_iso_code,
                     ),
                 )
                 total = global_energy_mix[country_iso_code]["total_TWh"]
@@ -126,30 +128,37 @@ class Data:
                         "emissions": country_emissions,
                         "country": country_name,
                         "fossil": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["fossil_TWh"], total
+                            global_energy_mix[country_iso_code]["fossil_TWh"],
+                            total,
                         ),
                         "geothermal": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["geothermal_TWh"], total
+                            global_energy_mix[country_iso_code]["geothermal_TWh"],
+                            total,
                         ),
                         "hydroelectricity": formatted_energy_percentage(
                             global_energy_mix[country_iso_code]["hydroelectricity_TWh"],
                             total,
                         ),
                         "nuclear": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["nuclear_TWh"], total
+                            global_energy_mix[country_iso_code]["nuclear_TWh"],
+                            total,
                         ),
                         "solar": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["solar_TWh"], total
+                            global_energy_mix[country_iso_code]["solar_TWh"],
+                            total,
                         ),
                         "wind": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["wind_TWh"], total
+                            global_energy_mix[country_iso_code]["wind_TWh"],
+                            total,
                         ),
-                    }
+                    },
                 )
         return choropleth_data
 
     def get_regional_emissions_choropleth_data(
-        self, net_energy_consumed: float, country_iso_code: str
+        self,
+        net_energy_consumed: float,
+        country_iso_code: str,
     ) -> List[Dict]:
 
         # add country codes here to render for different countries
@@ -158,11 +167,11 @@ class Data:
 
         try:
             region_emissions = self._data_source.get_country_emissions_data(
-                country_iso_code.lower()
+                country_iso_code.lower(),
             )
         except DataSourceException:  # This country has regional data at the energy mix level, not the emissions level
             country_energy_mix = self._data_source.get_country_energy_mix_data(
-                country_iso_code.lower()
+                country_iso_code.lower(),
             )
             region_emissions = {
                 region: {"regionCode": region}
@@ -189,7 +198,7 @@ class Data:
                         "region_code": region_code,
                         "region_name": region_name.upper(),
                         "emissions": emissions,
-                    }
+                    },
                 )
         return choropleth_data
 
@@ -266,8 +275,8 @@ class Data:
                         map(
                             lambda x: {"id": x["id"], "name": x["name"]},
                             iter(team_projects),
-                        )
-                    )
+                        ),
+                    ),
                 )
         project_list = sum(projects, [])
         return project_list

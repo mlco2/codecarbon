@@ -43,7 +43,9 @@ def test_user_service_creates_correct_user_on_sign_up(_):
     user_service: UserService = UserService(user_mock_repository)
     user_mock_repository.create_user.return_value = USER_1
     user_to_create: UserCreate = UserCreate(
-        name="Gontran Bonheur", email="xyz@email.com", password="pwd"
+        name="Gontran Bonheur",
+        email="xyz@email.com",
+        password="pwd",
     )
 
     actual_db_user = user_service.create_user(user_to_create)

@@ -33,7 +33,8 @@ class DataSource:
         https://setuptools.readthedocs.io/en/latest/pkg_resources.html#resource-extraction
         """
         return pkg_resources.resource_filename(
-            self.module_name, self.config["cloud_emissions_path"]
+            self.module_name,
+            self.config["cloud_emissions_path"],
         )
 
     @property
@@ -42,29 +43,34 @@ class DataSource:
         Get the path from the package resources.
         """
         return pkg_resources.resource_filename(
-            self.module_name, self.config["carbon_intensity_per_source_path"]
+            self.module_name,
+            self.config["carbon_intensity_per_source_path"],
         )
 
     def country_emissions_data_path(self, country: str):
         return pkg_resources.resource_filename(
-            self.module_name, self.config[f"{country}_emissions_data_path"]
+            self.module_name,
+            self.config[f"{country}_emissions_data_path"],
         )
 
     def country_energy_mix_data_path(self, country: str):
         return pkg_resources.resource_filename(
-            self.module_name, self.config[f"{country}_energy_mix_data_path"]
+            self.module_name,
+            self.config[f"{country}_energy_mix_data_path"],
         )
 
     @property
     def global_energy_mix_data_path(self):
         return pkg_resources.resource_filename(
-            self.module_name, self.config["global_energy_mix_data_path"]
+            self.module_name,
+            self.config["global_energy_mix_data_path"],
         )
 
     @property
     def cpu_power_path(self):
         return pkg_resources.resource_filename(
-            self.module_name, self.config["cpu_power_path"]
+            self.module_name,
+            self.config["cpu_power_path"],
         )
 
     def get_global_energy_mix_data(self) -> Dict:

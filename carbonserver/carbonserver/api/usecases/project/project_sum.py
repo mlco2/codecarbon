@@ -7,7 +7,10 @@ class ProjectSumsUsecase:
         self._project_repository = project_repository
 
     def compute_detailed_sum(
-        self, project_id: str, start_date, end_date
+        self,
+        project_id: str,
+        start_date,
+        end_date,
     ) -> ProjectReport:
         sums = self._project_repository.get_project_detailed_sums(
             project_id,

@@ -84,7 +84,7 @@ def test_emission_service_retrieves_all_existing_emissions_for_one_run():
 
     assert not diff
     assert len(list(actual_experiments_ids_list)) == len(
-        set(actual_experiments_ids_list)
+        set(actual_experiments_ids_list),
     )
 
 

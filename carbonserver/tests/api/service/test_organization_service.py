@@ -13,7 +13,10 @@ ORG_ID_2 = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
 
 ORG_1 = Organization(
-    id=ORG_ID, name="DFG", description="Data For Good Organization", api_key=API_KEY
+    id=ORG_ID,
+    name="DFG",
+    description="Data For Good Organization",
+    api_key=API_KEY,
 )
 
 ORG_2 = Organization(
@@ -34,7 +37,8 @@ def test_organization_service_add_org_creates_correct_org(_):
 
     user_service: OrganizationService = OrganizationService(repository_mock)
     org_to_create = OrganizationCreate(
-        name="Data For Good", description="Data For Good Organization"
+        name="Data For Good",
+        description="Data For Good Organization",
     )
 
     actual_saved_org = user_service.add_organization(org_to_create)

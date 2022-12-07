@@ -49,14 +49,17 @@ class SqlAlchemyRepository(Projects):
         """
         with self.session_factory() as session:
             res = session.query(SqlModelProject).filter(
-                SqlModelProject.team_id == team_id
+                SqlModelProject.team_id == team_id,
             )
             if res.first() is None:
                 return []
             return [self.map_sql_to_schema(e) for e in res]
 
     def get_project_detailed_sums(
-        self, project_id, start_date, end_date
+        self,
+        project_id,
+        start_date,
+        end_date,
     ) -> ProjectReport:
         """Find the experiments of a project in database between two dates and return
         a report containing the sum of their emissions
@@ -84,7 +87,7 @@ class SqlAlchemyRepository(Projects):
                     func.sum(SqlModelEmission.duration).label("duration"),
                     func.avg(SqlModelEmission.emissions_rate).label("emissions_rate"),
                     func.count(SqlModelEmission.emissions_rate).label(
-                        "emissions_count"
+                        "emissions_count",
                     ),
                 )
                 .join(

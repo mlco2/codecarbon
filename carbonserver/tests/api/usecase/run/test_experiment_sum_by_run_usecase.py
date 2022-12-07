@@ -38,11 +38,13 @@ def test_detailed_sum_computes_for_experiment_id():
 
     expected_emission_sum = EMISSIONS_SUM
     repository_mock.get_experiment_detailed_sums_by_run.return_value = [
-        EXPERIMENT_WITH_DETAILS
+        EXPERIMENT_WITH_DETAILS,
     ]
 
     actual_experiment_sum_by_run = experiment_sum_by_run_usecase.compute_detailed_sum(
-        experiment_id, START_DATE, END_DATE
+        experiment_id,
+        START_DATE,
+        END_DATE,
     )
 
     assert actual_experiment_sum_by_run[0]["emissions"] == expected_emission_sum

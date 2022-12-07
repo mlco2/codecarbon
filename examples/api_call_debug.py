@@ -29,7 +29,7 @@ if __name__ == "__main__":
     fh = logging.FileHandler("codecarbon.log")
     fh.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
+        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s",
     )
     fh.setFormatter(formatter)
     logger.addHandler(fh)

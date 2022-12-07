@@ -38,21 +38,22 @@ class Database:
                 error=DBError(
                     code=DBErrorEnum.INTEGRITY_ERROR,
                     message="Relation not found, or duplicate key",
-                )
+                ),
             )
         except exc.DataError as e:
             session.rollback()
             logger.error(e.orig.args[0], exc_info=True)
             raise DBException(
-                error=DBError(code=DBErrorEnum.DATA_ERROR, message="Invalid data")
+                error=DBError(code=DBErrorEnum.DATA_ERROR, message="Invalid data"),
             )
         except exc.ProgrammingError as e:
             session.rollback()
             logger.error(e.orig.args[0], exc_info=True)
             raise DBException(
                 error=DBError(
-                    code=DBErrorEnum.PROGRAMMING_ERROR, message="Wrong schema"
-                )
+                    code=DBErrorEnum.PROGRAMMING_ERROR,
+                    message="Wrong schema",
+                ),
             )
         except Exception:
             logger.error("Session rollback because of exception", exc_info=True)

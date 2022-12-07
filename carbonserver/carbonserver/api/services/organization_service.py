@@ -12,13 +12,13 @@ class OrganizationService:
 
     def add_organization(self, organization: OrganizationCreate) -> Organization:
         created_organization: Organization = self._repository.add_organization(
-            organization
+            organization,
         )
         return created_organization
 
     def read_organization(self, organization_id: str) -> Organization:
         organization: Organization = self._repository.get_one_organization(
-            organization_id
+            organization_id,
         )
         return organization
 

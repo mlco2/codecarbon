@@ -61,16 +61,20 @@ def render_app(df: pd.DataFrame):
                 component_property="children",
             ),
             Output(
-                component_id="project_power_consumption", component_property="children"
+                component_id="project_power_consumption",
+                component_property="children",
             ),
             Output(
-                component_id="project_carbon_equivalent", component_property="children"
+                component_id="project_carbon_equivalent",
+                component_property="children",
             ),
             Output(
-                component_id="last_run_power_consumption", component_property="children"
+                component_id="last_run_power_consumption",
+                component_property="children",
             ),
             Output(
-                component_id="last_run_carbon_equivalent", component_property="children"
+                component_id="last_run_carbon_equivalent",
+                component_property="children",
             ),
         ],
         [Input(component_id="project_name", component_property="value")],
@@ -135,10 +139,12 @@ def render_app(df: pd.DataFrame):
     @app.callback(
         [
             Output(
-                component_id="global_emissions_choropleth", component_property="figure"
+                component_id="global_emissions_choropleth",
+                component_property="figure",
             ),
             Output(
-                component_id="global_energy_mix_choropleth", component_property="figure"
+                component_id="global_energy_mix_choropleth",
+                component_property="figure",
             ),
         ],
         [
@@ -149,15 +155,16 @@ def render_app(df: pd.DataFrame):
     def update_global_comparisons(hidden_project_summary: dcc.Store, energy_type: str):
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
         global_emissions_choropleth_data = data.get_global_emissions_choropleth_data(
-            net_energy_consumed
+            net_energy_consumed,
         )
 
         return (
             components.get_global_emissions_choropleth_figure(
-                global_emissions_choropleth_data
+                global_emissions_choropleth_data,
             ),
             components.get_global_energy_mix_choropleth_figure(
-                energy_type, global_emissions_choropleth_data
+                energy_type,
+                global_emissions_choropleth_data,
             ),
         )
 
@@ -191,14 +198,16 @@ def render_app(df: pd.DataFrame):
         net_energy_consumed = hidden_project_summary["total"]["energy_consumed"]
         regional_emissions_choropleth_data = (
             data.get_regional_emissions_choropleth_data(
-                net_energy_consumed, country_iso_code
+                net_energy_consumed,
+                country_iso_code,
             )
         )
 
         return (
             country_name,
             components.get_regional_emissions_choropleth_figure(
-                regional_emissions_choropleth_data, country_iso_code
+                regional_emissions_choropleth_data,
+                country_iso_code,
             ),
         )
 
@@ -208,7 +217,7 @@ def render_app(df: pd.DataFrame):
     )
     def update_project_time_series(hidden_project_data: dt.DataTable):
         return components.get_project_time_series_figure(
-            hidden_project_data["props"]["data"]
+            hidden_project_data["props"]["data"],
         )
 
     @app.callback(
@@ -217,7 +226,7 @@ def render_app(df: pd.DataFrame):
     )
     def update_project_bar_chart(hidden_project_data: dt.DataTable):
         return components.get_project_emissions_bar_chart_figure(
-            hidden_project_data["props"]["data"]
+            hidden_project_data["props"]["data"],
         )
 
     @app.callback(
@@ -237,7 +246,8 @@ def render_app(df: pd.DataFrame):
         [
             Output(component_id="cloud_provider_name", component_property="children"),
             Output(
-                component_id="cloud_emissions_barchart", component_property="figure"
+                component_id="cloud_emissions_barchart",
+                component_property="figure",
             ),
             Output(component_id="cloud_recommendation", component_property="children"),
         ],
@@ -252,16 +262,21 @@ def render_app(df: pd.DataFrame):
             cloud_provider_name,
             cloud_emissions_barchart_data,
         ) = data.get_cloud_emissions_barchart_data(
-            net_energy_consumed, on_cloud, cloud_provider, cloud_region
+            net_energy_consumed,
+            on_cloud,
+            cloud_provider,
+            cloud_region,
         )
 
         return (
             cloud_provider_name,
             components.get_cloud_emissions_barchart_figure(
-                cloud_emissions_barchart_data
+                cloud_emissions_barchart_data,
             ),
             components.get_cloud_recommendation(
-                on_cloud, cloud_provider_name, cloud_emissions_barchart_data
+                on_cloud,
+                cloud_provider_name,
+                cloud_emissions_barchart_data,
             ),
         )
 

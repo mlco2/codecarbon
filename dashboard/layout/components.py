@@ -14,12 +14,13 @@ class Components:
                         html.Div(
                             [html.P("This is a beta version.")],
                             className="inner",
-                        )
+                        ),
                     ],
                     className="banner",
                 ),
                 html.A(
-                    [html.Img(src="/assets/logo.png")], href="https://codecarbon.io"
+                    [html.Img(src="/assets/logo.png")],
+                    href="https://codecarbon.io",
                 ),
                 html.P("Track and reduce CO2 emissions from your computing"),
                 dcc.DatePickerRange(
@@ -62,8 +63,8 @@ class Components:
                                             className="text-center",
                                         ),
                                         html.P("kWh", className="text-center"),
-                                    ]
-                                )
+                                    ],
+                                ),
                             ],
                         ),
                         dbc.Card(
@@ -82,8 +83,8 @@ class Components:
                                             "Kg. Eq. CO2",
                                             className="text-center",
                                         ),
-                                    ]
-                                )
+                                    ],
+                                ),
                             ],
                         ),
                         dbc.Card(
@@ -102,14 +103,14 @@ class Components:
                                             id="Tot_Duration_unit",
                                             className="text-center",
                                         ),
-                                    ]
-                                )
+                                    ],
+                                ),
                             ],
                         ),
                     ],
                     className="shadow",
                 ),
-            ]
+            ],
         )
 
     def get_household_equivalent(self):
@@ -128,7 +129,7 @@ class Components:
                             "of an american household weekly energy consumption",
                             className="card-title",
                         ),
-                    ]
+                    ],
                 ),
             ],
         )
@@ -149,7 +150,7 @@ class Components:
                             "miles driven",
                             className="card-title",
                         ),
-                    ]
+                    ],
                 ),
             ],
         )
@@ -170,7 +171,7 @@ class Components:
                             "of TV",
                             className="card-title",
                         ),
-                    ]
+                    ],
                 ),
             ],
         )

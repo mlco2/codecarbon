@@ -37,7 +37,7 @@ class Components:
                     style={"textAlign": "center", "paddingLeft": "0.5%"},
                     className="lead",
                 ),
-            ]
+            ],
         )
 
     @staticmethod
@@ -84,7 +84,7 @@ class Components:
                     ),
                 ],
                 style={"display": "inline-block"},
-            )
+            ),
         )
 
     @staticmethod
@@ -103,8 +103,8 @@ class Components:
                                 ),
                             ],
                             style={"float": "left"},
-                        )
-                    ]
+                        ),
+                    ],
                 ),
                 html.Br(),
                 html.Br(),
@@ -130,7 +130,7 @@ class Components:
                             ],
                             style={"float": "right"},
                         ),
-                    ]
+                    ],
                 ),
                 html.Br(),
                 html.Div(
@@ -155,7 +155,7 @@ class Components:
                             ],
                             style={"float": "right"},
                         ),
-                    ]
+                    ],
                 ),
             ],
             style={"paddingLeft": "1.4%", "paddingRight": "1.4%"},
@@ -204,7 +204,7 @@ class Components:
                                                     "emissions",
                                                     style={"paddingLeft": "1.4%"},
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                     ],
                                     style={"float": "left", "width": "25%"},
@@ -233,7 +233,7 @@ class Components:
                                                     "driven",
                                                     style={"paddingLeft": "5.5%"},
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                     ],
                                     style={
@@ -274,7 +274,7 @@ class Components:
                                                     "watched",
                                                     style={"paddingLeft": "6.4%"},
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                     ],
                                     style={"float": "right", "width": "25%"},
@@ -285,7 +285,7 @@ class Components:
                     ],
                     style={"display": "inline-block"},
                 ),
-            ]
+            ],
         )
 
     @staticmethod
@@ -319,7 +319,8 @@ class Components:
         )
 
     def get_cloud_emissions_barchart_figure(
-        self, cloud_emissions_barchart_data: pd.DataFrame
+        self,
+        cloud_emissions_barchart_data: pd.DataFrame,
     ):
         return (
             px.bar(
@@ -362,7 +363,7 @@ class Components:
                         f"{cloud_emissions_project_region.region}",
                         style={"fontWeight": "normal", "color": "green"},
                     ),
-                ]
+                ],
             )
         return (
             html.H4(
@@ -373,7 +374,7 @@ class Components:
                         style={"fontWeight": "normal", "color": "green"},
                     ),
                     " region, ",
-                ]
+                ],
             ),
             html.H4(
                 [
@@ -382,7 +383,7 @@ class Components:
                         f"{'{:.1f}'.format(cloud_emissions_minimum_region.emissions)} kg",
                         style={"fontWeight": "normal", "color": "green"},
                     ),
-                ]
+                ],
             ),
             html.H4(
                 [
@@ -391,7 +392,7 @@ class Components:
                         f"{'{:.1f}'.format(cloud_emissions_project_region.emissions - cloud_emissions_minimum_region.emissions)} kg",
                         style={"fontWeight": "normal", "color": "green"},
                     ),
-                ]
+                ],
             ),
         )
 
@@ -406,8 +407,8 @@ class Components:
                     dbc.Col(
                         dcc.Graph(id="global_emissions_choropleth"),
                         style={"marginLeft": "-16%"},
-                    )
-                )
+                    ),
+                ),
             ],
         )
 
@@ -442,9 +443,9 @@ class Components:
                                 id="global_energy_mix_choropleth",
                                 style={"marginLeft": "-16%"},
                             ),
-                        ]
-                    )
-                )
+                        ],
+                    ),
+                ),
             ],
         )
 
@@ -468,7 +469,7 @@ class Components:
                     value="emissions_tab",
                     children=[self.get_emissions_tab(), self.get_energy_mix_tab()],
                 ),
-            ]
+            ],
         )
 
     def get_global_emissions_choropleth_figure(self, choropleth_data):
@@ -554,7 +555,9 @@ class Components:
         )
 
     def get_regional_emissions_choropleth_figure(
-        self, choropleth_data, country_iso_code: str
+        self,
+        choropleth_data,
+        country_iso_code: str,
     ):
         # add location_modes and scopes for other country codes
         location_modes = {"usa": "USA-states", "can": "geojson-id"}
@@ -611,7 +614,7 @@ class Components:
                     html.Br(),
                     html.H2("Emissions Timeline", style={"textAlign": "center"}),
                     dcc.Graph(id="project_time_series"),
-                ]
+                ],
             ),
             style={"paddingLeft": "3%"},
         )
@@ -625,7 +628,7 @@ class Components:
                     html.Br(),
                     html.H2("Emissions Detail", style={"textAlign": "center"}),
                     dcc.Graph(id="project_emissions_bar_chart"),
-                ]
+                ],
             ),
             style={"paddingLeft": "3%"},
         )
@@ -684,7 +687,8 @@ class Components:
     @staticmethod
     def get_hidden_project_summary():
         return html.Div(
-            dcc.Store(id="hidden_project_summary"), style={"display": "none"}
+            dcc.Store(id="hidden_project_summary"),
+            style={"display": "none"},
         )
 
     @staticmethod
@@ -700,17 +704,17 @@ class Components:
                             html.A(
                                 "Energy Usage Reports: Environmental awareness as part of algorithmic accountability",
                                 href="https://arxiv.org/pdf/1911.08354.pdf",
-                            )
+                            ),
                         ),
                         html.Li(
                             html.A(
                                 "Quantifying the Carbon Emissions of Machine Learning",
                                 href="https://arxiv.org/pdf/1910.09700.pdf",
-                            )
+                            ),
                         ),
-                    ]
+                    ],
                 ),
                 html.Br(),
                 html.Br(),
-            ]
+            ],
         )

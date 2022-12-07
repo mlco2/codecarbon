@@ -122,7 +122,8 @@ def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.get(
-            "/emission/read_emission/", params={"emission_id": EMISSION_ID}
+            "/emission/read_emission/",
+            params={"emission_id": EMISSION_ID},
         )
         actual_emission = response.json()
 
@@ -131,7 +132,8 @@ def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server
 
 
 def test_get_emissions_from_run_retreives_all_emissions_from_run(
-    client, custom_test_server
+    client,
+    custom_test_server,
 ):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_emissions_id_list = [EMISSION_ID, EMISSION_ID_2]
@@ -142,7 +144,8 @@ def test_get_emissions_from_run_retreives_all_emissions_from_run(
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.get(
-            "/emissions/run/get_emissions_from_run/", params={"run_id": RUN_1_ID}
+            "/emissions/run/get_emissions_from_run/",
+            params={"run_id": RUN_1_ID},
         )
         actual_emission_list = response.json()["items"]
         actual_emission_ids_list = [emission["id"] for emission in actual_emission_list]

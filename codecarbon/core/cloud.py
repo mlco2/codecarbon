@@ -79,7 +79,9 @@ def get_env_cloud_details(timeout=1):
         try:
             params = CLOUD_METADATA_MAPPING[provider]
             response = requests.get(
-                params["url"], headers=params["headers"], timeout=timeout
+                params["url"],
+                headers=params["headers"],
+                timeout=timeout,
             )
             response.raise_for_status()
             response_data = response.json()
@@ -91,7 +93,9 @@ def get_env_cloud_details(timeout=1):
             return {"provider": provider, "metadata": response_data}
         except Exception as e:
             logger.debug(
-                "Not running on %s, couldn't retrieve metadata: %r", provider, e
+                "Not running on %s, couldn't retrieve metadata: %r",
+                provider,
+                e,
             )
 
     return None

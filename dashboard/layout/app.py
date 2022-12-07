@@ -46,7 +46,7 @@ app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
+        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
     ],
 )
 app.title = "Code Carbon"
@@ -74,7 +74,8 @@ def serve_layout():
                                     options=[
                                         {"label": orgName, "value": orgId}
                                         for orgName, orgId in zip(
-                                            df_org.name, df_org.id
+                                            df_org.name,
+                                            df_org.id,
                                         )
                                     ],
                                     # multi=False,
@@ -92,7 +93,8 @@ def serve_layout():
                                     options=[
                                         {"label": projectName, "value": projectId}
                                         for projectName, projectId in zip(
-                                            df_project.name, df_project.id
+                                            df_project.name,
+                                            df_project.id,
                                         )
                                     ],
                                     value=df_project.id.unique().tolist()[-1]
@@ -104,13 +106,13 @@ def serve_layout():
                                 ),
                             ],
                             width={"size": 6, "offset": 4},
-                        )
+                        ),
                     ),
                     dbc.Row(
                         [
                             # holding pieCharts
                             dbc.Col(
-                                dbc.Spinner(dcc.Graph(id="pieCharts", config=config))
+                                dbc.Spinner(dcc.Graph(id="pieCharts", config=config)),
                             ),
                             dbc.Col(
                                 [
@@ -119,9 +121,9 @@ def serve_layout():
                                             components.get_household_equivalent(),
                                             components.get_car_equivalent(),
                                             components.get_tv_equivalent(),
-                                        ]
+                                        ],
                                     ),
-                                ]
+                                ],
                             ),
                         ],
                     ),
@@ -132,7 +134,7 @@ def serve_layout():
                 dbc.Row(
                     [
                         dbc.Col(
-                            dcc.Graph(id="barChart", clickData=None, config=config)
+                            dcc.Graph(id="barChart", clickData=None, config=config),
                         ),  # holding barChart
                         dbc.Col(
                             dbc.Spinner(
@@ -142,10 +144,10 @@ def serve_layout():
                                     hoverData=None,
                                     figure={},
                                     config=config,
-                                )
-                            )
+                                ),
+                            ),
                         ),
-                    ]
+                    ],
                 ),
                 className="shadow",
             ),
@@ -173,7 +175,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -186,7 +188,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -199,7 +201,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -212,7 +214,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -225,7 +227,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -238,7 +240,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -251,7 +253,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -264,7 +266,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -277,7 +279,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -290,7 +292,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -303,7 +305,7 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
                                         html.Tr(
                                             [
@@ -316,13 +318,13 @@ def serve_layout():
                                                         "text-align": "right",
                                                     },
                                                 ),
-                                            ]
+                                            ],
                                         ),
-                                    ]
-                                )
-                            )
+                                    ],
+                                ),
+                            ),
                         ),
-                    ]
+                    ],
                 ),
                 className="shadow",
             ),
@@ -356,5 +358,5 @@ def serve_layout():
                 ],
                 className="sponsor",
             ),
-        ]
+        ],
     )

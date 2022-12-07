@@ -30,7 +30,8 @@ def client(custom_test_server):
 
 
 def test_authenticate_should_return_an_access_token_is_password_is_valid(
-    client, custom_test_server
+    client,
+    custom_test_server,
 ):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     repository_mock.verify_user.return_value = True
@@ -42,7 +43,8 @@ def test_authenticate_should_return_an_access_token_is_password_is_valid(
 
 
 def test_authenticate_should_returns_an_error_if_password_is_invalid(
-    client, custom_test_server
+    client,
+    custom_test_server,
 ):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     repository_mock.verify_user.return_value = False

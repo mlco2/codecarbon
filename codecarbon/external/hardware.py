@@ -42,7 +42,8 @@ class BaseHardware(ABC):
         """
         power = self.total_power()
         energy = Energy.from_power_and_time(
-            power=power, time=Time.from_seconds(last_duration)
+            power=power,
+            time=Time.from_seconds(last_duration),
         )
         return power, energy
 
@@ -57,7 +58,7 @@ class GPU(BaseHardware):
 
     def __repr__(self) -> str:
         return super().__repr__() + " ({})".format(
-            ", ".join([d["name"] for d in get_gpu_details()])
+            ", ".join([d["name"] for d in get_gpu_details()]),
         )
 
     def _get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
@@ -73,15 +74,15 @@ class GPU(BaseHardware):
                     gpu_details["power_usage"]
                     for idx, gpu_details in enumerate(all_gpu_details)
                     if idx in gpu_ids
-                ]
-            )
+                ],
+            ),
         )
 
     def total_power(self) -> Power:
         if self.gpu_ids is not None:
             gpu_ids = self.gpu_ids
             assert set(gpu_ids).issubset(
-                set(range(self.num_gpus))
+                set(range(self.num_gpus)),
             ), f"Unknown GPU ids {gpu_ids}"
         else:
             gpu_ids = set(range(self.num_gpus))
@@ -249,7 +250,8 @@ class RAM(BaseHardware):
     def _read_slurm_scontrol(self):
         try:
             return subprocess.check_output(
-                ["scontrol show job $SLURM_JOBID"], shell=True
+                ["scontrol show job $SLURM_JOBID"],
+                shell=True,
             ).decode()
         except subprocess.CalledProcessError:
             return
@@ -271,13 +273,13 @@ class RAM(BaseHardware):
         if len(mem_matches) == 0:
             logger.warning(
                 "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
-                + "to count SLURM-available RAM. Using the machine's total RAM."
+                + "to count SLURM-available RAM. Using the machine's total RAM.",
             )
             return psutil.virtual_memory().total / B_TO_GB
         if len(mem_matches) > 1:
             logger.warning(
                 "Unexpected output after running `scontrol show job $SLURM_JOBID` "
-                + "to count SLURM-available RAM. Using the machine's total RAM."
+                + "to count SLURM-available RAM. Using the machine's total RAM.",
             )
             return psutil.virtual_memory().total / B_TO_GB
 
@@ -290,7 +292,7 @@ class RAM(BaseHardware):
             logger.warning(
                 "Error running `scontrol show job $SLURM_JOBID` "
                 + "to retrieve SLURM-available RAM."
-                + "Using the machine's total RAM."
+                + "Using the machine's total RAM.",
             )
             return psutil.virtual_memory().total / B_TO_GB
         mem = self._parse_scontrol(scontrol_str)

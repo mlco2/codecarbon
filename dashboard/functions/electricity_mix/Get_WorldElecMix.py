@@ -2,12 +2,12 @@ import pandas as pd
 
 # Lire le World Energy Mix (last version)
 df1 = pd.read_csv(
-    "https://raw.githubusercontent.com/mlco2/codecarbon/master/codecarbon/data/private_infra/world_energy_mix.csv"
+    "https://raw.githubusercontent.com/mlco2/codecarbon/master/codecarbon/data/private_infra/world_energy_mix.csv",
 ).rename(columns={"country_name": "Country"})
 
 # Lire les codes pays associés aux intensités carbone (2020)
 df2 = pd.read_csv("dashboard/functions/electricity_mix/WorldIntensity.csv").rename(
-    columns={"CarbonIntensity": "Carbon intensity of electricity (gCO2/kWh)"}
+    columns={"CarbonIntensity": "Carbon intensity of electricity (gCO2/kWh)"},
 )
 df2.iloc[:, 2] = round(df2.iloc[:, 2], 0)
 
@@ -39,7 +39,8 @@ measure = (
 
 select = pd.merge(df, measure, on=["ISO"], how="inner")
 select = select[select["Year"] == select["Last Year"]].drop(
-    "Last Year", axis=1
+    "Last Year",
+    axis=1,
 )  # .rename(columns={"Year": "Last measure"})
 
 # Préparation du fichier final pour le Mix électrique mondial

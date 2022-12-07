@@ -9,7 +9,10 @@ class ExperimentSumsByRunUsecase:
         self._run_repository = run_repository
 
     def compute_detailed_sum(
-        self, experiment_id: str, start_date, end_date
+        self,
+        experiment_id: str,
+        start_date,
+        end_date,
     ) -> List[RunReport]:
         sums = self._run_repository.get_experiment_detailed_sums_by_run(
             experiment_id,

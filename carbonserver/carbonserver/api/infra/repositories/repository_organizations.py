@@ -78,11 +78,14 @@ class SqlAlchemyRepository(Organizations):
                 session.query(SqlModelOrganization)
                 .filter(SqlModelOrganization.id == organization_id)
                 .filter(SqlModelOrganization.api_key == api_key)
-                .first()
+                .first(),
             )
 
     def get_organization_detailed_sums(
-        self, organization_id, start_date, end_date
+        self,
+        organization_id,
+        start_date,
+        end_date,
     ) -> OrganizationReport:
         """Find the emissions of an organization in database between two dates and return
         a report containing their sum
@@ -110,7 +113,7 @@ class SqlAlchemyRepository(Organizations):
                     func.sum(SqlModelEmission.duration).label("duration"),
                     func.avg(SqlModelEmission.emissions_rate).label("emissions_rate"),
                     func.count(SqlModelEmission.emissions_rate).label(
-                        "emissions_count"
+                        "emissions_count",
                     ),
                 )
                 .join(

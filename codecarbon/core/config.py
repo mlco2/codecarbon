@@ -38,7 +38,7 @@ def parse_env_config() -> dict:
             clean_env_key(k): v
             for k, v in os.environ.items()
             if k.lower().startswith("codecarbon_")
-        }
+        },
     }
 
 

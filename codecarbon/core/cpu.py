@@ -73,13 +73,13 @@ class IntelPowerGadget:
         if self._system.startswith("win"):
             if shutil.which(self._windows_exec):
                 self._cli = shutil.which(
-                    self._windows_exec
+                    self._windows_exec,
                 )  # Windows exec is a relative path
             elif shutil.which(self._windows_exec_backup):
                 self._cli = self._windows_exec_backup
             else:
                 raise FileNotFoundError(
-                    f"Intel Power Gadget executable not found on {self._system}"
+                    f"Intel Power Gadget executable not found on {self._system}",
                 )
         elif self._system.startswith("darwin"):
             if shutil.which(self._osx_exec):
@@ -88,7 +88,7 @@ class IntelPowerGadget:
                 self._cli = self._osx_exec_backup
             else:
                 raise FileNotFoundError(
-                    f"Intel Power Gadget executable not found on {self._system}"
+                    f"Intel Power Gadget executable not found on {self._system}",
                 )
         else:
             raise SystemError("Platform not supported by Intel Power Gadget")
@@ -124,7 +124,7 @@ class IntelPowerGadget:
         if returncode != 0:
             logger.warning(
                 "Returncode while logging power values using "
-                + f"Intel Power Gadget: {returncode}"
+                + f"Intel Power Gadget: {returncode}",
             )
         return
 
@@ -177,7 +177,7 @@ class IntelRAPL:
             else:
                 raise FileNotFoundError(
                     f"Intel RAPL files not found at {self._lin_rapl_dir} "
-                    + f"on {self._system}"
+                    + f"on {self._system}",
                 )
         else:
             raise SystemError("Platform not supported by Intel RAPL Interface")
@@ -204,21 +204,23 @@ class IntelRAPL:
                 rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
                 # RAPL file containing maximum possible value of energy_uj above which it wraps
                 rapl_file_max = os.path.join(
-                    self._lin_rapl_dir, file, "max_energy_range_uj"
+                    self._lin_rapl_dir,
+                    file,
+                    "max_energy_range_uj",
                 )
                 try:
                     # Try to read the file to be sure we can
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
                     self._rapl_files.append(
-                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
+                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max),
                     )
                     logger.debug(f"We will read Intel RAPL files at {rapl_file}")
                 except PermissionError as e:
                     logger.error(
                         "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
-                        + f" for workarounds : {e}"
+                        + f" for workarounds : {e}",
                     )
         return
 
@@ -293,14 +295,19 @@ class TDP:
 
     @staticmethod
     def _get_single_direct_match(
-        ratios: list, max_ratio: int, cpu_df: pd.DataFrame
+        ratios: list,
+        max_ratio: int,
+        cpu_df: pd.DataFrame,
     ) -> str:
         idx = ratios.index(max_ratio)
         cpu_matched = cpu_df["Name"].iloc[idx]
         return cpu_matched
 
     def _get_matching_cpu(
-        self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
+        self,
+        model_raw: str,
+        cpu_df: pd.DataFrame,
+        greedy=False,
     ) -> str:
         """
         Get matching cpu name
@@ -340,7 +347,9 @@ class TDP:
         # Check if a direct match exists
         if max_ratio_direct >= THRESHOLD_DIRECT:
             cpu_matched = self._get_single_direct_match(
-                ratios_direct, max_ratio_direct, cpu_df
+                ratios_direct,
+                max_ratio_direct,
+                cpu_df,
             )
             return cpu_matched
 
@@ -372,17 +381,17 @@ class TDP:
 
             if power:
                 logger.debug(
-                    f"CPU : We detect a {cpu_model_detected} with a TDP of {power} W"
+                    f"CPU : We detect a {cpu_model_detected} with a TDP of {power} W",
                 )
                 return cpu_model_detected, power
             logger.warning(
                 f"We saw that you have a {cpu_model_detected} but we don't know it."
-                + " Please contact us."
+                + " Please contact us.",
             )
             return cpu_model_detected, None
         logger.warning(
             "We were unable to detect your CPU using the `cpuinfo` package."
-            + " Resorting to a default power consumption of 85W."
+            + " Resorting to a default power consumption of 85W.",
         )
         return "Unknown", None
 

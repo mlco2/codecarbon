@@ -32,19 +32,27 @@ class SignUpService:
     ) -> User:
         created_user = self._user_repository.create_user(user)
         self.subscribe_user_to_org(
-            created_user, self._default_org_id, self._default_api_key
+            created_user,
+            self._default_org_id,
+            self._default_api_key,
         )
         subscribed_user = self.subscribe_user_to_team(
-            created_user, self._default_team_id, self._default_api_key
+            created_user,
+            self._default_team_id,
+            self._default_api_key,
         )
         print(subscribed_user)
         return subscribed_user
 
     def subscribe_user_to_org(
-        self, user: User, organization_id: UUID, organization_api_key: str
+        self,
+        user: User,
+        organization_id: UUID,
+        organization_api_key: str,
     ):
         key_is_valid = self._organization_repository.is_api_key_valid(
-            organization_id, organization_api_key
+            organization_id,
+            organization_api_key,
         )
         if key_is_valid:
             self._user_repository.subscribe_user_to_org(user, organization_id)

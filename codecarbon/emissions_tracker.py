@@ -60,7 +60,12 @@ class BaseEmissionsTracker(ABC):
     """
 
     def _set_from_conf(
-        self, var, name, default=None, return_type=None, prevent_setter=False
+        self,
+        var,
+        name,
+        default=None,
+        return_type=None,
+        prevent_setter=False,
     ):
         """
         Method to standardize private argument setting. Generic flow is:
@@ -259,7 +264,7 @@ class BaseEmissionsTracker(ABC):
             gpu_names = [n["name"] for n in gpu.get_gpu_static_info()]
             gpu_names_dict = Counter(gpu_names)
             self._conf["gpu_model"] = "".join(
-                [f"{i} x {name}" for name, i in gpu_names_dict.items()]
+                [f"{i} x {name}" for name, i in gpu_names_dict.items()],
             )
             self._conf["gpu_count"] = len(gpu.get_gpu_static_info())
         else:
@@ -278,7 +283,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["cpu_model"] = hardware.get_model()
         else:
             logger.warning(
-                "No CPU tracking mode found. Falling back on CPU constant mode."
+                "No CPU tracking mode found. Falling back on CPU constant mode.",
             )
             tdp = cpu.TDP()
             power = tdp.tdp
@@ -291,7 +296,7 @@ class BaseEmissionsTracker(ABC):
             else:
                 logger.warning(
                     "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
+                    + "Falling back on a global constant.",
                 )
                 hardware = CPU.from_utils(self._output_dir, "constant")
                 self._hardware.append(hardware)
@@ -329,7 +334,8 @@ class BaseEmissionsTracker(ABC):
             self._conf["provider"] = cloud.provider
 
         self._emissions: Emissions = Emissions(
-            self._data_source, self._co2_signal_api_token
+            self._data_source,
+            self._co2_signal_api_token,
         )
         self.persistence_objs: List[BaseOutput] = list()
 
@@ -338,7 +344,7 @@ class BaseEmissionsTracker(ABC):
                 FileOutput(
                     os.path.join(self._output_dir, self._output_file),
                     self._on_csv_write,
-                )
+                ),
             )
 
         if self._save_to_logger:
@@ -349,7 +355,9 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_api:
             experiment_id = self._set_from_conf(
-                experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
+                experiment_id,
+                "experiment_id",
+                "5b0fa12a-3dd7-45bb-9766-cc326314d9f1",
             )
             self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
@@ -442,7 +450,8 @@ class BaseEmissionsTracker(ABC):
 
         if cloud.is_on_private_infra:
             emissions = self._emissions.get_private_infra_emissions(
-                self._total_energy, self._geo
+                self._total_energy,
+                self._geo,
             )  # float: kg co2_eq
             country_name = self._geo.country_name
             country_iso_code = self._geo.country_iso_code
@@ -539,7 +548,7 @@ class BaseEmissionsTracker(ABC):
             # Compute last_duration again for more accuracy
             last_duration = time.time() - self._last_measured_time
             power, energy = hardware.measure_power_and_energy(
-                last_duration=last_duration
+                last_duration=last_duration,
             )
             self._total_energy += energy
             if isinstance(hardware, CPU):
@@ -547,31 +556,31 @@ class BaseEmissionsTracker(ABC):
                 self._cpu_power = power
                 logger.info(
                     f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
-                    + f". All CPUs Power : {self._cpu_power.W} W"
+                    + f". All CPUs Power : {self._cpu_power.W} W",
                 )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
                 logger.info(
                     f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
-                    + f". All GPUs Power : {self._gpu_power.W} W"
+                    + f". All GPUs Power : {self._gpu_power.W} W",
                 )
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
                 self._ram_power = power
                 logger.info(
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
-                    + f". RAM Power : {self._ram_power.W} W"
+                    + f". RAM Power : {self._ram_power.W} W",
                 )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.time() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
-                + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
+                + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]",
             )
         logger.info(
-            f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
+            f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining.",
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
@@ -580,7 +589,7 @@ class BaseEmissionsTracker(ABC):
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
                     f"{emissions.emissions_rate:.6f} g.CO2eq/s mean an estimation of "
-                    + f"{emissions.emissions_rate*3600*24*365/1000:,} kg.CO2eq/year"
+                    + f"{emissions.emissions_rate*3600*24*365/1000:,} kg.CO2eq/year",
                 )
                 self._cc_api__out.out(emissions)
                 self._measure_occurrence = 0
@@ -647,7 +656,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         if self._cloud_provider:
             if self._cloud_region is None:
                 logger.error(
-                    "Cloud Region must be provided " + " if cloud provider is set"
+                    "Cloud Region must be provided " + " if cloud provider is set",
                 )
 
             df = DataSource().get_cloud_emissions_data()
@@ -656,14 +665,14 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     df.loc[
                         (df["provider"] == self._cloud_provider)
                         & (df["region"] == self._cloud_region)
-                    ]
+                    ],
                 )
                 == 0
             ):
                 logger.error(
                     "Cloud Provider/Region "
                     f"{self._cloud_provider} {self._cloud_region} "
-                    "not found in cloud emissions data."
+                    "not found in cloud emissions data.",
                 )
         if self._country_iso_code:
             try:
@@ -674,7 +683,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 logger.error(
                     "Does not support country"
                     + f" with ISO code {self._country_iso_code} "
-                    f"Exception occurred {e}"
+                    f"Exception occurred {e}",
                 )
 
         if self._country_2letter_iso_code:
@@ -694,7 +703,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     def _get_cloud_metadata(self) -> CloudMetadata:
         if self._cloud is None:
             self._cloud = CloudMetadata(
-                provider=self._cloud_provider, region=self._cloud_region
+                provider=self._cloud_provider,
+                region=self._cloud_region,
             )
         return self._cloud
 
@@ -829,7 +839,7 @@ def track_emissions(
             finally:
                 logger.info(
                     "\nGraceful stopping: collecting and writing information.\n"
-                    + "Please Allow for a few seconds..."
+                    + "Please Allow for a few seconds...",
                 )
                 tracker.stop()
                 logger.info("Done!\n")

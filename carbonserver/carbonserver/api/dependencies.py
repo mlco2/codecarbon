@@ -7,8 +7,9 @@ from carbonserver.database.database import SessionLocal
 
 async def get_token_header(
     x_token: Optional[str] = Header(
-        "fake-super-secret-token", convert_underscores=False
-    )
+        "fake-super-secret-token",
+        convert_underscores=False,
+    ),
 ):
     if x_token != "fake-super-secret-token":
         raise HTTPException(status_code=400, detail="X-Token header invalid")

@@ -28,5 +28,6 @@ for i in df["ISO"]:
     j = j + 1
 
 df_intensity.to_csv(
-    "dashboard/functions/electricity_mix/WorldIntensity.csv", index=False
+    "dashboard/functions/electricity_mix/WorldIntensity.csv",
+    index=False,
 )

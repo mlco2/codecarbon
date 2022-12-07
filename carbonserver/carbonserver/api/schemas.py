@@ -19,34 +19,54 @@ class EmissionBase(BaseModel):
     timestamp: datetime
     run_id: UUID
     duration: int = Field(
-        ..., gt=0, description="The duration must be greater than zero"
+        ...,
+        gt=0,
+        description="The duration must be greater than zero",
     )
     emissions_sum: Optional[float] = Field(
-        ..., ge=0, description="The emissions must be greater than zero"
+        ...,
+        ge=0,
+        description="The emissions must be greater than zero",
     )
     emissions_rate: Optional[float] = Field(
-        ..., ge=0, description="The emissions rate must be greater than zero"
+        ...,
+        ge=0,
+        description="The emissions rate must be greater than zero",
     )
     energy_consumed: Optional[float] = Field(
-        ..., ge=0, description="The energy_consumed must be greater than zero"
+        ...,
+        ge=0,
+        description="The energy_consumed must be greater than zero",
     )
     cpu_power: Optional[float] = Field(
-        ..., ge=0, description="The cpu_power must be greater than zero"
+        ...,
+        ge=0,
+        description="The cpu_power must be greater than zero",
     )
     gpu_power: Optional[float] = Field(
-        ..., ge=0, description="The gpu_power must be greater than zero"
+        ...,
+        ge=0,
+        description="The gpu_power must be greater than zero",
     )
     ram_power: Optional[float] = Field(
-        ..., ge=0, description="The ram_power must be greater than zero"
+        ...,
+        ge=0,
+        description="The ram_power must be greater than zero",
     )
     cpu_energy: Optional[float] = Field(
-        ..., ge=0, description="The cpu_energy must be greater than zero"
+        ...,
+        ge=0,
+        description="The cpu_energy must be greater than zero",
     )
     gpu_energy: Optional[float] = Field(
-        ..., ge=0, description="The gpu_energy must be greater than zero"
+        ...,
+        ge=0,
+        description="The gpu_energy must be greater than zero",
     )
     ram_energy: Optional[float] = Field(
-        ..., ge=0, description="The ram_energy must be greater than zero"
+        ...,
+        ge=0,
+        description="The ram_energy must be greater than zero",
     )
 
     class Config:
@@ -64,7 +84,7 @@ class EmissionBase(BaseModel):
                 "gpu_energy": 0.0,
                 "ram_energy": 2.0,
                 "energy_consumed": 57.21874,
-            }
+            },
         }
 
 
@@ -109,7 +129,7 @@ class RunBase(BaseModel):
                 "provider": "AWS",
                 "ram_total_size": 83948.22,
                 "tracking_mode": "Machine",
-            }
+            },
         }
 
 
@@ -162,7 +182,7 @@ class ExperimentBase(BaseModel):
                 "cloud_provider": "aws",
                 "cloud_region": "eu-west-1a",
                 "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
-            }
+            },
         }
 
 
@@ -235,7 +255,7 @@ class ProjectBase(BaseModel):
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
                 "team_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
-            }
+            },
         }
 
 
@@ -277,7 +297,7 @@ class TeamBase(BaseModel):
                 "description": "Data For Good France",
                 "organization_id": "e52fe339-164d-4c2b-a8c0-f562dfce066d",
                 "api_key": "default",
-            }
+            },
         }
 
 
@@ -301,7 +321,7 @@ class OrganizationBase(BaseModel):
             "example": {
                 "name": "Code Carbon",
                 "description": "Save the world, one run at a time.",
-            }
+            },
         }
 
 

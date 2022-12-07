@@ -102,7 +102,8 @@ def test_list_users_list_all_existing_users_with_200(client, custom_test_server)
 
 
 def test_get_user_by_id_returns_correct_user_with_correct_id(
-    client, custom_test_server
+    client,
+    custom_test_server,
 ):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_user = USER_1

@@ -25,7 +25,8 @@ class TestCarbonTrackerFlush(unittest.TestCase):
         self.emissions_logfile = "emissions-test-TestCarbonLoggingOutput.log"
         self.emissions_path = tempfile.gettempdir()
         self.emissions_file_path = os.path.join(
-            self.emissions_path, self.emissions_logfile
+            self.emissions_path,
+            self.emissions_logfile,
         )
         if os.path.isfile(self.emissions_file_path):
             os.remove(self.emissions_file_path)

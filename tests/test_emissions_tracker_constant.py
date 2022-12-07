@@ -22,7 +22,8 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         self.emissions_file = "emissions-test-TestCarbonTrackerConstant.csv"
         self.emissions_path = tempfile.gettempdir()
         self.emissions_file_path = os.path.join(
-            self.emissions_path, self.emissions_file
+            self.emissions_path,
+            self.emissions_file,
         )
         if os.path.isfile(self.emissions_file_path):
             os.remove(self.emissions_file_path)
@@ -33,7 +34,8 @@ class TestCarbonTrackerConstant(unittest.TestCase):
 
     def test_carbon_tracker_online_constant(self):
         tracker = EmissionsTracker(
-            output_dir=self.emissions_path, output_file=self.emissions_file
+            output_dir=self.emissions_path,
+            output_file=self.emissions_file,
         )
         tracker.start()
         heavy_computation(run_time_secs=1)

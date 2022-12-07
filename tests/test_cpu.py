@@ -52,7 +52,8 @@ class TestIntelPowerGadget(unittest.TestCase):
         )
         cpu_details = power_gadget.get_cpu_details()
         cpu_details["Cumulative IA Energy_0(mWh)"] = round(
-            cpu_details["Cumulative IA Energy_0(mWh)"], 3
+            cpu_details["Cumulative IA Energy_0(mWh)"],
+            3,
         )
         self.assertDictEqual(expected_cpu_details, cpu_details)
 
@@ -67,7 +68,8 @@ class TestIntelRAPL(unittest.TestCase):
             with open(os.path.join(self.rapl_dir, "intel-rapl:0/energy_uj"), "w") as f:
                 f.write("52649883221")
             with open(
-                os.path.join(self.rapl_dir, "intel-rapl:0/max_energy_range_uj"), "w"
+                os.path.join(self.rapl_dir, "intel-rapl:0/max_energy_range_uj"),
+                "w",
             ) as f:
                 f.write("262143328850")
 
@@ -77,7 +79,8 @@ class TestIntelRAPL(unittest.TestCase):
             with open(os.path.join(self.rapl_dir, "intel-rapl:1/energy_uj"), "w") as f:
                 f.write("117870082040")
             with open(
-                os.path.join(self.rapl_dir, "intel-rapl:1/max_energy_range_uj"), "w"
+                os.path.join(self.rapl_dir, "intel-rapl:1/max_energy_range_uj"),
+                "w",
             ) as f:
                 f.write("262143328850")
 
@@ -91,7 +94,8 @@ class TestIntelRAPL(unittest.TestCase):
 
         rapl = IntelRAPL(rapl_dir=self.rapl_dir)
         self.assertDictEqual(
-            expected_cpu_details, rapl.get_cpu_details(duration=Time(0))
+            expected_cpu_details,
+            rapl.get_cpu_details(duration=Time(0)),
         )
 
     @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
@@ -106,7 +110,7 @@ class TestIntelRAPL(unittest.TestCase):
         expected_energy = Energy(0)
         expected_power = Power(0)
         assert expected_power, expected_energy == cpu.measure_power_and_energy(
-            last_duration=0.01
+            last_duration=0.01,
         )
 
 

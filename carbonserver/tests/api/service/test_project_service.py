@@ -10,7 +10,10 @@ PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 TEAM_ID = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
 
 PROJECT = Project(
-    id=PROJECT_ID, name="Project", description="Description", team_id=TEAM_ID
+    id=PROJECT_ID,
+    name="Project",
+    description="Description",
+    team_id=TEAM_ID,
 )
 
 
@@ -22,7 +25,9 @@ def test_project_service_creates_correct_project(_):
     repository_mock.add_project.return_value = PROJECT
 
     project_to_create = ProjectCreate(
-        name="Project", description="Description", team_id=TEAM_ID
+        name="Project",
+        description="Description",
+        team_id=TEAM_ID,
     )
 
     actual_saved_project_id = project_service.add_project(project_to_create)

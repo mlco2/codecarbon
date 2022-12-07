@@ -64,18 +64,19 @@ class TestConfig(unittest.TestCase):
             no_overwrite=path/to/somewhere
             local_overwrite=ERROR:not overwritten
             syntax_test_key= no/space= problem2
-            """
+            """,
         )
         local_conf = dedent(
             """\
             [codecarbon]
             local_overwrite=SUCCESS:overwritten
             local_new_key=cool value
-            """
+            """,
         )
 
         with patch(
-            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(global_conf, local_conf),
         ):
             conf = dict(get_hierarchical_config())
             target = {
@@ -103,7 +104,7 @@ class TestConfig(unittest.TestCase):
             local_overwrite=ERROR:not overwritten
             syntax_test_key= no/space= problem2
             env_overwrite=ERROR:not overwritten
-            """
+            """,
         )
         local_conf = dedent(
             """\
@@ -111,11 +112,12 @@ class TestConfig(unittest.TestCase):
             local_overwrite=SUCCESS:overwritten
             local_new_key=cool value
             env_overwrite=ERROR:not overwritten
-            """
+            """,
         )
 
         with patch(
-            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(global_conf, local_conf),
         ):
             conf = dict(get_hierarchical_config())
             target = {
@@ -133,7 +135,8 @@ class TestConfig(unittest.TestCase):
         local_conf = ""
 
         with patch(
-            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(global_conf, local_conf),
         ):
             conf = dict(get_hierarchical_config())
             target = {}
@@ -154,7 +157,7 @@ class TestConfig(unittest.TestCase):
             measure_power_secs=10
             output_dir=ERROR:not overwritten
             save_to_file=ERROR:not overwritten
-            """
+            """,
         )
         local_conf = dedent(
             """\
@@ -162,14 +165,16 @@ class TestConfig(unittest.TestCase):
             output_dir=/success/overwritten
             emissions_endpoint=http://testhost:2000
             gpu_ids=ERROR:not overwritten
-            """
+            """,
         )
 
         with patch(
-            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(global_conf, local_conf),
         ):
             tracker = EmissionsTracker(
-                project_name="test-project", co2_signal_api_token="signal-token"
+                project_name="test-project",
+                co2_signal_api_token="signal-token",
             )
             self.assertEqual(tracker._measure_power_secs, 10)
             self.assertEqual(tracker._output_dir, "/success/overwritten")

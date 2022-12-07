@@ -43,7 +43,7 @@ router = APIRouter(
 def add_emission(
     emission: EmissionCreate,
     emission_service: EmissionService = Depends(
-        Provide[ServerContainer.emission_service]
+        Provide[ServerContainer.emission_service],
     ),
 ) -> UUID:
     return emission_service.add_emission(emission)
@@ -59,20 +59,22 @@ def add_emission(
 def read_emission(
     emission_id: str,
     emission_service: EmissionService = Depends(
-        Provide[ServerContainer.emission_service]
+        Provide[ServerContainer.emission_service],
     ),
 ) -> Emission:
     return emission_service.get_one_emission(emission_id)
 
 
 @router.get(
-    "/emissions/run/{run_id}", tags=EMISSIONS_ROUTER_TAGS, response_model=Page[Emission]
+    "/emissions/run/{run_id}",
+    tags=EMISSIONS_ROUTER_TAGS,
+    response_model=Page[Emission],
 )
 @inject
 def get_emissions_from_run(
     run_id: str,
     emission_service: EmissionService = Depends(
-        Provide[ServerContainer.emission_service]
+        Provide[ServerContainer.emission_service],
     ),
     params: Params = Depends(),
 ) -> Page[Emission]:

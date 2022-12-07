@@ -85,7 +85,8 @@ class ServerContainer(containers.DeclarativeContainer):
     )
 
     project_sums_usecase = providers.Factory(
-        ProjectSumsUsecase, project_repository=project_repository
+        ProjectSumsUsecase,
+        project_repository=project_repository,
     )
 
     project_service = providers.Factory(

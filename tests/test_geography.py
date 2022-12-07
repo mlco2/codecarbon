@@ -66,7 +66,10 @@ class TestGeoMetadata(unittest.TestCase):
     @responses.activate
     def test_geo_metadata_CANADA(self):
         responses.add(
-            responses.GET, self.geo_js_url, json=GEO_METADATA_CANADA, status=200
+            responses.GET,
+            self.geo_js_url,
+            json=GEO_METADATA_CANADA,
+            status=200,
         )
         geo = GeoMetadata.from_geo_js(self.geo_js_url)
         self.assertEqual("CAN", geo.country_iso_code)

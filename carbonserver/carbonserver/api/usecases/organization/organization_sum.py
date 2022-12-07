@@ -9,7 +9,10 @@ class OrganizationSumsUsecase:
         self._organization_repository = organization_repository
 
     def compute_detailed_sum(
-        self, organization_id: str, start_date, end_date
+        self,
+        organization_id: str,
+        start_date,
+        end_date,
     ) -> OrganizationReport:
         sums = self._organization_repository.get_organization_detailed_sums(
             organization_id,

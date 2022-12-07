@@ -28,7 +28,7 @@ app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
+        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
     ],
 )
 colors = {"background": darkgreen, "text": "white"}
@@ -59,7 +59,7 @@ card_household = dbc.Card(
                     style={"textAlign": "center", "fontSize": 10},
                     className="card-title",
                 ),
-            ]
+            ],
         ),
     ],
     color=darkgreen,
@@ -82,7 +82,7 @@ card_car = dbc.Card(
                     style={"textAlign": "center", "fontSize": 10},
                     className="card-title",
                 ),
-            ]
+            ],
         ),
     ],
     color=darkgreen,
@@ -105,7 +105,7 @@ card_tv = dbc.Card(
                     style={"textAlign": "center", "fontSize": 10},
                     className="card-title",
                 ),
-            ]
+            ],
         ),
     ],
     color=darkgreen,
@@ -160,10 +160,11 @@ app.layout = dbc.Container(
                                                     style={"textAlign": "center"},
                                                 ),
                                                 html.P(
-                                                    "kWh", style={"textAlign": "center"}
+                                                    "kWh",
+                                                    style={"textAlign": "center"},
                                                 ),
-                                            ]
-                                        )
+                                            ],
+                                        ),
                                     ],
                                     color=darkgreen,
                                 ),
@@ -183,8 +184,8 @@ app.layout = dbc.Container(
                                                     "Kg. Eq. CO2",
                                                     style={"textAlign": "center"},
                                                 ),
-                                            ]
-                                        )
+                                            ],
+                                        ),
                                     ],
                                     color=darkgreen,
                                 ),
@@ -204,16 +205,16 @@ app.layout = dbc.Container(
                                                     id="Tot_Duration_unit",
                                                     style={"textAlign": "center"},
                                                 ),
-                                            ]
-                                        )
+                                            ],
+                                        ),
                                     ],
                                     color=darkgreen,
                                 ),
-                            ]
+                            ],
                         ),
-                    ]
+                    ],
                 ),
-            ]
+            ],
         ),
         dbc.Row(
             dbc.Col(
@@ -232,15 +233,15 @@ app.layout = dbc.Container(
                     ),
                 ],
                 width={"size": 6, "offset": 4},
-            )
+            ),
         ),
         dbc.Row(
             [
                 # holding pieCharts
                 dbc.Col(
                     # dbc.Spinner(
-                    dcc.Graph(id="pieCharts", config=config)
-                )
+                    dcc.Graph(id="pieCharts", config=config),
+                ),
                 # dbc.CardGroup([
                 #     dbc.Card(
                 #         dcc.Graph(id='pieChartEnergy', config=config), color=darkgreen
@@ -252,17 +253,16 @@ app.layout = dbc.Container(
                 #         dcc.Graph(id='pieChartDuration', config=config) , color=darkgreen
                 #             )
                 #             ])
-                # )
-                ,
+                # ),
                 dbc.Col(
                     [
                         dbc.CardGroup([card_household, card_car, card_tv]),
                         dbc.Col(
-                            dcc.Graph(id="barChart", clickData=None, config=config)
+                            dcc.Graph(id="barChart", clickData=None, config=config),
                         ),
-                    ]
+                    ],
                 ),
-            ]
+            ],
         ),
         # dbc.Row([
         #     # holding cards
@@ -290,12 +290,12 @@ app.layout = dbc.Container(
                 dbc.Col(  # dbc.Spinner(
                     dcc.Graph(
                         id="lineChart",
-                        config=config
+                        config=config,
                         # )
                     ),
                     width=6,
                 ),
-            ]
+            ],
         ),
         # holding carbon emission map
         html.Br(),
@@ -315,9 +315,9 @@ app.layout = dbc.Container(
         ),
         html.Div(id="output_container", children=[]),
         # dbc.Spinner(
-        dcc.Graph(id="my_emission_map", figure={}, config=config)
+        dcc.Graph(id="my_emission_map", figure={}, config=config),
         # ),
-    ]
+    ],
 )
 # callback section: connecting the components
 # ************************************************************************
@@ -390,7 +390,7 @@ def update_Charts(start_date, end_date, project):
     car = str(
         round(
             emission / 0.409,
-        )
+        ),
     )
     time_in_minutes = emission * (1 / 0.097) * 60
     tvTime = str(time_in_minutes) + " min"
@@ -405,7 +405,7 @@ def update_Charts(start_date, end_date, project):
     duration_project = str(
         round(
             duration,
-        )
+        ),
     )
     duration_project_unit = "min"
     if duration >= 60:
@@ -522,7 +522,7 @@ def update_Charts(start_date, end_date, project):
                 "emissions_sum": sum,
                 "energy_consumed": sum,
                 "experiment_description": lambda x: x.iloc[0],
-            }
+            },
         )
         .reset_index()
     )
@@ -543,7 +543,11 @@ def update_Charts(start_date, end_date, project):
     )
     figBar.update_yaxes(showgrid=False, visible=False, title="")
     figBar.update_xaxes(
-        showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
+        showgrid=False,
+        showline=True,
+        linewidth=2,
+        linecolor="white",
+        title="",
     )
     return figBar, figPie, houseHold, car, tvTime
 
@@ -577,7 +581,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
                 "duration": "sum",
                 "emissions_sum": "sum",
                 "energy_consumed": "sum",
-            }
+            },
         )
         .reset_index()
     )
@@ -591,7 +595,8 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
         hover_name="run_id",
     )
     bubble.update_traces(
-        customdata=df1.run_id, marker=dict(line=dict(color=vividgreen, width=3))
+        customdata=df1.run_id,
+        marker=dict(line=dict(color=vividgreen, width=3)),
     )
     bubble.update_layout(
         title_text=experiment_name
@@ -599,11 +604,16 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
         template="CodeCarbonTemplate",
     )
     bubble.update_xaxes(
-        showgrid=False, showline=False, linewidth=2, linecolor="white", title=""
+        showgrid=False,
+        showline=False,
+        linewidth=2,
+        linecolor="white",
+        title="",
     )
     bubble.update_yaxes(showgrid=False, title="emissions (kg eq.CO2)")
     bubble.update_coloraxes(
-        colorbar_title_side="right", colorbar_title_text="energy consumed (KwH)"
+        colorbar_title_side="right",
+        colorbar_title_text="energy consumed (KwH)",
     )
     return bubble
 
@@ -652,7 +662,11 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         template="CodeCarbonTemplate",
     )
     line.update_xaxes(
-        showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
+        showgrid=False,
+        showline=True,
+        linewidth=2,
+        linecolor="white",
+        title="",
     )
     line.update_yaxes(showgrid=False, visible=False, title="emissions (kg eq. C02)")
     return line
@@ -677,7 +691,7 @@ def update_map(start_date, end_date, project, kpi):
     dff = dff[dff["timestamp"] > start_date][dff["timestamp"] < end_date]
     dff = dff[dff["project_name"] == project]
     dff = dff.groupby(["project_name", "country_iso_code", "country_name"]).agg(
-        {"emissions_sum": "sum", "duration": "sum"}
+        {"emissions_sum": "sum", "duration": "sum"},
     )
     #    dff["ratio"] = dff["emissions_sum"] / dff["duration"] * 3600 * 24
     dff = dff.reset_index()
@@ -698,10 +712,14 @@ def update_map(start_date, end_date, project, kpi):
             template="CodeCarbonTemplate",
         )
         fig.update_coloraxes(
-            colorbar_title_side="right", colorbar_title_text="CO2 emissions"
+            colorbar_title_side="right",
+            colorbar_title_text="CO2 emissions",
         )
         fig.update_geos(
-            showland=True, landcolor="#898381", showocean=True, oceancolor="#759FA8"
+            showland=True,
+            landcolor="#898381",
+            showocean=True,
+            oceancolor="#759FA8",
         )
     elif kpi == "Global Carbon Intensity":
         fig = px.choropleth(
@@ -724,15 +742,19 @@ def update_map(start_date, end_date, project, kpi):
             ],
             color_continuous_scale=px.colors.sequential.YlOrRd,
             labels={
-                "Carbon intensity of electricity (gCO2/kWh)": "CO2 intensity (gCO2/kWh)"
+                "Carbon intensity of electricity (gCO2/kWh)": "CO2 intensity (gCO2/kWh)",
             },
             template="CodeCarbonTemplate",
         )
         fig.update_coloraxes(
-            colorbar_title_side="right", colorbar_title_text="CO2 intensity (gCO2/KwH)"
+            colorbar_title_side="right",
+            colorbar_title_text="CO2 intensity (gCO2/KwH)",
         )
         fig.update_geos(
-            showland=True, landcolor="#898381", showocean=True, oceancolor="#759FA8"
+            showland=True,
+            landcolor="#898381",
+            showocean=True,
+            oceancolor="#759FA8",
         )
 
     return container, fig

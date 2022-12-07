@@ -62,7 +62,7 @@ class SqlAlchemyRepository(Experiments):
         """
         with self.session_factory() as session:
             res = session.query(SqlModelExperiment).filter(
-                SqlModelExperiment.project_id == project_id
+                SqlModelExperiment.project_id == project_id,
             )
             if res.first() is None:
                 return []
@@ -106,7 +106,10 @@ class SqlAlchemyRepository(Experiments):
             return res
 
     def get_project_detailed_sums_by_experiment(
-        self, project_id, start_date, end_date
+        self,
+        project_id,
+        start_date,
+        end_date,
     ) -> List[ExperimentReport]:
         with self.session_factory() as session:
             res = (
@@ -132,7 +135,7 @@ class SqlAlchemyRepository(Experiments):
                     func.sum(SqlModelEmission.duration).label("duration"),
                     func.avg(SqlModelEmission.emissions_rate).label("emissions_rate"),
                     func.count(SqlModelEmission.emissions_rate).label(
-                        "emissions_count"
+                        "emissions_count",
                     ),
                 )
                 .join(

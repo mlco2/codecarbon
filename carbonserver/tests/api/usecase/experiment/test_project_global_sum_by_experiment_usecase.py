@@ -62,12 +62,14 @@ def test_detailed_sum_computes_for_project_id():
 
     expected_emission_sum = EMISSIONS_SUM_WITH_DETAILS
     repository_mock.get_project_detailed_sums_by_experiment.return_value = [
-        EXPERIMENT_WITH_DETAILS
+        EXPERIMENT_WITH_DETAILS,
     ]
 
     actual_project_global_sum_by_experiment = (
         project_global_sum_usecase.compute_detailed_sum(
-            project_id, START_DATE, END_DATE
+            project_id,
+            START_DATE,
+            END_DATE,
         )
     )
 

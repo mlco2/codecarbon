@@ -65,7 +65,7 @@ class SqlAlchemyRepository(Teams):
         """
         with self.session_factory() as session:
             res = session.query(SqlModelTeam).filter(
-                SqlModelTeam.organization_id == organization_id
+                SqlModelTeam.organization_id == organization_id,
             )
             if res.first() is None:
                 return []
@@ -77,7 +77,7 @@ class SqlAlchemyRepository(Teams):
                 session.query(SqlModelTeam)
                 .filter(SqlModelTeam.id == organization_id)
                 .filter(SqlModelTeam.api_key == api_key)
-                .first()
+                .first(),
             )
 
     @staticmethod

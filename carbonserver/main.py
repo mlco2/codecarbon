@@ -32,7 +32,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 async def validation_exception_handler(request: Request, exc: ValidationError):
     return JSONResponse(
         {
-            "detail": "Validation error : a data is missing or in wrong format. Could be an error in our answer, not only in your request"
+            "detail": "Validation error : a data is missing or in wrong format. Could be an error in our answer, not only in your request",
         },
         status_code=400,
     )
@@ -63,7 +63,7 @@ def init_container():
             organizations,
             users,
             authenticate,
-        ]
+        ],
     )
     return container
 

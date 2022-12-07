@@ -41,7 +41,9 @@ def test_sum_computes_for_project_id():
 
     actual_project_global_sum_by_experiment = (
         project_global_sum_usecase.compute_detailed_sum(
-            project_id, START_DATE, END_DATE
+            project_id,
+            START_DATE,
+            END_DATE,
         )
     )
 

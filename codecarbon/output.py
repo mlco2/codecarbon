@@ -98,7 +98,7 @@ class FileOutput(BaseOutput):
         if on_csv_write not in {"append", "update"}:
             raise ValueError(
                 f"Unknown `on_csv_write` value: {on_csv_write}"
-                + " (should be one of 'append' or 'update'"
+                + " (should be one of 'append' or 'update'",
             )
         self.on_csv_write: str = on_csv_write
         self.save_file_path: str = save_file_path
@@ -132,12 +132,13 @@ class FileOutput(BaseOutput):
                 logger.warning(
                     f"CSV contains more than 1 ({len(df_run)})"
                     + f" rows with current run ID ({data.run_id})."
-                    + "Appending instead of updating."
+                    + "Appending instead of updating.",
                 )
                 df = pd.concat([df, pd.DataFrame.from_records([dict(data.values)])])
             else:
                 df.at[
-                    df.run_id == data.run_id, data.values.keys()
+                    df.run_id == data.run_id,
+                    data.values.keys(),
                 ] = data.values.values()
 
         df.to_csv(self.save_file_path, index=False)

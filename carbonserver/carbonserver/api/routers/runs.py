@@ -87,7 +87,7 @@ def read_experiment_detailed_sums_by_run(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     experiment_global_sum_by_run_usecase: ExperimentSumsByRunUsecase = Depends(
-        Provide[ServerContainer.experiment_sums_by_run_usecase]
+        Provide[ServerContainer.experiment_sums_by_run_usecase],
     ),
 ) -> List[RunReport]:
     start_date = (
@@ -97,7 +97,9 @@ def read_experiment_detailed_sums_by_run(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return experiment_global_sum_by_run_usecase.compute_detailed_sum(
-        experiment_id, start_date, end_date
+        experiment_id,
+        start_date,
+        end_date,
     )
 
 

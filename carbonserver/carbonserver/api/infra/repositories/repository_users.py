@@ -81,8 +81,8 @@ class SqlAlchemyRepository(Users):
                 .update(
                     {
                         SqlModelUser.organizations: user.organizations.append(
-                            organization_id
-                        )
+                            organization_id,
+                        ),
                     },
                     synchronize_session=False,
                 )

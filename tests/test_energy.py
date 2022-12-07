@@ -10,10 +10,12 @@ class TestEnergy(unittest.TestCase):
     def setUp(self):
         self.mock_energy_data_filename = "mock_rapl_data.txt"
         self.path = path.join(
-            path.dirname(os.path.abspath(__file__)), "test_data/mock_rapl_data.txt"
+            path.dirname(os.path.abspath(__file__)),
+            "test_data/mock_rapl_data.txt",
         )
         self.max_path = path.join(
-            path.dirname(os.path.abspath(__file__)), "test_data/mock_rapl_data_max.txt"
+            path.dirname(os.path.abspath(__file__)),
+            "test_data/mock_rapl_data_max.txt",
         )
 
         # Setup the RAPL File with a high energy level
@@ -25,7 +27,9 @@ class TestEnergy(unittest.TestCase):
 
     def test_wraparound_delta_correct_value(self):
         first_rapl_measure = RAPLFile(
-            name=self.mock_energy_data_filename, path=self.path, max_path=self.max_path
+            name=self.mock_energy_data_filename,
+            path=self.path,
+            max_path=self.max_path,
         )
 
         # Read the initial state
@@ -38,5 +42,6 @@ class TestEnergy(unittest.TestCase):
 
         # Assert the delta has given the correct value from wraparound (reading + max_value - previous_value)
         self.assertAlmostEqual(
-            Energy.from_ujoules(15).kWh, first_rapl_measure.energy_delta.kWh
+            Energy.from_ujoules(15).kWh,
+            first_rapl_measure.energy_delta.kWh,
         )

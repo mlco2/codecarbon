@@ -425,7 +425,8 @@ def test_api29_experiment_read_detailed_sums():
     for experiment_sum in r:
         tc.assertEqual(experiment_sum["emissions_count"], 4)
         tc.assertEqual(
-            experiment_sum["emissions"], default_emission["emissions_sum"] * 4
+            experiment_sum["emissions"],
+            default_emission["emissions_sum"] * 4,
         )
         for k, v in default_emission.items():
             """{'experiment_id': 'db1ba567-3bd2-4ad0-8024-e4fa71f8a203', 'timestamp': '2022-04-23T23:04:43.634455', 'name': 'test_api_black_box',
@@ -444,11 +445,15 @@ def test_api29_experiment_read_detailed_sums():
                 "duration",
             ]:
                 tc.assertEqual(
-                    experiment_sum[k], v * 4, f"{k}:{v} vs emission={experiment_sum}"
+                    experiment_sum[k],
+                    v * 4,
+                    f"{k}:{v} vs emission={experiment_sum}",
                 )
             if k in ["cpu_power", "gpu_power", "ram_power", "emissions_rate"]:
                 tc.assertEqual(
-                    experiment_sum[k], v, f"{k}:{v} vs emission={experiment_sum}"
+                    experiment_sum[k],
+                    v,
+                    f"{k}:{v} vs emission={experiment_sum}",
                 )
 
 
@@ -499,7 +504,8 @@ def test_api31_project_read_detailed_sums():
     expected_count = 4
     tc.assertEqual(project_sum["emissions_count"], expected_count)
     tc.assertEqual(
-        project_sum["emissions"], default_emission["emissions_sum"] * expected_count
+        project_sum["emissions"],
+        default_emission["emissions_sum"] * expected_count,
     )
     for k, v in default_emission.items():
         if k in [
@@ -511,7 +517,9 @@ def test_api31_project_read_detailed_sums():
             "duration",
         ]:
             tc.assertEqual(
-                project_sum[k], v * expected_count, f"{k}:{v} vs emission={project_sum}"
+                project_sum[k],
+                v * expected_count,
+                f"{k}:{v} vs emission={project_sum}",
             )
         if k in ["cpu_power", "gpu_power", "ram_power", "emissions_rate"]:
             tc.assertEqual(project_sum[k], v, f"{k}:{v} vs emission={project_sum}")
@@ -546,7 +554,9 @@ def test_api32_organization_read_detailed_sums():
             )
         if k in ["cpu_power", "gpu_power", "ram_power", "emissions_rate"]:
             tc.assertEqual(
-                organization_sum[k], v, f"{k}:{v} vs emission={organization_sum}"
+                organization_sum[k],
+                v,
+                f"{k}:{v} vs emission={organization_sum}",
             )
 
 

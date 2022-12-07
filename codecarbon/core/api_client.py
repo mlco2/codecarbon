@@ -59,17 +59,17 @@ class ApiClient:  # (AsyncClient)
             # TODO : raise an Exception ?
             logger.debug(
                 "ApiClient.add_emission need a run_id : the initial call may "
-                + "have failed. Retrying..."
+                + "have failed. Retrying...",
             )
             self._create_run(self.experiment_id)
             if self.run_id is None:
                 logger.error(
-                    "ApiClient.add_emission still no run_id, aborting for this time !"
+                    "ApiClient.add_emission still no run_id, aborting for this time !",
                 )
             return False
         if carbon_emission["duration"] < 1:
             logger.warning(
-                "ApiClient : emissions not sent because of a duration smaller than 1."
+                "ApiClient : emissions not sent because of a duration smaller than 1.",
             )
             return False
         emission = EmissionCreate(
@@ -136,7 +136,7 @@ class ApiClient:  # (AsyncClient)
             logger.info(
                 "ApiClient Successfully registered your run on the API.\n\n"
                 + f"Run ID: {self.run_id}\n"
-                + f"Experiment ID: {self.experiment_id}\n"
+                + f"Experiment ID: {self.experiment_id}\n",
             )
             return self.run_id
         except Exception as e:
@@ -158,10 +158,10 @@ class ApiClient:  # (AsyncClient)
 
     def _log_error(self, url, payload, response):
         logger.error(
-            f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
+            f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}",
         )
         logger.error(
-            f"ApiClient API return http code {response.status_code} and answer : {response.text}"
+            f"ApiClient API return http code {response.status_code} and answer : {response.text}",
         )
 
     def close_experiment(self):

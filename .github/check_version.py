@@ -75,5 +75,5 @@ if __name__ == "__main__":
         sys.exit(1)
     else:
         print(
-            f"All good !\nLocal version is {setup_version}\nPyPi versions are {versions}"
+            f"All good !\nLocal version is {setup_version}\nPyPi versions are {versions}",
         )

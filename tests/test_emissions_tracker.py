@@ -51,7 +51,8 @@ class TestCarbonTracker(unittest.TestCase):
         # ./.codecarbon.config so that the user's local configuration does not
         # alter tests
         patcher = mock.patch(
-            "builtins.open", new_callable=get_custom_mock_open(empty_conf, empty_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(empty_conf, empty_conf),
         )
         self.addCleanup(patcher.stop)
         patcher.start()
@@ -83,12 +84,14 @@ class TestCarbonTracker(unittest.TestCase):
 
         # THEN
         self.assertGreaterEqual(
-            mocked_get_gpu_details.call_count, 2
+            mocked_get_gpu_details.call_count,
+            2,
         )  # at least 2 times in 5 seconds + once for init >= 3
         self.assertEqual(1, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
-            "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
+            "https://get.geojs.io/v1/ip/geo.json",
+            responses.calls[0].request.url,
         )
         self.assertIsInstance(emissions, float)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
@@ -284,7 +287,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA",
+            output_dir=self.temp_path,
         )
         tracker.start()
         heavy_computation(run_time_secs=2)
@@ -304,10 +308,13 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA",
+            output_dir=self.temp_path,
         )
         emissions = os.path.join(
-            os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv"
+            os.path.dirname(__file__),
+            "test_data",
+            "emissions_invalid_headers.csv",
         )
         shutil.copyfile(emissions, self.emissions_file_path)
         tracker.start()
@@ -316,7 +323,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         emissions_df = pd.read_csv(self.emissions_file_path)
         emissions_backup_df = pd.read_csv(
-            self.emissions_file_path.with_suffix(".csv.bak")
+            self.emissions_file_path.with_suffix(".csv.bak"),
         )
 
         self.verify_output_file(self.emissions_file_path, 2)
@@ -334,10 +341,13 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA",
+            output_dir=self.temp_path,
         )
         emissions = os.path.join(
-            os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv"
+            os.path.dirname(__file__),
+            "test_data",
+            "emissions_valid_headers.csv",
         )
         shutil.copyfile(emissions, self.emissions_file_path)
         tracker.start()
@@ -382,12 +392,14 @@ class TestCarbonTracker(unittest.TestCase):
 
         # THEN
         self.assertGreaterEqual(
-            mocked_get_gpu_details.call_count, 2
+            mocked_get_gpu_details.call_count,
+            2,
         )  # at least 2 times in 5 seconds + once for init >= 3
         self.assertEqual(1, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
-            "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
+            "https://get.geojs.io/v1/ip/geo.json",
+            responses.calls[0].request.url,
         )
         self.assertIsInstance(tracker.final_emissions, float)
         self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
@@ -402,7 +414,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         with OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA",
+            output_dir=self.temp_path,
         ) as tracker:
             heavy_computation(run_time_secs=2)
 

@@ -28,7 +28,10 @@ def setup_cloud_details_responses(tested_provider, provider_metadata):
     for provider, params in CLOUD_METADATA_MAPPING.items():
         if provider == tested_provider:
             responses.add(
-                responses.GET, params["url"], json=provider_metadata, status=200
+                responses.GET,
+                params["url"],
+                json=provider_metadata,
+                status=200,
             )
         else:
             responses.add(responses.GET, params["url"], status=404)

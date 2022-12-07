@@ -74,7 +74,8 @@ def test_get_organization_by_id_returns_correct_org(client, custom_test_server):
 
     with custom_test_server.container.organization_repository.override(repository_mock):
         response = client.get(
-            "/organization/read_organization/", params={"organization_id": ORG_ID_1}
+            "/organization/read_organization/",
+            params={"organization_id": ORG_ID_1},
         )
         actual_org = response.json()
 

@@ -14,7 +14,7 @@ pio.templates["CodeCarbonTemplate"] = go.layout.Template(
         "paper_bgcolor": "#024758",
         "plot_bgcolor": "#024758",
         "title": {
-            "font": {"family": "Verdana, Geneva, Sans-serif", "color": "#d8d8d8"}
+            "font": {"family": "Verdana, Geneva, Sans-serif", "color": "#d8d8d8"},
         },
         "colorway": [
             "#c9fb37",
@@ -35,7 +35,7 @@ pio.templates["CodeCarbonTemplate"] = go.layout.Template(
                 hole=0.8,
                 hoverinfo="skip",
                 showlegend=False,
-            )
+            ),
         ],
     },
 )

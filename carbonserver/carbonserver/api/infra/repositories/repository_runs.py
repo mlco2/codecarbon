@@ -82,7 +82,7 @@ class SqlAlchemyRepository(Runs):
         """
         with self.session_factory() as session:
             res = session.query(SqlModelRun).filter(
-                SqlModelRun.experiment_id == experiment_id
+                SqlModelRun.experiment_id == experiment_id,
             )
             if res.first() is None:
                 return []
@@ -115,7 +115,10 @@ class SqlAlchemyRepository(Runs):
         )
 
     def get_experiment_detailed_sums_by_run(
-        self, experiment_id, start_date, end_date
+        self,
+        experiment_id,
+        start_date,
+        end_date,
     ) -> List[RunReport]:
         """Find the runs of an experiment in database between two dates and return
         a report containing the sum of their emissions
@@ -142,7 +145,7 @@ class SqlAlchemyRepository(Runs):
                     func.sum(SqlModelEmission.duration).label("duration"),
                     func.avg(SqlModelEmission.emissions_rate).label("emissions_rate"),
                     func.count(SqlModelEmission.emissions_rate).label(
-                        "emissions_count"
+                        "emissions_count",
                     ),
                 )
                 .join(
@@ -181,7 +184,8 @@ class SqlAlchemyRepository(Runs):
                     isouter=True,
                 )
                 .join(
-                    SqlModelProject, SqlModelProject.id == SqlModelExperiment.project_id
+                    SqlModelProject,
+                    SqlModelProject.id == SqlModelExperiment.project_id,
                 )
                 .filter(SqlModelProject.id == project_id)
                 .filter(

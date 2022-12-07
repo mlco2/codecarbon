@@ -19,7 +19,9 @@ from codecarbon.input import DataSource, DataSourceException
 
 class Emissions:
     def __init__(
-        self, data_source: DataSource, co2_signal_api_token: Optional[str] = None
+        self,
+        data_source: DataSource,
+        co2_signal_api_token: Optional[str] = None,
     ):
         self._data_source = data_source
         self._co2_signal_api_token = co2_signal_api_token
@@ -37,7 +39,7 @@ class Emissions:
         emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
             df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)][
                 "impact"
-            ].item()
+            ].item(),
         )
 
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
@@ -89,7 +91,7 @@ class Emissions:
                 logger.error(
                     "co2_signal.get_emissions: "
                     + str(e)
-                    + " >>> Using CodeCarbon's data."
+                    + " >>> Using CodeCarbon's data.",
                 )
 
         compute_with_regional_data: bool = (geo.region is not None) and (
@@ -103,7 +105,7 @@ class Emissions:
                 logger.error(e, exc_info=True)
                 logger.warning(
                     "Regional emissions retrieval failed."
-                    + " Falling back on country emissions."
+                    + " Falling back on country emissions.",
                 )
         return self.get_country_emissions(energy, geo)
 
@@ -119,28 +121,28 @@ class Emissions:
         """
         try:
             country_emissions_data = self._data_source.get_country_emissions_data(
-                geo.country_iso_code.lower()
+                geo.country_iso_code.lower(),
             )
 
             if geo.region not in country_emissions_data:
                 # TODO: Deal with missing data, default to something
                 raise ValueError(
                     f"Region: {geo.region} not found for Country"
-                    + f" with ISO CODE : {geo.country_iso_code}"
+                    + f" with ISO CODE : {geo.country_iso_code}",
                 )
 
             emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_lbs_per_mWh(
-                country_emissions_data[geo.region]["emissions"]
+                country_emissions_data[geo.region]["emissions"],
             )
         except DataSourceException:
             # This country has regional data at the energy mix level,
             # not the emissions level
             country_energy_mix_data = self._data_source.get_country_energy_mix_data(
-                geo.country_iso_code.lower()
+                geo.country_iso_code.lower(),
             )
             region_energy_mix_data = country_energy_mix_data[geo.region]
             emissions_per_kWh = self._region_energy_mix_to_emissions_rate(
-                region_energy_mix_data
+                region_energy_mix_data,
             )
 
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
@@ -158,14 +160,14 @@ class Emissions:
 
         if geo.country_iso_code not in energy_mix:
             logger.warning(
-                f"We do not have data for {geo.country_iso_code}, using world average."
+                f"We do not have data for {geo.country_iso_code}, using world average.",
             )
             carbon_intensity_per_source = (
                 DataSource().get_carbon_intensity_per_source_data()
             )
             return (
                 EmissionsPerKWh.from_g_per_kWh(
-                    carbon_intensity_per_source.get("world_average")
+                    carbon_intensity_per_source.get("world_average"),
                 ).kgs_per_kWh
                 * energy.kWh
             )  # kgs
@@ -173,11 +175,11 @@ class Emissions:
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
 
         emissions_per_kWh = self._global_energy_mix_to_emissions_rate(
-            country_energy_mix
+            country_energy_mix,
         )
         logger.debug(
             f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh*1000:.0f}"
-            + f" g.CO2eq/kWh for {geo.country_name}"
+            + f" g.CO2eq/kWh for {geo.country_name}",
         )
 
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
@@ -208,7 +210,7 @@ class Emissions:
             if "_TWh" in energy_type:
                 # Compute the carbon intensity ratio of this source for this country
                 carbon_intensity_for_type = carbon_intensity_per_source.get(
-                    energy_type[: -len("_TWh")]
+                    energy_type[: -len("_TWh")],
                 )
                 if carbon_intensity_for_type:  # to ignore "total_TWh"
                     carbon_intensity += (
@@ -219,10 +221,10 @@ class Emissions:
         # Sanity check
         if energy_sum_computed != energy_sum:
             logger.error(
-                f"We find {energy_sum_computed} TWh instead of {energy_sum} TWh for {energy_mix.get('official_name_en')}, using world average."
+                f"We find {energy_sum_computed} TWh instead of {energy_sum} TWh for {energy_mix.get('official_name_en')}, using world average.",
             )
             return EmissionsPerKWh.from_g_per_kWh(
-                carbon_intensity_per_source.get("world_average")
+                carbon_intensity_per_source.get("world_average"),
             )
 
         return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
@@ -261,8 +263,8 @@ class Emissions:
                     emissions_percentage[source]
                     * value.kgs_per_kWh  # % (0.x)  # kgs / kWh
                     for source, value in emissions_by_source.items()
-                ]
-            )
+                ],
+            ),
         )
 
         return emissions_per_kWh

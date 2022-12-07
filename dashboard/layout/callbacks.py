@@ -155,7 +155,7 @@ def update_Charts(start_date, end_date, project):
     car = str(
         round(
             emission / 0.409,
-        )
+        ),
     )
     time_in_minutes = emission * (1 / 0.097) / 60
     tvTime = f"{time_in_minutes:.0f} min"
@@ -170,7 +170,7 @@ def update_Charts(start_date, end_date, project):
     duration_project = str(
         round(
             duration,
-        )
+        ),
     )
     duration_project = f"{duration:.0f}"
     duration_project_unit = "sec"
@@ -260,10 +260,15 @@ def update_Charts(start_date, end_date, project):
     dfBar = get_experiment_sums(project, start_date, end_date)
     if dfBar.empty:
         dfBar = pd.DataFrame(
-            [["", "", 0]], columns=["name", "experiment_id", "emissions"]
+            [["", "", 0]],
+            columns=["name", "experiment_id", "emissions"],
         )
     figBar = px.bar(
-        dfBar, x="name", y="emissions", text="emissions", hover_name="experiment_id"
+        dfBar,
+        x="name",
+        y="emissions",
+        text="emissions",
+        hover_name="experiment_id",
     )
     figBar.update_layout(
         title_text="Experiments emissions <br><span style='font-size:0.6em'>click a bar to filter bubble chart on the right side</span>",
@@ -280,7 +285,11 @@ def update_Charts(start_date, end_date, project):
     )
     figBar.update_yaxes(showgrid=False, visible=False, title="")
     figBar.update_xaxes(
-        showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
+        showgrid=False,
+        showline=True,
+        linewidth=2,
+        linecolor="white",
+        title="",
     )
     return figBar, figPie, houseHold, car, tvTime
 
@@ -335,7 +344,8 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
         hover_name="run_id",
     )
     bubble.update_traces(
-        customdata=df1.run_id, marker=dict(line=dict(color=vividgreen, width=3))
+        customdata=df1.run_id,
+        marker=dict(line=dict(color=vividgreen, width=3)),
     )
     bubble.update_layout(
         title_text=experiment_name
@@ -344,11 +354,16 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
         template="CodeCarbonTemplate",
     )
     bubble.update_xaxes(
-        showgrid=False, showline=False, linewidth=2, linecolor="white", title=""
+        showgrid=False,
+        showline=False,
+        linewidth=2,
+        linecolor="white",
+        title="",
     )
     bubble.update_yaxes(showgrid=False, title="emissions (kg eq.CO2)")
     bubble.update_coloraxes(
-        colorbar_title_side="right", colorbar_title_text="energy consumed (KwH)"
+        colorbar_title_side="right",
+        colorbar_title_text="energy consumed (KwH)",
     )
     clickPoint = None
     return bubble, clickPoint
@@ -413,7 +428,11 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
         template="CodeCarbonTemplate",
     )
     line.update_xaxes(
-        showgrid=False, showline=True, linewidth=2, linecolor="white", title=""
+        showgrid=False,
+        showline=True,
+        linewidth=2,
+        linecolor="white",
+        title="",
     )
     line.update_yaxes(
         showgrid=False,
@@ -454,7 +473,11 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
     ],
 )
 def get_metadata_table(
-    clickPoint, start_date, end_date, experiment_clickPoint, project
+    clickPoint,
+    start_date,
+    end_date,
+    experiment_clickPoint,
+    project,
 ):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
@@ -545,7 +568,7 @@ def update_map(start_date, end_date, project, kpi):
                     "country_name",
                     "project_name",
                     "emissions",
-                ]
+                ],
             )
             project_em = 100
         fig = px.choropleth(
@@ -561,10 +584,14 @@ def update_map(start_date, end_date, project, kpi):
             template="CodeCarbonTemplate",
         )
         fig.update_coloraxes(
-            colorbar_title_side="right", colorbar_title_text="CO2 emissions"
+            colorbar_title_side="right",
+            colorbar_title_text="CO2 emissions",
         )
         fig.update_geos(
-            showland=True, landcolor="#898381", showocean=True, oceancolor="#759FA8"
+            showland=True,
+            landcolor="#898381",
+            showocean=True,
+            oceancolor="#759FA8",
         )
     elif kpi == "Global Carbon Intensity":
         fig = px.choropleth(
@@ -585,14 +612,18 @@ def update_map(start_date, end_date, project, kpi):
             ],
             color_continuous_scale=["#c9fb37", "#024758", "#fb36c9"],
             labels={
-                "Carbon intensity of electricity (gCO2/kWh)": "CO2 intensity (gCO2/kWh)"
+                "Carbon intensity of electricity (gCO2/kWh)": "CO2 intensity (gCO2/kWh)",
             },
             template="CodeCarbonTemplate",
         )
         fig.update_coloraxes(
-            colorbar_title_side="right", colorbar_title_text="CO2 intensity (gCO2/KwH)"
+            colorbar_title_side="right",
+            colorbar_title_text="CO2 intensity (gCO2/KwH)",
         )
         fig.update_geos(
-            showland=True, landcolor="#6f898e", showocean=True, oceancolor="#759FA8"
+            showland=True,
+            landcolor="#6f898e",
+            showocean=True,
+            oceancolor="#759FA8",
         )
     return container, fig

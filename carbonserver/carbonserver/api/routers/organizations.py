@@ -35,7 +35,7 @@ router = APIRouter(
 def add_organization(
     organization: OrganizationCreate,
     organization_service: OrganizationService = Depends(
-        Provide[ServerContainer.organization_service]
+        Provide[ServerContainer.organization_service],
     ),
 ) -> Organization:
     return organization_service.add_organization(organization)
@@ -51,7 +51,7 @@ def add_organization(
 def read_organization(
     organization_id: str,
     organization_service: OrganizationService = Depends(
-        Provide[ServerContainer.organization_service]
+        Provide[ServerContainer.organization_service],
     ),
 ) -> Organization:
     return organization_service.read_organization(organization_id)
@@ -66,7 +66,7 @@ def read_organization(
 @inject
 def list_organizations(
     organization_service: OrganizationService = Depends(
-        Provide[ServerContainer.organization_service]
+        Provide[ServerContainer.organization_service],
     ),
 ) -> List[Organization]:
     return organization_service.list_organizations()
@@ -83,7 +83,7 @@ def read_organization_detailed_sums(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     organization_global_sum_usecase: OrganizationSumsUsecase = Depends(
-        Provide[ServerContainer.organization_sums_usecase]
+        Provide[ServerContainer.organization_sums_usecase],
     ),
 ) -> OrganizationReport:
     start_date = (
@@ -93,5 +93,7 @@ def read_organization_detailed_sums(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return organization_global_sum_usecase.compute_detailed_sum(
-        organization_id, start_date, end_date
+        organization_id,
+        start_date,
+        end_date,
     )

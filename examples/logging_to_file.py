@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     # Define a log formatter
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
+        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s",
     )
 
     # Create file handler which logs debug messages

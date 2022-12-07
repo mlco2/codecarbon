@@ -45,7 +45,9 @@ def test_sum_computes_for_organization_id():
 
     actual_organization_global_sum_by_experiment = (
         organization_global_sum_usecase.compute_detailed_sum(
-            organization_id, START_DATE, END_DATE
+            organization_id,
+            START_DATE,
+            END_DATE,
         )
     )
 
