@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from datetime import datetime
 from functools import wraps
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Dict
 
 from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
@@ -23,6 +23,7 @@ from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
+from codecarbon.external.task import Task
 from codecarbon.input import DataSource
 from codecarbon.output import (
     BaseOutput,
@@ -258,6 +259,9 @@ class BaseEmissionsTracker(ABC):
         self._conf["python_version"] = platform.python_version()
         self._conf["cpu_count"] = count_cpus()
         self._geo = None
+        self._task_start_measurement_values = {}
+        self._task_stop_measurement_values = {}
+        self._tasks: Dict[str, Task] = {}
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
@@ -413,6 +417,105 @@ class BaseEmissionsTracker(ABC):
 
         self._scheduler.start()
 
+    def start_task(self, task_name) -> None:
+        """
+        Start tracking a dedicated execution task.
+        :param task_name: Name of the task to be isolated.
+        :return: None
+        """
+        self._tasks.update(
+            {
+                task_name: Task(
+                    task_name=task_name,
+                    intial_cpu_energy=self._total_cpu_energy,
+                    intial_gpu_energy=self._total_gpu_energy,
+                    intial_ram_energy=self._total_ram_energy,
+                )
+            }
+        )
+
+    def stop_task(self, task_name) -> float:
+        """
+        Stop tracking a dedicated execution task. Delta energy is computed, to isolate its contribution to total
+        emissions.
+        :param task_name: Name of the task to be isolated.
+        :return: None
+        """
+
+        delta_cpu_energy = self._tasks[task_name].compute_final_cpu_energy(
+            self._total_cpu_energy
+        )
+        delta_gpu_energy = self._tasks[task_name].compute_final_gpu_energy(
+            self._total_gpu_energy
+        )
+        delta_ram_energy = self._tasks[task_name].compute_final_ram_energy(
+            self._total_ram_energy
+        )
+
+        task_total_energy = delta_cpu_energy + delta_gpu_energy + delta_ram_energy
+
+        cloud: CloudMetadata = self._get_cloud_metadata()
+
+        if cloud.is_on_private_infra:
+            task_emissions = self._emissions.get_private_infra_emissions(
+                task_total_energy, self._geo
+            )  # float: kg co2_eq
+            country_name = self._geo.country_name
+            country_iso_code = self._geo.country_iso_code
+            region = self._geo.region
+            on_cloud = "N"
+            cloud_provider = ""
+            cloud_region = ""
+        else:
+            task_emissions = self._emissions.get_cloud_emissions(
+                task_total_energy, cloud
+            )
+            country_name = self._emissions.get_cloud_country_name(cloud)
+            country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
+            region = self._emissions.get_cloud_geo_region(cloud)
+            on_cloud = "Y"
+            cloud_provider = cloud.provider
+            cloud_region = cloud.region
+
+        task_duration = Time.from_seconds(
+            time.time() - self._tasks[task_name].start_time
+        )
+
+        task_emission_data = EmissionsData(
+            timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            project_name=self._project_name,
+            run_id=str(self.run_id),
+            duration=task_duration.seconds,
+            emissions=task_emissions,
+            emissions_rate=task_emissions * 1000 / task_duration.seconds,  # g/s
+            cpu_power=self._cpu_power.W,
+            gpu_power=self._gpu_power.W,
+            ram_power=self._ram_power.W,
+            cpu_energy=delta_cpu_energy.kWh,
+            gpu_energy=delta_gpu_energy.kWh,
+            ram_energy=delta_ram_energy.kWh,
+            energy_consumed=task_total_energy.kWh,
+            country_name=country_name,
+            country_iso_code=country_iso_code,
+            region=region,
+            on_cloud=on_cloud,
+            cloud_provider=cloud_provider,
+            cloud_region=cloud_region,
+            os=self._conf.get("os"),
+            python_version=self._conf.get("python_version"),
+            gpu_count=self._conf.get("gpu_count"),
+            gpu_model=self._conf.get("gpu_model"),
+            cpu_count=self._conf.get("cpu_count"),
+            cpu_model=self._conf.get("cpu_model"),
+            longitude=self._conf.get("longitude"),
+            latitude=self._conf.get("latitude"),
+            ram_total_size=self._conf.get("ram_total_size"),
+            tracking_mode=self._conf.get("tracking_mode"),
+        )
+        self._tasks[task_name].emissions_data = task_emission_data
+        self._tasks[task_name].is_active = False
+        return task_emissions
+
     @suppress(Exception)
     def flush(self) -> Optional[float]:
         """
@@ -449,11 +552,14 @@ class BaseEmissionsTracker(ABC):
         if self._scheduler:
             self._scheduler.stop()
             self._scheduler = None
+        else:
+            logger.warning("Tracker already stopped !")
+        for task_name in self._tasks:
+            if self._tasks[task_name].is_active:
+                self.stop_task(task_name=task_name)
             # Run to calculate the power used from last
             # scheduled measurement to shutdown
             self._measure_power_and_energy()
-        else:
-            logger.warning("Tracker already stopped !")
 
         emissions_data = self._prepare_emissions_data()
 
