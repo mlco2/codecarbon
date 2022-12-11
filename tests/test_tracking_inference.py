@@ -1,7 +1,12 @@
+import os
+import shutil
 import time
 import unittest
 
 from codecarbon import EmissionsTracker
+from pandas import read_csv
+
+OUTPUT_DIR = "test_task_data"
 
 
 def heavy_computation(run_time_secs: float = 3):
@@ -25,6 +30,15 @@ class InferenceClass:
 
 
 class TestCarbonInferenceTracker(unittest.TestCase):
+    def setUp(self) -> None:
+        tmp_dir = OUTPUT_DIR
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+
+    def tearDown(self) -> None:
+        tmp_dir = OUTPUT_DIR
+        shutil.rmtree(tmp_dir)
+
     def test_tracker_measures_model_loading_task(self):
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
@@ -63,3 +77,45 @@ class TestCarbonInferenceTracker(unittest.TestCase):
         tracker.stop()
 
         assert len(tasks) == 11
+
+    def test_tracker_outputs_data_point_for_each_task_logged(self):
+        experiment_name = "base_2"
+        tracker = EmissionsTracker(
+            measure_power_secs=1,
+            save_to_file=True,
+            output_dir=OUTPUT_DIR,
+            experiment_name=experiment_name,
+        )
+        expected_task_list = [
+            "model_loading",
+            "inference_0",
+            "inference_1",
+            "inference_2",
+            "inference_3",
+            "inference_4",
+            "inference_5",
+            "inference_6",
+            "inference_7",
+            "inference_8",
+            "inference_9",
+        ]
+
+        tracker.start()
+
+        tracker.start_task("model_loading")
+        run_id = tracker.run_id.__str__()
+        inference_class = InferenceClass()
+        tracker.stop_task("model_loading")
+
+        for i in range(10):
+            inference_task_name = "inference_" + str(i)
+            tracker.start_task(inference_task_name)
+            inference_class.predict(i)
+            tracker.stop_task(inference_task_name)
+
+        tracker.stop()
+
+        task_file_path = "emissions_" + experiment_name + "_" + run_id + ".csv"
+        actual_task_data = read_csv(os.path.join(OUTPUT_DIR, task_file_path))
+
+        assert expected_task_list == list(actual_task_data.task_name)

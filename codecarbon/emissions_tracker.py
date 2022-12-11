@@ -152,6 +152,7 @@ class BaseEmissionsTracker(ABC):
         gpu_ids: Optional[List] = _sentinel,
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
+        experiment_name: Optional[str] = _sentinel,
         co2_signal_api_token: Optional[str] = _sentinel,
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
@@ -190,6 +191,7 @@ class BaseEmissionsTracker(ABC):
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data.
         :param experiment_id: Id of the experiment.
+        :param experiment_name: Label of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
         :param tracking_mode: One of "process" or "machine" in order to measure the
@@ -216,6 +218,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
         self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
+        self._set_from_conf(experiment_name, "experiment_name", "base")
         self._set_from_conf(gpu_ids, "gpu_ids")
         self._set_from_conf(log_level, "log_level", "info")
         self._set_from_conf(measure_power_secs, "measure_power_secs", 15, int)
@@ -436,7 +439,7 @@ class BaseEmissionsTracker(ABC):
 
     def stop_task(self, task_name) -> float:
         """
-        Stop tracking a dedicated execution task. Delta energy is computed, to isolate its contribution to total
+        Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
         emissions.
         :param task_name: Name of the task to be isolated.
         :return: None
@@ -532,10 +535,7 @@ class BaseEmissionsTracker(ABC):
         self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
-        for persistence in self.persistence_objs:
-            if isinstance(persistence, CodeCarbonAPIOutput):
-                emissions_data = self._prepare_emissions_data(delta=True)
-            persistence.out(emissions_data)
+        self._persist_data(emissions_data)
 
         return emissions_data.emissions
 
@@ -563,15 +563,26 @@ class BaseEmissionsTracker(ABC):
 
         emissions_data = self._prepare_emissions_data()
 
+        self._persist_data(emissions_data, experiment_name=self._experiment_name)
+
+        self.final_emissions_data = emissions_data
+        self.final_emissions = emissions_data.emissions
+        return emissions_data.emissions
+
+    def _persist_data(self, emissions_data, experiment_name=None):
         for persistence in self.persistence_objs:
             if isinstance(persistence, CodeCarbonAPIOutput):
                 emissions_data = self._prepare_emissions_data(delta=True)
 
             persistence.out(emissions_data)
-
-        self.final_emissions_data = emissions_data
-        self.final_emissions = emissions_data.emissions
-        return emissions_data.emissions
+            if isinstance(persistence, FileOutput):
+                if len(self._tasks) > 0:
+                    task_emissions_data = []
+                    for task in self._tasks:
+                        task_emissions_data.append(self._tasks[task].out())
+                    persistence.task_out(
+                        task_emissions_data, experiment_name, self._output_dir
+                    )
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
