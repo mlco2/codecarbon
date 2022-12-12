@@ -3,8 +3,9 @@ import shutil
 import time
 import unittest
 
-from codecarbon import EmissionsTracker
 from pandas import read_csv
+
+from codecarbon import EmissionsTracker
 
 OUTPUT_DIR = "test_task_data"
 
