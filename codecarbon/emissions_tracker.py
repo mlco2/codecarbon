@@ -55,7 +55,7 @@ class BaseEmissionsTracker(ABC):
     """
     Primary abstraction with Emissions Tracking functionality.
     Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata`
-    that are implemented by two concrete classes `OfflineCarbonTracker`
+    that are implemented by two concrete classes: `OfflineCarbonTracker`
     and `CarbonTracker.`
     """
 
@@ -156,45 +156,45 @@ class BaseEmissionsTracker(ABC):
     ):
         """
         :param project_name: Project name for current experiment run, default name
-                             as "codecarbon"
+                             is "codecarbon".
         :param measure_power_secs: Interval (in seconds) to measure hardware power
-                                   usage, defaults to 15
+                                   usage, defaults to 15.
         :param api_call_interval: Occurrence to wait before calling API :
                             -1 : only call api on flush() and at the end.
                             1 : at every measure
                             2 : every 2 measure, etc...
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
-                             emissions data
-        :param api_key: API key for Code Carbon API, mandatory to use it !
+                             emissions data.
+        :param api_key: API key for Code Carbon API (mandatory!).
         :param output_dir: Directory path to which the experiment details are logged,
-                           defaults to current directory
-        :param output_file: Name of output CSV file, defaults to `emissions.csv`
+                           defaults to current directory.
+        :param output_file: Name of the output CSV file, defaults to `emissions.csv`.
         :param save_to_file: Indicates if the emission artifacts should be logged to a
-                             file, defaults to True
-        :param save_to_api: Indicates if the emission artifacts should be send to the
-                            CodeCarbon API, defaults to False
+                             file, defaults to True.
+        :param save_to_api: Indicates if the emission artifacts should be sent to the
+                            CodeCarbon API, defaults to False.
         :param save_to_logger: Indicates if the emission artifacts should be written
-                            to a dedicated logger, defaults to False
+                            to a dedicated logger, defaults to False.
         :param logging_logger: LoggerOutput object encapsulating a logging.logger
-                            or a Google Cloud logger
-        :param gpu_ids: User-specified known gpu ids to track, defaults to None
+                            or a Google Cloud logger.
+        :param gpu_ids: User-specified known gpu ids to track, defaults to None.
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
-                                   data
-        :param experiment_id: Id of the experiment
+                                   data.
+        :param experiment_id: Id of the experiment.
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
         :param tracking_mode: One of "process" or "machine" in order to measure the
-                              power consumptions due to the entire machine or try and
+                              power consumption due to the entire machine or to try and
                               isolate the tracked processe's in isolation.
-                              Defaults to "machine"
+                              Defaults to "machine".
         :param log_level: Global codecarbon log level. Accepts one of:
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
         :param on_csv_write: "append" or "update". Whether to always append a new line
                              to the csv when writing or to update the existing `run_id`
                              row (useful when calling`tracker.flush()` manually).
-                             Accepts one of "append" or "update".
-        :param logger_preamble: String to systematically include in the logger's.
+                             Accepts one of "append" or "update". Default is "append".
+        :param logger_preamble: String to systematically include in the logger.
                                 messages. Defaults to "".
         """
 
@@ -384,12 +384,12 @@ class BaseEmissionsTracker(ABC):
     @suppress(Exception)
     def flush(self) -> Optional[float]:
         """
-        Write emission to disk or call the API depending on the configuration
+        Write the emissions to disk or call the API depending on the configuration,
         but keep running the experiment.
         :return: CO2 emissions in kgs
         """
         if self._start_time is None:
-            logger.error("Need to first start the tracker")
+            logger.error("You first need to start the tracker.")
             return None
 
         # Run to calculate the power used from last
@@ -411,7 +411,7 @@ class BaseEmissionsTracker(ABC):
         :return: CO2 emissions in kgs
         """
         if self._start_time is None:
-            logger.error("Need to first start the tracker")
+            logger.error("You first need to start the tracker.")
             return None
 
         if self._scheduler:
@@ -435,7 +435,7 @@ class BaseEmissionsTracker(ABC):
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
-        :delta: True to return only the delta comsumption since last call
+        :delta: If 'True', return only the delta comsumption since the last call.
         """
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.time() - self._start_time)
@@ -547,14 +547,14 @@ class BaseEmissionsTracker(ABC):
                 self._cpu_power = power
                 logger.info(
                     f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
-                    + f". All CPUs Power : {self._cpu_power.W} W"
+                    + f". Total CPU Power : {self._cpu_power.W} W"
                 )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
                 logger.info(
                     f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
-                    + f". All GPUs Power : {self._gpu_power.W} W"
+                    + f". Total GPU Power : {self._gpu_power.W} W"
                 )
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
@@ -571,7 +571,7 @@ class BaseEmissionsTracker(ABC):
                 + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
             )
         logger.info(
-            f"{self._total_energy.kWh:.6f} kWh of electricity used since the begining."
+            f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
@@ -579,7 +579,7 @@ class BaseEmissionsTracker(ABC):
             if self._measure_occurrence >= self._api_call_interval:
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
-                    f"{emissions.emissions_rate:.6f} g.CO2eq/s mean an estimation of "
+                    f"{emissions.emissions_rate:.6f} g.CO2eq/s, which means an estimation of "
                     + f"{emissions.emissions_rate*3600*24*365/1000:,} kg.CO2eq/year"
                 )
                 self._cc_api__out.out(emissions)
@@ -614,7 +614,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         """
         :param country_iso_code: 3 letter ISO Code of the country where the
                                  experiment is being run
-        :param region: The provincial region, for example, California in the US.
+        :param region: The province or region (e.g. California in the US).
                        Currently, this only affects calculations for the United States
                        and Canada
         :param cloud_provider: The cloud provider specified for estimating emissions
@@ -702,7 +702,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 class EmissionsTracker(BaseEmissionsTracker):
     """
     An online emissions tracker that auto infers geographical location,
-    using `geojs` API
+    using the `geojs` API
     """
 
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -742,35 +742,35 @@ def track_emissions(
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
     :param fn: Function to be decorated
     :param project_name: Project name for current experiment run,
-                         default name as "codecarbon"
+                         default name is "codecarbon".
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
-                               defaults to 15
+                               defaults to 15.
     :api_call_interval: Number of measure to make before calling the Code Carbon API.
     :param output_dir: Directory path to which the experiment details are logged,
-                       defaults to current directory
+                       defaults to current directory.
     :param output_file: Name of output CSV file, defaults to `emissions.csv`
     :param save_to_file: Indicates if the emission artifacts should be logged to a file,
-                         defaults to True
+                         defaults to True.
     :param save_to_api: Indicates if the emission artifacts should be send to the
-                        CodeCarbon API, defaults to False
+                        CodeCarbon API, defaults to False.
     :param save_to_logger: Indicates if the emission artifacts should be written
-                        to a dedicated logger, defaults to False
+                        to a dedicated logger, defaults to False.
     :param logging_logger: LoggerOutput object encapsulating a logging.logger
-                        or a Google Cloud logger
-    :param offline: Indicates if the tracker should be run in offline mode
+                        or a Google Cloud logger.
+    :param offline: Indicates if the tracker should be run in offline mode.
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
                              being run, required if `offline=True`
-    :param region: The provincial region, for example, California in the US.
-                   Currently, this only affects calculations for the United States
+    :param region: The provice or region (e.g. California in the US).
+                   Currently, this only affects calculations for the United States.
     :param cloud_provider: The cloud provider specified for estimating emissions
                            intensity, defaults to None.
                            See https://github.com/mlco2/codecarbon/
                                             blob/master/codecarbon/data/cloud/impact.csv
-                           for a list of cloud providers
+                           for a list of cloud providers.
     :param cloud_region: The region of the cloud data center, defaults to None.
                          See https://github.com/mlco2/codecarbon/
                                             blob/master/codecarbon/data/cloud/impact.csv
-                         for a list of cloud regions
+                         for a list of cloud regions.
     :param gpu_ids: User-specified known gpu ids to track, defaults to None
     :param log_level: Global codecarbon log level. Accepts one of:
                         {"debug", "info", "warning", "error", "critical"}.
@@ -829,7 +829,7 @@ def track_emissions(
             finally:
                 logger.info(
                     "\nGraceful stopping: collecting and writing information.\n"
-                    + "Please Allow for a few seconds..."
+                    + "Please wait a few seconds..."
                 )
                 tracker.stop()
                 logger.info("Done!\n")
