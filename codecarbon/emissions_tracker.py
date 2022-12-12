@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from datetime import datetime
 from functools import wraps
-from typing import Callable, List, Optional, Union, Dict
+from typing import Callable, Dict, List, Optional, Union
 
 from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
