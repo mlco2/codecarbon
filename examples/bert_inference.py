@@ -2,9 +2,10 @@ from transformers import pipeline
 from datasets import load_dataset
 from codecarbon import EmissionsTracker
 
+device= "cuda"
 
 def build_model():
-    model = pipeline('fill-mask', model='bert-base-uncased')
+    model = pipeline('fill-mask', model='bert-base-uncased', device = 0)
     return model
 
 
@@ -18,12 +19,14 @@ def main():
     model = build_model()
     tracker.stop_task("build model")
     counter = 0
-    for d in dataset['text']:
+    for d in dataset[:100]['text']:
+        d= ' '.join(d.split())[:50]
         inference_task_name = "Inference_" + str(counter)
         tracker.start_task(inference_task_name)
-        model(d+ ' [MASK]')
+        print(model(d + ' [MASK]'))
         tracker.stop_task(inference_task_name)
         counter+=1
+
     emissions = tracker.stop()
 
     print(f"Emissions : {emissions} kg CO₂")
