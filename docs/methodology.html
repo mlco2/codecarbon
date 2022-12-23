@@ -49,6 +49,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#carbon-intensity">Carbon Intensity</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#power-usage">Power Usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#gpu">GPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ram">RAM</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cpu">CPU</a></li>
 </ul>
 </li>
@@ -114,8 +115,8 @@ energy sources that are used to generate electricity, including fossil fuels and
 <a class="reference internal image-reference" href="_images/grid_energy_mix.png"><img alt="Grid Energy Mix" class="align-center" src="_images/grid_energy_mix.png" style="width: 350px; height: 300px;" /></a>
 <p>When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a> ) or per country ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/eu-carbon-intensity-electricity.csv">here</a> ).</p>
 <p>If we don’t have the global carbon intensity or electricity of a country, but we have its electricity mix, we compute the carbon intensity of electricity using this table :</p>
-<table class="docutils align-center" id="id4">
-<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id4" title="Permalink to this table"></a></caption>
+<table class="colwidths-given docutils align-center" id="id5">
+<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id5" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 50%" />
 <col style="width: 50%" />
@@ -174,6 +175,11 @@ energy sources that are used to generate electricity, including fossil fuels and
 <section id="gpu">
 <h3>GPU<a class="headerlink" href="#gpu" title="Permalink to this heading"></a></h3>
 <p>Tracks Nvidia GPUs poxer consumption using <code class="docutils literal notranslate"><span class="pre">pynvml</span></code> library (installed with the package).</p>
+</section>
+<section id="ram">
+<h3>RAM<a class="headerlink" href="#ram" title="Permalink to this heading"></a></h3>
+<p>CodeCarbon uses a 3 Watts for 8 BG ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .
+This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.</p>
 </section>
 <section id="cpu">
 <h3>CPU<a class="headerlink" href="#cpu" title="Permalink to this heading"></a></h3>
