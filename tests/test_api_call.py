@@ -9,7 +9,7 @@ from codecarbon.output import EmissionsData
 conf = {
     "os": "macOS-10.15.7-x86_64-i386-64bit",
     "python_version": "3.8.0",
-    "codecarbon_version":'2.1.3',
+    "codecarbon_version": "2.1.3",
     "cpu_count": 12,
     "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
     "gpu_count": 4,
@@ -33,7 +33,7 @@ def test_call_api():
                 "experiment_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "os": "macOS-10.15.7-x86_64-i386-64bit",
                 "python_version": "3.8.0",
-                "codecarbon_version":'2.1.3',
+                "codecarbon_version": "2.1.3",
                 "cpu_count": 12,
                 "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
                 "gpu_count": 4,

@@ -90,8 +90,6 @@ def get_env_cloud_details(timeout=1):
 
             return {"provider": provider, "metadata": response_data}
         except requests.exceptions.RequestException:
-            logger.debug(
-                "Not running on %s", provider
-            )
+            logger.debug("Not running on %s", provider)
 
     return None

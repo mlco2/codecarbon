@@ -141,7 +141,10 @@ class ApiClient:  # (AsyncClient)
             )
             return self.run_id
         except requests.exceptions.ConnectionError as e:
-            logger.error(f"Failed to connect to API, please check the configuration. {e}", exc_info=False)
+            logger.error(
+                f"Failed to connect to API, please check the configuration. {e}",
+                exc_info=False,
+            )
         except Exception as e:
             logger.error(e, exc_info=True)
 
