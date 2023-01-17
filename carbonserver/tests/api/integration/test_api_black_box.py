@@ -418,7 +418,7 @@ def test_api27_read_all():
 def test_api29_experiment_read_detailed_sums():
     url = f"{URL}/experiments/{project_id}/sums/"
     r = requests.get(url, timeout=2)
-    print(url, r)
+    print("test_api29_experiment_read_detailed_sums", url, r)
     tc.assertEqual(r.status_code, 200)
     r = r.json()
 
