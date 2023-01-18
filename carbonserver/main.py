@@ -19,6 +19,7 @@ from carbonserver.api.routers import (
     users,
 )
 from carbonserver.database.database import engine
+from carbonserver.logger import logger
 
 
 async def db_exception_handler(request: Request, exc: DBException):
@@ -30,9 +31,11 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 
 async def validation_exception_handler(request: Request, exc: ValidationError):
+    logger.error(f"ValidationError {exc}")
     return JSONResponse(
         {
             "detail": "Validation error : a data is missing or in wrong format. Could be an error in our answer, not only in your request"
+            + str(exc)
         },
         status_code=400,
     )
