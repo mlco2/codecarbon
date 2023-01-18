@@ -34,8 +34,8 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
     logger.error(f"ValidationError {exc}")
     return JSONResponse(
         {
-            "detail": "Validation error : a data is missing or in wrong format. Could be an error in our answer, not only in your request"
-            + str(exc)
+            "detail": "Validation error : a data is missing or in wrong format. Could be an error in our answer, not only in your request",
+            "validation_error_message": str(exc)
         },
         status_code=400,
     )

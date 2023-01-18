@@ -185,7 +185,7 @@ class ExperimentReport(ExperimentBase):
     on_cloud: str
     cloud_provider: str
     cloud_region: str
-    emission: float
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -252,7 +252,7 @@ class ProjectReport(ExperimentBase):
     project_id: UUID
     name: str
     description: str
-    emission: float
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -319,7 +319,7 @@ class OrganizationReport(OrganizationBase):
     organization_id: UUID
     name: str
     description: str
-    emission: float
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float
