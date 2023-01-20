@@ -83,7 +83,11 @@ def get_experiment_runs(experiment_id, date_from, date_to) -> pd.DataFrame:
 
 def get_experiment_sums(project_id, date_from, date_to) -> pd.DataFrame:
     dict = load_experiment_sums(project_id, start_date=date_from, end_date=date_to)
-    df = pd.DataFrame.from_dict(dict)
+    try:
+        df = pd.DataFrame.from_dict(dict)
+    except Exception as e:
+        print(dict)
+        raise e
     if not df.empty:
         df = df.sort_values(by="timestamp")
     return df

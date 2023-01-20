@@ -184,8 +184,8 @@ class ExperimentReport(ExperimentBase):
     country_iso_code: str
     region: str
     on_cloud: str
-    cloud_provider: str
-    cloud_region: str
+    cloud_provider: Optional[str] = None
+    cloud_region: Optional[str] = None
     emissions: float
     cpu_power: float
     gpu_power: float
