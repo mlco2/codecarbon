@@ -124,7 +124,7 @@ class SqlAlchemyRepository(Runs):
         :start_date: the lower bound of the time interval which contains sought emissions
         :end_date: the upper bound of the time interval which contains sought emissions
         :returns: A report containing the sums of emissions
-        :rtype: schemas.ProjectReport
+        :rtype: schemas.RunReport
         """
         with self.session_factory() as session:
             res = (

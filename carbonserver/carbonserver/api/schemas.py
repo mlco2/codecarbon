@@ -122,6 +122,7 @@ class Run(RunBase):
 
 
 class RunReport(RunBase):
+    run_id: UUID
     timestamp: datetime
     emissions: float
     cpu_power: float
