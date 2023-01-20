@@ -73,6 +73,7 @@ class SqlAlchemyRepository(Projects):
                     SqlModelProject.id.label("project_id"),
                     SqlModelProject.name,
                     SqlModelProject.description,
+                    SqlModelProject.team_id,
                     func.sum(SqlModelEmission.emissions_sum).label("emissions"),
                     func.avg(SqlModelEmission.cpu_power).label("cpu_power"),
                     func.avg(SqlModelEmission.gpu_power).label("gpu_power"),
