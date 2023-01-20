@@ -123,7 +123,7 @@ class Run(RunBase):
 
 class RunReport(RunBase):
     timestamp: datetime
-    emission: float
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -248,7 +248,7 @@ class Project(ProjectBase):
     experiments: Optional[List[Experiment]] = []
 
 
-class ProjectReport(ExperimentBase):
+class ProjectReport(ProjectBase):
     project_id: UUID
     name: str
     description: str
