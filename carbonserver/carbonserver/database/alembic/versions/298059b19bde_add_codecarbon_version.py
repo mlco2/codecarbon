@@ -16,7 +16,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("runs", sa.Column("codecarbon_version", sa.String))
+    op.add_column("runs", sa.Column("codecarbon_version", sa.String, default=None))
 
 
 def downgrade():
