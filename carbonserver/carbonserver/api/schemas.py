@@ -122,8 +122,9 @@ class Run(RunBase):
 
 
 class RunReport(RunBase):
+    run_id: UUID
     timestamp: datetime
-    emission: float
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -183,9 +184,9 @@ class ExperimentReport(ExperimentBase):
     country_iso_code: str
     region: str
     on_cloud: str
-    cloud_provider: str
-    cloud_region: str
-    emission: float
+    cloud_provider: Optional[str] = None
+    cloud_region: Optional[str] = None
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -248,11 +249,11 @@ class Project(ProjectBase):
     experiments: Optional[List[Experiment]] = []
 
 
-class ProjectReport(ExperimentBase):
+class ProjectReport(ProjectBase):
     project_id: UUID
     name: str
     description: str
-    emission: float
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -319,7 +320,7 @@ class OrganizationReport(OrganizationBase):
     organization_id: UUID
     name: str
     description: str
-    emission: float
+    emissions: float
     cpu_power: float
     gpu_power: float
     ram_power: float

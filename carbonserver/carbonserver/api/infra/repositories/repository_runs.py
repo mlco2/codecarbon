@@ -124,13 +124,14 @@ class SqlAlchemyRepository(Runs):
         :start_date: the lower bound of the time interval which contains sought emissions
         :end_date: the upper bound of the time interval which contains sought emissions
         :returns: A report containing the sums of emissions
-        :rtype: schemas.ProjectReport
+        :rtype: schemas.RunReport
         """
         with self.session_factory() as session:
             res = (
                 session.query(
                     SqlModelRun.id.label("run_id"),
                     SqlModelRun.timestamp,
+                    SqlModelRun.experiment_id,
                     func.sum(SqlModelEmission.emissions_sum).label("emissions"),
                     func.avg(SqlModelEmission.cpu_power).label("cpu_power"),
                     func.avg(SqlModelEmission.gpu_power).label("gpu_power"),

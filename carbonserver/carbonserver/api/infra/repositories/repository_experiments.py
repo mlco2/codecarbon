@@ -121,6 +121,7 @@ class SqlAlchemyRepository(Experiments):
                     SqlModelExperiment.on_cloud,
                     SqlModelExperiment.cloud_provider,
                     SqlModelExperiment.cloud_region,
+                    SqlModelExperiment.project_id,
                     func.sum(SqlModelEmission.emissions_sum).label("emissions"),
                     func.avg(SqlModelEmission.cpu_power).label("cpu_power"),
                     func.avg(SqlModelEmission.gpu_power).label("gpu_power"),
