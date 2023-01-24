@@ -32,6 +32,7 @@ org_name = org_description = org_new_id = None
 team_name = team_description = team_new_id = emission_id = None
 USER_PASSWORD = "Secret1!îstring"
 USER_EMAIL = "user@integration.test"
+MISSING_UUID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
 
 def is_valid_uuid(val):
@@ -155,6 +156,12 @@ def is_key_all_values_equal(list_of_dict, key, value):
 #     assert r.status_code == 401
 
 
+def test_api00_organization_missing():
+    r = requests.get(url=URL + "/organization/" + MISSING_UUID, timeout=2)
+    tc.assertEqual(r.status_code, 200)
+    assert r.json() == 0
+
+
 def test_api09_organization_create():
     global org_new_id, org_name, org_description
     org_name = "test_to_delete"
@@ -228,6 +235,16 @@ def test_api16_project_create():
     tc.assertEqual(r.status_code, 201)
     assert r.json()["team_id"] == team_new_id
     project_id = r.json()["id"]
+
+
+def test_api16_project_lastrun_empty():
+    """
+    Test that empty result works.
+    """
+    url = f"{URL}/lastrun/project/{project_id}/"
+    r = requests.get(url, timeout=2)
+    tc.assertEqual(r.status_code, 200)
+    assert len(r.json()) == 0
 
 
 def test_api17_projects_for_team_list():

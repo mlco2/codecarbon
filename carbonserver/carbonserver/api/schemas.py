@@ -12,7 +12,11 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, SecretStr
+from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
+
+
+class Empty(BaseModel, extra=Extra.forbid):
+    pass
 
 
 class EmissionBase(BaseModel):

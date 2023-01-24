@@ -1,16 +1,18 @@
 import uuid
 from contextlib import AbstractContextManager
-from typing import List
+from typing import List, Union
 
 from dependency_injector.providers import Callable
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.runs import Runs
+from carbonserver.api.errors import EmptyResultException
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
-from carbonserver.api.schemas import Run, RunCreate, RunReport
+from carbonserver.api.schemas import Empty, Run, RunCreate, RunReport
+from carbonserver.logger import logger
 
 """
 Here there is all the methods to manipulate the run data
@@ -166,8 +168,10 @@ class SqlAlchemyRepository(Runs):
             )
             return res
 
-    def get_project_last_run(self, project_id, start_date, end_date) -> Run:
-        """TODO Find the last run of a project in database between two dates and return it
+    def get_project_last_run(
+        self, project_id, start_date, end_date
+    ) -> Union[Run, Empty]:
+        """Find the last run of a project in database between two dates and return it
 
         :project_id: The id of the project to retrieve runs from
         :start_date: the lower bound of the time interval which contains sought runs
@@ -196,5 +200,8 @@ class SqlAlchemyRepository(Runs):
             )
 
             if res is None:
-                return None
+                logger.warning(
+                    f"get_project_last_run : No runs for project {project_id}"
+                )
+                raise EmptyResultException(f"No runs for project {project_id}")
             return self.map_sql_to_schema(res)
