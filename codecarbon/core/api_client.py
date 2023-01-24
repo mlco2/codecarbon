@@ -114,6 +114,7 @@ class ApiClient:  # (AsyncClient)
                 experiment_id=experiment_id,
                 os=self.conf.get("os"),
                 python_version=self.conf.get("python_version"),
+                codecarbon_version=self.conf.get("codecarbon_version"),
                 cpu_count=self.conf.get("cpu_count"),
                 cpu_model=self.conf.get("cpu_model"),
                 gpu_count=self.conf.get("gpu_count"),
@@ -139,6 +140,11 @@ class ApiClient:  # (AsyncClient)
                 + f"Experiment ID: {self.experiment_id}\n"
             )
             return self.run_id
+        except requests.exceptions.ConnectionError as e:
+            logger.error(
+                f"Failed to connect to API, please check the configuration. {e}",
+                exc_info=False,
+            )
         except Exception as e:
             logger.error(e, exc_info=True)
 

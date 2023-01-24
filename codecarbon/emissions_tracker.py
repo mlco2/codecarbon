@@ -13,6 +13,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Callable, List, Optional, Union
 
+from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
@@ -102,7 +103,7 @@ class BaseEmissionsTracker(ABC):
 
         # Store final values in _conf
         if not hasattr(self, "_conf"):
-            self._conf = {}
+            self._conf = {"codecarbon_version": __version__}
 
         value = _sentinel
 
@@ -301,6 +302,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(">>> Tracker's metadata:")
         logger.info(f"  Platform system: {self._conf.get('os')}")
         logger.info(f"  Python version: {self._conf.get('python_version')}")
+        logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
         logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
         logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
@@ -480,6 +482,7 @@ class BaseEmissionsTracker(ABC):
             cloud_region=cloud_region,
             os=self._conf.get("os"),
             python_version=self._conf.get("python_version"),
+            codecarbon_version=self._conf.get("codecarbon_version"),
             gpu_count=self._conf.get("gpu_count"),
             gpu_model=self._conf.get("gpu_model"),
             cpu_count=self._conf.get("cpu_count"),

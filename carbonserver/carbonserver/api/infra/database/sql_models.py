@@ -41,6 +41,7 @@ class Run(Base):
     experiment_id = Column(UUID(as_uuid=True), ForeignKey("experiments.id"))
     os = Column(String, nullable=True)
     python_version = Column(String, nullable=True)
+    codecarbon_version = Column(String, nullable=True)
     cpu_count = Column(Integer, nullable=True)
     cpu_model = Column(String, nullable=True)
     gpu_count = Column(Integer, nullable=True)
@@ -61,6 +62,7 @@ class Run(Base):
             f'experiment_id="{self.experiment_id}")>,'
             f'os="{self.os}")>,'
             f'python_version="{self.python_version}")>,'
+            f'codecarbon_version="{self.codecarbon_version}")>,'
             f'cpu_count="{self.cpu_count}")>,'
             f'cpu_model="{self.cpu_model}")>,'
             f'gpu_count="{self.gpu_count}")>,'

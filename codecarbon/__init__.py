@@ -2,6 +2,7 @@
 The Carbon Tracker module. The following objects/decorators belong to the Public API
 """
 
+from ._version import __version__  # noqa
 from .emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
@@ -9,5 +10,3 @@ from .emissions_tracker import (
 )
 
 __all__ = ["EmissionsTracker", "OfflineEmissionsTracker", "track_emissions"]
-
-__version__ = "2.1.4"

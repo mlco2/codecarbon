@@ -81,6 +81,7 @@ class RunBase(BaseModel):
     experiment_id: UUID
     os: Optional[str]
     python_version: Optional[str]
+    codecarbon_version: Optional[str]
     cpu_count: Optional[int]
     cpu_model: Optional[str]
     gpu_count: Optional[int]
@@ -99,6 +100,7 @@ class RunBase(BaseModel):
                 "experiment_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "os": "macOS-10.15.7-x86_64-i386-64bit",
                 "python_version": "3.8.0",
+                "codecarbon_version": "2.1.3",
                 "cpu_count": 12,
                 "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
                 "gpu_count": 4,

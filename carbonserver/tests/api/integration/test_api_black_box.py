@@ -3,7 +3,8 @@ To test it, you need to set:
 export CODECARBON_API_URL=http://localhost:8008
 export DATABASE_URL=postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
 Then execute the tests:
-pytest -x carbonserver/tests/api/integration/test_api_black_box.py
+cd carbonserver
+tox -e integration
 """
 
 import os
@@ -276,6 +277,7 @@ def send_run(experiment_id: str):
         "experiment_id": experiment_id,
         "os": "macOS-10.15.7-x86_64-i386-64bit",
         "python_version": "3.8.0",
+        "codecarbon_version": "2.1.3",
         "cpu_count": 12,
         "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
         "gpu_count": 4,
@@ -307,7 +309,8 @@ def test_api21_run_create2():
 def test_api22_run_read():
     r = requests.get(url=URL + "/run/" + run_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
-    assert r.json()["id"] == run_id
+    tc.assertEqual(r.json()["id"], run_id)
+    tc.assertEqual(r.json()["codecarbon_version"], "2.1.3")
 
 
 def test_api23_run_list():
@@ -415,7 +418,7 @@ def test_api27_read_all():
 def test_api29_experiment_read_detailed_sums():
     url = f"{URL}/experiments/{project_id}/sums/"
     r = requests.get(url, timeout=2)
-    print(url, r)
+    print("test_api29_experiment_read_detailed_sums", url, r)
     tc.assertEqual(r.status_code, 200)
     r = r.json()
 

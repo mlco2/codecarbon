@@ -89,9 +89,7 @@ def get_env_cloud_details(timeout=1):
                 response_data = postprocess_function(response_data)
 
             return {"provider": provider, "metadata": response_data}
-        except Exception as e:
-            logger.debug(
-                "Not running on %s, couldn't retrieve metadata: %r", provider, e
-            )
+        except requests.exceptions.RequestException:
+            logger.debug("Not running on %s", provider)
 
     return None
