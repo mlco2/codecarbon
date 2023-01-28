@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from datetime import datetime
 from functools import wraps
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union, Any
 
 from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
@@ -265,6 +265,7 @@ class BaseEmissionsTracker(ABC):
         self._task_start_measurement_values = {}
         self._task_stop_measurement_values = {}
         self._tasks: Dict[str, Task] = {}
+        self._active_task: Optional[str] = None
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
@@ -402,6 +403,10 @@ class BaseEmissionsTracker(ABC):
             self._cc_prometheus_out = PrometheusOutput(self._prometheus_url)
             self.persistence_objs.append(self._cc_prometheus_out)
 
+    def service_shutdown(self, signum, frame):
+        print('Caught signal %d' % signum)
+        self.stop()
+
     @suppress(Exception)
     def start(self) -> None:
         """
@@ -409,6 +414,7 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
+
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -420,12 +426,19 @@ class BaseEmissionsTracker(ABC):
 
         self._scheduler.start()
 
-    def start_task(self, task_name) -> None:
+    def start_task(self, task_name=None) -> None:
         """
         Start tracking a dedicated execution task.
         :param task_name: Name of the task to be isolated.
         :return: None
         """
+        if self._active_task:
+            logger.info("A task is already under measure")
+            return
+        if not task_name:
+            task_name = uuid.uuid4().__str__()
+        if task_name in self._tasks.keys():
+            task_name += "_" + uuid.uuid4().__str__()
         self._tasks.update(
             {
                 task_name: Task(
@@ -436,15 +449,15 @@ class BaseEmissionsTracker(ABC):
                 )
             }
         )
+        self._active_task = task_name
 
-    def stop_task(self, task_name) -> float:
+    def stop_task(self) -> float:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
         emissions.
-        :param task_name: Name of the task to be isolated.
         :return: None
         """
-
+        task_name = self._active_task
         delta_cpu_energy = self._tasks[task_name].compute_final_cpu_energy(
             self._total_cpu_energy
         )
@@ -517,6 +530,7 @@ class BaseEmissionsTracker(ABC):
         )
         self._tasks[task_name].emissions_data = task_emission_data
         self._tasks[task_name].is_active = False
+        self._active_task = None
         return task_emissions
 
     @suppress(Exception)
@@ -876,6 +890,30 @@ class EmissionsTracker(BaseEmissionsTracker):
         return self._cloud
 
 
+class TaskEmissionsTracker:
+    """
+    An online emissions tracker that auto infers geographical location,
+    using `geojs` API
+    """
+    def __init__(self, task_name, tracker: EmissionsTracker = None):
+        self.is_default_tracker = False
+        if tracker:
+            self.tracker = tracker
+        else:
+            self.tracker = EmissionsTracker()
+            self.is_default_tracker = True
+        self.task_name = task_name
+
+    def __enter__(self):
+        self.tracker.start_task(self.task_name)
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb) -> None:
+        self.tracker.stop_task()
+        if self.is_default_tracker:
+            self.tracker.stop()
+
+
 def track_emissions(
     fn: Callable = None,
     project_name: Optional[str] = _sentinel,
@@ -1019,3 +1057,48 @@ def track_emissions(
     if fn:
         return _decorate(fn)
     return _decorate
+
+
+def track_task_emissions(
+    fn: Callable = None,
+    tracker: BaseEmissionsTracker = None,
+    task_name: str = ""
+):
+    """
+    Track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
+    :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
+    tracker which will read default parameter from config to enable tracking
+    :param: task_name: Task to be tracked. If none is provided, an id will be used.
+    :return: The decorated function
+    """
+
+    if not tracker:
+        is_tracker_default = True
+        tracker = EmissionsTracker()
+    else:
+        is_tracker_default = False
+
+    def _decorate(fn: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(fn)
+        def wrapped_fn(*args, **kwargs):
+            fn_result = None
+            tracker.start_task(task_name=task_name)
+            try:
+                fn_result = fn(*args, **kwargs)
+            finally:
+                logger.info(
+                    "\nGraceful stopping task measurement: collecting and writing information.\n"
+                    + "Please Allow for a few seconds..."
+                )
+                tracker.stop_task()
+                if is_tracker_default:
+                    tracker.stop()
+                logger.info("Done!\n")
+            return fn_result
+
+        return wrapped_fn
+
+    if fn:
+        return _decorate(fn)
+    return _decorate
+
