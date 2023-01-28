@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from datetime import datetime
 from functools import wraps
-from typing import Callable, Dict, List, Optional, Union, Any
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
@@ -137,7 +137,7 @@ class BaseEmissionsTracker(ABC):
     def __init__(
         self,
         project_name: Optional[str] = _sentinel,
-        measure_power_secs: Optional[int] = _sentinel,
+        measure_power_secs: Optional[float] = _sentinel,
         api_call_interval: Optional[int] = _sentinel,
         api_endpoint: Optional[str] = _sentinel,
         api_key: Optional[str] = _sentinel,
@@ -221,7 +221,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(experiment_name, "experiment_name", "base")
         self._set_from_conf(gpu_ids, "gpu_ids")
         self._set_from_conf(log_level, "log_level", "info")
-        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, int)
+        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
         self._set_from_conf(output_dir, "output_dir", ".")
         self._set_from_conf(output_file, "output_file", "emissions.csv")
         self._set_from_conf(project_name, "project_name", "codecarbon")
@@ -404,7 +404,7 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(self._cc_prometheus_out)
 
     def service_shutdown(self, signum, frame):
-        print('Caught signal %d' % signum)
+        print("Caught signal %d" % signum)
         self.stop()
 
     @suppress(Exception)
@@ -895,6 +895,7 @@ class TaskEmissionsTracker:
     An online emissions tracker that auto infers geographical location,
     using `geojs` API
     """
+
     def __init__(self, task_name, tracker: EmissionsTracker = None):
         self.is_default_tracker = False
         if tracker:
@@ -1060,9 +1061,7 @@ def track_emissions(
 
 
 def track_task_emissions(
-    fn: Callable = None,
-    tracker: BaseEmissionsTracker = None,
-    task_name: str = ""
+    fn: Callable = None, tracker: BaseEmissionsTracker = None, task_name: str = ""
 ):
     """
     Track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
@@ -1101,4 +1100,3 @@ def track_task_emissions(
     if fn:
         return _decorate(fn)
     return _decorate
-

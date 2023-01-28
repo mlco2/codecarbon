@@ -1,5 +1,4 @@
 from threading import Lock, Timer
-import threading
 
 
 class PeriodicScheduler:

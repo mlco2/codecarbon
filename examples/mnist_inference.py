@@ -1,13 +1,13 @@
 import tensorflow as tf
 from sklearn.model_selection import GridSearchCV
 from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
+
 from codecarbon import EmissionsTracker
-
-
 from codecarbon.emissions_tracker import TaskEmissionsTracker, track_task_emissions
 
-
-tracker = EmissionsTracker(project_name="mnist_inference", measure_power_secs=1)
+tracker = EmissionsTracker(
+    project_name="mnist_inference", measure_power_secs=0.1, log_level="error"
+)
 
 
 def build_model():
@@ -47,7 +47,7 @@ def main():
         grid = GridSearchCV(estimator=model, param_grid=param_grid)
     grid.fit(x_train, y_train)
 
-    for i in range(10):
+    for _ in range(10):
         # Third tracking mode for tasks, use a decorated function with track_task_emissions decorator
         predict(grid, x_test)
 
