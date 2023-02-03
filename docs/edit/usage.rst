@@ -150,7 +150,7 @@ Configuration priority
 CodeCarbon is structured so that you can configure it in a hierarchical manner:
     * *global* parameters in your home folder ``~/.codecarbon.config``
     * *local* parameters (with respect to the current working directory) in ``./.codecarbon.config``
-    * *environment variables* parameters starting with ``CODECABON_``
+    * *environment variables* parameters starting with ``CODECARBON_``
     * *script* parameters in the tracker's initialization as ``EmissionsTracker(param=value)``
 
 .. warning:: Configuration files **must** be named ``.codecarbon.config`` and start with a section header ``[codecarbon]`` as the first line in the file.
