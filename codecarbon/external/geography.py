@@ -14,7 +14,6 @@ from codecarbon.external.logger import logger
 
 @dataclass
 class CloudMetadata:
-
     provider: Optional[str]
     region: Optional[str]
 

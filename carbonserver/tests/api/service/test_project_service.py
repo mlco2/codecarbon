@@ -31,7 +31,6 @@ def test_project_service_creates_correct_project(_):
 
 
 def test_project_service_retrieves_correct_project_by_id():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_project = PROJECT
     organization_service: ProjectService = ProjectService(repository_mock)
@@ -44,7 +43,6 @@ def test_project_service_retrieves_correct_project_by_id():
 
 
 def test_project_service_retrieves__correct_project_by_team_id():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_team_id = TEAM_ID
     project_service: ProjectService = ProjectService(repository_mock)

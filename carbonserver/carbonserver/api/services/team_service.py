@@ -7,7 +7,6 @@ class TeamService:
         self._repository = team_repository
 
     def add_team(self, team: TeamCreate) -> Team:
-
         created_team = self._repository.add_team(team)
         return created_team
 

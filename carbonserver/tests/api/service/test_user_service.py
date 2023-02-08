@@ -37,7 +37,6 @@ USER_AUTHENTICATE = UserAuthenticate(email="xyz@email.com", password="pwd")
 
 @mock.patch("uuid.uuid4", return_value=USER_ID)
 def test_user_service_creates_correct_user_on_sign_up(_):
-
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
     expected_id = USER_ID
     user_service: UserService = UserService(user_mock_repository)
@@ -53,7 +52,6 @@ def test_user_service_creates_correct_user_on_sign_up(_):
 
 
 def test_user_service_retrieves_all_existing_users():
-
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
     expected_user_ids_list = [USER_ID, USER_ID_2]
     user_service: UserService = UserService(user_mock_repository)
@@ -68,7 +66,6 @@ def test_user_service_retrieves_all_existing_users():
 
 
 def test_user_service_retrieves_correct_user_by_id():
-
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
     expected_user: User = USER_1
     user_service: UserService = UserService(user_mock_repository)

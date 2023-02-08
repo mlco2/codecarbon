@@ -19,7 +19,6 @@ class SqlAlchemyRepository(Teams):
         self.session_factory = session_factory
 
     def add_team(self, team: TeamCreate) -> Team:
-
         with self.session_factory() as session:
             db_team = SqlModelTeam(
                 id=uuid4(),

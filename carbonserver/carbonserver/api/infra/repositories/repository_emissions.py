@@ -71,7 +71,6 @@ class SqlAlchemyRepository(Emissions):
         :rtype: List[schemas.Emission]
         """
         with self.session_factory() as session:
-
             res = (
                 session.query(sql_models.Emission)
                 .filter(sql_models.Emission.run_id == run_id)

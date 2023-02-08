@@ -39,7 +39,6 @@ from plotly.subplots import make_subplots
     ],
 )
 def update_project_from_organization(value):
-
     orga_id = value
     df_project = get_project_list(orga_id)
     if len(df_project) > 0:

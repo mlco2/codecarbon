@@ -112,7 +112,6 @@ class BaseEmissionsTracker(ABC):
         if var is not _sentinel:
             value = var
         else:
-
             # no value provided in the constructor for `name`: check in the conf
             # (using the provided default value)
             value = self._external_conf.get(name, default)

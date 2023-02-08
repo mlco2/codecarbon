@@ -19,7 +19,7 @@ class TestConfig(unittest.TestCase):
         for key in [1, None, 0.2, [], set()]:
             with self.assertRaises(AssertionError):
                 clean_env_key(key)
-        for (key, target) in [
+        for key, target in [
             ("", ""),
             ("USER", "user"),
             ("CODECARBON_TEST", "test"),
@@ -30,7 +30,7 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(clean_env_key(key), target)
 
     def test_parse_gpu_ids(self):
-        for (ids, target) in [
+        for ids, target in [
             ("0,1,2", [0, 1, 2]),
             ("[0, 1, 2", [0, 1, 2]),
             ("(0, 1, 2)", [0, 1, 2]),
@@ -57,7 +57,6 @@ class TestConfig(unittest.TestCase):
         )
 
     def test_read_confs(self):
-
         global_conf = dedent(
             """\
             [codecarbon]
@@ -95,7 +94,6 @@ class TestConfig(unittest.TestCase):
         },
     )
     def test_read_confs_and_parse_envs(self):
-
         global_conf = dedent(
             """\
             [codecarbon]

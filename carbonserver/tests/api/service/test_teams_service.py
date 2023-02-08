@@ -32,7 +32,6 @@ TEAM_2 = Team(
 
 @mock.patch("uuid.uuid4", return_value=TEAM_ID)
 def test_teams_service_creates_correct_team(_):
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_id = TEAM_ID
     user_service: TeamService = TeamService(repository_mock)
@@ -50,7 +49,6 @@ def test_teams_service_creates_correct_team(_):
 
 
 def test_teams_service_retrieves_all_existing_teams():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_team_ids_list = [TEAM_ID, TEAM_ID_2]
     organization_service: TeamService = TeamService(repository_mock)
@@ -65,7 +63,6 @@ def test_teams_service_retrieves_all_existing_teams():
 
 
 def test_teams_service_retrieves_correct_team_by_id():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org: Team = TEAM_1
     organization_service: TeamService = TeamService(repository_mock)
@@ -78,7 +75,6 @@ def test_teams_service_retrieves_correct_team_by_id():
 
 
 def test_teams_service_retrieves_correct_team_by_organization_id():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_organization_id = ORG_ID
     team_service: TeamService = TeamService(repository_mock)

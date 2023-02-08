@@ -151,7 +151,6 @@ class Data:
     def get_regional_emissions_choropleth_data(
         self, net_energy_consumed: float, country_iso_code: str
     ) -> List[Dict]:
-
         # add country codes here to render for different countries
         if country_iso_code.upper() not in ["USA", "CAN"]:
             return [{"region_code": "", "region_name": "", "emissions": ""}]
@@ -160,7 +159,9 @@ class Data:
             region_emissions = self._data_source.get_country_emissions_data(
                 country_iso_code.lower()
             )
-        except DataSourceException:  # This country has regional data at the energy mix level, not the emissions level
+        except (
+            DataSourceException
+        ):  # This country has regional data at the energy mix level, not the emissions level
             country_energy_mix = self._data_source.get_country_energy_mix_data(
                 country_iso_code.lower()
             )
@@ -170,7 +171,6 @@ class Data:
             }
         choropleth_data = []
         for region_name in region_emissions.keys():
-
             region_code = region_emissions[region_name]["regionCode"]
             if region_name not in ["_unit"]:
                 from codecarbon.core.units import Energy

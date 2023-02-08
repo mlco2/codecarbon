@@ -205,7 +205,6 @@ class ExperimentReport(ExperimentBase):
     emissions_count: int
 
     class Config:
-
         schema_extra = {
             "experiment_id": "943b2aa5-9e21-41a9-8a38-562505b4b2aa",
             "timestamp": "2021-10-07T20:19:27.716693",

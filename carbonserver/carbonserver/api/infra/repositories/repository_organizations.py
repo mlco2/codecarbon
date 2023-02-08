@@ -31,7 +31,6 @@ class SqlAlchemyRepository(Organizations):
         self.session_factory = session_factory
 
     def add_organization(self, organization: OrganizationCreate) -> Organization:
-
         with self.session_factory() as session:
             db_organization = SqlModelOrganization(
                 id=uuid4(),

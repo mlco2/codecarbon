@@ -22,7 +22,6 @@ def train_model(epochs: int):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--google-project",
