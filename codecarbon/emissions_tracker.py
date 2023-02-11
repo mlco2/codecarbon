@@ -417,10 +417,12 @@ class BaseEmissionsTracker(ABC):
 
         if self._scheduler:
             self._scheduler.stop()
-
-        # Run to calculate the power used from last
-        # scheduled measurement to shutdown
-        self._measure_power_and_energy()
+            self._scheduler = None
+            # Run to calculate the power used from last
+            # scheduled measurement to shutdown
+            self._measure_power_and_energy()
+        else:
+            logger.warning("Tracker already stopped !")
 
         emissions_data = self._prepare_emissions_data()
 
