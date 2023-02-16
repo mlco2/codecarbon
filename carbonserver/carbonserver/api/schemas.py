@@ -130,6 +130,7 @@ class Run(RunBase):
 class RunReport(RunBase):
     run_id: UUID
     timestamp: datetime
+    experiment_id: Optional[UUID]
     emissions: float
     cpu_power: float
     gpu_power: float

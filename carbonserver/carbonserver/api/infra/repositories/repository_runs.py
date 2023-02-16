@@ -12,7 +12,7 @@ from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmiss
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
-from carbonserver.api.schemas import Empty, Run, RunCreate, RunReport
+from carbonserver.api.schemas import Run, RunCreate, RunReport
 from carbonserver.logger import logger
 
 """
@@ -69,13 +69,10 @@ class SqlAlchemyRepository(Runs):
 
     def list_runs(self) -> List[Run]:
         with self.session_factory() as session:
-            e = session.query(SqlModelRun)
-            if e is None:
-                return None
-            runs: List[Run] = []
-            for run in e:
-                runs.append(self.map_sql_to_schema(run))
-            return runs
+            res = session.query(SqlModelRun)
+            if res is None:
+                return []
+            return [self.map_sql_to_schema(run) for run in res]
 
     def get_runs_from_experiment(self, experiment_id) -> List[Run]:
         """Find the list of runs from an experiment in database and return it
@@ -89,7 +86,7 @@ class SqlAlchemyRepository(Runs):
                 SqlModelRun.experiment_id == experiment_id
             )
             if res.first() is None:
-                return []
+                raise EmptyResultException(f"No runs for experiment {experiment_id}")
             return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
@@ -167,11 +164,15 @@ class SqlAlchemyRepository(Runs):
                 )
                 .all()
             )
+            # TODO: Remove this log XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            logger.debug(f"get_experiment_detailed_sums_by_run {res=}")
+            if res is None:
+                return []
+            # Ca à l'air d'être le return qui n'est plus accepter car PyDantic refuse de
+            # faire rentrer res dans RunReport
             return res
 
-    def get_project_last_run(
-        self, project_id, start_date, end_date
-    ) -> Union[Run, Empty]:
+    def get_project_last_run(self, project_id, start_date, end_date) -> Union[Run]:
         """Find the last run of a project in database between two dates and return it
 
         :project_id: The id of the project to retrieve runs from

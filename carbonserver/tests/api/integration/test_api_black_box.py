@@ -478,7 +478,7 @@ def test_api29_experiment_read_detailed_sums():
 def test_api30_run_read_detailed_sums():
     url = f"{URL}/runs/{experiment_id}/sums/"
     r = requests.get(url, timeout=2)
-    tc.assertEqual(r.status_code, 200)
+    tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     """
     [
         {'run_id': '1e614f0c-f1cb-4ce3-9183-d0df8e28566d', 'timestamp': '2022-04-23T23:11:05.377152', 'emissions': 201.0, 'cpu_power': 0.5,
@@ -513,7 +513,7 @@ def test_api30_run_read_detailed_sums():
 def test_api31_project_read_detailed_sums():
     url = f"{URL}/project/{project_id}/sums/"
     r = requests.get(url, timeout=2)
-    tc.assertEqual(r.status_code, 200)
+    tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     r = r.json()
     assert len(r) > 0
     assert r["project_id"] == project_id
@@ -542,7 +542,7 @@ def test_api31_project_read_detailed_sums():
 def test_api32_organization_read_detailed_sums():
     url = f"{URL}/organization/{org_new_id}/sums/"
     r = requests.get(url, timeout=2)
-    tc.assertEqual(r.status_code, 200)
+    tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     assert len(r.json()) > 0
     assert r.json()["organization_id"] == org_new_id
     organization_sum = r.json()
