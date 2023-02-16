@@ -156,10 +156,12 @@ def is_key_all_values_equal(list_of_dict, key, value):
 #     assert r.status_code == 401
 
 
-def test_api00_organization_missing():
-    r = requests.get(url=URL + "/organization/" + MISSING_UUID, timeout=2)
-    tc.assertEqual(r.status_code, 200)
-    assert r.json() == 0
+def test_api00_uuid_missing():
+    for route in ["organization", "team", "project", "experiment", "emission", "run"]:
+        r = requests.get(url=URL + f"/{route}/" + MISSING_UUID, timeout=2)
+        tc.assertEqual(
+            r.status_code, 404, msg=f"{r.status_code}!=404 for {route} : {r.content}"
+        )
 
 
 def test_api09_organization_create():

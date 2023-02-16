@@ -3,6 +3,7 @@ from contextlib import AbstractContextManager
 from typing import List, Union
 
 from dependency_injector.providers import Callable
+from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.runs import Runs
@@ -63,7 +64,7 @@ class SqlAlchemyRepository(Runs):
         with self.session_factory() as session:
             e = session.query(SqlModelRun).filter(SqlModelRun.id == run_id).first()
             if e is None:
-                return None
+                raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
             return self.map_sql_to_schema(e)
 
     def list_runs(self) -> List[Run]:

@@ -3,6 +3,7 @@ from typing import Callable, List
 from uuid import UUID, uuid4
 
 import bcrypt
+from fastapi import HTTPException
 
 from carbonserver.api.domain.users import Users
 from carbonserver.api.infra.api_key_service import generate_api_key
@@ -45,7 +46,7 @@ class SqlAlchemyRepository(Users):
         with self.session_factory() as session:
             e = session.query(SqlModelUser).filter(SqlModelUser.id == user_id).first()
             if e is None:
-                return None
+                raise HTTPException(status_code=404, detail=f"User {user_id} not found")
             return self.map_sql_to_schema(e)
 
     def list_users(self) -> List[User]:

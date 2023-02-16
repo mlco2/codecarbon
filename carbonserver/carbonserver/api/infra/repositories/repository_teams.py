@@ -3,6 +3,7 @@ from typing import List
 from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
+from fastapi import HTTPException
 
 from carbonserver.api.domain.teams import Teams
 from carbonserver.api.infra.api_key_service import generate_api_key
@@ -42,7 +43,7 @@ class SqlAlchemyRepository(Teams):
         with self.session_factory() as session:
             e = session.query(SqlModelTeam).filter(SqlModelTeam.id == team_id).first()
             if e is None:
-                return None
+                raise HTTPException(status_code=404, detail=f"Team {team_id} not found")
             return self.map_sql_to_schema(e)
 
     def list_teams(self):

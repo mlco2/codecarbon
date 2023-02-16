@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from click import UUID
 from dependency_injector.providers import Callable
+from fastapi import HTTPException
 
 from carbonserver.api.domain.emissions import Emissions
 from carbonserver.api.infra.database import sql_models
@@ -60,7 +61,9 @@ class SqlAlchemyRepository(Emissions):
                 .first()
             )
             if e is None:
-                return None
+                raise HTTPException(
+                    status_code=404, detail=f"Emission {emission_id} not found"
+                )
             return self.map_sql_to_schema(e)
 
     def get_emissions_from_run(self, run_id) -> List[Emission]:

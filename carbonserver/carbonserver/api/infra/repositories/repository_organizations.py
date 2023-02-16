@@ -3,6 +3,7 @@ from typing import List
 from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
+from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.organizations import Organizations
@@ -58,14 +59,16 @@ class SqlAlchemyRepository(Organizations):
                 .first()
             )
             if e is None:
-                return None
+                raise HTTPException(
+                    status_code=404, detail=f"Organization {organization_id} not found"
+                )
             return self.map_sql_to_schema(e)
 
-    def list_organizations(self):
+    def list_organizations(self) -> List[Organization]:
         with self.session_factory() as session:
             e = session.query(SqlModelOrganization)
             if e is None:
-                return None
+                return []
             orgs: List[Organization] = []
             for org in e:
                 orgs.append(self.map_sql_to_schema(org))
