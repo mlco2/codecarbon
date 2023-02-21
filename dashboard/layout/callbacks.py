@@ -139,7 +139,7 @@ def update_Charts(start_date, end_date, project):
     end_date = pd.to_datetime(end_date)
     df_project = get_project_sums(project, start_date, end_date)
 
-    if df_project is None:
+    if (df_project is None) or (len(df_project) != 15): #return-API (fix error V1)
         energyConsumed = 0
         emission = 0
         duration = 0

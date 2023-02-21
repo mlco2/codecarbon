@@ -22,7 +22,9 @@ def api_loader(fn_request_path):
     def wrapper(*args, **kwargs):
         r_path, params = fn_request_path(*args, **kwargs)
         r = requests.get(r_path, auth=(USER, PSSD), params=params)
-        # TODO: Handle error if r.status_code != 200
+        # Handle error if r.status_code != 200
+        if r.status_code !=200:
+            print("API ERROR:","\n",r_path,"\n",params)
         c = json.loads(r.content)
         return c
 
