@@ -54,7 +54,7 @@ git checkout api
 cd carbonserver
 python -m setup install
 python -m setup build   # Verify the build on local environment
-pip install -r requirements-test.txt # Install test dependencies
+pip install -r requirements-dev.txt # Install test dependencies
 ```
 
 
