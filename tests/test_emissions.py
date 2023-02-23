@@ -140,7 +140,6 @@ class TestEmissions(unittest.TestCase):
         self.assertAlmostEqual(emissions, 0.115, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITHOUT_REGION(self):
-
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
             Energy.from_energy(kWh=3),
@@ -152,7 +151,6 @@ class TestEmissions(unittest.TestCase):
         self.assertAlmostEqual(emissions, 0.3869, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
-
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
             Energy.from_energy(kWh=3),

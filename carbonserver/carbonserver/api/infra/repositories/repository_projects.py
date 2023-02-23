@@ -2,6 +2,7 @@ from contextlib import AbstractContextManager
 from typing import List
 
 from dependency_injector.providers import Callable
+from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.projects import Projects
@@ -29,7 +30,7 @@ class SqlAlchemyRepository(Projects):
             session.refresh(db_project)
             return self.map_sql_to_schema(db_project)
 
-    def get_one_project(self, project_id):
+    def get_one_project(self, project_id) -> Project:
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelProject)
@@ -37,7 +38,9 @@ class SqlAlchemyRepository(Projects):
                 .first()
             )
             if e is None:
-                return None
+                raise HTTPException(
+                    status_code=404, detail=f"Project {project_id} not found"
+                )
             return self.map_sql_to_schema(e)
 
     def get_projects_from_team(self, team_id) -> List[Project]:

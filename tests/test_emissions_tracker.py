@@ -130,7 +130,6 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
     ):
-
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         def raise_exception(*args, **kwargs):
@@ -149,7 +148,6 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
     ):
-
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         def raise_exception(*args, **kwargs):
@@ -169,7 +167,6 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
     ):
-
         # GIVEN
         responses.add(
             responses.GET,

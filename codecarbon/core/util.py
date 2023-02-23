@@ -26,7 +26,6 @@ def suppress(*exceptions):
 
 
 def resolve_path(path: Union[str, Path]) -> Path:
-
     """
     Fully resolve a path:
     resolve env vars ($HOME etc.) -> expand user (~) -> make absolute

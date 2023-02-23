@@ -20,7 +20,6 @@ def set_logger_format(custom_preamble: Optional[str] = ""):
 
 
 def set_logger_level(level: Optional[str] = None):
-
     if level is None:
         lower_envs = {k.lower(): v for k, v in os.environ.items()}
         level = lower_envs.get("codecarbon_log_level", "INFO")

@@ -2,6 +2,7 @@ from contextlib import AbstractContextManager
 from typing import List
 
 from dependency_injector.providers import Callable
+from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.experiments import Experiments
@@ -50,7 +51,9 @@ class SqlAlchemyRepository(Experiments):
                 .first()
             )
             if e is None:
-                return None
+                raise HTTPException(
+                    status_code=404, detail=f"Experiment {experiment_id} not found"
+                )
             return self.map_sql_to_schema(e)
 
     def get_experiments_from_project(self, project_id) -> List[Experiment]:

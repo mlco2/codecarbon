@@ -22,7 +22,6 @@ depends_on = None
 
 
 def upgrade():
-
     data_for_good_team_columns = "(id,name,description,api_key,organization_id)"
     data_for_good_team_values = (
         DFG_TEAM_ID,

@@ -26,7 +26,6 @@ ORG_2 = Organization(
 
 @mock.patch("uuid.uuid4", return_value=ORG_ID)
 def test_organization_service_add_org_creates_correct_org(_):
-
     expected_id = ORG_ID
     expected_api_key = API_KEY
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
@@ -45,7 +44,6 @@ def test_organization_service_add_org_creates_correct_org(_):
 
 
 def test_organiation_service_retrieves_all_existing_organizations():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org_ids_list = [ORG_ID, ORG_ID_2]
     organization_service: OrganizationService = OrganizationService(repository_mock)
@@ -60,7 +58,6 @@ def test_organiation_service_retrieves_all_existing_organizations():
 
 
 def test_organization_service_retrieves_correct_org_by_id():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org: Organization = ORG_1
     organization_service: OrganizationService = OrganizationService(repository_mock)

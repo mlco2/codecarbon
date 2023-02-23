@@ -32,7 +32,6 @@ from carbonserver.config import settings
 
 
 class ServerContainer(containers.DeclarativeContainer):
-
     config = providers.Configuration()
     db_url = settings.db_url
     db = providers.Singleton(

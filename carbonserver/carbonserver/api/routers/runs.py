@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import dateutil.relativedelta
 from container import ServerContainer
@@ -8,11 +8,13 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Run, RunCreate, RunReport
+from carbonserver.api.errors import EmptyResultException
+from carbonserver.api.schemas import Empty, Run, RunCreate, RunReport
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
     ExperimentSumsByRunUsecase,
 )
+from carbonserver.logger import logger
 
 RUNS_ROUTER_TAGS = ["Runs"]
 
@@ -105,7 +107,7 @@ def read_experiment_detailed_sums_by_run(
     "/lastrun/project/{project_id}",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
-    response_model=Run,
+    response_model=Union[Run, Empty],
 )
 @inject
 def read_project_last_run(
@@ -113,11 +115,15 @@ def read_project_last_run(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
-) -> Run:
+) -> Union[Run, Empty]:
     start_date = (
         start_date
         if start_date
         else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
-    return run_service.read_project_last_run(project_id, start_date, end_date)
+    try:
+        return run_service.read_project_last_run(project_id, start_date, end_date)
+    except EmptyResultException as e:
+        logger.warning(f"read_project_last_run : {e}")
+        return Empty()

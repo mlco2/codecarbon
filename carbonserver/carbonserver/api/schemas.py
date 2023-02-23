@@ -12,7 +12,11 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, SecretStr
+from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
+
+
+class Empty(BaseModel, extra=Extra.forbid):
+    pass
 
 
 class EmissionBase(BaseModel):
@@ -126,6 +130,7 @@ class Run(RunBase):
 class RunReport(RunBase):
     run_id: UUID
     timestamp: datetime
+    experiment_id: Optional[UUID]
     emissions: float
     cpu_power: float
     gpu_power: float
@@ -201,7 +206,6 @@ class ExperimentReport(ExperimentBase):
     emissions_count: int
 
     class Config:
-
         schema_extra = {
             "experiment_id": "943b2aa5-9e21-41a9-8a38-562505b4b2aa",
             "timestamp": "2021-10-07T20:19:27.716693",

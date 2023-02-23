@@ -2,6 +2,14 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+class EmptyResultException(Exception):
+    """
+    The request return an empty result.
+    """
+
+    pass
+
+
 @dataclass
 class ErrorBase:
     code: str

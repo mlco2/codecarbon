@@ -26,7 +26,7 @@ import requests
 from codecarbon.external.logger import logger
 
 
-def postprocess_gcp_cloud_metadata(cloud_metadata):
+def postprocess_gcp_cloud_metadata(cloud_metadata: Dict[str, Any]) -> Dict[str, Any]:
     # type: (Dict[str, Any]) -> Dict[str, Any]
 
     # Attributes contains custom metadata and also contains Kubernetes config,
@@ -54,7 +54,7 @@ CLOUD_METADATA_MAPPING: Dict[str, Dict[str, Any]] = {
 }
 
 
-def get_env_cloud_details(timeout=1):
+def get_env_cloud_details(timeout: int = 1) -> Optional[Any]:
     # type: (int) -> Optional[Any]
     """
     >>> get_env_cloud_details()

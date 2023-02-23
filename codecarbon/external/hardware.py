@@ -192,7 +192,6 @@ class CPU(BaseHardware):
         model: Optional[str] = None,
         tdp: Optional[int] = None,
     ) -> "CPU":
-
         if model is None:
             model = detect_cpu_model()
             if model is None:
@@ -209,7 +208,6 @@ class CPU(BaseHardware):
 
 @dataclass
 class RAM(BaseHardware):
-
     # 3 watts of power for every 8GB of DDR3 or DDR4 memory
     # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
     power_per_GB = 3 / 8  # W/GB

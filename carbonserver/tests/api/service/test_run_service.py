@@ -33,7 +33,6 @@ RUN_2 = Run(
 
 @mock.patch("uuid.uuid4", return_value=RUN_ID)
 def test_run_service_creates_correct_run(_):
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_id = RUN_ID
     run_service: RunService = RunService(repository_mock)
@@ -51,7 +50,6 @@ def test_run_service_creates_correct_run(_):
 
 
 def test_run_service_retrieves_all_existing_runs():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_run_ids_list = [RUN_ID, RUN_ID_2]
     run_service: RunService = RunService(repository_mock)
@@ -66,7 +64,6 @@ def test_run_service_retrieves_all_existing_runs():
 
 
 def test_run_service_retrieves_correct_run_by_id():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org: Run = RUN_1
     run_service: RunService = RunService(repository_mock)
@@ -78,7 +75,6 @@ def test_run_service_retrieves_correct_run_by_id():
 
 
 def test_run_service_retrieves_correct_run_by_experiment_id():
-
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_experiment_id = EXPERIMENT_ID
     run_service: RunService = RunService(repository_mock)

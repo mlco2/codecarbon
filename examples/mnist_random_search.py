@@ -14,7 +14,6 @@ class RandomSearchTuner(kerastuner.tuners.RandomSearch):
 
 
 def build_model(hp):
-
     model = tf.keras.models.Sequential(
         [
             tf.keras.layers.Flatten(input_shape=(28, 28)),

@@ -69,7 +69,6 @@ def read_project_experiments(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> List[Experiment]:
-
     return experiment_service.get_experiments_from_project(project_id)
 
 

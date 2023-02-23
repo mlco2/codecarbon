@@ -1,16 +1,19 @@
 import uuid
 from contextlib import AbstractContextManager
-from typing import List
+from typing import List, Union
 
 from dependency_injector.providers import Callable
+from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.runs import Runs
+from carbonserver.api.errors import EmptyResultException
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import Run, RunCreate, RunReport
+from carbonserver.logger import logger
 
 """
 Here there is all the methods to manipulate the run data
@@ -61,18 +64,15 @@ class SqlAlchemyRepository(Runs):
         with self.session_factory() as session:
             e = session.query(SqlModelRun).filter(SqlModelRun.id == run_id).first()
             if e is None:
-                return None
+                raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
             return self.map_sql_to_schema(e)
 
     def list_runs(self) -> List[Run]:
         with self.session_factory() as session:
-            e = session.query(SqlModelRun)
-            if e is None:
-                return None
-            runs: List[Run] = []
-            for run in e:
-                runs.append(self.map_sql_to_schema(run))
-            return runs
+            res = session.query(SqlModelRun)
+            if res is None:
+                return []
+            return [self.map_sql_to_schema(run) for run in res]
 
     def get_runs_from_experiment(self, experiment_id) -> List[Run]:
         """Find the list of runs from an experiment in database and return it
@@ -86,7 +86,7 @@ class SqlAlchemyRepository(Runs):
                 SqlModelRun.experiment_id == experiment_id
             )
             if res.first() is None:
-                return []
+                raise EmptyResultException(f"No runs for experiment {experiment_id}")
             return [self.map_sql_to_schema(e) for e in res]
 
     @staticmethod
@@ -164,10 +164,16 @@ class SqlAlchemyRepository(Runs):
                 )
                 .all()
             )
+            # TODO: Remove this log XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            logger.debug(f"get_experiment_detailed_sums_by_run {res=}")
+            if res is None:
+                return []
+            # Ca à l'air d'être le return qui n'est plus accepter car PyDantic refuse de
+            # faire rentrer res dans RunReport
             return res
 
-    def get_project_last_run(self, project_id, start_date, end_date) -> Run:
-        """TODO Find the last run of a project in database between two dates and return it
+    def get_project_last_run(self, project_id, start_date, end_date) -> Union[Run]:
+        """Find the last run of a project in database between two dates and return it
 
         :project_id: The id of the project to retrieve runs from
         :start_date: the lower bound of the time interval which contains sought runs
@@ -196,5 +202,8 @@ class SqlAlchemyRepository(Runs):
             )
 
             if res is None:
-                return None
+                logger.warning(
+                    f"get_project_last_run : No runs for project {project_id}"
+                )
+                raise EmptyResultException(f"No runs for project {project_id}")
             return self.map_sql_to_schema(res)

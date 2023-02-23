@@ -42,7 +42,6 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
 
 
 def create_app() -> FastAPI:
-
     container = init_container()
 
     init_db(container)

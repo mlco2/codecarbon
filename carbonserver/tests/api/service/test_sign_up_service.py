@@ -112,7 +112,6 @@ def test_sign_up_service_creates_user_with_default_team_and_organisation():
 
 
 def test_add_user_to_org_adds_user_if_api_key_is_correct():
-
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
     team_mock_repository: TeamSqlRepository = mock.Mock(spec=TeamSqlRepository)
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
@@ -128,7 +127,6 @@ def test_add_user_to_org_adds_user_if_api_key_is_correct():
 
 
 def test_add_user_to_org_rejects_user_if_api_key_is_incorrect():
-
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
     team_mock_repository: TeamSqlRepository = mock.Mock(spec=TeamSqlRepository)
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
@@ -148,7 +146,6 @@ def test_add_user_to_org_rejects_user_if_api_key_is_incorrect():
 
 
 def test_add_user_to_team_adds_user_if_api_key_is_correct():
-
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
     team_mock_repository: TeamSqlRepository = mock.Mock(spec=TeamSqlRepository)
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
@@ -163,7 +160,6 @@ def test_add_user_to_team_adds_user_if_api_key_is_correct():
 
 
 def test_add_user_to_team_rejects_user_if_api_key_is_incorrect():
-
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
     team_mock_repository: TeamSqlRepository = mock.Mock(spec=TeamSqlRepository)
     org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
