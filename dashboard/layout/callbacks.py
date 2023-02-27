@@ -304,7 +304,7 @@ def uppdate_bubblechart(clickPoint, start_date, end_date, project):
 
     if clickPoint is None:
         lastrun = get_lastrun(project, start_date, end_date)
-        if lastrun is not None:
+        if (lastrun is not None) and (len(lastrun) != 0):
             experiment_id = lastrun["experiment_id"]
             experiment_name = get_experiment(experiment_id)["name"]
         else:
@@ -376,7 +376,7 @@ def uppdate_linechart(clickPoint, start_date, end_date, experiment_clickPoint, p
 
     if experiment_clickPoint is None and clickPoint is None:
         last_run = get_lastrun(project, start_date, end_date)
-        if last_run is not None:
+        if (last_run is not None) and (len(last_run) != 0):
             run_name = last_run["id"]
             df_run, total_run = get_run_emissions(run_name)
 
@@ -474,7 +474,7 @@ def get_metadata_table(
     }
     if experiment_clickPoint is None and clickPoint is None:
         last_run = get_lastrun(project, start_date, end_date)
-        if last_run is not None:
+        if (last_run is not None) and (len(last_run) != 0):
             run_name = last_run["id"]
             dic_table = get_run_info(run_name)
     elif clickPoint is None:
