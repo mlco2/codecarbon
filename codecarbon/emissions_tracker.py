@@ -826,8 +826,11 @@ class BaseEmissionsTracker(ABC):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
                 logger.info(
-                    f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
-                    + f". Total CPU Power : {self._cpu_power.W} W"
+                    f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
+                    + f", power : {self._cpu_power.W} W"
+                )
+                logger.info(
+                    f"Energy consumed for All CPU : {self._total_cpu_energy.kWh:.6f} kWh"
                 )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
