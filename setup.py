@@ -10,7 +10,7 @@ DEPENDENCIES = [
     "requests",
     "psutil",
     "py-cpuinfo",
-    "fuzzywuzzy",
+    "rapidfuzz",
     "click",
     "prometheus_client",
 ]

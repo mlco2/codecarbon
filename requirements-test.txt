@@ -5,4 +5,4 @@ tox
 numpy
 psutil
 requests-mock
-fuzzywuzzy
+rapidfuzz

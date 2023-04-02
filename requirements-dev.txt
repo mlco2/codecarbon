@@ -13,6 +13,6 @@ sphinx-rtd-theme
 responses
 py-cpuinfo
 psutil
-fuzzywuzzy
 prometheus_client
 pre-commit
+rapidfuzz
