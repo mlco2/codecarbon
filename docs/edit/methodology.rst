@@ -133,6 +133,20 @@ If none of the tracking tools are available on a computing resource, CodeCarbon 
 
 The net Energy Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
+CPU hardware
+------------
+
+The CPU die is the processing unit itself. It’s a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible1. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.
+
+In Linux kernel, energy_uj is a current energy counter in micro joules. It is used to measure CPU cores’ energy consumption.
+
+Micro joules is then converted in kWh, with formulas kWh=energy * 10 ** (-6) * 2.77778e-7
+
+For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read two files :
+/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj
+
+
+
 ``Energy = Power * Time``
 
 References
