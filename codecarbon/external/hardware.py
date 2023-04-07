@@ -186,13 +186,13 @@ class CPU(BaseHardware):
             cpu_load = psutil.cpu_percent(interval=None)
             # We add a minimum of 10% of TDP
             power = max(self._tdp * 0.1, self._tdp * cpu_load / 100)
-            logger.debug(f"CPU load {self._tdp} W x {cpu_load}% = {power}")
+            logger.debug(f"CPU load {self._tdp} W x {cpu_load}% = {power} for whole machine.")
         elif self._tracking_mode == "process":
 
             cpu_load = self._process.cpu_percent(interval=None) / self._cpu_count
             power = self._tdp * cpu_load / 100
             logger.debug(
-                f"CPU load {self._tdp} W x {cpu_load}% = {power} for process {self._pid}"
+                f"CPU load {self._tdp} W x {cpu_load}% = {power} for process {self._pid}."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
