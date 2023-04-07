@@ -146,6 +146,32 @@ For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read 
 /sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj
 
 
+RAPL Metrics
+------------
+RAPL stand for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
+
+See https://blog.chih.me/read-cpu-power-with-RAPL.html
+
+Despite the name Intel RAPL, it support AMD processors since kernel 5.8.
+
+Metric comparison
+
+Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
+Power plug measure when idle (10% CPU): 125 W
+package-0-die-0 : 68 W
+package-0-die-1 : 68 W
+CodeCarbon : 137 W
+
+Power plug measure when loaded (100% CPU): 256 W - 125W in idle = 131 W
+CorWatt	PkgWatt
+	133.13	169.82
+	7.54	169.82
+CodeCarbon : 330 W
+package-0-die-0 : 166 W
+package-0-die-1 : 166 W
+
+RAPL: 234 sec. Joule Counter Range, at 280 Watts
+
 
 ``Energy = Power * Time``
 
