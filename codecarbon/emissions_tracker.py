@@ -153,6 +153,7 @@ class BaseEmissionsTracker(ABC):
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
+        default_cpu_power: Optional[int] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -196,6 +197,7 @@ class BaseEmissionsTracker(ABC):
                              Accepts one of "append" or "update". Default is "append".
         :param logger_preamble: String to systematically include in the logger.
                                 messages. Defaults to "".
+        :param default_cpu_power: cpu power to be used as default if the cpu is not known
         """
 
         # logger.info("base tracker init")
@@ -218,6 +220,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
+        self._set_from_conf(default_cpu_power, "default_cpu_power")
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -283,6 +286,11 @@ class BaseEmissionsTracker(ABC):
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
+            if (power is None) and self._default_cpu_power:
+                # We haven't been able to calculate CPU power but user has input a default one. We use it
+                user_input_power = self._default_cpu_power
+                logger.debug(f"Using user input TDP: {user_input_power} W")
+                power = user_input_power
             logger.info(f"CPU Model on constant consumption mode: {model}")
             self._conf["cpu_model"] = model
             if tdp:
