@@ -57,6 +57,26 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
         self.verify_output_file(self.emissions_file_path)
 
+    def test_carbon_tracker_offline_constant_default_cpu_power(self):
+        # Same as test_carbon_tracker_offline_constant test but this time forcing the default cpu power
+        USER_INPUT_CPU_POWER = 1000
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            output_dir=self.emissions_path,
+            output_file=self.emissions_file,
+            default_cpu_power=USER_INPUT_CPU_POWER,
+        )
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        emissions = tracker.stop()
+        assert isinstance(emissions, float)
+        self.assertNotEqual(emissions, 0.0)
+        # Assert the content stored. cpu_power should be 50% of input TDP
+        import pandas as pd
+
+        assertdf = pd.read_csv(self.emissions_file_path)
+        self.assertEqual(USER_INPUT_CPU_POWER / 2, assertdf["cpu_power"][0])
+
     def test_decorator_constant(self):
         @track_emissions(
             project_name=self.project_name,
