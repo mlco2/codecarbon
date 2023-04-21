@@ -50,6 +50,7 @@ Install from sources in development mode :
 
 ```bash
 git clone https://github.com/mlco2/codecarbon
+cd codecarbon
 pip install -e .
 ```
 
