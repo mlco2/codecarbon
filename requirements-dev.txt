@@ -17,3 +17,4 @@ responses
 py-cpuinfo
 psutil
 fuzzywuzzy
+prometheus_client

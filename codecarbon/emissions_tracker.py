@@ -31,6 +31,7 @@ from codecarbon.output import (
     FileOutput,
     HTTPOutput,
     LoggerOutput,
+    PrometheusOutput,
 )
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
@@ -145,6 +146,8 @@ class BaseEmissionsTracker(ABC):
         save_to_api: Optional[bool] = _sentinel,
         save_to_logger: Optional[bool] = _sentinel,
         logging_logger: Optional[LoggerOutput] = _sentinel,
+        save_to_prometheus: Optional[bool] = _sentinel,
+        prometheus_url: Optional[str] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
@@ -179,6 +182,9 @@ class BaseEmissionsTracker(ABC):
                             to a dedicated logger, defaults to False.
         :param logging_logger: LoggerOutput object encapsulating a logging.logger
                             or a Google Cloud logger.
+        :param save_to_prometheus: Indicates if the emission artifacts should be
+                            pushed to prometheus, defaults to False.
+        :param prometheus_url: url of the prometheus server, defaults to `localhost:9090`.
         :param gpu_ids: User-specified known gpu ids to track, defaults to None.
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data.
@@ -219,11 +225,16 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(save_to_file, "save_to_file", True, bool)
         self._set_from_conf(save_to_logger, "save_to_logger", False, bool)
         self._set_from_conf(logging_logger, "logging_logger")
+        self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
+        self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(default_cpu_power, "default_cpu_power")
         self._set_from_conf(pue, "pue", 1.0, float)
+        self._set_from_conf(
+            experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
+        )
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -343,6 +354,12 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
         )
+        self._init_output_methods(api_key)
+
+    def _init_output_methods(self, api_key):
+        """
+        Prepare the different output methods
+        """
         self.persistence_objs: List[BaseOutput] = list()
 
         if self._save_to_file:
@@ -357,15 +374,12 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(self._logging_logger)
 
         if self._emissions_endpoint:
-            self.persistence_objs.append(HTTPOutput(emissions_endpoint))
+            self.persistence_objs.append(HTTPOutput(self._emissions_endpoint))
 
         if self._save_to_api:
-            experiment_id = self._set_from_conf(
-                experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
-            )
             self._cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
-                experiment_id=experiment_id,
+                experiment_id=self._experiment_id,
                 api_key=api_key,
                 conf=self._conf,
             )
@@ -374,6 +388,9 @@ class BaseEmissionsTracker(ABC):
 
         else:
             self.run_id = uuid.uuid4()
+
+        if self._save_to_prometheus:
+            self.persistence_objs.append(PrometheusOutput(self._prometheus_url))
 
     @suppress(Exception)
     def start(self) -> None:
