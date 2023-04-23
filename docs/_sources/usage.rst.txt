@@ -111,13 +111,13 @@ Developers can use the ``OfflineEmissionsTracker`` object to track emissions as 
 
 Context manager
 ~~~~~~~~~~~~~~~~
-The ``Emissions tracker`` also works as a context manager
+The ``OfflineEmissionsTracker`` also works as a context manager
 
 .. code-block:: python
 
     from codecarbon import OfflineEmissionsTracker
 
-    with EmissionsTracker() as tracker:
+    with OfflineEmissionsTracker() as tracker:
     # GPU intensive training code  goes here
 
 
