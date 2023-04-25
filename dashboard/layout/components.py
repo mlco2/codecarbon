@@ -9,15 +9,6 @@ class Components:
     def get_header():
         return dbc.Col(
             [
-                html.Div(
-                    [
-                        html.Div(
-                            [html.P("This is a beta version.")],
-                            className="inner",
-                        )
-                    ],
-                    className="banner",
-                ),
                 html.A(
                     [html.Img(src="/assets/logo.png")], href="https://codecarbon.io"
                 ),
