@@ -154,6 +154,7 @@ class BaseEmissionsTracker(ABC):
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
+        pue: Optional[int] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -197,7 +198,8 @@ class BaseEmissionsTracker(ABC):
                              Accepts one of "append" or "update". Default is "append".
         :param logger_preamble: String to systematically include in the logger.
                                 messages. Defaults to "".
-        :param default_cpu_power: cpu power to be used as default if the cpu is not known
+        :param default_cpu_power: cpu power to be used as default if the cpu is not known.
+        :param pue: PUE (Power Usage Effectiveness) of the datacenter.
         """
 
         # logger.info("base tracker init")
@@ -221,6 +223,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(default_cpu_power, "default_cpu_power")
+        self._set_from_conf(pue, "pue", 1.0, float)
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -555,6 +558,8 @@ class BaseEmissionsTracker(ABC):
             power, energy = hardware.measure_power_and_energy(
                 last_duration=last_duration
             )
+            # Apply the PUE of the datacenter to the consumed energy
+            energy *= self._pue
             self._total_energy += energy
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
@@ -751,6 +756,8 @@ def track_emissions(
     gpu_ids: Optional[List] = _sentinel,
     co2_signal_api_token: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
+    default_cpu_power: Optional[int] = _sentinel,
+    pue: Optional[int] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -789,6 +796,8 @@ def track_emissions(
     :param log_level: Global codecarbon log level. Accepts one of:
                         {"debug", "info", "warning", "error", "critical"}.
                       Defaults to "info".
+    :param default_cpu_power: cpu power to be used as default if the cpu is not known.
+    :param pue: PUE (Power Usage Effectiveness) of the datacenter.
 
     :return: The decorated function
     """
@@ -817,6 +826,8 @@ def track_emissions(
                     gpu_ids=gpu_ids,
                     log_level=log_level,
                     co2_signal_api_token=co2_signal_api_token,
+                    default_cpu_power=default_cpu_power,
+                    pue=pue,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -836,6 +847,8 @@ def track_emissions(
                     api_endpoint=api_endpoint,
                     save_to_api=save_to_api,
                     co2_signal_api_token=co2_signal_api_token,
+                    default_cpu_power=default_cpu_power,
+                    pue=pue,
                 )
             tracker.start()
             try:
