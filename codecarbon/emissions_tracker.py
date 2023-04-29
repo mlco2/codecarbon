@@ -411,7 +411,7 @@ class BaseEmissionsTracker(ABC):
                 emissions_data = self._prepare_emissions_data(delta=True)
             persistence.out(emissions_data)
 
-        return emissions_data
+        return emissions_data.emissions
 
     @suppress(Exception)
     def stop(self) -> Optional[float]:
@@ -442,7 +442,7 @@ class BaseEmissionsTracker(ABC):
 
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
-        return emissions_data
+        return emissions_data.emissions
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
