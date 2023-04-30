@@ -54,6 +54,7 @@ class Energy:
     """
 
     UJOULES_TO_JOULES = 10 ** (-6)
+    MILLIJOULES_TO_JOULES = 10 ** (-3)
     JOULES_TO_KWH = 2.77778e-7
 
     kWh: float = field(compare=True)
@@ -65,6 +66,10 @@ class Energy:
     @classmethod
     def from_ujoules(cls, energy: float) -> "Energy":
         return cls(kWh=energy * Energy.UJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
+
+    @classmethod
+    def from_millijoules(cls, energy: float) -> "Energy":
+        return cls(kWh=energy * Energy.MILLIJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
 
     @classmethod
     def from_energy(cls, kWh: float) -> "Energy":

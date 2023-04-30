@@ -31,6 +31,13 @@ def to_utf8(str_or_bytes):
     return str_or_bytes
 
 
+def get_energy_consumption(handle):
+    """Returns energy consumption in milliJoules
+    https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
+    """
+    return pynvml.nvmlDeviceGetTotalEnergyConsumption(handle)
+
+
 def get_gpu_name(handle):
     """Returns the name of the GPU device
     https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1ga5361803e044c6fdf3b08523fb6d1481
@@ -195,6 +202,7 @@ def get_gpu_details():
                     "temperature": get_temperature(handle),
                     "power_usage": get_power_usage(handle),
                     "power_limit": get_power_limit(handle),
+                    "energy_consumption": get_energy_consumption(handle),
                     "gpu_utilization": get_gpu_utilization(handle),
                     "compute_mode": get_compute_mode(handle),
                     "compute_processes": get_compute_processes(handle),

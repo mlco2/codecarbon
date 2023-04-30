@@ -77,7 +77,33 @@ class GPU(BaseHardware):
             )
         )
 
-    def total_power(self) -> Power:
+    def _get_energy_from_gpus(self, gpu_ids: Iterable[int]) -> Energy:
+        """
+        Get total energy consumed by specific GPUs identified by `gpu_ids`
+        :param gpu_ids:
+        :return: energy in kWh
+        """
+        all_gpu_details: List[Dict] = get_gpu_details()
+        return Energy.from_millijoules(
+            sum(
+                [
+                    gpu_details["energy_consumption"]
+                    for idx, gpu_details in enumerate(all_gpu_details)
+                    if idx in gpu_ids
+                ]
+            )
+        )
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        power = self.total_power()
+        energy = self.total_energy()
+        return power, energy
+
+    def _get_gpu_ids(self) -> Iterable[int]:
+        """
+        Get the Ids of the GPUs that we would like to monitor
+        :return: list of ids
+        """
         if self.gpu_ids is not None:
             gpu_ids = self.gpu_ids
             assert set(gpu_ids).issubset(
@@ -85,9 +111,17 @@ class GPU(BaseHardware):
             ), f"Unknown GPU ids {gpu_ids}"
         else:
             gpu_ids = set(range(self.num_gpus))
+        return gpu_ids
 
+    def total_power(self) -> Power:
+        gpu_ids = self._get_gpu_ids()
         gpu_power = self._get_power_for_gpus(gpu_ids=gpu_ids)
         return gpu_power
+
+    def total_energy(self) -> Energy:
+        gpu_ids = self._get_gpu_ids()
+        gpu_energy = self._get_energy_from_gpus(gpu_ids=gpu_ids)
+        return gpu_energy
 
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
