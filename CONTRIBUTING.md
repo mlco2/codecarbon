@@ -91,6 +91,13 @@ To test the API, see [how to deploy it](#local_deployement) first.
 
 Core & external classes are unit tested, with one test file per class. Mosts pull-requests are expected to contains new tests or test update, if you are unusure what to test / how to test it, please put it in the pull-request description and the maintainers will help you.
 
+### Stress your computer
+
+To test CodeCarbon it is usefull to stress your computer to make it use his full power :
+- 7Zip is often already on your computer, running it with `7z b` make a quick CPU test.
+- [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
+
+`nvidia-smi` is a usefull tool to see the metrics of the GPU and compare it with CodeCarbon.
 
 ### Versionning
 
