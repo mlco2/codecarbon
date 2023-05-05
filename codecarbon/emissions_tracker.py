@@ -184,7 +184,7 @@ class BaseEmissionsTracker(ABC):
                             or a Google Cloud logger.
         :param save_to_prometheus: Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
-        :param prometheus_url: url of the prometheus server, defaults to `localhost:9090`.
+        :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
         :param gpu_ids: User-specified known gpu ids to track, defaults to None.
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data.
@@ -763,6 +763,8 @@ def track_emissions(
     save_to_file: Optional[bool] = _sentinel,
     save_to_api: Optional[bool] = _sentinel,
     save_to_logger: Optional[bool] = _sentinel,
+    save_to_prometheus: Optional[bool] = _sentinel,
+    prometheus_url: Optional[str] = _sentinel,
     logging_logger: Optional[LoggerOutput] = _sentinel,
     offline: Optional[bool] = _sentinel,
     emissions_endpoint: Optional[str] = _sentinel,
@@ -794,6 +796,9 @@ def track_emissions(
                         CodeCarbon API, defaults to False.
     :param save_to_logger: Indicates if the emission artifacts should be written
                         to a dedicated logger, defaults to False.
+    :param save_to_prometheus: Indicates if the emission artifacts should be
+                            pushed to prometheus, defaults to False.
+    :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
     :param logging_logger: LoggerOutput object encapsulating a logging.logger
                         or a Google Cloud logger.
     :param offline: Indicates if the tracker should be run in offline mode.
@@ -836,6 +841,8 @@ def track_emissions(
                     output_file=output_file,
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
+                    save_to_prometheus=save_to_prometheus,
+                    prometheus_url=prometheus_url,
                     logging_logger=logging_logger,
                     country_iso_code=country_iso_code,
                     region=region,
@@ -855,6 +862,8 @@ def track_emissions(
                     output_file=output_file,
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
+                    save_to_prometheus=save_to_prometheus,
+                    prometheus_url=prometheus_url,
                     logging_logger=logging_logger,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
