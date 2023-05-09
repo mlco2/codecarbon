@@ -22,72 +22,60 @@ labelnames = [
     "os",
     "codecarbon_version",
     "cpu_model",
+    "cpu_count",
     "gpu_model",
+    "gpu_count",
     "tracking_mode",
+    "ram_total_size",
 ]
 
 duration_gauge = Gauge(
     "codecarbon_duration",
-    "TODO: Add description of this metric",
+    "Duration from last measure (s)",
     registry=registry,
 )
 emissions_gauge = Gauge(
     "codecarbon_emissions",
-    "TODO: Add description of this metric",
+    "Emissions as CO₂-equivalents [CO₂eq] (kg)",
     registry=registry,
 )
 emissions_rate_gauge = Gauge(
-    "codecarbon_emissions_rate_gauge",
-    "TODO: Add description of this metric",
+    "codecarbon_emissions_rate",
+    "Emissions divided per duration (Kg/s)",
     registry=registry,
 )
 cpu_power_gauge = Gauge(
     "codecarbon_cpu_power",
-    "TODO: Add description of this metric",
+    "CPU power (W)",
     registry=registry,
 )
 gpu_power_gauge = Gauge(
     "codecarbon_gpu_power",
-    "TODO: Add description of this metric",
+    "GPU power (W)",
     registry=registry,
 )
 ram_power_gauge = Gauge(
     "codecarbon_ram_power",
-    "TODO: Add description of this metric",
+    "RAM power (W)",
     registry=registry,
 )
 cpu_energy_gauge = Gauge(
     "codecarbon_cpu_energy",
-    "TODO: Add description of this metric",
+    "Energy used per CPU (kW)",
     registry=registry,
 )
 gpu_energy_gauge = Gauge(
     "codecarbon_gpu_energy",
-    "TODO: Add description of this metric",
+    "Energy used per GPU (kW)",
     registry=registry,
 )
 ram_energy_gauge = Gauge(
     "codecarbon_ram_energy",
-    "TODO: Add description of this metric",
+    "Energy used per RAM (kW)",
     registry=registry,
 )
 energy_consumed_gauge = Gauge(
     "codecarbon_energy_consumed",
-    "TODO: Add description of this metric",
-    registry=registry,
-)
-cpu_count_gauge = Gauge(
-    "codecarbon_cpu_count",
-    "TODO: Add description of this metric",
-    registry=registry,
-)
-gpu_count_gauge = Gauge(
-    "codecarbon_gpu_count",
-    "TODO: Add description of this metric",
-    registry=registry,
-)
-ram_total_size_gauge = Gauge(
-    "codecarbon_ram_total_size",
-    "TODO: Add description of this metric",
+    "Sum of cpu_energy, gpu_energy and ram_energy (kW)",
     registry=registry,
 )

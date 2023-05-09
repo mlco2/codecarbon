@@ -250,6 +250,7 @@ class BaseEmissionsTracker(ABC):
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
         self._cc_api__out = None
+        self._cc_prometheus_out = None
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
@@ -390,7 +391,8 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
 
         if self._save_to_prometheus:
-            self.persistence_objs.append(PrometheusOutput(self._prometheus_url))
+            self._cc_prometheus_out = PrometheusOutput(self._prometheus_url)
+            self.persistence_objs.append(self._cc_prometheus_out)
 
     @suppress(Exception)
     def start(self) -> None:
@@ -612,14 +614,19 @@ class BaseEmissionsTracker(ABC):
         )
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
-        if self._cc_api__out is not None and self._api_call_interval != -1:
+        if (
+            self._cc_api__out is not None or self._cc_prometheus_out is not None
+        ) and self._api_call_interval != -1:
             if self._measure_occurrence >= self._api_call_interval:
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
                     f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
                     + f"{emissions.emissions_rate*3600*24*365:,} kg.CO2eq/year"
                 )
-                self._cc_api__out.out(emissions)
+                if self._cc_api__out:
+                    self._cc_api__out.out(emissions)
+                if self._cc_prometheus_out:
+                    self._cc_prometheus_out.out(emissions)
                 self._measure_occurrence = 0
         logger.debug(f"last_duration={last_duration}\n------------------------")
 

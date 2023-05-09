@@ -3,6 +3,9 @@
 Output
 ======
 
+CSV 
+---
+
 The package has an in-built logger that logs data into a CSV file named ``emissions.csv`` in the ``output_dir``, provided as an
 input parameter (defaults to the current directory), for each experiment tracked across projects.
 
@@ -73,7 +76,7 @@ input parameter (defaults to the current directory), for each experiment tracked
      - | Latitude, with reduced precision to a range of 11.1 km / 123 km².
        | This is done for privacy protection.
    * - ram_total_size
-     -  total RAM aviable (Go)
+     -  total RAM available (Go)
    * - Tracking_mode:
      - ``machine`` or ``process``(default to ``machine``)
 
@@ -81,3 +84,11 @@ input parameter (defaults to the current directory), for each experiment tracked
 
     Developers can enhance the Output interface, based on requirements. For example, to log into a database, by implementing a custom Class
     that is a derived implementation of base class ``BaseOutput`` at ``codecarbon/output.py``
+
+Prometheus
+----------
+
+
+
+Google Cloud Logger
+-------------------
