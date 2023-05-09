@@ -88,7 +88,54 @@ input parameter (defaults to the current directory), for each experiment tracked
 Prometheus
 ----------
 
+Using CodeCarbon with prometheus
+`````````````````````````````````
+
+`Prometheus <https://github.com/prometheus/prometheus>`_ is a systems and service monitoring system. It collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts when specified conditions are observed.
+
+CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
+
+Current version uses pushgateway mode. If your pushgateway server needs auth, set your environment values `PROMETHEUS_USERNAME` and `PROMETHEUS_PASSWORD` so codecarbon is able to push the metrics.
+
+How to test in local
+````````````````````
+
+Deploy a local version of Prometheus + Prometheus Pushgateway
+
+.. code-block:: shell
+
+  docker-compose up
 
 
-Google Cloud Logger
--------------------
+Run your EmissionTracker as usual, but with the parameter `save_to_prometheus` as True.
+e.g.
+
+.. code-block:: python
+
+  ...
+  tracker = OfflineEmissionsTracker(
+              project_name=self.project_name,
+              country_iso_code="USA",
+              save_to_prometheus=True,
+          )
+  tracker.start()
+  ...
+
+
+Go to `localhost:9090 <http://localhost:9090>`_. Search for `codecarbon_`. You will see all the metrics there.
+
+HTTP Output
+-----------
+
+The HTTP Output allow the call of a webhook with emission data when the tracker is stopped.
+
+CodeCarbon API
+--------------
+
+You can send all the data to the CodeCarbon API. So you have all your historical data in one place. By default nothing is send to the API.
+
+Logger Output
+-------------
+
+See :ref:`Collecting emissions to a logger<Collecting emissions to a logger>`.
+

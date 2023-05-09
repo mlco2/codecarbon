@@ -59,10 +59,10 @@ Output parameters
      - | Boolean variable indicating if emissions artifacts should be logged
        | to the CodeCarbon API, defaults to ``False``
    * - api_endpoint:
-     - | Optional URL of Code Carbon API endpoint for sending emissions data
+     - | Optional URL of CodeCarbon API endpoint for sending emissions data
        | defaults to "https://api.codecarbon.io"
    * - api_key
-     - API key for the code carbon API (mandatory to use this API!)
+     - API key for the CodeCarbon API (mandatory to use this API!)
    * - api_call_interval
      - | Occurence to wait before calling API (defaults to 8):
        | -1 : call API on flush() and at the end

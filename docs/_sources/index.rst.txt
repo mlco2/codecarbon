@@ -28,13 +28,13 @@ CodeCarbon
    parameters
    examples
    comet
-   to_logger
 
 .. toctree::
    :caption: Logging
    :maxdepth: 2
 
    output
+   to_logger
    visualize
 
 

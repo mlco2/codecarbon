@@ -19,8 +19,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Output" href="output.html" />
-    <link rel="prev" title="Comet Integration" href="comet.html" /> 
+    <link rel="next" title="Visualize" href="visualize.html" />
+    <link rel="prev" title="Output" href="output.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,13 +46,17 @@
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Logging</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Collecting emissions to a logger</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#create-a-logger">Create a logger</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#python-logger">Python logger</a></li>
@@ -64,10 +68,6 @@
 </li>
 </ul>
 </li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Logging</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize.html">Visualize</a></li>
 </ul>
 
@@ -98,9 +98,9 @@
   <section id="collecting-emissions-to-a-logger">
 <span id="id1"></span><h1>Collecting emissions to a logger<a class="headerlink" href="#collecting-emissions-to-a-logger" title="Permalink to this heading"></a></h1>
 <p>The <code class="docutils literal notranslate"><span class="pre">LoggerOutput</span></code> class (and <code class="docutils literal notranslate"><span class="pre">GoogleCloudLoggerOutput</span></code> subclass) allows to send emissions tracking to a logger.
-This is a specific, distinct logger than the one used by the Code Carbon package for its ‘private’ logs.
+This is a specific, distinct logger than the one used by the CodeCarbon package for its ‘private’ logs.
 It allows to leverage powerful logging systems, to centralize emissions to some central or cloud-based system, and build reports, triggers, etc. based on these data.</p>
-<p>This logging output can be used in parallel with other output options provided by Code Carbon.</p>
+<p>This logging output can be used in parallel with other output options provided by CodeCarbon.</p>
 <section id="create-a-logger">
 <h2>Create a logger<a class="headerlink" href="#create-a-logger" title="Permalink to this heading"></a></h2>
 <p>In order to send emissions tracking data to the logger, first create a logger and then create an <cite>EmissionTracker</cite>. <cite>OfflineEmissionTracker</cite>
@@ -109,7 +109,7 @@ is also supported but lack of network connectivity may forbid to stream tracking
 <h3>Python logger<a class="headerlink" href="#python-logger" title="Permalink to this heading"></a></h3>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
 
-<span class="c1"># Create a dedicated logger (log name can be the Code Carbon project name for example)</span>
+<span class="c1"># Create a dedicated logger (log name can be the CodeCarbon project name for example)</span>
 <span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">log_name</span><span class="p">)</span>
 
 <span class="c1"># Add a handler, see Python logging for various handlers (here a local file named after log_name)</span>
@@ -120,7 +120,7 @@ is also supported but lack of network connectivity may forbid to stream tracking
 <span class="c1"># This level can be used in the logging process to filter emissions messages</span>
 <span class="n">_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
-<span class="c1"># Create a Code Carbon LoggerOutput with the logger, specifying the logging level to be used for emissions data messages</span>
+<span class="c1"># Create a CodeCarbon LoggerOutput with the logger, specifying the logging level to be used for emissions data messages</span>
 <span class="n">my_logger</span> <span class="o">=</span> <span class="n">LoggerOutput</span><span class="p">(</span><span class="n">_logger</span><span class="p">,</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -133,14 +133,14 @@ is also supported but lack of network connectivity may forbid to stream tracking
 <span class="c1"># Create a Cloud Logging client (specify project name if needed, otherwise Google SDK default project name is used)</span>
 <span class="n">client</span> <span class="o">=</span> <span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">google_project_name</span><span class="p">)</span>
 
-<span class="c1"># Create a Code Carbon GoogleCloudLoggerOutput with the Cloud Logging logger, with the logging level to be used for emissions data messages</span>
+<span class="c1"># Create a CodeCarbon GoogleCloudLoggerOutput with the Cloud Logging logger, with the logging level to be used for emissions data messages</span>
 <span class="n">my_logger</span> <span class="o">=</span> <span class="n">GoogleCloudLoggerOutput</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">logger</span><span class="p">(</span><span class="n">log_name</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
 <section id="authentication">
 <h3>Authentication<a class="headerlink" href="#authentication" title="Permalink to this heading"></a></h3>
-<p>Please refer to Google Cloud documentation <a class="reference external" href="https://cloud.google.com/logging/docs/reference/libraries#setting_up_authentication">here</a>.</p>
+<p>Please refer to <a class="reference external" href="https://cloud.google.com/logging/docs/reference/libraries#setting_up_authentication">Google Cloud documentation</a>.</p>
 </section>
 <section id="create-an-emissiontracker">
 <h3>Create an EmissionTracker<a class="headerlink" href="#create-an-emissiontracker" title="Permalink to this heading"></a></h3>
@@ -164,8 +164,8 @@ is also supported but lack of network connectivity may forbid to stream tracking
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="comet.html" class="btn btn-neutral float-left" title="Comet Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="output.html" class="btn btn-neutral float-right" title="Output" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="output.html" class="btn btn-neutral float-left" title="Output" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="visualize.html" class="btn btn-neutral float-right" title="Visualize" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -53,7 +53,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#explicit-object">Explicit Object</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#context-manager">Context manager</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#decorator">Decorator</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#code-carbon-api-beta">Code Carbon API (BETA)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codecarbon-api-beta">CodeCarbon API (BETA)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#offline-mode">Offline Mode</a><ul>
@@ -72,11 +72,11 @@
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize.html">Visualize</a></li>
 </ul>
 
@@ -153,19 +153,19 @@ emissions of the training code.</p>
 <p>This will write a csv file named emissions.csv in the current directory</p>
 </div>
 </section>
-<section id="code-carbon-api-beta">
-<h3>Code Carbon API (BETA)<a class="headerlink" href="#code-carbon-api-beta" title="Permalink to this heading"></a></h3>
+<section id="codecarbon-api-beta">
+<h3>CodeCarbon API (BETA)<a class="headerlink" href="#codecarbon-api-beta" title="Permalink to this heading"></a></h3>
 <p><em>(This feature is currently in BETA stage, meaning all features are not available)</em></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This mode use the Code Carbon API to upload the timeseries of your emissions on a central server. All data will be public!</p>
+<p>This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!</p>
 </div>
 <p>Before using it, you need an experiment_id, to get one, run:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon init</span>
 </pre></div>
 </div>
 <p>It will create a experiment_id on the default project and save it to <code class="docutils literal notranslate"><span class="pre">codecarbon.config</span></code></p>
-<p>Then you could tell Code Carbon to monitor your machine :</p>
+<p>Then you could tell CodeCarbon to monitor your machine :</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor</span>
 </pre></div>
 </div>

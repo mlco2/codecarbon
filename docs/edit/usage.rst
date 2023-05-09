@@ -57,12 +57,12 @@ This mode is recommended if you have a training function.
 .. note::
     This will write a csv file named emissions.csv in the current directory
 
-Code Carbon API (BETA)
+CodeCarbon API (BETA)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 *(This feature is currently in BETA stage, meaning all features are not available)*
 
 .. warning::
-    This mode use the Code Carbon API to upload the timeseries of your emissions on a central server. All data will be public!
+    This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!
 
 Before using it, you need an experiment_id, to get one, run:
 
@@ -72,7 +72,7 @@ Before using it, you need an experiment_id, to get one, run:
 
 It will create a experiment_id on the default project and save it to ``codecarbon.config``
 
-Then you could tell Code Carbon to monitor your machine :
+Then you could tell CodeCarbon to monitor your machine :
 
 .. code-block:: console
 

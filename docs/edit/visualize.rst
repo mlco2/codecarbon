@@ -107,6 +107,6 @@ The app also provides a visualization of regional carbon intensity of electricit
             :alt: carbon intensity carbon_map
             :width: 750px
 
-Note that for now, all data sent to code carbon API are public.
+Note that for now, all data sent to CodeCarbon API are public.
 
 
