@@ -12,7 +12,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
-from codecarbon.core.gpu import get_gpu_details
+from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
@@ -52,52 +52,36 @@ class BaseHardware(ABC):
 
 @dataclass
 class GPU(BaseHardware):
-    num_gpus: int
     gpu_ids: Optional[List]
 
     def __repr__(self) -> str:
         return super().__repr__() + " ({})".format(
-            ", ".join([d["name"] for d in get_gpu_details()])
+            ", ".join([d["name"] for d in self.devices.get_gpu_details()])
         )
 
-    def _get_power_for_gpus(self, gpu_ids: Iterable[int]) -> Power:
-        """
-        Get total power consumed by specific GPUs identified by `gpu_ids`
-        :param gpu_ids:
-        :return: power in kW
-        """
-        all_gpu_details: List[Dict] = get_gpu_details()
-        return Power.from_milli_watts(
-            sum(
-                [
-                    gpu_details["power_usage"]
-                    for idx, gpu_details in enumerate(all_gpu_details)
-                    if idx in gpu_ids
-                ]
-            )
-        )
-
-    def _get_energy_from_gpus(self, gpu_ids: Iterable[int]) -> Energy:
-        """
-        Get total energy consumed by specific GPUs identified by `gpu_ids`
-        :param gpu_ids:
-        :return: energy in kWh
-        """
-        all_gpu_details: List[Dict] = get_gpu_details()
-        return Energy.from_millijoules(
-            sum(
-                [
-                    gpu_details["energy_consumption"]
-                    for idx, gpu_details in enumerate(all_gpu_details)
-                    if idx in gpu_ids
-                ]
-            )
-        )
+    def __post_init__(self):
+        self.devices = AllGPUDevices()
+        self.num_gpus = len(self.devices)
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
-        power = self.total_power()
-        energy = self.total_energy()
-        return power, energy
+        gpu_ids = self._get_gpu_ids()
+        all_gpu_details: List[Dict] = self.devices.get_delta(last_duration)
+        # We get the total energy and power of only the ones in gpu_ids
+        total_energy = sum(
+            [
+                gpu_details["delta_energy_consumption"]
+                for idx, gpu_details in enumerate(all_gpu_details)
+                if idx in gpu_ids
+            ]
+        )
+        total_power = sum(
+            [
+                gpu_details["power_usage"]
+                for idx, gpu_details in enumerate(all_gpu_details)
+                if idx in gpu_ids
+            ]
+        )
+        return total_power, total_energy
 
     def _get_gpu_ids(self) -> Iterable[int]:
         """
@@ -113,19 +97,9 @@ class GPU(BaseHardware):
             gpu_ids = set(range(self.num_gpus))
         return gpu_ids
 
-    def total_power(self) -> Power:
-        gpu_ids = self._get_gpu_ids()
-        gpu_power = self._get_power_for_gpus(gpu_ids=gpu_ids)
-        return gpu_power
-
-    def total_energy(self) -> Energy:
-        gpu_ids = self._get_gpu_ids()
-        gpu_energy = self._get_energy_from_gpus(gpu_ids=gpu_ids)
-        return gpu_energy
-
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
-        return cls(num_gpus=len(get_gpu_details()), gpu_ids=gpu_ids)
+        return cls(gpu_ids=gpu_ids)
 
 
 @dataclass
