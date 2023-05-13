@@ -14,7 +14,7 @@ import sys
 import requests
 
 
-def get_local_version(filepath="codecarbon/__init__.py"):
+def get_local_version(filepath="codecarbon/_version.py"):
     """
     Read the version in the file given in parameter
     :return: The version

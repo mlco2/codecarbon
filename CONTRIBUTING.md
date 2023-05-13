@@ -204,7 +204,7 @@ to regenerate the html files.
 ### Release process
 
 - Merge all PRs.
-- Create a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py, https://github.com/mlco2/codecarbon/blob/master/codecarbon/__init__.py and https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
+- Create a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py, https://github.com/mlco2/codecarbon/blob/master/codecarbon/_version.py and https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
 - Run `python3 .github/check_version.py` to check version consistancy.
 - [Build Documentation](#documentation) if needed.
 - Merge the PR.
@@ -214,7 +214,7 @@ to regenerate the html files.
 - For conda, we now have a [feedstock](https://github.com/conda-forge/codecarbon-feedstock/pulls) to publish to Conda-Forge channel.
 
 
-If you still want to publish to the Anaconda Codecarbon channel:
+If you still want to publish to the Anaconda CodeCarbon channel:
 
 Start a Docker image in the same directory and bind-mount the current directory with:
 

@@ -215,7 +215,7 @@ class IntelRAPL:
                     )
                     logger.debug(f"We will read Intel RAPL files at {rapl_file}")
                 except PermissionError as e:
-                    logger.error(
+                    raise PermissionError(
                         "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
                         + f" for workarounds : {e}"
