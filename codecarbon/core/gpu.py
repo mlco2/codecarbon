@@ -30,21 +30,21 @@ from codecarbon.external.logger import logger
 
 @dataclass
 class GPUDevice:
+    handle: any
+    gpu_index: int
     # Energy consumed in kWh
     energy_delta: Energy = field(default_factory=lambda: Energy(0))
     # Power based on reading
     power: Power = field(default_factory=lambda: Power(0))
     # Last energy reading in kWh
     last_energy: Energy = field(default_factory=lambda: Energy(0))
-    handle: any
-    gpu_index: int
 
     def __post_init__(self):
         self.last_energy = self._get_energy_kwh()
         self._init_static_details()
 
     def _get_energy_kwh(self):
-        return Energy.from_millijoules(self._get_energy_consumption())
+        return Energy.from_millijoules(self._get_total_energy_consumption())
 
     def delta(self, duration: Time) -> dict:
         """
@@ -188,9 +188,9 @@ class GPUDevice:
 class AllGPUDevices:
     def __init__(self):
         pynvml.nvmlInit()
-        device_count = pynvml.nvmlDeviceGetCount()
+        self.device_count = pynvml.nvmlDeviceGetCount()
         self.devices = []
-        for i in range(device_count):
+        for i in range(self.device_count):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             gpu_device = GPUDevice(handle=handle, gpu_index=i)
             self.devices.append(gpu_device)
@@ -210,7 +210,7 @@ class AllGPUDevices:
         """
         try:
             devices_static_info = []
-            for i in range(self.devices.length):
+            for i in range(self.device_count):
                 gpu_device = self.devices[i]
                 devices_static_info.append(gpu_device.get_static_details())
             return devices_static_info
@@ -242,7 +242,7 @@ class AllGPUDevices:
         """
         try:
             devices_info = []
-            for i in range(self.devices.length):
+            for i in range(self.device_count):
                 gpu_device = self.devices[i]
                 devices_info.append(gpu_device.get_gpu_details())
             return devices_info
@@ -251,7 +251,7 @@ class AllGPUDevices:
             logger.warning("Failed to retrieve gpu information", exc_info=True)
             return []
 
-    def get_delta(self, last_duration: float):
+    def get_delta(self, last_duration: Time):
         """Get difference since last time this function was called
         >>> get_delta()
         [
@@ -265,7 +265,7 @@ class AllGPUDevices:
         """
         try:
             devices_info = []
-            for i in range(self.devices.length):
+            for i in range(self.device_count):
                 gpu_device = self.devices[i]
                 devices_info.append(gpu_device.delta(last_duration))
             return devices_info

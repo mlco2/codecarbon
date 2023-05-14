@@ -61,25 +61,31 @@ class GPU(BaseHardware):
 
     def __post_init__(self):
         self.devices = AllGPUDevices()
-        self.num_gpus = len(self.devices)
+        self.num_gpus = self.devices.device_count
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         gpu_ids = self._get_gpu_ids()
-        all_gpu_details: List[Dict] = self.devices.get_delta(last_duration)
-        # We get the total energy and power of only the ones in gpu_ids
-        total_energy = sum(
-            [
-                gpu_details["delta_energy_consumption"]
-                for idx, gpu_details in enumerate(all_gpu_details)
-                if idx in gpu_ids
-            ]
+        all_gpu_details: List[Dict] = self.devices.get_delta(
+            Time.from_seconds(last_duration)
         )
-        total_power = sum(
-            [
-                gpu_details["power_usage"]
-                for idx, gpu_details in enumerate(all_gpu_details)
-                if idx in gpu_ids
-            ]
+        # We get the total energy and power of only the ones in gpu_ids
+        total_energy = Energy.from_energy(
+            sum(
+                [
+                    gpu_details["delta_energy_consumption"].kWh
+                    for idx, gpu_details in enumerate(all_gpu_details)
+                    if idx in gpu_ids
+                ]
+            )
+        )
+        total_power = Power(
+            sum(
+                [
+                    gpu_details["power_usage"].kW
+                    for idx, gpu_details in enumerate(all_gpu_details)
+                    if idx in gpu_ids
+                ]
+            )
         )
         return total_power, total_energy
 
@@ -96,6 +102,10 @@ class GPU(BaseHardware):
         else:
             gpu_ids = set(range(self.num_gpus))
         return gpu_ids
+
+    def total_power(self) -> Power:
+        # FIXME: do we still need this total_power?
+        return Power(0)
 
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":

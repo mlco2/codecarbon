@@ -31,7 +31,7 @@ empty_conf = "[codecarbon]"
 
 @mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
 @mock.patch(
-    "codecarbon.external.hardware.get_gpu_details",
+    "codecarbon.external.hardware.AllGPUDevices.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 @mock.patch(

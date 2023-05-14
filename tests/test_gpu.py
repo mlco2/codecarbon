@@ -133,8 +133,9 @@ class TestGpu(FakeGPUEnv):
         assert is_gpu_details_available() is True
 
     def test_static_gpu_info(self):
-        from codecarbon.core.gpu import get_gpu_static_info
+        from codecarbon.core.gpu import AllGPUDevices
 
+        alldevices = AllGPUDevices()
         expected = [
             {
                 "name": "GeForce GTX 1080",
@@ -152,17 +153,21 @@ class TestGpu(FakeGPUEnv):
             },
         ]
 
-        assert get_gpu_static_info() == expected
+        assert alldevices.get_gpu_static_info() == expected
 
     def test_gpu_details(self):
-        from codecarbon.core.gpu import get_gpu_details
+        from codecarbon.core.gpu import AllGPUDevices
 
-        assert get_gpu_details() == self.expected
+        alldevices = AllGPUDevices()
+
+        assert alldevices.get_gpu_details() == self.expected
 
     def test_gpu_no_power_limit(self):
         import pynvml
 
-        from codecarbon.core.gpu import get_gpu_details
+        from codecarbon.core.gpu import AllGPUDevices
+
+        alldevices = AllGPUDevices()
 
         def raiseException(handle):
             raise Exception("Some bad exception")
@@ -173,7 +178,7 @@ class TestGpu(FakeGPUEnv):
         expected_power_limit[0]["power_limit"] = None
         expected_power_limit[1]["power_limit"] = None
 
-        assert get_gpu_details() == expected_power_limit
+        assert alldevices.get_gpu_details() == expected_power_limit
 
 
 class TestGpuNotAvailable:
@@ -211,11 +216,15 @@ class TestGpuNotAvailable:
         assert is_gpu_details_available() is False
 
     def test_gpu_details_not_available(self):
-        from codecarbon.core.gpu import get_gpu_details
+        from codecarbon.core.gpu import AllGPUDevices
 
-        assert get_gpu_details() == []
+        alldevices = AllGPUDevices()
+
+        assert alldevices.get_gpu_details() == []
 
     def test_static_gpu_info_not_available(self):
-        from codecarbon.core.gpu import get_gpu_static_info
+        from codecarbon.core.gpu import AllGPUDevices
 
-        assert get_gpu_static_info() == []
+        alldevices = AllGPUDevices()
+
+        assert alldevices.get_gpu_static_info() == []
