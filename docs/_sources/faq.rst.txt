@@ -11,17 +11,20 @@ Frequently Asked Questions
 	
 		For cloud computing :
 
-		- (`google cloud plateform <https://cloud.google.com/sustainability/region-carbon?hl=fr>`_)
+		- Google publish carbon intensity of electricity for `Google Cloud Plateform <https://cloud.google.com/sustainability/region-carbon?hl=fr>`_.
 
-		- AWS and Azure sources are much more scatter and can be find directly in the (`csv file <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_)
+		- Unfortunately, Amazon has made a habit of keeping information about its carbon footprint out of public view1. Although it released its global carbon footprint, it does not publish datacenter carbon footprints.
+
+		- Microsoft has a Sustainability Calculator that helps enterprises analyze the carbon emissions of their IT infrastructure. But does not publish datacenter carbon intensity.
+		
 		
 		For private infra :
 		
-		- When available we use data from (`ourworld in data <https://ourworldindata.org/grapher/carbon-intensity-electricity?tab=table>`_)
+		- When available we use data from `ourworld in data <https://ourworldindata.org/grapher/carbon-intensity-electricity?tab=table>`_
 		
-		- if not available we use the electricity mix of the country find on (`globalpetrolprices.com <https://www.globalpetrolprices.com/energy_mix.php>`_) that we multiply by the carbon intensity of the source of electricity (`that you can find here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json>`_)
+		- if not available we use the electricity mix of the country find on `globalpetrolprices.com <https://www.globalpetrolprices.com/energy_mix.php>`_ that we multiply by the carbon intensity of the source of electricity (`that you can find here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json>`_)
 		
-		- if we have neither we default to  a world avarage of 475 gCO2.eq/KWh that we take from ( `IEA <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_ )
+		- if we have neither we default to a world average of 475 gCO2.eq/KWh from `IEA <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_.
 	
 
 * **How do I offset my emissions?**
