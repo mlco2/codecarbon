@@ -24,7 +24,9 @@ class Emissions:
         self._data_source = data_source
         self._co2_signal_api_token = co2_signal_api_token
 
-    def get_cloud_emissions(self, energy: Energy, cloud: CloudMetadata) -> float:
+    def get_cloud_emissions(
+        self, energy: Energy, cloud: CloudMetadata, geo=None
+    ) -> float:
         """
         Computes emissions for cloud infra
         :param energy: Mean power consumption of the process (kWh)
@@ -39,20 +41,26 @@ class Emissions:
                     (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
                 ]["impact"].item()
             )
-            return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
+            emissions = emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
         except ValueError:
             logger.warning(
-                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using work average instead."
+                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using country value instead."
             )
-            carbon_intensity_per_source = (
-                DataSource().get_carbon_intensity_per_source_data()
-            )
-            return (
-                EmissionsPerKWh.from_g_per_kWh(
-                    carbon_intensity_per_source.get("world_average")
+            if geo:
+                emissions = self.get_private_infra_emissions(
+                    energy, geo
+                )  # float: kg co2_eq
+            else:
+                carbon_intensity_per_source = (
+                    DataSource().get_carbon_intensity_per_source_data()
                 )
-                * energy.kWh
-            )  # kgs
+                emissions = (
+                    EmissionsPerKWh.from_g_per_kWh(
+                        carbon_intensity_per_source.get("world_average")
+                    )
+                    * energy.kWh
+                )  # kgs
+        return emissions
 
     def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
         """

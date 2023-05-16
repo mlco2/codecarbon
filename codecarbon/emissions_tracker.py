@@ -462,7 +462,9 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = ""
             cloud_region = ""
         else:
-            emissions = self._emissions.get_cloud_emissions(self._total_energy, cloud)
+            emissions = self._emissions.get_cloud_emissions(
+                self._total_energy, cloud, self._geo
+            )
             country_name = self._emissions.get_cloud_country_name(cloud)
             country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
             region = self._emissions.get_cloud_geo_region(cloud)
