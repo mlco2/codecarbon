@@ -42,9 +42,9 @@ class Emissions:
                 ]["impact"].item()
             )
             emissions = emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
-        except ValueError:
+        except Exception as e:
             logger.warning(
-                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using country value instead."
+                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using country value instead : {e}"
             )
             if geo:
                 emissions = self.get_private_infra_emissions(
@@ -57,7 +57,7 @@ class Emissions:
                 emissions = (
                     EmissionsPerKWh.from_g_per_kWh(
                         carbon_intensity_per_source.get("world_average")
-                    )
+                    ).kgs_per_kWh
                     * energy.kWh
                 )  # kgs
         return emissions
