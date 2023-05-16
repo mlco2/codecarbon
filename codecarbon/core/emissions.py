@@ -33,14 +33,26 @@ class Emissions:
         """
 
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-
-        emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
-            df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)][
-                "impact"
-            ].item()
-        )
-
-        return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
+        try:
+            emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
+                df.loc[
+                    (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+                ]["impact"].item()
+            )
+            return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
+        except ValueError:
+            logger.warning(
+                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using work average instead."
+            )
+            carbon_intensity_per_source = (
+                DataSource().get_carbon_intensity_per_source_data()
+            )
+            return (
+                EmissionsPerKWh.from_g_per_kWh(
+                    carbon_intensity_per_source.get("world_average")
+                )
+                * energy.kWh
+            )  # kgs
 
     def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
         """
