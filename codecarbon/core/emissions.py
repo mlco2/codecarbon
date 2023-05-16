@@ -44,7 +44,10 @@ class Emissions:
             emissions = emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
         except Exception as e:
             logger.warning(
-                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using country value instead : {e}"
+                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using country value instead. Error : {e}"
+            )
+            logger.warning(
+                "AWS and Azure do not provide any carbon intensity data. Only GCP does it."
             )
             if geo:
                 emissions = self.get_private_infra_emissions(
