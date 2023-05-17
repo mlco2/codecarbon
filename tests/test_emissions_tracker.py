@@ -289,7 +289,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         emissions_df = pd.read_csv(self.emissions_file_path)
 
-        self.assertEqual("US", emissions_df["country_name"].values[0])
+        self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
 
     def test_offline_tracker_invalid_headers(
@@ -319,7 +319,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.verify_output_file(self.emissions_file_path, 2)
         self.verify_output_file(self.emissions_file_path.with_suffix(".csv.bak"), 2)
 
-        self.assertEqual("US", emissions_df["country_name"].values[0])
+        self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("Morocco", emissions_backup_df["country_name"].values[0])
 
     def test_offline_tracker_valid_headers(
@@ -349,7 +349,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         self.assertAlmostEqual(0.269999999999999, emissions_df["cpu_power"].values[0])
         self.assertEqual("Morocco", emissions_df["country_name"].values[0])
-        self.assertEqual("US", emissions_df["country_name"].values[1])
+        self.assertEqual("United States", emissions_df["country_name"].values[1])
 
     def verify_output_file(self, file_path: str, num_lines: int) -> None:
         with open(file_path, "r") as f:
@@ -405,6 +405,6 @@ class TestCarbonTracker(unittest.TestCase):
 
         emissions_df = pd.read_csv(self.emissions_file_path)
 
-        self.assertEqual("US", emissions_df["country_name"].values[0])
+        self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
         self.assertIsInstance(tracker.final_emissions, float)
