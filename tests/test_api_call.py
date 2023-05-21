@@ -17,7 +17,7 @@ conf = {
     "longitude": -7.6174,
     "latitude": 33.5822,
     "region": "EUROPE",
-    "provider": "AWS",
+    "provider": "GCP",
     "ram_total_size": 83948.22,
     "tracking_mode": "Machine",
 }
