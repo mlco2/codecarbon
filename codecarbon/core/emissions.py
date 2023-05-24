@@ -25,12 +25,13 @@ class Emissions:
         self._co2_signal_api_token = co2_signal_api_token
 
     def get_cloud_emissions(
-        self, energy: Energy, cloud: CloudMetadata, geo=None
+        self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
     ) -> float:
         """
         Computes emissions for cloud infra
         :param energy: Mean power consumption of the process (kWh)
         :param cloud: Region of compute
+        :param geo: Instance of GeoMetadata to fallback if we don't find cloud carbon intensity
         :return: CO2 emissions in kg
         """
 
