@@ -23,8 +23,11 @@ class TestCloudMetadata(unittest.TestCase):
         cloud = CloudMetadata.from_utils()
 
         # THEN
-        self.assertEqual("aws", cloud.provider)
-        self.assertEqual("us-east-1", cloud.region)
+        # AWS in not considered a cloud provider for CodeCarbon as it does not provide carbon intensity
+        # self.assertEqual("aws", cloud.provider)
+        # self.assertEqual("us-east-1", cloud.region)
+        self.assertEqual(None, cloud.provider)
+        self.assertEqual(None, cloud.region)
 
     @mock.patch(
         "codecarbon.external.geography.get_env_cloud_details",
@@ -35,8 +38,11 @@ class TestCloudMetadata(unittest.TestCase):
         cloud = CloudMetadata.from_utils()
 
         # THEN
-        self.assertEqual("azure", cloud.provider)
-        self.assertEqual("eastus", cloud.region)
+        # Azure in not considered a cloud provider for CodeCarbon as it does not provide carbon intensity
+        # self.assertEqual("azure", cloud.provider)
+        # self.assertEqual("eastus", cloud.region)
+        self.assertEqual(None, cloud.provider)
+        self.assertEqual(None, cloud.region)
 
     @mock.patch(
         "codecarbon.external.geography.get_env_cloud_details",

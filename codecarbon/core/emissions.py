@@ -24,23 +24,47 @@ class Emissions:
         self._data_source = data_source
         self._co2_signal_api_token = co2_signal_api_token
 
-    def get_cloud_emissions(self, energy: Energy, cloud: CloudMetadata) -> float:
+    def get_cloud_emissions(
+        self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
+    ) -> float:
         """
         Computes emissions for cloud infra
         :param energy: Mean power consumption of the process (kWh)
         :param cloud: Region of compute
+        :param geo: Instance of GeoMetadata to fallback if we don't find cloud carbon intensity
         :return: CO2 emissions in kg
         """
 
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-
-        emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
-            df.loc[(df["provider"] == cloud.provider) & (df["region"] == cloud.region)][
-                "impact"
-            ].item()
-        )
-
-        return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
+        try:
+            emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
+                df.loc[
+                    (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+                ]["impact"].item()
+            )
+            emissions = emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
+        except Exception as e:
+            logger.warning(
+                f"Cloud electricity carbon intensity for provider '{cloud.provider}' and region '{cloud.region}' not found, using country value instead. Error : {e}"
+            )
+            logger.warning(
+                "AWS and Azure do not provide any carbon intensity data. Only GCP does it."
+            )
+            if geo:
+                emissions = self.get_private_infra_emissions(
+                    energy, geo
+                )  # float: kg co2_eq
+            else:
+                carbon_intensity_per_source = (
+                    DataSource().get_carbon_intensity_per_source_data()
+                )
+                emissions = (
+                    EmissionsPerKWh.from_g_per_kWh(
+                        carbon_intensity_per_source.get("world_average")
+                    ).kgs_per_kWh
+                    * energy.kWh
+                )  # kgs
+        return emissions
 
     def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
         """

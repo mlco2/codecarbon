@@ -43,7 +43,12 @@ class CloudMetadata:
 
         provider: str = cloud_metadata["provider"].lower()
         region: str = extract_region_for_provider.get(provider)(cloud_metadata)
-
+        if provider in ["aws", "azure"]:
+            logger.warning(
+                f"Cloud provider '{provider}' do not publish electricity carbon intensity. Using country value instead."
+            )
+            provider = None
+            region = None
         return cls(provider=provider, region=region)
 
 

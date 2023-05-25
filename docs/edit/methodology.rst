@@ -6,7 +6,7 @@ Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [C
 
 .. code-block:: text
 
-    C = Carbon Intensity of the electricity consumed for computation: quantified as kg of CO₂ emitted per kilowatt-hour of electricity.
+    C = Carbon Intensity of the electricity consumed for computation: quantified as g of CO₂ emitted per kilowatt-hour of electricity.
 
     P = Power Consumed by the computational infrastructure: quantified as kilowatt-hours.
 
@@ -79,6 +79,12 @@ GPU
 ~~~~
 
 Tracks Nvidia GPUs poxer consumption using ``pynvml`` library (installed with the package).
+
+RAM
+~~~~
+
+CodeCarbon uses a 3 Watts for 8 BG ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
+This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
 
 CPU 
 ~~~~

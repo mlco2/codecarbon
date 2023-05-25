@@ -4,6 +4,8 @@ import time
 import unittest
 from unittest import mock
 
+import pandas as pd
+
 from codecarbon.core import cpu
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
@@ -62,7 +64,7 @@ class TestCarbonTrackerConstant(unittest.TestCase):
     @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
     def test_carbon_tracker_offline_constant_default_cpu_power(self, mock_tdp):
         # Same as test_carbon_tracker_offline_constant test but this time forcing the default cpu power
-        USER_INPUT_CPU_POWER = 1000
+        USER_INPUT_CPU_POWER = 1_000
         # Mock the output of tdp
         mock_tdp.return_value = None
         tracker = OfflineEmissionsTracker(
@@ -77,8 +79,6 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         # Assert the content stored. cpu_power should be 50% of input TDP
-        import pandas as pd
-
         assertdf = pd.read_csv(self.emissions_file_path)
         self.assertEqual(USER_INPUT_CPU_POWER / 2, assertdf["cpu_power"][0])
 

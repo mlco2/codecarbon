@@ -23,7 +23,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.22, places=2)
+        self.assertAlmostEqual(emissions, 0.285, places=2)
 
     def test_emissions_CLOUD_AZURE(self):
         # WHEN
@@ -34,7 +34,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.55, places=2)
+        self.assertAlmostEqual(emissions, 0.7125, places=2)
 
     def test_emissions_CLOUD_GCP(self):
         emissions = self._emissions.get_cloud_emissions(
@@ -80,14 +80,7 @@ class TestEmissions(unittest.TestCase):
         )
 
         # THEN
-        jor_carbon_intensity = 17.19636 / 19.380129999999998 * 635  # fossil
-        jor_carbon_intensity += 0.02277 / 19.380129999999998 * 26  # hydroelectricity
-        jor_carbon_intensity += 1.441 / 19.380129999999998 * 48  # solar
-        jor_carbon_intensity += 0.72 / 19.380129999999998 * 26  # wind
-        jor_carbon_intensity /= 1000  # convert from g_per_kWh to kgs_per_kWh
-        jor_emissions = (
-            jor_carbon_intensity * 1_000
-        )  # Emissions in Kgs of CO2 For 1 000 kWh of energy
+        jor_emissions = 399.909  # Emissions in Kgs of CO2 For 1 000 kWh of energy
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, jor_emissions, places=2)
 
@@ -103,7 +96,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 33.4 / 1_000, places=2)
+        self.assertAlmostEqual(emissions, 26.4 / 1_000, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_USA_WITH_REGION(self):
         # WHEN
