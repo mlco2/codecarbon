@@ -1,8 +1,6 @@
-import logging
 import time
 
 from codecarbon import track_emissions
-from codecarbon.external.logger import logger
 
 
 @track_emissions(
@@ -11,25 +9,11 @@ from codecarbon.external.logger import logger
 )
 def train_model():
     """
-    This function will do nothing during (occurrence * delay) seconds.
+    This function will do nothing.
     """
-    occurrence = 1  # 60 * 24 * 365 * 100 Run for 100 years !
-    delay = 60  # Seconds
-    for i in range(occurrence):
-        print(f"{occurrence * delay - i * delay} seconds before ending script...")
-        time.sleep(delay)
+    print("30 seconds before ending script...")
+    time.sleep(30)
 
 
 if __name__ == "__main__":
-    logger.setLevel(logging.DEBUG)
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler("codecarbon.log")
-    fh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
-    )
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-    logger.debug("GO!")
     model = train_model()
-    logger.debug("THE END!")
