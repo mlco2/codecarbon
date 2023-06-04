@@ -76,6 +76,9 @@ class Energy:
     def __add__(self, other: "Energy") -> "Energy":
         return Energy(self.kWh + other.kWh)
 
+    def __mul__(self, factor: float) -> "Energy":
+        return Energy(self.kWh * factor)
+
     def __float__(self) -> float:
         return float(self.kWh)
 
