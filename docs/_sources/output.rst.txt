@@ -3,6 +3,9 @@
 Output
 ======
 
+CSV 
+---
+
 The package has an in-built logger that logs data into a CSV file named ``emissions.csv`` in the ``output_dir``, provided as an
 input parameter (defaults to the current directory), for each experiment tracked across projects.
 
@@ -73,7 +76,7 @@ input parameter (defaults to the current directory), for each experiment tracked
      - | Latitude, with reduced precision to a range of 11.1 km / 123 km².
        | This is done for privacy protection.
    * - ram_total_size
-     -  total RAM aviable (Go)
+     -  total RAM available (Go)
    * - Tracking_mode:
      - ``machine`` or ``process``(default to ``machine``)
 
@@ -81,3 +84,58 @@ input parameter (defaults to the current directory), for each experiment tracked
 
     Developers can enhance the Output interface, based on requirements. For example, to log into a database, by implementing a custom Class
     that is a derived implementation of base class ``BaseOutput`` at ``codecarbon/output.py``
+
+Prometheus
+----------
+
+Using CodeCarbon with prometheus
+`````````````````````````````````
+
+`Prometheus <https://github.com/prometheus/prometheus>`_ is a systems and service monitoring system. It collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts when specified conditions are observed.
+
+CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
+
+Current version uses pushgateway mode. If your pushgateway server needs auth, set your environment values `PROMETHEUS_USERNAME` and `PROMETHEUS_PASSWORD` so codecarbon is able to push the metrics.
+
+How to test in local
+````````````````````
+
+Deploy a local version of Prometheus + Prometheus Pushgateway
+
+.. code-block:: shell
+
+  docker-compose up
+
+
+Run your EmissionTracker as usual, but with the parameter `save_to_prometheus` as True.
+e.g.
+
+.. code-block:: python
+
+  ...
+  tracker = OfflineEmissionsTracker(
+              project_name=self.project_name,
+              country_iso_code="USA",
+              save_to_prometheus=True,
+          )
+  tracker.start()
+  ...
+
+
+Go to `localhost:9090 <http://localhost:9090>`_. Search for `codecarbon_`. You will see all the metrics there.
+
+HTTP Output
+-----------
+
+The HTTP Output allow the call of a webhook with emission data when the tracker is stopped.
+
+CodeCarbon API
+--------------
+
+You can send all the data to the CodeCarbon API. So you have all your historical data in one place. By default nothing is send to the API.
+
+Logger Output
+-------------
+
+See :ref:`Collecting emissions to a logger<Collecting emissions to a logger>`.
+

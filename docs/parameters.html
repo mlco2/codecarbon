@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Parameters &mdash; CodeCarbon 2.0.0 documentation</title>
@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -28,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> CodeCarbon
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            CodeCarbon
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -59,11 +63,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize.html">Visualize</a></li>
 </ul>
 
@@ -80,8 +84,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Parameters</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Parameters</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/parameters.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -96,7 +100,7 @@
 <p>A set of parameters are supported by API to help users provide additional details per project.</p>
 <section id="input-parameters">
 <h2>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this heading"></a></h2>
-<table class="colwidths-given docutils align-center" id="id4">
+<table class="docutils align-center" id="id4">
 <caption><span class="caption-text">Input Parameters</span><a class="headerlink" href="#id4" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 20%" />
@@ -145,7 +149,7 @@
 </section>
 <section id="output-parameters">
 <h2>Output parameters<a class="headerlink" href="#output-parameters" title="Permalink to this heading"></a></h2>
-<table class="colwidths-given docutils align-center" id="id5">
+<table class="docutils align-center" id="id5">
 <caption><span class="caption-text">Output Parameters</span><a class="headerlink" href="#id5" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 20%" />
@@ -195,13 +199,13 @@
 </tr>
 <tr class="row-odd"><td><p>api_endpoint:</p></td>
 <td><div class="line-block">
-<div class="line">Optional URL of Code Carbon API endpoint for sending emissions data</div>
+<div class="line">Optional URL of CodeCarbon API endpoint for sending emissions data</div>
 <div class="line">defaults to “<a class="reference external" href="https://api.codecarbon.io">https://api.codecarbon.io</a>”</div>
 </div>
 </td>
 </tr>
 <tr class="row-even"><td><p>api_key</p></td>
-<td><p>API key for the code carbon API (mandatory to use this API!)</p></td>
+<td><p>API key for the CodeCarbon API (mandatory to use this API!)</p></td>
 </tr>
 <tr class="row-odd"><td><p>api_call_interval</p></td>
 <td><div class="line-block">
@@ -230,7 +234,7 @@
 </section>
 <section id="specific-parameters-for-offline-mode">
 <h2>Specific parameters for offline mode<a class="headerlink" href="#specific-parameters-for-offline-mode" title="Permalink to this heading"></a></h2>
-<table class="colwidths-given docutils align-center" id="id6">
+<table class="docutils align-center" id="id6">
 <caption><span class="caption-text">Input Parameters to OfflineEmissionsTracker</span><a class="headerlink" href="#id6" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 20%" />
@@ -284,7 +288,7 @@
 <section id="track-emissions">
 <h2>&#64;track_emissions<a class="headerlink" href="#track-emissions" title="Permalink to this heading"></a></h2>
 <p>Decorator <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> in addition to standard arguments, requires the following parameters:</p>
-<table class="colwidths-given docutils align-center" id="id7">
+<table class="docutils align-center" id="id7">
 <caption><span class="caption-text">Input Parameters to &#64;track_emissions</span><a class="headerlink" href="#id7" title="Permalink to this table"></a></caption>
 <colgroup>
 <col style="width: 20%" />

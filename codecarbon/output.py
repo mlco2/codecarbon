@@ -19,6 +19,7 @@ import requests
 from codecarbon.core.api_client import ApiClient
 from codecarbon.core.util import backup
 from codecarbon.external.logger import logger
+from codecarbon.prometheus.prometheus import Prometheus
 
 
 @dataclass
@@ -189,6 +190,21 @@ class CodeCarbonAPIOutput(BaseOutput):
     def out(self, data: EmissionsData):
         try:
             self.api.add_emission(dataclasses.asdict(data))
+        except Exception as e:
+            logger.error(e, exc_info=True)
+
+
+class PrometheusOutput(BaseOutput):
+    """
+    Send emissions data to prometheus pushgateway
+    """
+
+    def __init__(self, prometheus_url: str):
+        self.prometheus = Prometheus(prometheus_url)
+
+    def out(self, data: EmissionsData):
+        try:
+            self.prometheus.add_emission(dataclasses.asdict(data))
         except Exception as e:
             logger.error(e, exc_info=True)
 

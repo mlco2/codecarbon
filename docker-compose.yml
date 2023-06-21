@@ -62,6 +62,20 @@ services:
       - codecarbon_net
     restart: unless-stopped
 
+  prometheus:
+      image: prom/prometheus:latest
+      ports:
+          - "9090:9090"
+      volumes:
+        - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      depends_on:
+          - "prometheus-pushgateway"
+
+  prometheus-pushgateway:
+      image: prom/pushgateway
+      ports:
+          - "9091:9091"
+
 volumes:
   postgres_data:
     name: postgres_codecarbon_data
