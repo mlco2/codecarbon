@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quickstart &mdash; CodeCarbon 2.0.0 documentation</title>
@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -28,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> CodeCarbon
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            CodeCarbon
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -93,8 +97,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Quickstart</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quickstart</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -258,19 +262,19 @@ additional parameters and configuration options.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">./.codecarbon.config</span></code></p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>codecarbon<span class="o">]</span>
-<span class="nv">save_to_file</span> <span class="o">=</span> <span class="nb">true</span>
-<span class="nv">output_dir</span> <span class="o">=</span> /Users/victor/emissions
+<span class="nv">save_to_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span>
+<span class="nv">output_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/Users/victor/emissions
 <span class="nv">co2_signal_api_token</span><span class="o">=</span>script-overwrite
-<span class="nv">experiment_id</span> <span class="o">=</span> 235b1da5-aaaa-aaaa-aaaa-893681599d2c
-<span class="nv">log_level</span> <span class="o">=</span> DEBUG
-<span class="nv">tracking_mode</span> <span class="o">=</span> process
+<span class="nv">experiment_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>235b1da5-aaaa-aaaa-aaaa-893681599d2c
+<span class="nv">log_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>DEBUG
+<span class="nv">tracking_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>process
 </pre></div>
 </div>
 </div></blockquote>
 </li>
 <li><p>environment variables</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">CODECARBON_GPU_IDS</span><span class="o">=</span><span class="s2">&quot;0, 1&quot;</span>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">CODECARBON_GPU_IDS</span><span class="o">=</span><span class="s2">&quot;0, 1&quot;</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -311,7 +315,7 @@ additional parameters and configuration options.</p>
 <h2>Access internet through proxy server<a class="headerlink" href="#access-internet-through-proxy-server" title="Permalink to this heading"></a></h2>
 <p>If you need a proxy to access internet, which is needed to call a Web API, like <a class="reference external" href="https://api.codecarbon.io/docs">Codecarbon API</a>, you have to set environment variable <code class="docutils literal notranslate"><span class="pre">HTTPS_PROXY</span></code>, or <em>HTTP_PROXY</em> if calling an <code class="docutils literal notranslate"><span class="pre">http://</span></code> enpoint.</p>
 <p>You could do it in your shell:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">HTTPS_PROXY</span><span class="o">=</span><span class="s2">&quot;http://0.0.0.0:0000&quot;</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">HTTPS_PROXY</span><span class="o">=</span><span class="s2">&quot;http://0.0.0.0:0000&quot;</span>
 </pre></div>
 </div>
 <p>Or in your Python code:</p>
