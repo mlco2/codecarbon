@@ -2013,6 +2013,7 @@ Intel Xeon E5-2660 v2,95
 Intel Xeon E5-2667 v2,130
 Intel Xeon E5-2670 v2,115
 Intel Xeon E5-2673 v3,110
+Intel Xeon E5-2660 v4,105
 Intel Xeon E5-2680 v2,115
 Intel Xeon E5-2680 v4,120
 Intel Xeon E5-2687W v2,130
@@ -2022,6 +2023,7 @@ Intel Xeon E5-2695 v2,115
 Intel Xeon E5-2697 v2,130
 Intel Xeon E5-4607,95
 Intel Xeon E5-4610,130
+Intel Xeon 5320,185
 Intel Xeon E5502,80
 Intel Xeon E5503,80
 Intel Xeon E5504,80
