@@ -12,6 +12,7 @@ DEPENDENCIES = [
     "py-cpuinfo",
     "fuzzywuzzy",
     "click",
+    "prometheus_client",
 ]
 
 TEST_DEPENDENCIES = ["mock", "pytest", "responses", "tox", "numpy", "requests-mock"]
