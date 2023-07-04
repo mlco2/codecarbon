@@ -51,3 +51,45 @@ def test_get_global_emissions_choropleth_data(
         "wind",
     ]
     assert all(list(row.keys()) == expected_keys for row in choropleth_data)
+
+
+def test_get_country_choropleth_data():
+    input_country_energy_mix = {
+        "biofuel_Twh": 20.0,
+        "carbon_intensity": 200,
+        "coal_Twh": 15.0,
+        "country_name": "Test",
+        "fossil_Twh": 150.0,
+        "gaz_Twh": 140.0,
+        "hydroelectricity_Twh": 40.0,
+        "iso_code": "TST",
+        "low_carbon_Twh": 110.0,
+        "nuclear_Twh": 20.0,
+        "oil_Twh": 15.0,
+        "other_renewable_Twh": 25.0,
+        "other_renewable_exc_biofuel_Twh": 5.0,
+        "per_capita_Twh": 500.0,
+        "renewables_Twh": 110.0,
+        "solar_Twh": 20.0,
+        "total_Twh": 1200.0,
+        "wind_Twh": 30.0,
+        "year": 2021,
+    }
+    expected_choropleth_data = {
+        "iso_code": "TST",
+        "emissions": 100,
+        "country": "Test",
+        "fossil": 12.5,
+        "hydroelectricity": 3.3,
+        "nuclear": 1.7,
+        "solar": 1.7,
+        "wind": 2.5,
+    }
+    viz_data = data.Data()
+    output_choropleth_data = viz_data.get_country_choropleth_data(
+        country_energy_mix=input_country_energy_mix,
+        country_name="Test",
+        country_iso_code="TST",
+        country_emissions=100,
+    )
+    assert output_choropleth_data == expected_choropleth_data
