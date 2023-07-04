@@ -225,11 +225,11 @@ class Emissions:
             DataSource().get_carbon_intensity_per_source_data()
         )
         carbon_intensity = 0
-        energy_sum = energy_mix["total_TWh"]
+        energy_sum = energy_mix["total_Twh"]
         energy_sum_computed = 0
         # Iterate through each source of energy in the country
         for energy_type, energy_per_year in energy_mix.items():
-            if "_TWh" in energy_type:
+            if "_Twh" in energy_type:
                 # Compute the carbon intensity ratio of this source for this country
                 carbon_intensity_for_type = carbon_intensity_per_source.get(
                     energy_type[: -len("_TWh")]
