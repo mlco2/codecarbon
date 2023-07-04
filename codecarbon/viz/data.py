@@ -14,7 +14,7 @@ class Data:
         self._emissions = Emissions(self._data_source)
 
     @staticmethod
-    def get_project_data(df: pd.DataFrame, project_name) -> dt.DataTable:
+    def get_project_data(df: pd.DataFrame, project_name: str) -> dt.DataTable:
         project_df = df[df.project_name == project_name]
         project_df = project_df.sort_values(by="timestamp")
         project_data = project_df.to_dict("records")
@@ -104,7 +104,8 @@ class Data:
         global_energy_mix = self._data_source.get_global_energy_mix_data()
         choropleth_data = []
         for country_iso_code in global_energy_mix.keys():
-            country_name = global_energy_mix[country_iso_code]["country_name"]
+            country_energy_mix = global_energy_mix[country_iso_code]
+            country_name = country_energy_mix["country_name"]
 
             if country_iso_code not in ["_define", "ATA"]:
                 from codecarbon.core.units import Energy
@@ -119,27 +120,27 @@ class Data:
                         country_name=country_name, country_iso_code=country_iso_code
                     ),
                 )
-                total = global_energy_mix[country_iso_code]["total_Twh"]
+                total = country_energy_mix["total_Twh"]
                 choropleth_data.append(
                     {
                         "iso_code": country_iso_code,
                         "emissions": country_emissions,
                         "country": country_name,
                         "fossil": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["fossil_Twh"], total
+                            country_energy_mix["fossil_Twh"], total
                         ),
                         "hydroelectricity": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["hydroelectricity_Twh"],
+                            country_energy_mix["hydroelectricity_Twh"],
                             total,
                         ),
                         "nuclear": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["nuclear_Twh"], total
+                            country_energy_mix["nuclear_Twh"], total
                         ),
                         "solar": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["solar_Twh"], total
+                            country_energy_mix["solar_Twh"], total
                         ),
                         "wind": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["wind_Twh"], total
+                            country_energy_mix["wind_Twh"], total
                         ),
                     }
                 )
