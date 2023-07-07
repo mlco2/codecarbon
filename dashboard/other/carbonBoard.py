@@ -716,7 +716,7 @@ def update_map(start_date, end_date, project, kpi):
                 "Country",
                 "Carbon intensity of electricity (gCO2/kWh)",
                 "% Fossil",
-                "% Geothermal",
+                "% Geothermal",  # TODO: Remove this line because data is unavailable
                 "% Hydro",
                 "% Nuclear",
                 "% Solar",
