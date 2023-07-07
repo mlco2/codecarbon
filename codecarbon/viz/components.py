@@ -329,7 +329,7 @@ class Components:
                 hover_data=["region", "country_name", "emissions"],
                 color="emissions",
                 labels={
-                    "emissions": "Carbon Equivalent (kg)",
+                    "emissions": "Carbon Equivalent (KgCO2)",
                     "region": "Region",
                     "country_name": "Country",
                 },
@@ -427,7 +427,6 @@ class Components:
                                 id="energy_type",
                                 options=[
                                     {"label": "Fossil", "value": "fossil"},
-                                    {"label": "Geothermal", "value": "geothermal"},
                                     {
                                         "label": "Hydroelectricity",
                                         "value": "hydroelectricity",
@@ -479,8 +478,8 @@ class Components:
             hover_data=[
                 "country",
                 "emissions",
+                "carbon_intensity",
                 "fossil",
-                "geothermal",
                 "hydroelectricity",
                 "nuclear",
                 "solar",
@@ -488,10 +487,10 @@ class Components:
             ],
             labels={
                 "country": "Country",
-                "emissions": "Carbon Equivalent (kg)",
+                "emissions": "Carbon Equivalent (KgCO2)",
+                "carbon_intensity": "Carbon Intensity (gCO2/kWh)",
                 "iso_code": "Country Code",
                 "fossil": "Fossil Energy(%)",
-                "geothermal": "Geothermal Energy (%)",
                 "hydroelectricity": "Hydroelectricity Energy (%)",
                 "nuclear": "Nuclear Energy (%)",
                 "solar": "Solar Energy (%)",
@@ -505,7 +504,6 @@ class Components:
     def get_global_energy_mix_choropleth_figure(self, energy_type, choropleth_data):
         energy_labels = {
             "fossil": "Fossil Energy(%)",
-            "geothermal": "Geothermal Energy (%)",
             "hydroelectricity": "Hydroelectricity Energy (%)",
             "nuclear": "Nuclear Energy (%)",
             "solar": "Solar Energy (%)",
@@ -518,7 +516,7 @@ class Components:
             hover_data=["country", "emissions", energy_type],
             labels={
                 "country": "Country",
-                "emissions": "Carbon Equivalent (kg)",
+                "emissions": "Carbon Equivalent (KgCO2)",
                 "iso_code": "Country Code",
                 energy_type: energy_labels[energy_type],
             },
@@ -591,7 +589,7 @@ class Components:
             hover_data=["region_name", "emissions", "region_code"],
             labels={
                 "region_name": "Region",
-                "emissions": "Carbon Equivalent (kg)",
+                "emissions": "Carbon Equivalent (KgCO2)",
                 "region_code": "Region Code",
             },
             width=1400,
@@ -639,7 +637,7 @@ class Components:
                 y="emissions",
                 hover_data=["emissions"],
                 labels={
-                    "emissions": "Carbon Equivalent (kg)",
+                    "emissions": "Carbon Equivalent (KgCO2eq)",
                     "timestamp": "Timestamp",
                 },
             )
@@ -659,7 +657,7 @@ class Components:
                 y="emissions",
                 hover_data=hover_data,
                 labels={
-                    "emissions": "Carbon Equivalent (kg)",
+                    "emissions": "Carbon Equivalent (KgCO2eq)",
                     "energy_consumed": "Energy Consumed (kWh)",
                     "timestamp": "Timestamp",
                     "project_name": "Project Name",

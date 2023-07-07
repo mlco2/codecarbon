@@ -136,21 +136,22 @@ class Data:
         def format_energy_percentage(energy_type: float, total: float) -> float:
             return float(f"{energy_type / total * 100:.1f}")
 
-        total = country_energy_mix["total_Twh"]
+        total = country_energy_mix["total_TWh"]
         return {
             "iso_code": country_iso_code,
             "emissions": country_emissions,
             "country": country_name,
-            "fossil": format_energy_percentage(country_energy_mix["fossil_Twh"], total),
+            "carbon_intensity": country_energy_mix["carbon_intensity"],
+            "fossil": format_energy_percentage(country_energy_mix["fossil_TWh"], total),
             "hydroelectricity": format_energy_percentage(
-                country_energy_mix["hydroelectricity_Twh"],
+                country_energy_mix["hydroelectricity_TWh"],
                 total,
             ),
             "nuclear": format_energy_percentage(
-                country_energy_mix["nuclear_Twh"], total
+                country_energy_mix["nuclear_TWh"], total
             ),
-            "solar": format_energy_percentage(country_energy_mix["solar_Twh"], total),
-            "wind": format_energy_percentage(country_energy_mix["wind_Twh"], total),
+            "solar": format_energy_percentage(country_energy_mix["solar_TWh"], total),
+            "wind": format_energy_percentage(country_energy_mix["wind_TWh"], total),
         }
 
     def get_regional_emissions_choropleth_data(
