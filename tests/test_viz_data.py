@@ -44,6 +44,7 @@ def test_get_global_emissions_choropleth_data(
         "iso_code",
         "emissions",
         "country",
+        "carbon_intensity",
         "fossil",
         "hydroelectricity",
         "nuclear",
@@ -78,6 +79,7 @@ def test_get_country_choropleth_data():
     expected_choropleth_data = {
         "iso_code": "TST",
         "emissions": 100,
+        "carbon_intensity": 200,
         "country": "Test",
         "fossil": 12.5,
         "hydroelectricity": 3.3,
