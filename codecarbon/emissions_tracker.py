@@ -17,6 +17,7 @@ from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
+from codecarbon.core.measure import MeasurePowerEnergy
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
@@ -439,13 +440,13 @@ class BaseEmissionsTracker(ABC):
             task_name = uuid.uuid4().__str__()
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
+        # TODO:Faire une mesure de l'énergie
+        task_measure = MeasurePowerEnergy(self._hardware, self._pue)
         self._tasks.update(
             {
                 task_name: Task(
                     task_name=task_name,
-                    intial_cpu_energy=self._total_cpu_energy,
-                    intial_gpu_energy=self._total_gpu_energy,
-                    intial_ram_energy=self._total_ram_energy,
+                    task_measure=task_measure,
                 )
             }
         )
@@ -457,16 +458,25 @@ class BaseEmissionsTracker(ABC):
         emissions.
         :return: None
         """
+
         task_name = self._active_task
-        delta_cpu_energy = self._tasks[task_name].compute_final_cpu_energy(
-            self._total_cpu_energy
-        )
-        delta_gpu_energy = self._tasks[task_name].compute_final_gpu_energy(
-            self._total_gpu_energy
-        )
-        delta_ram_energy = self._tasks[task_name].compute_final_ram_energy(
-            self._total_ram_energy
-        )
+        # TODO: Refaire une mesure pour avoir la consommation finale
+        # self._tasks[task_name].stop()
+        # delta_cpu_energy = self._tasks[task_name]._final_cpu_energy
+        # delta_gpu_energy = self._tasks[task_name]._final_gpu_energy
+        # delta_ram_energy 0
+        delta_cpu_energy = Energy(0)
+        delta_gpu_energy = Energy(0)
+        delta_ram_energy = Energy(0)
+        # delta_cpu_energy = self._tasks[task_name].compute_final_cpu_energy(
+        #     self._total_cpu_energy
+        # )
+        # delta_gpu_energy = self._tasks[task_name].compute_final_gpu_energy(
+        #     self._total_gpu_energy
+        # )
+        # delta_ram_energy = self._tasks[task_name].compute_final_ram_energy(
+        #     self._total_ram_energy
+        # )
 
         task_total_energy = delta_cpu_energy + delta_gpu_energy + delta_ram_energy
 
@@ -519,6 +529,7 @@ class BaseEmissionsTracker(ABC):
             cloud_region=cloud_region,
             os=self._conf.get("os"),
             python_version=self._conf.get("python_version"),
+            codecarbon_version=self._conf.get("codecarbon_version"),
             gpu_count=self._conf.get("gpu_count"),
             gpu_model=self._conf.get("gpu_model"),
             cpu_count=self._conf.get("cpu_count"),
@@ -687,22 +698,7 @@ class BaseEmissionsTracker(ABC):
         """
         pass
 
-    def _measure_power_and_energy(self) -> None:
-        """
-        A function that is periodically run by the `BackgroundScheduler`
-        every `self._measure_power_secs` seconds.
-        :return: None
-        """
-        last_duration = time.time() - self._last_measured_time
-
-        warning_duration = self._measure_power_secs * 3
-        if last_duration > warning_duration:
-            warn_msg = (
-                "Background scheduler didn't run for a long period"
-                + " (%ds), results might be inaccurate"
-            )
-            logger.warning(warn_msg, last_duration)
-
+    def _do_measurements(self) -> None:
         for hardware in self._hardware:
             h_time = time.time()
             # Compute last_duration again for more accuracy
@@ -744,6 +740,24 @@ class BaseEmissionsTracker(ABC):
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."
         )
+
+    def _measure_power_and_energy(self) -> None:
+        """
+        A function that is periodically run by the `BackgroundScheduler`
+        every `self._measure_power_secs` seconds.
+        :return: None
+        """
+        last_duration = time.time() - self._last_measured_time
+
+        warning_duration = self._measure_power_secs * 3
+        if last_duration > warning_duration:
+            warn_msg = (
+                "Background scheduler didn't run for a long period"
+                + " (%ds), results might be inaccurate"
+            )
+            logger.warning(warn_msg, last_duration)
+
+        self._do_measurements()
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
         if (

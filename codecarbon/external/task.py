@@ -16,25 +16,30 @@ class Task:
     is_active: bool
     emissions_data: EmissionsData
 
-    def __init__(
-        self, task_name, intial_cpu_energy, intial_gpu_energy, intial_ram_energy
-    ):
+    def __init__(self, task_name, task_measure):
         self.task_id: str = task_name + uuid4().__str__()
         self.task_name: str = task_name
-        self._initial_cpu_energy: Energy = intial_cpu_energy
-        self._initial_gpu_energy: Energy = intial_gpu_energy
-        self._initial_ram_energy: Energy = intial_ram_energy
+        self.task_measure = task_measure
+        self._initial_cpu_energy: Energy = task_measure._total_cpu_energy
+        self._initial_gpu_energy: Energy = task_measure._total_gpu_energy
+        self._initial_ram_energy: Energy = task_measure._total_ram_energy
         self.start_time = time.time()
         self.is_active = True
 
-    def compute_final_cpu_energy(self, current_cpu_energy):
-        return current_cpu_energy - self._initial_cpu_energy
+    def stop(self) -> None:
+        self.task_measure.do_measure()
+        self._final_cpu_energy = self.task_measure._total_cpu_energy
+        self._final_gpu_energy = self.task_measure._total_gpu_energy
+        self._final_ram_energy = self.task_measure._total_ram_energy
 
-    def compute_final_gpu_energy(self, current_gpu_energy):
-        return current_gpu_energy - self._initial_gpu_energy
+    # def compute_final_cpu_energy(self, current_cpu_energy):
+    #     return current_cpu_energy - self._initial_cpu_energy
 
-    def compute_final_ram_energy(self, current_ram_energy):
-        return current_ram_energy - self._initial_ram_energy
+    # def compute_final_gpu_energy(self, current_gpu_energy):
+    #     return current_gpu_energy - self._initial_gpu_energy
+
+    # def compute_final_ram_energy(self, current_ram_energy):
+    #     return current_ram_energy - self._initial_ram_energy
 
     def out(self):
         return TaskEmissionsData(
@@ -59,6 +64,7 @@ class Task:
             cloud_region=self.emissions_data.cloud_region,
             os=self.emissions_data.os,
             python_version=self.emissions_data.python_version,
+            codecarbon_version=self.emissions_data.codecarbon_version,
             cpu_count=self.emissions_data.cpu_count,
             cpu_model=self.emissions_data.cpu_model,
             gpu_count=self.emissions_data.gpu_count,
