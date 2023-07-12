@@ -88,7 +88,7 @@ class GeoMetadata:
         except Exception as e:
             # If there is a timeout, we default to Canada
             logger.warning(
-                f"Unable to access geographical location. Using 'Canada' as the default value - Exception : {e}"
+                f"Unable to access geographical location. Using 'Canada' as the default value - Exception : {e} - url={url}"
             )
             return cls(
                 country_iso_code="CAN",
