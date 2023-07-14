@@ -43,6 +43,13 @@ def main():
         print(
             f"Emissions : {1000 * task.emissions_data.emissions} g CO₂ for task {task_name}"
         )
+        print(
+            f"\tEnergy : {1000 * task.emissions_data.cpu_energy} Wh {1000 * task.emissions_data.gpu_energy} Wh RAM{1000 * task.emissions_data.ram_energy}Wh"
+        )
+        print(
+            f"\tPower CPU:{ task.emissions_data.cpu_power:.0f}W GPU:{ task.emissions_data.gpu_power:.0f}W RAM{ task.emissions_data.ram_power:.0f}W"
+            + f" during {task.emissions_data.duration} seconds."
+        )
 
 
 if __name__ == "__main__":

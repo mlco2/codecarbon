@@ -17,7 +17,6 @@ from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
-from codecarbon.core.measure import MeasurePowerEnergy
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
@@ -433,6 +432,9 @@ class BaseEmissionsTracker(ABC):
         :param task_name: Name of the task to be isolated.
         :return: None
         """
+        # Stop scheduler as we do not want it to interfere with the task measurement
+        self._scheduler.stop()
+
         if self._active_task:
             logger.info("A task is already under measure")
             return
@@ -441,108 +443,45 @@ class BaseEmissionsTracker(ABC):
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
         # TODO:Faire une mesure de l'énergie
-        task_measure = MeasurePowerEnergy(self._hardware, self._pue)
+        self._last_measured_time = self._start_time = time.time()
+        # Read initial energy for hardware
+        for hardware in self._hardware:
+            hardware.start()
+        _ = self._prepare_emissions_data(delta=True)
+
+        # task_measure = MeasurePowerEnergy(self._hardware, self._pue)
         self._tasks.update(
             {
                 task_name: Task(
                     task_name=task_name,
-                    task_measure=task_measure,
+                    # task_measure=task_measure,
                 )
             }
         )
         self._active_task = task_name
 
-    def stop_task(self) -> float:
+    def stop_task(self, task_name: str = None) -> float:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
         emissions.
         :return: None
         """
-
-        task_name = self._active_task
+        task_name = task_name if task_name else self._active_task
         # TODO: Refaire une mesure pour avoir la consommation finale
-        # self._tasks[task_name].stop()
-        # delta_cpu_energy = self._tasks[task_name]._final_cpu_energy
-        # delta_gpu_energy = self._tasks[task_name]._final_gpu_energy
-        # delta_ram_energy 0
-        delta_cpu_energy = Energy(0)
-        delta_gpu_energy = Energy(0)
-        delta_ram_energy = Energy(0)
-        # delta_cpu_energy = self._tasks[task_name].compute_final_cpu_energy(
-        #     self._total_cpu_energy
-        # )
-        # delta_gpu_energy = self._tasks[task_name].compute_final_gpu_energy(
-        #     self._total_gpu_energy
-        # )
-        # delta_ram_energy = self._tasks[task_name].compute_final_ram_energy(
-        #     self._total_ram_energy
-        # )
+        self._measure_power_and_energy()
 
-        task_total_energy = delta_cpu_energy + delta_gpu_energy + delta_ram_energy
-
-        cloud: CloudMetadata = self._get_cloud_metadata()
-
-        if cloud.is_on_private_infra:
-            task_emissions = self._emissions.get_private_infra_emissions(
-                task_total_energy, self._geo
-            )  # float: kg co2_eq
-            country_name = self._geo.country_name
-            country_iso_code = self._geo.country_iso_code
-            region = self._geo.region
-            on_cloud = "N"
-            cloud_provider = ""
-            cloud_region = ""
-        else:
-            task_emissions = self._emissions.get_cloud_emissions(
-                task_total_energy, cloud
-            )
-            country_name = self._emissions.get_cloud_country_name(cloud)
-            country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
-            region = self._emissions.get_cloud_geo_region(cloud)
-            on_cloud = "Y"
-            cloud_provider = cloud.provider
-            cloud_region = cloud.region
+        emissions_data = self._prepare_emissions_data(delta=True)
 
         task_duration = Time.from_seconds(
             time.time() - self._tasks[task_name].start_time
         )
 
-        task_emission_data = EmissionsData(
-            timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-            project_name=self._project_name,
-            run_id=str(self.run_id),
-            duration=task_duration.seconds,
-            emissions=task_emissions,
-            emissions_rate=task_emissions * 1000 / task_duration.seconds,  # g/s
-            cpu_power=self._cpu_power.W,
-            gpu_power=self._gpu_power.W,
-            ram_power=self._ram_power.W,
-            cpu_energy=delta_cpu_energy.kWh,
-            gpu_energy=delta_gpu_energy.kWh,
-            ram_energy=delta_ram_energy.kWh,
-            energy_consumed=task_total_energy.kWh,
-            country_name=country_name,
-            country_iso_code=country_iso_code,
-            region=region,
-            on_cloud=on_cloud,
-            cloud_provider=cloud_provider,
-            cloud_region=cloud_region,
-            os=self._conf.get("os"),
-            python_version=self._conf.get("python_version"),
-            codecarbon_version=self._conf.get("codecarbon_version"),
-            gpu_count=self._conf.get("gpu_count"),
-            gpu_model=self._conf.get("gpu_model"),
-            cpu_count=self._conf.get("cpu_count"),
-            cpu_model=self._conf.get("cpu_model"),
-            longitude=self._conf.get("longitude"),
-            latitude=self._conf.get("latitude"),
-            ram_total_size=self._conf.get("ram_total_size"),
-            tracking_mode=self._conf.get("tracking_mode"),
-        )
+        task_emission_data = emissions_data
+        task_emission_data.duration = task_duration.seconds
         self._tasks[task_name].emissions_data = task_emission_data
         self._tasks[task_name].is_active = False
         self._active_task = None
-        return task_emissions
+        return task_emission_data
 
     @suppress(Exception)
     def flush(self) -> Optional[float]:
@@ -906,8 +845,8 @@ class EmissionsTracker(BaseEmissionsTracker):
 
 class TaskEmissionsTracker:
     """
-    An online emissions tracker that auto infers geographical location,
-    using `geojs` API
+    Track emissions for a specific task
+    # TODO: THIS NOT USED, RIGHT ?
     """
 
     def __init__(self, task_name, tracker: EmissionsTracker = None):
@@ -1078,7 +1017,7 @@ def track_task_emissions(
     fn: Callable = None, tracker: BaseEmissionsTracker = None, task_name: str = ""
 ):
     """
-    Track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
+    Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
     :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
     tracker which will read default parameter from config to enable tracking
     :param: task_name: Task to be tracked. If none is provided, an id will be used.
