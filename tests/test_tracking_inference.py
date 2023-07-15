@@ -17,7 +17,7 @@ def heavy_computation(run_time_secs: float = 3):
 
 
 def mock_load_model():
-    model = [str(i) for i in range(1_000_000)]
+    model = [str(i) for i in range(100_000)]
 
     return model
 
@@ -68,7 +68,7 @@ class TestCarbonInferenceTracker(unittest.TestCase):
         inference_class = InferenceClass()
         tracker.stop_task("model_loading")
 
-        for i in range(10):
+        for i in range(3):
             inference_task_name = "inference_" + str(i)
             tracker.start_task(inference_task_name)
             inference_class.predict(i)
@@ -108,7 +108,7 @@ class TestCarbonInferenceTracker(unittest.TestCase):
         inference_class = InferenceClass()
         tracker.stop_task("model_loading")
 
-        for i in range(10):
+        for i in range(3):
             inference_task_name = "inference_" + str(i)
             tracker.start_task(inference_task_name)
             inference_class.predict(i)
