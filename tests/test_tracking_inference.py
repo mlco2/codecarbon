@@ -13,11 +13,11 @@ OUTPUT_DIR = "test_task_data"
 def heavy_computation(run_time_secs: float = 3):
     end_time: float = time.time() + run_time_secs  # Run for `run_time_secs` seconds
     while time.time() < end_time:
-        pass
+        _ = 1e9 / 1e10
 
 
 def mock_load_model():
-    model = [str(i) for i in range(100000000)]
+    model = [str(i) for i in range(1_000_000)]
 
     return model
 

@@ -521,9 +521,10 @@ class BaseEmissionsTracker(ABC):
         for task_name in self._tasks:
             if self._tasks[task_name].is_active:
                 self.stop_task(task_name=task_name)
-            # Run to calculate the power used from last
-            # scheduled measurement to shutdown
-            self._measure_power_and_energy()
+        # Run to calculate the power used from last
+        # scheduled measurement to shutdown
+        # or if scheduler interval was longer than the run
+        self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
 
