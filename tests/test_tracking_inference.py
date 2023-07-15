@@ -67,8 +67,8 @@ class TestCarbonInferenceTracker(unittest.TestCase):
         tracker.start_task("model_loading")
         inference_class = InferenceClass()
         tracker.stop_task("model_loading")
-
-        for i in range(3):
+        nb_inferences = 3
+        for i in range(nb_inferences):
             inference_task_name = "inference_" + str(i)
             tracker.start_task(inference_task_name)
             inference_class.predict(i)
@@ -77,7 +77,7 @@ class TestCarbonInferenceTracker(unittest.TestCase):
         tasks = tracker._tasks
         tracker.stop()
 
-        assert len(tasks) == 11
+        assert len(tasks) == nb_inferences + 1
 
     def test_tracker_outputs_data_point_for_each_task_logged(self):
         experiment_name = "base_2"
@@ -92,13 +92,6 @@ class TestCarbonInferenceTracker(unittest.TestCase):
             "inference_0",
             "inference_1",
             "inference_2",
-            "inference_3",
-            "inference_4",
-            "inference_5",
-            "inference_6",
-            "inference_7",
-            "inference_8",
-            "inference_9",
         ]
 
         tracker.start()
