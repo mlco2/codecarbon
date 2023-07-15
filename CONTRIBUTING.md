@@ -143,7 +143,7 @@ Here is the launch.json to be able to debug examples and tests:
 
 Then run opened test with this button:
 
-![vscode_debug](docs/edit/images/vscode_debug)
+![vscode_debug](docs/edit/images/vscode_debug.png)
 
 ### <a name="local_deployement"></a> Local deployment
 
