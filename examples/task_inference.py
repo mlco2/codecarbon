@@ -22,21 +22,23 @@ def inference(model, data, inference_task_name):
 
 
 def main():
-    tracker = EmissionsTracker(project_name="bert_inference", measure_power_secs=10)
-    tracker.start()
+    try:
+        tracker = EmissionsTracker(project_name="bert_inference", measure_power_secs=10)
+        tracker.start()
 
-    tracker.start_task("load dataset")
-    dataset = load_dataset("imdb", split="test")
-    tracker.stop_task()
-    tracker.start_task("build model")
-    model = build_model()
-    tracker.stop_task()
-    for i in range(2):
-        inference_task_name = "Inference" + str(i)
-        tracker.start_task(inference_task_name)
-        inference(model, dataset, inference_task_name)
+        tracker.start_task("load dataset")
+        dataset = load_dataset("imdb", split="test")
         tracker.stop_task()
-    emissions = tracker.stop()
+        tracker.start_task("build model")
+        model = build_model()
+        tracker.stop_task()
+        for i in range(2):
+            inference_task_name = "Inference" + str(i)
+            tracker.start_task(inference_task_name)
+            inference(model, dataset, inference_task_name)
+            tracker.stop_task()
+    finally:
+        emissions = tracker.stop()
 
     print(f"Emissions : {1000 * emissions} g CO₂")
     for task_name, task in tracker._tasks.items():
