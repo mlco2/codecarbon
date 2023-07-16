@@ -62,12 +62,15 @@ class GPU(BaseHardware):
     def __post_init__(self):
         self.devices = AllGPUDevices()
         self.num_gpus = self.devices.device_count
-        self.total_power = (
+        self._total_power = Power(
             0  # It will be 0 until we call for the first time measure_power_and_energy
         )
 
-    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
-        gpu_ids = self._get_gpu_ids()
+    def measure_power_and_energy(
+        self, last_duration: float, gpu_ids: Iterable[int] = None
+    ) -> Tuple[Power, Energy]:
+        if not gpu_ids:
+            gpu_ids = self._get_gpu_ids()
         all_gpu_details: List[Dict] = self.devices.get_delta(
             Time.from_seconds(last_duration)
         )
@@ -81,7 +84,7 @@ class GPU(BaseHardware):
                 ]
             )
         )
-        self.total_power = Power(
+        self._total_power = Power(
             sum(
                 [
                     gpu_details["power_usage"].kW
@@ -90,7 +93,7 @@ class GPU(BaseHardware):
                 ]
             )
         )
-        return self.total_power, total_energy
+        return self._total_power, total_energy
 
     def _get_gpu_ids(self) -> Iterable[int]:
         """
@@ -107,7 +110,7 @@ class GPU(BaseHardware):
         return gpu_ids
 
     def total_power(self) -> Power:
-        return self.total_power
+        return self._total_power
 
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":

@@ -87,6 +87,9 @@ class Energy:
     def __float__(self) -> float:
         return float(self.kWh)
 
+    def __truediv__(self, divisor: float) -> "Energy":
+        return Energy(self.kWh / divisor)
+
 
 @dataclass
 class Power:
@@ -139,3 +142,6 @@ class Power:
 
     def __add__(self, other: "Power") -> "Power":
         return Power(self.kW + other.kW)
+
+    def __mul__(self, factor: float) -> "Power":
+        return Power(self.kW * factor)

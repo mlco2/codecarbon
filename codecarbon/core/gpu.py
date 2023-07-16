@@ -187,8 +187,12 @@ class GPUDevice:
 
 class AllGPUDevices:
     def __init__(self):
-        pynvml.nvmlInit()
-        self.device_count = pynvml.nvmlDeviceGetCount()
+        if is_gpu_details_available():
+            logger.debug("GPU available. Starting setup")
+            self.device_count = pynvml.nvmlDeviceGetCount()
+        else:
+            logger.error("There is no GPU available")
+            self.device_count = 0
         self.devices = []
         for i in range(self.device_count):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
@@ -243,7 +247,7 @@ class AllGPUDevices:
         try:
             devices_info = []
             for i in range(self.device_count):
-                gpu_device = self.devices[i]
+                gpu_device: GPUDevice = self.devices[i]
                 devices_info.append(gpu_device.get_gpu_details())
             return devices_info
 
@@ -266,7 +270,7 @@ class AllGPUDevices:
         try:
             devices_info = []
             for i in range(self.device_count):
-                gpu_device = self.devices[i]
+                gpu_device: GPUDevice = self.devices[i]
                 devices_info.append(gpu_device.delta(last_duration))
             return devices_info
 
