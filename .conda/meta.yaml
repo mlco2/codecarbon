@@ -1,4 +1,4 @@
-{% set version = "2.2.5" %}
+{% set version = "2.2.6" %}
 
 package:
   name: codecarbon
@@ -33,6 +33,7 @@ requirements:
     - pynvml
     - py-cpuinfo
     - fuzzywuzzy
+    - prometheus_client
 
 test:
   imports:
