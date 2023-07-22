@@ -54,7 +54,7 @@ setuptools.setup(
             "viz/assets/*.png",
         ],
     },
-    python_requires=">3.6",
+    python_requires=">=3.7",
     entry_points={
         "console_scripts": [
             "carbonboard = codecarbon.viz.carbonboard:main",
