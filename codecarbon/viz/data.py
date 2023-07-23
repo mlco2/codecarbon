@@ -128,9 +128,6 @@ class Data:
                         "fossil": formatted_energy_percentage(
                             global_energy_mix[country_iso_code]["fossil_Twh"], total
                         ),
-                        "geothermal": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["geothermal_Twh"], total
-                        ),
                         "hydroelectricity": formatted_energy_percentage(
                             global_energy_mix[country_iso_code]["hydroelectricity_Twh"],
                             total,

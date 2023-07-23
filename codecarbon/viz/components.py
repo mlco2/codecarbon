@@ -427,7 +427,6 @@ class Components:
                                 id="energy_type",
                                 options=[
                                     {"label": "Fossil", "value": "fossil"},
-                                    {"label": "Geothermal", "value": "geothermal"},
                                     {
                                         "label": "Hydroelectricity",
                                         "value": "hydroelectricity",
@@ -480,7 +479,6 @@ class Components:
                 "country",
                 "emissions",
                 "fossil",
-                "geothermal",
                 "hydroelectricity",
                 "nuclear",
                 "solar",
@@ -491,7 +489,6 @@ class Components:
                 "emissions": "Carbon Equivalent (kg)",
                 "iso_code": "Country Code",
                 "fossil": "Fossil Energy(%)",
-                "geothermal": "Geothermal Energy (%)",
                 "hydroelectricity": "Hydroelectricity Energy (%)",
                 "nuclear": "Nuclear Energy (%)",
                 "solar": "Solar Energy (%)",
@@ -505,7 +502,6 @@ class Components:
     def get_global_energy_mix_choropleth_figure(self, energy_type, choropleth_data):
         energy_labels = {
             "fossil": "Fossil Energy(%)",
-            "geothermal": "Geothermal Energy (%)",
             "hydroelectricity": "Hydroelectricity Energy (%)",
             "nuclear": "Nuclear Energy (%)",
             "solar": "Solar Energy (%)",
