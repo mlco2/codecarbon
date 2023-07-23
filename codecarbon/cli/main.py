@@ -1,14 +1,13 @@
 import sys
-import time
 
 import click
 
-from codecarbon import EmissionsTracker
 from codecarbon.cli.cli_utils import (
     get_api_endpoint,
     get_existing_local_exp_id,
     write_local_exp_id,
 )
+from codecarbon.cli.monitor import monitor_infinite_loop
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate
 
@@ -79,11 +78,4 @@ def monitor(measure_power_secs, api_call_interval, api):
         click.echo("ERROR: No experiment id, call 'codecarbon init' first.")
         sys.exit(1)
     click.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
-    with EmissionsTracker(
-        measure_power_secs=measure_power_secs,
-        api_call_interval=api_call_interval,
-        save_to_api=api,
-    ):
-        # Infinite loop
-        while True:
-            time.sleep(300)
+    monitor_infinite_loop(measure_power_secs, api_call_interval, api)
