@@ -211,7 +211,7 @@ class Emissions:
         """
         Convert a mix of electricity sources into emissions per kWh.
         :param energy_mix: A dictionary that breaks down the electricity produced into
-            energy sources, with a total value. Format will vary, but must have keys for "total_TWh"
+            energy sources, with a total value. Format will vary, but must have keys for "total_Twh"
         :return: an EmissionsPerKwh object representing the average emissions rate
             in Kgs.CO2 / kWh
         """
@@ -225,16 +225,16 @@ class Emissions:
             DataSource().get_carbon_intensity_per_source_data()
         )
         carbon_intensity = 0
-        energy_sum = energy_mix["total_TWh"]
+        energy_sum = energy_mix["total_Twh"]
         energy_sum_computed = 0
         # Iterate through each source of energy in the country
         for energy_type, energy_per_year in energy_mix.items():
-            if "_TWh" in energy_type:
+            if "_Twh" in energy_type:
                 # Compute the carbon intensity ratio of this source for this country
                 carbon_intensity_for_type = carbon_intensity_per_source.get(
-                    energy_type[: -len("_TWh")]
+                    energy_type[: -len("_Twh")]
                 )
-                if carbon_intensity_for_type:  # to ignore "total_TWh"
+                if carbon_intensity_for_type:  # to ignore "total_Twh"
                     carbon_intensity += (
                         energy_per_year / energy_sum
                     ) * carbon_intensity_for_type
