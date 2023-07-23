@@ -17,7 +17,7 @@ class Data:
     def get_project_data(df: pd.DataFrame, project_name) -> dt.DataTable:
         project_df = df[df.project_name == project_name]
         project_df = project_df.sort_values(by="timestamp")
-        project_data = project_df.to_dict("rows")
+        project_data = project_df.to_dict("records")
         columns = [{"name": column, "id": column} for column in project_df.columns]
         return dt.DataTable(data=project_data, columns=columns)
 
