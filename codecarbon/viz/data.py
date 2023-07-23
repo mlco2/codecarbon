@@ -119,30 +119,30 @@ class Data:
                         country_name=country_name, country_iso_code=country_iso_code
                     ),
                 )
-                total = global_energy_mix[country_iso_code]["total_TWh"]
+                total = global_energy_mix[country_iso_code]["total_Twh"]
                 choropleth_data.append(
                     {
                         "iso_code": country_iso_code,
                         "emissions": country_emissions,
                         "country": country_name,
                         "fossil": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["fossil_TWh"], total
+                            global_energy_mix[country_iso_code]["fossil_Twh"], total
                         ),
                         "geothermal": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["geothermal_TWh"], total
+                            global_energy_mix[country_iso_code]["geothermal_Twh"], total
                         ),
                         "hydroelectricity": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["hydroelectricity_TWh"],
+                            global_energy_mix[country_iso_code]["hydroelectricity_Twh"],
                             total,
                         ),
                         "nuclear": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["nuclear_TWh"], total
+                            global_energy_mix[country_iso_code]["nuclear_Twh"], total
                         ),
                         "solar": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["solar_TWh"], total
+                            global_energy_mix[country_iso_code]["solar_Twh"], total
                         ),
                         "wind": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["wind_TWh"], total
+                            global_energy_mix[country_iso_code]["wind_Twh"], total
                         ),
                     }
                 )
