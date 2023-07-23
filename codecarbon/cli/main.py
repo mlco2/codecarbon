@@ -1,3 +1,4 @@
+import shlex
 import sys
 
 import click
@@ -7,7 +8,7 @@ from codecarbon.cli.cli_utils import (
     get_existing_local_exp_id,
     write_local_exp_id,
 )
-from codecarbon.cli.monitor import monitor_infinite_loop
+from codecarbon.cli.monitor import monitor_infinite_loop, monitor_subprocess
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate
 
@@ -59,7 +60,23 @@ def init():
 
 
 @codecarbon.command(
-    "monitor", short_help="Run an infinite loop to monitor this machine."
+    "monitor",
+    short_help="Run an infinite loop to monitor this machine.",
+    help=f"""
+    Monitor the environmental impact of programs.
+
+    This command has two usages:
+
+    Examples:
+
+    \b
+    # Monitor the system until you press CTRL-C
+    {sys.argv[0]} monitor
+
+    \b
+    # Run and monitor a subprocess called "recon-all" and forward arguments to "recon-all":
+    {sys.argv[0]} monitor -- recon-all -s sub-101 -i sub-101_ses-BL_T1w.nii.gz -all
+    """,
 )
 @click.option(
     "--measure_power_secs", default=10, help="Interval between two measures. (10)"
@@ -72,10 +89,18 @@ def init():
 @click.option(
     "--api/--no-api", default=True, help="Choose to call Code Carbon API or not. (yes)"
 )
-def monitor(measure_power_secs, api_call_interval, api):
+@click.argument("cmd", nargs=-1)
+def monitor(measure_power_secs, api_call_interval, api, cmd):
     experiment_id = get_existing_local_exp_id()
     if api and experiment_id is None:
         click.echo("ERROR: No experiment id, call 'codecarbon init' first.")
         sys.exit(1)
-    click.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
-    monitor_infinite_loop(measure_power_secs, api_call_interval, api)
+
+    if cmd:
+        click.echo("CodeCarbon is going to run and monitor this command:")
+        click.echo(f"\n\t{shlex.join(cmd)}\n")
+        rc = monitor_subprocess(measure_power_secs, api_call_interval, api, cmd)
+        sys.exit(rc)
+    else:
+        click.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
+        monitor_infinite_loop(measure_power_secs, api_call_interval, api)
