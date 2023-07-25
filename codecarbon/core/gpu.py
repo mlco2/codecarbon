@@ -130,23 +130,28 @@ def get_gpu_static_info():
         deviceCount = pynvml.nvmlDeviceGetCount()
         devices = []
         for i in range(deviceCount):
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            try:
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
 
-            # Memory
-            memory = get_memory_info(handle)
+                # Memory
+                memory = get_memory_info(handle)
 
-            device_details = {
-                "name": get_gpu_name(handle),
-                "uuid": get_uuid(handle),
-                "total_memory": memory.total,
-                "power_limit": get_power_limit(handle),
-                "gpu_index": i,
-            }
-            devices.append(device_details)
+                device_details = {
+                    "name": get_gpu_name(handle),
+                    "uuid": get_uuid(handle),
+                    "total_memory": memory.total,
+                    "power_limit": get_power_limit(handle),
+                    "gpu_index": i,
+                }
+                devices.append(device_details)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to retrieve info for GPU number {i} : {e}", exc_info=True
+                )
         return devices
 
     except pynvml.NVMLError:
-        logger.debug("Failed to retrieve gpu static info", exc_info=True)
+        logger.warning("Failed to retrieve gpu static info", exc_info=True)
         return []
 
 
@@ -175,30 +180,35 @@ def get_gpu_details():
         deviceCount = pynvml.nvmlDeviceGetCount()
         devices = []
         for i in range(deviceCount):
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            try:
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
 
-            # Memory
-            memory = get_memory_info(handle)
+                # Memory
+                memory = get_memory_info(handle)
 
-            device_details = {
-                "name": get_gpu_name(handle),
-                "uuid": get_uuid(handle),
-                "free_memory": memory.free,
-                "total_memory": memory.total,
-                "used_memory": memory.used,
-                "temperature": get_temperature(handle),
-                "power_usage": get_power_usage(handle),
-                "power_limit": get_power_limit(handle),
-                "gpu_utilization": get_gpu_utilization(handle),
-                "compute_mode": get_compute_mode(handle),
-                "compute_processes": get_compute_processes(handle),
-                "graphics_processes": get_graphics_processes(handle),
-            }
-            devices.append(device_details)
+                device_details = {
+                    "name": get_gpu_name(handle),
+                    "uuid": get_uuid(handle),
+                    "free_memory": memory.free,
+                    "total_memory": memory.total,
+                    "used_memory": memory.used,
+                    "temperature": get_temperature(handle),
+                    "power_usage": get_power_usage(handle),
+                    "power_limit": get_power_limit(handle),
+                    "gpu_utilization": get_gpu_utilization(handle),
+                    "compute_mode": get_compute_mode(handle),
+                    "compute_processes": get_compute_processes(handle),
+                    "graphics_processes": get_graphics_processes(handle),
+                }
+                devices.append(device_details)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to retrieve info for GPU number {i} : {e}", exc_info=True
+                )
         return devices
 
     except pynvml.NVMLError:
-        logger.debug("Failed to retrieve gpu information", exc_info=True)
+        logger.warning("Failed to retrieve gpu information", exc_info=True)
         return []
 
 
