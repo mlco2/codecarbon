@@ -1,4 +1,4 @@
-{% set version = "2.2.6" %}
+{% set version = "2.2.7" %}
 
 package:
   name: codecarbon

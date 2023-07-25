@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 import requests
@@ -14,10 +14,10 @@ class Data:
         self._emissions = Emissions(self._data_source)
 
     @staticmethod
-    def get_project_data(df: pd.DataFrame, project_name) -> dt.DataTable:
+    def get_project_data(df: pd.DataFrame, project_name: str) -> dt.DataTable:
         project_df = df[df.project_name == project_name]
         project_df = project_df.sort_values(by="timestamp")
-        project_data = project_df.to_dict("rows")
+        project_data = project_df.to_dict("records")
         columns = [{"name": column, "id": column} for column in project_df.columns]
         return dt.DataTable(data=project_data, columns=columns)
 
@@ -98,13 +98,11 @@ class Data:
     def get_global_emissions_choropleth_data(
         self, net_energy_consumed: float
     ) -> List[Dict]:
-        def formatted_energy_percentage(energy_type: float, total: float) -> float:
-            return float(f"{energy_type / total * 100:.1f}")
-
         global_energy_mix = self._data_source.get_global_energy_mix_data()
         choropleth_data = []
         for country_iso_code in global_energy_mix.keys():
-            country_name = global_energy_mix[country_iso_code]["country_name"]
+            country_energy_mix = global_energy_mix[country_iso_code]
+            country_name = country_energy_mix["country_name"]
 
             if country_iso_code not in ["_define", "ATA"]:
                 from codecarbon.core.units import Energy
@@ -119,34 +117,42 @@ class Data:
                         country_name=country_name, country_iso_code=country_iso_code
                     ),
                 )
-                total = global_energy_mix[country_iso_code]["total_TWh"]
-                choropleth_data.append(
-                    {
-                        "iso_code": country_iso_code,
-                        "emissions": country_emissions,
-                        "country": country_name,
-                        "fossil": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["fossil_TWh"], total
-                        ),
-                        "geothermal": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["geothermal_TWh"], total
-                        ),
-                        "hydroelectricity": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["hydroelectricity_TWh"],
-                            total,
-                        ),
-                        "nuclear": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["nuclear_TWh"], total
-                        ),
-                        "solar": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["solar_TWh"], total
-                        ),
-                        "wind": formatted_energy_percentage(
-                            global_energy_mix[country_iso_code]["wind_TWh"], total
-                        ),
-                    }
+                country_choropleth_data = self.get_country_choropleth_data(
+                    country_energy_mix=country_energy_mix,
+                    country_name=country_name,
+                    country_iso_code=country_iso_code,
+                    country_emissions=country_emissions,
                 )
+                choropleth_data.append(country_choropleth_data)
         return choropleth_data
+
+    @staticmethod
+    def get_country_choropleth_data(
+        country_energy_mix: Dict,
+        country_name: str,
+        country_iso_code: str,
+        country_emissions: float,
+    ) -> Dict[str, Any]:
+        def format_energy_percentage(energy_type: float, total: float) -> float:
+            return float(f"{energy_type / total * 100:.1f}")
+
+        total = country_energy_mix["total_TWh"]
+        return {
+            "iso_code": country_iso_code,
+            "emissions": country_emissions,
+            "country": country_name,
+            "carbon_intensity": country_energy_mix["carbon_intensity"],
+            "fossil": format_energy_percentage(country_energy_mix["fossil_TWh"], total),
+            "hydroelectricity": format_energy_percentage(
+                country_energy_mix["hydroelectricity_TWh"],
+                total,
+            ),
+            "nuclear": format_energy_percentage(
+                country_energy_mix["nuclear_TWh"], total
+            ),
+            "solar": format_energy_percentage(country_energy_mix["solar_TWh"], total),
+            "wind": format_energy_percentage(country_energy_mix["wind_TWh"], total),
+        }
 
     def get_regional_emissions_choropleth_data(
         self, net_energy_consumed: float, country_iso_code: str

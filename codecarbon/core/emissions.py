@@ -195,7 +195,6 @@ class Emissions:
             )  # kgs
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
-
         emissions_per_kWh = self._global_energy_mix_to_emissions_rate(
             country_energy_mix
         )
@@ -243,7 +242,7 @@ class Emissions:
         # Sanity check
         if energy_sum_computed != energy_sum:
             logger.error(
-                f"We find {energy_sum_computed} TWh instead of {energy_sum} TWh for {energy_mix.get('official_name_en')}, using world average."
+                f"We find {energy_sum_computed} TWh instead of {energy_sum} TWh for {energy_mix.get('country_name')}, using world average."
             )
             return EmissionsPerKWh.from_g_per_kWh(
                 carbon_intensity_per_source.get("world_average")
