@@ -1,3 +1,5 @@
+import pynvml as real_pynvml
+
 GEO_METADATA_USA = {
     "organization_name": "foobar",
     "region": "Illinois",
@@ -235,3 +237,32 @@ TWO_GPU_DETAILS_RESPONSE = [
         "graphics_processes": [],
     },
 ]
+
+TWO_GPU_DETAILS_RESPONSE_HANDLES = {
+    "handle_0": {
+        "name": "Tesla V100-SXM2-16GB",
+        "uuid": "foo",
+        "memory": real_pynvml.c_nvmlMemory_t(1024, 200, 824),
+        "temperature": 28,
+        "power_usage": 42159,
+        "power_limit": 300000,
+        "total_energy_consumption": 149709,
+        "gpu_utilization": 0,
+        "compute_mode": 0,
+        "compute_processes": [],
+        "graphics_processes": [],
+    },
+    "handle_1": {
+        "name": "Tesla V100-SXM2-16GB",
+        "uuid": "bar",
+        "memory": real_pynvml.c_nvmlMemory_t(1024, 200, 824),
+        "temperature": 28,
+        "power_usage": 32159,
+        "power_limit": 300000,
+        "total_energy_consumption": 149709,
+        "gpu_utilization": 0,
+        "compute_mode": 0,
+        "compute_processes": [],
+        "graphics_processes": [],
+    },
+}
