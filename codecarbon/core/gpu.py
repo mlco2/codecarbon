@@ -39,6 +39,9 @@ class GPUDevice:
     # Last energy reading in kWh
     last_energy: Energy = field(default_factory=lambda: Energy(0))
 
+    def start(self):
+        self.last_energy = self._get_energy_kwh()
+
     def __post_init__(self):
         self.last_energy = self._get_energy_kwh()
         self._init_static_details()

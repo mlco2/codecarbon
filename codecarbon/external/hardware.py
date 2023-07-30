@@ -112,6 +112,10 @@ class GPU(BaseHardware):
     def total_power(self) -> Power:
         return self._total_power
 
+    def start(self) -> None:
+        for d in self.devices.devices:
+            d.start()
+
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
         return cls(gpu_ids=gpu_ids)
