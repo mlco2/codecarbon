@@ -47,14 +47,14 @@ If we don't have the global carbon intensity or electricity of a country, but we
      - 26
    * - Nuclear
      - 29
-   * - Solar 
+   * - Solar
      - 48
    * - Wind
      - 26
-   
-Sources: 
- -  `for fossil energies <https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2>`_ 
- - `for renewables energies <http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf>`_  
+
+Sources:
+ -  `for fossil energies <https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2>`_
+ - `for renewables energies <http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf>`_
 
 
 Then, for example, if the Energy Mix of the Grid Electricity is 25% Coal, 35% Petroleum, 26% Natural Gas and 14% Nuclear:
@@ -75,10 +75,10 @@ Power supply to the underlying hardware is tracked at frequent time intervals. T
 
 Currently, the package supports the following hardware infrastructure.
 
-GPU 
+GPU
 ~~~~
 
-Tracks Nvidia GPUs poxer consumption using ``pynvml`` library (installed with the package).
+Tracks Nvidia GPUs power consumption using ``pynvml`` library (installed with the package).
 
 RAM
 ~~~~
@@ -86,7 +86,7 @@ RAM
 CodeCarbon uses a 3 Watts for 8 BG ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
 This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
 
-CPU 
+CPU
 ~~~~
 
 - **On Windows or Mac**
@@ -101,9 +101,9 @@ All CPUs listed in this directory will be tracked. `Help us improve this and mak
 *Note*: The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path
 
 
-If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode: 
+If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode:
 It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
-If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation. 
+If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
 We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.
 
 The net Power Used is the net power supply consumed during the compute time, measured as ``kWh``.
