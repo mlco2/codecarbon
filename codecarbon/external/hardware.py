@@ -134,7 +134,7 @@ class CPU(BaseHardware):
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
         if self._mode == "intel_rapl":
-            # Don't call get_cpu_details to avoid computing energy twice and loosing data.
+            # Don't call get_cpu_details to avoid computing energy twice and losing data.
             all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()
         else:
             all_cpu_details: Dict = self._intel_interface.get_cpu_details()
