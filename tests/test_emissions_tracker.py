@@ -16,7 +16,12 @@ from codecarbon.emissions_tracker import (
     track_emissions,
 )
 from codecarbon.external.geography import CloudMetadata
-from tests.testdata import GEO_METADATA_CANADA, TWO_GPU_DETAILS_RESPONSE
+from tests.fake_modules import pynvml as fake_pynvml
+from tests.testdata import (
+    GEO_METADATA_CANADA,
+    TWO_GPU_DETAILS_RESPONSE,
+    TWO_GPU_DETAILS_RESPONSE_HANDLES,
+)
 from tests.testutils import get_custom_mock_open, get_test_data_source
 
 
@@ -29,9 +34,10 @@ def heavy_computation(run_time_secs: float = 3):
 empty_conf = "[codecarbon]"
 
 
+@mock.patch("codecarbon.core.gpu.pynvml", fake_pynvml)
 @mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
 @mock.patch(
-    "codecarbon.external.hardware.get_gpu_details",
+    "codecarbon.external.hardware.AllGPUDevices.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
 )
 @mock.patch(
@@ -42,6 +48,7 @@ empty_conf = "[codecarbon]"
 @mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
 class TestCarbonTracker(unittest.TestCase):
     def setUp(self) -> None:
+        fake_pynvml.DETAILS = TWO_GPU_DETAILS_RESPONSE_HANDLES
         self.data_source = get_test_data_source()
         self.project_name = "project_foo"
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -57,6 +64,7 @@ class TestCarbonTracker(unittest.TestCase):
         patcher.start()
 
     def tearDown(self) -> None:
+        fake_pynvml.INIT_MOCK.reset_mock()
         self.temp_dir.cleanup()
 
     @responses.activate
@@ -85,7 +93,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertGreaterEqual(
             mocked_get_gpu_details.call_count, 2
         )  # at least 2 times in 5 seconds + once for init >= 3
-        self.assertEqual(1, mocked_is_gpu_details_available.call_count)
+        self.assertEqual(2, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
@@ -381,7 +389,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertGreaterEqual(
             mocked_get_gpu_details.call_count, 2
         )  # at least 2 times in 5 seconds + once for init >= 3
-        self.assertEqual(1, mocked_is_gpu_details_available.call_count)
+        self.assertEqual(2, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url

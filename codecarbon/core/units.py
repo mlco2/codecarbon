@@ -54,6 +54,7 @@ class Energy:
     """
 
     UJOULES_TO_JOULES = 10 ** (-6)
+    MILLIJOULES_TO_JOULES = 10 ** (-3)
     JOULES_TO_KWH = 2.77778e-7
 
     kWh: float = field(compare=True)
@@ -65,6 +66,10 @@ class Energy:
     @classmethod
     def from_ujoules(cls, energy: float) -> "Energy":
         return cls(kWh=energy * Energy.UJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
+
+    @classmethod
+    def from_millijoules(cls, energy: float) -> "Energy":
+        return cls(kWh=energy * Energy.MILLIJOULES_TO_JOULES * Energy.JOULES_TO_KWH)
 
     @classmethod
     def from_energy(cls, kWh: float) -> "Energy":
@@ -81,6 +86,9 @@ class Energy:
 
     def __float__(self) -> float:
         return float(self.kWh)
+
+    def __truediv__(self, divisor: float) -> "Energy":
+        return Energy(self.kWh / divisor)
 
 
 @dataclass
@@ -134,3 +142,6 @@ class Power:
 
     def __add__(self, other: "Power") -> "Power":
         return Power(self.kW + other.kW)
+
+    def __mul__(self, factor: float) -> "Power":
+        return Power(self.kW * factor)

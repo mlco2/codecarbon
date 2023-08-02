@@ -82,3 +82,7 @@ def nvmlDeviceGetComputeRunningProcesses(handle):
 
 def nvmlDeviceGetGraphicsRunningProcesses(handle):
     return DETAILS[handle]["graphics_processes"]
+
+
+def nvmlDeviceGetTotalEnergyConsumption(handle):
+    return DETAILS[handle]["total_energy_consumption"]

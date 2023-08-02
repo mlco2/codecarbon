@@ -22,6 +22,7 @@
 import os.path
 import sys
 from copy import copy, deepcopy
+from unittest import mock
 
 import pynvml as real_pynvml
 
@@ -51,6 +52,7 @@ class FakeGPUEnv:
                 "memory": real_pynvml.c_nvmlMemory_t(1024, 100, 924),
                 "temperature": 75,
                 "power_usage": 26,
+                "total_energy_consumption": 1000,
                 "power_limit": 149,
                 "utilization_rate": real_pynvml.c_nvmlUtilization_t(96, 0),
                 "compute_mode": 0,
@@ -66,6 +68,7 @@ class FakeGPUEnv:
                 "memory": real_pynvml.c_nvmlMemory_t(1024, 200, 824),
                 "temperature": 79,
                 "power_usage": 29,
+                "total_energy_consumption": 800,
                 "power_limit": 149,
                 "utilization_rate": real_pynvml.c_nvmlUtilization_t(0, 100),
                 "compute_mode": 2,
@@ -86,6 +89,7 @@ class FakeGPUEnv:
                 "temperature": 75,
                 "power_usage": 26,
                 "power_limit": 149,
+                "total_energy_consumption": 1000,
                 "gpu_utilization": 96,
                 "compute_mode": 0,
                 "compute_processes": [
@@ -103,6 +107,7 @@ class FakeGPUEnv:
                 "temperature": 79,
                 "power_usage": 29,
                 "power_limit": 149,
+                "total_energy_consumption": 800,
                 "gpu_utilization": 0,
                 "compute_mode": 2,
                 "compute_processes": [],
@@ -120,6 +125,10 @@ class FakeGPUEnv:
     def teardown_method(self):
         # Restore the old paths
         sys.path = self.old_sys_path
+        try:
+            del sys.modules["codecarbon.external.hardware"]
+        except KeyError:
+            pass
 
 
 class TestGpu(FakeGPUEnv):
@@ -129,8 +138,9 @@ class TestGpu(FakeGPUEnv):
         assert is_gpu_details_available() is True
 
     def test_static_gpu_info(self):
-        from codecarbon.core.gpu import get_gpu_static_info
+        from codecarbon.core.gpu import AllGPUDevices
 
+        alldevices = AllGPUDevices()
         expected = [
             {
                 "name": "GeForce GTX 1080",
@@ -148,28 +158,85 @@ class TestGpu(FakeGPUEnv):
             },
         ]
 
-        assert get_gpu_static_info() == expected
+        assert alldevices.get_gpu_static_info() == expected
 
     def test_gpu_details(self):
-        from codecarbon.core.gpu import get_gpu_details
+        from codecarbon.core.gpu import AllGPUDevices
 
-        assert get_gpu_details() == self.expected
+        alldevices = AllGPUDevices()
+
+        assert alldevices.get_gpu_details() == self.expected
 
     def test_gpu_no_power_limit(self):
         import pynvml
 
-        from codecarbon.core.gpu import get_gpu_details
+        from codecarbon.core.gpu import AllGPUDevices
 
         def raiseException(handle):
             raise Exception("Some bad exception")
 
         pynvml.nvmlDeviceGetEnforcedPowerLimit = raiseException
+        alldevices = AllGPUDevices()
 
         expected_power_limit = deepcopy(self.expected)
         expected_power_limit[0]["power_limit"] = None
         expected_power_limit[1]["power_limit"] = None
 
-        assert get_gpu_details() == expected_power_limit
+        assert alldevices.get_gpu_details() == expected_power_limit
+
+    def test_gpu_metadata_total_power(self):
+        """
+        Get the total power of all GPUs
+        """
+        # Prepare
+        # (Note: This imports should be inside the test, not on top of the file, otherwise the mock does not work)
+        from codecarbon.core.units import Energy, Power, Time
+        from codecarbon.external.hardware import GPU
+
+        gpu1_energy1 = Energy.from_millijoules(149701)
+        gpu1_energy2 = Energy.from_millijoules(180000)
+        gpu2_energy1 = Energy.from_millijoules(149702)
+        gpu2_energy2 = Energy.from_millijoules(180000)
+
+        gpu2_power = Power.from_energies_and_delay(gpu1_energy1, gpu1_energy2, Time(5))
+        gpu1_power = Power.from_energies_and_delay(gpu2_energy1, gpu2_energy2, Time(5))
+        expected_power = gpu1_power + gpu2_power
+
+        # Call
+        with mock.patch(
+            "pynvml.nvmlDeviceGetTotalEnergyConsumption",
+            side_effect=[149701, 149702, 180000, 180000],  # Mock the energy consumption
+        ):
+            gpu = GPU.from_utils()
+            gpu.measure_power_and_energy(5)
+
+        # Assert
+        assert expected_power.kW == gpu.total_power().kW
+
+    def test_gpu_metadata_one_gpu_power(self):
+        """
+        Get the power of just one GPU even if there are more than 1
+        """
+        # Prepare
+        # (Note: This imports should be inside the test, not on top of the file, otherwise the mock does not work)
+        from codecarbon.core.units import Energy, Power, Time
+        from codecarbon.external.hardware import GPU
+
+        # Call
+        with mock.patch(
+            "pynvml.nvmlDeviceGetTotalEnergyConsumption",
+            side_effect=[149701, 149702, 180000, 180000],  # Mock the energy consumption
+        ):
+            gpu = GPU.from_utils()
+            gpu.measure_power_and_energy(5, gpu_ids=[1])
+
+        # Assert
+        gpu2_energy1 = Energy.from_millijoules(149702)
+        gpu2_energy2 = Energy.from_millijoules(180000)
+
+        gpu2_power = Power.from_energies_and_delay(gpu2_energy1, gpu2_energy2, Time(5))
+        expected_power = gpu2_power  # In this case it should only count the second gpu
+        assert expected_power.kW == gpu.total_power().kW
 
 
 class TestGpuNotAvailable:
@@ -207,11 +274,15 @@ class TestGpuNotAvailable:
         assert is_gpu_details_available() is False
 
     def test_gpu_details_not_available(self):
-        from codecarbon.core.gpu import get_gpu_details
+        from codecarbon.core.gpu import AllGPUDevices
 
-        assert get_gpu_details() == []
+        alldevices = AllGPUDevices()
+
+        assert alldevices.get_gpu_details() == []
 
     def test_static_gpu_info_not_available(self):
-        from codecarbon.core.gpu import get_gpu_static_info
+        from codecarbon.core.gpu import AllGPUDevices
 
-        assert get_gpu_static_info() == []
+        alldevices = AllGPUDevices()
+
+        assert alldevices.get_gpu_static_info() == []

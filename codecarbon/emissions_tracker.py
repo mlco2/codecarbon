@@ -273,13 +273,14 @@ class BaseEmissionsTracker(ABC):
         logger.info("[setup] GPU Tracking...")
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
-            self._hardware.append(GPU.from_utils(self._gpu_ids))
-            gpu_names = [n["name"] for n in gpu.get_gpu_static_info()]
+            gpu_devices = GPU.from_utils(self._gpu_ids)
+            self._hardware.append(gpu_devices)
+            gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
             gpu_names_dict = Counter(gpu_names)
             self._conf["gpu_model"] = "".join(
                 [f"{i} x {name}" for name, i in gpu_names_dict.items()]
             )
-            self._conf["gpu_count"] = len(gpu.get_gpu_static_info())
+            self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
         else:
             logger.info("No GPU found.")
 
