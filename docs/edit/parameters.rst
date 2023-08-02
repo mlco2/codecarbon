@@ -31,6 +31,12 @@ Input Parameters
        | "error", or "critical"
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
+   * - pue
+     - | PUE (Power Usage Effectiveness) of the data center where the experiment is being run.
+
+PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.
+
+Old data-centers have a PUE up to 2.2, where new green one coud be as low as 1.1.
 
 Output parameters
 -----------------

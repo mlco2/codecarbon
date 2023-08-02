@@ -42,17 +42,18 @@ To install the package, run the following command in your terminal.
 Dependencies
 ------------
 
-pip
-~~~
-The following pip packages are used by the CodeCarbon package, and will be installed along with the package itself:
+The following packages are used by the CodeCarbon package, and will be installed along with the package itself:
 
 .. code-block::  bash
 
     arrow
-    click
-    fuzzywuzzy
     pandas
+    pynvml
+    requests
     psutil
     py-cpuinfo
-    pynvml
-    requests  
+    fuzzywuzzy
+    click
+    prometheus_client
+
+Please refer to `setup.py <https://github.com/mlco2/codecarbon/blob/347a802a3478a5740f04b3a7b6b5f379b38000a7/setup.py#L6>`_ for the latest list of the packages used.
