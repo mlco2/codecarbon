@@ -174,9 +174,12 @@ class GPUDevice:
         device with the memory used
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g46ceaea624d5c96e098e03c453419d68
         """
-        processes = pynvml.nvmlDeviceGetComputeRunningProcesses(self.handle)
+        try:
+            processes = pynvml.nvmlDeviceGetComputeRunningProcesses(self.handle)
 
-        return [{"pid": p.pid, "used_memory": p.usedGpuMemory} for p in processes]
+            return [{"pid": p.pid, "used_memory": p.usedGpuMemory} for p in processes]
+        except pynvml.NVMLError:
+            return []
 
     def _get_graphics_processes(self):
         """Returns the list of processes ids having a graphics context on the
