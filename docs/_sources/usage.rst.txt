@@ -97,40 +97,6 @@ This mode is recommended if you have a training function.
 .. note::
     This will write a csv file named emissions.csv in the current directory
 
-CodeCarbon API
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-    This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!
-
-Before using it, you need an experiment_id, to get one, run:
-
-.. code-block:: console
-
-    codecarbon init
-
-It will create a experiment_id on the default project and save it to ``codecarbon.config``
-
-Then you could tell CodeCarbon to monitor your machine :
-
-.. code-block:: console
-
-    codecarbon monitor
-
-Or use the API in your code
-
-.. code-block:: python
-
-    from codecarbon import track_emissions
-
-    @track_emissions(save_to_api=True)
-    def train_model():
-        # GPU intensive training code  goes here
-    if __name__ =="__main__":
-        train_model()
-
-More options could be specified in ``@track_emissions`` or in ``.codecarbon.config``
-
 Offline Mode
 ------------
 An offline version is available to support restricted environments without internet access. The internal computations remain unchanged; however,

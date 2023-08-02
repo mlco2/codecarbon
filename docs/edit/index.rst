@@ -25,6 +25,7 @@ CodeCarbon
 
    installation
    usage
+   api
    parameters
    examples
    comet
