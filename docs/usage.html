@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quickstart &mdash; CodeCarbon 2.2.7 documentation</title>
+  <title>Quickstart &mdash; CodeCarbon 2.3.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -50,10 +50,11 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#online-mode">Online Mode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-line">Command line</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#explicit-object">Explicit Object</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#context-manager">Context manager</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#decorator">Decorator</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#codecarbon-api-beta">CodeCarbon API (BETA)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codecarbon-api">CodeCarbon API</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#offline-mode">Offline Mode</a><ul>
@@ -112,6 +113,15 @@
 <h2>Online Mode<a class="headerlink" href="#online-mode" title="Permalink to this heading"></a></h2>
 <p>When the environment has internet access, the <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object or the <code class="docutils literal notranslate"><span class="pre">track_emissions</span></code> decorator can be used, which has
 <code class="docutils literal notranslate"><span class="pre">offline</span></code> parameter set to <code class="docutils literal notranslate"><span class="pre">False</span></code> by default.</p>
+<section id="command-line">
+<h3>Command line<a class="headerlink" href="#command-line" title="Permalink to this heading"></a></h3>
+<p>If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor --no-api</span>
+</pre></div>
+</div>
+<p>You have to stop the monitoring manually with <code class="docutils literal notranslate"><span class="pre">Ctrl+C</span></code>.</p>
+<p>Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.</p>
+</section>
 <section id="explicit-object">
 <h3>Explicit Object<a class="headerlink" href="#explicit-object" title="Permalink to this heading"></a></h3>
 <p>In the case of absence of a single entry and stop point for the training code base, users can instantiate a <code class="docutils literal notranslate"><span class="pre">EmissionsTracker</span></code> object and
@@ -119,11 +129,32 @@ pass it as a parameter to function calls to start and stop the emissions trackin
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">EmissionsTracker</span>
 <span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">()</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="c1"># Compute intensive code goes here</span>
-<span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+<span class="k">try</span><span class="p">:</span>
+     <span class="c1"># Compute intensive code goes here</span>
+     <span class="n">_</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="k">finally</span><span class="p">:</span>
+     <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>This mode is recommended when using a Jupyter Notebook. You call <code class="docutils literal notranslate"><span class="pre">tracker.start()</span></code> at the beginning of the Notebook, and call <code class="docutils literal notranslate"><span class="pre">tracker.stop()</span></code> in the last cell.</p>
+<p>This mode also allows you to record the monitoring with <code class="docutils literal notranslate"><span class="pre">tracker.flush()</span></code> that writes the emissions to disk or call the API depending on the configuration, but keep running the experiment.</p>
+<p>If you want to monitor small piece of code, like a model inference, you could use the task manager:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">project_name</span><span class="o">=</span><span class="s2">&quot;bert_inference&quot;</span><span class="p">,</span> <span class="n">measure_power_secs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">tracker</span><span class="o">.</span><span class="n">start_task</span><span class="p">(</span><span class="s2">&quot;load dataset&quot;</span><span class="p">)</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="s2">&quot;imdb&quot;</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+    <span class="n">imdb_emissions</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop_task</span><span class="p">()</span>
+    <span class="n">tracker</span><span class="o">.</span><span class="n">start_task</span><span class="p">(</span><span class="s2">&quot;build model&quot;</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">build_model</span><span class="p">()</span>
+    <span class="n">model_emissions</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop_task</span><span class="p">()</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This way CodeCarbon will track the emissions of each task .
+The task will not be written to disk to prevent overhead, you have to get the results from the return of <code class="docutils literal notranslate"><span class="pre">stop_task()</span></code>.
+If no name is provided, CodeCarbon will generate a uuid.</p>
+<p>Please note that you can’t use task mode and normal mode at the same time. Because <code class="docutils literal notranslate"><span class="pre">start_task</span></code> will stop the scheduler as we do not want it to interfere with the task measurement.</p>
 </section>
 <section id="context-manager">
 <h3>Context manager<a class="headerlink" href="#context-manager" title="Permalink to this heading"></a></h3>
@@ -153,9 +184,8 @@ emissions of the training code.</p>
 <p>This will write a csv file named emissions.csv in the current directory</p>
 </div>
 </section>
-<section id="codecarbon-api-beta">
-<h3>CodeCarbon API (BETA)<a class="headerlink" href="#codecarbon-api-beta" title="Permalink to this heading"></a></h3>
-<p><em>(This feature is currently in BETA stage, meaning all features are not available)</em></p>
+<section id="codecarbon-api">
+<h3>CodeCarbon API<a class="headerlink" href="#codecarbon-api" title="Permalink to this heading"></a></h3>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!</p>

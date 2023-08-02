@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Methodology &mdash; CodeCarbon 2.2.7 documentation</title>
+  <title>Methodology &mdash; CodeCarbon 2.3.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -49,7 +49,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#cpu">CPU</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-codecarbon-works">How CodeCarbon Works</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
@@ -199,6 +202,12 @@ We could not find any good resource showing statistical relationships between TD
 <section id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this heading"></a></h2>
 <p><a class="reference external" href="https://arxiv.org/pdf/1911.08354.pdf">Energy Usage Reports: Environmental awareness as part of algorithmic accountability</a></p>
+<section id="how-codecarbon-works">
+<h3>How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Permalink to this heading"></a></h3>
+<p>CodeCarbon use a scheduler that, by default, call for the measure every 15 seconds so it has no significant overhead.</p>
+<p>The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.</p>
+<p>The scheduler is started when the first <code class="docutils literal notranslate"><span class="pre">start</span></code> method is called and stopped when <code class="docutils literal notranslate"><span class="pre">stop</span></code> method is called.</p>
+</section>
 </section>
 </section>
 
