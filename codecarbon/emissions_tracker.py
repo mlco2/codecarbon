@@ -442,19 +442,16 @@ class BaseEmissionsTracker(ABC):
             task_name = uuid.uuid4().__str__()
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
-        # TODO:Faire une mesure de l'énergie
         self._last_measured_time = self._start_time = time.time()
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
         _ = self._prepare_emissions_data(delta=True)
 
-        # task_measure = MeasurePowerEnergy(self._hardware, self._pue)
         self._tasks.update(
             {
                 task_name: Task(
                     task_name=task_name,
-                    # task_measure=task_measure,
                 )
             }
         )
@@ -467,7 +464,6 @@ class BaseEmissionsTracker(ABC):
         :return: None
         """
         task_name = task_name if task_name else self._active_task
-        # TODO: Refaire une mesure pour avoir la consommation finale
         self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data(delta=True)
