@@ -31,6 +31,12 @@ Input Parameters
        | "error", or "critical"
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
+   * - pue
+     - | PUE (Power Usage Effectiveness) of the data center where the experiment is being run.
+
+PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.
+
+Old data-centers have a PUE up to 2.2, where new green one coud be as low as 1.1.
 
 Output parameters
 -----------------
@@ -87,7 +93,7 @@ Specific parameters for offline mode
      - Description
    * - country_iso_code
      - | 3 letter ISO Code of the country where the experiment is being run.
-       | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json>`_
+       | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`_
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted
        | Currently, supported only for US States and Canada

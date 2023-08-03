@@ -112,3 +112,13 @@ The net Power Used is the net power supply consumed during the compute time, mea
 References
 ----------
 `Energy Usage Reports: Environmental awareness as part of algorithmic accountability <https://arxiv.org/pdf/1911.08354.pdf>`_
+
+
+How CodeCarbon Works
+~~~~~~~~~~~~~~~~~~~~
+
+CodeCarbon use a scheduler that, by default, call for the measure every 15 seconds so it has no significant overhead.
+
+The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.
+
+The scheduler is started when the first ``start`` method is called and stopped when ``stop`` method is called.

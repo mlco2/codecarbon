@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parameters &mdash; CodeCarbon 2.2.7 documentation</title>
+  <title>Parameters &mdash; CodeCarbon 2.3.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Examples" href="examples.html" />
-    <link rel="prev" title="Quickstart" href="usage.html" /> 
+    <link rel="prev" title="CodeCarbon API" href="api.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -50,6 +50,7 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">CodeCarbon API</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Parameters</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#input-parameters">Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#output-parameters">Output parameters</a></li>
@@ -140,8 +141,16 @@
 </div>
 </td>
 </tr>
+<tr class="row-odd"><td><p>pue</p></td>
+<td><div class="line-block">
+<div class="line">PUE (Power Usage Effectiveness) of the data center where the experiment is being run.</div>
+</div>
+</td>
+</tr>
 </tbody>
 </table>
+<p>PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.</p>
+<p>Old data-centers have a PUE up to 2.2, where new green one coud be as low as 1.1.</p>
 </section>
 <section id="output-parameters">
 <h2>Output parameters<a class="headerlink" href="#output-parameters" title="Permalink to this heading"></a></h2>
@@ -245,7 +254,7 @@
 <tr class="row-even"><td><p>country_iso_code</p></td>
 <td><div class="line-block">
 <div class="line">3 letter ISO Code of the country where the experiment is being run.</div>
-<div class="line">Available countries are listed in <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json">global_energy_mix.json</a></div>
+<div class="line">Available countries are listed in <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">global_energy_mix.json</a></div>
 </div>
 </td>
 </tr>
@@ -344,7 +353,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="usage.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-left" title="CodeCarbon API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

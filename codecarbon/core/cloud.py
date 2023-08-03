@@ -55,7 +55,6 @@ CLOUD_METADATA_MAPPING: Dict[str, Dict[str, Any]] = {
 
 
 def get_env_cloud_details(timeout: int = 1) -> Optional[Any]:
-    # type: (int) -> Optional[Any]
     """
     >>> get_env_cloud_details()
     {'provider': 'AWS',

@@ -11,6 +11,7 @@ import os
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass
+from typing import List
 
 import pandas as pd
 import requests
@@ -83,6 +84,45 @@ class EmissionsData:
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
+@dataclass
+class TaskEmissionsData:
+    task_name: str
+    timestamp: str
+    project_name: str
+    run_id: str
+    duration: float
+    emissions: float
+    emissions_rate: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    country_name: str
+    country_iso_code: str
+    region: str
+    cloud_provider: str
+    cloud_region: str
+    os: str
+    python_version: str
+    codecarbon_version: str
+    cpu_count: float
+    cpu_model: str
+    gpu_count: float
+    gpu_model: str
+    longitude: float
+    latitude: float
+    ram_total_size: float
+    tracking_mode: str
+    on_cloud: str = "N"
+
+    @property
+    def values(self) -> OrderedDict:
+        return OrderedDict(self.__dict__.items())
+
+
 class BaseOutput(ABC):
     """
     An abstract class that requires children to inherit a single method,
@@ -147,6 +187,22 @@ class FileOutput(BaseOutput):
                 ] = data.values.values()
 
         df.to_csv(self.save_file_path, index=False)
+
+    def task_out(self, data: List[TaskEmissionsData], experiment_name: str, output_dir):
+        run_id = data[0].run_id
+        save_task_file_path = os.path.join(
+            output_dir, "emissions_" + experiment_name + "_" + run_id + ".csv"
+        )
+        df = pd.DataFrame(columns=data[0].values.keys())
+        df = pd.concat(
+            [
+                df,
+                pd.DataFrame.from_records(
+                    [dict(data_point.values) for data_point in data]
+                ),
+            ]
+        )
+        df.to_csv(save_task_file_path, index=False)
 
 
 class HTTPOutput(BaseOutput):

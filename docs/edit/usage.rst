@@ -11,6 +11,19 @@ Online Mode
 When the environment has internet access, the ``EmissionsTracker`` object or the ``track_emissions`` decorator can be used, which has
 ``offline`` parameter set to ``False`` by default.
 
+Command line
+~~~~~~~~~~~~
+
+If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:
+
+.. code-block:: console
+
+    codecarbon monitor --no-api
+
+You have to stop the monitoring manually with ``Ctrl+C``.
+
+Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
+
 Explicit Object
 ~~~~~~~~~~~~~~~
 In the case of absence of a single entry and stop point for the training code base, users can instantiate a ``EmissionsTracker`` object and
@@ -21,10 +34,37 @@ pass it as a parameter to function calls to start and stop the emissions trackin
    from codecarbon import EmissionsTracker
    tracker = EmissionsTracker()
    tracker.start()
-   # Compute intensive code goes here
-   tracker.stop()
+   try:
+        # Compute intensive code goes here
+        _ = 1 + 1
+   finally:
+        tracker.stop()
 
 This mode is recommended when using a Jupyter Notebook. You call ``tracker.start()`` at the beginning of the Notebook, and call ``tracker.stop()`` in the last cell.
+
+This mode also allows you to record the monitoring with ``tracker.flush()`` that writes the emissions to disk or call the API depending on the configuration, but keep running the experiment.
+
+If you want to monitor small piece of code, like a model inference, you could use the task manager:
+
+
+.. code-block:: python
+
+    try:
+        tracker = EmissionsTracker(project_name="bert_inference", measure_power_secs=10)
+        tracker.start_task("load dataset")
+        dataset = load_dataset("imdb", split="test")
+        imdb_emissions = tracker.stop_task()
+        tracker.start_task("build model")
+        model = build_model()
+        model_emissions = tracker.stop_task()
+    finally:
+        _ = tracker.stop()
+
+This way CodeCarbon will track the emissions of each task .
+The task will not be written to disk to prevent overhead, you have to get the results from the return of ``stop_task()``.
+If no name is provided, CodeCarbon will generate a uuid.
+
+Please note that you can't use task mode and normal mode at the same time. Because ``start_task`` will stop the scheduler as we do not want it to interfere with the task measurement.
 
 Context manager
 ~~~~~~~~~~~~~~~~
@@ -56,41 +96,6 @@ This mode is recommended if you have a training function.
 
 .. note::
     This will write a csv file named emissions.csv in the current directory
-
-CodeCarbon API (BETA)
-~~~~~~~~~~~~~~~~~~~~~~~~
-*(This feature is currently in BETA stage, meaning all features are not available)*
-
-.. warning::
-    This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!
-
-Before using it, you need an experiment_id, to get one, run:
-
-.. code-block:: console
-
-    codecarbon init
-
-It will create a experiment_id on the default project and save it to ``codecarbon.config``
-
-Then you could tell CodeCarbon to monitor your machine :
-
-.. code-block:: console
-
-    codecarbon monitor
-
-Or use the API in your code
-
-.. code-block:: python
-
-    from codecarbon import track_emissions
-
-    @track_emissions(save_to_api=True)
-    def train_model():
-        # GPU intensive training code  goes here
-    if __name__ =="__main__":
-        train_model()
-
-More options could be specified in ``@track_emissions`` or in ``.codecarbon.config``
 
 Offline Mode
 ------------

@@ -108,6 +108,42 @@ To add a new feature to codecarbon, the following workflow is applied :
 - Documenting the intent & the limits of a contribution in a dedicated issue or in the pull request helps the review
 - Once automated tests pass, the PR is reviewed and merged by the repository maintainers
 
+### Debug in VS Code
+
+Here is the launch.json to be able to debug examples and tests:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": { "PYTHONPATH": "${workspaceRoot}" }
+        },
+        {
+            "name": "PyTest: Current File",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": { "PYTHONPATH": "${workspaceRoot}" }
+        }
+    ]
+}
+```
+
+Then run opened test with this button:
+
+![vscode_debug](docs/edit/images/vscode_debug.png)
 
 ### <a name="local_deployement"></a> Local deployment
 

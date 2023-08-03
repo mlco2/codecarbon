@@ -33,6 +33,7 @@ class PeriodicScheduler:
         if from_run or self._stopped:
             self._stopped = False
             self._timer = Timer(self.interval, self._run)
+            self._timer.daemon = True
             self._timer.start()
         self._lock.release()
 

@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from datetime import datetime
 from functools import wraps
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from codecarbon._version import __version__
 from codecarbon.core import cpu, gpu
@@ -23,6 +23,7 @@ from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
+from codecarbon.external.task import Task
 from codecarbon.input import DataSource
 from codecarbon.output import (
     BaseOutput,
@@ -136,7 +137,7 @@ class BaseEmissionsTracker(ABC):
     def __init__(
         self,
         project_name: Optional[str] = _sentinel,
-        measure_power_secs: Optional[int] = _sentinel,
+        measure_power_secs: Optional[float] = _sentinel,
         api_call_interval: Optional[int] = _sentinel,
         api_endpoint: Optional[str] = _sentinel,
         api_key: Optional[str] = _sentinel,
@@ -151,6 +152,7 @@ class BaseEmissionsTracker(ABC):
         gpu_ids: Optional[List] = _sentinel,
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
+        experiment_name: Optional[str] = _sentinel,
         co2_signal_api_token: Optional[str] = _sentinel,
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
@@ -189,6 +191,7 @@ class BaseEmissionsTracker(ABC):
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data.
         :param experiment_id: Id of the experiment.
+        :param experiment_name: Label of the experiment
         :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
                                      free beta)
         :param tracking_mode: One of "process" or "machine" in order to measure the
@@ -215,9 +218,10 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
         self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
+        self._set_from_conf(experiment_name, "experiment_name", "base")
         self._set_from_conf(gpu_ids, "gpu_ids")
         self._set_from_conf(log_level, "log_level", "info")
-        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, int)
+        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
         self._set_from_conf(output_dir, "output_dir", ".")
         self._set_from_conf(output_file, "output_file", "emissions.csv")
         self._set_from_conf(project_name, "project_name", "codecarbon")
@@ -258,6 +262,10 @@ class BaseEmissionsTracker(ABC):
         self._conf["python_version"] = platform.python_version()
         self._conf["cpu_count"] = count_cpus()
         self._geo = None
+        self._task_start_measurement_values = {}
+        self._task_stop_measurement_values = {}
+        self._tasks: Dict[str, Task] = {}
+        self._active_task: Optional[str] = None
 
         if isinstance(self._gpu_ids, str):
             self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
@@ -395,6 +403,10 @@ class BaseEmissionsTracker(ABC):
             self._cc_prometheus_out = PrometheusOutput(self._prometheus_url)
             self.persistence_objs.append(self._cc_prometheus_out)
 
+    def service_shutdown(self, signum, frame):
+        print("Caught signal %d" % signum)
+        self.stop()
+
     @suppress(Exception)
     def start(self) -> None:
         """
@@ -402,6 +414,7 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
+
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -412,6 +425,59 @@ class BaseEmissionsTracker(ABC):
             hardware.start()
 
         self._scheduler.start()
+
+    def start_task(self, task_name=None) -> None:
+        """
+        Start tracking a dedicated execution task.
+        :param task_name: Name of the task to be isolated.
+        :return: None
+        """
+        # Stop scheduler as we do not want it to interfere with the task measurement
+        self._scheduler.stop()
+
+        if self._active_task:
+            logger.info("A task is already under measure")
+            return
+        if not task_name:
+            task_name = uuid.uuid4().__str__()
+        if task_name in self._tasks.keys():
+            task_name += "_" + uuid.uuid4().__str__()
+        self._last_measured_time = self._start_time = time.time()
+        # Read initial energy for hardware
+        for hardware in self._hardware:
+            hardware.start()
+        _ = self._prepare_emissions_data(delta=True)
+
+        self._tasks.update(
+            {
+                task_name: Task(
+                    task_name=task_name,
+                )
+            }
+        )
+        self._active_task = task_name
+
+    def stop_task(self, task_name: str = None) -> float:
+        """
+        Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
+        emissions.
+        :return: None
+        """
+        task_name = task_name if task_name else self._active_task
+        self._measure_power_and_energy()
+
+        emissions_data = self._prepare_emissions_data(delta=True)
+
+        task_duration = Time.from_seconds(
+            time.time() - self._tasks[task_name].start_time
+        )
+
+        task_emission_data = emissions_data
+        task_emission_data.duration = task_duration.seconds
+        self._tasks[task_name].emissions_data = task_emission_data
+        self._tasks[task_name].is_active = False
+        self._active_task = None
+        return task_emission_data
 
     @suppress(Exception)
     def flush(self) -> Optional[float]:
@@ -429,10 +495,7 @@ class BaseEmissionsTracker(ABC):
         self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
-        for persistence in self.persistence_objs:
-            if isinstance(persistence, CodeCarbonAPIOutput):
-                emissions_data = self._prepare_emissions_data(delta=True)
-            persistence.out(emissions_data)
+        self._persist_data(emissions_data)
 
         return emissions_data.emissions
 
@@ -449,23 +512,38 @@ class BaseEmissionsTracker(ABC):
         if self._scheduler:
             self._scheduler.stop()
             self._scheduler = None
-            # Run to calculate the power used from last
-            # scheduled measurement to shutdown
-            self._measure_power_and_energy()
         else:
             logger.warning("Tracker already stopped !")
+        for task_name in self._tasks:
+            if self._tasks[task_name].is_active:
+                self.stop_task(task_name=task_name)
+        # Run to calculate the power used from last
+        # scheduled measurement to shutdown
+        # or if scheduler interval was longer than the run
+        self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
 
+        self._persist_data(emissions_data, experiment_name=self._experiment_name)
+
+        self.final_emissions_data = emissions_data
+        self.final_emissions = emissions_data.emissions
+        return emissions_data.emissions
+
+    def _persist_data(self, emissions_data, experiment_name=None):
         for persistence in self.persistence_objs:
             if isinstance(persistence, CodeCarbonAPIOutput):
                 emissions_data = self._prepare_emissions_data(delta=True)
 
             persistence.out(emissions_data)
-
-        self.final_emissions_data = emissions_data
-        self.final_emissions = emissions_data.emissions
-        return emissions_data.emissions
+            if isinstance(persistence, FileOutput):
+                if len(self._tasks) > 0:
+                    task_emissions_data = []
+                    for task in self._tasks:
+                        task_emissions_data.append(self._tasks[task].out())
+                    persistence.task_out(
+                        task_emissions_data, experiment_name, self._output_dir
+                    )
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
@@ -556,22 +634,7 @@ class BaseEmissionsTracker(ABC):
         """
         pass
 
-    def _measure_power_and_energy(self) -> None:
-        """
-        A function that is periodically run by the `BackgroundScheduler`
-        every `self._measure_power_secs` seconds.
-        :return: None
-        """
-        last_duration = time.time() - self._last_measured_time
-
-        warning_duration = self._measure_power_secs * 3
-        if last_duration > warning_duration:
-            warn_msg = (
-                "Background scheduler didn't run for a long period"
-                + " (%ds), results might be inaccurate"
-            )
-            logger.warning(warn_msg, last_duration)
-
+    def _do_measurements(self) -> None:
         for hardware in self._hardware:
             h_time = time.time()
             # Compute last_duration again for more accuracy
@@ -613,6 +676,24 @@ class BaseEmissionsTracker(ABC):
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."
         )
+
+    def _measure_power_and_energy(self) -> None:
+        """
+        A function that is periodically run by the `BackgroundScheduler`
+        every `self._measure_power_secs` seconds.
+        :return: None
+        """
+        last_duration = time.time() - self._last_measured_time
+
+        warning_duration = self._measure_power_secs * 3
+        if last_duration > warning_duration:
+            warn_msg = (
+                "Background scheduler didn't run for a long period"
+                + " (%ds), results might be inaccurate"
+            )
+            logger.warning(warn_msg, last_duration)
+
+        self._do_measurements()
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
         if (
@@ -759,6 +840,31 @@ class EmissionsTracker(BaseEmissionsTracker):
         return self._cloud
 
 
+class TaskEmissionsTracker:
+    """
+    Track emissions for a specific task
+    # TODO: THIS NOT USED, RIGHT ?
+    """
+
+    def __init__(self, task_name, tracker: EmissionsTracker = None):
+        self.is_default_tracker = False
+        if tracker:
+            self.tracker = tracker
+        else:
+            self.tracker = EmissionsTracker()
+            self.is_default_tracker = True
+        self.task_name = task_name
+
+    def __enter__(self):
+        self.tracker.start_task(self.task_name)
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb) -> None:
+        self.tracker.stop_task()
+        if self.is_default_tracker:
+            self.tracker.stop()
+
+
 def track_emissions(
     fn: Callable = None,
     project_name: Optional[str] = _sentinel,
@@ -894,6 +1000,48 @@ def track_emissions(
                     + "Please wait a few seconds..."
                 )
                 tracker.stop()
+                logger.info("Done!\n")
+            return fn_result
+
+        return wrapped_fn
+
+    if fn:
+        return _decorate(fn)
+    return _decorate
+
+
+def track_task_emissions(
+    fn: Callable = None, tracker: BaseEmissionsTracker = None, task_name: str = ""
+):
+    """
+    Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
+    :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
+    tracker which will read default parameter from config to enable tracking
+    :param: task_name: Task to be tracked. If none is provided, an id will be used.
+    :return: The decorated function
+    """
+
+    if not tracker:
+        is_tracker_default = True
+        tracker = EmissionsTracker()
+    else:
+        is_tracker_default = False
+
+    def _decorate(fn: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(fn)
+        def wrapped_fn(*args, **kwargs):
+            fn_result = None
+            tracker.start_task(task_name=task_name)
+            try:
+                fn_result = fn(*args, **kwargs)
+            finally:
+                logger.info(
+                    "\nGraceful stopping task measurement: collecting and writing information.\n"
+                    + "Please Allow for a few seconds..."
+                )
+                tracker.stop_task()
+                if is_tracker_default:
+                    tracker.stop()
                 logger.info("Done!\n")
             return fn_result
 

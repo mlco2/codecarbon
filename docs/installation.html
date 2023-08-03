@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installing CodeCarbon &mdash; CodeCarbon 2.2.7 documentation</title>
+  <title>Installing CodeCarbon &mdash; CodeCarbon 2.3.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -50,14 +50,12 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installing CodeCarbon</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#from-pypi-repository">From PyPi repository</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#from-conda-repository">From conda repository</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#pip">pip</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">CodeCarbon API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
@@ -124,20 +122,19 @@ conda activate codecarbon
 </section>
 <section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading"></a></h2>
-<section id="pip">
-<h3>pip<a class="headerlink" href="#pip" title="Permalink to this heading"></a></h3>
-<p>The following pip packages are used by the CodeCarbon package, and will be installed along with the package itself:</p>
+<p>The following packages are used by the CodeCarbon package, and will be installed along with the package itself:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrow
-click
-fuzzywuzzy
 pandas
-psutil
-py-cpuinfo
 pynvml
 requests
+psutil
+py-cpuinfo
+fuzzywuzzy
+click
+prometheus_client
 </pre></div>
 </div>
-</section>
+<p>Please refer to <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/347a802a3478a5740f04b3a7b6b5f379b38000a7/setup.py#L6">setup.py</a> for the latest list of the packages used.</p>
 </section>
 </section>
 
