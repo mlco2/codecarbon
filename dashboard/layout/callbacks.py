@@ -9,6 +9,7 @@ from data.data_functions import (
     get_experiment_sums,
     get_lastrun,
     get_orga_sums,
+    get_organization_list,
     get_project,
     get_project_list,
     get_project_sums,
@@ -595,3 +596,21 @@ def update_map(start_date, end_date, project, kpi):
             showland=True, landcolor="#6f898e", showocean=True, oceancolor="#759FA8"
         )
     return container, fig
+
+
+# Refresh organizations list
+@app.callback(
+    [
+        Output(component_id="org-dropdown", component_property="options"),
+        Output(component_id="org-dropdown", component_property="value"),
+    ],
+    [Input("url-location", "pathname")],
+)
+def refresh_org_list(url):
+    df_org = get_organization_list()
+    org_id = df_org.id.unique().tolist()[1]
+    options = [
+        {"label": orgName, "value": orgId}
+        for orgName, orgId in zip(df_org.name, df_org.id)
+    ]
+    return options, org_id

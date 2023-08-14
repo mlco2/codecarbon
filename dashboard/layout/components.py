@@ -13,6 +13,7 @@ class Components:
                     [html.Img(src="/assets/logo.png")], href="https://codecarbon.io"
                 ),
                 html.P("Track and reduce CO2 emissions from your computing"),
+                dcc.Location(id="url-location", refresh=False),
                 dcc.DatePickerRange(
                     id="periode",
                     day_size=39,
