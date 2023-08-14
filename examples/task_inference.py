@@ -24,7 +24,6 @@ def inference(model, data, inference_task_name):
 def main():
     try:
         tracker = EmissionsTracker(project_name="bert_inference", measure_power_secs=10)
-        tracker.start()
 
         tracker.start_task("load dataset")
         dataset = load_dataset("imdb", split="test")

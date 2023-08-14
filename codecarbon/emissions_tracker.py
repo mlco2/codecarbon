@@ -433,7 +433,8 @@ class BaseEmissionsTracker(ABC):
         :return: None
         """
         # Stop scheduler as we do not want it to interfere with the task measurement
-        self._scheduler.stop()
+        if self._scheduler:
+            self._scheduler.stop()
 
         if self._active_task:
             logger.info("A task is already under measure")
