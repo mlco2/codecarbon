@@ -3,7 +3,7 @@
 Output
 ======
 
-CSV 
+CSV
 ---
 
 The package has an in-built logger that logs data into a CSV file named ``emissions.csv`` in the ``output_dir``, provided as an
@@ -36,13 +36,13 @@ input parameter (defaults to the current directory), for each experiment tracked
    * - ram_power
      - RAM power (W)
    * - cpu_energy
-     - Energy used per CPU (kW)
+     - Energy used per CPU (kWh)
    * - gpu_energy
-     - Energy used per GPU (kW)
+     - Energy used per GPU (kWh)
    * - ram_energy
-     - Energy used per RAM (kW)
+     - Energy used per RAM (kWh)
    * - energy_consumed
-     - sum of cpu_energy, gpu_energy and ram_energy (kW)
+     - sum of cpu_energy, gpu_energy and ram_energy (kWh)
    * - country_name
      - Name of the country where the infrastructure is hosted
    * - country_iso_code

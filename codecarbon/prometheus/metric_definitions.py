@@ -61,17 +61,17 @@ ram_power_gauge = Gauge(
 )
 cpu_energy_gauge = Gauge(
     "codecarbon_cpu_energy",
-    "Energy used per CPU (kW)",
+    "Energy used per CPU (kWh)",
     registry=registry,
 )
 gpu_energy_gauge = Gauge(
     "codecarbon_gpu_energy",
-    "Energy used per GPU (kW)",
+    "Energy used per GPU (kWh)",
     registry=registry,
 )
 ram_energy_gauge = Gauge(
     "codecarbon_ram_energy",
-    "Energy used per RAM (kW)",
+    "Energy used per RAM (kWh)",
     registry=registry,
 )
 energy_consumed_gauge = Gauge(
