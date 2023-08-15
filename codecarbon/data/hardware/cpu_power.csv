@@ -954,6 +954,7 @@ AMD Turion X2 Ultra ZM-88,35
 AMD Z-01,6
 AMD Z-60,5
 Apple M1,10
+AWS Graviton3,100
 Intel A100,3
 Intel A110,3
 Intel Atom 230,4
@@ -2158,3 +2159,4 @@ Intel Xeon X5672,95
 Intel Xeon X5677,130
 Intel Xeon X5680,130
 Intel Xeon X5687,130
+Neoverse-N1,110
