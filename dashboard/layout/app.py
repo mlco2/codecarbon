@@ -77,7 +77,7 @@ def serve_layout():
                                             df_org.name, df_org.id
                                         )
                                     ],
-                                    # multi=False,
+                                    clearable=False,
                                     value=orga_id,
                                     # value=df_org.id.unique().tolist()[0],
                                     # value="Select your organization",
