@@ -102,7 +102,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 ### Versioning
 
 
-To add a new feature to codecarbon, the apply the following workflow:
+To add a new feature to codecarbon, apply the following workflow:
 - Master branch is protected
 - To contribute to an already [prioritized](https://github.com/orgs/mlco2/projects/1) feature, you can create a branch from master and open a draft PR
 - Documenting the intent & the limits of a contribution in a dedicated issue or in the pull request helps the review
