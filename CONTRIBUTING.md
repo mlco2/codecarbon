@@ -182,7 +182,7 @@ Then, click on the url displayed in the terminal.
 
 ### Coding style && Linting
 
-The coding style and linting rules are automatically applied and enforce by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base and to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
 
 ```
 [INFO] Initializing environment for https://github.com/psf/black.
