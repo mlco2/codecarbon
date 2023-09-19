@@ -1,13 +1,13 @@
 # Usage of CodeCarbon with Docker
 
-## Pre-requisis
+## Prerequisites
 
 Clone the project
 ```sh
 git clone https://github.com/mlco2/codecarbon/codecarbon.git
 ```
 
-Prepare configuration :
+Prepare configuration:
 ```sh
 cd codecarbon
 cp docker/docker.env .env
