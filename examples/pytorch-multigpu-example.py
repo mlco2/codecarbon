@@ -28,13 +28,13 @@ class CNN(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2),
         )
-        # fully connected layer, output 10 classes
+        # Fully connected layer, output 10 classes
         self.out = nn.Linear(32 * 7 * 7, 10)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
-        # flatten the output of conv2 to (batch_size, 32 * 7 * 7)
+        # Flatten the output of conv2 to (batch_size, 32 * 7 * 7)
         x = x.view(x.size(0), -1)
         output = self.out(x)
         return output
@@ -104,7 +104,7 @@ try:
 
     for epoch in range(10):
         cnn.train()
-        # train for 1 epoch
+        # Train for 1 epoch
         for _, (image, label) in enumerate(loaders["train"]):
             print(f"\rBatch {bidx} | Epoch {epoch}", end="")
             bidx += 1

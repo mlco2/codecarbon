@@ -56,7 +56,7 @@ pip install codecarbon
 ```python
 conda install -c conda-forge codecarbon
 ```
-To see more installation options please refer to the documentation : [**Installation**](https://mlco2.github.io/codecarbon/installation.html#)
+To see more installation options please refer to the documentation: [**Installation**](https://mlco2.github.io/codecarbon/installation.html#)
 
 ## Start to estimate your impact 📏
 
