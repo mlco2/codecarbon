@@ -29,15 +29,20 @@ class Components:
 
     @staticmethod
     def get_header():
-        return dbc.Jumbotron(
-            [
-                html.H1("Carbon Footprint", style={"textAlign": "center"}),
-                html.P(
-                    "Measure Compute Emissions",
-                    style={"textAlign": "center", "paddingLeft": "0.5%"},
-                    className="lead",
-                ),
-            ]
+        return html.Div(
+            dbc.Container(
+                [
+                    html.H1("Carbon Footprint", style={"textAlign": "center"}),
+                    html.P(
+                        "Measure Compute Emissions",
+                        style={"textAlign": "center", "paddingLeft": "0.5%"},
+                        className="lead",
+                    ),
+                ],
+                fluid=True,
+                className="py-3",
+            ),
+            className="p-3 mb-5 bg-light rounded-5",
         )
 
     @staticmethod

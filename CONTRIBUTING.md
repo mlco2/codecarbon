@@ -46,7 +46,7 @@ conda create --name codecarbon python=3.8
 conda activate codecarbon
 ```
 
-Install from sources in development mode :
+Install from sources in development mode:
 
 ```bash
 git clone https://github.com/mlco2/codecarbon
@@ -64,19 +64,19 @@ Make sure that the [`tox` package](https://tox.readthedocs.io/en/latest/example/
 pip install tox
 ```
 
-You can run tests by simply entering tox in the terminal when in the root package directory, and it will run the unit tests.
+You can run the unit tests by simply entering tox in the terminal when in the root package directory.
 
 ```
 tox
 ```
 
-This will not run test that may failed because of your environment (no CO2 Signal API token, no PowerGadget...), if you want to run all package tests :
+This will not run test that may fail because of your environment (no CO2 Signal API token, no PowerGadget...). If you want to run all package tests:
 
 ```
 tox -e all
 ```
 
-You can also test your specific test in an isolated fashion to develop and debug them:
+You can also run your specific test in isolation to develop and debug them:
 
 ```
 $ python -m unittest tests.test_your_feature
@@ -89,20 +89,20 @@ $ python -m unittest tests.test_your_feature.YourTestCase.test_function
 To test the API, see [how to deploy it](#local_deployement) first.
 
 
-Core & external classes are unit tested, with one test file per class. Mosts pull-requests are expected to contains new tests or test update, if you are unusure what to test / how to test it, please put it in the pull-request description and the maintainers will help you.
+Core and external classes are unit tested, with one test file per class. Most pull requests are expected to contain either new tests or test updates. If you are unusure what to test / how to test it, please put it in the pull request description and the maintainers will help you.
 
 ### Stress your computer
 
-To test CodeCarbon it is usefull to stress your computer to make it use his full power :
-- 7Zip is often already on your computer, running it with `7z b` make a quick CPU test.
+To test CodeCarbon, it is useful to stress your computer to make it use its full power:
+- 7Zip is often already installed, running it with `7z b` makes a quick CPU test.
 - [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
 
-`nvidia-smi` is a usefull tool to see the metrics of the GPU and compare it with CodeCarbon.
+`nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
 
-### Versionning
+### Versioning
 
 
-To add a new feature to codecarbon, the following workflow is applied :
+To add a new feature to codecarbon, apply the following workflow:
 - Master branch is protected
 - To contribute to an already [prioritized](https://github.com/orgs/mlco2/projects/1) feature, you can create a branch from master and open a draft PR
 - Documenting the intent & the limits of a contribution in a dedicated issue or in the pull request helps the review
@@ -182,7 +182,7 @@ Then, click on the url displayed in the terminal.
 
 ### Coding style && Linting
 
-The coding style and linting rules are automatically applied and enforce by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
 
 ```
 [INFO] Initializing environment for https://github.com/psf/black.
@@ -204,7 +204,7 @@ black....................................................................Passed
 flake8...................................................................Passed
 ```
 
-If any of the linters/formatters failed, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their jobs) with `git add` and finally try to commit again `git commit ...`.
+If any of the linters/formatters fail, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their job) with `git add` and finally try to commit again `git commit ...`.
 
 You can also run `pre-commit` with `pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
@@ -216,12 +216,12 @@ Dependencies are defined in three different places:
 - In [setup.py](setup.py#L7), those are the dependencies for the Pypi package.
 - In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
-We drop support of Python 3.6 since version 2.0.0 of CodeCarbon.
+We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
 ### Alternative ways of contributing
 
 
-You have a cool idea, but do not know know if it fits with Code Carbon ? You can create an issue to share :
+You have a cool idea, but do not know know if it fits with Code Carbon? You can create an issue to share:
 - the code, via the Github repo or [Binder](https://mybinder.org/), to share executable notebooks
 - a webapp, using [Voilà](https://github.com/voila-dashboards/voila), [Dash](https://github.com/plotly/dash) or [Streamlit](https://github.com/streamlit/streamlit)
 - ideas for improvement about the tool or its documentation
@@ -272,15 +272,15 @@ Inside the docker container, run:
 
 ### API
 
-To run the API locally, the easiest way is Docker. Launch this command in the project directory:
+The easiest way to run the API locally is with Docker. Launch this command in the project directory:
 ```
 docker-compose up -d
 ```
 Please see [Docker specific documentation](./docker/README.md) for more informations.
-When up, the API documentation is locally available at the following URL : http://localhost:8008/redoc and can be used for testing.
+When up, the API documentation is available locally at the following URL: http://localhost:8008/redoc and can be used for testing.
 
 
-In order to connect make codecarbon automatically connect to the local API, create a file `.codecarbon.config` with the content:
+In order to make codecarbon automatically connect to the local API, create a file `.codecarbon.config` with contents:
 ```
 [codecarbon]
 api_endpoint = http://localhost:8008
@@ -303,11 +303,11 @@ python examples/api_call_debug.py
 
 ##### API
 
-The API is availiable to everyone from https://api.codecarbon.io but if you want to deploy it for yourself, here is the instructions.
+The API is availiable to everyone from https://api.codecarbon.io, but if you want to deploy it for yourself, here are the instructions.
 
-To deploy the API we use [Clever Cloud](https://www.clever-cloud.com/) , an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
+To deploy the API we use [Clever Cloud](https://www.clever-cloud.com/), an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
 
-Here is the Clever Cloud configuration if you want to reproduce it :
+Here is the Clever Cloud configuration if you want to reproduce it:
 ```
 APP_FOLDER="carbonserver"
 CC_PIP_REQUIREMENTS_FILE="requirements.txt"
@@ -325,7 +325,7 @@ To deploy,
 git remote add deploy git+ssh://git@push-n2-par-clevercloud-customers.services.clever-cloud.com/app_<secret_do_not_share>.git
 git push deploy master:master
 ```
-Yeah, no so hard, isn't it ?
+Yeah, not so hard, is it?
 
 See (the doc)[https://www.clever-cloud.com/doc/getting-started/quickstart/] for more informations.
 
