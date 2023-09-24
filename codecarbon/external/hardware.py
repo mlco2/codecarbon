@@ -168,7 +168,7 @@ class CPU(BaseHardware):
 
         power = 0
         for metric, value in all_cpu_details.items():
-            # "^Processor Power_\d+\(Watt\)$" for Inter Power Gadget
+            # "^Processor Power_\d+\(Watt\)$" for Intel Power Gadget
             if re.match(r"^Processor Power", metric):
                 power += value
                 logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")

@@ -9,7 +9,7 @@ Frequently Asked Questions
 * **What are the sources of your energy carbon intensity data?**
 	We use the following sources:
 
-		For cloud computing :
+		For cloud computing:
 
 		- Google publish carbon intensity of electricity for `Google Cloud Plateform <https://cloud.google.com/sustainability/region-carbon?hl=fr>`_.
 
@@ -18,7 +18,7 @@ Frequently Asked Questions
 		- Microsoft has a Sustainability Calculator that helps enterprises analyze the carbon emissions of their IT infrastructure. But does not publish datacenter carbon intensity.
 
 
-		For private infra :
+		For private infra:
 
 		- When available we use data from `ourworld in data <https://ourworldindata.org/grapher/carbon-intensity-electricity?tab=table>`_
 
