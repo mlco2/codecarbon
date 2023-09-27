@@ -11,6 +11,7 @@ import warnings
 from typing import Dict, Tuple
 
 import pandas as pd
+import psutil
 
 with warnings.catch_warnings(record=True) as w:
     from fuzzywuzzy import fuzz
@@ -42,6 +43,21 @@ def is_rapl_available():
         logger.debug(
             "Not using the RAPL interface, an exception occurred while instantiating "
             + f"IntelRAPL : {e}",
+        )
+        return False
+
+
+def is_psutil_available():
+    try:
+        cpu_load = psutil.cpu_percent(interval=0.1)
+        if cpu_load > 0.0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        logger.debug(
+            "Not using the psutil interface, an exception occurred while instantiating "
+            + f"psutil.cpu_percent : {e}",
         )
         return False
 
@@ -219,6 +235,9 @@ class IntelRAPL:
                         "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
                         + f" for workarounds : {e}"
+                    )
+                    raise PermissionError(
+                        "Unable to read Intel RAPL files for CPU power"
                     )
         return
 

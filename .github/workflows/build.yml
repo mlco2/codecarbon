@@ -24,6 +24,8 @@ jobs:
         pip install tox tox-gh-actions
     - name: Test package with tox
       run: tox -vv
+      env:
+        CODECARBON_COUNTRY_ISO_CODE: FRA
 
   build_server:
     runs-on: ubuntu-latest
