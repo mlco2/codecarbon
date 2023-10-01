@@ -149,6 +149,7 @@ class BaseEmissionsTracker(ABC):
         logging_logger: Optional[LoggerOutput] = _sentinel,
         save_to_prometheus: Optional[bool] = _sentinel,
         prometheus_url: Optional[str] = _sentinel,
+        output_handlers: Optional[List[BaseOutput]] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
@@ -231,6 +232,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logging_logger, "logging_logger")
         self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
+        self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
@@ -698,7 +700,9 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
         if (
-            self._cc_api__out is not None or self._cc_prometheus_out is not None
+            self._cc_api__out is not None
+            or self._cc_prometheus_out is not None
+            or len(self._output_handlers) > 0
         ) and self._api_call_interval != -1:
             if self._measure_occurrence >= self._api_call_interval:
                 emissions = self._prepare_emissions_data(delta=True)
@@ -710,6 +714,8 @@ class BaseEmissionsTracker(ABC):
                     self._cc_api__out.out(emissions)
                 if self._cc_prometheus_out:
                     self._cc_prometheus_out.out(emissions)
+                for handler in self._output_handlers:
+                    handler.out(emissions)
                 self._measure_occurrence = 0
         logger.debug(f"last_duration={last_duration}\n------------------------")
 
@@ -880,6 +886,7 @@ def track_emissions(
     save_to_logger: Optional[bool] = _sentinel,
     save_to_prometheus: Optional[bool] = _sentinel,
     prometheus_url: Optional[str] = _sentinel,
+    output_handlers: Optional[List[BaseOutput]] = _sentinel,
     logging_logger: Optional[LoggerOutput] = _sentinel,
     offline: Optional[bool] = _sentinel,
     emissions_endpoint: Optional[str] = _sentinel,
@@ -958,6 +965,7 @@ def track_emissions(
                     save_to_logger=save_to_logger,
                     save_to_prometheus=save_to_prometheus,
                     prometheus_url=prometheus_url,
+                    output_handlers=output_handlers,
                     logging_logger=logging_logger,
                     country_iso_code=country_iso_code,
                     region=region,
@@ -979,6 +987,7 @@ def track_emissions(
                     save_to_logger=save_to_logger,
                     save_to_prometheus=save_to_prometheus,
                     prometheus_url=prometheus_url,
+                    output_handlers=output_handlers,
                     logging_logger=logging_logger,
                     gpu_ids=gpu_ids,
                     log_level=log_level,
