@@ -8,9 +8,9 @@ Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [C
 
     C = Carbon Intensity of the electricity consumed for computation: quantified as g of CO₂ emitted per kilowatt-hour of electricity.
 
-    P = Power Consumed by the computational infrastructure: quantified as kilowatt-hours.
+    E = Energy Consumed by the computational infrastructure: quantified as kilowatt-hours.
 
-Carbon dioxide emissions (CO₂eq) can then be calculated as ``C * P``
+Carbon dioxide emissions (CO₂eq) can then be calculated as ``C * E``
 
 
 Carbon Intensity
@@ -53,7 +53,7 @@ If we don't have the global carbon intensity or electricity of a country, but we
      - 26
 
 Sources:
- -  `for fossil energies <https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2>`_
+ - `for fossil energies <https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2>`_
  - `for renewables energies <http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf>`_
 
 
@@ -78,7 +78,7 @@ Currently, the package supports the following hardware infrastructure.
 GPU
 ~~~~
 
-Tracks Nvidia GPUs power consumption using ``pynvml`` library (installed with the package).
+Tracks Nvidia GPUs energy consumption using ``pynvml`` library (installed with the package).
 
 RAM
 ~~~~
@@ -91,23 +91,24 @@ CPU
 
 - **On Windows or Mac**
 
-Tracks Intel processors power consumption using the ``Inter Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ .
+Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ .
 
 - **On Linux**
 
-Tracks Intel Processor power consumption from Inter RAPL files at ``\sys\class\powercap\intel-rapl`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
+Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``\sys\class\powercap\intel-rapl`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
 All CPUs listed in this directory will be tracked. `Help us improve this and make it configurable <https://github.com/mlco2/codecarbon/issues/156>`_.
 
 *Note*: The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path
 
 
 If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode:
-It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
-If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
-We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.
+ - It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
+ - If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
+ - We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.
 
-The net Power Used is the net power supply consumed during the compute time, measured as ``kWh``.
+The net Energy Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
+``Energy = Power * Time``
 
 References
 ----------
