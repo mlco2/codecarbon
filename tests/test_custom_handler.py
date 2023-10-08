@@ -28,7 +28,6 @@ class CustomOutput(BaseOutput):
 class TestCarbonCustomHandler(unittest.TestCase):
     def setUp(self) -> None:
         self.project_name = "project_TestCarbonCustomHandler"
-        self.emissions_logfile = "emissions-test-TestCarbonCustomHandler.log"
 
     def test_carbon_tracker_custom_handler(self):
         handler_0 = CustomOutput()
@@ -45,8 +44,8 @@ class TestCarbonCustomHandler(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
-        self.verify_logging_output(handler_0)
-        self.verify_logging_output(handler_1)
+        self.verify_custom_handler_state(handler_0)
+        self.verify_custom_handler_state(handler_1)
 
     def test_decorator_flush(self):
         handler_0 = CustomOutput()
@@ -60,14 +59,13 @@ class TestCarbonCustomHandler(unittest.TestCase):
         )
         def dummy_train_model():
             heavy_computation(run_time_secs=1)
-            # I don't know how to call flush() in decorator mode
             return 42
 
         dummy_train_model()
-        self.verify_logging_output(handler_0)
-        self.verify_logging_output(handler_1)
+        self.verify_custom_handler_state(handler_0)
+        self.verify_custom_handler_state(handler_1)
 
-    def verify_logging_output(self, handler: CustomOutput, expected_lines=1) -> None:
+    def verify_custom_handler_state(self, handler: CustomOutput, expected_lines=1) -> None:
         assert len(handler.log) == expected_lines
         results = handler.log[0]
         self.assertEqual(results.project_name, self.project_name)
