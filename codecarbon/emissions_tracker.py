@@ -397,6 +397,7 @@ class BaseEmissionsTracker(ABC):
             )
             self.run_id = self._cc_api__out.run_id
             self.persistence_objs.append(self._cc_api__out)
+            self._output_handlers.append(self._cc_api__out)
 
         else:
             self.run_id = uuid.uuid4()
@@ -404,6 +405,7 @@ class BaseEmissionsTracker(ABC):
         if self._save_to_prometheus:
             self._cc_prometheus_out = PrometheusOutput(self._prometheus_url)
             self.persistence_objs.append(self._cc_prometheus_out)
+            self._output_handlers.append(self._cc_prometheus_out)
 
     def service_shutdown(self, signum, frame):
         print("Caught signal %d" % signum)
@@ -699,24 +701,18 @@ class BaseEmissionsTracker(ABC):
         self._do_measurements()
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
-        if (
-            self._cc_api__out is not None
-            or self._cc_prometheus_out is not None
-            or len(self._output_handlers) > 0
-        ) and self._api_call_interval != -1:
-            if self._measure_occurrence >= self._api_call_interval:
-                emissions = self._prepare_emissions_data(delta=True)
-                logger.info(
-                    f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
-                    + f"{emissions.emissions_rate*3600*24*365:,} kg.CO2eq/year"
-                )
-                if self._cc_api__out:
-                    self._cc_api__out.out(emissions)
-                if self._cc_prometheus_out:
-                    self._cc_prometheus_out.out(emissions)
-                for handler in self._output_handlers:
-                    handler.out(emissions)
-                self._measure_occurrence = 0
+        if (len(self._output_handlers) > 0
+            and self._api_call_interval != -1
+            and self._measure_occurrence >= self._api_call_interval
+        ):
+            emissions = self._prepare_emissions_data(delta=True)
+            logger.info(
+                f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
+                + f"{emissions.emissions_rate*3600*24*365:,} kg.CO2eq/year"
+            )
+            for handler in self._output_handlers:
+                handler.out(emissions)
+            self._measure_occurrence = 0
         logger.debug(f"last_duration={last_duration}\n------------------------")
 
     def __enter__(self):
