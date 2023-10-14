@@ -701,7 +701,8 @@ class BaseEmissionsTracker(ABC):
         self._do_measurements()
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
-        if (len(self._output_handlers) > 0
+        if (
+            len(self._output_handlers) > 0
             and self._api_call_interval != -1
             and self._measure_occurrence >= self._api_call_interval
         ):

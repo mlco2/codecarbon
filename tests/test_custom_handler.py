@@ -2,13 +2,8 @@ import time
 import unittest
 from typing import List
 
-from codecarbon.emissions_tracker import (
-    EmissionsTracker,
-    track_emissions,
-)
-from codecarbon.output import (
-    BaseOutput, EmissionsData,
-)
+from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
+from codecarbon.output import BaseOutput, EmissionsData
 
 
 def heavy_computation(run_time_secs: int = 3):
@@ -65,7 +60,9 @@ class TestCarbonCustomHandler(unittest.TestCase):
         self.verify_custom_handler_state(handler_0)
         self.verify_custom_handler_state(handler_1)
 
-    def verify_custom_handler_state(self, handler: CustomOutput, expected_lines=1) -> None:
+    def verify_custom_handler_state(
+        self, handler: CustomOutput, expected_lines=1
+    ) -> None:
         assert len(handler.log) == expected_lines
         results = handler.log[0]
         self.assertEqual(results.project_name, self.project_name)
