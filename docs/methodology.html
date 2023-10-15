@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=67b02a41"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -104,7 +104,7 @@
            <div itemprop="articleBody">
              
   <section id="methodology">
-<span id="id1"></span><h1>Methodology<a class="headerlink" href="#methodology" title="Permalink to this heading"></a></h1>
+<span id="id1"></span><h1>Methodology<a class="headerlink" href="#methodology" title="Link to this heading"></a></h1>
 <p>Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [CO₂eq], are the product of two main factors :</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>C = Carbon Intensity of the electricity consumed for computation: quantified as g of CO₂ emitted per kilowatt-hour of electricity.
 
@@ -113,14 +113,14 @@ E = Energy Consumed by the computational infrastructure: quantified as kilowatt-
 </div>
 <p>Carbon dioxide emissions (CO₂eq) can then be calculated as <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">*</span> <span class="pre">E</span></code></p>
 <section id="carbon-intensity">
-<h2>Carbon Intensity<a class="headerlink" href="#carbon-intensity" title="Permalink to this heading"></a></h2>
+<h2>Carbon Intensity<a class="headerlink" href="#carbon-intensity" title="Link to this heading"></a></h2>
 <p>Carbon Intensity of the consumed electricity is calculated as a weighted average of the emissions from the different
 energy sources that are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, and natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, this package calculates the Carbon Intensity of the electricity consumed.</p>
 <a class="reference internal image-reference" href="_images/grid_energy_mix.png"><img alt="Grid Energy Mix" class="align-center" src="_images/grid_energy_mix.png" style="width: 350px; height: 300px;" /></a>
-<p>When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a> ) or per country ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/eu-carbon-intensity-electricity.csv">here</a> ).</p>
+<p>When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a> ) or per country ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">here</a> ).</p>
 <p>If we don’t have the global carbon intensity or electricity of a country, but we have its electricity mix, we compute the carbon intensity of electricity using this table:</p>
 <table class="docutils align-center" id="id5">
-<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id5" title="Permalink to this table"></a></caption>
+<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
 <colgroup>
 <col style="width: 50%" />
 <col style="width: 50%" />
@@ -172,21 +172,21 @@ energy sources that are used to generate electricity, including fossil fuels and
 <p>As you can see, we try to be as accurate as possible in estimating carbon intensity of electricity. Still there is room for improvement and all contributions are welcome.</p>
 </section>
 <section id="power-usage">
-<h2>Power Usage<a class="headerlink" href="#power-usage" title="Permalink to this heading"></a></h2>
+<h2>Power Usage<a class="headerlink" href="#power-usage" title="Link to this heading"></a></h2>
 <p>Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
 <code class="docutils literal notranslate"><span class="pre">measure_power_secs</span></code>, with default value 15 seconds, that can be passed when instantiating the emissions tracker.</p>
 <p>Currently, the package supports the following hardware infrastructure.</p>
 <section id="gpu">
-<h3>GPU<a class="headerlink" href="#gpu" title="Permalink to this heading"></a></h3>
+<h3>GPU<a class="headerlink" href="#gpu" title="Link to this heading"></a></h3>
 <p>Tracks Nvidia GPUs energy consumption using <code class="docutils literal notranslate"><span class="pre">pynvml</span></code> library (installed with the package).</p>
 </section>
 <section id="ram">
-<h3>RAM<a class="headerlink" href="#ram" title="Permalink to this heading"></a></h3>
+<h3>RAM<a class="headerlink" href="#ram" title="Link to this heading"></a></h3>
 <p>CodeCarbon uses a 3 Watts for 8 BG ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .
 This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.</p>
 </section>
 <section id="cpu">
-<h3>CPU<a class="headerlink" href="#cpu" title="Permalink to this heading"></a></h3>
+<h3>CPU<a class="headerlink" href="#cpu" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>On Windows or Mac</strong></p></li>
 </ul>
@@ -210,10 +210,10 @@ All CPUs listed in this directory will be tracked. <a class="reference external"
 </section>
 </section>
 <section id="references">
-<h2>References<a class="headerlink" href="#references" title="Permalink to this heading"></a></h2>
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
 <p><a class="reference external" href="https://arxiv.org/pdf/1911.08354.pdf">Energy Usage Reports: Environmental awareness as part of algorithmic accountability</a></p>
 <section id="how-codecarbon-works">
-<h3>How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Permalink to this heading"></a></h3>
+<h3>How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Link to this heading"></a></h3>
 <p>CodeCarbon use a scheduler that, by default, call for the measure every 15 seconds so it has no significant overhead.</p>
 <p>The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.</p>
 <p>The scheduler is started when the first <code class="docutils literal notranslate"><span class="pre">start</span></code> method is called and stopped when <code class="docutils literal notranslate"><span class="pre">stop</span></code> method is called.</p>
