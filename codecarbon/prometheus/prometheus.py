@@ -35,16 +35,36 @@ class Prometheus:
         """
 
         # Save the values of the metrics to the local registry
-        duration_gauge.labels(carbon_emission["project_name"]).set(int(carbon_emission["duration"]))
-        emissions_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["emissions"])
-        emissions_rate_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["emissions_rate"])
-        cpu_power_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["cpu_power"])
-        gpu_power_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["gpu_power"])
-        ram_power_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["ram_power"])
-        cpu_energy_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["cpu_energy"])
-        gpu_energy_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["gpu_energy"])
-        ram_energy_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["ram_energy"])
-        energy_consumed_gauge.labels(carbon_emission["project_name"]).set(carbon_emission["energy_consumed"])
+        duration_gauge.labels(carbon_emission["project_name"]).set(
+            int(carbon_emission["duration"])
+        )
+        emissions_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["emissions"]
+        )
+        emissions_rate_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["emissions_rate"]
+        )
+        cpu_power_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["cpu_power"]
+        )
+        gpu_power_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["gpu_power"]
+        )
+        ram_power_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["ram_power"]
+        )
+        cpu_energy_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["cpu_energy"]
+        )
+        gpu_energy_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["gpu_energy"]
+        )
+        ram_energy_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["ram_energy"]
+        )
+        energy_consumed_gauge.labels(carbon_emission["project_name"]).set(
+            carbon_emission["energy_consumed"]
+        )
 
         # Send the new metric values
         push_to_gateway(
