@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Methodology &mdash; CodeCarbon 2.3.1 documentation</title>
@@ -11,11 +11,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=67b02a41"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -28,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> CodeCarbon
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            CodeCarbon
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -88,8 +92,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Methodology</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Methodology</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/methodology.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -100,23 +104,23 @@
            <div itemprop="articleBody">
              
   <section id="methodology">
-<span id="id1"></span><h1>Methodology<a class="headerlink" href="#methodology" title="Permalink to this heading"></a></h1>
+<span id="id1"></span><h1>Methodology<a class="headerlink" href="#methodology" title="Link to this heading"></a></h1>
 <p>Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [CO₂eq], are the product of two main factors :</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>C = Carbon Intensity of the electricity consumed for computation: quantified as g of CO₂ emitted per kilowatt-hour of electricity.
 
-P = Power Consumed by the computational infrastructure: quantified as kilowatt-hours.
+E = Energy Consumed by the computational infrastructure: quantified as kilowatt-hours.
 </pre></div>
 </div>
-<p>Carbon dioxide emissions (CO₂eq) can then be calculated as <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">*</span> <span class="pre">P</span></code></p>
+<p>Carbon dioxide emissions (CO₂eq) can then be calculated as <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">*</span> <span class="pre">E</span></code></p>
 <section id="carbon-intensity">
-<h2>Carbon Intensity<a class="headerlink" href="#carbon-intensity" title="Permalink to this heading"></a></h2>
+<h2>Carbon Intensity<a class="headerlink" href="#carbon-intensity" title="Link to this heading"></a></h2>
 <p>Carbon Intensity of the consumed electricity is calculated as a weighted average of the emissions from the different
 energy sources that are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, and natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, this package calculates the Carbon Intensity of the electricity consumed.</p>
 <a class="reference internal image-reference" href="_images/grid_energy_mix.png"><img alt="Grid Energy Mix" class="align-center" src="_images/grid_energy_mix.png" style="width: 350px; height: 300px;" /></a>
-<p>When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a> ) or per country ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/eu-carbon-intensity-electricity.csv">here</a> ).</p>
-<p>If we don’t have the global carbon intensity or electricity of a country, but we have its electricity mix, we compute the carbon intensity of electricity using this table :</p>
-<table class="colwidths-given docutils align-center" id="id5">
-<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id5" title="Permalink to this table"></a></caption>
+<p>When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a> ) or per country ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">here</a> ).</p>
+<p>If we don’t have the global carbon intensity or electricity of a country, but we have its electricity mix, we compute the carbon intensity of electricity using this table:</p>
+<table class="docutils align-center" id="id5">
+<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
 <colgroup>
 <col style="width: 50%" />
 <col style="width: 50%" />
@@ -168,43 +172,48 @@ energy sources that are used to generate electricity, including fossil fuels and
 <p>As you can see, we try to be as accurate as possible in estimating carbon intensity of electricity. Still there is room for improvement and all contributions are welcome.</p>
 </section>
 <section id="power-usage">
-<h2>Power Usage<a class="headerlink" href="#power-usage" title="Permalink to this heading"></a></h2>
+<h2>Power Usage<a class="headerlink" href="#power-usage" title="Link to this heading"></a></h2>
 <p>Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
 <code class="docutils literal notranslate"><span class="pre">measure_power_secs</span></code>, with default value 15 seconds, that can be passed when instantiating the emissions tracker.</p>
 <p>Currently, the package supports the following hardware infrastructure.</p>
 <section id="gpu">
-<h3>GPU<a class="headerlink" href="#gpu" title="Permalink to this heading"></a></h3>
-<p>Tracks Nvidia GPUs power consumption using <code class="docutils literal notranslate"><span class="pre">pynvml</span></code> library (installed with the package).</p>
+<h3>GPU<a class="headerlink" href="#gpu" title="Link to this heading"></a></h3>
+<p>Tracks Nvidia GPUs energy consumption using <code class="docutils literal notranslate"><span class="pre">pynvml</span></code> library (installed with the package).</p>
 </section>
 <section id="ram">
-<h3>RAM<a class="headerlink" href="#ram" title="Permalink to this heading"></a></h3>
+<h3>RAM<a class="headerlink" href="#ram" title="Link to this heading"></a></h3>
 <p>CodeCarbon uses a 3 Watts for 8 BG ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .
 This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.</p>
 </section>
 <section id="cpu">
-<h3>CPU<a class="headerlink" href="#cpu" title="Permalink to this heading"></a></h3>
+<h3>CPU<a class="headerlink" href="#cpu" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>On Windows or Mac</strong></p></li>
 </ul>
-<p>Tracks Intel processors power consumption using the <code class="docutils literal notranslate"><span class="pre">Inter</span> <span class="pre">Power</span> <span class="pre">Gadget</span></code>. You need to install it yourself from this <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a> .</p>
+<p>Tracks Intel processors energy consumption using the <code class="docutils literal notranslate"><span class="pre">Intel</span> <span class="pre">Power</span> <span class="pre">Gadget</span></code>. You need to install it yourself from this <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a> .</p>
 <ul class="simple">
 <li><p><strong>On Linux</strong></p></li>
 </ul>
-<p>Tracks Intel Processor power consumption from Inter RAPL files at <code class="docutils literal notranslate"><span class="pre">\sys\class\powercap\intel-rapl</span></code> ( <a class="reference external" href="https://web.eece.maine.edu/~vweaver/projects/rapl/">reference</a> ).
+<p>Tracks Intel and AMD processor energy consumption from Intel RAPL files at <code class="docutils literal notranslate"><span class="pre">\sys\class\powercap\intel-rapl</span></code> ( <a class="reference external" href="https://web.eece.maine.edu/~vweaver/projects/rapl/">reference</a> ).
 All CPUs listed in this directory will be tracked. <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/156">Help us improve this and make it configurable</a>.</p>
 <p><em>Note</em>: The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path</p>
-<p>If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode:
-It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
-If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
-We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.</p>
-<p>The net Power Used is the net power supply consumed during the compute time, measured as <code class="docutils literal notranslate"><span class="pre">kWh</span></code>.</p>
+<dl class="simple">
+<dt>If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode:</dt><dd><ul class="simple">
+<li><p>It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).</p></li>
+<li><p>If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.</p></li>
+<li><p>We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The net Energy Used is the net power supply consumed during the compute time, measured as <code class="docutils literal notranslate"><span class="pre">kWh</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Energy</span> <span class="pre">=</span> <span class="pre">Power</span> <span class="pre">*</span> <span class="pre">Time</span></code></p>
 </section>
 </section>
 <section id="references">
-<h2>References<a class="headerlink" href="#references" title="Permalink to this heading"></a></h2>
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
 <p><a class="reference external" href="https://arxiv.org/pdf/1911.08354.pdf">Energy Usage Reports: Environmental awareness as part of algorithmic accountability</a></p>
 <section id="how-codecarbon-works">
-<h3>How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Permalink to this heading"></a></h3>
+<h3>How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Link to this heading"></a></h3>
 <p>CodeCarbon use a scheduler that, by default, call for the measure every 15 seconds so it has no significant overhead.</p>
 <p>The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.</p>
 <p>The scheduler is started when the first <code class="docutils literal notranslate"><span class="pre">start</span></code> method is called and stopped when <code class="docutils literal notranslate"><span class="pre">stop</span></code> method is called.</p>
