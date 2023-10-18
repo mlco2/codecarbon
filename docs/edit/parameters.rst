@@ -27,8 +27,8 @@ Input Parameters
    * - gpu_ids
      - User-specified known gpu ids to track, defaults to ``None``
    * - log_level
-     - | Global codecarbon log level : "info" (defaults), "debug", "warning", 
-       | "error", or "critical"
+     - | Global codecarbon log level (by order of verbosity): "debug", "info" (defaults), "warning", 
+       | "error", or "critical"  
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
    * - pue
