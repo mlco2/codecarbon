@@ -292,7 +292,7 @@ class RAM(BaseHardware):
             return nb / (1000**2)
 
     def _parse_scontrol(self, scontrol_str):
-        mem_matches = re.findall(r"mem=\d+[A-Z]", scontrol_str)
+        mem_matches = re.findall(r"AllocTRES=.*?,mem=(\d+[A-Z])", scontrol_str)
         if len(mem_matches) == 0:
             logger.warning(
                 "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
