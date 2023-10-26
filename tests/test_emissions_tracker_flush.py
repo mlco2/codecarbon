@@ -3,6 +3,8 @@ import tempfile
 import time
 import unittest
 
+import pandas as pd
+
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
@@ -33,7 +35,7 @@ class TestCarbonTrackerFlush(unittest.TestCase):
 
     def test_carbon_tracker_online_flush(self):
         tracker = EmissionsTracker(
-            output_dir=self.emissions_path, output_file=self.emissions_file
+            output_dir=self.emissions_path, output_file=self.emissions_file, experiment_id="test",
         )
         tracker.start()
         heavy_computation(run_time_secs=1)
@@ -47,11 +49,13 @@ class TestCarbonTrackerFlush(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
+        self.verify_experiment_id_presence()
         self.verify_output_file(self.emissions_file_path)
 
     def test_carbon_tracker_offline_flush(self):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA",
+            experiment_id="test",
             output_dir=self.emissions_path,
             output_file=self.emissions_file,
         )
@@ -63,11 +67,13 @@ class TestCarbonTrackerFlush(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
+        self.verify_experiment_id_presence()
         self.verify_output_file(self.emissions_file_path)
 
     def test_decorator_flush(self):
         @track_emissions(
             project_name=self.project_name,
+            experiment_id="test",
             output_dir=self.emissions_path,
             output_file=self.emissions_file,
         )
@@ -76,9 +82,17 @@ class TestCarbonTrackerFlush(unittest.TestCase):
             return 42
 
         res = dummy_train_model()
-        self.assertEqual(res, 42)
 
+        self.assertEqual(res, 42)
+        self.verify_experiment_id_presence()
         self.verify_output_file(self.emissions_file_path, 2)
+
+    def verify_experiment_id_presence(self) -> None:
+        assert os.path.isfile(self.emissions_file_path)
+        emissions_df = pd.read_csv(self.emissions_file_path)
+        print(emissions_df[['project_name', 'experiment_id', 'country_iso_code', 'country_name']])
+        self.assertEqual("test", emissions_df['experiment_id'].values[0])
+
 
     def verify_output_file(self, file_path: str, expected_lines=3) -> None:
         with open(file_path, "r") as f:
