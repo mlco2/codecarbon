@@ -172,7 +172,7 @@ For instance:
             emissions_endpoint=localhost:7777
 
 
-* ``./.codecarbon.config``
+* ``./.codecarbon.config`` will override ``~/.codecarbon.config`` if the same parameter is set in both files :
 
 	.. code-block:: bash
 
@@ -184,13 +184,15 @@ For instance:
             log_level = DEBUG
             tracking_mode = process
 
-* environment variables
+* environment variables will override ``./.codecarbon.config`` if the same parameter is set in both files :
 
 	.. code-block:: bash
+            
+            export CODECARBON_GPU_IDS="0, 1"
+            export CODECARBON_LOG_LEVEL="WARNING"
 
-	    export CODECARBON_GPU_IDS="0, 1"
 
-* script:
+* script parameters will override environment variables if the same parameter is set in both: 
 
 	.. code-block:: python
 
@@ -204,17 +206,17 @@ Yields attributes:
 .. code-block:: python
 
     {
-        "measure_power_secs": 10,
-        "save_to_file": True,
-        "api_call_interval": 4,
-        "save_to_api": True,
-        "experiment_id": "235b1da5-aaaa-aaaa-aaaa-893681599d2c",
-        "log_level": "DEBUG",
-        "tracking_mode": "process",
-        "emissions_endpoint": "localhost:7777",
-        "output_dir": "/Users/victor/emissions",
-        "co2_signal_api_token": "some-token",
-        "gpu_ids": [0, 1],
+        "measure_power_secs": 10,  # from ~/.codecarbon.config
+        "save_to_file": True,   # from ./.codecarbon.config (override ~/.codecarbon.config)
+        "api_call_interval": 4, # from script
+        "save_to_api": True,   # from script
+        "experiment_id": "235b1da5-aaaa-aaaa-aaaa-893681599d2c", # from ./.codecarbon.config
+        "log_level": "WARNING", # from environment variable (override ./.codecarbon.config)
+        "tracking_mode": "process", # from ./.codecarbon.config
+        "emissions_endpoint": "localhost:7777", # from ~/.codecarbon.config
+        "output_dir": "/Users/victor/emissions", # from ./.codecarbon.config
+        "co2_signal_api_token": "some-token", # from script (override ./.codecarbon.config)
+        "gpu_ids": [0, 1], # from environment variable
     }
 
 .. |ConfigParser| replace:: ``ConfigParser``
