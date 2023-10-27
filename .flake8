@@ -3,5 +3,5 @@
 
 [flake8]
 select = C,E,F,W,B
-ignore = E203, E501, W503, B008, E201, E231
+ignore = E203, E501, W503, B008, E201, E231, E226
 copyright-check = True
