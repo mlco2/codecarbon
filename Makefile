@@ -7,4 +7,5 @@ mypy-check:
 	--disable-error-code misc \
 
 pre-commit:
-	pre-commit run --all-files
+	# Use same syntax as GitHub pre-commit
+	pre-commit run --show-diff-on-failure --color=always --all-files
