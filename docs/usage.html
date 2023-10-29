@@ -262,7 +262,7 @@ additional parameters and configuration options.</p>
 </div>
 </div></blockquote>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">./.codecarbon.config</span></code></p>
+<li><p><code class="docutils literal notranslate"><span class="pre">./.codecarbon.config</span></code> will override <code class="docutils literal notranslate"><span class="pre">~/.codecarbon.config</span></code> if the same parameter is set in both files :</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>codecarbon<span class="o">]</span>
 <span class="nv">save_to_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span>
@@ -275,14 +275,15 @@ additional parameters and configuration options.</p>
 </div>
 </div></blockquote>
 </li>
-<li><p>environment variables</p>
+<li><p>environment variables will override <code class="docutils literal notranslate"><span class="pre">./.codecarbon.config</span></code> if the same parameter is set in both files :</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">CODECARBON_GPU_IDS</span><span class="o">=</span><span class="s2">&quot;0, 1&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CODECARBON_LOG_LEVEL</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span>
 </pre></div>
 </div>
 </div></blockquote>
 </li>
-<li><p>script:</p>
+<li><p>script parameters will override environment variables if the same parameter is set in both:</p>
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="n">EmissionsTracker</span><span class="p">(</span>
 <span class="n">api_call_interval</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
@@ -295,17 +296,17 @@ additional parameters and configuration options.</p>
 </ul>
 <p>Yields attributes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="s2">&quot;measure_power_secs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="s2">&quot;save_to_file&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="s2">&quot;api_call_interval&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="s2">&quot;save_to_api&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="s2">&quot;experiment_id&quot;</span><span class="p">:</span> <span class="s2">&quot;235b1da5-aaaa-aaaa-aaaa-893681599d2c&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;log_level&quot;</span><span class="p">:</span> <span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;tracking_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;process&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;emissions_endpoint&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost:7777&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;output_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;/Users/victor/emissions&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;co2_signal_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;some-token&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;gpu_ids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="s2">&quot;measure_power_secs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># from ~/.codecarbon.config</span>
+    <span class="s2">&quot;save_to_file&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>   <span class="c1"># from ./.codecarbon.config (override ~/.codecarbon.config)</span>
+    <span class="s2">&quot;api_call_interval&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="c1"># from script</span>
+    <span class="s2">&quot;save_to_api&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>   <span class="c1"># from script</span>
+    <span class="s2">&quot;experiment_id&quot;</span><span class="p">:</span> <span class="s2">&quot;235b1da5-aaaa-aaaa-aaaa-893681599d2c&quot;</span><span class="p">,</span> <span class="c1"># from ./.codecarbon.config</span>
+    <span class="s2">&quot;log_level&quot;</span><span class="p">:</span> <span class="s2">&quot;WARNING&quot;</span><span class="p">,</span> <span class="c1"># from environment variable (override ./.codecarbon.config)</span>
+    <span class="s2">&quot;tracking_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;process&quot;</span><span class="p">,</span> <span class="c1"># from ./.codecarbon.config</span>
+    <span class="s2">&quot;emissions_endpoint&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost:7777&quot;</span><span class="p">,</span> <span class="c1"># from ~/.codecarbon.config</span>
+    <span class="s2">&quot;output_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;/Users/victor/emissions&quot;</span><span class="p">,</span> <span class="c1"># from ./.codecarbon.config</span>
+    <span class="s2">&quot;co2_signal_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;some-token&quot;</span><span class="p">,</span> <span class="c1"># from script (override ./.codecarbon.config)</span>
+    <span class="s2">&quot;gpu_ids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="c1"># from environment variable</span>
 <span class="p">}</span>
 </pre></div>
 </div>

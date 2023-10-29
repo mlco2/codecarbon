@@ -46,7 +46,7 @@ class BaseHardware(ABC):
         )
         return power, energy
 
-    def start(self) -> None:
+    def start(self) -> None:  # noqa B027
         pass
 
 

@@ -1,11 +1,8 @@
 arrow
-black>=22.3.0 # https://github.com/psf/black/issues/2964
 dash
 dash_bootstrap_components
 dataclasses
 fire
-flake8
-isort
 mypy
 pandas
 plotly
@@ -18,3 +15,4 @@ py-cpuinfo
 psutil
 fuzzywuzzy
 prometheus_client
+pre-commit
