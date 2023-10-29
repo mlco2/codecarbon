@@ -13,9 +13,11 @@ jobs:
     - uses: actions/setup-python@v3
     - name: set PY
       run: echo "PY=$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')" >> $GITHUB_ENV
-    - uses: actions/cache@v1
+    - uses: actions/cache@v3
       with:
         path: ~/.cache/pre-commit
         key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
     - name: Run pre-commit
-      run: pre-commit run --show-diff-on-failure --color=always --all-files
+      run: |
+        pip install pre-commit==3.5.0
+        pre-commit run --show-diff-on-failure --color=always --all-files
