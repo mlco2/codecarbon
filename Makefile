@@ -5,3 +5,6 @@ mypy-check:
 	--disable-error-code attr-defined \
 	--disable-error-code assignment \
 	--disable-error-code misc \
+
+pre-commit:
+	pre-commit run --all-files

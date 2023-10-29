@@ -208,6 +208,7 @@ If any of the linters/formatters fail, check the difference with `git diff`, add
 
 You can also run `pre-commit` with `pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
+It's nice to keep it up-to-date with `pre-commit autoupdate` sometimes.
 
 ### Packaging
 
