@@ -46,6 +46,7 @@ class BaseHardware(ABC):
         )
         return power, energy
 
+    @abstractmethod
     def start(self) -> None:
         pass
 
