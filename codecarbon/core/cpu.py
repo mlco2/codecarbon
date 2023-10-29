@@ -46,6 +46,7 @@ def is_rapl_available():
 class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
+    _osx_silicon_exec = "asitop"
     _windows_exec = "PowerLog3.0.exe"
     # TODO: There is now a 3.6 version.
     _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
@@ -79,14 +80,23 @@ class IntelPowerGadget:
                     f"Intel Power Gadget executable not found on {self._system}"
                 )
         elif self._system.startswith("darwin"):
-            if shutil.which(self._osx_exec):
-                self._cli = self._osx_exec
-            elif shutil.which(self._osx_exec_backup):
-                self._cli = self._osx_exec_backup
+            cpu_model = detect_cpu_model()
+            if cpu_model.startswith("Apple"):
+                if shutil.which(self._osx_silicon_exec):
+                    self._cli = self._osx_silicon_exec
+                else:
+                    raise FileNotFoundError(
+                        f"Intel Power Gadget executable not found on {self._system}"
+                    )
             else:
-                raise FileNotFoundError(
-                    f"Intel Power Gadget executable not found on {self._system}"
-                )
+                if shutil.which(self._osx_exec):
+                    self._cli = self._osx_exec
+                elif shutil.which(self._osx_exec_backup):
+                    self._cli = self._osx_exec_backup
+                else:
+                    raise FileNotFoundError(
+                        f"Intel Power Gadget executable not found on {self._system}"
+                    )
         else:
             raise SystemError("Platform not supported by Intel Power Gadget")
 
@@ -111,10 +121,33 @@ class IntelPowerGadget:
                 stderr=subprocess.PIPE,
             )
         elif self._system.startswith("darwin"):
-            returncode = subprocess.call(
-                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",  # noqa: E501
+            # returncode = subprocess.call(
+            #     f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",  # noqa: E501
+            #     shell=True,
+            # )
+            process = subprocess.Popen(
+                [
+                    "sudo powermetrics",
+                    "--samplers",
+                    "all",
+                    "--show-usage-summary",
+                    "-i",
+                    "100",
+                    "-n",
+                    "10",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 shell=True,
             )
+            stdout, stderr = process.communicate()
+            print(stdout.decode())
+
+            returncode = subprocess.call(
+                f"{self._cli} --interval {self._duration} --avg {self._resolution}  > test_m1.txt",  # noqa: E501
+                shell=True,
+            )
+
         else:
             return None
 

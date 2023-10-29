@@ -279,7 +279,7 @@ class BaseEmissionsTracker(ABC):
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
-        if gpu.is_gpu_details_available():
+        if gpu.is_gpu_details_available():  # TODO #464 GPU not detected on mac m1
             logger.info("Tracking Nvidia GPU via pynvml")
             gpu_devices = GPU.from_utils(self._gpu_ids)
             self._hardware.append(gpu_devices)
@@ -293,7 +293,9 @@ class BaseEmissionsTracker(ABC):
             logger.info("No GPU found.")
 
         logger.info("[setup] CPU Tracking...")
-        if cpu.is_powergadget_available():
+        if (
+            cpu.is_powergadget_available()
+        ):  # TODO #464  Try to use other tool for mac silicon
             logger.info("Tracking Intel CPU via Power Gadget")
             hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
             self._hardware.append(hardware)

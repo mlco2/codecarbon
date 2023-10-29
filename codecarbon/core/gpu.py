@@ -269,7 +269,7 @@ class AllGPUDevices:
 def is_gpu_details_available():
     """Returns True if the GPU details are available."""
     try:
-        pynvml.nvmlInit()
+        pynvml.nvmlInit()  # TODO: On Mac M1 this detects a Tesla V100
         return True
 
     except pynvml.NVMLError:
