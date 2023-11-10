@@ -7,9 +7,11 @@ import pytest
 
 from codecarbon.core.cpu import (
     TDP,
+    ApplePowermetrics,
     IntelPowerGadget,
     IntelRAPL,
     is_powergadget_available,
+    is_powermetrics_available,
 )
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.external.hardware import CPU
@@ -114,6 +116,28 @@ class TestIntelRAPL(unittest.TestCase):
         assert expected_power, expected_energy == cpu.measure_power_and_energy(
             last_duration=0.01
         )
+
+
+class TestApplePowerMetrics(unittest.TestCase):
+    @pytest.mark.integ_test
+    def test_apple_powermetrics(self):
+        if is_powergadget_available():
+            power_gadget = ApplePowermetrics()
+            cpu_details = power_gadget.get_cpu_details()
+            assert len(cpu_details) > 0
+
+    @mock.patch("codecarbon.core.cpu.ApplePowermetrics._log_values")
+    @mock.patch("codecarbon.core.cpu.ApplePowermetrics._setup_cli")
+    def test_get_cpu_details(self, mock_setup, mock_log_values):
+        expected_cpu_details = {"Processor Power": 0.3146}
+        if is_powermetrics_available():
+            powermetrics = ApplePowermetrics(
+                output_dir=os.path.join(os.path.dirname(__file__), "test_data"),
+                log_file_name="mock_powermetrics_log.txt",
+            )
+            cpu_details = powermetrics.get_cpu_details()
+
+            self.assertDictEqual(expected_cpu_details, cpu_details)
 
 
 class TestTDP(unittest.TestCase):
