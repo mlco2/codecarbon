@@ -4,11 +4,13 @@ using Intel Power Gadget
 https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
 import os
+import re
 import shutil
 import subprocess
 import sys
 from typing import Dict, Tuple
 
+import numpy as np
 import pandas as pd
 from rapidfuzz import fuzz, process, utils
 
@@ -43,10 +45,21 @@ def is_rapl_available():
         return False
 
 
+def is_powermetrics_available():
+    try:
+        ApplePowermetrics()
+        return True
+    except Exception as e:
+        logger.debug(
+            "Not using PowerMetrics, an exception occurred while instantiating"
+            + f" Powermetrics : {e}",
+        )
+        return False
+
+
 class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
-    _osx_silicon_exec = "asitop"
     _windows_exec = "PowerLog3.0.exe"
     # TODO: There is now a 3.6 version.
     _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
@@ -80,23 +93,14 @@ class IntelPowerGadget:
                     f"Intel Power Gadget executable not found on {self._system}"
                 )
         elif self._system.startswith("darwin"):
-            cpu_model = detect_cpu_model()
-            if cpu_model.startswith("Apple"):
-                if shutil.which(self._osx_silicon_exec):
-                    self._cli = self._osx_silicon_exec
-                else:
-                    raise FileNotFoundError(
-                        f"Intel Power Gadget executable not found on {self._system}"
-                    )
+            if shutil.which(self._osx_exec):
+                self._cli = self._osx_exec
+            elif shutil.which(self._osx_exec_backup):
+                self._cli = self._osx_exec_backup
             else:
-                if shutil.which(self._osx_exec):
-                    self._cli = self._osx_exec
-                elif shutil.which(self._osx_exec_backup):
-                    self._cli = self._osx_exec_backup
-                else:
-                    raise FileNotFoundError(
-                        f"Intel Power Gadget executable not found on {self._system}"
-                    )
+                raise FileNotFoundError(
+                    f"Intel Power Gadget executable not found on {self._system}"
+                )
         else:
             raise SystemError("Platform not supported by Intel Power Gadget")
 
@@ -121,33 +125,10 @@ class IntelPowerGadget:
                 stderr=subprocess.PIPE,
             )
         elif self._system.startswith("darwin"):
-            # returncode = subprocess.call(
-            #     f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",  # noqa: E501
-            #     shell=True,
-            # )
-            process = subprocess.Popen(
-                [
-                    "sudo powermetrics",
-                    "--samplers",
-                    "all",
-                    "--show-usage-summary",
-                    "-i",
-                    "100",
-                    "-n",
-                    "10",
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,
-            )
-            stdout, stderr = process.communicate()
-            print(stdout.decode())
-
             returncode = subprocess.call(
-                f"{self._cli} --interval {self._duration} --avg {self._resolution}  > test_m1.txt",  # noqa: E501
+                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",  # noqa: E501
                 shell=True,
             )
-
         else:
             return None
 
@@ -398,4 +379,100 @@ class TDP:
         return "Unknown", None
 
     def start(self):
+        pass
+
+
+class ApplePowermetrics:
+    _osx_silicon_exec = "powermetrics"
+
+    def __init__(
+        self,
+        output_dir: str = ".",
+        n_points=10,
+        interval=100,
+        log_file_name="powermetrics_log.txt",
+    ):
+        self._log_file_path = os.path.join(output_dir, log_file_name)
+        self._system = sys.platform.lower()
+        self._n_points = n_points
+        self._interval = interval
+        self._setup_cli()
+
+    def _setup_cli(self):
+        """
+        Setup cli command to run Intel Power Gadget
+        """
+        if self._system.startswith("darwin"):
+            cpu_model = detect_cpu_model()
+            if cpu_model.startswith("Apple"):
+                if shutil.which(self._osx_silicon_exec):
+                    self._cli = self._osx_silicon_exec
+                else:
+                    raise FileNotFoundError(
+                        f"Powermetrics executable not found on {self._system}"
+                    )
+        else:
+            raise SystemError("Platform not supported by Powermetrics")
+
+    def _log_values(self):
+        """
+        Logs output from Intel Power Gadget command line to a file
+        """
+        returncode = None
+
+        if self._system.startswith("darwin"):
+            # Run the powermetrics command with sudo and capture its output
+            cmd = [
+                "sudo",
+                "powermetrics",
+                "-n",
+                str(self._n_points),
+                "",
+                "--samplers",
+                "cpu_power",
+                "--format",
+                "csv",
+                "-i",
+                str(self._interval),
+                "-o",
+                self._log_file_path,
+            ]
+            returncode = subprocess.call(cmd, universal_newlines=True)
+
+        else:
+            return None
+
+        if returncode != 0:
+            logger.warning(
+                "Returncode while logging power values using "
+                + f"Intel Power Gadget: {returncode}"
+            )
+        return
+
+    def get_cpu_details(self, **kwargs) -> Dict:
+        """
+        Fetches the CPU Power Details by fetching values from a logged csv file
+        in _log_values function
+        """
+        self._log_values()
+        cpu_details = dict()
+        try:
+            with open(self._log_file_path) as f:
+                cpu_log = f.read()
+            pattern = r"CPU Power: (\d+) mW"
+            cpu_power_list = re.findall(pattern, cpu_log)
+            cpu_details["Processor Power"] = np.mean(
+                [float(power) / 1000 for power in cpu_power_list]
+            )
+
+        except Exception as e:
+            logger.info(
+                f"Unable to read Powermetrics logged file at {self._log_file_path}\n \
+                Exception occurred {e}",
+                exc_info=True,
+            )
+        return cpu_details
+
+    def start(self):
+        # TODO: Read energy
         pass

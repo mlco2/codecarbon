@@ -6,6 +6,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *intel_power_gadget_log.csv
+*powermetrics_log.txt
 .codecarbon.config
 
 # C extensions

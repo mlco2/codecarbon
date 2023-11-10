@@ -305,6 +305,11 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
+        elif cpu.is_powermetrics_available():
+            logger.info("Tracking Apple CPU via PowerMetrics")
+            hardware = CPU.from_utils(self._output_dir, "apple_powermetrics")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
         else:
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."

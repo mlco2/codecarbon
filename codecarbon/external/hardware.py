@@ -9,7 +9,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
-from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
+from codecarbon.core.cpu import ApplePowermetrics, IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
@@ -138,6 +138,8 @@ class CPU(BaseHardware):
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
             self._intel_interface = IntelRAPL(rapl_dir=rapl_dir)
+        elif self._mode == "apple_powermetrics":
+            self._intel_interface = ApplePowermetrics(self._output_dir)
 
     def __repr__(self) -> str:
         if self._mode != "constant":
@@ -202,7 +204,7 @@ class CPU(BaseHardware):
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
-        if self._mode in ["intel_power_gadget", "intel_rapl"]:
+        if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
             self._intel_interface.start()
         pass
 
