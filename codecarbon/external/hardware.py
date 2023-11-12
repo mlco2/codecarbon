@@ -238,6 +238,7 @@ class RAM(BaseHardware):
     # 3 watts of power for every 8GB of DDR3 or DDR4 memory
     # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
     power_per_GB = 3 / 8  # W/GB
+    memory_size = None
 
     def __init__(
         self,
@@ -310,6 +311,9 @@ class RAM(BaseHardware):
 
     @property
     def slurm_memory_GB(self):
+        # Prevent calling scontrol at each mesure
+        if self.memory_size:
+            return self.memory_size
         scontrol_str = self._read_slurm_scontrol()
         if scontrol_str is None:
             logger.warning(
@@ -320,7 +324,8 @@ class RAM(BaseHardware):
             return psutil.virtual_memory().total / B_TO_GB
         mem = self._parse_scontrol(scontrol_str)
         if isinstance(mem, str):
-            return self._parse_scontrol_memory_GB(mem)
+            mem = self._parse_scontrol_memory_GB(mem)
+        self.memory_size = mem
         return mem
 
     @property
