@@ -1,6 +1,6 @@
 from time import time
 
-from codecarbon.external.hardware import CPU, GPU, RAM
+from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger
 
 
@@ -68,8 +68,23 @@ class MeasurePowerEnergy:
                 self._ram_power = power
                 logger.info(
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
-                    + f". RAM Power : {self._ram_power.W} W"
+                    + f".RAM Power : {self._ram_power.W} W"
                 )
+            elif isinstance(hardware, AppleSiliconChip):
+                if hardware.chip_part == "CPU":
+                    self._total_cpu_energy += energy
+                    self._cpu_power = power
+                    logger.info(
+                        f"Energy consumed for AppleSilicon CPU : {self._total_cpu_energy.kWh:.6f} kWh"
+                        + f".Apple Silicon CPU Power : {self._cpu_power.W} W"
+                    )
+                elif hardware.chip_part == "GPU":
+                    self._total_gpu_energy += energy
+                    self._gpu_power = power
+                    logger.info(
+                        f"Energy consumed for AppleSilicon GPU : {self._total_gpu_energy.kWh:.6f} kWh"
+                        + f".Apple Silicon GPU Power : {self._gpu_power.W} W"
+                    )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.time() - h_time

@@ -9,8 +9,9 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
-from codecarbon.core.cpu import ApplePowermetrics, IntelPowerGadget, IntelRAPL
+from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
+from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
 from codecarbon.external.logger import logger
@@ -138,8 +139,6 @@ class CPU(BaseHardware):
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
             self._intel_interface = IntelRAPL(rapl_dir=rapl_dir)
-        elif self._mode == "apple_powermetrics":
-            self._intel_interface = ApplePowermetrics(self._output_dir)
 
     def __repr__(self) -> str:
         if self._mode != "constant":
@@ -397,3 +396,75 @@ class RAM(BaseHardware):
             ram_power = Power.from_watts(0)
 
         return ram_power
+
+
+@dataclass
+class AppleSiliconChip(BaseHardware):
+    def __init__(
+        self,
+        output_dir: str,
+        model: str,
+        chip_part: str = "CPU",
+    ):
+        self._output_dir = output_dir
+        self._model = model
+        self._interface = ApplePowermetrics(self._output_dir)
+        self.chip_part = chip_part
+
+    def __repr__(self) -> str:
+        return f"AppleSiliconChip ({self._model} > {self.chip_part})"
+
+    def _get_power(self) -> Power:
+        """
+        Get Chip part power
+        Args:
+            chip_part (str): Chip part to get power from (CPU, GPU)
+        :return: power in kW
+        """
+
+        all_details: Dict = self._interface.get_details()
+
+        power = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Power", metric):
+                power += value
+                logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
+
+            else:
+                logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
+        return Power.from_watts(power)
+
+    def _get_energy(self, delay: Time) -> Energy:
+        """
+        Get Chip part energy deltas
+        Args:
+            chip_part (str): Chip part to get power from (Processor, GPU, etc.)
+        :return: energy in kWh
+        """
+        all_details: Dict = self._interface.get_details(delay)
+
+        energy = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Energy Delta_\d", metric):
+                energy += value
+        return Energy.from_energy(energy)
+
+    def total_power(self) -> Power:
+        return self._get_power()
+
+    def start(self):
+        self._interface.start()
+
+    def get_model(self):
+        return self._model
+
+    @classmethod
+    def from_utils(
+        cls, output_dir: str, model: Optional[str] = None, chip_part: str = "Processor"
+    ) -> "AppleSiliconChip":
+        if model is None:
+            model = detect_cpu_model()
+            if model is None:
+                logger.warning("Could not read AppleSiliconChip model.")
+
+        return cls(output_dir=output_dir, model=model, chip_part=chip_part)
