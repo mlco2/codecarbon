@@ -51,6 +51,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#gpu">GPU</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#ram">RAM</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cpu">CPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#apple-silicon-chips-m1-m2">Apple Silicon Chips (M1, M2)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a><ul>
@@ -188,9 +189,25 @@ This mesure is not satisfying and if ever you have an idea how to enhance it ple
 <section id="cpu">
 <h3>CPU<a class="headerlink" href="#cpu" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><strong>On Windows or Mac</strong></p></li>
+<li><p><strong>On Windows or Mac (Intel)</strong></p></li>
 </ul>
 <p>Tracks Intel processors energy consumption using the <code class="docutils literal notranslate"><span class="pre">Intel</span> <span class="pre">Power</span> <span class="pre">Gadget</span></code>. You need to install it yourself from this <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a> .</p>
+</section>
+<section id="apple-silicon-chips-m1-m2">
+<h3>Apple Silicon Chips (M1, M2)<a class="headerlink" href="#apple-silicon-chips-m1-m2" title="Link to this heading"></a></h3>
+<p>Apple Silicon Chips contain both the CPU and the GPU.</p>
+<p>Codecarbon tracks Apple Silicon Chip energy consumption using <code class="docutils literal notranslate"><span class="pre">powermetrics</span></code>. It should be available natively on you mac.
+However this tool is only usable with <code class="docutils literal notranslate"><span class="pre">sudo</span></code> rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
+(if you know of any solution for this do not hesitate and <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/">open an issue with your proposed solution</a>).</p>
+<p>To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>visudo
+</pre></div>
+</div>
+<p>Then add the following line at the end of the file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>username<span class="w"> </span><span class="nv">ALL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">(</span>root<span class="o">)</span><span class="w"> </span>NOPASSWD:<span class="w"> </span>/usr/bin/powermetrics
+</pre></div>
+</div>
+<p>If you do not want to give sudo rights to your user, then CodeCarbon will fallback in constant mode to measure CPU energy consumption.</p>
 <ul class="simple">
 <li><p><strong>On Linux</strong></p></li>
 </ul>
