@@ -274,6 +274,9 @@ class RAM(BaseHardware):
 
     def _read_slurm_scontrol(self):
         try:
+            logger.debug(
+                "SLURM environment detected, running `scontrol show job $SLURM_JOBID`..."
+            )
             return subprocess.check_output(
                 ["scontrol show job $SLURM_JOBID"], shell=True
             ).decode()

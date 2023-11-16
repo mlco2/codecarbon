@@ -79,6 +79,9 @@ def count_cpus() -> int:
         return psutil.cpu_count()
 
     try:
+        logger.debug(
+            "SLURM environment detected, running `scontrol show job $SLURM_JOBID` to count SLURM-available cpus."
+        )
         scontrol = subprocess.check_output(
             ["scontrol show job $SLURM_JOBID"], shell=True
         ).decode()
@@ -106,4 +109,5 @@ def count_cpus() -> int:
         return psutil.cpu_count()
 
     num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
+    logger.debug(f"Detected {num_cpus} cpus available on SLURM.")
     return int(num_cpus)
