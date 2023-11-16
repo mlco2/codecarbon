@@ -86,7 +86,7 @@ class ApplePowermetrics:
         if returncode != 0:
             logger.warning(
                 "Returncode while logging power values using "
-                + f"Intel Power Gadget: {returncode}"
+                + f"Powermetrics: {returncode}"
             )
         return
 
