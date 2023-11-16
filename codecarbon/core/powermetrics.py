@@ -41,7 +41,7 @@ class ApplePowermetrics:
 
     def _setup_cli(self):
         """
-        Setup cli command to run Intel Power Gadget
+        Setup cli command to run Powermetrics
         """
         if self._system.startswith("darwin"):
             cpu_model = detect_cpu_model()
