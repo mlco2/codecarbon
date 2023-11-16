@@ -67,8 +67,8 @@ class MeasurePowerEnergy:
                 self._total_ram_energy += energy
                 self._ram_power = power
                 logger.info(
-                    f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
-                    + f".RAM Power : {self._ram_power.W} W"
+                    f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh."
+                    + f"RAM Power : {self._ram_power.W} W"
                 )
             elif isinstance(hardware, AppleSiliconChip):
                 if hardware.chip_part == "CPU":

@@ -660,7 +660,7 @@ class BaseEmissionsTracker(ABC):
             (
                 power,
                 energy,
-            ) = hardware.measure_power_and_energy(  # TODO: here see how to do with Apple to split CPU / GPU
+            ) = hardware.measure_power_and_energy(
                 last_duration=last_duration
             )
             # Apply the PUE of the datacenter to the consumed energy
