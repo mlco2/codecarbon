@@ -57,7 +57,7 @@ class ApplePowermetrics:
 
     def _log_values(self):
         """
-        Logs output from Intel Power Gadget command line to a file
+        Logs output from Powermetrics to a file
         """
         returncode = None
 
