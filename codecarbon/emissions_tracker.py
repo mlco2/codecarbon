@@ -660,9 +660,7 @@ class BaseEmissionsTracker(ABC):
             (
                 power,
                 energy,
-            ) = hardware.measure_power_and_energy(
-                last_duration=last_duration
-            )
+            ) = hardware.measure_power_and_energy(last_duration=last_duration)
             # Apply the PUE of the datacenter to the consumed energy
             energy *= self._pue
             self._total_energy += energy
