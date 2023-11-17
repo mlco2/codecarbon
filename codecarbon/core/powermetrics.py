@@ -14,13 +14,50 @@ from codecarbon.external.logger import logger
 def is_powermetrics_available():
     try:
         ApplePowermetrics()
-        return True
+        response = _has_powermetrics_sudo()
+        return response
     except Exception as e:
         logger.debug(
             "Not using PowerMetrics, an exception occurred while instantiating"
             + f" Powermetrics : {e}",
         )
         return False
+
+
+def _has_powermetrics_sudo():
+    process = subprocess.Popen(
+        [
+            "sudo",
+            "powermetrics",
+            "--samplers",
+            "cpu_power",
+            "-n",
+            "1",
+            "-i",
+            "1",
+            "-o",
+            "/dev/null",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    _, stderr = process.communicate()
+
+    if re.search(r"[sudo].*password", stderr):
+        logger.debug(
+            """Not using PowerMetrics, sudo password prompt detected.
+                If you want to enable Powermetrics please modify your sudoers file
+                as described in :
+                https://mlco2.github.io/codecarbon/methodology.html#power-usage
+            """
+        )
+        return False
+    if process.returncode != 0:
+        raise Exception("Return code != 0")
+    else:
+        return True
 
 
 class ApplePowermetrics:
