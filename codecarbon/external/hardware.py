@@ -275,7 +275,7 @@ class RAM(BaseHardware):
     def _read_slurm_scontrol(self):
         try:
             logger.debug(
-                "SLURM environment detected, running `scontrol show job $SLURM_JOBID`..."
+                "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`..."
             )
             return (
                 subprocess.check_output(["scontrol show job $SLURM_JOB_ID"], shell=True)
@@ -301,13 +301,13 @@ class RAM(BaseHardware):
         mem_matches = re.findall(r"AllocTRES=.*?,mem=(\d+[A-Z])", scontrol_str)
         if len(mem_matches) == 0:
             logger.warning(
-                "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
+                "Could not find mem= after running `scontrol show job $SLURM_JOB_ID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
             return psutil.virtual_memory().total / B_TO_GB
         if len(mem_matches) > 1:
             logger.warning(
-                "Unexpected output after running `scontrol show job $SLURM_JOBID` "
+                "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
             return psutil.virtual_memory().total / B_TO_GB
@@ -322,7 +322,7 @@ class RAM(BaseHardware):
         scontrol_str = self._read_slurm_scontrol()
         if scontrol_str is None:
             logger.warning(
-                "Error running `scontrol show job $SLURM_JOBID` "
+                "Error running `scontrol show job $SLURM_JOB_ID` "
                 + "to retrieve SLURM-available RAM."
                 + "Using the machine's total RAM."
             )

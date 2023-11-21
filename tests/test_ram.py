@@ -37,7 +37,7 @@ class TestRAM(unittest.TestCase):
 
     def test_ram_slurm(self):
         scontrol_str = """
-scontrol show job $SLURM_JOBID
+scontrol show job $SLURM_JOB_ID
 JobId=XXXX JobName=gpu-jupyterhub
    UserId=XXXX GroupId=XXXX MCS_label=N/A
    Priority=255342 Nice=0 Account=puk@v100 QOS=qos_gpu-t3

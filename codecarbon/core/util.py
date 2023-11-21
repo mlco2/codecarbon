@@ -80,14 +80,14 @@ def count_cpus() -> int:
 
     try:
         logger.debug(
-            "SLURM environment detected, running `scontrol show job $SLURM_JOBID` to count SLURM-available cpus."
+            "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID` to count SLURM-available cpus."
         )
         scontrol = subprocess.check_output(
-            ["scontrol show job $SLURM_JOBID"], shell=True
+            ["scontrol show job $SLURM_JOB_ID"], shell=True
         ).decode()
     except subprocess.CalledProcessError:
         logger.warning(
-            "Error running `scontrol show job $SLURM_JOBID` "
+            "Error running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
         return psutil.cpu_count()
@@ -96,14 +96,14 @@ def count_cpus() -> int:
 
     if len(num_cpus_matches) == 0:
         logger.warning(
-            "Could not find NumCPUs= after running `scontrol show job $SLURM_JOBID` "
+            "Could not find NumCPUs= after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
         return psutil.cpu_count()
 
     if len(num_cpus_matches) > 1:
         logger.warning(
-            "Unexpected output after running `scontrol show job $SLURM_JOBID` "
+            "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
         return psutil.cpu_count()
