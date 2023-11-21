@@ -288,6 +288,15 @@ class RAM(BaseHardware):
             return
 
     def _parse_scontrol_memory_GB(self, mem):
+        """
+        Parse the memory string (B) returned by scontrol to a float (GB)
+
+        Args:
+            mem (str): Memory string (B) as `[amount][unit]` (e.g. `128G`)
+
+        Returns:
+            float: Memory (GB)
+        """
         nb = int(mem[:-1])
         unit = mem[-1]
         if unit == "T":
@@ -318,6 +327,12 @@ class RAM(BaseHardware):
 
     @property
     def slurm_memory_GB(self):
+        """
+        Property to compute the SLURM-available RAM in GigaBytes.
+
+        Returns:
+            float: Memory allocated to the job (GB)
+        """
         # Prevent calling scontrol at each mesure
         if self.memory_size:
             return self.memory_size
@@ -350,9 +365,15 @@ class RAM(BaseHardware):
 
     @property
     def machine_memory_GB(self):
+        """
+        Property to compute the machine's total memory in bytes.
+
+        Returns:
+            float: Total RAM (GB)
+        """
         return (
             self.slurm_memory_GB
-            if os.environ.get("SLURM_JOB_ID")
+            if SLURM_JOB_ID
             else psutil.virtual_memory().total / B_TO_GB
         )
 
