@@ -1,4 +1,5 @@
 import unittest
+from textwrap import dedent
 
 import numpy as np
 
@@ -36,44 +37,48 @@ class TestRAM(unittest.TestCase):
                 del array
 
     def test_ram_slurm(self):
-        scontrol_str = """
-scontrol show job $SLURM_JOB_ID
-JobId=XXXX JobName=gpu-jupyterhub
-   UserId=XXXX GroupId=XXXX MCS_label=N/A
-   Priority=255342 Nice=0 Account=puk@v100 QOS=qos_gpu-t3
-   JobState=RUNNING Reason=None Dependency=(null)
-   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
-   RunTime=00:33:42 TimeLimit=08:00:00 TimeMin=N/A
-   SubmitTime=2023-10-23T10:45:25 EligibleTime=2023-10-23T10:45:25
-   AccrueTime=2023-10-23T10:45:25
-   StartTime=2023-10-23T10:45:35 EndTime=2023-10-23T18:45:35 Deadline=N/A
-   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2023-10-23T10:45:35 Scheduler=Main
-   Partition=gpu_p13 AllocNode:Sid=idrsrv12-ib0:500994
-   ReqNodeList=(null) ExcNodeList=(null)
-   NodeList=r13i5n0
-   BatchHost=r13i5n0
-   NumNodes=1 NumCPUs=64 NumTasks=1 CPUs/Task=32 ReqB:S:C:T=0:0:*:1
-   ReqTRES=cpu=32,mem=128G,node=1,billing=40,gres/gpu=4
-   AllocTRES=cpu=64,mem=128G,node=1,billing=40,gres/gpu=4
-   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
-   MinCPUsNode=32 MinMemoryCPU=4G MinTmpDiskNode=0
-   Features=v100-16g DelayBoot=00:00:00
-   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
-   Command=(null)
-   WorkDir=/linkhome/rech/gendxh01/uei48xr
-   StdErr=/linkhome/rech/gendxh01/uei48xr/jupyterhub_slurm.err
-   StdIn=/dev/null
-   StdOut=/linkhome/rech/gendxh01/uei48xr/jupyterhub_slurm.out
-   Power=
-   TresPerNode=gres:gpu:4
-   """
+        scontrol_str = dedent(
+            """\
+            scontrol show job $SLURM_JOB_ID
+            JobId=XXXX JobName=gpu-jupyterhub
+               UserId=XXXX GroupId=XXXX MCS_label=N/A
+               Priority=255342 Nice=0 Account=puk@v100 QOS=qos_gpu-t3
+               JobState=RUNNING Reason=None Dependency=(null)
+               Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+               RunTime=00:33:42 TimeLimit=08:00:00 TimeMin=N/A
+               SubmitTime=2023-10-23T10:45:25 EligibleTime=2023-10-23T10:45:25
+               AccrueTime=2023-10-23T10:45:25
+               StartTime=2023-10-23T10:45:35 EndTime=2023-10-23T18:45:35 Deadline=N/A
+               SuspendTime=None SecsPreSuspend=0 LastSchedEval=2023-10-23T10:45:35 Scheduler=Main
+               Partition=gpu_p13 AllocNode:Sid=idrsrv12-ib0:500994
+               ReqNodeList=(null) ExcNodeList=(null)
+               NodeList=r13i5n0
+               BatchHost=r13i5n0
+               NumNodes=1 NumCPUs=64 NumTasks=1 CPUs/Task=32 ReqB:S:C:T=0:0:*:1
+               ReqTRES=cpu=32,mem=128G,node=1,billing=40,gres/gpu=4
+               AllocTRES=cpu=64,mem=128G,node=1,billing=40,gres/gpu=4
+               Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+               MinCPUsNode=32 MinMemoryCPU=4G MinTmpDiskNode=0
+               Features=v100-16g DelayBoot=00:00:00
+               OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+               Command=(null)
+               WorkDir=/linkhome/rech/gendxh01/uei48xr
+               StdErr=/linkhome/rech/gendxh01/uei48xr/jupyterhub_slurm.err
+               StdIn=/dev/null
+               StdOut=/linkhome/rech/gendxh01/uei48xr/jupyterhub_slurm.out
+               Power=
+               TresPerNode=gres:gpu:4
+            """
+        )
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "128G")
-        scontrol_str = """
-   ReqTRES=cpu=32,mem=134G,node=1,billing=40,gres/gpu=4
-   AllocTRES=cpu=64,mem=42K,node=1,billing=40,gres/gpu=4
-   """
+        scontrol_str = dedent(
+            """\
+            ReqTRES=cpu=32,mem=134G,node=1,billing=40,gres/gpu=4
+            AllocTRES=cpu=64,mem=42K,node=1,billing=40,gres/gpu=4
+            """
+        )
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "42K")
