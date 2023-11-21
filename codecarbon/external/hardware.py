@@ -14,7 +14,7 @@ import psutil
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import detect_cpu_model
+from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -278,7 +278,9 @@ class RAM(BaseHardware):
                 "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`..."
             )
             return (
-                subprocess.check_output(["scontrol show job $SLURM_JOB_ID"], shell=True)
+                subprocess.check_output(
+                    [f"scontrol show job {SLURM_JOB_ID}"], shell=True
+                )
                 .decode()
                 .strip()
             )

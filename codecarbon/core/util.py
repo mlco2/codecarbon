@@ -11,6 +11,11 @@ import psutil
 
 from codecarbon.external.logger import logger
 
+SLURM_JOB_ID = os.environ.get(
+    "SLURM_JOB_ID",  # default
+    os.environ.get("SLURM_JOBID"),  # deprecated but may still be used
+)
+
 
 @contextmanager
 def suppress(*exceptions):
@@ -75,15 +80,16 @@ def detect_cpu_model() -> str:
 
 
 def count_cpus() -> int:
-    if os.environ.get("SLURM_JOB_ID") is None:
+    if SLURM_JOB_ID is None:
         return psutil.cpu_count()
 
     try:
         logger.debug(
-            "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID` to count SLURM-available cpus."
+            "SLURM environment detected for job {SLURM_JOB_ID}, running"
+            + " `scontrol show job $SLURM_JOB_ID` to count SLURM-available cpus."
         )
         scontrol = subprocess.check_output(
-            ["scontrol show job $SLURM_JOB_ID"], shell=True
+            [f"scontrol show job {SLURM_JOB_ID}"], shell=True
         ).decode()
     except subprocess.CalledProcessError:
         logger.warning(
