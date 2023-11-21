@@ -277,9 +277,11 @@ class RAM(BaseHardware):
             logger.debug(
                 "SLURM environment detected, running `scontrol show job $SLURM_JOBID`..."
             )
-            return subprocess.check_output(
-                ["scontrol show job $SLURM_JOBID"], shell=True
-            ).decode()
+            return (
+                subprocess.check_output(["scontrol show job $SLURM_JOB_ID"], shell=True)
+                .decode()
+                .strip()
+            )
         except subprocess.CalledProcessError:
             return
 
