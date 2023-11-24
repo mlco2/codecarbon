@@ -75,8 +75,7 @@ class Emissions:
         selected = df.loc[flags]
         if not len(selected):
             raise Exception(f'Unable to find country name for {cloud.provider}, {cloud.region}')
-        selected["country_name"].item()
-        return selected
+        return selected["country_name"].item()
 
     def get_cloud_country_iso_code(self, cloud: CloudMetadata) -> str:
         """
