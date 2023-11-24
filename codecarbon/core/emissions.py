@@ -71,9 +71,12 @@ class Emissions:
         Returns the Country Name where the cloud region is located
         """
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-        return df.loc[
-            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        ]["country_name"].item()
+        flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        selected = df.loc[flags]
+        if not len(selected):
+            raise Exception(f'Unable to find country name for {cloud.provider}, {cloud.region}')
+        selected["country_name"].item()
+        return selected
 
     def get_cloud_country_iso_code(self, cloud: CloudMetadata) -> str:
         """
