@@ -1,8 +1,6 @@
 """
 Encapsulates external dependencies to retrieve hardware metadata
 """
-
-import os
 import re
 import subprocess
 from abc import ABC, abstractmethod
