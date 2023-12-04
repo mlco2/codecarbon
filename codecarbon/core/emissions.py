@@ -71,32 +71,49 @@ class Emissions:
         Returns the Country Name where the cloud region is located
         """
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-        return df.loc[
-            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        ]["country_name"].item()
+        flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        selected = df.loc[flags]
+        if not len(selected):
+            raise ValueError(
+                "Unable to find country name for "
+                f"cloud_provider={cloud.provider}, "
+                f"cloud_region={cloud.region}"
+            )
+        return selected["country_name"].item()
 
     def get_cloud_country_iso_code(self, cloud: CloudMetadata) -> str:
         """
         Returns the Country ISO Code where the cloud region is located
         """
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-        return df.loc[
-            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        ]["countryIsoCode"].item()
+        flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        selected = df.loc[flags]
+        if not len(selected):
+            raise ValueError(
+                "Unable to find country name for "
+                f"cloud_provider={cloud.provider}, "
+                f"cloud_region={cloud.region}"
+            )
+        return selected["countryIsoCode"].item()
 
     def get_cloud_geo_region(self, cloud: CloudMetadata) -> str:
         """
         Returns the State/City where the cloud region is located
         """
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-        state = df.loc[
-            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        ]["state"].item()
+        flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        selected = df.loc[flags]
+        if not len(selected):
+            raise ValueError(
+                "Unable to find country name for "
+                f"cloud_provider={cloud.provider}, "
+                f"cloud_region={cloud.region}"
+            )
+
+        state = selected["state"].item()
         if state is not None:
             return state
-        city = df.loc[
-            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        ]["city"].item()
+        city = selected["city"].item()
         return city
 
     def get_private_infra_emissions(self, energy: Energy, geo: GeoMetadata) -> float:

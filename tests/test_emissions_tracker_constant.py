@@ -99,3 +99,34 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
         assert len(lines) == 2
+
+    def test_carbon_tracker_offline_region_error(self):
+        # Test errors when unknown information is given to the offline tracker
+        from codecarbon.external.geography import CloudMetadata
+
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            cloud_provider="aws",
+            cloud_region="us-east-1",
+            output_dir=self.emissions_path,
+            output_file=self.emissions_file,
+        )
+        tracker.start()
+        tracker._measure_power_and_energy()
+        cloud: CloudMetadata = tracker._get_cloud_metadata()
+
+        try:
+            with self.assertRaises(ValueError) as context:
+                tracker._emissions.get_cloud_country_iso_code(cloud)
+            self.assertTrue("Unable to find country name" in context.exception.args[0])
+
+            with self.assertRaises(ValueError) as context:
+                tracker._emissions.get_cloud_geo_region(cloud)
+            self.assertTrue("Unable to find country name" in context.exception.args[0])
+
+            with self.assertRaises(ValueError) as context:
+                tracker._emissions.get_cloud_country_name(cloud)
+            self.assertTrue("Unable to find country name" in context.exception.args[0])
+
+        finally:
+            tracker.stop()
