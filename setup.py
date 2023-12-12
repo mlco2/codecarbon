@@ -11,7 +11,9 @@ DEPENDENCIES = [
     "psutil",
     "py-cpuinfo",
     "fuzzywuzzy",
-    "click",
+    "typer",
+    "questionary",
+    "rich",
     "prometheus_client",
 ]
 
