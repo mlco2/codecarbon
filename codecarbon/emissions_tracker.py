@@ -298,6 +298,11 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
+        elif cpu.is_perf_available():
+            logger.info("Tracking CPU via Linux Perf interface")
+            hardware = CPU.from_utils(self._output_dir, "linux_perf")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
@@ -522,6 +527,10 @@ class BaseEmissionsTracker(ABC):
         # scheduled measurement to shutdown
         # or if scheduler interval was longer than the run
         self._measure_power_and_energy()
+
+        # Shutdown tracking for hardware after taking last measurement
+        for hardware in self._hardware:
+            hardware.stop()
 
         emissions_data = self._prepare_emissions_data()
 

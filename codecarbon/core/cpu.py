@@ -3,6 +3,7 @@ Implements tracking Intel CPU Power Consumption on Mac and Windows
 using Intel Power Gadget
 https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
+import abc
 import os
 import shutil
 import subprocess
@@ -15,6 +16,10 @@ import pandas as pd
 with warnings.catch_warnings(record=True) as w:
     from fuzzywuzzy import fuzz
 
+try:
+    from codecarbon.core.perf import Perf
+except ImportError:
+    Perf = None
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
 from codecarbon.core.util import detect_cpu_model
@@ -46,7 +51,32 @@ def is_rapl_available():
         return False
 
 
-class IntelPowerGadget:
+def is_perf_available():
+    try:
+        if Perf is not None:
+            Perf(["energy-pkg"])
+            return True
+        else:
+            return False
+    except Exception as e:
+        logger.debug(
+            "Not using the Perf interface, an exception occurred while instantiating "
+            + f"Perf : {e}",
+        )
+        return False
+
+
+class BaseHardwareMeasurement(abc.ABC):
+    @abc.abstractmethod
+    def start(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def get_cpu_details(self, **kwargs) -> Dict:
+        pass
+
+
+class IntelPowerGadget(BaseHardwareMeasurement):
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
@@ -156,8 +186,45 @@ class IntelPowerGadget:
         # TODO: Read energy
         pass
 
+    def stop(self):
+        # TODO: Read energy
+        pass
 
-class IntelRAPL:
+
+class PerfCPUWrapper(BaseHardwareMeasurement):
+    def __init__(self) -> None:
+        self._perfinterface = Perf(["energy-pkg"])
+        self.cpu_details: Dict = dict()
+
+    def start(self):
+        self._perfinterface.start()
+
+    def stop(self):
+        self._perfinterface.stop()
+
+    def get_cpu_details(self, duration: Time, **kwargs) -> Dict:
+        """
+        Fetches the CPU Energy Deltas by fetching values from RAPL files
+        """
+        cpu_details = dict()
+
+        cpu_details["Processor Energy Delta_0"] = self._perfinterface.delta(
+            duration.seconds
+        ).kWh
+        self.cpu_details = cpu_details
+        logger.debug(f"get_cpu_details {self.cpu_details}")
+        return cpu_details
+
+    def get_static_cpu_details(self) -> Dict:
+        """
+        Return CPU details without computing them.
+        """
+        logger.debug(f"get_static_cpu_details {self.cpu_details}")
+
+        return self.cpu_details
+
+
+class IntelRAPL(BaseHardwareMeasurement):
     def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
@@ -259,6 +326,10 @@ class IntelRAPL:
     def start(self):
         for rapl_file in self._rapl_files:
             rapl_file.start()
+
+    def stop(self):
+        for rapl_file in self._rapl_files:
+            rapl_file.stop()
 
 
 class TDP:
@@ -387,4 +458,7 @@ class TDP:
         return "Unknown", None
 
     def start(self):
+        pass
+
+    def stop(self):
         pass

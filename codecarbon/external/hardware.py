@@ -9,7 +9,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
-from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
+from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL, PerfCPUWrapper
 from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
@@ -45,6 +45,9 @@ class BaseHardware(ABC):
         return power, energy
 
     def start(self) -> None:  # noqa B027
+        pass
+
+    def stop(self) -> None:
         pass
 
 
@@ -135,9 +138,11 @@ class CPU(BaseHardware):
         self._tdp = tdp
         self._is_generic_tdp = False
         if self._mode == "intel_power_gadget":
-            self._intel_interface = IntelPowerGadget(self._output_dir)
+            self._hw_measurement_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
-            self._intel_interface = IntelRAPL(rapl_dir=rapl_dir)
+            self._hw_measurement_interface = IntelRAPL(rapl_dir=rapl_dir)
+        elif self._mode == "linux_perf":
+            self._hw_measurement_interface = PerfCPUWrapper()
 
     def __repr__(self) -> str:
         if self._mode != "constant":
@@ -158,11 +163,13 @@ class CPU(BaseHardware):
         if self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
-        if self._mode == "intel_rapl":
+        if self._mode in ["intel_rapl", "linux_perf"]:
             # Don't call get_cpu_details to avoid computing energy twice and losing data.
-            all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()
+            all_cpu_details: Dict = (
+                self._hw_measurement_interface.get_static_cpu_details()
+            )
         else:
-            all_cpu_details: Dict = self._intel_interface.get_cpu_details()
+            all_cpu_details: Dict = self._hw_measurement_interface.get_cpu_details()
 
         power = 0
         for metric, value in all_cpu_details.items():
@@ -180,7 +187,7 @@ class CPU(BaseHardware):
         Get CPU energy deltas from RAPL files
         :return: energy in kWh
         """
-        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay)
+        all_cpu_details: Dict = self._hw_measurement_interface.get_cpu_details(delay)
 
         energy = 0
         for metric, value in all_cpu_details.items():
@@ -194,7 +201,7 @@ class CPU(BaseHardware):
         return cpu_power
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
-        if self._mode == "intel_rapl":
+        if self._mode in ["intel_rapl", "linux_perf"]:
             energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
             power = self.total_power()
             return power, energy
@@ -202,8 +209,13 @@ class CPU(BaseHardware):
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
-        if self._mode in ["intel_power_gadget", "intel_rapl"]:
-            self._intel_interface.start()
+        if self._mode in ["intel_power_gadget", "intel_rapl", "linux_perf"]:
+            self._hw_measurement_interface.start()
+        pass
+
+    def stop(self):
+        if self._mode in ["intel_power_gadget", "intel_rapl", "linux_perf"]:
+            self._hw_measurement_interface.stop()
         pass
 
     def get_model(self):
