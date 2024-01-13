@@ -96,6 +96,13 @@ def config(
             ["/.codecarbonconfig", "Create New Config"],
             default="/.codecarbonconfig",
         )
+        api = ApiClient(endpoint_url=api_endpoint)
+        organizations = api.get_list_organizations()
+        org = questionary_prompt(
+            "Pick existing organization from list or Create new organization ?",
+            [org["name"] for org in organizations] + ["Create New Organization"],
+            default="Create New Organization",
+        )
 
         if use_config == "/.codecarbonconfig":
             typer.echo("Using existing config file :")
@@ -185,15 +192,69 @@ def config(
                 team = [t for t in teams if t["name"] == team][0]
             overwrite_local_config("team_id", team["id"])
 
-            projects = api.list_projects_from_team(team["id"])
-            project = questionary_prompt(
-                "Pick existing project from list or Create new project ?",
-                [project["name"] for project in projects] + ["Create New Project"],
-                default="Create New Project",
+        team = questionary_prompt(
+            "Pick existing team from list or create new team in organization ?",
+            [team["name"] for team in teams] + ["Create New Team"],
+            default="Create New Team",
+        )
+        if team == "Create New Team":
+            team_name = typer.prompt("Team name", default="Code Carbon user test")
+            team_description = typer.prompt(
+                "Team description", default="Code Carbon user test"
             )
-            if project == "Create New Project":
-                project_name = typer.prompt(
-                    "Project name", default="Code Carbon user test"
+            team_create = TeamCreate(
+                name=team_name,
+                description=team_description,
+                organization_id=organization["id"],
+            )
+            team = api.create_team(
+                team=team_create,
+            )
+            typer.echo(f"Created team : {team}")
+        else:
+            team = [t for t in teams if t["name"] == team][0]
+        projects = api.list_projects_from_team(team["id"])
+        project = questionary_prompt(
+            "Pick existing project from list or Create new project ?",
+            [project["name"] for project in projects] + ["Create New Project"],
+            default="Create New Project",
+        )
+        if project == "Create New Project":
+            project_name = typer.prompt("Project name", default="Code Carbon user test")
+            project_description = typer.prompt(
+                "Project description", default="Code Carbon user test"
+            )
+            project_create = ProjectCreate(
+                name=project_name,
+                description=project_description,
+                team_id=team["id"],
+            )
+            project = api.create_project(project=project_create)
+            typer.echo(f"Created project : {project}")
+        else:
+            project = [p for p in projects if p["name"] == project][0]
+
+        experiments = api.list_experiments_from_project(project["id"])
+        experiment = questionary_prompt(
+            "Pick existing experiment from list or Create new experiment ?",
+            [experiment["name"] for experiment in experiments]
+            + ["Create New Experiment"],
+            default="Create New Experiment",
+        )
+        if experiment == "Create New Experiment":
+            typer.echo("Creating new experiment")
+            exp_name = typer.prompt(
+                "Experiment name :", default="Code Carbon user test"
+            )
+            exp_description = typer.prompt(
+                "Experiment description :",
+                default="Code Carbon user test ",
+            )
+
+            exp_on_cloud = Confirm.ask("Is this experiment running on the cloud ?")
+            if exp_on_cloud is True:
+                cloud_provider = typer.prompt(
+                    "Cloud provider (AWS, GCP, Azure, ...)", default="AWS"
                 )
                 project_description = typer.prompt(
                     "Project description", default="Code Carbon user test"
@@ -254,13 +315,30 @@ def config(
                 )
                 experiment_id = api.create_experiment(experiment=experiment_create)
 
-            else:
-                experiment_id = [e for e in experiments if e["name"] == experiment][0][
-                    "id"
-                ]
+        write_to_config = Confirm.ask(
+            "Write experiment_id to /.codecarbonconfig ? (Press enter to continue)"
+        )
 
-            overwrite_local_config("experiment_id", experiment_id)
-            show_config()
+        if write_to_config is True:
+            write_local_exp_id(experiment_id)
+            new_local = True
+    typer.echo(
+        "\nCodeCarbon Initialization achieved, here is your experiment id:\n"
+        + click.style(f"{experiment_id}", fg="bright_green")
+        + (
+            ""
+            if new_local
+            else " (from "
+            + click.style("./.codecarbon.config", fg="bright_blue")
+            + ")\n"
+        )
+    )
+    if new_local:
+        click.echo(
+            "\nCodeCarbon added this id to your local config: "
+            + click.style("./.codecarbon.config", fg="bright_blue")
+            + "\n"
+        )
 
 
 @codecarbon.command("monitor", short_help="Monitor your machine's carbon emissions.")
