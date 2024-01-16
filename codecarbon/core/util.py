@@ -117,3 +117,23 @@ def count_cpus() -> int:
     num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
     logger.debug(f"Detected {num_cpus} cpus available on SLURM.")
     return int(num_cpus)
+
+
+def is_amd_system():
+    """Returns True if the system has an amd-smi interface."""
+    try:
+        # Check if amd-smi is available
+        subprocess.check_output(["amd-smi", "--help"])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def is_nvidia_system():
+    """Returns True if the system has an nvidia-smi interface."""
+    try:
+        # Check if nvidia-smi is available
+        subprocess.check_output(["nvidia-smi", "--help"])
+        return True
+    except Exception:
+        return False

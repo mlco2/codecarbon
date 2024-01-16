@@ -1,9 +1,22 @@
+from collections import namedtuple
 from dataclasses import dataclass, field
 
-import pynvml
-
 from codecarbon.core.units import Energy, Power, Time
+from codecarbon.core.util import is_amd_system, is_nvidia_system
 from codecarbon.external.logger import logger
+
+USE_AMDSMI = False
+USE_PYNVML = False
+
+if is_nvidia_system():
+    import pynvml
+
+    USE_PYNVML = True
+
+if is_amd_system():
+    import amdsmi
+
+    USE_AMDSMI = True
 
 
 @dataclass
@@ -92,46 +105,105 @@ class GPUDevice:
         """Returns total energy consumption for this GPU in millijoules (mJ) since the driver was last reloaded
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
         """
-        return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+        if USE_PYNVML:
+            return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+        elif USE_AMDSMI:
+            # returns energy in microjoules (amd-smi metric --energy)
+            return amdsmi.amdsmi_get_power_measure(self.handle)["energy_accumulator"]
+        else:
+            raise Exception("No GPU interface available")
 
     def _get_gpu_name(self):
         """Returns the name of the GPU device
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1ga5361803e044c6fdf3b08523fb6d1481
         """
-        name = pynvml.nvmlDeviceGetName(self.handle)
+        if USE_PYNVML:
+            name = pynvml.nvmlDeviceGetName(self.handle)
+        elif USE_AMDSMI:
+            name = amdsmi.amdsmi_get_board_info(self.handle)["manufacturer_name"]
+        else:
+            raise Exception("No GPU interface available")
+
         return self._to_utf8(name)
 
     def _get_uuid(self):
         """Returns the globally unique GPU device UUID
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g72710fb20f30f0c2725ce31579832654
         """
-        uuid = pynvml.nvmlDeviceGetUUID(self.handle)
+        if USE_PYNVML:
+            uuid = pynvml.nvmlDeviceGetUUID(self.handle)
+        elif USE_AMDSMI:
+            uuid = amdsmi.amdsmi_get_device_uuid(self.handle)
+        else:
+            raise Exception("No GPU interface available")
+
         return self._to_utf8(uuid)
 
     def _get_memory_info(self):
         """Returns memory info in bytes
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g2dfeb1db82aa1de91aa6edf941c85ca8
         """
-        return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
+        if USE_PYNVML:
+            return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
+        elif USE_AMDSMI:
+            # returns memory in megabytes (amd-smi metric --mem-usage)
+            memory_info = amdsmi.amdsmi_get_vram_usage(self.handle)
+            AMDMemory = namedtuple("AMDMemory", ["total", "used", "free"])
+            return AMDMemory(
+                total=memory_info["vram_total"] * 1024 * 1024,
+                used=memory_info["vram_used"] * 1024 * 1024,
+                free=(memory_info["vram_total"] - memory_info["vram_used"])
+                * 1024
+                * 1024,
+            )
+        else:
+            raise Exception("No GPU interface available")
 
     def _get_temperature(self):
         """Returns degrees in the Celsius scale
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g92d1c5182a14dd4be7090e3c1480b121
         """
-        return pynvml.nvmlDeviceGetTemperature(self.handle, pynvml.NVML_TEMPERATURE_GPU)
+        if USE_PYNVML:
+            return pynvml.nvmlDeviceGetTemperature(
+                self.handle,
+                sensor=pynvml.NVML_TEMPERATURE_GPU,
+            )
+        elif USE_AMDSMI:
+            return amdsmi.amdsmi_dev_get_temp_metric(
+                self.handle,
+                sensor_type=amdsmi.AmdSmiTemperatureType.EDGE,
+                metric=amdsmi.AmdSmiTemperatureMetric.CURRENT,
+            )
+        else:
+            raise Exception("No GPU interface available")
 
     def _get_power_usage(self):
         """Returns power usage in milliwatts
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g7ef7dff0ff14238d08a19ad7fb23fc87
         """
-        return pynvml.nvmlDeviceGetPowerUsage(self.handle)
+        if USE_PYNVML:
+            return pynvml.nvmlDeviceGetPowerUsage(self.handle)
+        elif USE_AMDSMI:
+            # returns power in Watts (amd-smi metric --power)
+            return (
+                amdsmi.amdsmi_get_power_measure(self.handle)["average_socket_power"]
+                * 1000
+            )
+        else:
+            raise Exception("No GPU interface available")
 
     def _get_power_limit(self):
         """Returns max power usage in milliwatts
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g263b5bf552d5ec7fcd29a088264d10ad
         """
         try:
-            return pynvml.nvmlDeviceGetEnforcedPowerLimit(self.handle)
+            if USE_PYNVML:
+                return pynvml.nvmlDeviceGetEnforcedPowerLimit(self.handle)
+            elif USE_AMDSMI:
+                # returns power limit in Watts (amd-smi static --limit)
+                return (
+                    amdsmi.amdsmi_get_power_measure(self.handle)["power_limit"] * 1000
+                )
         except Exception:
             return None
 
@@ -139,51 +211,100 @@ class GPUDevice:
         """Returns the % of utilization of the kernels during the last sample
         https://docs.nvidia.com/deploy/nvml-api/structnvmlUtilization__t.html#structnvmlUtilization__t
         """
-        return pynvml.nvmlDeviceGetUtilizationRates(self.handle).gpu
+        if USE_PYNVML:
+            return pynvml.nvmlDeviceGetUtilizationRates(self.handle).gpu
+        elif USE_AMDSMI:
+            return amdsmi.amdsmi_get_gpu_activity(self.handle)["gfx_activity"]
+        else:
+            raise Exception("No GPU interface available")
 
     def _get_compute_mode(self):
         """Returns the compute mode of the GPU
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceEnumvs.html#group__nvmlDeviceEnumvs_1gbed1b88f2e3ba39070d31d1db4340233
         """
-        return pynvml.nvmlDeviceGetComputeMode(self.handle)
+        if USE_PYNVML:
+            return pynvml.nvmlDeviceGetComputeMode(self.handle)
+        elif USE_AMDSMI:
+            return None
+        else:
+            raise Exception("No GPU interface available")
 
     def _get_compute_processes(self):
-        """Returns the list of processes ids having a compute context on the
-        device with the memory used
+        """Returns the list of processes ids having a compute context on the device with the memory used
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g46ceaea624d5c96e098e03c453419d68
         """
         try:
-            processes = pynvml.nvmlDeviceGetComputeRunningProcesses(self.handle)
-
-            return [{"pid": p.pid, "used_memory": p.usedGpuMemory} for p in processes]
-        except pynvml.NVMLError:
+            if USE_PYNVML:
+                processes = pynvml.nvmlDeviceGetComputeRunningProcesses(self.handle)
+                return [
+                    {"pid": p.pid, "used_memory": p.usedGpuMemory} for p in processes
+                ]
+            elif USE_AMDSMI:
+                processes_handles = amdsmi.amdsmi_get_process_list(self.handle)
+                processes_info = [
+                    amdsmi.amdsmi_get_process_info(self.handle, p)
+                    for p in processes_handles
+                ]
+                return [
+                    {"pid": p["pid"], "used_memory": p["memory_usage"]["vram_usage"]}
+                    for p in processes_info
+                ]
+        except Exception:
             return []
 
     def _get_graphics_processes(self):
-        """Returns the list of processes ids having a graphics context on the
-        device with the memory used
+        """Returns the list of processes ids having a graphics context on the device with the memory used
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g7eacf7fa7ba4f4485d166736bf31195e
         """
         try:
-            processes = pynvml.nvmlDeviceGetGraphicsRunningProcesses(self.handle)
-
-            return [{"pid": p.pid, "used_memory": p.usedGpuMemory} for p in processes]
-        except pynvml.NVMLError:
+            if USE_PYNVML:
+                processes = pynvml.nvmlDeviceGetGraphicsRunningProcesses(self.handle)
+                return [
+                    {"pid": p.pid, "used_memory": p.usedGpuMemory} for p in processes
+                ]
+            elif USE_AMDSMI:
+                processes_handles = amdsmi.amdsmi_get_process_list(self.handle)
+                processes_info = [
+                    amdsmi.amdsmi_get_process_info(self.handle, p)
+                    for p in processes_handles
+                ]
+                return [
+                    {"pid": p["pid"], "used_memory": p["memory_usage"]["vram_usage"]}
+                    for p in processes_info
+                    if p["engine_usage"]["gfx"] > 0
+                ]
+        except Exception:
             return []
 
 
 class AllGPUDevices:
     def __init__(self):
         if is_gpu_details_available():
-            logger.debug("GPU available. Starting setup")
-            self.device_count = pynvml.nvmlDeviceGetCount()
+            if USE_PYNVML:
+                logger.debug("Nvidia GPU available. Starting setup")
+                pynvml.nvmlInit()
+                self.device_count = pynvml.nvmlDeviceGetCount()
+            elif USE_AMDSMI:
+                logger.debug("AMD GPU available. Starting setup")
+                amdsmi.amdsmi_init()
+                self.device_count = len(amdsmi.amdsmi_get_device_handles())
+            else:
+                logger.error("No GPU interface available")
+                self.device_count = 0
         else:
             logger.error("There is no GPU available")
             self.device_count = 0
         self.devices = []
         for i in range(self.device_count):
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-            gpu_device = GPUDevice(handle=handle, gpu_index=i)
+            if USE_PYNVML:
+                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                gpu_device = GPUDevice(handle=handle, gpu_index=i)
+            elif USE_AMDSMI:
+                handle = amdsmi.amdsmi_get_device_handles()[i]
+                gpu_device = GPUDevice(handle=handle, gpu_index=i)
+            else:
+                raise Exception("No GPU interface available")
+
             self.devices.append(gpu_device)
 
     def get_gpu_static_info(self):
@@ -206,7 +327,7 @@ class AllGPUDevices:
                 devices_static_info.append(gpu_device.get_static_details())
             return devices_static_info
 
-        except pynvml.NVMLError:
+        except Exception:
             logger.warning("Failed to retrieve gpu static info", exc_info=True)
             return []
 
@@ -238,7 +359,7 @@ class AllGPUDevices:
                 devices_info.append(gpu_device.get_gpu_details())
             return devices_info
 
-        except pynvml.NVMLError:
+        except Exception:
             logger.warning("Failed to retrieve gpu information", exc_info=True)
             return []
 
@@ -261,7 +382,7 @@ class AllGPUDevices:
                 devices_info.append(gpu_device.delta(last_duration))
             return devices_info
 
-        except pynvml.NVMLError:
+        except Exception:
             logger.warning("Failed to retrieve gpu information", exc_info=True)
             return []
 
@@ -269,8 +390,14 @@ class AllGPUDevices:
 def is_gpu_details_available():
     """Returns True if the GPU details are available."""
     try:
-        pynvml.nvmlInit()
-        return True
+        if USE_PYNVML:
+            pynvml.nvmlInit()
+            return True
+        elif USE_AMDSMI:
+            amdsmi.amdsmi_init()
+            return True
+        else:
+            return False
 
-    except pynvml.NVMLError:
+    except Exception:
         return False

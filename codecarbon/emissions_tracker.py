@@ -18,7 +18,7 @@ from codecarbon.core import cpu, gpu
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import count_cpus, suppress
+from codecarbon.core.util import count_cpus, is_amd_system, is_nvidia_system, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
@@ -280,7 +280,10 @@ class BaseEmissionsTracker(ABC):
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
         if gpu.is_gpu_details_available():
-            logger.info("Tracking Nvidia GPU via pynvml")
+            if is_nvidia_system():
+                logger.info("Tracking Nvidia GPU via pynvml")
+            elif is_amd_system():
+                logger.info("Tracking AMD GPU via amdsmi")
             gpu_devices = GPU.from_utils(self._gpu_ids)
             self._hardware.append(gpu_devices)
             gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
