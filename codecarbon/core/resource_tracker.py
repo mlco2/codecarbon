@@ -228,7 +228,10 @@ class ResourceTracker:
                 self.tracker._conf["gpu_count"] = len(self.tracker._gpu_ids)
 
         if gpu.is_gpu_details_available():
-            logger.info("Tracking Nvidia GPU via pynvml")
+            if is_nvidia_system():
+                logger.info("Tracking Nvidia GPU via pynvml")
+            elif is_amd_system():
+                logger.info("Tracking AMD GPU via amdsmi")
             gpu_devices = GPU.from_utils(self.tracker._gpu_ids)
             self.tracker._hardware.append(gpu_devices)
             gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
