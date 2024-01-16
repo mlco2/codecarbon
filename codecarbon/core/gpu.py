@@ -108,12 +108,9 @@ class GPUDevice:
         if USE_PYNVML:
             return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
         elif USE_AMDSMI:
-            # returns energy in "Energy Status Units" which is equivalent to 15.3 microjoules (amd-smi metric --energy)
-            return (
-                amdsmi.amdsmi_get_power_measure(self.handle)["energy_accumulator"]
-                * 15.3
-                / 1000
-            )
+            # returns energy in "Energy Status Units" which is equivalent to around 15.3 microjoules
+            energy = amdsmi.amdsmi_dev_get_energy_count(self.handle)
+            return energy["power"] * energy["counter_resolution"] / 1000
         else:
             raise Exception("No GPU interface available")
 
