@@ -32,8 +32,8 @@ requirements:
     - psutil
     - pynvml
     - py-cpuinfo
-    - fuzzywuzzy
     - prometheus_client
+    - rapidfuzz
 
 test:
   imports:
