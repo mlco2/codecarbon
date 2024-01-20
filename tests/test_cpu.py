@@ -5,7 +5,12 @@ from unittest import mock
 
 import pytest
 
-from codecarbon.core.cpu import TDP, IntelPowerGadget, IntelRAPL
+from codecarbon.core.cpu import (
+    TDP,
+    IntelPowerGadget,
+    IntelRAPL,
+    is_powergadget_available,
+)
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
@@ -14,9 +19,10 @@ from codecarbon.input import DataSource
 class TestIntelPowerGadget(unittest.TestCase):
     @pytest.mark.integ_test
     def test_intel_power_gadget(self):
-        power_gadget = IntelPowerGadget()
-        cpu_details = power_gadget.get_cpu_details()
-        assert len(cpu_details) > 0
+        if is_powergadget_available():
+            power_gadget = IntelPowerGadget()
+            cpu_details = power_gadget.get_cpu_details()
+            assert len(cpu_details) > 0
 
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
@@ -45,16 +51,16 @@ class TestIntelPowerGadget(unittest.TestCase):
             "GT Frequency(MHz)": 125.0,
             "GT Requsted Frequency(MHz)": 125.0,
         }
-
-        power_gadget = IntelPowerGadget(
-            output_dir=os.path.join(os.path.dirname(__file__), "test_data"),
-            log_file_name="mock_intel_power_gadget_data.csv",
-        )
-        cpu_details = power_gadget.get_cpu_details()
-        cpu_details["Cumulative IA Energy_0(mWh)"] = round(
-            cpu_details["Cumulative IA Energy_0(mWh)"], 3
-        )
-        self.assertDictEqual(expected_cpu_details, cpu_details)
+        if is_powergadget_available():
+            power_gadget = IntelPowerGadget(
+                output_dir=os.path.join(os.path.dirname(__file__), "test_data"),
+                log_file_name="mock_intel_power_gadget_data.csv",
+            )
+            cpu_details = power_gadget.get_cpu_details()
+            cpu_details["Cumulative IA Energy_0(mWh)"] = round(
+                cpu_details["Cumulative IA Energy_0(mWh)"], 3
+            )
+            self.assertDictEqual(expected_cpu_details, cpu_details)
 
 
 class TestIntelRAPL(unittest.TestCase):

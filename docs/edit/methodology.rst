@@ -89,9 +89,32 @@ This mesure is not satisfying and if ever you have an idea how to enhance it ple
 CPU
 ~~~~
 
-- **On Windows or Mac**
+- **On Windows or Mac (Intel)**
 
 Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ .
+
+Apple Silicon Chips (M1, M2)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Apple Silicon Chips contain both the CPU and the GPU.
+
+Codecarbon tracks Apple Silicon Chip energy consumption using ``powermetrics``. It should be available natively on any mac.
+However this tool is only usable with ``sudo`` rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
+(if you know of any solution for this do not hesitate and `open an issue with your proposed solution <https://github.com/mlco2/codecarbon/issues/>`_).
+
+To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command: 
+
+.. code-block:: bash
+
+    sudo visudo
+
+
+Then add the following line at the end of the file:
+
+.. code-block:: bash
+
+    username ALL = (root) NOPASSWD: /usr/bin/powermetrics
+
+If you do not want to give sudo rights to your user, then CodeCarbon will fallback in constant mode to measure CPU energy consumption.
 
 - **On Linux**
 
