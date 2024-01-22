@@ -97,7 +97,7 @@ Apple Silicon Chips (M1, M2)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Apple Silicon Chips contain both the CPU and the GPU.
 
-Codecarbon tracks Apple Silicon Chip energy consumption using ``powermetrics``. It should be available natively on you mac.
+Codecarbon tracks Apple Silicon Chip energy consumption using ``powermetrics``. It should be available natively on any mac.
 However this tool is only usable with ``sudo`` rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
 (if you know of any solution for this do not hesitate and `open an issue with your proposed solution <https://github.com/mlco2/codecarbon/issues/>`_).
 
