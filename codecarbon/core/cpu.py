@@ -47,8 +47,6 @@ class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
-    # TODO: There is now a 3.6 version.
-    _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
 
     def __init__(
         self,
@@ -68,6 +66,7 @@ class IntelPowerGadget:
         Setup cli command to run Intel Power Gadget
         """
         if self._system.startswith("win"):
+            self._get_windows_exec_backup()
             if shutil.which(self._windows_exec):
                 self._cli = shutil.which(
                     self._windows_exec
@@ -89,6 +88,27 @@ class IntelPowerGadget:
                 )
         else:
             raise SystemError("Platform not supported by Intel Power Gadget")
+
+    def _get_windows_exec_backup(self) -> None:
+        """
+        Find the windows executable for the current version of intel power gadget.
+        Example: "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
+        """
+        parent_folder = "C:\\Program Files\\Intel\\"
+
+        # Get a list of all subdirectories in the parent folder
+        subfolders = [f.name for f in os.scandir(parent_folder) if f.is_dir()]
+
+        # Look for a folder that contains "Power Gadget" in its name
+        desired_folder = next(
+            (folder for folder in subfolders if "Power Gadget" in folder), None
+        )
+        if desired_folder:
+            self._windows_exec_backup = os.path.join(
+                parent_folder, desired_folder, self._windows_exec
+            )
+        else:
+            self._windows_exec_backup = None
 
     def _log_values(self):
         """
