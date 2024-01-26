@@ -279,34 +279,35 @@ class GPUDevice:
 
 
 class AllGPUDevices:
+    devices = []
+    device_count:int = 0
+    
     def __init__(self):
+        self.devices = []
         if is_gpu_details_available():
             if USE_PYNVML:
                 logger.debug("Nvidia GPU available. Starting setup")
                 pynvml.nvmlInit()
                 self.device_count = pynvml.nvmlDeviceGetCount()
-            elif USE_AMDSMI:
+                for i in range(self.device_count):
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                    gpu_device = GPUDevice(handle=handle, gpu_index=i)
+                    self.devices.append(gpu_device)
+            if USE_AMDSMI:
                 logger.debug("AMD GPU available. Starting setup")
                 amdsmi.amdsmi_init()
                 self.device_count = len(amdsmi.amdsmi_get_device_handles())
+                for i in range(self.device_count):
+                    handle = amdsmi.amdsmi_get_device_handles()[i]
+                    gpu_device = GPUDevice(handle=handle, gpu_index=i)
+                    self.devices.append(gpu_device)
             else:
                 logger.error("No GPU interface available")
-                self.device_count = 0
         else:
             logger.error("There is no GPU available")
-            self.device_count = 0
-        self.devices = []
-        for i in range(self.device_count):
-            if USE_PYNVML:
-                handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-                gpu_device = GPUDevice(handle=handle, gpu_index=i)
-            elif USE_AMDSMI:
-                handle = amdsmi.amdsmi_get_device_handles()[i]
-                gpu_device = GPUDevice(handle=handle, gpu_index=i)
-            else:
-                raise Exception("No GPU interface available")
+        self.device_count = len(self.devices)
 
-            self.devices.append(gpu_device)
+        
 
     def get_gpu_static_info(self):
         """Get all GPUs static information.
