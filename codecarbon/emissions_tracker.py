@@ -21,7 +21,7 @@ from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
-from codecarbon.core.util import count_cpus, count_physical_cpus, is_amd_system, is_nvidia_system, suppress
+from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
