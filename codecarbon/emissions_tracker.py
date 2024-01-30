@@ -303,8 +303,9 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
-
-        if powermetrics.is_powermetrics_available() and self._default_cpu_power is None:
+        elif (
+            powermetrics.is_powermetrics_available() and self._default_cpu_power is None
+        ):
             logger.info("Tracking Apple CPU and GPU via PowerMetrics")
             hardware_cpu = AppleSiliconChip.from_utils(
                 self._output_dir, chip_part="CPU"
@@ -319,7 +320,6 @@ class BaseEmissionsTracker(ABC):
 
             self._conf["gpu_model"] = hardware_gpu.get_model()
             self._conf["gpu_count"] = 1
-
         else:
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
@@ -737,7 +737,7 @@ class BaseEmissionsTracker(ABC):
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
                     f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
-                    + f"{emissions.emissions_rate*3600*24*365:,} kg.CO2eq/year"
+                    + f"{emissions.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
                 )
                 if self._cc_api__out:
                     self._cc_api__out.out(emissions)
