@@ -61,14 +61,14 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     idx = 0
     parent = file_path.parent
     file_name = f"{file_path.name}{ext}"
-    backup = parent / file_name
+    backup_path = parent / file_name
 
-    while backup.exists():
+    while backup_path.exists():
         file_name = f"{file_path.name}_{idx}{ext}"
-        backup = parent / file_name
+        backup_path = parent / file_name
         idx += 1
 
-    file_path.rename(backup)
+    file_path.rename(backup_path)
 
 
 def detect_cpu_model() -> str:
