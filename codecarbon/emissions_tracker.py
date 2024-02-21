@@ -14,13 +14,13 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from codecarbon._version import __version__
-from codecarbon.core import cpu, gpu
+from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM
+from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
@@ -275,7 +275,7 @@ class BaseEmissionsTracker(ABC):
         logger.info("[setup] RAM Tracking...")
         ram = RAM(tracking_mode=self._tracking_mode)
         self._conf["ram_total_size"] = ram.machine_memory_GB
-        self._hardware: List[Union[RAM, CPU, GPU]] = [ram]
+        self._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
@@ -293,7 +293,7 @@ class BaseEmissionsTracker(ABC):
             logger.info("No GPU found.")
 
         logger.info("[setup] CPU Tracking...")
-        if cpu.is_powergadget_available():
+        if cpu.is_powergadget_available() and self._default_cpu_power is None:
             logger.info("Tracking Intel CPU via Power Gadget")
             hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
             self._hardware.append(hardware)
@@ -303,6 +303,23 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
+        elif (
+            powermetrics.is_powermetrics_available() and self._default_cpu_power is None
+        ):
+            logger.info("Tracking Apple CPU and GPU via PowerMetrics")
+            hardware_cpu = AppleSiliconChip.from_utils(
+                self._output_dir, chip_part="CPU"
+            )
+            self._hardware.append(hardware_cpu)
+            self._conf["cpu_model"] = hardware_cpu.get_model()
+
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self._output_dir, chip_part="GPU"
+            )
+            self._hardware.append(hardware_gpu)
+
+            self._conf["gpu_model"] = hardware_gpu.get_model()
+            self._conf["gpu_count"] = 1
         else:
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
@@ -640,9 +657,10 @@ class BaseEmissionsTracker(ABC):
             h_time = time.time()
             # Compute last_duration again for more accuracy
             last_duration = time.time() - self._last_measured_time
-            power, energy = hardware.measure_power_and_energy(
-                last_duration=last_duration
-            )
+            (
+                power,
+                energy,
+            ) = hardware.measure_power_and_energy(last_duration=last_duration)
             # Apply the PUE of the datacenter to the consumed energy
             energy *= self._pue
             self._total_energy += energy
@@ -667,6 +685,21 @@ class BaseEmissionsTracker(ABC):
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
                     + f". RAM Power : {self._ram_power.W} W"
                 )
+            elif isinstance(hardware, AppleSiliconChip):
+                if hardware.chip_part == "CPU":
+                    self._total_cpu_energy += energy
+                    self._cpu_power = power
+                    logger.info(
+                        f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
+                        + f". Total CPU Power : {self._cpu_power.W} W"
+                    )
+                elif hardware.chip_part == "GPU":
+                    self._total_gpu_energy += energy
+                    self._gpu_power = power
+                    logger.info(
+                        f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
+                        + f". Total GPU Power : {self._gpu_power.W} W"
+                    )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.time() - h_time
@@ -704,7 +737,7 @@ class BaseEmissionsTracker(ABC):
                 emissions = self._prepare_emissions_data(delta=True)
                 logger.info(
                     f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
-                    + f"{emissions.emissions_rate*3600*24*365:,} kg.CO2eq/year"
+                    + f"{emissions.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
                 )
                 if self._cc_api__out:
                     self._cc_api__out.out(emissions)

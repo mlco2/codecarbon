@@ -1,4 +1,4 @@
-{% set version = "2.3.1" %}
+{% set version = "2.3.4" %}
 
 package:
   name: codecarbon
@@ -32,8 +32,8 @@ requirements:
     - psutil
     - pynvml
     - py-cpuinfo
-    - fuzzywuzzy
     - prometheus_client
+    - rapidfuzz
 
 test:
   imports:

@@ -7,13 +7,10 @@ import os
 import shutil
 import subprocess
 import sys
-import warnings
 from typing import Dict, Tuple
 
 import pandas as pd
-
-with warnings.catch_warnings(record=True) as w:
-    from fuzzywuzzy import fuzz
+from rapidfuzz import fuzz, process, utils
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
@@ -50,8 +47,6 @@ class IntelPowerGadget:
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
-    # TODO: There is now a 3.6 version.
-    _windows_exec_backup = "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
 
     def __init__(
         self,
@@ -71,6 +66,7 @@ class IntelPowerGadget:
         Setup cli command to run Intel Power Gadget
         """
         if self._system.startswith("win"):
+            self._get_windows_exec_backup()
             if shutil.which(self._windows_exec):
                 self._cli = shutil.which(
                     self._windows_exec
@@ -92,6 +88,27 @@ class IntelPowerGadget:
                 )
         else:
             raise SystemError("Platform not supported by Intel Power Gadget")
+
+    def _get_windows_exec_backup(self) -> None:
+        """
+        Find the windows executable for the current version of intel power gadget.
+        Example: "C:\\Program Files\\Intel\\Power Gadget 3.5\\PowerLog3.0.exe"
+        """
+        parent_folder = "C:\\Program Files\\Intel\\"
+
+        # Get a list of all subdirectories in the parent folder
+        subfolders = [f.name for f in os.scandir(parent_folder) if f.is_dir()]
+
+        # Look for a folder that contains "Power Gadget" in its name
+        desired_folder = next(
+            (folder for folder in subfolders if "Power Gadget" in folder), None
+        )
+        if desired_folder:
+            self._windows_exec_backup = os.path.join(
+                parent_folder, desired_folder, self._windows_exec
+            )
+        else:
+            self._windows_exec_backup = None
 
     def _log_values(self):
         """
@@ -278,27 +295,6 @@ class TDP:
             return power
         return None
 
-    @staticmethod
-    def _get_cpus(cpu_df, cpu_idxs) -> list:
-        return [cpu_df["Name"][idx] for idx in cpu_idxs]
-
-    @staticmethod
-    def _get_direct_matches(moodel: str, cpu_df: pd.DataFrame) -> list:
-        model_l = moodel.lower()
-        return [fuzz.ratio(model_l, cpu.lower()) for cpu in cpu_df["Name"]]
-
-    @staticmethod
-    def _get_token_set_matches(model: str, cpu_df: pd.DataFrame) -> list:
-        return [fuzz.token_set_ratio(model, cpu) for cpu in cpu_df["Name"]]
-
-    @staticmethod
-    def _get_single_direct_match(
-        ratios: list, max_ratio: int, cpu_df: pd.DataFrame
-    ) -> str:
-        idx = ratios.index(max_ratio)
-        cpu_matched = cpu_df["Name"].iloc[idx]
-        return cpu_matched
-
     def _get_matching_cpu(
         self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
     ) -> str:
@@ -332,32 +328,34 @@ class TDP:
         THRESHOLD_DIRECT = 100
         THRESHOLD_TOKEN_SET = 100
 
-        ratios_direct = self._get_direct_matches(model_raw, cpu_df)
-        ratios_token_set = self._get_token_set_matches(model_raw, cpu_df)
-        max_ratio_direct = max(ratios_direct)
-        max_ratio_token_set = max(ratios_token_set)
+        direct_match = process.extractOne(
+            model_raw,
+            cpu_df["Name"],
+            processor=lambda s: s.lower(),
+            scorer=fuzz.ratio,
+            score_cutoff=THRESHOLD_DIRECT,
+        )
 
-        # Check if a direct match exists
-        if max_ratio_direct >= THRESHOLD_DIRECT:
-            cpu_matched = self._get_single_direct_match(
-                ratios_direct, max_ratio_direct, cpu_df
-            )
-            return cpu_matched
+        if direct_match:
+            return direct_match[0]
 
-        # Check if an indirect match exists
-        if max_ratio_token_set < THRESHOLD_TOKEN_SET:
-            return None
-        cpu_idxs = self._get_max_idxs(ratios_token_set, max_ratio_token_set)
-        cpu_machings = self._get_cpus(cpu_df, cpu_idxs)
+        indirect_matches = process.extract(
+            model_raw,
+            cpu_df["Name"],
+            processor=utils.default_process,
+            scorer=fuzz.token_set_ratio,
+            score_cutoff=THRESHOLD_TOKEN_SET,
+        )
 
-        if (cpu_machings and len(cpu_machings) == 1) or greedy:
-            cpu_matched = cpu_machings[0]
-            return cpu_matched
+        if indirect_matches:
+            if (
+                greedy
+                or len(indirect_matches) == 1
+                or indirect_matches[0][1] != indirect_matches[1][1]
+            ):
+                return indirect_matches[0][0]
+
         return None
-
-    @staticmethod
-    def _get_max_idxs(ratios: list, max_ratio: int) -> list:
-        return [idx for idx, ratio in enumerate(ratios) if ratio == max_ratio]
 
     def _main(self) -> Tuple[str, int]:
         """

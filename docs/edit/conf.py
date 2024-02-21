@@ -23,7 +23,7 @@ copyright = "2020, BCG GAMMA, Comet.ml, Haverford College, MILA"
 author = "BCG GAMMA, Comet.ml, Haverford College, MILA, Data For Good"
 
 # The full version, including alpha/beta/rc tags
-release = "2.3.1"
+release = "2.3.4"
 
 
 # -- General configuration ---------------------------------------------------

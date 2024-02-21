@@ -6,6 +6,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 *intel_power_gadget_log.csv
+*powermetrics_log.txt
+!tests/test_data/mock*
 .codecarbon.config
 
 # C extensions

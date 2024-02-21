@@ -1,8 +1,6 @@
 """
 Encapsulates external dependencies to retrieve hardware metadata
 """
-
-import os
 import re
 import subprocess
 from abc import ABC, abstractmethod
@@ -13,8 +11,9 @@ import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
+from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import detect_cpu_model
+from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -46,7 +45,7 @@ class BaseHardware(ABC):
         )
         return power, energy
 
-    def start(self) -> None:
+    def start(self) -> None:  # noqa B027
         pass
 
 
@@ -168,7 +167,7 @@ class CPU(BaseHardware):
 
         power = 0
         for metric, value in all_cpu_details.items():
-            # "^Processor Power_\d+\(Watt\)$" for Inter Power Gadget
+            # "^Processor Power_\d+\(Watt\)$" for Intel Power Gadget
             if re.match(r"^Processor Power", metric):
                 power += value
                 logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
@@ -204,7 +203,7 @@ class CPU(BaseHardware):
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
-        if self._mode in ["intel_power_gadget", "intel_rapl"]:
+        if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
             self._intel_interface.start()
         pass
 
@@ -238,6 +237,7 @@ class RAM(BaseHardware):
     # 3 watts of power for every 8GB of DDR3 or DDR4 memory
     # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
     power_per_GB = 3 / 8  # W/GB
+    memory_size = None
 
     def __init__(
         self,
@@ -273,13 +273,29 @@ class RAM(BaseHardware):
 
     def _read_slurm_scontrol(self):
         try:
-            return subprocess.check_output(
-                ["scontrol show job $SLURM_JOBID"], shell=True
-            ).decode()
+            logger.debug(
+                "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`..."
+            )
+            return (
+                subprocess.check_output(
+                    [f"scontrol show job {SLURM_JOB_ID}"], shell=True
+                )
+                .decode()
+                .strip()
+            )
         except subprocess.CalledProcessError:
             return
 
     def _parse_scontrol_memory_GB(self, mem):
+        """
+        Parse the memory string (B) returned by scontrol to a float (GB)
+
+        Args:
+            mem (str): Memory string (B) as `[amount][unit]` (e.g. `128G`)
+
+        Returns:
+            float: Memory (GB)
+        """
         nb = int(mem[:-1])
         unit = mem[-1]
         if unit == "T":
@@ -292,16 +308,16 @@ class RAM(BaseHardware):
             return nb / (1000**2)
 
     def _parse_scontrol(self, scontrol_str):
-        mem_matches = re.findall(r"mem=\d+[A-Z]", scontrol_str)
+        mem_matches = re.findall(r"AllocTRES=.*?,mem=(\d+[A-Z])", scontrol_str)
         if len(mem_matches) == 0:
             logger.warning(
-                "Could not find mem= after running `scontrol show job $SLURM_JOBID` "
+                "Could not find mem= after running `scontrol show job $SLURM_JOB_ID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
             return psutil.virtual_memory().total / B_TO_GB
         if len(mem_matches) > 1:
             logger.warning(
-                "Unexpected output after running `scontrol show job $SLURM_JOBID` "
+                "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."
             )
             return psutil.virtual_memory().total / B_TO_GB
@@ -310,17 +326,27 @@ class RAM(BaseHardware):
 
     @property
     def slurm_memory_GB(self):
+        """
+        Property to compute the SLURM-available RAM in GigaBytes.
+
+        Returns:
+            float: Memory allocated to the job (GB)
+        """
+        # Prevent calling scontrol at each mesure
+        if self.memory_size:
+            return self.memory_size
         scontrol_str = self._read_slurm_scontrol()
         if scontrol_str is None:
             logger.warning(
-                "Error running `scontrol show job $SLURM_JOBID` "
+                "Error running `scontrol show job $SLURM_JOB_ID` "
                 + "to retrieve SLURM-available RAM."
                 + "Using the machine's total RAM."
             )
             return psutil.virtual_memory().total / B_TO_GB
         mem = self._parse_scontrol(scontrol_str)
         if isinstance(mem, str):
-            return self._parse_scontrol_memory_GB(mem)
+            mem = self._parse_scontrol_memory_GB(mem)
+        self.memory_size = mem
         return mem
 
     @property
@@ -338,9 +364,15 @@ class RAM(BaseHardware):
 
     @property
     def machine_memory_GB(self):
+        """
+        Property to compute the machine's total memory in bytes.
+
+        Returns:
+            float: Total RAM (GB)
+        """
         return (
             self.slurm_memory_GB
-            if os.environ.get("SLURM_JOB_ID")
+            if SLURM_JOB_ID
             else psutil.virtual_memory().total / B_TO_GB
         )
 
@@ -364,3 +396,75 @@ class RAM(BaseHardware):
             ram_power = Power.from_watts(0)
 
         return ram_power
+
+
+@dataclass
+class AppleSiliconChip(BaseHardware):
+    def __init__(
+        self,
+        output_dir: str,
+        model: str,
+        chip_part: str = "CPU",
+    ):
+        self._output_dir = output_dir
+        self._model = model
+        self._interface = ApplePowermetrics(self._output_dir)
+        self.chip_part = chip_part
+
+    def __repr__(self) -> str:
+        return f"AppleSiliconChip ({self._model} > {self.chip_part})"
+
+    def _get_power(self) -> Power:
+        """
+        Get Chip part power
+        Args:
+            chip_part (str): Chip part to get power from (CPU, GPU)
+        :return: power in kW
+        """
+
+        all_details: Dict = self._interface.get_details()
+
+        power = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Power", metric):
+                power += value
+                logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
+
+            else:
+                logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
+        return Power.from_watts(power)
+
+    def _get_energy(self, delay: Time) -> Energy:
+        """
+        Get Chip part energy deltas
+        Args:
+            chip_part (str): Chip part to get power from (Processor, GPU, etc.)
+        :return: energy in kWh
+        """
+        all_details: Dict = self._interface.get_details(delay)
+
+        energy = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Energy Delta_\d", metric):
+                energy += value
+        return Energy.from_energy(energy)
+
+    def total_power(self) -> Power:
+        return self._get_power()
+
+    def start(self):
+        self._interface.start()
+
+    def get_model(self):
+        return self._model
+
+    @classmethod
+    def from_utils(
+        cls, output_dir: str, model: Optional[str] = None, chip_part: str = "Processor"
+    ) -> "AppleSiliconChip":
+        if model is None:
+            model = detect_cpu_model()
+            if model is None:
+                logger.warning("Could not read AppleSiliconChip model.")
+
+        return cls(output_dir=output_dir, model=model, chip_part=chip_part)

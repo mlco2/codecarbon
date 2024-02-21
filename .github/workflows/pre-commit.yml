@@ -9,12 +9,17 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+      with:
+        python-version: 3.11
     - name: set PY
       run: echo "PY=$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')" >> $GITHUB_ENV
-    - uses: actions/cache@v1
+    - uses: actions/cache@v3
       with:
         path: ~/.cache/pre-commit
         key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
-    - uses: pre-commit/action@v3.0.0
+    - name: Run pre-commit
+      run: |
+        pip install pre-commit==3.5.0
+        pre-commit run --show-diff-on-failure --color=always --all-files
