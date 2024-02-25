@@ -475,11 +475,11 @@ class BaseEmissionsTracker(ABC):
         )
         self._active_task = task_name
 
-    def stop_task(self, task_name: str = None) -> EmissionsData:
+    def stop_task(self, task_name: str = None) -> float:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
         emissions.
-        :return: EmissionsData
+        :return: None
         """
         task_name = task_name if task_name else self._active_task
         self._measure_power_and_energy()
