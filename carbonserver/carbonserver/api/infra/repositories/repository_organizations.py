@@ -39,7 +39,14 @@ class SqlAlchemyRepository(Organizations):
                 description=organization.description,
                 api_key=generate_api_key(),
             )
-
+            existing_organization = ( 
+                                       session.query(SqlModelOrganization).filter(SqlModelOrganization.name == organization.name).first()
+                                    )
+            if existing_organization: 
+                raise HTTPException( 
+                                      status_code=404,detail=f"the organization name  {organization.name} is already existed"
+                                   )
+            
             session.add(db_organization)
             session.commit()
             session.refresh(db_organization)

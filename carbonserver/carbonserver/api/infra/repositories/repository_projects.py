@@ -24,6 +24,16 @@ class SqlAlchemyRepository(Projects):
                 description=project.description,
                 team_id=project.team_id,
             )
+            existing_project = ( 
+                                session.query(SqlModelProject)
+                                       .filter(SqlModelProject.name == project.name)
+                                       .filter(SqlModelProject.team_id == project.team_id)
+                                       .first()
+                            )
+            if existing_project: 
+                raise HTTPException( 
+                                      status_code=404,detail=f"the project name {project.name} of that team {project.team_id} is already existed"
+                                   )
 
             session.add(db_project)
             session.commit()
