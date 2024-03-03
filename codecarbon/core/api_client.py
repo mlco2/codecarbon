@@ -98,9 +98,7 @@ class ApiClient:  # (AsyncClient)
         """
         List all teams
         """
-        url = (
-            self.url + "/teams/organization/" + organization_id
-        )  # TODO : check if this is the right url
+        url = self.url + "/teams/organization/" + organization_id
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
             self._log_error(url, {}, r)
@@ -116,6 +114,17 @@ class ApiClient:  # (AsyncClient)
         r = requests.post(url=url, json=payload, timeout=2)
         if r.status_code != 201:
             self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def get_team(self, team_id):
+        """
+        Get a team
+        """
+        url = self.url + "/team/" + team_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
             return None
         return r.json()
 
@@ -139,6 +148,17 @@ class ApiClient:  # (AsyncClient)
         r = requests.post(url=url, json=payload, timeout=2)
         if r.status_code != 201:
             self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def get_project(self, project_id):
+        """
+        Get a project
+        """
+        url = self.url + "/project/" + project_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
             return None
         return r.json()
 
@@ -255,7 +275,7 @@ class ApiClient:  # (AsyncClient)
         """
         self.experiment_id = experiment_id
 
-    def add_experiment(self, experiment: ExperimentCreate):
+    def create_experiment(self, experiment: ExperimentCreate):
         """
         Create an experiment, used by the CLI, not the package.
         ::experiment:: The experiment to create.
@@ -268,6 +288,17 @@ class ApiClient:  # (AsyncClient)
             return None
         self.experiment_id = r.json()["id"]
         return self.experiment_id
+
+    def get_experiment(self, experiment_id):
+        """
+        Get an experiment by id
+        """
+        url = self.url + "/experiment/" + experiment_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
 
     def _log_error(self, url, payload, response):
         if len(payload) > 0:
