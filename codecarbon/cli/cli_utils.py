@@ -5,7 +5,6 @@ from typing import Optional
 
 def get_config(path: Optional[Path] = None):
     p = path or Path.cwd().resolve() / ".codecarbon.config"
-
     if p.exists():
         config = configparser.ConfigParser()
         config.read(str(p))
