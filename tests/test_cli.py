@@ -15,32 +15,32 @@ class TestApp(unittest.TestCase):
         self.runner = CliRunner()
         self.mock_api_client = MagicMock()
         self.mock_api_client.get_list_organizations.return_value = [
-            {"id": 1, "name": "test org Code Carbon"}
+            {"id": "1", "name": "test org Code Carbon"}
         ]
         self.mock_api_client.list_teams_from_organization.return_value = [
-            {"id": 1, "name": "test team Code Carbon"}
+            {"id": "1", "name": "test team Code Carbon"}
         ]
 
         self.mock_api_client.list_projects_from_team.return_value = [
-            {"id": 1, "name": "test project Code Carbon"}
+            {"id": "1", "name": "test project Code Carbon"}
         ]
         self.mock_api_client.list_experiments_from_project.return_value = [
-            {"id": 1, "name": "test experiment Code Carbon"}
+            {"id": "1", "name": "test experiment Code Carbon"}
         ]
         self.mock_api_client.create_organization.return_value = {
-            "id": 1,
+            "id": "1",
             "name": "test org Code Carbon",
         }
         self.mock_api_client.create_team.return_value = {
-            "id": 1,
+            "id": "1",
             "name": "test team Code Carbon",
         }
         self.mock_api_client.create_project.return_value = {
-            "id": 1,
+            "id": "1",
             "name": "test project Code Carbon",
         }
         self.mock_api_client.create_experiment.return_value = {
-            "id": 1,
+            "id": "1",
             "name": "test experiment Code Carbon",
         }
 
@@ -51,18 +51,19 @@ class TestApp(unittest.TestCase):
         self.assertIn(__version__, result.stdout)
 
     def test_init_aborted(self, MockApiClient):
-        result = self.runner.invoke(codecarbon, ["init"])
+        result = self.runner.invoke(codecarbon, ["config", "--init"])
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Welcome to CodeCarbon configuration wizard", result.stdout)
 
-    def test_init_use_local(self, MockApiClient):
-        result = self.runner.invoke(codecarbon, ["init"], input="y")
+    @patch("codecarbon.cli.main.questionary_prompt")
+    def test_init_use_local(self, mock_prompt, MockApiClient):
+        mock_prompt.return_value = "/.codecarbonconfig"
+        result = self.runner.invoke(codecarbon, ["config", "--init"], input="y")
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
-            "CodeCarbon Initialization achieved, here is your experiment id:",
+            "Succesfully initiated Code Carbon ! \n Here is your detailed config : \n ",
             result.stdout,
         )
-        self.assertIn("(from ./.codecarbon.config)", result.stdout)
 
     def custom_questionary_side_effect(*args, **kwargs):
         default_value = kwargs.get("default")
@@ -73,6 +74,7 @@ class TestApp(unittest.TestCase):
     def test_init_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
         MockApiClient.return_value = self.mock_api_client
         mock_prompt.side_effect = [
+            "Create New Config",
             "Create New Organization",
             "Create New Team",
             "Create New Project",
@@ -81,12 +83,12 @@ class TestApp(unittest.TestCase):
         mock_confirm.side_effect = [False, False, False]
         result = self.runner.invoke(
             codecarbon,
-            ["init"],
-            input="n",
+            ["config", "--init"],
+            input="y",
         )
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
-            "CodeCarbon Initialization achieved, here is your experiment id:",
+            "Succesfully initiated Code Carbon ! \n Here is your detailed config : \n ",
             result.stdout,
         )
 
