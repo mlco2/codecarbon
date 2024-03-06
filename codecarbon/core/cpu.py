@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 from rapidfuzz import fuzz, process, utils
@@ -19,7 +19,7 @@ from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 
 
-def is_powergadget_available():
+def is_powergadget_available() -> bool:
     try:
         IntelPowerGadget()
         return True
@@ -31,7 +31,7 @@ def is_powergadget_available():
         return False
 
 
-def is_rapl_available():
+def is_rapl_available() -> bool:
     try:
         IntelRAPL()
         return True
@@ -61,7 +61,7 @@ class IntelPowerGadget:
         self._resolution = resolution
         self._setup_cli()
 
-    def _setup_cli(self):
+    def _setup_cli(self) -> None:
         """
         Setup cli command to run Intel Power Gadget
         """
@@ -110,7 +110,7 @@ class IntelPowerGadget:
         else:
             self._windows_exec_backup = None
 
-    def _log_values(self):
+    def _log_values(self) -> None:
         """
         Logs output from Intel Power Gadget command line to a file
         """
@@ -143,7 +143,6 @@ class IntelPowerGadget:
                 "Returncode while logging power values using "
                 + f"Intel Power Gadget: {returncode}"
             )
-        return
 
     def get_cpu_details(self, **kwargs) -> Dict:
         """
@@ -187,7 +186,7 @@ class IntelRAPL:
     def _is_platform_supported(self) -> bool:
         return self._system.startswith("lin")
 
-    def _setup_rapl(self):
+    def _setup_rapl(self) -> None:
         if self._is_platform_supported():
             if os.path.exists(self._lin_rapl_dir):
                 self._fetch_rapl_files()
@@ -198,7 +197,6 @@ class IntelRAPL:
                 )
         else:
             raise SystemError("Platform not supported by Intel RAPL Interface")
-        return
 
     def _fetch_rapl_files(self):
         """
@@ -206,7 +204,8 @@ class IntelRAPL:
         """
 
         # consider files like `intel-rapl:$i`
-        files = list(filter(lambda x: ":" in x, os.listdir(self._lin_rapl_dir)))
+        files = list(filter(lambda x: ":" in x,
+                     os.listdir(self._lin_rapl_dir)))
 
         i = 0
         for file in files:
@@ -228,16 +227,17 @@ class IntelRAPL:
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
                     self._rapl_files.append(
-                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
+                        RAPLFile(name=name, path=rapl_file,
+                                 max_path=rapl_file_max)
                     )
-                    logger.debug(f"We will read Intel RAPL files at {rapl_file}")
+                    logger.debug(
+                        f"We will read Intel RAPL files at {rapl_file}")
                 except PermissionError as e:
                     raise PermissionError(
                         "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
                         + f" for workarounds : {e}"
                     )
-        return
 
     def get_cpu_details(self, duration: Time, **kwargs) -> Dict:
         """
@@ -287,7 +287,7 @@ class TDP:
         """Extract constant power from matched CPU"""
         return cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]
 
-    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> int:
+    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
         cpu_power_df = DataSource().get_cpu_power_data()
         cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
         if cpu_matching:
