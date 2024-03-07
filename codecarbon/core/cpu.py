@@ -204,8 +204,7 @@ class IntelRAPL:
         """
 
         # consider files like `intel-rapl:$i`
-        files = list(filter(lambda x: ":" in x,
-                     os.listdir(self._lin_rapl_dir)))
+        files = list(filter(lambda x: ":" in x, os.listdir(self._lin_rapl_dir)))
 
         i = 0
         for file in files:
@@ -227,11 +226,9 @@ class IntelRAPL:
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
                     self._rapl_files.append(
-                        RAPLFile(name=name, path=rapl_file,
-                                 max_path=rapl_file_max)
+                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
                     )
-                    logger.debug(
-                        f"We will read Intel RAPL files at {rapl_file}")
+                    logger.debug(f"We will read Intel RAPL files at {rapl_file}")
                 except PermissionError as e:
                     raise PermissionError(
                         "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
