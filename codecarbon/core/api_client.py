@@ -4,6 +4,7 @@ Based on https://kernelpanic.io/the-modern-way-to-call-apis-in-python
 
 TODO : use async call to API
 """
+
 # from httpx import AsyncClient
 import dataclasses
 import json
@@ -174,7 +175,6 @@ class ApiClient:  # (AsyncClient)
         """
         Tell the API that the experiment has ended.
         """
-        pass
 
 
 class simple_utc(tzinfo):

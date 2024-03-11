@@ -1,6 +1,7 @@
 """
 Encapsulates external dependencies to retrieve hardware metadata
 """
+
 import re
 import subprocess
 from abc import ABC, abstractmethod
@@ -171,7 +172,6 @@ class CPU(BaseHardware):
             if re.match(r"^Processor Power", metric):
                 power += value
                 logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
-
             else:
                 logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
         return Power.from_watts(power)
@@ -205,7 +205,6 @@ class CPU(BaseHardware):
     def start(self):
         if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
             self._intel_interface.start()
-        pass
 
     def get_model(self):
         return self._model
