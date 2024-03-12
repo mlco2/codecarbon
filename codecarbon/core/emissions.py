@@ -216,7 +216,7 @@ class Emissions:
             country_energy_mix
         )
         logger.debug(
-            f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh*1000:.0f}"
+            f"We apply an energy mix of {emissions_per_kWh.kgs_per_kWh * 1000:.0f}"
             + f" g.CO2eq/kWh for {geo.country_name}"
         )
 

@@ -7,8 +7,6 @@ class EmptyResultException(Exception):
     The request return an empty result.
     """
 
-    pass
-
 
 @dataclass
 class ErrorBase:

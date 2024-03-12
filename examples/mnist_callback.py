@@ -12,7 +12,6 @@ to save emissions after each epoch.
 class CodeCarbonCallBack(Callback):
     def __init__(self, codecarbon_tracker):
         self.codecarbon_tracker = codecarbon_tracker
-        pass
 
     def on_epoch_end(self, epoch, logs=None):
         self.codecarbon_tracker.flush()

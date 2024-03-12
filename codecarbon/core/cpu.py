@@ -3,6 +3,7 @@ Implements tracking Intel CPU Power Consumption on Mac and Windows
 using Intel Power Gadget
 https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
+
 import os
 import shutil
 import subprocess
@@ -249,9 +250,9 @@ class IntelRAPL:
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
                 # We fake the name used by Power Gadget when using RAPL
                 if "Energy" in rapl_file.name:
-                    cpu_details[
-                        rapl_file.name.replace("Energy", "Power")
-                    ] = rapl_file.power.W
+                    cpu_details[rapl_file.name.replace("Energy", "Power")] = (
+                        rapl_file.power.W
+                    )
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \

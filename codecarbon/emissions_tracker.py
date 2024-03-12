@@ -2,6 +2,7 @@
 Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker and @track_emissions
 """
+
 import dataclasses
 import os
 import platform
@@ -643,14 +644,12 @@ class BaseEmissionsTracker(ABC):
         """
         :return: Metadata containing geographical info
         """
-        pass
 
     @abstractmethod
     def _get_cloud_metadata(self) -> CloudMetadata:
         """
         :return: Metadata containing cloud info
         """
-        pass
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:

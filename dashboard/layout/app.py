@@ -95,9 +95,11 @@ def serve_layout():
                                             df_project.name, df_project.id
                                         )
                                     ],
-                                    value=df_project.id.unique().tolist()[-1]
-                                    if len(df_project) > 0
-                                    else "No projects in this organization !",
+                                    value=(
+                                        df_project.id.unique().tolist()[-1]
+                                        if len(df_project) > 0
+                                        else "No projects in this organization !"
+                                    ),
                                     inline=True,
                                     #                                label_checked_class_name="text-primary",
                                     #                                input_checked_class_name="border border-primary bg-primary",

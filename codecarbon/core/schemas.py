@@ -1,6 +1,7 @@
 """
 Here is the schemas used to communicate with the API.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional

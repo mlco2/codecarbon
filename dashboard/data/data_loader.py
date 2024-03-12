@@ -2,7 +2,6 @@
 API calls
 """
 
-
 import json
 import os
 
