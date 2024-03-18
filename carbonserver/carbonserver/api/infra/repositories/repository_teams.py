@@ -28,6 +28,18 @@ class SqlAlchemyRepository(Teams):
                 api_key=generate_api_key(),
                 organization_id=team.organization_id,
             )
+            existing_team = ( 
+                                session.query(SqlModelTeam)
+                                       .filter(SqlModelTeam.name == team.name)
+                                       .filter(SqlModelTeam.organization_id == team.organization_id)
+                                       .first()
+                            )
+            if existing_team: 
+                raise HTTPException( 
+                                      status_code=404,detail=f"the team name {team.name} of that organization {team.organization_id} is already existed"
+                                   )
+
+
             session.add(db_team)
             session.commit()
             session.refresh(db_team)
