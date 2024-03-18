@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output 
 from data.data_functions import (
     get_experiment,
     get_experiment_runs,
@@ -16,14 +16,103 @@ from data.data_functions import (
     get_run_emissions,
     get_run_info,
     get_run_sums,
+    get_team_list,
 )
 from layout.app import app, df_mix
 from layout.template import darkgreen, vividgreen
 from plotly.subplots import make_subplots
 
+from dash import Input, Output
+
+
+import json
+import os
+import requests
+
+
+API_PATH = os.getenv("CODECARBON_API_URL")
+if API_PATH is None:
+    #API_PATH = "https://api.codecarbon.io"
+    API_PATH = "http://localhost:8008"   
+USER = "jessica"
+PSSD = "fake-super-secret-token"
+
+
+
 # callback section: connecting the components
 # ************************************************************************
 # ************************************************************************
+
+@app.callback(
+                Output("output","children"),
+                Output(component_id="organame", component_property="children"),
+                Output(component_id="orgadesc", component_property="children"),
+
+                Input("input_organame", "value"),
+
+                Input("input_orgadesc", "value"),
+
+                Input('submit_btn','n_clicks'),
+               
+)
+def on_button_click(input_organame,input_orgadesc,n_clicks):  
+        try: 
+       
+            if n_clicks:
+                path = f"{API_PATH}/organization" 
+                print(path)
+                payload = {'name': input_organame , 'description' : input_orgadesc}
+                response = requests.post(path, json=payload)
+                
+                if response.status_code == 201:
+                    return f'You have entered "{input_organame}" and "{input_orgadesc}" into the database.' 
+                else: 
+                    if response.status_code == 405:
+                        return f'You have entered "{response.status_code}"  and reason :  "{response.reason}"  '
+                    else: 
+                        return f'You have entered error :  "{response.status_code}"  and reason :  "{response.reason}" for path  {path} and payload {payload}'
+        except:
+                    return f'none'
+
+#@app.callback(
+##                Output("output2","children"),
+#                Input("input_teamname", "value"),
+#                Input("input_teamdesc", "value"),
+#                Input(component_id="org-dropdown", component_property="value"),
+#                Input('submit_btn_team','n_clicks'),
+#)
+#def on_button_click(input_teamname,input_teamdesc,n_clicks):
+
+    #if n_clicks:
+    #    return f'Input1 {input_teamname} and Input2 {input_teamdesc} and nb {n_clicks}' 
+       
+
+@app.callback(
+    [
+        Output(component_id="teamPicked", component_property="options"),
+        # Output(component_id="projectPicked", component_property="value"),
+    ],
+    [
+        Input(component_id="org-dropdown", component_property="value"),
+    ],
+)
+def update_team_from_organization(value):
+    orga_id = value
+    df_team = get_team_list(orga_id)
+    if len(df_team) > 0:
+        # project_id = df_project.id.unique().tolist()[0]
+        # project_name = df_project.name.unique().tolist()[0]
+        options = [
+            {"label": teamName, "value": teamId}
+            for teamName, teamId in zip(df_team.name, df_team.id)
+        ]
+    else:
+        # project_id = None
+        # project_name = "No Project !!!"
+        options = []
+
+    return [options]
+
 
 
 # indicators

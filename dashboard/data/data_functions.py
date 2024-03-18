@@ -139,3 +139,8 @@ def get_project_list(organization_id) -> pd.DataFrame:
         projects_to_add = pd.DataFrame.from_dict(load_team_projects(i))
         projects = pd.concat([projects, projects_to_add])
     return projects
+
+
+def get_team_list(organization_id) -> pd.DataFrame:
+    teams = pd.DataFrame.from_dict(load_organization_teams(organization_id))
+    return teams

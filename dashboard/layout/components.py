@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
@@ -13,6 +12,31 @@ class Components:
                     [html.Img(src="/assets/logo.png")], href="https://codecarbon.io"
                 ),
                 html.P("Track and reduce CO2 emissions from your computing"),
+               # dcc.Location(id="url-location", refresh=False),
+               # dcc.DatePickerRange(
+               #     id="periode",
+               #     day_size=39,
+               #     month_format="MMMM Y",
+               #     end_date_placeholder_text="MMMM Y",
+               #     display_format="DD/MM/YYYY",
+               #     # should be calculated from today() like minus 1 week
+               #     start_date=date(2021, 1, 1),
+               #     min_date_allowed=date(2021, 1, 1),
+               #     max_date_allowed=date.today() + timedelta(days=1),
+               #     initial_visible_month=date.today(),
+               #     end_date=date.today() + timedelta(days=1),
+               #),
+            ],
+            xs=12,
+            sm=12,
+            md=12,
+            lg=5,
+            xl=5,
+        )
+#### add 
+    def get_daterange(self):
+        return dbc.Col(
+           [
                 dcc.Location(id="url-location", refresh=False),
                 dcc.DatePickerRange(
                     id="periode",
@@ -27,13 +51,19 @@ class Components:
                     initial_visible_month=date.today(),
                     end_date=date.today() + timedelta(days=1),
                 ),
-            ],
-            xs=12,
-            sm=12,
-            md=12,
-            lg=5,
-            xl=5,
+
+
+           ]
+
+
         )
+    
+    
+    
+
+
+
+####
 
     def get_global_summary(self):
         return dbc.Col(
@@ -56,7 +86,7 @@ class Components:
                                         html.P("kWh", className="text-center"),
                                     ]
                                 )
-                            ],
+                            ],style={"color":"white"}
                         ),
                         dbc.Card(
                             [
@@ -76,7 +106,7 @@ class Components:
                                         ),
                                     ]
                                 )
-                            ],
+                            ],style={"color":"white"}
                         ),
                         dbc.Card(
                             [
@@ -96,7 +126,7 @@ class Components:
                                         ),
                                     ]
                                 )
-                            ],
+                            ],style={"color":"white"}
                         ),
                     ],
                     className="shadow",
