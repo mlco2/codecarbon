@@ -251,6 +251,7 @@ class TestCarbonTracker(unittest.TestCase):
             country_iso_code="CAN",
             project_name=self.project_name,
             output_dir=self.temp_path,
+            experiment_id="test",
         )
         def dummy_train_model():
             return 42
@@ -273,6 +274,7 @@ class TestCarbonTracker(unittest.TestCase):
             cloud_provider="gcp",
             cloud_region="us-central1",
             output_dir=self.temp_path,
+            experiment_id="test",
         )
         def dummy_train_model():
             return 42
@@ -289,7 +291,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA", output_dir=self.temp_path, experiment_id="test",
         )
         tracker.start()
         heavy_computation(run_time_secs=2)
@@ -309,7 +311,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA", output_dir=self.temp_path, experiment_id="test",
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv"
@@ -339,7 +341,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA", output_dir=self.temp_path, experiment_id="test",
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv"
@@ -356,6 +358,7 @@ class TestCarbonTracker(unittest.TestCase):
         print(emissions_df["cpu_power"].values[0])
 
         self.assertAlmostEqual(0.269999999999999, emissions_df["cpu_power"].values[0])
+        self.assertEqual("test", emissions_df["experiment_id"].values[0])
         self.assertEqual("Morocco", emissions_df["country_name"].values[0])
         self.assertEqual("United States", emissions_df["country_name"].values[1])
 

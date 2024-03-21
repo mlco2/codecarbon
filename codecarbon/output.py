@@ -32,6 +32,7 @@ class EmissionsData:
     timestamp: str
     project_name: str
     run_id: str
+    experiment_id: str
     duration: float
     emissions: float
     emissions_rate: float
