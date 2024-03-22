@@ -62,7 +62,7 @@ class TestApp(unittest.TestCase):
     @patch("codecarbon.cli.main.questionary_prompt")
     def test_init_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
         temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
-
+        print("temp_dir", temp_dir)
         temp_codecarbon_config = tempfile.NamedTemporaryFile(
             mode="w+t", delete=False, dir=temp_dir
         )

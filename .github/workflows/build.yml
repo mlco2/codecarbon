@@ -13,6 +13,10 @@ jobs:
         python-version: ["3.8", "3.11"]
 
     steps:
+    - name: List environment variables and directory permissions
+      run: |
+        printenv
+        ls -ld /tmp
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
