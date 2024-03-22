@@ -16,11 +16,26 @@ Command line
 
 If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:
 
+Create a minimal configuration file (just follow the prompts)
 .. code-block:: console
 
-    codecarbon monitor --no-api
+    codecarbon config --init  
+
+Start monitoring the emissions of the computer
+.. code-block:: console
+
+    codecarbon monitor  
 
 You have to stop the monitoring manually with ``Ctrl+C``.
+
+In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything 
+to an API running on localhost:8008 (that you can start with the docke-compose)
+
+.. raw:: html
+
+    <script src="https://asciinema.org/a/bJMOlPe5F4mFLY0Rl6fiJSOp3.js" id="asciicast-bJMOlPe5F4mFLY0Rl6fiJSOp3" async></script>
+
+
 
 Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
 
