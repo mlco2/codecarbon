@@ -1,5 +1,6 @@
 import sys
 import time
+from pathlib import Path
 from typing import Optional
 
 import questionary
@@ -98,11 +99,23 @@ def config(
 
         if use_config == "/.codecarbonconfig":
             typer.echo("Using existing config file :")
+            file_path = Path("/.codecarbonconfig")
             show_config()
             pass
 
         else:
             typer.echo("Creating new config file")
+            file_path = typer.prompt(
+                "Where do you want to put your config file ?",
+                type=str,
+                default="/.codecarbonconfig",
+            )
+            file_path = Path(file_path)
+            if not file_path.parent.exists():
+                Confirm.ask(
+                    "Parent folder does not exist do you want to create it (and parents) ?"
+                )
+
             api_endpoint = get_api_endpoint()
             api_endpoint = typer.prompt(
                 f"Default API endpoint is {api_endpoint}. You can change it in /.codecarbonconfig. Press enter to continue or input other url",
@@ -144,7 +157,9 @@ def config(
                 organization = [orga for orga in organizations if orga["name"] == org][
                     0
                 ]
-            overwrite_local_config("organization_id", organization["id"])
+            overwrite_local_config(
+                "organization_id", organization["id"], file_path=file_path
+            )
             teams = api.list_teams_from_organization(organization["id"])
 
             team = questionary_prompt(
@@ -244,7 +259,7 @@ def config(
                     "id"
                 ]
 
-            overwrite_local_config("experiment_id", experiment_id["id"])
+            overwrite_local_config("experiment_id", experiment_id)
             show_config()
 
 
