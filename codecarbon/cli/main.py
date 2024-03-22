@@ -62,7 +62,6 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         if "organization_id" not in d:
             print(
                 "No organization_id in config, follow setup instruction to complete your configuration file!",
-                color="red",
             )
         else:
             org = api.get_organization(d["organization_id"])
@@ -70,21 +69,18 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
             if "team_id" not in d:
                 print(
                     "No team_id in config, follow setup instruction to complete your configuration file!",
-                    color="red",
                 )
             else:
                 team = api.get_team(d["team_id"])
                 if "project_id" not in d:
                     print(
                         "No project_id in config, follow setup instruction to complete your configuration file!",
-                        color="red",
                     )
                 else:
                     project = api.get_project(d["project_id"])
                     if "experiment_id" not in d:
                         print(
                             "No experiment_id in config, follow setup instruction to complete your configuration file!",
-                            color="red",
                         )
                     else:
                         experiment = api.get_experiment(d["experiment_id"])
