@@ -1,4 +1,6 @@
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
@@ -55,8 +57,43 @@ class TestApp(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Welcome to CodeCarbon configuration wizard", result.stdout)
 
+    @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
-    def test_init_use_local(self, mock_prompt, MockApiClient):
+    def test_init_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
+        temp_codecarbon_config = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+
+        MockApiClient.return_value = self.mock_api_client
+        mock_prompt.side_effect = [
+            "Create New Organization",
+            "Create New Team",
+            "Create New Project",
+            "Create New Experiment",
+        ]
+        mock_confirm.side_effect = [True, False, False, False]
+
+        result = self.runner.invoke(
+            codecarbon,
+            ["config", "--init"],
+            input=f"{temp_codecarbon_config.name}\n",
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn(
+            "Creating new experiment",
+            result.stdout,
+        )
+        self.assertIn(
+            "Consult configuration documentation for more configuration options",
+            result.stdout,
+        )
+
+    @patch("codecarbon.cli.main.Path")
+    @patch("codecarbon.cli.main.questionary_prompt")
+    def test_init_use_local(self, mock_prompt, mock_path, MockApiClient):
+        temp_codecarbon_config = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+        mock_path.return_value = Path(temp_codecarbon_config.name)
+        test_data = "[codecarbon]\nexperiment_id = 12345"
+        temp_codecarbon_config.write(test_data)
+        temp_codecarbon_config.seek(0)
         mock_prompt.return_value = "./.codecarbon.config"
         result = self.runner.invoke(codecarbon, ["config", "--init"], input="n")
         self.assertEqual(result.exit_code, 0)
@@ -68,33 +105,6 @@ class TestApp(unittest.TestCase):
     def custom_questionary_side_effect(*args, **kwargs):
         default_value = kwargs.get("default")
         return MagicMock(return_value=default_value)
-
-    @patch("codecarbon.cli.main.Confirm.ask")
-    @patch("codecarbon.cli.main.questionary_prompt")
-    def test_init_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
-        MockApiClient.return_value = self.mock_api_client
-        mock_prompt.side_effect = [
-            "Create New Config",
-            "Create New Organization",
-            "Create New Team",
-            "Create New Project",
-            "Create New Experiment",
-        ]
-        mock_confirm.side_effect = [True, False, False, False]
-        result = self.runner.invoke(
-            codecarbon,
-            ["config", "--init"],
-            input="y",
-        )
-        self.assertEqual(result.exit_code, 0)
-        self.assertIn(
-            "Creating new experiment",
-            result.stdout,
-        )
-        self.assertIn(
-            "Consult configuration documentation for more configuration options",
-            result.stdout,
-        )
 
 
 if __name__ == "__main__":
