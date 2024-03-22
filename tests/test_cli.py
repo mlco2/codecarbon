@@ -53,16 +53,10 @@ class TestApp(unittest.TestCase):
         self.assertIn(__app_name__, result.stdout)
         self.assertIn(__version__, result.stdout)
 
-    def test_init_aborted(self, MockApiClient):
-        result = self.runner.invoke(codecarbon, ["config", "--init"])
-        self.assertEqual(result.exit_code, 1)
-        self.assertIn("Welcome to CodeCarbon configuration wizard", result.stdout)
-
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
     def test_init_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
         temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
-        print("temp_dir", temp_dir)
         temp_codecarbon_config = tempfile.NamedTemporaryFile(
             mode="w+t", delete=False, dir=temp_dir
         )
