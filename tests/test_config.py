@@ -38,6 +38,8 @@ class TestConfig(unittest.TestCase):
             ("1", [1]),
             ("0", [0]),
             ("", []),
+            ([], []),
+            ([1, 2, 3], [1, 2, 3]),
             (1, 1),
         ]:
             self.assertEqual(parse_gpu_ids(ids), target)
