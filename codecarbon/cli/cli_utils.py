@@ -2,6 +2,9 @@ import configparser
 from pathlib import Path
 from typing import Optional
 
+import typer
+from rich.prompt import Confirm
+
 
 def get_config(path: Optional[Path] = None):
     p = path or Path.cwd().resolve() / ".codecarbon.config"
@@ -11,7 +14,12 @@ def get_config(path: Optional[Path] = None):
         config.read(str(p))
         if "codecarbon" in config.sections():
             d = dict(config["codecarbon"])
-    return d
+            return d
+
+    else:
+        raise FileNotFoundError(
+            "No .codecarbon.config file found in the current directory."
+        )
 
 
 def get_api_endpoint(path: Optional[Path] = None):
@@ -23,6 +31,9 @@ def get_api_endpoint(path: Optional[Path] = None):
             d = dict(config["codecarbon"])
             if "api_endpoint" in d:
                 return d["api_endpoint"]
+            else:
+                with p.open("a") as f:
+                    f.write("api_endpoint=https://api.codecarbon.io\n")
     return "https://api.codecarbon.io"
 
 
@@ -64,3 +75,24 @@ def overwrite_local_config(config_name, value, path: Optional[Path] = None):
     config["codecarbon"][config_name] = value
     with p.open("w") as f:
         config.write(f)
+
+
+def create_new_config_file():
+    typer.echo("Creating new config file")
+    file_path = typer.prompt(
+        "Where do you want to put your config file ?",
+        type=str,
+        default="./.codecarbon.config",
+    )
+    file_path = Path(file_path)
+    if not file_path.parent.exists():
+        create = Confirm.ask(
+            "Parent folder does not exist do you want to create it (and parents) ?"
+        )
+        if create:
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.touch()
+    with open(file_path, "w") as f:
+        f.write("[codecarbon]\n")
+    typer.echo(f"Config file created at {file_path}")
+    return file_path

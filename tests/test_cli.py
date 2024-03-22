@@ -57,11 +57,11 @@ class TestApp(unittest.TestCase):
 
     @patch("codecarbon.cli.main.questionary_prompt")
     def test_init_use_local(self, mock_prompt, MockApiClient):
-        mock_prompt.return_value = "/.codecarbonconfig"
-        result = self.runner.invoke(codecarbon, ["config", "--init"], input="y")
+        mock_prompt.return_value = "./.codecarbon.config"
+        result = self.runner.invoke(codecarbon, ["config", "--init"], input="n")
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
-            "Succesfully initiated Code Carbon ! \n Here is your detailed config : \n ",
+            "Using already existing config file ",
             result.stdout,
         )
 
@@ -80,7 +80,7 @@ class TestApp(unittest.TestCase):
             "Create New Project",
             "Create New Experiment",
         ]
-        mock_confirm.side_effect = [False, False, False]
+        mock_confirm.side_effect = [True, False, False, False]
         result = self.runner.invoke(
             codecarbon,
             ["config", "--init"],
@@ -88,7 +88,11 @@ class TestApp(unittest.TestCase):
         )
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
-            "Succesfully initiated Code Carbon ! \n Here is your detailed config : \n ",
+            "Creating new experiment",
+            result.stdout,
+        )
+        self.assertIn(
+            "Consult configuration documentation for more configuration options",
             result.stdout,
         )
 
