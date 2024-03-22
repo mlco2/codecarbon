@@ -17,9 +17,10 @@ Command line
 If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:
 
 Create a minimal configuration file (just follow the prompts)
+
 .. code-block:: console
 
-    codecarbon config --init  
+  codecarbon config --init  
 
 Start monitoring the emissions of the computer
 .. code-block:: console
