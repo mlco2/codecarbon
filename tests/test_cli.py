@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -60,7 +61,11 @@ class TestApp(unittest.TestCase):
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
     def test_init_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
-        temp_codecarbon_config = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+        temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
+
+        temp_codecarbon_config = tempfile.NamedTemporaryFile(
+            mode="w+t", delete=False, dir=temp_dir
+        )
 
         MockApiClient.return_value = self.mock_api_client
         mock_prompt.side_effect = [
@@ -89,7 +94,11 @@ class TestApp(unittest.TestCase):
     @patch("codecarbon.cli.main.Path")
     @patch("codecarbon.cli.main.questionary_prompt")
     def test_init_use_local(self, mock_prompt, mock_path, MockApiClient):
-        temp_codecarbon_config = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+        temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
+
+        temp_codecarbon_config = tempfile.NamedTemporaryFile(
+            mode="w+t", delete=False, dir=temp_dir
+        )
         mock_path.return_value = Path(temp_codecarbon_config.name)
         test_data = "[codecarbon]\nexperiment_id = 12345"
         temp_codecarbon_config.write(test_data)
