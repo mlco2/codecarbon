@@ -286,8 +286,7 @@ class ApiClient:  # (AsyncClient)
         if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
-        self.experiment_id = r.json()["id"]
-        return self.experiment_id
+        return r.json()
 
     def get_experiment(self, experiment_id):
         """

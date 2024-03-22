@@ -1,4 +1,3 @@
-import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -11,6 +10,7 @@ from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
 from codecarbon.cli.cli_utils import (
+    create_new_config_file,
     get_api_endpoint,
     get_config,
     get_existing_local_exp_id,
@@ -33,7 +33,7 @@ codecarbon = typer.Typer()
 
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo(f"{__app_name__} v{__version__}")
+        print(f"{__app_name__} v{__version__}")
         raise typer.Exit()
 
 
@@ -51,29 +51,54 @@ def main(
     return
 
 
-def show_config():
-    d = get_config()
-    api_endpoint = get_api_endpoint()
+def show_config(path: Path = Path("./.codecarbon.config")) -> None:
+    d = get_config(path)
+    api_endpoint = get_api_endpoint(path)
     api = ApiClient(endpoint_url=api_endpoint)
+    print("Current configuration : \n")
+    print("Config file content : ")
+    print(d)
     try:
-        org = api.get_organization(d["organization_id"])
-        team = api.get_team(d["team_id"])
-        project = api.get_project(d["project_id"])
-        experiment = api.get_experiment(d["experiment_id"])
-        print(
-            "Succesfully initiated Code Carbon ! \n Here is your detailed config : \n "
-        )
-        print("Experiment: \n ")
-        print(experiment)
-        print("Project: \n")
-        print(project)
-        print("Team: \n")
-        print(team)
-        print("Organization: \n")
-        print(org)
-    except:
+        if "organization_id" not in d:
+            print(
+                "No organization_id in config, follow setup instruction to complete your configuration file!",
+                color="red",
+            )
+        else:
+            org = api.get_organization(d["organization_id"])
+
+            if "team_id" not in d:
+                print(
+                    "No team_id in config, follow setup instruction to complete your configuration file!",
+                    color="red",
+                )
+            else:
+                team = api.get_team(d["team_id"])
+                if "project_id" not in d:
+                    print(
+                        "No project_id in config, follow setup instruction to complete your configuration file!",
+                        color="red",
+                    )
+                else:
+                    project = api.get_project(d["project_id"])
+                    if "experiment_id" not in d:
+                        print(
+                            "No experiment_id in config, follow setup instruction to complete your configuration file!",
+                            color="red",
+                        )
+                    else:
+                        experiment = api.get_experiment(d["experiment_id"])
+                        print("\nExperiment :")
+                        print(experiment)
+                        print("\nProject :")
+                        print(project)
+                        print("\nTeam :")
+                        print(team)
+                        print("\nOrganization :")
+                        print(org)
+    except Exception as e:
         raise ValueError(
-            "Your configuration is invalid, please run `codecarbon config --init` first!"
+            f"Your configuration is invalid, please run `codecarbon config --init` first! (error: {e})"
         )
 
 
@@ -90,177 +115,171 @@ def config(
     if show:
         show_config()
     elif init:
-        typer.echo("Welcome to CodeCarbon configuration wizard")
-        use_config = questionary_prompt(
-            "Use existing /.codecarbonconfig to configure or overwrite ? ",
-            ["/.codecarbonconfig", "Create New Config"],
-            default="/.codecarbonconfig",
+        print("Welcome to CodeCarbon configuration wizard")
+        default_path = Path("./.codecarbon.config")
+
+        if default_path.exists():
+            print("Existing config file found :")
+            show_config(default_path)
+
+            use_config = questionary_prompt(
+                "Use existing ./.codecarbon.config to configure or create a new file somwhere else ? ",
+                ["./.codecarbon.config", "Create New Config"],
+                default="./.codecarbon.config",
+            )
+
+            if use_config == "./.codecarbon.config":
+                modify = Confirm.ask("Do you want to modify the existing config file ?")
+                if modify:
+                    print(f"Modifying existing config file {default_path}:")
+                    file_path = default_path
+                else:
+                    print(f"Using already existing config file {default_path}")
+                    return
+            else:
+                file_path = create_new_config_file()
+        else:
+            file_path = create_new_config_file()
+
+        api_endpoint = get_api_endpoint(file_path)
+        api_endpoint = typer.prompt(
+            f"Current API endpoint is {api_endpoint}. Press enter to continue or input other url",
+            type=str,
+            default=api_endpoint,
+        )
+        overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
+        api = ApiClient(endpoint_url=api_endpoint)
+        organizations = api.get_list_organizations()
+        org = questionary_prompt(
+            "Pick existing organization from list or Create new organization ?",
+            [org["name"] for org in organizations] + ["Create New Organization"],
+            default="Create New Organization",
         )
 
-        if use_config == "/.codecarbonconfig":
-            typer.echo("Using existing config file :")
-            file_path = Path("/.codecarbonconfig")
-            show_config()
-            pass
-
-        else:
-            typer.echo("Creating new config file")
-            file_path = typer.prompt(
-                "Where do you want to put your config file ?",
-                type=str,
-                default="/.codecarbonconfig",
+        if org == "Create New Organization":
+            org_name = typer.prompt(
+                "Organization name", default="Code Carbon user test"
             )
-            file_path = Path(file_path)
-            if not file_path.parent.exists():
-                Confirm.ask(
-                    "Parent folder does not exist do you want to create it (and parents) ?"
-                )
-
-            api_endpoint = get_api_endpoint()
-            api_endpoint = typer.prompt(
-                f"Default API endpoint is {api_endpoint}. You can change it in /.codecarbonconfig. Press enter to continue or input other url",
-                type=str,
-                default=api_endpoint,
+            org_description = typer.prompt(
+                "Organization description", default="Code Carbon user test"
             )
-            api = ApiClient(endpoint_url=api_endpoint)
-            organizations = api.get_list_organizations()
-            org = questionary_prompt(
-                "Pick existing organization from list or Create new organization ?",
-                [org["name"] for org in organizations] + ["Create New Organization"],
-                default="Create New Organization",
-            )
-
-            if org == "Create New Organization":
-                org_name = typer.prompt(
-                    "Organization name", default="Code Carbon user test"
+            if org_name in organizations:
+                print(
+                    f"Organization {org_name} already exists, using it for this experiment."
                 )
-                org_description = typer.prompt(
-                    "Organization description", default="Code Carbon user test"
-                )
-                if org_name in organizations:
-                    typer.echo(
-                        f"Organization {org_name} already exists, using it for this experiment."
-                    )
-                    organization = [
-                        orga for orga in organizations if orga["name"] == org
-                    ][0]
-                else:
-                    organization_create = OrganizationCreate(
-                        name=org_name,
-                        description=org_description,
-                    )
-                    organization = api.create_organization(
-                        organization=organization_create
-                    )
-                typer.echo(f"Created organization : {organization}")
-            else:
                 organization = [orga for orga in organizations if orga["name"] == org][
                     0
                 ]
-            overwrite_local_config(
-                "organization_id", organization["id"], file_path=file_path
-            )
-            teams = api.list_teams_from_organization(organization["id"])
-
-            team = questionary_prompt(
-                "Pick existing team from list or create new team in organization ?",
-                [team["name"] for team in teams] + ["Create New Team"],
-                default="Create New Team",
-            )
-            if team == "Create New Team":
-                team_name = typer.prompt("Team name", default="Code Carbon user test")
-                team_description = typer.prompt(
-                    "Team description", default="Code Carbon user test"
-                )
-                team_create = TeamCreate(
-                    name=team_name,
-                    description=team_description,
-                    organization_id=organization["id"],
-                )
-                team = api.create_team(
-                    team=team_create,
-                )
-                typer.echo(f"Created team : {team}")
             else:
-                team = [t for t in teams if t["name"] == team][0]
-            overwrite_local_config("team_id", team["id"])
+                organization_create = OrganizationCreate(
+                    name=org_name,
+                    description=org_description,
+                )
+                organization = api.create_organization(organization=organization_create)
+            print(f"Created organization : {organization}")
+        else:
+            organization = [orga for orga in organizations if orga["name"] == org][0]
+        overwrite_local_config("organization_id", organization["id"], path=file_path)
+        teams = api.list_teams_from_organization(organization["id"])
 
-            projects = api.list_projects_from_team(team["id"])
-            project = questionary_prompt(
-                "Pick existing project from list or Create new project ?",
-                [project["name"] for project in projects] + ["Create New Project"],
-                default="Create New Project",
+        team = questionary_prompt(
+            "Pick existing team from list or create new team in organization ?",
+            [team["name"] for team in teams] + ["Create New Team"],
+            default="Create New Team",
+        )
+        if team == "Create New Team":
+            team_name = typer.prompt("Team name", default="Code Carbon user test")
+            team_description = typer.prompt(
+                "Team description", default="Code Carbon user test"
             )
-            if project == "Create New Project":
-                project_name = typer.prompt(
-                    "Project name", default="Code Carbon user test"
-                )
-                project_description = typer.prompt(
-                    "Project description", default="Code Carbon user test"
-                )
-                project_create = ProjectCreate(
-                    name=project_name,
-                    description=project_description,
-                    team_id=team["id"],
-                )
-                project = api.create_project(project=project_create)
-                typer.echo(f"Created project : {project}")
-            else:
-                project = [p for p in projects if p["name"] == project][0]
-            overwrite_local_config("project_id", project["id"])
-
-            experiments = api.list_experiments_from_project(project["id"])
-            experiment = questionary_prompt(
-                "Pick existing experiment from list or Create new experiment ?",
-                [experiment["name"] for experiment in experiments]
-                + ["Create New Experiment"],
-                default="Create New Experiment",
+            team_create = TeamCreate(
+                name=team_name,
+                description=team_description,
+                organization_id=organization["id"],
             )
-            if experiment == "Create New Experiment":
-                typer.echo("Creating new experiment")
-                exp_name = typer.prompt(
-                    "Experiment name :", default="Code Carbon user test"
-                )
-                exp_description = typer.prompt(
-                    "Experiment description :",
-                    default="Code Carbon user test ",
-                )
+            team = api.create_team(
+                team=team_create,
+            )
+            print(f"Created team : {team}")
+        else:
+            team = [t for t in teams if t["name"] == team][0]
+        overwrite_local_config("team_id", team["id"], path=file_path)
 
-                exp_on_cloud = Confirm.ask("Is this experiment running on the cloud ?")
-                if exp_on_cloud is True:
-                    cloud_provider = typer.prompt(
-                        "Cloud provider (AWS, GCP, Azure, ...)", default="AWS"
-                    )
-                    cloud_region = typer.prompt(
-                        "Cloud region (eu-west-1, us-east-1, ...)", default="eu-west-1"
-                    )
-                else:
-                    cloud_provider = None
-                    cloud_region = None
-                country_name = typer.prompt("Country name :", default="France")
-                country_iso_code = typer.prompt("Country ISO code :", default="FRA")
-                region = typer.prompt("Region :", default="france")
-                experiment_create = ExperimentCreate(
-                    timestamp=get_datetime_with_timezone(),
-                    name=exp_name,
-                    description=exp_description,
-                    on_cloud=exp_on_cloud,
-                    project_id=project["id"],
-                    country_name=country_name,
-                    country_iso_code=country_iso_code,
-                    region=region,
-                    cloud_provider=cloud_provider,
-                    cloud_region=cloud_region,
-                )
-                experiment_id = api.create_experiment(experiment=experiment_create)
+        projects = api.list_projects_from_team(team["id"])
+        project = questionary_prompt(
+            "Pick existing project from list or Create new project ?",
+            [project["name"] for project in projects] + ["Create New Project"],
+            default="Create New Project",
+        )
+        if project == "Create New Project":
+            project_name = typer.prompt("Project name", default="Code Carbon user test")
+            project_description = typer.prompt(
+                "Project description", default="Code Carbon user test"
+            )
+            project_create = ProjectCreate(
+                name=project_name,
+                description=project_description,
+                team_id=team["id"],
+            )
+            project = api.create_project(project=project_create)
+            print(f"Created project : {project}")
+        else:
+            project = [p for p in projects if p["name"] == project][0]
+        overwrite_local_config("project_id", project["id"], path=file_path)
 
+        experiments = api.list_experiments_from_project(project["id"])
+        experiment = questionary_prompt(
+            "Pick existing experiment from list or Create new experiment ?",
+            [experiment["name"] for experiment in experiments]
+            + ["Create New Experiment"],
+            default="Create New Experiment",
+        )
+        if experiment == "Create New Experiment":
+            print("Creating new experiment")
+            exp_name = typer.prompt(
+                "Experiment name :", default="Code Carbon user test"
+            )
+            exp_description = typer.prompt(
+                "Experiment description :",
+                default="Code Carbon user test ",
+            )
+
+            exp_on_cloud = Confirm.ask("Is this experiment running on the cloud ?")
+            if exp_on_cloud is True:
+                cloud_provider = typer.prompt(
+                    "Cloud provider (AWS, GCP, Azure, ...)", default="AWS"
+                )
+                cloud_region = typer.prompt(
+                    "Cloud region (eu-west-1, us-east-1, ...)", default="eu-west-1"
+                )
             else:
-                experiment_id = [e for e in experiments if e["name"] == experiment][0][
-                    "id"
-                ]
+                cloud_provider = None
+                cloud_region = None
+            country_name = typer.prompt("Country name :", default="France")
+            country_iso_code = typer.prompt("Country ISO code :", default="FRA")
+            region = typer.prompt("Region :", default="france")
+            experiment_create = ExperimentCreate(
+                timestamp=get_datetime_with_timezone(),
+                name=exp_name,
+                description=exp_description,
+                on_cloud=exp_on_cloud,
+                project_id=project["id"],
+                country_name=country_name,
+                country_iso_code=country_iso_code,
+                region=region,
+                cloud_provider=cloud_provider,
+                cloud_region=cloud_region,
+            )
+            experiment = api.create_experiment(experiment=experiment_create)
 
-            overwrite_local_config("experiment_id", experiment_id)
-            show_config()
+        else:
+            experiment = [e for e in experiments if e["name"] == experiment][0]
+
+        overwrite_local_config("experiment_id", experiment["id"], path=file_path)
+        show_config(file_path)
+        print(
+            "Consult [link=https://mlco2.github.io/codecarbon/usage.html#configuration]configuration documentation[/link] for more configuration options"
+        )
 
 
 @codecarbon.command("monitor", short_help="Monitor your machine's carbon emissions.")
@@ -284,9 +303,8 @@ def monitor(
     """
     experiment_id = get_existing_local_exp_id()
     if api and experiment_id is None:
-        typer.echo("ERROR: No experiment id, call 'codecarbon init' first.")
-        sys.exit(1)
-    typer.echo("CodeCarbon is going in an infinite loop to monitor this machine.")
+        print("ERROR: No experiment id, call 'codecarbon init' first.", err=True)
+    print("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
         measure_power_secs=measure_power_secs,
         api_call_interval=api_call_interval,
@@ -307,5 +325,4 @@ def questionary_prompt(prompt, list_options, default):
 
 
 if __name__ == "__main__":
-    codecarbon()
     codecarbon()
