@@ -1,6 +1,14 @@
 
 # Contributing to Code Carbon
 
+
+Install [Hatch](https://hatch.pypa.io/1.9/install/).
+
+hatch env create
+
+Hatch inconvenient : No package.lock, we need a plugin for that :
+
+
 (New to open-source? [Here's a guide to help you](https://opensource.guide/how-to-contribute/))
 
 - [I have a question...](#questions)
@@ -155,6 +163,7 @@ pip install codecarbon["viz"]
 ```
 
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
+
 ```bash
 python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
@@ -167,15 +176,10 @@ carbonboard --filepath="examples/emissions.csv" --port=xxxx
 
 ## API Dashboard
 
-To install dependencies:
-```
-pip install codecarbon["dashboard"]
-```
-
 To test the new dashboard that uses the API, run:
 
-```bash
-python carbon_board_API.py
+```sh
+hatch run dashboard:run
 ```
 
 Then, click on the url displayed in the terminal.
@@ -229,20 +233,14 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 
 ### <a name="documentation"></a>Build Documentation 🖨️
 No software is complete without great documentation!
-To make generating documentation easier, install the [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi) and use it to edit and improve the existing documentation:
-```
-cd docs/edit
-python -m venv .venv
-source .venv/bin/activate
-pip install -U sphinx sphinx_rtd_theme
+To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
+
+In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
 
 ```
-In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
+hatch run docs:build
 ```
-cd docs/edit
-source .venv/bin/activate
-make docs
-```
+
 to regenerate the html files.
 
 ### Release process
@@ -273,7 +271,7 @@ Inside the docker container, run:
 
 ### API
 
-The easiest way to run the API locally is with Docker. Launch this command in the project directory:
+The easiest way to run the API locally is with Docker, it will set-up the Postgres database for you. Launch this command in the project directory:
 ```
 docker-compose up -d
 ```
