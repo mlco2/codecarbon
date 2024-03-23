@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "codecarbon"
+dynamic = ["version"]
+readme = "README.md"
+license = ""
+requires-python = ">=3.7"
+authors = [
+    { name = "Mila" },
+    { name = "DataForGood" },
+    { name = "BCG GAMMA" },
+    { name = "Comet.ml" },
+    { name = "Haverford College" },
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "arrow",
+    "click",
+    "pandas",
+    "prometheus_client",
+    "psutil",
+    "py-cpuinfo",
+    "pynvml",
+    "rapidfuzz",
+    "requests",
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "dash>=2.2.0",
+    "dash_bootstrap_components",
+    "plotly>=5.6.0",
+]
+viz = [
+    "dash",
+    "dash_bootstrap_components < 1.0.0",
+    "fire",
+]
+
+[project.scripts]
+carbonboard = "codecarbon.viz.carbonboard:main"
+codecarbon = "codecarbon.cli.main:codecarbon"
+
+[tool.hatch.version]
+path = "carbonserver/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/carbonserver",
+]
