@@ -83,6 +83,6 @@ To test the full build process, the Github Actions workflow can be executed loca
 # Build patched dockerfile from project root
 docker build act -t local/ubuntu-builder:latest
 
-# Run GA job from patched instance
+# Run Github Action job from patched instance
 act -j build_server -P ubuntu-latest=local/ubuntu-builder:latest
 ```

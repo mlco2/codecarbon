@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "arrow",
@@ -37,25 +38,83 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dashboard = [
-    "dash>=2.2.0",
-    "dash_bootstrap_components",
-    "plotly>=5.6.0",
-]
+
 viz = [
     "dash",
     "dash_bootstrap_components < 1.0.0",
     "fire",
+]
+test = [
+   "mock",
+   "pytest",
+   "responses",
+   # "tox",
+   "numpy",
+   "psutil",
+   "requests-mock",
+   "rapidfuzz",
+]
+dev = [
+    "pre-commit",
+]
+
+api = [
+    "alembic<2.0.0",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination<1.0.0",
 ]
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
 codecarbon = "codecarbon.cli.main:codecarbon"
 
+[tool.hatch.env]
+requires = [
+    "hatch-pip-compile"
+]
+
+[tool.hatch.envs.default]
+type = "pip-compile"
+
+[tool.hatch.envs.docs]
+dependencies = [
+  "sphinx",
+  "sphinx_rtd_theme",
+]
+pip-compile-constraint = ""
+
+[tool.hatch.envs.docs.scripts]
+build = "cd docs/edit && make docs"
+
+[tool.hatch.envs.dashboard]
+dependencies = [
+    "dash>=2.2.0",
+    "dash_bootstrap_components",
+    "plotly>=5.6.0",
+]
+
+[tool.hatch.envs.dashboard.scripts]
+run = "cd dashboard && python carbon_board_API.py"
+
+[tool.hatch.envs.api]
+dependencies = [
+    "dash>=2.2.0",
+    "dash_bootstrap_components",
+    "plotly>=5.6.0",
+]
+
 [tool.hatch.version]
-path = "carbonserver/__init__.py"
+path = "codecarbon/_version.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/carbonserver",
+    "/codecarbon",
 ]
