@@ -32,7 +32,7 @@ class SqlAlchemyRepository(Projects):
                             )
             if existing_project: 
                 raise HTTPException( 
-                                      status_code=404,detail=f"the project name {project.name} of that team {project.team_id} is already existed"
+                                      status_code=404,detail=f"the project name {project.name} of  team {project.team_id} already exists"
                                    )
 
             session.add(db_project)

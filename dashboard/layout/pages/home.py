@@ -56,10 +56,13 @@ def layout():
                                   dbc.Row(
                                     [
                                         dbc.Col([
-                                              html.H6(
-                                                "We explain more about this calculation in the Methodology section of the documentation. Our hope is that this package will be used widely for estimating the carbon footprint of computing, and for establishing best practices with regards to the disclosure and reduction of this footprint." 
-                                                 
-                                              )
+                                              html.H6([
+                                                    "We explain more about this calculation in the  ",
+                                                    dcc.Link(" Methodology ", href="https://mlco2.github.io/codecarbon/methodology.html#", target="_blank"),
+                                                    "section of the documentation. Our hope is that this package will be used widely for estimating the carbon footprint of computing, and for establishing best practices with regards to the disclosure and reduction of this footprint."
+                                                    
+                                              ])
+                                               
 
                                         ])
                                         

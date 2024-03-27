@@ -44,7 +44,7 @@ class SqlAlchemyRepository(Organizations):
                                     )
             if existing_organization: 
                 raise HTTPException( 
-                                      status_code=404,detail=f"the organization name  {organization.name} is already existed"
+                                      status_code=404,detail=f"the organization name  {organization.name}  already exists"
                                    )
             
             session.add(db_organization)

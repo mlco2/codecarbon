@@ -36,7 +36,7 @@ class SqlAlchemyRepository(Teams):
                             )
             if existing_team: 
                 raise HTTPException( 
-                                      status_code=404,detail=f"the team name {team.name} of that organization {team.organization_id} is already existed"
+                                      status_code=404,detail=f"the team name {team.name} of organization {team.organization_id}  already exists"
                                    )
 
 
