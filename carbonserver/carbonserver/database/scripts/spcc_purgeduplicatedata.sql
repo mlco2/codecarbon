@@ -85,7 +85,7 @@ BEGIN
 		 
          --RAISE NOTICE '------- START -------';
 		 RAISE NOTICE 'The rows affected by A=%',a_count;
-		 RAISE NOTICE 'Delete experiments which contains any runs affected'		 
+		 RAISE NOTICE 'Delete experiments which contains any runs affected';		 
 		 delete FROM public.experiments e 
                   where e.id not in ( select r.experiment_id
 				                       from	runs r 
@@ -94,7 +94,7 @@ BEGIN
 		 
 		 
 		 RAISE NOTICE '--------------';
-		 RAISE NOTICE 'Delete projects which contains any experiments affected'
+		 RAISE NOTICE 'Delete projects which contains any experiments affected';
 		 
 		 delete FROM public.projects p 
                  where p.id not in ( select e.project_id
@@ -104,7 +104,7 @@ BEGIN
 		 
          
 		 RAISE NOTICE '--------------';
-		 RAISE NOTICE 'Delete teams which contains any project affected '
+		 RAISE NOTICE 'Delete teams which contains any project affected ';
 		 DELETE from teams t    
          where t.id not in (select p.team_id from projects p)
 		 and t.organization_id =row_data.orga_id;
@@ -112,7 +112,7 @@ BEGIN
  
 		 
 		 RAISE NOTICE '--------------';
-		 RAISE NOTICE 'Delete organizations which contains any teams affected'
+		 RAISE NOTICE 'Delete organizations which contains any teams affected';
 		 DELETE from organizations o    
          where o.id not in (select t.organization_id from teams t )
 		 and o.id = row_data.orga_id;
