@@ -126,6 +126,5 @@ code_carbon.db
 emissions*.csv*
 tests/test_data/rapl/*
 
-
 #asciinema
 *.cast
