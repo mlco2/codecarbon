@@ -298,6 +298,32 @@ python examples/api_call_debug.py
 ```
 
 📝 Edit the line `occurence = 60 * 24 * 365 * 100` to specify the number of minutes you want to run it.
+
+#### Restore database from a production Backup
+
+```sh
+docker cp postgresql_*.dump postgres_codecarbon:/tmp
+docker exec -it postgres_codecarbon bash
+export BACKUP_USER=upwnpbdktjvnoks0foxq
+export BACKUP_DB=bnrwiktgr4hzukt1xseg
+psql -U $POSTGRES_USER -d $POSTGRES_DB -c "CREATE USER $BACKUP_USER WITH PASSWORD '$POSTGRES_PASSWORD';"
+psql -U $POSTGRES_USER -d $POSTGRES_DB -c "ALTER USER $BACKUP_USER CREATEDB;"
+createdb -U $BACKUP_USER $BACKUP_DB
+psql -U $BACKUP_USER -d $POSTGRES_DB -c "CREATE DATABASE $BACKUP_DB;"
+pg_restore -d $BACKUP_DB -U $BACKUP_USER --jobs=8 --clean --create /tmp/postgresql_*.dump
+psql -U $BACKUP_USER -d $BACKUP_DB -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"$POSTGRES_USER\";"
+psql -U $POSTGRES_USER -d $BACKUP_DB -c "ALTER DATABASE $POSTGRES_DB RENAME TO \"$POSTGRES_DB-backup\";"
+psql -U $BACKUP_USER -d $POSTGRES_DB-backup -c "ALTER DATABASE $BACKUP_DB RENAME TO $POSTGRES_DB;"
+
+```
+
+#### Clean the database
+
+To remove orphans (elements without run) from the database, run:
+```sql
+CALL public.spcc_purgeduplicatedata();
+```
+
 #### Deployment
 
 ##### API

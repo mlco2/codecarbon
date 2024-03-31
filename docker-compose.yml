@@ -37,7 +37,7 @@ services:
       POSTGRES_DB: ${DATABASE_NAME:-codecarbon_db}
       POSTGRES_PASSWORD: ${DATABASE_PASS:-supersecret}
       POSTGRES_USER: ${DATABASE_USER:-codecarbon-user}
-    image: postgres:12
+    image: postgres:13
     networks:
       - codecarbon_net
     ports:
