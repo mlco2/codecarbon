@@ -9,6 +9,7 @@ from codecarbon.core.powermetrics import ApplePowermetrics, is_powermetrics_avai
 
 
 class TestApplePowerMetrics(unittest.TestCase):
+
     @pytest.mark.integ_test
     def test_apple_powermetrics(self):
         if is_powermetrics_available():
@@ -16,6 +17,7 @@ class TestApplePowerMetrics(unittest.TestCase):
             details = power_gadget.get_details()
             assert len(details) > 0
 
+    @pytest.mark.integ_test
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._setup_cli")
     def test_get_details(self, mock_setup, mock_log_values):

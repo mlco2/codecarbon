@@ -44,33 +44,6 @@ viz = [
     "dash_bootstrap_components < 1.0.0",
     "fire",
 ]
-test = [
-   "mock",
-   "pytest",
-   "responses",
-   # "tox",
-   "numpy",
-   "psutil",
-   "requests-mock",
-   "rapidfuzz",
-]
-dev = [
-    "pre-commit",
-]
-
-api = [
-    "alembic<2.0.0",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
-]
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
@@ -82,14 +55,57 @@ requires = [
 ]
 
 [tool.hatch.envs.default]
+# pip-compile automate the export of environments.txt
 type = "pip-compile"
 
+[tool.hatch.envs.carbonboard]
+features = ["viz"]
+
+[tool.hatch.envs.carbonboard.scripts]
+run = "carbonboard {args:.}"
+
 [tool.hatch.envs.docs]
+# detached means that other deps won't be installed
+detached = true
 dependencies = [
   "sphinx",
   "sphinx_rtd_theme",
 ]
 pip-compile-constraint = ""
+
+[tool.hatch.envs.dev]
+dependencies = [
+    "pre-commit",
+    "ruff",
+    "black",
+    "mypy",
+]
+
+[tool.hatch.envs.dev.scripts]
+precommit-install = "pre-commit install"
+precommit-update = "pre-commit autoupdate"
+precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
+lint = ["black --check --diff {args:.}", "ruff check {args:.}", "mypy {args:.}"]
+format = ["black {args:.}", "ruff --fix --exit-non-zero-on-fix {args:.}"]
+
+[tool.hatch.envs.test]
+dependencies = [
+   "mock",
+   "pytest",
+   "responses",
+   # "tox",
+   "numpy",
+   "psutil",
+   "requests-mock",
+   "rapidfuzz",
+]
+
+[tool.hatch.envs.test.scripts]
+package = 'pytest -vv -m "not integ_test" tests/'
+package-integ = 'python -m pytest -vv tests/'
+
+[[tool.hatch.envs.test.matrix]]
+python = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
 
 [tool.hatch.envs.docs.scripts]
 build = "cd docs/edit && make docs"
@@ -106,10 +122,33 @@ run = "cd dashboard && python carbon_board_API.py"
 
 [tool.hatch.envs.api]
 dependencies = [
-    "dash>=2.2.0",
-    "dash_bootstrap_components",
-    "plotly>=5.6.0",
+    "alembic<2.0.0",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "httpx",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination<1.0.0",
+    "pytest",
+    "mock",
+    "pytest",
+    "responses",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
 ]
+
+[tool.hatch.envs.api.scripts]
+local = "cd carbonserver && uvicorn main:app --reload"
+docker = "docker-compose up -d"
+test-unit = 'cd carbonserver && python -m pytest -vv tests/api/routers/ && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/'
+test-integ = 'cd carbonserver && python -m pytest -vv tests/api/integration/'
 
 [tool.hatch.version]
 path = "codecarbon/_version.py"

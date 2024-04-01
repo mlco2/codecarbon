@@ -1,14 +1,6 @@
 
 # Contributing to Code Carbon
 
-
-Install [Hatch](https://hatch.pypa.io/1.9/install/).
-
-hatch env create
-
-Hatch inconvenient : No package.lock, we need a plugin for that :
-
-
 (New to open-source? [Here's a guide to help you](https://opensource.guide/how-to-contribute/))
 
 - [I have a question...](#questions)
@@ -45,54 +37,50 @@ New issues can be created with in the [GitHub repo](https://github.com/mlco2/cod
 
 ### Installation
 
+CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 
-Create a virtual environment using `conda` for easier management of dependencies and packages.
-For installing conda, follow the instructions on the [official conda website](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
+Since April 2024 we use Hatch for managing development environment. Hatch manage the environments, even the Python versions, the dependencies and handle matrix testing. It is a good way to avoid conflicts with your system Python.
 
-```bash
-conda create --name codecarbon python=3.8
-conda activate codecarbon
-```
+We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
-Install from sources in development mode:
+It is not mandatory for small contribution, while not recommanded, you could just install the package with `pip install -e .`.
 
-```bash
-git clone https://github.com/mlco2/codecarbon
+Please install [Hatch](https://hatch.pypa.io/) following [installation instruction](https://hatch.pypa.io/latest/install/), or with `pip install hatch`.
+
+Then, clone the repository and create the environment with:
+
+```sh
+git clone https://github.com/mlco2/codecarbon.git
 cd codecarbon
-pip install -e .
+hatch env create
 ```
 
 
 ### Tests
 
-
-Make sure that the [`tox` package](https://tox.readthedocs.io/en/latest/example/package.html) is available to run tests and debug:
-
-```
-pip install tox
-```
-
 You can run the unit tests by simply entering tox in the terminal when in the root package directory.
 
-```
-tox
+```sh
+hatch run test:package
 ```
 
 This will not run test that may fail because of your environment (no CO2 Signal API token, no PowerGadget...). If you want to run all package tests:
 
-```
-tox -e all
+```sh
+hatch run test:package-integ
 ```
 
 You can also run your specific test in isolation to develop and debug them:
 
-```
-$ python -m unittest tests.test_your_feature
+```sh
+$ hatch run python -m unittest tests.test_your_feature
 
 # or
 
-$ python -m unittest tests.test_your_feature.YourTestCase.test_function
+$ hatch run python -m unittest tests.test_your_feature.YourTestCase.test_function
 ```
+
+For example : `hatch run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
 
 To test the API, see [how to deploy it](#local_deployement) first.
 
@@ -157,21 +145,20 @@ Then run opened test with this button:
 
 ## CSV Dashboard
 
-To install dependencies:
-```
-pip install codecarbon["viz"]
-```
-
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
 
 ```bash
+hatch run carbonboard:run --filepath="examples/emissions.csv"
+
+# or
+pip install codecarbon["viz"]
 python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
 
 If you have the package installed, you can run the CLI command:
 
 ```bash
-carbonboard --filepath="examples/emissions.csv" --port=xxxx
+carbonboard --filepath="examples/emissions.csv" --port=8050
 ```
 
 ## API Dashboard
@@ -184,11 +171,75 @@ hatch run dashboard:run
 
 Then, click on the url displayed in the terminal.
 
-### Coding style && Linting
+By default, the dashboard is connected to the production API, to connect it to your local API, you can set the environment variable `CODECARBON_API_URL` to `http://localhost:8008` :
 
-The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `pre-commit install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+```sh
+export CODECARBON_API_URL=http://localhost:8008
+hatch run dashboard:run
+```
+
+
+
+### API
+
+The easiest way to run the API locally is with Docker, it will set-up the Postgres database for you. Launch this command in the project directory:
+
+```sh
+hatch run api:docker
+
+# or
+
+docker-compose up -d
+```
+
+Please see [Docker specific documentation](./docker/README.md) for more informations.
+When up, the API documentation is available locally at the following URL: http://localhost:8008/redoc and can be used for testing.
+
+If you want to run the API without Docker, you can run the following commands:
+
+```sh
+hatch run api:local
+```
+
+In order to make codecarbon automatically connect to the local API, create a file `.codecarbon.config` with contents:
+```
+[codecarbon]
+api_endpoint = http://localhost:8008
+```
+
+Before using it, you need an experiment_id, to get one, run:
+```
+codecarbon init
+```
+
+It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.
+
+Then you could run an example:
+```
+python examples/api_call_debug.py
+```
+
+📝 Edit the line `occurence = 60 * 24 * 365 * 100` to specify the number of minutes you want to run it.
+
+### Test the API
+
+To test the API, you can use the following command:
+
+```sh
+hatch run api:test-unit
+```
+
+```sh
+export CODECARBON_API_URL=http://localhost:8008
+hatch run api:test-integ
 
 ```
+
+### Coding style && Linting
+
+The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `hatch run dev:precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+
+```log
 [INFO] Initializing environment for https://github.com/psf/black.
 [INFO] Initializing environment for https://gitlab.com/pycqa/flake8.
 [INFO] Installing environment for https://github.com/psf/black.
@@ -212,16 +263,15 @@ If any of the linters/formatters fail, check the difference with `git diff`, add
 
 You can also run `pre-commit` with `pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
-It's nice to keep it up-to-date with `pip install -U  pre-commit && pre-commit autoupdate` sometimes.
+It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
 
 ### Packaging
 
-Dependencies are defined in three different places:
+Dependencies are defined in different places:
 
-- In [setup.py](setup.py#L7), those are the dependencies for the Pypi package.
+- In [pyproject.toml](pyproject.toml#L28), those are the dependencies for the Pypi package.
+- In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
 - In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
-
-We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
 ### Alternative ways of contributing
 
@@ -269,36 +319,6 @@ Inside the docker container, run:
 - `anaconda upload --user codecarbon /data/noarch/codecarbon-*.tar.bz2`
 
 
-### API
-
-The easiest way to run the API locally is with Docker, it will set-up the Postgres database for you. Launch this command in the project directory:
-```
-docker-compose up -d
-```
-Please see [Docker specific documentation](./docker/README.md) for more informations.
-When up, the API documentation is available locally at the following URL: http://localhost:8008/redoc and can be used for testing.
-
-
-In order to make codecarbon automatically connect to the local API, create a file `.codecarbon.config` with contents:
-```
-[codecarbon]
-api_endpoint = http://localhost:8008
-```
-
-Before using it, you need an experiment_id, to get one, run:
-```
-codecarbon init
-```
-
-It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.
-
-Then you could run an example:
-```
-python examples/api_call_debug.py
-```
-
-📝 Edit the line `occurence = 60 * 24 * 365 * 100` to specify the number of minutes you want to run it.
-
 #### Restore database from a production Backup
 
 ```sh
@@ -314,12 +334,12 @@ pg_restore -d $BACKUP_DB -U $BACKUP_USER --jobs=8 --clean --create /tmp/postgres
 psql -U $BACKUP_USER -d $BACKUP_DB -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"$POSTGRES_USER\";"
 psql -U $POSTGRES_USER -d $BACKUP_DB -c "ALTER DATABASE $POSTGRES_DB RENAME TO \"$POSTGRES_DB-backup\";"
 psql -U $BACKUP_USER -d $POSTGRES_DB-backup -c "ALTER DATABASE $BACKUP_DB RENAME TO $POSTGRES_DB;"
-
 ```
 
 #### Clean the database
 
 To remove orphans (elements without run) from the database, run:
+
 ```sql
 CALL public.spcc_purgeduplicatedata();
 ```
@@ -333,7 +353,7 @@ The API is availiable to everyone from https://api.codecarbon.io, but if you wan
 To deploy the API we use [Clever Cloud](https://www.clever-cloud.com/), an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
 
 Here is the Clever Cloud configuration if you want to reproduce it:
-```
+```conf
 APP_FOLDER="carbonserver"
 CC_PIP_REQUIREMENTS_FILE="requirements.txt"
 CC_POST_BUILD_HOOK="cd $APP_HOME/carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
@@ -346,7 +366,7 @@ PORT="8080"
 _CC stand here for Clever Cloud, not Code Carbon_ 😉
 
 To deploy,
-```
+```sh
 git remote add deploy git+ssh://git@push-n2-par-clevercloud-customers.services.clever-cloud.com/app_<secret_do_not_share>.git
 git push deploy master:master
 ```
@@ -374,7 +394,6 @@ PORT="8000"
 ```
 
 ### License
-
 
 By contributing your code, you agree to license your contribution under the terms of the [MIT License](LICENSE).
 
