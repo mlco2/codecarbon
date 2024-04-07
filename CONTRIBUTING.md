@@ -45,7 +45,7 @@ We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
 It is not mandatory for small contribution, while not recommanded, you could just install the package with `pip install -e .`.
 
-Please install [Hatch](https://hatch.pypa.io/) following [installation instruction](https://hatch.pypa.io/latest/install/), or with `pip install hatch`.
+Please install [Hatch](https://hatch.pypa.io/) following [installation instruction](https://hatch.pypa.io/latest/install/), or with `pipx install hatch`.
 
 Then, clone the repository and create the environment with:
 

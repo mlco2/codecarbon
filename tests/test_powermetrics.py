@@ -17,7 +17,7 @@ class TestApplePowerMetrics(unittest.TestCase):
             details = power_gadget.get_details()
             assert len(details) > 0
 
-    @pytest.mark.integ_test
+    # @pytest.mark.integ_test
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._setup_cli")
     def test_get_details(self, mock_setup, mock_log_values):

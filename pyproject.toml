@@ -89,6 +89,7 @@ lint = ["black --check --diff {args:.}", "ruff check {args:.}", "mypy {args:.}"]
 format = ["black {args:.}", "ruff --fix --exit-non-zero-on-fix {args:.}"]
 
 [tool.hatch.envs.test]
+features = ["viz"]
 dependencies = [
    "mock",
    "pytest",
