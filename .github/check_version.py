@@ -59,21 +59,19 @@ if __name__ == "__main__":
     versions = get_versions_from_pypi("codecarbon")
     module_version = get_local_version()
     meta_version = get_local_version(".conda/meta.yaml")
-    setup_version = get_local_version("setup.py")
-    local_versions = [module_version, meta_version, setup_version]
+    local_versions = [module_version, meta_version]
     if local_versions.count(local_versions[0]) != len(local_versions):
         print("All local versions did not match !")
-        print(f"__init__.py : {module_version}")
-        print(f"setup.py : {setup_version}")
+        print(f"_version.py : {module_version}")
         print(f"meta.yaml : {meta_version}")
         sys.exit(1)
     if args.onlyprintversion:
-        print(setup_version)
+        print(module_version)
     elif module_version.lower().strip() in versions:
-        print(f"Version {setup_version} already exist on PyPi !")
-        print("Please bump the version in setup.py, __init__.py and meta.yaml !.")
+        print(f"Version {module_version} already exist on PyPi !")
+        print("Please bump the version in _version.py and meta.yaml !.")
         sys.exit(1)
     else:
         print(
-            f"All good !\nLocal version is {setup_version}\nPyPi versions are {versions}"
+            f"All good !\nLocal version is {module_version}\nPyPi versions are {versions}"
         )

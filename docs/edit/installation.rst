@@ -56,4 +56,4 @@ The following packages are used by the CodeCarbon package, and will be installed
     rapidfuzz
     prometheus_client
 
-Please refer to `setup.py <https://github.com/mlco2/codecarbon/blob/347a802a3478a5740f04b3a7b6b5f379b38000a7/setup.py#L6>`_ for the latest list of the packages used.
+Please refer to `requirements.txt <https://github.com/mlco2/codecarbon/requirements.txt>`_ for the latest list of the packages used.
