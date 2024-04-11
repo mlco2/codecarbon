@@ -106,7 +106,8 @@ package = 'pytest -vv -m "not integ_test" tests/'
 package-integ = 'python -m pytest -vv tests/'
 
 [[tool.hatch.envs.test.matrix]]
-python = ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+# Python 3.7 does not works with pip-tools
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
 [tool.hatch.envs.docs.scripts]
 build = "cd docs/edit && make docs"
