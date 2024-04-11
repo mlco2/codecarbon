@@ -156,7 +156,7 @@
 </tbody>
 </table>
 <p>PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.</p>
-<p>Old data-centers have a PUE up to 2.2, where new green one coud be as low as 1.1.</p>
+<p>Old data-centers have a PUE up to 2.2, where new green one could be as low as 1.1.</p>
 </section>
 <section id="output-parameters">
 <h2>Output parameters<a class="headerlink" href="#output-parameters" title="Link to this heading"></a></h2>
@@ -220,7 +220,7 @@
 </tr>
 <tr class="row-odd"><td><p>api_call_interval</p></td>
 <td><div class="line-block">
-<div class="line">Occurence to wait before calling API (defaults to 8):</div>
+<div class="line">Number of measurements between API calls (defaults to 8):</div>
 <div class="line">-1 : call API on flush() and at the end</div>
 <div class="line">1 : at every measure</div>
 <div class="line">2 : at every 2 measure, and so on</div>
@@ -235,7 +235,7 @@
 </td>
 </tr>
 <tr class="row-odd"><td><p>logging_logger</p></td>
-<td><p>LoggerOutput object encapsulating a logging.logger or a Google Cloud logger</p></td>
+<td><p>LoggerOutput object encapsulating a logging.Logger or a Google Cloud logger</p></td>
 </tr>
 <tr class="row-even"><td><p>logger_preamble</p></td>
 <td><p>String to systematically include in the logger’s messages (defaults to “”)</p></td>
@@ -259,7 +259,7 @@
 <tbody>
 <tr class="row-even"><td><p>country_iso_code</p></td>
 <td><div class="line-block">
-<div class="line">3 letter ISO Code of the country where the experiment is being run.</div>
+<div class="line">3-letter ISO Code of the country where the experiment is being run.</div>
 <div class="line">Available countries are listed in <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">global_energy_mix.json</a></div>
 </div>
 </td>

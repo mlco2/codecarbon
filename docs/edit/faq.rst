@@ -11,7 +11,7 @@ Frequently Asked Questions
 
 		For cloud computing:
 
-		- Google publish carbon intensity of electricity for `Google Cloud Plateform <https://cloud.google.com/sustainability/region-carbon?hl=fr>`_.
+		- Google publish carbon intensity of electricity for `Google Cloud Platform <https://cloud.google.com/sustainability/region-carbon?hl=fr>`_.
 
 		- Unfortunately, Amazon has made a habit of keeping information about its carbon footprint out of public view. Although it released its global carbon footprint, it does not publish datacenter carbon footprints.
 
