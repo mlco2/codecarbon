@@ -132,7 +132,7 @@ The HTTP Output allow the call of a webhook with emission data when the tracker 
 CodeCarbon API
 --------------
 
-You can send all the data to the CodeCarbon API. So you have all your historical data in one place. By default nothing is send to the API.
+You can send all the data to the CodeCarbon API. So you have all your historical data in one place. By default, nothing is sent to the API.
 
 Logger Output
 -------------

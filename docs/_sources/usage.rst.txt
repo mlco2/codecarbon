@@ -187,12 +187,12 @@ For instance:
 * environment variables will override ``./.codecarbon.config`` if the same parameter is set in both files :
 
 	.. code-block:: bash
-            
+
             export CODECARBON_GPU_IDS="0, 1"
             export CODECARBON_LOG_LEVEL="WARNING"
 
 
-* script parameters will override environment variables if the same parameter is set in both: 
+* script parameters will override environment variables if the same parameter is set in both:
 
 	.. code-block:: python
 
@@ -227,7 +227,7 @@ Yields attributes:
 Access internet through proxy server
 ------------------------------------
 
-If you need a proxy to access internet, which is needed to call a Web API, like `Codecarbon API <https://api.codecarbon.io/docs>`_, you have to set environment variable ``HTTPS_PROXY``, or *HTTP_PROXY* if calling an ``http://`` enpoint.
+If you need a proxy to access internet, which is needed to call a Web API, like `Codecarbon API <https://api.codecarbon.io/docs>`_, you have to set environment variable ``HTTPS_PROXY``, or *HTTP_PROXY* if calling an ``http://`` endpoint.
 
 You could do it in your shell:
 
@@ -240,6 +240,7 @@ Or in your Python code:
 .. code-block:: python
 
     import os
+
     os.environ["HTTPS_PROXY"] = "http://0.0.0.0:0000"
 
 For more information, please read the `requests library proxy documentation <https://requests.readthedocs.io/en/latest/user/advanced/#proxies>`_

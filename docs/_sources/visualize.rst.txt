@@ -1,6 +1,6 @@
 .. _visualize:
 
-Visualize 
+Visualize
 =========
 
 Offline
@@ -59,7 +59,7 @@ region to host infrastructure for the concerned cloud provider.
 Online (Beta)
 --------------
 
-A ``Dash App`` is also aviable for those who chose to connect the package to the API then data are public and aviable for all to explore.
+A ``Dash App`` is also available for those who chose to connect the package to the API then data are public and available for all to explore.
 `preview <https://dashboard.codecarbon.io/>`_
 
 from global...
@@ -79,7 +79,7 @@ to more and more...
 
 Each project can be divided into several experiments, and in each experiment several runs can happen.
 The total emissions of experiments is shown on the barchart on the right hand side, and the runs on the bubble chart on the left hand side.
-If ever your project has several experiments you can switch from one experiment's runs in the bubble chart to another's by clicking the bar chart.
+If ever your project has several experiments you can switch from one experiment's runs in the bubble chart to another by clicking the bar chart.
 
 .. image:: ./images/Experiment-run.png
             :align: center
@@ -94,7 +94,7 @@ Clicking on one bubble, you can display the runtime series and see its metadata.
 
 .. image:: ./images/run&metadata.png
             :align: center
-            :alt: run time serie and metadata
+            :alt: run time series and metadata
             :width: 750px
 
 Electricity production carbon intensity per country

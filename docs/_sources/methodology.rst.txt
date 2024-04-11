@@ -63,7 +63,7 @@ Then, for example, if the Energy Mix of the Grid Electricity is 25% Coal, 35% Pe
 
     Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
 
-If ever we have neither the global carbon intensity of a country nor it's electricity mix, we apply a world avarage of 475 gCO2.eq/KWh ( `source <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_ ).
+If ever we have neither the global carbon intensity of a country nor it's electricity mix, we apply a world average of 475 gCO2.eq/KWh ( `source <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_ ).
 
 As you can see, we try to be as accurate as possible in estimating carbon intensity of electricity. Still there is room for improvement and all contributions are welcome.
 
@@ -71,7 +71,7 @@ As you can see, we try to be as accurate as possible in estimating carbon intens
 Power Usage
 -----------
 Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
-``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions tracker.
+``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions' tracker.
 
 Currently, the package supports the following hardware infrastructure.
 
@@ -84,7 +84,7 @@ RAM
 ~~~~
 
 CodeCarbon uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
-This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
+This measure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
 
 CPU
 ~~~~
@@ -98,10 +98,10 @@ Apple Silicon Chips (M1, M2)
 Apple Silicon Chips contain both the CPU and the GPU.
 
 Codecarbon tracks Apple Silicon Chip energy consumption using ``powermetrics``. It should be available natively on any mac.
-However this tool is only usable with ``sudo`` rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
+However, this tool is only usable with ``sudo`` rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
 (if you know of any solution for this do not hesitate and `open an issue with your proposed solution <https://github.com/mlco2/codecarbon/issues/>`_).
 
-To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command: 
+To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command:
 
 .. code-block:: bash
 
@@ -114,20 +114,20 @@ Then add the following line at the end of the file:
 
     username ALL = (root) NOPASSWD: /usr/bin/powermetrics
 
-If you do not want to give sudo rights to your user, then CodeCarbon will fallback in constant mode to measure CPU energy consumption.
+If you do not want to give sudo rights to your user, then CodeCarbon will fall back to constant mode to measure CPU energy consumption.
 
 - **On Linux**
 
 Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``\sys\class\powercap\intel-rapl`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
 All CPUs listed in this directory will be tracked. `Help us improve this and make it configurable <https://github.com/mlco2/codecarbon/issues/156>`_.
 
-*Note*: The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path
+*Note*: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path
 
 
-If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode:
+If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fallback mode:
  - It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
  - If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
- - We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.
+ - We could not find any good resource showing statistical relationships between TDP and average power, so we empirically tested that 50% is a decent approximation.
 
 The net Energy Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
@@ -141,7 +141,7 @@ References
 How CodeCarbon Works
 ~~~~~~~~~~~~~~~~~~~~
 
-CodeCarbon use a scheduler that, by default, call for the measure every 15 seconds so it has no significant overhead.
+CodeCarbon uses a scheduler that, by default, calls for the measure every 15 seconds, so it has no significant overhead.
 
 The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.
 
