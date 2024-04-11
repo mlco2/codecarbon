@@ -19,5 +19,5 @@ jobs:
         key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
     - name: Run pre-commit
       run: |
-        pip install pre-commit==3.5.0
+        pip install pre-commit==3.7.0
         pre-commit run --show-diff-on-failure --color=always --all-files
