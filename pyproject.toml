@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "codecarbon"
 dynamic = ["version"]
 readme = "README.md"
-license = ""
+license = "MIT"
 requires-python = ">=3.7"
 authors = [
     { name = "Mila" },
