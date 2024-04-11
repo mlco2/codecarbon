@@ -37,4 +37,4 @@ Or use the API in your code:
     if __name__ =="__main__":
         train_model()
 
-More options can be specified in ``@track_emissions`` or in ``.codecarbon.config``
+More options could be specified in ``@track_emissions`` or in ``.codecarbon.config``

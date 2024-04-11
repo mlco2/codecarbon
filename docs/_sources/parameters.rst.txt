@@ -92,7 +92,7 @@ Specific parameters for offline mode
    * - Parameter
      - Description
    * - country_iso_code
-     - | 3 letter ISO Code of the country where the experiment is being run.
+     - | 3-letter ISO Code of the country where the experiment is being run.
        | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`_
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted
@@ -127,7 +127,7 @@ Decorator ``track_emissions`` in addition to standard arguments, requires the fo
      - | Boolean variable indicating if the tracker should be run in offline mode
        | defaults to ``False``
    * - country_iso_code
-     - | 3-letter ISO Code of the country where the experiment is being run.
+     - | 3 letter ISO Code of the country where the experiment is being run.
        | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json>`_
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted

@@ -141,7 +141,7 @@ References
 How CodeCarbon Works
 ~~~~~~~~~~~~~~~~~~~~
 
-CodeCarbon uses a scheduler that, by default, calls for the measure every 15 seconds, so it has no significant overhead.
+CodeCarbon uses a scheduler that, by default, calls for a measure every 15 seconds, so it has no significant overhead.
 
 The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.
 
