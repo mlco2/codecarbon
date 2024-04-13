@@ -319,13 +319,14 @@ additional parameters and configuration options.</p>
 </section>
 <section id="access-internet-through-proxy-server">
 <h2>Access internet through proxy server<a class="headerlink" href="#access-internet-through-proxy-server" title="Link to this heading"></a></h2>
-<p>If you need a proxy to access internet, which is needed to call a Web API, like <a class="reference external" href="https://api.codecarbon.io/docs">Codecarbon API</a>, you have to set environment variable <code class="docutils literal notranslate"><span class="pre">HTTPS_PROXY</span></code>, or <em>HTTP_PROXY</em> if calling an <code class="docutils literal notranslate"><span class="pre">http://</span></code> enpoint.</p>
+<p>If you need a proxy to access internet, which is needed to call a Web API, like <a class="reference external" href="https://api.codecarbon.io/docs">Codecarbon API</a>, you have to set environment variable <code class="docutils literal notranslate"><span class="pre">HTTPS_PROXY</span></code>, or <em>HTTP_PROXY</em> if calling an <code class="docutils literal notranslate"><span class="pre">http://</span></code> endpoint.</p>
 <p>You could do it in your shell:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">HTTPS_PROXY</span><span class="o">=</span><span class="s2">&quot;http://0.0.0.0:0000&quot;</span>
 </pre></div>
 </div>
 <p>Or in your Python code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HTTPS_PROXY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http://0.0.0.0:0000&quot;</span>
 </pre></div>
 </div>

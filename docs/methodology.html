@@ -171,13 +171,13 @@ energy sources that are used to generate electricity, including fossil fuels and
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
 </pre></div>
 </div>
-<p>If ever we have neither the global carbon intensity of a country nor it’s electricity mix, we apply a world avarage of 475 gCO2.eq/KWh ( <a class="reference external" href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">source</a> ).</p>
+<p>If ever we have neither the global carbon intensity of a country nor it’s electricity mix, we apply a world average of 475 gCO2.eq/KWh ( <a class="reference external" href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">source</a> ).</p>
 <p>As you can see, we try to be as accurate as possible in estimating carbon intensity of electricity. Still there is room for improvement and all contributions are welcome.</p>
 </section>
 <section id="power-usage">
 <h2>Power Usage<a class="headerlink" href="#power-usage" title="Link to this heading"></a></h2>
 <p>Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
-<code class="docutils literal notranslate"><span class="pre">measure_power_secs</span></code>, with default value 15 seconds, that can be passed when instantiating the emissions tracker.</p>
+<code class="docutils literal notranslate"><span class="pre">measure_power_secs</span></code>, with default value 15 seconds, that can be passed when instantiating the emissions’ tracker.</p>
 <p>Currently, the package supports the following hardware infrastructure.</p>
 <section id="gpu">
 <h3>GPU<a class="headerlink" href="#gpu" title="Link to this heading"></a></h3>
@@ -186,7 +186,7 @@ energy sources that are used to generate electricity, including fossil fuels and
 <section id="ram">
 <h3>RAM<a class="headerlink" href="#ram" title="Link to this heading"></a></h3>
 <p>CodeCarbon uses a 3 Watts for 8 GB ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .
-This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.</p>
+This measure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.</p>
 </section>
 <section id="cpu">
 <h3>CPU<a class="headerlink" href="#cpu" title="Link to this heading"></a></h3>
@@ -199,7 +199,7 @@ This mesure is not satisfying and if ever you have an idea how to enhance it ple
 <h3>Apple Silicon Chips (M1, M2)<a class="headerlink" href="#apple-silicon-chips-m1-m2" title="Link to this heading"></a></h3>
 <p>Apple Silicon Chips contain both the CPU and the GPU.</p>
 <p>Codecarbon tracks Apple Silicon Chip energy consumption using <code class="docutils literal notranslate"><span class="pre">powermetrics</span></code>. It should be available natively on any mac.
-However this tool is only usable with <code class="docutils literal notranslate"><span class="pre">sudo</span></code> rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
+However, this tool is only usable with <code class="docutils literal notranslate"><span class="pre">sudo</span></code> rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
 (if you know of any solution for this do not hesitate and <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/">open an issue with your proposed solution</a>).</p>
 <p>To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>visudo
@@ -209,18 +209,18 @@ However this tool is only usable with <code class="docutils literal notranslate"
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>username<span class="w"> </span><span class="nv">ALL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">(</span>root<span class="o">)</span><span class="w"> </span>NOPASSWD:<span class="w"> </span>/usr/bin/powermetrics
 </pre></div>
 </div>
-<p>If you do not want to give sudo rights to your user, then CodeCarbon will fallback in constant mode to measure CPU energy consumption.</p>
+<p>If you do not want to give sudo rights to your user, then CodeCarbon will fall back to constant mode to measure CPU energy consumption.</p>
 <ul class="simple">
 <li><p><strong>On Linux</strong></p></li>
 </ul>
 <p>Tracks Intel and AMD processor energy consumption from Intel RAPL files at <code class="docutils literal notranslate"><span class="pre">\sys\class\powercap\intel-rapl</span></code> ( <a class="reference external" href="https://web.eece.maine.edu/~vweaver/projects/rapl/">reference</a> ).
 All CPUs listed in this directory will be tracked. <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/156">Help us improve this and make it configurable</a>.</p>
-<p><em>Note</em>: The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path</p>
+<p><em>Note</em>: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path</p>
 <dl class="simple">
-<dt>If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode:</dt><dd><ul class="simple">
+<dt>If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fallback mode:</dt><dd><ul class="simple">
 <li><p>It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).</p></li>
 <li><p>If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.</p></li>
-<li><p>We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.</p></li>
+<li><p>We could not find any good resource showing statistical relationships between TDP and average power, so we empirically tested that 50% is a decent approximation.</p></li>
 </ul>
 </dd>
 </dl>
@@ -233,7 +233,7 @@ All CPUs listed in this directory will be tracked. <a class="reference external"
 <p><a class="reference external" href="https://arxiv.org/pdf/1911.08354.pdf">Energy Usage Reports: Environmental awareness as part of algorithmic accountability</a></p>
 <section id="how-codecarbon-works">
 <h3>How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Link to this heading"></a></h3>
-<p>CodeCarbon use a scheduler that, by default, call for the measure every 15 seconds so it has no significant overhead.</p>
+<p>CodeCarbon uses a scheduler that, by default, calls for a measure every 15 seconds, so it has no significant overhead.</p>
 <p>The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.</p>
 <p>The scheduler is started when the first <code class="docutils literal notranslate"><span class="pre">start</span></code> method is called and stopped when <code class="docutils literal notranslate"><span class="pre">stop</span></code> method is called.</p>
 </section>

@@ -188,7 +188,10 @@ class BaseEmissionsTracker(ABC):
         :param save_to_prometheus: Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
         :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
-        :param gpu_ids: User-specified known gpu ids to track, defaults to None.
+        :param gpu_ids: User-specified known gpu ids to track.
+                            Defaults to None, which means that all available gpus will be tracked.
+                            It needs to be a list of integers or a comma-separated string.
+                            Valid examples: [1, 3, 4] or "1,2".
         :param emissions_endpoint: Optional URL of http endpoint for sending emissions
                                    data.
         :param experiment_id: Id of the experiment.
@@ -268,10 +271,16 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
 
-        if isinstance(self._gpu_ids, str):
+        # If _gpu_ids is a string or a list of int, parse it to a list of ints
+        if isinstance(self._gpu_ids, str) or (
+            isinstance(self._gpu_ids, list)
+            and all(isinstance(gpu_id, int) for gpu_id in self._gpu_ids)
+        ):
             self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
             self._conf["gpu_ids"] = self._gpu_ids
             self._conf["gpu_count"] = len(self._gpu_ids)
+        else:
+            logger.warn("Invalid gpu_ids format. Expected a string or a list of ints.")
 
         logger.info("[setup] RAM Tracking...")
         ram = RAM(tracking_mode=self._tracking_mode)

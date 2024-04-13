@@ -15,8 +15,8 @@ CodeCarbon can be automatically integrated with `Comet <https://www.comet.ml/sit
 To get started with the Comet-CodeCarbon integration, make sure you have comet-ml installed:
 
 .. code-block:: python
-  
-	pip install comet_ml>=3.2.2
+
+    pip install comet_ml>=3.2.2
 
 
 Go to `Comet's website <https://www.comet.ml/site/>`_  and create a free account. From your account settings page, copy your personal API key.
@@ -25,7 +25,7 @@ In the `mnist-comet.py <https://github.com/mlco2/codecarbon/blob/master/examples
 
 .. code-block:: python
 
-	experiment = Experiment(api_key="YOUR API KEY")
+    experiment = Experiment(api_key="YOUR API KEY")
 
 
 Run your experiment and click on the link in stdout to be taken back to the Comet UI. You'll automatically see your metrics, hyperparameters, graph definition, system and environment details, and more.
