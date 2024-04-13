@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash.dependencies import Input, Output 
+from dash.dependencies import Input, Output ,State
 from data.data_functions import (
     get_experiment,
     get_experiment_runs,
@@ -22,12 +22,14 @@ from layout.app import app, df_mix
 from layout.template import darkgreen, vividgreen
 from plotly.subplots import make_subplots
 
-from dash import Input, Output
+from dash import Input, Output,State , no_update
+from dash.exceptions import PreventUpdate
 
 
 import json
 import os
 import requests
+import time
 
 
 API_PATH = os.getenv("CODECARBON_API_URL")
@@ -43,75 +45,138 @@ PSSD = "fake-super-secret-token"
 # ************************************************************************
 # ************************************************************************
 
+# @app.callback(
+#     Output('body-div', 'children'),
+#     #Output('err','children'),
+#     Input('show-secret', 'n_clicks'),
+    
+#     State('input_organame','value'),
+#     State('input_orgadesc','value'),
+#     #prevent_initial_call=True,
+#     running=[(Output("show-secret", "disabled"), True, False)]
+# )
+# def update_output(n_clicks,input_organame,input_orgadesc):
+#     try:
+#         #time.sleep(5)
+#         if n_clicks is None:
+#                raise PreventUpdate
+#         if not input_organame and not input_orgadesc:
+#             return [""]
+#         else:
+#             print(input_organame)
+#             print(input_orgadesc)
+#             return [f'votre saisie est  {input_organame} and {input_orgadesc} ']
+#     except Exception as e:
+#             return  no_update, ''.format(e.args) 
+
+# def checkText(input_organame):
+#     for char in input_organame: 
+#         if not char.isalpha():
+#             return False 
+#         return True
+
 @app.callback(
-                Output("output","children"),
-                Output(component_id="organame", component_property="children"),
-                Output(component_id="orgadesc", component_property="children"),
-
-                Input("input_organame", "value"),
-
-                Input("input_orgadesc", "value"),
-
-                Input('submit_btn','n_clicks'),
-               
-)
-def on_button_click(input_organame,input_orgadesc,n_clicks):  
-        try: 
-       
-            if n_clicks:
-                path = f"{API_PATH}/organization" 
-                print(path)
-                payload = {'name': input_organame , 'description' : input_orgadesc}
-                response = requests.post(path, json=payload)
+                Output("Orgacard_to_hidden", "style"),
+                Output("Output_text","style"),
+                Output("Output_data","children"),
+                Output("Teamcard_to_hidden","style"),
+                [Input('submit_btn','n_clicks')],
+                [State("input_organame", "value"),
+                 State("input_orgadesc", "value")],
                 
-                if response.status_code == 201:
-                    return f'You have entered "{input_organame}" and "{input_orgadesc}" into the database.' 
+)
+def toggle_card_visibility(n_clicks,input_organame,input_orgadesc):
+    try: 
+        if n_clicks is None:
+            raise PreventUpdate
+        if not input_organame or not input_orgadesc: 
+             return {"display":"block"},{"display":"none"}, [""] ,{"display":"none"}
+        else:
+                Output_data= save_organization(input_organame,input_orgadesc)
+                print(Output_data)
+                print(n_clicks)
+                print(input_organame)
+                print(input_orgadesc)
+                return {"display":"none"},{"display":"block"},[Output_data],{"display":"block"}
+    except Exception as e:
+            return {"display":"block"},{"display":"block"}, e.args,{"display":"none"}
+
+def save_organization(input_organame, input_orgadesc) -> str:
+    try:
+            path = f"{API_PATH}/organization" 
+            print(path)
+            payload = {'name': input_organame , 'description' : input_orgadesc}
+            response = requests.post(path, json=payload)
+            message = "" 
+            if response.status_code == 201:
+                return f'You have entered "{input_organame}" and "{input_orgadesc}" into the database'
+            else: 
+                if response.status_code == 405:
+                    return f'You have entered "{response.status_code}"  and reason :  "{response.reason}"  '
                 else: 
-                    if response.status_code == 405:
-                        return f'You have entered "{response.status_code}"  and reason :  "{response.reason}"  '
-                    else: 
-                        return f'You have entered error :  "{response.status_code}"  and reason :  "{response.reason}" for path  {path} and payload {payload}'
-        except:
-                    return f'none'
+                    return  f'You have entered error :  "{response.status_code}"  and reason :  "{response.reason}" for path  {path} and payload {payload}'
+    except:
+            return f'none'
+
+#######################
+
+# Refresh organizations list
+# @app.callback(
+#     [   
+#         Output(component_id="dropdown-div", component_property="options"),
+#         Output(component_id="dropdown-div", component_property="value"),
+#     ],
+#     [Input("url-location", "pathname")],
+# )
+# def refresh_org_list(url):
+#     df_org = get_organization_list()
+#     org_id = df_org.id.unique().tolist()[1]
+#     options = [
+#         {"label": orgName, "value": orgId}
+#         for orgName, orgId in zip(df_org.name, df_org.id)
+#     ]
+#     return options, org_id
+
+
+
+# def update_dropdown(n_clicks, value1, value2):
+#     if n_clicks > 0 and value1 and value2:
+#         # Charger les options à partir de la base de données
+#         options = get_options_from_database()
+#         # Retourner la liste déroulante avec les options chargées
+#         return dcc.Dropdown(id='dropdown', options=options, placeholder='Sélectionnez une option')
+#     else:
+#         return None
+
+
+
+
 
 #@app.callback(
-##                Output("output2","children"),
-#                Input("input_teamname", "value"),
-#                Input("input_teamdesc", "value"),
-#                Input(component_id="org-dropdown", component_property="value"),
-#                Input('submit_btn_team','n_clicks'),
+#    [
+#        Output(component_id="teamPicked", component_property="options"),
+#        # Output(component_id="projectPicked", component_property="value"),
+#    ],
+#    [
+#        Input(component_id="org-dropdown", component_property="value"),
+#    ],
 #)
-#def on_button_click(input_teamname,input_teamdesc,n_clicks):
-
-    #if n_clicks:
-    #    return f'Input1 {input_teamname} and Input2 {input_teamdesc} and nb {n_clicks}' 
-       
-
-@app.callback(
-    [
-        Output(component_id="teamPicked", component_property="options"),
-        # Output(component_id="projectPicked", component_property="value"),
-    ],
-    [
-        Input(component_id="org-dropdown", component_property="value"),
-    ],
-)
-def update_team_from_organization(value):
-    orga_id = value
-    df_team = get_team_list(orga_id)
-    if len(df_team) > 0:
-        # project_id = df_project.id.unique().tolist()[0]
+#def update_team_from_organization(value):
+#    orga_id = value
+#    df_team = get_team_list(orga_id)
+#    if len(df_team) > 0:
+#        # project_id = df_project.id.unique().tolist()[0]
         # project_name = df_project.name.unique().tolist()[0]
-        options = [
-            {"label": teamName, "value": teamId}
-            for teamName, teamId in zip(df_team.name, df_team.id)
-        ]
-    else:
-        # project_id = None
-        # project_name = "No Project !!!"
-        options = []
+    #     options = [
+    #         {"label": teamName, "value": teamId}
+    #         for teamName, teamId in zip(df_team.name, df_team.id)
+    #     ]
+    # else:
+    #     # project_id = None
+    #     # project_name = "No Project !!!"
+    #     options = []
 
-    return [options]
+    # return [options]
 
 
 

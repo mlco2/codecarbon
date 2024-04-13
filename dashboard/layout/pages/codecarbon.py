@@ -8,7 +8,7 @@ from data.data_functions import get_organization_list, get_project_list
 from dashboard.layout.components import Components 
 
 
-dash.register_page(__name__, path='/codecarbon', name="Codecarbon", order=2 )
+dash.register_page(__name__, path='/codecarbon', name="Codecarbon", order=2)
 
 
 # Set configuration (prevent default plotly modebar to appears, disable zoom on figures, set a double click reset ~ not working that good IMO )
