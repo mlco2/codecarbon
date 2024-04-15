@@ -290,7 +290,7 @@ app.layout = dbc.Container(
                 dbc.Col(  # dbc.Spinner(
                     dcc.Graph(
                         id="lineChart",
-                        config=config
+                        config=config,
                         # )
                     ),
                     width=6,
@@ -315,7 +315,7 @@ app.layout = dbc.Container(
         ),
         html.Div(id="output_container", children=[]),
         # dbc.Spinner(
-        dcc.Graph(id="my_emission_map", figure={}, config=config)
+        dcc.Graph(id="my_emission_map", figure={}, config=config),
         # ),
     ]
 )

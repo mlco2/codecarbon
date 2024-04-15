@@ -182,9 +182,9 @@ class FileOutput(BaseOutput):
                 )
                 df = pd.concat([df, pd.DataFrame.from_records([dict(data.values)])])
             else:
-                df.at[
-                    df.run_id == data.run_id, data.values.keys()
-                ] = data.values.values()
+                df.at[df.run_id == data.run_id, data.values.keys()] = (
+                    data.values.values()
+                )
 
         df.to_csv(self.save_file_path, index=False)
 

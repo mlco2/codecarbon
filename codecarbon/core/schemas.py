@@ -1,6 +1,7 @@
 """
 Here is the schemas used to communicate with the API.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -77,4 +78,48 @@ class ExperimentCreate(ExperimentBase):
 
 
 class Experiment(ExperimentBase):
+    id: str
+
+
+@dataclass
+class OrganizationBase:
+    name: str
+    description: str
+
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+
+class Organization(OrganizationBase):
+    id: str
+
+
+@dataclass
+class TeamBase:
+    name: str
+    description: str
+    organization_id: str
+
+
+class TeamCreate(TeamBase):
+    pass
+
+
+class Team(TeamBase):
+    id: str
+
+
+@dataclass
+class ProjectBase:
+    name: str
+    description: str
+    team_id: str
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+class Project(ProjectBase):
     id: str

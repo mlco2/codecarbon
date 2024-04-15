@@ -527,9 +527,11 @@ class Components:
             },
             width=1400,
             height=600,
-            color_continuous_scale=list(reversed(self.colorscale))
-            if energy_type == "low_carbon"
-            else self.colorscale,
+            color_continuous_scale=(
+                list(reversed(self.colorscale))
+                if energy_type == "low_carbon"
+                else self.colorscale
+            ),
         )
 
     @staticmethod

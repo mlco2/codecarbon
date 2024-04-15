@@ -27,7 +27,6 @@ def suppress(*exceptions):
             exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
         )
         logger.warning("stopping.")
-        pass
 
 
 def resolve_path(path: Union[str, Path]) -> Path:

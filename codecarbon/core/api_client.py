@@ -4,6 +4,7 @@ Based on https://kernelpanic.io/the-modern-way-to-call-apis-in-python
 
 TODO : use async call to API
 """
+
 # from httpx import AsyncClient
 import dataclasses
 import json
@@ -13,7 +14,14 @@ from datetime import timedelta, tzinfo
 import arrow
 import requests
 
-from codecarbon.core.schemas import EmissionCreate, ExperimentCreate, RunCreate
+from codecarbon.core.schemas import (
+    EmissionCreate,
+    ExperimentCreate,
+    OrganizationCreate,
+    ProjectCreate,
+    RunCreate,
+    TeamCreate,
+)
 from codecarbon.external.logger import logger
 
 # from codecarbon.output import EmissionsData
@@ -51,6 +59,108 @@ class ApiClient:  # (AsyncClient)
         self.conf = conf
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
+
+    def get_list_organizations(self):
+        """
+        List all organizations
+        """
+        url = self.url + "/organizations"
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def create_organization(self, organization: OrganizationCreate):
+        """
+        Create an organization
+        """
+        payload = dataclasses.asdict(organization)
+        url = self.url + "/organization"
+        r = requests.post(url=url, json=payload, timeout=2)
+        if r.status_code != 201:
+            self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def get_organization(self, organization_id):
+        """
+        Get an organization
+        """
+        url = self.url + "/organization/" + organization_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def list_teams_from_organization(self, organization_id):
+        """
+        List all teams
+        """
+        url = self.url + "/teams/organization/" + organization_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def create_team(self, team: TeamCreate):
+        """
+        Create a team
+        """
+        payload = dataclasses.asdict(team)
+        url = self.url + "/team"
+        r = requests.post(url=url, json=payload, timeout=2)
+        if r.status_code != 201:
+            self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def get_team(self, team_id):
+        """
+        Get a team
+        """
+        url = self.url + "/team/" + team_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def list_projects_from_team(self, team_id):
+        """
+        List all projects
+        """
+        url = self.url + "/projects/team/" + team_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def create_project(self, project: ProjectCreate):
+        """
+        Create a project
+        """
+        payload = dataclasses.asdict(project)
+        url = self.url + "/project"
+        r = requests.post(url=url, json=payload, timeout=2)
+        if r.status_code != 201:
+            self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def get_project(self, project_id):
+        """
+        Get a project
+        """
+        url = self.url + "/project/" + project_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
@@ -148,7 +258,24 @@ class ApiClient:  # (AsyncClient)
         except Exception as e:
             logger.error(e, exc_info=True)
 
-    def add_experiment(self, experiment: ExperimentCreate):
+    def list_experiments_from_project(self, project_id: str):
+        """
+        List all experiments for a project
+        """
+        url = self.url + "/experiments/project/" + project_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def set_experiment(self, experiment_id: str):
+        """
+        Set the experiment id
+        """
+        self.experiment_id = experiment_id
+
+    def create_experiment(self, experiment: ExperimentCreate):
         """
         Create an experiment, used by the CLI, not the package.
         ::experiment:: The experiment to create.
@@ -159,13 +286,26 @@ class ApiClient:  # (AsyncClient)
         if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
-        self.experiment_id = r.json()["id"]
-        return self.experiment_id
+        return r.json()
+
+    def get_experiment(self, experiment_id):
+        """
+        Get an experiment by id
+        """
+        url = self.url + "/experiment/" + experiment_id
+        r = requests.get(url=url, timeout=2)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
 
     def _log_error(self, url, payload, response):
-        logger.error(
-            f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
-        )
+        if len(payload) > 0:
+            logger.error(
+                f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
+            )
+        else:
+            logger.error(f"ApiClient Error when calling the API on {url}")
         logger.error(
             f"ApiClient API return http code {response.status_code} and answer : {response.text}"
         )
@@ -174,7 +314,6 @@ class ApiClient:  # (AsyncClient)
         """
         Tell the API that the experiment has ended.
         """
-        pass
 
 
 class simple_utc(tzinfo):

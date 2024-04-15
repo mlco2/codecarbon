@@ -125,3 +125,6 @@ code_carbon.db
 # Local file
 emissions*.csv*
 tests/test_data/rapl/*
+
+#asciinema
+*.cast

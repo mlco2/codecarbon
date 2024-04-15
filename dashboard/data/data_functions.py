@@ -2,7 +2,6 @@
 API functions
 """
 
-
 from math import ceil
 
 import pandas as pd

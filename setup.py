@@ -12,6 +12,9 @@ DEPENDENCIES = [
     "py-cpuinfo",
     "rapidfuzz",
     "click",
+    "typer",
+    "questionary",
+    "rich",
     "prometheus_client",
 ]
 

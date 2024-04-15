@@ -3,11 +3,12 @@ Implements tracking Intel CPU Power Consumption on Mac and Windows
 using Intel Power Gadget
 https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
+
 import os
 import shutil
 import subprocess
 import sys
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 from rapidfuzz import fuzz, process, utils
@@ -19,7 +20,7 @@ from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 
 
-def is_powergadget_available():
+def is_powergadget_available() -> bool:
     try:
         IntelPowerGadget()
         return True
@@ -31,7 +32,7 @@ def is_powergadget_available():
         return False
 
 
-def is_rapl_available():
+def is_rapl_available() -> bool:
     try:
         IntelRAPL()
         return True
@@ -61,7 +62,7 @@ class IntelPowerGadget:
         self._resolution = resolution
         self._setup_cli()
 
-    def _setup_cli(self):
+    def _setup_cli(self) -> None:
         """
         Setup cli command to run Intel Power Gadget
         """
@@ -110,7 +111,7 @@ class IntelPowerGadget:
         else:
             self._windows_exec_backup = None
 
-    def _log_values(self):
+    def _log_values(self) -> None:
         """
         Logs output from Intel Power Gadget command line to a file
         """
@@ -143,7 +144,6 @@ class IntelPowerGadget:
                 "Returncode while logging power values using "
                 + f"Intel Power Gadget: {returncode}"
             )
-        return
 
     def get_cpu_details(self, **kwargs) -> Dict:
         """
@@ -187,7 +187,7 @@ class IntelRAPL:
     def _is_platform_supported(self) -> bool:
         return self._system.startswith("lin")
 
-    def _setup_rapl(self):
+    def _setup_rapl(self) -> None:
         if self._is_platform_supported():
             if os.path.exists(self._lin_rapl_dir):
                 self._fetch_rapl_files()
@@ -198,7 +198,6 @@ class IntelRAPL:
                 )
         else:
             raise SystemError("Platform not supported by Intel RAPL Interface")
-        return
 
     def _fetch_rapl_files(self):
         """
@@ -237,7 +236,6 @@ class IntelRAPL:
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
                         + f" for workarounds : {e}"
                     )
-        return
 
     def get_cpu_details(self, duration: Time, **kwargs) -> Dict:
         """
@@ -252,9 +250,9 @@ class IntelRAPL:
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
                 # We fake the name used by Power Gadget when using RAPL
                 if "Energy" in rapl_file.name:
-                    cpu_details[
-                        rapl_file.name.replace("Energy", "Power")
-                    ] = rapl_file.power.W
+                    cpu_details[rapl_file.name.replace("Energy", "Power")] = (
+                        rapl_file.power.W
+                    )
         except Exception as e:
             logger.info(
                 f"Unable to read Intel RAPL files at {self._rapl_files}\n \
@@ -287,7 +285,7 @@ class TDP:
         """Extract constant power from matched CPU"""
         return cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]
 
-    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> int:
+    def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
         cpu_power_df = DataSource().get_cpu_power_data()
         cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
         if cpu_matching:

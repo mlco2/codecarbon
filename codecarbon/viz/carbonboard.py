@@ -86,10 +86,10 @@ def render_app(df: pd.DataFrame):
                 f"{project_summary['region']}, {project_summary['country_name']}"
             )
         project_power_consumption = (
-            f"{round(project_summary['total']['energy_consumed'],1)} kWh"
+            f"{round(project_summary['total']['energy_consumed'], 1)} kWh"
         )
         project_carbon_equivalent = (
-            f"{round(project_summary['total']['emissions'],1)} kg"
+            f"{round(project_summary['total']['emissions'], 1)} kg"
         )
         last_run_power_consumption = (
             f"{project_summary['last_run']['energy_consumed']} kWh"

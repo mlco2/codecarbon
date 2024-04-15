@@ -54,4 +54,3 @@ def downgrade():
         "DELETE FROM teams WHERE id = '{dfg_team_id}'".format(dfg_team_id=DFG_TEAM_ID)
     )
     op.execute(f"DELETE FROM projects WHERE id = '{DFG_PROJECT_ID}'")
-    pass
