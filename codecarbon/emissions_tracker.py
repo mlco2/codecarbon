@@ -14,13 +14,13 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from codecarbon._version import __version__
-from codecarbon.core import cpu, gpu, powermetrics
+from codecarbon.core import cpu, gpu, powermetrics, tegrametrics
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip, NvidiaTegraChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
@@ -307,7 +307,26 @@ class BaseEmissionsTracker(ABC):
             logger.info("No GPU found.")
 
         logger.info("[setup] CPU Tracking...")
-        if cpu.is_powergadget_available() and self._default_cpu_power is None:
+        if tegrametrics.is_tegrametrics_available() and self._default_cpu_power is None:
+            logger.info("Tracking Nvidia Tegra CPU and GPU via TegraMetrics")
+            hardware_cpu = NvidiaTegraChip.from_utils(
+                self._output_dir, chip_part="CPU"
+            )
+
+            logger.info("Hardware CPU"+str(hardware_cpu))
+            self._hardware.append(hardware_cpu)
+            self._conf["cpu_model"] = hardware_cpu.get_model()
+            hardware_gpu = NvidiaTegraChip.from_utils(
+                self._output_dir, chip_part="GPU", interface=hardware_cpu._interface
+            )
+            self._hardware.append(hardware_gpu)
+            import pynvml
+            pynvml.nvmlDeviceGetCount()
+            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+            self._conf["gpu_model"] = pynvml.nvmlDeviceGetName(handle)
+            self._conf["gpu_count"] = 1
+
+        elif cpu.is_powergadget_available() and self._default_cpu_power is None:
             logger.info("Tracking Intel CPU via Power Gadget")
             hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
             self._hardware.append(hardware)
@@ -566,6 +585,10 @@ class BaseEmissionsTracker(ABC):
             experiment_name=self._experiment_name,
         )
 
+        for hardware in self._hardware:
+            if "_interface" in hardware.__dict__:
+                if "stop" in dir(hardware._interface):
+                    hardware._interface.stop()
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
@@ -708,6 +731,21 @@ class BaseEmissionsTracker(ABC):
                     + f". RAM Power : {self._ram_power.W} W"
                 )
             elif isinstance(hardware, AppleSiliconChip):
+                if hardware.chip_part == "CPU":
+                    self._total_cpu_energy += energy
+                    self._cpu_power = power
+                    logger.info(
+                        f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
+                        + f". Total CPU Power : {self._cpu_power.W} W"
+                    )
+                elif hardware.chip_part == "GPU":
+                    self._total_gpu_energy += energy
+                    self._gpu_power = power
+                    logger.info(
+                        f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
+                        + f". Total GPU Power : {self._gpu_power.W} W"
+                    )
+            elif isinstance(hardware, NvidiaTegraChip):
                 if hardware.chip_part == "CPU":
                     self._total_cpu_energy += energy
                     self._cpu_power = power

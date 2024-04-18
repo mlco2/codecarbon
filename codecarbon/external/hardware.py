@@ -12,7 +12,8 @@ import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
-from codecarbon.core.powermetrics import ApplePowermetrics
+from codecarbon.core.powermetrics import ApplePowermetrics 
+from codecarbon.core.tegrametrics import NvidiaTegrametrics 
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
 from codecarbon.external.logger import logger
@@ -396,6 +397,78 @@ class RAM(BaseHardware):
 
         return ram_power
 
+
+@dataclass
+class NvidiaTegraChip(BaseHardware):
+    def __init__(
+        self,
+        output_dir: str,
+        model: str,
+        chip_part: str = "CPU",
+        interface=None
+    ):
+        self._output_dir = output_dir
+        self._model = model
+        self._interface = interface
+        self.chip_part = chip_part
+
+    def __repr__(self) -> str:
+        return f"NvidiaTegraChip ({self._model} > {self.chip_part})"
+
+    def _get_power(self) -> Power:
+        """
+        Get Chip part power
+        Args:
+            chip_part (str): Chip part to get power from (CPU, GPU)
+        :return: power in kW
+        """
+
+        all_details: Dict = self._interface.get_details()
+
+        power = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Power", metric):
+                power += value
+                logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
+
+            else:
+                logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
+        return Power.from_watts(power)
+
+    def _get_energy(self, delay: Time) -> Energy:
+        """
+        Get Chip part energy deltas
+        Args:
+            chip_part (str): Chip part to get power from (Processor, GPU, etc.)
+        :return: energy in kWh
+        """
+        all_details: Dict = self._interface.get_details(delay)
+
+        energy = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Energy Delta_\d", metric):
+                energy += value
+        return Energy.from_energy(energy)
+
+    def total_power(self) -> Power:
+        return self._get_power()
+
+    def start(self):
+        self._interface.start()
+
+    def get_model(self):
+        return self._model
+
+    @classmethod
+    def from_utils(
+        cls, output_dir: str, model: Optional[str] = None, chip_part: str = "Processor",interface=NvidiaTegrametrics()
+    ) -> "NvidiaTegraChip":
+        if model is None:
+            model = detect_cpu_model()
+            if model is None:
+                logger.warning("Could not read NvidiaTegraChip model.")
+
+        return cls(output_dir=output_dir, model=model, chip_part=chip_part, interface=interface)
 
 @dataclass
 class AppleSiliconChip(BaseHardware):
