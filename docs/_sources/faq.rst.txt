@@ -20,11 +20,9 @@ Frequently Asked Questions
 
 		For private infra:
 
-		- When available we use data from `ourworld in data <https://ourworldindata.org/grapher/carbon-intensity-electricity?tab=table>`_
+		- We use data from `Our World In Data <https://ourworldindata.org/grapher/carbon-intensity-electricity?tab=table>`_
 
-		- if not available we use the electricity mix of the country find on `globalpetrolprices.com <https://www.globalpetrolprices.com/energy_mix.php>`_ that we multiply by the carbon intensity of the source of electricity (`that you can find here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json>`_)
-
-		- if we have neither we default to a world average of 475 gCO2.eq/KWh from `IEA <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_.
+		- If they don't have it, we default to a world average of 475 gCO2.eq/KWh from `IEA <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_.
 
 
 * **How do I offset my emissions?**
