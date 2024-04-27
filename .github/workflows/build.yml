@@ -66,7 +66,6 @@ jobs:
           - 5480:5432
 
     steps:
-      # Downloads a copy of the code in your repository before running CI tests
       - name: Check out repository code
         uses: actions/checkout@v2
 
