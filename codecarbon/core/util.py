@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import subprocess
 from contextlib import contextmanager
 from os.path import expandvars
@@ -67,7 +68,7 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
         backup_path = parent / file_name
         idx += 1
 
-    file_path.rename(backup_path)
+    shutil.copyfile(file_path, backup)
 
 
 def detect_cpu_model() -> str:
@@ -95,7 +96,7 @@ def count_cpus() -> int:
             "Error running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     num_cpus_matches = re.findall(r"NumCPUs=\d+", scontrol)
 
@@ -104,14 +105,14 @@ def count_cpus() -> int:
             "Could not find NumCPUs= after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     if len(num_cpus_matches) > 1:
         logger.warning(
             "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
     logger.debug(f"Detected {num_cpus} cpus available on SLURM.")

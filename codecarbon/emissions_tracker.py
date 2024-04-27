@@ -21,7 +21,7 @@ from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
@@ -331,9 +331,6 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_model"] = hardware_gpu.get_model()
             self._conf["gpu_count"] = 1
         else:
-            logger.warning(
-                "No CPU tracking mode found. Falling back on CPU constant mode."
-            )
             tdp = cpu.TDP()
             power = tdp.tdp
             model = tdp.model
@@ -345,14 +342,43 @@ class BaseEmissionsTracker(ABC):
             logger.info(f"CPU Model on constant consumption mode: {model}")
             self._conf["cpu_model"] = model
             if tdp:
-                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU load mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self._output_dir,
+                        MODE_CPU_LOAD,
+                        model,
+                        power,
+                        tracking_mode=self._tracking_mode,
+                    )
+                else:
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU constant mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self._output_dir, "constant", model, power
+                    )
                 self._hardware.append(hardware)
             else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
-                )
-                hardware = CPU.from_utils(self._output_dir, "constant")
+
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on CPU load mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self._output_dir,
+                        MODE_CPU_LOAD,
+                        model,
+                        power,
+                        tracking_mode=self._tracking_mode,
+                    )
+                else:
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on a global constant."
+                    )
+                    hardware = CPU.from_utils(self._output_dir, "constant")
                 self._hardware.append(hardware)
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
@@ -676,8 +702,11 @@ class BaseEmissionsTracker(ABC):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
                 logger.info(
-                    f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
-                    + f". Total CPU Power : {self._cpu_power.W} W"
+                    f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
+                    + f", power : {self._cpu_power.W} W"
+                )
+                logger.info(
+                    f"Energy consumed for All CPU : {self._total_cpu_energy.kWh:.6f} kWh"
                 )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
@@ -712,8 +741,7 @@ class BaseEmissionsTracker(ABC):
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.time() - h_time
             logger.debug(
-                f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
-                + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
+                f"Done measure for {hardware.__class__.__name__} - measurement time: {h_time:,.4f} s - last call {last_duration:,.2f} s"
             )
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."
