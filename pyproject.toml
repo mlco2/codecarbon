@@ -49,6 +49,8 @@ viz = [
 carbonboard = "codecarbon.viz.carbonboard:main"
 codecarbon = "codecarbon.cli.main:codecarbon"
 
+
+# This part can be improved to leverage UV.
 [tool.hatch.env]
 requires = [
     "hatch-pip-compile"
@@ -94,7 +96,6 @@ dependencies = [
    "mock",
    "pytest",
    "responses",
-   # "tox",
    "numpy",
    "psutil",
    "requests-mock",
@@ -146,6 +147,9 @@ dependencies = [
     "rapidfuzz",
 ]
 
+# Those scripts are quite dangerous. If someone executes them without trying to understand which OS have been used
+# To develop them, it might result in inconsistencies.
+# As benoit-cty  is the current release manager, it's only useful for him currently.
 [tool.hatch.envs.api.scripts]
 local = "cd carbonserver && uvicorn main:app --reload"
 docker = "docker-compose up -d"
