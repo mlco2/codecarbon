@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.8", "3.11"]
 
     steps:
     - uses: actions/checkout@v2
@@ -18,10 +18,12 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Test package
-      run:
-        - pipx install hatch
-        - hatch run test:package
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox tox-gh-actions
+    - name: Test package with tox
+      run: tox -vv
 
   build_server:
     runs-on: ubuntu-latest
@@ -36,11 +38,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install tox tox-gh-actions
     - name: Unit tests on api with tox
-      run:
-        - pipx install hatch
-        - hatch run api:test-unit
-        # cd carbonserver/
-        # tox -e unit -vv
+      run: |
+        cd carbonserver/
+        tox -e unit -vv
 
   test_api_server:
     runs-on: ubuntu-latest
@@ -76,7 +76,12 @@ jobs:
         with:
           python-version: '3.9'
       - name: Install dependencies
-        run: pipx install hatch
+        run: |
+          python -m pip install --upgrade pip
+          cd carbonserver
+          pip install -r requirements-dev.txt
+          pip install tox tox-gh-actions
+
       - name: Setup PostgreSQL
         # Runs a script that creates a PostgreSQL table, populates
         # the table with data, and then retrieves the data.
@@ -93,7 +98,7 @@ jobs:
           uvicorn main:app --host 0.0.0.0 --port 8008 &
           sleep 2
           netstat -o -n -a | grep 8008
-          hatch run api:test-integ
+          tox -e integration
         # Environment variables used by the `client.js` script to create a new PostgreSQL table.
         env:
           # The hostname used to communicate with the PostgreSQL service container
