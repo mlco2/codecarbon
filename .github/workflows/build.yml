@@ -76,12 +76,7 @@ jobs:
         with:
           python-version: '3.9'
       - name: Install dependencies
-      run: pipx install hatch
-
-        #   python -m pip install --upgrade pip
-        #   cd carbonserver
-        #   pip install -r requirements-dev.txt
-        #   pip install tox tox-gh-actions
+        run: pipx install hatch
 
       - name: Setup PostgreSQL
         # Runs a script that creates a PostgreSQL table, populates
