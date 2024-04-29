@@ -81,9 +81,8 @@ jobs:
       - name: Setup PostgreSQL
         # Runs a script that creates a PostgreSQL table, populates
         # the table with data, and then retrieves the data.
-        run: |
-          cd carbonserver
-          python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
+        run: hatch run api:setup-db
+          
         env:
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db

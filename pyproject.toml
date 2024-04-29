@@ -151,6 +151,7 @@ local = "cd carbonserver && uvicorn main:app --reload"
 docker = "docker-compose up -d"
 test-unit = 'cd carbonserver && python -m pytest -vv tests/api/routers/ && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/'
 test-integ = 'cd carbonserver && python -m pytest -vv tests/api/integration/'
+setup-db = 'cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head'
 
 [tool.hatch.version]
 path = "codecarbon/_version.py"
