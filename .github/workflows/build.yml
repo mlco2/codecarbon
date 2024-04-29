@@ -89,8 +89,7 @@ jobs:
 
       - name: Run API tests
         run: |
-          cd carbonserver
-          uvicorn main:app --host 0.0.0.0 --port 8008 &
+          hatch run api:server-ci &
           sleep 2
           netstat -o -n -a | grep 8008
           hatch run api:test-integ
