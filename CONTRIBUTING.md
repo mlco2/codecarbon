@@ -58,7 +58,7 @@ hatch env create
 
 ### Tests
 
-You can run the unit tests by simply entering tox in the terminal when in the root package directory.
+You can run the unit tests by running Hatch in the terminal when in the root package directory:
 
 ```sh
 hatch run test:package
