@@ -296,9 +296,9 @@ to regenerate the html files.
 ### Release process
 
 - Merge all PRs.
-- Create a PR bumping the version in https://github.com/mlco2/codecarbon/blob/master/setup.py, https://github.com/mlco2/codecarbon/blob/master/codecarbon/_version.py and https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
+- Create a PR bumping the version with `hatch version minor` and report it in https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
 - Run `python3 .github/check_version.py` to check version consistancy.
-- [Build Documentation](#documentation) if needed.
+- [Build Documentation](#documentation) if needed with `hatch run docs:build`.
 - Merge the PR.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
