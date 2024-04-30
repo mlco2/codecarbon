@@ -8,16 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
     - name: Test package
       run: |
         pipx install hatch
@@ -27,20 +23,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.9
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install tox tox-gh-actions
-    - name: Unit tests on api with tox
+    - name: Unit tests on api
       run: |
         pipx install hatch
         hatch run api:test-unit
-        # cd carbonserver/
-        # tox -e unit -vv
 
   test_api_server:
     runs-on: ubuntu-latest
@@ -49,7 +43,7 @@ jobs:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: postgres:12
+        image: postgres:16
         # Provide the password for postgres
         env:
           POSTGRES_DB: codecarbon_db

@@ -94,7 +94,6 @@ dependencies = [
    "mock",
    "pytest",
    "responses",
-   # "tox",
    "numpy",
    "psutil",
    "requests-mock",
