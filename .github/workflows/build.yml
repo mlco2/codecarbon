@@ -8,16 +8,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
     - name: Test package
       run: |
         pipx install hatch
-        hatch run test:package
+        hatch run +py=${{ matrix.python-version }} test:package
 
   build_server:
     runs-on: ubuntu-latest

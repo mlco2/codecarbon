@@ -64,6 +64,11 @@ You can run the unit tests by running Hatch in the terminal when in the root pac
 hatch run test:package
 ```
 
+To avoid testing all Python version, you could specify it, for example for Python 3.11 :
+```sh
+hatch run +py=3.11 test:package
+```
+
 This will not run test that may fail because of your environment (no CO2 Signal API token, no PowerGadget...). If you want to run all package tests:
 
 ```sh
