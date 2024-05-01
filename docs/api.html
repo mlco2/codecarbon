@@ -16,7 +16,7 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=3fb9b4ff"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -129,7 +129,24 @@
 <p>And so on for your team, project and experiment.</p>
 <p>You then have to set you experiment id in CodeCarbon, with two options:</p>
 <p>In the code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
+
+<span class="nd">@track_emissions</span><span class="p">(</span>
+    <span class="n">measure_power_secs</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">api_call_interval</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">experiment_id</span><span class="o">=</span><span class="s2">&quot;your experiment id&quot;</span><span class="p">,</span>
+    <span class="n">save_to_api</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">train_model</span><span class="p">():</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
 <p>Or in the config file <cite>.codecarbon.config</cite>:</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[codecarbon]</span>
+<span class="na">experiment_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">your experiment id</span>
+<span class="na">save_to_api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span>
+</pre></div>
+</div>
 </section>
 </section>
 
