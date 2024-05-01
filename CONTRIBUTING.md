@@ -3,23 +3,52 @@
 
 (New to open-source? [Here's a guide to help you](https://opensource.guide/how-to-contribute/))
 
-- [I have a question...](#questions)
-- [I found a bug...](#bugs)
-- [I have a feature request...](#features)
-- [I have a contribution to share...](#process)
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
-## <a name="questions"></a> Have a Question?
+- [<a name="questions"></a> Have a Question?](#have-a-question)
+- [<a name="bugs"></a> Found a Bug?](#found-a-bug)
+- [<a name="features"></a> Have a Feature Request?](#have-a-feature-request)
+- [<a name="process"></a> Ready to Contribute!](#ready-to-contribute)
+   * [<a name="issue"></a> Create an issue](#create-an-issue)
+   * [Installation](#installation)
+   * [Tests](#tests)
+   * [Stress your computer](#stress-your-computer)
+   * [Versioning](#versioning)
+   * [Debug in VS Code](#debug-in-vs-code)
+   * [<a name="local_deployement"></a> Local deployment](#local-deployment)
+- [CSV Dashboard](#csv-dashboard)
+- [API Dashboard](#api-dashboard)
+   * [API](#api)
+   * [Test the API](#test-the-api)
+   * [Coding style && Linting](#coding-style-linting)
+   * [Packaging](#packaging)
+   * [Alternative ways of contributing](#alternative-ways-of-contributing)
+   * [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
+   * [Release process](#release-process)
+      + [Restore database from a production Backup](#restore-database-from-a-production-backup)
+      + [Deployment](#deployment)
+         - [API](#api-1)
+         - [Dashboard](#dashboard)
+   * [License](#license)
+
+<!-- TOC end -->
+
+
+<!-- TOC --><a name="have-a-question"></a>
+## </a> Have a Question?
 
 Please see the [FAQ](https://mlco2.github.io/codecarbon/faq.html) for questions.
 
 
-## <a name="bugs"></a> Found a Bug?
+<!-- TOC --><a name="found-a-bug"></a>
+## </a> Found a Bug?
 
 
 If you've identified a bug in `codecarbon`, please [submit an issue](#issue) to the GitHub repo: [mlco2/codecarbon](https://github.com/mlco2/codecarbon/issues/new).  Please also feel free to submit a PR with a fix for the bug!
 
 
-## <a name="features"></a> Have a Feature Request?
+<!-- TOC --><a name="have-a-feature-request"></a>
+## </a> Have a Feature Request?
 
 
 Feel free to describe your request by [submitting an issue](#issue) documenting the feature (with its intent) and a PR with a proposed implementation of the feature.
@@ -27,14 +56,17 @@ Feel free to describe your request by [submitting an issue](#issue) documenting 
 
 
 
-## <a name="process"></a> Ready to Contribute!
+<!-- TOC --><a name="ready-to-contribute"></a>
+## </a> Ready to Contribute!
 
-### <a name="issue"></a> Create an issue
+<!-- TOC --><a name="create-an-issue"></a>
+### </a> Create an issue
 
 Before submitting a new issue, please search the issues to make sure there isn't a similar issue already.
 New issues can be created with in the [GitHub repo](https://github.com/mlco2/codecarbon/issues/new).
 
 
+<!-- TOC --><a name="installation"></a>
 ### Installation
 
 CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
@@ -56,6 +88,7 @@ hatch env create
 ```
 
 
+<!-- TOC --><a name="tests"></a>
 ### Tests
 
 You can run the unit tests by running Hatch in the terminal when in the root package directory:
@@ -92,6 +125,7 @@ To test the API, see [how to deploy it](#local_deployement) first.
 
 Core and external classes are unit tested, with one test file per class. Most pull requests are expected to contain either new tests or test updates. If you are unusure what to test / how to test it, please put it in the pull request description and the maintainers will help you.
 
+<!-- TOC --><a name="stress-your-computer"></a>
 ### Stress your computer
 
 To test CodeCarbon, it is useful to stress your computer to make it use its full power:
@@ -100,6 +134,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 `nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
 
+<!-- TOC --><a name="versioning"></a>
 ### Versioning
 
 
@@ -109,6 +144,7 @@ To add a new feature to codecarbon, apply the following workflow:
 - Documenting the intent & the limits of a contribution in a dedicated issue or in the pull request helps the review
 - Once automated tests pass, the PR is reviewed and merged by the repository maintainers
 
+<!-- TOC --><a name="debug-in-vs-code"></a>
 ### Debug in VS Code
 
 Here is the launch.json to be able to debug examples and tests:
@@ -146,8 +182,10 @@ Then run opened test with this button:
 
 ![vscode_debug](docs/edit/images/vscode_debug.png)
 
+<!-- TOC --><a name="local-deployment"></a>
 ### <a name="local_deployement"></a> Local deployment
 
+<!-- TOC --><a name="csv-dashboard"></a>
 ## CSV Dashboard
 
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
@@ -166,6 +204,7 @@ If you have the package installed, you can run the CLI command:
 carbonboard --filepath="examples/emissions.csv" --port=8050
 ```
 
+<!-- TOC --><a name="api-dashboard"></a>
 ## API Dashboard
 
 To test the new dashboard that uses the API, run:
@@ -185,6 +224,7 @@ hatch run dashboard:run
 
 
 
+<!-- TOC --><a name="api"></a>
 ### API
 
 The easiest way to run the API locally is with Docker, it will set-up the Postgres database for you. Launch this command in the project directory:
@@ -226,6 +266,7 @@ python examples/api_call_debug.py
 
 📝 Edit the line `occurence = 60 * 24 * 365 * 100` to specify the number of minutes you want to run it.
 
+<!-- TOC --><a name="test-the-api"></a>
 ### Test the API
 
 To test the API, you can use the following command:
@@ -240,6 +281,7 @@ hatch run api:test-integ
 
 ```
 
+<!-- TOC --><a name="coding-style-linting"></a>
 ### Coding style && Linting
 
 The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `hatch run dev:precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
@@ -270,6 +312,7 @@ You can also run `pre-commit` with `pre-commit run -v` if you have some changes 
 
 It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
 
+<!-- TOC --><a name="packaging"></a>
 ### Packaging
 
 Dependencies are defined in different places:
@@ -278,6 +321,7 @@ Dependencies are defined in different places:
 - In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
 - In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
+<!-- TOC --><a name="alternative-ways-of-contributing"></a>
 ### Alternative ways of contributing
 
 
@@ -286,6 +330,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 - a webapp, using [Voilà](https://github.com/voila-dashboards/voila), [Dash](https://github.com/plotly/dash) or [Streamlit](https://github.com/streamlit/streamlit)
 - ideas for improvement about the tool or its documentation
 
+<!-- TOC --><a name="build-documentation-"></a>
 ### <a name="documentation"></a>Build Documentation 🖨️
 No software is complete without great documentation!
 To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
@@ -298,6 +343,7 @@ hatch run docs:build
 
 to regenerate the html files.
 
+<!-- TOC --><a name="release-process"></a>
 ### Release process
 
 - Merge all PRs.
@@ -324,6 +370,7 @@ Inside the docker container, run:
 - `anaconda upload --user codecarbon /data/noarch/codecarbon-*.tar.bz2`
 
 
+<!-- TOC --><a name="restore-database-from-a-production-backup"></a>
 #### Restore database from a production Backup
 
 ```sh
@@ -349,8 +396,10 @@ To remove orphans (elements without run) from the database, run:
 CALL public.spcc_purgeduplicatedata();
 ```
 
+<!-- TOC --><a name="deployment"></a>
 #### Deployment
 
+<!-- TOC --><a name="api-1"></a>
 ##### API
 
 The API is availiable to everyone from https://api.codecarbon.io, but if you want to deploy it for yourself, here are the instructions.
@@ -381,6 +430,7 @@ See (the doc)[https://www.clever-cloud.com/doc/getting-started/quickstart/] for 
 
 Please note that Clever Cloud host Code Carbon for free because they like our project.
 
+<!-- TOC --><a name="dashboard"></a>
 ##### Dashboard
 
 Same as for the API, for example to deploy the branh `fix-unit` to CleverCloud:
@@ -398,6 +448,7 @@ CODECARBON_API_URL="https://api.codecarbon.io"
 PORT="8000"
 ```
 
+<!-- TOC --><a name="license"></a>
 ### License
 
 By contributing your code, you agree to license your contribution under the terms of the [MIT License](LICENSE).
