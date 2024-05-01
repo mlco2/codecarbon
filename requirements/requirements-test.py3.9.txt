@@ -20,7 +20,7 @@ charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via hatch.envs.test.py3.9
-idna==3.6
+idna==3.7
     # via requests
 numpy==1.26.4
     # via pandas

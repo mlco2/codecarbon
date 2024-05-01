@@ -43,7 +43,7 @@ fire==0.6.0
     # via hatch.envs.carbonboard
 flask==3.0.2
     # via dash
-idna==3.6
+idna==3.7
     # via requests
 importlib-metadata==7.1.0
     # via dash

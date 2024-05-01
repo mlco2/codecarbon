@@ -41,7 +41,7 @@ dash-table==5.0.0
     # via dash
 flask==3.0.2
     # via dash
-idna==3.6
+idna==3.7
     # via requests
 importlib-metadata==7.1.0
     # via
