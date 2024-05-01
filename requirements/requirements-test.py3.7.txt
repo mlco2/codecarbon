@@ -29,7 +29,7 @@ click==8.1.7
     # via hatch.envs.test.py3.7
 exceptiongroup==1.2.0
     # via pytest
-idna==3.6
+idna==3.7
     # via requests
 importlib-metadata==6.7.0
     # via
