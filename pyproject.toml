@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "codecarbon"
 dynamic = ["version"]
 readme = "README.md"
-license = ""
+license = {file = "LICENSE"}
 requires-python = ">=3.7"
 authors = [
     { name = "Mila" },
@@ -36,6 +36,14 @@ dependencies = [
     "rapidfuzz",
     "requests",
 ]
+
+[project.urls]
+Homepage = "https://codecarbon.io/"
+Repository = "https://github.com/mlco2/codecarbon"
+Dashboard = "http://dashboard.codecarbon.io/"
+Documentation = "https://mlco2.github.io/codecarbon/"
+Issues = "https://github.com/mlco2/codecarbon/issues"
+Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 [project.optional-dependencies]
 
