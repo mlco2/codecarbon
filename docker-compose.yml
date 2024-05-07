@@ -20,8 +20,6 @@ services:
     #command: cd /carbonserver/carbonserver/database && python3 -m alembic upgrade head && cd ../.. && uvicorn --reload main:app --host 0.0.0.0
     volumes:
       - ./carbonserver:/carbonserver
-      # Avoid problems with local tox
-      - /carbonserver/.tox
     ports:
       - 8008:8000
     environment:
@@ -37,7 +35,7 @@ services:
       POSTGRES_DB: ${DATABASE_NAME:-codecarbon_db}
       POSTGRES_PASSWORD: ${DATABASE_PASS:-supersecret}
       POSTGRES_USER: ${DATABASE_USER:-codecarbon-user}
-    image: postgres:12
+    image: postgres:13
     networks:
       - codecarbon_net
     ports:

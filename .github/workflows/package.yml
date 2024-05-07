@@ -8,11 +8,11 @@ jobs:
     build-package:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v2
-        - name: Set up Python 3.8
-          uses: actions/setup-python@v1
+        - uses: actions/checkout@v4
+        - name: Set up Python 3.11
+          uses: actions/setup-python@v5
           with:
-              python-version: 3.8
+              python-version: 3.11
         - name: Check versions
           run: |
               pip install -U pip requests
@@ -22,23 +22,7 @@ jobs:
               pip install -U pip build
               python3 -m build
         - name: Archive Pypi artifacts
-          uses: actions/upload-artifact@v1
+          uses: actions/upload-artifact@v4
           with:
               name: pypi_dist
               path: dist
-        # - uses: s-weigand/setup-conda@v1
-        #   with:
-        #       activate-conda: true
-        #       conda-channels: conda-forge
-        # Conda package is now build by Conda-forge
-        # See https://github.com/conda-forge/codecarbon-feedstock
-        # - name: Build conda package
-        #   run: |
-        #       conda install conda-build conda-verify
-        #       mkdir -p conda_dist
-        #       conda build --python 3.8 .conda/ -c conda-forge --output-folder conda_dist
-        # - name: Archive Conda artifacts
-        #   uses: actions/upload-artifact@v1
-        #   with:
-        #       name: conda_dist
-        #       path: conda_dist
