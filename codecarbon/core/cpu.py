@@ -283,7 +283,7 @@ class TDP:
     @staticmethod
     def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
         """Extract constant power from matched CPU"""
-        return cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]
+        return float(cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0])
 
     def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
         cpu_power_df = DataSource().get_cpu_power_data()
