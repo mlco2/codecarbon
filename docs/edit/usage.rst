@@ -30,7 +30,7 @@ Start monitoring the emissions of the computer
 You have to stop the monitoring manually with ``Ctrl+C``.
 
 In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything 
-to an API running on localhost:8008 (that you can start with the docke-compose)
+to an API running on "https://api.codecarbon.io" (Or you can start a private local API with "docke-compose up")
 
 .. raw:: html
 
