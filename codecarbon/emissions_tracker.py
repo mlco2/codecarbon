@@ -280,7 +280,9 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_ids"] = self._gpu_ids
             self._conf["gpu_count"] = len(self._gpu_ids)
         else:
-            logger.warn("Invalid gpu_ids format. Expected a string or a list of ints.")
+            logger.warning(
+                "Invalid gpu_ids format. Expected a string or a list of ints."
+            )
 
         logger.info("[setup] RAM Tracking...")
         ram = RAM(tracking_mode=self._tracking_mode)
