@@ -19,12 +19,15 @@ def test_codecarbon_pushes_2_emission_data_to_logfire_dashboard():
     data_source = get_test_data_source()
     Emissions(data_source)
     # WHEN:
-    logfire.metric_gauge_callback(
+    logfire.metric_gauge()
+    gauge = logfire.metric_gauge_callback(
         "temperature",
         unit="C",
         callbacks=[temperature_callback],
         description="Temperature",
     )
+    print(gauge)
+    gauge.observe()
 
     # THEN:
     assert 0 == 1
