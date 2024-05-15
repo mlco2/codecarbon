@@ -1,9 +1,13 @@
+import dataclasses
 import os
 
 from prometheus_client import push_to_gateway
 from prometheus_client.exposition import basic_auth_handler
 
-from codecarbon.prometheus.metric_definitions import (
+from codecarbon.external.logger import logger
+from codecarbon.output_methods.base_output_method import BaseOutput
+from codecarbon.output_methods.emissions_data import EmissionsData
+from codecarbon.output_methods.metrics.prometheus.metrics import (
     cpu_energy_gauge,
     cpu_power_gauge,
     duration_gauge,
@@ -18,9 +22,19 @@ from codecarbon.prometheus.metric_definitions import (
 )
 
 
-class Prometheus:
-    def __init__(self, prometheus_url):
+class PrometheusOutput(BaseOutput):
+    """
+    Send emissions data to prometheus pushgateway
+    """
+
+    def __init__(self, prometheus_url: str):
         self.prometheus_url = prometheus_url
+
+    def out(self, data: EmissionsData):
+        try:
+            self.add_emission(dataclasses.asdict(data))
+        except Exception as e:
+            logger.error(e, exc_info=True)
 
     def _auth_handler(self, url, method, timeout, headers, data):
         username = os.getenv("PROMETHEUS_USERNAME")
