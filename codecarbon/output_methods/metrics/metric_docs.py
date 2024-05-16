@@ -14,13 +14,14 @@ Example of how to use it:
 """
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
 class MetricDocumentation:
     name: str
     description: str
-    unit: str | None = None
+    unit: Optional[str] = None
 
 
 duration_doc = MetricDocumentation(
