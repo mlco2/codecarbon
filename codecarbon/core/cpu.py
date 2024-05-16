@@ -337,6 +337,10 @@ class TDP:
         if direct_match:
             return direct_match[0]
 
+        model_raw = model_raw.replace("(R)", "")
+        start_cpu = model_raw.find(" CPU @ ")
+        if start_cpu > 0:
+            model_raw = model_raw[0:start_cpu]
         indirect_matches = process.extract(
             model_raw,
             cpu_df["Name"],
