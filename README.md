@@ -20,6 +20,7 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
       - [In your python code](#in-your-python-code-)
       - [Visualize](#visualize-)
 - [Contributing 🤝](#contributing-)
+- [How To Cite 📝](#how-to-cite-)
 - [Contact 📝](#contact-)
 
 # About CodeCarbon 💡
@@ -120,6 +121,52 @@ Check out our [contribution guidelines :arrow_upper_right:](https://github.com/m
 
 Contact [@vict0rsch](https://github.com/vict0rsch) to be added to our slack workspace if you want to contribute regularly!
 
+# How To Cite 📝
+
+If you find CodeCarbon useful for your research, you can find a citation under a variety of formats on [Zenodo](https://zenodo.org/records/11171501).
+
+Here is a sample for BibTeX: 
+```tex 
+@software{benoit_courty_2024_11171501,
+  author       = {Benoit Courty and
+                  Victor Schmidt and
+                  Goyal-Kamal and
+                  MarionCoutarel and
+                  Boris Feld and
+                  Jérémy Lecourt and
+                  LiamConnell and
+                  SabAmine and
+                  inimaz and
+                  supatomic and
+                  Mathilde Léval and
+                  Luis Blanche and
+                  Alexis Cruveiller and
+                  ouminasara and
+                  Franklin Zhao and
+                  Aditya Joshi and
+                  Alexis Bogroff and
+                  Amine Saboni and
+                  Hugues de Lavoreille and
+                  Niko Laskaris and
+                  Edoardo Abati and
+                  Douglas Blank and
+                  Ziyao Wang and
+                  Armin Catovic and
+                  alencon and
+                  Michał Stęchły and
+                  Christian Bauer and
+                  Lucas-Otavio and
+                  JPW and
+                  MinervaBooks},
+  title        = {mlco2/codecarbon: v2.4.1},
+  month        = may,
+  year         = 2024,
+  publisher    = {Zenodo},
+  version      = {v2.4.1},
+  doi          = {10.5281/zenodo.11171501},
+  url          = {https://doi.org/10.5281/zenodo.11171501}
+}
+```
 
 # Contact 📝
 
