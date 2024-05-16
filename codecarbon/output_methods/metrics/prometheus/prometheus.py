@@ -5,7 +5,7 @@ from prometheus_client import push_to_gateway
 from prometheus_client.exposition import basic_auth_handler
 
 from codecarbon.external.logger import logger
-from codecarbon.output_methods.base_output_method import BaseOutput
+from codecarbon.output_methods.base_output import BaseOutput
 from codecarbon.output_methods.emissions_data import EmissionsData
 from codecarbon.output_methods.metrics.prometheus.metrics import (
     cpu_energy_gauge,

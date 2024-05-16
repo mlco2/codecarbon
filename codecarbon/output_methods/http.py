@@ -5,7 +5,7 @@ import requests
 
 from codecarbon.core.api_client import ApiClient
 from codecarbon.external.logger import logger
-from codecarbon.output_methods.base_output_method import BaseOutput
+from codecarbon.output_methods.base_output import BaseOutput
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 
