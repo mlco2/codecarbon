@@ -136,8 +136,8 @@ Here is a sample for BibTeX:
                   Boris Feld and
                   Jérémy Lecourt and
                   LiamConnell and
-                  SabAmine and
-                  inimaz and
+                  Amine Saboni and
+                  Inimaz and
                   supatomic and
                   Mathilde Léval and
                   Luis Blanche and
@@ -146,14 +146,13 @@ Here is a sample for BibTeX:
                   Franklin Zhao and
                   Aditya Joshi and
                   Alexis Bogroff and
-                  Amine Saboni and
                   Hugues de Lavoreille and
                   Niko Laskaris and
                   Edoardo Abati and
                   Douglas Blank and
                   Ziyao Wang and
                   Armin Catovic and
-                  alencon and
+                  Marc Alencon and
                   Michał Stęchły and
                   Christian Bauer and
                   Lucas-Otavio and
