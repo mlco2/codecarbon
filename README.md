@@ -130,6 +130,7 @@ Here is a sample for BibTeX:
 @software{benoit_courty_2024_11171501,
   author       = {Benoit Courty and
                   Victor Schmidt and
+                  Sasha Luccioni and
                   Goyal-Kamal and
                   MarionCoutarel and
                   Boris Feld and
