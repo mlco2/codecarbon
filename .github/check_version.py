@@ -58,12 +58,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     versions = get_versions_from_pypi("codecarbon")
     module_version = get_local_version()
-    meta_version = get_local_version(".conda/meta.yaml")
-    local_versions = [module_version, meta_version]
+    local_versions = [module_version]
     if local_versions.count(local_versions[0]) != len(local_versions):
         print("All local versions did not match !")
         print(f"codecarbon/_version.py : {module_version}")
-        print(f".conda/meta.yaml : {meta_version}")
         sys.exit(1)
     if args.onlyprintversion:
         print(module_version)
