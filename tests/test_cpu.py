@@ -193,7 +193,11 @@ class TestTDP(unittest.TestCase):
             tdp._get_matching_cpu(model, cpu_data, greedy=False),
             "Intel Xeon Gold 6330N",
         )
-
+        model = "Intel(R) Xeon(R) Silver 4208 CPU @ 2.10GHz"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "Intel Xeon Silver 4208",
+        )
         # Does not match when missing part replaced by (here wrong) other part.
         # Which here is good. Could happen if Intel creates a model with the
         # same name than AMD ("5800K"), but only AMD exists in our cpu list.
