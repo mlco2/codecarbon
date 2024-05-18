@@ -606,6 +606,7 @@ class BaseEmissionsTracker(ABC):
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
             run_id=str(self.run_id),
+            experiment_id=str(self._experiment_id),
             duration=duration.seconds,
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
