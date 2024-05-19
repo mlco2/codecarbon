@@ -15,8 +15,8 @@ services:
 
   carbonserver:
     build:
-      context: ./carbonserver/
-      dockerfile: ./docker/Dockerfile
+      context: .
+      dockerfile: ./carbonserver/docker/Dockerfile
     #command: cd /carbonserver/carbonserver/database && python3 -m alembic upgrade head && cd ../.. && uvicorn --reload main:app --host 0.0.0.0
     volumes:
       - ./carbonserver:/carbonserver
