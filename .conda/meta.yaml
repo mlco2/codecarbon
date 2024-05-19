@@ -24,6 +24,7 @@ requirements:
   host:
     - python
     - pip
+    - hatchling
   run:
     {% for req in pyproject.get('project').get('dependencies') %}
     - {{ req }}
