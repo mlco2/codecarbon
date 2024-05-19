@@ -432,9 +432,9 @@ Start a Docker image in the same directory and bind-mount the current directory 
 `docker run -ti --rm=true -v $PWD:/data continuumio/anaconda3`.
 
 Inside the docker container, run:
-- `conda install conda-build conda-verify`
+- `conda install conda-build conda-verify conda-forge::hatchling`
 - `cd /data && mkdir -p /conda_dist`
-- `conda build --python 3.8 .conda/ -c conda-forge --output-folder /conda_dist`
+- `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
 - `anaconda upload --user codecarbon /data/noarch/codecarbon-*.tar.bz2`
 
 
