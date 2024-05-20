@@ -53,9 +53,6 @@ If you've identified a bug in `codecarbon`, please [submit an issue](#issue) to 
 
 Feel free to describe your request by [submitting an issue](#issue) documenting the feature (with its intent) and a PR with a proposed implementation of the feature.
 
-
-
-
 <!-- TOC --><a name="ready-to-contribute"></a>
 ## </a> Ready to Contribute!
 
@@ -87,6 +84,77 @@ cd codecarbon
 hatch env create
 ```
 
+### Some Hatch commands
+
+View the options of CodeCarbon environments:
+
+```sh
+❯ hatch env show
+                                       Standalone                                       
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃ Name        ┃ Type        ┃ Features ┃ Dependencies              ┃ Scripts           ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│ default     │ pip-compile │          │                           │                   │
+├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
+│ carbonboard │ pip-compile │ viz      │                           │ run               │
+├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
+│ docs        │ virtual     │          │ sphinx                    │ build             │
+│             │             │          │ sphinx-rtd-theme          │                   │
+├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
+│ dev         │ pip-compile │          │ black                     │ format            │
+│             │             │          │ mypy                      │ lint              │
+│             │             │          │ pre-commit                │ mypy-check        │
+│             │             │          │ ruff                      │ precommit         │
+│             │             │          │                           │ precommit-install │
+│             │             │          │                           │ precommit-update  │
+├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
+│ dashboard   │ pip-compile │          │ dash-bootstrap-components │ run               │
+│             │             │          │ dash>=2.2.0               │                   │
+│             │             │          │ plotly>=5.6.0             │                   │
+├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
+│ api         │ pip-compile │          │ alembic<2.0.0             │ docker            │
+│             │             │          │ bcrypt<5.0.0              │ local             │
+│             │             │          │ dependency-injector<5.0.0 │ server-ci         │
+│             │             │          │ fastapi-pagination<1.0.0  │ setup-db          │
+│             │             │          │ fastapi<1.0.0             │ test-integ        │
+│             │             │          │ httpx                     │ test-unit         │
+│             │             │          │ mock                      │                   │
+│             │             │          │ numpy                     │                   │
+│             │             │          │ psutil                    │                   │
+│             │             │          │ psycopg2-binary<3.0.0     │                   │
+│             │             │          │ pydantic[email]<2.0.0     │                   │
+│             │             │          │ pytest                    │                   │
+│             │             │          │ python-dateutil<3.0.0     │                   │
+│             │             │          │ rapidfuzz                 │                   │
+│             │             │          │ requests-mock             │                   │
+│             │             │          │ requests<3.0.0            │                   │
+│             │             │          │ responses                 │                   │
+│             │             │          │ sqlalchemy<2.0.0          │                   │
+│             │             │          │ uvicorn[standard]<1.0.0   │                   │
+└─────────────┴─────────────┴──────────┴───────────────────────────┴───────────────────┘
+                                   Matrices                                    
+┏━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Name ┃ Type        ┃ Envs        ┃ Features ┃ Dependencies  ┃ Scripts       ┃
+┡━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ test │ pip-compile │ test.py3.8  │ viz      │ mock          │ package       │
+│      │             │ test.py3.9  │          │ numpy         │ package-integ │
+│      │             │ test.py3.10 │          │ psutil        │               │
+│      │             │ test.py3.11 │          │ pytest        │               │
+│      │             │ test.py3.12 │          │ rapidfuzz     │               │
+│      │             │             │          │ requests-mock │               │
+│      │             │             │          │ responses     │               │
+└──────┴─────────────┴─────────────┴──────────┴───────────────┴───────────────┘
+```
+
+To know the path of a env :
+```sh
+hatch env find dev
+```
+
+To delete all your env :
+```sh
+hatch env prune
+```
 
 <!-- TOC --><a name="tests"></a>
 ### Tests
