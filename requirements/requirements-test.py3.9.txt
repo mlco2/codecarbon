@@ -106,7 +106,7 @@ pyyaml==6.0.1
     # via responses
 rapidfuzz==3.7.0
     # via hatch.envs.test.py3.9
-requests==2.31.0
+requests==2.32.0
     # via
     #   hatch.envs.test.py3.9
     #   dash

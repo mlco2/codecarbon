@@ -78,7 +78,7 @@ pyyaml==6.0.1
     # via pre-commit
 rapidfuzz==3.7.0
     # via hatch.envs.dev
-requests==2.31.0
+requests==2.32.0
     # via hatch.envs.dev
 ruff==0.3.4
     # via hatch.envs.dev

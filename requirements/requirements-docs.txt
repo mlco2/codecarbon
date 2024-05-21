@@ -76,7 +76,7 @@ pytz==2024.1
     #   pandas
 rapidfuzz==3.6.2
     # via hatch.envs.docs
-requests==2.31.0
+requests==2.32.0
     # via
     #   hatch.envs.docs
     #   sphinx
