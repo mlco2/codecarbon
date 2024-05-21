@@ -415,7 +415,7 @@ to regenerate the html files.
 ### Release process
 
 - Merge all PRs.
-- Create a PR bumping the version with `hatch version minor` and report it in https://github.com/mlco2/codecarbon/blob/master/.conda/meta.yaml.
+- Create a PR bumping the version with `hatch version minor`.
 - Run `python3 .github/check_version.py` to check version consistancy.
 - [Build Documentation](#documentation) if needed with `hatch run docs:build`.
 - Merge the PR.
@@ -432,10 +432,10 @@ Start a Docker image in the same directory and bind-mount the current directory 
 `docker run -ti --rm=true -v $PWD:/data continuumio/anaconda3`.
 
 Inside the docker container, run:
-- `conda install conda-build conda-verify`
-- `cd /data && mkdir -p conda_dist`
-- `conda build --python 3.8 .conda/ -c conda-forge --output-folder conda_dist`
-- `anaconda upload --user codecarbon /data/noarch/codecarbon-*.tar.bz2`
+- `conda install -y conda-build conda-verify conda-forge::hatchling`
+- `cd /data && mkdir -p /conda_dist`
+- `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
+- `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
 
 
 <!-- TOC --><a name="restore-database-from-a-production-backup"></a>

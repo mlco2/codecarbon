@@ -1,11 +1,15 @@
-{% set version = "2.4.1" %}
+{% set version_match = load_file_regex(
+  load_file='codecarbon/_version.py',
+  regex_pattern='^__version__ = "(.+)"') %}
+{% set version = version_match[1] %}
+{% set pyproject = load_file_data('pyproject.toml') %}
 
 package:
   name: codecarbon
   version: {{ version }}
 
 source:
-  path: ../..
+  path: ..
 
 build:
   noarch: python
@@ -20,20 +24,11 @@ requirements:
   host:
     - python
     - pip
+    - hatchling
   run:
-    - python>=3.7
-    - arrow
-    - click
-    - dash
-    - dash-bootstrap-components
-    - fire
-    - pandas
-    - requests
-    - psutil
-    - pynvml
-    - py-cpuinfo
-    - prometheus_client
-    - rapidfuzz
+    {% for req in pyproject.get('project').get('dependencies') %}
+    - {{ req }}
+    {% endfor %}
 
 test:
   imports:
