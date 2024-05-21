@@ -72,7 +72,7 @@ mock==5.1.0
     # via hatch.envs.test.py3.8
 nest-asyncio==1.6.0
     # via dash
-numpy==1.24.4
+numpy==1.22.0
     # via
     #   hatch.envs.test.py3.8
     #   pandas

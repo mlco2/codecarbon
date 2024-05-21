@@ -57,7 +57,7 @@ markupsafe==2.1.5
     #   werkzeug
 nest-asyncio==1.6.0
     # via dash
-numpy==1.24.4
+numpy==1.22.0
     # via pandas
 packaging==24.0
     # via plotly

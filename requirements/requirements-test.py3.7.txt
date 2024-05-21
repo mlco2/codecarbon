@@ -40,7 +40,7 @@ iniconfig==2.0.0
     # via pytest
 mock==5.1.0
     # via hatch.envs.test.py3.7
-numpy==1.21.6
+numpy==1.22.0
     # via
     #   hatch.envs.test.py3.7
     #   pandas

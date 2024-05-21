@@ -50,7 +50,7 @@ make==0.1.6.post2
     # via hatch.envs.docs
 markupsafe==2.1.5
     # via jinja2
-numpy==1.24.4
+numpy==1.22.0
     # via pandas
 packaging==24.0
     # via sphinx

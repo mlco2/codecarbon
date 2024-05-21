@@ -46,7 +46,7 @@ mypy-extensions==1.0.0
     #   mypy
 nodeenv==1.8.0
     # via pre-commit
-numpy==1.26.4
+numpy==1.22.0
     # via pandas
 packaging==24.0
     # via black

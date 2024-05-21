@@ -22,7 +22,7 @@ click==8.1.7
     # via hatch.envs.test.py3.10
 idna==3.7
     # via requests
-numpy==1.26.4
+numpy==1.22.0
     # via pandas
 pandas==2.2.1
     # via hatch.envs.test.py3.10

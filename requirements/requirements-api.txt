@@ -96,7 +96,7 @@ markupsafe==2.1.5
     # via mako
 mock==5.1.0
     # via hatch.envs.api
-numpy==1.26.4
+numpy==1.22.0
     # via
     #   hatch.envs.api
     #   pandas
