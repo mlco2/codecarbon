@@ -42,7 +42,7 @@ pytz==2024.1
     # via pandas
 rapidfuzz==3.7.0
     # via hatch.envs.test.py3.10
-requests==2.31.0
+requests==2.32.0
     # via hatch.envs.test.py3.10
 six==1.16.0
     # via python-dateutil

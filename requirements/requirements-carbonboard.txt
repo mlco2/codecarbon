@@ -81,7 +81,7 @@ pytz==2024.1
     # via pandas
 rapidfuzz==3.7.0
     # via hatch.envs.carbonboard
-requests==2.31.0
+requests==2.32.0
     # via
     #   hatch.envs.carbonboard
     #   dash
