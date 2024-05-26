@@ -34,6 +34,7 @@ dependencies = [
     "pynvml",
     "rapidfuzz",
     "requests",
+    "logfire",
 ]
 
 [project.urls]

@@ -32,8 +32,9 @@ from codecarbon.output import (
     EmissionsData,
     FileOutput,
     HTTPOutput,
+    LogfireOutput,
     LoggerOutput,
-    PrometheusOutput, LogfireOutput,
+    PrometheusOutput,
 )
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
@@ -261,8 +262,6 @@ class BaseEmissionsTracker(ABC):
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
-        self._cc_api__out = None
-        self._cc_prometheus_out = None
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
@@ -420,25 +419,23 @@ class BaseEmissionsTracker(ABC):
             self.persistence_objs.append(HTTPOutput(self._emissions_endpoint))
 
         if self._save_to_api:
-            self._cc_api__out = CodeCarbonAPIOutput(
+            _cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
                 experiment_id=self._experiment_id,
                 api_key=api_key,
                 conf=self._conf,
             )
-            self.run_id = self._cc_api__out.run_id
-            self.persistence_objs.append(self._cc_api__out)
+            self.run_id = _cc_api__out.run_id
+            self.persistence_objs.append(_cc_api__out)
 
         else:
             self.run_id = uuid.uuid4()
 
         if self._save_to_prometheus:
-            self._cc_prometheus_out = PrometheusOutput(self._prometheus_url)
-            self.persistence_objs.append(self._cc_prometheus_out)
+            self.persistence_objs.append(PrometheusOutput(self._prometheus_url))
 
         if self._save_to_logfire:
-            self._cc_logfire_out = LogfireOutput()
-            self.persistence_objs.append(self._cc_logfire_out)
+            self.persistence_objs.append(LogfireOutput())
 
     def service_shutdown(self, signum, frame):
         print("Caught signal %d" % signum)
@@ -532,8 +529,7 @@ class BaseEmissionsTracker(ABC):
         # scheduled measurement to shutdown
         self._measure_power_and_energy()
 
-        emissions_data = self._prepare_emissions_data()
-        self._persist_data(emissions_data)
+        emissions_data = self._prepare_and_persist_data()
 
         return emissions_data.emissions
 
@@ -560,20 +556,44 @@ class BaseEmissionsTracker(ABC):
         # or if scheduler interval was longer than the run
         self._measure_power_and_energy()
 
-        emissions_data = self._prepare_emissions_data()
-
-        self._persist_data(emissions_data, experiment_name=self._experiment_name)
+        emissions_data = self._prepare_and_persist_data(
+            experiment_name=self._experiment_name
+        )
 
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
 
-    def _persist_data(self, emissions_data, experiment_name=None):
-        for persistence in self.persistence_objs:
-            if isinstance(persistence, CodeCarbonAPIOutput):
-                emissions_data = self._prepare_emissions_data(delta=True)
+    def _prepare_and_persist_data(
+        self, experiment_name=None, only_delta_methods=False
+    ) -> EmissionsData:
+        """
+        Prepare and persist emissions data.
+        Depending on the persistence method, it will persist the total emissions or just the delta emissions.
 
-            persistence.out(emissions_data)
+        Args:
+            experiment_name (str, optional): Name of the experiment. Defaults to None.
+            only_delta_methods (bool, optional): If True, only persist the delta emissions. Defaults to False.
+
+        Returns:
+            EmissionsData:
+        """
+
+        emissions_data = self._prepare_emissions_data()
+        delta_emissions_data = self._prepare_emissions_data(delta=True)
+        for persistence in self.persistence_objs:
+            use_emissions_delta: bool = getattr(
+                persistence, "use_emissions_delta", False
+            )
+            if use_emissions_delta:
+                logger.debug("Persisting delta emissions")
+                persistence.out(delta_emissions_data)
+            else:
+                if only_delta_methods:
+                    # Skip non-delta methods
+                    continue
+                logger.debug("Persisting total emissions")
+                persistence.out(emissions_data)
             if isinstance(persistence, FileOutput):
                 if len(self._tasks) > 0:
                     task_emissions_data = []
@@ -582,6 +602,7 @@ class BaseEmissionsTracker(ABC):
                     persistence.task_out(
                         task_emissions_data, experiment_name, self._output_dir
                     )
+        return emissions_data
 
     def _prepare_emissions_data(self, delta=False) -> EmissionsData:
         """
@@ -748,19 +769,14 @@ class BaseEmissionsTracker(ABC):
         self._do_measurements()
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
+        # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
-            self._cc_api__out is not None or self._cc_prometheus_out is not None
+            self._save_to_api is not None
+            or self._save_to_prometheus is not None
+            or self._save_to_logfire is not None
         ) and self._api_call_interval != -1:
             if self._measure_occurrence >= self._api_call_interval:
-                emissions = self._prepare_emissions_data(delta=True)
-                logger.info(
-                    f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
-                    + f"{emissions.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
-                )
-                if self._cc_api__out:
-                    self._cc_api__out.out(emissions)
-                if self._cc_prometheus_out:
-                    self._cc_prometheus_out.out(emissions)
+                self._prepare_and_persist_data(only_delta_methods=True)
                 self._measure_occurrence = 0
         logger.debug(f"last_duration={last_duration}\n------------------------")
 

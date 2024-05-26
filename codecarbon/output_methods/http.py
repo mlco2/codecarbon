@@ -41,6 +41,7 @@ class CodeCarbonAPIOutput(BaseOutput):
     run_id = None
 
     def __init__(self, endpoint_url: str, experiment_id: str, api_key: str, conf):
+        self.use_emissions_delta = True
         self.endpoint_url: str = endpoint_url
         self.api = ApiClient(
             experiment_id=experiment_id,
@@ -53,5 +54,9 @@ class CodeCarbonAPIOutput(BaseOutput):
     def out(self, data: EmissionsData):
         try:
             self.api.add_emission(dataclasses.asdict(data))
+            logger.info(
+                f"{data.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
+                + f"{data.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
+            )
         except Exception as e:
             logger.error(e, exc_info=True)
