@@ -33,6 +33,7 @@ from codecarbon.external.logger import logger, set_logger_format, set_logger_lev
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
 from codecarbon.input import DataSource
+from codecarbon.lock import acquire_lock
 from codecarbon.output import (
     BaseOutput,
     CodeCarbonAPIOutput,
@@ -232,6 +233,9 @@ class BaseEmissionsTracker(ABC):
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
+        # Acquire lock file to prevent multiple instances of codecarbon running
+        # at the same time
+        acquire_lock()
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
