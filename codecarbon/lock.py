@@ -21,7 +21,7 @@ def acquire_lock():
     try:
         _create_lock_file()
     except FileExistsError as e:
-        logger.error(e)
+        logger.debug("Error:", e)
         logger.error(
             "Error: Another instance of codecarbon is already running. Turn off the other instance to be able to run this one. Exiting."
         )
