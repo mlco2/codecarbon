@@ -162,6 +162,7 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
+        prevent_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -214,13 +215,16 @@ class BaseEmissionsTracker(ABC):
                                 messages. Defaults to "".
         :param default_cpu_power: cpu power to be used as default if the cpu is not known.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+        :param prevent_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
         """
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
-        # Acquire lock file to prevent multiple instances of codecarbon running
-        # at the same time
-        acquire_lock()
+        self._set_from_conf(prevent_multiple_runs, "prevent_multiple_runs", False, bool)
+        if prevent_multiple_runs:
+            # Acquire lock file to prevent multiple instances of codecarbon running
+            # at the same time
+            acquire_lock()
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
@@ -941,6 +945,7 @@ def track_emissions(
     log_level: Optional[Union[int, str]] = _sentinel,
     default_cpu_power: Optional[int] = _sentinel,
     pue: Optional[int] = _sentinel,
+    prevent_multiple_runs: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -984,6 +989,7 @@ def track_emissions(
                       Defaults to "info".
     :param default_cpu_power: cpu power to be used as default if the cpu is not known.
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+    :param prevent_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
 
     :return: The decorated function
     """
@@ -1016,6 +1022,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                     default_cpu_power=default_cpu_power,
                     pue=pue,
+                    prevent_multiple_runs=prevent_multiple_runs,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1039,6 +1046,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                     default_cpu_power=default_cpu_power,
                     pue=pue,
+                    prevent_multiple_runs=prevent_multiple_runs,
                 )
             tracker.start()
             try:
