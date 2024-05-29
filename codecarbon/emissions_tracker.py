@@ -236,7 +236,7 @@ class BaseEmissionsTracker(ABC):
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
         self._set_from_conf(prevent_multiple_runs, "prevent_multiple_runs", False, bool)
-        if prevent_multiple_runs:
+        if self._prevent_multiple_runs:
             # Acquire lock file to prevent multiple instances of codecarbon running
             # at the same time
             acquire_lock()
