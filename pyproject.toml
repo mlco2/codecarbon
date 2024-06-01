@@ -127,7 +127,7 @@ dependencies = [
 ]
 
 [tool.hatch.envs.dashboard.scripts]
-run = "cd dashboard && python carbon_board_API.py"
+run = "python dashboard/carbon_board_API.py"
 
 [tool.hatch.envs.api]
 dependencies = [

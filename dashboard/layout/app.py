@@ -39,7 +39,7 @@ orga_id = df_org.id.unique().tolist()[1]
 df_project = get_project_list(orga_id)
 
 # Load WorldElectricityMix
-df_mix = pd.read_csv("./WorldElectricityMix.csv")
+df_mix = pd.read_csv("dashboard/WorldElectricityMix.csv")
 
 # Define application
 app = dash.Dash(

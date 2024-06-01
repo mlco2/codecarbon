@@ -508,10 +508,10 @@ git push clever-dashboard fix-unit:master
 
 Config on CleverCloud:
 ```sh
-APP_FOLDER="dashboard"
-CC_PIP_REQUIREMENTS_FILE="requirements-new.txt"
-CC_PYTHON_MODULE="carbon_board_API:server"
-CC_PYTHON_VERSION="3.8"
+APP_FOLDER=""
+CC_PIP_REQUIREMENTS_FILE="requirements/requirements-carbonboard.txt"
+CC_PYTHON_MODULE="dashboard/carbon_board_API:server"
+CC_PYTHON_VERSION="3.11"
 CODECARBON_API_URL="https://api.codecarbon.io"
 PORT="8000"
 ```
