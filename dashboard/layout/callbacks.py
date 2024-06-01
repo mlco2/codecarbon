@@ -146,18 +146,28 @@ def update_Charts(start_date, end_date, project):
         duration = 0
     else:
         energyConsumed = df_project["energy_consumed"]
-        emission = df_project["emissions"]
-        duration = df_project["duration"]
+        emission = df_project["emissions"]  # In Kg.eqCO2
+        duration = df_project["duration"]  # In seconds
 
     # Cards
     # --------------------------------------------------------------
-    houseHold = str(round(100 * emission / 160.58, 2)) + " %"
+    # The average U.S. household consumes about 10,500 kilowatthours (kWh) of electricity per year
+    # 10 500 / 52 = 202 kWh per week
+    # USA "carbon_intensity": 0.368102 KgCO2.eq / kWh
+    us_household_weekly_emissions = 202 * 0.368102  # 74 KgCO2.eq
+    # American household weekly energy consumption
+    houseHold = str(round(100 * emission / us_household_weekly_emissions, 2)) + " %"
+    # Average emissions of a european car : 130 gCO2.eq / km
+    car_emissions_KgCo2_per_km = 130 / 1000
     car = str(
         round(
-            emission / 0.409,
+            emission / car_emissions_KgCo2_per_km,
         )
     )
-    time_in_minutes = emission * (1 / 0.097) / 60
+    # Average TV consumption : 100 W
+    # Average carbon intensity : 0.475 KgCO2.eq/KWh
+    tv_CO2_emissions_per_minute = 100 / 1000 * 0.475 / 60
+    time_in_minutes = emission / tv_CO2_emissions_per_minute
     tvTime = f"{time_in_minutes:.0f} min"
     if time_in_minutes >= 60:
         time_in_hours = time_in_minutes / 60
