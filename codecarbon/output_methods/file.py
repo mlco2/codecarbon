@@ -23,6 +23,9 @@ class FileOutput(BaseOutput):
             )
         self.on_csv_write: str = on_csv_write
         self.save_file_path: str = save_file_path
+        logger.info(
+            f"Saving emissions data to file {os.path.abspath(self.save_file_path)}"
+        )
 
     def has_valid_headers(self, data: EmissionsData):
         with open(self.save_file_path) as csv_file:
