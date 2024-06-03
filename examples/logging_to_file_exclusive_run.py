@@ -1,5 +1,5 @@
 """
-Similar to logging_to_file.py, but with the `prevent_multiple_runs` parameter set to True.
+Similar to logging_to_file.py, but with the `allow_multiple_runs` parameter set to False (which is the default).
 This will prevent multiple instances of codecarbon from running at the same time.
 We run 5 instances of codecarbon. 4 wil fail and only one will succeed
 
@@ -28,7 +28,7 @@ def worker():
         country_iso_code="FRA",
         measure_power_secs=30,
         project_name="ultra_secret",
-        prevent_multiple_runs=True,
+        # allow_multiple_runs=True,    # Set this to True to allow multiple instances of codecarbon to run at the same time
     )
 
     tracker.start()
