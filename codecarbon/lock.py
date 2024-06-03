@@ -8,10 +8,12 @@ import atexit
 import errno
 import os
 import sys
+import tempfile
 
 from codecarbon.external.logger import logger
 
-LOCKFILE = "/tmp/.codecarbon.lock"
+# We use tempfile.gettempdir() to get the system's temporary directory (linux: /tmp, windows: C:\Users\username\AppData\Local\Temp)
+LOCKFILE = os.path.join(tempfile.gettempdir(), ".codecarbon.lock")
 
 lock_file_created_by_this_process = False
 
