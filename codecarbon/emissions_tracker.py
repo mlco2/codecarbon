@@ -33,7 +33,7 @@ from codecarbon.external.logger import logger, set_logger_format, set_logger_lev
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
 from codecarbon.input import DataSource
-from codecarbon.lock import acquire_lock
+from codecarbon.lock import Lock
 from codecarbon.output import (
     BaseOutput,
     CodeCarbonAPIOutput,
@@ -243,7 +243,16 @@ class BaseEmissionsTracker(ABC):
         else:
             # Acquire lock file to prevent multiple instances of codecarbon running
             # at the same time
-            acquire_lock()
+            try:
+                self._lock = Lock()
+                self._lock.acquire()
+            except FileExistsError:
+                logger.error(
+                    "Error: Another instance of codecarbon is already running. Turn off the other instance to be able to run this one. Exiting."
+                )
+                # Do not continue if another instance of codecarbon is running
+                self._another_instance_already_running = True
+                return
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
@@ -508,7 +517,15 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
-
+        # if another instance of codecarbon is already running, stop here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -606,6 +623,19 @@ class BaseEmissionsTracker(ABC):
         Stops tracking the experiment
         :return: CO2 emissions in kgs
         """
+
+        # if another instance of codecarbon is already running, Nothing to do here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
+        if not self._allow_multiple_runs:
+            # Release the lock
+            self._lock.release()
         if self._start_time is None:
             logger.error("You first need to start the tracker.")
             return None
