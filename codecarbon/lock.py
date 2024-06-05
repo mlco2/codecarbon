@@ -4,10 +4,8 @@ It creates a lock file in /tmp/.codecarbon.lock and removes it on exit.
 If the lock file already exists, it exits the program.
 """
 
-import atexit
 import errno
 import os
-import sys
 import tempfile
 
 from codecarbon.external.logger import logger
@@ -15,46 +13,34 @@ from codecarbon.external.logger import logger
 # We use tempfile.gettempdir() to get the system's temporary directory (linux: /tmp, windows: C:\Users\username\AppData\Local\Temp)
 LOCKFILE = os.path.join(tempfile.gettempdir(), ".codecarbon.lock")
 
-lock_file_created_by_this_process = False
 
+class Lock:
+    """A lock to ensure only one instance of codecarbon is running."""
 
-def acquire_lock():
-    """Acquires a lock to ensure only one instance of codecarbon is running."""
-    try:
-        _create_lock_file()
-    except FileExistsError as e:
-        logger.debug("Error:", e)
-        logger.error(
-            "Error: Another instance of codecarbon is already running. Turn off the other instance to be able to run this one. Exiting."
-        )
-        sys.exit(1)
+    def __init__(self):
+        self._has_created_lock = False
 
-
-def _create_lock_file():
-    """Creates a lock file and ensures it's the only instance running."""
-    global lock_file_created_by_this_process
-    # Attempt to create the lock file
-    try:
-        with open(LOCKFILE, "x") as _:
-            lock_file_created_by_this_process = True
-    except FileExistsError:
-        logger.debug(
-            f"Lock file already exists. Path: {LOCKFILE}. This usually means another instance of codecarbon is running."
-        )
-        raise
-
-
-def _remove_lock_file():
-    """Removes the lock file on exit."""
-    global lock_file_created_by_this_process
-    # Only remove the lock file if this process created it
-    if lock_file_created_by_this_process:
+    def acquire(self):
+        """Creates a lock file and ensures it's the only instance running."""
+        # Attempt to create the lock file
         try:
-            os.remove(LOCKFILE)
+            with open(LOCKFILE, "x") as _:
+                logger.debug(f"Lock file created. Path: {LOCKFILE}")
+                self._has_created_lock = True
+        except FileExistsError:
+            logger.debug(
+                f"Lock file already exists. Path: {LOCKFILE}. This usually means another instance of codecarbon is running."
+            )
+            raise
+
+    def release(self):
+        """Removes the lock file on exit."""
+        logger.debug("Removing the lock")
+        try:
+            # Remove the lock file only if it was created by this instance
+            if self._has_created_lock:
+                os.remove(LOCKFILE)
         except OSError as e:
+            logger.error("Error:", e)
             if e.errno != errno.ENOENT:
                 raise
-
-
-# Register the cleanup function to be called on program exit
-atexit.register(_remove_lock_file)

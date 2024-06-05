@@ -1,40 +1,42 @@
 import unittest
 from unittest.mock import mock_open, patch
 
-import codecarbon.lock as lock
+from codecarbon.lock import LOCKFILE, Lock
 
 
 class TestLock(unittest.TestCase):
+    def setUp(self):
+        self.lock = Lock()
+
     @patch("codecarbon.lock.os.remove")
     @patch("codecarbon.lock.open", new_callable=mock_open)
     def test_acquire_lock_creates_lock_file(self, mock_file, mock_remove):
-        lock.lock_file_created_by_this_process = False
-        lock.acquire_lock()
-        mock_file.assert_called_once_with(lock.LOCKFILE, "x")
-        self.assertTrue(lock.lock_file_created_by_this_process)
+        self.lock.acquire()
+        mock_file.assert_called_once_with(LOCKFILE, "x")
+        self.assertTrue(self.lock._has_created_lock)
 
     @patch("codecarbon.lock.os.remove")
     @patch("codecarbon.lock.open", new_callable=mock_open)
     def test_acquire_lock_exits_when_lock_file_exists(self, mock_file, mock_remove):
         mock_file.side_effect = FileExistsError
-        with self.assertRaises(SystemExit):
-            lock.acquire_lock()
+        with self.assertRaises(FileExistsError):
+            self.lock.acquire()
 
     @patch("codecarbon.lock.os.remove")
     @patch("codecarbon.lock.open", new_callable=mock_open)
-    def test_remove_lock_file_removes_lock_file(self, mock_file, mock_remove):
-        lock.lock_file_created_by_this_process = True
-        lock._remove_lock_file()
-        mock_remove.assert_called_once_with(lock.LOCKFILE)
+    def test_release_removes_lock_file(self, mock_file, mock_remove):
+        self.lock.acquire()
+        self.lock.release()
+        mock_remove.assert_called_once_with(LOCKFILE)
 
     @patch("codecarbon.lock.os.remove")
     @patch("codecarbon.lock.open", new_callable=mock_open)
-    def test_remove_lock_file_does_not_remove_lock_file_when_not_created_by_this_process(
+    def test_release_does_not_release_when_not_created_by_this_instance(
         self, mock_file, mock_remove
     ):
-        lock.lock_file_created_by_this_process = False
-        lock._remove_lock_file()
+        self.lock.release()
         mock_remove.assert_not_called()
+        self.assertFalse(self.lock._has_created_lock)
 
 
 if __name__ == "__main__":
