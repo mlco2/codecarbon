@@ -30,11 +30,14 @@ class PrometheusOutput(BaseOutput):
     def __init__(self, prometheus_url: str):
         self.prometheus_url = prometheus_url
 
-    def out(self, data: EmissionsData):
+    def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            self.add_emission(dataclasses.asdict(data))
+            self.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)
+
+    def live_out(self, total: EmissionsData, delta: EmissionsData):
+        self.out(total, delta)
 
     def _auth_handler(self, url, method, timeout, headers, data):
         username = os.getenv("PROMETHEUS_USERNAME")

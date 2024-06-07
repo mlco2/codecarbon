@@ -110,6 +110,7 @@ venv.bak/
 
 # idea
 .idea/
+*.iml
 
 # Sphinx
 docs/_build/
