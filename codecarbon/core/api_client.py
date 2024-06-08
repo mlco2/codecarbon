@@ -35,7 +35,6 @@ def get_datetime_with_timezone():
 class ApiClient:  # (AsyncClient)
     """
     This class call the Code Carbon API
-    Note : The project, team and organization must have been created in the interface.
     """
 
     run_id = None
