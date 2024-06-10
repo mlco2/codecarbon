@@ -255,7 +255,7 @@ class BaseEmissionsTracker(ABC):
         set_logger_format(self._logger_preamble)
 
         self._start_time: Optional[float] = None
-        self._last_measured_time: float = time.time()
+        self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
@@ -453,7 +453,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning("Already started tracking")
             return
 
-        self._last_measured_time = self._start_time = time.time()
+        self._last_measured_time = self._start_time = time.perf_counter()
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -477,7 +477,9 @@ class BaseEmissionsTracker(ABC):
             task_name = uuid.uuid4().__str__()
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
-        self._last_measured_time = self._start_time = time.time()
+        
+        self._last_measured_time = self._start_time = time.perf_counter()
+
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -506,7 +508,7 @@ class BaseEmissionsTracker(ABC):
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         task_duration = Time.from_seconds(
-            time.time() - self._tasks[task_name].start_time
+            time.perf_counter() - self._tasks[task_name].start_time
         )
 
         task_emission_data = emissions_data_delta
@@ -596,7 +598,7 @@ class BaseEmissionsTracker(ABC):
         :delta: If 'True', return only the delta comsumption since the last call.
         """
         cloud: CloudMetadata = self._get_cloud_metadata()
-        duration: Time = Time.from_seconds(time.time() - self._start_time)
+        duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
 
         if cloud.is_on_private_infra:
             emissions = self._emissions.get_private_infra_emissions(
@@ -682,9 +684,9 @@ class BaseEmissionsTracker(ABC):
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
-            h_time = time.time()
+            h_time = time.perf_counter()
             # Compute last_duration again for more accuracy
-            last_duration = time.time() - self._last_measured_time
+            last_duration = time.perf_counter() - self._last_measured_time
             (
                 power,
                 energy,
@@ -730,7 +732,7 @@ class BaseEmissionsTracker(ABC):
                     )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
-            h_time = time.time() - h_time
+            h_time = time.perf_counter() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
                 + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
@@ -745,7 +747,7 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
-        last_duration = time.time() - self._last_measured_time
+        last_duration = time.perf_counter() - self._last_measured_time
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
@@ -756,7 +758,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         self._do_measurements()
-        self._last_measured_time = time.time()
+        self._last_measured_time = time.perf_counter()
         self._measure_occurrence += 1
         # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
