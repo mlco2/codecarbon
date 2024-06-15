@@ -108,7 +108,7 @@ def test_add_emission(client, custom_test_server):
     repository_mock.add_emission.return_value = UUID(EMISSION_ID)
 
     with custom_test_server.container.emission_repository.override(repository_mock):
-        response = client.post("/emission", json=EMISSION_TO_CREATE)
+        response = client.post("/emissions", json=EMISSION_TO_CREATE)
         actual_emission = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -122,7 +122,7 @@ def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server
 
     with custom_test_server.container.emission_repository.override(repository_mock):
         response = client.get(
-            "/emission/read_emission/", params={"emission_id": EMISSION_ID}
+            "/emissions/read_emission/", params={"emission_id": EMISSION_ID}
         )
         actual_emission = response.json()
 
