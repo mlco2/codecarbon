@@ -23,7 +23,7 @@ projects_temp_db = []
 
 
 @router.post(
-    "/project",
+    "/projects",
     tags=PROJECTS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=Project,
@@ -36,7 +36,7 @@ def add_project(
     return project_service.add_project(project)
 
 
-@router.get("/project/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
+@router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
 @inject
 def read_project(
     project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
@@ -58,7 +58,7 @@ def read_projects_from_team(
 
 
 @router.get(
-    "/project/{project_id}/sums/",
+    "/projects/{project_id}/sums/",
     tags=PROJECTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
