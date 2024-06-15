@@ -12,21 +12,16 @@ from carbonserver.api.schemas import Project
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 PROJECT_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
 
-TEAM_ID = "c13e851f-5c2f-403d-98d0-51fe15df3bc3"
-TEAM_ID_2 = "c13e851f-5c2f-403d-98d0-51fe15df3bc4"
-
 
 PROJECT_TO_CREATE = {
     "name": "API Code Carbon",
     "description": "API for Code Carbon",
-    "team_id": "c13e851f-5c2f-403d-98d0-51fe15df3bc3",
 }
 
 PROJECT_1 = {
     "id": PROJECT_ID,
     "name": "API Code Carbon",
     "description": "API for Code Carbon",
-    "team_id": TEAM_ID,
     "experiments": [],
 }
 
@@ -35,7 +30,6 @@ PROJECT_2 = {
     "id": PROJECT_ID_2,
     "name": "API Code Carbon",
     "description": "Calculates CO2 emissions of AI projects",
-    "team_id": TEAM_ID_2,
 }
 
 
@@ -78,19 +72,3 @@ def test_get_project_by_id_returns_correct_project(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_project == expected_project
-
-
-def test_get_projects_from_team_returns_correct_project(client, custom_test_server):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_project = PROJECT_1
-    expected_project_list = [expected_project]
-    repository_mock.get_projects_from_team.return_value = [
-        Project(**expected_project),
-    ]
-
-    with custom_test_server.container.project_repository.override(repository_mock):
-        response = client.get("/projects/team/" + TEAM_ID)
-        actual_project_list = response.json()
-
-    assert response.status_code == status.HTTP_200_OK
-    assert actual_project_list == expected_project_list

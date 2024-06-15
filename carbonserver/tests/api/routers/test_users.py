@@ -20,7 +20,6 @@ USER_1 = {
     "email": "xyz@email.com",
     "api_key": API_KEY,
     "organizations": [],
-    "teams": [],
     "is_active": True,
 }
 
@@ -30,7 +29,6 @@ USER_2 = {
     "email": "1234+1@email.fr",
     "api_key": API_KEY,
     "organizations": [],
-    "teams": [],
     "is_active": True,
 }
 

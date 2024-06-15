@@ -7,7 +7,6 @@ from carbonserver.api.infra.repositories import (
     repository_organizations,
     repository_projects,
     repository_runs,
-    repository_teams,
     repository_users,
 )
 from carbonserver.api.services.emissions_service import EmissionService
@@ -16,7 +15,6 @@ from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.services.signup_service import SignUpService
-from carbonserver.api.services.team_service import TeamService
 from carbonserver.api.services.user_service import UserService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
@@ -60,11 +58,6 @@ class ServerContainer(containers.DeclarativeContainer):
 
     organization_repository = providers.Factory(
         repository_organizations.SqlAlchemyRepository,
-        session_factory=db.provided.session,
-    )
-
-    team_repository = providers.Factory(
-        repository_teams.SqlAlchemyRepository,
         session_factory=db.provided.session,
     )
 
@@ -117,11 +110,6 @@ class ServerContainer(containers.DeclarativeContainer):
         organization_repository=organization_repository,
     )
 
-    team_service = providers.Factory(
-        TeamService,
-        team_repository=team_repository,
-    )
-
     run_service = providers.Factory(
         RunService,
         run_repository=run_repository,
@@ -131,5 +119,4 @@ class ServerContainer(containers.DeclarativeContainer):
         SignUpService,
         user_repository=user_repository,
         organization_repository=organization_repository,
-        team_repository=team_repository,
     )

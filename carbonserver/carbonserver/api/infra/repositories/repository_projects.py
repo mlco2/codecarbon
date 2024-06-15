@@ -1,5 +1,4 @@
 from contextlib import AbstractContextManager
-from typing import List
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
@@ -22,7 +21,6 @@ class SqlAlchemyRepository(Projects):
             db_project = SqlModelProject(
                 name=project.name,
                 description=project.description,
-                team_id=project.team_id,
             )
 
             session.add(db_project)
@@ -43,20 +41,21 @@ class SqlAlchemyRepository(Projects):
                 )
             return self.map_sql_to_schema(e)
 
-    def get_projects_from_team(self, team_id) -> List[Project]:
-        """Find the list of projects from a team in database and return it
+    # TODO: DO a version of this method but that returns a list of projects of an organization
+    # def get_projects_from_team(self, team_id) -> List[Project]:
+    #     """Find the list of projects from a team in database and return it
 
-        :team_id: The id of the team to retreive projects from.
-        :returns: List of Projects in pyDantic BaseModel format.
-        :rtype: List[schemas.Project]
-        """
-        with self.session_factory() as session:
-            res = session.query(SqlModelProject).filter(
-                SqlModelProject.team_id == team_id
-            )
-            if res.first() is None:
-                return []
-            return [self.map_sql_to_schema(e) for e in res]
+    #     :team_id: The id of the team to retreive projects from.
+    #     :returns: List of Projects in pyDantic BaseModel format.
+    #     :rtype: List[schemas.Project]
+    #     """
+    #     with self.session_factory() as session:
+    #         res = session.query(SqlModelProject).filter(
+    #             SqlModelProject.team_id == team_id
+    #         )
+    #         if res.first() is None:
+    #             return []
+    #         return [self.map_sql_to_schema(e) for e in res]
 
     def get_project_detailed_sums(
         self, project_id, start_date, end_date
@@ -76,7 +75,6 @@ class SqlAlchemyRepository(Projects):
                     SqlModelProject.id.label("project_id"),
                     SqlModelProject.name,
                     SqlModelProject.description,
-                    SqlModelProject.team_id,
                     func.sum(SqlModelEmission.emissions_sum).label("emissions"),
                     func.avg(SqlModelEmission.cpu_power).label("cpu_power"),
                     func.avg(SqlModelEmission.gpu_power).label("gpu_power"),
@@ -132,5 +130,4 @@ class SqlAlchemyRepository(Projects):
             id=str(project.id),
             name=project.name,
             description=project.description,
-            team_id=str(project.team_id),
         )

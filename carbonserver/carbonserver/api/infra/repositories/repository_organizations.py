@@ -15,7 +15,6 @@ from carbonserver.api.infra.database.sql_models import (
 )
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
-from carbonserver.api.infra.database.sql_models import Team as SqlModelTeam
 from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
@@ -114,16 +113,6 @@ class SqlAlchemyRepository(Organizations):
                     func.count(SqlModelEmission.emissions_rate).label(
                         "emissions_count"
                     ),
-                )
-                .join(
-                    SqlModelTeam,
-                    SqlModelOrganization.id == SqlModelTeam.organization_id,
-                    isouter=True,
-                )
-                .join(
-                    SqlModelProject,
-                    SqlModelTeam.id == SqlModelProject.team_id,
-                    isouter=True,
                 )
                 .join(
                     SqlModelExperiment,

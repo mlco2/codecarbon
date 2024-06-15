@@ -26,7 +26,6 @@ ORG_1 = {
     "api_key": API_KEY,
     "name": "Data For Good",
     "description": "DFG Organization",
-    "teams": [],
 }
 
 
@@ -35,7 +34,6 @@ ORG_2 = {
     "api_key": API_KEY,
     "name": "Code Carbon",
     "description": "Code Carbon Organization",
-    "teams": [],
 }
 
 
