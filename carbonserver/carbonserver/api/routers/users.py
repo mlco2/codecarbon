@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/user",
+    "/users",
     tags=USERS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=User,
@@ -31,7 +31,7 @@ def create_user(
 
 
 @router.post(
-    "/user/signup",
+    "/users/signup",
     tags=USERS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=User,
@@ -58,7 +58,7 @@ def list_users(
 
 
 @router.get(
-    "/user/{user_id}",
+    "/users/{user_id}",
     tags=USERS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
     response_model=User,

@@ -168,7 +168,7 @@ def test_api09_organization_create():
     org_name = "test_to_delete"
     org_description = "test to delete"
     payload = {"name": org_name, "description": org_description}
-    r = requests.post(url=URL + "/organization", json=payload, timeout=2)
+    r = requests.post(url=URL + "/organizations", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     assert r.json()["name"] == org_name
     assert r.json()["description"] == org_description
@@ -176,7 +176,7 @@ def test_api09_organization_create():
 
 
 def test_api10_organization_read():
-    r = requests.get(url=URL + "/organization/" + org_new_id, timeout=2)
+    r = requests.get(url=URL + "/organizations/" + org_new_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert r.json()["name"] == org_name
     assert r.json()["description"] == org_description
@@ -232,7 +232,7 @@ def test_api16_project_create():
         "description": "Test to delete by test_api_black_box",
         "team_id": team_new_id,
     }
-    r = requests.post(url=URL + "/project/", json=payload, timeout=2)
+    r = requests.post(url=URL + "/projects/", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     assert r.json()["team_id"] == team_new_id
     project_id = r.json()["id"]
@@ -269,7 +269,7 @@ def test_api18_experiment_create():
         "cloud_region": "eu-west-1a",
         "project_id": project_id,
     }
-    r = requests.post(url=URL + "/experiment", json=payload, timeout=2)
+    r = requests.post(url=URL + "/experiments", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     tc.assertEqual(r.json()["project_id"], project_id)
     experiment_id = r.json()["id"]
@@ -277,7 +277,7 @@ def test_api18_experiment_create():
 
 
 def test_api19_experiment_read():
-    r = requests.get(url=URL + "/experiment/" + experiment_id, timeout=2)
+    r = requests.get(url=URL + "/experiments/" + experiment_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert r.json()["id"] == experiment_id
 
@@ -307,7 +307,7 @@ def send_run(experiment_id: str):
         "ram_total_size": 16948.22,
         "tracking_mode": "Machine",
     }
-    r = requests.post(url=URL + "/run/", json=payload, timeout=2)
+    r = requests.post(url=URL + "/runs/", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     return r.json()
 
@@ -325,7 +325,7 @@ def test_api21_run_create2():
 
 
 def test_api22_run_read():
-    r = requests.get(url=URL + "/run/" + run_id, timeout=2)
+    r = requests.get(url=URL + "/runs/" + run_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     tc.assertEqual(r.json()["id"], run_id)
     tc.assertEqual(r.json()["codecarbon_version"], "2.1.3")
@@ -375,7 +375,7 @@ def add_emission(run_id: str):
         "ram_energy": default_emission["ram_energy"],
         "energy_consumed": default_emission["energy_consumed"],
     }
-    r = requests.post(url=URL + "/emission/", json=payload, timeout=2)
+    r = requests.post(url=URL + "/emissions/", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     return r.json()
 
@@ -400,7 +400,7 @@ def test_api26_emission_list():
 
 
 def test_api27_emission_read():
-    r = requests.get(url=URL + "/emission/" + emission_id, timeout=2)
+    r = requests.get(url=URL + "/emissions/" + emission_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     r = r.json()
     assert r["id"] == emission_id
@@ -411,7 +411,7 @@ def test_api27_emission_read():
 
 def test_api27_read_all():
     # Check the organization
-    r = requests.get(url=URL + "/organization/" + org_new_id, timeout=2)
+    r = requests.get(url=URL + "/organizations/" + org_new_id, timeout=2)
     assert r.json()["name"] == org_name
     # Check the team
     r = requests.get(url=URL + "/teams/organization/" + org_new_id, timeout=2)
@@ -510,7 +510,7 @@ def test_api30_run_read_detailed_sums():
 
 
 def test_api31_project_read_detailed_sums():
-    url = f"{URL}/project/{project_id}/sums/"
+    url = f"{URL}/projects/{project_id}/sums/"
     r = requests.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     r = r.json()
@@ -539,7 +539,7 @@ def test_api31_project_read_detailed_sums():
 
 
 def test_api32_organization_read_detailed_sums():
-    url = f"{URL}/organization/{org_new_id}/sums/"
+    url = f"{URL}/organizations/{org_new_id}/sums/"
     r = requests.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     assert len(r.json()) > 0

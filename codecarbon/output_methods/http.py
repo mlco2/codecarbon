@@ -19,9 +19,9 @@ class HTTPOutput(BaseOutput):
     def __init__(self, endpoint_url: str):
         self.endpoint_url: str = endpoint_url
 
-    def out(self, data: EmissionsData):
+    def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            payload = dataclasses.asdict(data)
+            payload = dataclasses.asdict(total)
             payload["user"] = getpass.getuser()
             resp = requests.post(self.endpoint_url, json=payload, timeout=10)
             if resp.status_code != 201:
@@ -51,12 +51,8 @@ class CodeCarbonAPIOutput(BaseOutput):
         )
         self.run_id = self.api.run_id
 
-    def out(self, data: EmissionsData):
+    def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            self.api.add_emission(dataclasses.asdict(data))
-            logger.info(
-                f"{data.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
-                + f"{data.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
-            )
+            self.api.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)

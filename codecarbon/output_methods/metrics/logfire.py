@@ -58,18 +58,21 @@ class LogfireOutput(BaseOutput):
             "codecarbon_ram_energy", unit="(kWh)", description="Energy used per RAM"
         )
 
-    def out(self, data: EmissionsData):
+    def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            self.duration.add(data.duration)
-            self.emissions.add(data.emissions)
-            self.emissions_rate.set(data.emissions_rate)
-            self.cpu_power.set(data.cpu_power)
-            self.gpu_power.set(data.gpu_power)
-            self.ram_power.set(data.ram_power)
-            self.cpu_energy.set(data.cpu_energy)
-            self.gpu_energy.set(data.gpu_energy)
-            self.ram_energy.set(data.ram_energy)
-            self.energy_consumed.add(data.energy_consumed)
+            self.duration.add(delta.duration)
+            self.emissions.add(delta.emissions)
+            self.emissions_rate.set(delta.emissions_rate)
+            self.cpu_power.set(delta.cpu_power)
+            self.gpu_power.set(delta.gpu_power)
+            self.ram_power.set(delta.ram_power)
+            self.cpu_energy.set(delta.cpu_energy)
+            self.gpu_energy.set(delta.gpu_energy)
+            self.ram_energy.set(delta.ram_energy)
+            self.energy_consumed.add(delta.energy_consumed)
             logger.debug("Data sent to logfire")
         except Exception as e:
             logger.error(e, exc_info=True)
+
+    def live_out(self, total: EmissionsData, delta: EmissionsData):
+        self.out(total, delta)

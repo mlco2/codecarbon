@@ -25,7 +25,7 @@ runs_temp_db = []
 
 
 @router.post(
-    "/run",
+    "/runs",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=Run,
@@ -39,7 +39,7 @@ def add_run(
 
 
 @router.get(
-    "/run/{run_id}",
+    "/runs/{run_id}",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
     response_model=Run,
