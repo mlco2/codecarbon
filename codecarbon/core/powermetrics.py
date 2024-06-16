@@ -25,6 +25,14 @@ def is_powermetrics_available():
 
 
 def _has_powermetrics_sudo():
+    if shutil.which("sudo") is None:
+        logger.debug("sudo not available, we won't use Apple PowerMetrics.")
+        return False
+    if shutil.which("powermetrics") is None:
+        logger.info(
+            "Apple PowerMetrics not available. Please install it if you are using an Apple product."
+        )
+        return False
     process = subprocess.Popen(
         [
             "sudo",
