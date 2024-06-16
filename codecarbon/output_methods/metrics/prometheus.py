@@ -79,7 +79,6 @@ class PrometheusOutput(BaseOutput):
 
     def __init__(self, prometheus_url: str):
         self.prometheus_url = prometheus_url
-        self.use_emissions_delta = True
 
     def out(self, total: EmissionsData, delta: EmissionsData):
         try:

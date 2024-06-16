@@ -9,7 +9,6 @@ class LogfireOutput(BaseOutput):
     """
 
     def __init__(self):
-        self.use_emissions_delta = True
         try:
             from logfire import configure, metric_counter, metric_gauge
 
