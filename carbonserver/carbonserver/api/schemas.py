@@ -235,6 +235,7 @@ class ProjectBase(BaseModel):
     name: str
     description: str
     team_id: UUID
+    organization_id: UUID
 
     class Config:
         schema_extra = {
