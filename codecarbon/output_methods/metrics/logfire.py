@@ -11,7 +11,9 @@ class LogfireOutput(BaseOutput):
     def __init__(self):
         self.use_emissions_delta = True
         try:
-            from logfire import metric_counter, metric_gauge
+            from logfire import configure, metric_counter, metric_gauge
+
+            configure()
         except ImportError:
             logger.error(
                 "Logfire is not installed. Please install it using `pip install logfire`"
