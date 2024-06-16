@@ -118,7 +118,7 @@ def test_add_experiment(client, custom_test_server):
     repository_mock.add_experiment.return_value = Experiment(**EXPERIMENT_1)
 
     with custom_test_server.container.experiment_repository.override(repository_mock):
-        response = client.post("/experiment", json=EXPERIMENT_TO_CREATE)
+        response = client.post("/experiments", json=EXPERIMENT_TO_CREATE)
         actual_experiment = response.json()
     print(actual_experiment)
     print(type(actual_experiment))
@@ -133,7 +133,7 @@ def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_ser
 
     with custom_test_server.container.experiment_repository.override(repository_mock):
         response = client.get(
-            "/experiment/read_experiment/", params={"experiment_id": EXPERIMENT_ID}
+            "/experiments/read_experiment/", params={"experiment_id": EXPERIMENT_ID}
         )
         actual_experiment = response.json()
 

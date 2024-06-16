@@ -54,7 +54,7 @@ def test_add_project(client, custom_test_server):
     repository_mock.add_project.return_value = Project(**PROJECT_1)
 
     with custom_test_server.container.project_repository.override(repository_mock):
-        response = client.post("/project", json=PROJECT_TO_CREATE)
+        response = client.post("/projects", json=PROJECT_TO_CREATE)
         actual_project = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -67,7 +67,7 @@ def test_get_project_by_id_returns_correct_project(client, custom_test_server):
     repository_mock.get_one_project.return_value = Project(**expected_project)
 
     with custom_test_server.container.project_repository.override(repository_mock):
-        response = client.get("/project/read_project/", params={"id": PROJECT_ID})
+        response = client.get("/projects/read_project/", params={"id": PROJECT_ID})
         actual_project = response.json()
 
     assert response.status_code == status.HTTP_200_OK

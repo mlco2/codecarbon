@@ -34,7 +34,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/emission",
+    "/emissions",
     tags=EMISSIONS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=UUID,
@@ -50,7 +50,7 @@ def add_emission(
 
 
 @router.get(
-    "/emission/{emission_id}",
+    "/emissions/{emission_id}",
     tags=EMISSIONS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
     response_model=Emission,
