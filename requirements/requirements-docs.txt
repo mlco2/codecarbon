@@ -109,7 +109,7 @@ types-python-dateutil==2.9.0.20240316
     # via arrow
 tzdata==2024.1
     # via pandas
-urllib3==2.2.1
+urllib3==2.2.2
     # via requests
 zipp==3.18.1
     # via importlib-metadata
