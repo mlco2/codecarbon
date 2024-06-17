@@ -31,6 +31,7 @@ from codecarbon.output import (
     EmissionsData,
     FileOutput,
     HTTPOutput,
+    LogfireOutput,
     LoggerOutput,
     PrometheusOutput,
 )
@@ -148,6 +149,7 @@ class BaseEmissionsTracker(ABC):
         save_to_logger: Optional[bool] = _sentinel,
         logging_logger: Optional[LoggerOutput] = _sentinel,
         save_to_prometheus: Optional[bool] = _sentinel,
+        save_to_logfire: Optional[bool] = _sentinel,
         prometheus_url: Optional[str] = _sentinel,
         output_handlers: Optional[List[BaseOutput]] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
@@ -187,6 +189,8 @@ class BaseEmissionsTracker(ABC):
                             or a Google Cloud logger.
         :param save_to_prometheus: Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
+        :param save_to_logfire: Indicates if the emission artifacts should be written
+                            to a logfire observability platform, defaults to False.
         :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
         :param gpu_ids: User-specified known gpu ids to track.
                             Defaults to None, which means that all available gpus will be tracked.
@@ -234,6 +238,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(save_to_logger, "save_to_logger", False, bool)
         self._set_from_conf(logging_logger, "logging_logger")
         self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
+        self._set_from_conf(save_to_logfire, "save_to_logfire", False, bool)
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
@@ -258,8 +263,6 @@ class BaseEmissionsTracker(ABC):
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
-        self._cc_api__out = None
-        self._cc_prometheus_out = None
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
@@ -430,6 +433,9 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_prometheus:
             self._output_handlers.append(PrometheusOutput(self._prometheus_url))
+
+        if self._save_to_logfire:
+            self._output_handlers.append(LogfireOutput())
 
     def service_shutdown(self, signum, frame):
         print("Caught signal %d" % signum)
@@ -752,6 +758,7 @@ class BaseEmissionsTracker(ABC):
         self._do_measurements()
         self._last_measured_time = time.time()
         self._measure_occurrence += 1
+        # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
             self._api_call_interval != -1
             and len(self._output_handlers) > 0
@@ -934,6 +941,7 @@ def track_emissions(
     save_to_api: Optional[bool] = _sentinel,
     save_to_logger: Optional[bool] = _sentinel,
     save_to_prometheus: Optional[bool] = _sentinel,
+    save_to_logfire: Optional[bool] = _sentinel,
     prometheus_url: Optional[str] = _sentinel,
     output_handlers: Optional[List[BaseOutput]] = _sentinel,
     logging_logger: Optional[LoggerOutput] = _sentinel,
@@ -969,6 +977,8 @@ def track_emissions(
                         to a dedicated logger, defaults to False.
     :param save_to_prometheus: Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
+    :param save_to_logfire: Indicates if the emission artifacts should be
+                            pushed to logfire, defaults to False.
     :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
     :param logging_logger: LoggerOutput object encapsulating a logging.logger
                         or a Google Cloud logger.
@@ -1013,6 +1023,7 @@ def track_emissions(
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
                     save_to_prometheus=save_to_prometheus,
+                    save_to_logfire=save_to_logfire,
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
                     logging_logger=logging_logger,
@@ -1035,6 +1046,7 @@ def track_emissions(
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
                     save_to_prometheus=save_to_prometheus,
+                    save_to_logfire=save_to_logfire,
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
                     logging_logger=logging_logger,
