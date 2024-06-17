@@ -21,8 +21,7 @@ from codecarbon.output_methods.logger import (  # noqa: F401
     GoogleCloudLoggerOutput,
     LoggerOutput,
 )
+from codecarbon.output_methods.metrics.logfire import LogfireOutput  # noqa: F401
 
 # output is sent to metrics
-from codecarbon.output_methods.metrics.prometheus.prometheus import (  # noqa: F401
-    PrometheusOutput,
-)
+from codecarbon.output_methods.metrics.prometheus import PrometheusOutput  # noqa: F401
