@@ -193,6 +193,7 @@ def test_api16_project_create():
     payload = {
         "name": "test_to_delete",
         "description": "Test to delete by test_api_black_box",
+        "organization_id": org_new_id,
     }
     r = requests.post(url=URL + "/projects/", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)

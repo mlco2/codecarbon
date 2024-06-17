@@ -110,13 +110,16 @@ class Project(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
     experiments = relationship("Experiment", back_populates="project")
+    organization = relationship("Organization", back_populates="projects")
 
     def __repr__(self):
         return (
             f'<Project(id="{self.id}", '
             f'name="{self.name}", '
             f'description="{self.description}", '
+            f'organization_id="{self.organization_id}", '
         )
 
 
@@ -126,6 +129,7 @@ class Organization(Base):
     name = Column(String)
     description = Column(String)
     api_key = Column(String)
+    projects = relationship("Project", back_populates="organization")
 
     def __repr__(self):
         return (

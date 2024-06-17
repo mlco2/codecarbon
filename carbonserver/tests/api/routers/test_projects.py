@@ -13,15 +13,20 @@ PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 PROJECT_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
 
 
+ORGANIZATION_ID = "c13e851f-5c2f-403d-98d0-51fe15df3bc3"
+ORGANIZATION_ID_2 = "c13e851f-5c2f-403d-98d0-51fe15df3bc4"
+
 PROJECT_TO_CREATE = {
     "name": "API Code Carbon",
     "description": "API for Code Carbon",
+    "organization_id": ORGANIZATION_ID,
 }
 
 PROJECT_1 = {
     "id": PROJECT_ID,
     "name": "API Code Carbon",
     "description": "API for Code Carbon",
+    "organization_id": ORGANIZATION_ID,
     "experiments": [],
 }
 
@@ -30,6 +35,7 @@ PROJECT_2 = {
     "id": PROJECT_ID_2,
     "name": "API Code Carbon",
     "description": "Calculates CO2 emissions of AI projects",
+    "organization_id": ORGANIZATION_ID_2,
 }
 
 
@@ -72,3 +78,21 @@ def test_get_project_by_id_returns_correct_project(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_project == expected_project
+
+
+def test_get_projects_from_organization_returns_correct_project(
+    client, custom_test_server
+):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_project = PROJECT_1
+    expected_project_list = [expected_project]
+    repository_mock.get_projects_from_organization.return_value = [
+        Project(**expected_project),
+    ]
+
+    with custom_test_server.container.project_repository.override(repository_mock):
+        response = client.get(f"/organizations/{ORGANIZATION_ID}/projects")
+        actual_project_list = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_project_list == expected_project_list

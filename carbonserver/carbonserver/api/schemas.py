@@ -234,6 +234,7 @@ class ExperimentReport(ExperimentBase):
 class ProjectBase(BaseModel):
     name: str
     description: str
+    organization_id: UUID
 
     class Config:
         schema_extra = {

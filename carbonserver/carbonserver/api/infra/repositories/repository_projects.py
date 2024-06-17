@@ -1,4 +1,5 @@
 from contextlib import AbstractContextManager
+from typing import List
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
@@ -21,6 +22,7 @@ class SqlAlchemyRepository(Projects):
             db_project = SqlModelProject(
                 name=project.name,
                 description=project.description,
+                organization_id=project.organization_id,
             )
 
             session.add(db_project)
@@ -41,6 +43,21 @@ class SqlAlchemyRepository(Projects):
                 )
             return self.map_sql_to_schema(e)
 
+    def get_projects_from_organization(self, organization_id) -> List[Project]:
+        """Find the list of projects from a organization in database and return it
+
+        :org_id: The id of the organization to retreive projects from.
+        :returns: List of Projects in pyDantic BaseModel format.
+        :rtype: List[schemas.Project]
+        """
+        with self.session_factory() as session:
+            res = session.query(SqlModelProject).filter(
+                SqlModelProject.organization_id == organization_id
+            )
+            if res.first() is None:
+                return []
+            return [self.map_sql_to_schema(e) for e in res]
+
     def get_project_detailed_sums(
         self, project_id, start_date, end_date
     ) -> ProjectReport:
@@ -59,6 +76,7 @@ class SqlAlchemyRepository(Projects):
                     SqlModelProject.id.label("project_id"),
                     SqlModelProject.name,
                     SqlModelProject.description,
+                    SqlModelProject.organization_id,
                     func.sum(SqlModelEmission.emissions_sum).label("emissions"),
                     func.avg(SqlModelEmission.cpu_power).label("cpu_power"),
                     func.avg(SqlModelEmission.gpu_power).label("gpu_power"),
@@ -114,4 +132,5 @@ class SqlAlchemyRepository(Projects):
             id=str(project.id),
             name=project.name,
             description=project.description,
+            organization_id=str(project.organization_id),
         )
