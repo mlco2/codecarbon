@@ -115,6 +115,11 @@ class SqlAlchemyRepository(Organizations):
                     ),
                 )
                 .join(
+                    SqlModelProject,
+                    SqlModelOrganization.id == SqlModelProject.organization_id,
+                    isouter=True,
+                )
+                .join(
                     SqlModelExperiment,
                     SqlModelProject.id == SqlModelExperiment.project_id,
                     isouter=True,
