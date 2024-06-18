@@ -52,6 +52,14 @@ class ApiClient:  # (AsyncClient)
         self.conf = conf
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
+        import warnings
+
+        # FIXME: remove this warning in the future once the release is created
+        warnings.warn(
+            "If you use Codecarbon API, team id is being deprecated in favor of organization id in the next releases. Please update your code if needed.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
