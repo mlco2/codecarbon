@@ -28,7 +28,6 @@ class SqlAlchemyRepository(Users):
                 hashed_password=self._hash_password(user.password.get_secret_value()),
                 api_key=generate_api_key(),
                 is_active=True,
-                teams=[],
                 organizations=[],
             )
             session.add(db_user)
@@ -89,17 +88,6 @@ class SqlAlchemyRepository(Users):
                 )
             )
 
-    def subscribe_user_to_team(self, user: User, team_id: UUID):
-        with self.session_factory() as session:
-            (
-                session.query(SqlModelUser)
-                .filter(SqlModelUser.id == user.id)
-                .update(
-                    {SqlModelUser.organizations: user.teams.append(team_id)},
-                    synchronize_session=False,
-                )
-            )
-
     @staticmethod
     def _hash_password(password):
         return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
@@ -117,6 +105,5 @@ class SqlAlchemyRepository(Users):
             email=sql_user.email,
             api_key=sql_user.api_key,
             is_active=sql_user.is_active,
-            teams=sql_user.teams,
             organizations=sql_user.organizations,
         )

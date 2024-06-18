@@ -45,19 +45,6 @@ def read_project(
 
 
 @router.get(
-    "/projects/team/{team_id}",
-    tags=PROJECTS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-)
-@inject
-def read_projects_from_team(
-    team_id: str,
-    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
-):
-    return project_service.list_projects_from_team(team_id)
-
-
-@router.get(
     "/projects/{project_id}/sums/",
     tags=PROJECTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,

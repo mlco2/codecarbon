@@ -15,7 +15,6 @@ from carbonserver.api.routers import (
     organizations,
     projects,
     runs,
-    teams,
     users,
 )
 from carbonserver.database.database import engine
@@ -61,7 +60,6 @@ def init_container():
             runs,
             experiments,
             projects,
-            teams,
             organizations,
             users,
             authenticate,
@@ -82,7 +80,6 @@ def init_server(container):
     server.include_router(users.router)
     server.include_router(authenticate.router)
     server.include_router(organizations.router)
-    server.include_router(teams.router)
     server.include_router(projects.router)
     server.include_router(experiments.router)
     server.include_router(experiments.router)
