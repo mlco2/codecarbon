@@ -5,31 +5,33 @@
 
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
-- [<a name="questions"></a> Have a Question?](#have-a-question)
-- [<a name="bugs"></a> Found a Bug?](#found-a-bug)
-- [<a name="features"></a> Have a Feature Request?](#have-a-feature-request)
-- [<a name="process"></a> Ready to Contribute!](#ready-to-contribute)
-   * [<a name="issue"></a> Create an issue](#create-an-issue)
-   * [Installation](#installation)
-   * [Tests](#tests)
-   * [Stress your computer](#stress-your-computer)
-   * [Versioning](#versioning)
-   * [Debug in VS Code](#debug-in-vs-code)
-   * [<a name="local_deployement"></a> Local deployment](#local-deployment)
-- [CSV Dashboard](#csv-dashboard)
-- [API Dashboard](#api-dashboard)
-   * [API](#api)
-   * [Test the API](#test-the-api)
-   * [Coding style && Linting](#coding-style-linting)
-   * [Packaging](#packaging)
-   * [Alternative ways of contributing](#alternative-ways-of-contributing)
-   * [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
-   * [Release process](#release-process)
-      + [Restore database from a production Backup](#restore-database-from-a-production-backup)
-      + [Deployment](#deployment)
-         - [API](#api-1)
-         - [Dashboard](#dashboard)
-   * [License](#license)
+- [Contributing to Code Carbon](#contributing-to-code-carbon)
+  - [ Have a Question?](#-have-a-question)
+  - [ Found a Bug?](#-found-a-bug)
+  - [ Have a Feature Request?](#-have-a-feature-request)
+  - [ Ready to Contribute!](#-ready-to-contribute)
+    - [ Create an issue](#-create-an-issue)
+    - [Installation](#installation)
+    - [Some Hatch commands](#some-hatch-commands)
+    - [Tests](#tests)
+    - [Stress your computer](#stress-your-computer)
+    - [Versioning](#versioning)
+    - [Debug in VS Code](#debug-in-vs-code)
+    - [ Local deployment](#-local-deployment)
+  - [CSV Dashboard](#csv-dashboard)
+  - [API Dashboard](#api-dashboard)
+    - [API](#api)
+    - [Test the API](#test-the-api)
+    - [Coding style \&\& Linting](#coding-style--linting)
+    - [Packaging](#packaging)
+    - [Alternative ways of contributing](#alternative-ways-of-contributing)
+    - [Build Documentation 🖨️](#build-documentation-️)
+    - [Release process](#release-process)
+      - [Restore database from a production Backup](#restore-database-from-a-production-backup)
+      - [Deployment](#deployment)
+        - [API](#api-1)
+        - [Dashboard](#dashboard)
+    - [License](#license)
 
 <!-- TOC end -->
 
@@ -90,7 +92,7 @@ View the options of CodeCarbon environments:
 
 ```sh
 ❯ hatch env show
-                                       Standalone                                       
+                                       Standalone
 ┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
 ┃ Name        ┃ Type        ┃ Features ┃ Dependencies              ┃ Scripts           ┃
 ┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
@@ -132,7 +134,7 @@ View the options of CodeCarbon environments:
 │             │             │          │ sqlalchemy<2.0.0          │                   │
 │             │             │          │ uvicorn[standard]<1.0.0   │                   │
 └─────────────┴─────────────┴──────────┴───────────────────────────┴───────────────────┘
-                                   Matrices                                    
+                                   Matrices
 ┏━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
 ┃ Name ┃ Type        ┃ Envs        ┃ Features ┃ Dependencies  ┃ Scripts       ┃
 ┡━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
@@ -179,14 +181,14 @@ hatch run test:package-integ
 You can also run your specific test in isolation to develop and debug them:
 
 ```sh
-$ hatch run python -m unittest tests.test_your_feature
+$ hatch -e test.py3.11 run  pytest tests/test_cloud.py
 
 # or
 
-$ hatch run python -m unittest tests.test_your_feature.YourTestCase.test_function
+$ hatch -e test.py3.11 run python -m unittest tests.test_your_feature.YourTestCase.test_function
 ```
 
-For example : `hatch run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
+For example : `hatch -e test.py3.11 run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
 
 To test the API, see [how to deploy it](#local_deployement) first.
 
