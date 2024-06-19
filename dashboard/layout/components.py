@@ -138,7 +138,7 @@ class Components:
                             id="car",
                         ),
                         html.P(
-                            "miles driven",
+                            "Km driven",
                             className="card-title",
                         ),
                     ]
