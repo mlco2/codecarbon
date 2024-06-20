@@ -110,10 +110,8 @@ class Project(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
-    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id"))
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
     experiments = relationship("Experiment", back_populates="project")
-    team = relationship("Team", back_populates="projects")
     organization = relationship("Organization", back_populates="projects")
 
     def __repr__(self):
@@ -122,26 +120,6 @@ class Project(Base):
             f'name="{self.name}", '
             f'description="{self.description}", '
             f'organization_id="{self.organization_id}", '
-            f'team_id="{self.team_id}")>'
-        )
-
-
-class Team(Base):
-    __tablename__ = "teams"
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    name = Column(String)
-    description = Column(String)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
-    projects = relationship("Project", back_populates="team")
-    api_key = Column(String)
-    organization = relationship("Organization", back_populates="teams")
-
-    def __repr__(self):
-        return (
-            f'<Team(id="{self.id}", '
-            f'name="{self.name}", '
-            f'description="{self.description}", '
-            f'organization_id="{self.organization_id}")>'
         )
 
 
@@ -151,7 +129,6 @@ class Organization(Base):
     name = Column(String)
     description = Column(String)
     api_key = Column(String)
-    teams = relationship("Team", back_populates="organization")
     projects = relationship("Project", back_populates="organization")
 
     def __repr__(self):
@@ -170,7 +147,6 @@ class User(Base):
     hashed_password = Column(String)
     api_key = Column(String)
     is_active = Column(Boolean, default=True)
-    teams = Column(ARRAY(String, as_tuple=False, dimensions=1))
     organizations = Column(ARRAY(String, as_tuple=False, dimensions=1))
 
     def __repr__(self):

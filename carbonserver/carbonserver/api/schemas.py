@@ -234,7 +234,6 @@ class ExperimentReport(ExperimentBase):
 class ProjectBase(BaseModel):
     name: str
     description: str
-    team_id: UUID
     organization_id: UUID
 
     class Config:
@@ -242,7 +241,6 @@ class ProjectBase(BaseModel):
             "example": {
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
-                "team_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
             }
         }
 
@@ -273,33 +271,6 @@ class ProjectReport(ProjectBase):
     emissions_count: int
 
 
-class TeamBase(BaseModel):
-    name: str
-    description: str
-    organization_id: UUID
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "Data For Good",
-                "description": "Data For Good France",
-                "organization_id": "e52fe339-164d-4c2b-a8c0-f562dfce066d",
-                "api_key": "default",
-            }
-        }
-
-
-class TeamCreate(TeamBase):
-    pass
-
-
-class Team(TeamBase):
-    id: UUID
-    api_key: str
-    organization_id: UUID
-    projects: Optional[List[Project]]
-
-
 class OrganizationBase(BaseModel):
     name: str
     description: str
@@ -320,7 +291,6 @@ class OrganizationCreate(OrganizationBase):
 class Organization(OrganizationBase):
     id: UUID
     api_key: str
-    teams: Optional[List[Team]]
 
 
 class OrganizationReport(OrganizationBase):
@@ -360,7 +330,6 @@ class User(UserBase):
     email: EmailStr
     api_key: str
     organizations: Optional[List]
-    teams: Optional[List]
     is_active: bool
 
     class Config:
