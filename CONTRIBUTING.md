@@ -73,7 +73,7 @@ We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
 It is not mandatory for small contribution, while not recommanded, you could just install the package with `pip install -e .`.
 
-Please install [Hatch](https://hatch.pypa.io/) following [installation instruction](https://hatch.pypa.io/latest/install/), or with `pipx install hatch`.
+Please install [Hatch](https://hatch.pypa.io/) following [installation instruction](https://hatch.pypa.io/latest/install/), or with `pipx install hatch hatch-pip-compile`.
 
 Then, clone the repository and create the environment with:
 
@@ -399,7 +399,7 @@ It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
 
 Dependencies are defined in different places:
 
--   In [pyproject.toml](pyproject.toml#L28), those are the dependencies for the Pypi package.
+-   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
 -   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
 -   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
@@ -435,6 +435,7 @@ to regenerate the html files.
 -   Merge all PRs.
 -   Create a PR bumping the version with `hatch version minor`.
 -   Run `python3 .github/check_version.py` to check version consistancy.
+-   Update the dependencies with `hatch-pip-compile --upgrade --all`.
 -   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
 -   Merge the PR.
 -   Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
@@ -536,7 +537,7 @@ Config on CleverCloud:
 
 ```sh
 APP_FOLDER="dashboard"
-CC_PIP_REQUIREMENTS_FILE="requirements-new.txt"
+CC_PIP_REQUIREMENTS_FILE="requirements-dashboard.txt"
 CC_PYTHON_MODULE="carbon_board_API:server"
 CC_PYTHON_VERSION="3.8"
 CODECARBON_API_URL="https://api.codecarbon.io"
