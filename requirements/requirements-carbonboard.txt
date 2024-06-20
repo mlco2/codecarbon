@@ -17,9 +17,9 @@
 
 arrow==1.3.0
     # via hatch.envs.carbonboard
-blinker==1.7.0
+blinker==1.8.2
     # via flask
-certifi==2024.2.2
+certifi==2024.6.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
@@ -27,7 +27,7 @@ click==8.1.7
     # via
     #   hatch.envs.carbonboard
     #   flask
-dash==2.16.1
+dash==2.17.1
     # via
     #   hatch.envs.carbonboard
     #   dash-bootstrap-components
@@ -41,13 +41,13 @@ dash-table==5.0.0
     # via dash
 fire==0.6.0
     # via hatch.envs.carbonboard
-flask==3.0.2
+flask==3.0.3
     # via dash
 idna==3.7
     # via requests
 importlib-metadata==7.1.0
     # via dash
-itsdangerous==2.1.2
+itsdangerous==2.2.0
     # via flask
 jinja2==3.1.4
     # via flask
@@ -57,17 +57,17 @@ markupsafe==2.1.5
     #   werkzeug
 nest-asyncio==1.6.0
     # via dash
-numpy==1.26.4
+numpy==2.0.0
     # via pandas
-packaging==24.0
+packaging==24.1
     # via plotly
-pandas==2.2.1
+pandas==2.2.2
     # via hatch.envs.carbonboard
-plotly==5.20.0
+plotly==5.22.0
     # via dash
 prometheus-client==0.20.0
     # via hatch.envs.carbonboard
-psutil==5.9.8
+psutil==6.0.0
     # via hatch.envs.carbonboard
 py-cpuinfo==9.0.0
     # via hatch.envs.carbonboard
@@ -79,9 +79,9 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2024.1
     # via pandas
-rapidfuzz==3.7.0
+rapidfuzz==3.9.3
     # via hatch.envs.carbonboard
-requests==2.32.0
+requests==2.32.3
     # via
     #   hatch.envs.carbonboard
     #   dash
@@ -92,13 +92,13 @@ six==1.16.0
     #   fire
     #   python-dateutil
     #   retrying
-tenacity==8.2.3
+tenacity==8.4.1
     # via plotly
 termcolor==2.4.0
     # via fire
 types-python-dateutil==2.9.0.20240316
     # via arrow
-typing-extensions==4.10.0
+typing-extensions==4.12.2
     # via dash
 tzdata==2024.1
     # via pandas
@@ -108,7 +108,7 @@ werkzeug==3.0.3
     # via
     #   dash
     #   flask
-zipp==3.18.1
+zipp==3.19.2
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
