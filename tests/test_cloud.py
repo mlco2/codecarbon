@@ -66,6 +66,14 @@ def test_get_env_cloud_details_mapping_google():
 
 
 @responses.activate
+def test_get_env_cloud_details_mapping_google_empty_payload():
+    metadata = {}
+    setup_cloud_details_responses("GCP", metadata)
+
+    assert get_env_cloud_details() == {"provider": "GCP", "metadata": metadata}
+
+
+@responses.activate
 def test_get_env_cloud_details_mapping_nothing():
     metadata = {"instance": {"attributes": {"cluster-location": "us-east1-c"}}}
     setup_cloud_details_responses("localhost", metadata)

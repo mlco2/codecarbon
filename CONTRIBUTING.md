@@ -184,14 +184,14 @@ hatch run test:package-integ
 You can also run your specific test in isolation to develop and debug them:
 
 ```sh
-$ hatch run python -m unittest tests.test_your_feature
+$ hatch -e test.py3.11 run  pytest tests/test_cloud.py
 
 # or
 
-$ hatch run python -m unittest tests.test_your_feature.YourTestCase.test_function
+$ hatch -e test.py3.11 run python -m unittest tests.test_your_feature.YourTestCase.test_function
 ```
 
-For example : `hatch run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
+For example : `hatch -e test.py3.11 run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
 
 To test the API, see [how to deploy it](#local_deployement) first.
 
