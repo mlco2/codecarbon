@@ -124,6 +124,37 @@ e.g.
 
 Go to `localhost:9090 <http://localhost:9090>`_. Search for `codecarbon_`. You will see all the metrics there.
 
+Logfire
+----------
+
+Using CodeCarbon with logfire
+`````````````````````````````````
+
+`Logfire <https://docs.pydantic.dev/logfire/>`_ is an observability platform. 
+
+CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
+
+
+How to use it
+````````````````````
+
+Run your EmissionTracker as usual, but with the parameter `save_to_logfire` as True.
+e.g.
+
+.. code-block:: python
+
+  ...
+  tracker = OfflineEmissionsTracker(
+              project_name=self.project_name,
+              country_iso_code="USA",
+              save_to_logfire=True,
+          )
+  tracker.start()
+  ...
+
+The first time it will ask to log in into Logfire. Once you log in and set the default logfire project, you are good to go, the metrics will appear following the format `codecarbon_*`.
+
+
 HTTP Output
 -----------
 
