@@ -52,6 +52,14 @@ class ApiClient:  # (AsyncClient)
         self.conf = conf
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
+        import warnings
+
+        # FIXME: remove this warning in the future, once the release is created
+        warnings.warn(
+            "Beta API will be reworked, and some features will be removed. If you have data persisted through the API, please be warned that it will be erased with the next API release",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
