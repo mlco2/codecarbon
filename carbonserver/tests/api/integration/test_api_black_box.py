@@ -238,7 +238,7 @@ def test_api19_experiment_read():
 
 
 def test_api20_experiment_list():
-    r = requests.get(url=URL + "/experiments/project/" + project_id, timeout=2)
+    r = requests.get(url=f"{URL}/projects/{project_id}/experiments", timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert is_key_value_exist(r.json(), "id", experiment_id)
 
@@ -294,7 +294,7 @@ def test_api23_run_list():
 
 
 def test_api24_runs_for_experiment_list():
-    r = requests.get(url=URL + "/runs/experiment/" + experiment_id, timeout=2)
+    r = requests.get(url=f"{URL}/experiments/{experiment_id}/runs", timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert is_key_value_exist(r.json(), "id", run_id)
     assert is_key_all_values_equal(r.json(), "experiment_id", experiment_id)
@@ -348,7 +348,7 @@ def test_api25_emission_create():
 
 def test_api26_emission_list():
     global emission_id
-    r = requests.get(url=URL + "/emissions/run/" + run_id, timeout=2)
+    r = requests.get(url=f"{URL}/runs/{run_id}/emissions", timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert is_key_all_values_equal(r.json()["items"], "run_id", run_id)
     emission_id = r.json()["items"][-1]["id"]
@@ -369,23 +369,21 @@ def test_api27_read_all():
     r = requests.get(url=URL + "/organizations/" + org_new_id, timeout=2)
     assert r.json()["name"] == org_name
     # Check the experiment
-    r = requests.get(url=URL + "/experiments/project/" + project_id, timeout=2)
+    r = requests.get(url=f"{URL}/projects/{project_id}/experiments", timeout=2)
     assert is_key_value_exist(r.json(), "id", experiment_id)
     # Check the run
-    r = requests.get(url=URL + "/runs/experiment/" + experiment_id, timeout=2)
+    r = requests.get(url=f"{URL}/experiments/{experiment_id}/runs", timeout=2)
     assert is_key_value_exist(r.json(), "id", run_id)
     # Check the emission
-    r = requests.get(url=URL + "/emissions/run/" + run_id, timeout=2)
+    r = requests.get(url=f"{URL}/runs/{run_id}/emissions", timeout=2)
     assert is_key_all_values_equal(r.json()["items"], "run_id", run_id)
     emission_id = r.json()["items"][-1]["id"]
     tc.assertTrue(is_valid_uuid(emission_id))
-    # print(r.json()["items"][-1])
 
 
 def test_api29_experiment_read_detailed_sums():
-    url = f"{URL}/experiments/{project_id}/sums/"
+    url = f"{URL}/projects/{project_id}/experiments/sums/"
     r = requests.get(url, timeout=2)
-    print("test_api29_experiment_read_detailed_sums", url, r)
     tc.assertEqual(r.status_code, 200)
     r = r.json()
 
@@ -424,7 +422,7 @@ def test_api29_experiment_read_detailed_sums():
 
 # TODO: Do assert on all results
 def test_api30_run_read_detailed_sums():
-    url = f"{URL}/runs/{experiment_id}/sums/"
+    url = f"{URL}/experiments/{experiment_id}/runs/sums"
     r = requests.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     """
@@ -439,7 +437,6 @@ def test_api30_run_read_detailed_sums():
     """
     r = r.json()
     assert len(r) > 0
-    # print(r)
     assert r[0]["run_id"] in [run_id, run_id_2]
     for run_sum in r:
         tc.assertEqual(run_sum["emissions_count"], 2)
