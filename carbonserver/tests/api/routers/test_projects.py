@@ -67,6 +67,16 @@ def test_add_project(client, custom_test_server):
     assert actual_project == expected_project
 
 
+def test_delete_project(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock.delete_project.return_value = None
+
+    with custom_test_server.container.project_repository.override(repository_mock):
+        response = client.delete("/projects/12345", params={"id": PROJECT_ID})
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
 def test_get_project_by_id_returns_correct_project(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_project = PROJECT_1

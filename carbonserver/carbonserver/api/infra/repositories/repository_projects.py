@@ -30,6 +30,20 @@ class SqlAlchemyRepository(Projects):
             session.refresh(db_project)
             return self.map_sql_to_schema(db_project)
 
+    def delete_project(self, project_id: str):
+        with self.session_factory() as session:
+            db_project = (
+                session.query(SqlModelProject)
+                .filter(SqlModelProject.id == project_id)
+                .first()
+            )
+            if db_project is None:
+                raise HTTPException(
+                    status_code=404, detail=f"Project {project_id} not found"
+                )
+            session.delete(db_project)
+            session.commit()
+
     def get_one_project(self, project_id) -> Project:
         with self.session_factory() as session:
             e = (

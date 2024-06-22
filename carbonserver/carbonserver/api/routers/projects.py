@@ -36,6 +36,19 @@ def add_project(
     return project_service.add_project(project)
 
 
+# Delete project
+@router.delete(
+    "/projects/{project_id}",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@inject
+def delete_project(
+    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+) -> None:
+    return project_service.delete_project(project_id)
+
+
 @router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
 @inject
 def read_project(

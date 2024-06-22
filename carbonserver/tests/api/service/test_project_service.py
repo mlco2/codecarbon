@@ -35,13 +35,24 @@ def test_project_service_creates_correct_project(_):
     assert actual_saved_project_id.id == expected_id
 
 
+def test_project_service_deletes_correct_project():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    project_service: ProjectService = ProjectService(repository_mock)
+    repository_mock.delete_project.return_value = None
+
+    project_service.delete_project(PROJECT_ID)
+
+    # Check that the repository delete_project method was called with the correct project_id
+    repository_mock.delete_project.assert_called_once_with(PROJECT_ID)
+
+
 def test_project_service_retrieves_correct_project_by_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_project = PROJECT
-    organization_service: ProjectService = ProjectService(repository_mock)
+    project_service: ProjectService = ProjectService(repository_mock)
     repository_mock.get_one_project.return_value = PROJECT
 
-    actual_saved_project = organization_service.get_one_project(PROJECT_ID)
+    actual_saved_project = project_service.get_one_project(PROJECT_ID)
 
     assert actual_saved_project.id == expected_project.id
     assert actual_saved_project.name == expected_project.name
