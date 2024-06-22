@@ -14,6 +14,9 @@ class ProjectService:
     def delete_project(self, project_id):
         return self._repository.delete_project(project_id)
 
+    def patch_project(self, project_id, project):
+        return self._repository.patch_project(project_id, project)
+
     def get_one_project(self, project_id):
         return self._repository.get_one_project(project_id)
 

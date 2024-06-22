@@ -30,7 +30,7 @@ class SqlAlchemyRepository(Projects):
             session.refresh(db_project)
             return self.map_sql_to_schema(db_project)
 
-    def delete_project(self, project_id: str):
+    def delete_project(self, project_id: str) -> None:
         with self.session_factory() as session:
             db_project = (
                 session.query(SqlModelProject)
@@ -133,6 +133,24 @@ class SqlAlchemyRepository(Projects):
                 .first()
             )
             return res
+
+    def patch_project(self, project_id, project) -> Project:
+        with self.session_factory() as session:
+            db_project = (
+                session.query(SqlModelProject)
+                .filter(SqlModelProject.id == project_id)
+                .first()
+            )
+            if db_project is None:
+                raise HTTPException(
+                    status_code=404, detail=f"Project {project_id} not found"
+                )
+            for attr, value in project.dict().items():
+                if value is not None:
+                    setattr(db_project, attr, value)
+            session.commit()
+            session.refresh(db_project)
+            return self.map_sql_to_schema(db_project)
 
     @staticmethod
     def map_sql_to_schema(project: SqlModelProject) -> Project:

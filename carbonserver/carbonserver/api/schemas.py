@@ -249,6 +249,20 @@ class ProjectCreate(ProjectBase):
     pass
 
 
+class ProjectPatch(BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+    # do not allow the organization_id
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "API Code Carbon",
+                "description": "API for Code Carbon",
+            }
+        }
+
+
 class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[Experiment]] = []
