@@ -66,10 +66,24 @@ def read_emission(
 
 
 @router.get(
-    "/emissions/run/{run_id}", tags=EMISSIONS_ROUTER_TAGS, response_model=Page[Emission]
+    "/runs/{run_id}/emissions",
+    tags=EMISSIONS_ROUTER_TAGS,
+    response_model=Page[Emission],
 )
 @inject
 def get_emissions_from_run(
+    run_id: str,
+    emission_service: EmissionService = Depends(
+        Provide[ServerContainer.emission_service]
+    ),
+    params: Params = Depends(),
+) -> Page[Emission]:
+    return paginate(emission_service.get_emissions_from_run(run_id), params)
+
+
+@router.get("/emissions", tags=EMISSIONS_ROUTER_TAGS, response_model=Page[Emission])
+@inject
+def get_emissions(
     run_id: str,
     emission_service: EmissionService = Depends(
         Provide[ServerContainer.emission_service]

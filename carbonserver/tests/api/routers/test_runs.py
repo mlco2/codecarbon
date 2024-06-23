@@ -141,7 +141,7 @@ def test_get_runs_from_experiment_returns_correct_run(client, custom_test_server
     ]
 
     with custom_test_server.container.run_repository.override(repository_mock):
-        response = client.get("/runs/experiment/" + EXPE_ID)
+        response = client.get(f"/experiments/{EXPE_ID}/runs")
         actual_run_list = response.json()
 
     assert response.status_code == status.HTTP_200_OK
