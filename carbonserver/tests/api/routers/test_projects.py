@@ -21,6 +21,10 @@ PROJECT_TO_CREATE = {
     "description": "API for Code Carbon",
     "organization_id": ORGANIZATION_ID,
 }
+PROJECT_PATCH = {
+    "name": "API Code Carbon",
+    "description": "API for Code Carbon",
+}
 
 PROJECT_1 = {
     "id": PROJECT_ID,
@@ -64,6 +68,29 @@ def test_add_project(client, custom_test_server):
         actual_project = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
+    assert actual_project == expected_project
+
+
+def test_delete_project(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock.delete_project.return_value = None
+
+    with custom_test_server.container.project_repository.override(repository_mock):
+        response = client.delete(f"/projects/{PROJECT_ID}", params={"id": PROJECT_ID})
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_patch_project(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_project = PROJECT_1
+    repository_mock.patch_project.return_value = Project(**expected_project)
+
+    with custom_test_server.container.project_repository.override(repository_mock):
+        response = client.patch(f"/projects/{PROJECT_ID}", json=PROJECT_PATCH)
+        actual_project = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
     assert actual_project == expected_project
 
 

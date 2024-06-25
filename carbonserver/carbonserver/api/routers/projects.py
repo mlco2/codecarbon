@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Project, ProjectCreate, ProjectReport
+from carbonserver.api.schemas import Project, ProjectCreate, ProjectPatch, ProjectReport
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
 
@@ -34,6 +34,35 @@ def add_project(
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
     return project_service.add_project(project)
+
+
+# Delete project
+@router.delete(
+    "/projects/{project_id}",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@inject
+def delete_project(
+    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+) -> None:
+    return project_service.delete_project(project_id)
+
+
+# Patch project
+@router.patch(
+    "/projects/{project_id}",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=Project,
+)
+@inject
+def patch_project(
+    project_id: str,
+    project: ProjectPatch,
+    project_service=Depends(Provide[ServerContainer.project_service]),
+) -> Project:
+    return project_service.patch_project(project_id, project)
 
 
 @router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
