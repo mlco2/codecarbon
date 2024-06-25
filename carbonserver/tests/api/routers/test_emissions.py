@@ -141,9 +141,7 @@ def test_get_emissions_from_run_retreives_all_emissions_from_run(
     ]
 
     with custom_test_server.container.emission_repository.override(repository_mock):
-        response = client.get(
-            "/emissions/run/get_emissions_from_run/", params={"run_id": RUN_1_ID}
-        )
+        response = client.get(f"/runs/{RUN_1_ID}/emissions")
         actual_emission_list = response.json()["items"]
         actual_emission_ids_list = [emission["id"] for emission in actual_emission_list]
         diff = set(actual_emission_ids_list) ^ set(expected_emissions_id_list)

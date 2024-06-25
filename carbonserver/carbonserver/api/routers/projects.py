@@ -74,7 +74,7 @@ def read_project(
 
 
 @router.get(
-    "/projects/{project_id}/sums/",
+    "/projects/{project_id}/sums",
     tags=PROJECTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

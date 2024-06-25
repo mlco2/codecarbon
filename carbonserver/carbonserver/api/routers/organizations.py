@@ -73,7 +73,7 @@ def list_organizations(
 
 
 @router.get(
-    "/organizations/{organization_id}/sums/",
+    "/organizations/{organization_id}/sums",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
