@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
 from carbonserver.api.routers import users
-from carbonserver.api.schemas import User
+from carbonserver.api.schemas import Project, User
 
 API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
 
@@ -44,6 +44,21 @@ USER_WITH_BAD_EMAIL = {
     "password": "pwd",
 }
 
+###
+#  Only needed for the steps after the creation of a user
+###
+PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+ORGANIZATION_ID = "c13e851f-5c2f-403d-98d0-51fe15df3bc3"
+
+PROJECT_1 = {
+    "id": PROJECT_ID,
+    "name": "API Code Carbon",
+    "description": "API for Code Carbon",
+    "organization_id": ORGANIZATION_ID,
+    "experiments": [],
+}
+###
+
 
 @pytest.fixture
 def custom_test_server():
@@ -64,8 +79,17 @@ def test_create_user(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_user = USER_1
     repository_mock.create_user.return_value = User(**expected_user)
+    project_repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_project = PROJECT_1
+    repository_mock.create_user.return_value = Project(**expected_project)
 
-    with custom_test_server.container.user_repository.override(repository_mock):
+    with custom_test_server.container.user_repository.override(
+        repository_mock
+    ) and custom_test_server.container.project_repository.override(
+        project_repository_mock
+    ) and custom_test_server.container.organization_repository.override(
+        repository_mock
+    ):
         response = client.post("/users", json=USER_TO_CREATE)
         actual_user = response.json()
 
