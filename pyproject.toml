@@ -34,6 +34,9 @@ dependencies = [
     "pynvml",
     "rapidfuzz",
     "requests",
+    "questionary",
+    "rich",
+    "typer"
 ]
 
 [project.urls]

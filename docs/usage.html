@@ -1,14 +1,12 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quickstart &mdash; CodeCarbon 2.3.4 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
-
-  
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -122,10 +120,23 @@
 <section id="command-line">
 <h3>Command line<a class="headerlink" href="#command-line" title="Link to this heading"></a></h3>
 <p>If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor --no-api</span>
-</pre></div>
-</div>
+<p>Create a minimal configuration file (just follow the prompts)
+.. code-block:: console</p>
+<blockquote>
+<div><p>codecarbon config –init</p>
+</div></blockquote>
+<p>Start monitoring the emissions of the computer
+.. code-block:: console</p>
+<blockquote>
+<div><p>codecarbon monitor</p>
+</div></blockquote>
 <p>You have to stop the monitoring manually with <code class="docutils literal notranslate"><span class="pre">Ctrl+C</span></code>.</p>
+<p>In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
+to an API running on localhost:8008 (that you can start with the docke-compose)
+.. raw:: html</p>
+<blockquote>
+<div><p>&lt;script src=”<a class="reference external" href="https://asciinema.org/a/bJMOlPe5F4mFLY0Rl6fiJSOp3.js">https://asciinema.org/a/bJMOlPe5F4mFLY0Rl6fiJSOp3.js</a>” id=”asciicast-bJMOlPe5F4mFLY0Rl6fiJSOp3” async&gt;&lt;/script&gt;</p>
+</div></blockquote>
 <p>Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.</p>
 </section>
 <section id="explicit-object">
