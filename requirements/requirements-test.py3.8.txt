@@ -27,9 +27,9 @@
 
 arrow==1.3.0
     # via hatch.envs.test.py3.8
-blinker==1.8.1
+blinker==1.8.2
     # via flask
-certifi==2024.2.2
+certifi==2024.6.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
@@ -37,8 +37,7 @@ click==8.1.7
     # via
     #   hatch.envs.test.py3.8
     #   flask
-    #   typer
-dash==2.16.1
+dash==2.17.1
     # via
     #   hatch.envs.test.py3.8
     #   dash-bootstrap-components
@@ -84,13 +83,13 @@ numpy==1.24.4
     # via
     #   hatch.envs.test.py3.8
     #   pandas
-packaging==24.0
+packaging==24.1
     # via
     #   plotly
     #   pytest
 pandas==2.0.3
     # via hatch.envs.test.py3.8
-plotly==5.21.0
+plotly==5.22.0
     # via dash
 pluggy==1.5.0
     # via pytest
@@ -98,7 +97,7 @@ prometheus-client==0.20.0
     # via hatch.envs.test.py3.8
 prompt-toolkit==3.0.36
     # via questionary
-psutil==5.9.8
+psutil==6.0.0
     # via hatch.envs.test.py3.8
 py-cpuinfo==9.0.0
     # via hatch.envs.test.py3.8
@@ -106,7 +105,7 @@ pygments==2.18.0
     # via rich
 pynvml==11.5.0
     # via hatch.envs.test.py3.8
-pytest==8.2.0
+pytest==8.2.2
     # via hatch.envs.test.py3.8
 python-dateutil==2.9.0.post0
     # via
@@ -120,7 +119,7 @@ questionary==2.0.1
     # via hatch.envs.test.py3.8
 rapidfuzz==3.7.0
     # via hatch.envs.test.py3.8
-requests==2.32.0
+requests==2.32.3
     # via
     #   hatch.envs.test.py3.8
     #   dash
@@ -128,7 +127,7 @@ requests==2.32.0
     #   responses
 requests-mock==1.12.1
     # via hatch.envs.test.py3.8
-responses==0.25.0
+responses==0.25.3
     # via hatch.envs.test.py3.8
 retrying==1.3.4
     # via dash
@@ -143,7 +142,7 @@ six==1.16.0
     #   fire
     #   python-dateutil
     #   retrying
-tenacity==8.2.3
+tenacity==8.4.1
     # via plotly
 termcolor==2.4.0
     # via fire
@@ -153,14 +152,11 @@ typer==0.12.3
     # via hatch.envs.test.py3.8
 types-python-dateutil==2.9.0.20240316
     # via arrow
-typing-extensions==4.11.0
-    # via
-    #   dash
-    #   rich
-    #   typer
+typing-extensions==4.12.2
+    # via dash
 tzdata==2024.1
     # via pandas
-urllib3==2.2.1
+urllib3==2.2.2
     # via
     #   requests
     #   responses
@@ -170,7 +166,7 @@ werkzeug==3.0.2
     # via
     #   dash
     #   flask
-zipp==3.18.1
+zipp==3.19.2
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

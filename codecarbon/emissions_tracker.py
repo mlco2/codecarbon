@@ -4,7 +4,6 @@ OfflineEmissionsTracker and @track_emissions
 """
 
 import dataclasses
-import os
 import platform
 import time
 import uuid
@@ -32,6 +31,7 @@ from codecarbon.output import (
     EmissionsData,
     FileOutput,
     HTTPOutput,
+    LogfireOutput,
     LoggerOutput,
     PrometheusOutput,
 )
@@ -149,7 +149,9 @@ class BaseEmissionsTracker(ABC):
         save_to_logger: Optional[bool] = _sentinel,
         logging_logger: Optional[LoggerOutput] = _sentinel,
         save_to_prometheus: Optional[bool] = _sentinel,
+        save_to_logfire: Optional[bool] = _sentinel,
         prometheus_url: Optional[str] = _sentinel,
+        output_handlers: Optional[List[BaseOutput]] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
@@ -187,6 +189,8 @@ class BaseEmissionsTracker(ABC):
                             or a Google Cloud logger.
         :param save_to_prometheus: Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
+        :param save_to_logfire: Indicates if the emission artifacts should be written
+                            to a logfire observability platform, defaults to False.
         :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
         :param gpu_ids: User-specified known gpu ids to track.
                             Defaults to None, which means that all available gpus will be tracked.
@@ -234,7 +238,9 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(save_to_logger, "save_to_logger", False, bool)
         self._set_from_conf(logging_logger, "logging_logger")
         self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
+        self._set_from_conf(save_to_logfire, "save_to_logfire", False, bool)
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
+        self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
@@ -249,7 +255,7 @@ class BaseEmissionsTracker(ABC):
         set_logger_format(self._logger_preamble)
 
         self._start_time: Optional[float] = None
-        self._last_measured_time: float = time.time()
+        self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
@@ -257,8 +263,6 @@ class BaseEmissionsTracker(ABC):
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
-        self._cc_api__out = None
-        self._cc_prometheus_out = None
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
@@ -400,38 +404,38 @@ class BaseEmissionsTracker(ABC):
         """
         Prepare the different output methods
         """
-        self.persistence_objs: List[BaseOutput] = list()
-
         if self._save_to_file:
-            self.persistence_objs.append(
+            self._output_handlers.append(
                 FileOutput(
-                    os.path.join(self._output_dir, self._output_file),
+                    self._output_file,
+                    self._output_dir,
                     self._on_csv_write,
                 )
             )
 
         if self._save_to_logger:
-            self.persistence_objs.append(self._logging_logger)
+            self._output_handlers.append(self._logging_logger)
 
         if self._emissions_endpoint:
-            self.persistence_objs.append(HTTPOutput(self._emissions_endpoint))
+            self._output_handlers.append(HTTPOutput(self._emissions_endpoint))
 
         if self._save_to_api:
-            self._cc_api__out = CodeCarbonAPIOutput(
+            cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
                 experiment_id=self._experiment_id,
                 api_key=api_key,
                 conf=self._conf,
             )
-            self.run_id = self._cc_api__out.run_id
-            self.persistence_objs.append(self._cc_api__out)
-
+            self.run_id = cc_api__out.run_id
+            self._output_handlers.append(cc_api__out)
         else:
             self.run_id = uuid.uuid4()
 
         if self._save_to_prometheus:
-            self._cc_prometheus_out = PrometheusOutput(self._prometheus_url)
-            self.persistence_objs.append(self._cc_prometheus_out)
+            self._output_handlers.append(PrometheusOutput(self._prometheus_url))
+
+        if self._save_to_logfire:
+            self._output_handlers.append(LogfireOutput())
 
     def service_shutdown(self, signum, frame):
         print("Caught signal %d" % signum)
@@ -449,7 +453,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning("Already started tracking")
             return
 
-        self._last_measured_time = self._start_time = time.time()
+        self._last_measured_time = self._start_time = time.perf_counter()
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -473,11 +477,12 @@ class BaseEmissionsTracker(ABC):
             task_name = uuid.uuid4().__str__()
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
-        self._last_measured_time = self._start_time = time.time()
+        self._last_measured_time = self._start_time = time.perf_counter()
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
-        _ = self._prepare_emissions_data(delta=True)
+        _ = self._prepare_emissions_data()
+        _ = self._compute_emissions_delta(_)
 
         self._tasks.update(
             {
@@ -497,13 +502,14 @@ class BaseEmissionsTracker(ABC):
         task_name = task_name if task_name else self._active_task
         self._measure_power_and_energy()
 
-        emissions_data = self._prepare_emissions_data(delta=True)
+        emissions_data = self._prepare_emissions_data()
+        emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         task_duration = Time.from_seconds(
-            time.time() - self._tasks[task_name].start_time
+            time.perf_counter() - self._tasks[task_name].start_time
         )
 
-        task_emission_data = emissions_data
+        task_emission_data = emissions_data_delta
         task_emission_data.duration = task_duration.seconds
         self._tasks[task_name].emissions_data = task_emission_data
         self._tasks[task_name].is_active = False
@@ -526,7 +532,11 @@ class BaseEmissionsTracker(ABC):
         self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
-        self._persist_data(emissions_data)
+        emissions_data_delta = self._compute_emissions_delta(emissions_data)
+
+        self._persist_data(
+            total_emissions=emissions_data, delta_emissions=emissions_data_delta
+        )
 
         return emissions_data.emissions
 
@@ -554,34 +564,39 @@ class BaseEmissionsTracker(ABC):
         self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
+        emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
-        self._persist_data(emissions_data, experiment_name=self._experiment_name)
+        self._persist_data(
+            total_emissions=emissions_data,
+            delta_emissions=emissions_data_delta,
+            experiment_name=self._experiment_name,
+        )
 
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
         return emissions_data.emissions
 
-    def _persist_data(self, emissions_data, experiment_name=None):
-        for persistence in self.persistence_objs:
-            if isinstance(persistence, CodeCarbonAPIOutput):
-                emissions_data = self._prepare_emissions_data(delta=True)
+    def _persist_data(
+        self,
+        total_emissions: EmissionsData,
+        delta_emissions: EmissionsData,
+        experiment_name=None,
+    ):
+        task_emissions_data = []
+        for task in self._tasks:
+            task_emissions_data.append(self._tasks[task].out())
 
-            persistence.out(emissions_data)
-            if isinstance(persistence, FileOutput):
-                if len(self._tasks) > 0:
-                    task_emissions_data = []
-                    for task in self._tasks:
-                        task_emissions_data.append(self._tasks[task].out())
-                    persistence.task_out(
-                        task_emissions_data, experiment_name, self._output_dir
-                    )
+        for handler in self._output_handlers:
+            handler.out(total_emissions, delta_emissions)
+            if len(task_emissions_data) > 0:
+                handler.task_out(task_emissions_data, experiment_name)
 
-    def _prepare_emissions_data(self, delta=False) -> EmissionsData:
+    def _prepare_emissions_data(self) -> EmissionsData:
         """
         :delta: If 'True', return only the delta comsumption since the last call.
         """
         cloud: CloudMetadata = self._get_cloud_metadata()
-        duration: Time = Time.from_seconds(time.time() - self._start_time)
+        duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
 
         if cloud.is_on_private_infra:
             emissions = self._emissions.get_private_infra_emissions(
@@ -636,20 +651,22 @@ class BaseEmissionsTracker(ABC):
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
         )
-        if delta:
-            if self._previous_emissions is None:
-                self._previous_emissions = total_emissions
-            else:
-                # Create a copy
-                delta_emissions = dataclasses.replace(total_emissions)
-                # Compute emissions rate from delta
-                delta_emissions.compute_delta_emission(self._previous_emissions)
-                # TODO : find a way to store _previous_emissions only when
-                # TODO : the API call succeeded
-                self._previous_emissions = total_emissions
-                total_emissions = delta_emissions
         logger.debug(total_emissions)
         return total_emissions
+
+    def _compute_emissions_delta(self, total_emissions: EmissionsData) -> EmissionsData:
+        delta_emissions: EmissionsData = total_emissions
+        if self._previous_emissions is None:
+            self._previous_emissions = total_emissions
+        else:
+            # Create a copy
+            delta_emissions = dataclasses.replace(total_emissions)
+            # Compute emissions rate from delta
+            delta_emissions.compute_delta_emission(self._previous_emissions)
+            # TODO : find a way to store _previous_emissions only when
+            # TODO : the API call succeeded
+            self._previous_emissions = total_emissions
+        return delta_emissions
 
     @abstractmethod
     def _get_geo_metadata(self) -> GeoMetadata:
@@ -665,9 +682,9 @@ class BaseEmissionsTracker(ABC):
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
-            h_time = time.time()
+            h_time = time.perf_counter()
             # Compute last_duration again for more accuracy
-            last_duration = time.time() - self._last_measured_time
+            last_duration = time.perf_counter() - self._last_measured_time
             (
                 power,
                 energy,
@@ -713,7 +730,7 @@ class BaseEmissionsTracker(ABC):
                     )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
-            h_time = time.time() - h_time
+            h_time = time.perf_counter() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
                 + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
@@ -728,7 +745,7 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
-        last_duration = time.time() - self._last_measured_time
+        last_duration = time.perf_counter() - self._last_measured_time
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
@@ -739,22 +756,23 @@ class BaseEmissionsTracker(ABC):
             logger.warning(warn_msg, last_duration)
 
         self._do_measurements()
-        self._last_measured_time = time.time()
+        self._last_measured_time = time.perf_counter()
         self._measure_occurrence += 1
+        # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
-            self._cc_api__out is not None or self._cc_prometheus_out is not None
-        ) and self._api_call_interval != -1:
-            if self._measure_occurrence >= self._api_call_interval:
-                emissions = self._prepare_emissions_data(delta=True)
-                logger.info(
-                    f"{emissions.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
-                    + f"{emissions.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
-                )
-                if self._cc_api__out:
-                    self._cc_api__out.out(emissions)
-                if self._cc_prometheus_out:
-                    self._cc_prometheus_out.out(emissions)
-                self._measure_occurrence = 0
+            self._api_call_interval != -1
+            and len(self._output_handlers) > 0
+            and self._measure_occurrence >= self._api_call_interval
+        ):
+            emissions = self._prepare_emissions_data()
+            emissions_delta = self._compute_emissions_delta(emissions)
+            logger.info(
+                f"{emissions_delta.emissions_rate * 1000:.6f} g.CO2eq/s mean an estimation of "
+                + f"{emissions_delta.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
+            )
+            for handler in self._output_handlers:
+                handler.live_out(emissions, emissions_delta)
+            self._measure_occurrence = 0
         logger.debug(f"last_duration={last_duration}\n------------------------")
 
     def __enter__(self):
@@ -923,7 +941,9 @@ def track_emissions(
     save_to_api: Optional[bool] = _sentinel,
     save_to_logger: Optional[bool] = _sentinel,
     save_to_prometheus: Optional[bool] = _sentinel,
+    save_to_logfire: Optional[bool] = _sentinel,
     prometheus_url: Optional[str] = _sentinel,
+    output_handlers: Optional[List[BaseOutput]] = _sentinel,
     logging_logger: Optional[LoggerOutput] = _sentinel,
     offline: Optional[bool] = _sentinel,
     emissions_endpoint: Optional[str] = _sentinel,
@@ -957,6 +977,8 @@ def track_emissions(
                         to a dedicated logger, defaults to False.
     :param save_to_prometheus: Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
+    :param save_to_logfire: Indicates if the emission artifacts should be
+                            pushed to logfire, defaults to False.
     :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
     :param logging_logger: LoggerOutput object encapsulating a logging.logger
                         or a Google Cloud logger.
@@ -1001,7 +1023,9 @@ def track_emissions(
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
                     save_to_prometheus=save_to_prometheus,
+                    save_to_logfire=save_to_logfire,
                     prometheus_url=prometheus_url,
+                    output_handlers=output_handlers,
                     logging_logger=logging_logger,
                     country_iso_code=country_iso_code,
                     region=region,
@@ -1022,7 +1046,9 @@ def track_emissions(
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
                     save_to_prometheus=save_to_prometheus,
+                    save_to_logfire=save_to_logfire,
                     prometheus_url=prometheus_url,
+                    output_handlers=output_handlers,
                     logging_logger=logging_logger,
                     gpu_ids=gpu_ids,
                     log_level=log_level,

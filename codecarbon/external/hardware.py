@@ -309,6 +309,9 @@ class RAM(BaseHardware):
     def _parse_scontrol(self, scontrol_str):
         mem_matches = re.findall(r"AllocTRES=.*?,mem=(\d+[A-Z])", scontrol_str)
         if len(mem_matches) == 0:
+            # Try with TRES, see https://github.com/mlco2/codecarbon/issues/569#issuecomment-2167706145
+            mem_matches = re.findall(r"TRES=.*?,mem=(\d+[A-Z])", scontrol_str)
+        if len(mem_matches) == 0:
             logger.warning(
                 "Could not find mem= after running `scontrol show job $SLURM_JOB_ID` "
                 + "to count SLURM-available RAM. Using the machine's total RAM."

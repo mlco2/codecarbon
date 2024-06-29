@@ -22,13 +22,27 @@ class SqlAlchemyRepository(Projects):
             db_project = SqlModelProject(
                 name=project.name,
                 description=project.description,
-                team_id=project.team_id,
+                organization_id=project.organization_id,
             )
 
             session.add(db_project)
             session.commit()
             session.refresh(db_project)
             return self.map_sql_to_schema(db_project)
+
+    def delete_project(self, project_id: str) -> None:
+        with self.session_factory() as session:
+            db_project = (
+                session.query(SqlModelProject)
+                .filter(SqlModelProject.id == project_id)
+                .first()
+            )
+            if db_project is None:
+                raise HTTPException(
+                    status_code=404, detail=f"Project {project_id} not found"
+                )
+            session.delete(db_project)
+            session.commit()
 
     def get_one_project(self, project_id) -> Project:
         with self.session_factory() as session:
@@ -43,16 +57,16 @@ class SqlAlchemyRepository(Projects):
                 )
             return self.map_sql_to_schema(e)
 
-    def get_projects_from_team(self, team_id) -> List[Project]:
-        """Find the list of projects from a team in database and return it
+    def get_projects_from_organization(self, organization_id) -> List[Project]:
+        """Find the list of projects from a organization in database and return it
 
-        :team_id: The id of the team to retreive projects from.
+        :org_id: The id of the organization to retreive projects from.
         :returns: List of Projects in pyDantic BaseModel format.
         :rtype: List[schemas.Project]
         """
         with self.session_factory() as session:
             res = session.query(SqlModelProject).filter(
-                SqlModelProject.team_id == team_id
+                SqlModelProject.organization_id == organization_id
             )
             if res.first() is None:
                 return []
@@ -76,7 +90,7 @@ class SqlAlchemyRepository(Projects):
                     SqlModelProject.id.label("project_id"),
                     SqlModelProject.name,
                     SqlModelProject.description,
-                    SqlModelProject.team_id,
+                    SqlModelProject.organization_id,
                     func.sum(SqlModelEmission.emissions_sum).label("emissions"),
                     func.avg(SqlModelEmission.cpu_power).label("cpu_power"),
                     func.avg(SqlModelEmission.gpu_power).label("gpu_power"),
@@ -120,6 +134,24 @@ class SqlAlchemyRepository(Projects):
             )
             return res
 
+    def patch_project(self, project_id, project) -> Project:
+        with self.session_factory() as session:
+            db_project = (
+                session.query(SqlModelProject)
+                .filter(SqlModelProject.id == project_id)
+                .first()
+            )
+            if db_project is None:
+                raise HTTPException(
+                    status_code=404, detail=f"Project {project_id} not found"
+                )
+            for attr, value in project.dict().items():
+                if value is not None:
+                    setattr(db_project, attr, value)
+            session.commit()
+            session.refresh(db_project)
+            return self.map_sql_to_schema(db_project)
+
     @staticmethod
     def map_sql_to_schema(project: SqlModelProject) -> Project:
         """Convert a models.Project to a schemas.Project
@@ -132,5 +164,5 @@ class SqlAlchemyRepository(Projects):
             id=str(project.id),
             name=project.name,
             description=project.description,
-            team_id=str(project.team_id),
+            organization_id=str(project.organization_id),
         )

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 
 import dateutil.relativedelta
 from container import ServerContainer
@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Project, ProjectCreate, ProjectReport
+from carbonserver.api.schemas import Project, ProjectCreate, ProjectPatch, ProjectReport
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
 
@@ -23,7 +23,7 @@ projects_temp_db = []
 
 
 @router.post(
-    "/project",
+    "/projects",
     tags=PROJECTS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=Project,
@@ -36,7 +36,36 @@ def add_project(
     return project_service.add_project(project)
 
 
-@router.get("/project/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
+# Delete project
+@router.delete(
+    "/projects/{project_id}",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+@inject
+def delete_project(
+    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+) -> None:
+    return project_service.delete_project(project_id)
+
+
+# Patch project
+@router.patch(
+    "/projects/{project_id}",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=Project,
+)
+@inject
+def patch_project(
+    project_id: str,
+    project: ProjectPatch,
+    project_service=Depends(Provide[ServerContainer.project_service]),
+) -> Project:
+    return project_service.patch_project(project_id, project)
+
+
+@router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
 @inject
 def read_project(
     project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
@@ -45,20 +74,7 @@ def read_project(
 
 
 @router.get(
-    "/projects/team/{team_id}",
-    tags=PROJECTS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-)
-@inject
-def read_projects_from_team(
-    team_id: str,
-    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
-):
-    return project_service.list_projects_from_team(team_id)
-
-
-@router.get(
-    "/project/{project_id}/sums/",
+    "/projects/{project_id}/sums",
     tags=PROJECTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
@@ -80,3 +96,29 @@ def read_project_detailed_sums(
     return project_global_sum_usecase.compute_detailed_sum(
         project_id, start_date, end_date
     )
+
+
+@router.get(
+    "/organizations/{organization_id}/projects",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def list_projects_nested(
+    organization_id: str,
+    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
+) -> List[Project]:
+    return project_service.list_projects_from_organization(organization_id)
+
+
+@router.get(
+    "/projects",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def list_projects(
+    organization: str,
+    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
+) -> List[Project]:
+    return project_service.list_projects_from_organization(organization)

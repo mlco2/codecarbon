@@ -68,6 +68,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#how-to-test-in-local">How to test in local</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#logfire">Logfire</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-codecarbon-with-logfire">Using CodeCarbon with logfire</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-to-use-it">How to use it</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#http-output">HTTP Output</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#codecarbon-api">CodeCarbon API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#logger-output">Logger Output</a></li>
@@ -107,8 +112,8 @@
 <h2>CSV<a class="headerlink" href="#csv" title="Link to this heading"></a></h2>
 <p>The package has an in-built logger that logs data into a CSV file named <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code> in the <code class="docutils literal notranslate"><span class="pre">output_dir</span></code>, provided as an
 input parameter (defaults to the current directory), for each experiment tracked across projects.</p>
-<table class="docutils align-center" id="id3">
-<caption><span class="caption-text">Data Fields Logged for Each Experiment</span><a class="headerlink" href="#id3" title="Link to this table"></a></caption>
+<table class="docutils align-center" id="id4">
+<caption><span class="caption-text">Data Fields Logged for Each Experiment</span><a class="headerlink" href="#id4" title="Link to this table"></a></caption>
 <colgroup>
 <col style="width: 20.0%" />
 <col style="width: 80.0%" />
@@ -257,6 +262,30 @@ e.g.</p>
 </pre></div>
 </div>
 <p>Go to <a class="reference external" href="http://localhost:9090">localhost:9090</a>. Search for <cite>codecarbon_</cite>. You will see all the metrics there.</p>
+</section>
+</section>
+<section id="logfire">
+<h2>Logfire<a class="headerlink" href="#logfire" title="Link to this heading"></a></h2>
+<section id="using-codecarbon-with-logfire">
+<h3>Using CodeCarbon with logfire<a class="headerlink" href="#using-codecarbon-with-logfire" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://docs.pydantic.dev/logfire/">Logfire</a> is an observability platform.</p>
+<p>CodeCarbon exposes all its metrics with the suffix <cite>codecarbon_</cite>.</p>
+</section>
+<section id="how-to-use-it">
+<h3>How to use it<a class="headerlink" href="#how-to-use-it" title="Link to this heading"></a></h3>
+<p>Run your EmissionTracker as usual, but with the parameter <cite>save_to_logfire</cite> as True.
+e.g.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
+<span class="n">tracker</span> <span class="o">=</span> <span class="n">OfflineEmissionsTracker</span><span class="p">(</span>
+            <span class="n">project_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project_name</span><span class="p">,</span>
+            <span class="n">country_iso_code</span><span class="o">=</span><span class="s2">&quot;USA&quot;</span><span class="p">,</span>
+            <span class="n">save_to_logfire</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+<span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>The first time it will ask to log in into Logfire. Once you log in and set the default logfire project, you are good to go, the metrics will appear following the format <cite>codecarbon_*</cite>.</p>
 </section>
 </section>
 <section id="http-output">

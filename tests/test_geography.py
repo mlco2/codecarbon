@@ -8,6 +8,7 @@ from tests.testdata import (
     CLOUD_METADATA_AWS,
     CLOUD_METADATA_AZURE,
     CLOUD_METADATA_GCP,
+    CLOUD_METADATA_GCP_EMPTY,
     COUNTRY_METADATA_USA,
     GEO_METADATA_CANADA,
     GEO_METADATA_USA,
@@ -57,6 +58,18 @@ class TestCloudMetadata(unittest.TestCase):
         # THEN
         self.assertEqual("gcp", cloud.provider)
         self.assertEqual("us-central1", cloud.region)
+
+    @mock.patch(
+        "codecarbon.external.geography.get_env_cloud_details",
+        return_value=CLOUD_METADATA_GCP_EMPTY,
+    )
+    def test_cloud_metadata_GCP_empty(self, mock_get_env_cloud_details):
+        # WHEN
+        cloud = CloudMetadata.from_utils()
+
+        # THEN
+        self.assertIsNone(cloud.provider)
+        self.assertIsNone(cloud.region)
 
 
 class TestGeoMetadata(unittest.TestCase):

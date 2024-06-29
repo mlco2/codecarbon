@@ -82,3 +82,12 @@ class TestRAM(unittest.TestCase):
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "42K")
+
+        scontrol_str = dedent(
+            """\
+            TRES=cpu=64,mem=50000M,node=1,billing=40,gres/gpu=4
+            """
+        )
+        ram = RAM(tracking_mode="slurm")
+        ram_size = ram._parse_scontrol(scontrol_str)
+        self.assertEqual(ram_size, "50000M")

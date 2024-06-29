@@ -23,7 +23,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/experiment",
+    "/experiments",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=Experiment,
@@ -41,7 +41,7 @@ def add_experiment(
 
 
 @router.get(
-    "/experiment/{experiment_id}",
+    "/experiments/{experiment_id}",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
     response_model=Experiment,
@@ -57,7 +57,7 @@ def read_experiment(
 
 
 @router.get(
-    "/experiments/project/{project_id}",
+    "/projects/{project_id}/experiments",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
     response_model=List[Experiment],
@@ -73,7 +73,7 @@ def read_project_experiments(
 
 
 @router.get(
-    "/experiments/{project_id}/sums/",
+    "/projects/{project_id}/experiments/sums",
     tags=EXPERIMENTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
