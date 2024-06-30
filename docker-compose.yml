@@ -1,4 +1,3 @@
-version: '3.7'
 services:
 
   # codecarbon_package:
@@ -14,10 +13,11 @@ services:
   #   restart: unless-stopped
 
   carbonserver:
+    depends_on:
+      - postgres
     build:
       context: .
       dockerfile: ./carbonserver/docker/Dockerfile
-    #command: cd /carbonserver/carbonserver/database && python3 -m alembic upgrade head && cd ../.. && uvicorn --reload main:app --host 0.0.0.0
     volumes:
       - ./carbonserver:/carbonserver
     ports:
@@ -28,7 +28,7 @@ services:
     networks:
       - codecarbon_net
 
-  postgres:
+  postgres: 
     container_name: ${DATABASE_HOST:-postgres_codecarbon}
     environment:
       HOSTNAME: ${DATABASE_HOST:-postgres_codecarbon}
