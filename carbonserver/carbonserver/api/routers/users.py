@@ -6,12 +6,10 @@ from fastapi import APIRouter, Depends, status
 
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import OrganizationCreate, ProjectCreate, User, UserCreate
+from carbonserver.api.services.organization_service import OrganizationService
+from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
-from carbonserver.carbonserver.api.services.organization_service import (
-    OrganizationService,
-)
-from carbonserver.carbonserver.api.services.project_service import ProjectService
 
 USERS_ROUTER_TAGS = ["Users"]
 
