@@ -1,9 +1,16 @@
+# Dockerfile
+
+# Use Ubuntu to install 3 versions of Python for testing
+# For production, you could use python:3.8-slim
+
 FROM ubuntu:22.04
 
+# set work directory
 WORKDIR /carbonserver
-
+# set env variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+# Prevent apt to ask for region
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get upgrade -y && \
