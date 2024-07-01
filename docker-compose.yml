@@ -28,7 +28,7 @@ services:
     networks:
       - codecarbon_net
 
-  postgres: 
+  postgres:
     container_name: ${DATABASE_HOST:-postgres_codecarbon}
     environment:
       HOSTNAME: ${DATABASE_HOST:-postgres_codecarbon}
