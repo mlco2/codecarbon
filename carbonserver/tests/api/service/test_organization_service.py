@@ -4,7 +4,7 @@ from uuid import UUID
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
-from carbonserver.api.schemas import Organization, OrganizationCreate
+from carbonserver.api.schemas import Organization, OrganizationCreate, OrganizationPatch
 from carbonserver.api.services.organization_service import OrganizationService
 
 ORG_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
@@ -67,3 +67,27 @@ def test_organization_service_retrieves_correct_org_by_id():
 
     assert actual_saved_org.id == expected_org.id
     assert actual_saved_org.name == expected_org.name
+
+
+def test_organization_service_patches_correct_org():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    organization_service: OrganizationService = OrganizationService(repository_mock)
+    patched_org = Organization(
+        id=ORG_2.id,
+        name="PATCHED - Data For Good",
+        description="PATCHED - Data For Good Organization",
+        api_key=ORG_2.api_key,
+    )
+    repository_mock.patch_organization.return_value = patched_org
+
+    org_to_patch = OrganizationPatch(
+        name="PATCHED - Data For Good",
+        description="PATCHED - Data For Good Organization",
+    )
+
+    actual_saved_org = organization_service.patch_organization(ORG_ID_2, org_to_patch)
+
+    assert actual_saved_org.id == ORG_ID_2
+    assert actual_saved_org.name == "PATCHED - Data For Good"
+    assert actual_saved_org.description == "PATCHED - Data For Good Organization"
+    assert actual_saved_org.api_key == API_KEY
