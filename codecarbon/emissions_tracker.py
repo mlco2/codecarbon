@@ -296,8 +296,12 @@ class BaseEmissionsTracker(ABC):
 
         # Hardware detection
         logger.info("[setup] GPU Tracking...")
-        if gpu.is_gpu_details_available():
-            logger.info("Tracking Nvidia GPU via pynvml")
+        if gpu.is_nvidia_system() or gpu.is_rocm_system():
+            if gpu.is_nvidia_system():
+                logger.info("Tracking Nvidia GPUs via PyNVML")
+            elif gpu.is_rocm_system():
+                logger.info("Tracking AMD GPUs via AMDSMI")
+
             gpu_devices = GPU.from_utils(self._gpu_ids)
             self._hardware.append(gpu_devices)
             gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
