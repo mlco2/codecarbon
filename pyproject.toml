@@ -130,6 +130,7 @@ dependencies = [
 run = "cd dashboard && python carbon_board_API.py"
 
 [tool.hatch.envs.api]
+python = "3.11"
 dependencies = [
     "alembic<2.0.0",
     "bcrypt<5.0.0",
