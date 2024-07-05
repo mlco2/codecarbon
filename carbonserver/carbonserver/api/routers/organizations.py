@@ -11,6 +11,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
+    OrganizationPatch,
     OrganizationReport,
 )
 from carbonserver.api.services.organization_service import OrganizationService
@@ -39,6 +40,22 @@ def add_organization(
     ),
 ) -> Organization:
     return organization_service.add_organization(organization)
+
+
+@router.patch(
+    "/organizations/{organization_id}",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def update_organization(
+    organization_id: str,
+    organization: OrganizationPatch,
+    organization_service: OrganizationService = Depends(
+        Provide[ServerContainer.organization_service]
+    ),
+) -> Organization:
+    return organization_service.patch_organization(organization_id, organization)
 
 
 @router.get(

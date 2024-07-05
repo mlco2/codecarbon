@@ -96,3 +96,16 @@ def test_list_organizations_returns_all_orgs(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_org_list == expected_org_list
+
+
+def test_patch_organization(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_org = ORG_1
+    repository_mock.patch_organization.return_value = Organization(**ORG_1)
+
+    with custom_test_server.container.organization_repository.override(repository_mock):
+        response = client.patch(f"/organizations/{ORG_ID_1}", json={"name": "New Name"})
+        actual_org = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_org == expected_org

@@ -302,6 +302,11 @@ class OrganizationCreate(OrganizationBase):
     pass
 
 
+class OrganizationPatch(OrganizationBase):
+    name: Optional[str]
+    description: Optional[str]
+
+
 class Organization(OrganizationBase):
     id: UUID
     api_key: str
