@@ -1,5 +1,5 @@
 from contextlib import AbstractContextManager
-from typing import List
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 from dependency_injector.providers import Callable
@@ -19,6 +19,7 @@ from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
     OrganizationReport,
+    User,
 )
 
 """
@@ -63,15 +64,12 @@ class SqlAlchemyRepository(Organizations):
                 )
             return self.map_sql_to_schema(e)
 
-    def list_organizations(self) -> List[Organization]:
+    def list_organizations(self, user: Optional[User] = None) -> List[Organization]:
         with self.session_factory() as session:
             e = session.query(SqlModelOrganization)
-            if e is None:
-                return []
-            orgs: List[Organization] = []
-            for org in e:
-                orgs.append(self.map_sql_to_schema(org))
-            return orgs
+            if user is not None:
+                e = e.filter(SqlModelOrganization.id.in_(user.organizations))
+            return [self.map_sql_to_schema(org) for org in e]
 
     def is_api_key_valid(self, organization_id: UUID, api_key: str):
         with self.session_factory() as session:

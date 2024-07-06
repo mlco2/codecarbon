@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
+from carbonserver.api.routers.authenticate import UserWithAuthDependency
 from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
@@ -82,11 +83,15 @@ def read_organization(
 )
 @inject
 def list_organizations(
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> List[Organization]:
-    return organization_service.list_organizations()
+    try:
+        return organization_service.list_organizations(user=auth_user.db_user)
+    except Exception:
+        return []
 
 
 @router.get(

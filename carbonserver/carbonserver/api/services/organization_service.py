@@ -3,7 +3,12 @@ from typing import List
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
-from carbonserver.api.schemas import Organization, OrganizationCreate, OrganizationPatch
+from carbonserver.api.schemas import (
+    Organization,
+    OrganizationCreate,
+    OrganizationPatch,
+    User,
+)
 
 
 class OrganizationService:
@@ -22,9 +27,8 @@ class OrganizationService:
         )
         return organization
 
-    def list_organizations(self) -> List[Organization]:
-        organizations: List[Organization] = self._repository.list_organizations()
-        return organizations
+    def list_organizations(self, user: User = None) -> List[Organization]:
+        return self._repository.list_organizations(user=user)
 
     def patch_organization(
         self, organization_id: str, organization: OrganizationPatch

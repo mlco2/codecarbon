@@ -353,7 +353,7 @@ class User(UserBase):
     id: UUID
     name: str
     email: EmailStr
-    api_key: str
+    api_key: Optional[str]
     organizations: Optional[List]
     is_active: bool
 
