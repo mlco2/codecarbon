@@ -1,0 +1,26 @@
+<h1>Login</h1>
+
+
+<h2>Test</h2>
+{{loginTest.status}}
+@if (loginTest.status == "redirect") {
+    <a href="{{loginTest.url}}">{{loginTest.url}}</a>
+}
+<br>
+<a href="https://carbonserver/auth/login">login2</a>
+
+
+<h2>Organizations</h2>
+@for (org of orgs; track org) {
+ <li>
+    {{ org.name }} [{{org.id}}]
+ </li>
+}
+
+
+
+
+
+
+To register <br>
+<a href="https://carbonserver/auth/user">create account</a>
