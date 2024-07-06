@@ -9,7 +9,16 @@ from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.routers import organizations
-from carbonserver.api.schemas import Organization
+from carbonserver.api.routers.authenticate import UserWithAuthDependency
+from carbonserver.api.schemas import Organization, User
+
+USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
+
+
+class FakeUserWithAuthDependency:
+    db_user = User(id=USER_ID_1, name="user1", email="user1@local.com", is_active=True)
+    auth_user = {"sub": USER_ID_1}
+
 
 API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
 
@@ -93,6 +102,29 @@ def test_list_organizations_returns_all_orgs(client, custom_test_server):
     with custom_test_server.container.organization_repository.override(repository_mock):
         response = client.get("/organizations")
         actual_org_list = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_org_list == expected_org_list
+
+
+def test_list_organizations_returns_all_orgs_for_user(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_org_1 = ORG_1
+    expected_org_2 = ORG_2
+    expected_org_list = [expected_org_1, expected_org_2]
+    repository_mock.list_organizations.return_value = [
+        Organization(**expected_org_1),
+        Organization(**expected_org_2),
+    ]
+    custom_test_server.dependency_overrides[UserWithAuthDependency] = (
+        FakeUserWithAuthDependency
+    )
+    with custom_test_server.container.organization_repository.override(repository_mock):
+        response = client.get("/organizations")
+        actual_org_list = response.json()
+    repository_mock.list_organizations.assert_called_with(
+        user=FakeUserWithAuthDependency.db_user
+    )
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_org_list == expected_org_list
