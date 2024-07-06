@@ -21,6 +21,10 @@ def upgrade():
     # Delete the relationship between projects and teams
     op.drop_constraint("fk_projects_teams", "projects", type_="foreignkey")
     op.drop_column("projects", "team_id")
+    # Delete the relationship between organizations and teams
+    op.drop_column("organizations", "teams")
+    # Delete the teams field in the table users
+    op.drop_column("users", "teams")
     # Delete the table teams
     op.drop_table("teams")
 
