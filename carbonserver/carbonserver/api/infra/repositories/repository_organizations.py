@@ -148,6 +148,25 @@ class SqlAlchemyRepository(Organizations):
             )
             return res
 
+    def patch_organization(self, organization_id, organization) -> Organization:
+        with self.session_factory() as session:
+            db_organization = (
+                session.query(SqlModelOrganization)
+                .filter(SqlModelOrganization.id == organization_id)
+                .first()
+            )
+            if db_organization is None:
+                raise HTTPException(
+                    status_code=404, detail=f"Organization {organization_id} not found"
+                )
+
+            for attr, value in organization.dict().items():
+                if value is not None:
+                    setattr(db_organization, attr, value)
+            session.commit()
+            session.refresh(db_organization)
+            return self.map_sql_to_schema(db_organization)
+
     @staticmethod
     def map_sql_to_schema(organization: SqlModelOrganization) -> Organization:
         return Organization(
