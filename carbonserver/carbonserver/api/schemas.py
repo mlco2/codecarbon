@@ -339,6 +339,12 @@ class UserCreate(UserBase):
     password: SecretStr
 
 
+class UserAutoCreate(UserBase):
+    name: str
+    email: EmailStr
+    id: UUID
+
+
 class UserAuthenticate(UserBase):
     password: SecretStr
 
