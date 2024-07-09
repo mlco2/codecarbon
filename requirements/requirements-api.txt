@@ -43,7 +43,7 @@ arrow==1.3.0
     # via hatch.envs.api
 bcrypt==4.1.3
     # via hatch.envs.api
-certifi==2024.6.2
+certifi==2024.7.4
     # via
     #   httpcore
     #   httpx
