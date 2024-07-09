@@ -130,6 +130,7 @@ dependencies = [
 run = "cd dashboard && python carbon_board_API.py"
 
 [tool.hatch.envs.api]
+python = "3.11"
 dependencies = [
     "alembic<2.0.0",
     "bcrypt<5.0.0",
@@ -160,6 +161,8 @@ docker = "docker-compose up -d"
 test-unit = 'cd carbonserver && python -m pytest -vv tests/api/routers/ && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/'
 test-integ = 'cd carbonserver && python -m pytest -vv tests/api/integration/'
 setup-db = 'cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head'
+# To downgrade the db and start from scratch
+downgrade-db = 'cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base'
 
 [tool.hatch.version]
 path = "codecarbon/_version.py"
