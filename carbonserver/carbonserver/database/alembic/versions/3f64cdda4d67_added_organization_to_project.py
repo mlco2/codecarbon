@@ -23,15 +23,14 @@ def upgrade():
         sa.Column("organization_id", postgresql.UUID(as_uuid=True), nullable=True),
     )
     op.create_foreign_key(
-        None, "projects", "organizations", ["organization_id"], ["id"]
+        "fk_projects_organizations",
+        "projects",
+        "organizations",
+        ["organization_id"],
+        ["id"],
     )
 
 
 def downgrade():
-    op.add_column(
-        "users",
-        sa.Column(
-            "organization_id", postgresql.UUID(), autoincrement=False, nullable=True
-        ),
-    )
-    op.drop_constraint(None, "projects", type_="foreignkey")
+    op.drop_constraint("fk_projects_organizations", "projects", type_="foreignkey")
+    op.drop_column("projects", "organization_id")
