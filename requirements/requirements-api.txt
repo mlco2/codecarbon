@@ -74,6 +74,8 @@ fastapi==0.112.0
     # via
     #   hatch.envs.api
     #   fief-client
+fastapi-cli==0.0.4
+    # via fastapi
 fastapi-pagination==0.12.26
     # via hatch.envs.api
 fief-client==0.19.0
@@ -116,6 +118,8 @@ numpy==2.0.1
     # via
     #   hatch.envs.api
     #   pandas
+orjson==3.10.6
+    # via fastapi
 packaging==24.1
     # via pytest
 pandas==2.2.2
@@ -160,9 +164,7 @@ pyyaml==6.0.1
     # via
     #   responses
     #   uvicorn
-questionary==2.0.1
-    # via hatch.envs.api
-rapidfuzz==3.9.5
+rapidfuzz==3.9.4
     # via hatch.envs.api
 requests==2.32.3
     # via

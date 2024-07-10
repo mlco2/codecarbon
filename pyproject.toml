@@ -105,7 +105,8 @@ dependencies = [
    "mock",
    "pytest",
    "responses",
-   "numpy",
+   "numpy<2.0.0;python_version<'3.10'",
+   "numpy;python_version>='3.10'",
    "psutil",
    "requests-mock",
    "rapidfuzz",
@@ -116,7 +117,7 @@ package = 'pytest -vv -m "not integ_test" tests/'
 package-integ = 'python -m pytest -vv tests/'
 
 [[tool.hatch.envs.test.matrix]]
-# Python 3.7 does not works with pip-tools
+# Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7
 python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
 [tool.hatch.envs.docs.scripts]
