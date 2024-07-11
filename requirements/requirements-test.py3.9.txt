@@ -4,10 +4,12 @@
 # - mock
 # - pytest
 # - responses
-# - numpy
+# - numpy<2.0.0; python_version < "3.10"
+# - numpy; python_version >= "3.10"
 # - psutil
 # - requests-mock
 # - rapidfuzz
+# - importlib_resources; python_version < "3.9"
 # - arrow
 # - click
 # - pandas
@@ -54,7 +56,7 @@ flask==3.0.3
     # via dash
 idna==3.7
     # via requests
-importlib-metadata==7.1.0
+importlib-metadata==8.0.0
     # via
     #   dash
     #   flask
@@ -72,7 +74,7 @@ mock==5.1.0
     # via hatch.envs.test.py3.9
 nest-asyncio==1.6.0
     # via dash
-numpy==2.0.0
+numpy==1.26.4 ; python_version < "3.10"
     # via
     #   hatch.envs.test.py3.9
     #   pandas
@@ -104,7 +106,7 @@ pytz==2024.1
     # via pandas
 pyyaml==6.0.1
     # via responses
-rapidfuzz==3.9.3
+rapidfuzz==3.9.4
     # via hatch.envs.test.py3.9
 requests==2.32.3
     # via
@@ -123,7 +125,7 @@ six==1.16.0
     #   fire
     #   python-dateutil
     #   retrying
-tenacity==8.4.1
+tenacity==8.5.0
     # via plotly
 termcolor==2.4.0
     # via fire
