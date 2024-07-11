@@ -4,10 +4,12 @@
 # - mock
 # - pytest
 # - responses
-# - numpy
+# - numpy<2.0.0; python_version < "3.10"
+# - numpy; python_version >= "3.10"
 # - psutil
 # - requests-mock
 # - rapidfuzz
+# - importlib_resources; python_version < "3.9"
 # - arrow
 # - click
 # - pandas
@@ -80,7 +82,7 @@ mock==5.1.0
     # via hatch.envs.test.py3.9
 nest-asyncio==1.6.0
     # via dash
-numpy==2.0.1
+numpy==1.26.4 ; python_version < "3.10"
     # via
     #   hatch.envs.test.py3.9
     #   pandas

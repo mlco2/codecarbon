@@ -4,10 +4,12 @@
 # - mock
 # - pytest
 # - responses
-# - numpy
+# - numpy<2.0.0; python_version < "3.10"
+# - numpy; python_version >= "3.10"
 # - psutil
 # - requests-mock
 # - rapidfuzz
+# - importlib_resources; python_version < "3.9"
 # - arrow
 # - click
 # - pandas
