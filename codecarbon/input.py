@@ -35,12 +35,12 @@ class DataSource:
     def geo_js_url(self):
         return self.config["geo_js_url"]
 
-    def get_ressource_path(self, package, filename):
+    @staticmethod
+    def get_ressource_path(package: str, filepath: str):
         file_manager = ExitStack()
         atexit.register(file_manager.close)
-        ref = importlib_resources_files(
-            self.module_name + "/" + self.config["cloud_emissions_path"]
-        )
+        ref = importlib_resources_files(package).joinpath(filepath)
+        print("ref:", ref)
         path = file_manager.enter_context(importlib_resources_as_file(ref))
         return path
 
