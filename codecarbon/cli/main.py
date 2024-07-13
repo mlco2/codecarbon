@@ -176,9 +176,13 @@ def config():
     overwrite_local_config("project_id", project_id, path=file_path)
 
     experiments = api.list_experiments_from_project(project_id)
+    experiments_names = (
+        [experiment["name"] for experiment in experiments] if experiments else []
+    )
+
     experiment = questionary_prompt(
         "Pick existing experiment from list or Create new experiment ?",
-        [experiment["name"] for experiment in experiments] + ["Create New Experiment"],
+        experiments_names + ["Create New Experiment"],
         default="Create New Experiment",
     )
     if experiment == "Create New Experiment":
@@ -221,7 +225,7 @@ def config():
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
-        experiment = api.create_experiment(experiment=experiment_create)
+        experiment = api.add_experiment(experiment=experiment_create)
 
     else:
         experiment = [e for e in experiments if e["name"] == experiment][0]

@@ -134,7 +134,7 @@ class ApiClient:  # (AsyncClient)
         """
         List all projects
         """
-        url = self.url + "/projects/" + organization_id
+        url = self.url + "/organizations/" + organization_id + "/projects"
 
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
@@ -201,7 +201,7 @@ class ApiClient:  # (AsyncClient)
         )
         try:
             payload = dataclasses.asdict(emission)
-            url = self.url + "/emission"
+            url = self.url + "/emissions"
             r = requests.post(url=url, json=payload, timeout=2)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
@@ -241,7 +241,7 @@ class ApiClient:  # (AsyncClient)
                 tracking_mode=self.conf.get("tracking_mode"),
             )
             payload = dataclasses.asdict(run)
-            url = self.url + "/run"
+            url = self.url + "/runs"
             r = requests.post(url=url, json=payload, timeout=2)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
@@ -265,7 +265,7 @@ class ApiClient:  # (AsyncClient)
         """
         List all experiments for a project
         """
-        url = self.url + "/experiments/project/" + project_id
+        url = self.url + "/projects/" + project_id + "/experiments"
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
             self._log_error(url, {}, r)
@@ -278,13 +278,13 @@ class ApiClient:  # (AsyncClient)
         """
         self.experiment_id = experiment_id
 
-    def create_experiment(self, experiment: ExperimentCreate):
+    def add_experiment(self, experiment: ExperimentCreate):
         """
         Create an experiment, used by the CLI, not the package.
         ::experiment:: The experiment to create.
         """
         payload = dataclasses.asdict(experiment)
-        url = self.url + "/experiment"
+        url = self.url + "/experiments"
         r = requests.post(url=url, json=payload, timeout=2)
         if r.status_code != 201:
             self._log_error(url, payload, r)
@@ -295,7 +295,7 @@ class ApiClient:  # (AsyncClient)
         """
         Get an experiment by id
         """
-        url = self.url + "/experiment/" + experiment_id
+        url = self.url + "/experiments/" + experiment_id
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
             self._log_error(url, {}, r)
