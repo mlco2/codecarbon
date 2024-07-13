@@ -17,12 +17,7 @@ from codecarbon.cli.cli_utils import (
     overwrite_local_config,
 )
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
-from codecarbon.core.schemas import (
-    ExperimentCreate,
-    OrganizationCreate,
-    ProjectCreate,
-    TeamCreate,
-)
+from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
@@ -66,32 +61,24 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         else:
             org = api.get_organization(d["organization_id"])
 
-            if "team_id" not in d:
+            if "project_id" not in d:
                 print(
-                    "No team_id in config, follow setup instruction to complete your configuration file!",
+                    "No project_id in config, follow setup instruction to complete your configuration file!",
                 )
             else:
-                team = api.get_team(d["team_id"])
-                if "project_id" not in d:
+                project = api.get_project(d["project_id"])
+                if "experiment_id" not in d:
                     print(
-                        "No project_id in config, follow setup instruction to complete your configuration file!",
+                        "No experiment_id in config, follow setup instruction to complete your configuration file!",
                     )
                 else:
-                    project = api.get_project(d["project_id"])
-                    if "experiment_id" not in d:
-                        print(
-                            "No experiment_id in config, follow setup instruction to complete your configuration file!",
-                        )
-                    else:
-                        experiment = api.get_experiment(d["experiment_id"])
-                        print("\nExperiment :")
-                        print(experiment)
-                        print("\nProject :")
-                        print(project)
-                        print("\nTeam :")
-                        print(team)
-                        print("\nOrganization :")
-                        print(org)
+                    experiment = api.get_experiment(d["experiment_id"])
+                    print("\nExperiment :")
+                    print(experiment)
+                    print("\nProject :")
+                    print(project)
+                    print("\nOrganization :")
+                    print(org)
     except Exception as e:
         raise ValueError(
             f"Your configuration is invalid, please run `codecarbon config --init` first! (error: {e})"
@@ -152,50 +139,23 @@ def config():
         org_description = typer.prompt(
             "Organization description", default="Code Carbon user test"
         )
-        if org_name in organizations:
-            print(
-                f"Organization {org_name} already exists, using it for this experiment."
-            )
-            organization = [orga for orga in organizations if orga["name"] == org][0]
-        else:
-            organization_create = OrganizationCreate(
-                name=org_name,
-                description=org_description,
-            )
-            organization = api.create_organization(organization=organization_create)
+
+        organization_create = OrganizationCreate(
+            name=org_name,
+            description=org_description,
+        )
+        organization = api.create_organization(organization=organization_create)
         print(f"Created organization : {organization}")
     else:
         organization = [orga for orga in organizations if orga["name"] == org][0]
-    overwrite_local_config("organization_id", organization["id"], path=file_path)
-    teams = api.list_teams_from_organization(organization["id"])
+    org_id = organization["id"]
+    overwrite_local_config("organization_id", org_id, path=file_path)
 
-    team = questionary_prompt(
-        "Pick existing team from list or create new team in organization ?",
-        [team["name"] for team in teams] + ["Create New Team"],
-        default="Create New Team",
-    )
-    if team == "Create New Team":
-        team_name = typer.prompt("Team name", default="Code Carbon user test")
-        team_description = typer.prompt(
-            "Team description", default="Code Carbon user test"
-        )
-        team_create = TeamCreate(
-            name=team_name,
-            description=team_description,
-            organization_id=organization["id"],
-        )
-        team = api.create_team(
-            team=team_create,
-        )
-        print(f"Created team : {team}")
-    else:
-        team = [t for t in teams if t["name"] == team][0]
-    overwrite_local_config("team_id", team["id"], path=file_path)
-
-    projects = api.list_projects_from_team(team["id"])
+    projects = api.list_projects_from_organization(org_id)
+    project_names = [project["name"] for project in projects] if projects else []
     project = questionary_prompt(
         "Pick existing project from list or Create new project ?",
-        [project["name"] for project in projects] + ["Create New Project"],
+        project_names + ["Create New Project"],
         default="Create New Project",
     )
     if project == "Create New Project":
@@ -206,15 +166,16 @@ def config():
         project_create = ProjectCreate(
             name=project_name,
             description=project_description,
-            team_id=team["id"],
+            organization_id=org_id,
         )
         project = api.create_project(project=project_create)
         print(f"Created project : {project}")
     else:
         project = [p for p in projects if p["name"] == project][0]
-    overwrite_local_config("project_id", project["id"], path=file_path)
+    project_id = project["id"]
+    overwrite_local_config("project_id", project_id, path=file_path)
 
-    experiments = api.list_experiments_from_project(project["id"])
+    experiments = api.list_experiments_from_project(project_id)
     experiment = questionary_prompt(
         "Pick existing experiment from list or Create new experiment ?",
         [experiment["name"] for experiment in experiments] + ["Create New Experiment"],

@@ -96,25 +96,10 @@ class Organization(OrganizationBase):
 
 
 @dataclass
-class TeamBase:
-    name: str
-    description: str
-    organization_id: str
-
-
-class TeamCreate(TeamBase):
-    pass
-
-
-class Team(TeamBase):
-    id: str
-
-
-@dataclass
 class ProjectBase:
     name: str
     description: str
-    team_id: str
+    organization_id: str
 
 
 class ProjectCreate(ProjectBase):

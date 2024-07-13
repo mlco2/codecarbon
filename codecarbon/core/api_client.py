@@ -20,7 +20,6 @@ from codecarbon.core.schemas import (
     OrganizationCreate,
     ProjectCreate,
     RunCreate,
-    TeamCreate,
 )
 from codecarbon.external.logger import logger
 
@@ -78,68 +77,65 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
+    def check_organization_exists(self, organization_name: str):
+        """
+        Check if an organization exists
+        """
+        organizations = self.get_list_organizations()
+        if organizations is None:
+            return False
+        for organization in organizations:
+            if organization["name"] == organization_name:
+                return organization
+        return False
+
     def create_organization(self, organization: OrganizationCreate):
         """
         Create an organization
         """
         payload = dataclasses.asdict(organization)
-        url = self.url + "/organization"
-        r = requests.post(url=url, json=payload, timeout=2)
-        if r.status_code != 201:
-            self._log_error(url, payload, r)
-            return None
-        return r.json()
+        url = self.url + "/organizations"
+        if organization := self.check_organization_exists(organization.name):
+            logger.warning(
+                f"Organization {organization['name']} already exists. Skipping creation."
+            )
+            return organization
+        else:
+            r = requests.post(url=url, json=payload, timeout=2)
+            if r.status_code != 201:
+                self._log_error(url, payload, r)
+                return None
+            return r.json()
 
     def get_organization(self, organization_id):
         """
         Get an organization
         """
-        url = self.url + "/organization/" + organization_id
+        url = self.url + "/organizations/" + organization_id
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
         return r.json()
 
-    def list_teams_from_organization(self, organization_id):
+    def update_organization(self, organization: OrganizationCreate):
         """
-        List all teams
+        Update an organization
         """
-        url = self.url + "/teams/organization/" + organization_id
-        r = requests.get(url=url, timeout=2)
+        payload = dataclasses.asdict(organization)
+        url = self.url + "/organizations/" + organization.id
+        r = requests.patch(url=url, json=payload, timeout=2)
         if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
-
-    def create_team(self, team: TeamCreate):
-        """
-        Create a team
-        """
-        payload = dataclasses.asdict(team)
-        url = self.url + "/team"
-        r = requests.post(url=url, json=payload, timeout=2)
-        if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
         return r.json()
 
-    def get_team(self, team_id):
-        """
-        Get a team
-        """
-        url = self.url + "/team/" + team_id
-        r = requests.get(url=url, timeout=2)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
-
-    def list_projects_from_team(self, team_id):
+    def list_projects_from_organization(self, organization_id):
         """
         List all projects
         """
-        url = self.url + "/projects/team/" + team_id
+        url = self.url + "/projects/" + organization_id
+
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
             self._log_error(url, {}, r)
@@ -151,7 +147,7 @@ class ApiClient:  # (AsyncClient)
         Create a project
         """
         payload = dataclasses.asdict(project)
-        url = self.url + "/project"
+        url = self.url + "/projects"
         r = requests.post(url=url, json=payload, timeout=2)
         if r.status_code != 201:
             self._log_error(url, payload, r)
@@ -162,7 +158,7 @@ class ApiClient:  # (AsyncClient)
         """
         Get a project
         """
-        url = self.url + "/project/" + project_id
+        url = self.url + "/projects/" + project_id
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
             self._log_error(url, {}, r)
@@ -273,7 +269,7 @@ class ApiClient:  # (AsyncClient)
         r = requests.get(url=url, timeout=2)
         if r.status_code != 200:
             self._log_error(url, {}, r)
-            return None
+            return []
         return r.json()
 
     def set_experiment(self, experiment_id: str):

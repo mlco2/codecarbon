@@ -30,8 +30,11 @@
 # - psutil
 # - py-cpuinfo
 # - pynvml
+# - questionary
 # - rapidfuzz
 # - requests
+# - rich
+# - typer
 #
 
 alembic==1.13.1
@@ -134,6 +137,8 @@ pluggy==1.5.0
     # via pytest
 prometheus-client==0.20.0
     # via hatch.envs.api
+prompt-toolkit==3.0.36
+    # via questionary
 psutil==6.0.0
     # via hatch.envs.api
 psycopg2-binary==2.9.9
@@ -170,6 +175,8 @@ pyyaml==6.0.1
     # via
     #   responses
     #   uvicorn
+questionary==2.0.1
+    # via hatch.envs.api
 rapidfuzz==3.9.3
     # via hatch.envs.api
 requests==2.32.3
@@ -182,7 +189,9 @@ requests-mock==1.12.1
 responses==0.25.3
     # via hatch.envs.api
 rich==13.7.1
-    # via typer
+    # via
+    #   hatch.envs.api
+    #   typer
 shellingham==1.5.4
     # via typer
 six==1.16.0
@@ -200,7 +209,9 @@ sqlalchemy==1.4.52
 starlette==0.37.2
     # via fastapi
 typer==0.12.3
-    # via fastapi-cli
+    # via
+    #   hatch.envs.api
+    #   fastapi-cli
 types-python-dateutil==2.9.0.20240316
     # via arrow
 typing-extensions==4.12.2
@@ -210,6 +221,7 @@ typing-extensions==4.12.2
     #   fastapi-pagination
     #   jwcrypto
     #   pydantic
+    #   starlette
     #   typer
 tzdata==2024.1
     # via pandas
@@ -227,5 +239,7 @@ uvloop==0.19.0
     # via uvicorn
 watchfiles==0.22.0
     # via uvicorn
+wcwidth==0.2.13
+    # via prompt-toolkit
 websockets==12.0
     # via uvicorn
