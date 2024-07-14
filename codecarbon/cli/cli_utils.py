@@ -82,7 +82,7 @@ def create_new_config_file():
     file_path = typer.prompt(
         "Where do you want to put your config file ?",
         type=str,
-        default="./.codecarbon.config",
+        default="~/.codecarbon.config",
     )
     file_path = Path(file_path)
     if not file_path.parent.exists():

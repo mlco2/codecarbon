@@ -52,17 +52,29 @@ class TestApp(unittest.TestCase):
         self.assertIn(__app_name__, result.stdout)
         self.assertIn(__version__, result.stdout)
 
+    @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
-    def test_config_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
+    def test_config_no_local_new_all(
+        self, mock_prompt, mock_confirm, mock_path_exists, MockApiClient
+    ):
         temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
         temp_codecarbon_config = tempfile.NamedTemporaryFile(
             mode="w+t", delete=False, dir=temp_dir
         )
 
+        def side_effect_wrapper(*args, **kwargs):
+            """Side effect wrapper to simulate the first call to path.exists to avoid picking up global config"""
+            if side_effect_wrapper.call_count == 0:
+                side_effect_wrapper.call_count += 1
+                return False
+            else:
+                return True
+
+        side_effect_wrapper.call_count = 0
+        mock_path_exists.side_effect = side_effect_wrapper
         MockApiClient.return_value = self.mock_api_client
         mock_prompt.side_effect = [
-            "/tmp/.codecarbon.config",
             "Create New Organization",
             "Create New Project",
             "Create New Experiment",
@@ -84,9 +96,12 @@ class TestApp(unittest.TestCase):
             result.stdout,
         )
 
+    @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.get_config")
     @patch("codecarbon.cli.main.questionary_prompt")
-    def test_init_use_local(self, mock_prompt, mock_config, MockApiClient):
+    def test_init_use_local(
+        self, mock_prompt, mock_config, mock_path_exists, MockApiClient
+    ):
         mock_prompt.return_value = "~/.codecarbon.config"
         mock_config.return_value = {
             "api_endpoint": "http://localhost:8008",
@@ -94,6 +109,18 @@ class TestApp(unittest.TestCase):
             "project_id": "133",
             "experiment_id": "yolo123",
         }
+
+        def side_effect_wrapper(*args, **kwargs):
+            """Side effect wrapper to simulate the first call to path.exists to avoid picking up global config"""
+            if side_effect_wrapper.call_count == 1:
+                side_effect_wrapper.call_count += 1
+                return False
+            else:
+                side_effect_wrapper.call_count += 1
+                return True
+
+        side_effect_wrapper.call_count = 0
+        mock_path_exists.side_effects = side_effect_wrapper
         result = self.runner.invoke(codecarbon, ["config"], input="n")
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
