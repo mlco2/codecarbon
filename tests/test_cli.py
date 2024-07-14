@@ -1,7 +1,6 @@
 import os
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from typer.testing import CliRunner
@@ -42,7 +41,7 @@ class TestApp(unittest.TestCase):
             "id": "1",
             "name": "test project Code Carbon",
         }
-        self.mock_api_client.create_experiment.return_value = {
+        self.mock_api_client.add_experiment.return_value = {
             "id": "1",
             "name": "test experiment Code Carbon",
         }
@@ -55,7 +54,7 @@ class TestApp(unittest.TestCase):
 
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
-    def test_init_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
+    def test_config_no_local_new_all(self, mock_prompt, mock_confirm, MockApiClient):
         temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
         temp_codecarbon_config = tempfile.NamedTemporaryFile(
             mode="w+t", delete=False, dir=temp_dir
@@ -63,8 +62,8 @@ class TestApp(unittest.TestCase):
 
         MockApiClient.return_value = self.mock_api_client
         mock_prompt.side_effect = [
+            "/tmp/.codecarbon.config",
             "Create New Organization",
-            "Create New Team",
             "Create New Project",
             "Create New Experiment",
         ]
@@ -72,12 +71,12 @@ class TestApp(unittest.TestCase):
 
         result = self.runner.invoke(
             codecarbon,
-            ["config", "--init"],
+            ["config"],
             input=f"{temp_codecarbon_config.name}\n",
         )
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
-            "Creating new experiment",
+            "Creating new experiment\nExperiment name : [Code Carbon user test]",
             result.stdout,
         )
         self.assertIn(
@@ -85,23 +84,20 @@ class TestApp(unittest.TestCase):
             result.stdout,
         )
 
-    @patch("codecarbon.cli.main.Path")
+    @patch("codecarbon.cli.main.get_config")
     @patch("codecarbon.cli.main.questionary_prompt")
-    def test_init_use_local(self, mock_prompt, mock_path, MockApiClient):
-        temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
-
-        temp_codecarbon_config = tempfile.NamedTemporaryFile(
-            mode="w+t", delete=False, dir=temp_dir
-        )
-        mock_path.return_value = Path(temp_codecarbon_config.name)
-        test_data = "[codecarbon]\nexperiment_id = 12345"
-        temp_codecarbon_config.write(test_data)
-        temp_codecarbon_config.seek(0)
-        mock_prompt.return_value = "./.codecarbon.config"
-        result = self.runner.invoke(codecarbon, ["config", "--init"], input="n")
+    def test_init_use_local(self, mock_prompt, mock_config, MockApiClient):
+        mock_prompt.return_value = "~/.codecarbon.config"
+        mock_config.return_value = {
+            "api_endpoint": "http://localhost:8008",
+            "organization_id": "114",
+            "project_id": "133",
+            "experiment_id": "yolo123",
+        }
+        result = self.runner.invoke(codecarbon, ["config"], input="n")
         self.assertEqual(result.exit_code, 0)
         self.assertIn(
-            "Using already existing config file ",
+            "Using already existing global config file ",
             result.stdout,
         )
 
