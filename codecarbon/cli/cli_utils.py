@@ -84,13 +84,18 @@ def create_new_config_file():
         type=str,
         default="~/.codecarbon.config",
     )
-    file_path = Path(file_path)
+    if file_path[0] == "~":
+        file_path = Path.home() / file_path[2:]
+    else:
+        file_path = Path(file_path)
+
     if not file_path.parent.exists():
         create = Confirm.ask(
             "Parent folder does not exist do you want to create it (and parents) ?"
         )
         if create:
             file_path.parent.mkdir(parents=True, exist_ok=True)
+
     file_path.touch()
     with open(file_path, "w") as f:
         f.write("[codecarbon]\n")
