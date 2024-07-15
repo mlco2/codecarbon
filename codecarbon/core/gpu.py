@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-
+import os
+import platform
 import pynvml
 
 from codecarbon.core.units import Energy, Power, Time
@@ -269,6 +270,9 @@ class AllGPUDevices:
 def is_gpu_details_available():
     """Returns True if the GPU details are available."""
     try:
+        if platform.system()=="Linux":
+            if "tegra" in platform.release():
+               return False
         pynvml.nvmlInit()
         return True
 
