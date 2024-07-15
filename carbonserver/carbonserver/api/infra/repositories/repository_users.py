@@ -8,27 +8,40 @@ from fastapi import HTTPException
 from carbonserver.api.domain.users import Users
 from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.infra.database.sql_models import User as SqlModelUser
-from carbonserver.api.schemas import User, UserAuthenticate, UserCreate
+from carbonserver.api.schemas import User, UserAuthenticate, UserAutoCreate, UserCreate
 
 
 class SqlAlchemyRepository(Users):
     def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
         self.session_factory = session_factory
 
-    def create_user(self, user: UserCreate) -> User:
+    def create_user(self, user: UserCreate | UserAutoCreate) -> User:
         """Creates a user in the database
         :returns: A User in pyDantic BaseModel format.
         :rtype: schemas.User
         """
         with self.session_factory() as session:
-            db_user = SqlModelUser(
-                id=uuid4(),
-                name=user.name,
-                email=user.email,
-                hashed_password=self._hash_password(user.password.get_secret_value()),
-                api_key=generate_api_key(),
-                is_active=True,
-                organizations=[],
+            db_user = (
+                SqlModelUser(
+                    id=uuid4(),
+                    name=user.name,
+                    email=user.email,
+                    hashed_password=self._hash_password(
+                        user.password.get_secret_value()
+                    ),
+                    api_key=generate_api_key(),
+                    is_active=True,
+                    organizations=[],
+                )
+                if isinstance(user, UserCreate)
+                else SqlModelUser(
+                    id=user.id,
+                    name=user.name,
+                    email=user.email,
+                    api_key=generate_api_key(),
+                    is_active=True,
+                    organizations=[],
+                )
             )
             session.add(db_user)
             session.commit()
