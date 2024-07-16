@@ -98,6 +98,7 @@ class GPUDevice:
         try:
             return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
         except pynvml.NVMLError:
+            logger.warning("Failed to retrieve gpu total energy consumption", exc_info=True)
             return None
 
     def _get_gpu_name(self):
