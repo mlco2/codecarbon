@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 import pytest
 from container import ServerContainer
@@ -98,9 +99,13 @@ def client(custom_test_server):
 
 
 def test_create_user(client, custom_test_server):
-    repository_mock = mock.Mock(spec=UsersRepository)
-    expected_user = USER_1
-    repository_mock.create_user.return_value = User(**expected_user)
+    user_repository_mock = mock.Mock(spec=UsersRepository)
+    expected_user = {**USER_1}
+    expected_user_with_org = {**USER_1, "organizations": [ORGANIZATION_ID]}
+    user_repository_mock.create_user.return_value = User(**expected_user)
+    user_repository_mock.subscribe_user_to_org.return_value = User(
+        **expected_user_with_org
+    )
     project_repository_mock = mock.Mock(spec=ProjectsRepository)
     expected_project = PROJECT_1
     project_repository_mock.add_project.return_value = Project(**expected_project)
@@ -111,24 +116,28 @@ def test_create_user(client, custom_test_server):
     )
 
     with custom_test_server.container.user_repository.override(
-        repository_mock
+        user_repository_mock
     ) and custom_test_server.container.project_repository.override(
         project_repository_mock
     ) and custom_test_server.container.organization_repository.override(
         organization_repository_mock
     ):
-        response = client.post("/users", json=USER_TO_CREATE)
+        response = client.post("/users/signup", json=USER_TO_CREATE)
         actual_user = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert actual_user == expected_user
+    assert actual_user == expected_user_with_org
 
     # Check that the mocks have been called
-    repository_mock.create_user.assert_called_once()
+    user_repository_mock.create_user.assert_called_once()
+    user_repository_mock.subscribe_user_to_org.assert_called_once()
     project_repository_mock.add_project.assert_called_once()
     organization_repository_mock.add_organization.assert_called_once()
     # Check that the mocks have been called with the correct arguments
-    repository_mock.create_user.assert_called_with(UserCreate(**USER_TO_CREATE))
+    user_repository_mock.create_user.assert_called_with(UserCreate(**USER_TO_CREATE))
+    user_repository_mock.subscribe_user_to_org.assert_called_with(
+        User(**USER_1), UUID(ORGANIZATION_ID)
+    )
     project_repository_mock.add_project.assert_called_with(ProjectCreate(**PROJECT_1))
     organization_repository_mock.add_organization.assert_called_with(
         OrganizationCreate(**ORG_1)
@@ -136,7 +145,7 @@ def test_create_user(client, custom_test_server):
 
 
 def test_create_user_with_bad_email_fails_at_http_layer(client):
-    response = client.post("/users", json=USER_WITH_BAD_EMAIL)
+    response = client.post("/users/signup", json=USER_WITH_BAD_EMAIL)
     actual_response = response.json()
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

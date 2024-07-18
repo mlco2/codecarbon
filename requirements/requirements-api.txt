@@ -7,7 +7,6 @@
 # - dependency-injector<5.0.0
 # - fastapi<1.0.0
 # - fief-client[fastapi]
-# - pyjwt
 # - httpx
 # - pydantic[email]<2.0.0
 # - psycopg2-binary<3.0.0
@@ -149,8 +148,6 @@ pydantic==1.10.16
     #   fastapi-pagination
 pygments==2.18.0
     # via rich
-pyjwt==2.8.0
-    # via hatch.envs.api
 pynvml==11.5.0
     # via hatch.envs.api
 pytest==8.2.2

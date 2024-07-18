@@ -119,4 +119,5 @@ class ServerContainer(containers.DeclarativeContainer):
         SignUpService,
         user_repository=user_repository,
         organization_repository=organization_repository,
+        project_repository=project_repository,
     )
