@@ -409,10 +409,26 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
-        # change code to check if powermetrics needs to be installed or just sudo setup
+
+            # ########### DEBUG ################
+            # Register a second CPU with MODE_CPU_LOAD
+            tdp = cpu.TDP()
+            power = tdp.tdp
+            model = tdp.model
+            hardware = CPU.from_utils(
+                self._output_dir,
+                MODE_CPU_LOAD,
+                model,
+                power,
+                tracking_mode=self._tracking_mode,
+            )
+            self._hardware.append(hardware)
+            # ########### END DEBUG ################
+
         elif (
             powermetrics.is_powermetrics_available() and self._default_cpu_power is None
         ):
+            # change code to check if powermetrics needs to be installed or just sudo setup
             logger.info("Tracking Apple CPU and GPU via PowerMetrics")
             gpu_tracker = "PowerMetrics"
             cpu_tracker = "PowerMetrics"
