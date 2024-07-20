@@ -33,7 +33,7 @@ class SignUpService:
         user: UserCreate,
     ) -> User:
         created_user = self._user_repository.create_user(user)
-        subscribed_user = self.new_user_steps(created_user)
+        subscribed_user = self.new_user_setup(created_user)
         LOGGER.info(f"User {subscribed_user.id} created")
         return subscribed_user
 
@@ -47,7 +47,7 @@ class SignUpService:
             user = self._user_repository.subscribe_user_to_org(user, organization_id)
         return user
 
-    def new_user_steps(self, user: User) -> User:
+    def new_user_setup(self, user: User) -> User:
         """
         Steps to be run for every new user created
         """
