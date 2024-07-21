@@ -1,6 +1,9 @@
 import logging
 from uuid import UUID
 
+import jwt
+from fastapi import HTTPException
+
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
 )
@@ -10,7 +13,13 @@ from carbonserver.api.infra.repositories.repository_projects import (
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserRepository,
 )
-from carbonserver.api.schemas import OrganizationCreate, ProjectCreate, User, UserCreate
+from carbonserver.api.schemas import (
+    OrganizationCreate,
+    ProjectCreate,
+    User,
+    UserAutoCreate,
+    UserCreate,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +39,7 @@ class SignUpService:
 
     def sign_up(
         self,
-        user: UserCreate,
+        user: UserCreate | UserAutoCreate,
     ) -> User:
         created_user = self._user_repository.create_user(user)
         subscribed_user = self.new_user_setup(created_user)
@@ -72,3 +81,26 @@ class SignUpService:
             user, organization_created.id, self._default_api_key
         )
         return subscribed_user
+
+    def check_jwt_user(self, token: str, create: bool):
+        try:
+            id_token = jwt.decode(
+                token, options={"verify_signature": False}, algorithms=["HS256"]
+            )
+            self._user_repository.get_user_by_id(id_token["sub"])
+        except HTTPException as e:
+            if e.status_code == 404:
+                if not create:
+                    LOGGER.error("Authenticated user not found")
+                    raise
+                LOGGER.info("Authenticated user not found. Creating.")
+                name = id_token.get("fields", {}).get("name")
+
+                new_user = self._user_repository.create_user(
+                    UserAutoCreate(
+                        id=id_token["sub"],
+                        email=id_token["email"],
+                        name=name or id_token["email"],
+                    )
+                )
+                self.sign_up(new_user)
