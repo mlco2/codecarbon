@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from uuid import UUID
 
 import jwt
@@ -47,8 +48,14 @@ class SignUpService:
         return subscribed_user
 
     def subscribe_user_to_org(
-        self, user: User, organization_id: UUID, organization_api_key: str
+        self,
+        user: User,
+        organization_id: UUID,
+        organization_api_key: Optional[str] = None,
     ):
+        if organization_api_key is None:
+            return self._user_repository.subscribe_user_to_org(user, organization_id)
+
         key_is_valid = self._organization_repository.is_api_key_valid(
             organization_id, organization_api_key
         )
@@ -77,9 +84,7 @@ class SignUpService:
         )
         self._project_repository.add_project(project)
         # TODO: Add default flag to the generated project and organization and do not allow to delete them
-        subscribed_user = self.subscribe_user_to_org(
-            user, organization_created.id, self._default_api_key
-        )
+        subscribed_user = self.subscribe_user_to_org(user, organization_created.id)
         return subscribed_user
 
     def check_jwt_user(self, token: str, create: bool):
@@ -96,11 +101,9 @@ class SignUpService:
                 LOGGER.info("Authenticated user not found. Creating.")
                 name = id_token.get("fields", {}).get("name")
 
-                new_user = self._user_repository.create_user(
-                    UserAutoCreate(
-                        id=id_token["sub"],
-                        email=id_token["email"],
-                        name=name or id_token["email"],
-                    )
+                new_user = UserAutoCreate(
+                    id=id_token["sub"],
+                    email=id_token["email"],
+                    name=name or id_token["email"],
                 )
                 self.sign_up(new_user)
