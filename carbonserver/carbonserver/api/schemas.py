@@ -339,6 +339,12 @@ class UserCreate(UserBase):
     password: SecretStr
 
 
+class UserAutoCreate(UserBase):
+    name: str
+    email: EmailStr
+    id: UUID
+
+
 class UserAuthenticate(UserBase):
     password: SecretStr
 
@@ -347,7 +353,7 @@ class User(UserBase):
     id: UUID
     name: str
     email: EmailStr
-    api_key: str
+    api_key: Optional[str]
     organizations: Optional[List]
     is_active: bool
 
