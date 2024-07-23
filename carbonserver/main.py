@@ -13,6 +13,7 @@ from carbonserver.api.routers import (
     emissions,
     experiments,
     organizations,
+    project_api_tokens,
     projects,
     runs,
     users,
@@ -60,6 +61,7 @@ def init_container():
             runs,
             experiments,
             projects,
+            project_api_tokens,
             organizations,
             users,
             authenticate,
@@ -81,6 +83,7 @@ def init_server(container):
     server.include_router(authenticate.router)
     server.include_router(organizations.router)
     server.include_router(projects.router)
+    server.include_router(project_api_tokens.router)
     server.include_router(experiments.router)
     server.include_router(experiments.router)
     server.include_router(runs.router)

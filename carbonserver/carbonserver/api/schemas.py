@@ -263,6 +263,44 @@ class ProjectPatch(BaseModel):
         }
 
 
+class ProjectToken(BaseModel):
+    id: UUID
+    project_id: UUID
+    name: Optional[str]
+    token: str
+    last_used: Optional[datetime]
+    read: bool
+    write: bool
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "name": "my project token",
+                "token": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "last_used": "2021-04-04T08:43:00+02:00",
+                "read": True,
+                "write": True,
+            }
+        }
+
+
+class ProjectTokenCreate(BaseModel):
+    name: Optional[str]
+    read: bool
+    write: bool
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "my project token",
+                "read": True,
+                "write": True,
+            }
+        }
+
+
 class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[Experiment]] = []

@@ -6,6 +6,7 @@ from carbonserver.api.infra.repositories import (
     repository_experiments,
     repository_organizations,
     repository_projects,
+    repository_projects_tokens,
     repository_runs,
     repository_users,
 )
@@ -13,6 +14,7 @@ from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.services.project_service import ProjectService
+from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
@@ -50,6 +52,10 @@ class ServerContainer(containers.DeclarativeContainer):
         repository_projects.SqlAlchemyRepository,
         session_factory=db.provided.session,
     )
+    project_token_repository = providers.Factory(
+        repository_projects_tokens.SqlAlchemyRepository,
+        session_factory=db.provided.session,
+    )
 
     user_repository = providers.Factory(
         repository_users.SqlAlchemyRepository,
@@ -83,6 +89,11 @@ class ServerContainer(containers.DeclarativeContainer):
     project_service = providers.Factory(
         ProjectService,
         project_repository=project_repository,
+    )
+
+    project_token_service = providers.Factory(
+        ProjectTokenService,
+        project_token_repository=project_token_repository,
     )
 
     run_repository = providers.Factory(
