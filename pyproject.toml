@@ -153,6 +153,7 @@ dependencies = [
     "psutil",
     "requests-mock",
     "rapidfuzz",
+    "PyJWT",
 ]
 
 [tool.hatch.envs.api.scripts]
