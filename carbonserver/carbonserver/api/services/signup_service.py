@@ -1,5 +1,9 @@
 import logging
+from typing import Optional
 from uuid import UUID
+
+import jwt
+from fastapi import HTTPException
 
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
@@ -10,7 +14,13 @@ from carbonserver.api.infra.repositories.repository_projects import (
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserRepository,
 )
-from carbonserver.api.schemas import OrganizationCreate, ProjectCreate, User, UserCreate
+from carbonserver.api.schemas import (
+    OrganizationCreate,
+    ProjectCreate,
+    User,
+    UserAutoCreate,
+    UserCreate,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +40,7 @@ class SignUpService:
 
     def sign_up(
         self,
-        user: UserCreate,
+        user: UserCreate | UserAutoCreate,
     ) -> User:
         created_user = self._user_repository.create_user(user)
         subscribed_user = self.new_user_setup(created_user)
@@ -38,8 +48,14 @@ class SignUpService:
         return subscribed_user
 
     def subscribe_user_to_org(
-        self, user: User, organization_id: UUID, organization_api_key: str
+        self,
+        user: User,
+        organization_id: UUID,
+        organization_api_key: Optional[str] = None,
     ):
+        if organization_api_key is None:
+            return self._user_repository.subscribe_user_to_org(user, organization_id)
+
         key_is_valid = self._organization_repository.is_api_key_valid(
             organization_id, organization_api_key
         )
@@ -68,7 +84,26 @@ class SignUpService:
         )
         self._project_repository.add_project(project)
         # TODO: Add default flag to the generated project and organization and do not allow to delete them
-        subscribed_user = self.subscribe_user_to_org(
-            user, organization_created.id, self._default_api_key
-        )
+        subscribed_user = self.subscribe_user_to_org(user, organization_created.id)
         return subscribed_user
+
+    def check_jwt_user(self, token: str, create: bool):
+        try:
+            id_token = jwt.decode(
+                token, options={"verify_signature": False}, algorithms=["HS256"]
+            )
+            self._user_repository.get_user_by_id(id_token["sub"])
+        except HTTPException as e:
+            if e.status_code == 404:
+                if not create:
+                    LOGGER.error("Authenticated user not found")
+                    raise
+                LOGGER.info("Authenticated user not found. Creating.")
+                name = id_token.get("fields", {}).get("name")
+
+                new_user = UserAutoCreate(
+                    id=id_token["sub"],
+                    email=id_token["email"],
+                    name=name or id_token["email"],
+                )
+                self.sign_up(new_user)

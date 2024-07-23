@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 import bcrypt
 from fastapi import HTTPException
+from sqlalchemy import update
 
 from carbonserver.api.domain.users import Users
 from carbonserver.api.infra.api_key_service import generate_api_key
@@ -86,20 +87,29 @@ class SqlAlchemyRepository(Users):
             )
             return is_verified
 
-    def subscribe_user_to_org(self, user: User, organization_id: UUID) -> User:
+    def subscribe_user_to_org(
+        self,
+        user: User,
+        organization_id: UUID,
+    ) -> User:
         with self.session_factory() as session:
-            e = (
-                session.query(SqlModelUser)
-                .filter(SqlModelUser.id == user.id)
-                .update(
+            user.organizations = []
+
+            if organization_id in user.organizations:
+                return user
+
+            stmt = (
+                update(SqlModelUser)
+                .where(SqlModelUser.id == user.id)
+                .values(
                     {
-                        SqlModelUser.organizations: user.organizations.append(
-                            organization_id
-                        )
-                    },
-                    synchronize_session=False,
+                        "organizations": [*user.organizations, organization_id],
+                    }
                 )
+                .returning(SqlModelUser)
             )
+            e = session.execute(stmt).one()
+            session.commit()
             return self.map_sql_to_schema(e)
 
     @staticmethod

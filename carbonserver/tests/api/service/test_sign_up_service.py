@@ -1,6 +1,8 @@
 from unittest import mock
 from uuid import UUID
 
+from fastapi import HTTPException
+
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrgSqlRepository,
 )
@@ -61,6 +63,11 @@ USER_IN_DEFAULT_ORG = User(
     is_active=True,
 )
 
+USER_1_JWT = {
+    "sub": USER_1.id,
+    "fields": {"name": USER_1.name},
+    "email": USER_1.email,
+}
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -141,3 +148,21 @@ def test_add_user_to_org_rejects_user_if_api_key_is_incorrect():
     signup_service.subscribe_user_to_org(USER_1, ORG_ID_2, INVALID_API_KEY)
     org_mock_repository.is_api_key_valid.assert_called_with(ORG_ID_2, INVALID_API_KEY)
     assert not user_mock_repository.subscribe_user_to_org.called
+
+
+@mock.patch("jwt.decode", return_value=USER_1_JWT)
+def test_check_user_from_jwt(_):
+    user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
+    org_mock_repository: OrgSqlRepository = mock.Mock(spec=OrgSqlRepository)
+    project_repository_mock: UserSqlRepository = mock.Mock(spec=ProjectSqlRepository)
+    signup_service: SignUpService = SignUpService(
+        user_mock_repository, org_mock_repository, project_repository_mock
+    )
+
+    user_mock_repository.get_user_by_id.side_effect = HTTPException(status_code=404)
+    user_mock_repository.create_user.return_value = USER_1
+    org_mock_repository.add_organization.return_value = ORG_1
+    with mock.patch.object(signup_service, "sign_up"):
+        signup_service.check_jwt_user(token="jwt_token", create=True)
+
+        signup_service.sign_up.assert_called_once()

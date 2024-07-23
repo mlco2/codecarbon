@@ -1,4 +1,5 @@
 import base64
+import logging
 import random
 from dataclasses import dataclass
 from typing import Annotated, Optional
@@ -18,10 +19,13 @@ from fief_client import FiefAsync, FiefUserInfo
 from fief_client.integrations.fastapi import FiefAuth
 
 from carbonserver.api.schemas import Token, UserAuthenticate
+from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
 
 AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
+LOGGER = logging.getLogger(__name__)
+OAUTH_SCOPES = ["openid", "email", "profile"]
 
 router = APIRouter()
 
@@ -61,7 +65,7 @@ SESSION_COOKIE_NAME = "user_session"
 scheme = OAuth2AuthorizationCodeBearer(
     settings.fief_url + "/authorize",
     settings.fief_url + "/api/token",
-    scopes={"openid": "openid", "offline_access": "offline_access"},
+    scopes={x: x for x in OAUTH_SCOPES},
     auto_error=False,
 )
 web_scheme = APIKeyCookie(name=SESSION_COOKIE_NAME, auto_error=False)
@@ -75,9 +79,7 @@ class UserOrRedirectAuth(FiefAuth):
 
     async def get_unauthorized_response(self, request: Request, response: Response):
         redirect_uri = request.url_for("auth_callback")
-        auth_url = await self.client.auth_url(
-            redirect_uri, scope=["openid", "offline_access"]
-        )
+        auth_url = await self.client.auth_url(redirect_uri, scope=OAUTH_SCOPES)
 
         raise HTTPException(
             status_code=status.HTTP_307_TEMPORARY_REDIRECT,
@@ -107,6 +109,7 @@ class UserWithAuthDependency:
             self.db_user = user_service.get_user_by_id(auth_user["sub"])
         except Exception:
             self.db_user = None
+        print("UserWithAuthDependency", auth_user, self.db_user)
 
 
 @router.get("/auth/check", name="auth-check")
@@ -146,8 +149,12 @@ async def auth_callback(request: Request, response: Response, code: str = Query(
 
 
 @router.get("/auth/login", name="login")
+@inject
 async def get_login(
-    request: Request, state: Optional[str] = None, code: Optional[str] = None
+    request: Request,
+    state: Optional[str] = None,
+    code: Optional[str] = None,
+    sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ):
     """
     login and redirect to frontend app with token
@@ -164,9 +171,12 @@ async def get_login(
                 "client_secret": settings.fief_client_secret,
             },
         )
-        url = f"{request.base_url}/web/login#creds={base64.b64encode(res.content).decode()}"
+
+        # check if the user exists in local DB ; create if needed
+        sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
+        url = f"{request.base_url}web/login#creds={base64.b64encode(res.content).decode()}"
         return RedirectResponse(url=url)
 
     state = str(int(random.random() * 1000))
-    url = f"{settings.fief_url}/authorize?response_type=code&client_id={settings.fief_client_id}&redirect_uri={login_url}&scope=openid offline_access&state={state}"
+    url = f"{settings.fief_url}/authorize?response_type=code&client_id={settings.fief_client_id}&redirect_uri={login_url}&scope={' '.join(OAUTH_SCOPES)}&state={state}"
     return RedirectResponse(url=url)
