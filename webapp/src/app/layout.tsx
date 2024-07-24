@@ -8,24 +8,30 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        <FiefAuthProvider currentUserPath="/api/current-user">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
-        </FiefAuthProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang="en">
+            <body className={inter.className}>
+                <FiefAuthProvider
+                    currentUserPath="/api/current-user"
+                    state={{
+                        userinfo: null,
+                        accessTokenInfo: null,
+                    }}
+                >
+                    <ThemeProvider
+                        attribute="class"
+                        defaultTheme="dark"
+                        enableSystem
+                        disableTransitionOnChange
+                    >
+                        {children}
+                    </ThemeProvider>
+                </FiefAuthProvider>
+            </body>
+        </html>
+    );
 }
