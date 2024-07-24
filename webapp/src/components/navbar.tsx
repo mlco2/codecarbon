@@ -89,22 +89,26 @@ export default function NavBar({
                         >
                             Home
                         </NavItem>
-                        <NavItem
-                            href={`/${selectedOrg}/projects`}
-                            isSelected={isProjects}
-                            paddingY={1.5}
-                            icon={<AreaChart className={iconStyles} />}
-                        >
-                            Projects
-                        </NavItem>
-                        <NavItem
-                            href={`/${selectedOrg}/members`}
-                            isSelected={pathname.includes("/members")}
-                            paddingY={1.5}
-                            icon={<Users className={iconStyles} />}
-                        >
-                            Members
-                        </NavItem>
+                        {selectedOrg && (
+                            <>
+                                <NavItem
+                                    href={`/${selectedOrg}/projects`}
+                                    isSelected={isProjects}
+                                    paddingY={1.5}
+                                    icon={<AreaChart className={iconStyles} />}
+                                >
+                                    Projects
+                                </NavItem>
+                                <NavItem
+                                    href={`/${selectedOrg}/members`}
+                                    isSelected={pathname.includes("/members")}
+                                    paddingY={1.5}
+                                    icon={<Users className={iconStyles} />}
+                                >
+                                    Members
+                                </NavItem>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className="mt-auto">
