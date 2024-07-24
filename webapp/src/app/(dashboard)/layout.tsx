@@ -10,6 +10,7 @@ export default async function MainLayout({
     children: React.ReactNode;
 }>) {
     const orgs = await getUserOrganizations();
+    console.log("getUserOrganizations", JSON.stringify(orgs, null, 2));
 
     return (
         <div className="grid h-screen w-full md:grid-cols-[220px_1fr]">
