@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fiefAuth } from "../../../lib/fief";
+import { fiefAuth } from "../../../helpers/fief";
 
 export async function GET() {
     try {
