@@ -14,7 +14,7 @@ async function checkAuth() {
     if (!token) {
         throw new Error("No token found");
     }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         headers: {
             Authorization: `Bearer ${token?.access_token}`,
         },
@@ -22,7 +22,7 @@ async function checkAuth() {
 
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch /auth/check");
+        throw new Error("Failed to fetch /auth/login");
     }
 
     return res.json();
