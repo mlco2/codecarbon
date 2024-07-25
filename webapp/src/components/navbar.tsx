@@ -25,8 +25,10 @@ import {
 
 export default function NavBar({
     orgs,
+    setSheetOpened,
 }: Readonly<{
     orgs: Organization[] | undefined;
+    setSheetOpened: (value: boolean) => void;
 }>) {
     const [selected, setSelected] = useState<string | null>(null);
     const router = useRouter();
@@ -87,6 +89,8 @@ export default function NavBar({
                             isSelected={selected === "home"}
                             onClick={() => {
                                 setSelected("home");
+                                setSheetOpened(false);
+
                                 if (selectedOrg) {
                                     router.push(`/${selectedOrg}`);
                                 } else {
@@ -104,6 +108,7 @@ export default function NavBar({
                                 isSelected={selected === "projects"}
                                 onClick={() => {
                                     setSelected("projects");
+                                    setSheetOpened(false);
                                     router.push(`/${selectedOrg}/projects`);
                                 }}
                                 paddingY={1.5}
@@ -115,6 +120,7 @@ export default function NavBar({
                                 isSelected={selected === "members"}
                                 onClick={() => {
                                     setSelected("members");
+                                    setSheetOpened(false);
                                     router.push(`/${selectedOrg}/members`);
                                 }}
                                 paddingY={1.5}
@@ -133,6 +139,7 @@ export default function NavBar({
                                 onValueChange={(value) => {
                                     setSelectedOrg(value);
                                     setSelected("home");
+                                    setSheetOpened(false);
                                     router.push(`/${value}`);
                                 }}
                             >
@@ -184,6 +191,7 @@ export default function NavBar({
                             isSelected={selected === "profile"}
                             onClick={() => {
                                 setSelected("profile");
+                                setSheetOpened(false);
                                 router.push(`/profile`);
                             }}
                             paddingY={1.5}
@@ -193,6 +201,7 @@ export default function NavBar({
                         </NavItem>
                         <NavItem
                             onClick={() => {
+                                setSheetOpened(false);
                                 router.push("/logout");
                             }}
                             isSelected={false}
