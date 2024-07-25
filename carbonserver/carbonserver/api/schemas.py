@@ -9,6 +9,7 @@ So this will help us avoiding confusion while using both.
 """
 
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
@@ -263,14 +264,19 @@ class ProjectPatch(BaseModel):
         }
 
 
+class AccessLevel(Enum):
+    READ = 1
+    WRITE = 2
+    READ_WRITE = 3
+
+
 class ProjectToken(BaseModel):
     id: UUID
     project_id: UUID
     name: Optional[str]
     token: str
-    last_used: Optional[datetime]
-    read: bool
-    write: bool
+    last_used: Optional[datetime] = None
+    access: int = AccessLevel.READ.value
 
     class Config:
         schema_extra = {
@@ -280,23 +286,20 @@ class ProjectToken(BaseModel):
                 "name": "my project token",
                 "token": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "last_used": "2021-04-04T08:43:00+02:00",
-                "read": True,
-                "write": True,
+                "access": 1,
             }
         }
 
 
 class ProjectTokenCreate(BaseModel):
     name: Optional[str]
-    read: bool
-    write: bool
+    access: int = AccessLevel.READ.value
 
     class Config:
         schema_extra = {
             "example": {
                 "name": "my project token",
-                "read": True,
-                "write": True,
+                "access": 1,
             }
         }
 

@@ -22,8 +22,7 @@ class SqlAlchemyRepository(ProjectTokens):
                 project_id=project_id,
                 token=token,
                 name=project_token.name,
-                read=project_token.read,
-                write=project_token.write,
+                access=project_token.access,
             )
             session.add(db_project_token)
             session.commit()
@@ -73,6 +72,5 @@ class SqlAlchemyRepository(ProjectTokens):
             project_id=project_token.project_id,
             token=project_token.token,
             last_used=project_token.last_used,
-            read=project_token.read,
-            write=project_token.write,
+            access=project_token.access,
         )

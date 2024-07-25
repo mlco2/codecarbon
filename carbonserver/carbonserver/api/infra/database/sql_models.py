@@ -160,16 +160,15 @@ class User(Base):
 
 
 class ProjectToken(Base):
-    __tablename__ = "projectTokens"
+    __tablename__ = "project_tokens"
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     name = Column(String)
     token = Column(String, unique=True)
     project = relationship("Project", back_populates="project_tokens")
     last_used = Column(DateTime, nullable=True)
-    # Read/Write permissions
-    read = Column(Boolean, default=True)
-    write = Column(Boolean, default=False)
+    # Permissions
+    access = Column(Integer)
 
     def __repr__(self):
         return (
@@ -177,6 +176,5 @@ class ProjectToken(Base):
             f'api_key="{self.token}", '
             f'name="{self.name}", '
             f'last_used="{self.last_used}", '
-            f'read="{self.read}", '
-            f'write="{self.write}")>'
+            f'access="{self.access}", '
         )
