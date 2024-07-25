@@ -7,7 +7,6 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.routers.authenticate import UserWithAuthDependency
 from carbonserver.api.schemas import (
     Organization,
@@ -22,9 +21,7 @@ from carbonserver.api.usecases.organization.organization_sum import (
 
 ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 
 
 @router.post(
