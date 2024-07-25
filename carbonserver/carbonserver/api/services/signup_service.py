@@ -87,18 +87,22 @@ class SignUpService:
         subscribed_user = self.subscribe_user_to_org(user, organization_created.id)
         return subscribed_user
 
-    def check_jwt_user(self, token: str, create: bool):
+    def check_jwt_user(self, token: str | dict, create: bool):
         try:
-            id_token = jwt.decode(
-                token, options={"verify_signature": False}, algorithms=["HS256"]
-            )
+            if isinstance(token, str):
+                id_token = jwt.decode(
+                    token, options={"verify_signature": False}, algorithms=["HS256"]
+                )
+            else:
+                id_token = token
             self._user_repository.get_user_by_id(id_token["sub"])
         except HTTPException as e:
             if e.status_code == 404:
                 if not create:
                     LOGGER.error("Authenticated user not found")
                     raise
-                LOGGER.info("Authenticated user not found. Creating.")
+                LOGGER.error("Authenticated user not found. Creating.")
+                LOGGER.error(f"Id token : {id_token}.")
                 name = id_token.get("fields", {}).get("name")
 
                 new_user = UserAutoCreate(
