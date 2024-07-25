@@ -1,65 +1,67 @@
-"use client";
-
-import Loader from "@/components/loader";
+import ErrorMessage from "@/components/error-message";
 import {
     Card,
     CardDescription,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { fetcher } from "@/helpers/swr";
-import { Organization } from "@/types/organization";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import useSWR from "swr";
+import { fiefAuth } from "@/helpers/fief";
+import { redirect } from "next/navigation";
 
-/**
- * Home Page with 4 different behaviors possible:
- * - Displays a loading spinner if the list of organizations is being queried
- * - A 'Get Started' guide if there is no data
- * - Redirects to the first organization dashboard
- * - Redirects to the user's last visited organization dashboard if any
- */
-export default function HomePage() {
-    const router = useRouter();
-    const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+// This method calls the API to check if the user is created in DB
+async function checkAuth() {
+    const token = fiefAuth.getAccessTokenInfo();
+    if (!token) {
+        throw new Error("No token found");
+    }
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check`, {
+        headers: {
+            Authorization: `Bearer ${token?.access_token}`,
+        },
+    });
 
-    // Fetch the list of organizations to check if the account has data
-    const { data: orgs, isLoading } = useSWR<Organization[]>(
-        "/api/organizations",
-        fetcher,
-        {
-            refreshInterval: 1000 * 60, // Refresh every minute
+    if (!res.ok) {
+        // This will activate the closest `error.js` Error Boundary
+        throw new Error("Failed to fetch /auth/check");
+    }
+
+    return res.json();
+}
+
+async function getDefaultOrgId(): Promise<string | null> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations`);
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch /organizations");
+    }
+
+    const orgs = await res.json();
+    if (orgs.length > 0) {
+        return orgs[0].id;
+    }
+    return null;
+}
+
+export default async function HomePage({
+    params,
+    searchParams,
+}: {
+    params: { slug: string };
+    searchParams: { [key: string]: string | string[] | undefined };
+}) {
+    console.log("HomePage params:", searchParams);
+    if (searchParams && searchParams["auth"]) {
+        try {
+            const res = await checkAuth();
+            console.log("User is authenticated:", res);
+        } catch (error) {
+            console.error("Error with /check/auth:", error);
         }
-    );
+    }
 
-    useEffect(() => {
-        if (!selectedOrg) {
-            try {
-                const localOrg = localStorage.getItem("organizationId");
-                if (localOrg) {
-                    setSelectedOrg(localOrg);
-                } else if (orgs && orgs.length > 0) {
-                    // Set the first organization as the default
-                    setSelectedOrg(orgs[0].id);
-                }
-            } catch (error) {
-                console.error("Error reading from localStorage:", error);
-            }
-            setLoading(false);
-        }
-    }, [selectedOrg, router, orgs]);
-
-    useEffect(() => {
-        if (selectedOrg) {
-            router.push(`/${selectedOrg}`);
-        }
-    }, [selectedOrg, router]);
-
-    if (isLoading) {
-        return <Loader />;
+    const orgId = await getDefaultOrgId();
+    if (orgId) {
+        redirect(`/${orgId}`);
     }
 
     return (
