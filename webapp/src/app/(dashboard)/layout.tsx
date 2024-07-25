@@ -1,17 +1,37 @@
+"use client";
+
 import AutoBreadcrumb from "@/components/breadcrumb";
 import NavBar from "@/components/navbar";
-import { getUserOrganizations } from "@/server-functions/organizations";
+import { fetcher } from "../../helpers/swr";
+import { Organization } from "@/types/organization";
+// import { getUserOrganizations } from "@/server-functions/organizations";
 import Image from "next/image";
 import Link from "next/link";
+import useSWR from "swr";
 
-export default async function MainLayout({
+// export async function getUserOrganizations(): Promise<Organization[]> {
+//     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations`, {
+//         next: {
+//             revalidate: 3600,
+//         },
+//     });
+
+//     if (!res.ok) {
+//         // This will activate the closest `error.js` Error Boundary
+//         console.error("Failed to fetch data", res.statusText);
+//         throw new Error("Failed to fetch data");
+//     }
+//     return res.json();
+// }
+
+export default function MainLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const orgs = await getUserOrganizations();
-    console.log("getUserOrganizations", JSON.stringify(orgs, null, 2));
-
+    const { data } = useSWR<Organization[]>("/api/organizations", fetcher, {
+        refreshInterval: 1000 * 60, // Refresh every minute
+    });
     return (
         <div className="grid h-screen w-full md:grid-cols-[220px_1fr]">
             <div className="hidden border-r bg-muted/40 md:block">
@@ -24,12 +44,13 @@ export default async function MainLayout({
                             <Image
                                 src="/logo.svg"
                                 alt="Logo"
-                                width={100}
-                                height={80}
+                                width={95}
+                                height={89}
+                                priority
                             />
                         </Link>
                     </div>
-                    <NavBar orgs={orgs} />
+                    <NavBar orgs={data} />
                 </div>
             </div>
             {/* Main content */}
