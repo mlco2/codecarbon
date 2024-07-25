@@ -8,6 +8,8 @@ import { Organization } from "@/types/organization";
 import Image from "next/image";
 import Link from "next/link";
 import useSWR from "swr";
+import { Suspense } from "react";
+import Loader from "@/components/loader";
 
 // export async function getUserOrganizations(): Promise<Organization[]> {
 //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations`, {
