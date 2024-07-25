@@ -39,6 +39,14 @@ class UserError(ErrorBase):
     code: DBErrorEnum
 
 
+class NotAllowedErrorEnum(str, Enum):
+    OPERATION_NOT_ALLOWED = "OPERATION_NOT_ALLOWED"
+
+
+class NotAllowedError(ErrorBase):
+    code: NotAllowedErrorEnum
+
+
 class UserException(Exception):
     def __init__(self, error):
         self.error = error
