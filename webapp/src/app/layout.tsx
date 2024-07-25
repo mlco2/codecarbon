@@ -14,7 +14,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
+            {/* suppressHydrationWarning is a Next theme recommendation */}
             <body className={inter.className}>
                 <SWRProvider>
                     <FiefAuthProvider
