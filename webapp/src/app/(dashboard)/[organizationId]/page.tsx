@@ -9,6 +9,7 @@ import { Organization } from "@/types/organization";
 import useSWR from "swr";
 import { fetcher } from "@/helpers/swr";
 import { Skeleton } from "@/components/ui/skeleton";
+import Loader from "@/components/loader";
 
 // /**
 //  * Retrieves an organization based on the id
@@ -51,15 +52,7 @@ export default function OrganizationPage({
     );
 
     if (isLoading) {
-        return (
-            <div className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                </div>
-            </div>
-        );
+        return <Loader />;
     }
 
     if (error) {

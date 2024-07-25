@@ -1,7 +1,6 @@
 "use server";
 
 import CustomRow from "@/components/custom-row";
-import ProjectRow from "@/components/custom-row";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";

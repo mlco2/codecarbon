@@ -1,5 +1,6 @@
 "use client";
 
+import Loader from "@/components/loader";
 import {
     Card,
     CardDescription,
@@ -7,8 +8,11 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetcher } from "@/helpers/swr";
+import { Organization } from "@/types/organization";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 /**
  * Home Page with 4 different behaviors possible:
@@ -22,39 +26,45 @@ export default function HomePage() {
     const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Fetch the list of organizations to check if the account has data
+    const { data: orgs, isLoading } = useSWR<Organization[]>(
+        "/api/organizations",
+        fetcher,
+        {
+            refreshInterval: 1000 * 60, // Refresh every minute
+        }
+    );
+
     useEffect(() => {
         if (!selectedOrg) {
             try {
                 const localOrg = localStorage.getItem("organizationId");
                 if (localOrg) {
                     setSelectedOrg(localOrg);
+                } else if (orgs && orgs.length > 0) {
+                    // Set the first organization as the default
+                    setSelectedOrg(orgs[0].id);
                 }
             } catch (error) {
                 console.error("Error reading from localStorage:", error);
             }
             setLoading(false);
         }
-    }, [selectedOrg]);
+    }, [selectedOrg, router, orgs]);
 
-    if (loading) {
-        return (
-            <div className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                </div>
-            </div>
-        );
-    }
+    useEffect(() => {
+        if (selectedOrg) {
+            router.push(`/${selectedOrg}`);
+        }
+    }, [selectedOrg, router]);
 
-    if (selectedOrg) {
-        router.push(`/${selectedOrg}`);
-        return null;
+    if (isLoading) {
+        return <Loader />;
     }
 
     return (
         <div className="container mx-auto p-4">
+            {/* Change to a proper readme or get started guide */}
             <Card className="max-w-md mx-auto">
                 <CardHeader>
                     <CardTitle>Get Started</CardTitle>
