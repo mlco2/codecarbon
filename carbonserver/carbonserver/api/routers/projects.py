@@ -32,7 +32,15 @@ def add_project(
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    return project_service.add_project(project, auth_user.db_user)
+    if project.organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot add project to organization",
+            )
+        )
+    else:
+        return project_service.add_project(project, auth_user.db_user)
 
 
 # Delete project
@@ -43,11 +51,20 @@ def add_project(
 )
 @inject
 def delete_project(
+    organization_id: str,
     project_id: str,
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> None:
-    return project_service.delete_project(project_id, auth_user.db_user)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot delete project from organization",
+            )
+        )
+    else:
+        return project_service.delete_project(project_id, auth_user.db_user)
 
 
 # Patch project
@@ -93,7 +110,15 @@ def list_projects_nested(
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
 ) -> List[Project]:
-    return project_service.list_projects_from_organization(organization_id, auth_user.db_user)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot read project from organization",
+            )
+        )
+    else:
+        return project_service.list_projects_from_organization(organization_id, auth_user.db_user)
 
 
 @router.get(

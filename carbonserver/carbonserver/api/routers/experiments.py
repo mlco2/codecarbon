@@ -28,6 +28,7 @@ router = APIRouter()
 )
 @inject
 def add_experiment(
+    organization_id: UUID,
     experiment: ExperimentCreate,
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
@@ -45,13 +46,22 @@ def add_experiment(
 )
 @inject
 def read_experiment(
+    organization_id: UUID,
     experiment_id: str,
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> Experiment:
-    return experiment_service.get_one_experiment(experiment_id, auth_user.db_user)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot read experiment from organization",
+            )
+        )
+    else:
+        return experiment_service.get_one_experiment(experiment_id, auth_user.db_user)
 
 
 @router.get(
@@ -62,13 +72,22 @@ def read_experiment(
 )
 @inject
 def read_project_experiments(
+    organization_id: UUID,
     project_id: str,
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> List[Experiment]:
-    return experiment_service.get_experiments_from_project(project_id, auth_user.db_user)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot read experiment from project",
+            )
+        )
+    else:
+        return experiment_service.get_experiments_from_project(project_id, auth_user.db_user)
 
 
 @router.get(
@@ -78,6 +97,7 @@ def read_project_experiments(
 )
 @inject
 def read_project_detailed_sums_by_experiment(
+    organization_id: UUID,
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
@@ -86,12 +106,20 @@ def read_project_detailed_sums_by_experiment(
         Provide[ServerContainer.project_sums_by_experiment_usecase]
     ),
 ) -> List[ExperimentReport]:
-    start_date = (
-        start_date
-        if start_date
-        else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
-    )
-    end_date = end_date if end_date else datetime.now() + timedelta(days=1)
-    return project_global_sum_by_experiment_usecase.compute_detailed_sum(
-        project_id, start_date, end_date
-    )
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot add experiment from organization",
+            )
+        )
+    else:
+        start_date = (
+            start_date
+            if start_date
+            else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
+        )
+        end_date = end_date if end_date else datetime.now() + timedelta(days=1)
+        return project_global_sum_by_experiment_usecase.compute_detailed_sum(
+            project_id, start_date, end_date
+        )
