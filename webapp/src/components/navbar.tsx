@@ -40,12 +40,15 @@ export default function NavBar({
                 const localOrg = localStorage.getItem("organizationId");
                 if (localOrg) {
                     setSelectedOrg(localOrg);
+                } else if (orgs.length > 0) {
+                    // Set the first organization as the default
+                    setSelectedOrg(orgs[0].id);
                 }
             } catch (error) {
                 console.error("Error reading from localStorage:", error);
             }
         }
-    }, [selectedOrg]); // Empty dependency array, runs only on mount
+    }, [selectedOrg, orgs]); // Empty dependency array, runs only on mount
 
     // Effect for updating localStorage when selectedOrg changes
     useEffect(() => {
