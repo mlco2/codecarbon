@@ -1,14 +1,8 @@
-import { NextResponse } from "next/server";
-import { fiefAuth } from "../../../helpers/fief";
+// import { NextResponse } from "next/server";
+// import { fiefAuth } from "../../../helpers/fief";
 
+// @TODO Implement a proper Fief implementation in Next 14
 export async function GET() {
-    try {
-        const currentUser = await fiefAuth.currentUser();
-        return NextResponse.json(currentUser);
-    } catch (error) {
-        return NextResponse.json(
-            { error: "Failed to fetch current user" },
-            { status: 500 }
-        );
-    }
+    // const currentUser = await fiefAuth.currentUser();
+    return Response.json({});
 }

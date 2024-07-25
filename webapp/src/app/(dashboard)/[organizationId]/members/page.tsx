@@ -12,51 +12,53 @@ import { User } from "@/types/user";
  * @param organizationId comes from the URL parameters
  */
 async function fetchUsersByOrg(organizationId: string): Promise<User[]> {
-  const res = await fetch(
-    `${process.env.API_URL}/users?organization=${organizationId}`,
-    {
-      next: { revalidate: 60 }, // Revalidate every minute
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users?organization=${organizationId}`,
+        {
+            next: { revalidate: 60 }, // Revalidate every minute
+        }
+    );
+
+    if (!res.ok) {
+        // This will activate the closest `error.js` Error Boundary
+        throw new Error("Failed to fetch data");
     }
-  );
 
-  if (!res.ok) {
-    // This will activate the closest `error.js` Error Boundary
-    throw new Error("Failed to fetch data");
-  }
-
-  return res.json();
+    return res.json();
 }
 
 export default async function MembersPage({
-  params,
+    params,
 }: Readonly<{ params: { organizationId: string } }>) {
-  const users = await fetchUsersByOrg(params.organizationId);
+    const users = await fetchUsersByOrg(params.organizationId);
 
-  return (
-    <div className="container mx-auto p-4 md:gap-8 md:p-8">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semi-bold">Members</h1>
-        <Button disabled className="bg-primary text-primary-foreground">
-          + Add a member
-        </Button>
-      </div>
-      <Card>
-        <Table>
-          <TableBody>
-            {users
-              .sort((a, b) =>
-                a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-              )
-              .map((user, index) => (
-                <CustomRow
-                  key={user.id}
-                  firstColumn={user.name}
-                  secondColumn={user.email}
-                />
-              ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
-  );
+    return (
+        <div className="container mx-auto p-4 md:gap-8 md:p-8">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-semi-bold">Members</h1>
+                <Button disabled className="bg-primary text-primary-foreground">
+                    + Add a member
+                </Button>
+            </div>
+            <Card>
+                <Table>
+                    <TableBody>
+                        {users
+                            .sort((a, b) =>
+                                a.name
+                                    .toLowerCase()
+                                    .localeCompare(b.name.toLowerCase())
+                            )
+                            .map((user, index) => (
+                                <CustomRow
+                                    key={user.id}
+                                    firstColumn={user.name}
+                                    secondColumn={user.email}
+                                />
+                            ))}
+                    </TableBody>
+                </Table>
+            </Card>
+        </div>
+    );
 }

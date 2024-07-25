@@ -1,3 +1,5 @@
+"use server";
+
 import { Activity, CreditCard, Users } from "lucide-react";
 
 import AreaChartStacked from "@/components/area-chart-stacked";
@@ -10,9 +12,9 @@ import { Project } from "@/types/project";
  * Retrieves a project based on the projectId
  */
 async function getProject(projectId: string): Promise<Project> {
-    const res = await fetch(`${process.env.API_URL}/projects/${projectId}`, {
-        next: { revalidate: 60 }, // Revalidate every minute
-    });
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`
+    );
 
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
