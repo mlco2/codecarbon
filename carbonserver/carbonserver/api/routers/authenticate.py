@@ -83,31 +83,10 @@ async def get_login(
         )
 
         # check if the user exists in local DB ; create if needed
-        if "id_token" not in res.json():
-            # get profile data from fief server if not present in response
-            id_token = requests.get(
-                settings.fief_url + "/api/userinfo",
-                headers={"Authorization": "Bearer " + res.json()["access_token"]},
-            ).json()
-            sign_up_service.check_jwt_user(id_token)
-        else:
-            sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
-
+        sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
         creds = base64.b64encode(res.content).decode()
         url = f"{request.base_url}home?auth=true&creds={creds}"
-
-        # NOTE: RedirectResponse doesn't work with clevercloud
-        # response = RedirectResponse(url=url)
-        content = f"""<html>
-        <head>
-        <script>
-        window.location.href = "{url}";
-        </script>
-        </head>
-        </html>
-        """
-        response = Response(content=content)
-
+        response = RedirectResponse(url=url)
         response.set_cookie(
             SESSION_COOKIE_NAME,
             res.json()["access_token"],
