@@ -115,21 +115,13 @@ class UserWithAuthDependency:
 @router.get("/auth/check", name="auth-check")
 def check_login(
     user: FiefUserInfo = Depends(web_auth_with_redirect.current_user(optional=False)),
+    sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ):
     """
     return user data or redirect to login screen
-    """
-    return {"user": user}
-
-
-@router.get("/auth/user", name="auth-user")
-def check_user(
-    user: FiefUserInfo = Depends(web_auth.current_user(optional=True)),
-):
-    """
-    return user data
     null value if not logged in
     """
+    sign_up_service.check_jwt_user(user["sub"], create=True)
     return {"user": user}
 
 
