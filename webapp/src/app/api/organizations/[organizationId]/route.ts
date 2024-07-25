@@ -1,7 +1,10 @@
-export async function GET(): Promise<Response> {
+export async function GET(
+    request: Request,
+    { params }: { params: { organizationId: string } }
+): Promise<Response> {
     try {
         const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/organizations`
+            `${process.env.NEXT_PUBLIC_API_URL}/organizations/${params.organizationId}`
         );
 
         if (!res.ok) {

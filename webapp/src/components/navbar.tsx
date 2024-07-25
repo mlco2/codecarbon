@@ -2,6 +2,7 @@
 
 import { cn } from "@/helpers/utils";
 import { Organization } from "@/types/organization";
+import { SelectGroup } from "@radix-ui/react-select";
 import {
     AreaChart,
     Building,
@@ -21,13 +22,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
-import { SelectGroup } from "@radix-ui/react-select";
 
 export default function NavBar({
     orgs,
 }: Readonly<{
-    orgs: Organization[];
+    orgs: Organization[] | undefined;
 }>) {
+    const [selected, setSelected] = useState<string | null>(null);
     const router = useRouter();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
@@ -35,12 +36,25 @@ export default function NavBar({
     const pathname = usePathname();
 
     useEffect(() => {
+        if (pathname.includes("/members")) {
+            setSelected("members");
+        } else if (pathname.includes("/profile")) {
+            setSelected("profile");
+        } else if (pathname.includes("/projects")) {
+            setSelected("projects");
+            return;
+        } else {
+            setSelected("home");
+        }
+    }, [pathname, orgs]);
+
+    useEffect(() => {
         if (!selectedOrg) {
             try {
                 const localOrg = localStorage.getItem("organizationId");
                 if (localOrg) {
                     setSelectedOrg(localOrg);
-                } else if (orgs.length > 0) {
+                } else if (orgs && orgs.length > 0) {
                     // Set the first organization as the default
                     setSelectedOrg(orgs[0].id);
                 }
@@ -64,54 +78,51 @@ export default function NavBar({
         }
     }, [selectedOrg]);
 
-    let isHome = pathname === "/home";
-    const isProjectSettings =
-        pathname.includes("/settings") && pathname.includes("/projects");
-    const isProjects = pathname.includes("/projects") && !isProjectSettings;
-    const isOrgSettings = pathname.includes("/settings") && !isProjectSettings;
-
-    // Detect if current path is "/<one of the orgs id>"
-    if (!isHome) {
-        orgs.forEach((org) => {
-            if (pathname === `/${org.id}`) {
-                isHome = true;
-            }
-        });
-    }
-
     return (
         <div className="flex-1 p-8">
             <nav className="flex flex-col h-full font-medium text-sm text-muted-foreground">
                 <div className="flex-1">
                     <div className="flex flex-col gap-2 py-4">
                         <NavItem
-                            isSelected={isHome}
+                            isSelected={selected === "home"}
+                            onClick={() => {
+                                setSelected("home");
+                                if (selectedOrg) {
+                                    router.push(`/${selectedOrg}`);
+                                } else {
+                                    router.push("/home");
+                                }
+                            }}
                             paddingY={1.5}
-                            href="/home"
                             icon={<Home className={iconStyles} />}
                         >
                             Home
                         </NavItem>
-                        {selectedOrg && (
-                            <>
-                                <NavItem
-                                    href={`/${selectedOrg}/projects`}
-                                    isSelected={isProjects}
-                                    paddingY={1.5}
-                                    icon={<AreaChart className={iconStyles} />}
-                                >
-                                    Projects
-                                </NavItem>
-                                <NavItem
-                                    href={`/${selectedOrg}/members`}
-                                    isSelected={pathname.includes("/members")}
-                                    paddingY={1.5}
-                                    icon={<Users className={iconStyles} />}
-                                >
-                                    Members
-                                </NavItem>
-                            </>
-                        )}
+
+                        <>
+                            <NavItem
+                                isSelected={selected === "projects"}
+                                onClick={() => {
+                                    setSelected("projects");
+                                    router.push(`/${selectedOrg}/projects`);
+                                }}
+                                paddingY={1.5}
+                                icon={<AreaChart className={iconStyles} />}
+                            >
+                                Projects
+                            </NavItem>
+                            <NavItem
+                                isSelected={selected === "members"}
+                                onClick={() => {
+                                    setSelected("members");
+                                    router.push(`/${selectedOrg}/members`);
+                                }}
+                                paddingY={1.5}
+                                icon={<Users className={iconStyles} />}
+                            >
+                                Members
+                            </NavItem>
+                        </>
                     </div>
                 </div>
                 <div className="mt-auto">
@@ -121,6 +132,7 @@ export default function NavBar({
                                 defaultValue={selectedOrg}
                                 onValueChange={(value) => {
                                     setSelectedOrg(value);
+                                    setSelected("home");
                                     router.push(`/${value}`);
                                 }}
                             >
@@ -140,12 +152,11 @@ export default function NavBar({
                                                 isCollapsed && "hidden"
                                             )}
                                         >
-                                            {
+                                            {orgs &&
                                                 orgs.find(
                                                     (org) =>
                                                         org.id === selectedOrg
-                                                )?.name
-                                            }
+                                                )?.name}
                                         </span>
                                     </SelectValue>
                                 </SelectTrigger>
@@ -154,30 +165,36 @@ export default function NavBar({
                                         <SelectLabel className="text-sm font-medium text-muted-foreground">
                                             Organizations
                                         </SelectLabel>
-                                        {orgs.map((org) => (
-                                            <SelectItem
-                                                key={org.id}
-                                                value={org.id}
-                                            >
-                                                <div className="flex items-center gap-3 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:text-foreground">
-                                                    {org.name}
-                                                </div>
-                                            </SelectItem>
-                                        ))}
+                                        {orgs &&
+                                            orgs.map((org) => (
+                                                <SelectItem
+                                                    key={org.id}
+                                                    value={org.id}
+                                                >
+                                                    <div className="flex items-center gap-3 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:text-foreground">
+                                                        {org.name}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
                         )}
                         <NavItem
-                            href="/profile"
-                            isSelected={pathname === "/profile"}
+                            isSelected={selected === "profile"}
+                            onClick={() => {
+                                setSelected("profile");
+                                router.push(`/profile`);
+                            }}
                             paddingY={1.5}
                             icon={<UserIcon className={iconStyles} />}
                         >
                             Profile
                         </NavItem>
                         <NavItem
-                            href="/logout"
+                            onClick={() => {
+                                router.push("/logout");
+                            }}
                             isSelected={false}
                             paddingY={1.5}
                             icon={<LogOutIcon className={iconStyles} />}
