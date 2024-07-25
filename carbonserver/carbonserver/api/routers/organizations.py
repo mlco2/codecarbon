@@ -22,9 +22,7 @@ from carbonserver.api.usecases.organization.organization_sum import (
 
 ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 
 
 @router.post(

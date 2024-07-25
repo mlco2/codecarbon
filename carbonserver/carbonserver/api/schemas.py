@@ -241,6 +241,7 @@ class ProjectBase(BaseModel):
             "example": {
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
+                "organization_id": "949a29a2-5d0c-4e63-81c9-eed598fa5b7f"
             }
         }
 

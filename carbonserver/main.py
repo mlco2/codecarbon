@@ -1,3 +1,5 @@
+from starlette import status
+
 from container import ServerContainer
 from fastapi import Depends, FastAPI
 from fastapi_pagination import add_pagination
@@ -6,7 +8,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from carbonserver.api.dependencies import get_query_token
-from carbonserver.api.errors import DBException
+from carbonserver.api.errors import DBException, UserException
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
     authenticate,
@@ -22,11 +24,15 @@ from carbonserver.logger import logger
 
 
 async def db_exception_handler(request: Request, exc: DBException):
-    return JSONResponse({"detail": exc.error.message}, status_code=400)
+    return JSONResponse({"detail": exc.error.message}, status_code=status.HTTP_400_BAD_REQUEST)
+
+
+async def user_exception_handler(request: Request, exc: UserException):
+    return JSONResponse({"detail": exc.error}, status_code=status.HTTP_401_UNAUTHORIZED)
 
 
 async def generic_exception_handler(request: Request, exc: Exception):
-    return JSONResponse({"detail": "Generic error"}, status_code=500)
+    return JSONResponse({"detail": "Internal error"}, status_code=status.HTTP_500_INTERNAL_SERVER)
 
 
 async def validation_exception_handler(request: Request, exc: ValidationError):

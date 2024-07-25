@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, Optional
 from uuid import UUID
 
 from container import ServerContainer
@@ -7,11 +7,13 @@ from fastapi import APIRouter, Depends, Query
 from fastapi_pagination import Page, paginate
 from fastapi_pagination.default import Page as BasePage
 from fastapi_pagination.default import Params as BaseParams
+from fief_client import FiefUserInfo
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Emission, EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
+
+from carbonserver.carbonserver.api.routers.authenticate import fief_auth
 
 # T, Params and Page are needed to override default pagination of get_emissions_from_run
 T = TypeVar("T")
@@ -28,9 +30,7 @@ class Page(BasePage[T], Generic[T]):  # noqa: F811
 
 EMISSIONS_ROUTER_TAGS = ["Emissions"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 
 
 @router.post(
@@ -47,22 +47,6 @@ def add_emission(
     ),
 ) -> UUID:
     return emission_service.add_emission(emission)
-
-
-@router.get(
-    "/emissions/{emission_id}",
-    tags=EMISSIONS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-    response_model=Emission,
-)
-@inject
-def read_emission(
-    emission_id: str,
-    emission_service: EmissionService = Depends(
-        Provide[ServerContainer.emission_service]
-    ),
-) -> Emission:
-    return emission_service.get_one_emission(emission_id)
 
 
 @router.get(

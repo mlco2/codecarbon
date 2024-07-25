@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Union
+from uuid import UUID
 
 import dateutil.relativedelta
 from container import ServerContainer
@@ -7,7 +8,6 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.errors import EmptyResultException
 from carbonserver.api.schemas import Empty, Run, RunCreate, RunReport
 from carbonserver.api.services.run_service import RunService
@@ -16,12 +16,12 @@ from carbonserver.api.usecases.run.experiment_sum_by_run import (
 )
 from carbonserver.logger import logger
 
+from carbonserver.carbonserver.api.errors import UserException, NotAllowedError, NotAllowedErrorEnum
+from carbonserver.carbonserver.api.services.auth_service import UserWithAuthDependency
+
 RUNS_ROUTER_TAGS = ["Runs"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
-runs_temp_db = []
+router = APIRouter()
 
 
 @router.post(
@@ -32,6 +32,7 @@ runs_temp_db = []
 )
 @inject
 def add_run(
+    organization_id: UUID,
     run: RunCreate,
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> Run:
@@ -46,10 +47,19 @@ def add_run(
 )
 @inject
 def read_run(
+    organization_id: UUID,
     run_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> Run:
-    return run_service.read_run(run_id)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot read run from organization")
+        )
+    else:
+        return run_service.read_run(run_id)
 
 
 @router.get(
@@ -60,9 +70,18 @@ def read_run(
 )
 @inject
 def list_runs(
+    organization_id: UUID,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> List[Run]:
-    return run_service.list_runs()
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot list runs from organization")
+        )
+    else:
+        return run_service.list_runs()
 
 
 @router.get(
@@ -72,10 +91,19 @@ def list_runs(
 )
 @inject
 def read_runs_from_experiment(
+    organization_id: UUID,
     experiment_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ):
-    return run_service.list_runs_from_experiment(experiment_id)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot read runs from experiment")
+        )
+    else:
+        return run_service.list_runs_from_experiment(experiment_id)
 
 
 @router.get(
@@ -85,18 +113,27 @@ def read_runs_from_experiment(
 )
 @inject
 def read_experiment_detailed_sums_by_run(
+    organization_id: UUID,
     experiment_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     experiment_global_sum_by_run_usecase: ExperimentSumsByRunUsecase = Depends(
         Provide[ServerContainer.experiment_sums_by_run_usecase]
     ),
 ) -> List[RunReport]:
-    start_date = (
-        start_date
-        if start_date
-        else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
-    )
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot read experiment detailed sums by run")
+        )
+    else:
+        start_date = (
+            start_date
+            if start_date
+            else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
+        )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return experiment_global_sum_by_run_usecase.compute_detailed_sum(
         experiment_id, start_date, end_date
@@ -111,16 +148,25 @@ def read_experiment_detailed_sums_by_run(
 )
 @inject
 def read_project_last_run(
+    organization_id: UUID,
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> Union[Run, Empty]:
-    start_date = (
-        start_date
-        if start_date
-        else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
-    )
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(
+            NotAllowedError(
+                code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                message="Cannot read run from project")
+        )
+    else:
+        start_date = (
+            start_date
+            if start_date
+            else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
+        )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     try:
         return run_service.read_project_last_run(project_id, start_date, end_date)

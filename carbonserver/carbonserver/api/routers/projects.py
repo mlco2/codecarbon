@@ -4,7 +4,7 @@ from typing import List, Optional
 import dateutil.relativedelta
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
@@ -12,14 +12,14 @@ from carbonserver.api.schemas import Project, ProjectCreate, ProjectPatch, Proje
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
 
+from carbonserver.carbonserver.api.errors import UserException, NotAllowedErrorEnum, NotAllowedError
+from carbonserver.carbonserver.api.services.auth_service import UserWithAuthDependency
+
 PROJECTS_ROUTER_TAGS = ["Projects"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
-
-
-projects_temp_db = []
 
 
 @router.post(
@@ -31,9 +31,14 @@ projects_temp_db = []
 @inject
 def add_project(
     project: ProjectCreate,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    return project_service.add_project(project)
+    if project.organization_id not in auth_user.db_user.organizations:
+        raise UserException(NotAllowedError(code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                                            message="Cannot add project to organization"))
+    else:
+        return project_service.add_project(project)
 
 
 # Delete project
@@ -44,9 +49,16 @@ def add_project(
 )
 @inject
 def delete_project(
-    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+    organization_id: str,
+    project_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    project_service=Depends(Provide[ServerContainer.project_service])
 ) -> None:
-    return project_service.delete_project(project_id)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(NotAllowedError(code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                                            message="Cannot delete project from organization"))
+    else:
+        return project_service.delete_project(project_id)
 
 
 # Patch project
@@ -58,19 +70,33 @@ def delete_project(
 )
 @inject
 def patch_project(
+    organization_id: str,
     project_id: str,
     project: ProjectPatch,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    return project_service.patch_project(project_id, project)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(NotAllowedError(code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                                            message="Cannot update project from organization"))
+    else:
+        return project_service.patch_project(project_id, project)
 
 
 @router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
 @inject
 def read_project(
-    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+    organization_id: str,
+    project_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    project_service=Depends(Provide[ServerContainer.project_service])
 ) -> Project:
-    return project_service.get_one_project(project_id)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(NotAllowedError(code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                                            message="Cannot read project from organization"))
+
+    else:
+        return project_service.get_one_project(project_id)
 
 
 @router.get(
@@ -80,22 +106,28 @@ def read_project(
 )
 @inject
 def read_project_detailed_sums(
+    organization_id: str,
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_global_sum_usecase: ProjectSumsUsecase = Depends(
         Provide[ServerContainer.project_sums_usecase]
     ),
 ) -> ProjectReport:
-    start_date = (
-        start_date
-        if start_date
-        else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
-    )
-    end_date = end_date if end_date else datetime.now() + timedelta(days=1)
-    return project_global_sum_usecase.compute_detailed_sum(
-        project_id, start_date, end_date
-    )
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(NotAllowedError(code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                                            message="Cannot read project from organization"))
+    else:
+        start_date = (
+            start_date
+            if start_date
+            else datetime.now() - dateutil.relativedelta.relativedelta(months=3)
+        )
+        end_date = end_date if end_date else datetime.now() + timedelta(days=1)
+        return project_global_sum_usecase.compute_detailed_sum(
+            project_id, start_date, end_date
+        )
 
 
 @router.get(
@@ -106,9 +138,14 @@ def read_project_detailed_sums(
 @inject
 def list_projects_nested(
     organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
 ) -> List[Project]:
-    return project_service.list_projects_from_organization(organization_id)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(NotAllowedError(code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                                            message="Cannot read project from organization"))
+    else:
+        return project_service.list_projects_from_organization(organization_id)
 
 
 @router.get(
@@ -118,7 +155,12 @@ def list_projects_nested(
 )
 @inject
 def list_projects(
-    organization: str,
+    organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
 ) -> List[Project]:
-    return project_service.list_projects_from_organization(organization)
+    if organization_id not in auth_user.db_user.organizations:
+        raise UserException(NotAllowedError(code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                                            message="Cannot read project from organization"))
+    else:
+        return project_service.list_projects_from_organization(organization_id)
