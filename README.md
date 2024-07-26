@@ -155,7 +155,7 @@ Here is a sample for BibTeX:
                   Marc Alencon and
                   Michał Stęchły and
                   Christian Bauer and
-                  Lucas-Otavio and
+                  Lucas Otávio N. de Araújo and
                   JPW and
                   MinervaBooks},
   title        = {mlco2/codecarbon: v2.4.1},
