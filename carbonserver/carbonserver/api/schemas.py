@@ -276,7 +276,7 @@ class ProjectToken(BaseModel):
     name: Optional[str]
     token: str
     last_used: Optional[datetime] = None
-    access: int = AccessLevel.READ.value
+    access: int = AccessLevel.WRITE.value
 
     class Config:
         schema_extra = {
@@ -293,7 +293,7 @@ class ProjectToken(BaseModel):
 
 class ProjectTokenCreate(BaseModel):
     name: Optional[str]
-    access: int = AccessLevel.READ.value
+    access: int = AccessLevel.WRITE.value
 
     class Config:
         schema_extra = {
