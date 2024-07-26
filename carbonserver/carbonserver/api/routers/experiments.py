@@ -4,7 +4,7 @@ from typing import List, Optional
 import dateutil.relativedelta
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
@@ -74,9 +74,12 @@ def read_experiment(
     project_token_service: ProjectTokenService = Depends(
         Provide[ServerContainer.project_token_service]
     ),
+    x_project_token: str = Header(None),  # Capture the x-project-token from the headers
 ) -> Experiment:
     project_token_service.project_token_has_access_to_experiment_id(
-        AccessLevel.READ.value, experiment_id=experiment_id
+        AccessLevel.READ.value,
+        experiment_id=experiment_id,
+        project_token=x_project_token,
     )
     return experiment_service.get_one_experiment(experiment_id)
 
@@ -99,9 +102,6 @@ def read_project_experiments(
     project_id: str,
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
-    ),
-    verify_token_access=Depends(
-        get_project_access_dependency(access_level=AccessLevel.READ)
     ),
 ) -> List[Experiment]:
     return experiment_service.get_experiments_from_project(project_id)

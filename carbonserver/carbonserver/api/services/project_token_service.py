@@ -1,4 +1,4 @@
-from fastapi import Header, HTTPException
+from fastapi import HTTPException
 
 from carbonserver.api.infra.repositories.repository_projects_tokens import (
     SqlAlchemyRepository as ProjectTokensSqlRepository,
@@ -20,44 +20,66 @@ class ProjectTokenService:
         return self._repository.list_project_tokens(project_id)
 
     def project_token_has_access_to_project_id(
-        self, desired_access: int, project_id: str, x_project_token: str = Header(...)
+        self, desired_access: int, project_id, project_token: str
     ):
+        if not project_token:
+            raise HTTPException(
+                status_code=403,
+                detail="Not allowed to perform this action. Missing project token",
+            )
         # Verify that the project token is valid and has access to do the action
         full_project_token = self._repository.get_project_token_by_project_id_and_token(
-            project_id, x_project_token
+            project_id, project_token
         )
         self._has_access(desired_access, full_project_token)
 
     def project_token_has_access_to_experiment_id(
-        self,
-        desired_access: int,
-        experiment_id: str,
-        x_project_token: str = Header(...),
+        self, desired_access: int, experiment_id, project_token: str
     ):
+        """
+        Check if the project token has access to the experiment_id with the desired_access.
+        Example: desired_access = AccessLevel.READ.value but the project_token has AccessLevel.WRITE.value ==> has_access = False because WRITE access is not READ
+        Example2: desired_access = AccessLevel.WRITE.value and the project_token has AccessLevel.READ_WRITE.value ==> has_access = TRUE because READ_WRITE access contains WRITE access
+        """
+        if not project_token:
+            raise HTTPException(
+                status_code=403,
+                detail="Not allowed to perform this action. Missing project token",
+            )
         # Verify that the project token is valid and has access to do the action
         full_project_token = (
-            self._repository.get_project_token_by_emission_id_and_token(
-                experiment_id, x_project_token
+            self._repository.get_project_token_by_experiment_id_and_token(
+                experiment_id, project_token
             )
         )
         self._has_access(desired_access, full_project_token)
 
     def project_token_has_access_to_run_id(
-        self, desired_access: int, run_id: str, x_project_token: str = Header(...)
+        self, desired_access: int, run_id, project_token: str
     ):
+        if not project_token:
+            raise HTTPException(
+                status_code=403,
+                detail="Not allowed to perform this action. Missing project token",
+            )
         # Verify that the project token is valid and has access to do the action
         full_project_token = self._repository.get_project_token_by_run_id_and_token(
-            run_id, x_project_token
+            run_id, project_token
         )
         self._has_access(desired_access, full_project_token)
 
-    def project_token_has_access_to_emissions_id(
-        self, desired_access: int, emission_id: str, x_project_token: str = Header(...)
+    def project_token_has_access_to_emission_id(
+        self, desired_access: int, emission_id, project_token: str
     ):
+        if not project_token:
+            raise HTTPException(
+                status_code=403,
+                detail="Not allowed to perform this action. Missing project token",
+            )
         # Verify that the project token is valid and has access to do the action
         full_project_token = (
             self._repository.get_project_token_by_emission_id_and_token(
-                emission_id, x_project_token
+                emission_id, project_token
             )
         )
         self._has_access(desired_access, full_project_token)
