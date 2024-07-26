@@ -5,9 +5,12 @@ from fastapi import HTTPException
 
 from carbonserver.api.domain.project_tokens import ProjectTokens
 from carbonserver.api.infra.api_key_service import generate_api_key
+from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
+from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import (
     ProjectToken as SqlModelProjectToken,
 )
+from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import ProjectToken, ProjectTokenCreate
 
 
@@ -57,6 +60,70 @@ class SqlAlchemyRepository(ProjectTokens):
                 self.map_sql_to_schema(project_token)
                 for project_token in db_project_tokens
             ]
+
+    def get_project_token_by_project_id_and_token(self, project_id: str, token: str):
+        with self.session_factory() as session:
+            db_project_token = (
+                session.query(SqlModelProjectToken)
+                .filter(
+                    SqlModelProjectToken.project_id == project_id
+                    and SqlModelProjectToken.token == token
+                )
+                .first()
+            )
+            if db_project_token is None:
+                raise HTTPException(status_code=404, detail="Project token not found")
+            return self.map_sql_to_schema(db_project_token)
+
+    def get_project_token_by_experiment_id_and_token(
+        self, experiment_id: str, token: str
+    ):
+        with self.session_factory() as session:
+            db_project_token = (
+                session.query(SqlModelProjectToken)
+                .filter(SqlModelProjectToken.token == token)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
+                )
+                .filter(SqlModelExperiment.id == experiment_id)
+            )
+            if db_project_token is None:
+                raise HTTPException(status_code=404, detail="Project token not found")
+            return self.map_sql_to_schema(db_project_token)
+
+    def get_project_token_by_run_id_and_token(self, run_id: str, token: str):
+        with self.session_factory() as session:
+            db_project_token = (
+                session.query(SqlModelProjectToken)
+                .filter(SqlModelProjectToken.token == token)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
+                )
+                .join(SqlModelRun, SqlModelExperiment.id == SqlModelRun.experiment_id)
+                .filter(SqlModelRun.id == run_id)
+            )
+            if db_project_token is None:
+                raise HTTPException(status_code=404, detail="Project token not found")
+            return self.map_sql_to_schema(db_project_token)
+
+    def get_project_token_by_emission_id_and_token(self, emission_id: str, token: str):
+        with self.session_factory() as session:
+            db_project_token = (
+                session.query(SqlModelProjectToken)
+                .filter(SqlModelProjectToken.token == token)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
+                )
+                .join(SqlModelRun, SqlModelExperiment.id == SqlModelRun.experiment_id)
+                .join(SqlModelEmission, SqlModelRun.id == SqlModelEmission.run_id)
+                .filter(SqlModelEmission.id == emission_id)
+            )
+            if db_project_token is None:
+                raise HTTPException(status_code=404, detail="Project token not found")
+            return self.map_sql_to_schema(db_project_token)
 
     @staticmethod
     def map_sql_to_schema(project_token: SqlModelProjectToken) -> ProjectToken:

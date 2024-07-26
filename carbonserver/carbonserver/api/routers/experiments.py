@@ -8,12 +8,31 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import Experiment, ExperimentCreate, ExperimentReport
+from carbonserver.api.schemas import (
+    AccessLevel,
+    Experiment,
+    ExperimentCreate,
+    ExperimentReport,
+)
 from carbonserver.api.services.experiments_service import ExperimentService
+from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
 )
 from carbonserver.logger import logger
+
+
+def check_project_access(
+    project_id: str,
+    access_level: AccessLevel,
+    project_token_service: ProjectTokenService = Depends(
+        Provide[ServerContainer.project_token_service]
+    ),
+):
+    project_token_service.project_token_has_access_to_project_id(
+        access_level.value, project_id=project_id
+    )
+
 
 EXPERIMENTS_ROUTER_TAGS = ["Experiments"]
 
@@ -52,8 +71,21 @@ def read_experiment(
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
+    project_token_service: ProjectTokenService = Depends(
+        Provide[ServerContainer.project_token_service]
+    ),
 ) -> Experiment:
+    project_token_service.project_token_has_access_to_experiment_id(
+        AccessLevel.READ.value, experiment_id=experiment_id
+    )
     return experiment_service.get_one_experiment(experiment_id)
+
+
+def get_project_access_dependency(access_level: AccessLevel, *args, **kwargs):
+    def dependency():
+        return check_project_access(*args, **kwargs, access_level=access_level)
+
+    return dependency
 
 
 @router.get(
@@ -67,6 +99,9 @@ def read_project_experiments(
     project_id: str,
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
+    ),
+    verify_token_access=Depends(
+        get_project_access_dependency(access_level=AccessLevel.READ)
     ),
 ) -> List[Experiment]:
     return experiment_service.get_experiments_from_project(project_id)
