@@ -21,19 +21,6 @@ from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
 )
 from carbonserver.logger import logger
 
-
-def check_project_access(
-    project_id: str,
-    access_level: AccessLevel,
-    project_token_service: ProjectTokenService = Depends(
-        Provide[ServerContainer.project_token_service]
-    ),
-):
-    project_token_service.project_token_has_access_to_project_id(
-        access_level.value, project_id=project_id
-    )
-
-
 EXPERIMENTS_ROUTER_TAGS = ["Experiments"]
 
 router = APIRouter(
@@ -76,19 +63,12 @@ def read_experiment(
     ),
     x_project_token: str = Header(None),  # Capture the x-project-token from the headers
 ) -> Experiment:
-    project_token_service.project_token_has_access_to_experiment_id(
+    project_token_service.project_token_has_access(
         AccessLevel.READ.value,
         experiment_id=experiment_id,
         project_token=x_project_token,
     )
     return experiment_service.get_one_experiment(experiment_id)
-
-
-def get_project_access_dependency(access_level: AccessLevel, *args, **kwargs):
-    def dependency():
-        return check_project_access(*args, **kwargs, access_level=access_level)
-
-    return dependency
 
 
 @router.get(

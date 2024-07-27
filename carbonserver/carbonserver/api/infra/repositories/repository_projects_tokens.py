@@ -87,6 +87,7 @@ class SqlAlchemyRepository(ProjectTokens):
                     SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
                 )
                 .filter(SqlModelExperiment.id == experiment_id)
+                .first()
             )
             if db_project_token is None:
                 raise HTTPException(status_code=404, detail="Project token not found")
@@ -103,6 +104,7 @@ class SqlAlchemyRepository(ProjectTokens):
                 )
                 .join(SqlModelRun, SqlModelExperiment.id == SqlModelRun.experiment_id)
                 .filter(SqlModelRun.id == run_id)
+                .first()
             )
             if db_project_token is None:
                 raise HTTPException(status_code=404, detail="Project token not found")
@@ -120,6 +122,7 @@ class SqlAlchemyRepository(ProjectTokens):
                 .join(SqlModelRun, SqlModelExperiment.id == SqlModelRun.experiment_id)
                 .join(SqlModelEmission, SqlModelRun.id == SqlModelEmission.run_id)
                 .filter(SqlModelEmission.id == emission_id)
+                .first()
             )
             if db_project_token is None:
                 raise HTTPException(status_code=404, detail="Project token not found")

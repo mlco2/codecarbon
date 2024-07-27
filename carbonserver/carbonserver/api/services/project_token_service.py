@@ -19,7 +19,41 @@ class ProjectTokenService:
     def list_tokens_from_project(self, project_id):
         return self._repository.list_project_tokens(project_id)
 
-    def project_token_has_access_to_project_id(
+    def project_token_has_access(
+        self,
+        desired_access: int,
+        project_token: str,
+        project_id=None,
+        experiment_id=None,
+        run_id=None,
+        emission_id=None,
+    ):
+        """
+        Check if the project token has access to the project_id, experiment_id, run_id or emission_id with the desired_access.
+        """
+        if project_id:
+            self._project_token_has_access_to_project_id(
+                desired_access, project_id, project_token
+            )
+        elif experiment_id:
+            self._project_token_has_access_to_experiment_id(
+                desired_access, experiment_id, project_token
+            )
+        elif run_id:
+            self._project_token_has_access_to_run_id(
+                desired_access, run_id, project_token
+            )
+        elif emission_id:
+            self._project_token_has_access_to_emission_id(
+                desired_access, emission_id, project_token
+            )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Not allowed to perform this action. Missing project_id, experiment_id, run_id or emission_id",
+            )
+
+    def _project_token_has_access_to_project_id(
         self, desired_access: int, project_id, project_token: str
     ):
         if not project_token:
@@ -33,7 +67,7 @@ class ProjectTokenService:
         )
         self._has_access(desired_access, full_project_token)
 
-    def project_token_has_access_to_experiment_id(
+    def _project_token_has_access_to_experiment_id(
         self, desired_access: int, experiment_id, project_token: str
     ):
         """
@@ -54,7 +88,7 @@ class ProjectTokenService:
         )
         self._has_access(desired_access, full_project_token)
 
-    def project_token_has_access_to_run_id(
+    def _project_token_has_access_to_run_id(
         self, desired_access: int, run_id, project_token: str
     ):
         if not project_token:
@@ -68,7 +102,7 @@ class ProjectTokenService:
         )
         self._has_access(desired_access, full_project_token)
 
-    def project_token_has_access_to_emission_id(
+    def _project_token_has_access_to_emission_id(
         self, desired_access: int, emission_id, project_token: str
     ):
         if not project_token:

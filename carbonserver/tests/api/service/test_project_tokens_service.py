@@ -81,8 +81,8 @@ def test_project_token_service_has_access_to_project_id():
         PROJECT_TOKEN
     )
 
-    response_read = project_token_service.project_token_has_access_to_project_id(
-        AccessLevel.READ.value, PROJECT_ID, "token"
+    response_read = project_token_service.project_token_has_access(
+        AccessLevel.READ.value, project_id=PROJECT_ID, project_token="token"
     )
 
     assert response_read is None
@@ -101,8 +101,8 @@ def test_project_token_service_has_access_to_project_id_write():
     )
 
     with pytest.raises(HTTPException) as exc:
-        project_token_service.project_token_has_access_to_project_id(
-            AccessLevel.WRITE.value, PROJECT_ID, "token"
+        project_token_service.project_token_has_access(
+            AccessLevel.WRITE.value, project_id=PROJECT_ID, project_token="token"
         )
     assert exc.value.status_code == 403
     assert exc.value.detail == "Not allowed to perform this action"
@@ -120,8 +120,8 @@ def test_project_token_service_has_access_to_experiment_id():
         PROJECT_TOKEN
     )
 
-    response_read = project_token_service.project_token_has_access_to_experiment_id(
-        AccessLevel.READ.value, EXPERIMENT_ID, "token"
+    response_read = project_token_service.project_token_has_access(
+        AccessLevel.READ.value, experiment_id=EXPERIMENT_ID, project_token="token"
     )
 
     assert response_read is None
@@ -137,8 +137,8 @@ def test_project_token_service_has_access_to_run_id():
     project_token_service: ProjectTokenService = ProjectTokenService(repository_mock)
     repository_mock.get_project_token_by_run_id_and_token.return_value = PROJECT_TOKEN
 
-    response_read = project_token_service.project_token_has_access_to_run_id(
-        AccessLevel.READ.value, RUN_ID, "token"
+    response_read = project_token_service.project_token_has_access(
+        AccessLevel.READ.value, run_id=RUN_ID, project_token="token"
     )
 
     assert response_read is None
@@ -156,8 +156,8 @@ def test_project_token_service_has_access_to_emission_id():
         PROJECT_TOKEN
     )
 
-    response_read = project_token_service.project_token_has_access_to_emission_id(
-        AccessLevel.READ.value, EMISSION_ID, "token"
+    response_read = project_token_service.project_token_has_access(
+        AccessLevel.READ.value, emission_id=EMISSION_ID, project_token="token"
     )
 
     assert response_read is None
