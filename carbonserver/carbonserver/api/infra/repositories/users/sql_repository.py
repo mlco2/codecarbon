@@ -1,17 +1,14 @@
 from contextlib import AbstractContextManager
-from typing import Callable, List
-from uuid import UUID, uuid4
+from typing import Callable
+from uuid import UUID
 
-import bcrypt
 from fastapi import HTTPException
 from sqlalchemy import update
 
 from carbonserver.api.domain.users import Users
-from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
-from carbonserver.api.infra.database.sql_models import Organization as SqlModelOrganization
-from carbonserver.api.schemas import User, UserAuthenticate, UserAutoCreate, UserCreate
+from carbonserver.api.schemas import User, UserAutoCreate
 
 
 class SqlAlchemyRepository(Users):
@@ -29,7 +26,6 @@ class SqlAlchemyRepository(Users):
                     id=user.id,
                     name=user.name,
                     email=user.email,
-                    api_key=generate_api_key(),
                     is_active=True,
                     organizations=[],
                 )
@@ -56,7 +52,7 @@ class SqlAlchemyRepository(Users):
         with self.session_factory() as session:
             project_subquery = session.query(SqlModelProject).where(SqlModelProject.id == project_id).subquery()
             user_authorized_on_project = session.query(SqlModelUser).where(SqlModelUser.id == user_id).filter(
-                SqlModelUser.organizations.contains(project_subquery.c.id)).first()
+                SqlModelUser.organizations.contains(project_subquery.c.organization_id)).first()
             return bool(user_authorized_on_project)
 
     def subscribe_user_to_org(
@@ -95,7 +91,6 @@ class SqlAlchemyRepository(Users):
             id=sql_user.id,
             name=sql_user.name,
             email=sql_user.email,
-            api_key=sql_user.api_key,
             is_active=sql_user.is_active,
             organizations=sql_user.organizations,
         )

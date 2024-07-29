@@ -8,8 +8,8 @@ from carbonserver.api.infra.repositories import (
     repository_projects,
     repository_projects_tokens,
     repository_runs,
-    repository_users,
 )
+from carbonserver.api.infra.repositories.users import sql_repository as repository_users
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.services.organization_service import OrganizationService
@@ -88,6 +88,7 @@ class ServerContainer(containers.DeclarativeContainer):
 
     project_service = providers.Factory(
         ProjectService,
+        user_repository=user_repository,
         project_repository=project_repository,
     )
 
@@ -113,6 +114,7 @@ class ServerContainer(containers.DeclarativeContainer):
 
     organization_service = providers.Factory(
         OrganizationService,
+        user_repository=user_repository,
         organization_repository=organization_repository,
     )
 

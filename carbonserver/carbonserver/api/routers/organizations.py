@@ -33,7 +33,7 @@ router = APIRouter()
 @inject
 def add_organization(
     organization: OrganizationCreate,
-    auth_user: UserWithAuthDependency = Depends(Provide[ServerContainer.auth_user]),
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
@@ -54,7 +54,7 @@ def add_organization(
 def update_organization(
     organization_id: str,
     organization: OrganizationPatch,
-    auth_user: UserWithAuthDependency = Depends(Provide[UserWithAuthDependency]),
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
@@ -77,7 +77,7 @@ def update_organization(
 @inject
 def read_organization(
     organization_id: str,
-    auth_user: UserWithAuthDependency = Depends(Provide[UserWithAuthDependency]),
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),

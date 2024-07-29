@@ -3,26 +3,23 @@ import logging
 import random
 from typing import Optional
 
-import jwt
 import requests
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import RedirectResponse
-from fief_client import FiefUserInfo
 
 from carbonserver.api.services.signup_service import SignUpService
-from carbonserver.carbonserver.api.services.auth_service import (
+from carbonserver.api.services.auth_service import (
     OAUTH_SCOPES,
     SESSION_COOKIE_NAME,
     fief,
-    web_auth_with_redirect,
+    UserWithAuthDependency,
 )
 from carbonserver.config import settings
 
 AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
 LOGGER = logging.getLogger(__name__)
-
 
 router = APIRouter()
 
@@ -36,7 +33,7 @@ def check_login(
     return user data or redirect to login screen
     null value if not logged in
     """
-    return {"user": user}
+    return {"user": auth_user}
 
 
 @router.get("/auth/auth-callback", tags=AUTHENTICATE_ROUTER_TAGS, name="auth_callback")
@@ -97,7 +94,7 @@ async def get_login(
         print("=> 120")
         url = f"{request.base_url}home?auth=true&creds={creds}"
         print("=> 150 redir url", url)
-        # response = RedirectResponse(url=url)
+        # Vresponse = RedirectResponse(url=url)
         content = f"""<html>
         <head>
         <script>

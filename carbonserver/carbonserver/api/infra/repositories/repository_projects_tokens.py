@@ -1,10 +1,10 @@
 from contextlib import AbstractContextManager
+from secrets import token_urlsafe
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
 
 from carbonserver.api.domain.project_tokens import ProjectTokens
-from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import (
@@ -19,7 +19,7 @@ class SqlAlchemyRepository(ProjectTokens):
         self.session_factory = session_factory
 
     def add_project_token(self, project_id: str, project_token: ProjectTokenCreate):
-        token = f"pt_{generate_api_key()}"  # pt stands for project token
+        token = f"pt_{token_urlsafe(16)}"  # pt stands for project token
         with self.session_factory() as session:
             db_project_token = SqlModelProjectToken(
                 project_id=project_id,

@@ -36,7 +36,6 @@ class SqlAlchemyRepository(Organizations):
                 id=uuid4(),
                 name=organization.name,
                 description=organization.description,
-                api_key=None,
             )
 
             session.add(db_organization)
@@ -64,20 +63,15 @@ class SqlAlchemyRepository(Organizations):
             return self.map_sql_to_schema(e)
 
     def list_organizations(self, user: Optional[User] = None) -> List[Organization]:
+        print(user)
+        print(user.organizations)
         with self.session_factory() as session:
             e = session.query(SqlModelOrganization)
             if user is not None:
                 e = e.filter(SqlModelOrganization.id.in_(user.organizations))
+                print(e)
             return [self.map_sql_to_schema(org) for org in e]
 
-    def is_api_key_valid(self, organization_id: UUID, api_key: str):
-        with self.session_factory() as session:
-            return bool(
-                session.query(SqlModelOrganization)
-                .filter(SqlModelOrganization.id == organization_id)
-                .filter(SqlModelOrganization.api_key == api_key)
-                .first()
-            )
 
     def get_organization_detailed_sums(
         self, organization_id, start_date, end_date
@@ -170,5 +164,4 @@ class SqlAlchemyRepository(Organizations):
             id=str(organization.id),
             name=organization.name,
             description=organization.description,
-            api_key=organization.api_key,
         )

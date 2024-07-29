@@ -376,7 +376,6 @@ class OrganizationPatch(OrganizationBase):
 
 class Organization(OrganizationBase):
     id: UUID
-    api_key: str
 
 
 class OrganizationReport(OrganizationBase):

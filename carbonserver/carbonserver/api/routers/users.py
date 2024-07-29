@@ -4,7 +4,7 @@ from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
 
-from carbonserver.api.schemas import User, UserCreate
+from carbonserver.api.schemas import User, UserAutoCreate
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 
@@ -21,7 +21,7 @@ router = APIRouter()
 )
 @inject
 def sign_up(
-    user: UserCreate,
+    user: UserAutoCreate,
     signup_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ) -> User:
     return signup_service.sign_up(user)

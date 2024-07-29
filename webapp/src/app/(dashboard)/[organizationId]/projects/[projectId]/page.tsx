@@ -4,6 +4,7 @@ import { Activity, CreditCard, Users } from "lucide-react";
 
 import AreaChartStacked from "@/components/area-chart-stacked";
 import BarChartMultiple from "@/components/bar-chart-multiple";
+import ExperimentsBarChart from "@/components/experiment-emissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Project } from "@/types/project";
@@ -17,6 +18,8 @@ async function getProject(projectId: string): Promise<Project> {
     );
 
     if (!res.ok) {
+        console.log(res.status)
+        console.log(res)
         // This will activate the closest `error.js` Error Boundary
         throw new Error("Failed to fetch data");
     }
@@ -101,7 +104,7 @@ export default async function ProjectPage({
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 md:gap-8">
                     <AreaChartStacked />
-                    <BarChartMultiple />
+                    <ExperimentsBarChart params={{ projectId: project.id }} />
                 </div>
             </main>
         </div>

@@ -10,8 +10,8 @@ from carbonserver.api.infra.repositories.users.sql_repository import (
 
 from carbonserver.api.schemas import ProjectCreate
 
-from carbonserver.carbonserver.api.errors import UserException, NotAllowedError, NotAllowedErrorEnum
-from carbonserver.carbonserver.api.schemas import User, ProjectPatch
+from carbonserver.api.errors import UserException, NotAllowedError, NotAllowedErrorEnum
+from carbonserver.api.schemas import User, ProjectPatch
 
 
 class ProjectService:
@@ -23,7 +23,7 @@ class ProjectService:
         self._user_repository = user_repository
 
     def add_project(self, project: ProjectCreate):
-        if not self.isOperationAuthorized(project.organization_id, project.user):
+        if self.isOperationAuthorized(project.organization_id, project.user):
             raise UserException(
                 NotAllowedError(
                     code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
@@ -52,9 +52,9 @@ class ProjectService:
             )
         return self._project_repository.patch_project(project_id, project)
 
-    def get_one_project(self, project_id: UUID):
+    def get_one_project(self, project_id: UUID, user: User):
         project = self._project_repository.get_one_project(project_id)
-        if not self.isOperationAuthorized(project.organization_id, project.user):
+        if not self.isOperationAuthorized(project.organization_id, user):
             raise UserException(
                 NotAllowedError(
                     code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
@@ -74,7 +74,7 @@ class ProjectService:
         return self._project_repository.get_projects_from_organization(organization_id)
 
     def isOperationAuthorized(self, organization_id, user: User):
-        db_user = self._user_repository.get_by_id(user.id)
+        db_user = self._user_repository.get_user_by_id(user.id)
         return organization_id in db_user.organizations
 
     def isOperationAuthorizedOnProject(self, project_id, user):

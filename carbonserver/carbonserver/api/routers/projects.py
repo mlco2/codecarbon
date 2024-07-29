@@ -11,7 +11,7 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Project, ProjectCreate, ProjectPatch, ProjectReport
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
-from carbonserver.carbonserver.api.services.auth_service import UserWithAuthDependency
+from carbonserver.api.services.auth_service import UserWithAuthDependency
 
 PROJECTS_ROUTER_TAGS = ["Projects"]
 

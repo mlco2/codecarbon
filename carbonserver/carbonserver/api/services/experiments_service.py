@@ -12,8 +12,8 @@ from carbonserver.api.infra.repositories.users.sql_repository import (
 
 from carbonserver.api.schemas import Experiment, ExperimentCreate
 
-from carbonserver.carbonserver.api.errors import UserException, NotAllowedError, NotAllowedErrorEnum
-from carbonserver.carbonserver.api.schemas import User
+from carbonserver.api.errors import UserException, NotAllowedError, NotAllowedErrorEnum
+from carbonserver.api.schemas import User
 
 
 class ExperimentService:

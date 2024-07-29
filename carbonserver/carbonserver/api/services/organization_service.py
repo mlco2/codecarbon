@@ -15,7 +15,7 @@ from carbonserver.api.schemas import (
     User,
 )
 
-from carbonserver.carbonserver.api.errors import UserException, NotAllowedError, NotAllowedErrorEnum
+from carbonserver.api.errors import UserException, NotAllowedError, NotAllowedErrorEnum
 logger = logging.getLogger(__name__)
 
 
@@ -54,6 +54,7 @@ class OrganizationService:
         return organization
 
     def list_organizations(self, user: User = None) -> List[Organization]:
+        print(user)
         return self._organization_repository.list_organizations(user=user)
 
     def patch_organization(
@@ -73,5 +74,5 @@ class OrganizationService:
         return updated_organization
 
     def isOperationAuthorized(self, organization_id, user):
-        user = self._user_repository.get_by_id(user.id)
-        return organization_id in user.organizations
+        db_user = self._user_repository.get_user_by_id(user.id)
+        return organization_id in db_user.organizations

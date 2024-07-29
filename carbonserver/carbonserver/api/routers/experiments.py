@@ -13,7 +13,7 @@ from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
 )
-from carbonserver.carbonserver.api.services.auth_service import UserWithAuthDependency
+from carbonserver.api.services.auth_service import UserWithAuthDependency
 
 EXPERIMENTS_ROUTER_TAGS = ["Experiments"]
 

@@ -15,10 +15,10 @@ from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
-from carbonserver.carbonserver.api.schemas import User
-from carbonserver.carbonserver.api.services.user_service import UserService
+from carbonserver.api.schemas import User
+from carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
-from carbonserver.container import ServerContainer
+from container import ServerContainer
 
 fief = FiefAsync(
     settings.fief_url, settings.fief_client_id, settings.fief_client_secret
