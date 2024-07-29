@@ -41,6 +41,7 @@ class UserError(ErrorBase):
 
 class NotAllowedErrorEnum(str, Enum):
     OPERATION_NOT_ALLOWED = "OPERATION_NOT_ALLOWED"
+    NOT_IN_ORGANISATION = "NOT_IN_ORGANISATION"
 
 
 class NotAllowedError(ErrorBase):

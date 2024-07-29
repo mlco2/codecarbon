@@ -7,7 +7,6 @@ from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.organizations import Organizations
-from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import (
@@ -37,7 +36,7 @@ class SqlAlchemyRepository(Organizations):
                 id=uuid4(),
                 name=organization.name,
                 description=organization.description,
-                api_key=generate_api_key(),
+                api_key=None,
             )
 
             session.add(db_organization)

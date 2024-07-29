@@ -40,7 +40,7 @@ class SqlAlchemyRepository(Experiments):
     def get_one_experiment(self, experiment_id) -> Experiment:
         """Find the experiment in database and return it
 
-        :experiment_id: The id of the experiment to retreive.
+        :experiment_id: The id of the experiment to retrieve.
         :returns: An Experiment in pyDantic BaseModel format.
         :rtype: schemas.Experiment
         """
@@ -59,7 +59,7 @@ class SqlAlchemyRepository(Experiments):
     def get_experiments_from_project(self, project_id) -> List[Experiment]:
         """Find the experiment from an emission in database and return it
 
-        :project_id: The id of the project to retreive experiment from.
+        :project_id: The id of the project to retrieve experiment from.
         :returns: An Experiment in pyDantic BaseModel format.
         :rtype: List[schemas.Experiment]
         """

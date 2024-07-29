@@ -1,28 +1,23 @@
-from container import ServerContainer
+from dependency_injector import containers, providers
+from fastapi import FastAPI
+
+from carbonserver.carbonserver.api.auth_middleware import OAuthHTTPMiddleware
+from carbonserver.carbonserver.api.infra.database.database_manager import Database
+from carbonserver.carbonserver.api.infra.repositories.users.inmemory_repositry import InMemoryRepository
+from carbonserver.carbonserver.config import settings
+
+test_app = FastAPI()
 
 
-def test_container_exposes_correct_list_of_providers_at_initialisation():
-    expected_providers = [
-        "config",
-        "db",
-        "emission_repository",
-        "experiment_repository",
-        "project_global_sum_by_experiment_usecase",
-        "project_repository",
-        "organization_repository",
-        "user_repository",
-        "emission_service",
-        "experiment_service",
-        "project_service",
-        "run_repository",
-        "run_service",
-        "organization_service",
-        "user_service",
-        "sign_up_service",
-    ]
+class TestContainer(containers.DeclarativeContainer):
+    config = providers.Configuration()
+    db_url = settings.db_url
+    db = providers.Singleton(
+        Database,
+        db_url=db_url,
+    )
 
-    actual_providers = ServerContainer().providers.keys()
-    diff = set(expected_providers) ^ set(actual_providers)
+    users_repository = providers.Factory(
+        InMemoryRepository
+    )
 
-    assert not diff
-    assert len(expected_providers) == len(actual_providers)

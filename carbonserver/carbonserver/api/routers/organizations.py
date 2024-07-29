@@ -19,7 +19,7 @@ from carbonserver.api.usecases.organization.organization_sum import (
     OrganizationSumsUsecase,
 )
 
-ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
+ORGANIZATIONS_ROUTER_TAGS = ["Organizations", 'Organization_router']
 
 router = APIRouter()
 
@@ -33,11 +33,16 @@ router = APIRouter()
 @inject
 def add_organization(
     organization: OrganizationCreate,
+    auth_user: UserWithAuthDependency = Depends(Provide[ServerContainer.auth_user]),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.add_organization(organization)
+    organization_create = OrganizationCreate(
+        **organization.dict(),
+        user=auth_user.db_user,
+    )
+    return organization_service.add_organization(organization_create)
 
 
 @router.patch(
@@ -49,11 +54,18 @@ def add_organization(
 def update_organization(
     organization_id: str,
     organization: OrganizationPatch,
+    auth_user: UserWithAuthDependency = Depends(Provide[UserWithAuthDependency]),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.patch_organization(organization_id, organization)
+    organization_patch = OrganizationPatch(
+        name=organization.name,
+        description=organization.description,
+        user=auth_user.db_user,
+
+    )
+    return organization_service.patch_organization(organization_id, organization_patch)
 
 
 @router.get(
@@ -65,11 +77,12 @@ def update_organization(
 @inject
 def read_organization(
     organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(Provide[UserWithAuthDependency]),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.read_organization(organization_id)
+    return organization_service.read_organization(organization_id, user=auth_user.db_user)
 
 
 @router.get(

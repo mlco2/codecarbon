@@ -10,7 +10,7 @@ So this will help us avoiding confusion while using both.
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Any
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
@@ -18,6 +18,27 @@ from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
 
 class Empty(BaseModel, extra=Extra.forbid):
     pass
+
+
+class UserBase(BaseModel):
+    email: str
+
+
+class UserAutoCreate(UserBase):
+    name: str
+    email: EmailStr
+    id: UUID
+
+
+class User(UserBase):
+    id: UUID
+    name: str
+    email: EmailStr
+    organizations: Optional[List]
+    is_active: bool
+
+    class Config:
+        orm_mode = True
 
 
 class EmissionBase(BaseModel):
@@ -248,12 +269,14 @@ class ProjectBase(BaseModel):
 
 
 class ProjectCreate(ProjectBase):
-    pass
+    user: User
 
 
 class ProjectPatch(BaseModel):
     name: Optional[str]
     description: Optional[str]
+    user: User
+
     # do not allow the organization_id
 
     class Config:
@@ -341,12 +364,14 @@ class OrganizationBase(BaseModel):
 
 
 class OrganizationCreate(OrganizationBase):
+    user: User
     pass
 
 
 class OrganizationPatch(OrganizationBase):
     name: Optional[str]
     description: Optional[str]
+    user: User
 
 
 class Organization(OrganizationBase):
@@ -369,40 +394,3 @@ class OrganizationReport(OrganizationBase):
     duration: int
     emissions_rate: float
     emissions_count: int
-
-
-class UserBase(BaseModel):
-    email: str
-
-
-class UserCreate(UserBase):
-    name: str
-    email: EmailStr
-    password: SecretStr
-
-
-class UserAutoCreate(UserBase):
-    name: str
-    email: EmailStr
-    id: UUID
-
-
-class UserAuthenticate(UserBase):
-    password: SecretStr
-
-
-class User(UserBase):
-    id: UUID
-    name: str
-    email: EmailStr
-    api_key: Optional[str]
-    organizations: Optional[List]
-    is_active: bool
-
-    class Config:
-        orm_mode = True
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
