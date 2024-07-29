@@ -40,7 +40,7 @@ class MemoryUserInfoCache implements IUserInfoCache {
 export const fiefAuth = new FiefAuth({
     client: fiefClient,
     sessionCookieName: SESSION_COOKIE_NAME,
-    redirectURI: `${process.env.NEXT_PUBLIC_BASE_URL}/auth-callback`,
+    redirectURI: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
     returnToDefault: `${process.env.NEXT_PUBLIC_BASE_URL}/home?auth=true`,
     logoutRedirectURI: `${process.env.NEXT_PUBLIC_BASE_URL}`,
     userInfoCache: new MemoryUserInfoCache(),
