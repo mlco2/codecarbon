@@ -15,6 +15,7 @@ from starlette import status
 from starlette.requests import Request
 from starlette.responses import Response
 
+from carbonserver.carbonserver.api.schemas import User
 from carbonserver.carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
 from carbonserver.container import ServerContainer
@@ -73,10 +74,9 @@ class UserWithAuthDependency:
         api_key: HTTPAuthorizationCredentials = Depends(web_scheme),
         user_service: UserService = Depends(Provide[ServerContainer.user_service]),
     ):
-        self.user_service = user_service
-        self.auth_user = auth_user
+        self.auth_user: FiefUserInfo = auth_user
         try:
-            self.db_user = user_service.get_user_by_id(auth_user["sub"])
+            self.db_user: User = user_service.get_user_by_id(auth_user["sub"])
         except Exception:
             self.db_user = None
         print("UserWithAuthDependency", auth_user, self.db_user)

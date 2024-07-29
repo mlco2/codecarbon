@@ -28,19 +28,6 @@ def sign_up(
 
 
 @router.get(
-    "/users",
-    tags=USERS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-    response_model=List[User],
-)
-@inject
-def list_users(
-    user_service: UserService = Depends(Provide[ServerContainer.user_service]),
-) -> List[User]:
-    return user_service.list_users()
-
-
-@router.get(
     "/users/{user_id}",
     tags=USERS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
