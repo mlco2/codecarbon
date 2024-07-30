@@ -4,18 +4,12 @@ from typing import List, Optional
 import dateutil.relativedelta
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.schemas import (
-    AccessLevel,
-    Experiment,
-    ExperimentCreate,
-    ExperimentReport,
-)
+from carbonserver.api.schemas import Experiment, ExperimentCreate, ExperimentReport
 from carbonserver.api.services.experiments_service import ExperimentService
-from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
 )
@@ -58,16 +52,7 @@ def read_experiment(
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
-    project_token_service: ProjectTokenService = Depends(
-        Provide[ServerContainer.project_token_service]
-    ),
-    x_project_token: str = Header(None),  # Capture the x-project-token from the headers
 ) -> Experiment:
-    project_token_service.project_token_has_access(
-        AccessLevel.READ.value,
-        experiment_id=experiment_id,
-        project_token=x_project_token,
-    )
     return experiment_service.get_one_experiment(experiment_id)
 
 

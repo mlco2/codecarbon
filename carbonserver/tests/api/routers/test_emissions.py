@@ -9,10 +9,13 @@ from fastapi_pagination import add_pagination
 from starlette import status
 
 from carbonserver.api.infra.repositories.repository_emissions import (
-    SqlAlchemyRepository,
+    SqlAlchemyRepository as EmissionRepository,
+)
+from carbonserver.api.infra.repositories.repository_projects_tokens import (
+    SqlAlchemyRepository as ProjectTokenRepository,
 )
 from carbonserver.api.routers import emissions
-from carbonserver.api.schemas import Emission
+from carbonserver.api.schemas import AccessLevel, Emission, ProjectToken
 
 RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
 RUN_2_ID = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
@@ -103,20 +106,46 @@ def client(custom_test_server):
 
 
 def test_add_emission(client, custom_test_server):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    # Prepare the test
+    repository_mock = mock.Mock(spec=EmissionRepository)
     expected_emission = EMISSION_ID
     repository_mock.add_emission.return_value = UUID(EMISSION_ID)
+    # Setup the project token repository (used to check the auth token)
+    project_tokens_repository_mock = mock.Mock(spec=ProjectTokenRepository)
+    PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
+    PROJECT_TOKEN_ID = UUID("e60afb92-17b7-4720-91a0-1ae91e409ba7")
+    PROJECT_TOKEN = ProjectToken(
+        id=PROJECT_TOKEN_ID,
+        project_id=PROJECT_ID,
+        name="Project",
+        token="token",
+        access=AccessLevel.WRITE.value,
+    )
+    project_tokens_repository_mock.get_project_token_by_run_id_and_token.return_value = (
+        PROJECT_TOKEN
+    )
+    # Call the endpoint
 
-    with custom_test_server.container.emission_repository.override(repository_mock):
-        response = client.post("/emissions", json=EMISSION_TO_CREATE)
+    with custom_test_server.container.emission_repository.override(
+        repository_mock
+    ) and custom_test_server.container.project_token_repository.override(
+        project_tokens_repository_mock
+    ):
+        response = client.post(
+            "/emissions", json=EMISSION_TO_CREATE, headers={"X-Project-Token": "token"}
+        )
         actual_emission = response.json()
 
+    # Asserts
     assert response.status_code == status.HTTP_201_CREATED
     assert actual_emission == expected_emission
+    project_tokens_repository_mock.get_project_token_by_run_id_and_token.assert_called_once_with(
+        UUID(RUN_1_ID), "token"
+    )
 
 
 def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock = mock.Mock(spec=EmissionRepository)
     expected_emission = EMISSION_1
     repository_mock.get_one_emission.return_value = Emission(**expected_emission)
 
@@ -133,7 +162,7 @@ def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server
 def test_get_emissions_from_run_retreives_all_emissions_from_run(
     client, custom_test_server
 ):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock = mock.Mock(spec=EmissionRepository)
     expected_emissions_id_list = [EMISSION_ID, EMISSION_ID_2]
     repository_mock.get_emissions_from_run.return_value = [
         Emission(**EMISSION_1),

@@ -1,6 +1,5 @@
 from datetime import datetime
 from unittest import mock
-from uuid import UUID
 
 import pytest
 from container import ServerContainer
@@ -12,11 +11,8 @@ from starlette.testclient import TestClient
 from carbonserver.api.infra.repositories.repository_experiments import (
     SqlAlchemyRepository as ExperimentRepository,
 )
-from carbonserver.api.infra.repositories.repository_projects_tokens import (
-    SqlAlchemyRepository as ProjectTokenRepository,
-)
 from carbonserver.api.routers import experiments
-from carbonserver.api.schemas import AccessLevel, Experiment, ProjectToken
+from carbonserver.api.schemas import Experiment
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -135,38 +131,14 @@ def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_ser
     repository_mock = mock.Mock(spec=ExperimentRepository)
     expected_experiment = EXPERIMENT_1
     repository_mock.get_one_experiment.return_value = Experiment(**EXPERIMENT_1)
-    project_tokens_repository_mock = mock.Mock(spec=ProjectTokenRepository)
-    PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
-    PROJECT_TOKEN_ID = UUID("e60afb92-17b7-4720-91a0-1ae91e409ba7")
-    PROJECT_TOKEN = ProjectToken(
-        id=PROJECT_TOKEN_ID,
-        project_id=PROJECT_ID,
-        name="Project",
-        token="token",
-        access=AccessLevel.READ.value,
-    )
-    project_tokens_repository_mock.get_project_token_by_experiment_id_and_token.return_value = (
-        PROJECT_TOKEN
-    )
 
     # Call the endpoint
 
-    with custom_test_server.container.experiment_repository.override(
-        repository_mock
-    ) and custom_test_server.container.project_token_repository.override(
-        project_tokens_repository_mock
-    ):
-        response = client.get(
-            f"/experiments/{EXPERIMENT_ID}", headers={"X-Project-Token": "token"}
-        )
+    with custom_test_server.container.experiment_repository.override(repository_mock):
+        response = client.get(f"/experiments/{EXPERIMENT_ID}")
         actual_experiment = response.json()
-
-    # Check the results
     assert response.status_code == status.HTTP_200_OK
     assert actual_experiment == expected_experiment
-    project_tokens_repository_mock.get_project_token_by_experiment_id_and_token.assert_called_once_with(
-        EXPERIMENT_ID, "token"
-    )
 
 
 def test_get_experiment_of_project_retrieves_all_experiments_of_project(

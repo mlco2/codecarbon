@@ -71,9 +71,9 @@ class SqlAlchemyRepository(ProjectTokens):
                 )
                 .first()
             )
-            if db_project_token is None:
-                raise HTTPException(status_code=404, detail="Project token not found")
-            return self.map_sql_to_schema(db_project_token)
+            return (
+                self.map_sql_to_schema(db_project_token) if db_project_token else None
+            )
 
     def get_project_token_by_experiment_id_and_token(
         self, experiment_id: str, token: str
@@ -89,9 +89,9 @@ class SqlAlchemyRepository(ProjectTokens):
                 .filter(SqlModelExperiment.id == experiment_id)
                 .first()
             )
-            if db_project_token is None:
-                raise HTTPException(status_code=404, detail="Project token not found")
-            return self.map_sql_to_schema(db_project_token)
+            return (
+                self.map_sql_to_schema(db_project_token) if db_project_token else None
+            )
 
     def get_project_token_by_run_id_and_token(self, run_id: str, token: str):
         with self.session_factory() as session:
@@ -106,9 +106,9 @@ class SqlAlchemyRepository(ProjectTokens):
                 .filter(SqlModelRun.id == run_id)
                 .first()
             )
-            if db_project_token is None:
-                raise HTTPException(status_code=404, detail="Project token not found")
-            return self.map_sql_to_schema(db_project_token)
+            return (
+                self.map_sql_to_schema(db_project_token) if db_project_token else None
+            )
 
     def get_project_token_by_emission_id_and_token(self, emission_id: str, token: str):
         with self.session_factory() as session:
@@ -124,9 +124,9 @@ class SqlAlchemyRepository(ProjectTokens):
                 .filter(SqlModelEmission.id == emission_id)
                 .first()
             )
-            if db_project_token is None:
-                raise HTTPException(status_code=404, detail="Project token not found")
-            return self.map_sql_to_schema(db_project_token)
+            return (
+                self.map_sql_to_schema(db_project_token) if db_project_token else None
+            )
 
     @staticmethod
     def map_sql_to_schema(project_token: SqlModelProjectToken) -> ProjectToken:
