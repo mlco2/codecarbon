@@ -142,6 +142,24 @@ def test_add_emission(client, custom_test_server):
     project_tokens_repository_mock.get_project_token_by_run_id_and_token.assert_called_once_with(
         UUID(RUN_1_ID), "token"
     )
+    # Call the endpoint without token
+
+    with custom_test_server.container.emission_repository.override(
+        repository_mock
+    ) and custom_test_server.container.project_token_repository.override(
+        project_tokens_repository_mock
+    ):
+        response_no_token = client.post("/emissions", json=EMISSION_TO_CREATE)
+        response_no_token_message = response_no_token.json()
+
+    # Asserts
+    assert response_no_token.status_code == status.HTTP_403_FORBIDDEN
+    assert response_no_token_message == {
+        "detail": "Not allowed to perform this action. Missing project token"
+    }
+    project_tokens_repository_mock.get_project_token_by_run_id_and_token.assert_called_once_with(
+        UUID(RUN_1_ID), "token"
+    )
 
 
 def test_get_emissions_by_id_returns_correct_emission(client, custom_test_server):
