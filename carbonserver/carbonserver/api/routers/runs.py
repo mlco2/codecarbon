@@ -4,12 +4,13 @@ from typing import List, Optional, Union
 import dateutil.relativedelta
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.errors import EmptyResultException
-from carbonserver.api.schemas import Empty, Run, RunCreate, RunReport
+from carbonserver.api.schemas import AccessLevel, Empty, Run, RunCreate, RunReport
+from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
     ExperimentSumsByRunUsecase,
@@ -34,7 +35,16 @@ runs_temp_db = []
 def add_run(
     run: RunCreate,
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
+    project_token_service: ProjectTokenService = Depends(
+        Provide[ServerContainer.project_token_service]
+    ),
+    x_api_token: str = Header(None),  # Capture the x-api-token from the headers
 ) -> Run:
+    project_token_service.project_token_has_access(
+        AccessLevel.WRITE.value,
+        experiment_id=run.experiment_id,
+        project_token=x_api_token,
+    )
     return run_service.add_run(run)
 
 
