@@ -284,7 +284,7 @@ def send_run(experiment_id: str):
         url=URL + "/runs/",
         json=payload,
         timeout=2,
-        headers={"X-Project-Token": PROJECT_TOKEN},
+        headers={"x-api-token": PROJECT_TOKEN},
     )
     tc.assertEqual(r.status_code, 201)
     return r.json()
@@ -357,7 +357,7 @@ def add_emission(run_id: str):
         url=URL + "/emissions/",
         json=payload,
         timeout=2,
-        headers={"X-Project-Token": PROJECT_TOKEN},
+        headers={"x-api-token": PROJECT_TOKEN},
     )
     tc.assertEqual(r.status_code, 201)
     return r.json()

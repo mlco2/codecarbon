@@ -49,12 +49,12 @@ def add_emission(
     project_token_service: ProjectTokenService = Depends(
         Provide[ServerContainer.project_token_service]
     ),
-    x_project_token: str = Header(None),  # Capture the x-project-token from the headers
+    x_api_token: str = Header(None),  # Capture the x-api-token from the headers
 ) -> UUID:
     project_token_service.project_token_has_access(
         AccessLevel.WRITE.value,
         run_id=emission.run_id,
-        project_token=x_project_token,
+        project_token=x_api_token,
     )
     return emission_service.add_emission(emission)
 

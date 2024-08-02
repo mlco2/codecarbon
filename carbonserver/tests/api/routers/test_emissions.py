@@ -132,7 +132,7 @@ def test_add_emission(client, custom_test_server):
         project_tokens_repository_mock
     ):
         response = client.post(
-            "/emissions", json=EMISSION_TO_CREATE, headers={"X-Project-Token": "token"}
+            "/emissions", json=EMISSION_TO_CREATE, headers={"x-api-token": "token"}
         )
         actual_emission = response.json()
 

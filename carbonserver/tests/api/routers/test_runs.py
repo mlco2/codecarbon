@@ -122,7 +122,7 @@ def test_add_run(client, custom_test_server):
         project_tokens_repository_mock
     ):
         response = client.post(
-            "/runs", json=RUN_TO_CREATE, headers={"X-Project-Token": "token"}
+            "/runs", json=RUN_TO_CREATE, headers={"x-api-token": "token"}
         )
         actual_run = response.json()
 
