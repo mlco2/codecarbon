@@ -37,6 +37,7 @@ click==8.1.7
     # via
     #   hatch.envs.test.py3.8
     #   flask
+    #   typer
 dash==2.17.1
     # via
     #   hatch.envs.test.py3.8
@@ -49,7 +50,7 @@ dash-html-components==2.0.0
     # via dash
 dash-table==5.0.0
     # via dash
-exceptiongroup==1.2.1
+exceptiongroup==1.2.2
     # via pytest
 fire==0.6.0
     # via hatch.envs.test.py3.8
@@ -57,7 +58,7 @@ flask==3.0.3
     # via dash
 idna==3.7
     # via requests
-importlib-metadata==7.1.0
+importlib-metadata==8.2.0
     # via
     #   dash
     #   flask
@@ -89,7 +90,7 @@ packaging==24.1
     #   pytest
 pandas==2.0.3
     # via hatch.envs.test.py3.8
-plotly==5.22.0
+plotly==5.23.0
     # via dash
 pluggy==1.5.0
     # via pytest
@@ -103,9 +104,9 @@ py-cpuinfo==9.0.0
     # via hatch.envs.test.py3.8
 pygments==2.18.0
     # via rich
-pynvml==11.5.0
+pynvml==11.5.3
     # via hatch.envs.test.py3.8
-pytest==8.2.2
+pytest==8.3.2
     # via hatch.envs.test.py3.8
 python-dateutil==2.9.0.post0
     # via
@@ -117,7 +118,7 @@ pyyaml==6.0.1
     # via responses
 questionary==2.0.1
     # via hatch.envs.test.py3.8
-rapidfuzz==3.7.0
+rapidfuzz==3.9.5
     # via hatch.envs.test.py3.8
 requests==2.32.3
     # via
@@ -142,7 +143,7 @@ six==1.16.0
     #   fire
     #   python-dateutil
     #   retrying
-tenacity==8.4.1
+tenacity==9.0.0
     # via plotly
 termcolor==2.4.0
     # via fire
@@ -153,7 +154,10 @@ typer==0.12.3
 types-python-dateutil==2.9.0.20240316
     # via arrow
 typing-extensions==4.12.2
-    # via dash
+    # via
+    #   dash
+    #   rich
+    #   typer
 tzdata==2024.1
     # via pandas
 urllib3==2.2.2
@@ -162,7 +166,7 @@ urllib3==2.2.2
     #   responses
 wcwidth==0.2.13
     # via prompt-toolkit
-werkzeug==3.0.2
+werkzeug==3.0.3
     # via
     #   dash
     #   flask
