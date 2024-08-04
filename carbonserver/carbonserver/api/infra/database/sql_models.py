@@ -113,6 +113,7 @@ class Project(Base):
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
     experiments = relationship("Experiment", back_populates="project")
     organization = relationship("Organization", back_populates="projects")
+    project_tokens = relationship("ProjectToken", back_populates="project")
 
     def __repr__(self):
         return (
@@ -155,4 +156,25 @@ class User(Base):
             f'name="{self.name}", '
             f'is_active="{self.is_active}", '
             f'email="{self.email}")>'
+        )
+
+
+class ProjectToken(Base):
+    __tablename__ = "project_tokens"
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
+    name = Column(String)
+    token = Column(String, unique=True)
+    project = relationship("Project", back_populates="project_tokens")
+    last_used = Column(DateTime, nullable=True)
+    # Permissions
+    access = Column(Integer)
+
+    def __repr__(self):
+        return (
+            f'<ApiKey(project_id="{self.project_id}", '
+            f'api_key="{self.token}", '
+            f'name="{self.name}", '
+            f'last_used="{self.last_used}", '
+            f'access="{self.access}", '
         )

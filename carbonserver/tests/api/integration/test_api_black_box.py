@@ -28,6 +28,7 @@ if URL is None:
 
 experiment_id = project_id = user_id = api_key = org_id = None
 org_name = org_description = org_new_id = None
+project_token_id = PROJECT_TOKEN = None
 emission_id = None
 USER_PASSWORD = "Secret1!îstring"
 USER_EMAIL = "user@integration.test"
@@ -243,6 +244,23 @@ def test_api20_experiment_list():
     assert is_key_value_exist(r.json(), "id", experiment_id)
 
 
+def test_api21_create_api_project_token():
+    # This project token is needed to create emissions/runs
+    global PROJECT_TOKEN
+    global project_token_id
+    assert project_id is not None
+    payload = {
+        "name": "Project token for test_api_black_box",
+        "access": 2,
+    }
+    r = requests.post(
+        url=URL + f"/projects/{project_id}/api-tokens", json=payload, timeout=2
+    )
+    tc.assertEqual(r.status_code, 201)
+    PROJECT_TOKEN = r.json()["token"]
+    project_token_id = r.json()["id"]
+
+
 def send_run(experiment_id: str):
     assert experiment_id is not None
     payload = {
@@ -262,7 +280,12 @@ def send_run(experiment_id: str):
         "ram_total_size": 16948.22,
         "tracking_mode": "Machine",
     }
-    r = requests.post(url=URL + "/runs/", json=payload, timeout=2)
+    r = requests.post(
+        url=URL + "/runs/",
+        json=payload,
+        timeout=2,
+        headers={"x-api-token": PROJECT_TOKEN},
+    )
     tc.assertEqual(r.status_code, 201)
     return r.json()
 
@@ -330,7 +353,12 @@ def add_emission(run_id: str):
         "ram_energy": default_emission["ram_energy"],
         "energy_consumed": default_emission["energy_consumed"],
     }
-    r = requests.post(url=URL + "/emissions/", json=payload, timeout=2)
+    r = requests.post(
+        url=URL + "/emissions/",
+        json=payload,
+        timeout=2,
+        headers={"x-api-token": PROJECT_TOKEN},
+    )
     tc.assertEqual(r.status_code, 201)
     return r.json()
 
@@ -524,3 +552,9 @@ def test_api33_project_read_last_run():
     assert len(r.json()) > 0
     assert r.json()["id"] == run_id_2
     assert r.json()["experiment_id"] == experiment_id
+
+
+def test_api34_project_api_token_delete():
+    url = f"{URL}/projects/{project_id}/api-tokens/{project_token_id}"
+    r = requests.delete(url, timeout=2)
+    tc.assertEqual(r.status_code, 204)
