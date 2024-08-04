@@ -40,7 +40,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2024.1
     # via pandas
-rapidfuzz==3.9.3
+rapidfuzz==3.9.4
     # via hatch.envs.default
 requests==2.32.3
     # via hatch.envs.default

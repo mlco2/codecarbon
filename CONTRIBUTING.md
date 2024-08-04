@@ -210,6 +210,13 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 <!-- TOC --><a name="versioning"></a>
 
+### Update all dependancies
+
+```sh
+pipx install hatch-pip-compile
+hatch-pip-compile --upgrade --all
+```
+
 ### Versioning
 
 To add a new feature to codecarbon, apply the following workflow:

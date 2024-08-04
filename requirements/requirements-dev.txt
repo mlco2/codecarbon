@@ -32,13 +32,13 @@ click==8.1.7
     #   black
 distlib==0.3.8
     # via virtualenv
-filelock==3.15.3
+filelock==3.15.4
     # via virtualenv
-identify==2.5.36
+identify==2.6.0
     # via pre-commit
 idna==3.7
     # via requests
-mypy==1.10.0
+mypy==1.10.1
     # via hatch.envs.dev
 mypy-extensions==1.0.0
     # via
@@ -76,11 +76,11 @@ pytz==2024.1
     # via pandas
 pyyaml==6.0.1
     # via pre-commit
-rapidfuzz==3.9.3
+rapidfuzz==3.9.4
     # via hatch.envs.dev
 requests==2.32.3
     # via hatch.envs.dev
-ruff==0.4.9
+ruff==0.5.1
     # via hatch.envs.dev
 six==1.16.0
     # via python-dateutil
@@ -98,5 +98,5 @@ tzdata==2024.1
     # via pandas
 urllib3==2.2.2
     # via requests
-virtualenv==20.26.2
+virtualenv==20.26.3
     # via pre-commit
