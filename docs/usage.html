@@ -122,10 +122,21 @@
 <section id="command-line">
 <h3>Command line<a class="headerlink" href="#command-line" title="Link to this heading"></a></h3>
 <p>If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor --no-api</span>
+<p>Create a minimal configuration file (just follow the prompts)</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon config</span>
+</pre></div>
+</div>
+<p>[![asciicast](<a class="reference external" href="https://asciinema.org/a/667970.svg)](https://asciinema.org/a/667970">https://asciinema.org/a/667970.svg)](https://asciinema.org/a/667970</a>)</p>
+<p>You can use the same command to modify an existing config</p>
+<p>[![asciicast](<a class="reference external" href="https://asciinema.org/a/667971.svg)](https://asciinema.org/a/667971">https://asciinema.org/a/667971.svg)](https://asciinema.org/a/667971</a>)</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor</span>
 </pre></div>
 </div>
 <p>You have to stop the monitoring manually with <code class="docutils literal notranslate"><span class="pre">Ctrl+C</span></code>.</p>
+<p>In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
+to an API running on “localhost:8008” (Or you can start a private local API with “docker-compose up”). Using the public API with
+this is not supported yet (coming soon!)</p>
+<p>[![asciicast](<a class="reference external" href="https://asciinema.org/a/667984.svg)](https://asciinema.org/a/667984">https://asciinema.org/a/667984.svg)](https://asciinema.org/a/667984</a>)</p>
 <p>Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.</p>
 </section>
 <section id="explicit-object">
