@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, List, Dict, Union
+from typing import Any, Dict, List, Union
 
 import pynvml
 
