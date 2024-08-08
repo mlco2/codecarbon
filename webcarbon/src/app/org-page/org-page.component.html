@@ -1,0 +1,9 @@
+
+[{{status.status}} {{status.email}}]
+
+<h2>Organizations</h2>
+@for (org of orgs; track org) {
+ <li>
+    {{ org.name }} [{{org.id}}]
+ </li>
+}
