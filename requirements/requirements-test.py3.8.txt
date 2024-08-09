@@ -60,7 +60,7 @@ flask==3.0.3
     # via dash
 idna==3.7
     # via requests
-importlib-metadata==8.0.0
+importlib-metadata==8.2.0
     # via
     #   dash
     #   flask
@@ -118,9 +118,11 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2024.1
     # via pandas
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via responses
-rapidfuzz==3.9.4
+questionary==2.0.1
+    # via hatch.envs.test.py3.8
+rapidfuzz==3.9.6
     # via hatch.envs.test.py3.8
 requests==2.32.3
     # via
@@ -145,7 +147,7 @@ six==1.16.0
     #   fire
     #   python-dateutil
     #   retrying
-tenacity==8.5.0
+tenacity==9.0.0
     # via plotly
 termcolor==2.4.0
     # via fire

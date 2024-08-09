@@ -82,7 +82,7 @@ mock==5.1.0
     # via hatch.envs.test.py3.9
 nest-asyncio==1.6.0
     # via dash
-numpy==2.0.0 ; python_version >= "3.9"
+numpy==2.0.1 ; python_version >= "3.9"
     # via
     #   hatch.envs.test.py3.9
     #   pandas
@@ -116,11 +116,11 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2024.1
     # via pandas
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via responses
 questionary==2.0.1
     # via hatch.envs.test.py3.9
-rapidfuzz==3.9.5
+rapidfuzz==3.9.6
     # via hatch.envs.test.py3.9
 requests==2.32.3
     # via
