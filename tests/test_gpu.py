@@ -184,6 +184,23 @@ class TestGpu(FakeGPUEnv):
 
         assert alldevices.get_gpu_details() == expected_power_limit
 
+    def test_gpu_not_ready(self):
+        import pynvml
+
+        from codecarbon.core.gpu import AllGPUDevices
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("System is not in ready state")
+
+        pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+        alldevices = AllGPUDevices()
+
+        expected = deepcopy(self.expected)
+        expected[0]["total_energy_consumption"] = None
+        expected[1]["total_energy_consumption"] = None
+
+        assert alldevices.get_gpu_details() == expected
+
     def test_gpu_metadata_total_power(self):
         """
         Get the total power of all GPUs
