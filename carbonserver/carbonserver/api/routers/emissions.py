@@ -4,12 +4,11 @@ from uuid import UUID
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Header, Query
-from fastapi_pagination import Page, paginate
+from fastapi_pagination import paginate
 from fastapi_pagination.default import Page as BasePage
 from fastapi_pagination.default import Params as BaseParams
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import AccessLevel, Emission, EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.project_token_service import ProjectTokenService
@@ -29,9 +28,7 @@ class Page(BasePage[T], Generic[T]):  # noqa: F811
 
 EMISSIONS_ROUTER_TAGS = ["Emissions"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 
 
 @router.post(
@@ -57,22 +54,6 @@ def add_emission(
         project_token=x_api_token,
     )
     return emission_service.add_emission(emission)
-
-
-@router.get(
-    "/emissions/{emission_id}",
-    tags=EMISSIONS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-    response_model=Emission,
-)
-@inject
-def read_emission(
-    emission_id: str,
-    emission_service: EmissionService = Depends(
-        Provide[ServerContainer.emission_service]
-    ),
-) -> Emission:
-    return emission_service.get_one_emission(emission_id)
 
 
 @router.get(

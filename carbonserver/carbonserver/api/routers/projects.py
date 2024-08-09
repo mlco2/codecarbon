@@ -11,15 +11,13 @@ from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Project, ProjectCreate, ProjectPatch, ProjectReport
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
+from carbonserver.carbonserver.api.services.auth_service import UserWithAuthDependency
 
 PROJECTS_ROUTER_TAGS = ["Projects"]
 
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
-
-
-projects_temp_db = []
 
 
 @router.post(
@@ -31,9 +29,10 @@ projects_temp_db = []
 @inject
 def add_project(
     project: ProjectCreate,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    return project_service.add_project(project)
+    return project_service.add_project(project, auth_user.db_user)
 
 
 # Delete project
@@ -44,9 +43,11 @@ def add_project(
 )
 @inject
 def delete_project(
-    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+    project_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> None:
-    return project_service.delete_project(project_id)
+    return project_service.delete_project(project_id, auth_user.db_user)
 
 
 # Patch project
@@ -58,31 +59,70 @@ def delete_project(
 )
 @inject
 def patch_project(
-    project_id: str,
     project: ProjectPatch,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    return project_service.patch_project(project_id, project)
+    return project_service.patch_project(project, auth_user.db_user)
 
 
-@router.get("/projects/{project_id}", tags=PROJECTS_ROUTER_TAGS, response_model=Project)
+@router.get(
+    "/projects/{project_id}",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=Project
+)
 @inject
 def read_project(
-    project_id: str, project_service=Depends(Provide[ServerContainer.project_service])
+    project_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    return project_service.get_one_project(project_id)
+    return project_service.get_one_project(project_id, auth_user.db_user)
+
+
+@router.get(
+    "/organizations/{organization_id}/projects",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=List[Project]
+)
+@inject
+def list_projects_nested(
+    organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
+) -> List[Project]:
+    return project_service.list_projects_from_organization(organization_id, auth_user.db_user)
+
+
+@router.get(
+    "/projects",
+    tags=PROJECTS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+    response_model=List[Project]
+)
+@inject
+def list_projects(
+    organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
+) -> List[Project]:
+    return project_service.list_projects_from_organization(organization_id, auth_user.db_user)
 
 
 @router.get(
     "/projects/{project_id}/sums",
     tags=PROJECTS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
+    response_model=ProjectReport
 )
 @inject
 def read_project_detailed_sums(
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_global_sum_usecase: ProjectSumsUsecase = Depends(
         Provide[ServerContainer.project_sums_usecase]
     ),
@@ -96,29 +136,3 @@ def read_project_detailed_sums(
     return project_global_sum_usecase.compute_detailed_sum(
         project_id, start_date, end_date
     )
-
-
-@router.get(
-    "/organizations/{organization_id}/projects",
-    tags=PROJECTS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-)
-@inject
-def list_projects_nested(
-    organization_id: str,
-    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
-) -> List[Project]:
-    return project_service.list_projects_from_organization(organization_id)
-
-
-@router.get(
-    "/projects",
-    tags=PROJECTS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-)
-@inject
-def list_projects(
-    organization: str,
-    project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
-) -> List[Project]:
-    return project_service.list_projects_from_organization(organization)
