@@ -25,7 +25,10 @@ class GPUDevice:
         self._init_static_details()
 
     def _get_energy_kwh(self):
-        return Energy.from_millijoules(self._get_total_energy_consumption())
+        total_energy_consumption = self._get_total_energy_consumption()
+        if total_energy_consumption is None:
+            return self.last_energy
+        return Energy.from_millijoules(total_energy_consumption)
 
     def delta(self, duration: Time) -> dict:
         """
@@ -92,7 +95,13 @@ class GPUDevice:
         """Returns total energy consumption for this GPU in millijoules (mJ) since the driver was last reloaded
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
         """
-        return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+        try:
+            return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+        except pynvml.NVMLError:
+            logger.warning(
+                "Failed to retrieve gpu total energy consumption", exc_info=True
+            )
+            return None
 
     def _get_gpu_name(self):
         """Returns the name of the GPU device
