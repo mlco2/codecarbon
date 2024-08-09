@@ -13,12 +13,12 @@ export default function Home() {
                     Get started by signing in with your preferred service.
                 </p>
                 <div className="mt-6">
-                    <Link href="/auth/login?redirect=/home?auth=true" passHref>
+                    <a href="/auth/login?redirect=/home?auth=true">
                         <Button className="w-full max-w-[300px]">
                             <LogIn className="mr-2 h-5 w-5" />
                             Sign in or create an account
                         </Button>
-                    </Link>
+                    </a>
                 </div>
             </div>
         </main>
