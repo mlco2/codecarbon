@@ -19,7 +19,7 @@ export default function RootLayout({
             <body className={inter.className}>
                 <SWRProvider>
                     <FiefAuthProvider
-                        currentUserPath="/api/current-user"
+                        currentUserPath="/auth/check"
                         state={{
                             userinfo: null,
                             accessTokenInfo: null,
