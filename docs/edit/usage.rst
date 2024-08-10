@@ -14,20 +14,27 @@ When the environment has internet access, the ``EmissionsTracker`` object or the
 Command line
 ~~~~~~~~~~~~
 
-If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:
 
-Create a minimal configuration file (just follow the prompts)
+Create a minimal configuration file (just follow the prompts) : 
 
 .. code-block:: console
 
   codecarbon config  
 
-[![asciicast](https://asciinema.org/a/667970.svg)](https://asciinema.org/a/667970)
+.. image:: https://asciinema.org/a/667970.svg
+            :align: center
+            :alt: Init config
+            :target: https://asciinema.org/a/667970
+            
+You can use the same command to modify an existing config :
 
-You can use the same command to modify an existing config 
+.. image:: https://asciinema.org/a/667971.svg
+            :align: center
+            :alt: Modify config
+            :target: https://asciinema.org/a/667971
 
-[![asciicast](https://asciinema.org/a/667971.svg)](https://asciinema.org/a/667971)
 
+If you want to track the emissions of a computer without having to modify your code, you can use :
 
 .. code-block:: console
 
@@ -39,7 +46,12 @@ In the following example you will see how to use the CLI to monitor all the emis
 to an API running on "localhost:8008" (Or you can start a private local API with "docker-compose up"). Using the public API with 
 this is not supported yet (coming soon!)
 
-[![asciicast](https://asciinema.org/a/667984.svg)](https://asciinema.org/a/667984)
+.. image:: https://asciinema.org/a/667984.svg
+            :align: center
+            :alt: Monitor example
+            :target: https://asciinema.org/a/667984
+
+
 
 Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
 
