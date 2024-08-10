@@ -4,10 +4,12 @@
 # - mock
 # - pytest
 # - responses
-# - numpy
+# - numpy<2.0.0; python_version < "3.9"
+# - numpy; python_version >= "3.9"
 # - psutil
 # - requests-mock
 # - rapidfuzz
+# - importlib_resources; python_version < "3.9"
 # - arrow
 # - click
 # - pandas
@@ -62,6 +64,8 @@ importlib-metadata==8.2.0
     # via
     #   dash
     #   flask
+importlib-resources==6.4.0 ; python_version < "3.9"
+    # via hatch.envs.test.py3.8
 iniconfig==2.0.0
     # via pytest
 itsdangerous==2.2.0
@@ -80,7 +84,7 @@ mock==5.1.0
     # via hatch.envs.test.py3.8
 nest-asyncio==1.6.0
     # via dash
-numpy==1.24.4
+numpy==1.24.4 ; python_version < "3.9"
     # via
     #   hatch.envs.test.py3.8
     #   pandas
@@ -114,11 +118,11 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2024.1
     # via pandas
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via responses
 questionary==2.0.1
     # via hatch.envs.test.py3.8
-rapidfuzz==3.9.5
+rapidfuzz==3.9.6
     # via hatch.envs.test.py3.8
 requests==2.32.3
     # via
@@ -171,7 +175,9 @@ werkzeug==3.0.3
     #   dash
     #   flask
 zipp==3.19.2
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
