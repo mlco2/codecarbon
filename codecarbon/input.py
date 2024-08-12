@@ -2,11 +2,20 @@
 App configuration: This will likely change when we have a common location for data files
 """
 
+import atexit
 import json
+import sys
+from contextlib import ExitStack
 from typing import Dict
 
 import pandas as pd
-import pkg_resources
+
+if sys.version_info >= (3, 9):
+    from importlib.resources import as_file as importlib_resources_as_file
+    from importlib.resources import files as importlib_resources_files
+else:
+    from importlib_resources import as_file as importlib_resources_as_file
+    from importlib_resources import files as importlib_resources_files
 
 
 class DataSource:
@@ -26,13 +35,22 @@ class DataSource:
     def geo_js_url(self):
         return self.config["geo_js_url"]
 
+    @staticmethod
+    def get_ressource_path(package: str, filepath: str):
+        file_manager = ExitStack()
+        atexit.register(file_manager.close)
+        ref = importlib_resources_files(package).joinpath(filepath)
+        print("ref:", ref)
+        path = file_manager.enter_context(importlib_resources_as_file(ref))
+        return path
+
     @property
     def cloud_emissions_path(self):
         """
         Resource Extraction from a package
         https://setuptools.readthedocs.io/en/latest/pkg_resources.html#resource-extraction
         """
-        return pkg_resources.resource_filename(
+        return self.get_ressource_path(
             self.module_name, self.config["cloud_emissions_path"]
         )
 
@@ -41,31 +59,29 @@ class DataSource:
         """
         Get the path from the package resources.
         """
-        return pkg_resources.resource_filename(
+        return self.get_ressource_path(
             self.module_name, self.config["carbon_intensity_per_source_path"]
         )
 
     def country_emissions_data_path(self, country: str):
-        return pkg_resources.resource_filename(
+        return self.get_ressource_path(
             self.module_name, self.config[f"{country}_emissions_data_path"]
         )
 
     def country_energy_mix_data_path(self, country: str):
-        return pkg_resources.resource_filename(
+        return self.get_ressource_path(
             self.module_name, self.config[f"{country}_energy_mix_data_path"]
         )
 
     @property
     def global_energy_mix_data_path(self):
-        return pkg_resources.resource_filename(
+        return self.get_ressource_path(
             self.module_name, self.config["global_energy_mix_data_path"]
         )
 
     @property
     def cpu_power_path(self):
-        return pkg_resources.resource_filename(
-            self.module_name, self.config["cpu_power_path"]
-        )
+        return self.get_ressource_path(self.module_name, self.config["cpu_power_path"])
 
     def get_global_energy_mix_data(self) -> Dict:
         """

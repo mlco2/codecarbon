@@ -121,11 +121,22 @@
 <code class="docutils literal notranslate"><span class="pre">offline</span></code> parameter set to <code class="docutils literal notranslate"><span class="pre">False</span></code> by default.</p>
 <section id="command-line">
 <h3>Command line<a class="headerlink" href="#command-line" title="Link to this heading"></a></h3>
-<p>If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor --no-api</span>
+<p>Create a minimal configuration file (just follow the prompts) :</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon config</span>
+</pre></div>
+</div>
+<a class="reference external image-reference" href="https://asciinema.org/a/667970"><img alt="Init config" class="align-center" src="https://asciinema.org/a/667970.svg" /></a>
+<p>You can use the same command to modify an existing config :</p>
+<a class="reference external image-reference" href="https://asciinema.org/a/667971"><img alt="Modify config" class="align-center" src="https://asciinema.org/a/667971.svg" /></a>
+<p>If you want to track the emissions of a computer without having to modify your code, you can use :</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor</span>
 </pre></div>
 </div>
 <p>You have to stop the monitoring manually with <code class="docutils literal notranslate"><span class="pre">Ctrl+C</span></code>.</p>
+<p>In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
+to an API running on “localhost:8008” (Or you can start a private local API with “docker-compose up”). Using the public API with
+this is not supported yet (coming soon!)</p>
+<a class="reference external image-reference" href="https://asciinema.org/a/667984"><img alt="Monitor example" class="align-center" src="https://asciinema.org/a/667984.svg" /></a>
 <p>Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.</p>
 </section>
 <section id="explicit-object">

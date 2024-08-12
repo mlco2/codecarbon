@@ -7,10 +7,16 @@ import os
 
 import requests
 
+from codecarbon.core.config import get_hierarchical_config
+
 API_PATH = os.getenv("CODECARBON_API_URL")
 if API_PATH is None:
+    conf = get_hierarchical_config()
+    if "api_endpoint" in conf:
+        API_PATH = conf["api_endpoint"]
     # API_PATH = "http://carbonserver.cleverapps.io"
-    API_PATH = "https://api.codecarbon.io"
+    else:
+        API_PATH = "https://api.codecarbon.io"
 # API_PATH = "http://localhost:8008"  # export CODECARBON_API_URL=http://localhost:8008
 # API_PATH = "http://carbonserver.cleverapps.io"
 USER = "jessica"
@@ -216,4 +222,5 @@ def load_run_infos(run_id: str, **kwargs) -> tuple:
         run_id = '58e2c11e-b91f-4adb-b0e0-7e91b72ffb80'
     """
     path = f"{API_PATH}/run/{run_id}"
+    return path, kwargs
     return path, kwargs
