@@ -207,7 +207,6 @@ class IntelPowerGadget:
         Placeholder method for starting the Intel Power Gadget monitoring.
         """
         # TODO: Read energy
-        pass
 
 
 class IntelRAPL:
@@ -314,9 +313,9 @@ class IntelRAPL:
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
                 # We fake the name used by Power Gadget when using RAPL
                 if "Energy" in rapl_file.name:
-                    cpu_details[
-                        rapl_file.name.replace("Energy", "Power")
-                    ] = rapl_file.power.W
+                    cpu_details[rapl_file.name.replace("Energy", "Power")] = (
+                        rapl_file.power.W
+                    )
         except Exception as e:
             logger.info(
                 "Unable to read Intel RAPL files at %s\n \
