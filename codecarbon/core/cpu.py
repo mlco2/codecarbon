@@ -409,8 +409,8 @@ class TDP:
             THRESHOLD_TOKEN_SET defines the similarity ratio value to consider
             token_set matches (for more detail see fuzz.token_set_ratio).
         """
-        THRESHOLD_DIRECT = 100
-        THRESHOLD_TOKEN_SET = 100
+        THRESHOLD_DIRECT: int = 100
+        THRESHOLD_TOKEN_SET: int = 100
 
         direct_match = process.extractOne(
             model_raw,
