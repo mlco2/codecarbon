@@ -83,7 +83,7 @@ cd codecarbon
 hatch env create
 ```
 
-> Note: this `hatch env create` command will use `venv` + the [normal python resoultion](https://hatch.pypa.io/latest/plugins/environment/virtual/#python-resolution) to get the Python version. If you want to use a specific Python version, you can do `export HATCH_PYTHON=path/to/your/bin/python` before running `hatch env create`.
+> Note: this `hatch env create` command will use `venv` + the [normal python resolution](https://hatch.pypa.io/latest/plugins/environment/virtual/#python-resolution) to get the Python version. If you want to use a specific Python version, you can do `export HATCH_PYTHON=path/to/your/bin/python` before running `hatch env create`.
 
 ### Some Hatch commands
 
