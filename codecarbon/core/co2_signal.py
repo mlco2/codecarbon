@@ -23,7 +23,7 @@ def get_emissions(
         energy (Energy):
             An object representing the energy consumption in kilowatt-hours (kWh).
         geo (GeoMetadata):
-            An object containing geographic metadata, including either latitude/longitude
+            Geographic metadata, including either latitude/longitude
             or a country code.
         co2_signal_api_token (str, optional):
             The API token for authenticating with the CO2 Signal API (default is an empty string).
