@@ -33,7 +33,8 @@ def _has_powermetrics_sudo():
             "Apple PowerMetrics not available. Please install it if you are using an Apple product."
         )
         return False
-    process = subprocess.Popen(
+
+    with subprocess.Popen(
         [
             "sudo",
             "powermetrics",
@@ -49,22 +50,21 @@ def _has_powermetrics_sudo():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-    )
+    ) as process:
+        _, stderr = process.communicate()
 
-    _, stderr = process.communicate()
+        if re.search(r"[sudo].*password", stderr):
+            logger.debug(
+                """Not using PowerMetrics, sudo password prompt detected.
+                    If you want to enable Powermetrics please modify your sudoers file
+                    as described in :
+                    https://mlco2.github.io/codecarbon/methodology.html#power-usage
+                """
+            )
+            return False
+        if process.returncode != 0:
+            raise Exception("Return code != 0")
 
-    if re.search(r"[sudo].*password", stderr):
-        logger.debug(
-            """Not using PowerMetrics, sudo password prompt detected.
-                If you want to enable Powermetrics please modify your sudoers file
-                as described in :
-                https://mlco2.github.io/codecarbon/methodology.html#power-usage
-            """
-        )
-        return False
-    if process.returncode != 0:
-        raise Exception("Return code != 0")
-    else:
         return True
 
 
