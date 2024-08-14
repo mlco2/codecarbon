@@ -5,11 +5,13 @@ import requests
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import GeoMetadata
 
-URL = "https://api.co2signal.com/v1/latest"
-CO2_SIGNAL_API_TIMEOUT = 30
+URL: str = "https://api.co2signal.com/v1/latest"
+CO2_SIGNAL_API_TIMEOUT: int = 30
 
 
-def get_emissions(energy: Energy, geo: GeoMetadata, co2_signal_api_token: str = ""):
+def get_emissions(
+    energy: Energy, geo: GeoMetadata, co2_signal_api_token: str = ""
+) -> float:
     params: Dict[str, Any]
     if geo.latitude:
         params = {"lat": geo.latitude, "lon": geo.longitude}
