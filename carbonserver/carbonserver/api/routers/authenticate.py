@@ -87,6 +87,8 @@ async def get_login(
         creds = base64.b64encode(res.content).decode()
         url = f"{request.base_url}home?auth=true&creds={creds}"
         response = RedirectResponse(url=url)
+        print(url)
+        print(response)
         response.set_cookie(
             SESSION_COOKIE_NAME,
             res.json()["access_token"],

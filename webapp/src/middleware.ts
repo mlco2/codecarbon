@@ -11,10 +11,11 @@ const authMiddleware = fiefAuth.middleware([
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
-
+    console.log(pathname)
+    console.log(request.nextUrl)
     if (pathname === "/") {
         return;
     }
-
+    console.log("Not on /")
     return authMiddleware(request);
 }

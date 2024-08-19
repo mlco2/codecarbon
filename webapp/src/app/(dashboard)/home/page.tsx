@@ -29,6 +29,7 @@ async function checkAuth() {
 }
 
 async function getDefaultOrgId(): Promise<string | null> {
+    console.log("Being invoked")
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations`);
 
     if (!res.ok) {
@@ -36,6 +37,7 @@ async function getDefaultOrgId(): Promise<string | null> {
     }
 
     const orgs = await res.json();
+    console.log(orgs)
     if (orgs.length > 0) {
         return orgs[0].id;
     }
