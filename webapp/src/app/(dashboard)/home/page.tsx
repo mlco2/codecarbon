@@ -12,14 +12,17 @@ import { redirect } from "next/navigation";
 async function checkAuth() {
     const token = fiefAuth.getAccessTokenInfo();
     if (!token) {
+        console.log("No token found")
         throw new Error("No token found");
     }
+    console.log("checkAuth() 20")
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         headers: {
             Authorization: `Bearer ${token?.access_token}`,
         },
     });
 
+    console.log("checkAuth() 300")
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
         throw new Error("Failed to fetch /auth/login");
@@ -57,7 +60,7 @@ export default async function HomePage({
             const res = await checkAuth();
             console.log("User is authenticated:", res);
         } catch (error) {
-            console.error("Error with /check/auth:", error);
+            console.error("Error with /auth/check:", error);
         }
     }
 

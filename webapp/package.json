@@ -4,10 +4,11 @@
   "private": true,
   "main": "myapp.js",
   "scripts": {
-    "dev": "next dev",
+    "dev1": "next dev",
+    "dev": "next dev -p 4200",
     "build": "next build",
     "install": "next build",
-    "start": "next start",
+    "start": "next dev",
     "lint": "next lint"
   },
   "dependencies": {

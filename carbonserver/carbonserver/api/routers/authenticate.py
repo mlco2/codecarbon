@@ -81,20 +81,43 @@ async def get_login(
                 "client_secret": settings.fief_client_secret,
             },
         )
-
         # check if the user exists in local DB ; create if needed
-        sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
+        if "id_token" not in res.json():
+            # get profile data from fief server if not present in response
+            id_token = requests.get(
+                settings.fief_url + "/api/userinfo",
+                headers={"Authorization": "Bearer " + res.json()["access_token"]},
+            ).json()
+            sign_up_service.check_jwt_user(id_token)
+        else:
+            sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
+
+        print("=> 100 sign up check done")
         creds = base64.b64encode(res.content).decode()
+        print("=> 120")
         url = f"{request.base_url}home?auth=true&creds={creds}"
-        response = RedirectResponse(url=url)
+        print("=> 150 redir url", url)
+        # response = RedirectResponse(url=url)
+        content = f"""<html>
+        <head>
+        <script>
+        window.location.href = "{url}";
+        </script>
+        </head>
+        </html>
+        """
+        response = Response(content=content)
         print(url)
         print(response)
+        print("=> 200")
         response.set_cookie(
             SESSION_COOKIE_NAME,
             res.json()["access_token"],
             httponly=True,
             secure=False,
         )
+        print("=> 250")
+        print(response)
         return response
 
     state = str(int(random.random() * 1000))
