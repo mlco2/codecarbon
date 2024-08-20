@@ -77,6 +77,17 @@ def detect_cpu_model() -> str:
         return cpu_model_detected
     return None
 
+def is_mac_os() -> str:
+    system = sys.platform.lower()
+    return system.startswith("dar")
+
+def is_windows_os() -> str:
+    system = sys.platform.lower()
+    return system.startswith("win")
+
+def is_linux_os() -> str:
+    system = sys.platform.lower()
+    return system.startswith("lin")
 
 def count_cpus() -> int:
     if SLURM_JOB_ID is None:
