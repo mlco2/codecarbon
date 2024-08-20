@@ -275,6 +275,47 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
 
+        self.set_CPU_GPU_ram_tracking()
+
+        self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
+
+        logger.info(">>> Tracker's metadata:")
+        logger.info(f"  Platform system: {self._conf.get('os')}")
+        logger.info(f"  Python version: {self._conf.get('python_version')}")
+        logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
+        logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
+        logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
+        logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
+        logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
+        logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
+
+        # Run `self._measure_power` every `measure_power_secs` seconds in a
+        # background thread
+        self._scheduler = PeriodicScheduler(
+            function=self._measure_power_and_energy,
+            interval=self._measure_power_secs,
+        )
+
+        self._data_source = DataSource()
+
+        cloud: CloudMetadata = self._get_cloud_metadata()
+
+        if cloud.is_on_private_infra:
+            self._geo = self._get_geo_metadata()
+            self._conf["longitude"] = self._geo.longitude
+            self._conf["latitude"] = self._geo.latitude
+            self._conf["region"] = cloud.region
+            self._conf["provider"] = cloud.provider
+        else:
+            self._conf["region"] = cloud.region
+            self._conf["provider"] = cloud.provider
+
+        self._emissions: Emissions = Emissions(
+            self._data_source, self._co2_signal_api_token
+        )
+        self._init_output_methods(api_key)
+
+    def set_CPU_GPU_ram_tracking(self):
         if self._gpu_ids:
             # If _gpu_ids is a string or a list of int, parse it to a list of ints
             if isinstance(self._gpu_ids, str) or (
@@ -320,6 +361,7 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
+        #change code to check if powermetrics or sudo needs to be installed
         elif (
             powermetrics.is_powermetrics_available() and self._default_cpu_power is None
         ):
@@ -338,6 +380,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_model"] = hardware_gpu.get_model()
             self._conf["gpu_count"] = 1
         else:
+            # PRINT WHAT TO INSTALL TO INCREASE ACCURACY
             logger.warning(
                 "No CPU tracking mode found. Falling back on CPU constant mode."
             )
@@ -361,44 +404,7 @@ class BaseEmissionsTracker(ABC):
                 )
                 hardware = CPU.from_utils(self._output_dir, "constant")
                 self._hardware.append(hardware)
-
-        self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
-
-        logger.info(">>> Tracker's metadata:")
-        logger.info(f"  Platform system: {self._conf.get('os')}")
-        logger.info(f"  Python version: {self._conf.get('python_version')}")
-        logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
-        logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
-        logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
-        logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
-        logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
-        logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
-
-        # Run `self._measure_power` every `measure_power_secs` seconds in a
-        # background thread
-        self._scheduler = PeriodicScheduler(
-            function=self._measure_power_and_energy,
-            interval=self._measure_power_secs,
-        )
-
-        self._data_source = DataSource()
-
-        cloud: CloudMetadata = self._get_cloud_metadata()
-
-        if cloud.is_on_private_infra:
-            self._geo = self._get_geo_metadata()
-            self._conf["longitude"] = self._geo.longitude
-            self._conf["latitude"] = self._geo.latitude
-            self._conf["region"] = cloud.region
-            self._conf["provider"] = cloud.provider
-        else:
-            self._conf["region"] = cloud.region
-            self._conf["provider"] = cloud.provider
-
-        self._emissions: Emissions = Emissions(
-            self._data_source, self._co2_signal_api_token
-        )
-        self._init_output_methods(api_key)
+        #Log what tracking methods are being used
 
     def _init_output_methods(self, api_key):
         """
