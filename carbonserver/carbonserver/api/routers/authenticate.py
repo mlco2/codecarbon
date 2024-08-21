@@ -2,8 +2,9 @@ import base64
 import logging
 import random
 from dataclasses import dataclass
-from typing import Annotated, Optional
+from typing import Optional
 
+import jwt
 import requests
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
@@ -12,7 +13,6 @@ from fastapi.responses import RedirectResponse
 from fastapi.security import (
     APIKeyCookie,
     HTTPAuthorizationCredentials,
-    HTTPBearer,
     OAuth2AuthorizationCodeBearer,
 )
 from fief_client import FiefAsync, FiefUserInfo
@@ -69,9 +69,7 @@ scheme = OAuth2AuthorizationCodeBearer(
     auto_error=False,
 )
 web_scheme = APIKeyCookie(name=SESSION_COOKIE_NAME, auto_error=False)
-auth = fief_auth = FiefAuth(fief, scheme)
-web_auth = FiefAuth(fief, web_scheme)
-api_auth = Annotated[HTTPAuthorizationCredentials, Depends(HTTPBearer())]
+fief_auth_cookie = FiefAuth(fief, web_scheme)
 
 
 class UserOrRedirectAuth(FiefAuth):
@@ -93,36 +91,44 @@ web_auth_with_redirect = UserOrRedirectAuth(fief, web_scheme)
 class UserWithAuthDependency:
     """
     Used to reconciliate oauth and db sides for a user
+    Auth token can be passed as bearer token or cookie
     """
 
     def __init__(
         self,
-        auth_user: Optional[FiefUserInfo] = Depends(
-            fief_auth.current_user(optional=True)
+        auth_user_cookie: Optional[FiefUserInfo] = Depends(
+            fief_auth_cookie.current_user(optional=True)
         ),
+        cookie_token: Optional[str] = Depends(web_scheme),
         api_key: HTTPAuthorizationCredentials = Depends(web_scheme),
         user_service: UserService = Depends(Provide[ServerContainer.user_service]),
     ):
         self.user_service = user_service
-        self.auth_user = auth_user
+        if cookie_token is not None:
+            self.auth_user = jwt.decode(
+                cookie_token, options={"verify_signature": False}, algorithms=["HS256"]
+            )
+        else:
+            self.auth_user = None
+
         try:
-            self.db_user = user_service.get_user_by_id(auth_user["sub"])
+            self.db_user = user_service.get_user_by_id(self.auth_user["sub"])
         except Exception:
             self.db_user = None
-        print("UserWithAuthDependency", auth_user, self.db_user)
 
 
 @router.get("/auth/check", name="auth-check")
+@inject
 def check_login(
-    user: FiefUserInfo = Depends(web_auth_with_redirect.current_user(optional=False)),
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ):
     """
     return user data or redirect to login screen
     null value if not logged in
     """
-    sign_up_service.check_jwt_user(user["sub"], create=True)
-    return {"user": user}
+    # sign_up_service.check_jwt_user(auth_user.auth_user, create=True)
+    return {"user": auth_user.auth_user}
 
 
 @router.get("/auth/auth-callback", name="auth_callback")
@@ -165,9 +171,38 @@ async def get_login(
         )
 
         # check if the user exists in local DB ; create if needed
-        sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
-        url = f"{request.base_url}web/login#creds={base64.b64encode(res.content).decode()}"
-        return RedirectResponse(url=url)
+        if "id_token" not in res.json():
+            # get profile data from fief server if not present in response
+            id_token = requests.get(
+                settings.fief_url + "/api/userinfo",
+                headers={"Authorization": "Bearer " + res.json()["access_token"]},
+            ).json()
+            sign_up_service.check_jwt_user(id_token)
+        else:
+            sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
+
+        creds = base64.b64encode(res.content).decode()
+        url = f"{request.base_url}home?auth=true&creds={creds}"
+
+        # NOTE: RedirectResponse doesn't work with clevercloud
+        # response = RedirectResponse(url=url)
+        content = f"""<html>
+        <head>
+        <script>
+        window.location.href = "{url}";
+        </script>
+        </head>
+        </html>
+        """
+        response = Response(content=content)
+
+        response.set_cookie(
+            SESSION_COOKIE_NAME,
+            res.json()["access_token"],
+            httponly=True,
+            secure=False,
+        )
+        return response
 
     state = str(int(random.random() * 1000))
     url = f"{settings.fief_url}/authorize?response_type=code&client_id={settings.fief_client_id}&redirect_uri={login_url}&scope={' '.join(OAUTH_SCOPES)}&state={state}"

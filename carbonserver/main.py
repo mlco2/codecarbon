@@ -93,6 +93,7 @@ def init_server(container):
 
 
 app = create_app()
+app.mount("/api", app, name="api")
 
 
 @app.get("/")
