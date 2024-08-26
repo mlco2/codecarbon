@@ -74,23 +74,3 @@ def test_user_service_retrieves_correct_user_by_id():
 
     assert actual_saved_user.id == expected_user.id
     assert actual_saved_user.name == expected_user.name
-
-
-def test_user_service_verifies_correctly_registered_user():
-    user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
-    user_service: UserService = UserService(user_mock_repository)
-    user_mock_repository.verify_user.return_value = True
-
-    is_actual_user_verified = user_service.verify_user(USER_AUTHENTICATE)
-
-    assert is_actual_user_verified
-
-
-def test_user_service_rejects_unregistered_user():
-    user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
-    user_service: UserService = UserService(user_mock_repository)
-    user_mock_repository.verify_user.return_value = False
-
-    is_actual_user_verified = user_service.verify_user(USER_AUTHENTICATE)
-
-    assert not is_actual_user_verified

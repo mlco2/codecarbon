@@ -77,6 +77,7 @@ class SqlAlchemyRepository(Users):
             )
             session.add(db_membership)
             session.commit()
+            return self.map_sql_to_schema(e)
 
     def is_user_authorized_on_project(self, project_id, user_id: UUID):
         with self.session_factory() as session:

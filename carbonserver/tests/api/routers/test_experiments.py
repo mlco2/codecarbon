@@ -2,7 +2,9 @@ from datetime import datetime
 from unittest import mock
 
 import pytest
+from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
 from container import ServerContainer
+from dependency_injector import providers
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from starlette import status
@@ -13,6 +15,7 @@ from carbonserver.api.infra.repositories.repository_experiments import (
 )
 from carbonserver.api.routers import experiments
 from carbonserver.api.schemas import Experiment
+from carbonserver.api.services.auth_service import UserWithAuthDependency
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -103,6 +106,8 @@ def custom_test_server():
     app = FastAPI()
     app.container = container
     app.include_router(experiments.router)
+    app.dependency_overrides[UserWithAuthDependency] = FakeUserWithAuthDependency
+    app.container.auth_context.override(providers.Factory(FakeAuthContext))
     add_pagination(app)
     yield app
 
@@ -112,7 +117,6 @@ def client(custom_test_server):
     yield TestClient(custom_test_server)
 
 
-@pytest.mark.skip(reason="test server with no auth in dev")
 def test_add_experiment(client, custom_test_server):
     repository_mock = mock.Mock(spec=ExperimentRepository)
     expected_expriment = EXPERIMENT_1
@@ -127,7 +131,6 @@ def test_add_experiment(client, custom_test_server):
     assert actual_experiment == expected_expriment
 
 
-@pytest.mark.skip(reason="test server with no auth in dev")
 def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_server):
     # Prepare the test
     repository_mock = mock.Mock(spec=ExperimentRepository)
@@ -143,7 +146,6 @@ def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_ser
     assert actual_experiment == expected_experiment
 
 
-@pytest.mark.skip(reason="test server with no auth in dev")
 def test_get_experiment_of_project_retrieves_all_experiments_of_project(
     client, custom_test_server
 ):

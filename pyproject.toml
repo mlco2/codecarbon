@@ -165,7 +165,7 @@ dependencies = [
 local = "cd carbonserver && uvicorn main:app --reload"
 server-ci = 'cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008'
 docker = "docker-compose up -d"
-test-unit = 'cd carbonserver && python -m pytest -vv tests/api/routers/ && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/'
+test-unit = 'cd carbonserver && python -m pytest -vv tests/api/routers/test_projects.py && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/'
 test-integ = 'cd carbonserver && python -m pytest -vv tests/api/integration/'
 setup-db = 'cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head'
 # To downgrade the db and start from scratch

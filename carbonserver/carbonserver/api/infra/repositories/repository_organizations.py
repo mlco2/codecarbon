@@ -80,7 +80,7 @@ class SqlAlchemyRepository(Organizations):
             )
             return [self.map_sql_to_schema(org) for org in e]
 
-    def list_users(self, organization_id: UUID, user: User) -> List[OrganizationUser]:
+    def list_users(self, organization_id: UUID) -> List[OrganizationUser]:
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelMembership, SqlModelUser)
