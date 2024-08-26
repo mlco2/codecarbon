@@ -17,6 +17,9 @@ from carbonserver.api.services.auth_service import (
     UserWithAuthDependency,
 )
 from carbonserver.config import settings
+from fief_client import FiefUserInfo
+
+from carbonserver.api.services.auth_service import web_auth_with_redirect
 
 AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
 LOGGER = logging.getLogger(__name__)
@@ -33,7 +36,7 @@ def check_login(
     return user data or redirect to login screen
     null value if not logged in
     """
-    return {"user": auth_user}
+    return {"user": user}
 
 
 @router.get("/auth/auth-callback", tags=AUTHENTICATE_ROUTER_TAGS, name="auth_callback")
