@@ -88,6 +88,7 @@ def list_organizations(
         Provide[ServerContainer.organization_service]
     ),
 ) -> List[Organization]:
+    print(auth_user.db_user)
     try:
         return organization_service.list_organizations(user=auth_user.db_user)
     except Exception:

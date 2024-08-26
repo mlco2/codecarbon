@@ -25,8 +25,6 @@ from carbonserver.api.schemas import (
     UserCreate,
 )
 
-API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
-
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 USER_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -34,7 +32,6 @@ USER_1 = {
     "id": USER_ID_1,
     "name": "Gontran Bonheur",
     "email": "xyz@email.com",
-    "api_key": API_KEY,
     "organizations": [],
     "is_active": True,
 }
@@ -43,7 +40,6 @@ USER_2 = {
     "id": USER_ID_2,
     "name": "Jonnhy Monnay",
     "email": "1234+1@email.fr",
-    "api_key": API_KEY,
     "organizations": [],
     "is_active": True,
 }
@@ -76,7 +72,6 @@ PROJECT_1 = {
 
 ORG_1 = {
     "id": ORGANIZATION_ID,
-    "api_key": API_KEY,
     "name": "Gontran Bonheur",
     "description": "Default organization",
 }

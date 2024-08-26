@@ -20,8 +20,6 @@ class FakeUserWithAuthDependency:
     auth_user = {"sub": USER_ID_1}
 
 
-API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
-
 ORG_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -32,7 +30,6 @@ ORG_TO_CREATE = {
 
 ORG_1 = {
     "id": ORG_ID_1,
-    "api_key": API_KEY,
     "name": "Data For Good",
     "description": "DFG Organization",
 }
@@ -40,7 +37,6 @@ ORG_1 = {
 
 ORG_2 = {
     "id": ORG_ID_2,
-    "api_key": API_KEY,
     "name": "Code Carbon",
     "description": "Code Carbon Organization",
 }

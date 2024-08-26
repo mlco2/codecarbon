@@ -350,7 +350,6 @@ class OrganizationPatch(OrganizationBase):
 
 class Organization(OrganizationBase):
     id: UUID
-    api_key: str
 
 
 class OrganizationReport(OrganizationBase):
@@ -394,7 +393,6 @@ class User(UserBase):
     id: UUID
     name: str
     email: EmailStr
-    api_key: Optional[str]
     organizations: Optional[List]
     is_active: bool
 
