@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import update
 
 from carbonserver.api.domain.users import Users
+from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from carbonserver.api.schemas import User, UserAutoCreate
 
@@ -79,6 +80,26 @@ class SqlAlchemyRepository(Users):
             e = session.execute(stmt).one()
             session.commit()
             return self.map_sql_to_schema(e)
+
+    def is_user_authorized_on_project(self, project_id, user_id: UUID):
+        with self.session_factory() as session:
+            project_subquery = (
+                session.query(SqlModelProject)
+                .where(SqlModelProject.id == project_id)
+                .first()
+            )
+            user_authorized_on_project = (
+                session.query(SqlModelUser)
+                .where(SqlModelUser.id == user_id)
+                .filter(
+                    SqlModelUser.organizations.any(
+                        str(project_subquery.organization_id)
+                    )
+                )
+                .all()
+            )
+            print(user_authorized_on_project)
+            return bool(user_authorized_on_project)
 
     @staticmethod
     def map_sql_to_schema(sql_user: SqlModelUser) -> User:

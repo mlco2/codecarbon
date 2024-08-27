@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     )
     fief_client_id: str = Field("", env="FIEF_CLIENT_ID")
     fief_client_secret: str = Field("", env="FIEF_CLIENT_SECRET")
-    fief_url: str = Field("https://fief.local/mytenant", env="FIEF_URL")
+    fief_url: str = Field("https://auth.codecarbon.io/codecarbon-dev", env="FIEF_URL")
 
 
 settings = Settings()

@@ -36,11 +36,12 @@ router = APIRouter(
 @inject
 def add_organization(
     organization: OrganizationCreate,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.add_organization(organization)
+    return organization_service.add_organization(organization, auth_user.db_user)
 
 
 @router.patch(
@@ -52,11 +53,14 @@ def add_organization(
 def update_organization(
     organization_id: str,
     organization: OrganizationPatch,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.patch_organization(organization_id, organization)
+    return organization_service.patch_organization(
+        organization_id, organization, auth_user.db_user
+    )
 
 
 @router.get(
@@ -68,11 +72,12 @@ def update_organization(
 @inject
 def read_organization(
     organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.read_organization(organization_id)
+    return organization_service.read_organization(organization_id, auth_user.db_user)
 
 
 @router.get(

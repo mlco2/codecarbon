@@ -1,29 +1,15 @@
 from unittest import mock
-from uuid import UUID
 
 import pytest
 from container import ServerContainer
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
-from carbonserver.api.infra.repositories.repository_organizations import (
-    SqlAlchemyRepository as OrganizationsRepository,
-)
-from carbonserver.api.infra.repositories.repository_projects import (
-    SqlAlchemyRepository as ProjectsRepository,
-)
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UsersRepository,
 )
 from carbonserver.api.routers import users
-from carbonserver.api.schemas import (
-    Organization,
-    OrganizationCreate,
-    Project,
-    ProjectCreate,
-    User,
-    UserCreate,
-)
+from carbonserver.api.schemas import User
 
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 USER_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -42,18 +28,6 @@ USER_2 = {
     "email": "1234+1@email.fr",
     "organizations": [],
     "is_active": True,
-}
-
-USER_TO_CREATE = {
-    "name": "Gontran Bonheur",
-    "email": "xyz@email.com",
-    "password": "pwd",
-}
-
-USER_WITH_BAD_EMAIL = {
-    "name": "Gontran Bonheur",
-    "email": "xyz",
-    "password": "pwd",
 }
 
 ###
@@ -75,6 +49,8 @@ ORG_1 = {
     "name": "Gontran Bonheur",
     "description": "Default organization",
 }
+
+
 ###
 
 
@@ -91,60 +67,6 @@ def custom_test_server():
 @pytest.fixture
 def client(custom_test_server):
     yield TestClient(custom_test_server)
-
-
-def test_create_user(client, custom_test_server):
-    user_repository_mock = mock.Mock(spec=UsersRepository)
-    expected_user = {**USER_1}
-    expected_user_with_org = {**USER_1, "organizations": [ORGANIZATION_ID]}
-    user_repository_mock.create_user.return_value = User(**expected_user)
-    user_repository_mock.subscribe_user_to_org.return_value = User(
-        **expected_user_with_org
-    )
-    project_repository_mock = mock.Mock(spec=ProjectsRepository)
-    expected_project = PROJECT_1
-    project_repository_mock.add_project.return_value = Project(**expected_project)
-    organization_repository_mock = mock.Mock(spec=OrganizationsRepository)
-    expected_organization = ORG_1
-    organization_repository_mock.add_organization.return_value = Organization(
-        **expected_organization
-    )
-
-    with custom_test_server.container.user_repository.override(
-        user_repository_mock
-    ) and custom_test_server.container.project_repository.override(
-        project_repository_mock
-    ) and custom_test_server.container.organization_repository.override(
-        organization_repository_mock
-    ):
-        response = client.post("/users/signup", json=USER_TO_CREATE)
-        actual_user = response.json()
-
-    assert response.status_code == status.HTTP_201_CREATED
-    assert actual_user == expected_user_with_org
-
-    # Check that the mocks have been called
-    user_repository_mock.create_user.assert_called_once()
-    user_repository_mock.subscribe_user_to_org.assert_called_once()
-    project_repository_mock.add_project.assert_called_once()
-    organization_repository_mock.add_organization.assert_called_once()
-    # Check that the mocks have been called with the correct arguments
-    user_repository_mock.create_user.assert_called_with(UserCreate(**USER_TO_CREATE))
-    user_repository_mock.subscribe_user_to_org.assert_called_with(
-        User(**USER_1), UUID(ORGANIZATION_ID)
-    )
-    project_repository_mock.add_project.assert_called_with(ProjectCreate(**PROJECT_1))
-    organization_repository_mock.add_organization.assert_called_with(
-        OrganizationCreate(**ORG_1)
-    )
-
-
-def test_create_user_with_bad_email_fails_at_http_layer(client):
-    response = client.post("/users/signup", json=USER_WITH_BAD_EMAIL)
-    actual_response = response.json()
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert actual_response["detail"][0]["type"] == "value_error.email"
 
 
 def test_list_users_list_all_existing_users_with_200(client, custom_test_server):

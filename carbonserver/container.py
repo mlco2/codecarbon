@@ -10,6 +10,7 @@ from carbonserver.api.infra.repositories import (
     repository_runs,
     repository_users,
 )
+from carbonserver.api.services.auth_context import AuthContext
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.services.organization_service import OrganizationService
@@ -67,6 +68,12 @@ class ServerContainer(containers.DeclarativeContainer):
         session_factory=db.provided.session,
     )
 
+    auth_context = providers.Factory(
+        AuthContext,
+        user_repository=user_repository,
+        token_repository=project_token_repository,
+    )
+
     emission_service = providers.Factory(
         EmissionService,
         emission_repository=emission_repository,
@@ -74,6 +81,7 @@ class ServerContainer(containers.DeclarativeContainer):
 
     experiment_service = providers.Factory(
         ExperimentService,
+        auth_context=auth_context,
         experiment_repository=experiment_repository,
     )
 
@@ -88,6 +96,7 @@ class ServerContainer(containers.DeclarativeContainer):
 
     project_service = providers.Factory(
         ProjectService,
+        auth_context=auth_context,
         project_repository=project_repository,
     )
 
@@ -113,6 +122,7 @@ class ServerContainer(containers.DeclarativeContainer):
 
     organization_service = providers.Factory(
         OrganizationService,
+        auth_context=auth_context,
         organization_repository=organization_repository,
     )
 
