@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
 from carbonserver.api.infra.repositories.repository_organizations import (
@@ -42,6 +43,11 @@ class OrganizationService:
 
     def list_organizations(self, user: User = None) -> List[Organization]:
         return self._repository.list_organizations(user=user)
+
+    def list_users(
+        self, organization_id: UUID | str, user: User = None
+    ) -> List[Organization]:
+        return self._repository.list_users(organization_id=organization_id, user=user)
 
     def patch_organization(
         self, organization_id: str, organization: OrganizationPatch, user: User

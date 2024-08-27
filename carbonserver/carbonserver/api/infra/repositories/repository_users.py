@@ -3,9 +3,9 @@ from typing import Callable, List
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import update
 
 from carbonserver.api.domain.users import Users
+from carbonserver.api.infra.database.sql_models import Membership as SqlModelMembership
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from carbonserver.api.schemas import User, UserAutoCreate
@@ -60,26 +60,23 @@ class SqlAlchemyRepository(Users):
         self,
         user: User,
         organization_id: UUID,
-    ) -> User:
+    ) -> None:
         with self.session_factory() as session:
-            user.organizations = []
-
-            if organization_id in user.organizations:
-                return user
-
-            stmt = (
-                update(SqlModelUser)
-                .where(SqlModelUser.id == user.id)
-                .values(
-                    {
-                        "organizations": [*user.organizations, organization_id],
-                    }
-                )
-                .returning(SqlModelUser)
+            e = (
+                session.query(SqlModelMembership)
+                .filter(SqlModelMembership.user_id == user.id)
+                .first()
             )
-            e = session.execute(stmt).one()
+            if e is not None:
+                return
+
+            db_membership = SqlModelMembership(
+                user_id=user.id,
+                organization_id=organization_id,
+                is_admin=True,
+            )
+            session.add(db_membership)
             session.commit()
-            return self.map_sql_to_schema(e)
 
     def is_user_authorized_on_project(self, project_id, user_id: UUID):
         with self.session_factory() as session:
@@ -113,5 +110,5 @@ class SqlAlchemyRepository(Users):
             name=sql_user.name,
             email=sql_user.email,
             is_active=sql_user.is_active,
-            organizations=sql_user.organizations,
+            organizations=[m.organization_id for m in sql_user.organizations],
         )

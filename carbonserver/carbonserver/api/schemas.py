@@ -38,7 +38,7 @@ class User(UserBase):
     id: UUID
     name: str
     email: EmailStr
-    organizations: Optional[List]
+    organizations: Optional[List[UUID | str]]  # TODO: cleanup type
     is_active: bool
 
     class Config:
@@ -396,6 +396,17 @@ class OrganizationReport(OrganizationBase):
     emissions_count: int
 
 
+class Membership(BaseModel):
+    user_id = UUID
+    organization_id = UUID
+    is_admin: bool
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class OrganizationUser(User):
+    organization_id = UUID
+    is_admin: bool

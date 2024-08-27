@@ -3,7 +3,6 @@ import uuid
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import ARRAY
 
 from carbonserver.database.database import Base
 
@@ -124,12 +123,28 @@ class Project(Base):
         )
 
 
+class Membership(Base):
+    __tablename__ = "memberships"
+    organization_id = Column(
+        ForeignKey("organizations.id", ondelete="cascade"),
+        primary_key=True,
+    )  # ondelete='cascade'
+    user_id = Column(
+        ForeignKey("users.id", ondelete="cascade"),
+        primary_key=True,
+    )
+    is_admin = Column(Boolean, nullable=False, default=False)
+    organization = relationship("Organization", back_populates="users")
+    user = relationship("User", back_populates="organizations")
+
+
 class Organization(Base):
     __tablename__ = "organizations"
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
     projects = relationship("Project", back_populates="organization")
+    users = relationship("Membership", back_populates="organization")
 
     def __repr__(self):
         return (
@@ -145,13 +160,14 @@ class User(Base):
     name = Column(String)
     email = Column(String, unique=True, index=True)
     is_active = Column(Boolean, default=True)
-    organizations = Column(ARRAY(String, as_tuple=False, dimensions=1))
+    organizations = relationship("Membership", back_populates="user")
 
     def __repr__(self):
         return (
             f'<User(id="{self.id}", '
             f'name="{self.name}", '
             f'is_active="{self.is_active}", '
+            f"organizations={self.organizations}"
             f'email="{self.email}")>'
         )
 

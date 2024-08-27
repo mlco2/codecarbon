@@ -14,6 +14,7 @@ from carbonserver.api.schemas import (
     OrganizationCreate,
     OrganizationPatch,
     OrganizationReport,
+    OrganizationUser,
 )
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.usecases.organization.organization_sum import (
@@ -123,3 +124,27 @@ def read_organization_detailed_sums(
     return organization_global_sum_usecase.compute_detailed_sum(
         organization_id, start_date, end_date
     )
+
+
+@router.get(
+    "/organizations/{organization_id}/users",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def list_organization_users(
+    organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    organization_service: OrganizationService = Depends(
+        Provide[ServerContainer.organization_service]
+    ),
+) -> List[OrganizationUser]:
+    return organization_service.list_users(
+        organization_id=organization_id, user=auth_user.db_user
+    )
+    try:
+        return organization_service.list_users(
+            organization_id=organization_id, user=auth_user.db_user
+        )
+    except Exception:
+        return []

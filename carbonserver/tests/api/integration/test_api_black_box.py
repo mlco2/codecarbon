@@ -558,3 +558,9 @@ def test_api34_project_api_token_delete():
     url = f"{URL}/projects/{project_id}/api-tokens/{project_token_id}"
     r = requests.delete(url, timeout=2)
     tc.assertEqual(r.status_code, 204)
+
+
+def test_api35_organization_read_users():
+    r = requests.get(url=URL + "/organizations/" + org_new_id + "/users", timeout=2)
+    tc.assertEqual(r.status_code, 200)
+    # TODO: check that user is a mamber
