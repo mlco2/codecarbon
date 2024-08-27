@@ -1,11 +1,19 @@
+from typing import List
 from unittest import mock
 from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
-from carbonserver.api.schemas import Organization, OrganizationCreate, OrganizationPatch
+from carbonserver.api.schemas import (
+    Organization,
+    OrganizationCreate,
+    OrganizationPatch,
+    OrganizationUser,
+)
 from carbonserver.api.services.organization_service import OrganizationService
+
+USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
 ORG_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 ORG_ID_2 = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
@@ -21,6 +29,15 @@ ORG_2 = Organization(
     name="Data For Good",
     description="Data For Good Organization 2",
     api_key=API_KEY,
+)
+
+ORG_USER = OrganizationUser(
+    id=USER_ID_1,
+    name="user1",
+    email="user1@local.com",
+    is_active=True,
+    organization_id=ORG_1.id,
+    is_admin=True,
 )
 
 
@@ -91,3 +108,14 @@ def test_organization_service_patches_correct_org():
     assert actual_saved_org.name == "PATCHED - Data For Good"
     assert actual_saved_org.description == "PATCHED - Data For Good Organization"
     assert actual_saved_org.api_key == API_KEY
+
+
+def test_orgganization_service_list_users():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    expected_org_users: List[OrganizationUser] = [ORG_USER]
+    organization_service: OrganizationService = OrganizationService(repository_mock)
+    repository_mock.list_users.return_value = [ORG_USER]
+
+    actual_user_list = organization_service.list_users(ORG_ID)
+
+    assert actual_user_list == expected_org_users

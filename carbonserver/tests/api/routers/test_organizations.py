@@ -10,7 +10,7 @@ from carbonserver.api.infra.repositories.repository_organizations import (
 )
 from carbonserver.api.routers import organizations
 from carbonserver.api.routers.authenticate import UserWithAuthDependency
-from carbonserver.api.schemas import Organization, User
+from carbonserver.api.schemas import Organization, OrganizationUser, User
 
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -38,6 +38,15 @@ ORG_2 = {
     "id": ORG_ID_2,
     "name": "Code Carbon",
     "description": "Code Carbon Organization",
+}
+
+ORG_USER = {
+    "id": USER_ID_1,
+    "name": "user1",
+    "email": "user1@local.com",
+    "is_active": True,
+    "organization_id": ORG_1["id"],
+    "is_admin": True,
 }
 
 
@@ -139,3 +148,26 @@ def test_patch_organization(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_org == expected_org
+
+
+def test_fetch_org_users(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_user_list = [
+        {
+            "email": "user1@local.com",
+            "id": USER_ID_1,
+            "name": "user1",
+            "api_key": None,
+            "organizations": None,
+            "is_active": True,
+            "is_admin": True,
+        }
+    ]
+    repository_mock.list_users.return_value = [OrganizationUser(**ORG_USER)]
+
+    with custom_test_server.container.organization_repository.override(repository_mock):
+        response = client.get(f"/organizations/{ORG_1['id']}/users")
+        actual_user_list = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_user_list == expected_user_list
