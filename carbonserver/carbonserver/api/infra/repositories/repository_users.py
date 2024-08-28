@@ -1,48 +1,32 @@
 from contextlib import AbstractContextManager
 from typing import Callable, List
-from uuid import UUID, uuid4
+from uuid import UUID
 
-import bcrypt
 from fastapi import HTTPException
 from sqlalchemy import update
 
 from carbonserver.api.domain.users import Users
-from carbonserver.api.infra.api_key_service import generate_api_key
+from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import User as SqlModelUser
-from carbonserver.api.schemas import User, UserAuthenticate, UserAutoCreate, UserCreate
+from carbonserver.api.schemas import User, UserAutoCreate
 
 
 class SqlAlchemyRepository(Users):
     def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
         self.session_factory = session_factory
 
-    def create_user(self, user: UserCreate | UserAutoCreate) -> User:
+    def create_user(self, user: UserAutoCreate) -> User:
         """Creates a user in the database
         :returns: A User in pyDantic BaseModel format.
         :rtype: schemas.User
         """
         with self.session_factory() as session:
-            db_user = (
-                SqlModelUser(
-                    id=uuid4(),
-                    name=user.name,
-                    email=user.email,
-                    hashed_password=self._hash_password(
-                        user.password.get_secret_value()
-                    ),
-                    api_key=generate_api_key(),
-                    is_active=True,
-                    organizations=[],
-                )
-                if isinstance(user, UserCreate)
-                else SqlModelUser(
-                    id=user.id,
-                    name=user.name,
-                    email=user.email,
-                    api_key=generate_api_key(),
-                    is_active=True,
-                    organizations=[],
-                )
+            db_user = SqlModelUser(
+                id=user.id,
+                name=user.name,
+                email=user.email,
+                is_active=True,
+                organizations=[],
             )
             session.add(db_user)
             session.commit()
@@ -72,21 +56,6 @@ class SqlAlchemyRepository(Users):
                 users.append(self.map_sql_to_schema(user))
             return users
 
-    def verify_user(self, user: UserAuthenticate) -> bool:
-        with self.session_factory() as session:
-            e = (
-                session.query(SqlModelUser)
-                .filter(SqlModelUser.email == user.email)
-                .first()
-            )
-            if e is None:
-                return None
-            is_verified = bcrypt.checkpw(
-                user.password.get_secret_value().encode("utf-8"),
-                e.hashed_password.encode("utf-8"),
-            )
-            return is_verified
-
     def subscribe_user_to_org(
         self,
         user: User,
@@ -112,9 +81,25 @@ class SqlAlchemyRepository(Users):
             session.commit()
             return self.map_sql_to_schema(e)
 
-    @staticmethod
-    def _hash_password(password):
-        return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    def is_user_authorized_on_project(self, project_id, user_id: UUID):
+        with self.session_factory() as session:
+            project_subquery = (
+                session.query(SqlModelProject)
+                .where(SqlModelProject.id == project_id)
+                .first()
+            )
+            user_authorized_on_project = (
+                session.query(SqlModelUser)
+                .where(SqlModelUser.id == user_id)
+                .filter(
+                    SqlModelUser.organizations.any(
+                        str(project_subquery.organization_id)
+                    )
+                )
+                .all()
+            )
+            print(user_authorized_on_project)
+            return bool(user_authorized_on_project)
 
     @staticmethod
     def map_sql_to_schema(sql_user: SqlModelUser) -> User:
@@ -127,7 +112,6 @@ class SqlAlchemyRepository(Users):
             id=sql_user.id,
             name=sql_user.name,
             email=sql_user.email,
-            api_key=sql_user.api_key,
             is_active=sql_user.is_active,
             organizations=sql_user.organizations,
         )

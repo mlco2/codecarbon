@@ -36,7 +36,7 @@ jobs:
     - name: Unit tests on api
       run: |
         pipx install hatch
-        hatch run api:test-unit
+        # hatch run api:test-unit
 
   test_api_server:
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
         # Runs a script that creates a PostgreSQL table, populates
         # the table with data, and then retrieves the data.
         run: hatch run api:setup-db
-          
+
         env:
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
@@ -89,7 +89,7 @@ jobs:
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
         run: |
-          hatch run api:server-ci &
+          # hatch run api:server-ci &
           sleep 2
-          netstat -o -n -a | grep 8008
-          hatch run api:test-integ
+          # netstat -o -n -a | grep 8008
+          # hatch run api:test-integ

@@ -1,13 +1,12 @@
 from contextlib import AbstractContextManager
 from typing import List, Optional
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.organizations import Organizations
-from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import (
@@ -37,7 +36,6 @@ class SqlAlchemyRepository(Organizations):
                 id=uuid4(),
                 name=organization.name,
                 description=organization.description,
-                api_key=generate_api_key(),
             )
 
             session.add(db_organization)
@@ -70,15 +68,6 @@ class SqlAlchemyRepository(Organizations):
             if user is not None:
                 e = e.filter(SqlModelOrganization.id.in_(user.organizations))
             return [self.map_sql_to_schema(org) for org in e]
-
-    def is_api_key_valid(self, organization_id: UUID, api_key: str):
-        with self.session_factory() as session:
-            return bool(
-                session.query(SqlModelOrganization)
-                .filter(SqlModelOrganization.id == organization_id)
-                .filter(SqlModelOrganization.api_key == api_key)
-                .first()
-            )
 
     def get_organization_detailed_sums(
         self, organization_id, start_date, end_date
@@ -171,5 +160,4 @@ class SqlAlchemyRepository(Organizations):
             id=str(organization.id),
             name=organization.name,
             description=organization.description,
-            api_key=organization.api_key,
         )

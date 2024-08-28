@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from uuid import UUID
 
 import jwt
@@ -19,7 +18,6 @@ from carbonserver.api.schemas import (
     ProjectCreate,
     User,
     UserAutoCreate,
-    UserCreate,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -35,12 +33,10 @@ class SignUpService:
         self._user_repository: UserRepository = user_repository
         self._organization_repository: OrganizationRepository = organization_repository
         self._project_repository: ProjectRepository = project_repository
-        self._default_org_id = UUID("e52fe339-164d-4c2b-a8c0-f562dfce066d")
-        self._default_api_key = "default"
 
     def sign_up(
         self,
-        user: UserCreate | UserAutoCreate,
+        user: UserAutoCreate,
     ) -> User:
         created_user = self._user_repository.create_user(user)
         subscribed_user = self.new_user_setup(created_user)
@@ -51,17 +47,8 @@ class SignUpService:
         self,
         user: User,
         organization_id: UUID,
-        organization_api_key: Optional[str] = None,
     ):
-        if organization_api_key is None:
-            return self._user_repository.subscribe_user_to_org(user, organization_id)
-
-        key_is_valid = self._organization_repository.is_api_key_valid(
-            organization_id, organization_api_key
-        )
-        if key_is_valid:
-            user = self._user_repository.subscribe_user_to_org(user, organization_id)
-        return user
+        return self._user_repository.subscribe_user_to_org(user, organization_id)
 
     def new_user_setup(self, user: User) -> User:
         """

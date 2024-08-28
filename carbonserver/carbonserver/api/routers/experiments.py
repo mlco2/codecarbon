@@ -7,19 +7,16 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import Experiment, ExperimentCreate, ExperimentReport
+from carbonserver.api.services.auth_service import UserWithAuthDependency
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
 )
-from carbonserver.logger import logger
 
 EXPERIMENTS_ROUTER_TAGS = ["Experiments"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 
 
 @router.post(
@@ -31,13 +28,12 @@ router = APIRouter(
 @inject
 def add_experiment(
     experiment: ExperimentCreate,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> Experiment:
-    experiment = experiment_service.add_experiment(experiment)
-    logger.debug(f"Experiment added : {experiment}")
-    return experiment
+    return experiment_service.add_experiment(experiment, user=auth_user.db_user)
 
 
 @router.get(
@@ -49,11 +45,12 @@ def add_experiment(
 @inject
 def read_experiment(
     experiment_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> Experiment:
-    return experiment_service.get_one_experiment(experiment_id)
+    return experiment_service.get_one_experiment(experiment_id, user=auth_user.db_user)
 
 
 @router.get(
@@ -65,11 +62,14 @@ def read_experiment(
 @inject
 def read_project_experiments(
     project_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> List[Experiment]:
-    return experiment_service.get_experiments_from_project(project_id)
+    return experiment_service.get_experiments_from_project(
+        project_id, user=auth_user.db_user
+    )
 
 
 @router.get(
@@ -80,6 +80,7 @@ def read_project_experiments(
 @inject
 def read_project_detailed_sums_by_experiment(
     project_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     project_global_sum_by_experiment_usecase: ProjectSumsByExperimentUsecase = Depends(
@@ -93,5 +94,5 @@ def read_project_detailed_sums_by_experiment(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return project_global_sum_by_experiment_usecase.compute_detailed_sum(
-        project_id, start_date, end_date
+        project_id, start_date, end_date, user=auth_user.db_user
     )
