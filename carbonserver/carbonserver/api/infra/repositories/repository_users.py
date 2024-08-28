@@ -46,6 +46,19 @@ class SqlAlchemyRepository(Users):
                 raise HTTPException(status_code=404, detail=f"User {user_id} not found")
             return self.map_sql_to_schema(e)
 
+    def get_user_by_email(self, email: str) -> User:
+        """Find an user in database and retrieves it
+
+        :email: The email of the user to retrieve.
+        :returns: An User in pyDantic BaseModel format.
+        :rtype: schemas.User
+        """
+        with self.session_factory() as session:
+            e = session.query(SqlModelUser).filter(SqlModelUser.email == email).first()
+            if e is None:
+                raise HTTPException(status_code=404, detail=f"User {email} not found")
+            return self.map_sql_to_schema(e)
+
     def list_users(self) -> List[User]:
         with self.session_factory() as session:
             e = session.query(SqlModelUser)
@@ -65,6 +78,7 @@ class SqlAlchemyRepository(Users):
             e = (
                 session.query(SqlModelMembership)
                 .filter(SqlModelMembership.user_id == user.id)
+                .filter(SqlModelMembership.organization_id == organization_id)
                 .first()
             )
             if e is not None:
@@ -78,6 +92,16 @@ class SqlAlchemyRepository(Users):
             session.add(db_membership)
             session.commit()
             return self.map_sql_to_schema(e)
+
+    def is_user_in_organization(self, organization_id: UUID, user: User):
+        with self.session_factory() as session:
+            e = (
+                session.query(SqlModelMembership)
+                .filter(SqlModelMembership.user_id == user.id)
+                .filter(SqlModelMembership.organization_id == organization_id)
+                .first()
+            )
+            return e is not None
 
     def is_user_authorized_on_project(self, project_id, user_id: UUID):
         with self.session_factory() as session:
@@ -96,7 +120,6 @@ class SqlAlchemyRepository(Users):
                 )
                 .all()
             )
-            print(user_authorized_on_project)
             return bool(user_authorized_on_project)
 
     @staticmethod

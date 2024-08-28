@@ -3,7 +3,10 @@ from uuid import UUID
 
 from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
 from carbonserver.api.infra.repositories.repository_organizations import (
-    SqlAlchemyRepository,
+    SqlAlchemyRepository as OrganizationRepository,
+)
+from carbonserver.api.infra.repositories.repository_users import (
+    SqlAlchemyRepository as UserRepository,
 )
 from carbonserver.api.schemas import (
     Organization,
@@ -16,12 +19,19 @@ from carbonserver.api.services.auth_context import AuthContext
 
 class OrganizationService:
     def __init__(
-        self, organization_repository: SqlAlchemyRepository, auth_context: AuthContext
+        self,
+        *,
+        user_repository: UserRepository,
+        organization_repository: OrganizationRepository,
+        auth_context: AuthContext,
     ):
-        self._repository = organization_repository
+        self._user_repository: UserRepository = user_repository
+        self._repository: OrganizationRepository = organization_repository
         self._auth_context = auth_context
 
-    def add_organization(self, organization: OrganizationCreate) -> Organization:
+    def add_organization(
+        self, organization: OrganizationCreate, user: User = None
+    ) -> Organization:
         created_organization: Organization = self._repository.add_organization(
             organization
         )
@@ -47,7 +57,8 @@ class OrganizationService:
     def list_users(
         self, organization_id: UUID | str, user: User = None
     ) -> List[Organization]:
-        return self._repository.list_users(organization_id=organization_id, user=user)
+        # TODO: check permissions
+        return self._repository.list_users(organization_id=organization_id)
 
     def patch_organization(
         self, organization_id: str, organization: OrganizationPatch, user: User
@@ -64,3 +75,10 @@ class OrganizationService:
                 organization_id, organization
             )
             return updated_organization
+
+    def add_user_by_mail(self, *, user: User, organization_id: str, email: str):
+        # TODO: check permissions ; user must be admin on organization
+        user = self._user_repository.get_user_by_email(email=email)
+        return self._user_repository.subscribe_user_to_org(
+            user=user, organization_id=organization_id
+        )

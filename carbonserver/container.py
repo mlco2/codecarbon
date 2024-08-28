@@ -124,6 +124,7 @@ class ServerContainer(containers.DeclarativeContainer):
         OrganizationService,
         auth_context=auth_context,
         organization_repository=organization_repository,
+        user_repository=user_repository,
     )
 
     organization_sums_usecase = providers.Factory(
