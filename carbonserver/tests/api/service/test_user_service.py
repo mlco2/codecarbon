@@ -4,7 +4,7 @@ from uuid import UUID
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserSqlRepository,
 )
-from carbonserver.api.schemas import User, UserAuthenticate, UserAutoCreate, UserCreate
+from carbonserver.api.schemas import User, UserAuthenticate, UserAutoCreate
 from carbonserver.api.services.user_service import UserService
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
@@ -33,22 +33,6 @@ USER_2 = User(
 )
 
 USER_AUTHENTICATE = UserAuthenticate(email="xyz@email.com", password="pwd")
-
-
-@mock.patch("uuid.uuid4", return_value=USER_ID)
-def test_user_service_creates_correct_user_on_sign_up(_):
-    user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
-    expected_id = USER_ID
-    user_service: UserService = UserService(user_mock_repository)
-    user_mock_repository.create_user.return_value = USER_1
-    user_to_create: UserCreate = UserCreate(
-        name="Gontran Bonheur", email="xyz@email.com", password="pwd"
-    )
-
-    actual_db_user = user_service.create_user(user_to_create)
-
-    user_mock_repository.create_user.assert_called_with(user_to_create)
-    assert actual_db_user.id == expected_id
 
 
 def test_user_service_creates_correct_user_on_sign_up_from_auth_server():

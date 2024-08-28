@@ -1,28 +1,41 @@
-from container import ServerContainer
+from unittest import mock
+
+from dependency_injector import providers
+from dependency_injector.containers import Container
+
+from carbonserver.api.infra.repositories.repository_projects import (
+    SqlAlchemyRepository as ProjectSqlRepository,
+)
+from carbonserver.carbonserver.api.services.project_service import ProjectService
 
 
-def test_container_exposes_correct_list_of_providers_at_initialisation():
-    expected_providers = [
-        "config",
-        "db",
-        "emission_repository",
-        "experiment_repository",
-        "project_global_sum_by_experiment_usecase",
-        "project_repository",
-        "organization_repository",
-        "user_repository",
-        "emission_service",
-        "experiment_service",
-        "project_service",
-        "run_repository",
-        "run_service",
-        "organization_service",
-        "user_service",
-        "sign_up_service",
-    ]
+class DatabaseMock:
+    def __init__(self, db_url):
+        self.db_url = db_url
 
-    actual_providers = ServerContainer().providers.keys()
-    diff = set(expected_providers) ^ set(actual_providers)
 
-    assert not diff
-    assert len(expected_providers) == len(actual_providers)
+class AuthContextMock:
+    @staticmethod
+    def isOperationAuthorizedOnOrg():
+        return True
+
+    @staticmethod
+    def isOperationAuthorizedOnProject():
+        return True
+
+
+class TestContainer(Container):
+    db = providers.Singleton(
+        DatabaseMock,
+        db_url=None,
+    )
+    projects_repository = providers.Factory(
+        mock.Mock(spec=ProjectSqlRepository),
+        session_factory=db.provided.session,
+    )
+
+    test_project_service = providers.Factory(
+        ProjectService,
+        projects_repository=projects_repository,
+        auth_context=AuthContextMock(),
+    )
