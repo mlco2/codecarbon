@@ -1,12 +1,9 @@
-from unittest import mock
-
-from dependency_injector import providers
-from dependency_injector.containers import Container
+from dependency_injector import containers, providers
 
 from carbonserver.api.infra.repositories.repository_projects import (
     SqlAlchemyRepository as ProjectSqlRepository,
 )
-from carbonserver.carbonserver.api.services.project_service import ProjectService
+from carbonserver.api.services.project_service import ProjectService
 
 
 class DatabaseMock:
@@ -24,17 +21,17 @@ class AuthContextMock:
         return True
 
 
-class TestContainer(Container):
+class FakeContainer(containers.DeclarativeContainer):
     db = providers.Singleton(
         DatabaseMock,
         db_url=None,
     )
     projects_repository = providers.Factory(
-        mock.Mock(spec=ProjectSqlRepository),
+        ProjectSqlRepository,
         session_factory=db.provided.session,
     )
 
-    test_project_service = providers.Factory(
+    project_service = providers.Factory(
         ProjectService,
         projects_repository=projects_repository,
         auth_context=AuthContextMock(),

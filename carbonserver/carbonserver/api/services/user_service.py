@@ -13,7 +13,6 @@ class UserService:
         return created_user
 
     def create_user_by_id(self, user: UserAutoCreate) -> User:
-        print("userservice", user)
         created_user: User = self._repository.create_user(user)
         return created_user
 

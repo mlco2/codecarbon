@@ -8,7 +8,7 @@ from carbonserver.api.services.auth_context import AuthContext
 
 class ProjectService:
     def __init__(
-        self, auth_context: AuthContext, project_repository: ProjectSqlRepository
+        self, project_repository: ProjectSqlRepository, auth_context: AuthContext
     ):
         self._auth_context = auth_context
         self._repository = project_repository
