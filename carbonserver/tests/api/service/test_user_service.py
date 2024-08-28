@@ -74,3 +74,15 @@ def test_user_service_retrieves_correct_user_by_id():
 
     assert actual_saved_user.id == expected_user.id
     assert actual_saved_user.name == expected_user.name
+
+
+def test_user_service_retrieves_correct_user_by_email():
+    user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
+    expected_user: User = USER_1
+    user_service: UserService = UserService(user_mock_repository)
+    user_mock_repository.get_user_by_email.return_value = USER_1
+
+    actual_saved_user = user_service.get_user_by_email(USER_1.email)
+
+    assert actual_saved_user.id == expected_user.id
+    assert actual_saved_user.name == expected_user.name

@@ -20,6 +20,10 @@ class UserService:
         user: User = self._repository.get_user_by_id(user_id)
         return user
 
+    def get_user_by_email(self, email: str) -> User:
+        user: User = self._repository.get_user_by_email(email)
+        return user
+
     def list_users(self) -> List[User]:
         users_list = self._repository.list_users()
         return users_list
