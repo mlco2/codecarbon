@@ -2,23 +2,26 @@ from contextlib import AbstractContextManager
 from typing import List, Optional
 from uuid import UUID, uuid4
 
+import sqlalchemy
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
 from sqlalchemy import and_, func
 
 from carbonserver.api.domain.organizations import Organizations
-from carbonserver.api.infra.api_key_service import generate_api_key
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.infra.database.sql_models import Membership as SqlModelMembership
 from carbonserver.api.infra.database.sql_models import (
     Organization as SqlModelOrganization,
 )
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
+from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
     OrganizationReport,
+    OrganizationUser,
     User,
 )
 
@@ -37,7 +40,6 @@ class SqlAlchemyRepository(Organizations):
                 id=uuid4(),
                 name=organization.name,
                 description=organization.description,
-                api_key=generate_api_key(),
             )
 
             session.add(db_organization)
@@ -66,19 +68,27 @@ class SqlAlchemyRepository(Organizations):
 
     def list_organizations(self, user: Optional[User] = None) -> List[Organization]:
         with self.session_factory() as session:
-            e = session.query(SqlModelOrganization)
-            if user is not None:
-                e = e.filter(SqlModelOrganization.id.in_(user.organizations))
+            if user is None:
+                return [
+                    self.map_sql_to_schema(org)
+                    for org in session.query(SqlModelOrganization)
+                ]
+            e = (
+                session.query(SqlModelOrganization)
+                .join(SqlModelOrganization.users)
+                .all()
+            )
             return [self.map_sql_to_schema(org) for org in e]
 
-    def is_api_key_valid(self, organization_id: UUID, api_key: str):
+    def list_users(self, organization_id: UUID) -> List[OrganizationUser]:
         with self.session_factory() as session:
-            return bool(
-                session.query(SqlModelOrganization)
-                .filter(SqlModelOrganization.id == organization_id)
-                .filter(SqlModelOrganization.api_key == api_key)
-                .first()
+            e = (
+                session.query(SqlModelMembership, SqlModelUser)
+                .join(SqlModelUser)
+                .filter(SqlModelMembership.organization_id == organization_id)
+                .all()
             )
+            return [self.map_sql_to_organizationuser_schema(row) for row in e]
 
     def get_organization_detailed_sums(
         self, organization_id, start_date, end_date
@@ -171,5 +181,14 @@ class SqlAlchemyRepository(Organizations):
             id=str(organization.id),
             name=organization.name,
             description=organization.description,
-            api_key=organization.api_key,
+        )
+
+    @staticmethod
+    def map_sql_to_organizationuser_schema(
+        row: sqlalchemy.engine.row.Row,
+    ) -> OrganizationUser:
+        return OrganizationUser(
+            **{k: v for k, v in row["User"].__dict__.items() if k != "organizations"},
+            is_admin=row["Membership"].is_admin,
+            organization_id=row["Membership"].organization_id,
         )

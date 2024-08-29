@@ -1,7 +1,9 @@
 from unittest import mock
 
 import pytest
+from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
 from container import ServerContainer
+from dependency_injector import providers
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
@@ -10,17 +12,9 @@ from carbonserver.api.infra.repositories.repository_organizations import (
 )
 from carbonserver.api.routers import organizations
 from carbonserver.api.routers.authenticate import UserWithAuthDependency
-from carbonserver.api.schemas import Organization, User
+from carbonserver.api.schemas import Organization, OrganizationUser
 
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
-
-
-class FakeUserWithAuthDependency:
-    db_user = User(id=USER_ID_1, name="user1", email="user1@local.com", is_active=True)
-    auth_user = {"sub": USER_ID_1}
-
-
-API_KEY = "U5W0EUP9y6bBENOnZWJS0g"
 
 ORG_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 ORG_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -32,17 +26,23 @@ ORG_TO_CREATE = {
 
 ORG_1 = {
     "id": ORG_ID_1,
-    "api_key": API_KEY,
     "name": "Data For Good",
     "description": "DFG Organization",
 }
 
-
 ORG_2 = {
     "id": ORG_ID_2,
-    "api_key": API_KEY,
     "name": "Code Carbon",
     "description": "Code Carbon Organization",
+}
+
+ORG_USER = {
+    "id": USER_ID_1,
+    "name": "user1",
+    "email": "user1@local.com",
+    "is_active": True,
+    "organization_id": ORG_1["id"],
+    "is_admin": True,
 }
 
 
@@ -53,6 +53,9 @@ def custom_test_server():
     app = FastAPI()
     app.container = container
     app.include_router(organizations.router)
+    app.dependency_overrides[UserWithAuthDependency] = FakeUserWithAuthDependency
+    app.container.auth_context.override(providers.Factory(FakeAuthContext))
+
     yield app
 
 
@@ -141,3 +144,26 @@ def test_patch_organization(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_org == expected_org
+
+
+def test_fetch_org_users(client, custom_test_server):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_user_list = [
+        {
+            "email": "user1@local.com",
+            "id": USER_ID_1,
+            "name": "user1",
+            "api_key": None,
+            "organizations": None,
+            "is_active": True,
+            "is_admin": True,
+        }
+    ]
+    repository_mock.list_users.return_value = [OrganizationUser(**ORG_USER)]
+
+    with custom_test_server.container.organization_repository.override(repository_mock):
+        response = client.get(f"/organizations/{ORG_1['id']}/users")
+        actual_user_list = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_user_list == expected_user_list

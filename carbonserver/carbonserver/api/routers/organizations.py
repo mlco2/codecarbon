@@ -14,6 +14,7 @@ from carbonserver.api.schemas import (
     OrganizationCreate,
     OrganizationPatch,
     OrganizationReport,
+    OrganizationUser,
 )
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.usecases.organization.organization_sum import (
@@ -36,11 +37,12 @@ router = APIRouter(
 @inject
 def add_organization(
     organization: OrganizationCreate,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.add_organization(organization)
+    return organization_service.add_organization(organization, auth_user.db_user)
 
 
 @router.patch(
@@ -52,11 +54,14 @@ def add_organization(
 def update_organization(
     organization_id: str,
     organization: OrganizationPatch,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.patch_organization(organization_id, organization)
+    return organization_service.patch_organization(
+        organization_id, organization, auth_user.db_user
+    )
 
 
 @router.get(
@@ -68,11 +73,12 @@ def update_organization(
 @inject
 def read_organization(
     organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> Organization:
-    return organization_service.read_organization(organization_id)
+    return organization_service.read_organization(organization_id, auth_user.db_user)
 
 
 @router.get(
@@ -88,6 +94,7 @@ def list_organizations(
         Provide[ServerContainer.organization_service]
     ),
 ) -> List[Organization]:
+    print(auth_user.db_user)
     try:
         return organization_service.list_organizations(user=auth_user.db_user)
     except Exception:
@@ -117,3 +124,27 @@ def read_organization_detailed_sums(
     return organization_global_sum_usecase.compute_detailed_sum(
         organization_id, start_date, end_date
     )
+
+
+@router.get(
+    "/organizations/{organization_id}/users",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def list_organization_users(
+    organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    organization_service: OrganizationService = Depends(
+        Provide[ServerContainer.organization_service]
+    ),
+) -> List[OrganizationUser]:
+    return organization_service.list_users(
+        organization_id=organization_id, user=auth_user.db_user
+    )
+    try:
+        return organization_service.list_users(
+            organization_id=organization_id, user=auth_user.db_user
+        )
+    except Exception:
+        return []

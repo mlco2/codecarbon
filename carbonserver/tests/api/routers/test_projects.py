@@ -1,17 +1,19 @@
 from unittest import mock
 
 import pytest
+from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
 from container import ServerContainer
+from dependency_injector import providers
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
 from carbonserver.api.infra.repositories.repository_projects import SqlAlchemyRepository
 from carbonserver.api.routers import projects
 from carbonserver.api.schemas import Project
+from carbonserver.api.services.auth_service import UserWithAuthDependency
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 PROJECT_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
-
 
 ORGANIZATION_ID = "c13e851f-5c2f-403d-98d0-51fe15df3bc3"
 ORGANIZATION_ID_2 = "c13e851f-5c2f-403d-98d0-51fe15df3bc4"
@@ -34,7 +36,6 @@ PROJECT_1 = {
     "experiments": [],
 }
 
-
 PROJECT_2 = {
     "id": PROJECT_ID_2,
     "name": "API Code Carbon",
@@ -44,12 +45,15 @@ PROJECT_2 = {
 
 
 @pytest.fixture
-def custom_test_server():
+def custom_test_server() -> FastAPI:
     container = ServerContainer()
     container.wire(modules=[projects])
+
     app = FastAPI()
     app.container = container
     app.include_router(projects.router)
+    app.dependency_overrides[UserWithAuthDependency] = FakeUserWithAuthDependency
+    app.container.auth_context.override(providers.Factory(FakeAuthContext))
     yield app
 
 
@@ -59,11 +63,13 @@ def client(custom_test_server):
 
 
 def test_add_project(client, custom_test_server):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    project_repository_mock = mock.Mock(spec=SqlAlchemyRepository)
     expected_project = PROJECT_1
-    repository_mock.add_project.return_value = Project(**PROJECT_1)
+    project_repository_mock.add_project.return_value = Project(**PROJECT_1)
 
-    with custom_test_server.container.project_repository.override(repository_mock):
+    with custom_test_server.container.project_repository.override(
+        project_repository_mock
+    ):
         response = client.post("/projects", json=PROJECT_TO_CREATE)
         actual_project = response.json()
 

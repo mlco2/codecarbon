@@ -20,6 +20,31 @@ class Empty(BaseModel, extra=Extra.forbid):
     pass
 
 
+class UserBase(BaseModel):
+    email: str
+
+
+class UserAutoCreate(UserBase):
+    name: str
+    email: EmailStr
+    id: UUID
+
+
+class UserAuthenticate(UserBase):
+    password: SecretStr
+
+
+class User(UserBase):
+    id: UUID
+    name: str
+    email: EmailStr
+    organizations: Optional[List[UUID | str]]  # TODO: cleanup type
+    is_active: bool
+
+    class Config:
+        orm_mode = True
+
+
 class EmissionBase(BaseModel):
     timestamp: datetime
     run_id: UUID
@@ -242,6 +267,7 @@ class ProjectBase(BaseModel):
             "example": {
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
+                "organization_id": "Code Carbon organization",
             }
         }
 
@@ -253,6 +279,7 @@ class ProjectCreate(ProjectBase):
 class ProjectPatch(BaseModel):
     name: Optional[str]
     description: Optional[str]
+
     # do not allow the organization_id
 
     class Config:
@@ -350,7 +377,6 @@ class OrganizationPatch(OrganizationBase):
 
 class Organization(OrganizationBase):
     id: UUID
-    api_key: str
 
 
 class OrganizationReport(OrganizationBase):
@@ -370,38 +396,17 @@ class OrganizationReport(OrganizationBase):
     emissions_count: int
 
 
-class UserBase(BaseModel):
-    email: str
-
-
-class UserCreate(UserBase):
-    name: str
-    email: EmailStr
-    password: SecretStr
-
-
-class UserAutoCreate(UserBase):
-    name: str
-    email: EmailStr
-    id: UUID
-
-
-class UserAuthenticate(UserBase):
-    password: SecretStr
-
-
-class User(UserBase):
-    id: UUID
-    name: str
-    email: EmailStr
-    api_key: Optional[str]
-    organizations: Optional[List]
-    is_active: bool
-
-    class Config:
-        orm_mode = True
+class Membership(BaseModel):
+    user_id = UUID
+    organization_id = UUID
+    is_admin: bool
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class OrganizationUser(User):
+    organization_id = UUID
+    is_admin: bool
