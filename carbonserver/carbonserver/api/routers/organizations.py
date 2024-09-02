@@ -5,6 +5,7 @@ import dateutil.relativedelta
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, EmailStr
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
@@ -39,10 +40,10 @@ def add_organization(
     organization: OrganizationCreate,
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     organization_service: OrganizationService = Depends(
-        Provide[ServerContainer.organization_service]
+        Provide[ServerContainer.organization_service],
     ),
 ) -> Organization:
-    return organization_service.add_organization(organization, auth_user.db_user)
+    return organization_service.add_organization(organization)
 
 
 @router.patch(
@@ -94,7 +95,6 @@ def list_organizations(
         Provide[ServerContainer.organization_service]
     ),
 ) -> List[Organization]:
-    print(auth_user.db_user)
     try:
         return organization_service.list_organizations(user=auth_user.db_user)
     except Exception:
@@ -142,9 +142,29 @@ def list_organization_users(
     return organization_service.list_users(
         organization_id=organization_id, user=auth_user.db_user
     )
-    try:
-        return organization_service.list_users(
-            organization_id=organization_id, user=auth_user.db_user
-        )
-    except Exception:
-        return []
+
+
+class UserEmailInput(BaseModel):
+    email: EmailStr
+
+
+@router.post(
+    "/organizations/{organization_id}/add-user",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def organization_add_user(
+    input: UserEmailInput,
+    organization_id: str,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    organization_service: OrganizationService = Depends(
+        Provide[ServerContainer.organization_service]
+    ),
+):
+    # TODO: check permissions
+    organization_service.add_user_by_mail(
+        organization_id=organization_id,
+        email=input.email,
+    )
+    return {"status": "ok"}

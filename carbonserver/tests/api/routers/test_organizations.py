@@ -153,7 +153,6 @@ def test_fetch_org_users(client, custom_test_server):
             "email": "user1@local.com",
             "id": USER_ID_1,
             "name": "user1",
-            "api_key": None,
             "organizations": None,
             "is_active": True,
             "is_admin": True,
