@@ -62,7 +62,7 @@ click==8.1.7
     #   hatch.envs.api
     #   typer
     #   uvicorn
-cryptography==43.0.0
+cryptography==43.0.1
     # via jwcrypto
 dependency-injector==4.41.0
     # via hatch.envs.api
