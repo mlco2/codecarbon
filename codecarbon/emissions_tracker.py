@@ -18,7 +18,14 @@ from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import count_cpus, suppress, detect_cpu_model, is_mac_os, is_windows_os, is_linux_os
+from codecarbon.core.util import (
+    count_cpus,
+    detect_cpu_model,
+    is_linux_os,
+    is_mac_os,
+    is_windows_os,
+    suppress,
+)
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
@@ -366,7 +373,7 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
-        #change code to check if powermetrics needs to be installed or just sudo setup
+        # change code to check if powermetrics needs to be installed or just sudo setup
         elif (
             powermetrics.is_powermetrics_available() and self._default_cpu_power is None
         ):
@@ -390,7 +397,11 @@ class BaseEmissionsTracker(ABC):
             # Explain what to install to increase accuracy
             cpu_tracking_install_instructions = ""
             if is_mac_os():
-                if "M1" in detect_cpu_model() or "M2" in detect_cpu_model() or "M3" in detect_cpu_model():
+                if (
+                    "M1" in detect_cpu_model()
+                    or "M2" in detect_cpu_model()
+                    or "M3" in detect_cpu_model()
+                ):
                     cpu_tracking_install_instructions = ""
                     cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
                 else:
