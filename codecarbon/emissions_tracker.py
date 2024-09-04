@@ -387,7 +387,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_model"] = hardware_gpu.get_model()
             self._conf["gpu_count"] = 1
         else:
-            # PRINT WHAT TO INSTALL TO INCREASE ACCURACY
+            # Explain what to install to increase accuracy
             #if darwin
             cpu_tracking_install_instructions = ""
             if is_mac_os():
