@@ -21,30 +21,60 @@ from codecarbon.input import DataSource
 
 
 def is_powergadget_available() -> bool:
+    """
+    Checks if Intel Power Gadget is available on the system.
+
+    Returns:
+        bool: `True` if Intel Power Gadget is available, `False` otherwise.
+    """
     try:
         IntelPowerGadget()
         return True
     except Exception as e:
         logger.debug(
-            "Not using PowerGadget, an exception occurred while instantiating"
-            + f" IntelPowerGadget : {e}",
+            "Not using PowerGadget, an exception occurred while instantiating "
+            + "IntelPowerGadget : %s",
+            e,
         )
         return False
 
 
 def is_rapl_available() -> bool:
+    """
+    Checks if Intel RAPL is available on the system.
+
+    Returns:
+        bool: `True` if Intel RAPL is available, `False` otherwise.
+    """
     try:
         IntelRAPL()
         return True
     except Exception as e:
         logger.debug(
             "Not using the RAPL interface, an exception occurred while instantiating "
-            + f"IntelRAPL : {e}",
+            + "IntelRAPL : %s",
+            e,
         )
         return False
 
 
 class IntelPowerGadget:
+    """
+    A class to interface with Intel Power Gadget for monitoring CPU power consumption on Windows and (non-Apple Silicon) macOS.
+
+    This class provides methods to set up and execute Intel Power Gadget's command-line interface (CLI) to
+    log power consumption data over a specified duration and resolution. It also includes functionality to
+    read and process the logged data to extract CPU power details.
+
+    Methods:
+        start():
+            Placeholder method for starting the Intel Power Gadget monitoring.
+
+        get_cpu_details() -> Dict:
+            Fetches the CPU power details by reading the values from the logged CSV file.
+
+    """
+
     _osx_exec = "PowerLog"
     _osx_exec_backup = "/Applications/Intel Power Gadget/PowerLog"
     _windows_exec = "PowerLog3.0.exe"
@@ -60,6 +90,7 @@ class IntelPowerGadget:
         self._system = sys.platform.lower()
         self._duration = duration
         self._resolution = resolution
+        self._windows_exec_backup = None
         self._setup_cli()
 
     def _setup_cli(self) -> None:
@@ -142,16 +173,17 @@ class IntelPowerGadget:
         if returncode != 0:
             logger.warning(
                 "Returncode while logging power values using "
-                + f"Intel Power Gadget: {returncode}"
+                + "Intel Power Gadget: %s",
+                returncode,
             )
 
-    def get_cpu_details(self, **kwargs) -> Dict:
+    def get_cpu_details(self) -> Dict:
         """
         Fetches the CPU Power Details by fetching values from a logged csv file
         in _log_values function
         """
         self._log_values()
-        cpu_details = dict()
+        cpu_details = {}
         try:
             cpu_data = pd.read_csv(self._log_file_path).dropna()
             for col_name in cpu_data.columns:
@@ -164,23 +196,53 @@ class IntelPowerGadget:
         except Exception as e:
             logger.info(
                 f"Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
-                Exception occurred {e}",
+                Exception occurred %s",
+                e,
                 exc_info=True,
             )
         return cpu_details
 
-    def start(self):
+    def start(self) -> None:
+        """
+        Placeholder method for starting the Intel Power Gadget monitoring.
+        """
         # TODO: Read energy
-        pass
 
 
 class IntelRAPL:
+    """
+    A class to interface Intel's Running Average Power Limit (RAPL) for monitoring CPU power consumption.
+
+    This class provides methods to set up and read energy consumption data from Intel RAPL files,
+    which are available on Linux systems.
+    It enables the measurement of CPU energy usage over time and provides methods to fetch
+    both dynamic and static CPU energy details.
+
+    Attributes:
+        _lin_rapl_dir (str): The directory path where Intel RAPL files are located.
+        _system (str): The platform of the running system, typically used to ensure compatibility.
+        _rapl_files (List[RAPLFile]): A list of RAPLFile objects representing the files to read energy data from.
+        _cpu_details (Dict): A dictionary storing the latest CPU energy details.
+        _last_mesure (int): Placeholder for storing the last measurement time.
+
+    Methods:
+        start():
+            Starts monitoring CPU energy consumption.
+
+        get_cpu_details(duration: Time) -> Dict:
+            Fetches the CPU energy deltas over a specified duration by reading values from RAPL files.
+
+        get_static_cpu_details() -> Dict:
+            Returns the CPU details without recalculating them.
+
+    """
+
     def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
-        self._rapl_files = list()
+        self._rapl_files = []
         self._setup_rapl()
-        self._cpu_details: Dict = dict()
+        self._cpu_details: Dict = {}
 
         self._last_mesure = 0
 
@@ -199,7 +261,7 @@ class IntelRAPL:
         else:
             raise SystemError("Platform not supported by Intel RAPL Interface")
 
-    def _fetch_rapl_files(self):
+    def _fetch_rapl_files(self) -> None:
         """
         Fetches RAPL files from the RAPL directory
         """
@@ -229,19 +291,20 @@ class IntelRAPL:
                     self._rapl_files.append(
                         RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
                     )
-                    logger.debug(f"We will read Intel RAPL files at {rapl_file}")
+                    logger.debug("We will read Intel RAPL files at %s", rapl_file)
                 except PermissionError as e:
                     raise PermissionError(
                         "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
-                        + f" for workarounds : {e}"
-                    )
+                        + " for workarounds : %s",
+                        e,
+                    ) from e
 
-    def get_cpu_details(self, duration: Time, **kwargs) -> Dict:
+    def get_cpu_details(self, duration: Time) -> Dict:
         """
         Fetches the CPU Energy Deltas by fetching values from RAPL files
         """
-        cpu_details = dict()
+        cpu_details = {}
         try:
             list(map(lambda rapl_file: rapl_file.delta(duration), self._rapl_files))
 
@@ -255,28 +318,50 @@ class IntelRAPL:
                     )
         except Exception as e:
             logger.info(
-                f"Unable to read Intel RAPL files at {self._rapl_files}\n \
-                Exception occurred {e}",
+                "Unable to read Intel RAPL files at %s\n \
+                Exception occurred %s",
+                self._rapl_files,
+                e,
                 exc_info=True,
             )
-        self.cpu_details = cpu_details
-        logger.debug(f"get_cpu_details {self.cpu_details}")
+        self._cpu_details = cpu_details
+        logger.debug("get_cpu_details %s", self._cpu_details)
         return cpu_details
 
     def get_static_cpu_details(self) -> Dict:
         """
         Return CPU details without computing them.
         """
-        logger.debug(f"get_static_cpu_details {self.cpu_details}")
+        logger.debug("get_static_cpu_details %s", self._cpu_details)
 
-        return self.cpu_details
+        return self._cpu_details
 
-    def start(self):
+    def start(self) -> None:
+        """
+        Starts monitoring CPU energy consumption.
+        """
         for rapl_file in self._rapl_files:
             rapl_file.start()
 
 
 class TDP:
+    """
+    Represents Thermal Design Power (TDP) for detecting and estimating
+    the power consumption of the CPU on a machine.
+
+    The class provides methods to identify the CPU model, match it with known TDP
+    values from a dataset, and return the corresponding power consumption in watts.
+
+    Attributes:
+        model (str): The detected CPU model name.
+        tdp (int): The TDP value of the detected CPU in watts.
+
+    Methods:
+        start():
+            Placeholder method to initiate TDP analysis.
+
+    """
+
     def __init__(self):
         self.model, self.tdp = self._main()
 
@@ -323,8 +408,8 @@ class TDP:
             THRESHOLD_TOKEN_SET defines the similarity ratio value to consider
             token_set matches (for more detail see fuzz.token_set_ratio).
         """
-        THRESHOLD_DIRECT = 100
-        THRESHOLD_TOKEN_SET = 100
+        THRESHOLD_DIRECT: int = 100
+        THRESHOLD_TOKEN_SET: int = 100
 
         direct_match = process.extractOne(
             model_raw,
@@ -372,12 +457,15 @@ class TDP:
 
             if power:
                 logger.debug(
-                    f"CPU : We detect a {cpu_model_detected} with a TDP of {power} W"
+                    "CPU : We detect a %s with a TDP of %s W",
+                    cpu_model_detected,
+                    power,
                 )
                 return cpu_model_detected, power
             logger.warning(
-                f"We saw that you have a {cpu_model_detected} but we don't know it."
-                + " Please contact us."
+                "We saw that you have a %s but we don't know it."
+                + " Please contact us.",
+                cpu_model_detected,
             )
             return cpu_model_detected, None
         logger.warning(
