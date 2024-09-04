@@ -393,7 +393,7 @@ class BaseEmissionsTracker(ABC):
             if is_mac_os():
                 if "M1" in detect_cpu_model() or "M2" in detect_cpu_model() or "M3" in detect_cpu_model():
                     cpu_tracking_install_instructions = ""
-                cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
+                    cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
                 else:
                     cpu_tracking_install_instructions = "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
             elif is_windows_os():
