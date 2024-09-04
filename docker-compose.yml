@@ -1,85 +1,132 @@
 services:
+    carbonserver:
+        depends_on:
+            - postgres
+        build:
+            context: .
+            dockerfile: ./carbonserver/docker/Dockerfile
+        volumes:
+            - ./carbonserver:/carbonserver
+        ports:
+            - 8008:8000
+        environment:
+            CODECARBON_LOG_LEVEL: DEBUG
+            DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@${DATABASE_HOST:-postgres}:${DATABASE_PORT:-5432}/${DATABASE_NAME:-codecarbon_db}
+            FIEF_URL: http://localhost:8000
+            FIEF_CLIENT_ID: http://localhost:8000
+            FIEF_CLIENT_SECRET: http://localhost:8000
+        networks:
+            - codecarbon_net
 
-  # codecarbon_package:
-  #   build:
-  #     context: ./codecarbon/
-  #     dockerfile: ./docker/Dockerfile
-  #   networks:
-  #     - codecarbon_net
-  #   volumes:
-  #     - ./codecarbon:/opt/codecarbon
-  #   depends_on:
-  #     - codecarbon_api
-  #   restart: unless-stopped
+    postgres:
+        container_name: ${DATABASE_HOST:-postgres_codecarbon}
+        environment:
+            HOSTNAME: ${DATABASE_HOST:-postgres_codecarbon}
+            POSTGRES_DB: ${DATABASE_NAME:-codecarbon_db}
+            POSTGRES_PASSWORD: ${DATABASE_PASS:-supersecret}
+            POSTGRES_USER: ${DATABASE_USER:-codecarbon-user}
+        image: postgres:13
+        networks:
+            - codecarbon_net
+        ports:
+            - 5480:5432
+        restart: unless-stopped
+        volumes:
+            - postgres_codecarbon_data:/var/lib/postgresql/data:rw
 
-  carbonserver:
-    depends_on:
-      - postgres
-    build:
-      context: .
-      dockerfile: ./carbonserver/docker/Dockerfile
-    volumes:
-      - ./carbonserver:/carbonserver
-    ports:
-      - 8008:8000
-    environment:
-      CODECARBON_LOG_LEVEL: DEBUG
-      DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@${DATABASE_HOST:-postgres}:${DATABASE_PORT:-5432}/${DATABASE_NAME:-codecarbon_db}
-    networks:
-      - codecarbon_net
+    pgadmin:
+        container_name: pgadmin_codecarbon
+        image: dpage/pgadmin4
+        environment:
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-test@test.com}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-test}
+        volumes:
+            - pgadmin:/root/.pgadmin
+            - ./carbonserver/docker/pgpassfile:/pgadmin4/pgpassfile
+            - ./carbonserver/docker/pgadmin-servers.json:/pgadmin4/servers.json
+        ports:
+            - "${PGADMIN_PORT:-5080}:80"
+        networks:
+            - codecarbon_net
+        restart: unless-stopped
 
-  postgres:
-    container_name: ${DATABASE_HOST:-postgres_codecarbon}
-    environment:
-      HOSTNAME: ${DATABASE_HOST:-postgres_codecarbon}
-      POSTGRES_DB: ${DATABASE_NAME:-codecarbon_db}
-      POSTGRES_PASSWORD: ${DATABASE_PASS:-supersecret}
-      POSTGRES_USER: ${DATABASE_USER:-codecarbon-user}
-    image: postgres:13
-    networks:
-      - codecarbon_net
-    ports:
-    - 5480:5432
-    restart: unless-stopped
-    volumes:
-    - postgres_data:/var/lib/postgresql/data:rw
+    # Uncomment the following to enable prometheus and pushgateway
+    # prometheus:
+    #     image: prom/prometheus:latest
+    #     ports:
+    #         - "9090:9090"
+    #     volumes:
+    #         - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+    #     depends_on:
+    #         - "prometheus-pushgateway"
 
-  pgadmin:
-    container_name: pgadmin_codecarbon
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-test@test.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-test}
-    volumes:
-       - pgadmin:/root/.pgadmin
-       - ./carbonserver/docker/pgpassfile:/pgadmin4/pgpassfile
-       - ./carbonserver/docker/pgadmin-servers.json:/pgadmin4/servers.json
-    ports:
-      - "${PGADMIN_PORT:-5080}:80"
-    networks:
-      - codecarbon_net
-    restart: unless-stopped
+    # prometheus-pushgateway:
+    #     image: prom/pushgateway
+    #     ports:
+    #         - "9091:9091"
 
-  prometheus:
-      image: prom/prometheus:latest
-      ports:
-          - "9090:9090"
-      volumes:
-        - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
-      depends_on:
-          - "prometheus-pushgateway"
+    ###############################################
+    # FIEF-related services
+    ###############################################
+    fief-server:
+        image: ghcr.io/fief-dev/fief:latest
+        command: fief run-server
+        env_file:
+            - .env
+        depends_on:
+            - postgres-fief
+            - redis
 
-  prometheus-pushgateway:
-      image: prom/pushgateway
-      ports:
-          - "9091:9091"
+    fief-worker:
+        image: ghcr.io/fief-dev/fief:latest
+        command: fief run-worker -p 1 -t 1
+        env_file:
+            - .env
+        depends_on:
+            - postgres-fief
+            - redis
+
+    postgres-fief:
+        image: postgres:alpine
+        environment:
+            - POSTGRES_PASSWORD=fief
+            - POSTGRES_USER=fief
+            - POSTGRES_DB=fief
+        volumes:
+            - postgres_fief_data:/var/lib/postgresql/data
+
+    redis:
+        image: redis:alpine
+        command: redis-server --save 60 1 --loglevel warning
+        volumes:
+            - redis-data:/data
+
+    ui:
+        build:
+            context: ./webapp
+            dockerfile: Dockerfile
+        image: ui
+        # Uncomment the following to enable hot-reloading
+        # volumes:
+        #   - ./webapp/app:/app
+
+        # The environment variables are built into the image, to change them:
+        # 1. Go to the Dockerfile
+        # 2. See the .env file that is using and change the vars.
+        # 3. Rebuild this image
+        ports:
+            - "3000:3000"
 
 volumes:
-  postgres_data:
-    name: postgres_codecarbon_data
-  pgadmin:
-    name: pgadmin_codecarbon_data
+    postgres_codecarbon_data:
+        name: postgres_codecarbon_data
+    pgadmin:
+        name: pgadmin_codecarbon_data
+    postgres_fief_data:
+        name: postgres_fief_data
+    redis-data:
+        name: redis_data
 
 networks:
-  codecarbon_net:
-    name: codecarbon_network
+    codecarbon_net:
+        name: codecarbon_network
