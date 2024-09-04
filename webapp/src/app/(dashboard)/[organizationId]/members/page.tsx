@@ -29,7 +29,7 @@ async function fetchUsersByOrg(organizationId: string): Promise<User[]> {
         `${process.env.NEXT_PUBLIC_API_URL}/api/users?organization=${organizationId}`,
         {
             next: { revalidate: 60 }, // Revalidate every minute
-        }
+        },
     );
 
     if (!res.ok) {
@@ -49,7 +49,7 @@ export default function MembersPage({
         fetcher,
         {
             refreshInterval: 1000 * 60, // Refresh every minute
-        }
+        },
     );
     if (isLoading) {
         return <Loader />;
@@ -74,7 +74,7 @@ export default function MembersPage({
                     "Content-Type": "application/json",
                 },
                 body: body,
-            }
+            },
         );
         const data = await result.json();
         if (result.status != 200) {
@@ -128,7 +128,7 @@ export default function MembersPage({
                                 .sort((a, b) =>
                                     a.name
                                         .toLowerCase()
-                                        .localeCompare(b.name.toLowerCase())
+                                        .localeCompare(b.name.toLowerCase()),
                                 )
                                 .map((user, index) => (
                                     <CustomRow

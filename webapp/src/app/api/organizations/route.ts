@@ -1,7 +1,7 @@
 export async function GET(): Promise<Response> {
     try {
         const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/organizations`
+            `${process.env.NEXT_PUBLIC_API_URL}/organizations`,
         );
 
         if (!res.ok) {

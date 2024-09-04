@@ -48,7 +48,7 @@ export default function OrganizationPage({
         fetcher,
         {
             refreshInterval: 1000 * 60, // Refresh every minute
-        }
+        },
     );
 
     if (isLoading) {
