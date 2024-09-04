@@ -1,10 +1,10 @@
 export async function GET(
     request: Request,
-    { params }: { params: { organizationId: string } }
+    { params }: { params: { organizationId: string } },
 ): Promise<Response> {
     try {
         const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/organizations/${params.organizationId}/users`
+            `${process.env.NEXT_PUBLIC_API_URL}/organizations/${params.organizationId}/users`,
         );
 
         if (!res.ok) {

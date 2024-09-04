@@ -11,7 +11,7 @@ async function getUser(): Promise<User | null> {
         return null;
     }
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`,
     );
 
     if (!res.ok) {

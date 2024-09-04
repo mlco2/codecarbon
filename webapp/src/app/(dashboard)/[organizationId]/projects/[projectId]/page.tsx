@@ -13,7 +13,7 @@ import { Project } from "@/types/project";
  */
 async function getProject(projectId: string): Promise<Project> {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
     );
 
     if (!res.ok) {

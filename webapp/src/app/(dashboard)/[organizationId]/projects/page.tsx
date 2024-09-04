@@ -12,7 +12,7 @@ import { Project } from "@/types/project";
  */
 async function fetchProjects(organizationId: string): Promise<Project[]> {
     const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects?organization=${organizationId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/projects?organization=${organizationId}`,
     );
 
     if (!res.ok) {
@@ -44,7 +44,7 @@ export default async function ProjectsPage({
                             .sort((a, b) =>
                                 a.name
                                     .toLowerCase()
-                                    .localeCompare(b.name.toLowerCase())
+                                    .localeCompare(b.name.toLowerCase()),
                             )
                             .map((project) => (
                                 <CustomRow
