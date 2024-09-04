@@ -93,3 +93,21 @@ jobs:
           sleep 2
           # netstat -o -n -a | grep 8008
           # hatch run api:test-integ
+
+  build-ui:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        working-directory: ./webapp
+        run: npm ci
+      - name: Build
+        working-directory: ./webapp
+        run: npm run build
+      - name: Check formatting with Prettier
+        working-directory: ./webapp
+        run: npx prettier . --check
