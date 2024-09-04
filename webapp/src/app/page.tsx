@@ -13,7 +13,7 @@ export default function Home() {
                 </p>
                 <div className="mt-6">
                     <a
-                        href={`${process.env.NEXT_PUBLIC_API_URL}/auth/login?redirect=/home?auth=true`}
+                        href={`${process.env.NEXT_PUBLIC_API_URL}/auth/login?redirect=${process.env.NEXT_PUBLIC_BASE_URL}/home?auth=true`}
                     >
                         <Button className="w-full max-w-[300px]">
                             <LogIn className="mr-2 h-5 w-5" />

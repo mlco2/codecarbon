@@ -1,3 +1,4 @@
+import os
 import time
 from pathlib import Path
 from typing import Optional
@@ -23,9 +24,13 @@ from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker
 
-AUTH_CLIENT_ID = "pkqh9CiOkp4MkPqRqM_k8Xc3mwBRpojS3RayIk1i5Pg"
-AUTH_SERVER_URL = "https://auth.codecarbon.io/codecarbon-dev"
-API_URL = "https://dash-dev.cleverapps.io/api"
+AUTH_CLIENT_ID = os.environ.get(
+    "AUTH_CLIENT_ID", "pkqh9CiOkp4MkPqRqM_k8Xc3mwBRpojS3RayIk1i5Pg"
+)
+AUTH_SERVER_URL = os.environ.get(
+    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon-dev"
+)
+API_URL = os.environ.get("API_URL", "https://dash-dev.cleverapps.io/api")
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
@@ -94,6 +99,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
 
 fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
 fief_auth = FiefAuth(fief, "./credentials.json")
+print("FIEF", AUTH_SERVER_URL, AUTH_CLIENT_ID)
 
 
 def _get_access_token():

@@ -17,4 +17,5 @@ else
     exit 1
 fi
 echo "Starting uvicorn server..."
-uvicorn --reload main:app --host 0.0.0.0 --port 8000
+# uvicorn --reload main:app --host 0.0.0.0 --port 8000
+uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
