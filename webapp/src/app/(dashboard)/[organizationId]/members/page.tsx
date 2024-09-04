@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { Project } from "@/types/project";
 import { User } from "@/types/user";
-import AddMember from "@/components/add-member";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "../../../../helpers/swr";
@@ -77,7 +76,7 @@ export default function MembersPage({
                 body: body,
             },
         );
-        const data = result.json();
+        const data = await result.json();
         if (result.status != 200) {
             alert(data.detail);
         }
