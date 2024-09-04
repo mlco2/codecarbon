@@ -103,8 +103,11 @@ jobs:
         with:
           node-version: '18'
       - name: Install dependencies
+        working-directory: ./webapp
         run: npm ci
       - name: Build
+        working-directory: ./webapp
         run: npm run build
       - name: Check formatting with Prettier
+        working-directory: ./webapp
         run: npx prettier . --check
