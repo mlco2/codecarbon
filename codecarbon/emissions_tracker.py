@@ -289,7 +289,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
         logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
-        # Run `self._measure_power` every `measure_power_secs` seconds in a
+        # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
         self._scheduler = PeriodicScheduler(
             function=self._measure_power_and_energy,
