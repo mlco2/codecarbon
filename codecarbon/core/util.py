@@ -1,11 +1,11 @@
 import os
 import re
 import subprocess
+import sys
 from contextlib import contextmanager
 from os.path import expandvars
 from pathlib import Path
 from typing import Optional, Union
-
 import cpuinfo
 import psutil
 
