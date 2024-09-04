@@ -388,7 +388,6 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_count"] = 1
         else:
             # Explain what to install to increase accuracy
-            #if darwin
             cpu_tracking_install_instructions = ""
             if is_mac_os():
                 if "M1" in detect_cpu_model() or "M2" in detect_cpu_model() or "M3" in detect_cpu_model():
@@ -401,7 +400,7 @@ class BaseEmissionsTracker(ABC):
             elif is_linux_os():
                 cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at \\sys\\class\\powercap\\intel-rapl to measure CPU"
             logger.warning(
-                f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}"
+                f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
             )
             cpu_tracker = "TDP constant"
             tdp = cpu.TDP()
