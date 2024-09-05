@@ -954,6 +954,8 @@ AMD Turion X2 Ultra ZM-88,35
 AMD Z-01,6
 AMD Z-60,5
 Apple M1,10
+AWS Graviton,95
+AWS Graviton2,110
 AWS Graviton3,100
 Intel A100,3
 Intel A110,3
@@ -2021,6 +2023,7 @@ Intel Xeon E5-2680 v2,115
 Intel Xeon E5-2680 v4,120
 Intel Xeon E5-2687W v2,130
 Intel Xeon E5-2690 v2,130
+Intel Xeon E5-2690 v4,135
 Intel Xeon E5-2692 v2,100
 Intel Xeon E5-2695 v2,115
 Intel Xeon E5-2697 v2,130
