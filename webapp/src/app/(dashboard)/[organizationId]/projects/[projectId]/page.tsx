@@ -107,7 +107,9 @@ export default function ProjectPage({
                     </div>
                     <div className="grid gap-4 md:grid-cols-2 md:gap-8">
                         <AreaChartStacked />
-                        <BarChartMultiple />
+                        <ExperimentsBarChart
+                            params={{ projectId: project.id }}
+                        />
                     </div>
                 </main>
             </div>
