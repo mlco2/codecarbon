@@ -91,7 +91,7 @@ class SqlAlchemyRepository(Users):
             )
             session.add(db_membership)
             session.commit()
-            return self.map_sql_to_schema(e)
+            return user
 
     def is_user_in_organization(self, organization_id: UUID, user: User):
         with self.session_factory() as session:
