@@ -53,16 +53,10 @@ jobs:
           python-version: "3.12"
           auto-update-conda: true
           channels: codecarbon,conda-forge
-          activate-environment: codecarbon_build_environment
-          environment-file: .conda/build-env.yaml
-      - name: Build and upload the conda packages
-        uses: uibcdf/action-build-and-upload-conda-packages@v1.3.0
-        with:
-          meta_yaml_dir: .conda
-          python-version: "3.12"
-          platform_linux-64: true
-          platform_osx-64: true
-          platform_win-64: true
-          user: codecarbon
-          label: auto
-          token: ${{ secrets.ANACONDA_TOKEN }}
+      - name: Conda build and upload
+        shell: bash -l {0}
+        run: |
+          conda install --yes conda-build anaconda-client
+          conda config --set anaconda_upload yes
+          conda build --channel conda-forge --token ${{ secrets.ANACONDA_TOKEN }} --user codecarbon .conda
+

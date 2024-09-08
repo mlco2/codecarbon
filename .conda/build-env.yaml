@@ -5,6 +5,7 @@ channels:
 
 dependencies:
 - python=3.12
+- anaconda-client
 - pip
 - hatchling
 - conda-build
@@ -20,4 +21,4 @@ dependencies:
 - requests
 - questionary
 - rich
-- type
+- typer

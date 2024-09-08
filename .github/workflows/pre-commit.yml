@@ -11,6 +11,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
     - name: set PY
       run: echo "PY=$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')" >> $GITHUB_ENV
     - uses: actions/cache@v4
@@ -21,31 +23,3 @@ jobs:
       run: |
         pip install pre-commit==3.7.0
         pre-commit run --show-diff-on-failure --color=always --all-files
-
-# TO REMOVE BEFORE PUBLISHING !!!!
-  conda_deployment:
-    name: Conda deployment of package with Python 3.12
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Conda environment creation and activation
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: "3.12"
-          auto-update-conda: true
-          channels: codecarbon,conda-forge
-          activate-environment: codecarbon_build_environment
-          environment-file: .conda/build-env.yaml
-      - name: Build and upload the conda packages
-        uses: uibcdf/action-build-and-upload-conda-packages@v1.3.0
-        with:
-          meta_yaml_dir: .conda
-          python-version: "3.12"
-          platform_linux-64: true
-          platform_osx-64: true
-          platform_win-64: true
-          user: codecarbon
-          label: auto
-          token: ${{ secrets.ANACONDA_TOKEN }}
