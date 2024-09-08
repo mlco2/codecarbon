@@ -37,7 +37,6 @@ class ApiClient:  # (AsyncClient)
     """
 
     run_id = None
-    _previous_call = time.time()
 
     def __init__(
         self,
@@ -167,7 +166,6 @@ class ApiClient:  # (AsyncClient)
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
-        self._previous_call = time.time()
         if self.run_id is None:
             # TODO : raise an Exception ?
             logger.debug(
