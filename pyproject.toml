@@ -85,6 +85,7 @@ pip-compile-constraint = ""
 
 [tool.hatch.envs.dev]
 dependencies = [
+    "bumpver",
     "pre-commit",
     "ruff",
     "black",
@@ -177,4 +178,16 @@ path = "codecarbon/_version.py"
 [tool.hatch.build.targets.sdist]
 include = [
     "/codecarbon",
+]
+
+[tool.bumpver]
+current_version = "2.7.0"
+version_pattern = "MAJOR.MINOR.PATCH"
+
+[tool.bumpver.file_patterns]
+"codecarbon/_version.py" = [
+    '^__version__ = "{version}"$',
+]
+"docs/edit/conf.py" = [
+    '^release = "{version}"$',
 ]
