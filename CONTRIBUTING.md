@@ -396,7 +396,7 @@ flake8...................................................................Passed
 
 If any of the linters/formatters fail, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their job) with `git add` and finally try to commit again `git commit ...`.
 
-You can also run `pre-commit` with `pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
+You can also run `pre-commit` with `hatch run dev:pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
 It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
 
