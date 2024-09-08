@@ -168,9 +168,10 @@ class TestConfig(unittest.TestCase):
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
-            tracker = EmissionsTracker(
-                project_name="test-project", co2_signal_api_token="signal-token"
-            )
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    project_name="test-project", co2_signal_api_token="signal-token"
+                )
             self.assertEqual(tracker._measure_power_secs, 10)
             self.assertEqual(tracker._output_dir, "/success/overwritten")
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")

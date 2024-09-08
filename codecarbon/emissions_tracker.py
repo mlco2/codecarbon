@@ -4,6 +4,7 @@ OfflineEmissionsTracker and @track_emissions
 """
 
 import dataclasses
+import os
 import platform
 import time
 import uuid
@@ -133,7 +134,10 @@ class BaseEmissionsTracker(ABC):
                 else:
                     assert callable(return_type)
                     value = return_type(value)
-
+        # Check conf
+        if name == "output_dir":
+            if not os.path.exists(value):
+                raise OSError(f"Folder '{value}' doesn't exist !")
         # store final value
         self._conf[name] = value
         # set `self._{name}` to `value`
