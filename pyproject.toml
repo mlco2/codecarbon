@@ -114,8 +114,8 @@ dependencies = [
 ]
 
 [tool.hatch.envs.test.scripts]
-package = 'pytest -vv -m "not integ_test" tests/'
-package-integ = 'python -m pytest -vv tests/'
+package = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m "not integ_test" tests/'
+package-integ = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/'
 
 [[tool.hatch.envs.test.matrix]]
 # Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7

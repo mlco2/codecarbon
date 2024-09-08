@@ -33,6 +33,7 @@ from codecarbon.external.logger import logger, set_logger_format, set_logger_lev
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
 from codecarbon.input import DataSource
+from codecarbon.lock import Lock
 from codecarbon.output import (
     BaseOutput,
     CodeCarbonAPIOutput,
@@ -174,6 +175,7 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
+        allow_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -228,10 +230,29 @@ class BaseEmissionsTracker(ABC):
                                 messages. Defaults to "".
         :param default_cpu_power: cpu power to be used as default if the cpu is not known.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+        :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
+        self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", False, bool)
+        if self._allow_multiple_runs:
+            logger.warning(
+                "Multiple instances of codecarbon are allowed to run at the same time."
+            )
+        else:
+            # Acquire lock file to prevent multiple instances of codecarbon running
+            # at the same time
+            try:
+                self._lock = Lock()
+                self._lock.acquire()
+            except FileExistsError:
+                logger.error(
+                    "Error: Another instance of codecarbon is already running. Turn off the other instance to be able to run this one. Exiting."
+                )
+                # Do not continue if another instance of codecarbon is running
+                self._another_instance_already_running = True
+                return
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
@@ -496,7 +517,15 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
-
+        # if another instance of codecarbon is already running, stop here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -594,6 +623,19 @@ class BaseEmissionsTracker(ABC):
         Stops tracking the experiment
         :return: CO2 emissions in kgs
         """
+
+        # if another instance of codecarbon is already running, Nothing to do here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
+        if not self._allow_multiple_runs:
+            # Release the lock
+            self._lock.release()
         if self._start_time is None:
             logger.error("You first need to start the tracker.")
             return None
@@ -1005,6 +1047,7 @@ def track_emissions(
     log_level: Optional[Union[int, str]] = _sentinel,
     default_cpu_power: Optional[int] = _sentinel,
     pue: Optional[int] = _sentinel,
+    allow_multiple_runs: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1050,6 +1093,7 @@ def track_emissions(
                       Defaults to "info".
     :param default_cpu_power: cpu power to be used as default if the cpu is not known.
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+    :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
 
     :return: The decorated function
     """
@@ -1084,6 +1128,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                     default_cpu_power=default_cpu_power,
                     pue=pue,
+                    allow_multiple_runs=allow_multiple_runs,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1109,6 +1154,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                     default_cpu_power=default_cpu_power,
                     pue=pue,
+                    allow_multiple_runs=allow_multiple_runs,
                 )
             tracker.start()
             try:
