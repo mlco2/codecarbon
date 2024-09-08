@@ -6,12 +6,13 @@ from dataclasses import dataclass
 @dataclass
 class EmissionsData:
     """
-    Output object containg run data
+    Output object containing run data
     """
 
     timestamp: str
     project_name: str
     run_id: str
+    experiment_id: str
     duration: float
     emissions: float
     emissions_rate: float
