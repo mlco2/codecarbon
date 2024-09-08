@@ -18,7 +18,14 @@ from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import count_cpus, suppress
+from codecarbon.core.util import (
+    count_cpus,
+    detect_cpu_model,
+    is_linux_os,
+    is_mac_os,
+    is_windows_os,
+    suppress,
+)
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
@@ -275,92 +282,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
 
-        if self._gpu_ids:
-            # If _gpu_ids is a string or a list of int, parse it to a list of ints
-            if isinstance(self._gpu_ids, str) or (
-                isinstance(self._gpu_ids, list)
-                and all(isinstance(gpu_id, int) for gpu_id in self._gpu_ids)
-            ):
-                self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
-                self._conf["gpu_ids"] = self._gpu_ids
-                self._conf["gpu_count"] = len(self._gpu_ids)
-            else:
-                logger.warning(
-                    "Invalid gpu_ids format. Expected a string or a list of ints."
-                )
-
-        logger.info("[setup] RAM Tracking...")
-        ram = RAM(tracking_mode=self._tracking_mode)
-        self._conf["ram_total_size"] = ram.machine_memory_GB
-        self._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
-
-        # Hardware detection
-        logger.info("[setup] GPU Tracking...")
-        if gpu.is_gpu_details_available():
-            logger.info("Tracking Nvidia GPU via pynvml")
-            gpu_devices = GPU.from_utils(self._gpu_ids)
-            self._hardware.append(gpu_devices)
-            gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
-            gpu_names_dict = Counter(gpu_names)
-            self._conf["gpu_model"] = "".join(
-                [f"{i} x {name}" for name, i in gpu_names_dict.items()]
-            )
-            self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
-        else:
-            logger.info("No GPU found.")
-
-        logger.info("[setup] CPU Tracking...")
-        if cpu.is_powergadget_available() and self._default_cpu_power is None:
-            logger.info("Tracking Intel CPU via Power Gadget")
-            hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
-            self._hardware.append(hardware)
-            self._conf["cpu_model"] = hardware.get_model()
-        elif cpu.is_rapl_available():
-            logger.info("Tracking Intel CPU via RAPL interface")
-            hardware = CPU.from_utils(self._output_dir, "intel_rapl")
-            self._hardware.append(hardware)
-            self._conf["cpu_model"] = hardware.get_model()
-        elif (
-            powermetrics.is_powermetrics_available() and self._default_cpu_power is None
-        ):
-            logger.info("Tracking Apple CPU and GPU via PowerMetrics")
-            hardware_cpu = AppleSiliconChip.from_utils(
-                self._output_dir, chip_part="CPU"
-            )
-            self._hardware.append(hardware_cpu)
-            self._conf["cpu_model"] = hardware_cpu.get_model()
-
-            hardware_gpu = AppleSiliconChip.from_utils(
-                self._output_dir, chip_part="GPU"
-            )
-            self._hardware.append(hardware_gpu)
-
-            self._conf["gpu_model"] = hardware_gpu.get_model()
-            self._conf["gpu_count"] = 1
-        else:
-            logger.warning(
-                "No CPU tracking mode found. Falling back on CPU constant mode."
-            )
-            tdp = cpu.TDP()
-            power = tdp.tdp
-            model = tdp.model
-            if (power is None) and self._default_cpu_power:
-                # We haven't been able to calculate CPU power but user has input a default one. We use it
-                user_input_power = self._default_cpu_power
-                logger.debug(f"Using user input TDP: {user_input_power} W")
-                power = user_input_power
-            logger.info(f"CPU Model on constant consumption mode: {model}")
-            self._conf["cpu_model"] = model
-            if tdp:
-                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
-                self._hardware.append(hardware)
-            else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
-                )
-                hardware = CPU.from_utils(self._output_dir, "constant")
-                self._hardware.append(hardware)
+        self.set_CPU_GPU_ram_tracking()
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
@@ -374,7 +296,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
         logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
-        # Run `self._measure_power` every `measure_power_secs` seconds in a
+        # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
         self._scheduler = PeriodicScheduler(
             function=self._measure_power_and_energy,
@@ -399,6 +321,128 @@ class BaseEmissionsTracker(ABC):
             self._data_source, self._co2_signal_api_token
         )
         self._init_output_methods(api_key)
+
+    def set_CPU_GPU_ram_tracking(self):
+        cpu_tracker = gpu_tracker = ram_tracker = "Unspecified"
+        if self._gpu_ids:
+            # If _gpu_ids is a string or a list of int, parse it to a list of ints
+            if isinstance(self._gpu_ids, str) or (
+                isinstance(self._gpu_ids, list)
+                and all(isinstance(gpu_id, int) for gpu_id in self._gpu_ids)
+            ):
+                self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
+                self._conf["gpu_ids"] = self._gpu_ids
+                self._conf["gpu_count"] = len(self._gpu_ids)
+            else:
+                logger.warning(
+                    "Invalid gpu_ids format. Expected a string or a list of ints."
+                )
+
+        logger.info("[setup] RAM Tracking...")
+        ram_tracker = "3 Watts for 8 GB ratio constant"
+        ram = RAM(tracking_mode=self._tracking_mode)
+        self._conf["ram_total_size"] = ram.machine_memory_GB
+        self._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+
+        # Hardware detection
+        logger.info("[setup] GPU Tracking...")
+        if gpu.is_gpu_details_available():
+            logger.info("Tracking Nvidia GPU via pynvml")
+            gpu_tracker = "pynvml"
+            gpu_devices = GPU.from_utils(self._gpu_ids)
+            self._hardware.append(gpu_devices)
+            gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
+            gpu_names_dict = Counter(gpu_names)
+            self._conf["gpu_model"] = "".join(
+                [f"{i} x {name}" for name, i in gpu_names_dict.items()]
+            )
+            self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
+        else:
+            logger.info("No GPU found.")
+
+        logger.info("[setup] CPU Tracking...")
+        if cpu.is_powergadget_available() and self._default_cpu_power is None:
+            logger.info("Tracking Intel CPU via Power Gadget")
+            cpu_tracker = "Power Gadget"
+            hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
+        elif cpu.is_rapl_available():
+            logger.info("Tracking Intel CPU via RAPL interface")
+            cpu_tracker = "RAPL"
+            hardware = CPU.from_utils(self._output_dir, "intel_rapl")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
+        # change code to check if powermetrics needs to be installed or just sudo setup
+        elif (
+            powermetrics.is_powermetrics_available() and self._default_cpu_power is None
+        ):
+            logger.info("Tracking Apple CPU and GPU via PowerMetrics")
+            gpu_tracker = "PowerMetrics"
+            cpu_tracker = "PowerMetrics"
+            hardware_cpu = AppleSiliconChip.from_utils(
+                self._output_dir, chip_part="CPU"
+            )
+            self._hardware.append(hardware_cpu)
+            self._conf["cpu_model"] = hardware_cpu.get_model()
+
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self._output_dir, chip_part="GPU"
+            )
+            self._hardware.append(hardware_gpu)
+
+            self._conf["gpu_model"] = hardware_gpu.get_model()
+            self._conf["gpu_count"] = 1
+        else:
+            # Explain what to install to increase accuracy
+            cpu_tracking_install_instructions = ""
+            if is_mac_os():
+                if (
+                    "M1" in detect_cpu_model()
+                    or "M2" in detect_cpu_model()
+                    or "M3" in detect_cpu_model()
+                ):
+                    cpu_tracking_install_instructions = ""
+                    cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
+                else:
+                    cpu_tracking_install_instructions = "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
+            elif is_windows_os():
+                cpu_tracking_install_instructions = "Windows OS detected: Please install Intel Power Gadget to measure CPU"
+            elif is_linux_os():
+                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at \\sys\\class\\powercap\\intel-rapl to measure CPU"
+            logger.warning(
+                f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
+            )
+            cpu_tracker = "TDP constant"
+            tdp = cpu.TDP()
+            power = tdp.tdp
+            model = tdp.model
+            if (power is None) and self._default_cpu_power:
+                # We haven't been able to calculate CPU power but user has input a default one. We use it
+                user_input_power = self._default_cpu_power
+                logger.debug(f"Using user input TDP: {user_input_power} W")
+                cpu_tracker = "User Input TDP constant"
+                power = user_input_power
+            logger.info(f"CPU Model on constant consumption mode: {model}")
+            self._conf["cpu_model"] = model
+            if tdp:
+                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
+                self._hardware.append(hardware)
+            else:
+                logger.warning(
+                    "Failed to match CPU TDP constant. "
+                    + "Falling back on a global constant."
+                )
+                cpu_tracker = "global constant"
+                hardware = CPU.from_utils(self._output_dir, "constant")
+                self._hardware.append(hardware)
+        logger.debug(
+            f"""The below tracking methods have been set up:
+                RAM Tracking Method: {ram_tracker}
+                CPU Tracking Method: {cpu_tracker}
+                GPU Tracking Method: {gpu_tracker}
+            """
+        )
 
     def _init_output_methods(self, api_key):
         """
