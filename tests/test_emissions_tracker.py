@@ -291,7 +291,9 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path, experiment_id="test",
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
         )
         tracker.start()
         heavy_computation(run_time_secs=2)
@@ -311,7 +313,9 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path, experiment_id="test",
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv"
@@ -341,7 +345,9 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path, experiment_id="test",
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv"

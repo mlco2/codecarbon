@@ -2,6 +2,7 @@ import os
 import tempfile
 import time
 import unittest
+
 import pandas as pd
 
 from codecarbon.emissions_tracker import (
@@ -86,8 +87,12 @@ class TestCarbonTrackerFlush(unittest.TestCase):
     def verify_experiment_id_presence(self) -> None:
         assert os.path.isfile(self.emissions_file_path)
         emissions_df = pd.read_csv(self.emissions_file_path)
-        print(emissions_df[['project_name', 'experiment_id', 'country_iso_code', 'country_name']])
-        self.assertEqual("test", emissions_df['experiment_id'].values[0])
+        print(
+            emissions_df[
+                ["project_name", "experiment_id", "country_iso_code", "country_name"]
+            ]
+        )
+        self.assertEqual("test", emissions_df["experiment_id"].values[0])
 
     def verify_output_file(self, file_path: str, expected_lines=3) -> None:
         with open(file_path, "r") as f:
