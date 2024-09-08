@@ -26,8 +26,10 @@ from tests.testutils import get_custom_mock_open, get_test_data_source
 
 
 def heavy_computation(run_time_secs: float = 3):
-    end_time: float = time.time() + run_time_secs  # Run for `run_time_secs` seconds
-    while time.time() < end_time:
+    end_time: float = (
+        time.perf_counter() + run_time_secs
+    )  # Run for `run_time_secs` seconds
+    while time.perf_counter() < end_time:
         pass
 
 

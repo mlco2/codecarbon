@@ -13,8 +13,10 @@ from codecarbon.emissions_tracker import (
 
 
 def heavy_computation(run_time_secs: int = 3):
-    end_time: float = time.time() + run_time_secs  # Run for `run_time_secs` seconds
-    while time.time() < end_time:
+    end_time: float = (
+        time.perf_counter() + run_time_secs
+    )  # Run for `run_time_secs` seconds
+    while time.perf_counter() < end_time:
         pass
 
 

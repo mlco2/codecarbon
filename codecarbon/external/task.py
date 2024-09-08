@@ -15,7 +15,7 @@ class Task:
     def __init__(self, task_name):  # , task_measure
         self.task_id: str = task_name + uuid4().__str__()
         self.task_name: str = task_name
-        self.start_time = time.time()
+        self.start_time = time.perf_counter()
         self.is_active = True
 
     def out(self):
