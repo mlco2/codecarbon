@@ -22,7 +22,7 @@
    * [API](#api)
    * [Test the API](#test-the-api)
    * [Coding style && Linting](#coding-style-linting)
-   * [Packaging](#packaging)
+   * [Dependencies management](#dependencies-management)
    * [Alternative ways of contributing](#alternative-ways-of-contributing)
    * [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
    * [Release process](#release-process)
@@ -406,8 +406,8 @@ You can also run `pre-commit` with `hatch run dev:pre-commit run -v` if you have
 It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
 
 
-<!-- TOC --><a name="packaging"></a>
-### Packaging
+<!-- TOC --><a name="dependencies-management"></a>
+### Dependencies management
 
 Dependencies are defined in different places:
 
@@ -445,7 +445,7 @@ to regenerate the html files.
 ### Release process
 
 -   Merge all PRs.
--   Create a PR bumping the version with `hatch version minor`.
+-   Create a PR bumping the version with `hatch run dev:bumpver update --minor`.
 -   Run `hatch run python3 .github/check_version.py` to check version consistancy.
 -   Update the dependencies with `hatch-pip-compile --upgrade --all`.
 -   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
