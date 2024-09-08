@@ -11,7 +11,9 @@ OUTPUT_DIR = "test_task_data"
 
 
 def heavy_computation(run_time_secs: float = 3):
-    end_time: float = time.perf_counter() + run_time_secs  # Run for `run_time_secs` seconds
+    end_time: float = (
+        time.perf_counter() + run_time_secs
+    )  # Run for `run_time_secs` seconds
     while time.perf_counter() < end_time:
         _ = 1e9 / 1e10
 

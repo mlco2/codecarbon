@@ -8,7 +8,6 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-import time
 from datetime import timedelta, tzinfo
 
 import arrow
