@@ -1,0 +1,23 @@
+name: codecarbon_build_environment
+channels:
+- conda-forge
+- codecarbon
+
+dependencies:
+- python=3.12
+- pip
+- hatchling
+- conda-build
+- conda-verify
+- arrow
+- click
+- pandas
+- prometheus_client
+- psutil
+- py-cpuinfo
+- pynvml
+- rapidfuzz
+- requests
+- questionary
+- rich
+- type

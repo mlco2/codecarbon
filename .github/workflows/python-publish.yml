@@ -41,11 +41,8 @@ jobs:
         password: ${{ secrets.PYPI_TOKEN }}
 
   conda_deployment:
-    name: Conda deployment of package with Python ${{ matrix.python-version }}
+    name: Conda deployment of package with Python 3.12
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,18 +50,19 @@ jobs:
       - name: Conda environment creation and activation
         uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
           auto-update-conda: true
           channels: codecarbon,conda-forge
-          activate-environment: true
+          activate-environment: codecarbon_build_environment
+          environment-file: .conda/build-env.yaml
       - name: Build and upload the conda packages
         uses: uibcdf/action-build-and-upload-conda-packages@v1.3.0
         with:
           meta_yaml_dir: .conda
-          python-version: ${{ matrix.python-version }} # Values previously defined in `matrix`
+          python-version: "3.12"
           platform_linux-64: true
           platform_osx-64: true
           platform_win-64: true
           user: codecarbon
           label: auto
-          token: ${{ secrets.ANACONDA_TOKEN }} # Replace with the right name of your secret
+          token: ${{ secrets.ANACONDA_TOKEN }}
