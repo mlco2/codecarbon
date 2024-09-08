@@ -449,6 +449,7 @@ to regenerate the html files.
 -   Run `hatch run python3 .github/check_version.py` to check version consistancy.
 -   Update the dependencies with `hatch-pip-compile --upgrade --all`.
 -   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
+-   Push the changes.
 -   Merge the PR.
 -   Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 -   [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
