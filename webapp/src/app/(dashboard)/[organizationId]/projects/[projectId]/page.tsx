@@ -1,38 +1,54 @@
-"use server";
+"use client";
 
+import useSWR from "swr";
+
+import { useEffect, useState } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
-
 import AreaChartStacked from "@/components/area-chart-stacked";
 import BarChartMultiple from "@/components/bar-chart-multiple";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Project } from "@/types/project";
+import { fetcher } from "../../../../../helpers/swr";
 
 /**
  * Retrieves a project based on the projectId
  */
-async function getProject(projectId: string): Promise<Project> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
-    );
+// async function getProject(projectId: string): Promise<Project> {
+//     const res = await fetch(
+//         `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
+//     );
 
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch data");
-    }
+//     if (!res.ok) {
+//         // This will activate the closest `error.js` Error Boundary
+//         throw new Error("Failed to fetch data");
+//     }
 
-    return res.json();
-}
+//     return res.json();
+// }
 
-export default async function ProjectPage({
+export default function ProjectPage({
     params,
 }: Readonly<{
     params: {
         projectId: string;
     };
 }>) {
-    const project = await getProject(params.projectId);
+    const [project, setProject] = useState<any>(undefined);
+    const { data, isLoading, error } = useSWR<Project[]>(
+        `/api/projects/${params.projectId}`,
+        async (url: string) => {
+            const res = await fetch(url);
+            const data = await res.json();
+            setProject(data);
+            return data;
+        },
+        {
+            refreshInterval: 1000 * 60, // Refresh every minute
+        }
+    )
 
+    if (project) {
     return (
         <div className="h-full w-full overflow-auto">
             <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -106,4 +122,5 @@ export default async function ProjectPage({
             </main>
         </div>
     );
+    }
 }
