@@ -1,5 +1,5 @@
 from contextlib import AbstractContextManager
-from typing import List, Optional
+from typing import List
 from uuid import UUID, uuid4
 
 import sqlalchemy
@@ -66,19 +66,17 @@ class SqlAlchemyRepository(Organizations):
                 )
             return self.map_sql_to_schema(e)
 
-    def list_organizations(self, user: Optional[User] = None) -> List[Organization]:
+    def list_organizations(self, user: User) -> List[OrganizationUser]:
+        if user is None:
+            return []
         with self.session_factory() as session:
-            if user is None:
-                return [
-                    self.map_sql_to_schema(org)
-                    for org in session.query(SqlModelOrganization)
-                ]
             e = (
                 session.query(SqlModelOrganization)
-                .join(SqlModelOrganization.users)
+                .join(SqlModelMembership)
+                .filter(SqlModelMembership.user_id == user.id)
                 .all()
             )
-            return [self.map_sql_to_schema(org) for org in e]
+            return [self.map_sql_to_schema(row) for row in e]
 
     def list_users(self, organization_id: UUID) -> List[OrganizationUser]:
         with self.session_factory() as session:
