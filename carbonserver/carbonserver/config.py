@@ -14,4 +14,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-# print("Database", settings.db_url)

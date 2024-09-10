@@ -13,7 +13,7 @@
 # - requests<3.0.0
 # - sqlalchemy<2.0.0
 # - uvicorn[standard]<1.0.0
-# - fastapi-pagination<1.0.0
+# - fastapi-pagination==0.9.1
 # - pytest
 # - mock
 # - pytest
@@ -73,8 +73,9 @@ email-validator==2.2.0
 fastapi==0.114.0
     # via
     #   hatch.envs.api
+    #   fastapi-pagination
     #   fief-client
-fastapi-pagination==0.12.26
+fastapi-pagination==0.9.1
     # via hatch.envs.api
 fief-client==0.19.0
     # via hatch.envs.api
@@ -203,7 +204,6 @@ typing-extensions==4.12.2
     # via
     #   alembic
     #   fastapi
-    #   fastapi-pagination
     #   jwcrypto
     #   pydantic
     #   typer

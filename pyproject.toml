@@ -150,7 +150,7 @@ dependencies = [
     "requests<3.0.0",
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
+    "fastapi-pagination==0.9.1",
     "pytest",
     "mock",
     "pytest",
