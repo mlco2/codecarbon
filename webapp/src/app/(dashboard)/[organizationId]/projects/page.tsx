@@ -1,4 +1,4 @@
-"use server";
+"use client";
 
 import CustomRow from "@/components/custom-row";
 import { Button } from "@/components/ui/button";
