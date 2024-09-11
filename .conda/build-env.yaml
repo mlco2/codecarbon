@@ -1,3 +1,5 @@
+# This file probably could be deleted as we don't use it
+# but we will keep it until conda package is back on conda-forge
 name: codecarbon_build_environment
 channels:
 - conda-forge
