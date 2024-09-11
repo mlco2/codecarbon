@@ -55,7 +55,13 @@ class TestConfig(unittest.TestCase):
     def test_parse_env_config(self):
         self.assertDictEqual(
             parse_env_config(),
-            {"codecarbon": {"test": "test-VALUE", "test_key": "this_other_value"}},
+            {
+                "codecarbon": {
+                    "allow_multiple_runs": "True",
+                    "test": "test-VALUE",
+                    "test_key": "this_other_value",
+                }
+            },
         )
 
     def test_read_confs(self):
@@ -80,6 +86,7 @@ class TestConfig(unittest.TestCase):
         ):
             conf = dict(get_hierarchical_config())
             target = {
+                "allow_multiple_runs": "True",
                 "no_overwrite": "path/to/somewhere",
                 "local_overwrite": "SUCCESS:overwritten",
                 "syntax_test_key": "no/space= problem2",
@@ -119,6 +126,7 @@ class TestConfig(unittest.TestCase):
         ):
             conf = dict(get_hierarchical_config())
             target = {
+                "allow_multiple_runs": "True",
                 "no_overwrite": "path/to/somewhere",
                 "local_overwrite": "SUCCESS:overwritten",
                 "env_overwrite": "SUCCESS:overwritten",
@@ -136,7 +144,9 @@ class TestConfig(unittest.TestCase):
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
             conf = dict(get_hierarchical_config())
-            target = {}
+            target = {
+                "allow_multiple_runs": "True"
+            }  # allow_multiple_runs is a default value
             self.assertDictEqual(conf, target)
 
     @mock.patch.dict(
@@ -168,9 +178,10 @@ class TestConfig(unittest.TestCase):
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
-            tracker = EmissionsTracker(
-                project_name="test-project", co2_signal_api_token="signal-token"
-            )
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    project_name="test-project", co2_signal_api_token="signal-token"
+                )
             self.assertEqual(tracker._measure_power_secs, 10)
             self.assertEqual(tracker._output_dir, "/success/overwritten")
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")

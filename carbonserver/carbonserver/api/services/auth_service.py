@@ -5,11 +5,7 @@ import jwt
 from container import ServerContainer
 from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException
-from fastapi.security import (
-    APIKeyCookie,
-    HTTPAuthorizationCredentials,
-    OAuth2AuthorizationCodeBearer,
-)
+from fastapi.security import APIKeyCookie, HTTPBearer, OAuth2AuthorizationCodeBearer
 from fief_client import FiefAsync, FiefUserInfo
 from fief_client.integrations.fastapi import FiefAuth
 from starlette import status
@@ -70,13 +66,25 @@ class UserWithAuthDependency:
             fief_auth_cookie.current_user(optional=True)
         ),
         cookie_token: Optional[str] = Depends(web_scheme),
-        api_key: HTTPAuthorizationCredentials = Depends(web_scheme),
-        user_service: UserService = Depends(Provide[ServerContainer.user_service]),
+        # api_key: Optional[HTTPAuthorizationCredentials] = Depends(web_scheme),
+        bearer_token: Optional[str] = Depends(HTTPBearer(auto_error=False)),
+        user_service: Optional[UserService] = Depends(
+            Provide[ServerContainer.user_service]
+        ),
     ):
         self.user_service = user_service
+
         if cookie_token is not None:
             self.auth_user = jwt.decode(
                 cookie_token, options={"verify_signature": False}, algorithms=["HS256"]
+            )
+        elif bearer_token is not None and settings.environment == "develop":
+            self.auth_user = jwt.decode(
+                bearer_token.credentials,
+                settings.jwt_key,
+                algorithms=[
+                    "HS256",
+                ],
             )
         else:
             self.auth_user = None
