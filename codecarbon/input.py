@@ -40,7 +40,6 @@ class DataSource:
         file_manager = ExitStack()
         atexit.register(file_manager.close)
         ref = importlib_resources_files(package).joinpath(filepath)
-        print("ref:", ref)
         path = file_manager.enter_context(importlib_resources_as_file(ref))
         return path
 

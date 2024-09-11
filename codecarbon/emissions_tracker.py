@@ -507,7 +507,7 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(LogfireOutput())
 
     def service_shutdown(self, signum, frame):
-        print("Caught signal %d" % signum)
+        logger.warning("service_shutdown - Caught signal %d" % signum)
         self.stop()
 
     @suppress(Exception)
