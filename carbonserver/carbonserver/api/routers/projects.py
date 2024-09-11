@@ -75,7 +75,7 @@ def read_project(
     auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    return project_service.get_one_project(project_id, auth_user)
+    return project_service.get_one_project(project_id, auth_user.db_user)
 
 
 @router.get(

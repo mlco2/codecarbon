@@ -94,5 +94,5 @@ def read_project_detailed_sums_by_experiment(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return project_global_sum_by_experiment_usecase.compute_detailed_sum(
-        project_id, start_date, end_date, user=auth_user.db_user
+        project_id, start_date, end_date
     )
