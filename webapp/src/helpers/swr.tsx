@@ -7,7 +7,7 @@ export const SWRProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const fetcher = async (url: string) => {
-    const res = await fetch(url);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${url}`);
     console.log("fetcher", res);
     if (!res.ok) {
         console.error("Failed to fetch data", res.statusText);

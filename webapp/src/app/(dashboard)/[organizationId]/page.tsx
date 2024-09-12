@@ -3,36 +3,12 @@
 import { Activity, CreditCard, DollarSign, Users } from "lucide-react";
 
 import ErrorMessage from "@/components/error-message";
+import Loader from "@/components/loader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { fetcher } from "@/helpers/swr";
 import { Organization } from "@/types/organization";
 import useSWR from "swr";
-import { fetcher } from "@/helpers/swr";
-import { Skeleton } from "@/components/ui/skeleton";
-import Loader from "@/components/loader";
-
-// /**
-//  * Retrieves an organization based on the id
-//  */
-// async function getOrganization(orgId: string): Promise<Organization | null> {
-//     try {
-//         const res = await fetch(
-//             `${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}`
-//         );
-
-//         if (!res.ok) {
-//             // This will activate the closest `error.js` Error Boundary
-//             throw new Error("Failed to fetch data");
-//         }
-
-//         return res.json();
-//     } catch (error) {
-//         if (error instanceof Error) {
-//             console.error("Error fetching organization:", error.message);
-//         }
-//         return null;
-//     }
-// }
 
 export default function OrganizationPage({
     params,
@@ -44,7 +20,7 @@ export default function OrganizationPage({
         isLoading,
         error,
     } = useSWR<Organization>(
-        `/api/organizations/${params.organizationId}`,
+        `/organizations/${params.organizationId}`,
         fetcher,
         {
             refreshInterval: 1000 * 60, // Refresh every minute

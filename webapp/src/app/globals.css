@@ -4,13 +4,13 @@
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 240 10% 3.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 240 10% 3.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 240 10% 3.9%;
-        --primary: 180 70% 50%;
+        --background: #181818; /* Equivalent to #181818 */
+        --foreground: 240 10% 3.9%; /* Adjusted for good contrast */
+        --card: 0 0% 10.2%; /* Matching card to background for consistency */
+        --card-foreground: 240 10% 3.9%; /* Adjusted for good contrast */
+        --popover: 0 0% 10.2%; /* Matching popover to background for consistency */
+        --popover-foreground: 240 10% 3.9%; /* Adjusted for good contrast */
+        --primary: 72 97.3% 76.5%; /* Equivalent to #BFFB4F */
         --primary-foreground: 144.9 80.4% 10%;
         --secondary: 240 4.8% 95.9%;
         --secondary-foreground: 240 5.9% 10%;
@@ -22,7 +22,7 @@
         --destructive-foreground: 0 0% 98%;
         --border: 240 5.9% 90%;
         --input: 240 5.9% 90%;
-        --ring: 180 70% 50%;
+        --ring: 72 97.3% 76.5%; /* Matching primary color */
         --radius: 0.5rem;
         --chart-1: 12 76% 61%;
         --chart-2: 173 58% 39%;
@@ -32,13 +32,13 @@
     }
 
     .dark {
-        --background: 20 14.3% 4.1%;
-        --foreground: 0 0% 95%;
-        --card: 24 9.8% 10%;
-        --card-foreground: 0 0% 95%;
-        --popover: 0 0% 9%;
-        --popover-foreground: 0 0% 95%;
-        --primary: 180 70% 50%;
+        --background: 0 0% 10.2%; /* Equivalent to #181818 */
+        --foreground: 0 0% 95%; /* Light color for text */
+        --card: 0 0% 10.2%; /* Matching card to background for consistency */
+        --card-foreground: 0 0% 95%; /* Light color for text */
+        --popover: 0 0% 10.2%; /* Matching popover to background for consistency */
+        --popover-foreground: 0 0% 95%; /* Light color for text */
+        --primary: 72 97.3% 76.5%; /* Equivalent to #BFFB4F */
         --primary-foreground: 144.9 80.4% 10%;
         --secondary: 240 3.7% 15.9%;
         --secondary-foreground: 0 0% 98%;
@@ -50,7 +50,7 @@
         --destructive-foreground: 0 85.7% 97.3%;
         --border: 240 3.7% 15.9%;
         --input: 240 3.7% 15.9%;
-        --ring: 180 70% 50%;
+        --ring: 72 97.3% 76.5%; /* Matching primary color */
         --chart-1: 220 70% 50%;
         --chart-2: 160 60% 45%;
         --chart-3: 30 80% 55%;
