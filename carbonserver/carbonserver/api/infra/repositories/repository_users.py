@@ -93,30 +93,23 @@ class SqlAlchemyRepository(Users):
             session.commit()
             return user
 
-    def is_user_in_organization(self, organization_id: UUID, user: User):
+    def is_user_in_organization(
+        self, organization_id: UUID, user: User, *, is_admin: bool | None = None
+    ):
         if user is None:
-            return []
+            return False
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelMembership)
                 .filter(SqlModelMembership.user_id == user.id)
                 .filter(SqlModelMembership.organization_id == organization_id)
-                .first()
             )
-            return e is not None
+            if is_admin is not None:
+                e = e.filter(SqlModelMembership.is_admin == is_admin)
+            return e.first() is not None
 
     def is_admin_in_organization(self, organization_id: UUID, user: User):
-        if user is None:
-            return []
-        with self.session_factory() as session:
-            e = (
-                session.query(SqlModelMembership)
-                .filter(SqlModelMembership.user_id == user.id)
-                .filter(SqlModelMembership.organization_id == organization_id)
-                .filter(SqlModelMembership.is_admin)
-                .first()
-            )
-            return e is not None
+        return self.is_user_in_organization(organization_id, user, is_admin=True)
 
     def is_user_authorized_on_project(self, project_id, user_id: UUID):
         with self.session_factory() as session:

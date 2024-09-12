@@ -60,7 +60,13 @@ class UserWithAuthDependency:
     Auth token can be passed as bearer token or cookie
     """
 
-    def __init__(
+    def __init__(self, error_if_not_found=False):
+        """
+        :param error_if_not_found: If True, will raise an exception if user is not authenticated
+        """
+        self.error_if_not_found = error_if_not_found
+
+    def __call__(
         self,
         auth_user_cookie: Optional[FiefUserInfo] = Depends(
             fief_auth_cookie.current_user(optional=True)
@@ -72,6 +78,7 @@ class UserWithAuthDependency:
             Provide[ServerContainer.user_service]
         ),
     ):
+        print("UserWithAuthDependency()")
         self.user_service = user_service
 
         if cookie_token is not None:
@@ -88,8 +95,16 @@ class UserWithAuthDependency:
             )
         else:
             self.auth_user = None
+            if self.error_if_not_found:
+                raise HTTPException(status_code=401, detail="Unauthorized")
 
         try:
             self.db_user = user_service.get_user_by_id(self.auth_user["sub"])
         except Exception:
             self.db_user = None
+
+        return self
+
+
+OptionalUserWithAuthDependency = UserWithAuthDependency(error_if_not_found=False)
+MandatoryUserWithAuthDependency = UserWithAuthDependency(error_if_not_found=True)

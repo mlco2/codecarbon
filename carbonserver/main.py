@@ -7,7 +7,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from carbonserver.api.dependencies import get_query_token
-from carbonserver.api.errors import DBException
+from carbonserver.api.errors import DBException, UserException, get_http_exception
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
     authenticate,
@@ -122,3 +122,8 @@ app.mount("/api", app, name="api")
 @app.get("/")
 def default():
     return {"status": "OK"}
+
+
+@app.exception_handler(UserException)
+async def custom_exception_handler(request: Request, exc: UserException):
+    raise get_http_exception(exc)

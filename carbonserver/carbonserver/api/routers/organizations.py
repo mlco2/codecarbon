@@ -9,13 +9,16 @@ from pydantic import BaseModel, EmailStr
 from starlette import status
 
 from carbonserver.api.dependencies import get_token_header
-from carbonserver.api.routers.authenticate import UserWithAuthDependency
 from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
     OrganizationPatch,
     OrganizationReport,
     OrganizationUser,
+)
+from carbonserver.api.services.auth_service import (
+    MandatoryUserWithAuthDependency,
+    UserWithAuthDependency,
 )
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.usecases.organization.organization_sum import (
@@ -38,12 +41,12 @@ router = APIRouter(
 @inject
 def add_organization(
     organization: OrganizationCreate,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service],
     ),
 ) -> Organization:
-    return organization_service.add_organization(organization)
+    return organization_service.add_organization(organization, user=auth_user.db_user)
 
 
 @router.patch(
@@ -55,7 +58,7 @@ def add_organization(
 def update_organization(
     organization_id: str,
     organization: OrganizationPatch,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
@@ -74,7 +77,7 @@ def update_organization(
 @inject
 def read_organization(
     organization_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
@@ -90,15 +93,12 @@ def read_organization(
 )
 @inject
 def list_organizations(
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
 ) -> List[Organization]:
-    try:
-        return organization_service.list_organizations(user=auth_user.db_user)
-    except Exception:
-        return []
+    return organization_service.list_organizations(user=auth_user.db_user)
 
 
 @router.get(
@@ -134,7 +134,7 @@ def read_organization_detailed_sums(
 @inject
 def list_organization_users(
     organization_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
@@ -157,7 +157,7 @@ class UserEmailInput(BaseModel):
 def organization_add_user(
     input: UserEmailInput,
     organization_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),

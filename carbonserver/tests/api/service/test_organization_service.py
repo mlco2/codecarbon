@@ -5,7 +5,10 @@ from uuid import UUID
 from api.mocks import DUMMY_USER, FakeAuthContext
 
 from carbonserver.api.infra.repositories.repository_organizations import (
-    SqlAlchemyRepository,
+    SqlAlchemyRepository as OrganizationRepository,
+)
+from carbonserver.api.infra.repositories.repository_users import (
+    SqlAlchemyRepository as UserRepository,
 )
 from carbonserver.api.schemas import (
     Organization,
@@ -43,27 +46,33 @@ ORG_USER = OrganizationUser(
 @mock.patch("uuid.uuid4", return_value=ORG_ID)
 def test_organization_service_add_org_creates_correct_org(_):
     expected_id = ORG_ID
-    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
     repository_mock.add_organization.return_value = ORG_1
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
 
-    user_service: OrganizationService = OrganizationService(
-        repository_mock, auth_context=FakeAuthContext()
+    org_service: OrganizationService = OrganizationService(
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=FakeAuthContext(),
     )
     org_to_create = OrganizationCreate(
         name="Data For Good", description="Data For Good Organization"
     )
 
-    actual_saved_org = user_service.add_organization(org_to_create)
+    actual_saved_org = org_service.add_organization(org_to_create, ORG_USER)
 
     repository_mock.add_organization.assert_called_with(org_to_create)
     assert actual_saved_org.id == expected_id
 
 
 def test_organiation_service_retrieves_all_existing_organizations():
-    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org_ids_list = [ORG_ID, ORG_ID_2]
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
     organization_service: OrganizationService = OrganizationService(
-        repository_mock, auth_context=FakeAuthContext()
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=FakeAuthContext(),
     )
     repository_mock.list_organizations.return_value = [ORG_1, ORG_2]
 
@@ -76,10 +85,13 @@ def test_organiation_service_retrieves_all_existing_organizations():
 
 
 def test_organization_service_retrieves_correct_org_by_id():
-    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org: Organization = ORG_1
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
     organization_service: OrganizationService = OrganizationService(
-        repository_mock, auth_context=FakeAuthContext()
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=FakeAuthContext(),
     )
     repository_mock.get_one_organization.return_value = ORG_1
 
@@ -90,9 +102,12 @@ def test_organization_service_retrieves_correct_org_by_id():
 
 
 def test_organization_service_patches_correct_org():
-    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
     organization_service: OrganizationService = OrganizationService(
-        repository_mock, auth_context=FakeAuthContext()
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=FakeAuthContext(),
     )
     patched_org = Organization(
         id=ORG_2.id,
@@ -116,11 +131,14 @@ def test_organization_service_patches_correct_org():
 
 
 def test_orgganization_service_list_users():
-    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    organization_service: OrganizationService = OrganizationService(
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=FakeAuthContext(),
+    )
     expected_org_users: List[OrganizationUser] = [ORG_USER]
-    organization_service: OrganizationService = OrganizationService(repository_mock)
     repository_mock.list_users.return_value = [ORG_USER]
-
     actual_user_list = organization_service.list_users(ORG_ID)
-
     assert actual_user_list == expected_org_users
