@@ -35,7 +35,6 @@ export default function OrganizationPage({
         return <ErrorMessage />;
     }
 
-    console.log(organization);
 
     return (
         <div className="h-full w-full overflow-auto">
@@ -43,10 +42,10 @@ export default function OrganizationPage({
             {organization && (
                 <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
                     <h1 className="text-2xl font-semi-bold">
-                        {organization.name}
+                        {organization.name} report
                     </h1>
                     <span className="text-sm font-semi-bold">
-                        {organization.description}
+                        This section has the impact of all projects combined, equivalent of
                     </span>
                     <Separator className="h-[0.5px] bg-muted-foreground" />
                     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">

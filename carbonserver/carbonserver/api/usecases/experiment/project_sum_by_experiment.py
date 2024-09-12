@@ -18,4 +18,5 @@ class ProjectSumsByExperimentUsecase:
             start_date,
             end_date,
         )
+        print(sums)
         return sums

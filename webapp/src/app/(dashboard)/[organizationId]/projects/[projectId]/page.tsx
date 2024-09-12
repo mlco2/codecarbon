@@ -4,8 +4,8 @@ import useSWR from "swr";
 
 import { useEffect, useState } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
-import AreaChartStacked from "@/components/area-chart-stacked";
-import BarChartMultiple from "@/components/bar-chart-multiple";
+import ExperimentsBarChart from "@/components/experiment-bar-chart";
+import RunsScatterChart from "@/components/runs-scatter-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Project } from "@/types/project";
@@ -27,7 +27,8 @@ export default function ProjectPage({
     } = useSWR<Project>(`/projects/${params.projectId}`, fetcher, {
         refreshInterval: 1000 * 60, // Refresh every minute
     });
-
+    console.log("Project from projectpage:", project);
+    console.log("ProjectId:", params.projectId);
     if (isLoading) {
         return <Loader />;
     }
@@ -35,7 +36,7 @@ export default function ProjectPage({
     if (error) {
         return <ErrorMessage />;
     }
-    console.log("Project from projectpage:", project);
+
     if (project) {
         return (
             <div className="h-full w-full overflow-auto">
