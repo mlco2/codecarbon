@@ -165,7 +165,7 @@ class RunReport(RunBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    duration: int
+    duration: float
     emissions_rate: float
     emissions_count: int
 

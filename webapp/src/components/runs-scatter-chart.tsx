@@ -11,13 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-const chartData = [
-  { runId: 1, emissions: 20 },
-  { runId: 2, emissions: 35 },
-  { runId: 3, emissions: 18 },
-  { runId: 4, emissions: 42 },
-  { runId: 5, emissions: 27 },
-];
 
 async function getRunEmissionsByExperiment(experimentId: string): Promise<RunReport[]> {
     console.log("From function: ", experimentId);
@@ -34,6 +27,9 @@ async function getRunEmissionsByExperiment(experimentId: string): Promise<RunRep
         return {
             runId: runReport.run_id,
             emissions: runReport.emissions,
+            timestamp: runReport.timestamp,
+            energy_consumed: runReport.energy_consumed,
+            duration: runReport.duration,
         };
     });
 }
@@ -59,16 +55,27 @@ export default async function RunsScatterChart() {
             left: 20,
           }}
         >
-          <CartesianGrid />
-          <XAxis dataKey="runId" name="Run Id" type="category">
+          <XAxis dataKey="runId" name="Run Id" type="number">
             <Label value="Run Id" offset={0} position="insideBottom" />
           </XAxis>
           <YAxis dataKey="emissions" name="Emissions" type="number">
             <Label value="Emissions" angle={-90} position="insideLeft" />
           </YAxis>
-          <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+            <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(value, name, props) => {
+                console.log(props.payload);
+                const data = props.payload[0].payload;
+                console.log(data)
+                return [
+                  `Run Id: ${data.runId}`,
+                  `Emissions: ${data.emissions}`,
+                  `Timestamp: ${data.timestamp}`,
+                  `Energy Consumed: ${data.energy_consumed}`,
+                  `Duration: ${data.duration}`,
+                ];
+              }} />
           <Scatter name="Emissions" data={runsReportsData} fill="#8884d8" />
         </ScatterChart>
+
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
