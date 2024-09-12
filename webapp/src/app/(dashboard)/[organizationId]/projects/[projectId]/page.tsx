@@ -35,7 +35,7 @@ export default function ProjectPage({
     if (error) {
         return <ErrorMessage />;
     }
-
+    console.log("Project from projectpage:", project);
     if (project) {
         return (
             <div className="h-full w-full overflow-auto">
