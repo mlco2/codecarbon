@@ -106,10 +106,10 @@ export default function ProjectPage({
                         </Card>
                     </div>
                     <div className="grid gap-4 md:grid-cols-2 md:gap-8">
-                        <AreaChartStacked />
                         <ExperimentsBarChart
                             params={{ projectId: project.id }}
                         />
+                        <RunsScatterChart />
                     </div>
                 </main>
             </div>
