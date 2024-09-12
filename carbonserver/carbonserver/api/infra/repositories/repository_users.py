@@ -94,11 +94,26 @@ class SqlAlchemyRepository(Users):
             return user
 
     def is_user_in_organization(self, organization_id: UUID, user: User):
+        if user is None:
+            return []
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelMembership)
                 .filter(SqlModelMembership.user_id == user.id)
                 .filter(SqlModelMembership.organization_id == organization_id)
+                .first()
+            )
+            return e is not None
+
+    def is_admin_in_organization(self, organization_id: UUID, user: User):
+        if user is None:
+            return []
+        with self.session_factory() as session:
+            e = (
+                session.query(SqlModelMembership)
+                .filter(SqlModelMembership.user_id == user.id)
+                .filter(SqlModelMembership.organization_id == organization_id)
+                .filter(SqlModelMembership.is_admin)
                 .first()
             )
             return e is not None

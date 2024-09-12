@@ -57,7 +57,14 @@ class OrganizationService:
     def list_users(
         self, organization_id: UUID | str, user: User = None
     ) -> List[Organization]:
-        # TODO: check permissions
+        # TODO: check permission
+        # if not self._auth_context.can_read_organization(organization_id, user):
+        #     raise UserException(
+        #         NotAllowedError(
+        #             code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+        #             message="Operation not authorized on organization",
+        #         )
+        #     )
         return self._repository.list_users(organization_id=organization_id)
 
     def patch_organization(
@@ -76,9 +83,9 @@ class OrganizationService:
             )
             return updated_organization
 
-    def add_user_by_mail(self, *, user: User, organization_id: str, email: str):
+    def add_user_by_mail(self, *, organization_id: str, email: str, user: User = None):
         # TODO: check permissions ; user must be admin on organization
-        user = self._user_repository.get_user_by_email(email=email)
+        user_to_add = self._user_repository.get_user_by_email(email=email)
         return self._user_repository.subscribe_user_to_org(
-            user=user, organization_id=organization_id
+            user=user_to_add, organization_id=organization_id
         )
