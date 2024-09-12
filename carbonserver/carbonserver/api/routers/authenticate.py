@@ -66,6 +66,8 @@ async def get_login(
     login and redirect to frontend app with token
     """
     login_url = request.url_for("login")
+    print("login_url", login_url)
+    print("login_url", login_url)
     if code:
         res = requests.post(
             f"{settings.fief_url}/api/token",
@@ -90,7 +92,10 @@ async def get_login(
             sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
 
         creds = base64.b64encode(res.content).decode()
-        url = f"{request.base_url}home?auth=true&creds={creds}"
+        base_url = request.base_url
+        if settings.frontend_url != "":
+            base_url = settings.frontend_url+"/"
+        url = f"{base_url}home?auth=true&creds={creds}"
 
         # NOTE: RedirectResponse doesn't work with clevercloud
         # response = RedirectResponse(url=url)
@@ -103,6 +108,7 @@ async def get_login(
         </html>
         """
         response = Response(content=content)
+        print("Response from fief /api/token",res.json())
 
         response.set_cookie(
             SESSION_COOKIE_NAME,

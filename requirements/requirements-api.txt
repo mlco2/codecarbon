@@ -13,7 +13,7 @@
 # - requests<3.0.0
 # - sqlalchemy<2.0.0
 # - uvicorn[standard]<1.0.0
-# - fastapi-pagination<1.0.0
+# - fastapi-pagination==0.9.1
 # - pytest
 # - mock
 # - pytest
@@ -64,21 +64,22 @@ click==8.1.7
     #   uvicorn
 cryptography==43.0.1
     # via jwcrypto
-dependency-injector==4.41.0
+dependency-injector==4.42.0
     # via hatch.envs.api
 dnspython==2.6.1
     # via email-validator
 email-validator==2.2.0
     # via pydantic
-fastapi==0.114.0
+fastapi==0.114.1
     # via
     #   hatch.envs.api
+    #   fastapi-pagination
     #   fief-client
-fastapi-pagination==0.12.26
+fastapi-pagination==0.9.1
     # via hatch.envs.api
 fief-client==0.19.0
     # via hatch.envs.api
-greenlet==3.0.3
+greenlet==3.1.0
     # via sqlalchemy
 h11==0.14.0
     # via
@@ -147,7 +148,7 @@ pyjwt==2.9.0
     # via hatch.envs.api
 pynvml==11.5.3
     # via hatch.envs.api
-pytest==8.3.2
+pytest==8.3.3
     # via hatch.envs.api
 python-dateutil==2.9.0.post0
     # via
@@ -156,7 +157,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-dotenv==1.0.1
     # via uvicorn
-pytz==2024.1
+pytz==2024.2
     # via pandas
 pyyaml==6.0.2
     # via
@@ -175,7 +176,7 @@ requests-mock==1.12.1
     # via hatch.envs.api
 responses==0.25.3
     # via hatch.envs.api
-rich==13.8.0
+rich==13.8.1
     # via
     #   hatch.envs.api
     #   typer
@@ -193,7 +194,7 @@ sqlalchemy==1.4.54
     # via
     #   hatch.envs.api
     #   alembic
-starlette==0.38.4
+starlette==0.38.5
     # via fastapi
 typer==0.12.5
     # via hatch.envs.api
@@ -203,7 +204,6 @@ typing-extensions==4.12.2
     # via
     #   alembic
     #   fastapi
-    #   fastapi-pagination
     #   jwcrypto
     #   pydantic
     #   typer

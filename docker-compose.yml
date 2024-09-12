@@ -7,14 +7,21 @@ services:
             dockerfile: ./carbonserver/docker/Dockerfile
         volumes:
             - ./carbonserver:/carbonserver
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.ui.rule=Host(`localhost`)"
+            - "traefik.http.routers.ui.entrypoints=websecure"
+            - "traefik.http.routers.ui.tls.certresolver=myresolver"
+
         ports:
-            - 8008:8000
+            - "8001:8001"
         environment:
             CODECARBON_LOG_LEVEL: DEBUG
             DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@${DATABASE_HOST:-postgres}:${DATABASE_PORT:-5432}/${DATABASE_NAME:-codecarbon_db}
-            FIEF_URL: http://localhost:8000
-            FIEF_CLIENT_ID: http://localhost:8000
-            FIEF_CLIENT_SECRET: http://localhost:8000
+            FIEF_URL: http://inigoPC.local:8000
+            FRONTEND_URL: http://localhost:3000
+            FIEF_CLIENT_ID: AvjQENuVMr1uLXjRdexwQ0mLXtz2-YAIkkdTXQixlfU
+            FIEF_CLIENT_SECRET: X3Xx3U9ag97fhsEMMCKYA4_0bgfyCbZoeQtcB27yxDI
         networks:
             - codecarbon_net
 
@@ -71,17 +78,26 @@ services:
     fief-server:
         image: ghcr.io/fief-dev/fief:latest
         command: fief run-server
+        # command: sleep infinity
         env_file:
-            - .env
+            - .env.fief
         depends_on:
             - postgres-fief
             - redis
+        ports:
+            - "8000:8000"
+        labels:
+            - "traefik.enable=true"
+            # Set your domain name here
+            - "traefik.http.routers.fief.rule=Host(`localhost`)"
+            - "traefik.http.routers.fief.entrypoints=websecure"
+            - "traefik.http.routers.fief.tls.certresolver=myresolver"
 
     fief-worker:
         image: ghcr.io/fief-dev/fief:latest
         command: fief run-worker -p 1 -t 1
         env_file:
-            - .env
+            - .env.fief
         depends_on:
             - postgres-fief
             - redis
@@ -89,11 +105,18 @@ services:
     postgres-fief:
         image: postgres:alpine
         environment:
-            - POSTGRES_PASSWORD=fief
+            - POSTGRES_PASSWORD=111fief-password
             - POSTGRES_USER=fief
             - POSTGRES_DB=fief
         volumes:
             - postgres_fief_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.ui.rule=Host(`localhost`)"
+            - "traefik.http.routers.ui.entrypoints=websecure"
+            - "traefik.http.routers.ui.tls.certresolver=myresolver"
 
     redis:
         image: redis:alpine
@@ -101,21 +124,50 @@ services:
         volumes:
             - redis-data:/data
 
+    traefik:
+        image: "traefik:v2.11"
+        container_name: "traefik"
+        command:
+            # Uncomment the lines below to debug and try with a self-signed certificate
+            - "--log.level=DEBUG"
+            - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--entrypoints.websecure.address=:443"
+            - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+            # Set your email address here
+            - "--certificatesresolvers.myresolver.acme.email=admin@mydomain.com"
+            - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+        ports:
+            - "443:443"
+            - "8080:8080"
+        volumes:
+            - "letsencrypt-data:/letsencrypt"
+            - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
     ui:
+        container_name: ui
         build:
             context: ./webapp
-            dockerfile: Dockerfile
-        image: ui
-        # Uncomment the following to enable hot-reloading
-        # volumes:
-        #   - ./webapp/app:/app
+            dockerfile: dev.Dockerfile
 
-        # The environment variables are built into the image, to change them:
-        # 1. Go to the Dockerfile
-        # 2. See the .env file that is using and change the vars.
-        # 3. Rebuild this image
+        # Set environment variables based on the .env file
+        env_file:
+            - ./webapp/.env.development
+        volumes:
+            - ./webapp/src:/app/src
+            - ./webapp/public:/app/public
+        restart: always
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.ui.rule=Host(`localhost`)"
+            - "traefik.http.routers.ui.entrypoints=websecure"
+            - "traefik.http.routers.ui.tls.certresolver=myresolver"
         ports:
             - "3000:3000"
+        networks:
+            - codecarbon_net
 
 volumes:
     postgres_codecarbon_data:
@@ -126,6 +178,8 @@ volumes:
         name: postgres_fief_data
     redis-data:
         name: redis_data
+    letsencrypt-data:
+        name: letsencrypt_data
 
 networks:
     codecarbon_net:
