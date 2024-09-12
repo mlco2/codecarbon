@@ -26,3 +26,11 @@ class FakeAuthContext:
     @staticmethod
     def isOperationAuthorizedOnProject(*args, **kwargs):
         return True
+
+    @staticmethod
+    def can_read_organization(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def can_write_organization(*args, **kwargs):
+        return True

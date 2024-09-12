@@ -11,8 +11,9 @@ class ProjectSumsByExperimentUsecase:
         self._experiment_repository = experiment_repository
 
     def compute_detailed_sum(
-        self, project_id: str, start_date, end_date
+        self, project_id: str, start_date, end_date, user=None
     ) -> List[ExperimentReport]:
+        # TODO: check permissions
         sums = self._experiment_repository.get_project_detailed_sums_by_experiment(
             project_id,
             start_date,

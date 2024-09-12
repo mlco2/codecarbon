@@ -8,7 +8,10 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Experiment, ExperimentCreate, ExperimentReport
-from carbonserver.api.services.auth_service import UserWithAuthDependency
+from carbonserver.api.services.auth_service import (
+    MandatoryUserWithAuthDependency,
+    UserWithAuthDependency,
+)
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
@@ -28,7 +31,7 @@ router = APIRouter()
 @inject
 def add_experiment(
     experiment: ExperimentCreate,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
@@ -45,7 +48,7 @@ def add_experiment(
 @inject
 def read_experiment(
     experiment_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
@@ -62,7 +65,7 @@ def read_experiment(
 @inject
 def read_project_experiments(
     project_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
@@ -80,7 +83,7 @@ def read_project_experiments(
 @inject
 def read_project_detailed_sums_by_experiment(
     project_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     project_global_sum_by_experiment_usecase: ProjectSumsByExperimentUsecase = Depends(

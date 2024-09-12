@@ -32,8 +32,18 @@ class OrganizationService:
     def add_organization(
         self, organization: OrganizationCreate, user: User = None
     ) -> Organization:
+        if user is None:
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                    message="User not found",
+                )
+            )
         created_organization: Organization = self._repository.add_organization(
             organization
+        )
+        self._user_repository.subscribe_user_to_org(
+            user=user, organization_id=created_organization.id
         )
         return created_organization
 
@@ -57,14 +67,13 @@ class OrganizationService:
     def list_users(
         self, organization_id: UUID | str, user: User = None
     ) -> List[Organization]:
-        # TODO: check permission
-        # if not self._auth_context.can_read_organization(organization_id, user):
-        #     raise UserException(
-        #         NotAllowedError(
-        #             code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
-        #             message="Operation not authorized on organization",
-        #         )
-        #     )
+        if not self._auth_context.can_read_organization(organization_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+                    message="Operation not authorized on organization",
+                )
+            )
         return self._repository.list_users(organization_id=organization_id)
 
     def patch_organization(

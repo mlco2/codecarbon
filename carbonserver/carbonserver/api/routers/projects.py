@@ -8,7 +8,10 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import Project, ProjectCreate, ProjectPatch, ProjectReport
-from carbonserver.api.services.auth_service import UserWithAuthDependency
+from carbonserver.api.services.auth_service import (
+    MandatoryUserWithAuthDependency,
+    UserWithAuthDependency,
+)
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
 
@@ -28,7 +31,7 @@ projects_temp_db = []
 @inject
 def add_project(
     project: ProjectCreate,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
     print("Entering router")
@@ -45,7 +48,7 @@ def add_project(
 @inject
 def delete_project(
     project_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> None:
     return project_service.delete_project(project_id, auth_user.db_user)
@@ -62,7 +65,7 @@ def delete_project(
 def patch_project(
     project_id: str,
     project: ProjectPatch,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
     return project_service.patch_project(project_id, project, auth_user.db_user)
@@ -72,7 +75,7 @@ def patch_project(
 @inject
 def read_project(
     project_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
     return project_service.get_one_project(project_id, auth_user.db_user)
@@ -111,7 +114,7 @@ def read_project_detailed_sums(
 @inject
 def list_projects_nested(
     organization_id: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
 ) -> List[Project]:
     return project_service.list_projects_from_organization(
@@ -127,7 +130,7 @@ def list_projects_nested(
 @inject
 def list_projects(
     organization: str,
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_service: ProjectService = Depends(Provide[ServerContainer.project_service]),
 ) -> List[Project]:
     return project_service.list_projects_from_organization(
