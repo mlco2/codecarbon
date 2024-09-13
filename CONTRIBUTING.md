@@ -333,7 +333,7 @@ docker-compose up -d
 Please see [Docker specific documentation](./docker/README.md) for more informations.
 When up, the API documentation is available locally at the following URL: http://localhost:8008/redoc and can be used for testing.
 
-If you want to run the API without Docker, you can run the following commands:
+If you want to run the API without Docker, you must first set the environment variables described in the .env.example file, and run the following command:
 
 ```sh
 hatch run api:local

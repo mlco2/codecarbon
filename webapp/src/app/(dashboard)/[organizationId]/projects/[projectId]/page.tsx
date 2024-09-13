@@ -10,22 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Project } from "@/types/project";
 import { fetcher } from "../../../../../helpers/swr";
-
-/**
- * Retrieves a project based on the projectId
- */
-// async function getProject(projectId: string): Promise<Project> {
-//     const res = await fetch(
-//         `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
-//     );
-
-//     if (!res.ok) {
-//         // This will activate the closest `error.js` Error Boundary
-//         throw new Error("Failed to fetch data");
-//     }
-
-//     return res.json();
-// }
+import Loader from "@/components/loader";
+import ErrorMessage from "@/components/error-message";
 
 export default function ProjectPage({
     params,
@@ -34,19 +20,21 @@ export default function ProjectPage({
         projectId: string;
     };
 }>) {
-    const [project, setProject] = useState<any>(undefined);
-    const { data, isLoading, error } = useSWR<Project[]>(
-        `/api/projects/${params.projectId}`,
-        async (url: string) => {
-            const res = await fetch(url);
-            const data = await res.json();
-            setProject(data);
-            return data;
-        },
-        {
-            refreshInterval: 1000 * 60, // Refresh every minute
-        },
-    );
+    const {
+        data: project,
+        isLoading,
+        error,
+    } = useSWR<Project>(`/projects/${params.projectId}`, fetcher, {
+        refreshInterval: 1000 * 60, // Refresh every minute
+    });
+
+    if (isLoading) {
+        return <Loader />;
+    }
+
+    if (error) {
+        return <ErrorMessage />;
+    }
 
     if (project) {
         return (

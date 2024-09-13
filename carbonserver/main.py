@@ -2,6 +2,7 @@ from container import ServerContainer
 from fastapi import Depends, FastAPI
 from fastapi_pagination import add_pagination
 from pydantic import ValidationError
+from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -89,6 +90,20 @@ def init_server(container):
     server.include_router(runs.router)
     server.include_router(emissions.router)
     add_pagination(server)
+
+    origins = [
+        "http://localhost",
+        "http://localhost:3000",
+    ]
+
+    server.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     return server
 
 
