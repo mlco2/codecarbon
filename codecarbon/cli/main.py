@@ -23,7 +23,7 @@ from codecarbon.emissions_tracker import EmissionsTracker
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
-codecarbon = typer.Typer()
+codecarbon = typer.Typer(no_args_is_help=True)
 
 
 def _version_callback(value: bool) -> None:

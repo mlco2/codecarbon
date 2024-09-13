@@ -124,8 +124,11 @@ class GPUDevice:
         """Returns the name of the GPU device
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1ga5361803e044c6fdf3b08523fb6d1481
         """
-        name = pynvml.nvmlDeviceGetName(self.handle)
-        return self._to_utf8(name)
+        try:
+            name = pynvml.nvmlDeviceGetName(self.handle)
+            return self._to_utf8(name)
+        except UnicodeDecodeError:
+            return "Unknown GPU"
 
     def _get_uuid(self) -> Any:
         """Returns the globally unique GPU device UUID

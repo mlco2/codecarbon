@@ -256,6 +256,7 @@ class BaseEmissionsTracker(ABC):
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
+        self._set_from_conf(api_key, "api_key", "api_key")
         self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
         self._set_from_conf(experiment_name, "experiment_name", "base")
@@ -345,7 +346,7 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
         )
-        self._init_output_methods(api_key)
+        self._init_output_methods(self._api_key)
 
     def set_CPU_GPU_ram_tracking(self):
         cpu_tracker = gpu_tracker = ram_tracker = "Unspecified"
