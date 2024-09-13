@@ -22,7 +22,6 @@ import {
 async function getProjectEmissionsByExperiment(
     projectId: string,
 ): Promise<ExperimentReport[]> {
-    console.log("From function: ", projectId);
     const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums/`,
     );
@@ -36,8 +35,8 @@ async function getProjectEmissionsByExperiment(
         return {
             experiment_id: experimentReport.experiment_id,
             name: experimentReport.name,
-            emissions: experimentReport.emissions,
-            energy_consumed: experimentReport.energy_consumed,
+            emissions: experimentReport.emissions*1000,
+            energy_consumed: experimentReport.energy_consumed*1000,
         };
     });
 }
@@ -59,8 +58,6 @@ type Params = {
 export default async function ExperimentsBarChart({
     params,
 }: Readonly<{ params: Params }>) {
-    console.log("Params", params);
-    console.log("ProjectId", params.projectId);
     const experimentsReportData = await getProjectEmissionsByExperiment(
         params.projectId,
     );

@@ -27,8 +27,6 @@ export default function ProjectPage({
     } = useSWR<Project>(`/projects/${params.projectId}`, fetcher, {
         refreshInterval: 1000 * 60, // Refresh every minute
     });
-    console.log("Project from projectpage:", project);
-    console.log("ProjectId:", params.projectId);
     if (isLoading) {
         return <Loader />;
     }
@@ -110,7 +108,9 @@ export default function ProjectPage({
                         <ExperimentsBarChart
                             params={{ projectId: project.id }}
                         />
-                        <RunsScatterChart />
+                        <RunsScatterChart
+                            params={{ experimentId: project.experiments[1] }}
+                        />
                     </div>
                 </main>
             </div>

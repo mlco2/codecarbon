@@ -333,7 +333,7 @@ class ProjectTokenCreate(BaseModel):
 
 class Project(ProjectBase):
     id: UUID
-    experiments: Optional[List[Experiment]] = []
+    experiments: Optional[List[str]] = []
 
 
 class ProjectReport(ProjectBase):

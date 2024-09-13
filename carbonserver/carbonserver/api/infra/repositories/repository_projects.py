@@ -3,7 +3,7 @@ from typing import List
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, cast, Text
 
 from carbonserver.api.domain.projects import Projects
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
@@ -55,7 +55,14 @@ class SqlAlchemyRepository(Projects):
                 raise HTTPException(
                     status_code=404, detail=f"Project {project_id} not found"
                 )
-            return self.map_sql_to_schema(e)
+            experiments = (
+                session.query(cast(SqlModelExperiment.id, Text))
+                .filter(SqlModelExperiment.project_id == project_id)
+                .all()
+            )
+            project = self.map_sql_to_schema(e)
+            project.experiments = [experiment[0] for experiment in experiments]
+            return project
 
     def get_projects_from_organization(self, organization_id) -> List[Project]:
         """Find the list of projects from a organization in database and return it
