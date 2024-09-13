@@ -66,30 +66,10 @@ export default async function RunsScatterChart({
               <YAxis dataKey="emissions" name="Emissions" type="number">
                 <Label value="Emissions" angle={-90} position="insideLeft" />
               </YAxis>
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(value, name, props) => {
-                    console.log(props.payload);
-                    const data = props.payload[0].payload;
-                    console.log(data)
-                    return [
-                      `Run Id: ${data.runId}`,
-                      `Emissions: ${data.emissions}`,
-                      `Timestamp: ${data.timestamp}`,
-                      `Energy Consumed: ${data.energy_consumed}`,
-                      `Duration: ${data.duration}`,
-                    ];
-                  }} />
               <Scatter name="Emissions" data={runsReportsData} fill="#8884d8" />
             </ScatterChart>
 
           </CardContent>
-          <CardFooter className="flex-col items-start gap-2 text-sm">
-            <div className="flex gap-2 font-medium leading-none">
-              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="leading-none text-muted-foreground">
-              Showing total emissions for the last 6 months
-            </div>
-          </CardFooter>
         </Card>
       )
 }
