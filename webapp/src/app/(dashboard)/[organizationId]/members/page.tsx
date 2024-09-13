@@ -1,43 +1,15 @@
 "use client";
 import CustomRow from "@/components/custom-row";
-import ProjectRow from "@/components/custom-row";
+import ErrorMessage from "@/components/error-message";
+import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody } from "@/components/ui/table";
-import { Project } from "@/types/project";
 import { User } from "@/types/user";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "../../../../helpers/swr";
-import Loader from "@/components/loader";
-import ErrorMessage from "@/components/error-message";
-import { stringify } from "querystring";
-import * as React from "react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { Input } from "@/components/ui/input";
-import { Text } from "lucide-react";
-// import { Input } from "postcss";
-
-/**
- * Retrieves the list of users for a given organization
- * @UNUSED
- * @TODO Filer per organizationId when the endpoint is ready.
- * @param organizationId comes from the URL parameters
- */
-async function fetchUsersByOrg(organizationId: string): Promise<User[]> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users?organization=${organizationId}`,
-        {
-            next: { revalidate: 60 }, // Revalidate every minute
-        },
-    );
-
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch data");
-    }
-    return res.json();
-}
 
 export default function MembersPage({
     params,
@@ -45,7 +17,7 @@ export default function MembersPage({
     let users: User[] = [];
     const [isDialogOpen, setDialogOpen] = useState(false);
     const { data, isLoading, error } = useSWR<User[]>(
-        `/api/organizations/${params.organizationId}/users`,
+        `/organizations/${params.organizationId}/users`,
         fetcher,
         {
             refreshInterval: 1000 * 60, // Refresh every minute
@@ -66,7 +38,7 @@ export default function MembersPage({
             email: (document.getElementById("emailInput") as any).value,
         });
         const result = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/organizations/${params.organizationId}/add-user`,
+            `${process.env.NEXT_PUBLIC_API_URL}/organizations/${params.organizationId}/add-user`,
             {
                 method: "POST",
                 headers: {

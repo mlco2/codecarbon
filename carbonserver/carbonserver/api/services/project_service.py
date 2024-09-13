@@ -1,9 +1,13 @@
+import logging
+
 from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
 from carbonserver.api.infra.repositories.repository_projects import (
     SqlAlchemyRepository as ProjectSqlRepository,
 )
 from carbonserver.api.schemas import ProjectCreate, ProjectPatch, User
 from carbonserver.api.services.auth_context import AuthContext
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ProjectService:
@@ -61,11 +65,14 @@ class ProjectService:
 
     def list_projects_from_organization(self, organization_id: str, user: User):
         if not self._auth_context.isOperationAuthorizedOnOrg(organization_id, user):
-            raise UserException(
-                NotAllowedError(
-                    code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
-                    message="Cannot read projects to this organization.",
-                )
-            )
+            # frontend doesn't manage error properly so return an empty list for now
+            LOGGER.warn("User %s is not authorized on org %s", user, organization_id)
+            return []
+            # raise UserException(
+            #     NotAllowedError(
+            #         code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+            #         message="Cannot read projects to this organization.",
+            #     )
+            # )
         else:
             return self._repository.get_projects_from_organization(organization_id)
