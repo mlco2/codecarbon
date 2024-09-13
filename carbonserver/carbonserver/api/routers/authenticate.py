@@ -94,7 +94,7 @@ async def get_login(
         creds = base64.b64encode(res.content).decode()
         base_url = request.base_url
         if settings.frontend_url != "":
-            base_url = settings.frontend_url+"/"
+            base_url = settings.frontend_url + "/"
         url = f"{base_url}home?auth=true&creds={creds}"
 
         # NOTE: RedirectResponse doesn't work with clevercloud
@@ -108,7 +108,6 @@ async def get_login(
         </html>
         """
         response = Response(content=content)
-        print("Response from fief /api/token",res.json())
 
         response.set_cookie(
             SESSION_COOKIE_NAME,

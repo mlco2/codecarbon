@@ -27,6 +27,7 @@
         "react-dom": "^18.3.1",
         "recharts": "^2.12.7",
         "swr": "^2.2.5",
+        "tailwindcss": "^3.4.1",
         "tailwind-merge": "^2.4.0",
         "tailwindcss-animate": "^1.0.7"
     },
@@ -39,7 +40,6 @@
         "eslint-config-prettier": "^9.1.0",
         "postcss": "^8",
         "prettier": "3.3.3",
-        "tailwindcss": "^3.4.1",
         "typescript": "^5"
     }
 }

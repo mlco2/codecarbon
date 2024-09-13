@@ -1,4 +1,7 @@
 services:
+    ###############################################
+    # Codecarbon-related services
+    ###############################################
     carbonserver:
         depends_on:
             - postgres
@@ -7,6 +10,7 @@ services:
             dockerfile: ./carbonserver/docker/Dockerfile
         volumes:
             - ./carbonserver:/carbonserver
+            # - /home/inigo/miniconda3/envs/codecarbon311/lib/python3.11/site-packages/fief_client:/usr/local/lib/python3.11/dist-packages/fief_client
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.ui.rule=Host(`localhost`)"
@@ -18,10 +22,33 @@ services:
         environment:
             CODECARBON_LOG_LEVEL: DEBUG
             DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@${DATABASE_HOST:-postgres}:${DATABASE_PORT:-5432}/${DATABASE_NAME:-codecarbon_db}
-            FIEF_URL: http://inigoPC.local:8000
-            FRONTEND_URL: http://localhost:3000
+            FIEF_URL: http://inigopc.local:8000
+            FRONTEND_URL: http://inigopc.local:3000
             FIEF_CLIENT_ID: AvjQENuVMr1uLXjRdexwQ0mLXtz2-YAIkkdTXQixlfU
             FIEF_CLIENT_SECRET: X3Xx3U9ag97fhsEMMCKYA4_0bgfyCbZoeQtcB27yxDI
+        networks:
+            - codecarbon_net
+
+    ui:
+        container_name: ui
+        build:
+            context: ./webapp
+            dockerfile: dev.Dockerfile
+
+        # Set environment variables based on the .env file
+        env_file:
+            - ./webapp/.env.development
+        volumes:
+            - ./webapp/src:/app/src
+            - ./webapp/public:/app/public
+        restart: always
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.ui.rule=Host(`localhost`)"
+            - "traefik.http.routers.ui.entrypoints=websecure"
+            - "traefik.http.routers.ui.tls.certresolver=myresolver"
+        ports:
+            - "3000:3000"
         networks:
             - codecarbon_net
 
@@ -57,7 +84,11 @@ services:
             - codecarbon_net
         restart: unless-stopped
 
+    ###############################################
+    # Prometheus-related services
+    ###############################################
     # Uncomment the following to enable prometheus and pushgateway
+
     # prometheus:
     #     image: prom/prometheus:latest
     #     ports:
@@ -88,7 +119,6 @@ services:
             - "8000:8000"
         labels:
             - "traefik.enable=true"
-            # Set your domain name here
             - "traefik.http.routers.fief.rule=Host(`localhost`)"
             - "traefik.http.routers.fief.entrypoints=websecure"
             - "traefik.http.routers.fief.tls.certresolver=myresolver"
@@ -124,11 +154,13 @@ services:
         volumes:
             - redis-data:/data
 
+    ###############################################
+    # Traefik (reverse proxy)
+    ###############################################
     traefik:
         image: "traefik:v2.11"
         container_name: "traefik"
         command:
-            # Uncomment the lines below to debug and try with a self-signed certificate
             - "--log.level=DEBUG"
             - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
             - "--api.insecure=true"
@@ -145,29 +177,6 @@ services:
         volumes:
             - "letsencrypt-data:/letsencrypt"
             - "/var/run/docker.sock:/var/run/docker.sock:ro"
-
-    ui:
-        container_name: ui
-        build:
-            context: ./webapp
-            dockerfile: dev.Dockerfile
-
-        # Set environment variables based on the .env file
-        env_file:
-            - ./webapp/.env.development
-        volumes:
-            - ./webapp/src:/app/src
-            - ./webapp/public:/app/public
-        restart: always
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.ui.rule=Host(`localhost`)"
-            - "traefik.http.routers.ui.entrypoints=websecure"
-            - "traefik.http.routers.ui.tls.certresolver=myresolver"
-        ports:
-            - "3000:3000"
-        networks:
-            - codecarbon_net
 
 volumes:
     postgres_codecarbon_data:

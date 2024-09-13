@@ -16,6 +16,7 @@ COPY src ./src
 COPY public ./public
 COPY next.config.mjs .
 COPY tsconfig.json .
+COPY tailwind.config.ts postcss.config.mjs ./
 
 # Next.js collects completely anonymous telemetry data about general usage. Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line to disable telemetry at run time
@@ -30,3 +31,5 @@ CMD \
     elif [ -f pnpm-lock.yaml ]; then pnpm dev; \
     else npm run dev; \
     fi
+
+ENV HOSTNAME="0.0.0.0"
