@@ -32,12 +32,17 @@ async function getDefaultOrgId(): Promise<string | null> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations`);
 
     if (!res.ok) {
-        throw new Error("Failed to fetch /organizations");
+        // throw new Error("Failed to fetch /organizations");
+        console.warn("error fetching organizations list");
+        return null;
     }
-
-    const orgs = await res.json();
-    if (orgs.length > 0) {
-        return orgs[0].id;
+    try {
+        const orgs = await res.json();
+        if (orgs.length > 0) {
+            return orgs[0].id;
+        }
+    } catch (err) {
+        console.warn("error processing organizations list");
     }
     return null;
 }
