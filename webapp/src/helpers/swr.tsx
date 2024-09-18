@@ -13,5 +13,7 @@ export const fetcher = async (url: string) => {
         console.error("Failed to fetch data", res.statusText);
         throw new Error("Failed to fetch data");
     }
-    return res.json();
+    const response = await res.json();
+    console.log("response json", response);
+    return response;
 };
