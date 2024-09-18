@@ -78,7 +78,12 @@ def init_db(container):
 
 
 def init_server(container):
-    server = FastAPI(dependencies=[Depends(get_query_token)])
+    server = FastAPI(
+        servers=[
+            {"url": "/api/"},
+        ],
+        dependencies=[Depends(get_query_token)],
+    )
     server.container = container
     server.include_router(users.router)
     server.include_router(authenticate.router)
@@ -92,8 +97,11 @@ def init_server(container):
     add_pagination(server)
 
     origins = [
+        "https://dash-dev.cleverapps.io/",
+        "https://dash-dev.cleverapps.io/api",
         "http://localhost",
         "http://localhost:3000",
+        "http://localhost:8000",
     ]
 
     server.add_middleware(

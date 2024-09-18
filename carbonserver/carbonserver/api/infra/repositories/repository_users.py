@@ -120,22 +120,20 @@ class SqlAlchemyRepository(Users):
 
     def is_user_authorized_on_project(self, project_id, user_id: UUID):
         with self.session_factory() as session:
-            project_subquery = (
-                session.query(SqlModelProject)
-                .where(SqlModelProject.id == project_id)
+            e = (
+                session.query(SqlModelMembership)
+                .join(
+                    SqlModelProject,
+                    SqlModelProject.id == project_id,
+                )
+                .filter(SqlModelMembership.user_id == user_id)
+                .filter(
+                    SqlModelMembership.organization_id
+                    == SqlModelProject.organization_id
+                )
                 .first()
             )
-            user_authorized_on_project = (
-                session.query(SqlModelUser)
-                .where(SqlModelUser.id == user_id)
-                .filter(
-                    SqlModelUser.organizations.any(
-                        str(project_subquery.organization_id)
-                    )
-                )
-                .all()
-            )
-            return bool(user_authorized_on_project)
+            return e is not None
 
     @staticmethod
     def map_sql_to_schema(sql_user: SqlModelUser) -> User:

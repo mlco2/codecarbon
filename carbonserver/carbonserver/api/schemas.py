@@ -165,7 +165,7 @@ class RunReport(RunBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    duration: int
+    duration: float
     emissions_rate: float
     emissions_count: int
 
@@ -213,10 +213,10 @@ class ExperimentReport(ExperimentBase):
     timestamp: datetime
     name: str
     description: str
-    country_name: str
-    country_iso_code: str
-    region: str
-    on_cloud: str
+    country_name: Optional[str] = None
+    country_iso_code: Optional[str] = None
+    region: Optional[str] = None
+    on_cloud: Optional[str] = None
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
     emissions: float
@@ -333,7 +333,7 @@ class ProjectTokenCreate(BaseModel):
 
 class Project(ProjectBase):
     id: UUID
-    experiments: Optional[List[Experiment]] = []
+    experiments: Optional[List[str]] = []
 
 
 class ProjectReport(ProjectBase):
