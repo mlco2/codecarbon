@@ -82,7 +82,7 @@ def init_server(container):
         servers=[
             {"url": "/api/"},
         ],
-        dependencies=[Depends(get_query_token)]
+        dependencies=[Depends(get_query_token)],
     )
     server.container = container
     server.include_router(users.router)

@@ -35,7 +35,6 @@ export default function OrganizationPage({
         return <ErrorMessage />;
     }
 
-
     return (
         <div className="h-full w-full overflow-auto">
             {!organization && <ErrorMessage />}
@@ -45,7 +44,8 @@ export default function OrganizationPage({
                         {organization.name} report
                     </h1>
                     <span className="text-sm font-semi-bold">
-                        This section has the impact of all projects combined, equivalent of
+                        This section has the impact of all projects combined,
+                        equivalent of
                     </span>
                     <Separator className="h-[0.5px] bg-muted-foreground" />
                     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
@@ -66,22 +66,19 @@ export default function OrganizationPage({
                         </Card>
                         <Card x-chunk="A card showing the total subscriptions and the percentage difference from last month.">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-
-                                </CardTitle>
+                                <CardTitle className="text-sm font-medium"></CardTitle>
                                 <Users className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <p className="text-xs text-muted-foreground">
-                                    21.43% of an american Household weekly energy consumption
+                                    21.43% of an american Household weekly
+                                    energy consumption
                                 </p>
                             </CardContent>
                         </Card>
                         <Card x-chunk="A card showing the total sales and the percentage difference from last month.">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-
-                                </CardTitle>
+                                <CardTitle className="text-sm font-medium"></CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-xs text-muted-foreground">
@@ -91,8 +88,7 @@ export default function OrganizationPage({
                         </Card>
                         <Card x-chunk="A card showing the total active users and the percentage difference from last hour.">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                </CardTitle>
+                                <CardTitle className="text-sm font-medium"></CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-xs text-muted-foreground">

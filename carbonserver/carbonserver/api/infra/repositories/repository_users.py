@@ -77,9 +77,9 @@ class SqlAlchemyRepository(Users):
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelMembership)
-                    .filter(SqlModelMembership.user_id == user.id)
-                    .filter(SqlModelMembership.organization_id == organization_id)
-                    .first()
+                .filter(SqlModelMembership.user_id == user.id)
+                .filter(SqlModelMembership.organization_id == organization_id)
+                .first()
             )
             if e is not None:
                 return
@@ -99,9 +99,9 @@ class SqlAlchemyRepository(Users):
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelMembership)
-                    .filter(SqlModelMembership.user_id == user.id)
-                    .filter(SqlModelMembership.organization_id == organization_id)
-                    .first()
+                .filter(SqlModelMembership.user_id == user.id)
+                .filter(SqlModelMembership.organization_id == organization_id)
+                .first()
             )
             return e is not None
 
@@ -123,11 +123,14 @@ class SqlAlchemyRepository(Users):
             e = (
                 session.query(SqlModelMembership)
                 .join(
-                        SqlModelProject,
-                        SqlModelProject.id == project_id,
-                    )
+                    SqlModelProject,
+                    SqlModelProject.id == project_id,
+                )
                 .filter(SqlModelMembership.user_id == user_id)
-                .filter(SqlModelMembership.organization_id == SqlModelProject.organization_id)
+                .filter(
+                    SqlModelMembership.organization_id
+                    == SqlModelProject.organization_id
+                )
                 .first()
             )
             return e is not None

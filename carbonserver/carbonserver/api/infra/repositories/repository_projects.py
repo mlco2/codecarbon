@@ -3,7 +3,7 @@ from typing import List
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
-from sqlalchemy import and_, func, cast, Text
+from sqlalchemy import Text, and_, cast, func
 
 from carbonserver.api.domain.projects import Projects
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission

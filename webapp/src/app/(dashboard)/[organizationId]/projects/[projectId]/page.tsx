@@ -60,8 +60,7 @@ export default function ProjectPage({
                         </Card>
                         <Card x-chunk="A card showing the total sales and the percentage difference from last month.">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                </CardTitle>
+                                <CardTitle className="text-sm font-medium"></CardTitle>
                                 <Activity className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
