@@ -18,25 +18,26 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { useEffect, useState } from "react";
 
 type Params = {
     experimentId: string;
+    startDate: string;
+    endDate: string;
 };
 async function getRunEmissionsByExperiment(
     experimentId: string,
+    startDate: string,
+    endDate: string,
 ): Promise<RunReport[]> {
-    console.log("From function: ", experimentId);
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums/`,
-    );
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums/?start_date=${startDate}&end_date=${endDate}`;
+
+    const res = await fetch(url);
 
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
         throw new Error("Failed to fetch data");
     }
     const result = await res.json();
-    console.log("Runs from experiment: ", result);
     return result.map((runReport: RunReport) => {
         return {
             runId: runReport.run_id,
@@ -51,17 +52,11 @@ async function getRunEmissionsByExperiment(
 export default async function RunsScatterChart({
     params,
 }: Readonly<{ params: Params }>) {
-    const [runsReportsData, setExperimentsReportData] = useState<RunReport[]>(
-        [],
+    const runsReportsData = await getRunEmissionsByExperiment(
+        params.experimentId,
+        params.startDate,
+        params.endDate,
     );
-    useEffect(() => {
-        const fetchData = async () => {
-            console.log("Fetching runs report data");
-            const data = await getRunEmissionsByExperiment(params.experimentId);
-            setExperimentsReportData(data);
-        };
-        fetchData();
-    }, [params.experimentId]);
     return (
         <Card>
             <CardHeader>

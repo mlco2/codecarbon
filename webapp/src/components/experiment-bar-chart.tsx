@@ -1,5 +1,6 @@
 "use client";
 
+import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { ExperimentReport } from "@/types/experiment-report";
 
@@ -17,14 +18,15 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useEffect, useState } from "react";
 
 async function getProjectEmissionsByExperiment(
     projectId: string,
+    startDate: string,
+    endDate: string,
 ): Promise<ExperimentReport[]> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums/`,
-    );
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums/?start_date=${startDate}&end_date=${endDate}`;
+
+    const res = await fetch(url);
 
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
@@ -54,24 +56,17 @@ const chartConfig = {
 
 type Params = {
     projectId: string;
+    startDate: string;
+    endDate: string;
 };
-export default function ExperimentsBarChart({
+export default async function ExperimentsBarChart({
     params,
 }: Readonly<{ params: Params }>) {
-    const [experimentsReportData, setExperimentsReportData] = useState<
-        ExperimentReport[]
-    >([]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            console.log("Fetching experiments report data");
-            const data = await getProjectEmissionsByExperiment(
-                params.projectId,
-            );
-            setExperimentsReportData(data);
-        };
-        fetchData();
-    }, [params.projectId]);
+    const experimentsReportData = await getProjectEmissionsByExperiment(
+        params.projectId,
+        params.startDate,
+        params.endDate,
+    );
     return (
         <Card>
             <CardHeader>
