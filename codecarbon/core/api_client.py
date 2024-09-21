@@ -39,7 +39,8 @@ class ApiClient:  # (AsyncClient)
 
     def __init__(
         self,
-        endpoint_url="https://api.codecarbon.io",
+        # endpoint_url="https://api.codecarbon.io",
+        endpoint_url="https://dash-dev.cleverapps.io/api",  # beta API
         experiment_id=None,
         api_key=None,
         conf=None,

@@ -78,21 +78,36 @@ class UserWithAuthDependency:
             Provide[ServerContainer.user_service]
         ),
     ):
-        print("UserWithAuthDependency()")
         self.user_service = user_service
-
         if cookie_token is not None:
             self.auth_user = jwt.decode(
-                cookie_token, options={"verify_signature": False}, algorithms=["HS256"]
+                cookie_token,
+                options={"verify_signature": False},
+                algorithms=["HS256", "RS256"],
             )
-        elif bearer_token is not None and settings.environment == "develop":
+        elif bearer_token is not None:
+            # cli user using fief token
             self.auth_user = jwt.decode(
                 bearer_token.credentials,
-                settings.jwt_key,
+                options={"verify_signature": False},
                 algorithms=[
                     "HS256",
+                    "RS256",
                 ],
             )
+            if settings.environment == "develop":
+                try:
+                    # test user
+                    self.auth_user = jwt.decode(
+                        bearer_token.credentials,
+                        settings.jwt_key,
+                        algorithms=[
+                            "HS256",
+                            "RS256",
+                        ],
+                    )
+                except Exception:
+                    ...
         else:
             self.auth_user = None
             if self.error_if_not_found:
