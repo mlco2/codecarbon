@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "arrow",
     "click",
+    "fief-client[cli]",
     "pandas",
     "prometheus_client",
     "psutil",

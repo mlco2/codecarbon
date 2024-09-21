@@ -52,6 +52,8 @@ dash-html-components==2.0.0
     # via dash
 dash-table==5.0.0
     # via dash
+fief-client[cli]==0.19.0
+    # via codecarbon (pyproject.toml)
 fire==0.6.0
     # via hatch.envs.test.py3.12
 flask==3.0.3

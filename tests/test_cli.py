@@ -55,8 +55,9 @@ class TestApp(unittest.TestCase):
     @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
+    @patch("codecarbon.cli.main._get_access_token")
     def test_config_no_local_new_all(
-        self, mock_prompt, mock_confirm, mock_path_exists, MockApiClient
+        self, mock_token, mock_prompt, mock_confirm, mock_path_exists, MockApiClient
     ):
         temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
         temp_codecarbon_config = tempfile.NamedTemporaryFile(
@@ -74,6 +75,7 @@ class TestApp(unittest.TestCase):
         side_effect_wrapper.call_count = 0
         mock_path_exists.side_effect = side_effect_wrapper
         MockApiClient.return_value = self.mock_api_client
+        mock_token.return_value = "user_token"
         mock_prompt.side_effect = [
             "Create New Organization",
             "Create New Project",
