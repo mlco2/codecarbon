@@ -24,7 +24,7 @@ async function getProjectEmissionsByExperiment(
     startDate: string,
     endDate: string,
 ): Promise<ExperimentReport[]> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums/?start_date=${startDate}&end_date=${endDate}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums?start_date=${startDate}&end_date=${endDate}`;
 
     const res = await fetch(url);
 
@@ -61,7 +61,9 @@ type Params = {
 };
 export default async function ExperimentsBarChart({
     params,
-}: Readonly<{ params: Params }>) {
+}: Readonly<{
+    params: Params;
+}>) {
     const experimentsReportData = await getProjectEmissionsByExperiment(
         params.projectId,
         params.startDate,

@@ -30,8 +30,7 @@ async function getOrganizationEmissionsByProject(
     organizationId: string,
     dateRange: DateRange | undefined,
 ): Promise<OrganizationReport> {
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/sums/`;
-    console.log(url);
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/sums`;
 
     if (dateRange) {
         url += `?start_date=${dateRange.from?.toISOString()}&end_date=${dateRange.to?.toISOString()}`;
@@ -39,7 +38,6 @@ async function getOrganizationEmissionsByProject(
 
     const res = await fetch(url);
     const result = await res.json();
-    console.log(result);
     return {
         name: result.name,
         emissions: result.emissions * 1000,
@@ -105,6 +103,18 @@ export default async function OrganizationPage({
         },
     };
 
+    const household_converted_value = (
+        (RadialChartData.emissions.value * 100) /
+        160.58
+    ).toFixed(2);
+    const transportation_converted_value = (
+        RadialChartData.emissions.value / 0.409
+    ).toFixed(2);
+    const tv_time_converted_value = (
+        RadialChartData.emissions.value /
+        (0.097 * 24)
+    ).toFixed(2);
+
     return (
         <div className="h-full w-full overflow-auto">
             {!organization && <ErrorMessage />}
@@ -118,7 +128,9 @@ export default async function OrganizationPage({
                                 alt="Logo 1"
                                 className="h-16 w-16"
                             />
-                            <p className="text-xs text-gray-500">21.43%</p>
+                            <p className="text-xs text-gray-500">
+                                {household_converted_value} %
+                            </p>
                             <p className="text-sm font-medium">
                                 Of an american household weekly energy
                                 consumption
@@ -130,7 +142,9 @@ export default async function OrganizationPage({
                                 alt="Logo 2"
                                 className="h-16 w-16"
                             />
-                            <p className="text-xs text-gray-500">123</p>
+                            <p className="text-xs text-gray-500">
+                                {transportation_converted_value}
+                            </p>
                             <p className="text-sm font-medium">
                                 Kilometers ridden
                             </p>
@@ -141,7 +155,9 @@ export default async function OrganizationPage({
                                 alt="Logo 3"
                                 className="h-16 w-16"
                             />
-                            <p className="text-xs text-gray-500">14 DAYS</p>
+                            <p className="text-xs text-gray-500">
+                                {tv_time_converted_value} days
+                            </p>
                             <p className="text-sm font-medium">
                                 Of watching TV
                             </p>

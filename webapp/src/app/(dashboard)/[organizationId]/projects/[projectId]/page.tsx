@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
+import EmissionsTimeSeriesChart from "@/components/emissions-time-series";
 import RadialChart from "@/components/radial-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -29,7 +30,7 @@ async function getProjectEmissionsByExperiment(
     projectId: string,
     dateRange: DateRange | undefined,
 ): Promise<ExperimentReport[]> {
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums/`;
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums`;
 
     if (dateRange) {
         url += `?start_date=${dateRange.from?.toISOString()}&end_date=${dateRange.to?.toISOString()}`;
@@ -69,6 +70,10 @@ export default async function ProjectPage({
         from: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
         to: today,
     });
+    const default_experiment_id = project ? project.experiments[0] : "";
+    const [selectedExperiment, setSelectedExperiment] = useState(
+        default_experiment_id,
+    );
 
     if (isLoading) {
         return <Loader />;
@@ -129,10 +134,22 @@ export default async function ProjectPage({
             endDate: date?.to?.toISOString() ?? "",
         };
         const RunData = {
-            experimentId: project.experiments[1],
+            experimentId: default_experiment_id,
             startDate: date?.from?.toISOString() ?? "",
             endDate: date?.to?.toISOString() ?? "",
         };
+        const household_converted_value = (
+            (RadialChartData.emissions.value * 100) /
+            160.58
+        ).toFixed(2);
+        const transportation_converted_value = (
+            RadialChartData.emissions.value / 0.409
+        ).toFixed(2);
+        const tv_time_converted_value = (
+            RadialChartData.emissions.value /
+            (0.097 * 24)
+        ).toFixed(2);
+
         return (
             <div className="h-full w-full overflow-auto">
                 <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -207,7 +224,7 @@ export default async function ProjectPage({
                                 </div>
                                 <div className="flex items-center justify-center">
                                     <p className="text-xs text-gray-500">
-                                        21.43%
+                                        {household_converted_value} %
                                     </p>
                                     <p className="text-sm font-medium">
                                         Of an american household weekly energy
@@ -224,13 +241,14 @@ export default async function ProjectPage({
                                     />
                                 </div>
                                 <div className="flex items-center justify-center">
-                                    <p className="text-xs text-gray-500">123</p>
+                                    <p className="text-xs text-gray-500">
+                                        {transportation_converted_value}
+                                    </p>
                                     <p className="text-sm font-medium">
                                         Kilometers ridden
                                     </p>
                                 </div>
                             </div>
-                            {/* Row 3 */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex items-center justify-center">
                                     <img
@@ -241,7 +259,7 @@ export default async function ProjectPage({
                                 </div>
                                 <div className="flex items-center justify-center">
                                     <p className="text-xs text-gray-500">
-                                        14 DAYS
+                                        {tv_time_converted_value} days
                                     </p>
                                     <p className="text-sm font-medium">
                                         Of watching TV
@@ -262,6 +280,9 @@ export default async function ProjectPage({
                     <div className="grid gap-4 md:grid-cols-2 md:gap-8">
                         <ExperimentsBarChart params={ExperimentsData} />
                         <RunsScatterChart params={RunData} />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2 md:gap-8">
+                        <EmissionsTimeSeriesChart runId="e14306a5-caa0-4c0d-a4b7-1b58124d6c8f"/>
                     </div>
                 </main>
             </div>
