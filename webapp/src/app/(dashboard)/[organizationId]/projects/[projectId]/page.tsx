@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { cn } from "@/helpers/utils";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
@@ -38,6 +38,7 @@ async function getProjectEmissionsByExperiment(
 
     const res = await fetch(url);
     const result = await res.json();
+    console.log(result)
     return result.map((experimentReport: ExperimentReport) => {
         return {
             experiment_id: experimentReport.experiment_id,
@@ -54,238 +55,219 @@ export default async function ProjectPage({
 }: Readonly<{
     params: {
         projectId: string;
-        className: string;
     };
 }>) {
-    const {
-        data: project,
-        isLoading,
-        error,
-    } = useSWR<Project>(`/projects/${params.projectId}`, fetcher, {
-        refreshInterval: 1000 * 60, // Refresh every minute
-    });
+
 
     const today = new Date();
     const [date, setDate] = useState<DateRange | undefined>({
         from: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
         to: today,
     });
-    const default_experiment_id = project ? project.experiments[0] : "";
-    const [selectedExperiment, setSelectedExperiment] = useState(
-        default_experiment_id,
+
+
+    const experimentReport = await getProjectEmissionsByExperiment(
+        params.projectId,
+        date,
     );
 
-    if (isLoading) {
-        return <Loader />;
-    }
+    const RadialChartData = {
+        energy: {
+            label: "kWh",
+            value: experimentReport
+                ? parseFloat(
+                      experimentReport
+                          .reduce(
+                              (n, { energy_consumed }) =>
+                                  n + energy_consumed,
+                              0,
+                          )
+                          .toFixed(2),
+                  )
+                : 0,
+        },
+        emissions: {
+            label: "kg eq CO2",
+            value: experimentReport
+                ? parseFloat(
+                      experimentReport
+                          .reduce((n, { emissions }) => n + emissions, 0)
+                          .toFixed(2),
+                  )
+                : 0,
+        },
+        duration: {
+            label: "days",
+            value: experimentReport
+                ? parseFloat(
+                      experimentReport
+                          .reduce(
+                              (n, { duration }) => n + duration / 86400,
+                              0,
+                          )
+                          .toFixed(2),
+                  )
+                : 0,
+        },
+    };
+    const ExperimentsData = {
+        projectId: params.projectId,
+        startDate: date?.from?.toISOString() ?? "",
+        endDate: date?.to?.toISOString() ?? "",
+    };
+    const RunData = {
+        experimentId: experimentReport[0].experiment_id,
+        startDate: date?.from?.toISOString() ?? "",
+        endDate: date?.to?.toISOString() ?? "",
+    };
+    const household_converted_value = (
+        (RadialChartData.emissions.value * 100) /
+        160.58
+    ).toFixed(2);
+    const transportation_converted_value = (
+        RadialChartData.emissions.value / 0.409
+    ).toFixed(2);
+    const tv_time_converted_value = (
+        RadialChartData.emissions.value /
+        (0.097 * 24)
+    ).toFixed(2);
 
-    if (error) {
-        return <ErrorMessage />;
-    }
-
-    if (project) {
-        const experimentReport = await getProjectEmissionsByExperiment(
-            project.id,
-            date,
-        );
-
-        const RadialChartData = {
-            energy: {
-                label: "kWh",
-                value: experimentReport
-                    ? parseFloat(
-                          experimentReport
-                              .reduce(
-                                  (n, { energy_consumed }) =>
-                                      n + energy_consumed,
-                                  0,
-                              )
-                              .toFixed(2),
-                      )
-                    : 0,
-            },
-            emissions: {
-                label: "kg eq CO2",
-                value: experimentReport
-                    ? parseFloat(
-                          experimentReport
-                              .reduce((n, { emissions }) => n + emissions, 0)
-                              .toFixed(2),
-                      )
-                    : 0,
-            },
-            duration: {
-                label: "days",
-                value: experimentReport
-                    ? parseFloat(
-                          experimentReport
-                              .reduce(
-                                  (n, { duration }) => n + duration / 86400,
-                                  0,
-                              )
-                              .toFixed(2),
-                      )
-                    : 0,
-            },
-        };
-        const ExperimentsData = {
-            projectId: project.id,
-            startDate: date?.from?.toISOString() ?? "",
-            endDate: date?.to?.toISOString() ?? "",
-        };
-        const RunData = {
-            experimentId: default_experiment_id,
-            startDate: date?.from?.toISOString() ?? "",
-            endDate: date?.to?.toISOString() ?? "",
-        };
-        const household_converted_value = (
-            (RadialChartData.emissions.value * 100) /
-            160.58
-        ).toFixed(2);
-        const transportation_converted_value = (
-            RadialChartData.emissions.value / 0.409
-        ).toFixed(2);
-        const tv_time_converted_value = (
-            RadialChartData.emissions.value /
-            (0.097 * 24)
-        ).toFixed(2);
-
-        return (
-            <div className="h-full w-full overflow-auto">
-                <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                        <div>
-                            <h1 className="text-2xl font-semi-bold">
-                                {project.name}
-                            </h1>
-                            <span className="text-sm font-semi-bold">
-                                {project.description}
-                            </span>
-                        </div>
-                        <div className={params.className}>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        id="date"
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-[300px] justify-start text-left font-normal",
-                                            !date && "text-muted-foreground",
-                                        )}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date?.from ? (
-                                            date.to ? (
-                                                <>
-                                                    {format(
-                                                        date.from,
-                                                        "LLL dd, y",
-                                                    )}{" "}
-                                                    -{" "}
-                                                    {format(
-                                                        date.to,
-                                                        "LLL dd, y",
-                                                    )}
-                                                </>
-                                            ) : (
-                                                format(date.from, "LLL dd, y")
-                                            )
-                                        ) : (
-                                            <span>Pick a date</span>
-                                        )}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                    className="w-auto p-0"
-                                    align="start"
+    return (
+        <div className="h-full w-full overflow-auto">
+            <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-semi-bold">
+                            Project name
+                        </h1>
+                        <span className="text-sm font-semi-bold">
+                            Project Description
+                        </span>
+                    </div>
+                    <div>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    id="date"
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[300px] justify-start text-left font-normal",
+                                        !date && "text-muted-foreground",
+                                    )}
                                 >
-                                    <Calendar
-                                        initialFocus
-                                        mode="range"
-                                        defaultMonth={date?.from}
-                                        selected={date}
-                                        onSelect={setDate}
-                                        numberOfMonths={2}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {date?.from ? (
+                                        date.to ? (
+                                            <>
+                                                {format(
+                                                    date.from,
+                                                    "LLL dd, y",
+                                                )}{" "}
+                                                -{" "}
+                                                {format(
+                                                    date.to,
+                                                    "LLL dd, y",
+                                                )}
+                                            </>
+                                        ) : (
+                                            format(date.from, "LLL dd, y")
+                                        )
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                            >
+                                <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={date?.from}
+                                    selected={date}
+                                    onSelect={setDate}
+                                    numberOfMonths={2}
+                                />
+                            </PopoverContent>
+                        </Popover>
                     </div>
-                    <Separator className="h-[0.5px] bg-muted-foreground" />
-                    <div className="grid grid-cols-4 gap-4">
-                        <div className="grid grid-cols-1 gap-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-center justify-center">
-                                    <img
-                                        src="/household_consumption.svg"
-                                        alt="Logo 1"
-                                        className="h-16 w-16"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-center">
-                                    <p className="text-xs text-gray-500">
-                                        {household_converted_value} %
-                                    </p>
-                                    <p className="text-sm font-medium">
-                                        Of an american household weekly energy
-                                        consumption
-                                    </p>
-                                </div>
+                </div>
+                <Separator className="h-[0.5px] bg-muted-foreground" />
+                <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-center justify-center">
+                                <img
+                                    src="/household_consumption.svg"
+                                    alt="Logo 1"
+                                    className="h-16 w-16"
+                                />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-center justify-center">
-                                    <img
-                                        src="/transportation.svg"
-                                        alt="Logo 2"
-                                        className="h-16 w-16"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-center">
-                                    <p className="text-xs text-gray-500">
-                                        {transportation_converted_value}
-                                    </p>
-                                    <p className="text-sm font-medium">
-                                        Kilometers ridden
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex items-center justify-center">
-                                    <img
-                                        src="/tv.svg"
-                                        alt="Logo 3"
-                                        className="h-16 w-16"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-center">
-                                    <p className="text-xs text-gray-500">
-                                        {tv_time_converted_value} days
-                                    </p>
-                                    <p className="text-sm font-medium">
-                                        Of watching TV
-                                    </p>
-                                </div>
+                            <div className="flex items-center justify-center">
+                                <p className="text-xs text-gray-500">
+                                    {household_converted_value} %
+                                </p>
+                                <p className="text-sm font-medium">
+                                    Of an american household weekly energy
+                                    consumption
+                                </p>
                             </div>
                         </div>
-                        <div className="col-span-1">
-                            <RadialChart data={RadialChartData.energy} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-center justify-center">
+                                <img
+                                    src="/transportation.svg"
+                                    alt="Logo 2"
+                                    className="h-16 w-16"
+                                />
+                            </div>
+                            <div className="flex items-center justify-center">
+                                <p className="text-xs text-gray-500">
+                                    {transportation_converted_value}
+                                </p>
+                                <p className="text-sm font-medium">
+                                    Kilometers ridden
+                                </p>
+                            </div>
                         </div>
-                        <div className="col-span-1">
-                            <RadialChart data={RadialChartData.emissions} />
-                        </div>
-                        <div className="col-span-1">
-                            <RadialChart data={RadialChartData.duration} />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-center justify-center">
+                                <img
+                                    src="/tv.svg"
+                                    alt="Logo 3"
+                                    className="h-16 w-16"
+                                />
+                            </div>
+                            <div className="flex items-center justify-center">
+                                <p className="text-xs text-gray-500">
+                                    {tv_time_converted_value} days
+                                </p>
+                                <p className="text-sm font-medium">
+                                    Of watching TV
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 md:gap-8">
-                        <ExperimentsBarChart params={ExperimentsData} />
-                        <RunsScatterChart params={RunData} />
+                    <div className="col-span-1">
+                        <RadialChart data={RadialChartData.energy} />
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 md:gap-8">
-                        <EmissionsTimeSeriesChart runId="e14306a5-caa0-4c0d-a4b7-1b58124d6c8f"/>
+                    <div className="col-span-1">
+                        <RadialChart data={RadialChartData.emissions} />
                     </div>
-                </main>
-            </div>
-        );
-    }
+                    <div className="col-span-1">
+                        <RadialChart data={RadialChartData.duration} />
+                    </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 md:gap-8">
+                    <ExperimentsBarChart
+                        params={ExperimentsData}
+                     />
+                     <RunsScatterChart params={RunData} />
+                </div>
+                <div>
+                </div>
+            </main>
+        </div>
+    );
 }

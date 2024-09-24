@@ -29,15 +29,18 @@ async function getRunEmissionsByExperiment(
     startDate: string,
     endDate: string,
 ): Promise<RunReport[]> {
+    console.log("ExperimentId: ", experimentId)
     const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`;
 
     const res = await fetch(url);
 
     if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch data");
+        // Log error waiting for a better error management
+        console.log("Failed to fetch data");
+        return []
     }
     const result = await res.json();
+    console.log("Result: ", result)
     return result.map((runReport: RunReport) => {
         return {
             runId: runReport.run_id,

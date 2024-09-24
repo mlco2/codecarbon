@@ -95,11 +95,6 @@ export default async function ExperimentsBarChart({
                             fill="var(--color-desktop)"
                             radius={4}
                         />
-                        <Bar
-                            dataKey="energy_consumed"
-                            fill="var(--color-mobile)"
-                            radius={4}
-                        />
                     </BarChart>
                 </ChartContainer>
             </CardContent>

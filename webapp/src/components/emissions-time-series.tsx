@@ -25,11 +25,13 @@ import { Emission } from "@/types/emission";
 async function getEmissionsTimeSeries(
     runId: string,
 ): Promise<EmissionsTimeSeries> {
-    const runMetadataResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/run/${runId}`);
-    const runMetadataData = await runMetadataResponse.json();
-
+    const runMetadataResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/runs/${runId}`);
     const emissionsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/runs/${runId}/emissions`);
+
+
+    const runMetadataData = await runMetadataResponse.json();
     const emissionsData = await emissionsResponse.json();
+
 
     const metadata: RunMetadata = {
         timestamp: runMetadataData.timestamp,
@@ -187,16 +189,8 @@ export default async function EmissionsTimeSeriesChart({
 }>) {
     const [activeChart, setActiveChart] =
         React.useState<keyof typeof chartConfig>("desktop");
-    const emissionTimeSeries = getEmissionsTimeSeries("e14306a5-caa0-4c0d-a4b7-1b58124d6c8f");
+    const emissionTimeSeries = await getEmissionsTimeSeries("e14306a5-caa0-4c0d-a4b7-1b58124d6c8f");
     console.log(emissionTimeSeries)
-
-    const total = React.useMemo(
-        () => ({
-            desktop: chartData.reduce((acc, curr) => acc + curr.desktop, 0),
-            mobile: chartData.reduce((acc, curr) => acc + curr.mobile, 0),
-        }),
-        [],
-    );
 
     return (
         <Card>
@@ -208,7 +202,7 @@ export default async function EmissionsTimeSeriesChart({
                     </CardDescription>
                 </div>
                 <div className="flex">
-                    {["desktop", "mobile"].map((key) => {
+                    {["emissions_rate", "mobile"].map((key) => {
                         const chart = key as keyof typeof chartConfig;
                         return (
                             <button
@@ -219,11 +213,6 @@ export default async function EmissionsTimeSeriesChart({
                             >
                                 <span className="text-xs text-muted-foreground">
                                     {chartConfig[chart].label}
-                                </span>
-                                <span className="text-lg font-bold leading-none sm:text-3xl">
-                                    {total[
-                                        key as keyof typeof total
-                                    ].toLocaleString()}
                                 </span>
                             </button>
                         );
