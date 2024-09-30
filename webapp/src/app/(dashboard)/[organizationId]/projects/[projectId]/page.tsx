@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { cn } from "@/helpers/utils";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
@@ -25,15 +25,34 @@ import {
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
+import { DateRangePicker } from "@/components/date-range-picker";
+import { addMonths, startOfDay, endOfDay } from 'date-fns';
+
+// Fonction pour obtenir la plage de dates par défaut
+const getDefaultDateRange = (): { from: Date; to: Date } => {
+    const today = new Date();
+    return {
+        from: startOfDay(addMonths(today, -2)),
+        to: endOfDay(today)
+    };
+};
 
 async function getProjectEmissionsByExperiment(
     projectId: string,
-    dateRange: DateRange | undefined,
+    dateRange: DateRange,
 ): Promise<ExperimentReport[]> {
     let url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums`;
+    console.log(dateRange)
 
-    if (dateRange) {
-        url += `?start_date=${dateRange.from?.toISOString()}&end_date=${dateRange.to?.toISOString()}`;
+    if (dateRange?.from || dateRange?.to) {
+        const params = new URLSearchParams();
+        if (dateRange.from) {
+            params.append('start_date', dateRange.from.toISOString());
+        }
+        if (dateRange.to) {
+            params.append('end_date', dateRange.to.toISOString());
+        }
+        url += `?${params.toString()}`;
     }
 
     const res = await fetch(url);
@@ -50,87 +69,91 @@ async function getProjectEmissionsByExperiment(
     });
 }
 
-export default async function ProjectPage({
+export default function ProjectPage({
     params,
 }: Readonly<{
     params: {
         projectId: string;
     };
 }>) {
+    const default_date = getDefaultDateRange();
+    const [date, setDate] = useState<DateRange>(default_date);
 
-
-    const today = new Date();
-    const [date, setDate] = useState<DateRange | undefined>({
-        from: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
-        to: today,
+    const [experimentReport, setExperimentReport] = useState<ExperimentReport[]>([]);
+    const [radialChartData, setRadialChartData] = useState({
+        energy: { label: "kWh", value: 0 },
+        emissions: { label: "kg eq CO2", value: 0 },
+        duration: { label: "days", value: 0 },
     });
-
-
-    const experimentReport = await getProjectEmissionsByExperiment(
-        params.projectId,
-        date,
-    );
-
-    const RadialChartData = {
-        energy: {
-            label: "kWh",
-            value: experimentReport
-                ? parseFloat(
-                      experimentReport
-                          .reduce(
-                              (n, { energy_consumed }) =>
-                                  n + energy_consumed,
-                              0,
-                          )
-                          .toFixed(2),
-                  )
-                : 0,
-        },
-        emissions: {
-            label: "kg eq CO2",
-            value: experimentReport
-                ? parseFloat(
-                      experimentReport
-                          .reduce((n, { emissions }) => n + emissions, 0)
-                          .toFixed(2),
-                  )
-                : 0,
-        },
-        duration: {
-            label: "days",
-            value: experimentReport
-                ? parseFloat(
-                      experimentReport
-                          .reduce(
-                              (n, { duration }) => n + duration / 86400,
-                              0,
-                          )
-                          .toFixed(2),
-                  )
-                : 0,
-        },
-    };
-    const ExperimentsData = {
+    const [experimentsData, setExperimentsData] = useState({
         projectId: params.projectId,
-        startDate: date?.from?.toISOString() ?? "",
-        endDate: date?.to?.toISOString() ?? "",
-    };
-    const RunData = {
-        experimentId: experimentReport[0].experiment_id,
-        startDate: date?.from?.toISOString() ?? "",
-        endDate: date?.to?.toISOString() ?? "",
-    };
-    const household_converted_value = (
-        (RadialChartData.emissions.value * 100) /
-        160.58
-    ).toFixed(2);
-    const transportation_converted_value = (
-        RadialChartData.emissions.value / 0.409
-    ).toFixed(2);
-    const tv_time_converted_value = (
-        RadialChartData.emissions.value /
-        (0.097 * 24)
-    ).toFixed(2);
+        startDate: default_date.from.toISOString(),
+        endDate: default_date.to.toISOString(),
+    });
+    const [runData, setRunData] = useState({
+        experimentId: "",
+        startDate: default_date.from.toISOString(),
+        endDate: default_date.to.toISOString(),
+    });
+    const [convertedValues, setConvertedValues] = useState({
+        household: "0",
+        transportation: "0",
+        tvTime: "0",
+    });
+    const [selectedExperimentId, setSelectedExperimentId] = useState<string>("");
+
+    useEffect(() => {
+        async function fetchData() {
+            const report = await getProjectEmissionsByExperiment(params.projectId, date);
+            setExperimentReport(report);
+
+            const newRadialChartData = {
+                energy: {
+                    label: "kWh",
+                    value: parseFloat(report.reduce((n, { energy_consumed }) => n + energy_consumed, 0).toFixed(2)),
+                },
+                emissions: {
+                    label: "kg eq CO2",
+                    value: parseFloat(report.reduce((n, { emissions }) => n + emissions, 0).toFixed(2)),
+                },
+                duration: {
+                    label: "days",
+                    value: parseFloat((report.reduce((n, { duration }) => n + duration / 86400, 0)).toFixed(2)),
+                },
+            };
+            setRadialChartData(newRadialChartData);
+
+            setExperimentsData({
+                projectId: params.projectId,
+                startDate: date?.from?.toISOString() ?? "",
+                endDate: date?.to?.toISOString() ?? "",
+            });
+
+            setRunData({
+                experimentId: report[0]?.experiment_id ?? "",
+                startDate: date?.from?.toISOString() ?? "",
+                endDate: date?.to?.toISOString() ?? "",
+            });
+
+            setSelectedExperimentId(report[0]?.experiment_id ?? "");
+
+            setConvertedValues({
+                household: ((newRadialChartData.emissions.value * 100) / 160.58).toFixed(2),
+                transportation: (newRadialChartData.emissions.value / 0.409).toFixed(2),
+                tvTime: (newRadialChartData.emissions.value / (0.097 * 24)).toFixed(2),
+            });
+        }
+
+        fetchData();
+    }, [params.projectId, date]);
+
+    const handleExperimentClick = useCallback((experimentId: string) => {
+        setSelectedExperimentId(experimentId);
+        setRunData(prevData => ({
+            ...prevData,
+            experimentId: experimentId,
+        }));
+    }, []);
 
     return (
         <div className="h-full w-full overflow-auto">
@@ -145,52 +168,10 @@ export default async function ProjectPage({
                         </span>
                     </div>
                     <div>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    id="date"
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[300px] justify-start text-left font-normal",
-                                        !date && "text-muted-foreground",
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {date?.from ? (
-                                        date.to ? (
-                                            <>
-                                                {format(
-                                                    date.from,
-                                                    "LLL dd, y",
-                                                )}{" "}
-                                                -{" "}
-                                                {format(
-                                                    date.to,
-                                                    "LLL dd, y",
-                                                )}
-                                            </>
-                                        ) : (
-                                            format(date.from, "LLL dd, y")
-                                        )
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                            >
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={date?.from}
-                                    selected={date}
-                                    onSelect={setDate}
-                                    numberOfMonths={2}
-                                />
-                            </PopoverContent>
-                        </Popover>
+                        <DateRangePicker 
+                            date={date} 
+                            onDateChange={(newDate) => setDate(newDate || getDefaultDateRange())} 
+                        />
                     </div>
                 </div>
                 <Separator className="h-[0.5px] bg-muted-foreground" />
@@ -205,8 +186,8 @@ export default async function ProjectPage({
                                 />
                             </div>
                             <div className="flex items-center justify-center">
-                                <p className="text-xs text-gray-500">
-                                    {household_converted_value} %
+                                <p className="text-xl text-gray-500">
+                                    {convertedValues.household} %
                                 </p>
                                 <p className="text-sm font-medium">
                                     Of an american household weekly energy
@@ -223,8 +204,8 @@ export default async function ProjectPage({
                                 />
                             </div>
                             <div className="flex items-center justify-center">
-                                <p className="text-xs text-gray-500">
-                                    {transportation_converted_value}
+                                <p className="text-xl text-gray-500">
+                                    {convertedValues.transportation}
                                 </p>
                                 <p className="text-sm font-medium">
                                     Kilometers ridden
@@ -240,8 +221,8 @@ export default async function ProjectPage({
                                 />
                             </div>
                             <div className="flex items-center justify-center">
-                                <p className="text-xs text-gray-500">
-                                    {tv_time_converted_value} days
+                                <p className="text-xl text-gray-500">
+                                    {convertedValues.tvTime} days
                                 </p>
                                 <p className="text-sm font-medium">
                                     Of watching TV
@@ -250,20 +231,24 @@ export default async function ProjectPage({
                         </div>
                     </div>
                     <div className="col-span-1">
-                        <RadialChart data={RadialChartData.energy} />
+                        <RadialChart data={radialChartData.energy} />
                     </div>
                     <div className="col-span-1">
-                        <RadialChart data={RadialChartData.emissions} />
+                        <RadialChart data={radialChartData.emissions} />
                     </div>
                     <div className="col-span-1">
-                        <RadialChart data={RadialChartData.duration} />
+                        <RadialChart data={radialChartData.duration} />
                     </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 md:gap-8">
                     <ExperimentsBarChart
-                        params={ExperimentsData}
-                     />
-                     <RunsScatterChart params={RunData} />
+                        params={experimentsData}
+                        onExperimentClick={handleExperimentClick}
+                    />
+                    <RunsScatterChart params={{
+                        ...runData,
+                        experimentId: selectedExperimentId,
+                    }} />
                 </div>
                 <div>
                 </div>

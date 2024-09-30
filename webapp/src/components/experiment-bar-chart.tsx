@@ -1,6 +1,5 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { ExperimentReport } from "@/types/experiment-report";
 
@@ -8,7 +7,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
@@ -18,6 +16,15 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
+
+interface ExperimentsBarChartProps {
+    params: {
+        projectId: string;
+        startDate: string;
+        endDate: string;
+    };
+    onExperimentClick: (experimentId: string) => void;
+}
 
 async function getProjectEmissionsByExperiment(
     projectId: string,
@@ -59,11 +66,7 @@ type Params = {
     startDate: string;
     endDate: string;
 };
-export default async function ExperimentsBarChart({
-    params,
-}: Readonly<{
-    params: Params;
-}>) {
+export default async function ExperimentsBarChart({ params, onExperimentClick }: ExperimentsBarChartProps) {
     const experimentsReportData = await getProjectEmissionsByExperiment(
         params.projectId,
         params.startDate,
@@ -94,6 +97,8 @@ export default async function ExperimentsBarChart({
                             dataKey="emissions"
                             fill="var(--color-desktop)"
                             radius={4}
+                            onClick={(data) => onExperimentClick(data.experiment_id)}
+                            cursor="pointer"
                         />
                     </BarChart>
                 </ChartContainer>

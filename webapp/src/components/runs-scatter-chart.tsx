@@ -60,6 +60,22 @@ export default async function RunsScatterChart({
         params.startDate,
         params.endDate,
     );
+
+    // Add this custom tooltip function
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (active && payload && payload.length) {
+            const data = payload[0].payload;
+            return (
+                <div className="custom-tooltip bg-background text-foreground p-2 border border-border rounded shadow">
+                    <p><strong>Emissions:</strong> {data.emissions.toFixed(2)}</p>
+                    <p><strong>Energy Consumed:</strong> {data.energy_consumed.toFixed(2)}</p>
+                    <p><strong>Duration:</strong> {data.duration.toFixed(2)}</p>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -77,24 +93,37 @@ export default async function RunsScatterChart({
                         left: 20,
                     }}
                 >
-                    <XAxis dataKey="timestamp" name="Timestamp" type="category">
+                    <XAxis 
+                        dataKey="timestamp" 
+                        name="Timestamp" 
+                        type="category"
+                        stroke="currentColor"
+                    >
                         <Label
                             value="Timestamp"
                             offset={0}
                             position="insideBottom"
+                            style={{ fill: 'currentColor' }}
                         />
                     </XAxis>
-                    <YAxis dataKey="emissions" name="Emissions" type="number">
+                    <YAxis 
+                        dataKey="emissions" 
+                        name="Emissions" 
+                        type="number"
+                        stroke="currentColor"
+                    >
                         <Label
                             value="Emissions"
                             angle={-90}
                             position="insideLeft"
+                            style={{ fill: 'currentColor' }}
                         />
                     </YAxis>
+                    <Tooltip content={<CustomTooltip />} />
                     <Scatter
                         name="Emissions"
                         data={runsReportsData}
-                        fill="#8884d8"
+                        fill="var(--primary)"
                     />
                 </ScatterChart>
             </CardContent>
