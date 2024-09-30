@@ -1,3 +1,5 @@
+# cp .env.example .env
+# docker compose up -d
 services:
     ###############################################
     # Codecarbon-related services
@@ -13,24 +15,23 @@ services:
             # - /home/inigo/miniconda3/envs/codecarbon311/lib/python3.11/site-packages/fief_client:/usr/local/lib/python3.11/dist-packages/fief_client
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.ui.rule=Host(`localhost`)"
+            - "traefik.http.routers.ui.rule=(Host(`${APP_HOSTNAME}`) && (PathPrefix(`/users`) || PathPrefix(`/auth`)|| PathPrefix(`/docs`)|| PathPrefix(`/organizations`) || PathPrefix(`/runs`) || PathPrefix(`/emissions`) || PathPrefix(`/projects`)|| PathPrefix(`/api`) || PathPrefix(`/auth-callback`)  ))"
             - "traefik.http.routers.ui.entrypoints=websecure"
             - "traefik.http.routers.ui.tls.certresolver=myresolver"
 
-        ports:
-            - "8001:8001"
+        # ports:
+        #     - "8001:8001"
         environment:
             CODECARBON_LOG_LEVEL: DEBUG
             DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@${DATABASE_HOST:-postgres}:${DATABASE_PORT:-5432}/${DATABASE_NAME:-codecarbon_db}
-            FIEF_URL: http://inigopc.local:8000
-            FRONTEND_URL: http://inigopc.local:3000
+            FIEF_URL: ${AUTH_HOSTNAME}
+            FRONTEND_URL: ${APP_HOSTNAME}
             FIEF_CLIENT_ID: AvjQENuVMr1uLXjRdexwQ0mLXtz2-YAIkkdTXQixlfU
             FIEF_CLIENT_SECRET: X3Xx3U9ag97fhsEMMCKYA4_0bgfyCbZoeQtcB27yxDI
         networks:
             - codecarbon_net
 
     ui:
-        container_name: ui
         build:
             context: ./webapp
             dockerfile: dev.Dockerfile
@@ -44,16 +45,16 @@ services:
         restart: always
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.ui.rule=Host(`localhost`)"
+            - "traefik.http.routers.ui.rule=Host(`${APP_HOSTNAME}`)"
             - "traefik.http.routers.ui.entrypoints=websecure"
             - "traefik.http.routers.ui.tls.certresolver=myresolver"
-        ports:
-            - "3000:3000"
+        # ports:
+        #     - "3000:3000"
         networks:
             - codecarbon_net
 
     postgres:
-        container_name: ${DATABASE_HOST:-postgres_codecarbon}
+        # container_name: ${DATABASE_HOST:-postgres_codecarbon}
         environment:
             HOSTNAME: ${DATABASE_HOST:-postgres_codecarbon}
             POSTGRES_DB: ${DATABASE_NAME:-codecarbon_db}
@@ -62,14 +63,14 @@ services:
         image: postgres:13
         networks:
             - codecarbon_net
-        ports:
-            - 5480:5432
+        # ports:
+        #     - 5480:5432
         restart: unless-stopped
         volumes:
             - postgres_codecarbon_data:/var/lib/postgresql/data:rw
 
     pgadmin:
-        container_name: pgadmin_codecarbon
+        # container_name: pgadmin_codecarbon
         image: dpage/pgadmin4
         environment:
             PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-test@test.com}
@@ -78,8 +79,8 @@ services:
             - pgadmin:/root/.pgadmin
             - ./carbonserver/docker/pgpassfile:/pgadmin4/pgpassfile
             - ./carbonserver/docker/pgadmin-servers.json:/pgadmin4/servers.json
-        ports:
-            - "${PGADMIN_PORT:-5080}:80"
+        # ports:
+        #     - "${PGADMIN_PORT:-5080}:80"
         networks:
             - codecarbon_net
         restart: unless-stopped
@@ -103,63 +104,13 @@ services:
     #     ports:
     #         - "9091:9091"
 
-    ###############################################
-    # FIEF-related services
-    ###############################################
-    fief-server:
-        image: ghcr.io/fief-dev/fief:latest
-        command: fief run-server
-        # command: sleep infinity
-        env_file:
-            - .env.fief
-        depends_on:
-            - postgres-fief
-            - redis
-        ports:
-            - "8000:8000"
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.fief.rule=Host(`localhost`)"
-            - "traefik.http.routers.fief.entrypoints=websecure"
-            - "traefik.http.routers.fief.tls.certresolver=myresolver"
-
-    fief-worker:
-        image: ghcr.io/fief-dev/fief:latest
-        command: fief run-worker -p 1 -t 1
-        env_file:
-            - .env.fief
-        depends_on:
-            - postgres-fief
-            - redis
-
-    postgres-fief:
-        image: postgres:alpine
-        environment:
-            - POSTGRES_PASSWORD=111fief-password
-            - POSTGRES_USER=fief
-            - POSTGRES_DB=fief
-        volumes:
-            - postgres_fief_data:/var/lib/postgresql/data
-        ports:
-            - "5432:5432"
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.ui.rule=Host(`localhost`)"
-            - "traefik.http.routers.ui.entrypoints=websecure"
-            - "traefik.http.routers.ui.tls.certresolver=myresolver"
-
-    redis:
-        image: redis:alpine
-        command: redis-server --save 60 1 --loglevel warning
-        volumes:
-            - redis-data:/data
 
     ###############################################
     # Traefik (reverse proxy)
     ###############################################
     traefik:
-        image: "traefik:v2.11"
-        container_name: "traefik"
+        image: "traefik:v3"
+        # container_name: "traefik"
         command:
             - "--log.level=DEBUG"
             - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -173,22 +124,20 @@ services:
             - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
         ports:
             - "443:443"
-            - "8080:8080"
+            - "8880:8080"
         volumes:
             - "letsencrypt-data:/letsencrypt"
             - "/var/run/docker.sock:/var/run/docker.sock:ro"
+        networks:
+            - codecarbon_net
 
 volumes:
     postgres_codecarbon_data:
-        name: postgres_codecarbon_data
+        name: postgres_codecarbon_data1
     pgadmin:
-        name: pgadmin_codecarbon_data
-    postgres_fief_data:
-        name: postgres_fief_data
-    redis-data:
-        name: redis_data
+        name: pgadmin_codecarbon_data1
     letsencrypt-data:
-        name: letsencrypt_data
+        name: letsencrypt_data1
 
 networks:
     codecarbon_net:
