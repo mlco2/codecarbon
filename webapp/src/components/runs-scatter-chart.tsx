@@ -4,7 +4,6 @@ import {
     Scatter,
     XAxis,
     YAxis,
-    CartesianGrid,
     Tooltip,
     Label,
 } from "recharts";
@@ -14,22 +13,24 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
 
-type Params = {
-    experimentId: string;
-    startDate: string;
-    endDate: string;
-};
+interface RunsScatterChartProps {
+    params: {
+        experimentId: string;
+        startDate: string;
+        endDate: string;
+    };
+    onRunClick: (runId: string) => void;
+}
+
 async function getRunEmissionsByExperiment(
     experimentId: string,
     startDate: string,
     endDate: string,
 ): Promise<RunReport[]> {
-    console.log("ExperimentId: ", experimentId)
     const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`;
 
     const res = await fetch(url);
@@ -40,7 +41,6 @@ async function getRunEmissionsByExperiment(
         return []
     }
     const result = await res.json();
-    console.log("Result: ", result)
     return result.map((runReport: RunReport) => {
         return {
             runId: runReport.run_id,
@@ -54,7 +54,8 @@ async function getRunEmissionsByExperiment(
 
 export default async function RunsScatterChart({
     params,
-}: Readonly<{ params: Params }>) {
+    onRunClick,
+}: RunsScatterChartProps) {
     const runsReportsData = await getRunEmissionsByExperiment(
         params.experimentId,
         params.startDate,
@@ -124,6 +125,8 @@ export default async function RunsScatterChart({
                         name="Emissions"
                         data={runsReportsData}
                         fill="var(--primary)"
+                        onClick={(data) => onRunClick(data.runId)}
+                        cursor="pointer"
                     />
                 </ScatterChart>
             </CardContent>

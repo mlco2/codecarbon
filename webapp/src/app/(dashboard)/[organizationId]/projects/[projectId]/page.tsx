@@ -1,29 +1,12 @@
 "use client";
 
-import useSWR from "swr";
-import { cn } from "@/helpers/utils";
-import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
-import { Activity, CreditCard, Users } from "lucide-react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
 import EmissionsTimeSeriesChart from "@/components/emissions-time-series";
 import RadialChart from "@/components/radial-chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Project } from "@/types/project";
 import { ExperimentReport } from "@/types/experiment-report";
-import { fetcher } from "../../../../../helpers/swr";
-import Loader from "@/components/loader";
-import ErrorMessage from "@/components/error-message";
-import { Calendar } from "@/components/ui/calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { addMonths, startOfDay, endOfDay } from 'date-fns';
@@ -42,7 +25,6 @@ async function getProjectEmissionsByExperiment(
     dateRange: DateRange,
 ): Promise<ExperimentReport[]> {
     let url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums`;
-    console.log(dateRange)
 
     if (dateRange?.from || dateRange?.to) {
         const params = new URLSearchParams();
@@ -57,7 +39,6 @@ async function getProjectEmissionsByExperiment(
 
     const res = await fetch(url);
     const result = await res.json();
-    console.log(result)
     return result.map((experimentReport: ExperimentReport) => {
         return {
             experiment_id: experimentReport.experiment_id,
@@ -101,6 +82,7 @@ export default function ProjectPage({
         tvTime: "0",
     });
     const [selectedExperimentId, setSelectedExperimentId] = useState<string>("");
+    const [selectedRunId, setSelectedRunId] = useState<string>("");
 
     useEffect(() => {
         async function fetchData() {
@@ -153,6 +135,11 @@ export default function ProjectPage({
             ...prevData,
             experimentId: experimentId,
         }));
+        setSelectedRunId(""); // Réinitialiser le runId sélectionné
+    }, []);
+
+    const handleRunClick = useCallback((runId: string) => {
+        setSelectedRunId(runId);
     }, []);
 
     return (
@@ -245,12 +232,18 @@ export default function ProjectPage({
                         params={experimentsData}
                         onExperimentClick={handleExperimentClick}
                     />
-                    <RunsScatterChart params={{
-                        ...runData,
-                        experimentId: selectedExperimentId,
-                    }} />
+                    <RunsScatterChart 
+                        params={{
+                            ...runData,
+                            experimentId: selectedExperimentId,
+                        }} 
+                        onRunClick={handleRunClick}
+                    />
                 </div>
-                <div>
+                <div className="grid gap-4 md:grid-cols-1 md:gap-8">
+                    {selectedRunId && (
+                        <EmissionsTimeSeriesChart runId={selectedRunId} />
+                    )}
                 </div>
             </main>
         </div>
