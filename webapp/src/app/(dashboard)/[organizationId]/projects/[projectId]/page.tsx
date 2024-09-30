@@ -9,14 +9,17 @@ import { Separator } from "@/components/ui/separator";
 import { ExperimentReport } from "@/types/experiment-report";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
-import { addMonths, startOfDay, endOfDay } from 'date-fns';
+import { addMonths, startOfDay, endOfDay } from "date-fns";
+import { useRouter } from "next/navigation";
+import { SettingsIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
     const today = new Date();
     return {
         from: startOfDay(addMonths(today, -2)),
-        to: endOfDay(today)
+        to: endOfDay(today),
     };
 };
 
@@ -29,10 +32,10 @@ async function getProjectEmissionsByExperiment(
     if (dateRange?.from || dateRange?.to) {
         const params = new URLSearchParams();
         if (dateRange.from) {
-            params.append('start_date', dateRange.from.toISOString());
+            params.append("start_date", dateRange.from.toISOString());
         }
         if (dateRange.to) {
-            params.append('end_date', dateRange.to.toISOString());
+            params.append("end_date", dateRange.to.toISOString());
         }
         url += `?${params.toString()}`;
     }
@@ -55,12 +58,21 @@ export default function ProjectPage({
 }: Readonly<{
     params: {
         projectId: string;
+        organizationId: string;
     };
 }>) {
+    const router = useRouter();
+    const handleSettingsClick = () => {
+        router.push(
+            `/${params.organizationId}/projects/${params.projectId}/settings`,
+        );
+    };
+
     const default_date = getDefaultDateRange();
     const [date, setDate] = useState<DateRange>(default_date);
-
-    const [experimentReport, setExperimentReport] = useState<ExperimentReport[]>([]);
+    const [experimentReport, setExperimentReport] = useState<
+        ExperimentReport[]
+    >([]);
     const [radialChartData, setRadialChartData] = useState({
         energy: { label: "kWh", value: 0 },
         emissions: { label: "kg eq CO2", value: 0 },
@@ -81,26 +93,48 @@ export default function ProjectPage({
         transportation: "0",
         tvTime: "0",
     });
-    const [selectedExperimentId, setSelectedExperimentId] = useState<string>("");
+    const [selectedExperimentId, setSelectedExperimentId] =
+        useState<string>("");
     const [selectedRunId, setSelectedRunId] = useState<string>("");
 
     useEffect(() => {
         async function fetchData() {
-            const report = await getProjectEmissionsByExperiment(params.projectId, date);
+            const report = await getProjectEmissionsByExperiment(
+                params.projectId,
+                date,
+            );
             setExperimentReport(report);
 
             const newRadialChartData = {
                 energy: {
                     label: "kWh",
-                    value: parseFloat(report.reduce((n, { energy_consumed }) => n + energy_consumed, 0).toFixed(2)),
+                    value: parseFloat(
+                        report
+                            .reduce(
+                                (n, { energy_consumed }) => n + energy_consumed,
+                                0,
+                            )
+                            .toFixed(2),
+                    ),
                 },
                 emissions: {
                     label: "kg eq CO2",
-                    value: parseFloat(report.reduce((n, { emissions }) => n + emissions, 0).toFixed(2)),
+                    value: parseFloat(
+                        report
+                            .reduce((n, { emissions }) => n + emissions, 0)
+                            .toFixed(2),
+                    ),
                 },
                 duration: {
                     label: "days",
-                    value: parseFloat((report.reduce((n, { duration }) => n + duration / 86400, 0)).toFixed(2)),
+                    value: parseFloat(
+                        report
+                            .reduce(
+                                (n, { duration }) => n + duration / 86400,
+                                0,
+                            )
+                            .toFixed(2),
+                    ),
                 },
             };
             setRadialChartData(newRadialChartData);
@@ -120,9 +154,17 @@ export default function ProjectPage({
             setSelectedExperimentId(report[0]?.experiment_id ?? "");
 
             setConvertedValues({
-                household: ((newRadialChartData.emissions.value * 100) / 160.58).toFixed(2),
-                transportation: (newRadialChartData.emissions.value / 0.409).toFixed(2),
-                tvTime: (newRadialChartData.emissions.value / (0.097 * 24)).toFixed(2),
+                household: (
+                    (newRadialChartData.emissions.value * 100) /
+                    160.58
+                ).toFixed(2),
+                transportation: (
+                    newRadialChartData.emissions.value / 0.409
+                ).toFixed(2),
+                tvTime: (
+                    newRadialChartData.emissions.value /
+                    (0.097 * 24)
+                ).toFixed(2),
             });
         }
 
@@ -131,7 +173,7 @@ export default function ProjectPage({
 
     const handleExperimentClick = useCallback((experimentId: string) => {
         setSelectedExperimentId(experimentId);
-        setRunData(prevData => ({
+        setRunData((prevData) => ({
             ...prevData,
             experimentId: experimentId,
         }));
@@ -150,14 +192,24 @@ export default function ProjectPage({
                         <h1 className="text-2xl font-semi-bold">
                             Project name
                         </h1>
+                        <Button
+                            onClick={handleSettingsClick}
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full"
+                        >
+                            <SettingsIcon className="mr-2 h-4 w-4" />
+                        </Button>
                         <span className="text-sm font-semi-bold">
                             Project Description
                         </span>
                     </div>
                     <div>
-                        <DateRangePicker 
-                            date={date} 
-                            onDateChange={(newDate) => setDate(newDate || getDefaultDateRange())} 
+                        <DateRangePicker
+                            date={date}
+                            onDateChange={(newDate) =>
+                                setDate(newDate || getDefaultDateRange())
+                            }
                         />
                     </div>
                 </div>
@@ -232,11 +284,11 @@ export default function ProjectPage({
                         params={experimentsData}
                         onExperimentClick={handleExperimentClick}
                     />
-                    <RunsScatterChart 
+                    <RunsScatterChart
                         params={{
                             ...runData,
                             experimentId: selectedExperimentId,
-                        }} 
+                        }}
                         onRunClick={handleRunClick}
                     />
                 </div>

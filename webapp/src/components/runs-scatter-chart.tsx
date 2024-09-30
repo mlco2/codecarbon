@@ -1,12 +1,5 @@
 import { TrendingUp } from "lucide-react";
-import {
-    ScatterChart,
-    Scatter,
-    XAxis,
-    YAxis,
-    Tooltip,
-    Label,
-} from "recharts";
+import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, Label } from "recharts";
 import { RunReport } from "@/types/run-report";
 
 import {
@@ -38,7 +31,7 @@ async function getRunEmissionsByExperiment(
     if (!res.ok) {
         // Log error waiting for a better error management
         console.log("Failed to fetch data");
-        return []
+        return [];
     }
     const result = await res.json();
     return result.map((runReport: RunReport) => {
@@ -68,9 +61,16 @@ export default async function RunsScatterChart({
             const data = payload[0].payload;
             return (
                 <div className="custom-tooltip bg-background text-foreground p-2 border border-border rounded shadow">
-                    <p><strong>Emissions:</strong> {data.emissions.toFixed(2)}</p>
-                    <p><strong>Energy Consumed:</strong> {data.energy_consumed.toFixed(2)}</p>
-                    <p><strong>Duration:</strong> {data.duration.toFixed(2)}</p>
+                    <p>
+                        <strong>Emissions:</strong> {data.emissions.toFixed(2)}
+                    </p>
+                    <p>
+                        <strong>Energy Consumed:</strong>{" "}
+                        {data.energy_consumed.toFixed(2)}
+                    </p>
+                    <p>
+                        <strong>Duration:</strong> {data.duration.toFixed(2)}
+                    </p>
                 </div>
             );
         }
@@ -94,9 +94,9 @@ export default async function RunsScatterChart({
                         left: 20,
                     }}
                 >
-                    <XAxis 
-                        dataKey="timestamp" 
-                        name="Timestamp" 
+                    <XAxis
+                        dataKey="timestamp"
+                        name="Timestamp"
                         type="category"
                         stroke="currentColor"
                     >
@@ -104,12 +104,12 @@ export default async function RunsScatterChart({
                             value="Timestamp"
                             offset={0}
                             position="insideBottom"
-                            style={{ fill: 'currentColor' }}
+                            style={{ fill: "currentColor" }}
                         />
                     </XAxis>
-                    <YAxis 
-                        dataKey="emissions" 
-                        name="Emissions" 
+                    <YAxis
+                        dataKey="emissions"
+                        name="Emissions"
                         type="number"
                         stroke="currentColor"
                     >
@@ -117,14 +117,14 @@ export default async function RunsScatterChart({
                             value="Emissions"
                             angle={-90}
                             position="insideLeft"
-                            style={{ fill: 'currentColor' }}
+                            style={{ fill: "currentColor" }}
                         />
                     </YAxis>
                     <Tooltip content={<CustomTooltip />} />
                     <Scatter
                         name="Emissions"
                         data={runsReportsData}
-                        fill="var(--primary)"
+                        fill="hsl(var(--primary)))"
                         onClick={(data) => onRunClick(data.runId)}
                         cursor="pointer"
                     />

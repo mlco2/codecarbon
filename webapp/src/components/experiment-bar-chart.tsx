@@ -53,11 +53,11 @@ async function getProjectEmissionsByExperiment(
 const chartConfig = {
     desktop: {
         label: "Emissions",
-        color: "hsl(var(--chart-1))",
+        color: "hsl(var(--primary))",
     },
     mobile: {
         label: "Energy consumed",
-        color: "hsl(var(--chart-2))",
+        color: "hsl(var(--secondary))",
     },
 } satisfies ChartConfig;
 
@@ -66,7 +66,10 @@ type Params = {
     startDate: string;
     endDate: string;
 };
-export default async function ExperimentsBarChart({ params, onExperimentClick }: ExperimentsBarChartProps) {
+export default async function ExperimentsBarChart({
+    params,
+    onExperimentClick,
+}: ExperimentsBarChartProps) {
     const experimentsReportData = await getProjectEmissionsByExperiment(
         params.projectId,
         params.startDate,
@@ -97,7 +100,9 @@ export default async function ExperimentsBarChart({ params, onExperimentClick }:
                             dataKey="emissions"
                             fill="var(--color-desktop)"
                             radius={4}
-                            onClick={(data) => onExperimentClick(data.experiment_id)}
+                            onClick={(data) =>
+                                onExperimentClick(data.experiment_id)
+                            }
                             cursor="pointer"
                         />
                     </BarChart>

@@ -78,14 +78,14 @@ export default async function RadialChart({
                                                 <tspan
                                                     x={viewBox.cx}
                                                     y={viewBox.cy}
-                                                    className="fill-foreground text-4xl font-bold"
+                                                    className="fill-primary text-4xl font-bold"
                                                 >
                                                     {data.value}
                                                 </tspan>
                                                 <tspan
                                                     x={viewBox.cx}
                                                     y={(viewBox.cy || 0) + 24}
-                                                    className="fill-muted-foreground"
+                                                    className="fill-muted-primary"
                                                 >
                                                     {data.label}
                                                 </tspan>
