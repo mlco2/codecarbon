@@ -10,9 +10,13 @@ from fastapi.testclient import TestClient
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
+from carbonserver.api.infra.repositories.repository_users import (
+    SqlAlchemyRepository as UserRepository,
+)
 from carbonserver.api.routers import organizations
 from carbonserver.api.routers.authenticate import UserWithAuthDependency
 from carbonserver.api.schemas import Organization, OrganizationUser
+from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
 
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -53,7 +57,9 @@ def custom_test_server():
     app = FastAPI()
     app.container = container
     app.include_router(organizations.router)
-    app.dependency_overrides[UserWithAuthDependency] = FakeUserWithAuthDependency
+    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
+        FakeUserWithAuthDependency
+    )
     app.container.auth_context.override(providers.Factory(FakeAuthContext))
 
     yield app
@@ -66,10 +72,18 @@ def client(custom_test_server):
 
 def test_add_org(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    user_repository_mock = mock.Mock(spec=UserRepository)
+
     expected_org = ORG_1
     repository_mock.add_organization.return_value = Organization(**ORG_1)
+    user_repository_mock.subscribe_user_to_org.return_value = OrganizationUser(
+        **ORG_USER
+    )
 
-    with custom_test_server.container.organization_repository.override(repository_mock):
+    with (
+        custom_test_server.container.organization_repository.override(repository_mock),
+        custom_test_server.container.user_repository.override(user_repository_mock),
+    ):
         response = client.post("/organizations", json=ORG_TO_CREATE)
         actual_org = response.json()
 

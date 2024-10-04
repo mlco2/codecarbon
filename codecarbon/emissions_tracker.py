@@ -4,6 +4,7 @@ OfflineEmissionsTracker and @track_emissions
 """
 
 import dataclasses
+import os
 import platform
 import time
 import uuid
@@ -18,13 +19,21 @@ from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import get_hierarchical_config, parse_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import count_cpus, suppress
+from codecarbon.core.util import (
+    count_cpus,
+    detect_cpu_model,
+    is_linux_os,
+    is_mac_os,
+    is_windows_os,
+    suppress,
+)
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
 from codecarbon.input import DataSource
+from codecarbon.lock import Lock
 from codecarbon.output import (
     BaseOutput,
     CodeCarbonAPIOutput,
@@ -126,7 +135,10 @@ class BaseEmissionsTracker(ABC):
                 else:
                     assert callable(return_type)
                     value = return_type(value)
-
+        # Check conf
+        if name == "output_dir":
+            if not os.path.exists(value):
+                raise OSError(f"Folder '{value}' doesn't exist !")
         # store final value
         self._conf[name] = value
         # set `self._{name}` to `value`
@@ -163,6 +175,7 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
+        allow_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -217,13 +230,33 @@ class BaseEmissionsTracker(ABC):
                                 messages. Defaults to "".
         :param default_cpu_power: cpu power to be used as default if the cpu is not known.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+        :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
+        self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", False, bool)
+        if self._allow_multiple_runs:
+            logger.warning(
+                "Multiple instances of codecarbon are allowed to run at the same time."
+            )
+        else:
+            # Acquire lock file to prevent multiple instances of codecarbon running
+            # at the same time
+            try:
+                self._lock = Lock()
+                self._lock.acquire()
+            except FileExistsError:
+                logger.error(
+                    "Error: Another instance of codecarbon is already running. Turn off the other instance to be able to run this one. Exiting."
+                )
+                # Do not continue if another instance of codecarbon is running
+                self._another_instance_already_running = True
+                return
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
+        self._set_from_conf(api_key, "api_key", "api_key")
         self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
         self._set_from_conf(experiment_name, "experiment_name", "base")
@@ -275,92 +308,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
 
-        if self._gpu_ids:
-            # If _gpu_ids is a string or a list of int, parse it to a list of ints
-            if isinstance(self._gpu_ids, str) or (
-                isinstance(self._gpu_ids, list)
-                and all(isinstance(gpu_id, int) for gpu_id in self._gpu_ids)
-            ):
-                self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
-                self._conf["gpu_ids"] = self._gpu_ids
-                self._conf["gpu_count"] = len(self._gpu_ids)
-            else:
-                logger.warning(
-                    "Invalid gpu_ids format. Expected a string or a list of ints."
-                )
-
-        logger.info("[setup] RAM Tracking...")
-        ram = RAM(tracking_mode=self._tracking_mode)
-        self._conf["ram_total_size"] = ram.machine_memory_GB
-        self._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
-
-        # Hardware detection
-        logger.info("[setup] GPU Tracking...")
-        if gpu.is_gpu_details_available():
-            logger.info("Tracking Nvidia GPU via pynvml")
-            gpu_devices = GPU.from_utils(self._gpu_ids)
-            self._hardware.append(gpu_devices)
-            gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
-            gpu_names_dict = Counter(gpu_names)
-            self._conf["gpu_model"] = "".join(
-                [f"{i} x {name}" for name, i in gpu_names_dict.items()]
-            )
-            self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
-        else:
-            logger.info("No GPU found.")
-
-        logger.info("[setup] CPU Tracking...")
-        if cpu.is_powergadget_available() and self._default_cpu_power is None:
-            logger.info("Tracking Intel CPU via Power Gadget")
-            hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
-            self._hardware.append(hardware)
-            self._conf["cpu_model"] = hardware.get_model()
-        elif cpu.is_rapl_available():
-            logger.info("Tracking Intel CPU via RAPL interface")
-            hardware = CPU.from_utils(self._output_dir, "intel_rapl")
-            self._hardware.append(hardware)
-            self._conf["cpu_model"] = hardware.get_model()
-        elif (
-            powermetrics.is_powermetrics_available() and self._default_cpu_power is None
-        ):
-            logger.info("Tracking Apple CPU and GPU via PowerMetrics")
-            hardware_cpu = AppleSiliconChip.from_utils(
-                self._output_dir, chip_part="CPU"
-            )
-            self._hardware.append(hardware_cpu)
-            self._conf["cpu_model"] = hardware_cpu.get_model()
-
-            hardware_gpu = AppleSiliconChip.from_utils(
-                self._output_dir, chip_part="GPU"
-            )
-            self._hardware.append(hardware_gpu)
-
-            self._conf["gpu_model"] = hardware_gpu.get_model()
-            self._conf["gpu_count"] = 1
-        else:
-            logger.warning(
-                "No CPU tracking mode found. Falling back on CPU constant mode."
-            )
-            tdp = cpu.TDP()
-            power = tdp.tdp
-            model = tdp.model
-            if (power is None) and self._default_cpu_power:
-                # We haven't been able to calculate CPU power but user has input a default one. We use it
-                user_input_power = self._default_cpu_power
-                logger.debug(f"Using user input TDP: {user_input_power} W")
-                power = user_input_power
-            logger.info(f"CPU Model on constant consumption mode: {model}")
-            self._conf["cpu_model"] = model
-            if tdp:
-                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
-                self._hardware.append(hardware)
-            else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
-                )
-                hardware = CPU.from_utils(self._output_dir, "constant")
-                self._hardware.append(hardware)
+        self.set_CPU_GPU_ram_tracking()
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
@@ -374,7 +322,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
         logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
-        # Run `self._measure_power` every `measure_power_secs` seconds in a
+        # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
         self._scheduler = PeriodicScheduler(
             function=self._measure_power_and_energy,
@@ -398,7 +346,129 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
         )
-        self._init_output_methods(api_key)
+        self._init_output_methods(self._api_key)
+
+    def set_CPU_GPU_ram_tracking(self):
+        cpu_tracker = gpu_tracker = ram_tracker = "Unspecified"
+        if self._gpu_ids:
+            # If _gpu_ids is a string or a list of int, parse it to a list of ints
+            if isinstance(self._gpu_ids, str) or (
+                isinstance(self._gpu_ids, list)
+                and all(isinstance(gpu_id, int) for gpu_id in self._gpu_ids)
+            ):
+                self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
+                self._conf["gpu_ids"] = self._gpu_ids
+                self._conf["gpu_count"] = len(self._gpu_ids)
+            else:
+                logger.warning(
+                    "Invalid gpu_ids format. Expected a string or a list of ints."
+                )
+
+        logger.info("[setup] RAM Tracking...")
+        ram_tracker = "3 Watts for 8 GB ratio constant"
+        ram = RAM(tracking_mode=self._tracking_mode)
+        self._conf["ram_total_size"] = ram.machine_memory_GB
+        self._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+
+        # Hardware detection
+        logger.info("[setup] GPU Tracking...")
+        if gpu.is_gpu_details_available():
+            logger.info("Tracking Nvidia GPU via pynvml")
+            gpu_tracker = "pynvml"
+            gpu_devices = GPU.from_utils(self._gpu_ids)
+            self._hardware.append(gpu_devices)
+            gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
+            gpu_names_dict = Counter(gpu_names)
+            self._conf["gpu_model"] = "".join(
+                [f"{i} x {name}" for name, i in gpu_names_dict.items()]
+            )
+            self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
+        else:
+            logger.info("No GPU found.")
+
+        logger.info("[setup] CPU Tracking...")
+        if cpu.is_powergadget_available() and self._default_cpu_power is None:
+            logger.info("Tracking Intel CPU via Power Gadget")
+            cpu_tracker = "Power Gadget"
+            hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
+        elif cpu.is_rapl_available():
+            logger.info("Tracking Intel CPU via RAPL interface")
+            cpu_tracker = "RAPL"
+            hardware = CPU.from_utils(self._output_dir, "intel_rapl")
+            self._hardware.append(hardware)
+            self._conf["cpu_model"] = hardware.get_model()
+        # change code to check if powermetrics needs to be installed or just sudo setup
+        elif (
+            powermetrics.is_powermetrics_available() and self._default_cpu_power is None
+        ):
+            logger.info("Tracking Apple CPU and GPU via PowerMetrics")
+            gpu_tracker = "PowerMetrics"
+            cpu_tracker = "PowerMetrics"
+            hardware_cpu = AppleSiliconChip.from_utils(
+                self._output_dir, chip_part="CPU"
+            )
+            self._hardware.append(hardware_cpu)
+            self._conf["cpu_model"] = hardware_cpu.get_model()
+
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self._output_dir, chip_part="GPU"
+            )
+            self._hardware.append(hardware_gpu)
+
+            self._conf["gpu_model"] = hardware_gpu.get_model()
+            self._conf["gpu_count"] = 1
+        else:
+            # Explain what to install to increase accuracy
+            cpu_tracking_install_instructions = ""
+            if is_mac_os():
+                if (
+                    "M1" in detect_cpu_model()
+                    or "M2" in detect_cpu_model()
+                    or "M3" in detect_cpu_model()
+                ):
+                    cpu_tracking_install_instructions = ""
+                    cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
+                else:
+                    cpu_tracking_install_instructions = "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
+            elif is_windows_os():
+                cpu_tracking_install_instructions = "Windows OS detected: Please install Intel Power Gadget to measure CPU"
+            elif is_linux_os():
+                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at \\sys\\class\\powercap\\intel-rapl to measure CPU"
+            logger.warning(
+                f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
+            )
+            cpu_tracker = "TDP constant"
+            tdp = cpu.TDP()
+            power = tdp.tdp
+            model = tdp.model
+            if (power is None) and self._default_cpu_power:
+                # We haven't been able to calculate CPU power but user has input a default one. We use it
+                user_input_power = self._default_cpu_power
+                logger.debug(f"Using user input TDP: {user_input_power} W")
+                cpu_tracker = "User Input TDP constant"
+                power = user_input_power
+            logger.info(f"CPU Model on constant consumption mode: {model}")
+            self._conf["cpu_model"] = model
+            if tdp:
+                hardware = CPU.from_utils(self._output_dir, "constant", model, power)
+                self._hardware.append(hardware)
+            else:
+                logger.warning(
+                    "Failed to match CPU TDP constant. "
+                    + "Falling back on a global constant."
+                )
+                cpu_tracker = "global constant"
+                hardware = CPU.from_utils(self._output_dir, "constant")
+                self._hardware.append(hardware)
+        logger.debug(
+            f"""The below tracking methods have been set up:
+                RAM Tracking Method: {ram_tracker}
+                CPU Tracking Method: {cpu_tracker}
+                GPU Tracking Method: {gpu_tracker}
+            """
+        )
 
     def _init_output_methods(self, api_key):
         """
@@ -438,7 +508,7 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(LogfireOutput())
 
     def service_shutdown(self, signum, frame):
-        print("Caught signal %d" % signum)
+        logger.warning("service_shutdown - Caught signal %d" % signum)
         self.stop()
 
     @suppress(Exception)
@@ -448,7 +518,15 @@ class BaseEmissionsTracker(ABC):
         Currently, Nvidia GPUs are supported.
         :return: None
         """
-
+        # if another instance of codecarbon is already running, stop here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -546,6 +624,19 @@ class BaseEmissionsTracker(ABC):
         Stops tracking the experiment
         :return: CO2 emissions in kgs
         """
+
+        # if another instance of codecarbon is already running, Nothing to do here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
+        if not self._allow_multiple_runs:
+            # Release the lock
+            self._lock.release()
         if self._start_time is None:
             logger.error("You first need to start the tracker.")
             return None
@@ -622,6 +713,7 @@ class BaseEmissionsTracker(ABC):
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
             run_id=str(self.run_id),
+            experiment_id=str(self._experiment_id),
             duration=duration.seconds,
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
@@ -957,6 +1049,7 @@ def track_emissions(
     log_level: Optional[Union[int, str]] = _sentinel,
     default_cpu_power: Optional[int] = _sentinel,
     pue: Optional[int] = _sentinel,
+    allow_multiple_runs: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1002,6 +1095,7 @@ def track_emissions(
                       Defaults to "info".
     :param default_cpu_power: cpu power to be used as default if the cpu is not known.
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+    :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
 
     :return: The decorated function
     """
@@ -1036,6 +1130,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                     default_cpu_power=default_cpu_power,
                     pue=pue,
+                    allow_multiple_runs=allow_multiple_runs,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1061,6 +1156,7 @@ def track_emissions(
                     co2_signal_api_token=co2_signal_api_token,
                     default_cpu_power=default_cpu_power,
                     pue=pue,
+                    allow_multiple_runs=allow_multiple_runs,
                 )
             tracker.start()
             try:

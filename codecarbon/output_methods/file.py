@@ -24,6 +24,8 @@ class FileOutput(BaseOutput):
                 + " (should be one of 'append' or 'update'"
             )
         self.output_file_name: str = output_file_name
+        if not os.path.exists(output_dir):
+            raise OSError(f"Folder '{output_dir}' doesn't exist !")
         self.output_dir: str = output_dir
         self.on_csv_write: str = on_csv_write
         self.save_file_path = os.path.join(self.output_dir, self.output_file_name)

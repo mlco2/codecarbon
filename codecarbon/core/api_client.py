@@ -8,7 +8,6 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-import time
 from datetime import timedelta, tzinfo
 
 import arrow
@@ -37,24 +36,25 @@ class ApiClient:  # (AsyncClient)
     """
 
     run_id = None
-    _previous_call = time.time()
 
     def __init__(
         self,
-        endpoint_url="https://api.codecarbon.io",
+        # endpoint_url="https://api.codecarbon.io",
+        endpoint_url="https://dash-dev.cleverapps.io/api",  # beta API
         experiment_id=None,
         api_key=None,
         conf=None,
     ):
         """
         :project_id: ID of the existing project
-        :api_ley: Code Carbon API_KEY
+        :api_key: Code Carbon API_KEY
         """
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
         self.conf = conf
+        self.access_token = None
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
         import warnings
@@ -66,12 +66,31 @@ class ApiClient:  # (AsyncClient)
             stacklevel=2,
         )
 
+    def set_access_token(self, token: str):
+        """This method sets the access token to be used for the API. For now it is not used.
+
+        Args:
+            token (str): access token to be used for the API
+        """
+        self.access_token = token
+
+    def _get_headers(self):
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            print(type(self.api_key))
+            # set the x-api-token header
+            headers["x-api-token"] = self.api_key
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        return headers
+
     def get_list_organizations(self):
         """
         List all organizations
         """
         url = self.url + "/organizations"
-        r = requests.get(url=url, timeout=2)
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -101,7 +120,8 @@ class ApiClient:  # (AsyncClient)
             )
             return organization
         else:
-            r = requests.post(url=url, json=payload, timeout=2)
+            headers = self._get_headers()
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return None
@@ -111,8 +131,9 @@ class ApiClient:  # (AsyncClient)
         """
         Get an organization
         """
+        headers = self._get_headers()
         url = self.url + "/organizations/" + organization_id
-        r = requests.get(url=url, timeout=2)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -123,8 +144,9 @@ class ApiClient:  # (AsyncClient)
         Update an organization
         """
         payload = dataclasses.asdict(organization)
+        headers = self._get_headers()
         url = self.url + "/organizations/" + organization.id
-        r = requests.patch(url=url, json=payload, timeout=2)
+        r = requests.patch(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, payload, r)
             return None
@@ -135,8 +157,8 @@ class ApiClient:  # (AsyncClient)
         List all projects
         """
         url = self.url + "/organizations/" + organization_id + "/projects"
-
-        r = requests.get(url=url, timeout=2)
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -148,7 +170,8 @@ class ApiClient:  # (AsyncClient)
         """
         payload = dataclasses.asdict(project)
         url = self.url + "/projects"
-        r = requests.post(url=url, json=payload, timeout=2)
+        headers = self._get_headers()
+        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
@@ -159,7 +182,8 @@ class ApiClient:  # (AsyncClient)
         Get a project
         """
         url = self.url + "/projects/" + project_id
-        r = requests.get(url=url, timeout=2)
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -167,7 +191,6 @@ class ApiClient:  # (AsyncClient)
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
-        self._previous_call = time.time()
         if self.run_id is None:
             # TODO : raise an Exception ?
             logger.debug(
@@ -202,7 +225,8 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             url = self.url + "/emissions"
-            r = requests.post(url=url, json=payload, timeout=2)
+            headers = self._get_headers()
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return False
@@ -242,7 +266,8 @@ class ApiClient:  # (AsyncClient)
             )
             payload = dataclasses.asdict(run)
             url = self.url + "/runs"
-            r = requests.post(url=url, json=payload, timeout=2)
+            headers = self._get_headers()
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return None
@@ -266,7 +291,8 @@ class ApiClient:  # (AsyncClient)
         List all experiments for a project
         """
         url = self.url + "/projects/" + project_id + "/experiments"
-        r = requests.get(url=url, timeout=2)
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return []
@@ -285,7 +311,8 @@ class ApiClient:  # (AsyncClient)
         """
         payload = dataclasses.asdict(experiment)
         url = self.url + "/experiments"
-        r = requests.post(url=url, json=payload, timeout=2)
+        headers = self._get_headers()
+        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
@@ -296,7 +323,8 @@ class ApiClient:  # (AsyncClient)
         Get an experiment by id
         """
         url = self.url + "/experiments/" + experiment_id
-        r = requests.get(url=url, timeout=2)
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None

@@ -40,12 +40,19 @@ def get_api_endpoint(path: Optional[Path] = None):
 def get_existing_local_exp_id(path: Optional[Path] = None):
     p = path or Path.cwd().resolve() / ".codecarbon.config"
     if p.exists():
-        config = configparser.ConfigParser()
-        config.read(str(p))
-        if "codecarbon" in config.sections():
-            d = dict(config["codecarbon"])
-            if "experiment_id" in d:
-                return d["experiment_id"]
+        existing_path = p
+    else:
+        existing_path = Path("~/.codecarbon.config").expanduser()
+    return _get_local_exp_id(existing_path)
+
+
+def _get_local_exp_id(p: Optional[Path] = None):
+    config = configparser.ConfigParser()
+    config.read(str(p))
+    if "codecarbon" in config.sections():
+        d = dict(config["codecarbon"])
+        if "experiment_id" in d:
+            return d["experiment_id"]
 
 
 def write_local_exp_id(exp_id, path: Optional[Path] = None):

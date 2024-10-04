@@ -26,8 +26,10 @@ from tests.testutils import get_custom_mock_open, get_test_data_source
 
 
 def heavy_computation(run_time_secs: float = 3):
-    end_time: float = time.time() + run_time_secs  # Run for `run_time_secs` seconds
-    while time.time() < end_time:
+    end_time: float = (
+        time.perf_counter() + run_time_secs
+    )  # Run for `run_time_secs` seconds
+    while time.perf_counter() < end_time:
         pass
 
 
@@ -251,6 +253,7 @@ class TestCarbonTracker(unittest.TestCase):
             country_iso_code="CAN",
             project_name=self.project_name,
             output_dir=self.temp_path,
+            experiment_id="test",
         )
         def dummy_train_model():
             return 42
@@ -273,6 +276,7 @@ class TestCarbonTracker(unittest.TestCase):
             cloud_provider="gcp",
             cloud_region="us-central1",
             output_dir=self.temp_path,
+            experiment_id="test",
         )
         def dummy_train_model():
             return 42
@@ -289,7 +293,9 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
         )
         tracker.start()
         heavy_computation(run_time_secs=2)
@@ -309,7 +315,9 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv"
@@ -339,7 +347,9 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         tracker = OfflineEmissionsTracker(
-            country_iso_code="USA", output_dir=self.temp_path
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv"

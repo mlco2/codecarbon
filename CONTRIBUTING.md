@@ -4,65 +4,68 @@
 
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
--   [<a name="questions"></a> Have a Question?](#have-a-question)
--   [<a name="bugs"></a> Found a Bug?](#found-a-bug)
--   [<a name="features"></a> Have a Feature Request?](#have-a-feature-request)
--   [<a name="process"></a> Ready to Contribute!](#ready-to-contribute)
-    -   [<a name="issue"></a> Create an issue](#create-an-issue)
-    -   [Installation](#installation)
-    -   [Tests](#tests)
-    -   [Stress your computer](#stress-your-computer)
-    -   [Versioning](#versioning)
-    -   [Debug in VS Code](#debug-in-vs-code)
-    -   [<a name="local_deployement"></a> Local deployment](#local-deployment)
--   [CSV Dashboard](#csv-dashboard)
--   [API Dashboard](#api-dashboard)
-    -   [API](#api)
-    -   [Test the API](#test-the-api)
-    -   [Coding style && Linting](#coding-style-linting)
-    -   [Packaging](#packaging)
-    -   [Alternative ways of contributing](#alternative-ways-of-contributing)
-    -   [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
-    -   [Release process](#release-process)
-        -   [Restore database from a production Backup](#restore-database-from-a-production-backup)
-        -   [Deployment](#deployment)
-            -   [API](#api-1)
-            -   [Dashboard](#dashboard)
-    -   [License](#license)
+- [Contributing to Code Carbon](#contributing-to-code-carbon)
+  - [ Have a Question?](#-have-a-question)
+  - [ Found a Bug?](#-found-a-bug)
+  - [ Have a Feature Request?](#-have-a-feature-request)
+  - [ Ready to Contribute!](#-ready-to-contribute)
+    - [ Create an issue](#-create-an-issue)
+    - [Installation](#installation)
+    - [Some Hatch commands](#some-hatch-commands)
+    - [Tests](#tests)
+    - [Stress your computer](#stress-your-computer)
+    - [Update all dependancies](#update-all-dependancies)
+    - [Branching and Pull Requests](#branching-and-pull-requests)
+    - [Debug in VS Code](#debug-in-vs-code)
+    - [ Local deployment](#-local-deployment)
+  - [CSV Dashboard](#csv-dashboard)
+  - [API Dashboard](#api-dashboard)
+    - [API](#api)
+    - [Test the API](#test-the-api)
+    - [Coding style \&\& Linting](#coding-style--linting)
+    - [Dependencies management](#dependencies-management)
+    - [Alternative ways of contributing](#alternative-ways-of-contributing)
+    - [Build Documentation 🖨️](#build-documentation-️)
+    - [Release process](#release-process)
+      - [Restore database from a production Backup](#restore-database-from-a-production-backup)
+      - [Deployment](#deployment)
+        - [API](#api-1)
+        - [Dashboard](#dashboard)
+    - [License](#license)
 
 <!-- TOC end -->
 
-<!-- TOC --><a name="have-a-question"></a>
 
+<!-- TOC --><a name="have-a-question"></a>
 ## </a> Have a Question?
 
 Please see the [FAQ](https://mlco2.github.io/codecarbon/faq.html) for questions.
 
-<!-- TOC --><a name="found-a-bug"></a>
 
+<!-- TOC --><a name="found-a-bug"></a>
 ## </a> Found a Bug?
 
 If you've identified a bug in `codecarbon`, please [submit an issue](#issue) to the GitHub repo: [mlco2/codecarbon](https://github.com/mlco2/codecarbon/issues/new). Please also feel free to submit a PR with a fix for the bug!
 
-<!-- TOC --><a name="have-a-feature-request"></a>
 
+<!-- TOC --><a name="have-a-feature-request"></a>
 ## </a> Have a Feature Request?
 
 Feel free to describe your request by [submitting an issue](#issue) documenting the feature (with its intent) and a PR with a proposed implementation of the feature.
 
-<!-- TOC --><a name="ready-to-contribute"></a>
 
+<!-- TOC --><a name="ready-to-contribute"></a>
 ## </a> Ready to Contribute!
 
-<!-- TOC --><a name="create-an-issue"></a>
 
+<!-- TOC --><a name="create-an-issue"></a>
 ### </a> Create an issue
 
 Before submitting a new issue, please search the issues to make sure there isn't a similar issue already.
 New issues can be created with in the [GitHub repo](https://github.com/mlco2/codecarbon/issues/new).
 
-<!-- TOC --><a name="installation"></a>
 
+<!-- TOC --><a name="installation"></a>
 ### Installation
 
 CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
@@ -85,6 +88,7 @@ hatch env create
 
 > Note: this `hatch env create` command will use `venv` + the [normal python resolution](https://hatch.pypa.io/latest/plugins/environment/virtual/#python-resolution) to get the Python version. If you want to use a specific Python version, you can do `export HATCH_PYTHON=path/to/your/bin/python` before running `hatch env create`.
 
+<!-- TOC --><a name="some-hatch-commands"></a>
 ### Some Hatch commands
 
 View the options of CodeCarbon environments:
@@ -103,10 +107,10 @@ View the options of CodeCarbon environments:
 │             │             │          │ sphinx-rtd-theme          │                   │
 ├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
 │ dev         │ pip-compile │          │ black                     │ format            │
-│             │             │          │ mypy                      │ lint              │
-│             │             │          │ pre-commit                │ mypy-check        │
-│             │             │          │ ruff                      │ precommit         │
-│             │             │          │                           │ precommit-install │
+│             │             │          │ bumpver                   │ lint              │
+│             │             │          │ mypy                      │ mypy-check        │
+│             │             │          │ pre-commit                │ precommit         │
+│             │             │          │ ruff                      │ precommit-install │
 │             │             │          │                           │ precommit-update  │
 ├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
 │ dashboard   │ pip-compile │          │ dash-bootstrap-components │ run               │
@@ -114,16 +118,18 @@ View the options of CodeCarbon environments:
 │             │             │          │ plotly>=5.6.0             │                   │
 ├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
 │ api         │ pip-compile │          │ alembic<2.0.0             │ docker            │
-│             │             │          │ bcrypt<5.0.0              │ local             │
-│             │             │          │ dependency-injector<5.0.0 │ server-ci         │
-│             │             │          │ fastapi-pagination<1.0.0  │ setup-db          │
-│             │             │          │ fastapi<1.0.0             │ test-integ        │
+│             │             │          │ bcrypt<5.0.0              │ downgrade-db      │
+│             │             │          │ dependency-injector<5.0.0 │ local             │
+│             │             │          │ fastapi-pagination<1.0.0  │ server-ci         │
+│             │             │          │ fastapi<1.0.0             │ setup-db          │
+│             │             │          │ fief-client[fastapi]      │ test-integ        │
 │             │             │          │ httpx                     │ test-unit         │
 │             │             │          │ mock                      │                   │
 │             │             │          │ numpy                     │                   │
 │             │             │          │ psutil                    │                   │
 │             │             │          │ psycopg2-binary<3.0.0     │                   │
 │             │             │          │ pydantic[email]<2.0.0     │                   │
+│             │             │          │ pyjwt                     │                   │
 │             │             │          │ pytest                    │                   │
 │             │             │          │ python-dateutil<3.0.0     │                   │
 │             │             │          │ rapidfuzz                 │                   │
@@ -133,18 +139,20 @@ View the options of CodeCarbon environments:
 │             │             │          │ sqlalchemy<2.0.0          │                   │
 │             │             │          │ uvicorn[standard]<1.0.0   │                   │
 └─────────────┴─────────────┴──────────┴───────────────────────────┴───────────────────┘
-                                   Matrices
-┏━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
-┃ Name ┃ Type        ┃ Envs        ┃ Features ┃ Dependencies  ┃ Scripts       ┃
-┡━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
-│ test │ pip-compile │ test.py3.8  │ viz      │ mock          │ package       │
-│      │             │ test.py3.9  │          │ numpy         │ package-integ │
-│      │             │ test.py3.10 │          │ psutil        │               │
-│      │             │ test.py3.11 │          │ pytest        │               │
-│      │             │ test.py3.12 │          │ rapidfuzz     │               │
-│      │             │             │          │ requests-mock │               │
-│      │             │             │          │ responses     │               │
-└──────┴─────────────┴─────────────┴──────────┴───────────────┴───────────────┘
+                                                  Matrices
+┏━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Name ┃ Type        ┃ Envs        ┃ Features ┃ Dependencies                                ┃ Scripts       ┃
+┡━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ test │ pip-compile │ test.py3.8  │ viz      │ importlib-resources; python_version < '3.9' │ package       │
+│      │             │ test.py3.9  │          │ mock                                        │ package-integ │
+│      │             │ test.py3.10 │          │ numpy; python_version >= '3.9'              │               │
+│      │             │ test.py3.11 │          │ numpy<2.0.0; python_version < '3.9'         │               │
+│      │             │ test.py3.12 │          │ psutil                                      │               │
+│      │             │             │          │ pytest                                      │               │
+│      │             │             │          │ rapidfuzz                                   │               │
+│      │             │             │          │ requests-mock                               │               │
+│      │             │             │          │ responses                                   │               │
+└──────┴─────────────┴─────────────┴──────────┴─────────────────────────────────────────────┴───────────────┘
 ```
 
 To know the path of a env :
@@ -159,8 +167,8 @@ To delete all your env :
 hatch env prune
 ```
 
-<!-- TOC --><a name="tests"></a>
 
+<!-- TOC --><a name="tests"></a>
 ### Tests
 
 You can run the unit tests by running Hatch in the terminal when in the root package directory:
@@ -197,8 +205,8 @@ To test the API, see [how to deploy it](#local_deployement) first.
 
 Core and external classes are unit tested, with one test file per class. Most pull requests are expected to contain either new tests or test updates. If you are unusure what to test / how to test it, please put it in the pull request description and the maintainers will help you.
 
-<!-- TOC --><a name="stress-your-computer"></a>
 
+<!-- TOC --><a name="stress-your-computer"></a>
 ### Stress your computer
 
 To test CodeCarbon, it is useful to stress your computer to make it use its full power:
@@ -208,8 +216,9 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 `nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
 
-<!-- TOC --><a name="versioning"></a>
 
+
+<!-- TOC --><a name="update-all-dependancies"></a>
 ### Update all dependancies
 
 ```sh
@@ -217,7 +226,8 @@ pipx install hatch-pip-compile
 hatch-pip-compile --upgrade --all
 ```
 
-### Versioning
+<!-- TOC --><a name="branching-and-pull-requests"></a>
+### Branching and Pull Requests
 
 To add a new feature to codecarbon, apply the following workflow:
 
@@ -226,8 +236,8 @@ To add a new feature to codecarbon, apply the following workflow:
 -   Documenting the intent & the limits of a contribution in a dedicated issue or in the pull request helps the review
 -   Once automated tests pass, the PR is reviewed and merged by the repository maintainers
 
-<!-- TOC --><a name="debug-in-vs-code"></a>
 
+<!-- TOC --><a name="debug-in-vs-code"></a>
 ### Debug in VS Code
 
 Here is the launch.json to be able to debug examples and tests:
@@ -263,12 +273,12 @@ Then run opened test with this button:
 
 ![vscode_debug](docs/edit/images/vscode_debug.png)
 
-<!-- TOC --><a name="local-deployment"></a>
 
+<!-- TOC --><a name="local-deployment"></a>
 ### <a name="local_deployement"></a> Local deployment
 
-<!-- TOC --><a name="csv-dashboard"></a>
 
+<!-- TOC --><a name="csv-dashboard"></a>
 ## CSV Dashboard
 
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
@@ -287,8 +297,8 @@ If you have the package installed, you can run the CLI command:
 carbonboard --filepath="examples/emissions.csv" --port=8050
 ```
 
-<!-- TOC --><a name="api-dashboard"></a>
 
+<!-- TOC --><a name="api-dashboard"></a>
 ## API Dashboard
 
 To test the new dashboard that uses the API, run:
@@ -306,8 +316,8 @@ export CODECARBON_API_URL=http://localhost:8008
 hatch run dashboard:run
 ```
 
-<!-- TOC --><a name="api"></a>
 
+<!-- TOC --><a name="api"></a>
 ### API
 
 The easiest way to run the API locally is with Docker, it will set-up the Postgres database for you. Launch this command in the project directory:
@@ -323,7 +333,7 @@ docker-compose up -d
 Please see [Docker specific documentation](./docker/README.md) for more informations.
 When up, the API documentation is available locally at the following URL: http://localhost:8008/redoc and can be used for testing.
 
-If you want to run the API without Docker, you can run the following commands:
+If you want to run the API without Docker, you must first set the environment variables described in the .env.example file, and run the following command:
 
 ```sh
 hatch run api:local
@@ -352,8 +362,8 @@ python examples/api_call_debug.py
 
 📝 Edit the line `occurence = 60 * 24 * 365 * 100` to specify the number of minutes you want to run it.
 
-<!-- TOC --><a name="test-the-api"></a>
 
+<!-- TOC --><a name="test-the-api"></a>
 ### Test the API
 
 To test the API, you can use the following command:
@@ -368,8 +378,8 @@ hatch run api:test-integ
 
 ```
 
-<!-- TOC --><a name="coding-style-linting"></a>
 
+<!-- TOC --><a name="coding-style-linting"></a>
 ### Coding style && Linting
 
 The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `hatch run dev:precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
@@ -396,13 +406,13 @@ flake8...................................................................Passed
 
 If any of the linters/formatters fail, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their job) with `git add` and finally try to commit again `git commit ...`.
 
-You can also run `pre-commit` with `pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
+You can also run `pre-commit` with `hatch run dev:pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
 It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
 
-<!-- TOC --><a name="packaging"></a>
 
-### Packaging
+<!-- TOC --><a name="dependencies-management"></a>
+### Dependencies management
 
 Dependencies are defined in different places:
 
@@ -410,8 +420,8 @@ Dependencies are defined in different places:
 -   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
 -   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
-<!-- TOC --><a name="alternative-ways-of-contributing"></a>
 
+<!-- TOC --><a name="alternative-ways-of-contributing"></a>
 ### Alternative ways of contributing
 
 You have a cool idea, but do not know know if it fits with Code Carbon? You can create an issue to share:
@@ -420,8 +430,8 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 -   a webapp, using [Voilà](https://github.com/voila-dashboards/voila), [Dash](https://github.com/plotly/dash) or [Streamlit](https://github.com/streamlit/streamlit)
 -   ideas for improvement about the tool or its documentation
 
-<!-- TOC --><a name="build-documentation-"></a>
 
+<!-- TOC --><a name="build-documentation-"></a>
 ### <a name="documentation"></a>Build Documentation 🖨️
 
 No software is complete without great documentation!
@@ -435,15 +445,16 @@ hatch run docs:build
 
 to regenerate the html files.
 
-<!-- TOC --><a name="release-process"></a>
 
+<!-- TOC --><a name="release-process"></a>
 ### Release process
 
 -   Merge all PRs.
--   Create a PR bumping the version with `hatch version minor`.
--   Run `python3 .github/check_version.py` to check version consistancy.
+-   Create a PR bumping the version with `hatch run dev:bumpver update --minor`.
+-   Run `hatch run python3 .github/check_version.py` to check version consistancy.
 -   Update the dependencies with `hatch-pip-compile --upgrade --all`.
 -   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
+-   Push the changes.
 -   Merge the PR.
 -   Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 -   [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
@@ -463,8 +474,8 @@ Inside the docker container, run:
 -   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
 -   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
 
-<!-- TOC --><a name="restore-database-from-a-production-backup"></a>
 
+<!-- TOC --><a name="restore-database-from-a-production-backup"></a>
 #### Restore database from a production Backup
 
 ```sh
@@ -490,12 +501,12 @@ To remove orphans (elements without run) from the database, run:
 CALL public.spcc_purgeduplicatedata();
 ```
 
-<!-- TOC --><a name="deployment"></a>
 
+<!-- TOC --><a name="deployment"></a>
 #### Deployment
 
-<!-- TOC --><a name="api-1"></a>
 
+<!-- TOC --><a name="api-1"></a>
 ##### API
 
 The API is availiable to everyone from https://api.codecarbon.io, but if you want to deploy it for yourself, here are the instructions.
@@ -530,8 +541,8 @@ See (the doc)[https://www.clever-cloud.com/doc/getting-started/quickstart/] for 
 
 Please note that Clever Cloud host Code Carbon for free because they like our project.
 
-<!-- TOC --><a name="dashboard"></a>
 
+<!-- TOC --><a name="dashboard"></a>
 ##### Dashboard
 
 Same as for the API, for example to deploy the branh `fix-unit` to CleverCloud:
@@ -551,8 +562,8 @@ CODECARBON_API_URL="https://api.codecarbon.io"
 PORT="8000"
 ```
 
-<!-- TOC --><a name="license"></a>
 
+<!-- TOC --><a name="license"></a>
 ### License
 
 By contributing your code, you agree to license your contribution under the terms of the [MIT License](LICENSE).

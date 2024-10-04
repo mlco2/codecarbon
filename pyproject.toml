@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "arrow",
     "click",
+    "fief-client[cli]",
     "pandas",
     "prometheus_client",
     "psutil",
@@ -85,6 +86,7 @@ pip-compile-constraint = ""
 
 [tool.hatch.envs.dev]
 dependencies = [
+    "bumpver",
     "pre-commit",
     "ruff",
     "black",
@@ -114,8 +116,8 @@ dependencies = [
 ]
 
 [tool.hatch.envs.test.scripts]
-package = 'pytest -vv -m "not integ_test" tests/'
-package-integ = 'python -m pytest -vv tests/'
+package = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m "not integ_test" tests/'
+package-integ = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/'
 
 [[tool.hatch.envs.test.matrix]]
 # Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7
@@ -149,7 +151,7 @@ dependencies = [
     "requests<3.0.0",
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
+    "fastapi-pagination==0.9.1",
     "pytest",
     "mock",
     "pytest",
@@ -177,4 +179,16 @@ path = "codecarbon/_version.py"
 [tool.hatch.build.targets.sdist]
 include = [
     "/codecarbon",
+]
+
+[tool.bumpver]
+current_version = "2.7.1"
+version_pattern = "MAJOR.MINOR.PATCH"
+
+[tool.bumpver.file_patterns]
+"codecarbon/_version.py" = [
+    '^__version__ = "{version}"$',
+]
+"docs/edit/conf.py" = [
+    '^release = "{version}"$',
 ]

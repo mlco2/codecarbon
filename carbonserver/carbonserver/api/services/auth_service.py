@@ -5,11 +5,7 @@ import jwt
 from container import ServerContainer
 from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException
-from fastapi.security import (
-    APIKeyCookie,
-    HTTPAuthorizationCredentials,
-    OAuth2AuthorizationCodeBearer,
-)
+from fastapi.security import APIKeyCookie, HTTPBearer, OAuth2AuthorizationCodeBearer
 from fief_client import FiefAsync, FiefUserInfo
 from fief_client.integrations.fastapi import FiefAuth
 from starlette import status
@@ -64,24 +60,66 @@ class UserWithAuthDependency:
     Auth token can be passed as bearer token or cookie
     """
 
-    def __init__(
+    def __init__(self, error_if_not_found=False):
+        """
+        :param error_if_not_found: If True, will raise an exception if user is not authenticated
+        """
+        self.error_if_not_found = error_if_not_found
+
+    def __call__(
         self,
         auth_user_cookie: Optional[FiefUserInfo] = Depends(
             fief_auth_cookie.current_user(optional=True)
         ),
         cookie_token: Optional[str] = Depends(web_scheme),
-        api_key: HTTPAuthorizationCredentials = Depends(web_scheme),
-        user_service: UserService = Depends(Provide[ServerContainer.user_service]),
+        # api_key: Optional[HTTPAuthorizationCredentials] = Depends(web_scheme),
+        bearer_token: Optional[str] = Depends(HTTPBearer(auto_error=False)),
+        user_service: Optional[UserService] = Depends(
+            Provide[ServerContainer.user_service]
+        ),
     ):
         self.user_service = user_service
         if cookie_token is not None:
             self.auth_user = jwt.decode(
-                cookie_token, options={"verify_signature": False}, algorithms=["HS256"]
+                cookie_token,
+                options={"verify_signature": False},
+                algorithms=["HS256", "RS256"],
             )
+        elif bearer_token is not None:
+            # cli user using fief token
+            self.auth_user = jwt.decode(
+                bearer_token.credentials,
+                options={"verify_signature": False},
+                algorithms=[
+                    "HS256",
+                    "RS256",
+                ],
+            )
+            if settings.environment == "develop":
+                try:
+                    # test user
+                    self.auth_user = jwt.decode(
+                        bearer_token.credentials,
+                        settings.jwt_key,
+                        algorithms=[
+                            "HS256",
+                            "RS256",
+                        ],
+                    )
+                except Exception:
+                    ...
         else:
             self.auth_user = None
+            if self.error_if_not_found:
+                raise HTTPException(status_code=401, detail="Unauthorized")
 
         try:
             self.db_user = user_service.get_user_by_id(self.auth_user["sub"])
         except Exception:
             self.db_user = None
+
+        return self
+
+
+OptionalUserWithAuthDependency = UserWithAuthDependency(error_if_not_found=False)
+MandatoryUserWithAuthDependency = UserWithAuthDependency(error_if_not_found=True)

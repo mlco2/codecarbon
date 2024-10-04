@@ -3,7 +3,10 @@ from pathlib import Path
 from typing import Optional
 
 import questionary
+import requests
 import typer
+from fief_client import Fief
+from fief_client.integrations.cli import FiefAuth
 from rich import print
 from rich.prompt import Confirm
 from typing_extensions import Annotated
@@ -20,10 +23,14 @@ from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker
 
+AUTH_CLIENT_ID = "pkqh9CiOkp4MkPqRqM_k8Xc3mwBRpojS3RayIk1i5Pg"
+AUTH_SERVER_URL = "https://auth.codecarbon.io/codecarbon-dev"
+API_URL = "https://dash-dev.cleverapps.io/api"
+
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
-codecarbon = typer.Typer()
+codecarbon = typer.Typer(no_args_is_help=True)
 
 
 def _version_callback(value: bool) -> None:
@@ -85,6 +92,51 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         )
 
 
+fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
+fief_auth = FiefAuth(fief, "./credentials.json")
+
+
+def _get_access_token():
+    access_token_info = fief_auth.access_token_info()
+    access_token = access_token_info["access_token"]
+    return access_token
+
+
+@codecarbon.command(
+    "test-api", short_help="Make an authenticated GET request to an API endpoint"
+)
+def api_get():
+    """
+    ex: test-api
+    """
+    api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
+    api.set_access_token(_get_access_token())
+    organizations = api.get_list_organizations()
+    print(organizations)
+
+
+@codecarbon.command("login", short_help="Login to CodeCarbon")
+def login():
+    fief_auth.authorize()
+
+
+@codecarbon.command("get-token", short_help="Get project token")
+def get_token(project_id: str):
+    # api = ApiClient(endpoint_url=API_URL) # TODO: get endpoint from config
+    # api.set_access_token(_get_access_token())
+    req = requests.post(
+        f"{API_URL}/projects/{project_id}/api-tokens",
+        json={
+            "project_id": project_id,
+            "name": "api token",
+            "x_token": "???",
+        },
+        headers={"Authorization": f"Bearer {_get_access_token()}"},
+    )
+    print("Your token: " + req.json()["token"])
+    print("Add it to the api_key field in your configuration file")
+
+
 @codecarbon.command("config", short_help="Generate or show config")
 def config():
     """
@@ -127,6 +179,7 @@ def config():
     )
     overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
     api = ApiClient(endpoint_url=api_endpoint)
+    api.set_access_token(_get_access_token())
     organizations = api.get_list_organizations()
     org = questionary_prompt(
         "Pick existing organization from list or Create new organization ?",

@@ -10,7 +10,10 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from fief_client import FiefAsync
 
-from carbonserver.api.services.auth_service import UserWithAuthDependency
+from carbonserver.api.services.auth_service import (
+    OptionalUserWithAuthDependency,
+    UserWithAuthDependency,
+)
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.config import settings
 
@@ -30,7 +33,7 @@ fief = FiefAsync(
 @router.get("/auth/check", name="auth-check")
 @inject
 def check_login(
-    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
 ):
     """
     return user data or redirect to login screen

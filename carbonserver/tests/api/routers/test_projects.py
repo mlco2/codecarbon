@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from carbonserver.api.infra.repositories.repository_projects import SqlAlchemyRepository
 from carbonserver.api.routers import projects
 from carbonserver.api.schemas import Project
-from carbonserver.api.services.auth_service import UserWithAuthDependency
+from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 PROJECT_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -52,7 +52,9 @@ def custom_test_server() -> FastAPI:
     app = FastAPI()
     app.container = container
     app.include_router(projects.router)
-    app.dependency_overrides[UserWithAuthDependency] = FakeUserWithAuthDependency
+    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
+        FakeUserWithAuthDependency
+    )
     app.container.auth_context.override(providers.Factory(FakeAuthContext))
     yield app
 
@@ -126,6 +128,5 @@ def test_get_projects_from_organization_returns_correct_project(
     with custom_test_server.container.project_repository.override(repository_mock):
         response = client.get(f"/organizations/{ORGANIZATION_ID}/projects")
         actual_project_list = response.json()
-
     assert response.status_code == status.HTTP_200_OK
     assert actual_project_list == expected_project_list

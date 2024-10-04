@@ -15,7 +15,7 @@ from carbonserver.api.infra.repositories.repository_experiments import (
 )
 from carbonserver.api.routers import experiments
 from carbonserver.api.schemas import Experiment
-from carbonserver.api.services.auth_service import UserWithAuthDependency
+from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -106,7 +106,9 @@ def custom_test_server():
     app = FastAPI()
     app.container = container
     app.include_router(experiments.router)
-    app.dependency_overrides[UserWithAuthDependency] = FakeUserWithAuthDependency
+    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
+        FakeUserWithAuthDependency
+    )
     app.container.auth_context.override(providers.Factory(FakeAuthContext))
     add_pagination(app)
     yield app

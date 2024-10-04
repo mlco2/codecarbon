@@ -1,33 +1,37 @@
-"use server";
+"use client";
 
 import CustomRow from "@/components/custom-row";
+import ErrorMessage from "@/components/error-message";
+import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
+import { fetcher } from "@/helpers/swr";
 import { Project } from "@/types/project";
+import useSWR from "swr";
 
-/**
- * Retrieves the list of projects for a given organization
- * @param organizationId comes from the URL parameters
- */
-async function fetchProjects(organizationId: string): Promise<Project[]> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects?organization=${organizationId}`
-    );
-
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch data");
-    }
-
-    return res.json();
-}
-
-export default async function ProjectsPage({
+export default function ProjectsPage({
     params,
 }: Readonly<{ params: { organizationId: string } }>) {
-    const projects = await fetchProjects(params.organizationId);
-    console.log("ProjectsPage: fetchProjects", projects.length);
+    const {
+        data: projects,
+        error,
+        isLoading,
+    } = useSWR<Project[]>(
+        `/projects?organization=${params.organizationId}`,
+        fetcher,
+        {
+            refreshInterval: 1000 * 60, // Refresh every minute
+        },
+    );
+
+    if (isLoading) {
+        return <Loader />;
+    }
+
+    if (error) {
+        return <ErrorMessage />;
+    }
 
     return (
         <div className="container mx-auto p-4 md:gap-8 md:p-8">
@@ -40,20 +44,21 @@ export default async function ProjectsPage({
             <Card>
                 <Table>
                     <TableBody>
-                        {projects
-                            .sort((a, b) =>
-                                a.name
-                                    .toLowerCase()
-                                    .localeCompare(b.name.toLowerCase())
-                            )
-                            .map((project) => (
-                                <CustomRow
-                                    key={project.id}
-                                    firstColumn={project.name}
-                                    secondColumn={project.description}
-                                    href={`/${params.organizationId}/projects/${project.id}`}
-                                />
-                            ))}
+                        {projects &&
+                            projects
+                                .sort((a, b) =>
+                                    a.name
+                                        .toLowerCase()
+                                        .localeCompare(b.name.toLowerCase()),
+                                )
+                                .map((project) => (
+                                    <CustomRow
+                                        key={project.id}
+                                        firstColumn={project.name}
+                                        secondColumn={project.description}
+                                        href={`/${params.organizationId}/projects/${project.id}`}
+                                    />
+                                ))}
                     </TableBody>
                 </Table>
             </Card>

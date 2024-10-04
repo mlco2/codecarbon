@@ -11,6 +11,7 @@ import unittest
 import uuid
 from datetime import datetime
 
+import jwt
 import pytest
 import requests
 from sqlalchemy import create_engine, text
@@ -24,7 +25,9 @@ tc = unittest.TestCase()
 URL = os.getenv("CODECARBON_API_URL")
 if URL is None:
     pytest.exit("CODECARBON_API_URL is not defined")
-
+# hack to ensure url points to api endpoint
+if "/api" not in URL:
+    URL = URL.rstrip("/") + "/api"
 
 experiment_id = project_id = user_id = api_key = org_id = None
 org_name = org_description = org_new_id = None
@@ -33,6 +36,16 @@ emission_id = None
 USER_PASSWORD = "Secret1!îstring"
 USER_EMAIL = "user@integration.test"
 MISSING_UUID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+MAIN_USER_ID = "bb479cc8-3357-4859-985d-e3cc209d6fc9"  # same as initial_data script
+
+
+@pytest.fixture
+def user_session():
+    token = jwt.encode({"sub": MAIN_USER_ID}, key=settings.jwt_key, algorithm="HS256")
+    client = requests.Session()
+    client.headers["Authorization"] = f"Bearer {token}"
+    client.headers["Accept"] = "application/json"
+    return client
 
 
 def is_valid_uuid(val):
@@ -164,54 +177,65 @@ def test_api00_uuid_missing():
         )
 
 
-def test_api09_organization_create():
+def test_api09_organization_create(user_session):
     global org_new_id, org_name, org_description
     org_name = "test_to_delete"
     org_description = "test to delete"
     payload = {"name": org_name, "description": org_description}
-    r = requests.post(url=URL + "/organizations", json=payload, timeout=2)
+
+    # check that we can't do it without being authenticated
+    wronq_req = requests.post(url=URL + "/organizations", json=payload, timeout=2)
+    assert wronq_req.status_code == 401
+
+    # proper request
+    r = user_session.post(url=URL + "/organizations", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     assert r.json()["name"] == org_name
     assert r.json()["description"] == org_description
     org_new_id = r.json()["id"]
 
 
-def test_api10_organization_read():
-    r = requests.get(url=URL + "/organizations/" + org_new_id, timeout=2)
+def test_api10_organization_read(user_session):
+    wronq_req = requests.get(url=URL + "/organizations/" + org_new_id, timeout=2)
+    assert wronq_req.status_code == 401
+
+    r = user_session.get(url=URL + "/organizations/" + org_new_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert r.json()["name"] == org_name
     assert r.json()["description"] == org_description
 
 
-def test_api11_organization_list():
-    r = requests.get(url=URL + "/organizations", timeout=2)
+def test_api11_organization_list(user_session):
+    wronq_req = requests.get(url=URL + "/organizations", timeout=2)
+    assert wronq_req.status_code == 401
+    r = user_session.get(url=URL + "/organizations", timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert r.json()[-1]["id"] == org_new_id
 
 
-def test_api16_project_create():
+def test_api16_project_create(user_session):
     global project_id
     payload = {
         "name": "test_to_delete",
         "description": "Test to delete by test_api_black_box",
         "organization_id": org_new_id,
     }
-    r = requests.post(url=URL + "/projects/", json=payload, timeout=2)
+    r = user_session.post(url=URL + "/projects/", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     project_id = r.json()["id"]
 
 
-def test_api16_project_lastrun_empty():
+def test_api16_project_lastrun_empty(user_session):
     """
     Test that empty result works.
     """
     url = f"{URL}/lastrun/project/{project_id}/"
-    r = requests.get(url, timeout=2)
+    r = user_session.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert len(r.json()) == 0
 
 
-def test_api18_experiment_create():
+def test_api18_experiment_create(user_session):
     global experiment_id
     payload = {
         "name": "test_api_black_box",
@@ -225,26 +249,26 @@ def test_api18_experiment_create():
         "cloud_region": "eu-west-1a",
         "project_id": project_id,
     }
-    r = requests.post(url=URL + "/experiments", json=payload, timeout=2)
+    r = user_session.post(url=URL + "/experiments", json=payload, timeout=2)
     tc.assertEqual(r.status_code, 201)
     tc.assertEqual(r.json()["project_id"], project_id)
     experiment_id = r.json()["id"]
     tc.assertTrue(is_valid_uuid(experiment_id))
 
 
-def test_api19_experiment_read():
-    r = requests.get(url=URL + "/experiments/" + experiment_id, timeout=2)
+def test_api19_experiment_read(user_session):
+    r = user_session.get(url=URL + "/experiments/" + experiment_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert r.json()["id"] == experiment_id
 
 
-def test_api20_experiment_list():
-    r = requests.get(url=f"{URL}/projects/{project_id}/experiments", timeout=2)
+def test_api20_experiment_list(user_session):
+    r = user_session.get(url=f"{URL}/projects/{project_id}/experiments", timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert is_key_value_exist(r.json(), "id", experiment_id)
 
 
-def test_api21_create_api_project_token():
+def test_api21_create_api_project_token(user_session):
     # This project token is needed to create emissions/runs
     global PROJECT_TOKEN
     global project_token_id
@@ -253,7 +277,7 @@ def test_api21_create_api_project_token():
         "name": "Project token for test_api_black_box",
         "access": 2,
     }
-    r = requests.post(
+    r = user_session.post(
         url=URL + f"/projects/{project_id}/api-tokens", json=payload, timeout=2
     )
     tc.assertEqual(r.status_code, 201)
@@ -302,22 +326,22 @@ def test_api21_run_create2():
     run_id_2 = resp["id"]
 
 
-def test_api22_run_read():
-    r = requests.get(url=URL + "/runs/" + run_id, timeout=2)
+def test_api22_run_read(user_session):
+    r = user_session.get(url=URL + "/runs/" + run_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     tc.assertEqual(r.json()["id"], run_id)
     tc.assertEqual(r.json()["codecarbon_version"], "2.1.3")
 
 
-def test_api23_run_list():
-    r = requests.get(url=URL + "/runs", timeout=2)
+def test_api23_run_list(user_session):
+    r = user_session.get(url=URL + "/runs", timeout=2)
     tc.assertEqual(r.status_code, 200)
     tc.assertTrue(is_key_value_exist(r.json(), "id", run_id))
     tc.assertTrue(is_key_value_exist(r.json(), "id", run_id_2))
 
 
-def test_api24_runs_for_experiment_list():
-    r = requests.get(url=f"{URL}/experiments/{experiment_id}/runs", timeout=2)
+def test_api24_runs_for_experiment_list(user_session):
+    r = user_session.get(url=f"{URL}/experiments/{experiment_id}/runs", timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert is_key_value_exist(r.json(), "id", run_id)
     assert is_key_all_values_equal(r.json(), "experiment_id", experiment_id)
@@ -374,16 +398,16 @@ def test_api25_emission_create():
     tc.assertTrue(is_valid_uuid(r))
 
 
-def test_api26_emission_list():
+def test_api26_emission_list(user_session):
     global emission_id
-    r = requests.get(url=f"{URL}/runs/{run_id}/emissions", timeout=2)
+    r = user_session.get(url=f"{URL}/runs/{run_id}/emissions", timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert is_key_all_values_equal(r.json()["items"], "run_id", run_id)
     emission_id = r.json()["items"][-1]["id"]
 
 
-def test_api27_emission_read():
-    r = requests.get(url=URL + "/emissions/" + emission_id, timeout=2)
+def test_api27_emission_read(user_session):
+    r = user_session.get(url=URL + "/emissions/" + emission_id, timeout=2)
     tc.assertEqual(r.status_code, 200)
     r = r.json()
     assert r["id"] == emission_id
@@ -392,26 +416,26 @@ def test_api27_emission_read():
         tc.assertEqual(r[k], v)
 
 
-def test_api27_read_all():
+def test_api27_read_all(user_session):
     # Check the organization
-    r = requests.get(url=URL + "/organizations/" + org_new_id, timeout=2)
+    r = user_session.get(url=URL + "/organizations/" + org_new_id, timeout=2)
     assert r.json()["name"] == org_name
     # Check the experiment
-    r = requests.get(url=f"{URL}/projects/{project_id}/experiments", timeout=2)
+    r = user_session.get(url=f"{URL}/projects/{project_id}/experiments", timeout=2)
     assert is_key_value_exist(r.json(), "id", experiment_id)
     # Check the run
-    r = requests.get(url=f"{URL}/experiments/{experiment_id}/runs", timeout=2)
+    r = user_session.get(url=f"{URL}/experiments/{experiment_id}/runs", timeout=2)
     assert is_key_value_exist(r.json(), "id", run_id)
     # Check the emission
-    r = requests.get(url=f"{URL}/runs/{run_id}/emissions", timeout=2)
+    r = user_session.get(url=f"{URL}/runs/{run_id}/emissions", timeout=2)
     assert is_key_all_values_equal(r.json()["items"], "run_id", run_id)
     emission_id = r.json()["items"][-1]["id"]
     tc.assertTrue(is_valid_uuid(emission_id))
 
 
-def test_api29_experiment_read_detailed_sums():
+def test_api29_experiment_read_detailed_sums(user_session):
     url = f"{URL}/projects/{project_id}/experiments/sums/"
-    r = requests.get(url, timeout=2)
+    r = user_session.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200)
     r = r.json()
 
@@ -449,9 +473,9 @@ def test_api29_experiment_read_detailed_sums():
 
 
 # TODO: Do assert on all results
-def test_api30_run_read_detailed_sums():
+def test_api30_run_read_detailed_sums(user_session):
     url = f"{URL}/experiments/{experiment_id}/runs/sums"
-    r = requests.get(url, timeout=2)
+    r = user_session.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     """
     [
@@ -483,9 +507,9 @@ def test_api30_run_read_detailed_sums():
                 tc.assertEqual(run_sum[k], v, f"{k}:{v} vs emission={run_sum}")
 
 
-def test_api31_project_read_detailed_sums():
+def test_api31_project_read_detailed_sums(user_session):
     url = f"{URL}/projects/{project_id}/sums/"
-    r = requests.get(url, timeout=2)
+    r = user_session.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     r = r.json()
     assert len(r) > 0
@@ -512,9 +536,9 @@ def test_api31_project_read_detailed_sums():
             tc.assertEqual(project_sum[k], v, f"{k}:{v} vs emission={project_sum}")
 
 
-def test_api32_organization_read_detailed_sums():
+def test_api32_organization_read_detailed_sums(user_session):
     url = f"{URL}/organizations/{org_new_id}/sums/"
-    r = requests.get(url, timeout=2)
+    r = user_session.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200, msg=f"{url=} {r.content=}")
     assert len(r.json()) > 0
     assert r.json()["organization_id"] == org_new_id
@@ -545,22 +569,22 @@ def test_api32_organization_read_detailed_sums():
             )
 
 
-def test_api33_project_read_last_run():
+def test_api33_project_read_last_run(user_session):
     url = f"{URL}/lastrun/project/{project_id}/"
-    r = requests.get(url, timeout=2)
+    r = user_session.get(url, timeout=2)
     tc.assertEqual(r.status_code, 200)
     assert len(r.json()) > 0
     assert r.json()["id"] == run_id_2
     assert r.json()["experiment_id"] == experiment_id
 
 
-def test_api34_project_api_token_delete():
+def test_api34_project_api_token_delete(user_session):
     url = f"{URL}/projects/{project_id}/api-tokens/{project_token_id}"
-    r = requests.delete(url, timeout=2)
+    r = user_session.delete(url, timeout=2)
     tc.assertEqual(r.status_code, 204)
 
 
-def test_api35_organization_read_users():
-    r = requests.get(url=URL + "/organizations/" + org_new_id + "/users", timeout=2)
+def test_api35_organization_read_users(user_session):
+    r = user_session.get(url=URL + "/organizations/" + org_new_id + "/users", timeout=2)
     tc.assertEqual(r.status_code, 200)
     # TODO: check that user is a mamber

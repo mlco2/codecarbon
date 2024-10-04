@@ -91,36 +91,42 @@ class SqlAlchemyRepository(Users):
             )
             session.add(db_membership)
             session.commit()
-            return self.map_sql_to_schema(e)
+            return user
 
-    def is_user_in_organization(self, organization_id: UUID, user: User):
+    def is_user_in_organization(
+        self, organization_id: UUID, user: User, *, is_admin: bool | None = None
+    ):
+        if user is None:
+            return False
         with self.session_factory() as session:
             e = (
                 session.query(SqlModelMembership)
                 .filter(SqlModelMembership.user_id == user.id)
                 .filter(SqlModelMembership.organization_id == organization_id)
-                .first()
             )
-            return e is not None
+            if is_admin is not None:
+                e = e.filter(SqlModelMembership.is_admin == is_admin)
+            return e.first() is not None
+
+    def is_admin_in_organization(self, organization_id: UUID, user: User):
+        return self.is_user_in_organization(organization_id, user, is_admin=True)
 
     def is_user_authorized_on_project(self, project_id, user_id: UUID):
         with self.session_factory() as session:
-            project_subquery = (
-                session.query(SqlModelProject)
-                .where(SqlModelProject.id == project_id)
+            e = (
+                session.query(SqlModelMembership)
+                .join(
+                    SqlModelProject,
+                    SqlModelProject.id == project_id,
+                )
+                .filter(SqlModelMembership.user_id == user_id)
+                .filter(
+                    SqlModelMembership.organization_id
+                    == SqlModelProject.organization_id
+                )
                 .first()
             )
-            user_authorized_on_project = (
-                session.query(SqlModelUser)
-                .where(SqlModelUser.id == user_id)
-                .filter(
-                    SqlModelUser.organizations.any(
-                        str(project_subquery.organization_id)
-                    )
-                )
-                .all()
-            )
-            return bool(user_authorized_on_project)
+            return e is not None
 
     @staticmethod
     def map_sql_to_schema(sql_user: SqlModelUser) -> User:
