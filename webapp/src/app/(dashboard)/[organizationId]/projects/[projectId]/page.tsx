@@ -10,19 +10,24 @@ import { Project } from "@/types/project";
 import { fetcher } from "../../../../../helpers/swr";
 import Loader from "@/components/loader";
 import ErrorMessage from "@/components/error-message";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { SettingsIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 export default function ProjectPage({
     params,
 }: Readonly<{
     params: {
         projectId: string;
+        organizationId: string;
     };
 }>) {
     const router = useRouter();
     const handleSettingsClick = () => {
-        router.push(`/projects/${params.projectId}/settings`);
+        router.push(
+            `/${params.organizationId}/projects/${params.projectId}/settings`,
+        );
     };
     const {
         data: project,
@@ -47,13 +52,14 @@ export default function ProjectPage({
                         <h1 className="text-2xl font-semi-bold">
                             {project.name}
                         </h1>
-                        <button
+                        <Button
                             onClick={handleSettingsClick}
-                            className="flex items-center p-2 text-sm font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full"
                         >
                             <SettingsIcon className="mr-2 h-4 w-4" />
-                            Settings
-                        </button>
+                        </Button>
                     </div>
                     <span className="text-sm font-semi-bold">
                         {project.description}
