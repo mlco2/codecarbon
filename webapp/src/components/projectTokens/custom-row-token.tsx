@@ -13,7 +13,6 @@ export default function CustomRowToken({
 }) {
     const handleDelete = async (projectToken: IProjectToken) => {
         await deleteProjectToken(projectToken.project_id, projectToken.id);
-        console.log("ProjectSettingsPage: project deleted");
         await onTokenDeleted(); // Call the callback to refresh the token list
     };
 

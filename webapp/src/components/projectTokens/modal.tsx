@@ -19,8 +19,6 @@ const Modal: React.FC<ModalProps> = ({
     const onSave = async (tokenName: string) => {
         const access = 2;
         const newToken = await createProjectToken(projectId, tokenName, access);
-        console.log("ProjectSettingsPage: createProjectToken", newToken);
-        console.log("ProjectSettingsPage: onTokenCreated", onTokenCreated);
         await onTokenCreated(); // Call the callback to refresh the token list
         return newToken;
     };
@@ -31,7 +29,6 @@ const Modal: React.FC<ModalProps> = ({
     const handleSave = async () => {
         if (!name || name === "") return;
         const projectToken: IProjectToken = await onSave(name);
-        console.log(projectToken);
         setIsTokenDisplayed(true);
         setToken(projectToken.token);
     };
