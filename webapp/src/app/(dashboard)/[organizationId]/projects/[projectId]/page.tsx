@@ -1,8 +1,6 @@
 "use client";
 
 import useSWR from "swr";
-
-import { useEffect, useState } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
@@ -12,6 +10,8 @@ import { Project } from "@/types/project";
 import { fetcher } from "../../../../../helpers/swr";
 import Loader from "@/components/loader";
 import ErrorMessage from "@/components/error-message";
+import { useRouter } from "next/router";
+import { SettingsIcon } from "lucide-react";
 
 export default function ProjectPage({
     params,
@@ -20,6 +20,10 @@ export default function ProjectPage({
         projectId: string;
     };
 }>) {
+    const router = useRouter();
+    const handleSettingsClick = () => {
+        router.push(`/projects/${params.projectId}/settings`);
+    };
     const {
         data: project,
         isLoading,
@@ -39,7 +43,18 @@ export default function ProjectPage({
         return (
             <div className="h-full w-full overflow-auto">
                 <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-                    <h1 className="text-2xl font-semi-bold">{project.name}</h1>
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-2xl font-semi-bold">
+                            {project.name}
+                        </h1>
+                        <button
+                            onClick={handleSettingsClick}
+                            className="flex items-center p-2 text-sm font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+                        >
+                            <SettingsIcon className="mr-2 h-4 w-4" />
+                            Settings
+                        </button>
+                    </div>
                     <span className="text-sm font-semi-bold">
                         {project.description}
                     </span>
