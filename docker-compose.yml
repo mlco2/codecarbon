@@ -25,10 +25,10 @@ services:
       - "traefik.http.routers.carbonserver.entrypoints=websecure"
       - "traefik.http.routers.carbonserver.tls.certresolver=myresolver"
       - "traefik.http.routers.carbonserver.priority=10000"
-      - "traefik.http.services.carbonserver.loadbalancer.server.port=8001"
+      - "traefik.http.services.carbonserver.loadbalancer.server.port=8000"
       - "traefik.docker.network=shared"
     # ports:
-    #     - "8001:8001"
+    #     - "8000:8000"
     environment:
       CODECARBON_LOG_LEVEL: DEBUG
       DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@${DATABASE_HOST:-postgres}:${DATABASE_PORT:-5432}/${DATABASE_NAME:-codecarbon_db}

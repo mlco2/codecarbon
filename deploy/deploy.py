@@ -77,6 +77,54 @@ def _setup(settings: Settings):
           )
 
 @app.command()
+def wipe():
+    """
+    This will remove all containers, data volumes and images
+    This will not remove data on local folders
+    """
+    subprocess.check_output([
+            "docker-compose",
+            "-p","codecarbon",
+            "stop"
+        ], cwd="./")
+    subprocess.check_output([
+            "docker-compose",
+            "-p","codecarbon",
+            "rm", "-v", "-f"
+        ], cwd="./")
+    subprocess.check_output([
+            "docker-compose",
+            "-p","fief",
+            "-f", "fief-compose.yml",
+            "stop"
+        ], cwd="./deploy")
+    subprocess.check_output([
+            "docker-compose",
+            "-p","fief",
+            "-f", "fief-compose.yml",
+            "rm", "-v", "-f"
+        ], cwd="./deploy")
+    subprocess.check_output([
+            "docker-compose",
+            "-p","traefik",
+            "-f", "traefik-compose.yml",
+            "stop"
+        ], cwd="./deploy")
+    subprocess.check_output([
+            "docker-compose",
+            "-p","traefik",
+            "-f", "traefik-compose.yml",
+            "rm", "-v", "-f"
+        ], cwd="./deploy")
+    subprocess.check_output([
+            "docker-compose",
+            "-p","traefik",
+            "-f", "traefik-compose.yml",
+            "rm", "-v", "-f"
+        ], cwd="./deploy")
+    
+
+@app.command()
 def start(traefik: Annotated[bool, typer.Option()] = False,
           fief: Annotated[bool, typer.Option()] = False,
           codecarbon: Annotated[bool, typer.Option()] = False,
