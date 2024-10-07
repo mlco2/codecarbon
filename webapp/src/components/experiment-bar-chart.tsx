@@ -18,6 +18,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useEffect, useState } from "react";
 
 async function getProjectEmissionsByExperiment(
     projectId: string,
@@ -55,12 +56,22 @@ const chartConfig = {
 type Params = {
     projectId: string;
 };
-export default async function ExperimentsBarChart({
+export default function ExperimentsBarChart({
     params,
 }: Readonly<{ params: Params }>) {
-    const experimentsReportData = await getProjectEmissionsByExperiment(
-        params.projectId,
-    );
+    const [experimentsReportData, setExperimentsReportData] = useState<
+        ExperimentReport[]
+    >([]);
+
+    const fetchTokens = async () => {
+        // Fetch the updated list of tokens from the server
+        const data = await getProjectEmissionsByExperiment(params.projectId);
+        setExperimentsReportData(data);
+    };
+
+    useEffect(() => {
+        fetchTokens();
+    });
     return (
         <Card>
             <CardHeader>
