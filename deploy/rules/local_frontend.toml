@@ -1,0 +1,17 @@
+[http]
+
+    [http.routers]
+
+      [http.routers.webapp-router]
+          rule = "Host(`webapp.localhost`)"
+          service = "webapp-service"
+          entrypoints=["websecure"]
+          priority = 1000
+
+      [http.routers.webapp-router.tls]
+           certResolver = "le"
+
+    [http.services]
+      [http.services.webapp-service.loadbalancer]
+          [[http.services.webapp-service.loadbalancer.servers]]
+            url = "http://host.docker.internal:3000"
