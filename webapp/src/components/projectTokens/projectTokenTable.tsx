@@ -17,7 +17,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
 
     useEffect(() => {
         fetchTokens();
-    });
+    }, []);
 
     return (
         <div className="flex-col p-4 md:gap-8 md:p-8 justify-between max-w-screen-sm">

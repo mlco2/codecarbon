@@ -1,6 +1,5 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { ExperimentReport } from "@/types/experiment-report";
 
@@ -63,15 +62,16 @@ export default function ExperimentsBarChart({
         ExperimentReport[]
     >([]);
 
-    const fetchTokens = async () => {
-        // Fetch the updated list of tokens from the server
-        const data = await getProjectEmissionsByExperiment(params.projectId);
-        setExperimentsReportData(data);
-    };
-
     useEffect(() => {
-        fetchTokens();
-    });
+        const fetchData = async () => {
+            console.log("Fetching experiments report data");
+            const data = await getProjectEmissionsByExperiment(
+                params.projectId,
+            );
+            setExperimentsReportData(data);
+        };
+        fetchData();
+    }, [params.projectId]);
     return (
         <Card>
             <CardHeader>

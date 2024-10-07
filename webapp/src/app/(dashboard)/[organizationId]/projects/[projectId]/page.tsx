@@ -59,7 +59,6 @@ export default function ProjectPage({
                             className="rounded-full"
                         >
                             <SettingsIcon className="mr-2 h-4 w-4" />
-                            Settings
                         </Button>
                     </div>
                     <span className="text-sm font-semi-bold">
