@@ -19,14 +19,14 @@ class Settings:
 
 
 def replace(source, destination, variables):
-    with (open(source) as f,
-          open(destination, 'w') as f_out):
-        for line in f.readlines():
-            for k,v in variables.items():
-                if re.match(f"^{k}=.*", line):
-                    line = f"{k}={v}\n"
-                    continue
-            f_out.write(line)
+    with open(source) as f:
+        with open(destination, 'w') as f_out:
+            for line in f.readlines():
+                for k,v in variables.items():
+                    if re.match(f"^{k}=.*", line):
+                        line = f"{k}={v}\n"
+                        continue
+                f_out.write(line)
 
 
 def _setup(settings: Settings):
@@ -81,6 +81,7 @@ def start(traefik: Annotated[bool, typer.Option()] = False,
           fief: Annotated[bool, typer.Option()] = False,
           codecarbon: Annotated[bool, typer.Option()] = False,
           ):
+    subprocess.check_output(["docker", "network", "create", "shared"])
     if traefik:
         res = subprocess.check_output([
             "docker-compose",
