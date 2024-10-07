@@ -17,11 +17,19 @@ export default function CustomRow({
     firstColumn,
     secondColumn,
     href,
+    hrefSettings,
+    onDelete = async () => {},
+    deleteDisabled = true,
+    settingsDisabled = true,
 }: {
     key: string;
     firstColumn: string;
     secondColumn: string;
     href?: string;
+    hrefSettings?: string;
+    onDelete?: () => Promise<void>;
+    deleteDisabled?: boolean;
+    settingsDisabled?: boolean;
 }) {
     const router = useRouter();
     const cellClassName = `font-medium ${href && "hover:cursor-pointer"} `;
@@ -55,9 +63,23 @@ export default function CustomRow({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem disabled>Settings</DropdownMenuItem>
+                        <DropdownMenuItem
+                            disabled={settingsDisabled}
+                            onClick={() =>
+                                hrefSettings &&
+                                !settingsDisabled &&
+                                router.push(hrefSettings)
+                            }
+                        >
+                            Settings
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem disabled>Delete</DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={onDelete}
+                            disabled={deleteDisabled}
+                        >
+                            Delete
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </TableCell>

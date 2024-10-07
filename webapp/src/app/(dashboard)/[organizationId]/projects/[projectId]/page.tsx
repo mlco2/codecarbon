@@ -1,8 +1,6 @@
 "use client";
 
 import useSWR from "swr";
-
-import { useEffect, useState } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
