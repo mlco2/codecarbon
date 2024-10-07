@@ -6,6 +6,14 @@ import secrets
 import typer
 import subprocess
 from typing_extensions import Annotated
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class FiefSettings(BaseSettings):
+    fief_main_admin_api_key: str
+    model_config = SettingsConfigDict(env_file='deploy/.env.fief', env_file_encoding='utf-8',extra="allow")
+
 
 app = typer.Typer()
 
@@ -16,6 +24,7 @@ class Settings:
     fief_hostname: str = "fief.localhost"
     hostname: str = "codecarbon.localhost"
     admin_email: str = "admin@localhost"
+    fief_admin_password: str = secrets.token_urlsafe(20)
 
 
 def replace(source, destination, variables):
@@ -42,6 +51,7 @@ def _setup(settings: Settings):
         "AUTH_HOSTNAME": settings.fief_hostname,
         "FIEF_HOSTNAME": settings.fief_hostname,
         "FIEF_DOMAIN": settings.fief_hostname,
+        "FIEF_MAIN_USER_PASSWORD": settings.fief_admin_password,
         "ADMIN_EMAIL": settings.admin_email,
         "FRONTEND_URL": f"https://{settings.hostname}",
         "FIEF_URL": f"https://{settings.fief_hostname}",
@@ -50,8 +60,10 @@ def _setup(settings: Settings):
     if settings.run_fief:
         variables["FIEF_CLIENT_ID"] = secrets.token_urlsafe(32)
         variables["FIEF_CLIENT_SECRET"] = secrets.token_urlsafe(64)
+        
         replace("./deploy/.env.fief.example", "./deploy/.env.fief", {
             **variables,
+            "FIEF_MAIN_ADMIN_API_KEY": secrets.token_urlsafe(64),
             "SECRET": secrets.token_urlsafe(64),
             "DATABASE_PASSWORD": secrets.token_urlsafe(32),
         })
@@ -69,12 +81,19 @@ def _setup(settings: Settings):
         "FIEF_BASE_URL": variables["FIEF_URL"]
         })
     
+    print(f"""
+Useful informations:
+Fief admin username: admin@mydomain.com
+Fief admin password: {settings.fief_admin_password}
+    """)
+
     print("To start:")
     print("./deploy/deploy.py start " \
           + (" --traefik" if settings.run_traefik else "") \
           + (" --fief" if settings.run_fief else "") \
           + " --codecarbon"
           )
+
 
 @app.command()
 def wipe():
@@ -122,6 +141,16 @@ def wipe():
             "-f", "traefik-compose.yml",
             "rm", "-v", "-f"
         ], cwd="./deploy")
+
+
+
+def configure_fief():
+    fief_settings = FiefSettings()
+    import requests
+    api = requests.Session()
+    api.headers["Authorization"] = f"Bearer {s.fief_main_admin_api_key}"
+    url = "https://auth.localhost/admin/api"
+
     
 
 @app.command()
@@ -130,7 +159,9 @@ def start(traefik: Annotated[bool, typer.Option()] = False,
           codecarbon: Annotated[bool, typer.Option()] = False,
           ):
     subprocess.check_output(["docker", "network", "create", "shared"])
+
     if traefik:
+        print("Starting traefik")
         res = subprocess.check_output([
             "docker-compose",
             "-p","traefik",
@@ -138,12 +169,15 @@ def start(traefik: Annotated[bool, typer.Option()] = False,
             "up", "-d",
         ], cwd="./deploy")
     if fief:
+        print("Starting fief")
         subprocess.check_output([
             "docker-compose",
             "-p","fief",
             "-f", "fief-compose.yml",
             "up", "-d",
         ], cwd="./deploy")
+        print("Configuring fief")
+        configure_fief()
     if codecarbon:
         subprocess.check_output([
             "docker-compose",
@@ -151,6 +185,22 @@ def start(traefik: Annotated[bool, typer.Option()] = False,
             "-f", "docker-compose.yml",
             "up", "-d",
         ], cwd="./")
+
+    print(f"""
+=========================================
+Your codecarbon server is now running !
+You can access it:
+https://codecarbon.localhost
+""")
+    if fief:
+        print("""
+The fief server is running:
+https://fief.localhost
+""")
+    print("""
+You can run the webapp locally for local development on the port 3000 and access it:
+https://webapp.localhost          
+          """)
 
 @app.command()
 def setup():
