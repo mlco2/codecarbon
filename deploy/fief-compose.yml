@@ -34,10 +34,9 @@ services:
 
   postgres-fief:
     image: postgres:alpine
-    environment:
-      - POSTGRES_PASSWORD=111fief-password
-      - POSTGRES_USER=fief
-      - POSTGRES_DB=fief
+    env_file:
+      - .env.fief    
+
     volumes:
       - postgres_fief_data:/var/lib/postgresql/data
     networks:
