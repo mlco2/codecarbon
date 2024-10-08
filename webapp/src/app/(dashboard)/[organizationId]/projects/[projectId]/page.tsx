@@ -1,8 +1,6 @@
 "use client";
 
 import useSWR from "swr";
-
-import { useEffect, useState } from "react";
 import { Activity, CreditCard, Users } from "lucide-react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
@@ -12,14 +10,25 @@ import { Project } from "@/types/project";
 import { fetcher } from "../../../../../helpers/swr";
 import Loader from "@/components/loader";
 import ErrorMessage from "@/components/error-message";
+import { useRouter } from "next/navigation";
+import { SettingsIcon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 export default function ProjectPage({
     params,
 }: Readonly<{
     params: {
         projectId: string;
+        organizationId: string;
     };
 }>) {
+    const router = useRouter();
+    const handleSettingsClick = () => {
+        router.push(
+            `/${params.organizationId}/projects/${params.projectId}/settings`,
+        );
+    };
     const {
         data: project,
         isLoading,
@@ -39,7 +48,19 @@ export default function ProjectPage({
         return (
             <div className="h-full w-full overflow-auto">
                 <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-                    <h1 className="text-2xl font-semi-bold">{project.name}</h1>
+                    <div className="flex justify-between items-center">
+                        <h1 className="text-2xl font-semi-bold">
+                            {project.name}
+                        </h1>
+                        <Button
+                            onClick={handleSettingsClick}
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full"
+                        >
+                            <SettingsIcon className="mr-2 h-4 w-4" />
+                        </Button>
+                    </div>
                     <span className="text-sm font-semi-bold">
                         {project.description}
                     </span>

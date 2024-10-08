@@ -57,6 +57,8 @@ export default function ProjectsPage({
                                         firstColumn={project.name}
                                         secondColumn={project.description}
                                         href={`/${params.organizationId}/projects/${project.id}`}
+                                        hrefSettings={`/${params.organizationId}/projects/${project.id}/settings`}
+                                        settingsDisabled={false}
                                     />
                                 ))}
                     </TableBody>

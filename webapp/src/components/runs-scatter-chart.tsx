@@ -18,6 +18,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 type Params = {
     experimentId: string;
@@ -50,9 +51,17 @@ async function getRunEmissionsByExperiment(
 export default async function RunsScatterChart({
     params,
 }: Readonly<{ params: Params }>) {
-    const runsReportsData = await getRunEmissionsByExperiment(
-        params.experimentId,
+    const [runsReportsData, setExperimentsReportData] = useState<RunReport[]>(
+        [],
     );
+    useEffect(() => {
+        const fetchData = async () => {
+            console.log("Fetching runs report data");
+            const data = await getRunEmissionsByExperiment(params.experimentId);
+            setExperimentsReportData(data);
+        };
+        fetchData();
+    }, [params.experimentId]);
     return (
         <Card>
             <CardHeader>

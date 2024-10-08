@@ -1,6 +1,5 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { ExperimentReport } from "@/types/experiment-report";
 
@@ -18,6 +17,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useEffect, useState } from "react";
 
 async function getProjectEmissionsByExperiment(
     projectId: string,
@@ -55,12 +55,23 @@ const chartConfig = {
 type Params = {
     projectId: string;
 };
-export default async function ExperimentsBarChart({
+export default function ExperimentsBarChart({
     params,
 }: Readonly<{ params: Params }>) {
-    const experimentsReportData = await getProjectEmissionsByExperiment(
-        params.projectId,
-    );
+    const [experimentsReportData, setExperimentsReportData] = useState<
+        ExperimentReport[]
+    >([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            console.log("Fetching experiments report data");
+            const data = await getProjectEmissionsByExperiment(
+                params.projectId,
+            );
+            setExperimentsReportData(data);
+        };
+        fetchData();
+    }, [params.projectId]);
     return (
         <Card>
             <CardHeader>

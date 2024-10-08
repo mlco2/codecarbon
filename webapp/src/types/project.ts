@@ -5,3 +5,12 @@ export interface Project {
     organizationId: string;
     experiments: string[];
 }
+
+export interface IProjectToken {
+    id: string;
+    project_id: string;
+    last_used: string | null;
+    name: string;
+    token: string;
+    access: number;
+}
