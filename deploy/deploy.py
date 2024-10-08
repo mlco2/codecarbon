@@ -2,7 +2,9 @@
 import dataclasses
 import os
 import re
+import requests
 import secrets
+import time
 import typer
 import subprocess
 from typing_extensions import Annotated
@@ -12,8 +14,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # TODO: use pydantic settings
 class FiefSettings(BaseSettings):
     fief_main_admin_api_key: str
+    fief_domain: str
+
     model_config = SettingsConfigDict(
         env_file="deploy/.env.fief", env_file_encoding="utf-8", extra="allow"
+    )
+
+class CarbonServerSettings(BaseSettings):
+    app_hostname: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="allow"
     )
 
 
@@ -182,12 +193,28 @@ def wipe():
 
 def configure_fief():
     fief_settings = FiefSettings()
-    import requests
-
+    carbonserver_settings = CarbonServerSettings()
+           
     api = requests.Session()
     api.headers["Authorization"] = f"Bearer {fief_settings.fief_main_admin_api_key}"
-    url = "https://fief.localhost/admin/api"
-    clients = api.get(url + "/clients", verify=False)
+    url = f"https://{fief_settings.fief_domain}/admin/api"
+
+    # fief server might not be running yet
+    for i in range(5):
+        if api.get(url + "/clients", verify=False).status_code != 502:
+            break
+        print("waiting for fief server to come online...")
+        time.sleep(5)
+
+    client = api.get(url + "/clients", verify=False).json()["results"][0]
+    redir_uris = [
+                  f'https://{carbonserver_settings.app_hostname }/auth/login', 
+                  f'https://{fief_settings.fief_domain}/docs/oauth2-redirect', 
+                  f'https://{fief_settings.fief_domain}/admin/auth/callback', 
+                  f'http://{fief_settings.fief_domain}/docs/oauth2-redirect', 
+                  f'http://{fief_settings.fief_domain}/admin/auth/callback',
+    ]
+    api.patch(f"{url}/clients/{client['id']}", json={"redirect_uris": redir_uris}, verify=False)
 
 
 @app.command()
@@ -232,7 +259,7 @@ def start(
         print("Configuring fief")
         configure_fief()
     if codecarbon:
-        subprocess.check_output(
+        subprocess.check_output(        
             [
                 "docker-compose",
                 "-p",
