@@ -116,7 +116,7 @@ export default function RunsScatterChart({
                     >
                         <Label
                             value="Timestamp"
-                            offset={50}
+                            offset={-50}
                             position="insideBottom"
                             style={{ fill: "currentColor" }}
                         />

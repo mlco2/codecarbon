@@ -86,6 +86,9 @@ export default function RadialChart({
                                                     x={viewBox.cx}
                                                     y={(viewBox.cy || 0) + 24}
                                                     className="text-xl"
+                                                    style={{
+                                                        fill: "hsl(var(--card-foreground))",
+                                                    }}
                                                 >
                                                     {data.label}
                                                 </tspan>
