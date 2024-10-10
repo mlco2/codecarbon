@@ -13,7 +13,6 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    console.log(process.env.NEXT_PUBLIC_API_URL);
     return (
         <html lang="en" suppressHydrationWarning>
             {/* suppressHydrationWarning is a Next theme recommendation */}

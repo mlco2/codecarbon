@@ -54,11 +54,9 @@ export default async function HomePage({
     params: { slug: string };
     searchParams: { [key: string]: string | string[] | undefined };
 }) {
-    console.log("HomePage params:", searchParams);
     if (searchParams && searchParams["auth"]) {
         try {
             const res = await checkAuth();
-            console.log("User is authenticated:", res);
         } catch (error) {
             console.error("Error with /check/auth:", error);
         }
