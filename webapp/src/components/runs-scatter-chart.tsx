@@ -111,12 +111,12 @@ export default function RunsScatterChart({
                         type="category"
                         stroke="currentColor"
                         tickFormatter={(timestamp) =>
-                            format(new Date(timestamp), "MM/dd/yyyy")
+                            format(new Date(timestamp), "dd/MM/yyyy HH:mm")
                         }
                     >
                         <Label
                             value="Timestamp"
-                            offset={0}
+                            offset={50}
                             position="insideBottom"
                             style={{ fill: "currentColor" }}
                         />

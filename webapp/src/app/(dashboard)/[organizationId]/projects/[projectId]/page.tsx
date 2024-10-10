@@ -13,6 +13,8 @@ import { addMonths, startOfDay, endOfDay } from "date-fns";
 import { useRouter } from "next/navigation";
 import { SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getOneProject } from "@/server-functions/projects";
+import { Project } from "@/types/project";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -61,6 +63,24 @@ export default function ProjectPage({
         organizationId: string;
     };
 }>) {
+    const [project, setProject] = useState({
+        name: "",
+        description: "",
+    } as Project);
+
+    useEffect(() => {
+        // Replace with your actual API endpoint
+        const fetchProjectDetails = async () => {
+            try {
+                const project: Project = await getOneProject(params.projectId);
+                setProject(project);
+            } catch (error) {
+                console.error("Error fetching project description:", error);
+            }
+        };
+
+        fetchProjectDetails();
+    }, []);
     const router = useRouter();
     const handleSettingsClick = () => {
         router.push(
@@ -190,7 +210,7 @@ export default function ProjectPage({
                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-semi-bold">
-                            Project name
+                            Project {project.name}
                         </h1>
                         <Button
                             onClick={handleSettingsClick}
@@ -201,7 +221,7 @@ export default function ProjectPage({
                             <SettingsIcon />
                         </Button>
                         <span className="text-sm font-semi-bold">
-                            Project Description
+                            {project.description}
                         </span>
                     </div>
                     <div>
