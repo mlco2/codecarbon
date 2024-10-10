@@ -7,7 +7,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
@@ -17,14 +16,24 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useEffect, useState } from "react";
+
+interface ExperimentsBarChartProps {
+    params: {
+        projectId: string;
+        startDate: string;
+        endDate: string;
+    };
+    onExperimentClick: (experimentId: string) => void;
+}
 
 async function getProjectEmissionsByExperiment(
     projectId: string,
+    startDate: string,
+    endDate: string,
 ): Promise<ExperimentReport[]> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums/`,
-    );
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums?start_date=${startDate}&end_date=${endDate}`;
+
+    const res = await fetch(url);
 
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
@@ -44,34 +53,28 @@ async function getProjectEmissionsByExperiment(
 const chartConfig = {
     desktop: {
         label: "Emissions",
-        color: "hsl(var(--chart-1))",
+        color: "hsl(var(--primary))",
     },
     mobile: {
         label: "Energy consumed",
-        color: "hsl(var(--chart-2))",
+        color: "hsl(var(--secondary))",
     },
 } satisfies ChartConfig;
 
 type Params = {
     projectId: string;
+    startDate: string;
+    endDate: string;
 };
-export default function ExperimentsBarChart({
+export default async function ExperimentsBarChart({
     params,
-}: Readonly<{ params: Params }>) {
-    const [experimentsReportData, setExperimentsReportData] = useState<
-        ExperimentReport[]
-    >([]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            console.log("Fetching experiments report data");
-            const data = await getProjectEmissionsByExperiment(
-                params.projectId,
-            );
-            setExperimentsReportData(data);
-        };
-        fetchData();
-    }, [params.projectId]);
+    onExperimentClick,
+}: ExperimentsBarChartProps) {
+    const experimentsReportData = await getProjectEmissionsByExperiment(
+        params.projectId,
+        params.startDate,
+        params.endDate,
+    );
     return (
         <Card>
             <CardHeader>
@@ -97,11 +100,10 @@ export default function ExperimentsBarChart({
                             dataKey="emissions"
                             fill="var(--color-desktop)"
                             radius={4}
-                        />
-                        <Bar
-                            dataKey="energy_consumed"
-                            fill="var(--color-mobile)"
-                            radius={4}
+                            onClick={(data) =>
+                                onExperimentClick(data.experiment_id)
+                            }
+                            cursor="pointer"
                         />
                     </BarChart>
                 </ChartContainer>

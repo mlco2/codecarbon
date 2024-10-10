@@ -1,42 +1,39 @@
 import { TrendingUp } from "lucide-react";
-import {
-    ScatterChart,
-    Scatter,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Label,
-} from "recharts";
+import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, Label } from "recharts";
 import { RunReport } from "@/types/run-report";
 
 import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { useEffect, useState } from "react";
 
-type Params = {
-    experimentId: string;
-};
+interface RunsScatterChartProps {
+    params: {
+        experimentId: string;
+        startDate: string;
+        endDate: string;
+    };
+    onRunClick: (runId: string) => void;
+}
+
 async function getRunEmissionsByExperiment(
     experimentId: string,
+    startDate: string,
+    endDate: string,
 ): Promise<RunReport[]> {
-    console.log("From function: ", experimentId);
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums/`,
-    );
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`;
+
+    const res = await fetch(url);
 
     if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch data");
+        // Log error waiting for a better error management
+        console.log("Failed to fetch data");
+        return [];
     }
     const result = await res.json();
-    console.log("Runs from experiment: ", result);
     return result.map((runReport: RunReport) => {
         return {
             runId: runReport.run_id,
@@ -50,18 +47,36 @@ async function getRunEmissionsByExperiment(
 
 export default async function RunsScatterChart({
     params,
-}: Readonly<{ params: Params }>) {
-    const [runsReportsData, setExperimentsReportData] = useState<RunReport[]>(
-        [],
+    onRunClick,
+}: RunsScatterChartProps) {
+    const runsReportsData = await getRunEmissionsByExperiment(
+        params.experimentId,
+        params.startDate,
+        params.endDate,
     );
-    useEffect(() => {
-        const fetchData = async () => {
-            console.log("Fetching runs report data");
-            const data = await getRunEmissionsByExperiment(params.experimentId);
-            setExperimentsReportData(data);
-        };
-        fetchData();
-    }, [params.experimentId]);
+
+    // Add this custom tooltip function
+    const CustomTooltip = ({ active, payload }: any) => {
+        if (active && payload && payload.length) {
+            const data = payload[0].payload;
+            return (
+                <div className="custom-tooltip bg-background text-foreground p-2 border border-border rounded shadow">
+                    <p>
+                        <strong>Emissions:</strong> {data.emissions.toFixed(2)}
+                    </p>
+                    <p>
+                        <strong>Energy Consumed:</strong>{" "}
+                        {data.energy_consumed.toFixed(2)}
+                    </p>
+                    <p>
+                        <strong>Duration:</strong> {data.duration.toFixed(2)}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -79,24 +94,39 @@ export default async function RunsScatterChart({
                         left: 20,
                     }}
                 >
-                    <XAxis dataKey="timestamp" name="Timestamp" type="category">
+                    <XAxis
+                        dataKey="timestamp"
+                        name="Timestamp"
+                        type="category"
+                        stroke="currentColor"
+                    >
                         <Label
                             value="Timestamp"
                             offset={0}
                             position="insideBottom"
+                            style={{ fill: "currentColor" }}
                         />
                     </XAxis>
-                    <YAxis dataKey="emissions" name="Emissions" type="number">
+                    <YAxis
+                        dataKey="emissions"
+                        name="Emissions"
+                        type="number"
+                        stroke="currentColor"
+                    >
                         <Label
                             value="Emissions"
                             angle={-90}
                             position="insideLeft"
+                            style={{ fill: "currentColor" }}
                         />
                     </YAxis>
+                    <Tooltip content={<CustomTooltip />} />
                     <Scatter
                         name="Emissions"
                         data={runsReportsData}
-                        fill="#8884d8"
+                        fill="hsl(var(--primary)))"
+                        onClick={(data) => onRunClick(data.runId)}
+                        cursor="pointer"
                     />
                 </ScatterChart>
             </CardContent>
