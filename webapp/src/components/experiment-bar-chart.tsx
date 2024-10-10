@@ -115,7 +115,10 @@ export default function ExperimentsBarChart({
         <Card>
             <CardHeader>
                 <CardTitle>Project experiment runs</CardTitle>
-                <CardDescription></CardDescription>
+                <CardDescription>
+                    Click an experiment to see the runs on the chart on the
+                    right
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig}>
