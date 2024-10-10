@@ -299,6 +299,8 @@ export default function ProjectPage({
                         <RadialChart data={radialChartData.duration} />
                     </div>
                 </div>
+
+                <Separator className="h-[0.5px] bg-muted-foreground" />
                 <div className="grid gap-4 md:grid-cols-2 md:gap-8">
                     <ExperimentsBarChart
                         params={experimentsData}
@@ -312,9 +314,13 @@ export default function ProjectPage({
                         onRunClick={handleRunClick}
                     />
                 </div>
+                <Separator className="h-[0.5px] bg-muted-foreground" />
                 <div className="grid gap-4 md:grid-cols-1 md:gap-8">
                     {selectedRunId && (
-                        <EmissionsTimeSeriesChart runId={selectedRunId} />
+                        <>
+                            <EmissionsTimeSeriesChart runId={selectedRunId} />
+                            <Separator className="h-[0.5px] bg-muted-foreground" />
+                        </>
                     )}
                 </div>
             </main>
