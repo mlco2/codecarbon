@@ -1,4 +1,3 @@
-import { TrendingUp } from "lucide-react";
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, Label } from "recharts";
 import { RunReport } from "@/types/run-report";
 
@@ -9,6 +8,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 
 interface RunsScatterChartProps {
     params: {
@@ -45,15 +45,25 @@ async function getRunEmissionsByExperiment(
     });
 }
 
-export default async function RunsScatterChart({
+export default function RunsScatterChart({
     params,
     onRunClick,
 }: RunsScatterChartProps) {
-    const runsReportsData = await getRunEmissionsByExperiment(
-        params.experimentId,
-        params.startDate,
-        params.endDate,
+    const [runsReportsData, setExperimentsReportData] = useState<RunReport[]>(
+        [],
     );
+    useEffect(() => {
+        const fetchData = async () => {
+            console.log("Fetching runs report data");
+            const data = await getRunEmissionsByExperiment(
+                params.experimentId,
+                params.startDate,
+                params.endDate,
+            );
+            setExperimentsReportData(data);
+        };
+        fetchData();
+    }, [params.experimentId, params.startDate, params.endDate]);
 
     // Add this custom tooltip function
     const CustomTooltip = ({ active, payload }: any) => {

@@ -16,6 +16,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useEffect, useState } from "react";
 
 interface ExperimentsBarChartProps {
     params: {
@@ -66,15 +67,26 @@ type Params = {
     startDate: string;
     endDate: string;
 };
-export default async function ExperimentsBarChart({
+export default function ExperimentsBarChart({
     params,
     onExperimentClick,
 }: ExperimentsBarChartProps) {
-    const experimentsReportData = await getProjectEmissionsByExperiment(
-        params.projectId,
-        params.startDate,
-        params.endDate,
-    );
+    const [experimentsReportData, setExperimentsReportData] = useState<
+        ExperimentReport[]
+    >([]);
+    useEffect(() => {
+        const fetchData = async () => {
+            console.log("Fetching experiments report data");
+            const data = await getProjectEmissionsByExperiment(
+                params.projectId,
+                params.startDate,
+                params.endDate,
+            );
+            setExperimentsReportData(data);
+        };
+        fetchData();
+    }, [params.projectId, params.startDate, params.endDate]);
+
     return (
         <Card>
             <CardHeader>
