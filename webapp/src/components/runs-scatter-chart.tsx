@@ -1,4 +1,5 @@
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, Label } from "recharts";
+import { format } from "date-fns";
 import { RunReport } from "@/types/run-report";
 
 import {
@@ -91,7 +92,7 @@ export default function RunsScatterChart({
         <Card>
             <CardHeader>
                 <CardTitle>Scatter Chart - Emissions by Run Id</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
+                <CardDescription></CardDescription>
             </CardHeader>
             <CardContent>
                 <ScatterChart
@@ -109,6 +110,9 @@ export default function RunsScatterChart({
                         name="Timestamp"
                         type="category"
                         stroke="currentColor"
+                        tickFormatter={(timestamp) =>
+                            format(new Date(timestamp), "MM/dd/yyyy")
+                        }
                     >
                         <Label
                             value="Timestamp"

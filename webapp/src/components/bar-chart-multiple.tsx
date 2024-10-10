@@ -42,7 +42,7 @@ export default function BarChartMultiple() {
         <Card>
             <CardHeader>
                 <CardTitle>Bar Chart - Multiple</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
+                <CardDescription></CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig}>

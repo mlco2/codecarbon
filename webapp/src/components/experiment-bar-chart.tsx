@@ -91,7 +91,7 @@ export default function ExperimentsBarChart({
         <Card>
             <CardHeader>
                 <CardTitle>Project experiment runs</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
+                <CardDescription></CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig}>

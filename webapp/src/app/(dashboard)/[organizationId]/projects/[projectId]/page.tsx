@@ -216,7 +216,7 @@ export default function ProjectPage({
                 <Separator className="h-[0.5px] bg-muted-foreground" />
                 <div className="grid grid-cols-4 gap-4">
                     <div className="grid grid-cols-1 gap-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
                                 <img
                                     src="/household_consumption.svg"
@@ -224,8 +224,8 @@ export default function ProjectPage({
                                     className="h-16 w-16"
                                 />
                             </div>
-                            <div className="flex items-center justify-center">
-                                <p className="text-xl text-gray-500">
+                            <div className="flex flex-col col-span-2 justify-center">
+                                <p className="text-4xl text-primary">
                                     {convertedValues.household} %
                                 </p>
                                 <p className="text-sm font-medium">
@@ -234,7 +234,7 @@ export default function ProjectPage({
                                 </p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
                                 <img
                                     src="/transportation.svg"
@@ -242,8 +242,8 @@ export default function ProjectPage({
                                     className="h-16 w-16"
                                 />
                             </div>
-                            <div className="flex items-center justify-center">
-                                <p className="text-xl text-gray-500">
+                            <div className="flex flex-col col-span-2 justify-center">
+                                <p className="text-4xl text-primary">
                                     {convertedValues.transportation}
                                 </p>
                                 <p className="text-sm font-medium">
@@ -251,7 +251,7 @@ export default function ProjectPage({
                                 </p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
                                 <img
                                     src="/tv.svg"
@@ -259,8 +259,8 @@ export default function ProjectPage({
                                     className="h-16 w-16"
                                 />
                             </div>
-                            <div className="flex items-center justify-center">
-                                <p className="text-xl text-gray-500">
+                            <div className="flex flex-col col-span-2 justify-center">
+                                <p className="text-4xl text-primary">
                                     {convertedValues.tvTime} days
                                 </p>
                                 <p className="text-sm font-medium">
