@@ -25,7 +25,7 @@ type chartDataType = {
     value: number;
 };
 
-export default async function RadialChart({
+export default function RadialChart({
     data,
 }: Readonly<{ data: chartDataType }>) {
     const chartConfig = {
