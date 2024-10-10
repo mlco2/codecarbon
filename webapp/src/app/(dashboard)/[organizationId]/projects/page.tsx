@@ -1,5 +1,6 @@
 "use client";
 
+import CreateProjectModal from "@/components/createProjectModal";
 import CustomRow from "@/components/custom-row";
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
@@ -8,11 +9,16 @@ import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { fetcher } from "@/helpers/swr";
 import { Project } from "@/types/project";
+import { useState } from "react";
 import useSWR from "swr";
 
 export default function ProjectsPage({
     params,
 }: Readonly<{ params: { organizationId: string } }>) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const handleClick = async () => {
+        setIsModalOpen(true);
+    };
     const {
         data: projects,
         error,
@@ -37,9 +43,17 @@ export default function ProjectsPage({
         <div className="container mx-auto p-4 md:gap-8 md:p-8">
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-semi-bold">Projects</h1>
-                <Button disabled className="bg-primary text-primary-foreground">
+                <Button
+                    onClick={handleClick}
+                    className="bg-primary text-primary-foreground"
+                >
                     + Add a project
                 </Button>
+                <CreateProjectModal
+                    organizationId={params.organizationId}
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                />
             </div>
             <Card>
                 <Table>

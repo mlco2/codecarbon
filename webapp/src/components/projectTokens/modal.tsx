@@ -1,6 +1,6 @@
 import { IProjectToken } from "@/types/project";
 import React, { useState } from "react";
-import { ClipboardCopy } from "lucide-react";
+import { ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { createProjectToken } from "@/server-functions/projectTokens";
 import GeneralModal from "../ui/modal";
 
@@ -10,15 +10,28 @@ interface ModalProps {
     onClose: () => void;
     onTokenCreated: () => Promise<void>;
 }
-
+interface CreateProjectTokenInput {
+    name: string;
+}
 const ProjectTokenModal: React.FC<ModalProps> = ({
     projectId,
     isOpen,
     onClose,
     onTokenCreated,
 }) => {
-    const initialData = { name: "" };
-    const handleSave = async (data: { name: string }) => {
+    const [isCopied, setIsCopied] = useState(false);
+    const initialData: CreateProjectTokenInput = { name: "" };
+    const initialSavedData: IProjectToken = {
+        name: "",
+        id: "",
+        project_id: "",
+        last_used: null,
+        token: "",
+        access: 0,
+    };
+    const handleSave = async (
+        data: CreateProjectTokenInput,
+    ): Promise<IProjectToken> => {
         const access = 2;
         const newToken = await createProjectToken(projectId, data.name, access);
         await onTokenCreated(); // Call the callback to refresh the token list
@@ -29,7 +42,8 @@ const ProjectTokenModal: React.FC<ModalProps> = ({
         navigator.clipboard
             .writeText(token)
             .then(() => {
-                alert("Token copied to clipboard");
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000); // Revert back after 2 seconds
             })
             .catch((err) => {
                 console.error("Failed to copy token: ", err);
@@ -54,15 +68,22 @@ const ProjectTokenModal: React.FC<ModalProps> = ({
             <p className="text-l mb-4">
                 The following token has been generated:
             </p>
-            <div className="bg-muted flex items-center p-2 rounded ">
-                <pre className="m-0">
+            <div className="bg-muted flex items-center p-2 rounded justify-between">
+                <pre className="m-1">
                     <code>{data.token}</code>
                 </pre>
                 <button
                     onClick={() => handleCopy(data.token)}
                     className="ml-2 px-4 py-2 rounded text-gray-500 hover:text-gray-700"
                 >
-                    <ClipboardCopy />
+                    {isCopied ? (
+                        <div className="flex justify-between">
+                            <ClipboardCheck />
+                            <p>Copied</p>
+                        </div>
+                    ) : (
+                        <ClipboardCopy />
+                    )}
                 </button>
             </div>
         </div>
@@ -73,7 +94,7 @@ const ProjectTokenModal: React.FC<ModalProps> = ({
             onClose={onClose}
             onSave={handleSave}
             initialData={initialData}
-            initialSavedData={initialData}
+            initialSavedData={initialSavedData}
             renderForm={renderForm}
             renderSavedData={renderSavedData}
         />
