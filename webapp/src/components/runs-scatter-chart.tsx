@@ -133,6 +133,9 @@ export default function RunsScatterChart({
                             name="Timestamp"
                             type="category"
                             stroke="currentColor"
+                            tickFormatter={(value) =>
+                                format(new Date(value), "yyyy-mm-dd HH:mm")
+                            }
                         >
                             <Label
                                 value="Timestamp"
