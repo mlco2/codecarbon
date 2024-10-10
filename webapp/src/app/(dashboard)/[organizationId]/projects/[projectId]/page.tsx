@@ -13,6 +13,8 @@ import { addMonths, startOfDay, endOfDay } from "date-fns";
 import { useRouter } from "next/navigation";
 import { SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getOneProject } from "@/server-functions/projects";
+import { Project } from "@/types/project";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -61,6 +63,24 @@ export default function ProjectPage({
         organizationId: string;
     };
 }>) {
+    const [project, setProject] = useState({
+        name: "",
+        description: "",
+    } as Project);
+
+    useEffect(() => {
+        // Replace with your actual API endpoint
+        const fetchProjectDetails = async () => {
+            try {
+                const project: Project = await getOneProject(params.projectId);
+                setProject(project);
+            } catch (error) {
+                console.error("Error fetching project description:", error);
+            }
+        };
+
+        fetchProjectDetails();
+    }, []);
     const router = useRouter();
     const handleSettingsClick = () => {
         router.push(
@@ -190,7 +210,7 @@ export default function ProjectPage({
                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-semi-bold">
-                            Project name
+                            Project {project.name}
                         </h1>
                         <Button
                             onClick={handleSettingsClick}
@@ -201,7 +221,7 @@ export default function ProjectPage({
                             <SettingsIcon />
                         </Button>
                         <span className="text-sm font-semi-bold">
-                            Project Description
+                            {project.description}
                         </span>
                     </div>
                     <div>
@@ -216,7 +236,7 @@ export default function ProjectPage({
                 <Separator className="h-[0.5px] bg-muted-foreground" />
                 <div className="grid grid-cols-4 gap-4">
                     <div className="grid grid-cols-1 gap-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
                                 <img
                                     src="/household_consumption.svg"
@@ -224,8 +244,8 @@ export default function ProjectPage({
                                     className="h-16 w-16"
                                 />
                             </div>
-                            <div className="flex items-center justify-center">
-                                <p className="text-xl text-gray-500">
+                            <div className="flex flex-col col-span-2 justify-center">
+                                <p className="text-4xl text-primary">
                                     {convertedValues.household} %
                                 </p>
                                 <p className="text-sm font-medium">
@@ -234,7 +254,7 @@ export default function ProjectPage({
                                 </p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
                                 <img
                                     src="/transportation.svg"
@@ -242,8 +262,8 @@ export default function ProjectPage({
                                     className="h-16 w-16"
                                 />
                             </div>
-                            <div className="flex items-center justify-center">
-                                <p className="text-xl text-gray-500">
+                            <div className="flex flex-col col-span-2 justify-center">
+                                <p className="text-4xl text-primary">
                                     {convertedValues.transportation}
                                 </p>
                                 <p className="text-sm font-medium">
@@ -251,7 +271,7 @@ export default function ProjectPage({
                                 </p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
                                 <img
                                     src="/tv.svg"
@@ -259,8 +279,8 @@ export default function ProjectPage({
                                     className="h-16 w-16"
                                 />
                             </div>
-                            <div className="flex items-center justify-center">
-                                <p className="text-xl text-gray-500">
+                            <div className="flex flex-col col-span-2 justify-center">
+                                <p className="text-4xl text-primary">
                                     {convertedValues.tvTime} days
                                 </p>
                                 <p className="text-sm font-medium">
@@ -279,6 +299,8 @@ export default function ProjectPage({
                         <RadialChart data={radialChartData.duration} />
                     </div>
                 </div>
+
+                <Separator className="h-[0.5px] bg-muted-foreground" />
                 <div className="grid gap-4 md:grid-cols-2 md:gap-8">
                     <ExperimentsBarChart
                         params={experimentsData}
@@ -292,9 +314,13 @@ export default function ProjectPage({
                         onRunClick={handleRunClick}
                     />
                 </div>
+                <Separator className="h-[0.5px] bg-muted-foreground" />
                 <div className="grid gap-4 md:grid-cols-1 md:gap-8">
                     {selectedRunId && (
-                        <EmissionsTimeSeriesChart runId={selectedRunId} />
+                        <>
+                            <EmissionsTimeSeriesChart runId={selectedRunId} />
+                            <Separator className="h-[0.5px] bg-muted-foreground" />
+                        </>
                     )}
                 </div>
             </main>

@@ -74,6 +74,12 @@ export default function ExperimentsBarChart({
     const [experimentsReportData, setExperimentsReportData] = useState<
         ExperimentReport[]
     >([]);
+    const [selectedBar, setSelectedBar] = useState(0);
+
+    const handleBarClick = (data: ExperimentReport, index: number) => {
+        onExperimentClick(data.experiment_id);
+        setSelectedBar(index);
+    };
     useEffect(() => {
         const fetchData = async () => {
             console.log("Fetching experiments report data");
@@ -87,11 +93,32 @@ export default function ExperimentsBarChart({
         fetchData();
     }, [params.projectId, params.startDate, params.endDate]);
 
+    const CustomBar = (props: any) => {
+        const { fill, x, y, width, height, index } = props;
+        const barFill =
+            selectedBar === index
+                ? "var(--color-desktop)"
+                : "var(--color-mobile)";
+        return (
+            <rect
+                x={x}
+                y={y}
+                width={width}
+                height={height}
+                fill={barFill}
+                onClick={() => handleBarClick(props.payload, index)}
+                cursor="pointer"
+            />
+        );
+    };
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Project experiment runs</CardTitle>
-                <CardDescription>January - June 2024</CardDescription>
+                <CardDescription>
+                    Click an experiment to see the runs on the chart on the
+                    right
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig}>
@@ -110,12 +137,8 @@ export default function ExperimentsBarChart({
                         />
                         <Bar
                             dataKey="emissions"
-                            fill="var(--color-desktop)"
+                            shape={<CustomBar />}
                             radius={4}
-                            onClick={(data) =>
-                                onExperimentClick(data.experiment_id)
-                            }
-                            cursor="pointer"
                         />
                     </BarChart>
                 </ChartContainer>

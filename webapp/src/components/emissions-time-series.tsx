@@ -215,7 +215,7 @@ async function getEmissionsTimeSeries(
     runId: string,
 ): Promise<EmissionsTimeSeries> {
     const runMetadataResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/run/${runId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/runs/${runId}`,
     );
     const runMetadataData = await runMetadataResponse.json();
 

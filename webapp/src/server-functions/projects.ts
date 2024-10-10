@@ -30,3 +30,10 @@ export const getProjects = async (
     const data = await response.json();
     return data;
 };
+export const getOneProject = async (projectId: string): Promise<Project> => {
+    const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
+    );
+    const data = await response.json();
+    return data;
+};
