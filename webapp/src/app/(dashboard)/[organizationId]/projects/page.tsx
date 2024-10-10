@@ -8,17 +8,25 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { fetcher } from "@/helpers/swr";
+import { getProjects } from "@/server-functions/projects";
 import { Project } from "@/types/project";
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import useSWR from "swr";
 
 export default function ProjectsPage({
     params,
 }: Readonly<{ params: { organizationId: string } }>) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [projectList, setProjectList] = useState<Project[]>([]);
     const handleClick = async () => {
         setIsModalOpen(true);
     };
+    const refreshProjectList = async () => {
+        // Fetch the updated list of projects from the server
+        const projectList = await getProjects(params.organizationId);
+        setProjectList(projectList);
+    };
+    // Fetch the updated list of projects from the server
     const {
         data: projects,
         error,
@@ -31,6 +39,11 @@ export default function ProjectsPage({
         },
     );
 
+    useEffect(() => {
+        if (projects) {
+            setProjectList(projects);
+        }
+    }, [projects]);
     if (isLoading) {
         return <Loader />;
     }
@@ -53,13 +66,14 @@ export default function ProjectsPage({
                     organizationId={params.organizationId}
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
+                    onProjectCreated={refreshProjectList}
                 />
             </div>
             <Card>
                 <Table>
                     <TableBody>
-                        {projects &&
-                            projects
+                        {projectList &&
+                            projectList
                                 .sort((a, b) =>
                                     a.name
                                         .toLowerCase()

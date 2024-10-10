@@ -1,13 +1,14 @@
-import { IProjectToken, Project } from "@/types/project";
-import React, { useState } from "react";
-import { ClipboardCopy } from "lucide-react";
+import { Project } from "@/types/project";
 import GeneralModal from "./ui/modal";
 import { createProject } from "@/server-functions/projects";
+import { Separator } from "./ui/separator";
+import { Input } from "./ui/input";
 
 interface ModalProps {
     organizationId: string;
     isOpen: boolean;
     onClose: () => void;
+    onProjectCreated: () => Promise<void>;
 }
 interface CreateProjectInput {
     name: string;
@@ -18,6 +19,7 @@ const CreateProjectModal: React.FC<ModalProps> = ({
     organizationId,
     isOpen,
     onClose,
+    onProjectCreated,
 }) => {
     const initialData: CreateProjectInput = {
         name: "",
@@ -32,27 +34,29 @@ const CreateProjectModal: React.FC<ModalProps> = ({
     };
     const handleSave = async (data: CreateProjectInput) => {
         const newProject: Project = await createProject(organizationId, data);
+        await onProjectCreated(); // Call the callback to refresh the project list
         return newProject;
     };
 
     const renderForm = (data: CreateProjectInput, setData: any) => (
         <div>
             <h2 className="text-xl font-bold mb-4">Create new project</h2>
-            <input
+            <Separator className="mb-4" />
+            <Input
                 type="text"
                 value={data.name}
                 onChange={(e) => setData({ ...data, name: e.target.value })}
-                className="border p-2 w-full"
                 placeholder="Project Name"
+                className={"mt-4 mb-4"}
             />
-            <input
+            <Input
                 type="text"
                 value={data.description}
                 onChange={(e) =>
                     setData({ ...data, description: e.target.value })
                 }
-                className="border p-2 w-full"
                 placeholder="Project Description"
+                className={"mt-4 mb-4"}
             />
         </div>
     );

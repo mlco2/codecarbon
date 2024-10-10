@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { createProjectToken } from "@/server-functions/projectTokens";
 import GeneralModal from "../ui/modal";
+import { Separator } from "../ui/separator";
+import { Input } from "../ui/input";
 
 interface ModalProps {
     projectId: string;
@@ -53,11 +55,10 @@ const ProjectTokenModal: React.FC<ModalProps> = ({
     const renderForm = (data: any, setData: any) => (
         <div>
             <h2 className="text-xl font-bold mb-4">Create new token</h2>
-            <input
+            <Input
                 type="text"
                 value={data.name}
                 onChange={(e) => setData({ ...data, name: e.target.value })}
-                className="border p-2 w-full"
                 placeholder="Token Name"
             />
         </div>
