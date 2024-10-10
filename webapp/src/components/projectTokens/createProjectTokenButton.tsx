@@ -1,8 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import Modal from "@/components/projectTokens/modal";
-import { createProjectToken } from "@/server-functions/projectTokens";
+import ProjectTokenModal from "@/components/projectTokens/modal";
 
 const CreateTokenButton = ({
     projectId,
@@ -23,7 +22,7 @@ const CreateTokenButton = ({
             >
                 + Create a new token
             </Button>
-            <Modal
+            <ProjectTokenModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onTokenCreated={onTokenCreated}

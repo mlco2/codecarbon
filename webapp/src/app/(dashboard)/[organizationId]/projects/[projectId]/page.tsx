@@ -198,7 +198,7 @@ export default function ProjectPage({
                             size="icon"
                             className="rounded-full"
                         >
-                            <SettingsIcon className="mr-2 h-4 w-4" />
+                            <SettingsIcon />
                         </Button>
                         <span className="text-sm font-semi-bold">
                             Project Description
