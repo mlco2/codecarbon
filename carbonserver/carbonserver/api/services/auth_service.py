@@ -20,7 +20,6 @@ fief = FiefAsync(
     settings.fief_url, settings.fief_client_id, settings.fief_client_secret
 )
 
-
 @dataclass
 class FullUser:
     db_user: dict

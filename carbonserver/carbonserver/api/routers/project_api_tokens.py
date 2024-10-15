@@ -13,6 +13,7 @@ PROJECTS_TOKENS_ROUTER_TAGS = ["Project tokens"]
 router = APIRouter(
     dependencies=[Depends(get_token_header)],
 )
+# TODO: Add authentication to the endpoints
 
 
 # Create project token
