@@ -1,31 +1,34 @@
 from contextlib import AbstractContextManager
+import datetime
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
 
 from carbonserver.api.domain.project_tokens import ProjectTokens
-from carbonserver.api.infra.api_key_service import generate_api_key
+from carbonserver.api.infra.api_key_utils import  generate_lookup_value,  verify_api_key
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import (
     ProjectToken as SqlModelProjectToken,
 )
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
-from carbonserver.api.schemas import ProjectToken, ProjectTokenCreate
+from carbonserver.api.schemas import ProjectToken, ProjectTokenInternal
 
 
 class SqlAlchemyRepository(ProjectTokens):
     def __init__(self, session_factory) -> Callable[..., AbstractContextManager]:
         self.session_factory = session_factory
 
-    def add_project_token(self, project_id: str, project_token: ProjectTokenCreate):
-        token = f"pt_{generate_api_key()}"  # pt stands for project token
+    def add_project_token(self, project_token: ProjectTokenInternal):
+        lookup_value = generate_lookup_value(project_token.token)
         with self.session_factory() as session:
             db_project_token = SqlModelProjectToken(
-                project_id=project_id,
-                token=token,
+                project_id=project_token.project_id,
+                hashed_token=project_token.hashed_token,
+                expiration_date=project_token.expiration_date,
                 name=project_token.name,
                 access=project_token.access,
+                lookup_value=lookup_value,
             )
             session.add(db_project_token)
             session.commit()
@@ -62,59 +65,70 @@ class SqlAlchemyRepository(ProjectTokens):
             ]
 
     def get_project_token_by_project_id_and_token(self, project_id: str, token: str):
+        lookup_value = generate_lookup_value(token)
         with self.session_factory() as session:
             db_project_token = (
                 session.query(SqlModelProjectToken)
+                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
                 .filter(
                     SqlModelProjectToken.project_id == project_id
-                    and SqlModelProjectToken.token == token
                 )
+                .filter(verify_api_key(token, SqlModelProjectToken.hashed_token))
                 .first()
             )
-            return (
-                self.map_sql_to_schema(db_project_token) if db_project_token else None
-            )
+            if db_project_token:
+                self._set_last_used(db_project_token)
+                return self.map_sql_to_schema(db_project_token)
+            return None
 
     def get_project_token_by_experiment_id_and_token(
         self, experiment_id: str, token: str
     ):
+        lookup_value = generate_lookup_value(token)
         with self.session_factory() as session:
             db_project_token = (
                 session.query(SqlModelProjectToken)
-                .filter(SqlModelProjectToken.token == token)
+                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
                 .join(
                     SqlModelExperiment,
                     SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
                 )
                 .filter(SqlModelExperiment.id == experiment_id)
+                .filter(verify_api_key(token, SqlModelProjectToken.hashed_token)) # Done last to avoid unnecessary hashing
                 .first()
             )
-            return (
-                self.map_sql_to_schema(db_project_token) if db_project_token else None
-            )
+            if db_project_token:
+                self._set_last_used(db_project_token)
+                return self.map_sql_to_schema(db_project_token)
+            return None
 
     def get_project_token_by_run_id_and_token(self, run_id: str, token: str):
+        lookup_value = generate_lookup_value(token)
         with self.session_factory() as session:
             db_project_token = (
                 session.query(SqlModelProjectToken)
-                .filter(SqlModelProjectToken.token == token)
+                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
                 .join(
                     SqlModelExperiment,
                     SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
                 )
                 .join(SqlModelRun, SqlModelExperiment.id == SqlModelRun.experiment_id)
                 .filter(SqlModelRun.id == run_id)
+                .filter(verify_api_key(token, SqlModelProjectToken.hashed_token)) # Done last to avoid unnecessary hashing
                 .first()
             )
-            return (
-                self.map_sql_to_schema(db_project_token) if db_project_token else None
-            )
+
+            if db_project_token:
+                self._set_last_used(db_project_token)
+                return self.map_sql_to_schema(db_project_token)
+            return None
 
     def get_project_token_by_emission_id_and_token(self, emission_id: str, token: str):
+        lookup_value = generate_lookup_value(token)
         with self.session_factory() as session:
             db_project_token = (
                 session.query(SqlModelProjectToken)
-                .filter(SqlModelProjectToken.token == token)
+                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
                 .join(
                     SqlModelExperiment,
                     SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
@@ -122,11 +136,21 @@ class SqlAlchemyRepository(ProjectTokens):
                 .join(SqlModelRun, SqlModelExperiment.id == SqlModelRun.experiment_id)
                 .join(SqlModelEmission, SqlModelRun.id == SqlModelEmission.run_id)
                 .filter(SqlModelEmission.id == emission_id)
+                .filter(verify_api_key(token, SqlModelProjectToken.hashed_token)) # Done last to avoid unnecessary hashing
                 .first()
             )
-            return (
-                self.map_sql_to_schema(db_project_token) if db_project_token else None
-            )
+            if db_project_token:
+                self._set_last_used(db_project_token)
+                return self.map_sql_to_schema(db_project_token)
+            return None
+        
+    def _set_last_used(self, project_token: SqlModelProjectToken):
+        """Update the last_used field of the project token"""
+        with self.session_factory() as session:
+            project_token.last_used = datetime.datetime.now()
+            session.commit()
+            session.refresh(project_token)
+            return self.map_sql_to_schema(project_token)
 
     @staticmethod
     def map_sql_to_schema(project_token: SqlModelProjectToken) -> ProjectToken:
@@ -140,7 +164,8 @@ class SqlAlchemyRepository(ProjectTokens):
             id=str(project_token.id),
             name=project_token.name,
             project_id=project_token.project_id,
-            token=project_token.token,
             last_used=project_token.last_used,
             access=project_token.access,
+            expiration_date=project_token.expiration_date,
+            revoked=project_token.revoked,
         )

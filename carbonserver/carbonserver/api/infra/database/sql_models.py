@@ -177,17 +177,22 @@ class ProjectToken(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     name = Column(String)
-    token = Column(String, unique=True)
+    hashed_token = Column(String,nullable=False)
+    lookup_value = Column(String,nullable=False) # This is the first 8 characters of the SHA-256 hash of the API key. Used for filtering faster
+    revoked = Column(Boolean, default=False)
     project = relationship("Project", back_populates="project_tokens")
+    # Dates
     last_used = Column(DateTime, nullable=True)
+    expiration_date = Column(DateTime, nullable=False)
     # Permissions
     access = Column(Integer)
 
     def __repr__(self):
         return (
             f'<ApiKey(project_id="{self.project_id}", '
-            f'api_key="{self.token}", '
+            f'api_key="{self.hashed_token}", '
             f'name="{self.name}", '
+            f'revoked="{self.revoked}", '
             f'last_used="{self.last_used}", '
             f'access="{self.access}", '
         )
