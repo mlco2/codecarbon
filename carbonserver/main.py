@@ -1,4 +1,4 @@
-from container import ServerContainer
+from container import ServerContainer, settings
 from fastapi import Depends, FastAPI
 from fastapi_pagination import add_pagination
 from pydantic import ValidationError
@@ -103,6 +103,9 @@ def init_server(container):
         "http://localhost:3000",
         "http://localhost:8000",
     ]
+
+    if settings.frontend_url != "":
+        origins.append(settings.frontend_url)
 
     server.add_middleware(
         CORSMiddleware,
