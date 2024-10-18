@@ -71,7 +71,6 @@ class UserWithAuthDependency:
             fief_auth_cookie.current_user(optional=True)
         ),
         cookie_token: Optional[str] = Depends(web_scheme),
-        # api_key: Optional[HTTPAuthorizationCredentials] = Depends(web_scheme),
         bearer_token: Optional[str] = Depends(HTTPBearer(auto_error=False)),
         user_service: Optional[UserService] = Depends(
             Provide[ServerContainer.user_service]

@@ -13,8 +13,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr, validator
-
+from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
 
 class Empty(BaseModel, extra=Extra.forbid):
     pass
@@ -303,7 +302,6 @@ class ProjectToken(BaseModel):
     project_id: UUID
     name: Optional[str]
     token: Optional[str] = None
-    expiration_date: Optional[datetime] = None
     last_used: Optional[datetime] = None
     access: int = AccessLevel.WRITE.value
     revoked: bool = False
@@ -315,7 +313,6 @@ class ProjectToken(BaseModel):
                 "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "name": "my project token",
                 "last_used": "2021-04-04T08:43:00+02:00",
-                "expiration_date": "2021-04-07T08:43:00+02:00",
                 "access": 1,
                 "revoked": False,
             }
@@ -329,20 +326,12 @@ class ProjectTokenInternal(ProjectToken):
 class ProjectTokenCreate(BaseModel):
     name: Optional[str]
     access: int = AccessLevel.WRITE.value
-    expiration_date: datetime
-
-    @validator('expiration_date')
-    def check_expiration_date(cls, value):
-        if value < datetime.now(timezone.utc):
-            raise ValueError('Expiration date must be in the future')
-        return value
 
     class Config:
         schema_extra = {
             "example": {
                 "name": "my project token",
                 "access": 1,
-                "expiration_date": "2041-04-07T08:43:00+02:00",
             }
         }
 

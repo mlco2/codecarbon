@@ -25,13 +25,9 @@ def upgrade():
     op.add_column('project_tokens', sa.Column('lookup_value', sa.String(), nullable=False))
     # Add revoked column
     op.add_column('project_tokens', sa.Column('revoked', sa.Boolean(), nullable=False, server_default='false'))
-    # Add expiration_date column
-    op.add_column('project_tokens', sa.Column('expiration_date', sa.DateTime(), nullable=False))
 
 
 def downgrade():
-    # Remove expiration_date column
-    op.drop_column('project_tokens', 'expiration_date')
     # Remove revoked column
     op.drop_column('project_tokens', 'revoked')
     # Remove lookup_value column

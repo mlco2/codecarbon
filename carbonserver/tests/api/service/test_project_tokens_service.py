@@ -35,8 +35,7 @@ def test_project_token_service_creates_correct_project_token(_):
 
     project_token_to_create = ProjectTokenCreate(
         name="Project",
-        access=AccessLevel.READ.value,
-        expiration_date="2051-08-27T14:00:00Z",
+        access=AccessLevel.READ.value
     )
 
     actual_saved_project_token = project_token_service.add_project_token(

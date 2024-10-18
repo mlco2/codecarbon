@@ -27,7 +27,6 @@ class ProjectTokenService:
             project_id=response_db.project_id,
             name=response_db.name,
             access=response_db.access,
-            expiration_date=response_db.expiration_date,
             token=api_key
             )
 

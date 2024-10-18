@@ -26,7 +26,6 @@ class SqlAlchemyRepository(ProjectTokens):
             db_project_token = SqlModelProjectToken(
                 project_id=project_token.project_id,
                 hashed_token=project_token.hashed_token,
-                expiration_date=project_token.expiration_date,
                 name=project_token.name,
                 access=project_token.access,
                 lookup_value=lookup_value,
@@ -168,6 +167,5 @@ class SqlAlchemyRepository(ProjectTokens):
             project_id=project_token.project_id,
             last_used=project_token.last_used,
             access=project_token.access,
-            expiration_date=project_token.expiration_date,
             revoked=project_token.revoked,
         )

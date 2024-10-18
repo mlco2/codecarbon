@@ -183,14 +183,13 @@ class ProjectToken(Base):
     project = relationship("Project", back_populates="project_tokens")
     # Dates
     last_used = Column(DateTime, nullable=True)
-    expiration_date = Column(DateTime, nullable=False)
     # Permissions
     access = Column(Integer)
 
     def __repr__(self):
         return (
             f'<ApiKey(project_id="{self.project_id}", '
-            f'api_key="{self.hashed_token}", '
+            f'hashed_token="{self.hashed_token}", '
             f'name="{self.name}", '
             f'revoked="{self.revoked}", '
             f'last_used="{self.last_used}", '
