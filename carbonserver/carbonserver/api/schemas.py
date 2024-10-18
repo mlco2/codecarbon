@@ -302,7 +302,7 @@ class ProjectToken(BaseModel):
     id: UUID
     project_id: UUID
     name: Optional[str]
-    token: Optional[str]
+    token: Optional[str] = None
     expiration_date: Optional[datetime] = None
     last_used: Optional[datetime] = None
     access: int = AccessLevel.WRITE.value
@@ -314,7 +314,6 @@ class ProjectToken(BaseModel):
                 "id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "name": "my project token",
-                "token": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "last_used": "2021-04-04T08:43:00+02:00",
                 "expiration_date": "2021-04-07T08:43:00+02:00",
                 "access": 1,
