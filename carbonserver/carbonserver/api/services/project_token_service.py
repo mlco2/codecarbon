@@ -1,10 +1,15 @@
 from fastapi import HTTPException
 
+from carbonserver.api.infra.api_key_utils import generate_api_key, get_api_key_hash
 from carbonserver.api.infra.repositories.repository_projects_tokens import (
     SqlAlchemyRepository as ProjectTokensSqlRepository,
 )
-from carbonserver.api.infra.api_key_utils import generate_api_key, get_api_key_hash
-from carbonserver.api.schemas import AccessLevel, ProjectToken, ProjectTokenCreate, ProjectTokenInternal
+from carbonserver.api.schemas import (
+    AccessLevel,
+    ProjectToken,
+    ProjectTokenCreate,
+    ProjectTokenInternal,
+)
 
 
 class ProjectTokenService:
@@ -18,8 +23,9 @@ class ProjectTokenService:
             **input_project_token.dict(),
             project_id=project_id,
             hashed_token=hashed_api_key,
-            token=api_key)
-        response_db= self._repository.add_project_token(project_token)
+            token=api_key,
+        )
+        response_db = self._repository.add_project_token(project_token)
 
         # Return the project token with the api key
         return ProjectToken(
@@ -27,8 +33,8 @@ class ProjectTokenService:
             project_id=response_db.project_id,
             name=response_db.name,
             access=response_db.access,
-            token=api_key
-            )
+            token=api_key,
+        )
 
     def delete_project_token(self, project_id, token_id):
         return self._repository.delete_project_token(project_id, token_id)

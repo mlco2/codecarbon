@@ -8,12 +8,13 @@ These Pydantic models define more or less a "schema" (a valid data shape).
 So this will help us avoiding confusion while using both.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
+
 
 class Empty(BaseModel, extra=Extra.forbid):
     pass
@@ -318,10 +319,12 @@ class ProjectToken(BaseModel):
             }
         }
 
+
 # Used to handle responses from the database
 class ProjectTokenInternal(ProjectToken):
     id: Optional[str]
     hashed_token: str
+
 
 class ProjectTokenCreate(BaseModel):
     name: Optional[str]

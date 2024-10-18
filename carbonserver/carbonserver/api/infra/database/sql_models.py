@@ -177,8 +177,10 @@ class ProjectToken(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     name = Column(String)
-    hashed_token = Column(String,nullable=False)
-    lookup_value = Column(String,nullable=False) # This is the first 8 characters of the SHA-256 hash of the API key. Used for filtering faster
+    hashed_token = Column(String, nullable=False)
+    lookup_value = Column(
+        String, nullable=False
+    )  # This is the first 8 characters of the SHA-256 hash of the API key. Used for filtering faster
     revoked = Column(Boolean, default=False)
     project = relationship("Project", back_populates="project_tokens")
     # Dates

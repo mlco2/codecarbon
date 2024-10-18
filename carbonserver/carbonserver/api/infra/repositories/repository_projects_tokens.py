@@ -1,12 +1,12 @@
-from contextlib import AbstractContextManager
 import datetime
+from contextlib import AbstractContextManager
 from typing import List, Optional
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
 
 from carbonserver.api.domain.project_tokens import ProjectTokens
-from carbonserver.api.infra.api_key_utils import  generate_lookup_value,  verify_api_key
+from carbonserver.api.infra.api_key_utils import generate_lookup_value, verify_api_key
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import (
@@ -69,10 +69,10 @@ class SqlAlchemyRepository(ProjectTokens):
         with self.session_factory() as session:
             db_project_tokens = (
                 session.query(SqlModelProjectToken)
-                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
                 .filter(
-                    SqlModelProjectToken.project_id == project_id
-                )
+                    SqlModelProjectToken.lookup_value == lookup_value
+                )  # To be used for faster filtering
+                .filter(SqlModelProjectToken.project_id == project_id)
                 .all()
             )
             return self._verify_possible_tokens(db_project_tokens, token)
@@ -84,7 +84,9 @@ class SqlAlchemyRepository(ProjectTokens):
         with self.session_factory() as session:
             db_project_tokens = (
                 session.query(SqlModelProjectToken)
-                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
+                .filter(
+                    SqlModelProjectToken.lookup_value == lookup_value
+                )  # To be used for faster filtering
                 .join(
                     SqlModelExperiment,
                     SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
@@ -99,7 +101,9 @@ class SqlAlchemyRepository(ProjectTokens):
         with self.session_factory() as session:
             db_project_tokens = (
                 session.query(SqlModelProjectToken)
-                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
+                .filter(
+                    SqlModelProjectToken.lookup_value == lookup_value
+                )  # To be used for faster filtering
                 .join(
                     SqlModelExperiment,
                     SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
@@ -115,7 +119,9 @@ class SqlAlchemyRepository(ProjectTokens):
         with self.session_factory() as session:
             db_project_tokens = (
                 session.query(SqlModelProjectToken)
-                .filter(SqlModelProjectToken.lookup_value == lookup_value) # To be used for faster filtering
+                .filter(
+                    SqlModelProjectToken.lookup_value == lookup_value
+                )  # To be used for faster filtering
                 .join(
                     SqlModelExperiment,
                     SqlModelProjectToken.project_id == SqlModelExperiment.project_id,
@@ -126,8 +132,10 @@ class SqlAlchemyRepository(ProjectTokens):
                 .all()
             )
             return self._verify_possible_tokens(db_project_tokens, token)
-        
-    def _verify_possible_tokens(self, db_project_tokens:List[SqlModelProjectToken], target_token:str)->Optional[ProjectToken]:
+
+    def _verify_possible_tokens(
+        self, db_project_tokens: List[SqlModelProjectToken], target_token: str
+    ) -> Optional[ProjectToken]:
         """Common function to verify the possible tokens and return the correct one if found
 
         Args:
@@ -137,15 +145,19 @@ class SqlAlchemyRepository(ProjectTokens):
         Returns:
             ProjectToken: The correct token if found, None otherwise
         """
-        if db_project_tokens!=[]:
+        if db_project_tokens != []:
             for db_project_token in db_project_tokens:
-                verification_response = verify_api_key(target_token, db_project_token.hashed_token)
+                verification_response = verify_api_key(
+                    target_token, db_project_token.hashed_token
+                )
                 if verification_response:
                     self._set_last_used(db_project_token)
                     return self.map_sql_to_schema(db_project_token)
         return None
 
-    def _set_last_used(self, project_token: SqlModelProjectToken)->SqlModelProjectToken:
+    def _set_last_used(
+        self, project_token: SqlModelProjectToken
+    ) -> SqlModelProjectToken:
         """Update the last_used field of the project token"""
         with self.session_factory() as session:
             project_token.last_used = datetime.datetime.now()

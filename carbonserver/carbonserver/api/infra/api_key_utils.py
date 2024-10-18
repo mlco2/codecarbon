@@ -1,17 +1,19 @@
-import secrets
-import bcrypt
 import hashlib
+import secrets
 
-PREFIX_KEY = "cpt_" # cpt stands for codecarbon project token
+import bcrypt
+
+PREFIX_KEY = "cpt_"  # cpt stands for codecarbon project token
 
 
-def generate_api_key()->str:
+def generate_api_key() -> str:
     # Generate a random API key
     api_key = secrets.token_urlsafe(32)
     prefixed_api_key = f"{PREFIX_KEY}{api_key}"
     return prefixed_api_key
 
-def get_api_key_hash(api_key:str)->str:
+
+def get_api_key_hash(api_key: str) -> str:
     """Get the hash of the api key"""
     return bcrypt.hashpw(
         api_key.encode(),
@@ -19,7 +21,7 @@ def get_api_key_hash(api_key:str)->str:
     )
 
 
-def verify_api_key(plain_api_key:str, hashed_api_key:str) -> bool:
+def verify_api_key(plain_api_key: str, hashed_api_key: str) -> bool:
     """
     Verify the api key
     """
@@ -27,6 +29,7 @@ def verify_api_key(plain_api_key:str, hashed_api_key:str) -> bool:
         plain_api_key.encode(),
         hashed_api_key.encode(),
     )
+
 
 def generate_lookup_value(api_key: str) -> str:
     # Generate a SHA-256 hash of the API key
