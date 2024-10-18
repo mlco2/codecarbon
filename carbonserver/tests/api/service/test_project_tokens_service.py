@@ -34,8 +34,7 @@ def test_project_token_service_creates_correct_project_token(_):
     repository_mock.add_project_token.return_value = PROJECT_TOKEN
 
     project_token_to_create = ProjectTokenCreate(
-        name="Project",
-        access=AccessLevel.READ.value,
+        name="Project", access=AccessLevel.READ.value
     )
 
     actual_saved_project_token = project_token_service.add_project_token(

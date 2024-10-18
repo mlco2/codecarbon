@@ -1,17 +1,40 @@
 from fastapi import HTTPException
 
+from carbonserver.api.infra.api_key_utils import generate_api_key, get_api_key_hash
 from carbonserver.api.infra.repositories.repository_projects_tokens import (
     SqlAlchemyRepository as ProjectTokensSqlRepository,
 )
-from carbonserver.api.schemas import AccessLevel, ProjectToken, ProjectTokenCreate
+from carbonserver.api.schemas import (
+    AccessLevel,
+    ProjectToken,
+    ProjectTokenCreate,
+    ProjectTokenInternal,
+)
 
 
 class ProjectTokenService:
     def __init__(self, project_token_repository: ProjectTokensSqlRepository):
         self._repository = project_token_repository
 
-    def add_project_token(self, project_id, project_token: ProjectTokenCreate):
-        return self._repository.add_project_token(project_id, project_token)
+    def add_project_token(self, project_id, input_project_token: ProjectTokenCreate):
+        api_key = generate_api_key()
+        hashed_api_key = get_api_key_hash(api_key=api_key)
+        project_token = ProjectTokenInternal(
+            **input_project_token.dict(),
+            project_id=project_id,
+            hashed_token=hashed_api_key,
+            token=api_key,
+        )
+        response_db = self._repository.add_project_token(project_token)
+
+        # Return the project token with the api key
+        return ProjectToken(
+            id=response_db.id,
+            project_id=response_db.project_id,
+            name=response_db.name,
+            access=response_db.access,
+            token=api_key,
+        )
 
     def delete_project_token(self, project_id, token_id):
         return self._repository.delete_project_token(project_id, token_id)
@@ -105,6 +128,7 @@ class ProjectTokenService:
         self._has_access(desired_access, full_project_token)
 
     def _has_access(self, desired_access: int, full_project_token: ProjectToken | None):
+        # TODO: Check if the project token is expired
         if full_project_token:
             has_access = (
                 desired_access == full_project_token.access
