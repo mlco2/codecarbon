@@ -194,7 +194,7 @@ sqlalchemy==1.4.54
     # via
     #   hatch.envs.api
     #   alembic
-starlette==0.40.0
+starlette
     # via fastapi
 typer==0.12.5
     # via hatch.envs.api
