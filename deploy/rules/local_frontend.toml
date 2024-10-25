@@ -3,8 +3,9 @@
     [http.routers]
 
       [http.routers.webapp-router]
+          # comment the next line and uncomment the one after to use the local frontend
           rule = "Host(`webapp.local`)"
-          #rule = "Host(`codecarbon.local`)"
+          # rule = "Host(`codecarbon.local`)"
           service = "webapp-service"
           entrypoints=["web","websecure"]
           priority = 10
