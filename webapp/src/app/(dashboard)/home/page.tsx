@@ -1,4 +1,3 @@
-import ErrorMessage from "@/components/error-message";
 import {
     Card,
     CardDescription,
@@ -6,6 +5,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { fiefAuth } from "@/helpers/fief";
+import { getDefaultOrgId } from "@/server-functions/organizations";
 import { redirect } from "next/navigation";
 
 // This method calls the API to check if the user is created in DB
@@ -26,25 +26,6 @@ async function checkAuth() {
     }
 
     return res.json();
-}
-
-async function getDefaultOrgId(): Promise<string | null> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations`);
-
-    if (!res.ok) {
-        // throw new Error("Failed to fetch /organizations");
-        console.warn("error fetching organizations list");
-        return null;
-    }
-    try {
-        const orgs = await res.json();
-        if (orgs.length > 0) {
-            return orgs[0].id;
-        }
-    } catch (err) {
-        console.warn("error processing organizations list");
-    }
-    return null;
 }
 
 export default async function HomePage({
