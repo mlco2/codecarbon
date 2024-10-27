@@ -117,9 +117,11 @@ def _setup(settings: Settings):
     print(
         f"""
 You might need to add the following entries to your /etc/hosts:
-192.168.0.x  {settings.hostname} {settings.fief_hostname} webapp.local
+local_ip  {settings.hostname} {settings.fief_hostname} webapp.local
 
-Use the IP for your lan, not 127.0.0.1
+Replace "local_ip" by you local ip, not 127.0.0.1
+You might be able to get it with `ip a | grep 192.168 | grep -v br-`
+
 
 Useful informations:
 Fief admin username: admin@mydomain.com
@@ -134,6 +136,7 @@ Fief admin password: {settings.fief_admin_password}
         + (" --fief" if settings.run_fief else "")
         + " --codecarbon"
     )
+    print("You can find somme additional information in deploy/README.md")
 
 
 @app.command()

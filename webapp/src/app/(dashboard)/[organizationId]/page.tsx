@@ -1,52 +1,19 @@
 "use client";
 
-import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
-
-import { cn } from "@/helpers/utils";
+import { useEffect, useState } from "react";
 
 import { DateRange } from "react-day-picker";
-import { format } from "date-fns";
-
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import RadialChart from "@/components/radial-chart";
 import { fetcher } from "@/helpers/swr";
 import { Organization } from "@/types/organization";
 import { OrganizationReport } from "@/types/organization-report";
 import useSWR from "swr";
+import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
 
-async function getOrganizationEmissionsByProject(
-    organizationId: string,
-    dateRange: DateRange | undefined,
-): Promise<OrganizationReport> {
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/sums`;
-
-    if (dateRange) {
-        url += `?start_date=${dateRange.from?.toISOString()}&end_date=${dateRange.to?.toISOString()}`;
-    }
-
-    const res = await fetch(url);
-    const result = await res.json();
-    return {
-        name: result.name,
-        emissions: result.emissions * 1000,
-        energy_consumed: result.energy_consumed * 1000,
-        duration: result.duration,
-    };
-}
-
-export default async function OrganizationPage({
+export default function OrganizationPage({
     params,
 }: {
     params: { organizationId: string };
@@ -68,7 +35,24 @@ export default async function OrganizationPage({
         from: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
         to: today,
     });
+    const [organizationReport, setOrganizationReport] = useState<
+        OrganizationReport | undefined
+    >({ name: "", duration: 0, emissions: 0, energy_consumed: 0 });
 
+    useEffect(() => {
+        async function fetchOrganizationReport() {
+            const organizationReport: OrganizationReport | null =
+                await getOrganizationEmissionsByProject(
+                    params.organizationId,
+                    date,
+                );
+            if (organizationReport) {
+                setOrganizationReport(organizationReport);
+            }
+        }
+
+        fetchOrganizationReport();
+    }, [params.organizationId, date]);
     if (isLoading) {
         return <Loader />;
     }
@@ -76,26 +60,23 @@ export default async function OrganizationPage({
     if (error) {
         return <ErrorMessage />;
     }
-    const organizationReport = await getOrganizationEmissionsByProject(
-        params.organizationId,
-        date,
-    );
+
     const RadialChartData = {
         energy: {
             label: "kWh",
-            value: organizationReport
+            value: organizationReport?.energy_consumed
                 ? parseFloat(organizationReport.energy_consumed.toFixed(2))
                 : 0,
         },
         emissions: {
             label: "kg eq CO2",
-            value: organizationReport
+            value: organizationReport?.emissions
                 ? parseFloat(organizationReport.emissions.toFixed(2))
                 : 0,
         },
         duration: {
             label: "days",
-            value: organizationReport
+            value: organizationReport?.duration
                 ? parseFloat(
                       (organizationReport.duration / 86400, 0).toFixed(2),
                   )
