@@ -255,7 +255,7 @@ def configure_fief():
     print(
         f"""Run the following setup to use the cli:
     export AUTH_SERVER_URL=http://{fief_settings.fief_domain}
-    export API_URL=http://{carbonserver_settings.carbonserver_domain}/api
+    export API_URL=http://{carbonserver_settings.app_hostname}/api
     export AUTH_CLIENT_ID={cli_client_id}
     """
     )
