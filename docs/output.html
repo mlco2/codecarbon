@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Output &mdash; CodeCarbon 2.7.1 documentation</title>
+  <title>Output &mdash; CodeCarbon 2.7.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=59eed32c"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4c6c8f0e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -109,13 +107,13 @@
            <div itemprop="articleBody">
              
   <section id="output">
-<span id="id1"></span><h1>Output<a class="headerlink" href="#output" title="Permalink to this heading"></a></h1>
+<span id="id1"></span><h1>Output<a class="headerlink" href="#output" title="Link to this heading"></a></h1>
 <section id="csv">
-<h2>CSV<a class="headerlink" href="#csv" title="Permalink to this heading"></a></h2>
+<h2>CSV<a class="headerlink" href="#csv" title="Link to this heading"></a></h2>
 <p>The package has an in-built logger that logs data into a CSV file named <code class="docutils literal notranslate"><span class="pre">emissions.csv</span></code> in the <code class="docutils literal notranslate"><span class="pre">output_dir</span></code>, provided as an
 input parameter (defaults to the current directory), for each experiment tracked across projects.</p>
 <table class="docutils align-center" id="id4">
-<caption><span class="caption-text">Data Fields Logged for Each Experiment</span><a class="headerlink" href="#id4" title="Permalink to this table"></a></caption>
+<caption><span class="caption-text">Data Fields Logged for Each Experiment</span><a class="headerlink" href="#id4" title="Link to this table"></a></caption>
 <colgroup>
 <col style="width: 20.0%" />
 <col style="width: 80.0%" />
@@ -238,15 +236,15 @@ that is a derived implementation of base class <code class="docutils literal not
 </div>
 </section>
 <section id="prometheus">
-<h2>Prometheus<a class="headerlink" href="#prometheus" title="Permalink to this heading"></a></h2>
+<h2>Prometheus<a class="headerlink" href="#prometheus" title="Link to this heading"></a></h2>
 <section id="using-codecarbon-with-prometheus">
-<h3>Using CodeCarbon with prometheus<a class="headerlink" href="#using-codecarbon-with-prometheus" title="Permalink to this heading"></a></h3>
+<h3>Using CodeCarbon with prometheus<a class="headerlink" href="#using-codecarbon-with-prometheus" title="Link to this heading"></a></h3>
 <p><a class="reference external" href="https://github.com/prometheus/prometheus">Prometheus</a> is a systems and service monitoring system. It collects metrics from configured targets at given intervals, evaluates rule expressions, displays the results, and can trigger alerts when specified conditions are observed.</p>
 <p>CodeCarbon exposes all its metrics with the suffix <cite>codecarbon_</cite>.</p>
 <p>Current version uses pushgateway mode. If your pushgateway server needs auth, set your environment values <cite>PROMETHEUS_USERNAME</cite> and <cite>PROMETHEUS_PASSWORD</cite> so codecarbon is able to push the metrics.</p>
 </section>
 <section id="how-to-test-in-local">
-<h3>How to test in local<a class="headerlink" href="#how-to-test-in-local" title="Permalink to this heading"></a></h3>
+<h3>How to test in local<a class="headerlink" href="#how-to-test-in-local" title="Link to this heading"></a></h3>
 <p>Deploy a local version of Prometheus + Prometheus Pushgateway</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>docker-compose<span class="w"> </span>up
 </pre></div>
@@ -267,14 +265,14 @@ e.g.</p>
 </section>
 </section>
 <section id="logfire">
-<h2>Logfire<a class="headerlink" href="#logfire" title="Permalink to this heading"></a></h2>
+<h2>Logfire<a class="headerlink" href="#logfire" title="Link to this heading"></a></h2>
 <section id="using-codecarbon-with-logfire">
-<h3>Using CodeCarbon with logfire<a class="headerlink" href="#using-codecarbon-with-logfire" title="Permalink to this heading"></a></h3>
+<h3>Using CodeCarbon with logfire<a class="headerlink" href="#using-codecarbon-with-logfire" title="Link to this heading"></a></h3>
 <p><a class="reference external" href="https://docs.pydantic.dev/logfire/">Logfire</a> is an observability platform.</p>
 <p>CodeCarbon exposes all its metrics with the suffix <cite>codecarbon_</cite>.</p>
 </section>
 <section id="how-to-use-it">
-<h3>How to use it<a class="headerlink" href="#how-to-use-it" title="Permalink to this heading"></a></h3>
+<h3>How to use it<a class="headerlink" href="#how-to-use-it" title="Link to this heading"></a></h3>
 <p>Run your EmissionTracker as usual, but with the parameter <cite>save_to_logfire</cite> as True.
 e.g.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
@@ -291,15 +289,15 @@ e.g.</p>
 </section>
 </section>
 <section id="http-output">
-<h2>HTTP Output<a class="headerlink" href="#http-output" title="Permalink to this heading"></a></h2>
+<h2>HTTP Output<a class="headerlink" href="#http-output" title="Link to this heading"></a></h2>
 <p>The HTTP Output allow the call of a webhook with emission data when the tracker is stopped.</p>
 </section>
 <section id="codecarbon-api">
-<h2>CodeCarbon API<a class="headerlink" href="#codecarbon-api" title="Permalink to this heading"></a></h2>
+<h2>CodeCarbon API<a class="headerlink" href="#codecarbon-api" title="Link to this heading"></a></h2>
 <p>You can send all the data to the CodeCarbon API. So you have all your historical data in one place. By default, nothing is sent to the API.</p>
 </section>
 <section id="logger-output">
-<h2>Logger Output<a class="headerlink" href="#logger-output" title="Permalink to this heading"></a></h2>
+<h2>Logger Output<a class="headerlink" href="#logger-output" title="Link to this heading"></a></h2>
 <p>See <a class="reference internal" href="to_logger.html#collecting-emissions-to-a-logger"><span class="std std-ref">Collecting emissions to a logger</span></a>.</p>
 </section>
 </section>
