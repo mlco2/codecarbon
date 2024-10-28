@@ -30,12 +30,11 @@ jobs:
           python3 .github/check_version.py
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install build
+        pipx install hatch
     - name: Build package
-      run: python -m build
+      run: hatch build -c
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
