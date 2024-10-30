@@ -17,8 +17,6 @@ build:
   number: 0
   string: py37_plus
   script: python -m pip install --no-deps --ignore-installed .
-  entry_points:
-    - codecarbon = codecarbon.cli.main:codecarbon
 
 requirements:
   host:
@@ -29,11 +27,11 @@ requirements:
     # Will be replaced by the dependencies from the pyproject.toml file
     - dependencies
 
-test:
-  imports:
-    - codecarbon
-    - codecarbon.core
-    - codecarbon.external
+tests:
+  - python:
+      imports:
+        - codecarbon
+      pip_check: true
 
 about:
   homepage: https://codecarbon.io
