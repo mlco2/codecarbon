@@ -34,7 +34,7 @@ jobs:
                 key: build-conda-${{ github.sha }}
             - name: set version
               run: |
-                python3 .github/pyproject_version.py --replace True
+                python3 .github/pyproject_versions.py --replace True
             - name: Build conda package
               uses: prefix-dev/rattler-build-action@v0.2.16
               with:
