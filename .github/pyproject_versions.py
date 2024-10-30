@@ -49,7 +49,7 @@ def replace_in_file(filepath: str, info: dict):
     for dep in info["dependencies"]:
         if "fief-client" in dep:
             # Prevent to have unsupported "fief-client[cli]" in dependencies
-            dependencies += "    - fief-client-fastapi\n"
+            dependencies += "    - fief-client-fastapi\n    - yaspin\n"
         else:
             dependencies += f"    - {dep}\n"
     meta = meta.replace("    - dependencies", dependencies)
