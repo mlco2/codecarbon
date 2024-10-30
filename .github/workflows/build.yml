@@ -68,37 +68,6 @@ jobs:
               shell: bash -l {0}
               run: codecarbon --help
 
-  # TO BE MOVED IN python-publish.yml before merge !!!!!
-  publish-to-conda:
-    runs-on: ubuntu-24.04
-    needs: [ test-conda ]
-    steps:
-        - uses: actions/checkout@v4
-        - name: Restore build
-          uses: actions/cache@v4
-          with:
-            path: /tmp/conda-bld
-            key: build-conda-${{ github.sha }}
-            fail-on-cache-miss: true
-        - uses: conda-incubator/setup-miniconda@v3
-          with:
-            activate-environment: codecarbon
-            miniforge-version: latest
-            python-version: 3.12
-            use-mamba: true
-        - name: Install package
-          shell: bash -l {0}
-          run: mamba install --channel file:///tmp/conda-bld --channel codecarbon codecarbon
-        - name: Test conda package
-          shell: bash -l {0}
-          run: codecarbon --help
-        - name: Conda upload already build package
-          # This shell is made necessary by https://github.com/conda-incubator/setup-miniconda/issues/128
-          shell: bash -l {0}
-          run: |
-            conda install --yes anaconda-client
-            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload --user codecarbon /tmp/conda-bld/noarch/codecarbon-*
-
   build_server:
     runs-on: ubuntu-latest
     steps:
