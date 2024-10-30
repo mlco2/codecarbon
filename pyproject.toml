@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "codecarbon"
 dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 authors = [
     { name = "Mila" },
     { name = "DataForGood" },
@@ -17,6 +17,7 @@ authors = [
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -120,6 +121,7 @@ package = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m "not integ_test" te
 package-integ = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/'
 
 [[tool.hatch.envs.test.matrix]]
+# Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7
 python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.docs.scripts]

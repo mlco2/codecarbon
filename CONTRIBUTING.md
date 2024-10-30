@@ -418,7 +418,7 @@ Dependencies are defined in different places:
 
 -   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
 -   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
--   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.8 and higher versions.
+-   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
 
 <!-- TOC --><a name="alternative-ways-of-contributing"></a>

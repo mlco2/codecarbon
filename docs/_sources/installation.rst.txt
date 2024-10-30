@@ -36,7 +36,7 @@ To install the package, run the following command in your terminal.
 
 ..  note::
 
-    We recommend using Python 3.8 or above.
+    We recommend using Python 3.7 or above.
 
 
 Dependencies
