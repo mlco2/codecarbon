@@ -47,7 +47,11 @@ def replace_in_file(filepath: str, info: dict):
         raise Exception(f'"    - dependencies" not found in {filepath}')
     dependencies = ""
     for dep in info["dependencies"]:
-        dependencies += f"    - {dep}\n"
+        if "fief-client" in dep:
+            # Prevent to have unsupported "fief-client[cli]" in dependencies
+            dependencies += "    - fief-client-fastapi\n"
+        else:
+            dependencies += f"    - {dep}\n"
     meta = meta.replace("    - dependencies", dependencies)
     with open(filepath, "wt") as fout:
         fout.write(meta)
