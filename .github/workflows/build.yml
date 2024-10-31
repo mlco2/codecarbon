@@ -6,21 +6,67 @@ on:
     branches: [master]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Test package
-      run: |
-        pipx install hatch
-        hatch run +py=${{ matrix.python-version }} test:package
+  python-test:
+        runs-on: ubuntu-24.04
+        strategy:
+            matrix:
+              python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v5
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Test package
+          run: |
+            pipx install hatch
+            hatch run +py=${{ matrix.python-version }} test:package
+
+  build-conda:
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Cache build
+              uses: actions/cache@v4
+              with:
+                path: /tmp/conda-bld
+                key: build-conda-${{ github.sha }}
+            - name: set version
+              run: |
+                python3 .github/pyproject_versions.py --replace True
+            - name: Build conda package
+              uses: prefix-dev/rattler-build-action@v0.2.16
+              with:
+                build-args: --channel codecarbon --channel conda-forge --output-dir /tmp/conda-bld
+                recipe-path: .conda/recipe.yaml
+                upload-artifact: false
+
+  test-conda:
+        runs-on: ubuntu-24.04
+        needs: [ build-conda ]
+        steps:
+            # Checkout needed to get github.sha
+            - uses: actions/checkout@v4
+            - name: Setup conda
+              uses: conda-incubator/setup-miniconda@v3
+              with:
+                activate-environment: codecarbon
+                miniforge-version: latest
+                python-version: 3.12
+                use-mamba: true
+            - name: Restore build
+              uses: actions/cache@v4
+              with:
+                path: /tmp/conda-bld
+                key: build-conda-${{ github.sha }}
+                fail-on-cache-miss: true
+            - name: Install package
+              shell: bash -l {0}
+              run: mamba install --channel file:///tmp/conda-bld --channel codecarbon codecarbon
+            - name: Test conda package
+              shell: bash -l {0}
+              run: codecarbon --help
 
   build_server:
     runs-on: ubuntu-latest

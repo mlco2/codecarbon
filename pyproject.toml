@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "arrow",
@@ -121,7 +122,7 @@ package-integ = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/
 
 [[tool.hatch.envs.test.matrix]]
 # Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.docs.scripts]
 build = "cd docs/edit && make docs"
@@ -182,7 +183,7 @@ include = [
 ]
 
 [tool.bumpver]
-current_version = "2.7.2"
+current_version = "2.7.3"
 version_pattern = "MAJOR.MINOR.PATCH"
 
 [tool.bumpver.file_patterns]

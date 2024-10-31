@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  deploy-pypi:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -39,31 +39,32 @@ jobs:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
 
-  conda_deployment:
-    name: Conda deployment of package with Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
+  publish-to-conda:
+    runs-on: ubuntu-24.04
+    needs: [ deploy-pypi ]
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Conda environment creation and activation
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-          auto-update-conda: true
-          channels: codecarbon,conda-forge
-          activate-environment: true
-      - name: Build and upload the conda packages
-        uses: uibcdf/action-build-and-upload-conda-packages@v1.3.0
-        with:
-          meta_yaml_dir: .conda
-          python-version: ${{ matrix.python-version }} # Values previously defined in `matrix`
-          platform_linux-64: true
-          platform_osx-64: true
-          platform_win-64: true
-          user: codecarbon
-          label: auto
-          token: ${{ secrets.ANACONDA_TOKEN }} # Replace with the right name of your secret
+        - uses: actions/checkout@v4
+        - name: Restore build
+          uses: actions/cache@v4
+          with:
+            path: /tmp/conda-bld
+            key: build-conda-${{ github.sha }}
+            fail-on-cache-miss: true
+        - uses: conda-incubator/setup-miniconda@v3
+          with:
+            activate-environment: codecarbon
+            miniforge-version: latest
+            python-version: 3.12
+            use-mamba: true
+        - name: Install package
+          shell: bash -l {0}
+          run: mamba install --channel file:///tmp/conda-bld --channel codecarbon codecarbon
+        - name: Test conda package
+          shell: bash -l {0}
+          run: codecarbon --help
+        - name: Conda upload already build package
+          # This shell is made necessary by https://github.com/conda-incubator/setup-miniconda/issues/128
+          shell: bash -l {0}
+          run: |
+            conda install --yes anaconda-client
+            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload --user codecarbon /tmp/conda-bld/noarch/codecarbon-*
