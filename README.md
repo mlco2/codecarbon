@@ -7,6 +7,7 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
 <br/>
 
 [![](https://anaconda.org/conda-forge/codecarbon/badges/version.svg)](https://anaconda.org/conda-forge/codecarbon)
+[![](https://anaconda.org/codecarbon/codecarbon/badges/version.svg)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
 [![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon)
@@ -56,7 +57,7 @@ pip install codecarbon
 
 **From Conda repository**
 ```python
-conda install -c conda-forge codecarbon
+conda install -c codecarbon codecarbon
 ```
 To see more installation options please refer to the documentation: [**Installation**](https://mlco2.github.io/codecarbon/installation.html#)
 
