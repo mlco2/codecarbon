@@ -1,3 +1,5 @@
+// "use client";
+
 import {
     Card,
     CardDescription,
@@ -55,7 +57,36 @@ export default async function HomePage({
                 <CardHeader>
                     <CardTitle>Get Started</CardTitle>
                     <CardDescription>
-                        Create your first organization to begin
+                        You can do that by installing the command line tool and
+                        running:
+                        <span
+                            style={{
+                                display: "block",
+                                whiteSpace: "pre-wrap",
+                                borderLeft: "2px solid #3498db",
+                                wordWrap: "break-word",
+                                paddingLeft: "1em",
+                                margin: "1em",
+                            }}
+                        >
+                            codecarbon login <br />
+                            codecarbon config <br />
+                            codecarbon monitor
+                        </span>
+                        You&apos;ll then need to get the project id from the
+                        config file before generating the token.
+                        <br />
+                        You can then write the token in the config file and
+                        start monitoring. <br />
+                        <br />
+                        For more information, please refer to the documentation:
+                        <br />
+                        <a
+                            href="https://mlco2.github.io/codecarbon/usage.html"
+                            target="_blank"
+                        >
+                            https://mlco2.github.io/codecarbon/usage.html
+                        </a>
                     </CardDescription>
                 </CardHeader>
             </Card>
