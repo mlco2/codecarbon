@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { createProjectToken } from "@/server-functions/projectTokens";
 import GeneralModal from "../ui/modal";
-import { Separator } from "../ui/separator";
 import { Input } from "../ui/input";
 
 interface ModalProps {
@@ -87,6 +86,10 @@ const ProjectTokenModal: React.FC<ModalProps> = ({
                     )}
                 </button>
             </div>
+            <p className="text-l mb-4 p-2">
+                Make sure to copy the token above as it will not be shown again.
+                We don&apos;t store it for security reasons.
+            </p>
         </div>
     );
     return (
