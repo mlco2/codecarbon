@@ -183,7 +183,7 @@ include = [
 ]
 
 [tool.bumpver]
-current_version = "2.7.3"
+current_version = "2.7.4"
 version_pattern = "MAJOR.MINOR.PATCH"
 
 [tool.bumpver.file_patterns]

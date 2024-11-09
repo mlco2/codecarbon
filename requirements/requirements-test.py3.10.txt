@@ -12,6 +12,7 @@
 # - importlib_resources; python_version < "3.9"
 # - arrow
 # - click
+# - fief-client[cli]
 # - pandas
 # - prometheus-client
 # - psutil
@@ -27,20 +28,29 @@
 # - fire
 #
 
+anyio==4.6.2.post1
+    # via httpx
 arrow==1.3.0
     # via hatch.envs.test.py3.10
-blinker==1.8.2
+blinker==1.9.0
     # via flask
 certifi==2024.8.30
-    # via requests
-charset-normalizer==3.3.2
+    # via
+    #   httpcore
+    #   httpx
+    #   requests
+cffi==1.17.1
+    # via cryptography
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via
     #   hatch.envs.test.py3.10
     #   flask
     #   typer
-dash==2.18.0
+cryptography==43.0.3
+    # via jwcrypto
+dash==2.18.2
     # via
     #   hatch.envs.test.py3.10
     #   dash-bootstrap-components
@@ -53,16 +63,27 @@ dash-html-components==2.0.0
 dash-table==5.0.0
     # via dash
 exceptiongroup==1.2.2
-    # via pytest
-fief-client[cli]==0.19.0
-    # via codecarbon (pyproject.toml)
-fire==0.6.0
+    # via
+    #   anyio
+    #   pytest
+fief-client==0.20.0
+    # via hatch.envs.test.py3.10
+fire==0.7.0
     # via hatch.envs.test.py3.10
 flask==3.0.3
     # via dash
-idna==3.8
-    # via requests
-importlib-metadata==8.4.0
+h11==0.14.0
+    # via httpcore
+httpcore==1.0.6
+    # via httpx
+httpx==0.27.2
+    # via fief-client
+idna==3.10
+    # via
+    #   anyio
+    #   httpx
+    #   requests
+importlib-metadata==8.5.0
     # via dash
 iniconfig==2.0.0
     # via pytest
@@ -70,9 +91,11 @@ itsdangerous==2.2.0
     # via flask
 jinja2==3.1.4
     # via flask
+jwcrypto==1.5.6
+    # via fief-client
 markdown-it-py==3.0.0
     # via rich
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via
     #   jinja2
     #   werkzeug
@@ -82,45 +105,47 @@ mock==5.1.0
     # via hatch.envs.test.py3.10
 nest-asyncio==1.6.0
     # via dash
-numpy==2.1.1 ; python_version >= "3.9"
+numpy==2.1.3 ; python_version >= "3.9"
     # via
     #   hatch.envs.test.py3.10
     #   pandas
-packaging==24.1
+packaging==24.2
     # via
     #   plotly
     #   pytest
-pandas==2.2.2
+pandas==2.2.3
     # via hatch.envs.test.py3.10
-plotly==5.24.0
+plotly==5.24.1
     # via dash
 pluggy==1.5.0
     # via pytest
-prometheus-client==0.20.0
+prometheus-client==0.21.0
     # via hatch.envs.test.py3.10
 prompt-toolkit==3.0.36
     # via questionary
-psutil==6.0.0
+psutil==6.1.0
     # via hatch.envs.test.py3.10
 py-cpuinfo==9.0.0
     # via hatch.envs.test.py3.10
+pycparser==2.22
+    # via cffi
 pygments==2.18.0
     # via rich
 pynvml==11.5.3
     # via hatch.envs.test.py3.10
-pytest==8.3.2
+pytest==8.3.3
     # via hatch.envs.test.py3.10
 python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   pandas
-pytz==2024.1
+pytz==2024.2
     # via pandas
 pyyaml==6.0.2
     # via responses
 questionary==2.0.1
     # via hatch.envs.test.py3.10
-rapidfuzz==3.9.7
+rapidfuzz==3.10.1
     # via hatch.envs.test.py3.10
 requests==2.32.3
     # via
@@ -134,7 +159,7 @@ responses==0.25.3
     # via hatch.envs.test.py3.10
 retrying==1.3.4
     # via dash
-rich==13.8.0
+rich==13.9.4
     # via
     #   hatch.envs.test.py3.10
     #   typer
@@ -142,26 +167,34 @@ shellingham==1.5.4
     # via typer
 six==1.16.0
     # via
-    #   fire
     #   python-dateutil
     #   retrying
+sniffio==1.3.1
+    # via
+    #   anyio
+    #   httpx
 tenacity==9.0.0
     # via plotly
-termcolor==2.4.0
-    # via fire
-tomli==2.0.1
+termcolor==2.3.0
+    # via
+    #   fire
+    #   yaspin
+tomli==2.0.2
     # via pytest
-typer==0.12.5
+typer==0.13.0
     # via hatch.envs.test.py3.10
-types-python-dateutil==2.9.0.20240906
+types-python-dateutil==2.9.0.20241003
     # via arrow
 typing-extensions==4.12.2
     # via
+    #   anyio
     #   dash
+    #   jwcrypto
+    #   rich
     #   typer
-tzdata==2024.1
+tzdata==2024.2
     # via pandas
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   requests
     #   responses
@@ -171,7 +204,9 @@ werkzeug==3.0.6
     # via
     #   dash
     #   flask
-zipp==3.20.1
+yaspin==3.1.0
+    # via fief-client
+zipp==3.20.2
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
