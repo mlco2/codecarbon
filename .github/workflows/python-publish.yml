@@ -30,7 +30,8 @@ jobs:
           python3 .github/check_version.py
     - name: Install dependencies
       run: |
-        pipx install hatch
+        python -m pip install --upgrade pip
+        pip install hatch==1.13.0 hatchling==1.25.0
     - name: Build package
       run: hatch build -c
     - name: Publish package
