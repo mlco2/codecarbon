@@ -17,11 +17,12 @@ jobs:
           uses: actions/setup-python@v5
           with:
             python-version: ${{ matrix.python-version }}
-        - name: Clean pip cache
-          run: pip cache purge
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install hatch==1.13.0 hatchling==1.25.0
         - name: Test package
           run: |
-            pipx install hatch==1.13.0 hatchling==1.25.0
             hatch run +py=${{ matrix.python-version }} test:package
 
   build-conda:
@@ -86,7 +87,7 @@ jobs:
 
     - name: Unit tests on api
       run: |
-        pipx install hatch==1.13.0 hatchling==1.25.0
+        pip install hatch==1.13.0 hatchling==1.25.0
         # hatch run api:test-unit
 
   test_api_server:
@@ -122,10 +123,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - name: Clean pip cache
-        run: pip cache purge
       - name: Install dependencies
-        run: pipx install hatch==1.13.0 hatchling==1.25.0
+        run: |
+          python -m pip install --upgrade pip
+          pip install hatch==1.13.0 hatchling==1.25.0
 
       - name: Setup PostgreSQL
         # Runs a script that creates a PostgreSQL table, populates
