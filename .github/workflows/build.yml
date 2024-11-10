@@ -19,7 +19,7 @@ jobs:
             python-version: ${{ matrix.python-version }}
         - name: Test package
           run: |
-            pipx install hatch
+            pipx install hatch==1.13.0 hatchling==1.25.0
             hatch run +py=${{ matrix.python-version }} test:package
 
   build-conda:
@@ -81,7 +81,7 @@ jobs:
         python -m pip install --upgrade pip
     - name: Unit tests on api
       run: |
-        pipx install hatch
+        pipx install hatch==1.13.0 hatchling==1.25.0
         # hatch run api:test-unit
 
   test_api_server:
@@ -118,7 +118,7 @@ jobs:
         with:
           python-version: '3.9'
       - name: Install dependencies
-        run: pipx install hatch
+        run: pipx install hatch==1.13.0 hatchling==1.25.0
 
       - name: Setup PostgreSQL
         # Runs a script that creates a PostgreSQL table, populates
