@@ -8,6 +8,8 @@ import os
 import platform
 import time
 import uuid
+import threading
+from codecarbon import EmissionsTracker
 from abc import ABC, abstractmethod
 from collections import Counter
 from datetime import datetime
@@ -347,6 +349,44 @@ class BaseEmissionsTracker(ABC):
             self._data_source, self._co2_signal_api_token
         )
         self._init_output_methods(self._api_key)
+
+    def track_emissions():
+    # Control variable for the thread
+    pthread = 1
+
+    # Function for the thread to periodically flush emissions data
+    def fthread():
+        nonlocal pthread  # Allows access to the outer pthread variable
+        while pthread:
+            if tracker:
+                tracker.flush()
+            time.sleep(1)  # Adjust as needed for flushing frequency
+
+    # Initialize the emissions tracker
+    tracker = EmissionsTracker(
+        project_name="Test",
+        tracking_mode="machine",
+        csv_run_name="emissions_test54.csv"
+    )
+
+    # Create and start the thread to flush data periodically
+    eng_measure = threading.Thread(target=fthread)
+    tracker.start()
+    eng_measure.start()
+
+    try:
+        # Main code here (this is where your primary code would go)
+        time.sleep(5)  # Replace with actual code
+    finally:
+        # Ensure the thread is properly stopped
+        pthread = 0
+        eng_measure.join()
+        emissions = tracker.stop()
+        print(f"Total emissions: {emissions} gCO2eq")
+
+# If running this as a script, you can call the function directly
+if __name__ == "__main__":
+    track_emissions()
 
     def set_CPU_GPU_ram_tracking(self):
         cpu_tracker = gpu_tracker = ram_tracker = "Unspecified"
@@ -751,7 +791,7 @@ class BaseEmissionsTracker(ABC):
         if self._previous_emissions is None:
             self._previous_emissions = total_emissions
         else:
-            # Create a copy
+            # Create a copycon
             delta_emissions = dataclasses.replace(total_emissions)
             # Compute emissions rate from delta
             delta_emissions.compute_delta_emission(self._previous_emissions)
