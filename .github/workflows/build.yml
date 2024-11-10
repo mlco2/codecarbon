@@ -17,6 +17,8 @@ jobs:
           uses: actions/setup-python@v5
           with:
             python-version: ${{ matrix.python-version }}
+        - name: Clean pip cache
+          run: pip cache purge
         - name: Test package
           run: |
             pipx install hatch==1.13.0 hatchling==1.25.0
@@ -76,9 +78,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+    - name: Clean pip cache
+      run: pip cache purge
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+
     - name: Unit tests on api
       run: |
         pipx install hatch==1.13.0 hatchling==1.25.0
@@ -117,6 +122,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+      - name: Clean pip cache
+        run: pip cache purge
       - name: Install dependencies
         run: pipx install hatch==1.13.0 hatchling==1.25.0
 
