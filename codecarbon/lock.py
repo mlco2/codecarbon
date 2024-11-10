@@ -44,7 +44,7 @@ class Lock:
                 self._has_created_lock = True
         except FileExistsError:
             logger.debug(
-                f"Lock file already exists. Path: {LOCKFILE}. This usually means another instance of codecarbon is running."
+                f"Lock file {LOCKFILE} already exists. This usually means another instance of codecarbon is running. You can safely delete it if you want or use allow_multiple_runs parameter to always bypass it."
             )
             raise
 
