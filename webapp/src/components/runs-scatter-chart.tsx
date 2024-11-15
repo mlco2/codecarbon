@@ -34,8 +34,11 @@ async function getRunEmissionsByExperiment(
     startDate: string,
     endDate: string,
 ): Promise<RunReport[]> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`;
+    if (!experimentId || experimentId == "") {
+        return [];
+    }
 
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`;
     const res = await fetch(url);
 
     if (!res.ok) {
