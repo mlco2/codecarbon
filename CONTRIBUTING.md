@@ -450,7 +450,7 @@ to regenerate the html files.
 ### Release process
 
 -   Merge all PRs.
--   Create a PR bumping the version with `hatch run dev:bumpver update --minor`.
+-   Create a PR bumping the version with `hatch run dev:bumpver update --patch`.
 -   Run `hatch run python3 .github/check_version.py` to check version consistancy.
 -   Update the dependencies with `hatch-pip-compile --upgrade --all`.
 -   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
