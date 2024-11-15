@@ -22,7 +22,7 @@ from codecarbon.cli.cli_utils import (
 )
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
-from codecarbon.emissions_tracker import EmissionsTracker
+from codecarbon.emissions_tracker import AnotherInstanceException, EmissionsTracker
 
 AUTH_CLIENT_ID = os.environ.get(
     "AUTH_CLIENT_ID", "pkqh9CiOkp4MkPqRqM_k8Xc3mwBRpojS3RayIk1i5Pg"
@@ -99,7 +99,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
 
 fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
 fief_auth = FiefAuth(fief, "./credentials.json")
-print("FIEF", AUTH_SERVER_URL, AUTH_CLIENT_ID)
+# print("FIEF", AUTH_SERVER_URL, AUTH_CLIENT_ID)
 
 
 def _get_access_token():
@@ -319,14 +319,18 @@ def monitor(
     if api and experiment_id is None:
         print("ERROR: No experiment id, call 'codecarbon init' first.", err=True)
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
-    with EmissionsTracker(
-        measure_power_secs=measure_power_secs,
-        api_call_interval=api_call_interval,
-        save_to_api=api,
-    ):
-        # Infinite loop
-        while True:
-            time.sleep(300)
+    try:
+        with EmissionsTracker(
+            measure_power_secs=measure_power_secs,
+            api_call_interval=api_call_interval,
+            save_to_api=api,
+        ):
+            # Infinite loop
+            while True:
+                time.sleep(300)
+    except AnotherInstanceException:
+        print("Another instance of CodeCarbon is already running.")
+        exit(1)
 
 
 def questionary_prompt(prompt, list_options, default):

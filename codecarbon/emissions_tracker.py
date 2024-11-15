@@ -64,6 +64,11 @@ from codecarbon.output import (
 _sentinel = object()
 
 
+# Define an exception to raise when another instance of codecarbon is already running
+class AnotherInstanceException(Exception):
+    pass
+
+
 class BaseEmissionsTracker(ABC):
     """
     Primary abstraction with Emissions Tracking functionality.
@@ -252,7 +257,7 @@ class BaseEmissionsTracker(ABC):
                 )
                 # Do not continue if another instance of codecarbon is running
                 self._another_instance_already_running = True
-                return
+                raise AnotherInstanceException
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
@@ -515,7 +520,6 @@ class BaseEmissionsTracker(ABC):
     def start(self) -> None:
         """
         Starts tracking the experiment.
-        Currently, Nvidia GPUs are supported.
         :return: None
         """
         # if another instance of codecarbon is already running, stop here
@@ -526,7 +530,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning(
                 "Another instance of codecarbon is already running. Exiting."
             )
-            return
+            raise AnotherInstanceException
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -633,7 +637,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning(
                 "Another instance of codecarbon is already running. Exiting."
             )
-            return
+            raise AnotherInstanceException
         if not self._allow_multiple_runs:
             # Release the lock
             self._lock.release()
