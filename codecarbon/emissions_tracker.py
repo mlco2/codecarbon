@@ -251,7 +251,7 @@ class BaseEmissionsTracker(ABC):
                 self._lock.acquire()
             except FileExistsError:
                 logger.error(
-                    "Error: Another instance of codecarbon is already running. Turn off the other instance to be able to run this one. Exiting."
+                    f"Error: Another instance of codecarbon is probably running as we find `{self._lock.lockfile_path}`. Turn off the other instance to be able to run this one or use `allow_multiple_runs` or delete the file. Exiting."
                 )
                 # Do not continue if another instance of codecarbon is running
                 self._another_instance_already_running = True

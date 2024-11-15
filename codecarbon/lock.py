@@ -21,7 +21,7 @@ class Lock:
 
     def __init__(self):
         self._has_created_lock = False
-
+        self.lockfile_path = LOCKFILE
         atexit.register(
             self.release
         )  # Ensure release() is called on unexpected exit of the user's python code
