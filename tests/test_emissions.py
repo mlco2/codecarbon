@@ -68,21 +68,24 @@ class TestEmissions(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 56.04 / 1000, places=2)
 
-    def test_get_emissions_PRIVATE_INFRA_JOR(self):
+    def test_get_emissions_PRIVATE_INFRA_UNKNOWN(self):
         """
-        Jordania use fossil energy
+        Test with a country that is not in the list of known countries.
         """
         # WHEN
 
         emissions = self._emissions.get_private_infra_emissions(
             Energy.from_energy(kWh=1_000),
-            GeoMetadata(country_iso_code="JOR", country_name="Jordan"),
+            GeoMetadata(country_iso_code="UNK", country_name="Unknown"),
         )
 
         # THEN
-        jor_emissions = 475  # Emissions in Kgs of CO2 For 1 000 kWh of energy
+        carbon_intensity_per_source = (
+            DataSource().get_carbon_intensity_per_source_data()
+        )
+        default_emissions = carbon_intensity_per_source.get("world_average")
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, jor_emissions, places=2)
+        self.assertAlmostEqual(emissions, default_emissions, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_NOR(self):
         """

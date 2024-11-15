@@ -88,7 +88,8 @@ celerybeat-schedule
 
 # Environments
 .env
-.venv
+.venv/
+.venv-notebook-data/
 env/
 venv/
 ENV/
@@ -129,7 +130,6 @@ tests/test_data/rapl/*
 
 #asciinema
 *.cast
-
 
 # credentials
 credentials.json
