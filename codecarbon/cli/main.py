@@ -323,9 +323,12 @@ def monitor(
         measure_power_secs=measure_power_secs,
         api_call_interval=api_call_interval,
         save_to_api=api,
-    ):
+    ) as tracker:
         # Infinite loop
         while True:
+            if tracker._another_instance_already_running:
+                print("Another instance of CodeCarbon is already running. Exiting.")
+                break
             time.sleep(300)
 
 
