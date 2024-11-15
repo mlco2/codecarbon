@@ -326,7 +326,10 @@ def monitor(
     ) as tracker:
         # Infinite loop
         while True:
-            if tracker._another_instance_already_running:
+            if (
+                hasattr(tracker, "_another_instance_already_running")
+                and tracker._another_instance_already_running
+            ):
                 print("Another instance of CodeCarbon is already running. Exiting.")
                 break
             time.sleep(300)
