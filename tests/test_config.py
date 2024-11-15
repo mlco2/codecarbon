@@ -189,3 +189,20 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(tracker._co2_signal_api_token, "signal-token")
             self.assertEqual(tracker._project_name, "test-project")
             self.assertTrue(tracker._save_to_file)
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "0, 1",
+        },
+    )
+    def test_gpu_ids_from_env(self):
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, [0, 1])
+
+
+if __name__ == "__main__":
+    unittest.main()

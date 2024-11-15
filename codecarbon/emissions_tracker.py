@@ -139,6 +139,9 @@ class BaseEmissionsTracker(ABC):
         if name == "output_dir":
             if not os.path.exists(value):
                 raise OSError(f"Folder '{value}' doesn't exist !")
+        if name == "gpu_ids":
+            if value is None and os.environ.get("CUDA_VISIBLE_DEVICES"):
+                value = os.environ.get("CUDA_VISIBLE_DEVICES")
         # store final value
         self._conf[name] = value
         # set `self._{name}` to `value`
