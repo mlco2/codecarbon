@@ -323,7 +323,12 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
-        logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
+        if self._gpu_ids:
+            logger.info(
+                f"  GPU model: {self._conf.get('gpu_model')} BUT only tracking this GPU ids : {self._conf.get('gpu_ids')}"
+            )
+        else:
+            logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
         # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
@@ -385,7 +390,8 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_model"] = "".join(
                 [f"{i} x {name}" for name, i in gpu_names_dict.items()]
             )
-            self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
+            if self._conf.get("gpu_count") is None:
+                self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
         else:
             logger.info("No GPU found.")
 
