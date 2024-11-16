@@ -16,7 +16,7 @@ Carbon dioxide emissions (CO₂eq) can then be calculated as ``C * E``
 Carbon Intensity
 ----------------
 Carbon Intensity of the consumed electricity is calculated as a weighted average of the emissions from the different
-energy sources that are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, and natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, this package calculates the Carbon Intensity of the electricity consumed.
+energy sources that are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, and natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, the Carbon Intensity of the electricity consumed can be computed.
 
 .. image:: ./images/grid_energy_mix.png
             :align: center
@@ -26,7 +26,7 @@ energy sources that are used to generate electricity, including fossil fuels and
 
 When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ ) or per country ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`_ ).
 
-If we don't have the global carbon intensity or electricity of a country, but we have its electricity mix, we compute the carbon intensity of electricity using this table:
+If we don't have the global carbon intensity or electricity of a country, but we have its electricity mix, we used to compute the carbon intensity of electricity using this table:
 
 .. list-table:: Carbon Intensity Across Energy Sources
    :widths: 50 50
@@ -62,6 +62,8 @@ Then, for example, if the Energy Mix of the Grid Electricity is 25% Coal, 35% Pe
 .. code-block:: text
 
     Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
+
+But it doesn't append anymore because Our World in Data now provides the global carbon intensity of electricity per country ( `source <https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data>`_ ). Some countries is missing data for last year, so we use the previous year data available.
 
 If ever we have neither the global carbon intensity of a country nor it's electricity mix, we apply a world average of 475 gCO2.eq/KWh ( `source <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_ ).
 
