@@ -22,9 +22,11 @@
 import os.path
 import sys
 from copy import copy, deepcopy
-from unittest import mock
+from unittest import TestCase, mock
 
 import pynvml as real_pynvml
+
+tc = TestCase()
 
 
 class FakeGPUEnv:
@@ -206,36 +208,73 @@ class TestGpu(FakeGPUEnv):
         Get the total power of all GPUs
         """
         # Prepare
-        # (Note: This imports should be inside the test, not on top of the file, otherwise the mock does not work)
         from codecarbon.core.units import Energy, Power, Time
         from codecarbon.external.hardware import GPU
 
-        energy_consumption = [100_701, 149_702, 180_001, 180_002, 190_001, 200_002]
-        # gpu1_energy1 = Energy.from_millijoules(energy_consumption[0])
-        gpu1_energy2 = Energy.from_millijoules(energy_consumption[2])
-        gpu1_energy3 = Energy.from_millijoules(energy_consumption[4])
-        # gpu2_energy1 = Energy.from_millijoules(energy_consumption[1])
-        gpu2_energy2 = Energy.from_millijoules(energy_consumption[3])
-        gpu2_energy3 = Energy.from_millijoules(energy_consumption[5])
+        energy_consumption = {
+            "handle_0": [100_701, 180_001, 190_001],
+            "handle_1": [149_702, 180_002, 200_002],
+        }
 
-        # gpu2_power = Power.from_energies_and_delay(gpu1_energy1, gpu1_energy2, Time(5))
+        def mock_nvmlDeviceGetTotalEnergyConsumption(handle):
+            return energy_consumption[handle].pop(0)
+
+        gpu1_energy2 = Energy.from_millijoules(energy_consumption["handle_0"][1])
+        gpu1_energy3 = Energy.from_millijoules(energy_consumption["handle_0"][2])
+        gpu2_energy2 = Energy.from_millijoules(energy_consumption["handle_1"][1])
+        gpu2_energy3 = Energy.from_millijoules(energy_consumption["handle_1"][2])
+
         gpu2_power2 = Power.from_energies_and_delay(gpu1_energy2, gpu1_energy3, Time(5))
-        # gpu1_power = Power.from_energies_and_delay(gpu2_energy1, gpu2_energy2, Time(5))
         gpu1_power2 = Power.from_energies_and_delay(gpu2_energy2, gpu2_energy3, Time(5))
         expected_power = gpu1_power2 + gpu2_power2
 
-        # Call
         with mock.patch(
             "pynvml.nvmlDeviceGetTotalEnergyConsumption",
-            side_effect=energy_consumption,  # Mock the energy consumption
+            side_effect=mock_nvmlDeviceGetTotalEnergyConsumption,
         ):
             gpu = GPU.from_utils()
             gpu.measure_power_and_energy(5)
 
-        # Assert
         assert expected_power.kW == gpu.total_power().kW
 
     def test_gpu_metadata_one_gpu_power(self):
+        """
+        Get the power of just one GPU even if there are more than 1
+        """
+        # Prepare
+        from codecarbon.core.units import Energy, Power, Time
+        from codecarbon.external.hardware import GPU
+
+        energy_consumption_mock = {
+            "handle_0": [100_701, 180_001, 190_001],
+            "handle_1": [149_702, 180_002, 200_002],
+        }
+        energy_consumption = deepcopy(energy_consumption_mock)
+
+        def mock_nvmlDeviceGetTotalEnergyConsumption(handle):
+            return energy_consumption_mock[handle].pop(0)
+
+        with mock.patch(
+            "pynvml.nvmlDeviceGetTotalEnergyConsumption",
+            side_effect=mock_nvmlDeviceGetTotalEnergyConsumption,
+        ):
+            gpu = GPU.from_utils()
+            gpu.measure_power_and_energy(5, gpu_ids=[1])
+        print(energy_consumption)
+        gpu2_energy1 = Energy.from_millijoules(energy_consumption["handle_1"][1])
+        gpu2_energy2 = Energy.from_millijoules(energy_consumption["handle_1"][2])
+        gpu2_power = Power.from_energies_and_delay(gpu2_energy1, gpu2_energy2, Time(5))
+        expected_power = gpu2_power
+
+        assert expected_power.kW == gpu.total_power().kW
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "1",
+        },
+    )
+    def test_gpu_metadata_one_gpu_power_CUDA_VISIBLE_DEVICES(self):
         """
         Get the power of just one GPU even if there are more than 1
         """
@@ -244,32 +283,33 @@ class TestGpu(FakeGPUEnv):
         from codecarbon.core.units import Energy, Power, Time
         from codecarbon.external.hardware import GPU
 
-        energy_consumption = [100_701, 149_702, 180_001, 180_002, 190_001, 200_002]
+        energy_consumption_mock = {
+            "handle_0": [100_000, 100_001, 100_002],
+            "handle_1": [149_702, 180_002, 200_002],
+        }
+        energy_consumption = deepcopy(energy_consumption_mock)
+
+        def mock_nvmlDeviceGetTotalEnergyConsumption(handle):
+            # print("mock_nvmlDeviceGetTotalEnergyConsumption", handle, energy_consumption_mock[handle])
+            return energy_consumption_mock[handle].pop(0)
 
         # Call
         with mock.patch(
             "pynvml.nvmlDeviceGetTotalEnergyConsumption",
-            side_effect=energy_consumption,  # Mock the energy consumption
+            side_effect=mock_nvmlDeviceGetTotalEnergyConsumption,  # Mock the energy consumption
         ):
-            gpu = GPU.from_utils()
-            gpu.measure_power_and_energy(5, gpu_ids=[1])
+            gpu = GPU.from_utils(gpu_ids=[int(os.environ["CUDA_VISIBLE_DEVICES"])])
+            # Despite the fact that there are 2 GPUs, only one is being used
+            assert gpu.gpu_ids == [1]
+            gpu.measure_power_and_energy(5)
 
         # Assert
-        gpu2_energy1 = Energy.from_millijoules(energy_consumption[-3])
-        gpu2_energy2 = Energy.from_millijoules(energy_consumption[-1])
-
+        # ((200_002 - 180_002) * 10 ** (-3)) * 2.77778e-7 * 3_600 /5 = 0.0040000031999999994 kW
+        gpu2_energy1 = Energy.from_millijoules(energy_consumption["handle_1"][1])
+        gpu2_energy2 = Energy.from_millijoules(energy_consumption["handle_1"][2])
         gpu2_power = Power.from_energies_and_delay(gpu2_energy1, gpu2_energy2, Time(5))
-        # 180_002 - 149_702 = 30_300 millijoules = 0.000008416666666667 kWh
-        #  * 3_600 = 0.0303000000000012 kWs / 5s = 0.00606000000000024 kW
-
-        # >>> ((180_002 - 149_702) * 10 ** (-3)) * 2.77778e-7 * 3_600 /5
-        # 0.006060004847999999
-        # >>> ((200_002-180_002) * 10 ** (-3)) * 2.77778e-7 * 3_600 /5
-        # 0.0040000031999999994
-        expected_power = (
-            gpu2_power  # In this case it should only count only the second gpu
-        )
-        assert expected_power.kW == gpu.total_power().kW
+        expected_power = gpu2_power
+        tc.assertAlmostEqual(expected_power.kW, gpu.total_power().kW)
 
 
 class TestGpuNotAvailable:
