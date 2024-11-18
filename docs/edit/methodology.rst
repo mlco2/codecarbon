@@ -95,8 +95,8 @@ CPU
 
 Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ .
 
-Apple Silicon Chips (M1, M2)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- **Apple Silicon Chips (M1, M2)**
+
 Apple Silicon Chips contain both the CPU and the GPU.
 
 Codecarbon tracks Apple Silicon Chip energy consumption using ``powermetrics``. It should be available natively on any mac.

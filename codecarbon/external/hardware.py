@@ -23,7 +23,7 @@ POWER_CONSTANT = 85
 #  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
-B_TO_GB = 1024 * 1024 * 1024  # Or 1e9 ?
+B_TO_GB = 1024 * 1024 * 1024
 
 
 @dataclass
