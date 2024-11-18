@@ -266,6 +266,18 @@ Here is the launch.json to be able to debug examples and tests:
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": { "PYTHONPATH": "${workspaceRoot}" }
+        },
+        {
+            "name": "PyTest: codecarbon monitor",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "codecarbon.cli.main",
+            "args": [
+                "monitor"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": { "PYTHONPATH": "${workspaceRoot}" }
         }
     ]
 }
