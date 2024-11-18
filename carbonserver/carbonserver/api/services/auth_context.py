@@ -21,3 +21,8 @@ class AuthContext:
         return self._user_repository.is_admin_in_organization(
             organization_id=organization_id, user=user
         )
+
+    def can_create_run(self, experiment_id, user):
+        return self._user_repository.is_user_authorized_on_experiment(
+            experiment_id, user.id
+        )

@@ -323,6 +323,7 @@ def monitor(
         measure_power_secs=measure_power_secs,
         api_call_interval=api_call_interval,
         save_to_api=api,
+        access_token=_get_access_token(),
     ) as tracker:
         # Infinite loop
         while True:

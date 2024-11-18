@@ -135,6 +135,7 @@ class ServerContainer(containers.DeclarativeContainer):
     run_service = providers.Factory(
         RunService,
         run_repository=run_repository,
+        auth_context=auth_context,
     )
 
     sign_up_service = providers.Factory(
