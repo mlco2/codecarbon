@@ -115,7 +115,7 @@ class GPU(BaseHardware):
                     logger.info(
                         f"GPU number {gpu_id} will not be monitored, at your request."
                     )
-            gpu_ids = self.gpu_ids
+            self.gpu_ids = gpu_ids
         else:
             gpu_ids = set(range(self.num_gpus))
         return gpu_ids
