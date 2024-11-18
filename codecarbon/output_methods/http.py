@@ -40,12 +40,20 @@ class CodeCarbonAPIOutput(BaseOutput):
 
     run_id = None
 
-    def __init__(self, endpoint_url: str, experiment_id: str, api_key: str, conf):
+    def __init__(
+        self,
+        endpoint_url: str,
+        experiment_id: str,
+        api_key: str,
+        conf,
+        access_token: str = None,
+    ):
         self.endpoint_url: str = endpoint_url
         self.api = ApiClient(
             experiment_id=experiment_id,
             endpoint_url=endpoint_url,
             api_key=api_key,
+            access_token=access_token,
             conf=conf,
         )
         self.run_id = self.api.run_id

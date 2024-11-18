@@ -43,6 +43,7 @@ class ApiClient:  # (AsyncClient)
         endpoint_url="https://dash-dev.cleverapps.io/api",  # beta API
         experiment_id=None,
         api_key=None,
+        access_token=None,
         conf=None,
     ):
         """
@@ -54,7 +55,7 @@ class ApiClient:  # (AsyncClient)
         self.experiment_id = experiment_id
         self.api_key = api_key
         self.conf = conf
-        self.access_token = None
+        self.access_token = access_token
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
         import warnings

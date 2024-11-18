@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from carbonserver.api.domain.users import Users
+from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Membership as SqlModelMembership
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import User as SqlModelUser
@@ -120,6 +121,28 @@ class SqlAlchemyRepository(Users):
                     SqlModelProject.id == project_id,
                 )
                 .filter(SqlModelMembership.user_id == user_id)
+                .filter(
+                    SqlModelMembership.organization_id
+                    == SqlModelProject.organization_id
+                )
+                .first()
+            )
+            return e is not None
+
+    def is_user_authorized_on_experiment(self, experiment_id, user_id: UUID):
+        with self.session_factory() as session:
+            e = (
+                session.query(SqlModelMembership)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelExperiment.id == experiment_id,
+                )
+                .join(
+                    SqlModelProject,
+                    SqlModelProject.id == SqlModelExperiment.project_id,
+                )
+                .filter(SqlModelMembership.user_id == user_id)
+                .filter(SqlModelExperiment.id == experiment_id)
                 .filter(
                     SqlModelMembership.organization_id
                     == SqlModelProject.organization_id
