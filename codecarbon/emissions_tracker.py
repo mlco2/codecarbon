@@ -325,7 +325,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
         if self._gpu_ids:
             logger.info(
-                f"  GPU model: {self._conf.get('gpu_model')} BUT only tracking this GPU ids : {self._conf.get('gpu_ids')}"
+                f"  GPU model: {self._conf.get('gpu_model')} BUT only tracking these GPU ids : {self._conf.get('gpu_ids')}"
             )
         else:
             logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
