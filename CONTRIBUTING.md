@@ -201,7 +201,7 @@ $ hatch -e test.py3.11 run python -m unittest tests.test_your_feature.YourTestCa
 
 For example : `hatch -e test.py3.11 run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
 
-Some tests will fail if you do not set CODECARBON_ALLOW_MULTIPLE_RUNS with `export CODECARBON_ALLOW_MULTIPLE_RUNS=True` before running test manually.
+Some tests will fail if you do not set *CODECARBON_ALLOW_MULTIPLE_RUNS* with `export CODECARBON_ALLOW_MULTIPLE_RUNS=True` before running test manually.
 
 To test the API, see [how to deploy it](#local_deployement) first.
 
