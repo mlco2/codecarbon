@@ -103,7 +103,7 @@ class GPU(BaseHardware):
         gpu_ids = []
         if self.gpu_ids is not None:
             # Check that the provided GPU ids are valid
-            if not set(gpu_ids).issubset(set(range(self.num_gpus))):
+            if not set(self.gpu_ids).issubset(set(range(self.num_gpus))):
                 logger.warning(
                     f"Unknown GPU ids {gpu_ids}, only {self.num_gpus} GPUs available."
                 )
