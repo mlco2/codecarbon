@@ -5,8 +5,8 @@ from codecarbon import track_emissions
 
 @track_emissions(
     # api_endpoint="http://your api if you want",
-    # experiment_id="3a202149-8be2-408c-a3d8-baeae2de2987",
-    # api_key=" not used yet",
+    experiment_id="3a202149-8be2-408c-a3d8-baeae2de2987",
+    api_key=" not used yet",
     save_to_api=True,
 )
 def train_model():

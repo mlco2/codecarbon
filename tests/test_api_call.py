@@ -50,7 +50,7 @@ def test_call_api():
         api = ApiClient(
             experiment_id="experiment_id",
             endpoint_url="http://test.com",
-            api_key="Toto",
+            project_token="Toto",
             conf=conf,
         )
         assert api.run_id == "82ba0923-0713-4da1-9e57-cea70b460ee9"

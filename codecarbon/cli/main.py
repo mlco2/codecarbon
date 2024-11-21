@@ -140,7 +140,7 @@ def get_token(project_id: str):
         headers={"Authorization": f"Bearer {_get_access_token()}"},
     )
     print("Your token: " + req.json()["token"])
-    print("Add it to the api_key field in your configuration file")
+    print("Add it to the project_token field in your configuration file")
 
 
 @codecarbon.command("config", short_help="Generate or show config")

@@ -45,22 +45,6 @@ from codecarbon.output import (
     PrometheusOutput,
 )
 
-# /!\ Warning: current implementation prevents the user from setting any value to None
-# from the script call
-# Imagine:
-#   1/ emissions_endpoint=localhost:8000 in ~/.codecarbon.config
-#   2/ Inside the script, the user cannot disable emissions_endpoint with
-#   EmissionsTracker(emissions_endpoint=None) since the config logic will use the one in
-#   the config file.
-#
-# Alternative: EmissionsTracker(emissions_endpoint=False) would work
-# TODO: document this
-#
-# To fix this, a complex move would be to have default values set to the sentinel:
-# _sentinel = object()
-# see: https://stackoverflow.com/questions/67202314/
-#      python-distinguish-default-argument-and-argument-provided-with-default-value
-
 _sentinel = object()
 
 
@@ -79,7 +63,7 @@ class BaseEmissionsTracker(ABC):
         Method to standardize private argument setting. Generic flow is:
 
         * If a value for the variable `var` with name `name` is provided in the
-          __init__ constructor: set the the private attribute `self._{name}` to
+          __init__ constructor: set the private attribute `self._{name}` to
           that value
 
         * If no value is provided for `var`, i.e. `var is _sentinel` is True then
@@ -153,7 +137,7 @@ class BaseEmissionsTracker(ABC):
         measure_power_secs: Optional[float] = _sentinel,
         api_call_interval: Optional[int] = _sentinel,
         api_endpoint: Optional[str] = _sentinel,
-        api_key: Optional[str] = _sentinel,
+        project_token: Optional[str] = _sentinel,
         output_dir: Optional[str] = _sentinel,
         output_file: Optional[str] = _sentinel,
         save_to_file: Optional[bool] = _sentinel,
@@ -188,7 +172,7 @@ class BaseEmissionsTracker(ABC):
                             2 : every 2 measure, etc...
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
                              emissions data.
-        :param api_key: API key for Code Carbon API (mandatory!).
+        :param project_token: Project token for Code Carbon API (mandatory!).
         :param output_dir: Directory path to which the experiment details are logged,
                            defaults to current directory.
         :param output_file: Name of the output CSV file, defaults to `emissions.csv`.
@@ -233,7 +217,6 @@ class BaseEmissionsTracker(ABC):
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
-        # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", False, bool)
         if self._allow_multiple_runs:
@@ -256,7 +239,7 @@ class BaseEmissionsTracker(ABC):
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
-        self._set_from_conf(api_key, "api_key", "api_key")
+        self._set_from_conf(project_token, "project_token", "project_token")
         self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
         self._set_from_conf(experiment_name, "experiment_name", "base")
@@ -346,7 +329,7 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
         )
-        self._init_output_methods(self._api_key)
+        self._init_output_methods(self._project_token)
 
     def set_CPU_GPU_ram_tracking(self):
         cpu_tracker = gpu_tracker = ram_tracker = "Unspecified"
@@ -470,7 +453,7 @@ class BaseEmissionsTracker(ABC):
             """
         )
 
-    def _init_output_methods(self, api_key):
+    def _init_output_methods(self, project_token):
         """
         Prepare the different output methods
         """
@@ -493,7 +476,7 @@ class BaseEmissionsTracker(ABC):
             cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
                 experiment_id=self._experiment_id,
-                api_key=api_key,
+                project_token=project_token,
                 conf=self._conf,
             )
             self.run_id = cc_api__out.run_id
@@ -606,7 +589,7 @@ class BaseEmissionsTracker(ABC):
             return None
 
         # Run to calculate the power used from last
-        # scheduled measurement to shutdown
+        # scheduled measurement to shut down
         self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
@@ -650,7 +633,7 @@ class BaseEmissionsTracker(ABC):
             if self._tasks[task_name].is_active:
                 self.stop_task(task_name=task_name)
         # Run to calculate the power used from last
-        # scheduled measurement to shutdown
+        # scheduled measurement to shut down
         # or if scheduler interval was longer than the run
         self._measure_power_and_energy()
 
@@ -684,7 +667,7 @@ class BaseEmissionsTracker(ABC):
 
     def _prepare_emissions_data(self) -> EmissionsData:
         """
-        :delta: If 'True', return only the delta comsumption since the last call.
+        :delta: If 'True', return only the delta consumption since the last call.
         """
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
@@ -893,7 +876,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         **kwargs,
     ):
         """
-        :param country_iso_code: 3 letter ISO Code of the country where the
+        :param country_iso_code: 3-letter ISO Code of the country where the
                                  experiment is being run
         :param region: The province or region (e.g. California in the US).
                        Currently, this only affects calculations for the United States
@@ -1026,7 +1009,7 @@ def track_emissions(
     measure_power_secs: Optional[int] = _sentinel,
     api_call_interval: int = _sentinel,
     api_endpoint: Optional[str] = _sentinel,
-    api_key: Optional[str] = _sentinel,
+    project_token: Optional[str] = _sentinel,
     output_dir: Optional[str] = _sentinel,
     output_file: Optional[str] = _sentinel,
     save_to_file: Optional[bool] = _sentinel,
@@ -1150,7 +1133,7 @@ def track_emissions(
                     emissions_endpoint=emissions_endpoint,
                     experiment_id=experiment_id,
                     api_call_interval=api_call_interval,
-                    api_key=api_key,
+                    project_token=project_token,
                     api_endpoint=api_endpoint,
                     save_to_api=save_to_api,
                     co2_signal_api_token=co2_signal_api_token,

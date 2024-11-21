@@ -42,17 +42,17 @@ class ApiClient:  # (AsyncClient)
         # endpoint_url="https://api.codecarbon.io",
         endpoint_url="https://dash-dev.cleverapps.io/api",  # beta API
         experiment_id=None,
-        api_key=None,
+        project_token=None,
         conf=None,
     ):
         """
         :project_id: ID of the existing project
-        :api_key: Code Carbon API_KEY
+        :project_token: Code Carbon project token
         """
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
-        self.api_key = api_key
+        self.project_token = project_token
         self.conf = conf
         self.access_token = None
         if self.experiment_id is not None:
@@ -76,10 +76,10 @@ class ApiClient:  # (AsyncClient)
 
     def _get_headers(self):
         headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            print(type(self.api_key))
+        if self.project_token:
+            print(type(self.project_token))
             # set the x-api-token header
-            headers["x-api-token"] = self.api_key
+            headers["x-api-token"] = self.project_token
         if self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
