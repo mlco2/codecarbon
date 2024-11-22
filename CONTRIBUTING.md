@@ -201,6 +201,8 @@ $ hatch -e test.py3.11 run python -m unittest tests.test_your_feature.YourTestCa
 
 For example : `hatch -e test.py3.11 run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
 
+Some tests will fail if you do not set *CODECARBON_ALLOW_MULTIPLE_RUNS* with `export CODECARBON_ALLOW_MULTIPLE_RUNS=True` before running test manually.
+
 To test the API, see [how to deploy it](#local_deployement) first.
 
 Core and external classes are unit tested, with one test file per class. Most pull requests are expected to contain either new tests or test updates. If you are unusure what to test / how to test it, please put it in the pull request description and the maintainers will help you.
@@ -261,6 +263,18 @@ Here is the launch.json to be able to debug examples and tests:
             "request": "launch",
             "module": "pytest",
             "args": ["${file}"],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": { "PYTHONPATH": "${workspaceRoot}" }
+        },
+        {
+            "name": "PyTest: codecarbon monitor",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "codecarbon.cli.main",
+            "args": [
+                "monitor"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": { "PYTHONPATH": "${workspaceRoot}" }

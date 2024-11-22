@@ -139,6 +139,9 @@ class BaseEmissionsTracker(ABC):
         if name == "output_dir":
             if not os.path.exists(value):
                 raise OSError(f"Folder '{value}' doesn't exist !")
+        if name == "gpu_ids":
+            if value is None and os.environ.get("CUDA_VISIBLE_DEVICES"):
+                value = os.environ.get("CUDA_VISIBLE_DEVICES")
         # store final value
         self._conf[name] = value
         # set `self._{name}` to `value`
@@ -248,7 +251,7 @@ class BaseEmissionsTracker(ABC):
                 self._lock.acquire()
             except FileExistsError:
                 logger.error(
-                    "Error: Another instance of codecarbon is already running. Turn off the other instance to be able to run this one. Exiting."
+                    f"Error: Another instance of codecarbon is probably running as we find `{self._lock.lockfile_path}`. Turn off the other instance to be able to run this one or use `allow_multiple_runs` or delete the file. Exiting."
                 )
                 # Do not continue if another instance of codecarbon is running
                 self._another_instance_already_running = True
@@ -320,7 +323,12 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
-        logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
+        if self._gpu_ids:
+            logger.info(
+                f"  GPU model: {self._conf.get('gpu_model')} BUT only tracking these GPU ids : {self._conf.get('gpu_ids')}"
+            )
+        else:
+            logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
         # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
@@ -382,7 +390,8 @@ class BaseEmissionsTracker(ABC):
             self._conf["gpu_model"] = "".join(
                 [f"{i} x {name}" for name, i in gpu_names_dict.items()]
             )
-            self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
+            if self._conf.get("gpu_count") is None:
+                self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
         else:
             logger.info("No GPU found.")
 

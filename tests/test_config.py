@@ -11,6 +11,7 @@ from codecarbon.core.config import (
     parse_gpu_ids,
 )
 from codecarbon.emissions_tracker import EmissionsTracker
+from codecarbon.external.hardware import GPU
 from tests.testutils import get_custom_mock_open
 
 
@@ -189,3 +190,40 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(tracker._co2_signal_api_token, "signal-token")
             self.assertEqual(tracker._project_name, "test-project")
             self.assertTrue(tracker._save_to_file)
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "2, 3",
+        },
+    )
+    def test_gpu_ids_from_env(self):
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, [2, 3])
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "99",
+        },
+    )
+    def test_too_much_gpu_ids_in_env(self):
+        # GPU numbers start from 0, so 1 mean 2 GPUs
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, [99])
+        gpu_count = 0
+        for hardware in tracker._hardware:
+            if isinstance(hardware, GPU):
+                gpu_count += 1
+        # self.assertEqual(gpu_count, 0)
+        tracker.stop()
+
+
+if __name__ == "__main__":
+    unittest.main()

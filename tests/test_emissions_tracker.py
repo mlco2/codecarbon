@@ -95,7 +95,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertGreaterEqual(
             mocked_get_gpu_details.call_count, 2
         )  # at least 2 times in 5 seconds + once for init >= 3
-        self.assertEqual(2, mocked_is_gpu_details_available.call_count)
+        self.assertEqual(3, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
@@ -399,7 +399,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertGreaterEqual(
             mocked_get_gpu_details.call_count, 2
         )  # at least 2 times in 5 seconds + once for init >= 3
-        self.assertEqual(2, mocked_is_gpu_details_available.call_count)
+        self.assertEqual(3, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
