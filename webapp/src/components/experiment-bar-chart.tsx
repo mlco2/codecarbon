@@ -82,7 +82,6 @@ export default function ExperimentsBarChart({
     };
     useEffect(() => {
         const fetchData = async () => {
-            console.log("Fetching experiments report data");
             const data = await getProjectEmissionsByExperiment(
                 params.projectId,
                 params.startDate,
