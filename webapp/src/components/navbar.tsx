@@ -22,6 +22,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
+import CreateOrganizationModal from "./createOrganizationModal";
+import { getOrganizations } from "@/server-functions/organizations";
+import { Button } from "./ui/button";
 
 export default function NavBar({
     orgs,
@@ -36,6 +39,11 @@ export default function NavBar({
     const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
     const iconStyles = "h-4 w-4 flex-shrink-0 text-muted-foreground";
     const pathname = usePathname();
+    const [isNewOrgModalOpen, setNewOrgModalOpen] = useState(false);
+    const [organizationList, setOrganizationList] = useState<
+        Organization[] | undefined
+    >([]);
+    const [isDropdownOpen, setDropdownOpen] = useState(false);
 
     useEffect(() => {
         if (pathname.includes("/members")) {
@@ -51,20 +59,26 @@ export default function NavBar({
     }, [pathname, orgs]);
 
     useEffect(() => {
+        if (orgs) {
+            setOrganizationList(orgs);
+        }
+    }, [orgs]);
+
+    useEffect(() => {
         if (!selectedOrg) {
             try {
                 const localOrg = localStorage.getItem("organizationId");
                 if (localOrg) {
                     setSelectedOrg(localOrg);
-                } else if (orgs && orgs.length > 0) {
+                } else if (organizationList && organizationList.length > 0) {
                     // Set the first organization as the default
-                    setSelectedOrg(orgs[0].id);
+                    setSelectedOrg(organizationList[0].id);
                 }
             } catch (error) {
                 console.error("Error reading from localStorage:", error);
             }
         }
-    }, [selectedOrg, orgs]); // Empty dependency array, runs only on mount
+    }, [selectedOrg, organizationList]);
 
     // Effect for updating localStorage when selectedOrg changes
     useEffect(() => {
@@ -79,6 +93,17 @@ export default function NavBar({
             }
         }
     }, [selectedOrg]);
+
+    const handleNewOrgClick = async () => {
+        setNewOrgModalOpen(true);
+        setDropdownOpen(false); // Close the dropdown menu
+    };
+
+    const refreshOrgList = async () => {
+        // Fetch the updated list of organizations from the server
+        const orgs = await getOrganizations();
+        setOrganizationList(orgs);
+    };
 
     return (
         <div className="flex-1 p-8">
@@ -142,6 +167,8 @@ export default function NavBar({
                                     setSheetOpened(false);
                                     router.push(`/${value}`);
                                 }}
+                                open={isDropdownOpen} // Control the dropdown visibility
+                                onOpenChange={setDropdownOpen} // Update the state when the dropdown is opened/closed
                             >
                                 <SelectTrigger
                                     className={cn(
@@ -159,8 +186,8 @@ export default function NavBar({
                                                 isCollapsed && "hidden",
                                             )}
                                         >
-                                            {orgs &&
-                                                orgs.find(
+                                            {organizationList &&
+                                                organizationList.find(
                                                     (org) =>
                                                         org.id === selectedOrg,
                                                 )?.name}
@@ -168,12 +195,18 @@ export default function NavBar({
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <Button
+                                        onClick={handleNewOrgClick}
+                                        variant="ghost"
+                                    >
+                                        + Add new organization
+                                    </Button>
                                     <SelectGroup>
                                         <SelectLabel className="text-sm font-medium text-muted-foreground">
                                             Organizations
                                         </SelectLabel>
-                                        {orgs &&
-                                            orgs.map((org) => (
+                                        {organizationList &&
+                                            organizationList.map((org) => (
                                                 <SelectItem
                                                     key={org.id}
                                                     value={org.id}
@@ -187,6 +220,11 @@ export default function NavBar({
                                 </SelectContent>
                             </Select>
                         )}
+                        <CreateOrganizationModal
+                            isOpen={isNewOrgModalOpen}
+                            onClose={() => setNewOrgModalOpen(false)}
+                            onOrganizationCreated={refreshOrgList}
+                        />
                         <NavItem
                             isSelected={selected === "profile"}
                             onClick={() => {

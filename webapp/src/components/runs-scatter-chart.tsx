@@ -78,7 +78,6 @@ export default function RunsScatterChart({
     );
     useEffect(() => {
         const fetchData = async () => {
-            console.log("Fetching runs report data");
             const data = await getRunEmissionsByExperiment(
                 params.experimentId,
                 params.startDate,

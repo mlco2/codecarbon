@@ -1,3 +1,4 @@
+import { Organization } from "@/types/organization";
 import { OrganizationReport } from "@/types/organization-report";
 import { DateRange } from "react-day-picker";
 
@@ -44,3 +45,35 @@ export async function getDefaultOrgId(): Promise<string | null> {
     }
     return null;
 }
+export async function getOrganizations(): Promise<Organization[] | undefined> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations`);
+
+    if (!res.ok) {
+        console.warn("error fetching organizations list");
+        return;
+    }
+    try {
+        const orgs = await res.json();
+    } catch (err) {
+        console.warn("error processing organizations list");
+    }
+    return;
+}
+
+export const createOrganization = async (organization: {
+    name: string;
+    description: string;
+}): Promise<Organization> => {
+    const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/organizations`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(organization),
+        },
+    );
+    const data = await response.json();
+    return data;
+};
