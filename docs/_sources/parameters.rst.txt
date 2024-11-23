@@ -27,16 +27,25 @@ Input Parameters
    * - gpu_ids
      - User-specified known gpu ids to track, defaults to ``None``
    * - log_level
-     - | Global codecarbon log level (by order of verbosity): "debug", "info" (defaults), "warning",
-       | "error", or "critical"
+     - | Global codecarbon log level (by order of verbosity): "debug", "info" (defaults),
+       | "warning", "error", or "critical"
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
    * - pue
      - | PUE (Power Usage Effectiveness) of the data center where the experiment is being run.
+   * - default_cpu_power
+     - | Default CPU power consumption in watts, defaults to ``42.5``
+       | *(POWER_CONSTANT x CONSUMPTION_PERCENTAGE_CONSTANT)*
+   * - allow_multiple_runs
+     - | Boolean variable indicating if multiple instance of CodeCarbon on the same machine
+       | is allowed, defaults to ``False``.
 
 PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.
 
 Old data-centers have a PUE up to 2.2, where new green one could be as low as 1.1.
+
+If you, or your provider, use ``CUDA_VISIBLE_DEVICES`` to set the GPU you want to use, CodeCarbon will automaticly set this value to ``gpu_ids``.
+If you set ``gpu_ids`` manually, it will override the ``CUDA_VISIBLE_DEVICES`` for CodeCarbon measures.
 
 Output parameters
 -----------------
@@ -81,6 +90,17 @@ Output parameters
      - LoggerOutput object encapsulating a logging.Logger or a Google Cloud logger
    * - logger_preamble
      - String to systematically include in the logger's messages (defaults to "")
+   * - save_to_prometheus
+     - | Boolean variable indicating if the emission artifacts should be written
+       | to a Prometheus server, defaults to ``False``
+   * - prometheus_url
+     - | URL of the Prometheus server
+   * - save_to_logfire
+     - | Boolean variable indicating if the emission artifacts should be written
+       | to a LogFire server, defaults to ``False``
+   * - output_handlers
+     - | List of output handlers to use for saving the emissions data
+       | defaults to ``[]``
 
 Specific parameters for offline mode
 ------------------------------------
@@ -99,14 +119,14 @@ Specific parameters for offline mode
        | Currently, supported only for US States and Canada
        | for example - California or New York, from the `list <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json>`_
    * - cloud_provider
-     - | The cloud provider specified for estimating emissions intensity, defaults to ``None``
-       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
+     - | The cloud provider specified for estimating emissions intensity,
+       | defaults to ``None``. See `impact.csv <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ for a list of cloud providers
    * - cloud_region
      - | The region of the cloud data center, defaults to ``None``
-       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
+       | See `impact.csv <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ for a list of cloud regions.
    * - country_2letter_iso_code
-     - | For use with the CO2Signal emissions API.
-       | See http://api.electricitymap.org/v3/zones for a list of codes and their corresponding locations.
+     - | For use with the Electricity Maps emissions API.
+       | See `Electricity Maps zones <http://api.electricitymap.org/v3/zones>`_ for a list of codes and their locations.
 
 
 @track_emissions
@@ -134,8 +154,8 @@ Decorator ``track_emissions`` in addition to standard arguments, requires the fo
        | Currently, supported only for US States
        | for example - California or New York, from the `list <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json>`_
    * - cloud_provider
-     - | The cloud provider specified for estimating emissions intensity, defaults to ``None``.
-       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud providers
+     - | The cloud provider specified for estimating emissions intensity,
+       | defaults to ``None``. See `impact.csv <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ for a list of cloud providers
    * - cloud_region
-     - | The region of the cloud data center, defaults to ``None``.
-       | See https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv for a list of cloud regions
+     - | The region of the cloud data center, defaults to ``None``
+       | See `impact.csv <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ for a list of cloud regions.

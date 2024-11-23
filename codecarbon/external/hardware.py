@@ -23,7 +23,7 @@ POWER_CONSTANT = 85
 #  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
-B_TO_GB = 1024 * 1024 * 1024  # Or 1e9 ?
+B_TO_GB = 1024 * 1024 * 1024
 
 
 @dataclass
@@ -97,14 +97,25 @@ class GPU(BaseHardware):
 
     def _get_gpu_ids(self) -> Iterable[int]:
         """
-        Get the Ids of the GPUs that we would like to monitor
+        Get the Ids of the GPUs that we will monitor
         :return: list of ids
         """
+        gpu_ids = []
         if self.gpu_ids is not None:
-            gpu_ids = self.gpu_ids
-            assert set(gpu_ids).issubset(
-                set(range(self.num_gpus))
-            ), f"Unknown GPU ids {gpu_ids}"
+            # Check that the provided GPU ids are valid
+            if not set(self.gpu_ids).issubset(set(range(self.num_gpus))):
+                logger.warning(
+                    f"Unknown GPU ids {gpu_ids}, only {self.num_gpus} GPUs available."
+                )
+            # Keep only the GPUs that are in the provided list
+            for gpu_id in range(self.num_gpus):
+                if gpu_id in self.gpu_ids:
+                    gpu_ids.append(gpu_id)
+                else:
+                    logger.info(
+                        f"GPU number {gpu_id} will not be monitored, at your request."
+                    )
+            self.gpu_ids = gpu_ids
         else:
             gpu_ids = set(range(self.num_gpus))
         return gpu_ids
@@ -118,7 +129,13 @@ class GPU(BaseHardware):
 
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
-        return cls(gpu_ids=gpu_ids)
+        gpus = cls(gpu_ids=gpu_ids)
+        new_gpu_ids = gpus._get_gpu_ids()
+        if len(new_gpu_ids) < gpus.num_gpus:
+            logger.warning(
+                f"You have {gpus.num_gpus} GPUs but we will monitor only {len(gpu_ids)} of them. Check your configuration."
+            )
+        return cls(gpu_ids=new_gpu_ids)
 
 
 @dataclass
