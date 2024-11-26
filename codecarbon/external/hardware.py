@@ -186,7 +186,9 @@ class CPU(BaseHardware):
             cpu_load = psutil.cpu_percent(interval=None)
             # We add a minimum of 10% of TDP
             power = max(self._tdp * 0.1, self._tdp * cpu_load / 100)
-            logger.debug(f"CPU load {self._tdp} W x {cpu_load}% = {power} for whole machine.")
+            logger.debug(
+                f"CPU load {self._tdp} W x {cpu_load}% = {power} for whole machine."
+            )
         elif self._tracking_mode == "process":
 
             cpu_load = self._process.cpu_percent(interval=None) / self._cpu_count
@@ -257,7 +259,6 @@ class CPU(BaseHardware):
         if self._mode == MODE_CPU_LOAD:
             # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
             _ = self._get_power_from_cpu_load()
-        pass
 
     def get_model(self):
         return self._model

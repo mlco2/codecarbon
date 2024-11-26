@@ -1,6 +1,6 @@
-from codecarbon import EmissionsTracker
 import multiprocessing
 
+from codecarbon import EmissionsTracker
 
 # pool = SafePool(multiprocessing.cpu_count(), retries=150)
 # handles = {
@@ -17,11 +17,12 @@ import multiprocessing
 # if failures:
 #     raise failures.pop()
 
+
 def task(number):
     a = 0
     for i in range(1000):
-            for i in range(int(1e6)):
-                a = a + i**number
+        for i in range(int(1e6)):
+            a = a + i**number
 
 
 tracker = EmissionsTracker(measure_power_secs=100)
@@ -33,5 +34,4 @@ try:
 finally:
     emissions: float = tracker.stop()
 
-print(a)
 print(f"Emissions: {emissions} kg")

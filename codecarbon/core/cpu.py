@@ -11,8 +11,8 @@ import sys
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
-from rapidfuzz import fuzz, process, utils
 import psutil
+from rapidfuzz import fuzz, process, utils
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
