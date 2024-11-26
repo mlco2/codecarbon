@@ -1,6 +1,5 @@
 import os
 import re
-import shutil
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -49,6 +48,8 @@ def resolve_path(path: Union[str, Path]) -> Path:
 def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     """
     Resolves the path to a path then backs it up, adding the extension provided.
+    Warning : this function will rename the file in place, it's the calling function that will write a new file at the original path.
+    This function will not overwrite existing backups but add a number.
 
     Args:
         file_path (Union[str, Path]): Path to a file to backup.
@@ -69,7 +70,7 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
         backup_path = parent / file_name
         idx += 1
 
-    shutil.copyfile(file_path, backup)
+    file_path.rename(backup_path)
 
 
 def detect_cpu_model() -> str:
