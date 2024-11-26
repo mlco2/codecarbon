@@ -179,6 +179,7 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
+        force_add_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
@@ -234,6 +235,7 @@ class BaseEmissionsTracker(ABC):
                                 messages. Defaults to "".
         :param default_cpu_power: cpu power to be used as default if the cpu is not known.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+        :param force_add_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
@@ -283,6 +285,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(default_cpu_power, "default_cpu_power")
         self._set_from_conf(pue, "pue", 1.0, float)
+        self._set_from_conf(force_add_mode_cpu_load, "force_add_mode_cpu_load", False)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -409,22 +412,6 @@ class BaseEmissionsTracker(ABC):
             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
             self._hardware.append(hardware)
             self._conf["cpu_model"] = hardware.get_model()
-
-            # ########### DEBUG ################
-            # Register a second CPU with MODE_CPU_LOAD
-            tdp = cpu.TDP()
-            power = tdp.tdp
-            model = tdp.model
-            hardware = CPU.from_utils(
-                self._output_dir,
-                MODE_CPU_LOAD,
-                model,
-                power,
-                tracking_mode=self._tracking_mode,
-            )
-            self._hardware.append(hardware)
-            # ########### END DEBUG ################
-
         elif (
             powermetrics.is_powermetrics_available() and self._default_cpu_power is None
         ):
@@ -498,7 +485,6 @@ class BaseEmissionsTracker(ABC):
                     )
                 self._hardware.append(hardware)
             else:
-
                 if cpu.is_psutil_available():
                     logger.warning(
                         "Failed to match CPU TDP constant. Falling back on CPU load mode."
@@ -515,6 +501,21 @@ class BaseEmissionsTracker(ABC):
                         "Failed to match CPU TDP constant. Falling back on a global constant."
                     )
                     hardware = CPU.from_utils(self._output_dir, "constant")
+        if self._conf.get("force_add_mode_cpu_load", False):
+            # ########### DEBUG ################
+            # Register a second CPU with MODE_CPU_LOAD
+            tdp = cpu.TDP()
+            power = tdp.tdp
+            model = tdp.model
+            hardware = CPU.from_utils(
+                self._output_dir,
+                MODE_CPU_LOAD,
+                model,
+                power,
+                tracking_mode=self._tracking_mode,
+            )
+            self._hardware.append(hardware)
+            # ########### END DEBUG ################
         logger.debug(
             f"""The below tracking methods have been set up:
                 RAM Tracking Method: {ram_tracker}
