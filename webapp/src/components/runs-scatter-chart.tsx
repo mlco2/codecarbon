@@ -1,12 +1,4 @@
-import {
-    ScatterChart,
-    Scatter,
-    XAxis,
-    YAxis,
-    Tooltip,
-    Label,
-    ResponsiveContainer,
-} from "recharts";
+import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, Label } from "recharts";
 import { format } from "date-fns";
 import { RunReport } from "@/types/run-report";
 
@@ -19,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { ChartConfig, ChartContainer } from "./ui/chart";
+import { getRunEmissionsByExperiment } from "@/server-functions/runs";
 
 interface RunsScatterChartProps {
     params: {
@@ -27,35 +20,6 @@ interface RunsScatterChartProps {
         endDate: string;
     };
     onRunClick: (runId: string) => void;
-}
-
-async function getRunEmissionsByExperiment(
-    experimentId: string,
-    startDate: string,
-    endDate: string,
-): Promise<RunReport[]> {
-    if (!experimentId || experimentId == "") {
-        return [];
-    }
-
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`;
-    const res = await fetch(url);
-
-    if (!res.ok) {
-        // Log error waiting for a better error management
-        console.log("Failed to fetch data");
-        return [];
-    }
-    const result = await res.json();
-    return result.map((runReport: RunReport) => {
-        return {
-            runId: runReport.run_id,
-            emissions: runReport.emissions * 1000,
-            timestamp: runReport.timestamp,
-            energy_consumed: runReport.energy_consumed * 1000,
-            duration: runReport.duration * 10,
-        };
-    });
 }
 
 const chartConfig = {
@@ -83,7 +47,13 @@ export default function RunsScatterChart({
                 params.startDate,
                 params.endDate,
             );
-            setExperimentsReportData(data);
+            // Sort the data by timestamp
+            const sortedData = data.sort(
+                (a, b) =>
+                    new Date(a.timestamp).getTime() -
+                    new Date(b.timestamp).getTime(),
+            );
+            setExperimentsReportData(sortedData);
         };
         fetchData();
     }, [params.experimentId, params.startDate, params.endDate]);
@@ -95,14 +65,15 @@ export default function RunsScatterChart({
             return (
                 <div className="custom-tooltip bg-background text-foreground p-2 border border-border rounded shadow">
                     <p>
-                        <strong>Emissions:</strong> {data.emissions.toFixed(2)}
+                        <strong>Emissions:</strong> {data.emissions.toFixed(2)}{" "}
+                        kgeqCO2
                     </p>
                     <p>
                         <strong>Energy Consumed:</strong>{" "}
-                        {data.energy_consumed.toFixed(2)}
+                        {data.energy_consumed.toFixed(2)} kWh
                     </p>
                     <p>
-                        <strong>Duration:</strong> {data.duration.toFixed(2)}
+                        <strong>Duration:</strong> {data.duration.toFixed(2)} s
                     </p>
                 </div>
             );
@@ -136,7 +107,7 @@ export default function RunsScatterChart({
                             type="category"
                             stroke="currentColor"
                             tickFormatter={(value) =>
-                                format(new Date(value), "yyyy-mm-dd HH:mm")
+                                format(new Date(value), "yyyy-MM-dd HH:mm")
                             }
                         >
                             <Label
@@ -153,7 +124,7 @@ export default function RunsScatterChart({
                             stroke="currentColor"
                         >
                             <Label
-                                value="Emissions"
+                                value="Emissions (kg eq CO2)"
                                 angle={-90}
                                 position="insideLeft"
                                 style={{ fill: "currentColor" }}
@@ -163,7 +134,7 @@ export default function RunsScatterChart({
                         <Scatter
                             name="Emissions"
                             data={runsReportsData}
-                            fill="hsl(var(--primary)))"
+                            fill="hsl(var(--primary))"
                             onClick={(data) => onRunClick(data.runId)}
                             cursor="pointer"
                         />
