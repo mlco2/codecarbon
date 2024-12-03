@@ -41,7 +41,6 @@ Input Parameters
        | is allowed, defaults to ``False``.
 
 PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.
-
 Old data-centers have a PUE up to 2.2, where new green one could be as low as 1.1.
 
 If you, or your provider, use ``CUDA_VISIBLE_DEVICES`` to set the GPU you want to use, CodeCarbon will automaticly set this value to ``gpu_ids``.
