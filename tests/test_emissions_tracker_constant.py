@@ -64,11 +64,15 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         self.verify_output_file(self.emissions_file_path)
 
     @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
-    def test_carbon_tracker_offline_constant_default_cpu_power(self, mock_tdp):
+    @mock.patch.object(cpu, "is_psutil_available")
+    def test_carbon_tracker_offline_constant_default_cpu_power(
+        self, mock_tdp, mock_psutil
+    ):
         # Same as test_carbon_tracker_offline_constant test but this time forcing the default cpu power
         USER_INPUT_CPU_POWER = 1_000
         # Mock the output of tdp
         mock_tdp.return_value = None
+        mock_psutil.return_value = False
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA",
             output_dir=self.emissions_path,
