@@ -12,6 +12,11 @@ import { Organization } from "@/types/organization";
 import { OrganizationReport } from "@/types/organization-report";
 import useSWR from "swr";
 import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
+import {
+    getEquivalentCitizenPercentage,
+    getEquivalentCarKm,
+    getEquivalentTvTime,
+} from "@/helpers/constants";
 
 export default function OrganizationPage({
     params,
@@ -84,16 +89,14 @@ export default function OrganizationPage({
         },
     };
 
-    const household_converted_value = (
-        (RadialChartData.emissions.value * 100) /
-        160.58
+    const citizen_converted_value = getEquivalentCitizenPercentage(
+        RadialChartData.emissions.value,
     ).toFixed(2);
-    const transportation_converted_value = (
-        RadialChartData.emissions.value / 0.409
+    const transportation_converted_value = getEquivalentCarKm(
+        RadialChartData.emissions.value,
     ).toFixed(2);
-    const tv_time_converted_value = (
-        RadialChartData.emissions.value /
-        (0.097 * 24)
+    const tv_time_converted_value = getEquivalentTvTime(
+        RadialChartData.energy.value,
     ).toFixed(2);
 
     return (
@@ -110,11 +113,10 @@ export default function OrganizationPage({
                                 className="h-16 w-16"
                             />
                             <p className="text-xs text-gray-500">
-                                {household_converted_value} %
+                                {citizen_converted_value} %
                             </p>
                             <p className="text-sm font-medium">
-                                Of an american household weekly energy
-                                consumption
+                                Of a U.S citizen weekly energy emissions
                             </p>
                         </div>
                         <div className="flex flex-col items-center justify-center">
