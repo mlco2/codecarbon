@@ -21,6 +21,7 @@ import {
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
+import RunsLineChart from "@/components/runs-line-chart";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -223,7 +224,7 @@ export default function ProjectPage({
                                     {convertedValues.citizen} %
                                 </p>
                                 <p className="text-sm font-medium">
-                                    Of a U.S citizen weekly energy emissions
+                                    Of a U.S citizen weekly CO2eq emissions
                                 </p>
                             </div>
                         </div>
@@ -279,7 +280,7 @@ export default function ProjectPage({
                         params={experimentsData}
                         onExperimentClick={handleExperimentClick}
                     />
-                    <RunsScatterChart
+                    <RunsLineChart
                         params={{
                             ...runData,
                             experimentId: selectedExperimentId,
