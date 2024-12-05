@@ -21,10 +21,10 @@ export async function getRunEmissionsByExperiment(
     return result.map((runReport: RunReport) => {
         return {
             runId: runReport.run_id,
-            emissions: runReport.emissions * 1000,
+            emissions: runReport.emissions,
             timestamp: runReport.timestamp,
-            energy_consumed: runReport.energy_consumed * 1000,
-            duration: runReport.duration * 10,
+            energy_consumed: runReport.energy_consumed,
+            duration: runReport.duration,
         };
     });
 }

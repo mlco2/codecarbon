@@ -15,6 +15,12 @@ import { SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getOneProject } from "@/server-functions/projects";
 import { Project } from "@/types/project";
+import { getProjectEmissionsByExperiment } from "@/server-functions/experiments";
+import {
+    getEquivalentCarKm,
+    getEquivalentHouseHoldPercentage,
+    getEquivalentTvTime,
+} from "@/helpers/constants";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -24,36 +30,6 @@ const getDefaultDateRange = (): { from: Date; to: Date } => {
         to: endOfDay(today),
     };
 };
-
-async function getProjectEmissionsByExperiment(
-    projectId: string,
-    dateRange: DateRange,
-): Promise<ExperimentReport[]> {
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums`;
-
-    if (dateRange?.from || dateRange?.to) {
-        const params = new URLSearchParams();
-        if (dateRange.from) {
-            params.append("start_date", dateRange.from.toISOString());
-        }
-        if (dateRange.to) {
-            params.append("end_date", dateRange.to.toISOString());
-        }
-        url += `?${params.toString()}`;
-    }
-
-    const res = await fetch(url);
-    const result = await res.json();
-    return result.map((experimentReport: ExperimentReport) => {
-        return {
-            experiment_id: experimentReport.experiment_id,
-            name: experimentReport.name,
-            emissions: experimentReport.emissions * 1000,
-            energy_consumed: experimentReport.energy_consumed * 1000,
-            duration: experimentReport.duration,
-        };
-    });
-}
 
 export default function ProjectPage({
     params,
@@ -80,7 +56,7 @@ export default function ProjectPage({
         };
 
         fetchProjectDetails();
-    }, []);
+    }, [params.projectId]);
     const router = useRouter();
     const handleSettingsClick = () => {
         router.push(
@@ -174,16 +150,14 @@ export default function ProjectPage({
             setSelectedExperimentId(report[0]?.experiment_id ?? "");
 
             setConvertedValues({
-                household: (
-                    (newRadialChartData.emissions.value * 100) /
-                    160.58
+                household: getEquivalentHouseHoldPercentage(
+                    newRadialChartData.emissions.value,
                 ).toFixed(2),
-                transportation: (
-                    newRadialChartData.emissions.value / 0.409
+                transportation: getEquivalentCarKm(
+                    newRadialChartData.emissions.value,
                 ).toFixed(2),
-                tvTime: (
-                    newRadialChartData.emissions.value /
-                    (0.097 * 24)
+                tvTime: getEquivalentTvTime(
+                    newRadialChartData.emissions.value,
                 ).toFixed(2),
             });
         }

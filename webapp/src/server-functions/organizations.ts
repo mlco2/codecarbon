@@ -21,8 +21,8 @@ export async function getOrganizationEmissionsByProject(
     }
     return {
         name: result.name,
-        emissions: result.emissions * 1000,
-        energy_consumed: result.energy_consumed * 1000,
+        emissions: result.emissions,
+        energy_consumed: result.energy_consumed,
         duration: result.duration,
     };
 }

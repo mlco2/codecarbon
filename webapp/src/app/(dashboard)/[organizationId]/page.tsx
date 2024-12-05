@@ -12,6 +12,11 @@ import { Organization } from "@/types/organization";
 import { OrganizationReport } from "@/types/organization-report";
 import useSWR from "swr";
 import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
+import {
+    getEquivalentHouseHoldPercentage,
+    getEquivalentCarKm,
+    getEquivalentTvTime,
+} from "@/helpers/constants";
 
 export default function OrganizationPage({
     params,
@@ -84,16 +89,14 @@ export default function OrganizationPage({
         },
     };
 
-    const household_converted_value = (
-        (RadialChartData.emissions.value * 100) /
-        160.58
+    const household_converted_value = getEquivalentHouseHoldPercentage(
+        RadialChartData.emissions.value,
     ).toFixed(2);
-    const transportation_converted_value = (
-        RadialChartData.emissions.value / 0.409
+    const transportation_converted_value = getEquivalentCarKm(
+        RadialChartData.emissions.value,
     ).toFixed(2);
-    const tv_time_converted_value = (
-        RadialChartData.emissions.value /
-        (0.097 * 24)
+    const tv_time_converted_value = getEquivalentTvTime(
+        RadialChartData.emissions.value,
     ).toFixed(2);
 
     return (

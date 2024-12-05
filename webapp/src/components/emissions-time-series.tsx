@@ -245,15 +245,15 @@ async function getEmissionsTimeSeries(
     const emissions: Emission[] = emissionsData.items.map((item: any) => ({
         emission_id: item.run_id,
         timestamp: item.timestamp,
-        emissions_sum: item.emissions_sum * 1000,
-        emissions_rate: item.emissions_rate * 1000,
+        emissions_sum: item.emissions_sum,
+        emissions_rate: item.emissions_rate,
         cpu_power: item.cpu_power,
         gpu_power: item.gpu_power,
         ram_power: item.ram_power,
         cpu_energy: item.cpu_energy,
         gpu_energy: item.gpu_energy,
         ram_energy: item.ram_energy,
-        energy_consumed: item.energy_consumed * 1000,
+        energy_consumed: item.energy_consumed,
     }));
 
     return {

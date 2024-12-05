@@ -45,8 +45,8 @@ async function getProjectEmissionsByExperiment(
         return {
             experiment_id: experimentReport.experiment_id,
             name: experimentReport.name,
-            emissions: experimentReport.emissions * 1000,
-            energy_consumed: experimentReport.energy_consumed * 1000,
+            emissions: experimentReport.emissions,
+            energy_consumed: experimentReport.energy_consumed,
         };
     });
 }
