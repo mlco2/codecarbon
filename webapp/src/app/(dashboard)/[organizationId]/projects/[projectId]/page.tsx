@@ -18,7 +18,7 @@ import { Project } from "@/types/project";
 import { getProjectEmissionsByExperiment } from "@/server-functions/experiments";
 import {
     getEquivalentCarKm,
-    getEquivalentHouseHoldPercentage,
+    getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
 
@@ -85,7 +85,7 @@ export default function ProjectPage({
         endDate: default_date.to.toISOString(),
     });
     const [convertedValues, setConvertedValues] = useState({
-        household: "0",
+        citizen: "0",
         transportation: "0",
         tvTime: "0",
     });
@@ -150,14 +150,14 @@ export default function ProjectPage({
             setSelectedExperimentId(report[0]?.experiment_id ?? "");
 
             setConvertedValues({
-                household: getEquivalentHouseHoldPercentage(
+                citizen: getEquivalentCitizenPercentage(
                     newRadialChartData.emissions.value,
                 ).toFixed(2),
                 transportation: getEquivalentCarKm(
                     newRadialChartData.emissions.value,
                 ).toFixed(2),
                 tvTime: getEquivalentTvTime(
-                    newRadialChartData.emissions.value,
+                    newRadialChartData.energy.value,
                 ).toFixed(2),
             });
         }
@@ -220,11 +220,10 @@ export default function ProjectPage({
                             </div>
                             <div className="flex flex-col col-span-2 justify-center">
                                 <p className="text-4xl text-primary">
-                                    {convertedValues.household} %
+                                    {convertedValues.citizen} %
                                 </p>
                                 <p className="text-sm font-medium">
-                                    Of an american household weekly energy
-                                    consumption
+                                    Of a U.S citizen weekly energy emissions
                                 </p>
                             </div>
                         </div>
