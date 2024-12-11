@@ -20,7 +20,7 @@ from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
@@ -170,7 +170,7 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
-        force_add_mode_cpu_load: Optional[bool] = _sentinel,
+        force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
@@ -226,7 +226,7 @@ class BaseEmissionsTracker(ABC):
                                 messages. Defaults to "".
         :param default_cpu_power: cpu power to be used as default if the cpu is not known.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
-        :param force_add_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
+        :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
@@ -276,7 +276,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(default_cpu_power, "default_cpu_power")
         self._set_from_conf(pue, "pue", 1.0, float)
-        self._set_from_conf(force_add_mode_cpu_load, "force_add_mode_cpu_load", False)
+        self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
