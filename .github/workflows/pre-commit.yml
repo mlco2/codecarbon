@@ -3,7 +3,7 @@ name: pre-commit
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [master, codecarbon_v3_rc]
 
 jobs:
   pre-commit:
