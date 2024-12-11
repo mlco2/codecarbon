@@ -4,7 +4,7 @@ from typing import List, Union
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger
 
 
@@ -133,10 +133,14 @@ class ResourceTracker:
         else:
             logger.info("No GPU found.")
 
-    def set_CPU_GPU_ram_tracking(self):
-        self.set_RAM_tracking()
-        self.set_CPU_tracking()
-        self.set_GPU_tracking()
+    def set_CPU_GPU_ram_tracking(self, tracker):
+        """
+        Set up CPU, GPU and RAM tracking based on the user's configuration.
+        param tracker: BaseEmissionsTracker object
+        """
+        self.set_RAM_tracking(tracker)
+        self.set_CPU_tracking(tracker)
+        self.set_GPU_tracking(tracker)
 
         logger.debug(
             f"""The below tracking methods have been set up:
