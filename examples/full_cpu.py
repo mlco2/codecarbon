@@ -25,7 +25,7 @@ def task(number):
             a = a + i**number
 
 
-tracker = EmissionsTracker(measure_power_secs=10, force_add_mode_cpu_load=True)
+tracker = EmissionsTracker(measure_power_secs=10, force_mode_cpu_load=True)
 try:
     tracker.start()
     with multiprocessing.Pool() as pool:
