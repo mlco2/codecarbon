@@ -97,6 +97,7 @@ def init_server(container):
     add_pagination(server)
 
     origins = [
+        "https://api.codecarbon.io",
         "https://dash-dev.cleverapps.io/",
         "https://dash-dev.cleverapps.io/api",
         "http://localhost",
