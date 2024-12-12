@@ -98,6 +98,7 @@ def init_server(container):
 
     origins = [
         "https://api.codecarbon.io",
+        "https://dashboard.codecarbon.io",
         "https://dash-dev.cleverapps.io/",
         "https://dash-dev.cleverapps.io/api",
         "http://localhost",
