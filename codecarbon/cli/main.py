@@ -25,12 +25,13 @@ from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, Projec
 from codecarbon.emissions_tracker import EmissionsTracker
 
 AUTH_CLIENT_ID = os.environ.get(
-    "AUTH_CLIENT_ID", "pkqh9CiOkp4MkPqRqM_k8Xc3mwBRpojS3RayIk1i5Pg"
+    "AUTH_CLIENT_ID",
+    "jsUPWIcUECQFE_ouanUuVhXx52TTjEVcVNNtNGeyAtU",
 )
 AUTH_SERVER_URL = os.environ.get(
-    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon-dev"
+    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon"
 )
-API_URL = os.environ.get("API_URL", "https://dash-dev.cleverapps.io/api")
+API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
