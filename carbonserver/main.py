@@ -6,7 +6,6 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from carbonserver.api.dependencies import get_query_token
 from carbonserver.api.errors import DBException, UserException, get_http_exception
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
@@ -82,7 +81,6 @@ def init_server(container):
         servers=[
             {"url": "/api/"},
         ],
-        dependencies=[Depends(get_query_token)],
     )
     server.container = container
     server.include_router(users.router)

@@ -7,13 +7,9 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Header
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.errors import EmptyResultException
 from carbonserver.api.schemas import AccessLevel, Empty, Run, RunCreate, RunReport
-from carbonserver.api.services.auth_service import (
-    OptionalUserWithAuthDependency,
-    UserWithAuthDependency,
-)
+
 from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
@@ -23,9 +19,7 @@ from carbonserver.logger import logger
 
 RUNS_ROUTER_TAGS = ["Runs"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 runs_temp_db = []
 
 
@@ -42,18 +36,15 @@ def add_run(
     project_token_service: ProjectTokenService = Depends(
         Provide[ServerContainer.project_token_service]
     ),
-    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     x_api_token: Optional[str] = Header(None),
 ) -> Run:
-    if x_api_token and x_api_token != "api_key":  # ignore dummy value
-        # use project-specific token if available
-        project_token_service.project_token_has_access(
-            AccessLevel.WRITE.value,
-            experiment_id=run.experiment_id,
-            project_token=x_api_token,
-        )
-        return run_service.add_run(run)
-    return run_service.add_run(run, user=auth_user.db_user)
+
+    project_token_service.project_token_has_access(
+        AccessLevel.WRITE.value,
+        experiment_id=run.experiment_id,
+        project_token=x_api_token,
+    )
+    return run_service.add_run(run)
 
 
 @router.get(
