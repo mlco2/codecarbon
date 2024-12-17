@@ -9,7 +9,6 @@ from starlette import status
 
 from carbonserver.api.errors import EmptyResultException
 from carbonserver.api.schemas import AccessLevel, Empty, Run, RunCreate, RunReport
-
 from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.usecases.run.experiment_sum_by_run import (

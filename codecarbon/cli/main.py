@@ -317,11 +317,9 @@ def monitor(
         api (Annotated[bool, typer.Option, optional): Choose to call Code Carbon API or not. Defaults to True.
     """
     experiment_id = get_existing_local_exp_id()
-    token = None
     if api:
         if experiment_id is None:
-            print("ERROR: No experiment id, call 'codecarbon init' first.", err=True)
-        token = _get_access_token()
+            print("ERROR: No experiment id, call 'codecarbon config' first.", err=True)
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
         measure_power_secs=measure_power_secs,

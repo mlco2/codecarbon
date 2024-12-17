@@ -1,4 +1,3 @@
-from codecs import backslashreplace_errors
 from dataclasses import dataclass
 from typing import Optional
 
@@ -86,8 +85,6 @@ class UserWithAuthDependency:
                 algorithms=["HS256", "RS256"],
             )
         elif bearer_token is not None:
-            print(bearer_token)
-            print(bearer_token.credentials)
             # cli user using fief token
             self.auth_user = jwt.decode(
                 bearer_token.credentials,

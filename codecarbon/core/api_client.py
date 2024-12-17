@@ -65,15 +65,12 @@ class ApiClient:  # (AsyncClient)
             stacklevel=2,
         )
 
-
     def _get_headers(self):
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             print(type(self.api_key))
             # set the x-api-token header
             headers["x-api-token"] = self.api_key
-        if self.access_token:
-            headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
 
     def get_list_organizations(self):
