@@ -1,12 +1,12 @@
 import abc
 from typing import List
 
-from carbonserver.api.schemas import User, UserCreate
+from carbonserver.api.schemas import User, UserAutoCreate
 
 
 class Users(abc.ABC):
     @abc.abstractmethod
-    def create_user(self, user: UserCreate) -> User:
+    def create_user(self, user: UserAutoCreate) -> User:
         raise NotImplementedError
 
     @abc.abstractmethod

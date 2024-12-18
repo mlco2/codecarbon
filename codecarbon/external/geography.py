@@ -32,18 +32,22 @@ class CloudMetadata:
             return re.search(google_region_regex, zone).group(0)
 
         extract_region_for_provider: Dict[str, Callable] = {
-            "aws": lambda x: x["metadata"]["region"],
-            "azure": lambda x: x["metadata"]["compute"]["location"],
-            "gcp": lambda x: extract_gcp_region(x["metadata"]["zone"]),
+            "aws": lambda x: x["metadata"].get("region"),
+            "azure": lambda x: x["metadata"]["compute"].get("location"),
+            "gcp": lambda x: extract_gcp_region(x["metadata"].get("zone")),
         }
 
         cloud_metadata: Dict = get_env_cloud_details()
 
-        if cloud_metadata is None:
+        if cloud_metadata is None or cloud_metadata["metadata"] == {}:
             return cls(provider=None, region=None)
 
         provider: str = cloud_metadata["provider"].lower()
         region: str = extract_region_for_provider.get(provider)(cloud_metadata)
+        if region is None:
+            logger.warning(
+                f"Cloud provider '{provider}' detected, but unable to read region. Using country value instead."
+            )
         if provider in ["aws", "azure"]:
             logger.warning(
                 f"Cloud provider '{provider}' do not publish electricity carbon intensity. Using country value instead."

@@ -1,0 +1,46 @@
+###############################################################################
+## To build Conda package for Anaconda.org
+## We use the `rattler-build` tool to build the package, see README.md
+## rattler-build build --channel codecarbon --channel conda-forge --recipe .conda --output-dir /tmp/rattler
+###############################################################################
+schema_version: 1
+
+package:
+  name: codecarbon
+  version: X.X.X  # Will be replaced by the version from the pyproject.toml file
+
+source:
+  path: ..
+
+build:
+  noarch: python
+  number: 0
+  string: py37_plus
+  script: python -m pip install --no-deps --ignore-installed .
+  python:
+    entry_points:
+      - codecarbon = codecarbon.cli.main:codecarbon
+
+requirements:
+  host:
+    - python
+    - pip
+    - hatchling
+  run:
+    # Will be replaced by the dependencies from the pyproject.toml file
+    - dependencies
+
+tests:
+  - python:
+      imports:
+        - codecarbon
+      pip_check: true
+
+about:
+  homepage: https://codecarbon.io
+  license: MIT
+  summary: 'CodeCarbon emissions tracker'
+  description: |
+    CodeCarbon is a Python package for tracking the carbon emissions produced by various kinds of computer programs, from straightforward algorithms to deep neural networks.
+
+    By taking into account your computing infrastructure, location, usage and running time, CodeCarbon can provide an estimate of how much CO2 you produced, and give you some comparisons with common modes of transporation to give you an order of magnitude.

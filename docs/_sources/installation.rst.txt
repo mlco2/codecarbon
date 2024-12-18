@@ -36,7 +36,7 @@ To install the package, run the following command in your terminal.
 
 ..  note::
 
-    We recommend using Python 3.7 or above.
+    We recommend using Python 3.8 or above.
 
 
 Dependencies
@@ -47,13 +47,18 @@ The following packages are used by the CodeCarbon package, and will be installed
 .. code-block::  bash
 
     arrow
+    click
+    fief-client[cli]
     pandas
-    pynvml
-    requests
+    prometheus_client
     psutil
     py-cpuinfo
-    click
+    pynvml
     rapidfuzz
-    prometheus_client
+    requests
+    questionary
+    rich
+    typer
 
-Please refer to `setup.py <https://github.com/mlco2/codecarbon/blob/347a802a3478a5740f04b3a7b6b5f379b38000a7/setup.py#L6>`_ for the latest list of the packages used.
+
+Please refer to `pyproject.toml <https://github.com/mlco2/codecarbon/blob/master/pyproject.toml>`_ for the latest list of the packages used.

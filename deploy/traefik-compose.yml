@@ -1,0 +1,45 @@
+services:
+  traefik:
+    image: "traefik:v3"
+    # container_name: "traefik"
+    command:
+      - "--log.level=DEBUG"
+      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/rules"
+      - "--providers.file.watch=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.address=:80"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      # Set your email address here
+      - "--certificatesresolvers.myresolver.acme.email=${ADMIN_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    environment:
+      - "TRAEFIK_API_DASHBOARD=true"
+      - "TRAEFIK_API=true"
+      - "TRAEFIK_PROVIDERS_FILE_DIRECTORY=/rules"
+    volumes:
+      # - ./traefik.toml:/traefik.toml
+      - "letsencrypt-data:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./rules:/rules
+      - ./certs:/certs
+    networks:
+      - shared
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  letsencrypt-data:
+    name: letsencrypt_data
+
+networks:
+  shared:
+    external: true

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
 
+from fastapi import HTTPException
+
 
 class EmptyResultException(Exception):
     """
@@ -39,6 +41,25 @@ class UserError(ErrorBase):
     code: DBErrorEnum
 
 
+class NotAllowedErrorEnum(str, Enum):
+    OPERATION_NOT_ALLOWED = "OPERATION_NOT_ALLOWED"
+    NOT_IN_ORGANISATION = "NOT_IN_ORGANISATION"
+
+
+class NotAllowedError(ErrorBase):
+    code: NotAllowedErrorEnum
+
+
 class UserException(Exception):
     def __init__(self, error):
         self.error = error
+
+
+def get_http_exception(exception) -> HTTPException:
+    """
+    take an internal exception and return a HTTPException
+    """
+    if isinstance(exception, UserException):
+        if isinstance(error := exception.error, NotAllowedError):
+            return HTTPException(status_code=403, detail=error.message)
+    return HTTPException(status_code=500)

@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installing CodeCarbon &mdash; CodeCarbon 2.3.4 documentation</title>
+  <title>Installing CodeCarbon &mdash; CodeCarbon 2.8.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=3fb9b4ff"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fa7f208a"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -123,24 +121,28 @@ conda<span class="w"> </span>activate<span class="w"> </span>codecarbon
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>We recommend using Python 3.7 or above.</p>
+<p>We recommend using Python 3.8 or above.</p>
 </div>
 </section>
 <section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
 <p>The following packages are used by the CodeCarbon package, and will be installed along with the package itself:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrow
+click
+fief-client<span class="o">[</span>cli<span class="o">]</span>
 pandas
-pynvml
-requests
+prometheus_client
 psutil
 py-cpuinfo
-click
+pynvml
 rapidfuzz
-prometheus_client
+requests
+questionary
+rich
+typer
 </pre></div>
 </div>
-<p>Please refer to <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/347a802a3478a5740f04b3a7b6b5f379b38000a7/setup.py#L6">setup.py</a> for the latest list of the packages used.</p>
+<p>Please refer to <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/pyproject.toml">pyproject.toml</a> for the latest list of the packages used.</p>
 </section>
 </section>
 

@@ -6,8 +6,6 @@ from codecarbon.external.logger import logger
 
 
 def postprocess_gcp_cloud_metadata(cloud_metadata: Dict[str, Any]) -> Dict[str, Any]:
-    # type: (Dict[str, Any]) -> Dict[str, Any]
-
     # Attributes contains custom metadata and also contains Kubernetes config,
     # startup script and secrets, filter it out
     if "attributes" in cloud_metadata:

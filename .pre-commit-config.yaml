@@ -5,12 +5,12 @@ repos:
           - id: isort
             args: ["--filter-files"]
     - repo: https://github.com/psf/black
-      rev: 24.2.0
+      rev: 24.8.0
       hooks:
           - id: black
             args: [--safe]
     - repo: https://github.com/PyCQA/flake8
-      rev: 7.0.0
+      rev: 7.1.1
       hooks:
           - id: flake8
             args: ["--config=.flake8"]
@@ -18,6 +18,6 @@ repos:
     
     # removes unused imports and unused variables
     -   repo: https://github.com/PyCQA/autoflake
-        rev: v2.3.0
+        rev: v2.3.1
         hooks:
         -   id: autoflake

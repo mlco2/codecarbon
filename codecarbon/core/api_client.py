@@ -8,13 +8,18 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-import time
 from datetime import timedelta, tzinfo
 
 import arrow
 import requests
 
-from codecarbon.core.schemas import EmissionCreate, ExperimentCreate, RunCreate
+from codecarbon.core.schemas import (
+    EmissionCreate,
+    ExperimentCreate,
+    OrganizationCreate,
+    ProjectCreate,
+    RunCreate,
+)
 from codecarbon.external.logger import logger
 
 # from codecarbon.output import EmissionsData
@@ -28,34 +33,164 @@ def get_datetime_with_timezone():
 class ApiClient:  # (AsyncClient)
     """
     This class call the Code Carbon API
-    Note : The project, team and organization must have been created in the interface.
     """
 
     run_id = None
-    _previous_call = time.time()
 
     def __init__(
         self,
-        endpoint_url="https://api.codecarbon.io",
+        # endpoint_url="https://api.codecarbon.io",
+        endpoint_url="https://dash-dev.cleverapps.io/api",  # beta API
         experiment_id=None,
         api_key=None,
+        access_token=None,
         conf=None,
     ):
         """
         :project_id: ID of the existing project
-        :api_ley: Code Carbon API_KEY
+        :api_key: Code Carbon API_KEY
         """
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
         self.conf = conf
+        self.access_token = access_token
         if self.experiment_id is not None:
             self._create_run(self.experiment_id)
+        import warnings
+
+        # FIXME: remove this warning in the future, once the release is created
+        warnings.warn(
+            "Beta API will be reworked, and some features will be removed. If you have data persisted through the API, please be warned that it will be erased with the next API release",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    def _get_headers(self):
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            print(type(self.api_key))
+            # set the x-api-token header
+            headers["x-api-token"] = self.api_key
+        elif self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        return headers
+
+    def set_access_token(self, token: str):
+        """This method sets the access token to be used for the API.
+        Args:
+            token (str): access token to be used for the API
+        """
+        self.access_token = token
+
+    def get_list_organizations(self):
+        """
+        List all organizations
+        """
+        url = self.url + "/organizations"
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def check_organization_exists(self, organization_name: str):
+        """
+        Check if an organization exists
+        """
+        organizations = self.get_list_organizations()
+        if organizations is None:
+            return False
+        for organization in organizations:
+            if organization["name"] == organization_name:
+                return organization
+        return False
+
+    def create_organization(self, organization: OrganizationCreate):
+        """
+        Create an organization
+        """
+        payload = dataclasses.asdict(organization)
+        url = self.url + "/organizations"
+        if organization := self.check_organization_exists(organization.name):
+            logger.warning(
+                f"Organization {organization['name']} already exists. Skipping creation."
+            )
+            return organization
+        else:
+            headers = self._get_headers()
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
+            if r.status_code != 201:
+                self._log_error(url, payload, r)
+                return None
+            return r.json()
+
+    def get_organization(self, organization_id):
+        """
+        Get an organization
+        """
+        headers = self._get_headers()
+        url = self.url + "/organizations/" + organization_id
+        r = requests.get(url=url, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def update_organization(self, organization: OrganizationCreate):
+        """
+        Update an organization
+        """
+        payload = dataclasses.asdict(organization)
+        headers = self._get_headers()
+        url = self.url + "/organizations/" + organization.id
+        r = requests.patch(url=url, json=payload, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def list_projects_from_organization(self, organization_id):
+        """
+        List all projects
+        """
+        url = self.url + "/organizations/" + organization_id + "/projects"
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
+    def create_project(self, project: ProjectCreate):
+        """
+        Create a project
+        """
+        payload = dataclasses.asdict(project)
+        url = self.url + "/projects"
+        headers = self._get_headers()
+        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
+        if r.status_code != 201:
+            self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def get_project(self, project_id):
+        """
+        Get a project
+        """
+        url = self.url + "/projects/" + project_id
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
-        self._previous_call = time.time()
         if self.run_id is None:
             # TODO : raise an Exception ?
             logger.debug(
@@ -89,8 +224,9 @@ class ApiClient:  # (AsyncClient)
         )
         try:
             payload = dataclasses.asdict(emission)
-            url = self.url + "/emission"
-            r = requests.post(url=url, json=payload, timeout=2)
+            url = self.url + "/emissions"
+            headers = self._get_headers()
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return False
@@ -129,8 +265,9 @@ class ApiClient:  # (AsyncClient)
                 tracking_mode=self.conf.get("tracking_mode"),
             )
             payload = dataclasses.asdict(run)
-            url = self.url + "/run"
-            r = requests.post(url=url, json=payload, timeout=2)
+            url = self.url + "/runs"
+            headers = self._get_headers()
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return None
@@ -149,24 +286,57 @@ class ApiClient:  # (AsyncClient)
         except Exception as e:
             logger.error(e, exc_info=True)
 
+    def list_experiments_from_project(self, project_id: str):
+        """
+        List all experiments for a project
+        """
+        url = self.url + "/projects/" + project_id + "/experiments"
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return []
+        return r.json()
+
+    def set_experiment(self, experiment_id: str):
+        """
+        Set the experiment id
+        """
+        self.experiment_id = experiment_id
+
     def add_experiment(self, experiment: ExperimentCreate):
         """
         Create an experiment, used by the CLI, not the package.
         ::experiment:: The experiment to create.
         """
         payload = dataclasses.asdict(experiment)
-        url = self.url + "/experiment"
-        r = requests.post(url=url, json=payload, timeout=2)
+        url = self.url + "/experiments"
+        headers = self._get_headers()
+        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
-        self.experiment_id = r.json()["id"]
-        return self.experiment_id
+        return r.json()
+
+    def get_experiment(self, experiment_id):
+        """
+        Get an experiment by id
+        """
+        url = self.url + "/experiments/" + experiment_id
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
 
     def _log_error(self, url, payload, response):
-        logger.error(
-            f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
-        )
+        if len(payload) > 0:
+            logger.error(
+                f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
+            )
+        else:
+            logger.error(f"ApiClient Error when calling the API on {url}")
         logger.error(
             f"ApiClient API return http code {response.status_code} and answer : {response.text}"
         )

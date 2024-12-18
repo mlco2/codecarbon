@@ -26,7 +26,7 @@ conf = {
 def test_call_api():
     with requests_mock.Mocker() as m:
         m.post(
-            "http://test.com/run",
+            "http://test.com/runs",
             json={
                 "id": "82ba0923-0713-4da1-9e57-cea70b460ee9",
                 "timestamp": "2021-04-04T08:43:00+02:00",
@@ -56,11 +56,12 @@ def test_call_api():
         assert api.run_id == "82ba0923-0713-4da1-9e57-cea70b460ee9"
 
     with requests_mock.Mocker() as m:
-        m.post("http://test.com/emission", status_code=201)
+        m.post("http://test.com/emissions", status_code=201)
         carbon_emission = EmissionsData(
             timestamp="222",
             project_name="",
             run_id=uuid4(),
+            experiment_id="test",
             duration=1.5,
             emissions=2.0,
             emissions_rate=2.0,

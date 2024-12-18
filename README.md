@@ -7,6 +7,7 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
 <br/>
 
 [![](https://anaconda.org/conda-forge/codecarbon/badges/version.svg)](https://anaconda.org/conda-forge/codecarbon)
+[![](https://anaconda.org/codecarbon/codecarbon/badges/version.svg)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
 [![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon)
@@ -20,6 +21,7 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
       - [In your python code](#in-your-python-code-)
       - [Visualize](#visualize-)
 - [Contributing 🤝](#contributing-)
+- [How To Cite 📝](#how-to-cite-)
 - [Contact 📝](#contact-)
 
 # About CodeCarbon 💡
@@ -55,7 +57,7 @@ pip install codecarbon
 
 **From Conda repository**
 ```python
-conda install -c conda-forge codecarbon
+conda install -c codecarbon codecarbon
 ```
 To see more installation options please refer to the documentation: [**Installation**](https://mlco2.github.io/codecarbon/installation.html#)
 
@@ -120,6 +122,52 @@ Check out our [contribution guidelines :arrow_upper_right:](https://github.com/m
 
 Contact [@vict0rsch](https://github.com/vict0rsch) to be added to our slack workspace if you want to contribute regularly!
 
+# How To Cite 📝
+
+If you find CodeCarbon useful for your research, you can find a citation under a variety of formats on [Zenodo](https://zenodo.org/records/11171501).
+
+Here is a sample for BibTeX: 
+```tex 
+@software{benoit_courty_2024_11171501,
+  author       = {Benoit Courty and
+                  Victor Schmidt and
+                  Sasha Luccioni and
+                  Goyal-Kamal and
+                  MarionCoutarel and
+                  Boris Feld and
+                  Jérémy Lecourt and
+                  LiamConnell and
+                  Amine Saboni and
+                  Inimaz and
+                  supatomic and
+                  Mathilde Léval and
+                  Luis Blanche and
+                  Alexis Cruveiller and
+                  ouminasara and
+                  Franklin Zhao and
+                  Aditya Joshi and
+                  Alexis Bogroff and
+                  Hugues de Lavoreille and
+                  Niko Laskaris and
+                  Edoardo Abati and
+                  Douglas Blank and
+                  Ziyao Wang and
+                  Armin Catovic and
+                  Marc Alencon and
+                  Michał Stęchły and
+                  Christian Bauer and
+                  Lucas Otávio N. de Araújo and
+                  JPW and
+                  MinervaBooks},
+  title        = {mlco2/codecarbon: v2.4.1},
+  month        = may,
+  year         = 2024,
+  publisher    = {Zenodo},
+  version      = {v2.4.1},
+  doi          = {10.5281/zenodo.11171501},
+  url          = {https://doi.org/10.5281/zenodo.11171501}
+}
+```
 
 # Contact 📝
 

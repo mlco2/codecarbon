@@ -6,41 +6,89 @@ on:
     branches: [master]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.11"]
+  python-test:
+        runs-on: ubuntu-24.04
+        strategy:
+            matrix:
+              python-version: ["3.9", "3.12", "3.13"]
+        steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v5
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install hatch==1.13.0 hatchling==1.25.0
+        - name: Test package
+          run: |
+            hatch run +py=${{ matrix.python-version }} test:package
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
-    - name: Test package with tox
-      run: tox -vv
+  build-conda:
+        runs-on: ubuntu-24.04
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Cache build
+              uses: actions/cache@v4
+              with:
+                path: /tmp/conda-bld
+                key: build-conda-${{ github.sha }}
+            - name: set version
+              run: |
+                python3 .github/pyproject_versions.py --replace True
+            - name: Build conda package
+              uses: prefix-dev/rattler-build-action@v0.2.16
+              with:
+                build-args: --channel codecarbon --channel conda-forge --output-dir /tmp/conda-bld
+                recipe-path: .conda/recipe.yaml
+                upload-artifact: false
+
+  test-conda:
+        runs-on: ubuntu-24.04
+        needs: [ build-conda ]
+        steps:
+            # Checkout needed to get github.sha
+            - uses: actions/checkout@v4
+            - name: Setup conda
+              uses: conda-incubator/setup-miniconda@v3
+              with:
+                activate-environment: codecarbon
+                miniforge-version: latest
+                python-version: 3.12
+                use-mamba: true
+            - name: Restore build
+              uses: actions/cache@v4
+              with:
+                path: /tmp/conda-bld
+                key: build-conda-${{ github.sha }}
+                fail-on-cache-miss: true
+            - name: Install package
+              shell: bash -l {0}
+              run: mamba install --channel file:///tmp/conda-bld --channel codecarbon codecarbon
+            - name: Test conda package
+              shell: bash -l {0}
+              run: codecarbon --help
 
   build_server:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: 3.12
+    - name: Clean pip cache
+      run: pip cache purge
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
-    - name: Unit tests on api with tox
+
+    - name: Unit tests on api
       run: |
-        cd carbonserver/
-        tox -e unit -vv
+        pip install hatch==1.13.0 hatchling==1.25.0
+        # hatch run api:test-unit
 
   test_api_server:
     runs-on: ubuntu-latest
@@ -49,7 +97,7 @@ jobs:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: postgres:12
+        image: postgres:16
         # Provide the password for postgres
         env:
           POSTGRES_DB: codecarbon_db
@@ -68,38 +116,52 @@ jobs:
     steps:
       # Downloads a copy of the code in your repository before running CI tests
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Performs a clean installation of all dependencies
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: 3.12
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          cd carbonserver
-          pip install -r requirements-dev.txt
-          pip install tox tox-gh-actions
+          pip install hatch==1.13.0 hatchling==1.25.0
 
       - name: Setup PostgreSQL
         # Runs a script that creates a PostgreSQL table, populates
         # the table with data, and then retrieves the data.
-        run: |
-          cd carbonserver
-          python3 -m alembic -c carbonserver/database/alembic.ini upgrade head
+        run: hatch run api:setup-db
+
         env:
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
 
       - name: Run API tests
-        run: |
-          cd carbonserver
-          uvicorn main:app --host 0.0.0.0 --port 8008 &
-          sleep 2
-          netstat -o -n -a | grep 8008
-          tox -e integration
-        # Environment variables used by the `client.js` script to create a new PostgreSQL table.
         env:
+          CODECARBON_API_URL: http://localhost:8008
           # The hostname used to communicate with the PostgreSQL service container
           DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
+        run: |
+          # hatch run api:server-ci &
+          sleep 2
+          # netstat -o -n -a | grep 8008
+          # hatch run api:test-integ
+
+  build-ui:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        working-directory: ./webapp
+        run: npm ci
+      - name: Build
+        working-directory: ./webapp
+        run: npm run build
+      - name: Check formatting with Prettier
+        working-directory: ./webapp
+        run: npx prettier . --check

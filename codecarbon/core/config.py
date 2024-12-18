@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import List
 
+from codecarbon.external.logger import logger
+
 
 def clean_env_key(k: str) -> str:
     """
@@ -96,6 +98,16 @@ def get_hierarchical_config():
     home = Path.home()
     global_path = str((home / ".codecarbon.config").expanduser().resolve())
     local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
+    if Path(global_path).exists():
+        logger.info(
+            f"Codecarbon is taking the configuration from global file: {global_path}"
+        )
+        if Path(local_path).exists():
+            logger.info(f"Some variables are overriden by the local file: {local_path}")
+    elif Path(local_path).exists():
+        logger.info(
+            f"Codecarbon is taking the configuration from the local file {local_path}"
+        )
 
     config.read([global_path, local_path])
     config.read_dict(parse_env_config())

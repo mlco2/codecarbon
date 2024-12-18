@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+import sys
 from contextlib import contextmanager
 from os.path import expandvars
 from pathlib import Path
@@ -76,6 +77,21 @@ def detect_cpu_model() -> str:
         cpu_model_detected = cpu_info.get("brand_raw", "")
         return cpu_model_detected
     return None
+
+
+def is_mac_os() -> str:
+    system = sys.platform.lower()
+    return system.startswith("dar")
+
+
+def is_windows_os() -> str:
+    system = sys.platform.lower()
+    return system.startswith("win")
+
+
+def is_linux_os() -> str:
+    system = sys.platform.lower()
+    return system.startswith("lin")
 
 
 def count_cpus() -> int:

@@ -4,7 +4,7 @@ from uuid import UUID
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserSqlRepository,
 )
-from carbonserver.api.schemas import User, UserAuthenticate, UserCreate
+from carbonserver.api.schemas import User, UserAuthenticate, UserAutoCreate
 from carbonserver.api.services.user_service import UserService
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
@@ -35,14 +35,13 @@ USER_2 = User(
 USER_AUTHENTICATE = UserAuthenticate(email="xyz@email.com", password="pwd")
 
 
-@mock.patch("uuid.uuid4", return_value=USER_ID)
-def test_user_service_creates_correct_user_on_sign_up(_):
+def test_user_service_creates_correct_user_on_sign_up_from_auth_server():
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
-    expected_id = USER_ID
+    expected_id = USER_ID_2
     user_service: UserService = UserService(user_mock_repository)
-    user_mock_repository.create_user.return_value = USER_1
-    user_to_create: UserCreate = UserCreate(
-        name="Gontran Bonheur", email="xyz@email.com", password="pwd"
+    user_mock_repository.create_user.return_value = USER_2
+    user_to_create: UserAutoCreate = UserAutoCreate(
+        name="Gontran Bonheur", email="xyz@email.com", id=USER_ID_2
     )
 
     actual_db_user = user_service.create_user(user_to_create)
@@ -77,21 +76,13 @@ def test_user_service_retrieves_correct_user_by_id():
     assert actual_saved_user.name == expected_user.name
 
 
-def test_user_service_verifies_correctly_registered_user():
+def test_user_service_retrieves_correct_user_by_email():
     user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
+    expected_user: User = USER_1
     user_service: UserService = UserService(user_mock_repository)
-    user_mock_repository.verify_user.return_value = True
+    user_mock_repository.get_user_by_email.return_value = USER_1
 
-    is_actual_user_verified = user_service.verify_user(USER_AUTHENTICATE)
+    actual_saved_user = user_service.get_user_by_email(USER_1.email)
 
-    assert is_actual_user_verified
-
-
-def test_user_service_rejects_unregistered_user():
-    user_mock_repository: UserSqlRepository = mock.Mock(spec=UserSqlRepository)
-    user_service: UserService = UserService(user_mock_repository)
-    user_mock_repository.verify_user.return_value = False
-
-    is_actual_user_verified = user_service.verify_user(USER_AUTHENTICATE)
-
-    assert not is_actual_user_verified
+    assert actual_saved_user.id == expected_user.id
+    assert actual_saved_user.name == expected_user.name

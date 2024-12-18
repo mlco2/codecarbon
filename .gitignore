@@ -88,7 +88,8 @@ celerybeat-schedule
 
 # Environments
 .env
-.venv
+.venv/
+.venv-notebook-data/
 env/
 venv/
 ENV/
@@ -110,6 +111,7 @@ venv.bak/
 
 # idea
 .idea/
+*.iml
 
 # Sphinx
 docs/_build/
@@ -125,3 +127,9 @@ code_carbon.db
 # Local file
 emissions*.csv*
 tests/test_data/rapl/*
+
+#asciinema
+*.cast
+
+# credentials
+credentials.json

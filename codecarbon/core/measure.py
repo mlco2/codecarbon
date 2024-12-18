@@ -1,4 +1,4 @@
-from time import time
+from time import perf_counter
 
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger
@@ -25,7 +25,7 @@ class MeasurePowerEnergy:
         :param hardware: list of hardware components to measure
         :param pue: Power Usage Effectiveness of the datacenter
         """
-        self._last_measured_time = time()
+        self._last_measured_time = perf_counter()
         self._hardware = hardware
         self._pue = pue
         # TODO: Read initial energy values from hardware
@@ -40,9 +40,9 @@ class MeasurePowerEnergy:
 
     def do_measure(self) -> None:
         for hardware in self._hardware:
-            h_time = time.time()
+            h_time = perf_counter()
             # Compute last_duration again for more accuracy
-            last_duration = time.time() - self._last_measured_time
+            last_duration = perf_counter() - self._last_measured_time
             power, energy = hardware.measure_power_and_energy(
                 last_duration=last_duration
             )
@@ -87,7 +87,7 @@ class MeasurePowerEnergy:
                     )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
-            h_time = time.time() - h_time
+            h_time = perf_counter() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
                 + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"

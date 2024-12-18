@@ -40,7 +40,6 @@ class RAPLFile:
 
     def start(self) -> None:
         self.last_energy = self._get_value()
-        return
 
     def delta(self, duration: Time) -> None:
         """
@@ -57,5 +56,3 @@ class RAPLFile:
         )
         self.energy_delta = energy - self.last_energy
         self.last_energy = new_last_energy
-
-        return

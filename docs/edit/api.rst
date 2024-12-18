@@ -50,6 +50,7 @@ You then have to set you experiment id in CodeCarbon, with two options:
 In the code:
 
 .. code-block:: python
+
     from codecarbon import track_emissions
 
     @track_emissions(
@@ -64,6 +65,7 @@ In the code:
 Or in the config file `.codecarbon.config`:
 
 .. code-block:: ini
+
     [codecarbon]
     experiment_id = your experiment id
     save_to_api = true

@@ -220,6 +220,11 @@ CLOUD_METADATA_GCP = {
     "provider": "GCP",
 }
 
+CLOUD_METADATA_GCP_EMPTY = {
+    "experimentKey": "3e84c36ba22c449a9eefdc077f640d30",
+    "metadata": {},
+    "provider": "GCP",
+}
 
 SINGLE_GPU_DETAILS_RESPONSE = [
     {

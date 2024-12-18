@@ -9,6 +9,7 @@ So this will help us avoiding confusion while using both.
 """
 
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
@@ -17,6 +18,31 @@ from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
 
 class Empty(BaseModel, extra=Extra.forbid):
     pass
+
+
+class UserBase(BaseModel):
+    email: str
+
+
+class UserAutoCreate(UserBase):
+    name: str
+    email: EmailStr
+    id: UUID
+
+
+class UserAuthenticate(UserBase):
+    password: SecretStr
+
+
+class User(UserBase):
+    id: UUID
+    name: str
+    email: EmailStr
+    organizations: Optional[List[UUID | str]]  # TODO: cleanup type
+    is_active: bool
+
+    class Config:
+        orm_mode = True
 
 
 class EmissionBase(BaseModel):
@@ -139,7 +165,7 @@ class RunReport(RunBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    duration: int
+    duration: float
     emissions_rate: float
     emissions_count: int
 
@@ -187,10 +213,10 @@ class ExperimentReport(ExperimentBase):
     timestamp: datetime
     name: str
     description: str
-    country_name: str
-    country_iso_code: str
-    region: str
-    on_cloud: str
+    country_name: Optional[str] = None
+    country_iso_code: Optional[str] = None
+    region: Optional[str] = None
+    on_cloud: Optional[str] = None
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
     emissions: float
@@ -234,14 +260,14 @@ class ExperimentReport(ExperimentBase):
 class ProjectBase(BaseModel):
     name: str
     description: str
-    team_id: UUID
+    organization_id: UUID
 
     class Config:
         schema_extra = {
             "example": {
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
-                "team_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "organization_id": "Code Carbon organization",
             }
         }
 
@@ -250,9 +276,72 @@ class ProjectCreate(ProjectBase):
     pass
 
 
+class ProjectPatch(BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+
+    # do not allow the organization_id
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "API Code Carbon",
+                "description": "API for Code Carbon",
+            }
+        }
+
+
+class AccessLevel(Enum):
+    READ = 1
+    WRITE = 2
+    READ_WRITE = 3
+
+
+# Used in the responses to the user
+class ProjectToken(BaseModel):
+    id: UUID
+    project_id: UUID
+    name: Optional[str]
+    token: Optional[str] = None
+    last_used: Optional[datetime] = None
+    access: int = AccessLevel.WRITE.value
+    revoked: bool = False
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "name": "my project token",
+                "last_used": "2021-04-04T08:43:00+02:00",
+                "access": 1,
+                "revoked": False,
+            }
+        }
+
+
+# Used to handle responses from the database
+class ProjectTokenInternal(ProjectToken):
+    id: Optional[str]
+    hashed_token: str
+
+
+class ProjectTokenCreate(BaseModel):
+    name: Optional[str]
+    access: int = AccessLevel.WRITE.value
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "my project token",
+                "access": 1,
+            }
+        }
+
+
 class Project(ProjectBase):
     id: UUID
-    experiments: Optional[List[Experiment]] = []
+    experiments: Optional[List[str]] = []
 
 
 class ProjectReport(ProjectBase):
@@ -272,33 +361,6 @@ class ProjectReport(ProjectBase):
     emissions_count: int
 
 
-class TeamBase(BaseModel):
-    name: str
-    description: str
-    organization_id: UUID
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "Data For Good",
-                "description": "Data For Good France",
-                "organization_id": "e52fe339-164d-4c2b-a8c0-f562dfce066d",
-                "api_key": "default",
-            }
-        }
-
-
-class TeamCreate(TeamBase):
-    pass
-
-
-class Team(TeamBase):
-    id: UUID
-    api_key: str
-    organization_id: UUID
-    projects: Optional[List[Project]]
-
-
 class OrganizationBase(BaseModel):
     name: str
     description: str
@@ -316,10 +378,13 @@ class OrganizationCreate(OrganizationBase):
     pass
 
 
+class OrganizationPatch(OrganizationBase):
+    name: Optional[str]
+    description: Optional[str]
+
+
 class Organization(OrganizationBase):
     id: UUID
-    api_key: str
-    teams: Optional[List[Team]]
 
 
 class OrganizationReport(OrganizationBase):
@@ -339,33 +404,17 @@ class OrganizationReport(OrganizationBase):
     emissions_count: int
 
 
-class UserBase(BaseModel):
-    email: str
-
-
-class UserCreate(UserBase):
-    name: str
-    email: EmailStr
-    password: SecretStr
-
-
-class UserAuthenticate(UserBase):
-    password: SecretStr
-
-
-class User(UserBase):
-    id: UUID
-    name: str
-    email: EmailStr
-    api_key: str
-    organizations: Optional[List]
-    teams: Optional[List]
-    is_active: bool
-
-    class Config:
-        orm_mode = True
+class Membership(BaseModel):
+    user_id = UUID
+    organization_id = UUID
+    is_admin: bool
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class OrganizationUser(User):
+    organization_id = UUID
+    is_admin: bool
