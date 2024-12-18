@@ -101,7 +101,6 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
 
 fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
 fief_auth = FiefAuth(fief, "./credentials.json")
-print("FIEF", AUTH_SERVER_URL, AUTH_CLIENT_ID)
 
 
 def _get_access_token():
