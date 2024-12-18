@@ -157,7 +157,7 @@ The CodeCarbon dashboard provides equivalent emissions and energy usage comparis
 Car Usage
 ---------
 - **Emission factor**: *0.12 kgCO₂ per kilometer driven*.
-- This value is derived from the average emissions of a passenger car under normal driving conditions.
+- This value is derived from the average emissions of a European passenger car under normal driving conditions.
 
 TV Usage
 --------
