@@ -9,7 +9,6 @@ from fastapi_pagination.default import Page as BasePage
 from fastapi_pagination.default import Params as BaseParams
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import AccessLevel, Emission, EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.project_token_service import ProjectTokenService
@@ -29,9 +28,7 @@ class Page(BasePage[T], Generic[T]):  # noqa: F811
 
 EMISSIONS_ROUTER_TAGS = ["Emissions"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 
 
 @router.post(
