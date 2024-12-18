@@ -157,14 +157,14 @@ The CodeCarbon dashboard provides equivalent emissions and energy usage comparis
 Car Usage
 ---------
 - **Emission factor**: *0.12 kgCO₂ per kilometer driven*.
-- This value is derived from the average emissions of a passenger car under normal driving conditions.
+- This value is derived from the average emissions of a European passenger car under normal driving conditions.
 
 TV Usage
 --------
-- **Emission factor**: *0.084 kgCO₂ per hour of usage*.
+- **Energy consumption**: *138 Wh per day based on average use*.
 - This assumes:
-  - An average power consumption of a modern television (~100W).
-  - Global electricity grid emissions of approximately *0.84 kgCO₂/kWh*.
+  - An average daily usage of 6.5 hours.
+  - A modern television with a power consumption of approximately *21.2 W per hour*.
 
 Calculation Formula
 -------------------
@@ -175,15 +175,18 @@ The equivalent emissions are calculated using this formula:
    \text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}
 
 For example:
-- *1 kgCO₂* emitted is approximately equivalent to:
-  - *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
-  - *11.9 hours of TV usage* (*1 ÷ 0.084*).
+ \text{Equivalent Usage} = \frac{\text{Total Consumption (kWh)}}{\text{Usage Factor (kWh/unit)}}
 
+For example:
+- *1 kWh* of energy consumption is approximately equivalent to:
+  - *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
+  - *11.9 hours of TV usage* (*1 ÷ 0.084*), if emissions are considered.
+  
 These estimates are approximate and subject to regional variations in:
 - Grid emissions intensity.
 - Vehicle efficiencies.
 
 Source
 ------
-The emission factors used are defined in the `CodeCarbon source code <https://github.com/mlco2/codecarbon/blob/b83cc2a38f21e410f9137e3a98a36f0ccfb4c905/webapp/src/helpers/constants.ts>`_. They are based on publicly available data and general assumptions.
+The emission factors used are defined in the `CodeCarbon source code <https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts>`_. They are based on publicly available data and general assumptions.
 
