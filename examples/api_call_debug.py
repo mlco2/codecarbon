@@ -8,6 +8,7 @@ from codecarbon.external.logger import logger
 @track_emissions(
     measure_power_secs=2,
     api_call_interval=2,
+    api_key="",
     save_to_api=True,
 )
 def train_model():
