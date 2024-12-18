@@ -25,12 +25,13 @@ from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, Projec
 from codecarbon.emissions_tracker import EmissionsTracker
 
 AUTH_CLIENT_ID = os.environ.get(
-    "AUTH_CLIENT_ID", "pkqh9CiOkp4MkPqRqM_k8Xc3mwBRpojS3RayIk1i5Pg"
+    "AUTH_CLIENT_ID",
+    "jsUPWIcUECQFE_ouanUuVhXx52TTjEVcVNNtNGeyAtU",
 )
 AUTH_SERVER_URL = os.environ.get(
-    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon-dev"
+    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon"
 )
-API_URL = os.environ.get("API_URL", "https://dash-dev.cleverapps.io/api")
+API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
@@ -62,6 +63,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
     d = get_config(path)
     api_endpoint = get_api_endpoint(path)
     api = ApiClient(endpoint_url=api_endpoint)
+    api.set_access_token(_get_access_token())
     print("Current configuration : \n")
     print("Config file content : ")
     print(d)
@@ -316,17 +318,14 @@ def monitor(
         api (Annotated[bool, typer.Option, optional): Choose to call Code Carbon API or not. Defaults to True.
     """
     experiment_id = get_existing_local_exp_id()
-    token = None
     if api:
         if experiment_id is None:
-            print("ERROR: No experiment id, call 'codecarbon init' first.", err=True)
-        token = _get_access_token()
+            print("ERROR: No experiment id, call 'codecarbon config' first.", err=True)
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
         measure_power_secs=measure_power_secs,
         api_call_interval=api_call_interval,
         save_to_api=api,
-        access_token=token,
     ) as tracker:
         # Infinite loop
         while True:

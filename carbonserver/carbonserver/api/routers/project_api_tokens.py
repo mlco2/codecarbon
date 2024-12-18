@@ -5,7 +5,6 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import ProjectToken, ProjectTokenCreate
 from carbonserver.api.services.auth_service import (
     MandatoryUserWithAuthDependency,
@@ -15,10 +14,7 @@ from carbonserver.api.services.project_token_service import ProjectTokenService
 
 PROJECTS_TOKENS_ROUTER_TAGS = ["Project tokens"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
-# TODO: Add authentication to the endpoints
+router = APIRouter()
 
 
 # Create project token
