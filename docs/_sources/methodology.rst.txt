@@ -185,5 +185,5 @@ These estimates are approximate and subject to regional variations in:
 
 Source
 ------
-The emission factors used are defined in the `CodeCarbon source code <https://github.com/mlco2/codecarbon/blob/b83cc2a38f21e410f9137e3a98a36f0ccfb4c905/webapp/src/helpers/constants.ts>`_. They are based on publicly available data and general assumptions.
+The emission factors used are defined in the `CodeCarbon source code <https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts>`_. They are based on publicly available data and general assumptions.
 
