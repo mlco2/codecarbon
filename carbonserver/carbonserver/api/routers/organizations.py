@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
@@ -27,9 +26,7 @@ from carbonserver.api.usecases.organization.organization_sum import (
 
 ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 
 
 @router.post(
