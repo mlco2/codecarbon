@@ -148,3 +148,42 @@ CodeCarbon uses a scheduler that, by default, calls for a measure every 15 secon
 The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.
 
 The scheduler is started when the first ``start`` method is called and stopped when ``stop`` method is called.
+
+Estimation of Equivalent Usage Emissions
+========================================
+
+The CodeCarbon dashboard provides equivalent emissions and energy usage comparisons to help users better understand the carbon impact of their activities. These comparisons are based on the following assumptions:
+
+Car Usage
+---------
+- **Emission factor**: *0.12 kgCO₂ per kilometer driven*.
+- This value is derived from the average emissions of a passenger car under normal driving conditions.
+
+TV Usage
+--------
+- **Emission factor**: *0.084 kgCO₂ per hour of usage*.
+- This assumes:
+  - An average power consumption of a modern television (~100W).
+  - Global electricity grid emissions of approximately *0.84 kgCO₂/kWh*.
+
+Calculation Formula
+-------------------
+The equivalent emissions are calculated using this formula:
+
+.. math::
+
+   \text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}
+
+For example:
+- *1 kgCO₂* emitted is approximately equivalent to:
+  - *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
+  - *11.9 hours of TV usage* (*1 ÷ 0.084*).
+
+These estimates are approximate and subject to regional variations in:
+- Grid emissions intensity.
+- Vehicle efficiencies.
+
+Source
+------
+The emission factors used are defined in the `CodeCarbon source code <https://github.com/mlco2/codecarbon/blob/b83cc2a38f21e410f9137e3a98a36f0ccfb4c905/webapp/src/helpers/constants.ts>`_. They are based on publicly available data and general assumptions.
+
