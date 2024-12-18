@@ -1,7 +1,6 @@
 from typing import List
 from uuid import UUID
 
-from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.schemas import Run, RunCreate, User
 from carbonserver.api.services.auth_context import AuthContext
@@ -17,14 +16,6 @@ class RunService:
         self._auth_context = auth_context
 
     def add_run(self, run: RunCreate, user: User = None) -> Run:
-        if user:
-            if not self._auth_context.can_create_run(run.experiment_id, user):
-                raise UserException(
-                    NotAllowedError(
-                        code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
-                        message="Operation not authorized on experiment",
-                    )
-                )
         created_run = self._repository.add_run(run)
         return created_run
 

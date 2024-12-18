@@ -98,11 +98,12 @@ class TestApp(unittest.TestCase):
             result.stdout,
         )
 
+    @patch("codecarbon.cli.main._get_access_token")
     @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.get_config")
     @patch("codecarbon.cli.main.questionary_prompt")
     def test_init_use_local(
-        self, mock_prompt, mock_config, mock_path_exists, MockApiClient
+        self, mock_prompt, mock_config, mock_path_exists, mock_token, MockApiClient
     ):
         mock_prompt.return_value = "~/.codecarbon.config"
         mock_config.return_value = {
@@ -111,6 +112,7 @@ class TestApp(unittest.TestCase):
             "project_id": "133",
             "experiment_id": "yolo123",
         }
+        mock_token.return_value = "mock_token"
 
         def side_effect_wrapper(*args, **kwargs):
             """Side effect wrapper to simulate the first call to path.exists to avoid picking up global config"""

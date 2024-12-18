@@ -149,7 +149,6 @@ class BaseEmissionsTracker(ABC):
         api_call_interval: Optional[int] = _sentinel,
         api_endpoint: Optional[str] = _sentinel,
         api_key: Optional[str] = _sentinel,
-        access_token: Optional[str] = _sentinel,
         output_dir: Optional[str] = _sentinel,
         output_file: Optional[str] = _sentinel,
         save_to_file: Optional[bool] = _sentinel,
@@ -349,9 +348,9 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source, self._co2_signal_api_token
         )
-        self._init_output_methods(api_key=self._api_key, access_token=access_token)
+        self._init_output_methods(api_key=self._api_key)
 
-    def _init_output_methods(self, *, api_key: str = None, access_token: str = None):
+    def _init_output_methods(self, *, api_key: str = None):
         """
         Prepare the different output methods
         """
@@ -375,7 +374,6 @@ class BaseEmissionsTracker(ABC):
                 endpoint_url=self._api_endpoint,
                 experiment_id=self._experiment_id,
                 api_key=api_key,
-                access_token=access_token,
                 conf=self._conf,
             )
             self.run_id = cc_api__out.run_id
