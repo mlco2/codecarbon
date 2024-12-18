@@ -63,6 +63,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
     d = get_config(path)
     api_endpoint = get_api_endpoint(path)
     api = ApiClient(endpoint_url=api_endpoint)
+    api.set_access_token(_get_access_token())
     print("Current configuration : \n")
     print("Config file content : ")
     print(d)
