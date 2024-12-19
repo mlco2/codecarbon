@@ -48,7 +48,7 @@ click==8.1.7
     #   hatch.envs.test.py3.8
     #   flask
     #   typer
-cryptography==43.0.3
+cryptography==44.0.0
     # via jwcrypto
 dash==2.18.2
     # via
@@ -74,7 +74,7 @@ flask==3.0.3
     # via dash
 h11==0.14.0
     # via httpcore
-httpcore==1.0.6
+httpcore==1.0.7
     # via httpx
 httpx==0.27.2
     # via fief-client
@@ -123,7 +123,7 @@ plotly==5.24.1
     # via dash
 pluggy==1.5.0
     # via pytest
-prometheus-client==0.21.0
+prometheus-client==0.21.1
     # via hatch.envs.test.py3.8
 prompt-toolkit==3.0.36
     # via questionary
@@ -137,7 +137,7 @@ pygments==2.18.0
     # via rich
 pynvml==11.5.3
     # via hatch.envs.test.py3.8
-pytest==8.3.3
+pytest==8.3.4
     # via hatch.envs.test.py3.8
 python-dateutil==2.9.0.post0
     # via
@@ -169,7 +169,7 @@ rich==13.9.4
     #   typer
 shellingham==1.5.4
     # via typer
-six==1.16.0
+six==1.17.0
     # via
     #   python-dateutil
     #   retrying
@@ -183,11 +183,11 @@ termcolor==2.4.0
     # via
     #   fire
     #   yaspin
-tomli==2.0.2
+tomli==2.2.1
     # via pytest
-typer==0.13.0
+typer==0.15.1
     # via hatch.envs.test.py3.8
-types-python-dateutil==2.9.0.20241003
+types-python-dateutil==2.9.0.20241206
     # via arrow
 typing-extensions==4.12.2
     # via
