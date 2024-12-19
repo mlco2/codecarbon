@@ -1,6 +1,16 @@
+from carbonserver.api.infra.repositories.repository_projects_tokens import (
+    SqlAlchemyRepository as ProjectTokensRepository,
+)
+from carbonserver.api.infra.repositories.repository_users import (
+    SqlAlchemyRepository as UserRepository,
+)
+
+
 class AuthContext:
 
-    def __init__(self, user_repository, token_repository):
+    def __init__(
+        self, user_repository: UserRepository, token_repository: ProjectTokensRepository
+    ):
         self._user_repository = user_repository
         self._token_repository = token_repository
 

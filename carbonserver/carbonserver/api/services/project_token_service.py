@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 
+from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
 from carbonserver.api.infra.api_key_utils import generate_api_key, get_api_key_hash
 from carbonserver.api.infra.repositories.repository_projects_tokens import (
     SqlAlchemyRepository as ProjectTokensSqlRepository,
@@ -10,13 +11,28 @@ from carbonserver.api.schemas import (
     ProjectTokenCreate,
     ProjectTokenInternal,
 )
+from carbonserver.api.services.auth_context import AuthContext
 
 
 class ProjectTokenService:
-    def __init__(self, project_token_repository: ProjectTokensSqlRepository):
+    def __init__(
+        self,
+        project_token_repository: ProjectTokensSqlRepository,
+        auth_context: AuthContext,
+    ):
         self._repository = project_token_repository
+        self._auth_context: AuthContext = auth_context
 
-    def add_project_token(self, project_id, input_project_token: ProjectTokenCreate):
+    def add_project_token(
+        self, project_id: str, input_project_token: ProjectTokenCreate, user
+    ):
+        if not self._auth_context.isOperationAuthorizedOnProject(project_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_PROJECT,
+                    message="Create project token is not authorized for your user in this project",
+                )
+            )
         api_key = generate_api_key()
         hashed_api_key = get_api_key_hash(api_key=api_key)
         project_token = ProjectTokenInternal(
@@ -36,10 +52,24 @@ class ProjectTokenService:
             token=api_key,
         )
 
-    def delete_project_token(self, project_id, token_id):
+    def delete_project_token(self, project_id: str, token_id: str, user):
+        if not self._auth_context.isOperationAuthorizedOnProject(project_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_PROJECT,
+                    message="Delete project token is not authorized for your user in this project",
+                )
+            )
         return self._repository.delete_project_token(project_id, token_id)
 
-    def list_tokens_from_project(self, project_id):
+    def list_tokens_from_project(self, project_id, user):
+        if not self._auth_context.isOperationAuthorizedOnProject(project_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_PROJECT,
+                    message="Get list of project tokens is not authorized for your user in this project",
+                )
+            )
         return self._repository.list_project_tokens(project_id)
 
     def project_token_has_access(

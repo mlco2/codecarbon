@@ -3,6 +3,7 @@ from unittest import mock
 from uuid import UUID
 
 import dateutil.relativedelta
+from api.mocks import FakeAuthContext
 
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.schemas import Run, RunCreate
@@ -35,7 +36,9 @@ RUN_2 = Run(
 def test_run_service_creates_correct_run(_):
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_id = RUN_ID
-    run_service: RunService = RunService(repository_mock)
+    run_service: RunService = RunService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.add_run.return_value = RUN_1
     run_to_create = RunCreate(
         id=RUN_ID,
@@ -52,7 +55,9 @@ def test_run_service_creates_correct_run(_):
 def test_run_service_retrieves_all_existing_runs():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_run_ids_list = [RUN_ID, RUN_ID_2]
-    run_service: RunService = RunService(repository_mock)
+    run_service: RunService = RunService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.list_runs.return_value = [RUN_1, RUN_2]
 
     run_list = run_service.list_runs()
@@ -66,7 +71,9 @@ def test_run_service_retrieves_all_existing_runs():
 def test_run_service_retrieves_correct_run_by_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_org: Run = RUN_1
-    run_service: RunService = RunService(repository_mock)
+    run_service: RunService = RunService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.get_one_run.return_value = RUN_1
 
     actual_saved_org = run_service.read_run(RUN_ID)
@@ -77,7 +84,9 @@ def test_run_service_retrieves_correct_run_by_id():
 def test_run_service_retrieves_correct_run_by_experiment_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_experiment_id = EXPERIMENT_ID
-    run_service: RunService = RunService(repository_mock)
+    run_service: RunService = RunService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.get_runs_from_experiment.return_value = [RUN_1]
 
     actual_runs = run_service.list_runs_from_experiment(EXPERIMENT_ID)
@@ -88,7 +97,9 @@ def test_run_service_retrieves_correct_run_by_experiment_id():
 def test_run_service_retrieves_correct_last_run_for_project_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_run_id = RUN_ID
-    run_service: RunService = RunService(repository_mock)
+    run_service: RunService = RunService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.get_project_last_run.return_value = RUN_1
 
     END_DATE = datetime.now()
