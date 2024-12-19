@@ -166,6 +166,17 @@ TV Usage
   - An average daily usage of 6.5 hours.
   - A modern television with a power consumption of approximately *21.2 W per hour*.
 
+US Citizen Weekly Emissions
+---------------------------
+- **Annual emissions**: *13.3 tons of CO₂ equivalent per year* for an average US citizen.
+- **Weekly emissions**: This value is divided by the 52 weeks in a year to estimate weekly emissions:
+
+.. math::
+
+   \text{Weekly Emissions} = \frac{\text{Annual Emissions (tons)}}{52}
+
+   \text{Weekly Emissions} = \frac{13.3}{52} \approx 0.256 \, \text{tons of CO₂ equivalent per week.}
+
 Calculation Formula
 -------------------
 The equivalent emissions are calculated using this formula:
@@ -175,13 +186,18 @@ The equivalent emissions are calculated using this formula:
    \text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}
 
 For example:
- \text{Equivalent Usage} = \frac{\text{Total Consumption (kWh)}}{\text{Usage Factor (kWh/unit)}}
 
-For example:
-- *1 kWh* of energy consumption is approximately equivalent to:
+- **Car Usage**: *1 kWh* of energy consumption is approximately equivalent to:
   - *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
   - *11.9 hours of TV usage* (*1 ÷ 0.084*), if emissions are considered.
-  
+
+- **US Citizen Emissions**:
+  - *1 kWh* of energy consumption can be compared to a fraction of the average weekly emissions of a US citizen:
+
+.. math::
+
+   \text{US Citizen Equivalent} = \frac{\text{Total Emissions (tons)}}{0.256}
+
 These estimates are approximate and subject to regional variations in:
 - Grid emissions intensity.
 - Vehicle efficiencies.
