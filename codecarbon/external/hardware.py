@@ -250,16 +250,18 @@ class CPU(BaseHardware):
 
 @dataclass
 class RAM(BaseHardware):
-    # 3 watts of power for every 8GB of DDR3 or DDR4 memory
+    # 5 watts of power per RAM module
     # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
-    power_per_GB = 3 / 8  # W/GB
+    power_per_module = 5  # W/module
     memory_size = None
+    modules = 1  # Default to 1 module
 
     def __init__(
         self,
         pid: int = psutil.Process().pid,
         children: bool = True,
         tracking_mode: str = "machine",
+        modules: int = 1,  # Add parameter for the number of modules
     ):
         """
         Instantiate a RAM object from a reference pid. If none is provided, will use the
@@ -271,10 +273,12 @@ class RAM(BaseHardware):
                                  children). Defaults to psutil.Process().pid.
             children (int, optional): Look for children of the process when computing
                                       total RAM used. Defaults to True.
+            modules (int, optional): Number of RAM modules. Defaults to 1.
         """
         self._pid = pid
         self._children = children
         self._tracking_mode = tracking_mode
+        self.modules = modules  # Set the number of modules
 
     def _get_children_memories(self):
         """
@@ -342,6 +346,23 @@ class RAM(BaseHardware):
             return psutil.virtual_memory().total / B_TO_GB
 
         return mem_matches[0].replace("mem=", "")
+
+    def total_power(self) -> Power:
+        """
+        Compute the Power (kW) consumed by the current process (and its children if
+        `children` was True in __init__)
+
+        Returns:
+            Power: kW of power consumption, using self.power_per_module W/module
+        """
+        try:
+            # Calculate RAM power based on modules
+            ram_power = Power.from_watts(self.modules * self.power_per_module)
+        except Exception as e:
+            logger.warning(f"Could not measure RAM Power ({str(e)})")
+            ram_power = Power.from_watts(0)
+
+        return ram_power
 
     @property
     def slurm_memory_GB(self):
