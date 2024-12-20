@@ -85,8 +85,8 @@ Tracks Nvidia GPUs energy consumption using ``pynvml`` library (installed with t
 RAM
 ~~~~
 
-CodeCarbon uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
-This measure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
+CodeCarbon uses a 5 watts per module assumption for RAM power usage. This value is based on updated information from Crucial.
+`Source <https://www.crucial.com/articles/about-memory/how-much-power-does-ram-use>`_.
 
 CPU
 ~~~~
