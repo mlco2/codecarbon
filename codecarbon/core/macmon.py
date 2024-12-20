@@ -93,11 +93,15 @@ class MacMon:
                 str(self._n_points),
             ]
             with open(self._log_file_path, "w") as f:
-                returncode = subprocess.call(cmd, universal_newlines=True, stdout=f, text=True)
+                returncode = subprocess.call(
+                    cmd, universal_newlines=True, stdout=f, text=True
+                )
         else:
             return None
         if returncode != 0:
-            logger.warning("Returncode while logging power values using " + f"Macmon: {returncode}")
+            logger.warning(
+                "Returncode while logging power values using " + f"Macmon: {returncode}"
+            )
         return
 
     def get_details(self) -> Dict:
@@ -132,7 +136,10 @@ class MacMon:
                 [(self._interval / 1000) * (power / 1000) for power in ram_power_list]
             )
         except Exception as e:
-            msg = f"Unable to read macmon logged file at {self._log_file_path}\n" f"Exception occurred {e}"
+            msg = (
+                f"Unable to read macmon logged file at {self._log_file_path}\n"
+                f"Exception occurred {e}"
+            )
             logger.info(msg, exc_info=True)
         return details
 
