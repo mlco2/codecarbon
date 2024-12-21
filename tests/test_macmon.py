@@ -32,10 +32,10 @@ class TestMacMon(unittest.TestCase):
     @mock.patch("codecarbon.core.macmon.MacMon._setup_cli")
     def test_get_details(self, mock_setup, mock_log_values):
         expected_details = {
-            "CPU Power": np.float64(0.000398248779),
-            "CPU Energy Delta": np.float64(0.000398248779),
-            "GPU Power": np.float64(3.21656683e-05),
-            "GPU Energy Delta": np.float64(3.2165668299999997e-05),
+            "CPU Power": np.float64(0.398248779),
+            "CPU Energy Delta": np.float64(0.398248779),
+            "GPU Power": np.float64(0.0321656683),
+            "GPU Energy Delta": np.float64(0.0321656683),
             "Ram Power": np.float64(0.0),
             "Ram Energy Delta": np.float64(0.0),
         }

@@ -1,11 +1,10 @@
-import json
 import os
 import shutil
 import subprocess
 import sys
 from typing import Dict
 
-import numpy as np
+import pandas as pd
 
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
@@ -81,6 +80,8 @@ class MacMon:
         Logs output from Macmon to a file. If a macmon process is already
         running, it will use the existing process instead of starting a new one.
         """
+        import multiprocessing
+
         returncode = None
         if self._system.startswith("darwin"):
             # Run the MacMon command and capture its output
@@ -92,10 +93,12 @@ class MacMon:
                 "-s",
                 str(self._n_points),
             ]
-            with open(self._log_file_path, "w") as f:
-                returncode = subprocess.call(
-                    cmd, universal_newlines=True, stdout=f, text=True
-                )
+            lock = multiprocessing.Lock()
+            with lock:
+                with open(self._log_file_path, "a") as f:  # Open file in append mode
+                    returncode = subprocess.call(
+                        cmd, universal_newlines=True, stdout=f, text=True
+                    )
         else:
             return None
         if returncode != 0:
@@ -112,29 +115,19 @@ class MacMon:
         self._log_values()
         details = dict()
         try:
-            cpu_power_list = []
-            gpu_power_list = []
-            ram_power_list = []
-
-            with open(self._log_file_path) as f:
-                for line in f:
-                    j = json.loads(line)
-                    cpu_power_list.append(float(j["cpu_power"]))
-                    gpu_power_list.append(float(j["gpu_power"]))
-                    ram_power_list.append(float(j["ram_power"]))
-
-            details["CPU Power"] = np.mean([power / 1000 for power in cpu_power_list])
-            details["CPU Energy Delta"] = np.sum(
-                [(self._interval / 1000) * (power / 1000) for power in cpu_power_list]
-            )
-            details["GPU Power"] = np.mean([power / 1000 for power in gpu_power_list])
-            details["GPU Energy Delta"] = np.sum(
-                [(self._interval / 1000) * (power / 1000) for power in gpu_power_list]
-            )
-            details["Ram Power"] = np.mean([power / 1000 for power in ram_power_list])
-            details["Ram Energy Delta"] = np.sum(
-                [(self._interval / 1000) * (power / 1000) for power in ram_power_list]
-            )
+            data = pd.read_json(self._log_file_path, lines=True)
+            details["CPU Power"] = data["cpu_power"].mean()
+            details["CPU Energy Delta"] = (self._interval / 1000) * (
+                data["cpu_power"].astype(float)
+            ).sum()
+            details["GPU Power"] = data["gpu_power"].mean()
+            details["GPU Energy Delta"] = (self._interval / 1000) * (
+                data["gpu_power"].astype(float)
+            ).sum()
+            details["Ram Power"] = data["ram_power"].mean()
+            details["Ram Energy Delta"] = (self._interval / 1000) * (
+                data["ram_power"].astype(float)
+            ).sum()
         except Exception as e:
             msg = (
                 f"Unable to read macmon logged file at {self._log_file_path}\n"
