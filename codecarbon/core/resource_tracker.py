@@ -35,14 +35,29 @@ class ResourceTracker:
             hardware = CPU.from_utils(self.tracker._output_dir, "intel_rapl")
             self.tracker._hardware.append(hardware)
             self.tracker._conf["cpu_model"] = hardware.get_model()
-        # change code to check if powermetrics needs to be installed or just sudo setup
-        elif self.tracker._default_cpu_power is None:
-            if macmon.is_macmon_available():
-                self.gpu_tracker = "MacMon"
-                self.cpu_tracker = "MacMon"
-            elif powermetrics.is_powermetrics_available():
-                self.cpu_tracker = "PowerMetrics"
-                self.gpu_tracker = "PowerMetrics"
+        elif self.tracker._default_cpu_power is None and macmon.is_macmon_available():
+            self.gpu_tracker = "MacMon"
+            self.cpu_tracker = "MacMon"
+            logger.info(f"Tracking Apple CPU and GPU using {self.cpu_tracker}")
+            hardware_cpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="CPU"
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="GPU"
+            )
+            self.tracker._hardware.append(hardware_gpu)
+
+            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
+            self.tracker._conf["gpu_count"] = 1
+        elif (
+            self.tracker._default_cpu_power is None
+            and powermetrics.is_powermetrics_available()
+        ):
+            self.gpu_tracker = "PowerMetrics"
+            self.cpu_tracker = "PowerMetrics"
             logger.info(f"Tracking Apple CPU and GPU using {self.cpu_tracker}")
             hardware_cpu = AppleSiliconChip.from_utils(
                 self.tracker._output_dir, chip_part="CPU"
