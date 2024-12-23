@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -327,7 +328,10 @@ def monitor(
     experiment_id = get_existing_local_exp_id()
     if api:
         if experiment_id is None:
-            print("ERROR: No experiment id, call 'codecarbon config' first.", err=True)
+            print(
+                "ERROR: No experiment id, call 'codecarbon config' first.",
+                file=sys.stderr,
+            )
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
         measure_power_secs=measure_power_secs,
