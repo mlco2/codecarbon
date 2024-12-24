@@ -120,7 +120,6 @@ Create a systemd service file:
     User=codecarbon
     Group=codecarbon
     WorkingDirectory=/opt/codecarbon
-    Environment="CODECARBON_API_KEY=YOUR_API_KEY"
     ExecStart=/opt/codecarbon/.venv/bin/codecarbon monitor
     Restart=always
 
@@ -128,7 +127,35 @@ Create a systemd service file:
     WantedBy=multi-user.target
     EOF
 
-Replace YOUR_API_KEY with the API key you obtained from the CodeCarbon dashboard.
+Give permissions to the ``codecarbon`` group to read the RAPL (Running Average Power Limit) information:
+
+.. code-block::  bash
+
+    sudo chown -R root:codecarbon /sys/class/powercap/intel-rapl/*
+    sudo chmod g+r -R /sys/class/powercap/intel-rapl/*
+
+    sudo apt install sysfsutils
+    echo "mode class/powercap/intel-rapl:0/energy_uj = 0440" >> /etc/sysfs.conf
+    echo "owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon" >> /etc/sysfs.conf
+
+Create the configuration file for CodeCarbon:
+
+.. code-block::  bash
+
+    sudo tee /opt/codecarbon/.codecarbon.config <<EOF
+    [codecarbon]
+    api_endpoint = https://api.codecarbon.io
+    organization_id = <organization_id>
+    project_id = <project_id>
+    experiment_id = <experiment_id>
+    api_key = <api_key>
+    # Verbose logging
+    log_level=DEBUG
+    # Measure power every 30 seconds
+    measure_power_secs=30
+    # Send measure to API every 5 minutes (10*30 seconds)
+    api_call_interval=10
+    EOF
 
 Enable and start the service:
 
@@ -137,28 +164,13 @@ Enable and start the service:
     sudo systemctl enable codecarbon
     sudo systemctl start codecarbon
 
-Check the status of the service:
+Check the traces of the service:
 
 .. code-block::  bash
 
-    sudo systemctl status codecarbon
-
-You should see the service running.
-
-To stop the service:
-
-.. code-block::  bash
-
-    sudo systemctl stop codecarbon
+    journalctl -u codecarbon
 
 
-Optionaly, you can also give permissions to the user to read the RAPL information:
+You are done, CodeCarbon is now running as a service on your machine.
 
-.. code-block::  bash
-
-    sudo chown -R root:codecarbon /sys/class/powercap/intel-rapl
-
-    sudo apt install sysfsutils
-    echo "mode class/powercap/intel-rapl:0/energy_uj = 0440" >> /etc/sysfs.conf
-    echo "owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon" >> /etc/sysfs.conf
-
+Wait 5 minutes for the first measure to be send to the dashboard at https://dashboard.codecarbon.io/.
