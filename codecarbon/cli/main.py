@@ -100,12 +100,14 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         )
 
 
-fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
-fief_auth = FiefAuth(fief, "./credentials.json")
+def get_fief_auth():
+    fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
+    fief_auth = FiefAuth(fief, "./credentials.json")
+    return fief_auth
 
 
 def _get_access_token():
-    access_token_info = fief_auth.access_token_info()
+    access_token_info = get_fief_auth().access_token_info()
     access_token = access_token_info["access_token"]
     return access_token
 
@@ -125,7 +127,7 @@ def api_get():
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
-    fief_auth.authorize()
+    get_fief_auth().authorize()
 
 
 def get_api_key(project_id: str):
