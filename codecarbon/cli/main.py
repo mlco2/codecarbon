@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -99,12 +100,14 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         )
 
 
-fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
-fief_auth = FiefAuth(fief, "./credentials.json")
+def get_fief_auth():
+    fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
+    fief_auth = FiefAuth(fief, "./credentials.json")
+    return fief_auth
 
 
 def _get_access_token():
-    access_token_info = fief_auth.access_token_info()
+    access_token_info = get_fief_auth().access_token_info()
     access_token = access_token_info["access_token"]
     return access_token
 
@@ -124,7 +127,7 @@ def api_get():
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
-    fief_auth.authorize()
+    get_fief_auth().authorize()
 
 
 def get_api_key(project_id: str):
@@ -327,7 +330,10 @@ def monitor(
     experiment_id = get_existing_local_exp_id()
     if api:
         if experiment_id is None:
-            print("ERROR: No experiment id, call 'codecarbon config' first.", err=True)
+            print(
+                "ERROR: No experiment id, call 'codecarbon config' first.",
+                file=sys.stderr,
+            )
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
         measure_power_secs=measure_power_secs,
