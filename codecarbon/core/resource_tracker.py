@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import List, Union
 
-from codecarbon.core import cpu, gpu, powermetrics
+from codecarbon.core import cpu, gpu, macmon, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
@@ -35,14 +35,30 @@ class ResourceTracker:
             hardware = CPU.from_utils(self.tracker._output_dir, "intel_rapl")
             self.tracker._hardware.append(hardware)
             self.tracker._conf["cpu_model"] = hardware.get_model()
-        # change code to check if powermetrics needs to be installed or just sudo setup
+        elif self.tracker._default_cpu_power is None and macmon.is_macmon_available():
+            self.gpu_tracker = "MacMon"
+            self.cpu_tracker = "MacMon"
+            logger.info(f"Tracking Apple CPU and GPU using {self.cpu_tracker}")
+            hardware_cpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="CPU"
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="GPU"
+            )
+            self.tracker._hardware.append(hardware_gpu)
+
+            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
+            self.tracker._conf["gpu_count"] = 1
         elif (
-            powermetrics.is_powermetrics_available()
-            and self.tracker._default_cpu_power is None
+            self.tracker._default_cpu_power is None
+            and powermetrics.is_powermetrics_available()
         ):
-            logger.info("Tracking Apple CPU and GPU via PowerMetrics")
             self.gpu_tracker = "PowerMetrics"
             self.cpu_tracker = "PowerMetrics"
+            logger.info(f"Tracking Apple CPU and GPU using {self.cpu_tracker}")
             hardware_cpu = AppleSiliconChip.from_utils(
                 self.tracker._output_dir, chip_part="CPU"
             )
@@ -60,13 +76,8 @@ class ResourceTracker:
             # Explain what to install to increase accuracy
             cpu_tracking_install_instructions = ""
             if is_mac_os():
-                if (
-                    "M1" in detect_cpu_model()
-                    or "M2" in detect_cpu_model()
-                    or "M3" in detect_cpu_model()
-                ):
-                    cpu_tracking_install_instructions = ""
-                    cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
+                if any((m in detect_cpu_model() for m in ["M1", "M2", "M3", "M4"])):
+                    cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics with sudo or MacMon to measure CPU"
                 else:
                     cpu_tracking_install_instructions = "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
             elif is_windows_os():
