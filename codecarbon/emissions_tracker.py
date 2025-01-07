@@ -64,6 +64,9 @@ class BaseEmissionsTracker(ABC):
     and `CarbonTracker.`
     """
 
+    _scheduler: Optional[PeriodicScheduler] = None
+    _scheduler_monitor_power: Optional[PeriodicScheduler] = None
+
     def _set_from_conf(
         self, var, name, default=None, return_type=None, prevent_setter=False
     ):
@@ -333,6 +336,10 @@ class BaseEmissionsTracker(ABC):
             function=self._measure_power_and_energy,
             interval=self._measure_power_secs,
         )
+        self._scheduler_monitor_power = PeriodicScheduler(
+            function=self._monitor_power,
+            interval=1,
+        )
 
         self._data_source = DataSource()
 
@@ -420,6 +427,7 @@ class BaseEmissionsTracker(ABC):
             hardware.start()
 
         self._scheduler.start()
+        self._scheduler_monitor_power.start()
 
     def start_task(self, task_name=None) -> None:
         """
@@ -430,6 +438,9 @@ class BaseEmissionsTracker(ABC):
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
             self._scheduler.stop()
+
+        # Task background thread for measuring power
+        self._scheduler_monitor_power.start()
 
         if self._active_task:
             logger.info("A task is already under measure")
@@ -460,6 +471,9 @@ class BaseEmissionsTracker(ABC):
         emissions.
         :return: None
         """
+        if self._scheduler_monitor_power:
+            self._scheduler_monitor_power.stop()
+
         task_name = task_name if task_name else self._active_task
         self._measure_power_and_energy()
 
@@ -527,6 +541,9 @@ class BaseEmissionsTracker(ABC):
         if self._scheduler:
             self._scheduler.stop()
             self._scheduler = None
+        if self._scheduler_monitor_power:
+            self._scheduler_monitor_power.stop()
+            self._scheduler_monitor_power = None
         else:
             logger.warning("Tracker already stopped !")
         for task_name in self._tasks:
@@ -654,6 +671,17 @@ class BaseEmissionsTracker(ABC):
         """
         :return: Metadata containing cloud info
         """
+
+    def _monitor_power(self) -> None:
+        """
+        Monitor the power consumption of the hardware.
+        We do this for hardware that does not support energy monitoring.
+        So we could average the power consumption.
+        This method is called every 1 second. Even if we are in Task mode.
+        """
+        for hardware in self._hardware:
+            if isinstance(hardware, CPU):
+                hardware.monitor_power()
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
