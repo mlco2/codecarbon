@@ -89,17 +89,46 @@ class ResourceTracker:
             logger.info(f"CPU Model on constant consumption mode: {model}")
             self.tracker._conf["cpu_model"] = model
             if tdp:
-                hardware = CPU.from_utils(
-                    self.tracker._output_dir, "constant", model, power
-                )
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU load mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self.tracker._output_dir,
+                        MODE_CPU_LOAD,
+                        model,
+                        power,
+                        tracking_mode=self.tracker._tracking_mode,
+                    )
+                    self.cpu_tracker = "load"
+                else:
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU constant mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self.tracker._output_dir, "constant", model, power
+                    )
+                    self.cpu_tracker = "global constant"
                 self.tracker._hardware.append(hardware)
             else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
-                )
-                self.cpu_tracker = "global constant"
-                hardware = CPU.from_utils(self.tracker._output_dir, "constant")
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on CPU load mode."
+                    )
+                    hardware = CPU.from_utils(
+                        self.tracker._output_dir,
+                        MODE_CPU_LOAD,
+                        model,
+                        power,
+                        tracking_mode=self.tracker._tracking_mode,
+                    )
+                    self.cpu_tracker = "load"
+                else:
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on a global constant."
+                    )
+                    self.cpu_tracker = "global constant"
+                    hardware = CPU.from_utils(self.tracker._output_dir, "constant")
                 self.tracker._hardware.append(hardware)
 
     def set_GPU_tracking(self):
