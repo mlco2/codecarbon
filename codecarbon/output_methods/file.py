@@ -78,12 +78,10 @@ class FileOutput(BaseOutput):
             self.output_dir, "emissions_" + experiment_name + "_" + run_id + ".csv"
         )
         df = pd.DataFrame(columns=data[0].values.keys())
-        df = pd.concat(
-            [
-                df,
-                pd.DataFrame.from_records(
-                    [dict(data_point.values) for data_point in data]
-                ),
-            ]
+        new_df = pd.DataFrame.from_records(
+            [dict(data_point.values) for data_point in data]
         )
+        # Filter out empty or all-NA columns, to avoid warnings from Pandas
+        new_df = new_df.dropna(axis=1, how="all")
+        df = pd.concat([df, new_df], ignore_index=True)
         df.to_csv(save_task_file_path, index=False)
