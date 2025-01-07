@@ -23,6 +23,26 @@ class ResourceTracker:
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
+        if self.tracker._conf.get("force_mode_cpu_load", False):
+            if cpu.is_psutil_available():
+                # Register a CPU with MODE_CPU_LOAD
+                tdp = cpu.TDP()
+                power = tdp.tdp
+                model = tdp.model
+                hardware = CPU.from_utils(
+                    self.tracker._output_dir,
+                    MODE_CPU_LOAD,
+                    model,
+                    power,
+                    tracking_mode=self.tracker._tracking_mode,
+                )
+                self.cpu_tracker = "load"
+                self.tracker._hardware.append(hardware)
+                return
+            else:
+                logger.warning(
+                    "Force CPU load mode requested but psutil is not available."
+                )
         if cpu.is_powergadget_available() and self.tracker._default_cpu_power is None:
             logger.info("Tracking Intel CPU via Power Gadget")
             self.cpu_tracker = "Power Gadget"
@@ -32,9 +52,15 @@ class ResourceTracker:
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
             self.cpu_tracker = "RAPL"
-            hardware = CPU.from_utils(self.tracker._output_dir, "intel_rapl")
+            hardware = CPU.from_utils(
+                output_dir=self.tracker._output_dir, mode="intel_rapl"
+            )
             self.tracker._hardware.append(hardware)
             self.tracker._conf["cpu_model"] = hardware.get_model()
+            if "AMD Ryzen Threadripper" in self.tracker._conf["cpu_model"]:
+                logger.warning(
+                    "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."
+                )
         # change code to check if powermetrics needs to be installed or just sudo setup
         elif (
             powermetrics.is_powermetrics_available()
@@ -159,17 +185,18 @@ class ResourceTracker:
                 self.tracker._conf["gpu_count"] = len(
                     gpu_devices.devices.get_gpu_static_info()
                 )
+            self.gpu_tracker = "pynvml"
         else:
             logger.info("No GPU found.")
 
-    def set_CPU_GPU_ram_tracking(self, tracker):
+    def set_CPU_GPU_ram_tracking(self):
         """
         Set up CPU, GPU and RAM tracking based on the user's configuration.
         param tracker: BaseEmissionsTracker object
         """
-        self.set_RAM_tracking(tracker)
-        self.set_CPU_tracking(tracker)
-        self.set_GPU_tracking(tracker)
+        self.set_RAM_tracking()
+        self.set_CPU_tracking()
+        self.set_GPU_tracking()
 
         logger.debug(
             f"""The below tracking methods have been set up:

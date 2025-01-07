@@ -152,6 +152,7 @@ class CPU(BaseHardware):
         tracking_mode: str = "machine",
     ):
         assert tracking_mode in ["machine", "process"]
+        self._power_history: List[Power] = []
         self._output_dir = output_dir
         self._mode = mode
         self._model = model
@@ -183,18 +184,25 @@ class CPU(BaseHardware):
         When in MODE_CPU_LOAD
         """
         if self._tracking_mode == "machine":
-            cpu_load = psutil.cpu_percent(interval=None)
-            # We add a minimum of 10% of TDP
-            power = max(self._tdp * 0.1, self._tdp * cpu_load / 100)
+            tdp = self._tdp
+            cpu_load = psutil.cpu_percent(
+                interval=0.5, percpu=False
+            )  # Convert to 0-1 range
+            logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
+            # Cubic relationship with minimum 10% of TDP
+            load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
+            power = tdp * load_factor
             logger.debug(
-                f"CPU load {self._tdp} W x {cpu_load}% = {power} for whole machine."
+                f"CPU load {self._tdp} W and {cpu_load:.1f}% {load_factor=} => estimation of {power} W for whole machine."
             )
         elif self._tracking_mode == "process":
 
-            cpu_load = self._process.cpu_percent(interval=None) / self._cpu_count
+            cpu_load = (
+                self._process.cpu_percent(interval=0.5, percpu=False) / self._cpu_count
+            )
             power = self._tdp * cpu_load / 100
             logger.debug(
-                f"CPU load {self._tdp} W x {cpu_load}% = {power} for process {self._pid}."
+                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid}."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
@@ -242,15 +250,23 @@ class CPU(BaseHardware):
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
-        cpu_power = self._get_power_from_cpus()
-        return cpu_power
+        self._power_history.append(self._get_power_from_cpus())
+        power_history_in_W = [power.W for power in self._power_history]
+        cpu_power = sum(power_history_in_W) / len(power_history_in_W)
+        self._power_history = []
+        return Power.from_watts(cpu_power)
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         if self._mode == "intel_rapl":
             energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
             power = self.total_power()
+            # Patch AMD Threadripper that count 2x the power
+            if "AMD Ryzen Threadripper" in self._model:
+                power = power / 2
+                energy = energy / 2
             return power, energy
-        # If not intel_rapl
+        # If not intel_rapl, we call the parent method from BaseHardware
+        # to compute energy from power and time
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
@@ -259,6 +275,10 @@ class CPU(BaseHardware):
         if self._mode == MODE_CPU_LOAD:
             # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
             _ = self._get_power_from_cpu_load()
+
+    def monitor_power(self):
+        cpu_power = self._get_power_from_cpus()
+        self._power_history.append(cpu_power)
 
     def get_model(self):
         return self._model
