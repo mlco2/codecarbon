@@ -145,3 +145,9 @@ class Power:
 
     def __mul__(self, factor: float) -> "Power":
         return Power(self.kW * factor)
+
+    def __truediv__(self, divisor: float) -> "Power":
+        return Power(self.kW / divisor)
+
+    def __floordiv__(self, divisor: float) -> "Power":
+        return Power(self.kW // divisor)
