@@ -210,18 +210,24 @@ class CPU(BaseHardware):
         """
         if self._tracking_mode == "machine":
             tdp = self._tdp
-            cpu_load = psutil.cpu_percent(interval=0.5)
-            power = self._calculate_power_from_cpu_load(tdp, cpu_load, self._model)
+            cpu_load = psutil.cpu_percent(
+                interval=0.5, percpu=False
+            )  # Convert to 0-1 range
+            logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
+            # Cubic relationship with minimum 10% of TDP
+            load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
+            power = tdp * load_factor
             logger.debug(
-                f"A TDP of {self._tdp} W and a CPU load of {cpu_load:.1f}% give an estimation of {power:1f} W for whole machine."
+                f"CPU load {self._tdp} W and {cpu_load:.1f}% {load_factor=} => estimation of {power} W for whole machine."
             )
         elif self._tracking_mode == "process":
-            cpu_load = self._process.cpu_percent(interval=0.5) / self._cpu_count
-            power = self._calculate_power_from_cpu_load(
-                self._tdp, cpu_load, self._model
+
+            cpu_load = (
+                self._process.cpu_percent(interval=0.5, percpu=False) / self._cpu_count
             )
+            power = self._tdp * cpu_load / 100
             logger.debug(
-                f"A TDP of {self._tdp} W and a CPU load of {cpu_load:.1f}% give an estimation of {power:1f} W for process {self._pid}."
+                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid}."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
