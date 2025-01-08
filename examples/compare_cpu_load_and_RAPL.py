@@ -16,7 +16,6 @@ hatch run python examples/compare_cpu_load_and_RAPL.py
 import asyncio
 import os
 import subprocess
-import threading
 import time
 from threading import Thread
 
@@ -93,10 +92,13 @@ class MeasurementPoint:
         self.temperature = 0
         self.cpu_freq = 0
         self.rapl_power = 0
+        self.rapl_energy = 0
         self.estimated_power = 0
+        self.estimated_energy = 0
         self.tapo_power = 0
         self.tapo_energy = 0
         self.tapo_time_delta = 0
+        self.duration = 0
 
     def __repr__(self):
         return (
@@ -116,14 +118,18 @@ class MeasurementPoint:
             "temperature": self.temperature,
             "cpu_freq": self.cpu_freq,
             "rapl_power": self.rapl_power,
+            "rapl_energy": self.rapl_energy,
             "estimated_power": self.estimated_power,
+            "estimated_energy": self.estimated_energy,
             "tapo_power": self.tapo_power,
             "tapo_energy": self.tapo_energy,
             "tapo_time_delta": self.tapo_time_delta,
+            "duration": self.duration,
         }
 
 
 def collect_measurements(core_count):
+    print(f"Collecting measurements for {core_count} cores")
     point = MeasurementPoint()
     point.task_name = task_name
     point.timestamp = time.time()
@@ -146,8 +152,8 @@ def collect_measurements(core_count):
     if freqs:
         point.cpu_freq = sum(f.current for f in freqs) / len(freqs)
 
-    point.rapl_power = tracker_rapl._cpu_power.W
-    point.estimated_power = tracker_cpu_load._cpu_power.W
+    # point.rapl_power = tracker_rapl._cpu_power.W
+    # point.estimated_power = tracker_cpu_load._cpu_power.W
     # Read tapo
     point.tapo_power, point.tapo_energy, point.tapo_time_delta = asyncio.run(
         read_tapo()
@@ -165,10 +171,10 @@ def stress_ng(number_of_threads, test_phase_duration):
     )
 
 
-def measurement_thread(core_count, stop_event):
-    while not stop_event.is_set():
-        collect_measurements(core_count)
-        time.sleep(measure_power_secs / 2)
+def measurement_thread(core_count):
+    # We do a mesurement in the middle of the task
+    time.sleep(test_phase_duration / 2)
+    collect_measurements(core_count)
 
 
 # Get the number of cores
@@ -185,12 +191,14 @@ tracker_cpu_load = EmissionsTracker(
     allow_multiple_runs=True,
     logger_preamble="CPU Load",
     log_level=log_level,
+    save_to_file=False,
 )
 tracker_rapl = EmissionsTracker(
     measure_power_secs=measure_power_secs,
     allow_multiple_runs=True,
     logger_preamble="RAPL",
     log_level=log_level,
+    save_to_file=False,
 )
 
 # Check if we could use RAPL
@@ -213,10 +221,7 @@ try:
         tracker_rapl.start_task(task_name + " RAPL")
 
         # Create and start measurement thread
-        stop_measurement = threading.Event()
-        measure_thread = Thread(
-            target=measurement_thread, args=(core_to_run, stop_measurement)
-        )
+        measure_thread = Thread(target=measurement_thread, args=(core_to_run,))
         measure_thread.start()
 
         # Run stress test
@@ -227,18 +232,23 @@ try:
             stress_ng(core_to_run, test_phase_duration)
 
         # Stop measurement thread
-        stop_measurement.set()
-        measure_thread.join()
+        # measure_thread.join()
 
         cpu_load_data = tracker_cpu_load.stop_task()
         rapl_data = tracker_rapl.stop_task()
+        point = measurements[-1]
+        point.rapl_power = rapl_data.cpu_power
+        point.rapl_energy = rapl_data.cpu_energy
+        point.estimated_power = cpu_load_data.cpu_power
+        point.estimated_energy = cpu_load_data.cpu_energy
+        point.duration = rapl_data.duration
+
         print("=" * 80)
         print(measurements[-1].__dict__)
         print("=" * 80)
 
 finally:
     # Stop measurement thread
-    stop_measurement.set()
     measure_thread.join()
 
 
@@ -262,29 +272,42 @@ mae = (df["estimated_power"] - df["rapl_power"]).abs().mean()
 print(f"{mae:.2f} watts")
 
 print("=" * 80)
+
+tasks = []
+
 for task_name, task in tracker_cpu_load._tasks.items():
-    print(
-        f"Emissions : {1000 * task.emissions_data.emissions:.0f} g CO₂ for task {task_name}"
-    )
-    print(
-        f"\tEnergy : {1000 * task.emissions_data.cpu_energy:.1f} Wh {1000 * task.emissions_data.gpu_energy:.1f} Wh RAM:{1000 * task.emissions_data.ram_energy}Wh"
-    )
-    print(
-        f"\tPower CPU:{task.emissions_data.cpu_power:.0f}W GPU:{task.emissions_data.gpu_power:.0f}W RAM:{task.emissions_data.ram_power:.0f}W"
-        + f" during {task.emissions_data.duration:.1f} seconds."
+    tasks.append(
+        {
+            "task_name": task_name,
+            "emissions_cpu_load": task.emissions_data.emissions,
+            "cpu_energy_cpu_load": task.emissions_data.cpu_energy,
+            "gpu_energy_cpu_load": task.emissions_data.gpu_energy,
+            "ram_energy_cpu_load": task.emissions_data.ram_energy,
+            "cpu_power_cpu_load": task.emissions_data.cpu_power,
+            "gpu_power_cpu_load": task.emissions_data.gpu_power,
+            "ram_power_cpu_load": task.emissions_data.ram_power,
+            "duration_cpu_load": task.emissions_data.duration,
+        }
     )
 print("")
-for task_name, task in tracker_rapl._tasks.items():
-    print(
-        f"Emissions : {1000 * task.emissions_data.emissions:.0f} g CO₂ for task {task_name}"
-    )
-    print(
-        f"\tEnergy : {1000 * task.emissions_data.cpu_energy:.1f} Wh {1000 * task.emissions_data.gpu_energy:.1f} Wh RAM{1000 * task.emissions_data.ram_energy:.1f}Wh"
-    )
-    print(
-        f"\tPower CPU:{task.emissions_data.cpu_power:.0f}W GPU:{task.emissions_data.gpu_power:.0f}W RAM:{task.emissions_data.ram_power:.0f}W"
-        + f" during {task.emissions_data.duration:.1f} seconds."
-    )
+task_id = 0
+for _, task in tracker_rapl._tasks.items():
+    tasks[task_id]["emissions_rapl"] = task.emissions_data.emissions
+    tasks[task_id]["cpu_energy_rapl"] = task.emissions_data.cpu_energy
+    tasks[task_id]["gpu_energy_rapl"] = task.emissions_data.gpu_energy
+    tasks[task_id]["ram_energy_rapl"] = task.emissions_data.ram_energy
+    tasks[task_id]["cpu_power_rapl"] = task.emissions_data.cpu_power
+    tasks[task_id]["gpu_power_rapl"] = task.emissions_data.gpu_power
+    tasks[task_id]["ram_power_rapl"] = task.emissions_data.ram_power
+    tasks[task_id]["duration_rapl"] = task.emissions_data.duration
+    task_id += 1
+df_tasks = pd.DataFrame(tasks)
+df_tasks.to_csv(
+    f"compare_cpu_load_and_RAPL-{cpu_name.replace(' ', '_')}-{date}-tasks.csv",
+    index=False,
+)
+print("=" * 80)
+print(df_tasks)
 print("=" * 80)
 """
 Lowest power at the plug when idle: 100 W

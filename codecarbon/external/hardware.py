@@ -2,6 +2,7 @@
 Encapsulates external dependencies to retrieve hardware metadata
 """
 
+import math
 import re
 import subprocess
 from abc import ABC, abstractmethod
@@ -179,30 +180,41 @@ class CPU(BaseHardware):
 
         return s + ")"
 
+    @staticmethod
+    def _calculate_power_from_cpu_load(tdp, cpu_load):
+        load = cpu_load / 100.0
+
+        if load < 0.1:  # Below 10% CPU load
+            return tdp * (0.05 * load * 10)
+        elif load <= 0.3:  # 10-30% load - linear phase
+            return tdp * (0.05 + 1.8 * (load - 0.1))
+        elif load <= 0.5:  # 30-50% load - adjusted coefficients
+            # Increased base power and adjusted curve
+            base_power = 0.45  # Increased from 0.41
+            power_range = 0.50  # Increased from 0.44
+            factor = ((load - 0.3) / 0.2) ** 1.8  # Reduced power from 2.0 to 1.8
+            return tdp * (base_power + power_range * factor)
+        else:  # Above 50% - plateau phase
+            return tdp * (0.85 + 0.15 * (1 - math.exp(-(load - 0.5) * 5)))
+
     def _get_power_from_cpu_load(self):
         """
         When in MODE_CPU_LOAD
         """
         if self._tracking_mode == "machine":
             tdp = self._tdp
-            cpu_load = psutil.cpu_percent(
-                interval=0.5, percpu=False
-            )  # Convert to 0-1 range
-            logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
-            # Cubic relationship with minimum 10% of TDP
-            load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
-            power = tdp * load_factor
+            cpu_load = psutil.cpu_percent(interval=0.5, percpu=False)
+            power = self._calculate_power_from_cpu_load(tdp, cpu_load)
             logger.debug(
-                f"CPU load {self._tdp} W and {cpu_load:.1f}% {load_factor=} => estimation of {power} W for whole machine."
+                f"A TDP of {self._tdp} W and a CPU load of {cpu_load:.1f}% give an estimation of {power} W for whole machine."
             )
         elif self._tracking_mode == "process":
-
             cpu_load = (
                 self._process.cpu_percent(interval=0.5, percpu=False) / self._cpu_count
             )
-            power = self._tdp * cpu_load / 100
+            power = self._calculate_power_from_cpu_load(self.tdp, cpu_load)
             logger.debug(
-                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid}."
+                f"A TDP of {self._tdp} W and a CPU load of {cpu_load * 100:.1f}% give an estimation of {power} W for process {self._pid}."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
