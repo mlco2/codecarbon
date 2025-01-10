@@ -750,7 +750,13 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
-        last_duration = time.perf_counter() - self._last_measured_time
+        try:
+            last_duration = time.perf_counter() - self._last_measured_time
+        except AttributeError as e:
+            logger.debug(
+                f"You need to start the tracker first before measuring. Or maybe you do multiple run at the same time ? Error: {e}"
+            )
+            raise e
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:

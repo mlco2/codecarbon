@@ -118,19 +118,21 @@ class TestCarbonTrackerConstant(unittest.TestCase):
             output_file=self.emissions_file,
         )
         tracker.start()
+        tracker._measure_power_and_energy()
+        cloud: CloudMetadata = tracker._get_cloud_metadata()
 
         try:
             with self.assertRaises(ValueError) as context:
-                tracker._measure_power_and_energy()
-            self.assertTrue("Unable to find country name" in context.exception.args[0])
-            cloud: CloudMetadata = tracker._get_cloud_metadata()
-            with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_country_iso_code(cloud)
-            self.assertTrue("Unable to find country name" in context.exception.args[0])
+            self.assertTrue(
+                "Unable to find country ISO Code" in context.exception.args[0]
+            )
 
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_geo_region(cloud)
-            self.assertTrue("Unable to find country name" in context.exception.args[0])
+            self.assertTrue(
+                "Unable to find State/City name for " in context.exception.args[0]
+            )
 
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_country_name(cloud)

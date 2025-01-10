@@ -90,7 +90,7 @@ class Emissions:
         selected = df.loc[flags]
         if not len(selected):
             raise ValueError(
-                "Unable to find country name for "
+                "Unable to find country ISO Code for "
                 f"cloud_provider={cloud.provider}, "
                 f"cloud_region={cloud.region}"
             )
@@ -105,7 +105,7 @@ class Emissions:
         selected = df.loc[flags]
         if not len(selected):
             raise ValueError(
-                "Unable to find country name for "
+                "Unable to find State/City name for "
                 f"cloud_provider={cloud.provider}, "
                 f"cloud_region={cloud.region}"
             )
