@@ -32,7 +32,7 @@ from codecarbon import EmissionsTracker
 from codecarbon.external.hardware import CPU
 
 measure_power_secs = 10
-test_phase_duration = 60
+test_phase_duration = 30
 test_phase_number = 10
 measurements = []
 task_name = ""
@@ -51,6 +51,11 @@ if tapo_username:
     tapo_client = ApiClient(tapo_username, tapo_password)
 else:
     print("WARNING : No tapo credentials found in the environment !!!")
+
+# all_cores: Mean we load all the cores at a given load level
+LOAD_ALL_CORES = "all_cores"
+# some_cores: Mean we load some cores at full load
+LOAD_SOME_CORES = "some_cores"
 
 
 # Verify that stress-ng is installed
@@ -110,6 +115,7 @@ asyncio.run(read_tapo())
 class MeasurementPoint:
     def __init__(self):
         self.task_name = ""
+        self.load_type = ""
         self.cpu_name = ""
         self.timestamp = 0
         self.cores_used = 0
@@ -136,6 +142,7 @@ class MeasurementPoint:
     def to_dict(self):
         return {
             "task_name": self.task_name,
+            "load_type": self.load_type,
             "cpu_name": cpu_name,
             "timestamp": self.timestamp,
             "cores_used": self.cores_used,
@@ -153,12 +160,17 @@ class MeasurementPoint:
         }
 
 
-def collect_measurements(core_count):
-    print(f"Collecting measurements for {core_count} cores")
+def collect_measurements(expected_load, load_type):
+    print(f"Collecting measurements for {expected_load} cores")
+    if load_type == LOAD_SOME_CORES:
+        cores_used = expected_load
+    else:
+        cores_used = get_cpu_cores()
     point = MeasurementPoint()
     point.task_name = task_name
+    point.load_type = load_type
     point.timestamp = time.time()
-    point.cores_used = core_count
+    point.cores_used = cores_used
     point.cpu_load = psutil.cpu_percent(interval=0.1)
 
     # Get CPU temperature (average across cores)
@@ -186,28 +198,51 @@ def collect_measurements(core_count):
     measurements.append(point)
 
 
-def stress_ng(number_of_threads, test_phase_duration):
+def get_cpu_cores():
+    """
+    Get the number of CPU cores
+    """
+    return psutil.cpu_count()
+
+
+def get_list_of_cores_to_test(nb):
+    cores_to_test = [0]
+    indice = nb / test_phase_number
+    for i in range(test_phase_number):
+        cores_to_test.append(int(indice * (i + 1)))
+    return sorted(list(set(cores_to_test)))
+
+
+# assert get_list_of_cores_to_test(32) == [0, 3, 6, 9, 12, 16, 19, 22, 25, 28, 32]
+
+
+def stress_ng(load_type, test_phase_duration, expected_load):
     """
     Call 'stress-ng --matrix <number_of_threads> --rapl -t 1m --verify'
     """
-    subprocess.run(
-        f"stress-ng --matrix {number_of_threads} --rapl -t {test_phase_duration} --verify",
-        shell=True,
-    )
+    if load_type == LOAD_SOME_CORES:
+        subprocess.run(
+            f"stress-ng  --cpu-method float64 --cpu {expected_load} --rapl -t {test_phase_duration} --verify",
+            shell=True,
+        )
+    elif load_type == LOAD_ALL_CORES:
+        subprocess.run(
+            f"stress-ng  --cpu-method float64 --cpu 0 --rapl -l {expected_load} -t {test_phase_duration} --verify",
+            shell=True,
+        )
+    else:
+        raise ValueError(f"Unknown load type: {load_type}")
 
 
-def measurement_thread(core_count):
+def measurement_thread(core_count, load_type):
     # We do a mesurement in the middle of the task
     time.sleep(test_phase_duration / 2)
-    collect_measurements(core_count)
+    collect_measurements(core_count, load_type)
 
 
 # Get the number of cores
-cores = psutil.cpu_count()
-cores_to_test = [i * (cores // test_phase_number) for i in range(test_phase_number + 1)]
-cores_to_test.append(cores)
 print("=" * 80)
-print(f"We will run {len(cores_to_test)} tests for {test_phase_duration} seconds each.")
+print(f"We will run {test_phase_number} tests for {test_phase_duration} seconds each.")
 # print(f"Number of cores: {cores}, cores to test: {cores_to_test}")
 print("=" * 80)
 tracker_cpu_load = EmissionsTracker(
@@ -239,22 +274,25 @@ for h in tracker_rapl._hardware:
 else:
     raise ValueError("No RAPL mode found")
 
-try:
-    for core_to_run in cores_to_test:
-        task_name = f"Stress-ng on {core_to_run} cores"
+
+def one_test(expected_load, load_type):
+    try:
+        task_name = f"Stress-ng for {expected_load}% load on {load_type}"
         tracker_cpu_load.start_task(task_name + " CPU Load")
         tracker_rapl.start_task(task_name + " RAPL")
 
         # Create and start measurement thread
-        measure_thread = Thread(target=measurement_thread, args=(core_to_run,))
+        measure_thread = Thread(
+            target=measurement_thread, args=(expected_load, load_type)
+        )
         measure_thread.start()
 
         # Run stress test
-        if core_to_run == 0:
+        if expected_load == 0:
             # Just sleep, because, sending 0 to stress-ng mean "all cores" !
             time.sleep(test_phase_duration)
         else:
-            stress_ng(core_to_run, test_phase_duration)
+            stress_ng(load_type, test_phase_duration, expected_load)
 
         # Stop measurement thread
         # measure_thread.join()
@@ -271,71 +309,94 @@ try:
         print("=" * 80)
         print(measurements[-1].__dict__)
         print("=" * 80)
+    finally:
+        # Stop measurement thread
+        measure_thread.join()
 
-finally:
-    # Stop measurement thread
-    measure_thread.join()
+
+def measure_power(load_type):
+    if load_type == LOAD_SOME_CORES:
+        expected_loads = get_list_of_cores_to_test(get_cpu_cores())
+        for expected_load in expected_loads:
+            one_test(expected_load, load_type)
+    elif load_type == LOAD_ALL_CORES:
+        for i in range(test_phase_number + 1):
+            expected_load = i * 10
+            one_test(expected_load, load_type)
 
 
-# Convert measurements to DataFrame
-df = pd.DataFrame([m.to_dict() for m in measurements])
-date = time.strftime("%Y-%m-%d")
-df.to_csv(
-    f"compare_cpu_load_and_RAPL-{cpu_name.replace(' ', '_')}-{date}.csv", index=False
-)
-
-# Calculate correlation between variables
-print("\nCorrelations with RAPL power:")
-correlations = df[["cpu_load", "temperature", "cpu_freq", "cores_used"]].corrwith(
-    df["rapl_power"]
-)
-print(correlations)
-
-# Compare estimated vs actual power
-print("\nMean Absolute Error:")
-mae = (df["estimated_power"] - df["rapl_power"]).abs().mean()
-print(f"{mae:.2f} watts")
-
-print("=" * 80)
-
-tasks = []
-
-for task_name, task in tracker_cpu_load._tasks.items():
-    tasks.append(
-        {
-            "task_name": task_name,
-            "emissions_cpu_load": task.emissions_data.emissions,
-            "cpu_energy_cpu_load": task.emissions_data.cpu_energy,
-            "gpu_energy_cpu_load": task.emissions_data.gpu_energy,
-            "ram_energy_cpu_load": task.emissions_data.ram_energy,
-            "cpu_power_cpu_load": task.emissions_data.cpu_power,
-            "gpu_power_cpu_load": task.emissions_data.gpu_power,
-            "ram_power_cpu_load": task.emissions_data.ram_power,
-            "duration_cpu_load": task.emissions_data.duration,
-        }
+def data_output(load_type, measurements):
+    # Convert measurements to DataFrame
+    df = pd.DataFrame([m.to_dict() for m in measurements])
+    print(df)
+    date = time.strftime("%Y-%m-%d")
+    df.to_csv(
+        f"compare_cpu_load_and_RAPL-{load_type}-{cpu_name.replace(' ', '_')}-{date}.csv",
+        index=False,
     )
-print("")
-task_id = 0
-for _, task in tracker_rapl._tasks.items():
-    tasks[task_id]["emissions_rapl"] = task.emissions_data.emissions
-    tasks[task_id]["cpu_energy_rapl"] = task.emissions_data.cpu_energy
-    tasks[task_id]["gpu_energy_rapl"] = task.emissions_data.gpu_energy
-    tasks[task_id]["ram_energy_rapl"] = task.emissions_data.ram_energy
-    tasks[task_id]["cpu_power_rapl"] = task.emissions_data.cpu_power
-    tasks[task_id]["gpu_power_rapl"] = task.emissions_data.gpu_power
-    tasks[task_id]["ram_power_rapl"] = task.emissions_data.ram_power
-    tasks[task_id]["duration_rapl"] = task.emissions_data.duration
-    task_id += 1
-df_tasks = pd.DataFrame(tasks)
-df_tasks.to_csv(
-    f"compare_cpu_load_and_RAPL-{cpu_name.replace(' ', '_')}-{date}-tasks.csv",
-    index=False,
-)
-print("=" * 80)
-print(df_tasks)
-print("=" * 80)
+
+    # Calculate correlation between variables
+    print("\nCorrelations with RAPL power:")
+    correlations = df[["cpu_load", "temperature", "cpu_freq", "cores_used"]].corrwith(
+        df["rapl_power"]
+    )
+    print(correlations)
+
+    # Compare estimated vs actual power
+    print("\nMean Absolute Error:")
+    mae = (df["estimated_power"] - df["rapl_power"]).abs().mean()
+    print(f"{mae:.2f} watts")
+
+    print("=" * 80)
+
+    tasks = []
+
+    for task_name, task in tracker_cpu_load._tasks.items():
+        tasks.append(
+            {
+                "task_name": task_name,
+                "emissions_cpu_load": task.emissions_data.emissions,
+                "cpu_energy_cpu_load": task.emissions_data.cpu_energy,
+                "gpu_energy_cpu_load": task.emissions_data.gpu_energy,
+                "ram_energy_cpu_load": task.emissions_data.ram_energy,
+                "cpu_power_cpu_load": task.emissions_data.cpu_power,
+                "gpu_power_cpu_load": task.emissions_data.gpu_power,
+                "ram_power_cpu_load": task.emissions_data.ram_power,
+                "duration_cpu_load": task.emissions_data.duration,
+            }
+        )
+    print("")
+    task_id = 0
+    for _, task in tracker_rapl._tasks.items():
+        tasks[task_id]["emissions_rapl"] = task.emissions_data.emissions
+        tasks[task_id]["cpu_energy_rapl"] = task.emissions_data.cpu_energy
+        tasks[task_id]["gpu_energy_rapl"] = task.emissions_data.gpu_energy
+        tasks[task_id]["ram_energy_rapl"] = task.emissions_data.ram_energy
+        tasks[task_id]["cpu_power_rapl"] = task.emissions_data.cpu_power
+        tasks[task_id]["gpu_power_rapl"] = task.emissions_data.gpu_power
+        tasks[task_id]["ram_power_rapl"] = task.emissions_data.ram_power
+        tasks[task_id]["duration_rapl"] = task.emissions_data.duration
+        task_id += 1
+    df_tasks = pd.DataFrame(tasks)
+    df_tasks.to_csv(
+        f"compare_cpu_load_and_RAPL-{load_type}-{cpu_name.replace(' ', '_')}-{date}-tasks.csv",
+        index=False,
+    )
+
+
 """
 Lowest power at the plug when idle: 100 W
 Peak power at the plug: 309 W
 AMD Ryzen Threadripper 1950X 16-Core/32 threads Processor TDP: 180W
 """
+
+
+if __name__ == "__main__":
+    results = []
+    for load_type in [LOAD_ALL_CORES, LOAD_SOME_CORES]:
+        measurements = []
+        measure_power(load_type)
+        results.append(measurements.copy())
+
+    for result, load_type in zip(results, [LOAD_ALL_CORES, LOAD_SOME_CORES]):
+        data_output(load_type, result)
