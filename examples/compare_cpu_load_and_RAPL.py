@@ -5,6 +5,7 @@ and compare the emissions measured by codecarbon using CPU load and RAPL mode.
 It runs in less than 2 minutes on a powerful machine with 32 cores.
 
 To run this script:
+sudo apt install stress-ng
 hatch run pip install tapo
 export TAPO_USERNAME=XXX
 export TAPO_PASSWORD=XXX
@@ -21,7 +22,11 @@ from threading import Thread
 
 import pandas as pd
 import psutil
-from tapo import ApiClient
+
+try:
+    from tapo import ApiClient
+except ImportError:
+    print("WARNING : No tapo module found !!!")
 
 from codecarbon import EmissionsTracker
 from codecarbon.external.hardware import CPU
@@ -46,6 +51,26 @@ if tapo_username:
     tapo_client = ApiClient(tapo_username, tapo_password)
 else:
     print("WARNING : No tapo credentials found in the environment !!!")
+
+
+# Verify that stress-ng is installed
+def check_stress_ng_installed():
+    try:
+        subprocess.run(
+            ["stress-ng", "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        print("stress-ng is installed.")
+    except subprocess.CalledProcessError:
+        print(
+            "ERROR stress-ng is not installed. Please install it using 'sudo apt install stress-ng'."
+        )
+        exit(1)
+
+
+check_stress_ng_installed()
 
 
 async def read_tapo():
