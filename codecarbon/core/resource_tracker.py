@@ -98,7 +98,7 @@ class ResourceTracker:
             elif is_windows_os():
                 cpu_tracking_install_instructions = "Windows OS detected: Please install Intel Power Gadget to measure CPU"
             elif is_linux_os():
-                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at \\sys\\class\\powercap\\intel-rapl to measure CPU"
+                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at /sys/class/powercap/intel-rapl to measure CPU"
             logger.warning(
                 f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
             )
