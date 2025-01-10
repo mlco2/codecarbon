@@ -181,7 +181,14 @@ class CPU(BaseHardware):
         return s + ")"
 
     @staticmethod
-    def _calculate_power_from_cpu_load(tdp, cpu_load):
+    def _calculate_power_from_cpu_load(tdp, cpu_load, model):
+        if "AMD Ryzen Threadripper" in model:
+            return CPU._calculate_power_from_cpu_load_treadripper(tdp, cpu_load)
+        else:
+            return tdp * (cpu_load / 100.0)
+
+    @staticmethod
+    def _calculate_power_from_cpu_load_treadripper(tdp, cpu_load):
         load = cpu_load / 100.0
 
         if load < 0.1:  # Below 10% CPU load
@@ -204,7 +211,7 @@ class CPU(BaseHardware):
         if self._tracking_mode == "machine":
             tdp = self._tdp
             cpu_load = psutil.cpu_percent(interval=0.5, percpu=False)
-            power = self._calculate_power_from_cpu_load(tdp, cpu_load)
+            power = self._calculate_power_from_cpu_load(tdp, cpu_load, self._model)
             logger.debug(
                 f"A TDP of {self._tdp} W and a CPU load of {cpu_load:.1f}% give an estimation of {power} W for whole machine."
             )
@@ -212,7 +219,7 @@ class CPU(BaseHardware):
             cpu_load = (
                 self._process.cpu_percent(interval=0.5, percpu=False) / self._cpu_count
             )
-            power = self._calculate_power_from_cpu_load(self.tdp, cpu_load)
+            power = self._calculate_power_from_cpu_load(self.tdp, cpu_load, self._model)
             logger.debug(
                 f"A TDP of {self._tdp} W and a CPU load of {cpu_load * 100:.1f}% give an estimation of {power} W for process {self._pid}."
             )
