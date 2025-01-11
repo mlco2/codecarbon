@@ -161,7 +161,7 @@ class MeasurementPoint:
 
 
 def collect_measurements(expected_load, load_type):
-    print(f"Collecting measurements for {expected_load}% load.")
+    print(f"Collecting measurements for {expected_load} (cores or % load).")
     if load_type == LOAD_SOME_CORES:
         cores_used = expected_load
     else:
@@ -221,10 +221,14 @@ def stress_ng(load_type, test_phase_duration, expected_load):
     Call 'stress-ng --matrix <number_of_threads> --rapl -t 1m --verify'
     """
     if load_type == LOAD_SOME_CORES:
-        subprocess.run(
-            f"stress-ng  --cpu-method float64 --cpu {expected_load} --rapl -t {test_phase_duration} --verify",
-            shell=True,
-        )
+        if expected_load == 0:
+            print("Just sleep, because, sending 0 to stress-ng mean `all cores` !")
+            time.sleep(test_phase_duration)
+        else:
+            subprocess.run(
+                f"stress-ng  --cpu-method float64 --cpu {expected_load} --rapl -t {test_phase_duration} --verify",
+                shell=True,
+            )
     elif load_type == LOAD_ALL_CORES:
         subprocess.run(
             f"stress-ng  --cpu-method float64 --cpu 0 --rapl -l {expected_load} -t {test_phase_duration} --verify",
@@ -296,12 +300,7 @@ def one_test(expected_load, load_type):
         )
         measure_thread.start()
 
-        # Run stress test
-        if expected_load < 1:
-            # Just sleep, because, sending 0 to stress-ng mean "all cores" !
-            time.sleep(test_phase_duration)
-        else:
-            stress_ng(load_type, test_phase_duration, expected_load)
+        stress_ng(load_type, test_phase_duration, expected_load)
 
         # Stop measurement thread
         # measure_thread.join()
@@ -337,7 +336,13 @@ def measure_power(load_type):
 def data_output(load_type, measurements):
     # Convert measurements to DataFrame
     df = pd.DataFrame([m.to_dict() for m in measurements])
-    print(df)
+    print(
+        df[
+            "cores_used	cpu_load	temperature	cpu_freq	rapl_power	estimated_power	tapo_power	tapo_energy".split(
+                "\t"
+            )
+        ]
+    )
     date = time.strftime("%Y-%m-%d")
     df.to_csv(
         f"compare_cpu_load_and_RAPL-{load_type}-{cpu_name.replace(' ', '_')}-{date}.csv",
@@ -402,10 +407,12 @@ AMD Ryzen Threadripper 1950X 16-Core/32 threads Processor TDP: 180W
 
 if __name__ == "__main__":
     results = []
-    for load_type in [LOAD_ALL_CORES, LOAD_SOME_CORES]:
+    # test_to_run = [LOAD_ALL_CORES, LOAD_SOME_CORES]
+    test_to_run = [LOAD_SOME_CORES]
+    for load_type in test_to_run:
         measurements = []
         measure_power(load_type)
         results.append(measurements.copy())
 
-    for result, load_type in zip(results, [LOAD_ALL_CORES, LOAD_SOME_CORES]):
+    for result, load_type in zip(results, test_to_run):
         data_output(load_type, result)
