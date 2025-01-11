@@ -62,8 +62,8 @@ def is_rapl_available() -> bool:
 
 def is_psutil_available():
     try:
-        cpu_load = psutil.cpu_percent(interval=0.1)
-        if cpu_load > 0.0:
+        nice = psutil.cpu_times().nice
+        if nice > 0.1:
             return True
         else:
             return False
