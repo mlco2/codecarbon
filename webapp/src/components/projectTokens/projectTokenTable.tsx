@@ -10,9 +10,18 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     const [tokens, setTokens] = useState<IProjectToken[]>([]);
 
     const fetchTokens = async () => {
-        // Fetch the updated list of tokens from the server
-        const projectTokens = await getProjectTokens(projectId);
-        setTokens(projectTokens);
+        try {
+            // Fetch the updated list of tokens from the server
+            const projectTokens = await getProjectTokens(projectId);
+            setTokens(projectTokens);
+        } catch (error: any) {
+            if (error?.response && error?.response?.status === 401) {
+                console.error("401 Unauthorized error", error);
+            } else {
+                // Handle other errors
+                console.error("Failed to fetch tokens", error);
+            }
+        }
     };
 
     useEffect(() => {
@@ -31,19 +40,20 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             <Card>
                 <Table>
                     <TableBody>
-                        {tokens
-                            .sort((a, b) =>
-                                a.name
-                                    .toLowerCase()
-                                    .localeCompare(b.name.toLowerCase()),
-                            )
-                            .map((projectToken, index) => (
-                                <CustomRowToken
-                                    key={index}
-                                    projectToken={projectToken}
-                                    onTokenDeleted={fetchTokens}
-                                />
-                            ))}
+                        {Array.isArray(tokens) &&
+                            tokens
+                                .sort((a, b) =>
+                                    a.name
+                                        .toLowerCase()
+                                        .localeCompare(b.name.toLowerCase()),
+                                )
+                                .map((projectToken, index) => (
+                                    <CustomRowToken
+                                        key={index}
+                                        projectToken={projectToken}
+                                        onTokenDeleted={fetchTokens}
+                                    />
+                                ))}
                     </TableBody>
                 </Table>
             </Card>
