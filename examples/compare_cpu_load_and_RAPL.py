@@ -29,7 +29,7 @@ except ImportError:
     print("WARNING : No tapo module found !!!")
 
 from codecarbon import EmissionsTracker
-from codecarbon.external.hardware import CPU
+from codecarbon.external.hardware import CPU, MODE_CPU_LOAD
 
 measure_power_secs = 10
 test_phase_duration = 30
@@ -37,7 +37,7 @@ test_phase_number = 10
 measurements = []
 task_name = ""
 cpu_name = ""
-log_level = "INFO"
+log_level = "DEBUG"
 
 # Read the credentials from the environment
 tapo_username = os.getenv("TAPO_USERNAME")
@@ -161,7 +161,7 @@ class MeasurementPoint:
 
 
 def collect_measurements(expected_load, load_type):
-    print(f"Collecting measurements for {expected_load} cores")
+    print(f"Collecting measurements for {expected_load}% load.")
     if load_type == LOAD_SOME_CORES:
         cores_used = expected_load
     else:
@@ -269,10 +269,19 @@ for h in tracker_rapl._hardware:
         # print(f"{h._mode=}")
         # print(h._tracking_mode)  # machine / process
         if h._mode == "intel_rapl":
+            # Set global CPU name
             cpu_name = h.get_model()
             break
 else:
     raise ValueError("No RAPL mode found")
+
+# Check we have the TDP
+for h in tracker_cpu_load._hardware:
+    if isinstance(h, CPU):
+        if h._mode == MODE_CPU_LOAD:
+            break
+else:
+    raise ValueError("No TDP found for your CPU.")
 
 
 def one_test(expected_load, load_type):
@@ -288,7 +297,7 @@ def one_test(expected_load, load_type):
         measure_thread.start()
 
         # Run stress test
-        if expected_load == 0:
+        if expected_load < 1:
             # Just sleep, because, sending 0 to stress-ng mean "all cores" !
             time.sleep(test_phase_duration)
         else:

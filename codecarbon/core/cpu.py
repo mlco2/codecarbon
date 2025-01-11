@@ -348,8 +348,6 @@ class IntelRAPL:
         """
         Return CPU details without computing them.
         """
-        logger.debug("get_static_cpu_details %s", self._cpu_details)
-
         return self._cpu_details
 
     def start(self) -> None:
