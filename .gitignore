@@ -8,11 +8,9 @@ __pycache__/
 *intel_power_gadget_log.csv
 *powermetrics_log.txt
 !tests/test_data/mock*
-.codecarbon.config
 
 # C extensions
 *.so
-.codecarbon.config
 
 # Distribution / packaging
 .Python
@@ -132,4 +130,5 @@ tests/test_data/rapl/*
 *.cast
 
 # credentials
-credentials.json
+credentials*
+.codecarbon.config*

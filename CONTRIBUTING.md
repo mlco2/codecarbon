@@ -4,34 +4,32 @@
 
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
-- [Contributing to Code Carbon](#contributing-to-code-carbon)
-  - [ Have a Question?](#-have-a-question)
-  - [ Found a Bug?](#-found-a-bug)
-  - [ Have a Feature Request?](#-have-a-feature-request)
-  - [ Ready to Contribute!](#-ready-to-contribute)
-    - [ Create an issue](#-create-an-issue)
-    - [Installation](#installation)
-    - [Some Hatch commands](#some-hatch-commands)
-    - [Tests](#tests)
-    - [Stress your computer](#stress-your-computer)
-    - [Update all dependancies](#update-all-dependancies)
-    - [Branching and Pull Requests](#branching-and-pull-requests)
-    - [Debug in VS Code](#debug-in-vs-code)
-    - [ Local deployment](#-local-deployment)
-  - [CSV Dashboard](#csv-dashboard)
-  - [API Dashboard](#api-dashboard)
-    - [API](#api)
-    - [Test the API](#test-the-api)
-    - [Coding style \&\& Linting](#coding-style--linting)
-    - [Dependencies management](#dependencies-management)
-    - [Alternative ways of contributing](#alternative-ways-of-contributing)
-    - [Build Documentation 🖨️](#build-documentation-️)
-    - [Release process](#release-process)
-      - [Restore database from a production Backup](#restore-database-from-a-production-backup)
-      - [Deployment](#deployment)
-        - [API](#api-1)
-        - [Dashboard](#dashboard)
-    - [License](#license)
+- [</a> Have a Question?](#have-a-question)
+- [</a> Found a Bug?](#found-a-bug)
+- [</a> Have a Feature Request?](#have-a-feature-request)
+- [Alternative ways of contributing](#alternative-ways-of-contributing)
+- [</a> Ready to Contribute!](#ready-to-contribute)
+   * [Installation](#installation)
+   * [Some Hatch commands](#some-hatch-commands)
+   * [Tests](#tests)
+   * [Stress your computer](#stress-your-computer)
+   * [Update all dependancies](#update-all-dependancies)
+   * [Branching and Pull Requests](#branching-and-pull-requests)
+   * [Debug in VS Code](#debug-in-vs-code)
+   * [Coding style && Linting](#coding-style-linting)
+   * [Dependencies management](#dependencies-management)
+   * [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
+   * [Release process](#release-process)
+- [API and Dashboard](#api-and-dashboard)
+   * [CSV Dashboard](#csv-dashboard)
+   * [Web dashboard](#web-dashboard)
+   * [API](#api)
+   * [Test the API](#test-the-api)
+   * [Restore database from a production Backup](#restore-database-from-a-production-backup)
+   * [Deployment](#deployment)
+      + [API](#api-1)
+      + [Dashboard](#dashboard)
+- [License](#license)
 
 <!-- TOC end -->
 
@@ -53,16 +51,20 @@ If you've identified a bug in `codecarbon`, please [submit an issue](#issue) to 
 
 Feel free to describe your request by [submitting an issue](#issue) documenting the feature (with its intent) and a PR with a proposed implementation of the feature.
 
+Before submitting a new issue, please search the issues to make sure there isn't a similar issue already.
+New issues can be created within the [GitHub repo](https://github.com/mlco2/codecarbon/issues/new).
+
+<!-- TOC --><a name="alternative-ways-of-contributing"></a>
+## Alternative ways of contributing
+
+You have a cool idea, but do not know know if it fits with Code Carbon? You can create an issue to share:
+
+-   the code, via the Github repo or [Binder](https://mybinder.org/), to share executable notebooks
+-   a webapp, using [Voilà](https://github.com/voila-dashboards/voila), [Dash](https://github.com/plotly/dash) or [Streamlit](https://github.com/streamlit/streamlit)
+-   ideas for improvement about the tool or its documentation
 
 <!-- TOC --><a name="ready-to-contribute"></a>
 ## </a> Ready to Contribute!
-
-
-<!-- TOC --><a name="create-an-issue"></a>
-### </a> Create an issue
-
-Before submitting a new issue, please search the issues to make sure there isn't a similar issue already.
-New issues can be created with in the [GitHub repo](https://github.com/mlco2/codecarbon/issues/new).
 
 
 <!-- TOC --><a name="installation"></a>
@@ -288,12 +290,97 @@ Then run opened test with this button:
 ![vscode_debug](docs/edit/images/vscode_debug.png)
 
 
-<!-- TOC --><a name="local-deployment"></a>
-### <a name="local_deployement"></a> Local deployment
+<!-- TOC --><a name="coding-style-linting"></a>
+### Coding style && Linting
 
+The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `hatch run dev:precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+
+```log
+[INFO] Initializing environment for https://github.com/psf/black.
+[INFO] Initializing environment for https://gitlab.com/pycqa/flake8.
+[INFO] Installing environment for https://github.com/psf/black.
+[INFO] Once installed this environment will be reused.
+[INFO] This may take a few minutes...
+[INFO] Installing environment for https://gitlab.com/pycqa/flake8.
+[INFO] Once installed this environment will be reused.
+[INFO] This may take a few minutes...
+seed isort known_third_party.............................................Passed
+isort....................................................................Failed
+- hook id: isort
+- files were modified by this hook
+
+Fixing codecarbon/__init__.py
+
+black....................................................................Passed
+flake8...................................................................Passed
+```
+
+If any of the linters/formatters fail, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their job) with `git add` and finally try to commit again `git commit ...`.
+
+You can also run `pre-commit` with `hatch run dev:pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
+
+It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
+
+
+<!-- TOC --><a name="dependencies-management"></a>
+### Dependencies management
+
+Dependencies are defined in different places:
+
+-   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
+-   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
+-   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
+
+
+<!-- TOC --><a name="build-documentation-"></a>
+### <a name="documentation"></a>Build Documentation 🖨️
+
+No software is complete without great documentation!
+To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
+
+In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
+
+```
+hatch run docs:build
+```
+
+to regenerate the html files.
+
+<!-- TOC --><a name="release-process"></a>
+### Release process
+
+-   Merge all PRs.
+-   Create a PR bumping the version with `hatch run dev:bumpver update --patch`.
+-   Run `hatch run python3 .github/check_version.py` to check version consistancy.
+-   Update the dependencies with `hatch-pip-compile --upgrade --all`.
+-   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
+-   Push the changes.
+-   Merge the PR.
+-   Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
+-   [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+-   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
+-   For conda, we now have a [feedstock](https://github.com/conda-forge/codecarbon-feedstock/pulls) to publish to Conda-Forge channel.
+
+If you still want to publish to the Anaconda CodeCarbon channel:
+
+Start a Docker image in the same directory and bind-mount the current directory with:
+
+`docker run -ti --rm=true -v $PWD:/data continuumio/anaconda3`.
+
+Inside the docker container, run:
+
+-   `conda install -y conda-build conda-verify conda-forge::hatchling`
+-   `cd /data && mkdir -p /conda_dist`
+-   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
+-   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
+
+
+
+<!-- TOC --><a name="api-and-dashboard"></a>
+## API and Dashboard
 
 <!-- TOC --><a name="csv-dashboard"></a>
-## CSV Dashboard
+### CSV Dashboard
 
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
 
@@ -311,9 +398,8 @@ If you have the package installed, you can run the CLI command:
 carbonboard --filepath="examples/emissions.csv" --port=8050
 ```
 
-
-<!-- TOC --><a name="api-dashboard"></a>
-## API Dashboard
+<!-- TOC --><a name="web-dashboard"></a>
+### Web dashboard
 
 To test the new dashboard that uses the API, run:
 
@@ -392,105 +478,8 @@ hatch run api:test-integ
 
 ```
 
-
-<!-- TOC --><a name="coding-style-linting"></a>
-### Coding style && Linting
-
-The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `hatch run dev:precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
-
-```log
-[INFO] Initializing environment for https://github.com/psf/black.
-[INFO] Initializing environment for https://gitlab.com/pycqa/flake8.
-[INFO] Installing environment for https://github.com/psf/black.
-[INFO] Once installed this environment will be reused.
-[INFO] This may take a few minutes...
-[INFO] Installing environment for https://gitlab.com/pycqa/flake8.
-[INFO] Once installed this environment will be reused.
-[INFO] This may take a few minutes...
-seed isort known_third_party.............................................Passed
-isort....................................................................Failed
-- hook id: isort
-- files were modified by this hook
-
-Fixing codecarbon/__init__.py
-
-black....................................................................Passed
-flake8...................................................................Passed
-```
-
-If any of the linters/formatters fail, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their job) with `git add` and finally try to commit again `git commit ...`.
-
-You can also run `pre-commit` with `hatch run dev:pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
-
-It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
-
-
-<!-- TOC --><a name="dependencies-management"></a>
-### Dependencies management
-
-Dependencies are defined in different places:
-
--   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
--   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
--   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
-
-
-<!-- TOC --><a name="alternative-ways-of-contributing"></a>
-### Alternative ways of contributing
-
-You have a cool idea, but do not know know if it fits with Code Carbon? You can create an issue to share:
-
--   the code, via the Github repo or [Binder](https://mybinder.org/), to share executable notebooks
--   a webapp, using [Voilà](https://github.com/voila-dashboards/voila), [Dash](https://github.com/plotly/dash) or [Streamlit](https://github.com/streamlit/streamlit)
--   ideas for improvement about the tool or its documentation
-
-
-<!-- TOC --><a name="build-documentation-"></a>
-### <a name="documentation"></a>Build Documentation 🖨️
-
-No software is complete without great documentation!
-To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
-
-In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
-
-```
-hatch run docs:build
-```
-
-to regenerate the html files.
-
-
-<!-- TOC --><a name="release-process"></a>
-### Release process
-
--   Merge all PRs.
--   Create a PR bumping the version with `hatch run dev:bumpver update --patch`.
--   Run `hatch run python3 .github/check_version.py` to check version consistancy.
--   Update the dependencies with `hatch-pip-compile --upgrade --all`.
--   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
--   Push the changes.
--   Merge the PR.
--   Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
--   [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
--   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
--   For conda, we now have a [feedstock](https://github.com/conda-forge/codecarbon-feedstock/pulls) to publish to Conda-Forge channel.
-
-If you still want to publish to the Anaconda CodeCarbon channel:
-
-Start a Docker image in the same directory and bind-mount the current directory with:
-
-`docker run -ti --rm=true -v $PWD:/data continuumio/anaconda3`.
-
-Inside the docker container, run:
-
--   `conda install -y conda-build conda-verify conda-forge::hatchling`
--   `cd /data && mkdir -p /conda_dist`
--   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
--   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
-
-
 <!-- TOC --><a name="restore-database-from-a-production-backup"></a>
-#### Restore database from a production Backup
+### Restore database from a production Backup
 
 ```sh
 docker cp postgresql_*.dump postgres_codecarbon:/tmp
@@ -517,11 +506,11 @@ CALL public.spcc_purgeduplicatedata();
 
 
 <!-- TOC --><a name="deployment"></a>
-#### Deployment
+### Deployment
 
 
 <!-- TOC --><a name="api-1"></a>
-##### API
+#### API
 
 The API is availiable to everyone from https://api.codecarbon.io, but if you want to deploy it for yourself, here are the instructions.
 
@@ -557,7 +546,7 @@ Please note that Clever Cloud host Code Carbon for free because they like our pr
 
 
 <!-- TOC --><a name="dashboard"></a>
-##### Dashboard
+#### Dashboard
 
 Same as for the API, for example to deploy the branh `fix-unit` to CleverCloud:
 
@@ -578,7 +567,7 @@ PORT="8000"
 
 
 <!-- TOC --><a name="license"></a>
-### License
+## License
 
 By contributing your code, you agree to license your contribution under the terms of the [MIT License](LICENSE).
 

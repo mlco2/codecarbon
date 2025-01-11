@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -99,13 +100,14 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         )
 
 
-fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
-fief_auth = FiefAuth(fief, "./credentials.json")
-print("FIEF", AUTH_SERVER_URL, AUTH_CLIENT_ID)
+def get_fief_auth():
+    fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
+    fief_auth = FiefAuth(fief, "./credentials.json")
+    return fief_auth
 
 
 def _get_access_token():
-    access_token_info = fief_auth.access_token_info()
+    access_token_info = get_fief_auth().access_token_info()
     access_token = access_token_info["access_token"]
     return access_token
 
@@ -125,13 +127,10 @@ def api_get():
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
-    fief_auth.authorize()
+    get_fief_auth().authorize()
 
 
-@codecarbon.command("get-token", short_help="Get project token")
-def get_token(project_id: str):
-    # api = ApiClient(endpoint_url=API_URL) # TODO: get endpoint from config
-    # api.set_access_token(_get_access_token())
+def get_api_key(project_id: str):
     req = requests.post(
         f"{API_URL}/projects/{project_id}/api-tokens",
         json={
@@ -141,7 +140,16 @@ def get_token(project_id: str):
         },
         headers={"Authorization": f"Bearer {_get_access_token()}"},
     )
-    print("Your token: " + req.json()["token"])
+    api_key = req.json()["token"]
+    return api_key
+
+
+@codecarbon.command("get-token", short_help="Get project token")
+def get_token(project_id: str):
+    # api = ApiClient(endpoint_url=API_URL) # TODO: get endpoint from config
+    # api.set_access_token(_get_access_token())
+    token = get_api_key(project_id)
+    print("Your token: " + token)
     print("Add it to the api_key field in your configuration file")
 
 
@@ -292,6 +300,8 @@ def config():
         experiment = [e for e in experiments if e["name"] == experiment][0]
 
     overwrite_local_config("experiment_id", experiment["id"], path=file_path)
+    api_key = get_api_key(project_id)
+    overwrite_local_config("api_key", api_key, path=file_path)
     show_config(file_path)
     print(
         "Consult [link=https://mlco2.github.io/codecarbon/usage.html#configuration]configuration documentation[/link] for more configuration options"
@@ -320,7 +330,10 @@ def monitor(
     experiment_id = get_existing_local_exp_id()
     if api:
         if experiment_id is None:
-            print("ERROR: No experiment id, call 'codecarbon config' first.", err=True)
+            print(
+                "ERROR: No experiment id, call 'codecarbon config' first.",
+                file=sys.stderr,
+            )
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
     with EmissionsTracker(
         measure_power_secs=measure_power_secs,
