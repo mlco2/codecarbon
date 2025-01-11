@@ -23,10 +23,14 @@ class ResourceTracker:
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
-        if self.tracker._conf.get("force_mode_cpu_load", False):
-            if cpu.is_psutil_available():
+        tdp = cpu.TDP()
+        if self.tracker._conf.get("force_mode_cpu_load", False) and tdp.tdp is not None:
+            if tdp.tdp is None:
+                logger.warning(
+                    "Force CPU load mode requested but TDP could not be calculated. Falling back to another mode."
+                )
+            elif cpu.is_psutil_available():
                 # Register a CPU with MODE_CPU_LOAD
-                tdp = cpu.TDP()
                 power = tdp.tdp
                 model = tdp.model
                 hardware = CPU.from_utils(
@@ -36,7 +40,8 @@ class ResourceTracker:
                     power,
                     tracking_mode=self.tracker._tracking_mode,
                 )
-                self.cpu_tracker = "load"
+                self.cpu_tracker = MODE_CPU_LOAD
+                self.tracker._conf["cpu_model"] = hardware.get_model()
                 self.tracker._hardware.append(hardware)
                 return
             else:
@@ -126,7 +131,7 @@ class ResourceTracker:
                         power,
                         tracking_mode=self.tracker._tracking_mode,
                     )
-                    self.cpu_tracker = "load"
+                    self.cpu_tracker = MODE_CPU_LOAD
                 else:
                     logger.warning(
                         "No CPU tracking mode found. Falling back on CPU constant mode."
@@ -148,7 +153,7 @@ class ResourceTracker:
                         power,
                         tracking_mode=self.tracker._tracking_mode,
                     )
-                    self.cpu_tracker = "load"
+                    self.cpu_tracker = MODE_CPU_LOAD
                 else:
                     logger.warning(
                         "Failed to match CPU TDP constant. Falling back on a global constant."
