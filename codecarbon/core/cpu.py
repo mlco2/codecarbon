@@ -5,6 +5,7 @@ https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget
 """
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -440,6 +441,18 @@ class TDP:
         start_cpu = model_raw.find(" CPU @ ")
         if start_cpu > 0:
             model_raw = model_raw[0:start_cpu]
+        model_raw = model_raw.replace(" CPU", "")
+        model_raw = re.sub(r" @\s*\d+\.\d+GHz", "", model_raw)
+        direct_match = process.extractOne(
+            model_raw,
+            cpu_df["Name"],
+            processor=lambda s: s.lower(),
+            scorer=fuzz.ratio,
+            score_cutoff=THRESHOLD_DIRECT,
+        )
+
+        if direct_match:
+            return direct_match[0]
         indirect_matches = process.extract(
             model_raw,
             cpu_df["Name"],
