@@ -142,7 +142,18 @@ class IntelRAPL:
         try:
             for domain in os.listdir(self.rapl_base_path):
                 if domain.startswith("intel-rapl:"):
-                    self.domains.append(domain)
+                    domain_info = {
+                        "path": domain,
+                        "name": "",
+                    }
+                    if os.path.exists(
+                        os.path.join(self.rapl_base_path, domain, "name")
+                    ):
+                        with open(
+                            os.path.join(self.rapl_base_path, domain, "name"), "r"
+                        ) as f:
+                            domain_info["name"] = f.read().strip()
+                    self.domains.append(domain_info)
             return self.domains
         except Exception as e:
             print(f"Error listing power domains: {e}")
@@ -166,7 +177,9 @@ class IntelRAPL:
 
         try:
             # Path to energy counter
-            energy_path = os.path.join(self.rapl_base_path, domain, "energy_uj")
+            energy_path = os.path.join(
+                self.rapl_base_path, domain.get("path"), "energy_uj"
+            )
 
             # Read initial energy
             with open(energy_path, "r") as f:
@@ -201,10 +214,15 @@ class IntelRAPL:
         start_time = time.time()
 
         while time.time() - start_time < duration:
+            total_power = 0
             for domain in self.domains:
-                power = self.read_power_consumption()
+                power = self.read_power_consumption(domain)
                 if power is not None:
-                    print(f"Domain: {domain} power Consumption: {power:.2f} Watts")
+                    print(
+                        f"Domain '{domain.get("path").split('/')[-1]}/{domain.get("name")}' as a power consumption of {power:.2f} Watts"
+                    )
+                    total_power += power
+            print(f"Total Power Consumption: {total_power:.2f} Watts")
 
             time.sleep(interval)
 
@@ -226,10 +244,10 @@ if __name__ == "__main__":
     print("\nPotential RAM Domains:")
     for domain in potential_ram_domains:
         print(f"Domain: {domain['domain']}")
-        print("Key Files:")
+        print("\tKey Files:")
         for file, value in domain["details"]["files"].items():
-            print(f"  {file}: {value}")
-        print("---")
+            print(f"\t  {file}: {value}")
+    print("---")
     rapl = IntelRAPL()
 
     # List available power domains
