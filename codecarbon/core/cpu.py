@@ -254,7 +254,7 @@ class IntelRAPL:
 
     """
 
-    def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
+    def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl/subsystem"):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
         self._rapl_files = []
@@ -292,7 +292,7 @@ class IntelRAPL:
             with open(path) as f:
                 name = f.read().strip()
                 # Fake the name used by Power Gadget
-                if "package" in name:
+                if "package" in name or "core" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
                 # RAPL file to take measurement from
