@@ -109,6 +109,7 @@ class Project(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
+    public = Column(Boolean, default=False)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
     experiments = relationship("Experiment", back_populates="project")
     organization = relationship("Organization", back_populates="projects")

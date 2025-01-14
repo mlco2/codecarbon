@@ -51,6 +51,14 @@ class NotAllowedError(ErrorBase):
     code: NotAllowedErrorEnum
 
 
+class NotFoundErrorEnum(str, Enum):
+    NOT_FOUND = "NOT_FOUND"
+
+
+class NotFoundError(ErrorBase):
+    code: NotFoundErrorEnum
+
+
 class UserException(Exception):
     def __init__(self, error):
         self.error = error
@@ -63,4 +71,6 @@ def get_http_exception(exception) -> HTTPException:
     if isinstance(exception, UserException):
         if isinstance(error := exception.error, NotAllowedError):
             return HTTPException(status_code=403, detail=error.message)
+        elif isinstance(error := exception.error, NotFoundError):
+            return HTTPException(status_code=404, detail=error.message)
     return HTTPException(status_code=500)
