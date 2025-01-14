@@ -10,6 +10,7 @@ from starlette import status
 from carbonserver.api.schemas import Project, ProjectCreate, ProjectPatch, ProjectReport
 from carbonserver.api.services.auth_service import (
     MandatoryUserWithAuthDependency,
+    OptionalUserWithAuthDependency,
     UserWithAuthDependency,
 )
 from carbonserver.api.services.project_service import ProjectService
@@ -75,7 +76,7 @@ def patch_project(
 @inject
 def read_project(
     project_id: str,
-    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
     return project_service.get_one_project(project_id, auth_user.db_user)
