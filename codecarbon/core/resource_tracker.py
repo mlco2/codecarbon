@@ -23,7 +23,9 @@ class ResourceTracker:
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
+        cpu_number = self.tracker._conf.get("cpu_physical_count")
         tdp = cpu.TDP()
+        max_power = tdp.tdp * cpu_number
         if self.tracker._conf.get("force_mode_cpu_load", False) and tdp.tdp is not None:
             if tdp.tdp is None:
                 logger.warning(
@@ -31,18 +33,17 @@ class ResourceTracker:
                 )
             elif cpu.is_psutil_available():
                 # Register a CPU with MODE_CPU_LOAD
-                power = tdp.tdp
                 model = tdp.model
-                hardware = CPU.from_utils(
+                hardware_cpu = CPU.from_utils(
                     self.tracker._output_dir,
                     MODE_CPU_LOAD,
                     model,
-                    power,
+                    max_power,
                     tracking_mode=self.tracker._tracking_mode,
                 )
                 self.cpu_tracker = MODE_CPU_LOAD
-                self.tracker._conf["cpu_model"] = hardware.get_model()
-                self.tracker._hardware.append(hardware)
+                self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+                self.tracker._hardware.append(hardware_cpu)
                 return
             else:
                 logger.warning(
@@ -51,17 +52,19 @@ class ResourceTracker:
         if cpu.is_powergadget_available() and self.tracker._default_cpu_power is None:
             logger.info("Tracking Intel CPU via Power Gadget")
             self.cpu_tracker = "Power Gadget"
-            hardware = CPU.from_utils(self.tracker._output_dir, "intel_power_gadget")
-            self.tracker._hardware.append(hardware)
-            self.tracker._conf["cpu_model"] = hardware.get_model()
+            hardware_cpu = CPU.from_utils(
+                self.tracker._output_dir, "intel_power_gadget"
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
             self.cpu_tracker = "RAPL"
-            hardware = CPU.from_utils(
+            hardware_cpu = CPU.from_utils(
                 output_dir=self.tracker._output_dir, mode="intel_rapl"
             )
-            self.tracker._hardware.append(hardware)
-            self.tracker._conf["cpu_model"] = hardware.get_model()
+            self.tracker._hardware.append(hardware_cpu)
+            self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
             if "AMD Ryzen Threadripper" in self.tracker._conf["cpu_model"]:
                 logger.warning(
                     "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."
@@ -108,15 +111,13 @@ class ResourceTracker:
                 f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
             )
             self.cpu_tracker = "TDP constant"
-            tdp = cpu.TDP()
-            power = tdp.tdp
             model = tdp.model
-            if (power is None) and self.tracker._default_cpu_power:
+            if (max_power is None) and self.tracker._default_cpu_power:
                 # We haven't been able to calculate CPU power but user has input a default one. We use it
                 user_input_power = self.tracker._default_cpu_power
                 logger.debug(f"Using user input TDP: {user_input_power} W")
                 self.cpu_tracker = "User Input TDP constant"
-                power = user_input_power
+                max_power = user_input_power
             logger.info(f"CPU Model on constant consumption mode: {model}")
             self.tracker._conf["cpu_model"] = model
             if tdp:
@@ -124,11 +125,11 @@ class ResourceTracker:
                     logger.warning(
                         "No CPU tracking mode found. Falling back on CPU load mode."
                     )
-                    hardware = CPU.from_utils(
+                    hardware_cpu = CPU.from_utils(
                         self.tracker._output_dir,
                         MODE_CPU_LOAD,
                         model,
-                        power,
+                        max_power,
                         tracking_mode=self.tracker._tracking_mode,
                     )
                     self.cpu_tracker = MODE_CPU_LOAD
@@ -136,21 +137,21 @@ class ResourceTracker:
                     logger.warning(
                         "No CPU tracking mode found. Falling back on CPU constant mode."
                     )
-                    hardware = CPU.from_utils(
-                        self.tracker._output_dir, "constant", model, power
+                    hardware_cpu = CPU.from_utils(
+                        self.tracker._output_dir, "constant", model, max_power
                     )
                     self.cpu_tracker = "global constant"
-                self.tracker._hardware.append(hardware)
+                self.tracker._hardware.append(hardware_cpu)
             else:
                 if cpu.is_psutil_available():
                     logger.warning(
                         "Failed to match CPU TDP constant. Falling back on CPU load mode."
                     )
-                    hardware = CPU.from_utils(
+                    hardware_cpu = CPU.from_utils(
                         self.tracker._output_dir,
                         MODE_CPU_LOAD,
                         model,
-                        power,
+                        max_power,
                         tracking_mode=self.tracker._tracking_mode,
                     )
                     self.cpu_tracker = MODE_CPU_LOAD
@@ -159,8 +160,8 @@ class ResourceTracker:
                         "Failed to match CPU TDP constant. Falling back on a global constant."
                     )
                     self.cpu_tracker = "global constant"
-                    hardware = CPU.from_utils(self.tracker._output_dir, "constant")
-                self.tracker._hardware.append(hardware)
+                    hardware_cpu = CPU.from_utils(self.tracker._output_dir, "constant")
+                self.tracker._hardware.append(hardware_cpu)
 
     def set_GPU_tracking(self):
         logger.info("[setup] GPU Tracking...")
