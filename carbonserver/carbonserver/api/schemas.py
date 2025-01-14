@@ -279,6 +279,7 @@ class ProjectCreate(ProjectBase):
 class ProjectPatch(BaseModel):
     name: Optional[str]
     description: Optional[str]
+    public: Optional[bool]
 
     # do not allow the organization_id
 
@@ -342,6 +343,7 @@ class ProjectTokenCreate(BaseModel):
 class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[str]] = []
+    public: Optional[bool]
 
 
 class ProjectReport(ProjectBase):

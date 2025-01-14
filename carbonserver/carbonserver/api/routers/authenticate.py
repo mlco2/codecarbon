@@ -69,7 +69,7 @@ async def get_login(
     login and redirect to frontend app with token
     """
     login_url = request.url_for("login")
-    print("login_url", login_url)
+
     if code:
         res = requests.post(
             f"{settings.fief_url}/api/token",
