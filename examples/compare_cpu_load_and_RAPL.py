@@ -6,15 +6,20 @@ It runs in less than 2 minutes on a powerful machine with 32 cores.
 
 To run this script:
 sudo apt install stress-ng
+
+# If you want to monitor a Tapo P110 smart plug
 hatch run pip install tapo
 export TAPO_USERNAME=XXX
 export TAPO_PASSWORD=XXX
 export IP_ADDRESS=192.168.0.XXX
+
+# Run the script
 hatch run python examples/compare_cpu_load_and_RAPL.py
 
 """
 
 import asyncio
+import multiprocessing
 import os
 import subprocess
 import time
@@ -37,7 +42,7 @@ test_phase_number = 10
 measurements = []
 task_name = ""
 cpu_name = ""
-log_level = "DEBUG"
+log_level = "INFO"
 
 # Read the credentials from the environment
 tapo_username = os.getenv("TAPO_USERNAME")
@@ -116,7 +121,7 @@ class MeasurementPoint:
     def __init__(self):
         self.task_name = ""
         self.load_type = ""
-        self.cpu_name = ""
+        self.cpu_name = cpu_name
         self.timestamp = 0
         self.cores_used = 0
         self.cpu_load = 0
@@ -143,7 +148,7 @@ class MeasurementPoint:
         return {
             "task_name": self.task_name,
             "load_type": self.load_type,
-            "cpu_name": cpu_name,
+            "cpu_name": self.cpu_name,
             "timestamp": self.timestamp,
             "cores_used": self.cores_used,
             "cpu_load": self.cpu_load,
@@ -213,10 +218,40 @@ def get_list_of_cores_to_test(nb):
     return sorted(list(set(cores_to_test)))
 
 
-# assert get_list_of_cores_to_test(32) == [0, 3, 6, 9, 12, 16, 19, 22, 25, 28, 32]
+def load_one_cpu(percentage, duration):
+    """Generate CPU load at specified percentage."""
+    if percentage < 0 or percentage > 100:
+        raise ValueError("Percentage must be between 0 and 100")
+    if percentage < 1:
+        time.sleep(duration)
+        return
+    start = time.time()
+    while True and time.time() - start < duration:
+        start_time = time.time()
+        # Do computation
+        while time.time() - start_time < 0.01:
+            pass
+        # Sleep to achieve target load
+        time.sleep(0.01 * (100 - percentage) / percentage)
 
 
-def stress_ng(load_type, test_phase_duration, expected_load):
+def load_all_cpu(target_percent, duration):
+    processes = []
+    # Create process for each CPU core
+    for _ in range(psutil.cpu_count()):
+        p = multiprocessing.Process(
+            target=load_one_cpu, args=(target_percent, duration)
+        )
+        p.start()
+        processes.append(p)
+    for p in processes:
+        p.join()
+
+
+# Example usage: load_processes = start_load(50)  # 50% load
+
+
+def stress_cpu(load_type, test_phase_duration, expected_load):
     """
     Call 'stress-ng --matrix <number_of_threads> --rapl -t 1m --verify'
     """
@@ -230,10 +265,12 @@ def stress_ng(load_type, test_phase_duration, expected_load):
                 shell=True,
             )
     elif load_type == LOAD_ALL_CORES:
-        subprocess.run(
-            f"stress-ng  --cpu-method float64 --cpu 0 --rapl -l {expected_load} -t {test_phase_duration} --verify",
-            shell=True,
-        )
+        # stress-ng do not work well in our test to target a load on all cores
+        # subprocess.run(
+        #     f"stress-ng  --cpu-method float64 --cpu 0 --rapl -l {expected_load} -t {test_phase_duration} --verify",
+        #     shell=True,
+        # )
+        load_all_cpu(expected_load, test_phase_duration)
     else:
         raise ValueError(f"Unknown load type: {load_type}")
 
@@ -290,7 +327,7 @@ else:
 
 def one_test(expected_load, load_type):
     try:
-        task_name = f"Stress-ng for {expected_load}% load on {load_type}"
+        task_name = f"Load for {expected_load} threads or % load on {load_type}"
         tracker_cpu_load.start_task(task_name + " CPU Load")
         tracker_rapl.start_task(task_name + " RAPL")
 
@@ -300,7 +337,7 @@ def one_test(expected_load, load_type):
         )
         measure_thread.start()
 
-        stress_ng(load_type, test_phase_duration, expected_load)
+        stress_cpu(load_type, test_phase_duration, expected_load)
 
         # Stop measurement thread
         # measure_thread.join()
@@ -308,6 +345,7 @@ def one_test(expected_load, load_type):
         cpu_load_data = tracker_cpu_load.stop_task()
         rapl_data = tracker_rapl.stop_task()
         point = measurements[-1]
+        point.task_name = task_name
         point.rapl_power = rapl_data.cpu_power
         point.rapl_energy = rapl_data.cpu_energy
         point.estimated_power = cpu_load_data.cpu_power
@@ -323,6 +361,7 @@ def one_test(expected_load, load_type):
 
 
 def measure_power(load_type):
+    global tracker_cpu_load, tracker_rapl
     if load_type == LOAD_SOME_CORES:
         expected_loads = get_list_of_cores_to_test(get_cpu_cores())
         for expected_load in expected_loads:
@@ -331,6 +370,24 @@ def measure_power(load_type):
         for i in range(test_phase_number + 1):
             expected_load = i * 10
             one_test(expected_load, load_type)
+    # Reload the trackers
+    tracker_cpu_load.stop()
+    tracker_rapl.stop()
+    tracker_cpu_load = EmissionsTracker(
+        measure_power_secs=measure_power_secs,
+        force_mode_cpu_load=True,
+        allow_multiple_runs=True,
+        logger_preamble="CPU Load",
+        log_level=log_level,
+        save_to_file=False,
+    )
+    tracker_rapl = EmissionsTracker(
+        measure_power_secs=measure_power_secs,
+        allow_multiple_runs=True,
+        logger_preamble="RAPL",
+        log_level=log_level,
+        save_to_file=False,
+    )
 
 
 def data_output(load_type, measurements):
@@ -407,8 +464,13 @@ AMD Ryzen Threadripper 1950X 16-Core/32 threads Processor TDP: 180W
 
 if __name__ == "__main__":
     results = []
-    # test_to_run = [LOAD_ALL_CORES, LOAD_SOME_CORES]
-    test_to_run = [LOAD_SOME_CORES]
+    # TODO : bug sur le premier du deuxème appel ?
+    """
+cores_used  cpu_load  temperature     cpu_freq  rapl_power  estimated_power  tapo_power  tapo_energy
+0            0       5.3         44.0  2258.912781  161.864521         4.957548           0            0
+1            3      16.6         53.0  2416.061094   53.889815        26.508194           0            0
+    """
+    test_to_run = [LOAD_ALL_CORES, LOAD_SOME_CORES]
     for load_type in test_to_run:
         measurements = []
         measure_power(load_type)
