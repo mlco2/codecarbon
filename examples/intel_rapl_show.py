@@ -10,7 +10,7 @@ import time
 
 class RAPLDomainInspector:
     def __init__(self):
-        self.rapl_base_path = "/sys/class/powercap/intel-rapl"
+        self.rapl_base_path = "/sys/class/powercap/intel-rapl/subsystem"
 
     def inspect_rapl_domains(self):
         """
@@ -21,11 +21,16 @@ class RAPLDomainInspector:
         try:
             # Iterate through all RAPL domains
             for domain_dir in os.listdir(self.rapl_base_path):
+                print(domain_dir)
                 if not domain_dir.startswith("intel-rapl:"):
                     continue
 
                 domain_path = os.path.join(self.rapl_base_path, domain_dir)
-                domain_info = {"name": domain_dir, "files": {}, "subdomain_details": {}}
+                domain_info = {
+                    "domain_dir": domain_dir,
+                    "files": {},
+                    "subdomain_details": {},
+                }
 
                 # Check available files in the domain
                 for file in os.listdir(domain_path):
@@ -69,7 +74,7 @@ class RAPLDomainInspector:
         Sample Detailed RAPL Domain Information:
         {
             "intel-rapl:1": {
-                "name": "intel-rapl:1",
+                "domain_dir": "intel-rapl:1",
                 "files": {
                 "uevent": "",
                 "energy_uj": "10359908363",
@@ -80,7 +85,7 @@ class RAPLDomainInspector:
                 "subdomain_details": {}
             },
             "intel-rapl:0": {
-                "name": "intel-rapl:0",
+                "domain_dir": "intel-rapl:0",
                 "files": {
                 "uevent": "",
                 "energy_uj": "10360237493",
@@ -112,6 +117,14 @@ class RAPLDomainInspector:
                 potential_ram_domains.append(
                     {"domain": domain_name, "details": domain_info}
                 )
+            is_potential_ram = any(
+                indicator in domain_info["files"].get("name").lower()
+                for indicator in memory_indicators
+            )
+            if is_potential_ram:
+                potential_ram_domains.append(
+                    {"domain": domain_name, "details": domain_info}
+                )
 
         return potential_ram_domains
 
@@ -119,18 +132,18 @@ class RAPLDomainInspector:
 class IntelRAPL:
     def __init__(self):
         # Base path for RAPL power readings in sysfs
-        self.rapl_base_path = "/sys/class/powercap/intel-rapl"
+        self.rapl_base_path = "/sys/class/powercap/intel-rapl/subsystem"
 
     def list_power_domains(self):
         """
         List available RAPL power domains
         """
-        domains = []
+        self.domains = []
         try:
             for domain in os.listdir(self.rapl_base_path):
                 if domain.startswith("intel-rapl:"):
-                    domains.append(domain)
-            return domains
+                    self.domains.append(domain)
+            return self.domains
         except Exception as e:
             print(f"Error listing power domains: {e}")
             return []
@@ -183,12 +196,15 @@ class IntelRAPL:
         :param duration: Total monitoring duration in seconds
         """
         print("Starting Power Monitoring:")
+        if not self.domains:
+            self.domains = self.list_power_domains()
         start_time = time.time()
 
         while time.time() - start_time < duration:
-            power = self.read_power_consumption()
-            if power is not None:
-                print(f"Power Consumption: {power:.2f} Watts")
+            for domain in self.domains:
+                power = self.read_power_consumption()
+                if power is not None:
+                    print(f"Domain: {domain} power Consumption: {power:.2f} Watts")
 
             time.sleep(interval)
 
@@ -218,6 +234,6 @@ if __name__ == "__main__":
 
     # List available power domains
     print("Available Power Domains:")
-
+    print(rapl.list_power_domains())
     # Monitor power consumption
     rapl.monitor_power(interval=1, duration=5)
