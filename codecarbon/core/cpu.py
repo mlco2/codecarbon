@@ -292,7 +292,9 @@ class IntelRAPL:
             with open(path) as f:
                 name = f.read().strip()
                 # Fake the name used by Power Gadget
-                if "package" in name or "core" in name:
+                # We ignore "core" in name as it seems to be included in "package" for Intel CPU.
+                # TODO: Use "dram" for memory power
+                if "package" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
                 # RAPL file to take measurement from
