@@ -120,10 +120,10 @@ If you do not want to give sudo rights to your user, then CodeCarbon will fall b
 
 - **On Linux**
 
-Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``/sys/class/powercap/intel-rapl`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
-All CPUs listed in this directory will be tracked. `Help us improve this and make it configurable <https://github.com/mlco2/codecarbon/issues/156>`_.
+Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``/sys/class/powercap/intel-rapl/subsystem`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
+All CPUs listed in this directory will be tracked.
 
-*Note*: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path
+*Note*: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path and if the user has the necessary permissions to read them.
 
 
 If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fallback mode:
@@ -150,9 +150,25 @@ RAPL Metrics
 ------------
 RAPL stand for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
 
-See https://blog.chih.me/read-cpu-power-with-RAPL.html
+See https://blog.chih.me/read-cpu-power-with-RAPL.html for more information.
 
 Despite the name Intel RAPL, it support AMD processors since kernel 5.8.
+
+It is some files in /sys/class/powercap/intel-rapl/subsystem/ that give the energy consumption of the CPU, and sometime RAM.
+There are folder for each `domain`, and in each folder there are a file `name` with the name of the domain and a `energy_uj` for the amount of energy in micro-joules.
+
+The drawback of RAPL is that not every CPU use it the same way. We focus on the `package` domain, but some CPU have more domain like `core`, `uncore`, `dram`, `psys`, `gpu`, `psys` and `psys-io`.
+
+For example :
+- Intel put all the physical cores consumption in `core` and the `package` include `core`.
+- For AMD, `core` have very low energy, so we don't know if it is included in the `package` or not.
+
+Our friend from Scaphandre, a tool to monitor energy consumption, have a good article about RAPL https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html and also a discussion with good references: https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231 and point out that this topic is not well documented.
+
+
+
+https://user-images.githubusercontent.com/894892/120764898-ecf07280-c518-11eb-9155-92780cabcf52.png
+Source :“RAPL in Action: Experiences in Using RAPL for Power Measurements,” (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z. Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp. 1–26, Apr. 2018, doi: 10.1145/3177754.)
 
 Metric comparison
 
