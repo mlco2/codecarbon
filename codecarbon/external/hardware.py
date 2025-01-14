@@ -149,7 +149,7 @@ class CPU(BaseHardware):
         mode: str,
         model: str,
         tdp: int,
-        rapl_dir: str = "/sys/class/powercap/intel-rapl",
+        rapl_dir: str = "/sys/class/powercap/intel-rapl/subsystem",
         tracking_mode: str = "machine",
     ):
         assert tracking_mode in ["machine", "process"]
