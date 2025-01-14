@@ -96,6 +96,25 @@ def is_linux_os() -> str:
     return system.startswith("lin")
 
 
+def count_physical_cpus():
+    import platform
+    import subprocess
+
+    if platform.system() == "Windows":
+        return int(os.environ.get("NUMBER_OF_PROCESSORS", 1))
+    else:
+        try:
+            output = subprocess.check_output(["lscpu"], text=True)
+            for line in output.split("\n"):
+                if "Socket(s):" in line:
+                    return int(line.split(":")[1].strip())
+        except Exception as e:
+            logger.warning(
+                f"Error while trying to count physical CPUs: {e}. Defaulting to 1."
+            )
+            return 1
+
+
 def count_cpus() -> int:
     if SLURM_JOB_ID is None:
         return psutil.cpu_count()

@@ -18,7 +18,7 @@ from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import count_cpus, suppress
+from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
@@ -303,6 +303,7 @@ class BaseEmissionsTracker(ABC):
         self._conf["os"] = platform.platform()
         self._conf["python_version"] = platform.python_version()
         self._conf["cpu_count"] = count_cpus()
+        self._conf["cpu_physical_count"] = count_physical_cpus()
         self._geo = None
         self._task_start_measurement_values = {}
         self._task_stop_measurement_values = {}
@@ -320,7 +321,9 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  Python version: {self._conf.get('python_version')}")
         logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
         logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
-        logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
+        logger.info(
+            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get("cpu_physical_count")} physical CPU(s)"
+        )
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
         if self._gpu_ids:
