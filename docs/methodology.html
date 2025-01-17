@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Methodology &mdash; CodeCarbon 2.8.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
@@ -192,14 +192,28 @@ This measure is not satisfying and if ever you have an idea how to enhance it pl
 <ul class="simple">
 <li><p><strong>On Windows or Mac (Intel)</strong></p></li>
 </ul>
-<p>Tracks Intel processors energy consumption using the <code class="docutils literal notranslate"><span class="pre">Intel</span> <span class="pre">Power</span> <span class="pre">Gadget</span></code>. You need to install it yourself from this <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a> .</p>
+<p>Tracks Intel processors energy consumption using the <code class="docutils literal notranslate"><span class="pre">Intel</span> <span class="pre">Power</span> <span class="pre">Gadget</span></code>. You need to install it yourself from this <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a> .
+WARNING : The Intel Power Gadget is not available on Apple Silicon Macs.
+WARNING 2 : Intel Power Gadget has been deprecated by Intel, and it is not available for the latest processors. We are looking for alternatives.</p>
 <ul class="simple">
-<li><p><strong>Apple Silicon Chips (M1, M2)</strong></p></li>
+<li><p><strong>Apple Silicon Chips (M1, M2, M3, M4)</strong></p></li>
 </ul>
 <p>Apple Silicon Chips contain both the CPU and the GPU.</p>
-<p>Codecarbon tracks Apple Silicon Chip energy consumption using <code class="docutils literal notranslate"><span class="pre">powermetrics</span></code>. It should be available natively on any mac.
-However, this tool is only usable with <code class="docutils literal notranslate"><span class="pre">sudo</span></code> rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
-(if you know of any solution for this do not hesitate and <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/">open an issue with your proposed solution</a>).</p>
+<dl class="simple">
+<dt>There are two options to track the energy consumption of the Apple Silicon Chip:</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://www.unix.com/man-page/osx/1/powermetrics/">Powermetrics</a> The mac native utility to monitor energy consumption on Apple Silicon Macs.</p></li>
+<li><p><a class="reference external" href="https://github.com/vladkens/macmon">macmon</a> : a utility that allows you to monitor the energy consumption of your Apple Silicon Mac, it has the advantage of not requiring sudo privileges.</p></li>
+</ul>
+</dd>
+</dl>
+<p>In order to provide the easiest for the user, codecarbon uses macmon if it is available, otherwise it falls back to powermetrics, and if none of them are available, it falls back to constant mode using TDP.
+Powermetrics should be available natively on any mac, but macmon requires installation.</p>
+<p>To use the <code class="docutils literal notranslate"><span class="pre">macmon</span></code> utility, you can use the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>brew<span class="w"> </span>install<span class="w"> </span>macmon
+</pre></div>
+</div>
+<p>And <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code> will automatically detect and use it.</p>
+<p>If you prefer to use <code class="docutils literal notranslate"><span class="pre">powermetrics</span></code> with <code class="docutils literal notranslate"><span class="pre">codecarbon</span></code> then you need to give it <code class="docutils literal notranslate"><span class="pre">sudo</span></code> rights.</p>
 <p>To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>visudo
 </pre></div>
