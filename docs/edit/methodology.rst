@@ -72,6 +72,7 @@ As you can see, we try to be as accurate as possible in estimating carbon intens
 
 Power Usage
 -----------
+
 Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
 ``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions' tracker.
 
@@ -87,13 +88,14 @@ RAM
 
 CodeCarbon uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
 This measure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
+There is a discussion about it on `github issues #717 <https://github.com/mlco2/codecarbon/issues/717>`_.
 
 CPU
 ~~~~
 
 - **On Windows or Mac (Intel)**
 
-Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ .
+Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ . But has been discontinued. There is a discussion about it on `github issues #457 <https://github.com/mlco2/codecarbon/issues/457>`_.
 
 - **Apple Silicon Chips (M1, M2)**
 
@@ -126,19 +128,12 @@ All CPUs listed in this directory will be tracked.
 *Note*: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path and if the user has the necessary permissions to read them.
 
 
-If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fallback mode:
- - It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
- - If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
- - We could not find any good resource showing statistical relationships between TDP and average power, so we empirically tested that 50% is a decent approximation.
-
-The net Energy Used is the net power supply consumed during the compute time, measured as ``kWh``.
-
 CPU hardware
 ------------
 
-The CPU die is the processing unit itself. It’s a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible1. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.
+The CPU die is the processing unit itself. It's a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible1. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.
 
-In Linux kernel, energy_uj is a current energy counter in micro joules. It is used to measure CPU cores’ energy consumption.
+In Linux kernel, energy_uj is a current energy counter in micro joules. It is used to measure CPU core's energy consumption.
 
 Micro joules is then converted in kWh, with formulas kWh=energy * 10 ** (-6) * 2.77778e-7
 
@@ -189,6 +184,27 @@ package-0-die-1 : 166 W
 RAPL: 234 sec. Joule Counter Range, at 280 Watts
 
 
+CPU metrics priority
+--------------------
+
+CodeCarbon will first try to read the energy consumption of the CPU from low level interface like RAPL or ``powermetrics``.
+If none of the tracking tools are available, CodeCarbon will be switched to a fallback mode:
+ - It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
+ - If the CPU is not found in the data source, a global constant will be applied.
+ - If ``psutil`` is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.
+ - CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
+
+Here is a drawing of the fallback mode:
+
+.. image:: ./images/cpu_fallback.png
+            :align: center
+            :alt: CPU Fallback
+
+The code doing this is available in `codecarbon/core/resource_tracker.py <https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L24>`_.
+
+The net Energy Used is the net power supply consumed during the compute time, measured as ``kWh``.
+
+We compute energy consumption as the product of the power consumed and the time the power was consumed for. The formula is:
 ``Energy = Power * Time``
 
 References
