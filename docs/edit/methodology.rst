@@ -135,7 +135,7 @@ If you do not want to give sudo rights to your user, then CodeCarbon will fall b
 
 - **On Linux**
 
-Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``\sys\class\powercap\intel-rapl`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
+Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``/sys/class/powercap/intel-rapl`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
 All CPUs listed in this directory will be tracked. `Help us improve this and make it configurable <https://github.com/mlco2/codecarbon/issues/156>`_.
 
 *Note*: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path
