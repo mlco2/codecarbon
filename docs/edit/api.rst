@@ -5,7 +5,7 @@ CodeCarbon API
 
 
 CodeCarbon API
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. warning::
     This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!
