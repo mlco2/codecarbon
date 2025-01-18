@@ -14,6 +14,9 @@ export default function ProjectSettingsPage({
         name: "Project Name",
         description: "Project Description",
     });
+
+    const [saveSuccess, setSaveSuccess] = useState(false);
+
     useEffect(() => {
         const fetchProject = async () => {
             // Fetch the project details from the API
@@ -24,8 +27,15 @@ export default function ProjectSettingsPage({
     }, [params.projectId]);
 
     const handleClick = async () => {
-        // Update the project details
-        const response = await updateProject(params.projectId, project);
+        try {
+            // Update the project details
+            const response = await updateProject(params.projectId, project);
+            setSaveSuccess(true);
+        } catch (error) {
+            setSaveSuccess(false);
+        } finally {
+            setTimeout(() => setSaveSuccess(false), 3000); // Hide the success message after 3 seconds
+        }
     };
 
     // Get the projectId from the URL
@@ -89,6 +99,11 @@ export default function ProjectSettingsPage({
                                 <Button variant="default" onClick={handleClick}>
                                     Save Changes
                                 </Button>
+                                {saveSuccess && (
+                                    <p className="text-primary-foreground1 ml-4">
+                                        ✓ Changes saved successfully!
+                                    </p>
+                                )}
                             </div>
                         </section>
                     </div>
