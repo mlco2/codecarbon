@@ -13,6 +13,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         try {
             // Fetch the updated list of tokens from the server
             const projectTokens = await getProjectTokens(projectId);
+            console.log("projectTokens", projectTokens);
             setTokens(projectTokens);
         } catch (error: any) {
             if (error?.response && error?.response?.status === 401) {

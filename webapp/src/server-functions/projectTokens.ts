@@ -1,4 +1,4 @@
-"use server";
+// "use server";
 import { IProjectToken } from "@/types/project";
 
 /**
@@ -9,7 +9,17 @@ export async function getProjectTokens(
 ): Promise<IProjectToken[]> {
     try {
         const URL = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/api-tokens`;
-        const res = await fetch(URL);
+        const res = await fetch(URL, {
+            credentials: "include",
+        });
+
+        console.log("Response status:", res.status);
+        console.log("Response headers:", res.headers);
+        if (!res.ok) {
+            // This will activate the closest `error.js` Error Boundary
+            console.error("Failed to fetch data", res.statusText);
+            throw new Error("Failed to fetch data");
+        }
         const data = await res.json();
         return data;
     } catch (error) {
@@ -32,6 +42,7 @@ export async function createProjectToken(
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ name: tokenName, access }),
+                credentials: "include",
             },
         );
         if (!res.ok) {
@@ -58,6 +69,7 @@ export async function deleteProjectToken(
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include",
             },
         );
         if (res.status !== 204) {
