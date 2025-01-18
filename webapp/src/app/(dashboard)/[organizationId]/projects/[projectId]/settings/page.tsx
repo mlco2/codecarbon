@@ -1,12 +1,33 @@
-"use server";
+"use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProjectTokensTable } from "../../../../../../components/projectTokens/projectTokenTable";
+import { useEffect, useState } from "react";
+import { getOneProject, updateProject } from "@/server-functions/projects";
+import { Project } from "@/types/project";
 
-export default async function ProjectSettingsPage({
+export default function ProjectSettingsPage({
     params,
 }: Readonly<{ params: { projectId: string } }>) {
+    const [project, setProject] = useState({
+        name: "Project Name",
+        description: "Project Description",
+    });
+    useEffect(() => {
+        const fetchProject = async () => {
+            // Fetch the project details from the API
+            const response: Project = await getOneProject(params.projectId);
+            setProject(response);
+        };
+        fetchProject();
+    }, [params.projectId]);
+
+    const handleClick = async () => {
+        // Update the project details
+        const response = await updateProject(params.projectId, project);
+    };
+
     // Get the projectId from the URL
     const projectId = params.projectId;
     return (
@@ -34,7 +55,13 @@ export default async function ProjectSettingsPage({
                                             id="project-name"
                                             placeholder="Enter project name"
                                             className="mt-1 w-full"
-                                            disabled
+                                            value={project.name}
+                                            onChange={(e) =>
+                                                setProject({
+                                                    ...project,
+                                                    name: e.target.value,
+                                                })
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -47,13 +74,19 @@ export default async function ProjectSettingsPage({
                                             id="project-description"
                                             placeholder="Enter project description"
                                             className="mt-1 w-full"
-                                            disabled
+                                            value={project.description}
+                                            onChange={(e) =>
+                                                setProject({
+                                                    ...project,
+                                                    description: e.target.value,
+                                                })
+                                            }
                                         />
                                     </div>
                                 </div>
                             </div>
                             <div className="flex justify-start p-4 mt-6 pr-8">
-                                <Button variant="default" disabled>
+                                <Button variant="default" onClick={handleClick}>
                                     Save Changes
                                 </Button>
                             </div>
