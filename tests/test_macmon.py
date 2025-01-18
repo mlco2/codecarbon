@@ -36,8 +36,8 @@ class TestMacMon(unittest.TestCase):
             "CPU Energy Delta": np.float64(0.398248779),
             "GPU Power": np.float64(0.0321656683),
             "GPU Energy Delta": np.float64(0.0321656683),
-            "Ram Power": np.float64(0.0),
-            "Ram Energy Delta": np.float64(0.0),
+            "RAM Power": np.float64(0.0),
+            "RAM Energy Delta": np.float64(0.0),
         }
         if is_macmon_available():
             macmon = MacMon(
