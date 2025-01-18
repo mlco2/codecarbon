@@ -31,19 +31,20 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             <Card>
                 <Table>
                     <TableBody>
-                        {tokens
-                            .sort((a, b) =>
-                                a.name
-                                    .toLowerCase()
-                                    .localeCompare(b.name.toLowerCase()),
-                            )
-                            .map((projectToken, index) => (
-                                <CustomRowToken
-                                    key={index}
-                                    projectToken={projectToken}
-                                    onTokenDeleted={fetchTokens}
-                                />
-                            ))}
+                        {Array.isArray(tokens) &&
+                            tokens
+                                .sort((a, b) =>
+                                    a.name
+                                        .toLowerCase()
+                                        .localeCompare(b.name.toLowerCase()),
+                                )
+                                .map((projectToken, index) => (
+                                    <CustomRowToken
+                                        key={index}
+                                        projectToken={projectToken}
+                                        onTokenDeleted={fetchTokens}
+                                    />
+                                ))}
                     </TableBody>
                 </Table>
             </Card>
