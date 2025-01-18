@@ -103,6 +103,7 @@ class ServerContainer(containers.DeclarativeContainer):
     project_token_service = providers.Factory(
         ProjectTokenService,
         project_token_repository=project_token_repository,
+        auth_context=auth_context,
     )
 
     run_repository = providers.Factory(
