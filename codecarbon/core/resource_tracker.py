@@ -16,10 +16,20 @@ class ResourceTracker:
 
     def set_RAM_tracking(self):
         logger.info("[setup] RAM Tracking...")
-        self.ram_tracker = "3 Watts for 8 GB ratio constant"
-        ram = RAM(tracking_mode=self.tracker._tracking_mode)
-        self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
-        self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+        if macmon.is_macmon_available():
+            logger.info("Tracking Apple RAM via MacMon")
+            self.ram_tracker = "MacMon"
+            ram = AppleSiliconChip.from_utils(self.tracker._output_dir, chip_part="RAM")
+            self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
+            self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+
+        else:
+            self.ram_tracker = "3 Watts for 8 GB ratio constant"
+            logger.info(f"Tracking RAM via constant ratio: {self.ram_tracker}")
+
+            ram = RAM(tracking_mode=self.tracker._tracking_mode)
+            self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
+            self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
@@ -36,42 +46,26 @@ class ResourceTracker:
             self.tracker._hardware.append(hardware)
             self.tracker._conf["cpu_model"] = hardware.get_model()
         elif self.tracker._default_cpu_power is None and macmon.is_macmon_available():
-            self.gpu_tracker = "MacMon"
             self.cpu_tracker = "MacMon"
-            logger.info(f"Tracking Apple CPU and GPU using {self.cpu_tracker}")
+            logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
             hardware_cpu = AppleSiliconChip.from_utils(
                 self.tracker._output_dir, chip_part="CPU"
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
 
-            hardware_gpu = AppleSiliconChip.from_utils(
-                self.tracker._output_dir, chip_part="GPU"
-            )
-            self.tracker._hardware.append(hardware_gpu)
-
-            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
-            self.tracker._conf["gpu_count"] = 1
         elif (
             self.tracker._default_cpu_power is None
             and powermetrics.is_powermetrics_available()
         ):
-            self.gpu_tracker = "PowerMetrics"
             self.cpu_tracker = "PowerMetrics"
-            logger.info(f"Tracking Apple CPU and GPU using {self.cpu_tracker}")
+            logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
             hardware_cpu = AppleSiliconChip.from_utils(
                 self.tracker._output_dir, chip_part="CPU"
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
 
-            hardware_gpu = AppleSiliconChip.from_utils(
-                self.tracker._output_dir, chip_part="GPU"
-            )
-            self.tracker._hardware.append(hardware_gpu)
-
-            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
-            self.tracker._conf["gpu_count"] = 1
         else:
             # Explain what to install to increase accuracy
             cpu_tracking_install_instructions = ""
@@ -141,6 +135,23 @@ class ResourceTracker:
                 self.tracker._conf["gpu_count"] = len(
                     gpu_devices.devices.get_gpu_static_info()
                 )
+        elif macmon.is_macmon_available():
+            logger.info("Tracking Apple GPU via MacMon")
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="GPU"
+            )
+            self.tracker._hardware.append(hardware_gpu)
+            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
+            self.tracker._conf["gpu_count"] = 1
+
+        elif powermetrics.is_powermetrics_available():
+            logger.info("Tracking Apple GPU via PowerMetrics")
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="GPU"
+            )
+            self.tracker._hardware.append(hardware_gpu)
+            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
+            self.tracker._conf["gpu_count"] = 1
         else:
             logger.info("No GPU found.")
 
