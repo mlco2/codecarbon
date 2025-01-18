@@ -10,19 +10,9 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     const [tokens, setTokens] = useState<IProjectToken[]>([]);
 
     const fetchTokens = async () => {
-        try {
-            // Fetch the updated list of tokens from the server
-            const projectTokens = await getProjectTokens(projectId);
-            console.log("projectTokens", projectTokens);
-            setTokens(projectTokens);
-        } catch (error: any) {
-            if (error?.response && error?.response?.status === 401) {
-                console.error("401 Unauthorized error", error);
-            } else {
-                // Handle other errors
-                console.error("Failed to fetch tokens", error);
-            }
-        }
+        // Fetch the updated list of tokens from the server
+        const projectTokens = await getProjectTokens(projectId);
+        setTokens(projectTokens);
     };
 
     useEffect(() => {
