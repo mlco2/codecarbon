@@ -493,3 +493,13 @@ class AppleSiliconChip(BaseHardware):
                 logger.warning("Could not read AppleSiliconChip model.")
 
         return cls(output_dir=output_dir, model=model, chip_part=chip_part)
+
+    @property
+    def machine_memory_GB(self):
+        """
+        Property to compute the machine's total memory in bytes.
+
+        Returns:
+            float: Total RAM (GB)
+        """
+        return psutil.virtual_memory().total / B_TO_GB

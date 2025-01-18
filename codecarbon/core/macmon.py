@@ -124,8 +124,8 @@ class MacMon:
             details["GPU Energy Delta"] = (self._interval / 1000) * (
                 data["gpu_power"].astype(float)
             ).sum()
-            details["Ram Power"] = data["ram_power"].mean()
-            details["Ram Energy Delta"] = (self._interval / 1000) * (
+            details["RAM Power"] = data["ram_power"].mean()
+            details["RAM Energy Delta"] = (self._interval / 1000) * (
                 data["ram_power"].astype(float)
             ).sum()
         except Exception as e:
