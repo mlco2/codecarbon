@@ -700,6 +700,13 @@ class BaseEmissionsTracker(ABC):
                         f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                         + f". Total GPU Power : {self._gpu_power.W} W"
                     )
+                elif hardware.chip_part == "RAM":
+                    self._total_ram_energy += energy
+                    self._ram_power = power
+                    logger.info(
+                        f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
+                        + f". RAM Power : {self._ram_power.W} W"
+                    )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.perf_counter() - h_time
