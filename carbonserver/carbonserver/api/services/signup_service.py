@@ -42,7 +42,7 @@ class SignUpService:
         with logfire.span("User applicative creation", service="signup"):
             created_user = self._user_repository.create_user(user)
             subscribed_user = self.new_user_setup(created_user)
-            logfire.info(subscribed_user)
+            logfire.info(str(subscribed_user))
             LOGGER.info(f"User {subscribed_user.id} created")
         return subscribed_user
 

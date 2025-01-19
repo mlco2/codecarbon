@@ -33,7 +33,6 @@ AUTH_SERVER_URL = os.environ.get(
     "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon"
 )
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
-DASHBOARD_HOME_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/home")
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
@@ -113,6 +112,11 @@ def _get_access_token():
     return access_token
 
 
+def _get_id_token():
+    id_token = get_fief_auth()._tokens["id_token"]
+    return id_token
+
+
 @codecarbon.command(
     "test-api", short_help="Make an authenticated GET request to an API endpoint"
 )
@@ -128,8 +132,10 @@ def api_get():
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
+    get_fief_auth().authorize()
     api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
-    api.set_access_token(_get_access_token())
+    id_token = _get_id_token()
+    api.set_access_token(id_token)
     api.check_auth()
 
 
