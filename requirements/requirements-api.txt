@@ -42,7 +42,7 @@
 
 alembic==1.14.0
     # via hatch.envs.api
-anyio==4.7.0
+anyio==4.8.0
     # via
     #   httpx
     #   starlette
@@ -53,23 +53,23 @@ asgiref==3.8.1
     # via opentelemetry-instrumentation-asgi
 bcrypt==4.2.1
     # via hatch.envs.api
-certifi==2024.8.30
+certifi==2024.12.14
     # via
     #   httpcore
     #   httpx
     #   requests
 cffi==1.17.1
     # via cryptography
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
-click==8.1.7
+click==8.1.8
     # via
     #   hatch.envs.api
     #   typer
     #   uvicorn
 cryptography==44.0.0
     # via jwcrypto
-dependency-injector==4.44.0
+dependency-injector==4.45.0
     # via hatch.envs.api
 deprecated==1.2.15
     # via
@@ -131,7 +131,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.1.0
     # via hatch.envs.api
-numpy==2.2.0
+numpy==2.2.2
     # via
     #   hatch.envs.api
     #   pandas
@@ -186,14 +186,14 @@ pluggy==1.5.0
     # via pytest
 prometheus-client==0.21.1
     # via hatch.envs.api
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.48
     # via questionary
 protobuf==5.29.3
     # via
     #   googleapis-common-protos
     #   logfire
     #   opentelemetry-proto
-psutil==6.1.0
+psutil==6.1.1
     # via hatch.envs.api
 psycopg2-binary==2.9.10
     # via hatch.envs.api
@@ -201,12 +201,12 @@ py-cpuinfo==9.0.0
     # via hatch.envs.api
 pycparser==2.22
     # via cffi
-pydantic==1.10.19
+pydantic==1.10.21
     # via
     #   hatch.envs.api
     #   fastapi
     #   fastapi-pagination
-pygments==2.18.0
+pygments==2.19.1
     # via rich
 pyjwt==2.10.1
     # via hatch.envs.api
@@ -227,9 +227,9 @@ pyyaml==6.0.2
     # via
     #   responses
     #   uvicorn
-questionary==2.0.1
+questionary==2.1.0
     # via hatch.envs.api
-rapidfuzz==3.10.1
+rapidfuzz==3.11.0
     # via hatch.envs.api
 requests==2.32.3
     # via
@@ -239,7 +239,7 @@ requests==2.32.3
     #   responses
 requests-mock==1.12.1
     # via hatch.envs.api
-responses==0.25.3
+responses==0.25.6
     # via hatch.envs.api
 rich==13.9.4
     # via
@@ -249,9 +249,7 @@ rich==13.9.4
 shellingham==1.5.4
     # via typer
 six==1.17.0
-    # via
-    #   dependency-injector
-    #   python-dateutil
+    # via python-dateutil
 sniffio==1.3.1
     # via
     #   anyio
@@ -280,15 +278,15 @@ typing-extensions==4.12.2
     #   typer
 tzdata==2024.2
     # via pandas
-urllib3==2.2.3
+urllib3==2.3.0
     # via
     #   requests
     #   responses
-uvicorn==0.32.1
+uvicorn==0.34.0
     # via hatch.envs.api
 uvloop==0.21.0
     # via uvicorn
-watchfiles==1.0.3
+watchfiles==1.0.4
     # via uvicorn
 wcwidth==0.2.13
     # via prompt-toolkit
