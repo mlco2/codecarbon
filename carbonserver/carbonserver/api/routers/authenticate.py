@@ -33,11 +33,13 @@ fief = FiefAsync(
 @inject
 def check_login(
     auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
+    sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ):
     """
     return user data or redirect to login screen
     null value if not logged in
     """
+    sign_up_service.check_jwt_user(auth_user.auth_user, create=True)
     return {"user": auth_user.auth_user}
 
 

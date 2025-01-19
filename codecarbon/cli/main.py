@@ -128,7 +128,9 @@ def api_get():
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
-    get_fief_auth().authorize()
+    api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
+    api.set_access_token(_get_access_token())
+    api.check_auth()
 
 
 def get_api_key(project_id: str):
