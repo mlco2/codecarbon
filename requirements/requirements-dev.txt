@@ -18,11 +18,14 @@
 # - rapidfuzz
 # - requests
 # - rich
+# - starlette
 # - typer
 #
 
 anyio==4.7.0
-    # via httpx
+    # via
+    #   httpx
+    #   starlette
 arrow==1.3.0
     # via hatch.envs.dev
 black==24.10.0
@@ -143,6 +146,8 @@ sniffio==1.3.1
     # via
     #   anyio
     #   httpx
+starlette==0.45.2
+    # via hatch.envs.dev
 termcolor==2.3.0
     # via yaspin
 toml==0.10.2

@@ -39,7 +39,7 @@ class SignUpService:
         self,
         user: UserAutoCreate,
     ) -> User:
-        with logfire.span('User applicative creation'):
+        with logfire.span("User applicative creation", service="signup"):
             created_user = self._user_repository.create_user(user)
             subscribed_user = self.new_user_setup(created_user)
             logfire.info(subscribed_user)

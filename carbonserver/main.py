@@ -1,7 +1,6 @@
-import logfire
-
 import os
 
+import logfire
 from container import ServerContainer, settings
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination

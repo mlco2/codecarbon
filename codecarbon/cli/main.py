@@ -101,8 +101,10 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
             f"Your configuration is invalid, please run `codecarbon config --init` first! (error: {e})"
         )
 
+
 def render_success_page():
     return RedirectResponse(url=DASHBOARD_HOME_URL, status_code=307)
+
 
 def get_fief_auth():
     fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
