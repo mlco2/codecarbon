@@ -6,6 +6,11 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from carbonserver.api.schemas import ProjectToken, ProjectTokenCreate
+from carbonserver.api.services.auth_service import (
+    MandatoryUserWithAuthDependency,
+    UserWithAuthDependency,
+)
+from carbonserver.api.services.project_token_service import ProjectTokenService
 
 PROJECTS_TOKENS_ROUTER_TAGS = ["Project tokens"]
 
@@ -23,9 +28,14 @@ router = APIRouter()
 def add_project_token(
     project_id: str,
     project_token: ProjectTokenCreate,
-    project_token_service=Depends(Provide[ServerContainer.project_token_service]),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    project_token_service: ProjectTokenService = Depends(
+        Provide[ServerContainer.project_token_service]
+    ),
 ) -> ProjectToken:
-    return project_token_service.add_project_token(project_id, project_token)
+    return project_token_service.add_project_token(
+        project_id, project_token, user=auth_user.db_user
+    )
 
 
 # Delete project token
@@ -38,9 +48,14 @@ def add_project_token(
 def delete_project_token(
     project_id: str,
     token_id: str,
-    project_token_service=Depends(Provide[ServerContainer.project_token_service]),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    project_token_service: ProjectTokenService = Depends(
+        Provide[ServerContainer.project_token_service]
+    ),
 ) -> None:
-    return project_token_service.delete_project_token(project_id, token_id)
+    return project_token_service.delete_project_token(
+        project_id, token_id, user=auth_user.db_user
+    )
 
 
 # See all project tokens of the project
@@ -52,6 +67,11 @@ def delete_project_token(
 @inject
 def get_all_project_tokens(
     project_id: str,
-    project_token_service=Depends(Provide[ServerContainer.project_token_service]),
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    project_token_service: ProjectTokenService = Depends(
+        Provide[ServerContainer.project_token_service]
+    ),
 ) -> List[ProjectToken]:
-    return project_token_service.list_tokens_from_project(project_id)
+    return project_token_service.list_tokens_from_project(
+        project_id, user=auth_user.db_user
+    )

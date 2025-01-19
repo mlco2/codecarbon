@@ -34,3 +34,7 @@ class FakeAuthContext:
     @staticmethod
     def can_write_organization(*args, **kwargs):
         return True
+
+    @staticmethod
+    def can_read_project(*args, **kwargs):
+        return True
