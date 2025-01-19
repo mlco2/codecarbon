@@ -1,3 +1,5 @@
+import logfire
+
 import os
 
 from container import ServerContainer, settings
@@ -79,11 +81,14 @@ def init_db(container):
 
 
 def init_server(container):
+    logfire.configure(token=settings.logfire_token)
     server = FastAPI(
         servers=[
             {"url": "/api/"},
         ],
     )
+    logfire.instrument_fastapi(server)
+
     server.container = container
     server.include_router(users.router)
     server.include_router(authenticate.router)

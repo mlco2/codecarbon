@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     frontend_url: str = Field("", env="FRONTEND_URL")
     environment: str = Field("production")
     jwt_key: str = Field("", env="JWT_KEY")
+    logfire_token: str = Field("", env="LOGFIRE_TOKEN")
 
 
 settings = Settings()

@@ -92,6 +92,7 @@ def read_project_detailed_sums(
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_global_sum_usecase: ProjectSumsUsecase = Depends(
         Provide[ServerContainer.project_sums_usecase]
     ),
