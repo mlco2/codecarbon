@@ -2,6 +2,7 @@ import logging
 from uuid import UUID
 
 import jwt
+import logfire
 from fastapi import HTTPException
 
 from carbonserver.api.infra.repositories.repository_organizations import (
@@ -38,9 +39,11 @@ class SignUpService:
         self,
         user: UserAutoCreate,
     ) -> User:
-        created_user = self._user_repository.create_user(user)
-        subscribed_user = self.new_user_setup(created_user)
-        LOGGER.info(f"User {subscribed_user.id} created")
+        with logfire.span("User applicative creation", service="signup"):
+            created_user = self._user_repository.create_user(user)
+            subscribed_user = self.new_user_setup(created_user)
+            logfire.info(str(subscribed_user))
+            LOGGER.info(f"User {subscribed_user.id} created")
         return subscribed_user
 
     def subscribe_user_to_org(
