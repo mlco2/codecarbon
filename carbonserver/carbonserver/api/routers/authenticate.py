@@ -24,7 +24,6 @@ SESSION_COOKIE_NAME = "user_session"
 
 router = APIRouter()
 
-
 fief = FiefAsync(
     settings.fief_url, settings.fief_client_id, settings.fief_client_secret
 )

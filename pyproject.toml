@@ -29,7 +29,6 @@ dependencies = [
     "arrow",
     "click",
     "fief-client[cli]",
-    "starlette",
     "pandas",
     "prometheus_client",
     "psutil",

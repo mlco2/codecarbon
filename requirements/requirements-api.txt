@@ -37,7 +37,6 @@
 # - rapidfuzz
 # - requests
 # - rich
-# - starlette
 # - typer
 #
 
@@ -262,9 +261,7 @@ sqlalchemy==1.4.54
     #   hatch.envs.api
     #   alembic
 starlette==0.41.3
-    # via
-    #   hatch.envs.api
-    #   fastapi
+    # via fastapi
 termcolor==2.3.0
     # via yaspin
 typer==0.15.1
