@@ -122,6 +122,11 @@ def _get_id_token():
     return id_token
 
 
+def _get_id_token():
+    id_token = get_fief_auth()._tokens["id_token"]
+    return id_token
+
+
 @codecarbon.command(
     "test-api", short_help="Make an authenticated GET request to an API endpoint"
 )
