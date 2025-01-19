@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     environment: str = Field("production")
     jwt_key: str = Field("", env="JWT_KEY")
     logfire_token: str = Field("", env="LOGFIRE_TOKEN")
+    send_to_logfire: bool = Field(False, env="LOGFIRE_SEND_TO_LOGFIRE")
 
 
 settings = Settings()

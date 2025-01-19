@@ -80,7 +80,7 @@ def init_db(container):
 
 
 def init_server(container):
-    logfire.configure(token=settings.logfire_token)
+    logfire.configure(token=settings.logfire_token, send_to_logfire=settings.send_to_logfire)
     server = FastAPI(
         servers=[
             {"url": "/api/"},
