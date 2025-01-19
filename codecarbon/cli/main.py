@@ -11,6 +11,7 @@ from fief_client import Fief
 from fief_client.integrations.cli import FiefAuth
 from rich import print
 from rich.prompt import Confirm
+from starlette.responses import RedirectResponse
 from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
@@ -33,6 +34,7 @@ AUTH_SERVER_URL = os.environ.get(
     "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon"
 )
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
+DASHBOARD_HOME_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/home")
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
@@ -99,10 +101,13 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
             f"Your configuration is invalid, please run `codecarbon config --init` first! (error: {e})"
         )
 
+def render_success_page():
+    return RedirectResponse(url=DASHBOARD_HOME_URL, status_code=307)
 
 def get_fief_auth():
     fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
     fief_auth = FiefAuth(fief, "./credentials.json")
+    fief_auth.render_success_page = render_success_page
     return fief_auth
 
 
