@@ -23,11 +23,17 @@ class Empty(BaseModel, extra=Extra.forbid):
 class UserBase(BaseModel):
     email: str
 
+    def __repr__(self):
+        return f"User(email={self.email})"
+
 
 class UserAutoCreate(UserBase):
     name: str
     email: EmailStr
     id: UUID
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id})"
 
 
 class UserAuthenticate(UserBase):
@@ -43,6 +49,9 @@ class User(UserBase):
 
     class Config:
         orm_mode = True
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id}, organizations={self.organizations})"
 
 
 class EmissionBase(BaseModel):
