@@ -88,7 +88,7 @@ Create the configuration file for CodeCarbon:
     experiment_id = <experiment_id>
     api_key = <api_key>
     # Verbose logging
-    log_level=DEBUG
+    log_level=WARNING
     # Measure power every 30 seconds
     measure_power_secs=30
     # Send measure to API every 5 minutes (10*30 seconds)
