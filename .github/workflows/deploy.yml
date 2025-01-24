@@ -1,0 +1,41 @@
+name: Deploy to Clever Cloud
+
+on:
+  pull_request_target:
+      types: [opened, synchronize, reopened]
+      branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering for either environment
+
+jobs:
+  staging:
+    if: github.event_name == 'pull_request' || github.event.action == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Clever Tools CLI
+      run: |
+        CC_VERSION=latest
+        curl -s -O https://clever-tools.clever-cloud.com/releases/${CC_VERSION}/clever-tools-${CC_VERSION}_linux.tar.gz
+        tar -xvf clever-tools-${CC_VERSION}_linux.tar.gz
+        PATH=${PATH}:$(pwd)/clever-tools-${CC_VERSION}_linux
+
+    - name: Login to Clever Cloud
+      env:
+        CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+      run: clever login --token ${{ secrets.CLEVER_TOKEN }} --secret ${{ secrets.CLEVER_SECRET }}
+
+    - name: Deploy backend to Clever Cloud (Staging)
+      env:
+        CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_STAGING }}
+      run: |
+        clever link $CLEVER_APP_ID
+        clever deploy
+  
+    - name: Deploy frontend to Clever Cloud (Staging)
+      env:
+        CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_STAGING }}
+      run: |
+        clever link $CLEVER_APP_ID
+        clever deploy
