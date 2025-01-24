@@ -60,8 +60,8 @@ class BaseEmissionsTracker(ABC):
     """
     Primary abstraction with Emissions Tracking functionality.
     Has two abstract methods, `_get_geo_metadata` and `_get_cloud_metadata`
-    that are implemented by two concrete classes: `OfflineCarbonTracker`
-    and `CarbonTracker.`
+    that are implemented by two concrete classes: `OfflineEmissionTracker`
+    and `EmissionTracker.`
     """
 
     def _set_from_conf(
@@ -1034,6 +1034,7 @@ def track_emissions(
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
                     gpu_ids=gpu_ids,
+                    experiment_id=experiment_id,
                     co2_signal_api_token=co2_signal_api_token,
                     tracking_mode=tracking_mode,
                     log_level=log_level,
