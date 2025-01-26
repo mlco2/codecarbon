@@ -1,14 +1,15 @@
 name: Deploy to Clever Cloud
 
 on:
-  pull_request_target:
-      types: [opened, synchronize, reopened]
-      branches: [ main ]
-  workflow_dispatch:  # Allow manual triggering for either environment
+  pull_request:
+  # pull_request_target:
+  #     types: [opened, synchronize, reopened]
+  #     branches: [ main ]
+  # workflow_dispatch:  # Allow manual triggering for either environment
 
 jobs:
   staging:
-    if: github.event_name == 'pull_request' || github.event.action == 'workflow_dispatch'
+    # if: github.event_name == 'pull_request' || github.event.action == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
