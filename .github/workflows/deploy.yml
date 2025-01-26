@@ -36,7 +36,7 @@ jobs:
         APP_NAME: cc_api_test
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME
+        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME --quiet
   
     - name: Deploy frontend to Clever Cloud (Staging)
       env:
@@ -44,4 +44,4 @@ jobs:
         APP_NAME: cc_dashboard_dev
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME
+        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME --quiet
