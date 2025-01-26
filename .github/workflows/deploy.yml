@@ -33,13 +33,15 @@ jobs:
     - name: Deploy backend to Clever Cloud (Staging)
       env:
         CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_STAGING }}
+        APP_NAME: cc_api_test
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f
+        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME
   
     - name: Deploy frontend to Clever Cloud (Staging)
       env:
         CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_STAGING }}
+        APP_NAME: cc_dashboard_dev
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f
+        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME
