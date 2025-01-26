@@ -1,15 +1,11 @@
 name: Deploy to Clever Cloud
 
 on:
-  pull_request:
-  # pull_request_target:
-  #     types: [opened, synchronize, reopened]
-  #     branches: [ main ]
-  # workflow_dispatch:  # Allow manual triggering for either environment
+  push:
+    branches: [master]
 
 jobs:
-  staging:
-    # if: github.event_name == 'pull_request' || github.event.action == 'workflow_dispatch'
+  production:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -30,18 +26,18 @@ jobs:
         CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
       run: ./clever-tools-latest_linux/clever login --token ${{ secrets.CLEVER_TOKEN }} --secret ${{ secrets.CLEVER_SECRET }}
 
-    - name: Deploy backend to Clever Cloud (Staging)
+    - name: Deploy backend to Clever Cloud (PROD)
       env:
-        CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_STAGING }}
-        APP_NAME: cc_api_test
+        CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_PROD }}
+        APP_NAME: cc_api_prod
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
         ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME --quiet
   
-    - name: Deploy frontend to Clever Cloud (Staging)
+    - name: Deploy frontend to Clever Cloud (PROD)
       env:
-        CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_STAGING }}
-        APP_NAME: cc_dashboard_dev
+        CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_PROD }}
+        APP_NAME: cc_dashboard_prod
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
         ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME --quiet
