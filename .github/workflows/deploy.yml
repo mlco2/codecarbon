@@ -14,6 +14,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Same as git fetch --unshallow
+        clean: true    # Remove any untracked files or modifications
 
     - name: Install Clever Tools CLI
       run: |
@@ -32,11 +35,11 @@ jobs:
         CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_STAGING }}
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy
+        ./clever-tools-latest_linux/clever deploy -f
   
     - name: Deploy frontend to Clever Cloud (Staging)
       env:
         CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_STAGING }}
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy
+        ./clever-tools-latest_linux/clever deploy -f
