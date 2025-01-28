@@ -407,6 +407,11 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
+        try:
+            _ = self._emissions
+        except AttributeError:
+            logger.error("Tracker not initialized. Please check the logs.")
+            return
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -424,6 +429,21 @@ class BaseEmissionsTracker(ABC):
         :param task_name: Name of the task to be isolated.
         :return: None
         """
+        # if another instance of codecarbon is already running, stop here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
+        try:
+            _ = self._emissions
+        except AttributeError:
+            logger.error("Tracker not initialized. Please check the logs.")
+            return
+
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
             self._scheduler.stop()
