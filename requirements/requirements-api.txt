@@ -71,7 +71,7 @@ cryptography==44.0.1
     # via jwcrypto
 dependency-injector==4.45.0
     # via hatch.envs.api
-deprecated==1.2.15
+deprecated==1.2.18
     # via
     #   opentelemetry-api
     #   opentelemetry-exporter-otlp-proto-http
@@ -91,6 +91,8 @@ fief-client==0.20.0
     # via hatch.envs.api
 googleapis-common-protos==1.66.0
     # via opentelemetry-exporter-otlp-proto-http
+greenlet==3.1.1
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -115,7 +117,7 @@ iniconfig==2.0.0
     # via pytest
 jwcrypto==1.5.6
     # via fief-client
-logfire==3.2.0
+logfire==3.4.0
     # via hatch.envs.api
 makefun==1.15.6
     # via fief-client
