@@ -103,6 +103,8 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.1.0
     # via hatch.envs.test.py3.10
+narwhals==1.24.1
+    # via plotly
 nest-asyncio==1.6.0
     # via dash
 numpy==2.2.2 ; python_version >= "3.9"
@@ -117,7 +119,7 @@ packaging==24.2
     #   pytest
 pandas==2.2.3
     # via hatch.envs.test.py3.10
-plotly==5.24.1
+plotly==6.0.0
     # via dash
 pluggy==1.5.0
     # via pytest
@@ -175,8 +177,6 @@ sniffio==1.3.1
     # via
     #   anyio
     #   httpx
-tenacity==9.0.0
-    # via plotly
 termcolor==2.3.0
     # via
     #   fire
