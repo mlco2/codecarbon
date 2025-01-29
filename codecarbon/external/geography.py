@@ -67,7 +67,9 @@ class GeoMetadata:
         longitude: Optional[float] = None,
         country_2letter_iso_code: Optional[str] = None,
     ):
-        self.country_iso_code = country_iso_code.upper()
+        self.country_iso_code = (
+            None if country_iso_code is None else country_iso_code.upper()
+        )
         self.country_name = country_name
         self.region = region if region is None else region.lower()
         self.latitude = latitude
