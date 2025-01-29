@@ -823,6 +823,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     In addition to the standard arguments, the following are required.
     """
 
+    _country_iso_code = None
+    _country_name, _region, country_2letter_iso_code = None, None, None
+
     @suppress(Exception)
     def __init__(
         self,
@@ -940,7 +943,12 @@ class EmissionsTracker(BaseEmissionsTracker):
 class TaskEmissionsTracker:
     """
     Track emissions for a specific task
-    # TODO: THIS NOT USED, RIGHT ?
+    This is the context manager for tracking emissions for a specific task.
+    For example:
+    ```py
+    with TaskEmissionsTracker(task_name="Grid search", tracker=tracker):
+        grid = GridSearchCV(estimator=model, param_grid=param_grid)
+    ```
     """
 
     def __init__(self, task_name, tracker: EmissionsTracker = None):
