@@ -79,7 +79,7 @@ idna==3.10
     #   anyio
     #   httpx
     #   requests
-importlib-metadata==8.5.0
+importlib-metadata==8.6.1
     # via dash
 iniconfig==2.0.0
     # via pytest
@@ -99,13 +99,15 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.1.0
     # via hatch.envs.test.py3.13
+narwhals==1.24.1
+    # via plotly
 nest-asyncio==1.6.0
     # via dash
 numpy==2.2.2 ; python_version >= "3.9"
     # via
     #   hatch.envs.test.py3.13
     #   pandas
-nvidia-ml-py==12.560.30
+nvidia-ml-py==12.570.86
     # via pynvml
 packaging==24.2
     # via
@@ -113,13 +115,13 @@ packaging==24.2
     #   pytest
 pandas==2.2.3
     # via hatch.envs.test.py3.13
-plotly==5.24.1
+plotly==6.0.0
     # via dash
 pluggy==1.5.0
     # via pytest
 prometheus-client==0.21.1
     # via hatch.envs.test.py3.13
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via questionary
 psutil==6.1.1
     # via hatch.envs.test.py3.13
@@ -171,8 +173,6 @@ sniffio==1.3.1
     # via
     #   anyio
     #   httpx
-tenacity==9.0.0
-    # via plotly
 termcolor==2.3.0
     # via
     #   fire
@@ -186,7 +186,7 @@ typing-extensions==4.12.2
     #   dash
     #   jwcrypto
     #   typer
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 urllib3==2.3.0
     # via

@@ -56,13 +56,13 @@ mdurl==0.1.2
     # via markdown-it-py
 numpy==2.2.2
     # via pandas
-nvidia-ml-py==12.560.30
+nvidia-ml-py==12.570.86
     # via pynvml
 pandas==2.2.3
     # via hatch.envs.default
 prometheus-client==0.21.1
     # via hatch.envs.default
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via questionary
 psutil==6.1.1
     # via hatch.envs.default
@@ -109,7 +109,7 @@ typing-extensions==4.12.2
     #   anyio
     #   jwcrypto
     #   typer
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 urllib3==2.3.0
     # via requests

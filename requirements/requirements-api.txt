@@ -40,7 +40,7 @@
 # - typer
 #
 
-alembic==1.14.0
+alembic==1.14.1
     # via hatch.envs.api
 anyio==4.8.0
     # via
@@ -71,7 +71,7 @@ cryptography==44.0.0
     # via jwcrypto
 dependency-injector==4.45.0
     # via hatch.envs.api
-deprecated==1.2.15
+deprecated==1.2.18
     # via
     #   opentelemetry-api
     #   opentelemetry-exporter-otlp-proto-http
@@ -80,9 +80,9 @@ dnspython==2.7.0
     # via email-validator
 email-validator==2.2.0
     # via pydantic
-executing==2.1.0
+executing==2.2.0
     # via logfire
-fastapi==0.115.6
+fastapi==0.115.7
     # via
     #   hatch.envs.api
     #   fastapi-pagination
@@ -93,6 +93,8 @@ fief-client==0.20.0
     # via hatch.envs.api
 googleapis-common-protos==1.66.0
     # via opentelemetry-exporter-otlp-proto-http
+greenlet==3.1.1
+    # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
@@ -117,7 +119,7 @@ iniconfig==2.0.0
     # via pytest
 jwcrypto==1.5.6
     # via fief-client
-logfire==3.2.0
+logfire==3.4.0
     # via hatch.envs.api
 makefun==1.15.6
     # via fief-client
@@ -135,7 +137,7 @@ numpy==2.2.2
     # via
     #   hatch.envs.api
     #   pandas
-nvidia-ml-py==12.560.30
+nvidia-ml-py==12.570.86
     # via pynvml
 opentelemetry-api==1.29.0
     # via
@@ -186,7 +188,7 @@ pluggy==1.5.0
     # via pytest
 prometheus-client==0.21.1
     # via hatch.envs.api
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via questionary
 protobuf==5.29.3
     # via
@@ -258,7 +260,7 @@ sqlalchemy==1.4.54
     # via
     #   hatch.envs.api
     #   alembic
-starlette==0.41.3
+starlette==0.45.3
     # via fastapi
 termcolor==2.3.0
     # via yaspin
@@ -276,7 +278,7 @@ typing-extensions==4.12.2
     #   opentelemetry-sdk
     #   pydantic
     #   typer
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 urllib3==2.3.0
     # via
@@ -290,7 +292,7 @@ watchfiles==1.0.4
     # via uvicorn
 wcwidth==0.2.13
     # via prompt-toolkit
-websockets==14.1
+websockets==14.2
     # via uvicorn
 wrapt==1.17.2
     # via
