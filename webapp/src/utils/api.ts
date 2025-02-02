@@ -1,4 +1,5 @@
-import { fiefAuth } from "@/helpers/fief";
+"use server";
+
 import { headers } from "next/headers";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
@@ -23,7 +24,9 @@ export async function fetchApi<T>(
     });
 
     if (!response.ok) {
-        console.log(`API call failed: ${response.statusText}`);
+        console.log(
+            `API call failed: ${response.status} ${response.statusText}`,
+        );
         return null;
     }
 

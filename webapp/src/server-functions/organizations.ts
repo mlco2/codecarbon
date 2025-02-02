@@ -54,10 +54,11 @@ export async function getOrganizations(): Promise<Organization[] | undefined> {
     }
     try {
         const orgs = await res.json();
+        return orgs;
     } catch (err) {
         console.warn("error processing organizations list");
+        return;
     }
-    return;
 }
 
 export const createOrganization = async (organization: {
