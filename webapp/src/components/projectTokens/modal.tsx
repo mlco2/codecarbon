@@ -9,7 +9,7 @@ interface ModalProps {
     projectId: string;
     isOpen: boolean;
     onClose: () => void;
-    onTokenCreated: () => Promise<void>;
+    onTokenCreated: () => void;
 }
 interface CreateProjectTokenInput {
     name: string;

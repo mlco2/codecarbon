@@ -15,7 +15,10 @@ import useSWR from "swr";
 
 export default function ProjectsPage({
     params,
-}: Readonly<{ params: { organizationId: string } }>) {
+}: {
+    params: Promise<{ organizationId: string }>;
+}) {
+    const { organizationId } = use(params);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [projectList, setProjectList] = useState<Project[]>([]);
     const handleClick = async () => {
@@ -23,7 +26,7 @@ export default function ProjectsPage({
     };
     const refreshProjectList = async () => {
         // Fetch the updated list of projects from the server
-        const projectList = await getProjects(params.organizationId);
+        const projectList = await getProjects(organizationId);
         setProjectList(projectList);
     };
     // Fetch the updated list of projects from the server
@@ -31,13 +34,9 @@ export default function ProjectsPage({
         data: projects,
         error,
         isLoading,
-    } = useSWR<Project[]>(
-        `/projects?organization=${params.organizationId}`,
-        fetcher,
-        {
-            refreshInterval: 1000 * 60, // Refresh every minute
-        },
-    );
+    } = useSWR<Project[]>(`/projects?organization=${organizationId}`, fetcher, {
+        refreshInterval: 1000 * 60, // Refresh every minute
+    });
 
     useEffect(() => {
         if (projects) {
@@ -63,7 +62,7 @@ export default function ProjectsPage({
                     + Add a project
                 </Button>
                 <CreateProjectModal
-                    organizationId={params.organizationId}
+                    organizationId={organizationId}
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onProjectCreated={refreshProjectList}
@@ -82,10 +81,11 @@ export default function ProjectsPage({
                                 .map((project) => (
                                     <CustomRow
                                         key={project.id}
+                                        rowKey={project.id}
                                         firstColumn={project.name}
                                         secondColumn={project.description}
-                                        href={`/${params.organizationId}/projects/${project.id}`}
-                                        hrefSettings={`/${params.organizationId}/projects/${project.id}/settings`}
+                                        href={`/${organizationId}/projects/${project.id}`}
+                                        hrefSettings={`/${organizationId}/projects/${project.id}/settings`}
                                         settingsDisabled={false}
                                     />
                                 ))}

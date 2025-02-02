@@ -18,9 +18,8 @@ export default function MainLayout({
     children: React.ReactNode;
 }>) {
     const [isSheetOpen, setSheetOpened] = useState(false);
-    const { data } = useSWR<Organization[]>("/organizations", fetcher, {
-        refreshInterval: 1000 * 60, // Refresh every minute
-    });
+    const { data } = useSWR<Organization[]>("/organizations", fetcher);
+
     return (
         <div className="grid h-screen w-full md:grid-cols-[220px_1fr]">
             {/* Side bar that shows only on screens larger than 768px */}

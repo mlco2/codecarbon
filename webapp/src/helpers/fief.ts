@@ -7,6 +7,7 @@ export const fiefClient = new Fief({
     baseURL: process.env.FIEF_BASE_URL as string,
     clientId: process.env.FIEF_CLIENT_ID as string,
     clientSecret: process.env.FIEF_CLIENT_SECRET as string,
+    requestInit: { next: { revalidate: 3600 } },
 });
 
 class MemoryUserInfoCache implements IUserInfoCache {
