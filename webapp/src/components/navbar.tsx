@@ -68,7 +68,10 @@ export default function NavBar({
         if (!selectedOrg) {
             try {
                 const localOrg = localStorage.getItem("organizationId");
-                if (localOrg) {
+                const foundOrg = organizationList?.find(
+                    (org) => org.id === localOrg,
+                );
+                if (localOrg && foundOrg) {
                     setSelectedOrg(localOrg);
                 } else if (organizationList && organizationList.length > 0) {
                     // Set the first organization as the default
@@ -186,11 +189,12 @@ export default function NavBar({
                                                 isCollapsed && "hidden",
                                             )}
                                         >
-                                            {organizationList &&
+                                            {(organizationList &&
                                                 organizationList.find(
                                                     (org) =>
                                                         org.id === selectedOrg,
-                                                )?.name}
+                                                )?.name) ||
+                                                selectedOrg}
                                         </span>
                                     </SelectValue>
                                 </SelectTrigger>
