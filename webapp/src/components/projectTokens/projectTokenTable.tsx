@@ -1,4 +1,3 @@
-"use client";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { IProjectToken } from "@/types/project";
@@ -6,18 +5,21 @@ import { getProjectTokens } from "@/server-functions/projectTokens";
 import CreateTokenButton from "./createProjectTokenButton";
 import CustomRowToken from "@/components/projectTokens/custom-row-token";
 import { useState, useEffect } from "react";
-export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
-    const [tokens, setTokens] = useState<IProjectToken[]>([]);
+import { revalidatePath } from "next/cache";
 
-    const fetchTokens = async () => {
-        // Fetch the updated list of tokens from the server
-        const projectTokens = await getProjectTokens(projectId);
-        setTokens(projectTokens);
-    };
+export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
+    const [tokens, setTokens] = useState<IProjectToken[] | null>(null);
 
     useEffect(() => {
-        fetchTokens();
-    }, []);
+        const fetchTokens = async () => {
+            // Fetch the updated list of tokens from the server
+            const projectTokens = await getProjectTokens(projectId);
+            setTokens(projectTokens);
+        };
+        if (tokens === null) {
+            fetchTokens();
+        }
+    }, [projectId, tokens]);
 
     return (
         <div className="flex-col p-4 md:gap-8 md:p-8 justify-between max-w-screen-sm">
@@ -25,7 +27,9 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             <div className="flex-1 p-4 md:p-4">
                 <CreateTokenButton
                     projectId={projectId}
-                    onTokenCreated={fetchTokens}
+                    onTokenCreated={() =>
+                        revalidatePath(`/projects/${projectId}/settings`)
+                    }
                 />
             </div>
             <Card>
@@ -42,7 +46,11 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                                     <CustomRowToken
                                         key={index}
                                         projectToken={projectToken}
-                                        onTokenDeleted={fetchTokens}
+                                        onTokenDeleted={() =>
+                                            revalidatePath(
+                                                `/projects/${projectId}/settings`,
+                                            )
+                                        }
                                     />
                                 ))}
                     </TableBody>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RunsScatterChart from "@/components/runs-scatter-chart";
 import EmissionsTimeSeriesChart from "@/components/emissions-time-series";
@@ -22,6 +22,7 @@ import {
     getEquivalentTvTime,
 } from "@/helpers/constants";
 import CreateExperimentModal from "@/components/createExperimentModal";
+import Image from "next/image";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -35,11 +36,13 @@ const getDefaultDateRange = (): { from: Date; to: Date } => {
 export default function ProjectPage({
     params,
 }: Readonly<{
-    params: {
+    params: Promise<{
         projectId: string;
         organizationId: string;
-    };
+    }>;
 }>) {
+    const { projectId, organizationId } = use(params);
+
     const [project, setProject] = useState({
         name: "",
         description: "",
@@ -49,7 +52,7 @@ export default function ProjectPage({
         // Replace with your actual API endpoint
         const fetchProjectDetails = async () => {
             try {
-                const project: Project = await getOneProject(params.projectId);
+                const project: Project = await getOneProject(projectId);
                 setProject(project);
             } catch (error) {
                 console.error("Error fetching project description:", error);
@@ -57,12 +60,10 @@ export default function ProjectPage({
         };
 
         fetchProjectDetails();
-    }, [params.projectId]);
+    }, [projectId]);
     const router = useRouter();
     const handleSettingsClick = () => {
-        router.push(
-            `/${params.organizationId}/projects/${params.projectId}/settings`,
-        );
+        router.push(`/${organizationId}/projects/${projectId}/settings`);
     };
 
     const default_date = getDefaultDateRange();
@@ -76,7 +77,7 @@ export default function ProjectPage({
         duration: { label: "days", value: 0 },
     });
     const [experimentsData, setExperimentsData] = useState({
-        projectId: params.projectId,
+        projectId: projectId,
         startDate: default_date.from.toISOString(),
         endDate: default_date.to.toISOString(),
     });
@@ -107,7 +108,7 @@ export default function ProjectPage({
     useEffect(() => {
         async function fetchData() {
             const report = await getProjectEmissionsByExperiment(
-                params.projectId,
+                projectId,
                 date,
             );
             setExperimentReport(report);
@@ -147,7 +148,7 @@ export default function ProjectPage({
             setRadialChartData(newRadialChartData);
 
             setExperimentsData({
-                projectId: params.projectId,
+                projectId: projectId,
                 startDate: date?.from?.toISOString() ?? "",
                 endDate: date?.to?.toISOString() ?? "",
             });
@@ -174,7 +175,7 @@ export default function ProjectPage({
         }
 
         fetchData();
-    }, [params.projectId, date]);
+    }, [projectId, date]);
 
     const handleExperimentClick = useCallback((experimentId: string) => {
         setSelectedExperimentId(experimentId);
@@ -223,7 +224,7 @@ export default function ProjectPage({
                             + Add Experiment
                         </Button>
                         <CreateExperimentModal
-                            projectId={params.projectId}
+                            projectId={projectId}
                             isOpen={isExperimentModalOpen}
                             onClose={() => setIsExperimentModalOpen(false)}
                             onExperimentCreated={refreshExperimentList}
@@ -235,9 +236,11 @@ export default function ProjectPage({
                     <div className="grid grid-cols-1 gap-4">
                         <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
-                                <img
+                                <Image
                                     src="/household_consumption.svg"
-                                    alt="Logo 1"
+                                    alt="Household consumption icon"
+                                    width={64}
+                                    height={64}
                                     className="h-16 w-16"
                                 />
                             </div>
@@ -252,9 +255,11 @@ export default function ProjectPage({
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
-                                <img
+                                <Image
                                     src="/transportation.svg"
-                                    alt="Logo 2"
+                                    alt="Transportation icon"
+                                    width={64}
+                                    height={64}
                                     className="h-16 w-16"
                                 />
                             </div>
@@ -269,9 +274,11 @@ export default function ProjectPage({
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="flex items-center justify-center">
-                                <img
+                                <Image
                                     src="/tv.svg"
-                                    alt="Logo 3"
+                                    alt="TV icon"
+                                    width={64}
+                                    height={64}
                                     className="h-16 w-16"
                                 />
                             </div>

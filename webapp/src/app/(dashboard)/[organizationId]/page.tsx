@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { use } from "react";
+import Image from "next/image";
 
 import { DateRange } from "react-day-picker";
 import ErrorMessage from "@/components/error-message";
@@ -21,19 +23,16 @@ import {
 export default function OrganizationPage({
     params,
 }: {
-    params: { organizationId: string };
+    params: Promise<{ organizationId: string }>;
 }) {
+    const { organizationId } = use(params);
     const {
         data: organization,
         isLoading,
         error,
-    } = useSWR<Organization>(
-        `/organizations/${params.organizationId}`,
-        fetcher,
-        {
-            refreshInterval: 1000 * 60, // Refresh every minute
-        },
-    );
+    } = useSWR<Organization>(`/organizations/${organizationId}`, fetcher, {
+        refreshInterval: 1000 * 60, // Refresh every minute
+    });
 
     const today = new Date();
     const [date, setDate] = useState<DateRange | undefined>({
@@ -47,17 +46,15 @@ export default function OrganizationPage({
     useEffect(() => {
         async function fetchOrganizationReport() {
             const organizationReport: OrganizationReport | null =
-                await getOrganizationEmissionsByProject(
-                    params.organizationId,
-                    date,
-                );
+                await getOrganizationEmissionsByProject(organizationId, date);
             if (organizationReport) {
                 setOrganizationReport(organizationReport);
             }
         }
 
         fetchOrganizationReport();
-    }, [params.organizationId, date]);
+    }, [organizationId, date]);
+
     if (isLoading) {
         return <Loader />;
     }
@@ -107,9 +104,11 @@ export default function OrganizationPage({
                     <Separator className="h-[0.5px] bg-muted-foreground" />
                     <div className="grid grid-cols-3 gap-4">
                         <div className="flex flex-col items-center justify-center">
-                            <img
+                            <Image
                                 src="/household_consumption.svg"
-                                alt="Logo 1"
+                                alt="Household consumption icon"
+                                width={64}
+                                height={64}
                                 className="h-16 w-16"
                             />
                             <p className="text-xs text-gray-500">
@@ -120,9 +119,11 @@ export default function OrganizationPage({
                             </p>
                         </div>
                         <div className="flex flex-col items-center justify-center">
-                            <img
+                            <Image
                                 src="/transportation.svg"
-                                alt="Logo 2"
+                                alt="Transportation icon"
+                                width={64}
+                                height={64}
                                 className="h-16 w-16"
                             />
                             <p className="text-xs text-gray-500">
@@ -133,9 +134,11 @@ export default function OrganizationPage({
                             </p>
                         </div>
                         <div className="flex flex-col items-center justify-center">
-                            <img
+                            <Image
                                 src="/tv.svg"
-                                alt="Logo 3"
+                                alt="TV icon"
+                                width={64}
+                                height={64}
                                 className="h-16 w-16"
                             />
                             <p className="text-xs text-gray-500">

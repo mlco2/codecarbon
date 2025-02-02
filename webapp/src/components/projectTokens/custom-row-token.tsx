@@ -9,16 +9,16 @@ export default function CustomRowToken({
     onTokenDeleted,
 }: {
     projectToken: IProjectToken;
-    onTokenDeleted: () => Promise<void>;
+    onTokenDeleted: () => void;
 }) {
     const handleDelete = async (projectToken: IProjectToken) => {
         await deleteProjectToken(projectToken.project_id, projectToken.id);
-        await onTokenDeleted(); // Call the callback to refresh the token list
+        onTokenDeleted();
     };
 
     return (
         <CustomRow
-            key={projectToken.id}
+            rowKey={projectToken.id}
             firstColumn={projectToken.name}
             secondColumn={projectToken.token}
             onDelete={() => handleDelete(projectToken)}

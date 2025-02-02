@@ -6,19 +6,22 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { fiefAuth } from "@/helpers/fief";
 import { getDefaultOrgId } from "@/server-functions/organizations";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 // This method calls the API to check if the user is created in DB
 async function checkAuth() {
-    const token = fiefAuth.getAccessTokenInfo();
+    const headersList = await headers();
+    const token = headersList.get("X-FiefAuth-Access-Token-Info");
+
     if (!token) {
         throw new Error("No token found");
     }
+    const tokenInfo = JSON.parse(token);
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         headers: {
-            Authorization: `Bearer ${token?.access_token}`,
+            Authorization: `Bearer ${tokenInfo.access_token}`,
         },
     });
 
@@ -26,20 +29,18 @@ async function checkAuth() {
         // This will activate the closest `error.js` Error Boundary
         throw new Error("Failed to fetch /auth/login");
     }
-
-    return res.json();
 }
 
 export default async function HomePage({
-    params,
     searchParams,
 }: {
-    params: { slug: string };
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    if (searchParams && searchParams["auth"]) {
+    const { auth } = await searchParams;
+
+    if (auth) {
         try {
-            const res = await checkAuth();
+            await checkAuth();
         } catch (error) {
             console.error("Error with /check/auth:", error);
         }
@@ -53,22 +54,13 @@ export default async function HomePage({
     return (
         <div className="container mx-auto p-4">
             {/* Change to a proper readme or get started guide */}
-            <Card className="max-w-md mx-auto">
+            <Card className="mx-auto">
                 <CardHeader>
                     <CardTitle>Get Started</CardTitle>
                     <CardDescription>
                         You can do that by installing the command line tool and
                         running:
-                        <span
-                            style={{
-                                display: "block",
-                                whiteSpace: "pre-wrap",
-                                borderLeft: "2px solid #3498db",
-                                wordWrap: "break-word",
-                                paddingLeft: "1em",
-                                margin: "1em",
-                            }}
-                        >
+                        <span className="block whitespace-pre-wrap border-l-2 border-[#3498db] break-words pl-4 m-4">
                             codecarbon login <br />
                             codecarbon config <br />
                             codecarbon monitor
