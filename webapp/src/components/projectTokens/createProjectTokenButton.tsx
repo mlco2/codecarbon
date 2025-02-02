@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ProjectTokenModal from "@/components/projectTokens/modal";
@@ -8,7 +9,7 @@ const CreateTokenButton = ({
     onTokenCreated,
 }: {
     projectId: string;
-    onTokenCreated: () => Promise<void>;
+    onTokenCreated: () => void;
 }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const handleClick = async () => {

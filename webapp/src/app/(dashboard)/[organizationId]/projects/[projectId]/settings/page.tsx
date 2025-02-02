@@ -1,15 +1,20 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProjectTokensTable } from "../../../../../../components/projectTokens/projectTokenTable";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { getOneProject, updateProject } from "@/server-functions/projects";
 import { Project } from "@/types/project";
 
 export default function ProjectSettingsPage({
     params,
-}: Readonly<{ params: { projectId: string } }>) {
+}: {
+    params: Promise<{ projectId: string }>;
+}) {
+    const { projectId } = use(params);
+
     const [project, setProject] = useState({
         name: "Project Name",
         description: "Project Description",
@@ -20,16 +25,16 @@ export default function ProjectSettingsPage({
     useEffect(() => {
         const fetchProject = async () => {
             // Fetch the project details from the API
-            const response: Project = await getOneProject(params.projectId);
+            const response: Project = await getOneProject(projectId);
             setProject(response);
         };
         fetchProject();
-    }, [params.projectId]);
+    }, [projectId]);
 
     const handleClick = async () => {
         try {
             // Update the project details
-            const response = await updateProject(params.projectId, project);
+            await updateProject(projectId, project);
             setSaveSuccess(true);
         } catch (error) {
             setSaveSuccess(false);
@@ -38,8 +43,6 @@ export default function ProjectSettingsPage({
         }
     };
 
-    // Get the projectId from the URL
-    const projectId = params.projectId;
     return (
         <div className="flex px-4 space-y-6 md:px-6 flex-col">
             <div className="space-y-1.5">
