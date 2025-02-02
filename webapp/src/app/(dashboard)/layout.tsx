@@ -2,15 +2,14 @@
 
 import AutoBreadcrumb from "@/components/breadcrumb";
 import NavBar from "@/components/navbar";
-import { Organization } from "@/types/organization";
-import { fetcher } from "../../helpers/swr";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { getOrganizations } from "@/server-functions/organizations";
+import { Organization } from "@/types/organization";
 import { Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import useSWR from "swr";
+import { useEffect, useState } from "react";
 
 export default function MainLayout({
     children,
@@ -18,7 +17,15 @@ export default function MainLayout({
     children: React.ReactNode;
 }>) {
     const [isSheetOpen, setSheetOpened] = useState(false);
-    const { data } = useSWR<Organization[]>("/organizations", fetcher);
+    const [orgs, setOrgs] = useState<Organization[] | undefined>(undefined);
+
+    useEffect(() => {
+        const fetchOrgs = async () => {
+            const data = await getOrganizations();
+            setOrgs(data);
+        };
+        fetchOrgs();
+    }, []);
 
     return (
         <div className="grid h-screen w-full md:grid-cols-[220px_1fr]">
@@ -39,7 +46,7 @@ export default function MainLayout({
                             />
                         </Link>
                     </div>
-                    <NavBar orgs={data} setSheetOpened={setSheetOpened} />
+                    <NavBar orgs={orgs} setSheetOpened={setSheetOpened} />
                 </div>
             </div>
 
@@ -84,7 +91,7 @@ export default function MainLayout({
                                     </Link>
                                 </div>
                                 <NavBar
-                                    orgs={data}
+                                    orgs={orgs}
                                     setSheetOpened={setSheetOpened}
                                 />
                             </SheetContent>
