@@ -25,6 +25,7 @@ class ResourceTracker:
         logger.info("[setup] CPU Tracking...")
         cpu_number = self.tracker._conf.get("cpu_physical_count")
         tdp = cpu.TDP()
+
         max_power = tdp.tdp * cpu_number
         if self.tracker._conf.get("force_mode_cpu_load", False) and tdp.tdp is not None:
             if tdp.tdp is None:
@@ -108,7 +109,7 @@ class ResourceTracker:
             elif is_linux_os():
                 cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at /sys/class/powercap/intel-rapl/subsystem to measure CPU"
             logger.warning(
-                f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
+                f"No CPU tracking mode found. Falling back on estimation based on TDP for CPU. \n {cpu_tracking_install_instructions}\n"
             )
             self.cpu_tracker = "TDP constant"
             model = tdp.model

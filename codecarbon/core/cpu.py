@@ -18,6 +18,7 @@ from rapidfuzz import fuzz, process, utils
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
 from codecarbon.core.util import detect_cpu_model
+from codecarbon.external.hardware import DEFAULT_POWER_PER_CORE, POWER_CONSTANT
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 
@@ -496,10 +497,18 @@ class TDP:
                 + " Please contact us.",
                 cpu_model_detected,
             )
+            if is_psutil_available():
+                # Count thread of the CPU
+                threads = psutil.cpu_count(logical=True)
+                estimated_tdp = threads * DEFAULT_POWER_PER_CORE
+                logger.warning(
+                    f"We will use the default power consumption of {DEFAULT_POWER_PER_CORE} W per thread for your {threads} CPU, so {estimated_tdp}W."
+                )
+                return cpu_model_detected, estimated_tdp
             return cpu_model_detected, None
         logger.warning(
             "We were unable to detect your CPU using the `cpuinfo` package."
-            + " Resorting to a default power consumption of 85W."
+            + f" Resorting to a default power consumption of {POWER_CONSTANT}W."
         )
         return "Unknown", None
 
