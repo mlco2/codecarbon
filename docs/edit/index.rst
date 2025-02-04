@@ -29,6 +29,7 @@ CodeCarbon
    parameters
    examples
    comet
+   advanced_installation
 
 .. toctree::
    :caption: Logging
