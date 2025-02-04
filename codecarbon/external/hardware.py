@@ -21,6 +21,9 @@ from codecarbon.external.logger import logger
 # default W value for a CPU if no model is found in the ref csv
 POWER_CONSTANT = 85
 
+# default W value per core for a CPU if no model is found in the ref csv
+DEFAULT_POWER_PER_CORE = 4
+
 #  ratio of TDP estimated to be consumed on average
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
