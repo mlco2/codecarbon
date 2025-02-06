@@ -235,7 +235,7 @@ class BaseEmissionsTracker(ABC):
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
-        self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", False, bool)
+        self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
         if self._allow_multiple_runs:
             logger.warning(
                 "Multiple instances of codecarbon are allowed to run at the same time."
