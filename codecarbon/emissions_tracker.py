@@ -67,9 +67,7 @@ class BaseEmissionsTracker(ABC):
     _scheduler: Optional[PeriodicScheduler] = None
     _scheduler_monitor_power: Optional[PeriodicScheduler] = None
 
-    def _set_from_conf(
-        self, var, name, default=None, return_type=None, prevent_setter=False
-    ):
+    def _set_from_conf(self, var, name, default=None, return_type=None, prevent_setter=False):
         """
         Method to standardize private argument setting. Generic flow is:
 
@@ -237,9 +235,7 @@ class BaseEmissionsTracker(ABC):
         self._external_conf = get_hierarchical_config()
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", False, bool)
         if self._allow_multiple_runs:
-            logger.warning(
-                "Multiple instances of codecarbon are allowed to run at the same time."
-            )
+            logger.warning("Multiple instances of codecarbon are allowed to run at the same time.")
         else:
             # Acquire lock file to prevent multiple instances of codecarbon running
             # at the same time
@@ -280,9 +276,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(default_cpu_power, "default_cpu_power")
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False)
-        self._set_from_conf(
-            experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
-        )
+        self._set_from_conf(experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1")
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -322,7 +316,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
         logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
         logger.info(
-            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get("cpu_physical_count")} physical CPU(s)"
+            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get('cpu_physical_  count')} physical CPU(s)"
         )
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
@@ -358,9 +352,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["region"] = cloud.region
             self._conf["provider"] = cloud.provider
 
-        self._emissions: Emissions = Emissions(
-            self._data_source, self._co2_signal_api_token
-        )
+        self._emissions: Emissions = Emissions(self._data_source, self._co2_signal_api_token)
         self._init_output_methods(api_key=self._api_key)
 
     def _init_output_methods(self, *, api_key: str = None):
@@ -412,13 +404,8 @@ class BaseEmissionsTracker(ABC):
         :return: None
         """
         # if another instance of codecarbon is already running, stop here
-        if (
-            hasattr(self, "_another_instance_already_running")
-            and self._another_instance_already_running
-        ):
-            logger.warning(
-                "Another instance of codecarbon is already running. Exiting."
-            )
+        if hasattr(self, "_another_instance_already_running") and self._another_instance_already_running:
+            logger.warning("Another instance of codecarbon is already running. Exiting.")
             return
         if self._start_time is not None:
             logger.warning("Already started tracking")
@@ -483,9 +470,7 @@ class BaseEmissionsTracker(ABC):
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
-        task_duration = Time.from_seconds(
-            time.perf_counter() - self._tasks[task_name].start_time
-        )
+        task_duration = Time.from_seconds(time.perf_counter() - self._tasks[task_name].start_time)
 
         task_emission_data = emissions_data_delta
         task_emission_data.duration = task_duration.seconds
@@ -512,9 +497,7 @@ class BaseEmissionsTracker(ABC):
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
-        self._persist_data(
-            total_emissions=emissions_data, delta_emissions=emissions_data_delta
-        )
+        self._persist_data(total_emissions=emissions_data, delta_emissions=emissions_data_delta)
 
         return emissions_data.emissions
 
@@ -526,13 +509,8 @@ class BaseEmissionsTracker(ABC):
         """
 
         # if another instance of codecarbon is already running, Nothing to do here
-        if (
-            hasattr(self, "_another_instance_already_running")
-            and self._another_instance_already_running
-        ):
-            logger.warning(
-                "Another instance of codecarbon is already running. Exiting."
-            )
+        if hasattr(self, "_another_instance_already_running") and self._another_instance_already_running:
+            logger.warning("Another instance of codecarbon is already running. Exiting.")
             return
         if not self._allow_multiple_runs:
             # Release the lock
@@ -603,9 +581,7 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = ""
             cloud_region = ""
         else:
-            emissions = self._emissions.get_cloud_emissions(
-                self._total_energy, cloud, self._geo
-            )
+            emissions = self._emissions.get_cloud_emissions(self._total_energy, cloud, self._geo)
             country_name = self._emissions.get_cloud_country_name(cloud)
             country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
             region = self._emissions.get_cloud_geo_region(cloud)
@@ -705,9 +681,7 @@ class BaseEmissionsTracker(ABC):
                     f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
                     + f", power : {self._cpu_power.W} W"
                 )
-                logger.info(
-                    f"Energy consumed for All CPU : {self._total_cpu_energy.kWh:.6f} kWh"
-                )
+                logger.info(f"Energy consumed for All CPU : {self._total_cpu_energy.kWh:.6f} kWh")
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
@@ -743,9 +717,7 @@ class BaseEmissionsTracker(ABC):
             logger.debug(
                 f"Done measure for {hardware.__class__.__name__} - measurement time: {h_time:,.4f} s - last call {last_duration:,.2f} s"
             )
-        logger.info(
-            f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."
-        )
+        logger.info(f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning.")
 
     def _measure_power_and_energy(self) -> None:
         """
@@ -763,10 +735,7 @@ class BaseEmissionsTracker(ABC):
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
-            warn_msg = (
-                "Background scheduler didn't run for a long period"
-                + " (%ds), results might be inaccurate"
-            )
+            warn_msg = "Background scheduler didn't run for a long period" + " (%ds), results might be inaccurate"
             logger.warning(warn_msg, last_duration)
 
         self._do_measurements()
@@ -849,20 +818,10 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._cloud_provider:
             if self._cloud_region is None:
-                logger.error(
-                    "Cloud Region must be provided " + " if cloud provider is set"
-                )
+                logger.error("Cloud Region must be provided " + " if cloud provider is set")
 
             df = DataSource().get_cloud_emissions_data()
-            if (
-                len(
-                    df.loc[
-                        (df["provider"] == self._cloud_provider)
-                        & (df["region"] == self._cloud_region)
-                    ]
-                )
-                == 0
-            ):
+            if len(df.loc[(df["provider"] == self._cloud_provider) & (df["region"] == self._cloud_region)]) == 0:
                 logger.error(
                     "Cloud Provider/Region "
                     f"{self._cloud_provider} {self._cloud_region} "
@@ -870,13 +829,12 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 )
         if self._country_iso_code:
             try:
-                self._country_name: str = DataSource().get_global_energy_mix_data()[
-                    self._country_iso_code
-                ]["country_name"]
+                self._country_name: str = DataSource().get_global_energy_mix_data()[self._country_iso_code][
+                    "country_name"
+                ]
             except KeyError as e:
                 logger.error(
-                    "Does not support country"
-                    + f" with ISO code {self._country_iso_code} "
+                    "Does not support country" + f" with ISO code {self._country_iso_code} "
                     f"Exception occurred {e}"
                 )
 
@@ -896,9 +854,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
     def _get_cloud_metadata(self) -> CloudMetadata:
         if self._cloud is None:
-            self._cloud = CloudMetadata(
-                provider=self._cloud_provider, region=self._cloud_region
-            )
+            self._cloud = CloudMetadata(provider=self._cloud_provider, region=self._cloud_region)
         return self._cloud
 
 
@@ -1085,8 +1041,7 @@ def track_emissions(
                 fn_result = fn(*args, **kwargs)
             finally:
                 logger.info(
-                    "\nGraceful stopping: collecting and writing information.\n"
-                    + "Please wait a few seconds..."
+                    "\nGraceful stopping: collecting and writing information.\n" + "Please wait a few seconds..."
                 )
                 tracker.stop()
                 logger.info("Done!\n")
@@ -1099,9 +1054,7 @@ def track_emissions(
     return _decorate
 
 
-def track_task_emissions(
-    fn: Callable = None, tracker: BaseEmissionsTracker = None, task_name: str = ""
-):
+def track_task_emissions(fn: Callable = None, tracker: BaseEmissionsTracker = None, task_name: str = ""):
     """
     Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
     :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
