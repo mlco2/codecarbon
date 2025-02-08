@@ -1,15 +1,23 @@
 import unittest
 from textwrap import dedent
+from time import sleep
+from unittest import mock
 
 import numpy as np
 
+from codecarbon.emissions_tracker import OfflineEmissionsTracker
 from codecarbon.external.hardware import RAM
 
 # TODO: need help: test multiprocess case
 
 
+@mock.patch("psutil.virtual_memory")
 class TestRAM(unittest.TestCase):
-    def test_ram_diff(self):
+    def setUp(self):
+        # Mock memory size to 32GB for consistent testing
+        self.total_memory = 32 * 1024 * 1024 * 1024  # 32GB in bytes
+
+    def test_ram_diff(self, mock_virtual_memory):
         ram = RAM(tracking_mode="process")
 
         for array_size in [
@@ -36,7 +44,7 @@ class TestRAM(unittest.TestCase):
                 )
                 del array
 
-    def test_ram_slurm(self):
+    def test_ram_slurm(self, mock_virtual_memory):
         scontrol_str = dedent(
             """\
             scontrol show job $SLURM_JOB_ID
@@ -91,3 +99,76 @@ class TestRAM(unittest.TestCase):
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "50000M")
+
+    def test_ram_total_power(self, mock_virtual_memory):
+        # Setup mock to return 50% RAM usage on 32GB system
+        mock_virtual_memory.return_value = mock.Mock(
+            total=self.total_memory,  # 32GB
+            percent=50.0,  # 50% usage
+        )
+
+        ram = RAM(tracking_mode="machine")
+        ram.start()
+        sleep(0.5)
+        power = ram._get_power_from_ram_load()
+        # Expected: (32/8) * 3.0 * 0.5 = 6.0W for 50% of 32GB
+        self.assertEqual(power.W, 6.0)
+        self.assertEqual(ram.total_power().W, 12)  # 32 * 3.0/8  = 12.0W
+
+    def test_ram_load_detection(self, mock_virtual_memory):
+        # Setup mock to return 100% RAM usage on 32GB system
+        mock_virtual_memory.return_value = mock.Mock(total=self.total_memory, percent=100.0)
+
+        tracker = OfflineEmissionsTracker(country_iso_code="FRA")
+        for hardware in tracker._hardware:
+            if isinstance(hardware, RAM):
+                break
+        else:
+            raise Exception("No RAM tracking found!")
+
+        tracker.start()
+        sleep(0.5)
+        emission = tracker.stop()
+        self.assertGreater(emission, 0.0)
+
+    def test_ram_power_calculation_at_different_loads(self, mock_virtual_memory):
+        ram = RAM(tracking_mode="machine")
+        # Mock machine_memory_GB to return 32
+        with mock.patch.object(RAM, "machine_memory_GB", new_callable=mock.PropertyMock) as mock_mem:
+            mock_mem.return_value = 32
+            tests_values = [
+                {
+                    "ram_load": 0.0,
+                    "expected_power": 0.0,
+                },
+                {
+                    "ram_load": 50.0,
+                    "expected_power": 6.0,  # 32 * 3.0/8 * 0.5 = 6.0W
+                },
+                {
+                    "ram_load": 100.0,
+                    "expected_power": 12.0,  # 32  * 3.0/8 * 1.0 = 12.0W
+                },
+            ]
+
+            for test in tests_values:
+                mock_virtual_memory.return_value = mock.Mock(total=self.total_memory, percent=test["ram_load"])
+                power = ram._get_power_from_ram_load()
+                self.assertEqual(power.W, test["expected_power"])
+
+    def test_ram_power_different_sizes(self, mock_virtual_memory):
+        test_sizes = [
+            (8, 3.0),  # 8GB should use 3.0W at 100%
+            (16, 6.0),  # 16GB should use 6.0W at 100%
+            (32, 12.0),  # 32GB should use 12.0W at 100%
+            (64, 24.0),  # 64GB should use 24.0W at 100%
+        ]
+
+        for gb_size, expected_power in test_sizes:
+            mock_virtual_memory.return_value = mock.Mock(
+                total=gb_size * 1024 * 1024 * 1024,  # Convert GB to bytes
+                percent=100.0,  # 100% usage
+            )
+            ram = RAM(tracking_mode="machine")
+            power = ram._get_power_from_ram_load()
+            self.assertEqual(power.W, expected_power, f"Failed for {gb_size}GB RAM")

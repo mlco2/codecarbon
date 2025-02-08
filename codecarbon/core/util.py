@@ -24,9 +24,7 @@ def suppress(*exceptions):
         yield
     except exceptions:
         logger.warning("graceful shutdown. Exceptions:")
-        logger.warning(
-            exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
-        )
+        logger.warning(exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True)
         logger.warning("stopping.")
 
 
@@ -96,6 +94,25 @@ def is_linux_os() -> str:
     return system.startswith("lin")
 
 
+def is_psutil_available() -> bool:
+    try:
+        import psutil
+
+        psutil.cpu_times()
+        return True
+    except Exception as e:
+        if isinstance(e, ImportError):
+            logger.debug(
+                "Not using the psutil interface, psutil is not installed. "
+                + "Please `pip install psutil` to get more accurate results."
+            )
+        logger.debug(
+            "Not using the psutil interface, an exception occurred while instantiating "
+            + f"psutil.cpu_percent : {e}",
+        )
+        return False
+
+
 def count_physical_cpus():
     import platform
     import subprocess
@@ -111,9 +128,7 @@ def count_physical_cpus():
             else:
                 return 1
         except Exception as e:
-            logger.warning(
-                f"Error while trying to count physical CPUs: {e}. Defaulting to 1."
-            )
+            logger.warning(f"Error while trying to count physical CPUs: {e}. Defaulting to 1.")
             return 1
 
 
@@ -126,9 +141,7 @@ def count_cpus() -> int:
             "SLURM environment detected for job {SLURM_JOB_ID}, running"
             + " `scontrol show job $SLURM_JOB_ID` to count SLURM-available cpus."
         )
-        scontrol = subprocess.check_output(
-            [f"scontrol show job {SLURM_JOB_ID}"], shell=True
-        ).decode()
+        scontrol = subprocess.check_output([f"scontrol show job {SLURM_JOB_ID}"], shell=True).decode()
     except subprocess.CalledProcessError:
         logger.warning(
             "Error running `scontrol show job $SLURM_JOB_ID` "
