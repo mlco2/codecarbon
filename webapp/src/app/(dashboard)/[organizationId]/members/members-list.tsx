@@ -1,15 +1,14 @@
 "use client";
+
 import CustomRow from "@/components/custom-row";
-import ErrorMessage from "@/components/error-message";
-import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody } from "@/components/ui/table";
 import { User } from "@/types/user";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import useSWR from "swr";
-import { fetcher } from "../../../../helpers/swr";
+import { z } from "zod";
 
 export default function MembersList({
     users,
@@ -18,44 +17,65 @@ export default function MembersList({
     users: User[];
     organizationId: string;
 }) {
+    const router = useRouter();
     const [isDialogOpen, setDialogOpen] = useState(false);
-    const { data, isLoading, error } = useSWR<User[]>(
-        `/organizations/${organizationId}/users`,
-        fetcher,
-        {
-            refreshInterval: 1000 * 60, // Refresh every minute
-        },
-    );
-    if (isLoading) {
-        return <Loader />;
-    }
-    if (error) {
-        return <ErrorMessage />;
-    }
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    users = data as User[];
     const form = { email: undefined };
 
+    const emailSchema = z.object({
+        email: z.string().email("Please enter a valid email address"),
+    });
+
     async function addUser() {
-        const body = JSON.stringify({
-            email: (document.getElementById("emailInput") as any).value,
-        });
-        const result = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/add-user`,
-            {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
+        try {
+            setIsLoading(true);
+            const email = (
+                document.getElementById("emailInput") as HTMLInputElement
+            ).value;
+            // Validate email
+            emailSchema.parse({ email });
+            setError(null);
+
+            const body = JSON.stringify({ email });
+            const result = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/add-user`,
+                {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: body,
                 },
-                body: body,
-            },
-        );
-        const data = await result.json();
-        if (result.status != 200) {
-            alert(data.detail);
+            );
+
+            const data = await result.json();
+            if (result.status !== 200) {
+                const errorObject = data.detail;
+
+                if (Array.isArray(errorObject) && errorObject.length > 0) {
+                    const errorMessage = errorObject
+                        .map((error: any) => error.msg)
+                        .join("\n");
+                    setError(errorMessage);
+                } else {
+                    setError(JSON.stringify(errorObject));
+                }
+            } else {
+                router.refresh();
+                setDialogOpen(false);
+            }
+        } catch (err) {
+            if (err instanceof z.ZodError) {
+                setError(err.errors[0].message);
+                return;
+            }
+            setError("An error occurred");
+        } finally {
+            setIsLoading(false);
         }
-        setDialogOpen(false);
     }
 
     return (
@@ -63,21 +83,29 @@ export default function MembersList({
             <div className="container mx-auto p-4 md:gap-8 md:p-8">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-semi-bold">Members</h1>
-                    <Button onClick={() => setDialogOpen(true)}>
+                    <Button
+                        disabled={isDialogOpen}
+                        onClick={() => setDialogOpen(true)}
+                    >
                         + Add a member
                     </Button>
                 </div>
                 <div id="addMemberModalTarget"></div>
                 {isDialogOpen && (
-                    <div className="flex flex-col gap-2 m-2 p-2 rounded-md border border-white">
+                    <div className="flex flex-col gap-2 mb-6 p-6 rounded-md border border-white/30">
                         <h2>Add member</h2>
                         <Input
                             id="emailInput"
                             placeholder="email"
                             value={form.email}
                         />
+                        {error && (
+                            <p className="text-sm text-red-500">{error}</p>
+                        )}
                         <div className="flex justify-end gap-6">
                             <Button
+                                disabled={isLoading}
+                                variant="outline"
                                 onClick={() => {
                                     form.email = undefined;
                                     setDialogOpen(false);
@@ -85,7 +113,12 @@ export default function MembersList({
                             >
                                 Cancel
                             </Button>
-                            <Button onClick={() => addUser()}>Ok</Button>
+                            <Button
+                                onClick={() => addUser()}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? "Adding..." : "Ok"}
+                            </Button>
                         </div>
                     </div>
                 )}

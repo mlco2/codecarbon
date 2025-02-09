@@ -53,7 +53,7 @@ export default function MainLayout({
             {/* Main content */}
             <div className="flex flex-col overflow-hidden">
                 <div className="overflow-auto">
-                    <header className="flex items-center justify-between h-14 px-4 lg:h-[60px] lg:px-6">
+                    <header className="flex items-center justify-between h-14 lg:hidden lg:h-0 px-4">
                         {/* Drawer that shows only on small screens */}
                         <Sheet open={isSheetOpen} onOpenChange={setSheetOpened}>
                             <SheetTrigger
@@ -96,7 +96,6 @@ export default function MainLayout({
                                 />
                             </SheetContent>
                         </Sheet>
-                        <AutoBreadcrumb />
                     </header>
                     <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                         {children}
