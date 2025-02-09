@@ -1,24 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { use } from "react";
 import Image from "next/image";
+import { use, useEffect, useState } from "react";
 
-import { DateRange } from "react-day-picker";
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import { Separator } from "@/components/ui/separator";
 import RadialChart from "@/components/radial-chart";
-import { fetcher } from "@/helpers/swr";
-import { Organization } from "@/types/organization";
-import { OrganizationReport } from "@/types/organization-report";
-import useSWR from "swr";
-import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
 import {
-    getEquivalentCitizenPercentage,
     getEquivalentCarKm,
+    getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
+import { fetcher } from "@/helpers/swr";
+import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
+import { Organization } from "@/types/organization";
+import { OrganizationReport } from "@/types/organization-report";
+import { DateRange } from "react-day-picker";
+import useSWR from "swr";
 
 export default function OrganizationPage({
     params,
@@ -100,8 +98,7 @@ export default function OrganizationPage({
         <div className="h-full w-full overflow-auto">
             {!organization && <ErrorMessage />}
             {organization && (
-                <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-                    <Separator className="h-[0.5px] bg-muted-foreground" />
+                <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
                     <div className="grid grid-cols-3 gap-4">
                         <div className="flex flex-col items-center justify-center">
                             <Image
@@ -154,7 +151,7 @@ export default function OrganizationPage({
                         <RadialChart data={RadialChartData.emissions} />
                         <RadialChart data={RadialChartData.duration} />
                     </div>
-                </main>
+                </div>
             )}
         </div>
     );

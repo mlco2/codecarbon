@@ -41,7 +41,7 @@ export async function getProjectEmissionsByExperiment(
 
     const res = await fetch(url);
     const result = await res.json();
-    return result.map((experimentReport: ExperimentReport) => {
+    return result?.map((experimentReport: ExperimentReport) => {
         return {
             experiment_id: experimentReport.experiment_id,
             name: experimentReport.name,

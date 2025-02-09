@@ -23,6 +23,7 @@ import {
 } from "@/helpers/constants";
 import CreateExperimentModal from "@/components/createExperimentModal";
 import Image from "next/image";
+import BreadcrumbHeader from "@/components/breadcrumb";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -192,6 +193,24 @@ export default function ProjectPage({
 
     return (
         <div className="h-full w-full overflow-auto">
+            <BreadcrumbHeader
+                pathSegments={[
+                    {
+                        title:
+                            localStorage.getItem("organizationName") ||
+                            organizationId,
+                        href: `/${organizationId}`,
+                    },
+                    {
+                        title: "Projects",
+                        href: `/${organizationId}/projects`,
+                    },
+                    {
+                        title: `Project ${project.name || ""}`,
+                        href: null,
+                    },
+                ]}
+            />
             <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div>

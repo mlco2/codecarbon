@@ -1,6 +1,8 @@
 import { User } from "@/types/user";
 import MembersList from "./members-list";
 import { fetchApi } from "@/utils/api";
+import BreadcrumbHeader from "@/components/breadcrumb";
+import { Organization } from "@/types/organization";
 
 export default async function MembersPage({
     params,
@@ -11,11 +13,31 @@ export default async function MembersPage({
 
     const users: User[] | null = await fetchApi<User[]>(
         `/organizations/${organizationId}/users`,
+        {
+            cache: "no-store",
+        },
+    );
+
+    const organization = await fetchApi<Organization>(
+        `/organizations/${organizationId}`,
     );
 
     if (!users) {
         return <div>Error loading users</div>;
     }
 
-    return <MembersList users={users} organizationId={organizationId} />;
+    return (
+        <>
+            <BreadcrumbHeader
+                pathSegments={[
+                    {
+                        title: organization?.name || organizationId,
+                        href: `/${organizationId}`,
+                    },
+                    { title: "Members", href: null },
+                ]}
+            />
+            <MembersList users={users} organizationId={organizationId} />
+        </>
+    );
 }

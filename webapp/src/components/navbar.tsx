@@ -90,12 +90,18 @@ export default function NavBar({
                 const localOrg = localStorage.getItem("organizationId");
                 if (localOrg !== selectedOrg) {
                     localStorage.setItem("organizationId", selectedOrg);
+                    const orgName = organizationList?.find(
+                        (org) => org.id === selectedOrg,
+                    )?.name;
+                    if (orgName) {
+                        localStorage.setItem("organizationName", orgName);
+                    }
                 }
             } catch (error) {
                 console.error("Error writing to localStorage:", error);
             }
         }
-    }, [selectedOrg]);
+    }, [selectedOrg, organizationList]);
 
     const handleNewOrgClick = async () => {
         setNewOrgModalOpen(true);
