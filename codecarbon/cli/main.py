@@ -3,6 +3,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Optional
+import signal
 
 import questionary
 import requests
@@ -357,14 +358,30 @@ def monitor(
             save_to_api=api,
         )
 
+    def signal_handler(signum, frame):
+        print("\nReceived signal to stop. Saving emissions data...")
+        tracker.stop()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
-    with tracker:
+    print("Press Ctrl+C to stop and save emissions data.")
+
+    tracker.start()
+    try:
         while True:
             if (hasattr(tracker, "_another_instance_already_running") 
                 and tracker._another_instance_already_running):
                 print("Another instance of CodeCarbon is already running. Exiting.")
                 break
             time.sleep(300)
+    except Exception as e:
+        print(f"\nError occurred: {e}")
+        tracker.stop()
+        raise e
 
 def questionary_prompt(prompt, list_options, default):
     value = questionary.select(
