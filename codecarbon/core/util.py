@@ -108,6 +108,8 @@ def count_physical_cpus():
             for line in output.split("\n"):
                 if "Socket(s):" in line:
                     return int(line.split(":")[1].strip())
+            else:
+                return 1
         except Exception as e:
             logger.warning(
                 f"Error while trying to count physical CPUs: {e}. Defaulting to 1."
