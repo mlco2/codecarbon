@@ -26,7 +26,7 @@ class ResourceTracker:
         cpu_number = self.tracker._conf.get("cpu_physical_count")
         tdp = cpu.TDP()
 
-        max_power = tdp.tdp * cpu_number
+        max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
         if self.tracker._conf.get("force_mode_cpu_load", False) and tdp.tdp is not None:
             if tdp.tdp is None:
                 logger.warning(
