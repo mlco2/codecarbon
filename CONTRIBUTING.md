@@ -248,11 +248,15 @@ Here is the launch.json to be able to debug examples and tests:
 
 ```json
 {
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
@@ -261,13 +265,17 @@ Here is the launch.json to be able to debug examples and tests:
         },
         {
             "name": "PyTest: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "pytest",
-            "args": ["${file}"],
+            "args": [
+                "-s",
+                "${file}"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": { "PYTHONPATH": "${workspaceRoot}" }
+            "env": { "PYTHONPATH": "${workspaceRoot}",
+            "CODECARBON_ALLOW_MULTIPLE_RUNS": "True"  }
         },
         {
             "name": "PyTest: codecarbon monitor",
@@ -279,7 +287,7 @@ Here is the launch.json to be able to debug examples and tests:
             ],
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": { "PYTHONPATH": "${workspaceRoot}" }
+            "env": { "PYTHONPATH": "${workspaceRoot}"}
         }
     ]
 }
@@ -350,7 +358,7 @@ to regenerate the html files.
 ### Release process
 
 -   Merge all PRs.
--   Create a PR bumping the version with `hatch run dev:bumpver update --patch`.
+-   Create a PR bumping the version with `hatch run dev:bumpver update --patch`. For a release candidate, use `hatch run dev:bumpver update --set-version  3.0.0_rc1`.
 -   Run `hatch run python3 .github/check_version.py` to check version consistancy.
 -   Update the dependencies with `hatch-pip-compile --upgrade --all`.
 -   [Build Documentation](#documentation) if needed with `hatch run docs:build`.

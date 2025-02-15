@@ -64,11 +64,15 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         self.verify_output_file(self.emissions_file_path)
 
     @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
-    def test_carbon_tracker_offline_constant_default_cpu_power(self, mock_tdp):
+    @mock.patch.object(cpu, "is_psutil_available")
+    def test_carbon_tracker_offline_constant_default_cpu_power(
+        self, mock_tdp, mock_psutil
+    ):
         # Same as test_carbon_tracker_offline_constant test but this time forcing the default cpu power
         USER_INPUT_CPU_POWER = 1_000
         # Mock the output of tdp
         mock_tdp.return_value = None
+        mock_psutil.return_value = False
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA",
             output_dir=self.emissions_path,
@@ -120,11 +124,15 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         try:
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_country_iso_code(cloud)
-            self.assertTrue("Unable to find country name" in context.exception.args[0])
+            self.assertTrue(
+                "Unable to find country ISO Code" in context.exception.args[0]
+            )
 
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_geo_region(cloud)
-            self.assertTrue("Unable to find country name" in context.exception.args[0])
+            self.assertTrue(
+                "Unable to find State/City name for " in context.exception.args[0]
+            )
 
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_country_name(cloud)

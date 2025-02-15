@@ -18,7 +18,7 @@ from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import count_cpus, suppress
+from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
@@ -63,6 +63,9 @@ class BaseEmissionsTracker(ABC):
     that are implemented by two concrete classes: `OfflineCarbonTracker`
     and `CarbonTracker.`
     """
+
+    _scheduler: Optional[PeriodicScheduler] = None
+    _scheduler_monitor_power: Optional[PeriodicScheduler] = None
 
     def _set_from_conf(
         self, var, name, default=None, return_type=None, prevent_setter=False
@@ -170,6 +173,7 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         default_cpu_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
+        force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
@@ -225,6 +229,7 @@ class BaseEmissionsTracker(ABC):
                                 messages. Defaults to "".
         :param default_cpu_power: cpu power to be used as default if the cpu is not known.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+        :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
@@ -274,6 +279,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(default_cpu_power, "default_cpu_power")
         self._set_from_conf(pue, "pue", 1.0, float)
+        self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -297,6 +303,7 @@ class BaseEmissionsTracker(ABC):
         self._conf["os"] = platform.platform()
         self._conf["python_version"] = platform.python_version()
         self._conf["cpu_count"] = count_cpus()
+        self._conf["cpu_physical_count"] = count_physical_cpus()
         self._geo = None
         self._task_start_measurement_values = {}
         self._task_stop_measurement_values = {}
@@ -314,7 +321,9 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  Python version: {self._conf.get('python_version')}")
         logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
         logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
-        logger.info(f"  CPU count: {self._conf.get('cpu_count')}")
+        logger.info(
+            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get('cpu_physical_count')} physical CPU(s)"
+        )
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
         if self._gpu_ids:
@@ -329,6 +338,10 @@ class BaseEmissionsTracker(ABC):
         self._scheduler = PeriodicScheduler(
             function=self._measure_power_and_energy,
             interval=self._measure_power_secs,
+        )
+        self._scheduler_monitor_power = PeriodicScheduler(
+            function=self._monitor_power,
+            interval=1,
         )
 
         self._data_source = DataSource()
@@ -417,6 +430,7 @@ class BaseEmissionsTracker(ABC):
             hardware.start()
 
         self._scheduler.start()
+        self._scheduler_monitor_power.start()
 
     def start_task(self, task_name=None) -> None:
         """
@@ -427,6 +441,9 @@ class BaseEmissionsTracker(ABC):
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
             self._scheduler.stop()
+
+        # Task background thread for measuring power
+        self._scheduler_monitor_power.start()
 
         if self._active_task:
             logger.info("A task is already under measure")
@@ -457,6 +474,9 @@ class BaseEmissionsTracker(ABC):
         emissions.
         :return: None
         """
+        if self._scheduler_monitor_power:
+            self._scheduler_monitor_power.stop()
+
         task_name = task_name if task_name else self._active_task
         self._measure_power_and_energy()
 
@@ -524,6 +544,9 @@ class BaseEmissionsTracker(ABC):
         if self._scheduler:
             self._scheduler.stop()
             self._scheduler = None
+        if self._scheduler_monitor_power:
+            self._scheduler_monitor_power.stop()
+            self._scheduler_monitor_power = None
         else:
             logger.warning("Tracker already stopped !")
         for task_name in self._tasks:
@@ -652,6 +675,17 @@ class BaseEmissionsTracker(ABC):
         :return: Metadata containing cloud info
         """
 
+    def _monitor_power(self) -> None:
+        """
+        Monitor the power consumption of the hardware.
+        We do this for hardware that does not support energy monitoring.
+        So we could average the power consumption.
+        This method is called every 1 second. Even if we are in Task mode.
+        """
+        for hardware in self._hardware:
+            if isinstance(hardware, CPU):
+                hardware.monitor_power()
+
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
             h_time = time.perf_counter()
@@ -668,8 +702,11 @@ class BaseEmissionsTracker(ABC):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
                 logger.info(
-                    f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
-                    + f". Total CPU Power : {self._cpu_power.W} W"
+                    f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
+                    + f", power : {self._cpu_power.W} W"
+                )
+                logger.info(
+                    f"Energy consumed for All CPU : {self._total_cpu_energy.kWh:.6f} kWh"
                 )
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
@@ -704,8 +741,7 @@ class BaseEmissionsTracker(ABC):
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
             h_time = time.perf_counter() - h_time
             logger.debug(
-                f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
-                + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"
+                f"Done measure for {hardware.__class__.__name__} - measurement time: {h_time:,.4f} s - last call {last_duration:,.2f} s"
             )
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."
@@ -717,7 +753,13 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
-        last_duration = time.perf_counter() - self._last_measured_time
+        try:
+            last_duration = time.perf_counter() - self._last_measured_time
+        except AttributeError as e:
+            logger.debug(
+                f"You need to start the tracker first before measuring. Or maybe you do multiple run at the same time ? Error: {e}"
+            )
+            raise e
 
         warning_duration = self._measure_power_secs * 3
         if last_duration > warning_duration:
