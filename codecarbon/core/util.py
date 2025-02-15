@@ -24,7 +24,9 @@ def suppress(*exceptions):
         yield
     except exceptions:
         logger.warning("graceful shutdown. Exceptions:")
-        logger.warning(exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True)
+        logger.warning(
+            exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
+        )
         logger.warning("stopping.")
 
 
@@ -126,7 +128,9 @@ def count_physical_cpus():
                 if "Socket(s):" in line:
                     return int(line.split(":")[1].strip())
         except Exception as e:
-            logger.warning(f"Error while trying to count physical CPUs: {e}. Defaulting to 1.")
+            logger.warning(
+                f"Error while trying to count physical CPUs: {e}. Defaulting to 1."
+            )
             return 1
 
 
@@ -139,7 +143,9 @@ def count_cpus() -> int:
             "SLURM environment detected for job {SLURM_JOB_ID}, running"
             + " `scontrol show job $SLURM_JOB_ID` to count SLURM-available cpus."
         )
-        scontrol = subprocess.check_output([f"scontrol show job {SLURM_JOB_ID}"], shell=True).decode()
+        scontrol = subprocess.check_output(
+            [f"scontrol show job {SLURM_JOB_ID}"], shell=True
+        ).decode()
     except subprocess.CalledProcessError:
         logger.warning(
             "Error running `scontrol show job $SLURM_JOB_ID` "
