@@ -37,7 +37,8 @@ def is_powergadget_available() -> bool:
         return True
     except Exception as e:
         logger.debug(
-            "Not using PowerGadget, an exception occurred while instantiating " + "IntelPowerGadget : %s",
+            "Not using PowerGadget, an exception occurred while instantiating "
+            + "IntelPowerGadget : %s",
             e,
         )
         return False
@@ -55,7 +56,8 @@ def is_rapl_available() -> bool:
         return True
     except Exception as e:
         logger.debug(
-            "Not using the RAPL interface, an exception occurred while instantiating " + "IntelRAPL : %s",
+            "Not using the RAPL interface, an exception occurred while instantiating "
+            + "IntelRAPL : %s",
             e,
         )
         return False
@@ -118,18 +120,24 @@ class IntelPowerGadget:
         if self._system.startswith("win"):
             self._get_windows_exec_backup()
             if shutil.which(self._windows_exec):
-                self._cli = shutil.which(self._windows_exec)  # Windows exec is a relative path
+                self._cli = shutil.which(
+                    self._windows_exec
+                )  # Windows exec is a relative path
             elif shutil.which(self._windows_exec_backup):
                 self._cli = self._windows_exec_backup
             else:
-                raise FileNotFoundError(f"Intel Power Gadget executable not found on {self._system}")
+                raise FileNotFoundError(
+                    f"Intel Power Gadget executable not found on {self._system}"
+                )
         elif self._system.startswith("darwin"):
             if shutil.which(self._osx_exec):
                 self._cli = self._osx_exec
             elif shutil.which(self._osx_exec_backup):
                 self._cli = self._osx_exec_backup
             else:
-                raise FileNotFoundError(f"Intel Power Gadget executable not found on {self._system}")
+                raise FileNotFoundError(
+                    f"Intel Power Gadget executable not found on {self._system}"
+                )
         else:
             raise SystemError("Platform not supported by Intel Power Gadget")
 
@@ -144,9 +152,13 @@ class IntelPowerGadget:
         subfolders = [f.name for f in os.scandir(parent_folder) if f.is_dir()]
 
         # Look for a folder that contains "Power Gadget" in its name
-        desired_folder = next((folder for folder in subfolders if "Power Gadget" in folder), None)
+        desired_folder = next(
+            (folder for folder in subfolders if "Power Gadget" in folder), None
+        )
         if desired_folder:
-            self._windows_exec_backup = os.path.join(parent_folder, desired_folder, self._windows_exec)
+            self._windows_exec_backup = os.path.join(
+                parent_folder, desired_folder, self._windows_exec
+            )
         else:
             self._windows_exec_backup = None
 
@@ -180,7 +192,8 @@ class IntelPowerGadget:
 
         if returncode != 0:
             logger.warning(
-                "Returncode while logging power values using " + "Intel Power Gadget: %s",
+                "Returncode while logging power values using "
+                + "Intel Power Gadget: %s",
                 returncode,
             )
 
@@ -262,7 +275,8 @@ class IntelRAPL:
                 self._fetch_rapl_files()
             else:
                 raise FileNotFoundError(
-                    f"Intel RAPL files not found at {self._lin_rapl_dir} " + f"on {self._system}"
+                    f"Intel RAPL files not found at {self._lin_rapl_dir} "
+                    + f"on {self._system}"
                 )
         else:
             raise SystemError("Platform not supported by Intel RAPL Interface")
@@ -289,12 +303,16 @@ class IntelRAPL:
                 # RAPL file to take measurement from
                 rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
                 # RAPL file containing maximum possible value of energy_uj above which it wraps
-                rapl_file_max = os.path.join(self._lin_rapl_dir, file, "max_energy_range_uj")
+                rapl_file_max = os.path.join(
+                    self._lin_rapl_dir, file, "max_energy_range_uj"
+                )
                 try:
                     # Try to read the file to be sure we can
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
-                    self._rapl_files.append(RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max))
+                    self._rapl_files.append(
+                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
+                    )
                     logger.debug("We will read Intel RAPL files at %s", rapl_file)
                 except PermissionError as e:
                     raise PermissionError(
@@ -317,7 +335,9 @@ class IntelRAPL:
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
                 # We fake the name used by Power Gadget when using RAPL
                 if "Energy" in rapl_file.name:
-                    cpu_details[rapl_file.name.replace("Energy", "Power")] = rapl_file.power.W
+                    cpu_details[rapl_file.name.replace("Energy", "Power")] = (
+                        rapl_file.power.W
+                    )
         except Exception as e:
             logger.info(
                 "Unable to read Intel RAPL files at %s\n \
@@ -378,7 +398,9 @@ class TDP:
             return power
         return None
 
-    def _get_matching_cpu(self, model_raw: str, cpu_df: pd.DataFrame, greedy=False) -> str:
+    def _get_matching_cpu(
+        self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
+    ) -> str:
         """
         Get matching cpu name
 
@@ -445,7 +467,11 @@ class TDP:
         )
 
         if indirect_matches:
-            if greedy or len(indirect_matches) == 1 or indirect_matches[0][1] != indirect_matches[1][1]:
+            if (
+                greedy
+                or len(indirect_matches) == 1
+                or indirect_matches[0][1] != indirect_matches[1][1]
+            ):
                 return indirect_matches[0][0]
 
         return None
@@ -469,7 +495,8 @@ class TDP:
                 )
                 return cpu_model_detected, power
             logger.warning(
-                "We saw that you have a %s but we don't know it." + " Please contact us.",
+                "We saw that you have a %s but we don't know it."
+                + " Please contact us.",
                 cpu_model_detected,
             )
             if is_psutil_available():

@@ -117,7 +117,9 @@ class TestRAM(unittest.TestCase):
 
     def test_ram_load_detection(self, mock_virtual_memory):
         # Setup mock to return 100% RAM usage on 32GB system
-        mock_virtual_memory.return_value = mock.Mock(total=self.total_memory, percent=100.0)
+        mock_virtual_memory.return_value = mock.Mock(
+            total=self.total_memory, percent=100.0
+        )
 
         tracker = OfflineEmissionsTracker(country_iso_code="FRA")
         for hardware in tracker._hardware:
@@ -134,7 +136,9 @@ class TestRAM(unittest.TestCase):
     def test_ram_power_calculation_at_different_loads(self, mock_virtual_memory):
         ram = RAM(tracking_mode="machine")
         # Mock machine_memory_GB to return 32
-        with mock.patch.object(RAM, "machine_memory_GB", new_callable=mock.PropertyMock) as mock_mem:
+        with mock.patch.object(
+            RAM, "machine_memory_GB", new_callable=mock.PropertyMock
+        ) as mock_mem:
             mock_mem.return_value = 32
             tests_values = [
                 {
@@ -152,7 +156,9 @@ class TestRAM(unittest.TestCase):
             ]
 
             for test in tests_values:
-                mock_virtual_memory.return_value = mock.Mock(total=self.total_memory, percent=test["ram_load"])
+                mock_virtual_memory.return_value = mock.Mock(
+                    total=self.total_memory, percent=test["ram_load"]
+                )
                 power = ram._get_power_from_ram_load()
                 self.assertEqual(power.W, test["expected_power"])
 

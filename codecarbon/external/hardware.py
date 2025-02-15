@@ -45,7 +45,9 @@ class BaseHardware(ABC):
         hardware and convert it to energy.
         """
         power = self.total_power()
-        energy = Energy.from_power_and_time(power=power, time=Time.from_seconds(last_duration))
+        energy = Energy.from_power_and_time(
+            power=power, time=Time.from_seconds(last_duration)
+        )
         return power, energy
 
     def start(self) -> None:  # noqa B027
@@ -57,7 +59,9 @@ class GPU(BaseHardware):
     gpu_ids: Optional[List]
 
     def __repr__(self) -> str:
-        return super().__repr__() + " ({})".format(", ".join([d["name"] for d in self.devices.get_gpu_details()]))
+        return super().__repr__() + " ({})".format(
+            ", ".join([d["name"] for d in self.devices.get_gpu_details()])
+        )
 
     def __post_init__(self):
         self.devices = AllGPUDevices()
@@ -71,7 +75,9 @@ class GPU(BaseHardware):
     ) -> Tuple[Power, Energy]:
         if not gpu_ids:
             gpu_ids = self._get_gpu_ids()
-        all_gpu_details: List[Dict] = self.devices.get_delta(Time.from_seconds(last_duration))
+        all_gpu_details: List[Dict] = self.devices.get_delta(
+            Time.from_seconds(last_duration)
+        )
         # We get the total energy and power of only the ones in gpu_ids
         total_energy = Energy.from_energy(
             sum(
@@ -102,13 +108,17 @@ class GPU(BaseHardware):
         if self.gpu_ids is not None:
             # Check that the provided GPU ids are valid
             if not set(self.gpu_ids).issubset(set(range(self.num_gpus))):
-                logger.warning(f"Unknown GPU ids {gpu_ids}, only {self.num_gpus} GPUs available.")
+                logger.warning(
+                    f"Unknown GPU ids {gpu_ids}, only {self.num_gpus} GPUs available."
+                )
             # Keep only the GPUs that are in the provided list
             for gpu_id in range(self.num_gpus):
                 if gpu_id in self.gpu_ids:
                     gpu_ids.append(gpu_id)
                 else:
-                    logger.info(f"GPU number {gpu_id} will not be monitored, at your request.")
+                    logger.info(
+                        f"GPU number {gpu_id} will not be monitored, at your request."
+                    )
             self.gpu_ids = gpu_ids
         else:
             gpu_ids = set(range(self.num_gpus))
@@ -207,7 +217,9 @@ class CPU(BaseHardware):
                 f"A TDP of {self._tdp} W and a CPU load of {cpu_load:.1f}% give an estimation of {power} W for whole machine."
             )
         elif self._tracking_mode == "process":
-            cpu_load = self._process.cpu_percent(interval=0.5, percpu=False) / self._cpu_count
+            cpu_load = (
+                self._process.cpu_percent(interval=0.5, percpu=False) / self._cpu_count
+            )
             power = self._calculate_power_from_cpu_load(self.tdp, cpu_load, self._model)
             logger.debug(
                 f"A TDP of {self._tdp} W and a CPU load of {cpu_load * 100:.1f}% give an estimation of {power} W for process {self._pid}."
@@ -362,8 +374,16 @@ class RAM(BaseHardware):
 
     def _read_slurm_scontrol(self):
         try:
-            logger.debug("SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`...")
-            return subprocess.check_output([f"scontrol show job {SLURM_JOB_ID}"], shell=True).decode().strip()
+            logger.debug(
+                "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`..."
+            )
+            return (
+                subprocess.check_output(
+                    [f"scontrol show job {SLURM_JOB_ID}"], shell=True
+                )
+                .decode()
+                .strip()
+            )
         except subprocess.CalledProcessError:
             return
 
@@ -454,7 +474,11 @@ class RAM(BaseHardware):
         Returns:
             float: Total RAM (GB)
         """
-        return self.slurm_memory_GB if SLURM_JOB_ID else psutil.virtual_memory().total / B_TO_GB
+        return (
+            self.slurm_memory_GB
+            if SLURM_JOB_ID
+            else psutil.virtual_memory().total / B_TO_GB
+        )
 
     def total_power(self) -> Power:
         """
@@ -465,7 +489,11 @@ class RAM(BaseHardware):
             Power: kW of power consumption, using self.power_per_GB W/GB
         """
         try:
-            memory_GB = self.machine_memory_GB if self._tracking_mode == "machine" else self.process_memory_GB
+            memory_GB = (
+                self.machine_memory_GB
+                if self._tracking_mode == "machine"
+                else self.process_memory_GB
+            )
             ram_power = Power.from_watts(memory_GB * self.power_per_GB)
         except Exception as e:
             logger.warning(f"Could not measure RAM Power ({str(e)})")
@@ -487,7 +515,9 @@ class RAM(BaseHardware):
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         power = self._get_power_from_ram_load()
         self._current_power = power.W
-        energy = Energy.from_power_and_time(power=power, time=Time.from_seconds(last_duration))
+        energy = Energy.from_power_and_time(
+            power=power, time=Time.from_seconds(last_duration)
+        )
         return power, energy
 
 
