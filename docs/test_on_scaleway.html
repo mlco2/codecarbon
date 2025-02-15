@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Motivation &mdash; CodeCarbon 3.0.0_rc1 documentation</title>
+  <title>Test of CodeCarbon on Scaleway hardware &mdash; CodeCarbon 3.0.0_rc1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -18,9 +18,7 @@
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Methodology" href="methodology.html" />
-    <link rel="prev" title="CodeCarbon" href="index.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -43,8 +41,8 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Motivation</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
@@ -80,9 +78,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Motivation</li>
+      <li class="breadcrumb-item active">Test of CodeCarbon on Scaleway hardware</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/motivation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/test_on_scaleway.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -90,21 +88,50 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="motivation">
-<span id="id1"></span><h1>Motivation<a class="headerlink" href="#motivation" title="Link to this heading"></a></h1>
-<p>In recent years, Artificial Intelligence, and more specifically Machine Learning, has become remarkably efficient at performing human-level tasks: recognizing objects and faces in images, driving cars, and playing sophisticated games like chess and Go.</p>
-<p>In order to achieve these incredible levels of performance, current approaches leverage vast amounts of data to learn underlying patterns and features. Thus, state-of-the-art Machine Learning models leverage significant amounts of computing power, training on advanced processors for weeks or months, consequently consuming enormous amounts of energy. Depending on the energy grid used during this process, this can entail the emission of large amounts of greenhouse gases such as CO₂.</p>
-<p>With AI models becoming more ubiquitous and deployed across different sectors and industries, AI’s environmental impact is also growing. For this reason, it is important to estimate and curtail both the energy used and the emissions produced by training and deploying AI models. This package enables developers to track carbon dioxide (CO₂) emissions across machine learning experiments or other programs.</p>
-<p>This package enables developers to track emissions, measured as kilograms of CO₂-equivalents (CO₂eq) in order to estimate the carbon footprint of their work. For this purpose, we use <code class="docutils literal notranslate"><span class="pre">CO₂-equivalents</span> <span class="pre">[CO₂eq]</span></code>, which is a standardized measure used to express the global warming potential of various greenhouse gases: the amount of CO₂ that would have the equivalent global warming impact. For computing, which emits CO₂ via the electricity it is consuming, carbon emissions are measured in kilograms of CO₂-equivalent per kilowatt-hour. As a matter of fact, electricity is generated as part of the broader electrical grid by combusting fossil fuels for example.</p>
+  <section id="test-of-codecarbon-on-scaleway-hardware">
+<span id="test-on-scaleway"></span><h1>Test of CodeCarbon on Scaleway hardware<a class="headerlink" href="#test-of-codecarbon-on-scaleway-hardware" title="Link to this heading"></a></h1>
+<p>We use Scaleway hardware to test CodeCarbon on a real-world scenario. We use the following hardware:</p>
+<blockquote>
+<div><p>EM-I120E-NVME   AMD EPYC 8024P     64 GB    2 x 960 GB NVMe
+EM-B112X-SSD    2 x Intel(R) Xeon(R) CPU E5-2620 v3 &#64; 2.40GHz</p>
+</div></blockquote>
+<p>85 W TDP for the Intel(R) Xeon(R) CPU E5-2620 v3 &#64; 2.40GHz</p>
+<p>Choose Ubuntu as OS because new version of stress-ng is not available on Debian 12 (Bookworm).</p>
+<p>Connect to the server:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">ssh ubuntu@51.159.214.207</span>
+</pre></div>
+</div>
+<p>Install and run the test:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sudo chmod a+r -R /sys/class/powercap/intel-rapl/subsystem/*</span>
+<span class="go">sudo apt update &amp;&amp; sudo apt install -y git pipx python3-launchpadlib htop</span>
+<span class="go">pipx ensurepath</span>
+<span class="go">sudo add-apt-repository -y ppa:colin-king/stress-ng</span>
+<span class="go">sudo apt update &amp;&amp; sudo apt install -y stress-ng</span>
+<span class="go">export PATH=$PATH:/home/ubuntu/.local/bin</span>
+<span class="go">git clone https://github.com/mlco2/codecarbon.git</span>
+<span class="go">cd codecarbon</span>
+<span class="go">git checkout use-cpu-load</span>
+<span class="go">pipx install hatch</span>
+<span class="go">hatch run python examples/compare_cpu_load_and_RAPL.py</span>
+</pre></div>
+</div>
+<p>To do a full code CPU load, we run the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s</span>
+</pre></div>
+</div>
+<p>Get back the data from the server:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mkdir -p codecarbon/data/hardware/cpu_load_profiling/E3-1240/</span>
+<span class="go">scp ubuntu@51.159.214.207:/home/ubuntu/codecarbon/*.csv codecarbon/data/hardware/cpu_load_profiling/E5-1240/</span>
+</pre></div>
+</div>
+<p>You can now delete the server in the Scaleway console.</p>
+<p>For the results, see the notebook XXX.</p>
 </section>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="CodeCarbon" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="methodology.html" class="btn btn-neutral float-right" title="Methodology" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

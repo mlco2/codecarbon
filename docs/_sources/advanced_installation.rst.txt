@@ -1,70 +1,8 @@
-.. _installation:
-
-Installing CodeCarbon
+Advanced Installation
 =====================
 
-Create a virtual environment using `conda` for easier management of dependencies and packages.
-For installing conda, follow the instructions on the
-`official conda website <https://docs.conda.io/projects/conda/en/latest/user-guide/install>`__
-
-.. code-block::  bash
-
-    conda create --name codecarbon
-    conda activate codecarbon
-
-From PyPi repository
---------------------
-
-The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`_.
-
-To install the package, run the following command in your terminal.
-
-.. code-block::  bash
-
-    pip install codecarbon
-
-From conda repository
----------------------
-
-The package is hosted on the conda repository `here <https://anaconda.org/codecarbon/codecarbon>`_.
-
-To install the package, run the following command in your terminal.
-
-.. code-block::  bash
-
-    conda install -c codecarbon -c conda-forge codecarbon
-
-..  note::
-
-    We recommend using Python 3.8 or above.
-
-
-Dependencies
-------------
-
-The following packages are used by the CodeCarbon package, and will be installed along with the package itself:
-
-.. code-block::  bash
-
-    arrow
-    click
-    fief-client[cli]
-    pandas
-    prometheus_client
-    psutil
-    py-cpuinfo
-    pynvml
-    rapidfuzz
-    requests
-    questionary
-    rich
-    typer
-
-
-Please refer to `pyproject.toml <https://github.com/mlco2/codecarbon/blob/master/pyproject.toml>`_ for the latest list of the packages used.
-
 Install CodeCarbon as a Linux service
--------------------------------------
+`````````````````````````````````````
 
 To install CodeCarbon as a Linux service, follow the instructions below. It works on Ubuntu or other Debian-based systems using systemd.
 
@@ -174,3 +112,74 @@ Check the traces of the service:
 You are done, CodeCarbon is now running as a service on your machine.
 
 Wait 5 minutes for the first measure to be send to the dashboard at https://dashboard.codecarbon.io/.
+
+
+Deploy CodeCarbon CLI as a Service using Ansible
+````````````````````````````````````````````````
+
+This section describes how to deploy CodeCarbon as a system service using Ansible automation.
+
+It automate the manual installation done in the previous chapter.
+
+What the Playbook Does
+--------------------
+The Ansible playbook automates the following tasks:
+
+* Creates a dedicated system user and group for CodeCarbon
+* Sets up a Python virtual environment
+* Installs CodeCarbon package
+* Configures RAPL permissions for power measurements
+* Creates and configures the systemd service
+* Sets up the CodeCarbon configuration file
+* Starts and enables the service
+
+Prerequisites
+------------
+* Ansible installed on your machine
+* Debian-based target system(s)
+* SSH access to target system(s)
+* CodeCarbon API credentials from the dashboard
+
+Directory Structure
+-----------------
+.. code-block:: text
+
+    codecarbon/deploy/ansible/codecarbon_cli_as_a_service/
+    ├── hosts
+    ├── tasks
+    │   ├── install_codecarbon.yml
+    │   ├── main.yml
+    │   ├── rapl.yml
+    │   └── systemd_service.yml
+    ├── templates
+    │   ├── codecarbon.config.j2
+    │   └── systemd_service.j2
+    └── vars
+        └── main.yml
+
+Quick Start
+----------
+
+1. Set the the target to install in ``hosts``:
+
+   .. code-block:: bash
+
+       yourservername.yourdomain.com   hostname=yourservername ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+2. Update the variables in ``vars/main.yml`` with your configuration:
+
+   .. code-block:: yaml
+
+       organization_id: your_org_id
+       project_id: your_project_id
+       experiment_id: your_experiment_id
+       api_key: your_api_key
+
+
+3. Run the playbook:
+
+   .. code-block:: bash
+
+       ansible-playbook -i hosts tasks/main.yml
+
+

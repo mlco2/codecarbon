@@ -6,21 +6,21 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Installing CodeCarbon &mdash; CodeCarbon 3.0.0_rc1 documentation</title>
+  <title>Advanced Installation &mdash; CodeCarbon 2.8.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=f6280c33"></script>
+      <script src="_static/documentation_options.js?v=fa7f208a"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Quickstart" href="usage.html" />
-    <link rel="prev" title="Frequently Asked Questions" href="faq.html" /> 
+    <link rel="next" title="Output" href="output.html" />
+    <link rel="prev" title="Comet Integration" href="comet.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -51,19 +51,24 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Installing CodeCarbon</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#from-pypi-repository">From PyPi repository</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#from-conda-repository">From conda repository</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install-codecarbon-as-a-linux-service">Install CodeCarbon as a Linux service</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">CodeCarbon API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Advanced Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install-codecarbon-as-a-linux-service">Install CodeCarbon as a Linux service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deploy-codecarbon-cli-as-a-service-using-ansible">Deploy CodeCarbon CLI as a Service using Ansible</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-the-playbook-does">What the Playbook Does</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#directory-structure">Directory Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#quick-start">Quick Start</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -86,9 +91,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Installing CodeCarbon</li>
+      <li class="breadcrumb-item active">Advanced Installation</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/advanced_installation.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -96,55 +101,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="installing-codecarbon">
-<span id="installation"></span><h1>Installing CodeCarbon<a class="headerlink" href="#installing-codecarbon" title="Link to this heading"></a></h1>
-<p>Create a virtual environment using <cite>conda</cite> for easier management of dependencies and packages.
-For installing conda, follow the instructions on the
-<a class="reference external" href="https://docs.conda.io/projects/conda/en/latest/user-guide/install">official conda website</a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>codecarbon
-conda<span class="w"> </span>activate<span class="w"> </span>codecarbon
-</pre></div>
-</div>
-<section id="from-pypi-repository">
-<h2>From PyPi repository<a class="headerlink" href="#from-pypi-repository" title="Link to this heading"></a></h2>
-<p>The package is hosted on the pip repository <a class="reference external" href="https://pypi.org/project/codecarbon/">here</a>.</p>
-<p>To install the package, run the following command in your terminal.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>codecarbon
-</pre></div>
-</div>
-</section>
-<section id="from-conda-repository">
-<h2>From conda repository<a class="headerlink" href="#from-conda-repository" title="Link to this heading"></a></h2>
-<p>The package is hosted on the conda repository <a class="reference external" href="https://anaconda.org/codecarbon/codecarbon">here</a>.</p>
-<p>To install the package, run the following command in your terminal.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>codecarbon<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>codecarbon
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>We recommend using Python 3.8 or above.</p>
-</div>
-</section>
-<section id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
-<p>The following packages are used by the CodeCarbon package, and will be installed along with the package itself:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrow
-click
-fief-client<span class="o">[</span>cli<span class="o">]</span>
-pandas
-prometheus_client
-psutil
-py-cpuinfo
-pynvml
-rapidfuzz
-requests
-questionary
-rich
-typer
-</pre></div>
-</div>
-<p>Please refer to <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/pyproject.toml">pyproject.toml</a> for the latest list of the packages used.</p>
-</section>
+  <section id="advanced-installation">
+<h1>Advanced Installation<a class="headerlink" href="#advanced-installation" title="Link to this heading"></a></h1>
 <section id="install-codecarbon-as-a-linux-service">
 <h2>Install CodeCarbon as a Linux service<a class="headerlink" href="#install-codecarbon-as-a-linux-service" title="Link to this heading"></a></h2>
 <p>To install CodeCarbon as a Linux service, follow the instructions below. It works on Ubuntu or other Debian-based systems using systemd.</p>
@@ -230,14 +188,81 @@ sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w
 <p>You are done, CodeCarbon is now running as a service on your machine.</p>
 <p>Wait 5 minutes for the first measure to be send to the dashboard at <a class="reference external" href="https://dashboard.codecarbon.io/">https://dashboard.codecarbon.io/</a>.</p>
 </section>
+<section id="deploy-codecarbon-cli-as-a-service-using-ansible">
+<h2>Deploy CodeCarbon CLI as a Service using Ansible<a class="headerlink" href="#deploy-codecarbon-cli-as-a-service-using-ansible" title="Link to this heading"></a></h2>
+<p>This section describes how to deploy CodeCarbon as a system service using Ansible automation.</p>
+<p>It automate the manual installation done in the previous chapter.</p>
+<section id="what-the-playbook-does">
+<h3>What the Playbook Does<a class="headerlink" href="#what-the-playbook-does" title="Link to this heading"></a></h3>
+<p>The Ansible playbook automates the following tasks:</p>
+<ul class="simple">
+<li><p>Creates a dedicated system user and group for CodeCarbon</p></li>
+<li><p>Sets up a Python virtual environment</p></li>
+<li><p>Installs CodeCarbon package</p></li>
+<li><p>Configures RAPL permissions for power measurements</p></li>
+<li><p>Creates and configures the systemd service</p></li>
+<li><p>Sets up the CodeCarbon configuration file</p></li>
+<li><p>Starts and enables the service</p></li>
+</ul>
+</section>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Ansible installed on your machine</p></li>
+<li><p>Debian-based target system(s)</p></li>
+<li><p>SSH access to target system(s)</p></li>
+<li><p>CodeCarbon API credentials from the dashboard</p></li>
+</ul>
+</section>
+<section id="directory-structure">
+<h3>Directory Structure<a class="headerlink" href="#directory-structure" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>codecarbon/deploy/ansible/codecarbon_cli_as_a_service/
+├── hosts
+├── tasks
+│   ├── install_codecarbon.yml
+│   ├── main.yml
+│   ├── rapl.yml
+│   └── systemd_service.yml
+├── templates
+│   ├── codecarbon.config.j2
+│   └── systemd_service.j2
+└── vars
+    └── main.yml
+</pre></div>
+</div>
+</section>
+<section id="quick-start">
+<h3>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p>Set the the target to install in <code class="docutils literal notranslate"><span class="pre">hosts</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>yourservername.yourdomain.com<span class="w">   </span><span class="nv">hostname</span><span class="o">=</span>yourservername<span class="w"> </span><span class="nv">ansible_user</span><span class="o">=</span>root<span class="w"> </span><span class="nv">ansible_ssh_private_key_file</span><span class="o">=</span>~/.ssh/id_ed25519
+</pre></div>
+</div>
+</li>
+<li><p>Update the variables in <code class="docutils literal notranslate"><span class="pre">vars/main.yml</span></code> with your configuration:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">organization_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_org_id</span>
+<span class="nt">project_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_project_id</span>
+<span class="nt">experiment_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_experiment_id</span>
+<span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_api_key</span>
+</pre></div>
+</div>
+</li>
+<li><p>Run the playbook:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>hosts<span class="w"> </span>tasks/main.yml
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="faq.html" class="btn btn-neutral float-left" title="Frequently Asked Questions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="usage.html" class="btn btn-neutral float-right" title="Quickstart" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="comet.html" class="btn btn-neutral float-left" title="Comet Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="output.html" class="btn btn-neutral float-right" title="Output" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
