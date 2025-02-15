@@ -18,9 +18,11 @@ from rapidfuzz import fuzz, process, utils
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
 from codecarbon.core.util import detect_cpu_model
-from codecarbon.external.hardware import DEFAULT_POWER_PER_CORE, POWER_CONSTANT
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
+
+# default W value per core for a CPU if no model is found in the ref csv
+DEFAULT_POWER_PER_CORE = 4
 
 
 def is_powergadget_available() -> bool:
@@ -508,7 +510,7 @@ class TDP:
             return cpu_model_detected, None
         logger.warning(
             "We were unable to detect your CPU using the `cpuinfo` package."
-            + f" Resorting to a default power consumption of {POWER_CONSTANT}W."
+            + " Resorting to a default power consumption."
         )
         return "Unknown", None
 
