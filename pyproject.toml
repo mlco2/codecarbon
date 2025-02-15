@@ -186,6 +186,7 @@ include = [
 current_version = "3.0.0_rc0"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
+
 [tool.bumpver.file_patterns]
 "codecarbon/_version.py" = [
     '^__version__ = "{version}"$',
