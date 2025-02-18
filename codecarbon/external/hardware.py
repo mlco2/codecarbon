@@ -217,7 +217,9 @@ class CPU(BaseHardware):
             )
         elif self._tracking_mode == "process":
             cpu_load = self._process.cpu_percent(interval=0.5) / self._cpu_count
-            power = self._calculate_power_from_cpu_load(self.tdp, cpu_load, self._model)
+            power = self._calculate_power_from_cpu_load(
+                self._tdp, cpu_load, self._model
+            )
             logger.debug(
                 f"A TDP of {self._tdp} W and a CPU load of {cpu_load * 100:.1f}% give an estimation of {power} W for process {self._pid}."
             )
