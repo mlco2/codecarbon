@@ -9,7 +9,7 @@
 # - fief-client[cli]
 # - pandas
 # - prometheus-client
-# - psutil
+# - psutil>=6.0.0
 # - py-cpuinfo
 # - pynvml
 # - questionary
