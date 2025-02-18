@@ -31,7 +31,7 @@ dependencies = [
     "fief-client[cli]",
     "pandas",
     "prometheus_client",
-    "psutil",
+    "psutil >= 6.0.0",
     "py-cpuinfo",
     "pynvml",
     "rapidfuzz",
@@ -183,7 +183,7 @@ include = [
 ]
 
 [tool.bumpver]
-current_version = "3.0.0_rc1"
+current_version = "3.0.0_rc2"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

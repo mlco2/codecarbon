@@ -15,7 +15,7 @@
 # - fief-client[cli]
 # - pandas
 # - prometheus-client
-# - psutil
+# - psutil>=6.0.0
 # - py-cpuinfo
 # - pynvml
 # - questionary
@@ -28,27 +28,27 @@
 # - fire
 #
 
-anyio==4.7.0
+anyio==4.8.0
     # via httpx
 arrow==1.3.0
     # via hatch.envs.test.py3.11
 blinker==1.9.0
     # via flask
-certifi==2024.8.30
+certifi==2025.1.31
     # via
     #   httpcore
     #   httpx
     #   requests
 cffi==1.17.1
     # via cryptography
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
-click==8.1.7
+click==8.1.8
     # via
     #   hatch.envs.test.py3.11
     #   flask
     #   typer
-cryptography==44.0.0
+cryptography==44.0.1
     # via jwcrypto
 dash==2.18.2
     # via
@@ -79,7 +79,7 @@ idna==3.10
     #   anyio
     #   httpx
     #   requests
-importlib-metadata==8.5.0
+importlib-metadata==8.6.1
     # via dash
 iniconfig==2.0.0
     # via pytest
@@ -99,13 +99,15 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.1.0
     # via hatch.envs.test.py3.11
+narwhals==1.27.1
+    # via plotly
 nest-asyncio==1.6.0
     # via dash
-numpy==2.2.0 ; python_version >= "3.9"
+numpy==2.2.3 ; python_version >= "3.9"
     # via
     #   hatch.envs.test.py3.11
     #   pandas
-nvidia-ml-py==12.560.30
+nvidia-ml-py==12.570.86
     # via pynvml
 packaging==24.2
     # via
@@ -113,21 +115,21 @@ packaging==24.2
     #   pytest
 pandas==2.2.3
     # via hatch.envs.test.py3.11
-plotly==5.24.1
+plotly==6.0.0
     # via dash
 pluggy==1.5.0
     # via pytest
 prometheus-client==0.21.1
     # via hatch.envs.test.py3.11
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.50
     # via questionary
-psutil==6.1.0
+psutil==7.0.0
     # via hatch.envs.test.py3.11
 py-cpuinfo==9.0.0
     # via hatch.envs.test.py3.11
 pycparser==2.22
     # via cffi
-pygments==2.18.0
+pygments==2.19.1
     # via rich
 pynvml==12.0.0
     # via hatch.envs.test.py3.11
@@ -137,13 +139,13 @@ python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
 pyyaml==6.0.2
     # via responses
-questionary==2.0.1
+questionary==2.1.0
     # via hatch.envs.test.py3.11
-rapidfuzz==3.10.1
+rapidfuzz==3.12.1
     # via hatch.envs.test.py3.11
 requests==2.32.3
     # via
@@ -153,7 +155,7 @@ requests==2.32.3
     #   responses
 requests-mock==1.12.1
     # via hatch.envs.test.py3.11
-responses==0.25.3
+responses==0.25.6
     # via hatch.envs.test.py3.11
 retrying==1.3.4
     # via dash
@@ -171,8 +173,6 @@ sniffio==1.3.1
     # via
     #   anyio
     #   httpx
-tenacity==9.0.0
-    # via plotly
 termcolor==2.3.0
     # via
     #   fire
@@ -187,9 +187,9 @@ typing-extensions==4.12.2
     #   dash
     #   jwcrypto
     #   typer
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
-urllib3==2.2.3
+urllib3==2.3.0
     # via
     #   requests
     #   responses

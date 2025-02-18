@@ -6,7 +6,7 @@
 # - fief-client[cli]
 # - pandas
 # - prometheus-client
-# - psutil
+# - psutil>=6.0.0
 # - py-cpuinfo
 # - pynvml
 # - questionary
@@ -16,24 +16,24 @@
 # - typer
 #
 
-anyio==4.7.0
+anyio==4.8.0
     # via httpx
 arrow==1.3.0
     # via hatch.envs.default
-certifi==2024.8.30
+certifi==2025.1.31
     # via
     #   httpcore
     #   httpx
     #   requests
 cffi==1.17.1
     # via cryptography
-charset-normalizer==3.4.0
+charset-normalizer==3.4.1
     # via requests
-click==8.1.7
+click==8.1.8
     # via
     #   hatch.envs.default
     #   typer
-cryptography==44.0.0
+cryptography==44.0.1
     # via jwcrypto
 fief-client==0.20.0
     # via hatch.envs.default
@@ -54,23 +54,23 @@ markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
-numpy==2.2.0
+numpy==2.2.3
     # via pandas
-nvidia-ml-py==12.560.30
+nvidia-ml-py==12.570.86
     # via pynvml
 pandas==2.2.3
     # via hatch.envs.default
 prometheus-client==0.21.1
     # via hatch.envs.default
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.50
     # via questionary
-psutil==6.1.0
+psutil==7.0.0
     # via hatch.envs.default
 py-cpuinfo==9.0.0
     # via hatch.envs.default
 pycparser==2.22
     # via cffi
-pygments==2.18.0
+pygments==2.19.1
     # via rich
 pynvml==12.0.0
     # via hatch.envs.default
@@ -78,11 +78,11 @@ python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
-questionary==2.0.1
+questionary==2.1.0
     # via hatch.envs.default
-rapidfuzz==3.10.1
+rapidfuzz==3.12.1
     # via hatch.envs.default
 requests==2.32.3
     # via hatch.envs.default
@@ -109,9 +109,9 @@ typing-extensions==4.12.2
     #   anyio
     #   jwcrypto
     #   typer
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
-urllib3==2.2.3
+urllib3==2.3.0
     # via requests
 wcwidth==0.2.13
     # via prompt-toolkit
