@@ -46,25 +46,26 @@ class FileOutput(BaseOutput):
             logger.info("Backing up old emission file")
             backup(self.save_file_path)
             file_exists = False
-
+        new_df = pd.DataFrame.from_records([dict(total.values)])
+        new_df = new_df.dropna(axis=1, how="all")
         if not file_exists:
             df = pd.DataFrame(columns=total.values.keys())
-            df = pd.concat([df, pd.DataFrame.from_records([dict(total.values)])])
+            df = pd.concat([df, new_df])
         elif self.on_csv_write == "append":
             df = pd.read_csv(self.save_file_path)
-            df = pd.concat([df, pd.DataFrame.from_records([dict(total.values)])])
+            df = pd.concat([df, new_df])
         else:
             df = pd.read_csv(self.save_file_path)
             df_run = df.loc[df.run_id == total.run_id]
             if len(df_run) < 1:
-                df = pd.concat([df, pd.DataFrame.from_records([dict(total.values)])])
+                df = pd.concat([df, new_df])
             elif len(df_run) > 1:
                 logger.warning(
                     f"CSV contains more than 1 ({len(df_run)})"
                     + f" rows with current run ID ({total.run_id})."
                     + "Appending instead of updating."
                 )
-                df = pd.concat([df, pd.DataFrame.from_records([dict(total.values)])])
+                df = pd.concat([df, new_df])
             else:
                 df.at[df.run_id == total.run_id, total.values.keys()] = (
                     total.values.values()
