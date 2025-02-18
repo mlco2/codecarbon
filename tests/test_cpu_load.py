@@ -11,6 +11,24 @@ from codecarbon.external.hardware import CPU, MODE_CPU_LOAD
 @mock.patch("codecarbon.core.cpu.is_powergadget_available", return_value=False)
 @mock.patch("codecarbon.core.cpu.is_rapl_available", return_value=False)
 class TestCPULoad(unittest.TestCase):
+    def test_cpu_total_power_process(
+        self,
+        mocked_is_psutil_available,
+        mocked_is_powergadget_available,
+        mocked_is_rapl_available,
+    ):
+        cpu = CPU.from_utils(
+            None,
+            MODE_CPU_LOAD,
+            "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz",
+            100,
+            tracking_mode="process",
+        )
+        cpu.start()
+        sleep(0.5)
+        power = cpu._get_power_from_cpu_load()
+        self.assertGreaterEqual(power.W, 0.0)
+
     @mock.patch(
         "codecarbon.external.hardware.CPU._get_power_from_cpu_load",
         return_value=Power.from_watts(50),
