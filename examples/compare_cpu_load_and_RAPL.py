@@ -190,9 +190,9 @@ def collect_measurements(expected_load, load_type):
         point.temperature = temps["asus_wmi_sensors"][0].current
 
     # Get CPU frequency (average across cores)
-    freqs = psutil.cpu_freq(percpu=True)
-    if freqs:
-        point.cpu_freq = sum(f.current for f in freqs) / len(freqs)
+    freq = psutil.cpu_freq()
+    if freq:
+        point.cpu_freq = freq.current
 
     # point.rapl_power = tracker_rapl._cpu_power.W
     # point.estimated_power = tracker_cpu_load._cpu_power.W
