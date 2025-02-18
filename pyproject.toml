@@ -31,7 +31,7 @@ dependencies = [
     "fief-client[cli]",
     "pandas",
     "prometheus_client",
-    "psutil",
+    "psutil >= 6.0.0",
     "py-cpuinfo",
     "pynvml",
     "rapidfuzz",
