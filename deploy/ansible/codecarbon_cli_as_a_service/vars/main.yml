@@ -1,0 +1,16 @@
+---
+# RAPL base path
+rapl_base_path: /sys/class/powercap/intel-rapl
+
+# CodeCarbon configuration
+codecarbon_user: codecarbon
+codecarbon_group: codecarbon
+codecarbon_home: /opt/codecarbon
+codecarbon_venv: "{{ codecarbon_home }}/venv"
+
+# Dashboard configuration
+api_endpoint: https://api.codecarbon.io
+organization_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+project_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+experiment_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+api_key: xxx_xxxxxxxx_xxxxxxxxxxxx
