@@ -96,6 +96,25 @@ def is_linux_os() -> str:
     return system.startswith("lin")
 
 
+def is_psutil_available() -> bool:
+    try:
+        import psutil
+
+        psutil.cpu_times()
+        return True
+    except Exception as e:
+        if isinstance(e, ImportError):
+            logger.debug(
+                "Not using the psutil interface, psutil is not installed. "
+                + "Please `pip install psutil` to get more accurate results."
+            )
+        logger.debug(
+            "Not using the psutil interface, an exception occurred while instantiating "
+            + f"psutil.cpu_percent : {e}",
+        )
+        return False
+
+
 def count_physical_cpus():
     import platform
     import subprocess
