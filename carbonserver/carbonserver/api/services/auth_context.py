@@ -21,9 +21,9 @@ class AuthContext:
         token_repository: ProjectTokensRepository,
         project_repository: ProjectRepository,
     ):
-        self._user_repository = user_repository
-        self._token_repository = token_repository
-        self._project_repository = project_repository
+        self._user_repository: UserRepository = user_repository
+        self._token_repository: ProjectTokensRepository = token_repository
+        self._project_repository: ProjectRepository = project_repository
 
     def isOperationAuthorizedOnOrg(self, organization_id, user: User):
         return self._user_repository.is_user_in_organization(
@@ -38,9 +38,7 @@ class AuthContext:
             return True
         if user is None:
             raise Exception("Not authenticated")
-        return self._user_repository.is_user_read_authorized_on_project(
-            project_id, user.id
-        )
+        return self._user_repository.is_user_authorized_on_project(project_id, user.id)
 
     def can_read_organization(self, organization_id: UUID, user: User):
         return self._user_repository.is_user_in_organization(
