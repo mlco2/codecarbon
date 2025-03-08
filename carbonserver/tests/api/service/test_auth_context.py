@@ -21,7 +21,9 @@ TEST_PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
 TEST_ORG_ID = UUID("e60afa92-17b7-4720-91a0-1ae91e409ba1")
 TEST_EXPERIMENT_ID = UUID("b4e18750-3721-4131-9e13-603a8b89e73f")
 
-TEST_USER = User(id=TEST_USER_ID, email="test@test.com", name="Test User")
+TEST_USER = User(
+    id=TEST_USER_ID, email="test@test.com", name="Test User", is_active=True
+)
 
 
 @pytest.fixture
