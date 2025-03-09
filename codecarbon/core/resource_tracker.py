@@ -12,7 +12,13 @@ from codecarbon.core.util import (
     is_mac_os,
     is_windows_os,
 )
-from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
+from codecarbon.external.hardware import (
+    CPU,
+    GPU,
+    MODE_CPU_LOAD,
+    AppleSiliconChip,
+    Raspberry,
+)
 from codecarbon.external.logger import logger
 from codecarbon.external.ram import RAM
 
@@ -39,7 +45,13 @@ class ResourceTracker:
             force_ram_power=self.tracker._force_ram_power,
         )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
-        self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+        self.tracker._hardware: List[
+            Union[RAM, CPU, GPU, AppleSiliconChip, Raspberry]
+        ] = [ram]
+        if cpu.is_raspberry():
+            self.tracker._hardware = [
+                Raspberry.from_utils(self.tracker._output_dir, chip_part="RAM")
+            ]
 
     def _setup_cpu_load_mode(self, tdp, max_power):
         """Set up CPU tracking in load mode using psutil."""
@@ -98,6 +110,15 @@ class ResourceTracker:
             rapl_include_dram=self.tracker._rapl_include_dram,
             rapl_prefer_psys=self.tracker._rapl_prefer_psys,
         )
+        self.tracker._hardware.append(hardware_cpu)
+        self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+        return True
+
+    def _setup_raspberry(self):
+        """Set up CPU tracking using the Raspberry Pi power interface."""
+        logger.info("Tracking CPU via raspberry utils")
+        self.cpu_tracker = "raspberry"
+        hardware_cpu = Raspberry.from_utils(self.tracker._output_dir, chip_part="CPU")
         self.tracker._hardware.append(hardware_cpu)
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
         return True
@@ -222,6 +243,9 @@ class ResourceTracker:
         """Try platform-preferred CPU backends when force_cpu_power is unset."""
         if is_linux_os() and cpu.is_rapl_available():
             self._setup_rapl()
+            return True
+        if cpu.is_raspberry():
+            self._setup_raspberry()
             return True
         if is_mac_os():
             cpu_model = detect_cpu_model() or ""
