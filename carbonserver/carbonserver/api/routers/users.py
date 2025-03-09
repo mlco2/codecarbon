@@ -1,5 +1,3 @@
-from typing import List
-
 from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
@@ -10,19 +8,6 @@ from carbonserver.api.services.user_service import UserService
 USERS_ROUTER_TAGS = ["Users"]
 
 router = APIRouter()
-
-
-@router.get(
-    "/users",
-    tags=USERS_ROUTER_TAGS,
-    status_code=status.HTTP_200_OK,
-    response_model=List[User],
-)
-@inject
-def list_users(
-    user_service: UserService = Depends(Provide[ServerContainer.user_service]),
-) -> List[User]:
-    return user_service.list_users()
 
 
 @router.get(
