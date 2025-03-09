@@ -4,7 +4,13 @@ from typing import List, Union
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
-from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
+from codecarbon.external.hardware import (
+    CPU,
+    GPU,
+    MODE_CPU_LOAD,
+    AppleSiliconChip,
+    Raspberry,
+)
 from codecarbon.external.logger import logger
 from codecarbon.external.ram import RAM
 
@@ -31,7 +37,13 @@ class ResourceTracker:
             force_ram_power=self.tracker._force_ram_power,
         )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
-        self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+        self.tracker._hardware: List[
+            Union[RAM, CPU, GPU, AppleSiliconChip, Raspberry]
+        ] = [ram]
+        if cpu.is_raspberry():
+            self.tracker._hardware = [
+                Raspberry.from_utils(self.tracker._output_dir, chip_part="RAM")
+            ]
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
@@ -86,6 +98,14 @@ class ResourceTracker:
                 logger.warning(
                     "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."
                 )
+        elif cpu.is_raspberry():
+            logger.info("Tracking CPU via raspberry utils")
+            self.cpu_tracker = "raspberry"
+            hardware_cpu = Raspberry.from_utils(
+                self.tracker._output_dir, chip_part="CPU"
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
         # change code to check if powermetrics needs to be installed or just sudo setup
         elif (
             powermetrics.is_powermetrics_available()
