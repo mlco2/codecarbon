@@ -20,7 +20,7 @@ from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip, Raspberry
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
@@ -705,6 +705,21 @@ class BaseEmissionsTracker(ABC):
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
                     + f". RAM Power : {self._ram_power.W} W"
                 )
+            elif isinstance(hardware, Raspberry):
+                if hardware.chip_part == "CPU":
+                    self._total_cpu_energy += energy
+                    self._cpu_power = power
+                    logger.info(
+                        f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
+                        + f". Total CPU Power : {self._cpu_power.W} W"
+                    )
+                elif hardware.chip_part == "RAM":
+                    self._total_ram_energy += energy
+                    self._ram_power = power
+                    logger.info(
+                        f"Energy consumed for RAMs : {self._total_ram_energy.kWh:.6f} kWh"
+                        + f". Total RAM Power : {self._ram_power.W} W"
+                    )
             elif isinstance(hardware, AppleSiliconChip):
                 if hardware.chip_part == "CPU":
                     self._total_cpu_energy += energy
