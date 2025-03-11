@@ -96,7 +96,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
                     print(org)
     except Exception as e:
         raise ValueError(
-            f"Your configuration is invalid, please run `codecarbon config --init` first! (error: {e})"
+            f"Your configuration is invalid, please verify your configuration file at {path}. To start from scratch, run `codecarbon config` and overwrite your configuration file. (error: {e})"
         )
 
 
@@ -107,9 +107,14 @@ def get_fief_auth():
 
 
 def _get_access_token():
-    access_token_info = get_fief_auth().access_token_info()
-    access_token = access_token_info["access_token"]
-    return access_token
+    try:
+        access_token_info = get_fief_auth().access_token_info()
+        access_token = access_token_info["access_token"]
+        return access_token
+    except Exception as e:
+        raise ValueError(
+            f"Not able to retrieve the access token, please run `codecarbon login` first! (error: {e})"
+        )
 
 
 def _get_id_token():
@@ -223,6 +228,9 @@ def config():
             description=org_description,
         )
         organization = api.create_organization(organization=organization_create)
+        if organization is None:
+            print("Error creating organization")
+            return
         print(f"Created organization : {organization}")
     else:
         organization = [orga for orga in organizations if orga["name"] == org][0]
