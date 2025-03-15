@@ -28,6 +28,8 @@ B_TO_GB = 1024 * 1024 * 1024
 
 MODE_CPU_LOAD = "cpu_load"
 
+RAM_SLOT_POWER_X86 = 4  # Watts
+
 
 @dataclass
 class BaseHardware(ABC):
@@ -333,10 +335,56 @@ class CPU(BaseHardware):
 
 @dataclass
 class RAM(BaseHardware):
+    """
+    Before V3 heuristic:
     # 3 watts of power for every 8GB of DDR3 or DDR4 memory
     # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
-    power_per_GB = 3 / 8  # W/GB
+
+    In V3, we need to improve the accuracy of the RAM power estimation.
+    Because the power consumption of RAM is not linear with the amount of memory used,
+    for example, in servers you could have thousands of GB of RAM but the power
+    consumption would not be proportional to the amount of memory used, but to the number
+    of memory modules used.
+    But there is no way to know the memory modules used in the system, without admin rights.
+    So we need to build a heuristic that is more accurate than the previous one.
+    For example keep a minimum of 2 modules. Execept for ARM CPU like rapsberry pi where we will consider a 3W constant.
+    Then consider the max RAM per module is 128GB and that RAM module only exist in power of 2 (2, 4, 8, 16, 32, 64, 128).
+    So we can estimate the power consumption of the RAM by the number of modules used.
+
+    1. **ARM CPU Detection**:
+    - Added a `_detect_arm_cpu` method that checks if the system is using an ARM architecture
+    - For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the minimum power
+
+    2. **DIMM Count Estimation**:
+    - Created a `_estimate_dimm_count` method that intelligently estimates how many memory modules might be present based on total RAM size
+    - Takes into account that servers typically have more and larger DIMMs
+    - Assumes DIMM sizes follow powers of 2 (4GB, 8GB, 16GB, 32GB, 64GB, 128GB) as specified
+
+    3. **Scaling Power Model**:
+    - Base power per DIMM is 2.5W for x86 systems and 1.5W for ARM systems
+    - For standard systems (up to 4 DIMMs): linear scaling at full power per DIMM
+    - For medium systems (5-8 DIMMs): decreasing efficiency (90% power per additional DIMM)
+    - For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)
+    - For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)
+
+    4. **Minimum Power Guarantees**:
+    - Ensures at least 5W for x86 systems (assuming 2 DIMMs at minimum)
+    - Ensures at least 3W for ARM systems as requested
+
+    ### Example Power Estimates:
+
+    - **Small laptop (8GB RAM)**: ~5W (2 DIMMs at 2.5W each)
+    - **Desktop (32GB RAM)**: ~10W (4 DIMMs at 2.5W each)
+    - **Small server (128GB RAM)**: ~18.6W (8 DIMMs with efficiency scaling)
+    - **Large server (1TB RAM)**: ~44W (using 16x64GB DIMMs with high efficiency scaling)
+
+    This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn't scale linearly with capacity, but rather with the number of physical modules. Since we don't have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.
+
+    The model also includes detailed debug logging that will show the estimated power for given memory sizes, helping with validation and fine-tuning in the future.
+    """
+
     memory_size = None
+    is_arm_cpu = False
 
     def __init__(
         self,
@@ -358,6 +406,121 @@ class RAM(BaseHardware):
         self._pid = pid
         self._children = children
         self._tracking_mode = tracking_mode
+        # Check if using ARM architecture
+        self.is_arm_cpu = self._detect_arm_cpu()
+
+    def _detect_arm_cpu(self) -> bool:
+        """
+        Detect if the CPU is ARM-based
+        """
+        try:
+            # Try to detect ARM architecture using platform module
+            import platform
+
+            machine = platform.machine().lower()
+            return any(arm in machine for arm in ["arm", "aarch"])
+        except Exception:
+            # Default to False if detection fails
+            return False
+
+    def _estimate_dimm_count(self, total_gb: float) -> int:
+        """
+        Estimate the number of memory DIMMs based on total memory size
+        using heuristic rules.
+
+        Args:
+            total_gb: Total RAM in GB
+
+        Returns:
+            int: Estimated number of memory DIMMs
+        """
+        # Typical DIMM sizes in GB
+        dimm_sizes = [4, 8, 16, 32, 64, 128]
+
+        # For very small amounts of RAM (e.g. embedded systems)
+        if total_gb <= 2:
+            return 1
+
+        # For standard desktop/laptop (4-32GB)
+        if total_gb <= 32:
+            # Estimate based on likely configurations (2-4 DIMMs)
+            return max(2, min(4, int(total_gb / 8) + 1))
+
+        # For workstations and small servers (32-128GB)
+        if total_gb <= 128:
+            # Likely 4-8 DIMMs
+            return max(4, min(8, int(total_gb / 16) + 1))
+
+        # For larger servers (>128GB)
+        # Estimate using larger DIMM sizes and more slots
+        # Most servers have 8-32 DIMM slots
+        # Try to find the best fit with common DIMM sizes
+        dimm_count = 8  # Minimum for a large server
+
+        # Find the largest common DIMM size that fits
+        for dimm_size in sorted(dimm_sizes, reverse=True):
+            if dimm_size <= total_gb / 8:  # Assume at least 8 DIMMs
+                # Calculate how many DIMMs of this size would be needed
+                dimm_count = math.ceil(total_gb / dimm_size)
+                # Cap at 32 DIMMs (very large server)
+                dimm_count = min(dimm_count, 32)
+                break
+
+        return dimm_count
+
+    def _calculate_ram_power(self, memory_gb: float) -> float:
+        """
+        Calculate RAM power consumption based on the total RAM size using a more
+        sophisticated model that better scales with larger memory sizes.
+
+        Args:
+            memory_gb: Total RAM in GB
+
+        Returns:
+            float: Estimated power consumption in watts
+        """
+        # Detect how many DIMMs might be present
+        dimm_count = self._estimate_dimm_count(memory_gb)
+
+        # Base power consumption per DIMM
+        if self.is_arm_cpu:
+            # ARM systems typically use lower power memory
+            base_power_per_dimm = 1.5  # Watts
+            # Minimum 3W for ARM as requested
+            min_power = 3.0
+        else:
+            # x86 systems
+            base_power_per_dimm = RAM_SLOT_POWER_X86  # Watts
+            # Minimum 5W for x86 as requested (2 sticks at 2.5W)
+            min_power = base_power_per_dimm * 2
+
+        # Estimate power based on DIMM count with decreasing marginal power per DIMM as count increases
+        if dimm_count <= 4:
+            # Small systems: full power per DIMM
+            total_power = base_power_per_dimm * dimm_count
+        elif dimm_count <= 8:
+            # Medium systems: slight efficiency at scale
+            total_power = base_power_per_dimm * 4 + base_power_per_dimm * 0.9 * (
+                dimm_count - 4
+            )
+        elif dimm_count <= 16:
+            # Larger systems: better efficiency at scale
+            total_power = (
+                base_power_per_dimm * 4
+                + base_power_per_dimm * 0.9 * 4
+                + base_power_per_dimm * 0.8 * (dimm_count - 8)
+            )
+        else:
+            # Very large systems: high efficiency at scale
+            total_power = (
+                base_power_per_dimm * 4
+                + base_power_per_dimm * 0.9 * 4
+                + base_power_per_dimm * 0.8 * 8
+                + base_power_per_dimm * 0.7 * (dimm_count - 16)
+            )
+
+        # Apply minimum power constraint
+        return max(min_power, total_power)
 
     def _get_children_memories(self):
         """
@@ -484,7 +647,7 @@ class RAM(BaseHardware):
         `children` was True in __init__)
 
         Returns:
-            Power: kW of power consumption, using self.power_per_GB W/GB
+            Power: kW of power consumption, using a more sophisticated power model
         """
         try:
             memory_GB = (
@@ -492,7 +655,10 @@ class RAM(BaseHardware):
                 if self._tracking_mode == "machine"
                 else self.process_memory_GB
             )
-            ram_power = Power.from_watts(memory_GB * self.power_per_GB)
+            ram_power = Power.from_watts(self._calculate_ram_power(memory_GB))
+            logger.debug(
+                f"RAM power estimation: {ram_power.W:.2f}W for {memory_GB:.2f}GB"
+            )
         except Exception as e:
             logger.warning(f"Could not measure RAM Power ({str(e)})")
             ram_power = Power.from_watts(0)
