@@ -4,8 +4,9 @@ from typing import List, Union
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
-from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
 from codecarbon.external.logger import logger
+from codecarbon.external.ram import RAM
 
 
 class ResourceTracker:
