@@ -112,6 +112,11 @@ def _get_access_token():
     return access_token
 
 
+def _get_id_token():
+    id_token = get_fief_auth()._tokens["id_token"]
+    return id_token
+
+
 @codecarbon.command(
     "test-api", short_help="Make an authenticated GET request to an API endpoint"
 )
@@ -128,6 +133,10 @@ def api_get():
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
     get_fief_auth().authorize()
+    api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
+    id_token = _get_id_token()
+    api.set_access_token(id_token)
+    api.check_auth()
 
 
 def get_api_key(project_id: str):

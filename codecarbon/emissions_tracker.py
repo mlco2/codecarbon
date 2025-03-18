@@ -407,6 +407,11 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
+        try:
+            _ = self._emissions
+        except AttributeError:
+            logger.error("Tracker not initialized. Please check the logs.")
+            return
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -424,6 +429,21 @@ class BaseEmissionsTracker(ABC):
         :param task_name: Name of the task to be isolated.
         :return: None
         """
+        # if another instance of codecarbon is already running, stop here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
+        try:
+            _ = self._emissions
+        except AttributeError:
+            logger.error("Tracker not initialized. Please check the logs.")
+            return
+
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
             self._scheduler.stop()
@@ -768,6 +788,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     In addition to the standard arguments, the following are required.
     """
 
+    _country_iso_code = None
+    _country_name, _region, country_2letter_iso_code = None, None, None
+
     @suppress(Exception)
     def __init__(
         self,
@@ -885,7 +908,12 @@ class EmissionsTracker(BaseEmissionsTracker):
 class TaskEmissionsTracker:
     """
     Track emissions for a specific task
-    # TODO: THIS NOT USED, RIGHT ?
+    This is the context manager for tracking emissions for a specific task.
+    For example:
+    ```py
+    with TaskEmissionsTracker(task_name="Grid search", tracker=tracker):
+        grid = GridSearchCV(estimator=model, param_grid=param_grid)
+    ```
     """
 
     def __init__(self, task_name, tracker: EmissionsTracker = None):
@@ -919,24 +947,29 @@ def track_emissions(
     save_to_file: Optional[bool] = _sentinel,
     save_to_api: Optional[bool] = _sentinel,
     save_to_logger: Optional[bool] = _sentinel,
+    logging_logger: Optional[LoggerOutput] = _sentinel,
     save_to_prometheus: Optional[bool] = _sentinel,
     save_to_logfire: Optional[bool] = _sentinel,
     prometheus_url: Optional[str] = _sentinel,
     output_handlers: Optional[List[BaseOutput]] = _sentinel,
-    logging_logger: Optional[LoggerOutput] = _sentinel,
-    offline: Optional[bool] = _sentinel,
+    gpu_ids: Optional[List] = _sentinel,
     emissions_endpoint: Optional[str] = _sentinel,
     experiment_id: Optional[str] = _sentinel,
+    experiment_name: Optional[str] = _sentinel,
+    co2_signal_api_token: Optional[str] = _sentinel,
+    tracking_mode: Optional[str] = _sentinel,
+    log_level: Optional[Union[int, str]] = _sentinel,
+    on_csv_write: Optional[str] = _sentinel,
+    logger_preamble: Optional[str] = _sentinel,
+    default_cpu_power: Optional[int] = _sentinel,
+    pue: Optional[int] = _sentinel,
+    allow_multiple_runs: Optional[bool] = _sentinel,
+    offline: Optional[bool] = _sentinel,
     country_iso_code: Optional[str] = _sentinel,
     region: Optional[str] = _sentinel,
     cloud_provider: Optional[str] = _sentinel,
     cloud_region: Optional[str] = _sentinel,
-    gpu_ids: Optional[List] = _sentinel,
-    co2_signal_api_token: Optional[str] = _sentinel,
-    log_level: Optional[Union[int, str]] = _sentinel,
-    default_cpu_power: Optional[int] = _sentinel,
-    pue: Optional[int] = _sentinel,
-    allow_multiple_runs: Optional[bool] = _sentinel,
+    country_2letter_iso_code: Optional[str] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -945,7 +978,10 @@ def track_emissions(
                          default name is "codecarbon".
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15.
-    :api_call_interval: Number of measure to make before calling the Code Carbon API.
+    :param api_call_interval: Number of measure to make before calling the Code Carbon API.
+    :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
+                         emissions data.
+    :param api_key: API key for Code Carbon API (mandatory!).
     :param output_dir: Directory path to which the experiment details are logged,
                        defaults to current directory.
     :param output_file: Name of output CSV file, defaults to `emissions.csv`
@@ -955,13 +991,40 @@ def track_emissions(
                         CodeCarbon API, defaults to False.
     :param save_to_logger: Indicates if the emission artifacts should be written
                         to a dedicated logger, defaults to False.
+    :param logging_logger: LoggerOutput object encapsulating a logging.logger
+                        or a Google Cloud logger.
     :param save_to_prometheus: Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
     :param save_to_logfire: Indicates if the emission artifacts should be
                             pushed to logfire, defaults to False.
     :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
-    :param logging_logger: LoggerOutput object encapsulating a logging.logger
-                        or a Google Cloud logger.
+    :param output_handlers: List of output handlers to use.
+    :param gpu_ids: User-specified known gpu ids to track.
+                    Defaults to None, which means that all available gpus will be tracked.
+                    It needs to be a list of integers or a comma-separated string.
+                    Valid examples: [1, 3, 4] or "1,2".
+    :param emissions_endpoint: Optional URL of http endpoint for sending emissions
+                               data.
+    :param experiment_id: Id of the experiment.
+    :param experiment_name: Label of the experiment
+    :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
+                                 free beta)
+    :param tracking_mode: One of "process" or "machine" in order to measure the
+                          power consumption due to the entire machine or to try and
+                          isolate the tracked processe's in isolation.
+                          Defaults to "machine".
+    :param log_level: Global codecarbon log level. Accepts one of:
+                      {"debug", "info", "warning", "error", "critical"}.
+                      Defaults to "info".
+    :param on_csv_write: "append" or "update". Whether to always append a new line
+                         to the csv when writing or to update the existing `run_id`
+                         row (useful when calling`tracker.flush()` manually).
+                         Accepts one of "append" or "update". Default is "append".
+    :param logger_preamble: String to systematically include in the logger.
+                            messages. Defaults to "".
+    :param default_cpu_power: cpu power to be used as default if the cpu is not known.
+    :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+    :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
     :param offline: Indicates if the tracker should be run in offline mode.
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
                              being run, required if `offline=True`
@@ -976,13 +1039,10 @@ def track_emissions(
                          See https://github.com/mlco2/codecarbon/
                                             blob/master/codecarbon/data/cloud/impact.csv
                          for a list of cloud regions.
-    :param gpu_ids: User-specified known gpu ids to track, defaults to None
-    :param log_level: Global codecarbon log level. Accepts one of:
-                        {"debug", "info", "warning", "error", "critical"}.
-                      Defaults to "info".
-    :param default_cpu_power: cpu power to be used as default if the cpu is not known.
-    :param pue: PUE (Power Usage Effectiveness) of the datacenter.
-    :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
+    :param country_2letter_iso_code: For use with the CO2Signal emissions API.
+                                     See http://api.electricitymap.org/v3/zones for
+                                     a list of codes and their corresponding
+                                     locations.
 
     :return: The decorated function
     """
@@ -1003,44 +1063,52 @@ def track_emissions(
                     output_file=output_file,
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
+                    logging_logger=logging_logger,
                     save_to_prometheus=save_to_prometheus,
                     save_to_logfire=save_to_logfire,
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
-                    logging_logger=logging_logger,
+                    gpu_ids=gpu_ids,
+                    co2_signal_api_token=co2_signal_api_token,
+                    tracking_mode=tracking_mode,
+                    log_level=log_level,
+                    on_csv_write=on_csv_write,
+                    logger_preamble=logger_preamble,
+                    default_cpu_power=default_cpu_power,
+                    pue=pue,
+                    allow_multiple_runs=allow_multiple_runs,
                     country_iso_code=country_iso_code,
                     region=region,
                     cloud_provider=cloud_provider,
                     cloud_region=cloud_region,
-                    gpu_ids=gpu_ids,
-                    log_level=log_level,
-                    co2_signal_api_token=co2_signal_api_token,
-                    default_cpu_power=default_cpu_power,
-                    pue=pue,
-                    allow_multiple_runs=allow_multiple_runs,
+                    country_2letter_iso_code=country_2letter_iso_code,
                 )
             else:
                 tracker = EmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
+                    api_call_interval=api_call_interval,
+                    api_endpoint=api_endpoint,
+                    api_key=api_key,
                     output_dir=output_dir,
                     output_file=output_file,
                     save_to_file=save_to_file,
+                    save_to_api=save_to_api,
                     save_to_logger=save_to_logger,
+                    logging_logger=logging_logger,
                     save_to_prometheus=save_to_prometheus,
                     save_to_logfire=save_to_logfire,
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
-                    logging_logger=logging_logger,
                     gpu_ids=gpu_ids,
-                    log_level=log_level,
                     emissions_endpoint=emissions_endpoint,
                     experiment_id=experiment_id,
-                    api_call_interval=api_call_interval,
-                    api_key=api_key,
-                    api_endpoint=api_endpoint,
-                    save_to_api=save_to_api,
+                    experiment_name=experiment_name,
                     co2_signal_api_token=co2_signal_api_token,
+                    tracking_mode=tracking_mode,
+                    log_level=log_level,
+                    on_csv_write=on_csv_write,
+                    logger_preamble=logger_preamble,
                     default_cpu_power=default_cpu_power,
                     pue=pue,
                     allow_multiple_runs=allow_multiple_runs,

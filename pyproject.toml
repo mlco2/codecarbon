@@ -146,6 +146,8 @@ dependencies = [
     "dependency-injector<5.0.0",
     "fastapi<1.0.0",
     "fief-client[fastapi]",
+    "logfire",
+    "logfire[fastapi]",
     "httpx",
     "pydantic[email]<2.0.0",
     "psycopg2-binary<3.0.0",
@@ -183,7 +185,7 @@ include = [
 ]
 
 [tool.bumpver]
-current_version = "2.8.2"
+current_version = "2.8.3"
 version_pattern = "MAJOR.MINOR.PATCH"
 
 [tool.bumpver.file_patterns]

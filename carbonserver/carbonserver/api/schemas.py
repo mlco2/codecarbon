@@ -23,11 +23,17 @@ class Empty(BaseModel, extra=Extra.forbid):
 class UserBase(BaseModel):
     email: str
 
+    def __repr__(self):
+        return f"User(email={self.email})"
+
 
 class UserAutoCreate(UserBase):
     name: str
     email: EmailStr
     id: UUID
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id})"
 
 
 class UserAuthenticate(UserBase):
@@ -43,6 +49,9 @@ class User(UserBase):
 
     class Config:
         orm_mode = True
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id}, organizations={self.organizations})"
 
 
 class EmissionBase(BaseModel):
@@ -279,6 +288,7 @@ class ProjectCreate(ProjectBase):
 class ProjectPatch(BaseModel):
     name: Optional[str]
     description: Optional[str]
+    public: Optional[bool]
 
     # do not allow the organization_id
 
@@ -342,6 +352,7 @@ class ProjectTokenCreate(BaseModel):
 class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[str]] = []
+    public: Optional[bool]
 
 
 class ProjectReport(ProjectBase):
