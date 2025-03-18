@@ -16,7 +16,8 @@ class ResourceTracker:
 
     def set_RAM_tracking(self):
         logger.info("[setup] RAM Tracking...")
-        if macmon.is_macmon_available():
+
+        if macmon.is_macmon_available() and "M1" not in detect_cpu_model():
             logger.info("Tracking Apple RAM via MacMon")
             self.ram_tracker = "MacMon"
             ram = AppleSiliconChip.from_utils(self.tracker._output_dir, chip_part="RAM")
@@ -24,6 +25,10 @@ class ResourceTracker:
             self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
         else:
+            if macmon.is_macmon_available():
+                logger.warning(
+                    "MacMon is installed but cannot track RAM power on M1 chips, reverting to constant RAM power"
+                )
             self.ram_tracker = "3 Watts for 8 GB ratio constant"
             logger.info(f"Tracking RAM via constant ratio: {self.ram_tracker}")
 
