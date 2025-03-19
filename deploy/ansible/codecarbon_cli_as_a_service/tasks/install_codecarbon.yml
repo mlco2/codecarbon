@@ -1,0 +1,51 @@
+---
+- name: Install CodeCarbon
+  hosts: all
+  vars_files:
+    - "../vars/main.yml"
+  become: true
+  become_method: sudo
+
+  tasks:
+  - name: Create CodeCarbon group
+    group:
+      name: "{{ codecarbon_group }}"
+      system: yes
+      state: present
+  - name: Create CodeCarbon user
+    user:
+      name: "{{ codecarbon_user }}"
+      group: "{{ codecarbon_group }}"
+      system: yes
+      shell: /bin/false
+      create_home: no
+      state: present
+  - name: Create CodeCarbon directory
+    file:
+       path: "{{ codecarbon_home }}"
+       state: directory
+       owner: "{{ codecarbon_user }}"
+       group: "{{ codecarbon_group }}"
+       mode: '0755'
+  - name: Install Python virtual environment package
+    apt:
+       name: python3-venv
+       state: present
+  - name: Create Python virtual environment
+    command:
+       cmd: "python3 -m venv {{ codecarbon_venv }}"
+       creates: "{{ codecarbon_venv }}"
+    become_user: "{{ codecarbon_user }}"
+  - name: Install CodeCarbon package
+    pip:
+       name: codecarbon
+       virtualenv: "{{ codecarbon_venv }}"
+    become_user: "{{ codecarbon_user }}"
+  - name: Create CodeCarbon configuration file
+    template:
+       src: ../templates/codecarbon.config.j2
+       dest: "{{ codecarbon_home }}/.codecarbon.config"
+       owner: "{{ codecarbon_user }}"
+       group: "{{ codecarbon_group }}"
+       mode: '0600'
+ 
