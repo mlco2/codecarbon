@@ -1,4 +1,4 @@
-name: build package & server
+name: build ui
 
 on:
   pull_request:
