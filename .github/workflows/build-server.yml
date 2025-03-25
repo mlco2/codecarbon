@@ -1,0 +1,90 @@
+name: build package & server
+
+on:
+  pull_request:
+      paths:
+      - "carbonserver/**"
+      - "pyproject.toml"
+  push:
+    paths:
+      - "carbonserver/**"
+      - "pyproject.toml"
+    branches: [master]
+
+jobs:
+  build_server:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+    - name: Clean pip cache
+      run: pip cache purge
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+
+    - name: Unit tests on api
+      run: |
+        pip install hatch==1.13.0 hatchling==1.25.0
+        hatch run api:test-unit
+
+  test_api_server:
+    runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:16
+        # Provide the password for postgres
+        env:
+          POSTGRES_DB: codecarbon_db
+          POSTGRES_PASSWORD: supersecret
+          POSTGRES_USER: codecarbon-user
+          POSTGRES_HOST: localhost
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5480:5432
+
+    steps:
+      # Downloads a copy of the code in your repository before running CI tests
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      # Performs a clean installation of all dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install hatch==1.13.0 hatchling==1.25.0
+
+      - name: Setup PostgreSQL
+        # Runs a script that creates a PostgreSQL table, populates
+        # the table with data, and then retrieves the data.
+        run: hatch run api:setup-db
+
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
+
+      - name: Run API tests
+        env:
+          CODECARBON_API_URL: http://localhost:8008
+          # The hostname used to communicate with the PostgreSQL service container
+          DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
+        run: |
+          # hatch run api:server-ci &
+          sleep 2
+          # netstat -o -n -a | grep 8008
+          # hatch run api:test-integ
