@@ -2,6 +2,7 @@ import math
 import re
 import subprocess
 from dataclasses import dataclass
+from typing import Optional
 
 import psutil
 
@@ -61,6 +62,9 @@ class RAM(BaseHardware):
     This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn't scale linearly with capacity, but rather with the number of physical modules. Since we don't have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.
 
     The model also includes detailed debug logging that will show the estimated power for given memory sizes, helping with validation and fine-tuning in the future.
+
+    If the user knows the exact RAM power consumption of their system, they can provide
+    it using the `force_ram_power` parameter, which will override the automatic estimation.
     """
 
     memory_size = None
@@ -71,6 +75,7 @@ class RAM(BaseHardware):
         pid: int = psutil.Process().pid,
         children: bool = True,
         tracking_mode: str = "machine",
+        force_ram_power: Optional[int] = None,
     ):
         """
         Instantiate a RAM object from a reference pid. If none is provided, will use the
@@ -82,12 +87,21 @@ class RAM(BaseHardware):
                                  children). Defaults to psutil.Process().pid.
             children (int, optional): Look for children of the process when computing
                                       total RAM used. Defaults to True.
+            tracking_mode (str, optional): Whether to track "machine" or "process" RAM.
+                                          Defaults to "machine".
+            force_ram_power (int, optional): User-provided RAM power in watts. If provided,
+                                           this value is used instead of estimating RAM power.
+                                           Defaults to None.
         """
         self._pid = pid
         self._children = children
         self._tracking_mode = tracking_mode
+        self._force_ram_power = force_ram_power
         # Check if using ARM architecture
         self.is_arm_cpu = self._detect_arm_cpu()
+
+        if self._force_ram_power is not None:
+            logger.info(f"Using user-provided RAM power: {self._force_ram_power} Watts")
 
     def _detect_arm_cpu(self) -> bool:
         """
@@ -341,8 +355,15 @@ class RAM(BaseHardware):
         `children` was True in __init__)
 
         Returns:
-            Power: kW of power consumption, using a more sophisticated power model
+            Power: kW of power consumption, using either the user-provided value or a power model
         """
+        # If user provided a RAM power value, use it directly
+        if self._force_ram_power is not None:
+            logger.debug(
+                f"Using user-provided RAM power: {self._force_ram_power} Watts"
+            )
+            return Power.from_watts(self._force_ram_power)
+
         try:
             memory_GB = (
                 self.machine_memory_GB

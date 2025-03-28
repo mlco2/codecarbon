@@ -49,8 +49,7 @@ class FileOutput(BaseOutput):
         new_df = pd.DataFrame.from_records([dict(total.values)])
         new_df = new_df.dropna(axis=1, how="all")
         if not file_exists:
-            df = pd.DataFrame(columns=total.values.keys())
-            df = pd.concat([df, new_df])
+            df = new_df
         elif self.on_csv_write == "append":
             df = pd.read_csv(self.save_file_path)
             df = pd.concat([df, new_df])
