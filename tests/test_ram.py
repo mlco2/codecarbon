@@ -253,3 +253,31 @@ class TestRAM(unittest.TestCase):
         efficiency_128gb = power_128gb / 128  # W per GB
         efficiency_4096gb = power_4096gb / 4096  # W per GB
         self.assertGreater(efficiency_128gb, efficiency_4096gb)
+
+    def test_force_ram_power(self):
+        """Test that force_ram_power overrides automatic RAM power estimation"""
+        # Test with a specific user-provided power value
+        user_power_value = 42  # Arbitrary test value in watts
+        ram = RAM(tracking_mode="machine", force_ram_power=user_power_value)
+
+        # The total_power method should return the user-provided power value
+        ram_power = ram.total_power()
+        self.assertEqual(ram_power.W, user_power_value)
+
+        # Test with a different power value to ensure it's not hardcoded
+        user_power_value_2 = 99  # Different arbitrary test value
+        ram = RAM(tracking_mode="machine", force_ram_power=user_power_value_2)
+        ram_power = ram.total_power()
+        self.assertEqual(ram_power.W, user_power_value_2)
+
+        # Test with process tracking mode to ensure it works across modes
+        ram = RAM(tracking_mode="process", force_ram_power=user_power_value)
+        ram_power = ram.total_power()
+        self.assertEqual(ram_power.W, user_power_value)
+
+        # Mock the calculate_ram_power method to verify it's not called when force_ram_power is set
+        with mock.patch.object(RAM, "_calculate_ram_power") as mock_calc:
+            ram = RAM(tracking_mode="machine", force_ram_power=user_power_value)
+            ram_power = ram.total_power()
+            # Verify the calculation method was not called
+            mock_calc.assert_not_called()
