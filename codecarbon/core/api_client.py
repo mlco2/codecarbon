@@ -39,12 +39,12 @@ class ApiClient:  # (AsyncClient)
 
     def __init__(
         self,
-        # endpoint_url="https://api.codecarbon.io",
-        endpoint_url="https://dash-dev.cleverapps.io/api",  # beta API
+        endpoint_url="https://api.codecarbon.io",
         experiment_id=None,
         api_key=None,
         access_token=None,
         conf=None,
+        do_not_create_run=False,
     ):
         """
         :project_id: ID of the existing project
@@ -56,16 +56,8 @@ class ApiClient:  # (AsyncClient)
         self.api_key = api_key
         self.conf = conf
         self.access_token = access_token
-        if self.experiment_id is not None:
+        if self.experiment_id is not None and do_not_create_run is False:
             self._create_run(self.experiment_id)
-        import warnings
-
-        # FIXME: remove this warning in the future, once the release is created
-        warnings.warn(
-            "Beta API will be reworked, and some features will be removed. If you have data persisted through the API, please be warned that it will be erased with the next API release",
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     def _get_headers(self):
         headers = {"Content-Type": "application/json"}
