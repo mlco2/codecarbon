@@ -563,6 +563,7 @@ AMD EPYC 7F32,180
 AMD EPYC 7F52,240
 AMD EPYC 7F72,240
 AMD EPYC 7H12,280
+AMD EPYC 9454,290
 AMD EPYC Embedded 3251,50
 AMD FX-4100,95
 AMD FX-4120,95
@@ -2524,6 +2525,7 @@ Intel Core m3-8100Y,5
 Intel Core m3-8114Y,28
 Intel Core i7-2720QM,45
 Intel Core i7-2760QM,45
+Intel(R) Core(TM) Ultra 7 165H,28
 Intel Mobile Celeron 266,9.8
 Intel Mobile Celeron 300,11.1
 Intel Mobile Celeron 333,11.8
