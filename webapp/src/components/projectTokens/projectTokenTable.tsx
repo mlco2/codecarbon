@@ -1,3 +1,5 @@
+"use client";
+
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { IProjectToken } from "@/types/project";
