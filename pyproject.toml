@@ -50,17 +50,66 @@ Documentation = "https://mlco2.github.io/codecarbon/"
 Issues = "https://github.com/mlco2/codecarbon/issues"
 Changelog = "https://github.com/mlco2/codecarbon/releases"
 
-[project.optional-dependencies]
 
-viz = [
+[dependency-groups]
+dev = [
+    "taskipy>=1.14.1",
+    "bumpver",
+    "pre-commit",
+    "ruff",
+    "black",
+    "mypy",
+]
+
+[project.optional-dependencies]
+viz-legacy = [
     "dash",
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
 
+viz = [
+   "mock",
+   "pytest",
+   "responses",
+   "numpy<2.0.0;python_version<'3.9'",
+   "numpy;python_version>='3.9'",
+   "psutil",
+   "requests-mock",
+   "rapidfuzz",
+   "importlib_resources;python_version<'3.9'"
+]
+api  = [
+    "alembic<2.0.0",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "fief-client[fastapi]",
+    "httpx",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination==0.9.1",
+    "pytest",
+    "mock",
+    "pytest",
+    "responses",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
+    "PyJWT",
+]
+
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
 codecarbon = "codecarbon.cli.main:main"
+
+[tool.taskipy.tasks]
+pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit hook." }
 
 [tool.hatch.env]
 requires = [
@@ -86,40 +135,20 @@ dependencies = [
 ]
 pip-compile-constraint = ""
 
-[tool.hatch.envs.dev]
-dependencies = [
-    "bumpver",
-    "pre-commit",
-    "ruff",
-    "black",
-    "mypy",
-]
 
 [tool.hatch.envs.dev.scripts]
 precommit-install = "pre-commit install"
 precommit-update = "pre-commit autoupdate"
 precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
 mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
-lint = ["black --check --diff {args:.}", "ruff check {args:.}", "mypy {args:.}"]
-format = ["black {args:.}", "ruff --fix --exit-non-zero-on-fix {args:.}"]
+lint = ["black --check --diff .", "ruff check .", "mypy ."]
+format = ["black .", "ruff --fix --exit-non-zero-on-fix ."]
+test = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m 'not integ_test' tests/"
+test-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
+docs = "cd docs/edit && make docs"
+carbonboard = "python codecarbon/viz/carbonboard.py"
+dashboard = "cd dashboard && python carbon_board_API.py"
 
-[tool.hatch.envs.test]
-features = ["viz"]
-dependencies = [
-   "mock",
-   "pytest",
-   "responses",
-   "numpy<2.0.0;python_version<'3.9'",
-   "numpy;python_version>='3.9'",
-   "psutil",
-   "requests-mock",
-   "rapidfuzz",
-   "importlib_resources;python_version<'3.9'"
-]
-
-[tool.hatch.envs.test.scripts]
-package = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m "not integ_test" tests/'
-package-integ = 'CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/'
 
 [[tool.hatch.envs.test.matrix]]
 # Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7
@@ -156,15 +185,25 @@ dependencies = [
     "PyJWT",
 ]
 
-[tool.hatch.envs.api.scripts]
+[tool.hatch.envs.dashboard]
+dependencies = [
+    "dash>=2.2.0",
+    "dash_bootstrap_components",
+    "plotly>=5.6.0",
+]
+
+[tool.hatch.envs.dashboard.scripts]
+run = "cd dashboard && python carbon_board_API.py"
+
+
+[tool.hatch.scripts.api]
 local = "cd carbonserver && uvicorn main:app --reload"
-server-ci = 'cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008'
+server-ci = "cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008"
 docker = "docker-compose up -d"
-test-unit = 'cd carbonserver && python -m pytest -vv tests/api/routers/test_projects.py && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/'
-test-integ = 'cd carbonserver && python -m pytest -vv tests/api/integration/'
-setup-db = 'cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head'
-# To downgrade the db and start from scratch
-downgrade-db = 'cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base'
+test-unit = "cd carbonserver && python -m pytest -vv tests/api/routers/test_projects.py && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/"
+test-integ = "cd carbonserver && python -m pytest -vv tests/api/integration/"
+setup-db = "cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
+downgrade-db = "cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base"
 
 [tool.hatch.version]
 path = "codecarbon/_version.py"
@@ -185,3 +224,4 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 "docs/edit/conf.py" = [
     '^release = "{version}"$',
 ]
+

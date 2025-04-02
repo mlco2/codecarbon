@@ -10,7 +10,7 @@
 - [Alternative ways of contributing](#alternative-ways-of-contributing)
 - [</a> Ready to Contribute!](#ready-to-contribute)
    * [Installation](#installation)
-   * [Some Hatch commands](#some-hatch-commands)
+   * [Some UV commands](#some-uv-commands)
    * [Tests](#tests)
    * [Stress your computer](#stress-your-computer)
    * [Update all dependancies](#update-all-dependancies)
@@ -72,136 +72,84 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 
 CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 
-Since April 2024 we use Hatch for managing development environment. Hatch manage the environments, even the Python versions, the dependencies and handle matrix testing. It is a good way to avoid conflicts with your system Python.
+Since April 2024 we use UV for managing development environment. UV manages the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
 
 We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
-It is not mandatory for small contribution, while not recommanded, you could just install the package with `pip install -e .`.
+Please install [UV](https://github.com/astral-sh/uv) following [installation instructions](https://github.com/astral-sh/uv#installation), or with:
 
-Please install [Hatch](https://hatch.pypa.io/) following [installation instruction](https://hatch.pypa.io/latest/install/), or with `pipx install hatch hatch-pip-compile`.
+```sh
+pip install uv
+```
 
 Then, clone the repository and create the environment with:
 
 ```sh
 git clone https://github.com/mlco2/codecarbon.git
 cd codecarbon
-hatch env create
+uv venv
+uv pip install -e .
+uv pip install -e ".[dev,test]"
 ```
 
-> Note: this `hatch env create` command will use `venv` + the [normal python resolution](https://hatch.pypa.io/latest/plugins/environment/virtual/#python-resolution) to get the Python version. If you want to use a specific Python version, you can do `export HATCH_PYTHON=path/to/your/bin/python` before running `hatch env create`.
-
-<!-- TOC --><a name="some-hatch-commands"></a>
-### Some Hatch commands
-
-View the options of CodeCarbon environments:
+To activate the virtual environment:
 
 ```sh
-❯ hatch env show
-                                       Standalone
-┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
-┃ Name        ┃ Type        ┃ Features ┃ Dependencies              ┃ Scripts           ┃
-┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
-│ default     │ pip-compile │          │                           │                   │
-├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
-│ carbonboard │ pip-compile │ viz      │                           │ run               │
-├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
-│ docs        │ virtual     │          │ sphinx                    │ build             │
-│             │             │          │ sphinx-rtd-theme          │                   │
-├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
-│ dev         │ pip-compile │          │ black                     │ format            │
-│             │             │          │ bumpver                   │ lint              │
-│             │             │          │ mypy                      │ mypy-check        │
-│             │             │          │ pre-commit                │ precommit         │
-│             │             │          │ ruff                      │ precommit-install │
-│             │             │          │                           │ precommit-update  │
-├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
-│ dashboard   │ pip-compile │          │ dash-bootstrap-components │ run               │
-│             │             │          │ dash>=2.2.0               │                   │
-│             │             │          │ plotly>=5.6.0             │                   │
-├─────────────┼─────────────┼──────────┼───────────────────────────┼───────────────────┤
-│ api         │ pip-compile │          │ alembic<2.0.0             │ docker            │
-│             │             │          │ bcrypt<5.0.0              │ downgrade-db      │
-│             │             │          │ dependency-injector<5.0.0 │ local             │
-│             │             │          │ fastapi-pagination<1.0.0  │ server-ci         │
-│             │             │          │ fastapi<1.0.0             │ setup-db          │
-│             │             │          │ fief-client[fastapi]      │ test-integ        │
-│             │             │          │ httpx                     │ test-unit         │
-│             │             │          │ mock                      │                   │
-│             │             │          │ numpy                     │                   │
-│             │             │          │ psutil                    │                   │
-│             │             │          │ psycopg2-binary<3.0.0     │                   │
-│             │             │          │ pydantic[email]<2.0.0     │                   │
-│             │             │          │ pyjwt                     │                   │
-│             │             │          │ pytest                    │                   │
-│             │             │          │ python-dateutil<3.0.0     │                   │
-│             │             │          │ rapidfuzz                 │                   │
-│             │             │          │ requests-mock             │                   │
-│             │             │          │ requests<3.0.0            │                   │
-│             │             │          │ responses                 │                   │
-│             │             │          │ sqlalchemy<2.0.0          │                   │
-│             │             │          │ uvicorn[standard]<1.0.0   │                   │
-└─────────────┴─────────────┴──────────┴───────────────────────────┴───────────────────┘
-                                                  Matrices
-┏━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
-┃ Name ┃ Type        ┃ Envs        ┃ Features ┃ Dependencies                                ┃ Scripts       ┃
-┡━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
-│ test │ pip-compile │ test.py3.8  │ viz      │ importlib-resources; python_version < '3.9' │ package       │
-│      │             │ test.py3.9  │          │ mock                                        │ package-integ │
-│      │             │ test.py3.10 │          │ numpy; python_version >= '3.9'              │               │
-│      │             │ test.py3.11 │          │ numpy<2.0.0; python_version < '3.9'         │               │
-│      │             │ test.py3.12 │          │ psutil                                      │               │
-│      │             │             │          │ pytest                                      │               │
-│      │             │             │          │ rapidfuzz                                   │               │
-│      │             │             │          │ requests-mock                               │               │
-│      │             │             │          │ responses                                   │               │
-└──────┴─────────────┴─────────────┴──────────┴─────────────────────────────────────────────┴───────────────┘
+# On Linux/macOS
+source .venv/bin/activate
+
+# On Windows
+.venv\Scripts\activate
 ```
 
-To know the path of a env :
+<!-- TOC --><a name="some-uv-commands"></a>
+### Some UV commands
+
+UV simplifies Python package management with fast, reliable commands:
 
 ```sh
-hatch env find dev
+# Install the package in development mode
+uv pip install -e .
+
+# Install with optional dependencies
+uv pip install -e ".[viz]"
+
+# Install dev dependencies
+uv pip install -e ".[dev]"
+
+# Run a script defined in pyproject.toml
+uv run test
+
+# Update all dependencies
+uv pip compile requirements.in -o requirements.txt
 ```
-
-To delete all your env :
-
-```sh
-hatch env prune
-```
-
 
 <!-- TOC --><a name="tests"></a>
 ### Tests
 
-You can run the unit tests by running Hatch in the terminal when in the root package directory:
+You can run the unit tests by running UV in the terminal when in the root package directory:
 
 ```sh
-hatch run test:package
+uv run test
 ```
 
-To avoid testing all Python version, you could specify it, for example for Python 3.11 :
+To run integration tests:
 
 ```sh
-hatch run +py=3.11 test:package
+uv run test-integ
 ```
 
-This will not run test that may fail because of your environment (no CO2 Signal API token, no PowerGadget...). If you want to run all package tests:
+You can also run a specific test:
 
 ```sh
-hatch run test:package-integ
-```
-
-You can also run your specific test in isolation to develop and debug them:
-
-```sh
-$ hatch -e test.py3.11 run  pytest tests/test_cloud.py
+uv run pytest tests/test_cloud.py
 
 # or
 
-$ hatch -e test.py3.11 run python -m unittest tests.test_your_feature.YourTestCase.test_function
+uv run python -m unittest tests.test_your_feature.YourTestCase.test_function
 ```
 
-For example : `hatch -e test.py3.11 run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
+For example: `uv run python -m unittest tests.test_energy.TestEnergy.test_wraparound_delta_correct_value`
 
 Some tests will fail if you do not set *CODECARBON_ALLOW_MULTIPLE_RUNS* with `export CODECARBON_ALLOW_MULTIPLE_RUNS=True` before running test manually.
 
@@ -226,8 +174,14 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 ### Update all dependancies
 
 ```sh
-pipx install hatch-pip-compile
-hatch-pip-compile --upgrade --all
+uv pip compile requirements.in -o requirements.txt
+```
+
+For multiple requirement files:
+
+```sh
+uv pip compile requirements/dev.in -o requirements/dev.txt
+uv pip compile requirements/test.in -o requirements/test.txt
 ```
 
 <!-- TOC --><a name="branching-and-pull-requests"></a>
@@ -298,7 +252,7 @@ Then run opened test with this button:
 <!-- TOC --><a name="coding-style-linting"></a>
 ### Coding style && Linting
 
-The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `hatch run dev:precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `uv run precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
 
 ```log
 [INFO] Initializing environment for https://github.com/psf/black.
@@ -322,9 +276,9 @@ flake8...................................................................Passed
 
 If any of the linters/formatters fail, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their job) with `git add` and finally try to commit again `git commit ...`.
 
-You can also run `pre-commit` with `hatch run dev:pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
+You can also run `pre-commit` with `uv run pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
-It's nice to keep it up-to-date with `hatch run dev:precommit-update` sometimes.
+It's nice to keep it up-to-date with `uv run precommit-update` sometimes.
 
 
 <!-- TOC --><a name="dependencies-management"></a>
@@ -346,7 +300,7 @@ To make generating documentation easier, we use [`sphinx` package](https://www.s
 In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run in root folder:
 
 ```
-hatch run docs:build
+uv run docs
 ```
 
 to regenerate the html files.
@@ -355,10 +309,10 @@ to regenerate the html files.
 ### Release process
 
 -   Merge all PRs.
--   Create a PR bumping the version with `hatch run dev:bumpver update --patch`. For a release candidate, use `hatch run dev:bumpver update --set-version  3.0.0_rc1`.
--   Run `hatch run python3 .github/check_version.py` to check version consistancy.
--   Update the dependencies with `hatch-pip-compile --upgrade --all`.
--   [Build Documentation](#documentation) if needed with `hatch run docs:build`.
+-   Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
+-   Run `uv run python3 .github/check_version.py` to check version consistancy.
+-   Update the dependencies with `uv pip compile requirements.in -o requirements.txt`.
+-   [Build Documentation](#documentation) if needed with `uv run docs`.
 -   Push the changes.
 -   Merge the PR.
 -   Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
@@ -390,7 +344,7 @@ Inside the docker container, run:
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
 
 ```bash
-hatch run carbonboard:run --filepath="examples/emissions.csv"
+uv run carbonboard --filepath="examples/emissions.csv"
 
 # or
 pip install codecarbon["viz"]
@@ -409,7 +363,7 @@ carbonboard --filepath="examples/emissions.csv" --port=8050
 To test the new dashboard that uses the API, run:
 
 ```sh
-hatch run dashboard:run
+uv run dashboard
 ```
 
 Then, click on the url displayed in the terminal.
@@ -418,7 +372,7 @@ By default, the dashboard is connected to the production API, to connect it to y
 
 ```sh
 export CODECARBON_API_URL=http://localhost:8008
-hatch run dashboard:run
+uv run dashboard
 ```
 
 
@@ -428,7 +382,7 @@ hatch run dashboard:run
 The easiest way to run the API locally is with Docker, it will set-up the Postgres database for you. Launch this command in the project directory:
 
 ```sh
-hatch run api:docker
+uv run api.docker
 
 # or
 
@@ -441,7 +395,7 @@ When up, the API documentation is available locally at the following URL: http:/
 If you want to run the API without Docker, you must first set the environment variables described in the .env.example file, and run the following command:
 
 ```sh
-hatch run api:local
+uv run api.local
 ```
 
 In order to make codecarbon automatically connect to the local API, create a file `.codecarbon.config` with contents:
@@ -474,12 +428,12 @@ python examples/api_call_debug.py
 To test the API, you can use the following command:
 
 ```sh
-hatch run api:test-unit
+uv run api.test-unit
 ```
 
 ```sh
 export CODECARBON_API_URL=http://localhost:8008
-hatch run api:test-integ
+uv run api.test-integ
 
 ```
 
