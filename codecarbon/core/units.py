@@ -4,6 +4,8 @@ Provides functionality for unit conversions
 
 from dataclasses import dataclass, field
 
+# from pydantic.dataclasses import dataclass, field
+
 
 @dataclass
 class Time:
@@ -61,7 +63,10 @@ class Energy:
 
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
-        return cls(kWh=power.kW * time.hours)
+        assert isinstance(power.kW, float)
+        assert isinstance(time.hours, float)
+        energy = power.kW * time.hours
+        return cls(kWh=energy)
 
     @classmethod
     def from_ujoules(cls, energy: float) -> "Energy":
@@ -82,7 +87,10 @@ class Energy:
         return Energy(self.kWh + other.kWh)
 
     def __mul__(self, factor: float) -> "Energy":
-        return Energy(self.kWh * factor)
+        assert isinstance(factor, float)
+        assert isinstance(self.kWh, float)
+        result = Energy(self.kWh * factor)
+        return result
 
     def __float__(self) -> float:
         return float(self.kWh)
@@ -127,7 +135,9 @@ class Power:
             Power: Resulting Power estimation
         """
         delta_energy = abs(e2.kWh - e1.kWh)
+        assert isinstance(delta_energy, float)
         kW = delta_energy / delay.hours if delay.hours != 0.0 else 0.0
+        assert isinstance(delta_energy, float)
         return cls(kW=kW)
 
     @classmethod

@@ -17,18 +17,18 @@ class ResourceTracker:
 
     def set_RAM_tracking(self):
         logger.info("[setup] RAM Tracking...")
-        if self.tracker._ram_power is not None:
+        if self.tracker._force_ram_power is not None:
             self.ram_tracker = (
-                f"User specified constant: {self.tracker._ram_power} Watts"
+                f"User specified constant: {self.tracker._force_ram_power} Watts"
             )
             logger.info(
-                f"Using user-provided RAM power: {self.tracker._ram_power} Watts"
+                f"Using user-provided RAM power: {self.tracker._force_ram_power} Watts"
             )
         else:
             self.ram_tracker = "RAM power estimation model"
         ram = RAM(
             tracking_mode=self.tracker._tracking_mode,
-            force_ram_power=self.tracker._ram_power,
+            force_ram_power=self.tracker._force_ram_power,
         )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
         self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
