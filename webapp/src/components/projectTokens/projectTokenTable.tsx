@@ -7,10 +7,11 @@ import { getProjectTokens } from "@/server-functions/projectTokens";
 import CreateTokenButton from "./createProjectTokenButton";
 import CustomRowToken from "@/components/projectTokens/custom-row-token";
 import { useState, useEffect } from "react";
-import { revalidatePath } from "next/cache";
+import { useRouter } from "next/navigation";
 
 export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     const [tokens, setTokens] = useState<IProjectToken[] | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchTokens = async () => {
@@ -23,15 +24,18 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         }
     }, [projectId, tokens]);
 
+    const refreshTokens = () => {
+        setTokens(null); // This will trigger a refetch in the useEffect
+        router.refresh(); // Refresh the current route
+    };
+
     return (
         <div className="flex-col p-4 md:gap-8 md:p-8 justify-between max-w-screen-sm">
             {/* <div className="flex justify-between items-center mb-4"> */}
             <div className="flex-1 p-4 md:p-4">
                 <CreateTokenButton
                     projectId={projectId}
-                    onTokenCreated={() =>
-                        revalidatePath(`/projects/${projectId}/settings`)
-                    }
+                    onTokenCreated={refreshTokens}
                 />
             </div>
             <Card>
@@ -48,11 +52,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                                     <CustomRowToken
                                         key={index}
                                         projectToken={projectToken}
-                                        onTokenDeleted={() =>
-                                            revalidatePath(
-                                                `/projects/${projectId}/settings`,
-                                            )
-                                        }
+                                        onTokenDeleted={refreshTokens}
                                     />
                                 ))}
                     </TableBody>

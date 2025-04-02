@@ -1,10 +1,10 @@
 "use client";
 
-import { ThemeProvider } from "@/components/ui/theme-provider";
 import { FiefAuthProvider } from "@fief/fief/nextjs/react";
 import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SWRProvider } from "../helpers/swr";
+import { ThemeProvider } from "next-themes";
 
 const font = IBM_Plex_Mono({ weight: "400", subsets: ["latin"] });
 
