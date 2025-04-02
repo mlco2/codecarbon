@@ -31,6 +31,7 @@ const CreateProjectModal: React.FC<ModalProps> = ({
         description: "",
         organizationId: "",
         experiments: [],
+        public: false,
     };
     const handleSave = async (data: CreateProjectInput) => {
         const newProject: Project = await createProject(organizationId, data);

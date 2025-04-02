@@ -42,7 +42,7 @@ To rebuild the images:
 
 When registering a user, you'll need a verification code.
 You can find it with:
-docker logs -f fief_fief-worker_1
+docker logs -f fief-fief-worker-1
 
 ## local backend/frontend
 

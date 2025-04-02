@@ -1,4 +1,4 @@
-import { Project } from "@/types/project";
+import { Project, ProjectInputs } from "@/types/project";
 
 export const createProject = async (
     organizationId: string,
@@ -22,7 +22,7 @@ export const createProject = async (
 };
 export const updateProject = async (
     projectId: string,
-    project: { name: string; description: string },
+    project: ProjectInputs,
 ): Promise<Project> => {
     const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
@@ -31,9 +31,7 @@ export const updateProject = async (
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-                ...project,
-            }),
+            body: JSON.stringify(project),
         },
     );
     const data = await response.json();
