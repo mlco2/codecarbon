@@ -20,8 +20,9 @@ from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
+from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
 from codecarbon.input import DataSource
@@ -171,7 +172,8 @@ class BaseEmissionsTracker(ABC):
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
-        default_cpu_power: Optional[int] = _sentinel,
+        force_cpu_power: Optional[int] = _sentinel,
+        force_ram_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
@@ -227,7 +229,8 @@ class BaseEmissionsTracker(ABC):
                              Accepts one of "append" or "update". Default is "append".
         :param logger_preamble: String to systematically include in the logger.
                                 messages. Defaults to "".
-        :param default_cpu_power: cpu power to be used as default if the cpu is not known.
+        :param force_cpu_power: cpu power to be used instead of automatic detection.
+        :param force_ram_power: ram power to be used instead of automatic detection.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
@@ -277,7 +280,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
-        self._set_from_conf(default_cpu_power, "default_cpu_power")
+        self._set_from_conf(force_cpu_power, "force_cpu_power")
+        self._set_from_conf(force_ram_power, "force_ram_power")
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False)
         self._set_from_conf(
@@ -969,7 +973,8 @@ def track_emissions(
     gpu_ids: Optional[List] = _sentinel,
     co2_signal_api_token: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
-    default_cpu_power: Optional[int] = _sentinel,
+    force_cpu_power: Optional[int] = _sentinel,
+    force_ram_power: Optional[int] = _sentinel,
     pue: Optional[int] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
 ):
@@ -1015,7 +1020,8 @@ def track_emissions(
     :param log_level: Global codecarbon log level. Accepts one of:
                         {"debug", "info", "warning", "error", "critical"}.
                       Defaults to "info".
-    :param default_cpu_power: cpu power to be used as default if the cpu is not known.
+    :param force_cpu_power: cpu power to be used instead of automatic detection.
+    :param force_ram_power: ram power to be used instead of automatic detection.
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
     :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
 
@@ -1050,7 +1056,8 @@ def track_emissions(
                     gpu_ids=gpu_ids,
                     log_level=log_level,
                     co2_signal_api_token=co2_signal_api_token,
-                    default_cpu_power=default_cpu_power,
+                    force_cpu_power=force_cpu_power,
+                    force_ram_power=force_ram_power,
                     pue=pue,
                     allow_multiple_runs=allow_multiple_runs,
                 )
@@ -1076,7 +1083,8 @@ def track_emissions(
                     api_endpoint=api_endpoint,
                     save_to_api=save_to_api,
                     co2_signal_api_token=co2_signal_api_token,
-                    default_cpu_power=default_cpu_power,
+                    force_cpu_power=force_cpu_power,
+                    force_ram_power=force_ram_power,
                     pue=pue,
                     allow_multiple_runs=allow_multiple_runs,
                 )
