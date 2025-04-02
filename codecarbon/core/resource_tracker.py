@@ -28,7 +28,7 @@ class ResourceTracker:
             self.ram_tracker = "RAM power estimation model"
         ram = RAM(
             tracking_mode=self.tracker._tracking_mode,
-            user_ram_power=self.tracker._ram_power,
+            force_ram_power=self.tracker._ram_power,
         )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
         self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
