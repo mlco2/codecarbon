@@ -84,10 +84,14 @@ export default function CreateExperimentModal({
             />
             {/** On_cloud boolean checkbox */}
             <div className="flex items-center mb-4">
-                <label htmlFor="on_cloud" className="mr-2">
+                <label
+                    htmlFor="on_cloud"
+                    className="px-4 m-6 w-full text-center"
+                >
                     On Cloud
                 </label>
                 <Input
+                    className="h-5"
                     type="checkbox"
                     id="on_cloud"
                     checked={data.on_cloud}

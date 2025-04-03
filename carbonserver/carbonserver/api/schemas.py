@@ -188,6 +188,7 @@ class ExperimentBase(BaseModel):
     on_cloud: bool
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
+    timestamp: Optional[datetime] = None
     project_id: UUID
 
     class Config:
