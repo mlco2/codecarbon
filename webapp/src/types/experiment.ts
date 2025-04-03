@@ -1,5 +1,5 @@
 export interface Experiment {
-    timestamp: string;
+    timestamp?: string;
     name: string;
     description: string;
     on_cloud: boolean;

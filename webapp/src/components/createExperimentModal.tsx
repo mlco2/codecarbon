@@ -22,7 +22,6 @@ export default function CreateExperimentModal({
     const initialData: Experiment = {
         name: "",
         description: "",
-        timestamp: "",
         on_cloud: false,
         project_id: projectId,
     };
@@ -30,7 +29,6 @@ export default function CreateExperimentModal({
         project_id: projectId,
         name: "",
         description: "",
-        timestamp: "",
         on_cloud: false,
     };
     const handleSave = async (data: Experiment) => {
