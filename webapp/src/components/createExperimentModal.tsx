@@ -71,71 +71,6 @@ export default function CreateExperimentModal({
                 placeholder="Experiment Description"
                 className={"mt-4 mb-4"}
             />
-            <Input
-                type="text"
-                value={data.country_name}
-                onChange={(e) =>
-                    setData({ ...data, country_name: e.target.value })
-                }
-                placeholder="Country Name"
-                className={"mt-4 mb-4"}
-            />
-            <Input
-                type="text"
-                value={data.country_iso_code}
-                onChange={(e) =>
-                    setData({ ...data, country_iso_code: e.target.value })
-                }
-                placeholder="Country ISO Code"
-                className={"mt-4 mb-4"}
-            />
-            <Input
-                type="text"
-                value={data.region}
-                onChange={(e) => setData({ ...data, region: e.target.value })}
-                placeholder="Region"
-                className={"mt-4 mb-4"}
-            />
-            {/** On_cloud boolean checkbox */}
-            <div className="flex items-center mb-4">
-                <label
-                    htmlFor="on_cloud"
-                    className="px-4 m-6 w-full text-center"
-                >
-                    On Cloud
-                </label>
-                <Input
-                    className="h-5"
-                    type="checkbox"
-                    id="on_cloud"
-                    checked={data.on_cloud}
-                    onChange={(e) =>
-                        setData({ ...data, on_cloud: e.target.checked })
-                    }
-                />
-            </div>
-            {data.on_cloud && (
-                <div>
-                    <Input
-                        type="text"
-                        value={data.cloud_provider}
-                        onChange={(e) =>
-                            setData({ ...data, cloud_provider: e.target.value })
-                        }
-                        placeholder="Cloud Provider"
-                        className={"mt-4 mb-4"}
-                    />
-                    <Input
-                        type="text"
-                        value={data.cloud_region}
-                        onChange={(e) =>
-                            setData({ ...data, cloud_region: e.target.value })
-                        }
-                        placeholder="Cloud Region"
-                        className={"mt-4 mb-4"}
-                    />
-                </div>
-            )}
         </div>
     );
 
@@ -164,19 +99,6 @@ export default function CreateExperimentModal({
                     )}
                 </button>
             </div>
-            <button
-                onClick={() => handleCopy(data.id)}
-                className="ml-2 px-4 py-2 rounded text-gray-500 hover:text-gray-700"
-            >
-                {isCopied ? (
-                    <div className="flex justify-between">
-                        <ClipboardCheck />
-                        <p>Copied</p>
-                    </div>
-                ) : (
-                    <ClipboardCopy />
-                )}
-            </button>
         </div>
     );
 
