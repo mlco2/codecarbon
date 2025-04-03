@@ -210,7 +210,8 @@ class ExperimentBase(BaseModel):
 
 
 class ExperimentCreate(ExperimentBase):
-    pass
+    class Config:
+        exclude = {"timestamp"}
 
 
 class Experiment(ExperimentBase):

@@ -85,6 +85,9 @@ export default function CreateExperimentModal({
                 className={"mt-4 mb-4"}
             />
             {/** On_cloud boolean checkbox */}
+            <label htmlFor="on_cloud" className="mr-2">
+                On Cloud
+            </label>
             <Input
                 type="checkbox"
                 id="on_cloud"
