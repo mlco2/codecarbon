@@ -9,4 +9,5 @@ export interface Experiment {
     region?: string;
     cloud_provider?: string;
     cloud_region?: string;
+    id?: string;
 }

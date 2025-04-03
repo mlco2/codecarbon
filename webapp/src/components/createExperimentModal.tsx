@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Experiment } from "@/types/experiment";
 import GeneralModal from "./ui/modal";
 import { Separator } from "./ui/separator";
+import { ClipboardCheck, ClipboardCopy } from "lucide-react";
 
 export default function CreateExperimentModal({
     projectId,
@@ -19,6 +20,7 @@ export default function CreateExperimentModal({
     onClose: () => void;
     onExperimentCreated: () => void;
 }) {
+    const [isCopied, setIsCopied] = useState(false);
     const initialData: Experiment = {
         name: "",
         description: "",
@@ -35,6 +37,18 @@ export default function CreateExperimentModal({
         const newExperiment: Experiment = await createExperiment(data);
         await onExperimentCreated(); // Call the callback to refresh the project list
         return newExperiment;
+    };
+    const handleCopy = (token: string | undefined) => {
+        if (!token) return;
+        navigator.clipboard
+            .writeText(token)
+            .then(() => {
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000); // Revert back after 2 seconds
+            })
+            .catch((err) => {
+                console.error("Failed to copy experiment id: ", err);
+            });
     };
 
     const renderForm = (data: Experiment, setData: any) => (
@@ -124,11 +138,45 @@ export default function CreateExperimentModal({
             )}
         </div>
     );
+
     const renderSavedData = (data: Experiment, setSavedData: any) => (
         <div>
             <h2 className="text-xl font-bold mb-4">
                 Experiment {data.name} Created
             </h2>
+            <Separator className="mb-4" />
+            <p className="text-l mb-4">Id of this experiment:</p>
+            <div className="bg-muted flex items-center p-2 rounded justify-between">
+                <pre className="m-1">
+                    <code>{data.id}</code>
+                </pre>
+                <button
+                    onClick={() => handleCopy(data.id)}
+                    className="ml-2 px-4 py-2 rounded text-gray-500 hover:text-gray-700"
+                >
+                    {isCopied ? (
+                        <div className="flex justify-between">
+                            <ClipboardCheck />
+                            <p>Copied</p>
+                        </div>
+                    ) : (
+                        <ClipboardCopy />
+                    )}
+                </button>
+            </div>
+            <button
+                onClick={() => handleCopy(data.id)}
+                className="ml-2 px-4 py-2 rounded text-gray-500 hover:text-gray-700"
+            >
+                {isCopied ? (
+                    <div className="flex justify-between">
+                        <ClipboardCheck />
+                        <p>Copied</p>
+                    </div>
+                ) : (
+                    <ClipboardCopy />
+                )}
+            </button>
         </div>
     );
 
