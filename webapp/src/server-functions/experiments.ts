@@ -1,6 +1,27 @@
+import { Experiment } from "@/types/experiment";
 import { ExperimentReport } from "@/types/experiment-report";
 import { DateRange } from "react-day-picker";
 
+export async function createExperiment(
+    experiment: Experiment,
+): Promise<Experiment> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/experiments`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            ...experiment,
+        }),
+    });
+
+    if (!res.ok) {
+        throw new Error("Failed to create experiment");
+    }
+
+    const result = await res.json();
+    return result;
+}
 export async function getProjectEmissionsByExperiment(
     projectId: string,
     dateRange: DateRange,

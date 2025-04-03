@@ -37,6 +37,7 @@ def add_experiment(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> Experiment:
+    experiment.timestamp = datetime.now()
     return experiment_service.add_experiment(experiment, user=auth_user.db_user)
 
 

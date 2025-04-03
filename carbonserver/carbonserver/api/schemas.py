@@ -180,7 +180,7 @@ class RunReport(RunBase):
 
 
 class ExperimentBase(BaseModel):
-    timestamp: datetime
+    timestamp: datetime = None
     name: str
     description: str
     country_name: Optional[str] = None
