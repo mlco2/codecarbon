@@ -14,7 +14,7 @@ async function updateProjectAction(projectId: string, formData: FormData) {
 
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
-    const isPublic = formData.get("isPublic") === "true";
+    const isPublic = formData.has("isPublic");
 
     console.log("SAVING PROJECT:", { name, description, public: isPublic });
 
@@ -35,7 +35,7 @@ export default async function ProjectSettingsPage({
 }) {
     const { projectId } = await params;
     const project: Project = await getOneProject(projectId);
-
+    console.log("PROJECT:", project);
     return (
         <div className="flex px-4 space-y-6 md:px-6 flex-col">
             <div className="space-y-1.5">
@@ -93,6 +93,7 @@ export default async function ProjectSettingsPage({
                                             id="isPublic"
                                             name="isPublic"
                                             defaultChecked={project?.public}
+                                            value="true"
                                         />
                                         <Label htmlFor="isPublic">
                                             Make project public

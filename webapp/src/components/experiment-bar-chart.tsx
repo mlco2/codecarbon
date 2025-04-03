@@ -1,7 +1,7 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { ExperimentReport } from "@/types/experiment-report";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
 import {
     Card,
@@ -16,6 +16,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
+import { fetchApi } from "@/utils/api";
 import { useEffect, useState } from "react";
 
 interface ExperimentsBarChartProps {
@@ -32,21 +33,16 @@ async function getProjectEmissionsByExperiment(
     startDate: string,
     endDate: string,
 ): Promise<ExperimentReport[]> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums?start_date=${startDate}&end_date=${endDate}`;
+    const path = `/projects/${projectId}/experiments/sums?start_date=${startDate}&end_date=${endDate}`;
+    const result = await fetchApi<ExperimentReport[]>(path, {});
 
-    const res = await fetch(url);
-
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch data");
-    }
-    const result = await res.json();
     return result.map((experimentReport: ExperimentReport) => {
         return {
             experiment_id: experimentReport.experiment_id,
             name: experimentReport.name,
             emissions: experimentReport.emissions,
             energy_consumed: experimentReport.energy_consumed,
+            duration: experimentReport.duration,
         };
     });
 }
