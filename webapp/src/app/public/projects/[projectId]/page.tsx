@@ -13,6 +13,7 @@ import {
 } from "@/helpers/constants";
 import ProjectDashboard from "@/components/public-project-dashboard";
 import { getDefaultDateRange } from "@/helpers/date-utils";
+import { fiefAuth } from "@/helpers/fief";
 
 export default function PublicProjectPage({
     params,
@@ -23,7 +24,7 @@ export default function PublicProjectPage({
 }>) {
     const { projectId } = use(params);
     const router = useRouter();
-
+    const tokenInfo = fiefAuth.getAccessTokenInfo();
     const [project, setProject] = useState({
         name: "",
         description: "",
@@ -35,13 +36,13 @@ export default function PublicProjectPage({
                 const project: Project = await getOneProject(projectId);
                 if (!project.public) {
                     // Redirect to home if project is not public
-                    router.push('/');
+                    router.push("/");
                     return;
                 }
                 setProject(project);
             } catch (error) {
                 console.error("Error fetching project description:", error);
-                router.push('/');
+                router.push("/");
             }
         };
 
@@ -70,24 +71,27 @@ export default function PublicProjectPage({
         transportation: "0",
         tvTime: "0",
     });
-    const [selectedExperimentId, setSelectedExperimentId] = useState<string>("");
+    const [selectedExperimentId, setSelectedExperimentId] =
+        useState<string>("");
     const [selectedRunId, setSelectedRunId] = useState<string>("");
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const report = await getProjectEmissionsByExperiment(
+                    tokenInfo?.access_token ?? null,
                     projectId,
                     date,
                 );
-                
+
                 const newRadialChartData = {
                     energy: {
                         label: "kWh",
                         value: parseFloat(
                             report
                                 .reduce(
-                                    (n, { energy_consumed }) => n + energy_consumed,
+                                    (n, { energy_consumed }) =>
+                                        n + energy_consumed,
                                     0,
                                 )
                                 .toFixed(2),
@@ -148,7 +152,7 @@ export default function PublicProjectPage({
         if (project.id) {
             fetchData();
         }
-    }, [projectId, date, project.id]);
+    }, [projectId, date, project.id, tokenInfo?.access_token]);
 
     const handleExperimentClick = useCallback((experimentId: string) => {
         setSelectedExperimentId(experimentId);

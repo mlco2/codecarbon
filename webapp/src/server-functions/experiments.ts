@@ -1,11 +1,12 @@
 import { ExperimentReport } from "@/types/experiment-report";
+import { fetchApi } from "@/utils/api";
 import { DateRange } from "react-day-picker";
 
 export async function getProjectEmissionsByExperiment(
     projectId: string,
     dateRange: DateRange,
 ): Promise<ExperimentReport[]> {
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums`;
+    let url = `/projects/${projectId}/experiments/sums`;
 
     if (dateRange?.from || dateRange?.to) {
         const params = new URLSearchParams();
@@ -18,8 +19,7 @@ export async function getProjectEmissionsByExperiment(
         url += `?${params.toString()}`;
     }
 
-    const res = await fetch(url);
-    const result = await res.json();
+    const result = await fetchApi<ExperimentReport[]>(url, {});
     return result?.map((experimentReport: ExperimentReport) => {
         return {
             experiment_id: experimentReport.experiment_id,

@@ -1,8 +1,8 @@
 import { User } from "@/types/user";
 import MembersList from "./members-list";
-import { fetchApi } from "@/utils/api";
 import BreadcrumbHeader from "@/components/breadcrumb";
 import { Organization } from "@/types/organization";
+import { fetchApi } from "@/utils/api";
 
 export default async function MembersPage({
     params,

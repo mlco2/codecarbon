@@ -21,7 +21,8 @@ export default function ShareProjectButton({
     isPublic,
 }: ShareProjectButtonProps) {
     const [copied, setCopied] = useState(false);
-    const publicUrl = `${window.location.origin}/public/projects/${projectId}`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const publicUrl = `${baseUrl}/public/projects/${projectId}`;
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(publicUrl);

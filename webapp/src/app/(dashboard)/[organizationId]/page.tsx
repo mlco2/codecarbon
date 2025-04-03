@@ -43,10 +43,14 @@ export default function OrganizationPage({
 
     useEffect(() => {
         async function fetchOrganizationReport() {
-            const organizationReport: OrganizationReport | null =
-                await getOrganizationEmissionsByProject(organizationId, date);
-            if (organizationReport) {
-                setOrganizationReport(organizationReport);
+            try {
+                const organizationReport = await getOrganizationEmissionsByProject(organizationId, date);
+                if (organizationReport) {
+                    setOrganizationReport(organizationReport);
+                }
+            } catch (error) {
+                console.error("Failed to fetch organization report:", error);
+                // Keep the default empty report with zeros
             }
         }
 
