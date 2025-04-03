@@ -83,41 +83,47 @@ export default function CreateExperimentModal({
                 className={"mt-4 mb-4"}
             />
             {/** On_cloud boolean checkbox */}
-            <label htmlFor="on_cloud" className="mr-2">
-                On Cloud
-            </label>
-            <Input
-                type="checkbox"
-                id="on_cloud"
-                checked={data.on_cloud}
-                onChange={(e) =>
-                    setData({ ...data, on_cloud: e.target.checked })
-                }
-            />
-            <Input
-                type="text"
-                value={data.cloud_provider}
-                onChange={(e) =>
-                    setData({ ...data, cloud_provider: e.target.value })
-                }
-                placeholder="Cloud Provider"
-                className={"mt-4 mb-4"}
-            />
-            <Input
-                type="text"
-                value={data.cloud_region}
-                onChange={(e) =>
-                    setData({ ...data, cloud_region: e.target.value })
-                }
-                placeholder="Cloud Region"
-                className={"mt-4 mb-4"}
-            />
+            <div className="flex items-center mb-4">
+                <label htmlFor="on_cloud" className="mr-2">
+                    On Cloud
+                </label>
+                <Input
+                    type="checkbox"
+                    id="on_cloud"
+                    checked={data.on_cloud}
+                    onChange={(e) =>
+                        setData({ ...data, on_cloud: e.target.checked })
+                    }
+                />
+            </div>
+            {data.on_cloud && (
+                <div>
+                    <Input
+                        type="text"
+                        value={data.cloud_provider}
+                        onChange={(e) =>
+                            setData({ ...data, cloud_provider: e.target.value })
+                        }
+                        placeholder="Cloud Provider"
+                        className={"mt-4 mb-4"}
+                    />
+                    <Input
+                        type="text"
+                        value={data.cloud_region}
+                        onChange={(e) =>
+                            setData({ ...data, cloud_region: e.target.value })
+                        }
+                        placeholder="Cloud Region"
+                        className={"mt-4 mb-4"}
+                    />
+                </div>
+            )}
         </div>
     );
     const renderSavedData = (data: Experiment, setSavedData: any) => (
         <div>
             <h2 className="text-xl font-bold mb-4">
-                Project {data.name} Created
+                Experiment {data.name} Created
             </h2>
         </div>
     );

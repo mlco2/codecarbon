@@ -180,7 +180,6 @@ class RunReport(RunBase):
 
 
 class ExperimentBase(BaseModel):
-    timestamp: datetime = None
     name: str
     description: str
     country_name: Optional[str] = None
@@ -210,12 +209,12 @@ class ExperimentBase(BaseModel):
 
 
 class ExperimentCreate(ExperimentBase):
-    class Config:
-        exclude = {"timestamp"}
+    pass
 
 
 class Experiment(ExperimentBase):
     id: UUID
+    timestamp: datetime
 
 
 class ExperimentReport(ExperimentBase):

@@ -31,13 +31,13 @@ router = APIRouter()
 )
 @inject
 def add_experiment(
-    experiment: ExperimentCreate,
+    experiment_create: ExperimentCreate,
     auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> Experiment:
-    experiment.timestamp = datetime.now()
+    experiment = Experiment(**experiment_create, timestamp=datetime.now())
     return experiment_service.add_experiment(experiment, user=auth_user.db_user)
 
 
