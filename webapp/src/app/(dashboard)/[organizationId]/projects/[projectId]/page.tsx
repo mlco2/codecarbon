@@ -21,6 +21,7 @@ import {
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
+import CreateExperimentModal from "@/components/createExperimentModal";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -92,6 +93,16 @@ export default function ProjectPage({
     const [selectedExperimentId, setSelectedExperimentId] =
         useState<string>("");
     const [selectedRunId, setSelectedRunId] = useState<string>("");
+
+    const [isExperimentModalOpen, setIsExperimentModalOpen] = useState(false);
+
+    const handleCreateExperimentClick = () => {
+        setIsExperimentModalOpen(true);
+    };
+
+    const refreshExperimentList = async () => {
+        // Logic to refresh experiments if needed
+    };
 
     useEffect(() => {
         async function fetchData() {
@@ -198,12 +209,24 @@ export default function ProjectPage({
                             {project.description}
                         </span>
                     </div>
-                    <div>
+                    <div className="flex gap-4">
                         <DateRangePicker
                             date={date}
                             onDateChange={(newDate) =>
                                 setDate(newDate || getDefaultDateRange())
                             }
+                        />
+                        <Button
+                            onClick={handleCreateExperimentClick}
+                            className="bg-primary text-primary-foreground"
+                        >
+                            + Add Experiment
+                        </Button>
+                        <CreateExperimentModal
+                            projectId={params.projectId}
+                            isOpen={isExperimentModalOpen}
+                            onClose={() => setIsExperimentModalOpen(false)}
+                            onExperimentCreated={refreshExperimentList}
                         />
                     </div>
                 </div>

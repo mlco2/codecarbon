@@ -180,15 +180,15 @@ class RunReport(RunBase):
 
 
 class ExperimentBase(BaseModel):
-    timestamp: datetime
     name: str
     description: str
     country_name: Optional[str] = None
     country_iso_code: Optional[str] = None
     region: Optional[str] = None
-    on_cloud: bool
+    on_cloud: Optional[bool] = None
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
+    timestamp: Optional[datetime] = None
     project_id: UUID
 
     class Config:
@@ -215,6 +215,7 @@ class ExperimentCreate(ExperimentBase):
 
 class Experiment(ExperimentBase):
     id: UUID
+    timestamp: datetime
 
 
 class ExperimentReport(ExperimentBase):
