@@ -15,13 +15,19 @@ import { SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getOneProject } from "@/server-functions/projects";
 import { Project } from "@/types/project";
-import { getProjectEmissionsByExperiment } from "@/server-functions/experiments";
+import {
+    getExperiments,
+    getProjectEmissionsByExperiment,
+} from "@/server-functions/experiments";
 import {
     getEquivalentCarKm,
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
 import CreateExperimentModal from "@/components/createExperimentModal";
+import { Card } from "@/components/ui/card";
+import { TableBody, TableHeader, Table } from "@/components/ui/table";
+import { Experiment } from "@/types/experiment";
 
 // Fonction pour obtenir la plage de dates par défaut
 const getDefaultDateRange = (): { from: Date; to: Date } => {
@@ -44,29 +50,13 @@ export default function ProjectPage({
         name: "",
         description: "",
     } as Project);
-
-    useEffect(() => {
-        // Replace with your actual API endpoint
-        const fetchProjectDetails = async () => {
-            try {
-                const project: Project = await getOneProject(params.projectId);
-                setProject(project);
-            } catch (error) {
-                console.error("Error fetching project description:", error);
-            }
-        };
-
-        fetchProjectDetails();
-    }, [params.projectId]);
-    const router = useRouter();
-    const handleSettingsClick = () => {
-        router.push(
-            `/${params.organizationId}/projects/${params.projectId}/settings`,
-        );
-    };
-
     const default_date = getDefaultDateRange();
     const [date, setDate] = useState<DateRange>(default_date);
+    // The experiments of the current project. We need this because experimentReport only contains the experiments that have been run
+    const [projectExperiments, setProjectExperiments] = useState<Experiment[]>(
+        [],
+    );
+    // The reports (if any) of the experiments
     const [experimentReport, setExperimentReport] = useState<
         ExperimentReport[]
     >([]);
@@ -74,11 +64,6 @@ export default function ProjectPage({
         energy: { label: "kWh", value: 0 },
         emissions: { label: "kg eq CO2", value: 0 },
         duration: { label: "days", value: 0 },
-    });
-    const [experimentsData, setExperimentsData] = useState({
-        projectId: params.projectId,
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
     });
     const [runData, setRunData] = useState({
         experimentId: "",
@@ -92,18 +77,49 @@ export default function ProjectPage({
     });
     const [selectedExperimentId, setSelectedExperimentId] =
         useState<string>("");
+    const [experimentsBarCharData, setExperimentsBarCharData] = useState({
+        projectId: params.projectId,
+        startDate: default_date.from.toISOString(),
+        endDate: default_date.to.toISOString(),
+        selectedExperimentId: selectedExperimentId,
+    });
     const [selectedRunId, setSelectedRunId] = useState<string>("");
-
     const [isExperimentModalOpen, setIsExperimentModalOpen] = useState(false);
+
+    const router = useRouter();
+    const handleSettingsClick = () => {
+        router.push(
+            `/${params.organizationId}/projects/${params.projectId}/settings`,
+        );
+    };
 
     const handleCreateExperimentClick = () => {
         setIsExperimentModalOpen(true);
     };
 
-    const refreshExperimentList = async () => {
+    const refreshExperimentList = useCallback(async () => {
         // Logic to refresh experiments if needed
-    };
+        const experiments: Experiment[] = await getExperiments(
+            params.projectId,
+        );
+        setProjectExperiments(experiments);
+    }, []);
 
+    /** Use effect functions */
+    useEffect(() => {
+        const fetchProjectDetails = async () => {
+            try {
+                const project: Project = await getOneProject(params.projectId);
+                setProject(project);
+            } catch (error) {
+                console.error("Error fetching project description:", error);
+            }
+        };
+
+        fetchProjectDetails();
+        refreshExperimentList();
+    }, [params.projectId, refreshExperimentList]);
+    // Fetch the experiment report of the current project
     useEffect(() => {
         async function fetchData() {
             const report = await getProjectEmissionsByExperiment(
@@ -111,12 +127,19 @@ export default function ProjectPage({
                 date,
             );
             setExperimentReport(report);
+        }
 
+        fetchData();
+    }, [params.projectId, date]);
+    // Show the experiment report of the selected experiment. This is not in the same useEffect as the previous one because
+    // we refresh the component data when we select an experiment but we don't want to do a call to refresh the data
+    useEffect(() => {
+        async function fetchData() {
             const newRadialChartData = {
                 energy: {
                     label: "kWh",
                     value: parseFloat(
-                        report
+                        experimentReport
                             .reduce(
                                 (n, { energy_consumed }) => n + energy_consumed,
                                 0,
@@ -127,7 +150,7 @@ export default function ProjectPage({
                 emissions: {
                     label: "kg eq CO2",
                     value: parseFloat(
-                        report
+                        experimentReport
                             .reduce((n, { emissions }) => n + emissions, 0)
                             .toFixed(2),
                     ),
@@ -135,7 +158,7 @@ export default function ProjectPage({
                 duration: {
                     label: "days",
                     value: parseFloat(
-                        report
+                        experimentReport
                             .reduce(
                                 (n, { duration }) => n + duration / 86400,
                                 0,
@@ -146,19 +169,18 @@ export default function ProjectPage({
             };
             setRadialChartData(newRadialChartData);
 
-            setExperimentsData({
+            setExperimentsBarCharData({
                 projectId: params.projectId,
+                selectedExperimentId: selectedExperimentId ?? "",
                 startDate: date?.from?.toISOString() ?? "",
                 endDate: date?.to?.toISOString() ?? "",
             });
 
             setRunData({
-                experimentId: report[0]?.experiment_id ?? "",
+                experimentId: selectedExperimentId ?? "",
                 startDate: date?.from?.toISOString() ?? "",
                 endDate: date?.to?.toISOString() ?? "",
             });
-
-            setSelectedExperimentId(report[0]?.experiment_id ?? "");
 
             setConvertedValues({
                 citizen: getEquivalentCitizenPercentage(
@@ -174,20 +196,36 @@ export default function ProjectPage({
         }
 
         fetchData();
-    }, [params.projectId, date]);
+    }, [params.projectId, date, experimentReport, selectedExperimentId]);
 
-    const handleExperimentClick = useCallback((experimentId: string) => {
-        setSelectedExperimentId(experimentId);
-        setRunData((prevData) => ({
-            ...prevData,
-            experimentId: experimentId,
-        }));
-        setSelectedRunId(""); // Réinitialiser le runId sélectionné
-    }, []);
+    const handleExperimentRowClick = useCallback(
+        (experimentId: string | undefined) => {
+            if (!experimentId) return;
+            setSelectedExperimentId(experimentId);
+        },
+        [],
+    );
+    const handleExperimentBarClick = useCallback(
+        (experimentId: string) => {
+            if (experimentId === selectedExperimentId) {
+                setSelectedExperimentId("");
+                return;
+            }
+            setSelectedExperimentId(experimentId);
+        },
+        [selectedExperimentId],
+    );
 
-    const handleRunClick = useCallback((runId: string) => {
-        setSelectedRunId(runId);
-    }, []);
+    const handleRunClick = useCallback(
+        (runId: string) => {
+            if (runId === selectedRunId) {
+                setSelectedRunId("");
+                return;
+            }
+            setSelectedRunId(runId);
+        },
+        [selectedRunId],
+    );
 
     return (
         <div className="h-full w-full overflow-auto">
@@ -197,17 +235,19 @@ export default function ProjectPage({
                         <h1 className="text-2xl font-semi-bold">
                             Project {project.name}
                         </h1>
-                        <Button
-                            onClick={handleSettingsClick}
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-full"
-                        >
-                            <SettingsIcon />
-                        </Button>
-                        <span className="text-sm font-semi-bold">
-                            {project.description}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={handleSettingsClick}
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full"
+                            >
+                                <SettingsIcon />
+                            </Button>
+                            <span className="text-sm font-semi-bold">
+                                {project.description}
+                            </span>
+                        </div>
                     </div>
                     <div className="flex gap-4">
                         <DateRangePicker
@@ -216,12 +256,6 @@ export default function ProjectPage({
                                 setDate(newDate || getDefaultDateRange())
                             }
                         />
-                        <Button
-                            onClick={handleCreateExperimentClick}
-                            className="bg-primary text-primary-foreground"
-                        >
-                            + Add Experiment
-                        </Button>
                         <CreateExperimentModal
                             projectId={params.projectId}
                             isOpen={isExperimentModalOpen}
@@ -295,12 +329,70 @@ export default function ProjectPage({
                         <RadialChart data={radialChartData.duration} />
                     </div>
                 </div>
-
                 <Separator className="h-[0.5px] bg-muted-foreground" />
+                <Card className="flex flex-col md:flex-row justify-start gap-4 px-4 py-4 w-full max-w-3/4">
+                    <div className="flex items-center justify-start px-2">
+                        <p className="text-sm font-medium pr-2 text-center">
+                            {projectExperiments.length === 0
+                                ? "No experiments have been created yet."
+                                : "Set of experiments included in this project"}
+                        </p>
+                        <div className="flex items-center justify-center px-2">
+                            <Button
+                                onClick={handleCreateExperimentClick}
+                                className="bg-primary text-primary-foreground"
+                            >
+                                + Add Experiment
+                            </Button>
+                        </div>
+                    </div>
+                    {projectExperiments.length !== 0 && (
+                        <Card className="flex flex-col md:flex-row justify-between md:items-center gap-4 py-4 px-4 w-full max-w-3/4">
+                            <Table>
+                                <TableHeader>
+                                    <tr>
+                                        <th className="text-left">
+                                            Experiment
+                                        </th>
+                                        <th className="text-left">
+                                            Description
+                                        </th>
+                                        <th className="text-left">
+                                            Experiment id
+                                        </th>
+                                    </tr>
+                                </TableHeader>
+                                <TableBody>
+                                    {projectExperiments.map((experiment) => (
+                                        <tr
+                                            key={experiment.id}
+                                            className={`cursor-pointer hover:bg-muted/50 ${
+                                                experiment.id ===
+                                                selectedExperimentId
+                                                    ? "bg-primary/10"
+                                                    : ""
+                                            }`}
+                                            onClick={() =>
+                                                handleExperimentRowClick(
+                                                    experiment.id,
+                                                )
+                                            }
+                                        >
+                                            <td>{experiment.name}</td>
+                                            <td>{experiment.description}</td>
+                                            <td>{experiment.id}</td>
+                                        </tr>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Card>
+                    )}
+                </Card>
+
                 <div className="grid gap-4 md:grid-cols-2 md:gap-8">
                     <ExperimentsBarChart
-                        params={experimentsData}
-                        onExperimentClick={handleExperimentClick}
+                        params={experimentsBarCharData}
+                        onExperimentClick={handleExperimentBarClick}
                     />
                     <RunsScatterChart
                         params={{
@@ -310,12 +402,10 @@ export default function ProjectPage({
                         onRunClick={handleRunClick}
                     />
                 </div>
-                <Separator className="h-[0.5px] bg-muted-foreground" />
                 <div className="grid gap-4 md:grid-cols-1 md:gap-8">
-                    {selectedRunId && (
+                    {selectedRunId && selectedRunId !== "" && (
                         <>
                             <EmissionsTimeSeriesChart runId={selectedRunId} />
-                            <Separator className="h-[0.5px] bg-muted-foreground" />
                         </>
                     )}
                 </div>
