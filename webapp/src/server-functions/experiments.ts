@@ -22,6 +22,26 @@ export async function createExperiment(
     const result = await res.json();
     return result;
 }
+export async function getExperiments(projectId: string): Promise<Experiment[]> {
+    const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments`,
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch experiments");
+    }
+
+    const result = await res.json();
+    return result.map((experiment: Experiment) => {
+        return {
+            id: experiment.id,
+            name: experiment.name,
+            description: experiment.description,
+            project_id: experiment.project_id,
+            created_at: experiment.timestamp,
+        };
+    });
+}
 export async function getProjectEmissionsByExperiment(
     projectId: string,
     dateRange: DateRange,

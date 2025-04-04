@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/chart";
 import { useEffect, useState } from "react";
 
+type Params = {
+    projectId: string;
+    startDate: string;
+    selectedExperimentId: string;
+    endDate: string;
+};
 interface ExperimentsBarChartProps {
-    params: {
-        projectId: string;
-        startDate: string;
-        endDate: string;
-    };
+    params: Params;
     onExperimentClick: (experimentId: string) => void;
 }
 
@@ -62,11 +64,6 @@ const chartConfig = {
     },
 } satisfies ChartConfig;
 
-type Params = {
-    projectId: string;
-    startDate: string;
-    endDate: string;
-};
 export default function ExperimentsBarChart({
     params,
     onExperimentClick,
@@ -78,8 +75,14 @@ export default function ExperimentsBarChart({
 
     const handleBarClick = (data: ExperimentReport, index: number) => {
         onExperimentClick(data.experiment_id);
-        setSelectedBar(index);
     };
+    useEffect(() => {
+        const highlightedBar = experimentsReportData.findIndex(
+            (experiment) =>
+                experiment.experiment_id === params.selectedExperimentId,
+        );
+        setSelectedBar(highlightedBar);
+    }, [params.selectedExperimentId, experimentsReportData]);
     useEffect(() => {
         const fetchData = async () => {
             const data = await getProjectEmissionsByExperiment(
