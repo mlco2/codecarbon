@@ -1,0 +1,8 @@
+---
+# Tasks file to install CodeCarbon CLI as a service
+
+- import_playbook: install_codecarbon.yml
+
+- import_playbook: systemd_service.yml
+
+- import_playbook: rapl.yml
