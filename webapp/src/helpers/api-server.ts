@@ -12,7 +12,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 export async function fetchApiServer<T>(
     endpoint: string,
     options?: RequestInit,
-): Promise<T> {
+): Promise<T | null> {
     try {
         // Get session cookie for server-side auth
         const cookieStore = await cookies();
@@ -29,7 +29,6 @@ export async function fetchApiServer<T>(
                 Cookie: `${SESSION_COOKIE_NAME}=${sessionCookie.value}`,
                 ...(options?.headers || {}),
             },
-            cache: "no-store", // Ensure we're not using cached responses
         });
 
         if (!response.ok) {
@@ -40,17 +39,23 @@ export async function fetchApiServer<T>(
             } catch (e) {
                 // Ignore JSON parsing errors
             }
-            throw new Error(errorMessage);
+            console.log(errorMessage);
+            return null;
         }
 
         // Special handling for endpoints that might return null
-        if (endpoint.includes('/organizations/') && endpoint.includes('/sums')) {
+        if (
+            endpoint.includes("/organizations/") &&
+            endpoint.includes("/sums")
+        ) {
             // For organization sums endpoint that might return null
             try {
                 return await response.json();
             } catch (e) {
                 // If JSON parsing fails (e.g., empty response), return default values
-                console.warn("Empty response from organization sums endpoint, using default values");
+                console.warn(
+                    "Empty response from organization sums endpoint, using default values",
+                );
                 return {
                     name: "",
                     description: "",
@@ -65,7 +70,7 @@ export async function fetchApiServer<T>(
                 } as unknown as T;
             }
         }
-        
+
         return await response.json();
     } catch (error) {
         // Log server-side error with more details
@@ -73,9 +78,12 @@ export async function fetchApiServer<T>(
             endpoint,
             error: error instanceof Error ? error.message : String(error),
         });
-        
+
         // For organization sums endpoint, return default values instead of throwing
-        if (endpoint.includes('/organizations/') && endpoint.includes('/sums')) {
+        if (
+            endpoint.includes("/organizations/") &&
+            endpoint.includes("/sums")
+        ) {
             return {
                 name: "",
                 description: "",
@@ -89,7 +97,7 @@ export async function fetchApiServer<T>(
                 emissions_count: 0,
             } as unknown as T;
         }
-        
+
         throw new Error("API request failed. Please try again.");
     }
 }

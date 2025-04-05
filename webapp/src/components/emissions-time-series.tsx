@@ -19,11 +19,16 @@ import { RunMetadata } from "@/types/run-metadata";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
+import { ExportCsvButton } from "@/components/export-csv-button";
 import { fetchApi } from "@/utils/api";
+import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
 import { Cpu, HardDrive, Server } from "lucide-react";
 
 interface EmissionsTimeSeriesChartProps {
+    isPublicView: boolean;
     runId: string;
+    projectName?: string;
+    experimentName?: string;
 }
 
 const chartConfig = {
@@ -38,7 +43,10 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function EmissionsTimeSeriesChart({
+    isPublicView,
     runId,
+    projectName = "project",
+    experimentName,
 }: EmissionsTimeSeriesChartProps) {
     const [activeChart, setActiveChart] =
         React.useState<keyof typeof chartConfig>("emissions_rate");
@@ -68,7 +76,7 @@ export default function EmissionsTimeSeriesChart({
         return <div>Loading...</div>;
     }
 
-    if (!emissionTimeSeries) {
+    if (!emissionTimeSeries || !emissionTimeSeries.metadata) {
         return <div>No data available</div>;
     }
 
@@ -126,10 +134,34 @@ export default function EmissionsTimeSeriesChart({
             <Card>
                 <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
                     <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-                        <CardTitle>Emissions Time Series</CardTitle>
-                        <CardDescription>
-                            Showing emissions rate and energy consumed over time
-                        </CardDescription>
+                        <div className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Emissions Time Series</CardTitle>
+                                <CardDescription>
+                                    Showing emissions rate and energy consumed
+                                    over time
+                                </CardDescription>
+                            </div>
+                            {!isPublicView && (
+                                <ExportCsvButton
+                                    isDisabled={
+                                        !emissionTimeSeries ||
+                                        !emissionTimeSeries.emissions.length
+                                    }
+                                    onDownload={async () => {
+                                        if (!emissionTimeSeries) return;
+                                        exportEmissionsTimeSeriesCsv(
+                                            emissionTimeSeries,
+                                            projectName,
+                                            experimentName,
+                                        );
+                                    }}
+                                    loadingMessage="Exporting time series..."
+                                    successMessage="Time series exported successfully"
+                                    errorMessage="Failed to export time series"
+                                />
+                            )}
+                        </div>
                     </div>
                     <div className="flex">
                         {Object.keys(chartConfig).map((key) => {
@@ -212,7 +244,7 @@ export default function EmissionsTimeSeriesChart({
     );
 }
 
-async function getEmissionsTimeSeries(
+export async function getEmissionsTimeSeries(
     runId: string,
 ): Promise<EmissionsTimeSeries> {
     try {
@@ -220,6 +252,14 @@ async function getEmissionsTimeSeries(
         const emissionsData = await fetchApi<{ items: Emission[] }>(
             `/runs/${runId}/emissions`,
         );
+
+        if (!runMetadataData || !emissionsData) {
+            return {
+                runId,
+                emissions: [],
+                metadata: null,
+            };
+        }
 
         const metadata: RunMetadata = {
             timestamp: runMetadataData.timestamp,

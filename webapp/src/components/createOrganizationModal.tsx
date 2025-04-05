@@ -29,9 +29,13 @@ const CreateOrganizationModal: React.FC<ModalProps> = ({
         description: "",
     };
     const handleSave = async (data: CreateOrganizationInput) => {
-        const newOrganization: Organization = await createOrganization(data);
-        await onOrganizationCreated(); // Call the callback to refresh the project list
-        return newOrganization;
+        const newOrganization: Organization | null =
+            await createOrganization(data);
+        if (newOrganization) {
+            await onOrganizationCreated(); // Call the callback to refresh the project list
+            return newOrganization;
+        }
+        return null;
     };
 
     const renderForm = (data: CreateOrganizationInput, setData: any) => (

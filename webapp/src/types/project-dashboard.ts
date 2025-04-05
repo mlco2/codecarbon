@@ -1,5 +1,6 @@
 import { DateRange } from "react-day-picker";
 import { Project } from "./project";
+import { ExperimentReport } from "./experiment-report";
 
 export interface RadialChartData {
     energy: { label: string; value: number };
@@ -19,11 +20,7 @@ export interface ProjectDashboardProps {
     onDateChange: (newDate: DateRange | undefined) => void;
     radialChartData: RadialChartData;
     convertedValues: ConvertedValues;
-    experimentsData: {
-        projectId: string;
-        startDate: string;
-        endDate: string;
-    };
+    experimentsReportData: ExperimentReport[];
     runData: {
         experimentId: string;
         startDate: string;
@@ -34,5 +31,5 @@ export interface ProjectDashboardProps {
     onExperimentClick: (experimentId: string) => void;
     onRunClick: (runId: string) => void;
     onSettingsClick: () => void;
-    organizationId: string;
+    isLoading?: boolean;
 }

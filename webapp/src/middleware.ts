@@ -4,7 +4,8 @@ import { fiefAuth } from "./helpers/fief";
 
 const authMiddleware = fiefAuth.middleware([
     {
-        matcher: "/((?!api|_next/static|_next/image|favicon.ico|public/).*)",
+        matcher:
+            "/((?!api|_next/static|_next/image|favicon.ico|icons/|public/).*)",
         parameters: {},
     },
 ]);
@@ -14,7 +15,7 @@ export async function middleware(request: NextRequest) {
 
     // Skip auth for public routes
     if (
-        pathname === "/" || 
+        pathname === "/" ||
         pathname.startsWith("/public/") ||
         pathname.startsWith("/api/public/")
     ) {

@@ -6,7 +6,7 @@ import { fetchApiServer } from "@/helpers/api-server";
 export async function getOrganizationEmissionsByProject(
     organizationId: string,
     dateRange: DateRange | undefined,
-): Promise<OrganizationReport> {
+): Promise<OrganizationReport | null> {
     try {
         let endpoint = `/organizations/${organizationId}/sums`;
 
@@ -15,6 +15,10 @@ export async function getOrganizationEmissionsByProject(
         }
 
         const result = await fetchApiServer<any>(endpoint);
+
+        if (!result) {
+            return null;
+        }
 
         // Handle case when no emissions data is found
         if (!result || result === null) {
@@ -39,7 +43,7 @@ export async function getOrganizationEmissionsByProject(
         return {
             name: "",
             emissions: 0,
-            energy_consumed: 0, 
+            energy_consumed: 0,
             duration: 0,
         };
     }
@@ -48,6 +52,10 @@ export async function getOrganizationEmissionsByProject(
 export async function getDefaultOrgId(): Promise<string | null> {
     try {
         const orgs = await fetchApiServer<Organization[]>("/organizations");
+        if (!orgs) {
+            return null;
+        }
+
         if (orgs.length > 0) {
             return orgs[0].id;
         }
@@ -59,7 +67,12 @@ export async function getDefaultOrgId(): Promise<string | null> {
 
 export async function getOrganizations(): Promise<Organization[]> {
     try {
-        return await fetchApiServer<Organization[]>("/organizations");
+        const orgs = await fetchApiServer<Organization[]>("/organizations");
+        if (!orgs) {
+            return [];
+        }
+
+        return orgs;
     } catch (err) {
         console.warn("error fetching organizations list", err);
         return [];
@@ -69,7 +82,7 @@ export async function getOrganizations(): Promise<Organization[]> {
 export const createOrganization = async (organization: {
     name: string;
     description: string;
-}): Promise<Organization> => {
+}): Promise<Organization | null> => {
     return fetchApiServer<Organization>("/organizations", {
         method: "POST",
         body: JSON.stringify(organization),

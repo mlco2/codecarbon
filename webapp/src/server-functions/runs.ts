@@ -1,4 +1,11 @@
+import { RunMetadata } from "@/types/run-metadata";
 import { RunReport } from "@/types/run-report";
+
+export async function getRunMetadata(runId: string): Promise<RunMetadata> {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/runs/${runId}`;
+    const res = await fetch(url);
+    return await res.json();
+}
 
 export async function getRunEmissionsByExperiment(
     experimentId: string,
@@ -18,7 +25,7 @@ export async function getRunEmissionsByExperiment(
         return [];
     }
     const result = await res.json();
-    return result.map((runReport: RunReport) => {
+    return result.map((runReport: any) => {
         return {
             runId: runReport.run_id,
             emissions: runReport.emissions,

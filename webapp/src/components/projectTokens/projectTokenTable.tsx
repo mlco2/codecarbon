@@ -6,8 +6,9 @@ import { IProjectToken } from "@/types/project";
 import { getProjectTokens } from "@/server-functions/projectTokens";
 import CreateTokenButton from "./createProjectTokenButton";
 import CustomRowToken from "@/components/projectTokens/custom-row-token";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     const [tokens, setTokens] = useState<IProjectToken[] | null>(null);
@@ -30,9 +31,8 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     };
 
     return (
-        <div className="flex-col p-4 md:gap-8 md:p-8 justify-between max-w-screen-sm">
-            {/* <div className="flex justify-between items-center mb-4"> */}
-            <div className="flex-1 p-4 md:p-4">
+        <div className="flex-col p-4 md:gap-8 md:p-4 justify-between">
+            <div className="flex-1 mb-4">
                 <CreateTokenButton
                     projectId={projectId}
                     onTokenCreated={refreshTokens}
@@ -41,7 +41,24 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             <Card>
                 <Table>
                     <TableBody>
-                        {Array.isArray(tokens) &&
+                        {tokens === null ? (
+                            <tr>
+                                <td colSpan={3} className="text-center py-6">
+                                    <div className="flex justify-center">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : tokens.length === 0 ? (
+                            <tr>
+                                <td colSpan={3} className="text-center py-6">
+                                    <p className="text-muted-foreground">No API tokens found</p>
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        Create a token to interact with the CodeCarbon API
+                                    </p>
+                                </td>
+                            </tr>
+                        ) : (
                             tokens
                                 .sort((a, b) =>
                                     a.name
@@ -54,7 +71,8 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                                         projectToken={projectToken}
                                         onTokenDeleted={refreshTokens}
                                     />
-                                ))}
+                                ))
+                        )}
                     </TableBody>
                 </Table>
             </Card>

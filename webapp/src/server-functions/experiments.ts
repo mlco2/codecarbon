@@ -41,7 +41,11 @@ export async function getProjectEmissionsByExperiment(
     }
 
     const result = await fetchApi<ExperimentReport[]>(url, {});
-    return result?.map((experimentReport: ExperimentReport) => {
+    if (!result) {
+        return [];
+    }
+
+    return result.map((experimentReport: ExperimentReport) => {
         return {
             experiment_id: experimentReport.experiment_id,
             name: experimentReport.name,

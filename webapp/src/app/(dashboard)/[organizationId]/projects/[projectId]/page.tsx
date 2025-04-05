@@ -7,23 +7,13 @@ import {
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
+import { getDefaultDateRange } from "@/helpers/date-utils";
 import { getProjectEmissionsByExperiment } from "@/server-functions/experiments";
 import { getOneProject } from "@/server-functions/projects";
 import { ExperimentReport } from "@/types/experiment-report";
 import { Project } from "@/types/project";
-import { addMonths, endOfDay, startOfDay } from "date-fns";
-import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
-
-// Fonction pour obtenir la plage de dates par défaut
-const getDefaultDateRange = (): { from: Date; to: Date } => {
-    const today = new Date();
-    return {
-        from: startOfDay(addMonths(today, -2)),
-        to: endOfDay(today),
-    };
-};
 
 export default function ProjectPage({
     params,
@@ -34,17 +24,63 @@ export default function ProjectPage({
     }>;
 }>) {
     const { projectId, organizationId } = use(params);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [project, setProject] = useState({
         name: "",
         description: "",
     } as Project);
 
+    // This function now just refreshes the project data instead of navigating
+    const handleSettingsClick = async () => {
+        try {
+            const updatedProject = await getOneProject(projectId);
+            if (updatedProject) {
+                setProject(updatedProject);
+            }
+        } catch (error) {
+            console.error("Error refreshing project data:", error);
+        }
+    };
+
+    const default_date = getDefaultDateRange();
+    const [date, setDate] = useState<DateRange>(default_date);
+
+    const [radialChartData, setRadialChartData] = useState({
+        energy: { label: "kWh", value: 0 },
+        emissions: { label: "kg eq CO2", value: 0 },
+        duration: { label: "days", value: 0 },
+    });
+
+    const [experimentsReportData, setExperimentsReportData] = useState<
+        ExperimentReport[]
+    >([]);
+
+    const [runData, setRunData] = useState({
+        experimentId: "",
+        startDate: default_date.from.toISOString(),
+        endDate: default_date.to.toISOString(),
+    });
+
+    const [convertedValues, setConvertedValues] = useState({
+        citizen: "0",
+        transportation: "0",
+        tvTime: "0",
+    });
+
+    const [selectedExperimentId, setSelectedExperimentId] =
+        useState<string>("");
+
+    const [selectedRunId, setSelectedRunId] = useState<string>("");
+
     useEffect(() => {
         // Replace with your actual API endpoint
         const fetchProjectDetails = async () => {
             try {
-                const project: Project = await getOneProject(projectId);
+                const project = await getOneProject(projectId);
+                if (!project) {
+                    return;
+                }
                 setProject(project);
             } catch (error) {
                 console.error("Error fetching project description:", error);
@@ -53,110 +89,82 @@ export default function ProjectPage({
 
         fetchProjectDetails();
     }, [projectId]);
-    const router = useRouter();
-    const handleSettingsClick = () => {
-        router.push(`/${organizationId}/projects/${projectId}/settings`);
-    };
-
-    const default_date = getDefaultDateRange();
-    const [date, setDate] = useState<DateRange>(default_date);
-    const [experimentReport, setExperimentReport] = useState<
-        ExperimentReport[]
-    >([]);
-    const [radialChartData, setRadialChartData] = useState({
-        energy: { label: "kWh", value: 0 },
-        emissions: { label: "kg eq CO2", value: 0 },
-        duration: { label: "days", value: 0 },
-    });
-    const [experimentsData, setExperimentsData] = useState({
-        projectId: projectId,
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
-    const [runData, setRunData] = useState({
-        experimentId: "",
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
-    const [convertedValues, setConvertedValues] = useState({
-        citizen: "0",
-        transportation: "0",
-        tvTime: "0",
-    });
-    const [selectedExperimentId, setSelectedExperimentId] =
-        useState<string>("");
-    const [selectedRunId, setSelectedRunId] = useState<string>("");
 
     useEffect(() => {
         async function fetchData() {
-            const report = await getProjectEmissionsByExperiment(
-                projectId,
-                date,
-            );
-            setExperimentReport(report);
+            setIsLoading(true);
+            try {
+                const report = await getProjectEmissionsByExperiment(
+                    projectId,
+                    date,
+                );
 
-            const newRadialChartData = {
-                energy: {
-                    label: "kWh",
-                    value: parseFloat(
-                        report
-                            .reduce(
-                                (n, { energy_consumed }) => n + energy_consumed,
-                                0,
-                            )
-                            .toFixed(2),
-                    ),
-                },
-                emissions: {
-                    label: "kg eq CO2",
-                    value: parseFloat(
-                        report
-                            .reduce((n, { emissions }) => n + emissions, 0)
-                            .toFixed(2),
-                    ),
-                },
-                duration: {
-                    label: "days",
-                    value: parseFloat(
-                        report
-                            .reduce(
-                                (n, { duration }) => n + duration / 86400,
-                                0,
-                            )
-                            .toFixed(2),
-                    ),
-                },
-            };
-            setRadialChartData(newRadialChartData);
+                const newRadialChartData = {
+                    energy: {
+                        label: "kWh",
+                        value: parseFloat(
+                            report
+                                .reduce(
+                                    (n, { energy_consumed }) =>
+                                        n + energy_consumed,
+                                    0,
+                                )
+                                .toFixed(2),
+                        ),
+                    },
+                    emissions: {
+                        label: "kg eq CO2",
+                        value: parseFloat(
+                            report
+                                .reduce((n, { emissions }) => n + emissions, 0)
+                                .toFixed(2),
+                        ),
+                    },
+                    duration: {
+                        label: "days",
+                        value: parseFloat(
+                            report
+                                .reduce(
+                                    (n, { duration }) => n + duration / 86400,
+                                    0,
+                                )
+                                .toFixed(2),
+                        ),
+                    },
+                };
+                setRadialChartData(newRadialChartData);
 
-            setExperimentsData({
-                projectId: projectId,
-                startDate: date?.from?.toISOString() ?? "",
-                endDate: date?.to?.toISOString() ?? "",
-            });
+                setExperimentsReportData(report);
 
-            setRunData({
-                experimentId: report[0]?.experiment_id ?? "",
-                startDate: date?.from?.toISOString() ?? "",
-                endDate: date?.to?.toISOString() ?? "",
-            });
+                setRunData({
+                    experimentId: report[0]?.experiment_id ?? "",
+                    startDate: date?.from?.toISOString() ?? "",
+                    endDate: date?.to?.toISOString() ?? "",
+                });
 
-            setSelectedExperimentId(report[0]?.experiment_id ?? "");
+                setSelectedExperimentId(report[0]?.experiment_id ?? "");
 
-            setConvertedValues({
-                citizen: getEquivalentCitizenPercentage(
-                    newRadialChartData.emissions.value,
-                ).toFixed(2),
-                transportation: getEquivalentCarKm(
-                    newRadialChartData.emissions.value,
-                ).toFixed(2),
-                tvTime: getEquivalentTvTime(
-                    newRadialChartData.energy.value,
-                ).toFixed(2),
-            });
+                setConvertedValues({
+                    citizen: getEquivalentCitizenPercentage(
+                        newRadialChartData.emissions.value,
+                    ).toFixed(2),
+                    transportation: getEquivalentCarKm(
+                        newRadialChartData.emissions.value,
+                    ).toFixed(2),
+                    tvTime: getEquivalentTvTime(
+                        newRadialChartData.energy.value,
+                    ).toFixed(2),
+                });
+            } catch (error) {
+                console.error("Error fetching project data:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
 
-        fetchData();
+        if (projectId) {
+            fetchData();
+        }
     }, [projectId, date]);
 
     const handleExperimentClick = useCallback((experimentId: string) => {
@@ -201,14 +209,14 @@ export default function ProjectPage({
                     }
                     radialChartData={radialChartData}
                     convertedValues={convertedValues}
-                    experimentsData={experimentsData}
+                    experimentsReportData={experimentsReportData}
                     runData={runData}
                     selectedExperimentId={selectedExperimentId}
                     selectedRunId={selectedRunId}
                     onExperimentClick={handleExperimentClick}
                     onRunClick={handleRunClick}
                     onSettingsClick={handleSettingsClick}
-                    organizationId={organizationId}
+                    isLoading={isLoading}
                 />
             </div>
         </div>

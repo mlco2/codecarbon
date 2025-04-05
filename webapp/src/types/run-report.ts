@@ -1,5 +1,5 @@
 export interface RunReport {
-    run_id: string;
+    runId: string;
     emissions: number;
     timestamp: string;
     energy_consumed: number;

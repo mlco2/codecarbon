@@ -28,7 +28,7 @@ export default function ProjectsPage({
     const refreshProjectList = async () => {
         // Fetch the updated list of projects from the server
         const projectList = await getProjects(organizationId);
-        setProjectList(projectList);
+        setProjectList(projectList || []);
     };
     // Fetch the updated list of projects from the server
     const {

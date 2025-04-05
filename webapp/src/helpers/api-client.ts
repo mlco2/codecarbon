@@ -19,7 +19,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 export async function fetchApiClient<T>(
     endpoint: string,
     options?: RequestInit,
-): Promise<T> {
+): Promise<T | null> {
     const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers: {
@@ -36,7 +36,8 @@ export async function fetchApiClient<T>(
         } catch (e) {
             // Ignore JSON parsing errors
         }
-        throw new Error(errorMessage);
+        console.log(errorMessage);
+        return null;
     }
 
     return response.json();

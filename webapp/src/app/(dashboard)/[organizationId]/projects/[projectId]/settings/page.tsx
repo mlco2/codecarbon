@@ -34,8 +34,12 @@ export default async function ProjectSettingsPage({
     params: Promise<{ projectId: string }>;
 }) {
     const { projectId } = await params;
-    const project: Project = await getOneProject(projectId);
-    console.log("PROJECT:", project);
+    const project: Project | null = await getOneProject(projectId);
+
+    if (!project) {
+        return <div>Project not found</div>;
+    }
+
     return (
         <div className="flex px-4 space-y-6 md:px-6 flex-col">
             <div className="space-y-1.5">
