@@ -212,7 +212,7 @@ For example, in servers you could have thousands of GB of RAM but the power cons
 <ul class="simple">
 <li><p><strong>Small laptop (8GB RAM)</strong>: ~5W (2 DIMMs at 5W each)</p></li>
 <li><p><strong>Desktop (32GB RAM)</strong>: ~20W (4 DIMMs at 5W each)</p></li>
-<li><p><strong>Small server (128GB RAM)</strong>: ~36W (8 DIMMs with efficiency scaling)</p></li>
+<li><p><strong>Small server (128GB RAM)</strong>: ~40W (8 DIMMs with efficiency scaling)</p></li>
 <li><p><strong>Large server (1TB RAM)</strong>: ~40W (using 8x128GB DIMMs with high efficiency scaling)</p></li>
 </ul>
 <p>This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn’t scale linearly with capacity, but rather with the number of physical modules. Since we don’t have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.</p>
