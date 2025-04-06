@@ -33,6 +33,7 @@ dependencies = [
     "prometheus_client",
     "psutil >= 6.0.0",
     "py-cpuinfo",
+    "pydantic",
     "pynvml",
     "rapidfuzz",
     "requests",
@@ -185,7 +186,7 @@ include = [
 ]
 
 [tool.bumpver]
-current_version = "3.0.0_rc3"
+current_version = "3.0.0_rc5"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
