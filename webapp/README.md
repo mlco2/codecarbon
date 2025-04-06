@@ -7,7 +7,7 @@ Welcome to the Code Carbon Next.js Project! This README will guide you through t
 Before you begin, ensure you have the following installed on your system:
 
 - Node.js (version 14 or later)
-- pnpm (better npm alternative)
+- pnpm (better alternative to npm)
 - Git
 
 ## Getting Started
