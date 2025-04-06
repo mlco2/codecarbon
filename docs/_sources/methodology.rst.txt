@@ -115,7 +115,7 @@ Example Power Estimates:
 
 - **Small laptop (8GB RAM)**: ~5W (2 DIMMs at 5W each)
 - **Desktop (32GB RAM)**: ~20W (4 DIMMs at 5W each)
-- **Small server (128GB RAM)**: ~36W (8 DIMMs with efficiency scaling)
+- **Small server (128GB RAM)**: ~40W (8 DIMMs with efficiency scaling)
 - **Large server (1TB RAM)**: ~40W (using 8x128GB DIMMs with high efficiency scaling)
 
 This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn't scale linearly with capacity, but rather with the number of physical modules. Since we don't have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.
