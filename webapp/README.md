@@ -7,7 +7,7 @@ Welcome to the Code Carbon Next.js Project! This README will guide you through t
 Before you begin, ensure you have the following installed on your system:
 
 - Node.js (version 14 or later)
-- npm (usually comes with Node.js)
+- pnpm (better npm alternative)
 - Git
 
 ## Getting Started
@@ -23,7 +23,7 @@ Follow these steps to get the project up and running on your local machine:
 2. **Install dependencies**
 
     ```bash
-    npm install
+    pnpm install
     ```
 
 3. **Set up environment variables**
@@ -41,7 +41,7 @@ Follow these steps to get the project up and running on your local machine:
 4. **Run the development server**
 
     ```bash
-    npm run dev
+    pnpm dev
     ```
 
     The application should now be running on [http://localhost:3000](http://localhost:3000).
@@ -50,10 +50,10 @@ Follow these steps to get the project up and running on your local machine:
 
 In the project directory, you can run:
 
-- `npm run dev`: Runs the app in development mode
-- `npm run build`: Builds the app for production
-- `npm start`: Runs the built app in production mode
-- `npm run lint`: Runs the linter to check for code style issues
+- `pnpm dev`: Runs the app in development mode
+- `pnpm build`: Builds the app for production
+- `pnpm start`: Runs the built app in production mode
+- `pnpm lint`: Runs the linter to check for code style issues
 
 ## Learn More
 
