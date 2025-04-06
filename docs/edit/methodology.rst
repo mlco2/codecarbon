@@ -86,9 +86,55 @@ Tracks Nvidia GPUs energy consumption using ``pynvml`` library (installed with t
 RAM
 ~~~~
 
-CodeCarbon uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
-This measure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
-There is a discussion about it on `github issues #717 <https://github.com/mlco2/codecarbon/issues/717>`_.
+CodeCarbon v2 uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
+
+But this is not a good measure because it doesn't take into account the number of RAM slots used in the machine, that really drive the power consumption, not the amount of RAM.
+For example, in servers you could have thousands of GB of RAM but the power consumption would not be proportional to the amount of memory used, but to the number of memory modules used.
+
+Old machine could use 2 Mb memory stick, where modern servers will use 128 Mb memory stick.
+
+So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:
+.. code-block:: text
+
+    RAM Power Consumption = 5 Watts * Number of RAM slots used
+
+But getting the number of RAM slots used is not possible as you need root access to get the number of RAM slots used. So we use an heuristic based on the RAM size.
+
+For example keep a minimum of 2 modules. Except for ARM CPU like rapsberry pi where we will consider a 3W constant. Then consider the max RAM per module is 128GB and that RAM module only exist in power of 2 (2, 4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the RAM by the number of modules used.
+
+- For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the minimum power
+- Base power per DIMM is 5W for x86 systems and 1.5W for ARM systems
+- For standard systems (up to 4 DIMMs): linear scaling at full power per DIMM
+- For medium systems (5-8 DIMMs): decreasing efficiency (90% power per additional DIMM)
+- For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)
+- For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)
+- Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)
+- Ensures at least 3W for ARM systems as requested
+
+Example Power Estimates:
+
+- **Small laptop (8GB RAM)**: ~5W (2 DIMMs at 5W each)
+- **Desktop (32GB RAM)**: ~20W (4 DIMMs at 5W each)
+- **Small server (128GB RAM)**: ~40W (8 DIMMs with efficiency scaling)
+- **Large server (1TB RAM)**: ~40W (using 8x128GB DIMMs with high efficiency scaling)
+
+This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn't scale linearly with capacity, but rather with the number of physical modules. Since we don't have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.
+
+If you know the exact RAM power consumption of your system, then provide it using the `force_ram_power` parameter, which will override the automatic estimation.
+
+For example, in a Ubuntu machine, you can get the number of RAM slots used with the following command:
+
+.. code-block:: bash
+
+    sudo lshw -C memory -short | grep DIMM
+
+    /0/37/0                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+    /0/37/1                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+    /0/37/2                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+    /0/37/3                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+
+Here we count 4 RAM slots used, so the power consumption will be 4 x 5 = 20 Watts, just add `force_ram_power=20` to the init of CodeCarbon.
+
 
 CPU
 ~~~~

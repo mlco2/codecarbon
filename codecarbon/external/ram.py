@@ -23,48 +23,10 @@ class RAM(BaseHardware):
 
     In V3, we need to improve the accuracy of the RAM power estimation.
     Because the power consumption of RAM is not linear with the amount of memory used,
-    for example, in servers you could have thousands of GB of RAM but the power
-    consumption would not be proportional to the amount of memory used, but to the number
-    of memory modules used.
-    But there is no way to know the memory modules used in the system, without admin rights.
-    So we need to build a heuristic that is more accurate than the previous one.
-    For example keep a minimum of 2 modules. Execept for ARM CPU like rapsberry pi where we will consider a 3W constant.
-    Then consider the max RAM per module is 128GB and that RAM module only exist in power of 2 (2, 4, 8, 16, 32, 64, 128).
-    So we can estimate the power consumption of the RAM by the number of modules used.
 
-    1. **ARM CPU Detection**:
-    - Added a `_detect_arm_cpu` method that checks if the system is using an ARM architecture
-    - For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the minimum power
+    See https://mlco2.github.io/codecarbon/methodology.html#ram for details on the RAM
+    power estimation methodology.
 
-    2. **DIMM Count Estimation**:
-    - Created a `_estimate_dimm_count` method that intelligently estimates how many memory modules might be present based on total RAM size
-    - Takes into account that servers typically have more and larger DIMMs
-    - Assumes DIMM sizes follow powers of 2 (4GB, 8GB, 16GB, 32GB, 64GB, 128GB) as specified
-
-    3. **Scaling Power Model**:
-    - Base power per DIMM is 2.5W for x86 systems and 1.5W for ARM systems
-    - For standard systems (up to 4 DIMMs): linear scaling at full power per DIMM
-    - For medium systems (5-8 DIMMs): decreasing efficiency (90% power per additional DIMM)
-    - For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)
-    - For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)
-
-    4. **Minimum Power Guarantees**:
-    - Ensures at least 5W for x86 systems (assuming 2 DIMMs at minimum)
-    - Ensures at least 3W for ARM systems as requested
-
-    ### Example Power Estimates:
-
-    - **Small laptop (8GB RAM)**: ~5W (2 DIMMs at 2.5W each)
-    - **Desktop (32GB RAM)**: ~10W (4 DIMMs at 2.5W each)
-    - **Small server (128GB RAM)**: ~18.6W (8 DIMMs with efficiency scaling)
-    - **Large server (1TB RAM)**: ~44W (using 16x64GB DIMMs with high efficiency scaling)
-
-    This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn't scale linearly with capacity, but rather with the number of physical modules. Since we don't have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.
-
-    The model also includes detailed debug logging that will show the estimated power for given memory sizes, helping with validation and fine-tuning in the future.
-
-    If the user knows the exact RAM power consumption of their system, they can provide
-    it using the `force_ram_power` parameter, which will override the automatic estimation.
     """
 
     memory_size = None

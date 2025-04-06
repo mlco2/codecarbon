@@ -33,8 +33,8 @@ Input Parameters
      - | API token for co2signal.com (requires sign-up for free beta)
    * - pue
      - | PUE (Power Usage Effectiveness) of the data center where the experiment is being run.
-   * - default_cpu_power
-     - | Default CPU power consumption in watts, defaults to ``42.5``
+   * - force_cpu_power
+     - | Force the CPU max power consumption in watts, use this if others methods fail.
        | *(POWER_CONSTANT x CONSUMPTION_PERCENTAGE_CONSTANT)*
    * - allow_multiple_runs
      - | Boolean variable indicating if multiple instance of CodeCarbon on the same machine

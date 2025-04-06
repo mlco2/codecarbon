@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Methodology &mdash; CodeCarbon 3.0.0_rc3 documentation</title>
+  <title>Methodology &mdash; CodeCarbon 3.0.0_rc5 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=65a80240"></script>
+      <script src="_static/documentation_options.js?v=0a591694"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -187,9 +187,46 @@ energy sources that are used to generate electricity, including fossil fuels and
 </section>
 <section id="ram">
 <h3>RAM<a class="headerlink" href="#ram" title="Link to this heading"></a></h3>
-<p>CodeCarbon uses a 3 Watts for 8 GB ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .
-This measure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
-There is a discussion about it on <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/717">github issues #717</a>.</p>
+<p>CodeCarbon v2 uses a 3 Watts for 8 GB ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .</p>
+<p>But this is not a good measure because it doesn’t take into account the number of RAM slots used in the machine, that really drive the power consumption, not the amount of RAM.
+For example, in servers you could have thousands of GB of RAM but the power consumption would not be proportional to the amount of memory used, but to the number of memory modules used.</p>
+<p>Old machine could use 2 Mb memory stick, where modern servers will use 128 Mb memory stick.</p>
+<p>So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:
+.. code-block:: text</p>
+<blockquote>
+<div><p>RAM Power Consumption = 5 Watts * Number of RAM slots used</p>
+</div></blockquote>
+<p>But getting the number of RAM slots used is not possible as you need root access to get the number of RAM slots used. So we use an heuristic based on the RAM size.</p>
+<p>For example keep a minimum of 2 modules. Except for ARM CPU like rapsberry pi where we will consider a 3W constant. Then consider the max RAM per module is 128GB and that RAM module only exist in power of 2 (2, 4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the RAM by the number of modules used.</p>
+<ul class="simple">
+<li><p>For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the minimum power</p></li>
+<li><p>Base power per DIMM is 5W for x86 systems and 1.5W for ARM systems</p></li>
+<li><p>For standard systems (up to 4 DIMMs): linear scaling at full power per DIMM</p></li>
+<li><p>For medium systems (5-8 DIMMs): decreasing efficiency (90% power per additional DIMM)</p></li>
+<li><p>For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)</p></li>
+<li><p>For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)</p></li>
+<li><p>Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)</p></li>
+<li><p>Ensures at least 3W for ARM systems as requested</p></li>
+</ul>
+<p>Example Power Estimates:</p>
+<ul class="simple">
+<li><p><strong>Small laptop (8GB RAM)</strong>: ~5W (2 DIMMs at 5W each)</p></li>
+<li><p><strong>Desktop (32GB RAM)</strong>: ~20W (4 DIMMs at 5W each)</p></li>
+<li><p><strong>Small server (128GB RAM)</strong>: ~36W (8 DIMMs with efficiency scaling)</p></li>
+<li><p><strong>Large server (1TB RAM)</strong>: ~40W (using 8x128GB DIMMs with high efficiency scaling)</p></li>
+</ul>
+<p>This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn’t scale linearly with capacity, but rather with the number of physical modules. Since we don’t have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.</p>
+<p>If you know the exact RAM power consumption of your system, then provide it using the <cite>force_ram_power</cite> parameter, which will override the automatic estimation.</p>
+<p>For example, in a Ubuntu machine, you can get the number of RAM slots used with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>lshw<span class="w"> </span>-C<span class="w"> </span>memory<span class="w"> </span>-short<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>DIMM
+
+/0/37/0<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/1<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/2<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/3<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+</pre></div>
+</div>
+<p>Here we count 4 RAM slots used, so the power consumption will be 4 x 5 = 20 Watts, just add <cite>force_ram_power=20</cite> to the init of CodeCarbon.</p>
 </section>
 <section id="cpu">
 <h3>CPU<a class="headerlink" href="#cpu" title="Link to this heading"></a></h3>

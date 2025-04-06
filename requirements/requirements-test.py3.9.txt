@@ -17,6 +17,7 @@
 # - prometheus-client
 # - psutil>=6.0.0
 # - py-cpuinfo
+# - pydantic
 # - pynvml
 # - questionary
 # - rapidfuzz
@@ -129,6 +130,10 @@ py-cpuinfo==9.0.0
     # via hatch.envs.test.py3.9
 pycparser==2.22
     # via cffi
+pydantic==2.11.1
+    # via hatch.envs.test.py3.9
+pydantic-core==2.33.0
+    # via pydantic
 pygments==2.19.1
     # via rich
 pynvml==12.0.0
@@ -188,6 +193,8 @@ typing-extensions==4.13.2
     #   anyio
     #   dash
     #   jwcrypto
+    #   pydantic
+    #   pydantic-core
     #   rich
     #   typer
 tzdata==2025.2
