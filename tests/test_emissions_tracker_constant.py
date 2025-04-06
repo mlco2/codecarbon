@@ -107,9 +107,9 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         emissions = tracker.stop()
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
-        # Assert the content stored. cpu_power should be a random value between 0 and 1_000
+        # Assert the content stored. cpu_power should be a random value between 0 and 250
         assertdf = pd.read_csv(self.emissions_file_path)
-        self.assertLess(USER_INPUT_CPU_POWER / 2, assertdf["cpu_power"][0])
+        self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER / 4)
 
     def test_decorator_constant(self):
         @track_emissions(

@@ -61,7 +61,7 @@ class TestCarbonTrackerFlush(unittest.TestCase):
         )
         tracker.start()
         heavy_computation(run_time_secs=1)
-        tracker.flush()  # TODO: Flush seems to be broken !!!
+        tracker.flush()
         heavy_computation(run_time_secs=1)
         emissions = tracker.stop()
         assert isinstance(emissions, float)

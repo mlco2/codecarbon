@@ -525,6 +525,15 @@ class BaseEmissionsTracker(ABC):
         but keep running the experiment.
         :return: CO2 emissions in kgs
         """
+        # if another instance of codecarbon is already running, Nothing to do here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
         if self._start_time is None:
             logger.error("You first need to start the tracker.")
             return None
