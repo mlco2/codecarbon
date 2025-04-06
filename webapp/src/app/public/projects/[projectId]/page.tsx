@@ -38,16 +38,13 @@ export default function PublicProjectPage({
     const [experimentsReportData, setExperimentsReportData] = useState<
         ExperimentReport[]
     >([]);
+
     const [radialChartData, setRadialChartData] = useState({
         energy: { label: "kWh", value: 0 },
         emissions: { label: "kg eq CO2", value: 0 },
         duration: { label: "days", value: 0 },
     });
-    const [experimentsData, setExperimentsData] = useState({
-        projectId: "",
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
+
     const [runData, setRunData] = useState({
         experimentId: "",
         startDate: default_date.from.toISOString(),
@@ -107,10 +104,10 @@ export default function PublicProjectPage({
             }
         };
 
-        if (projectId) {
+        if (projectId && !project) {
             fetchProjectData();
         }
-    }, [projectId]);
+    }, [projectId, project]);
 
     // Fetch experiments and emissions data
     useEffect(() => {
@@ -165,12 +162,6 @@ export default function PublicProjectPage({
 
                 setRadialChartData(newRadialChartData);
 
-                setExperimentsData({
-                    projectId: projectId,
-                    startDate: date?.from?.toISOString() ?? "",
-                    endDate: date?.to?.toISOString() ?? "",
-                });
-
                 if (report.length > 0) {
                     setRunData({
                         experimentId: report[0]?.experiment_id ?? "",
@@ -224,8 +215,8 @@ export default function PublicProjectPage({
 
     if (error) {
         return (
-            <div className="container mx-auto p-8">
-                <Alert variant="destructive">
+            <div className="container mx-auto p-8 h-screen flex flex-col justify-center items-center">
+                <Alert variant="default" className="w-[500px]">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>

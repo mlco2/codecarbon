@@ -1,8 +1,18 @@
+import { useState } from "react";
 import { Project } from "@/types/project";
-import GeneralModal from "./ui/modal";
 import { createProject } from "@/server-functions/projects";
 import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "./ui/dialog";
+import { toast } from "sonner";
 
 interface ModalProps {
     organizationId: string;
@@ -10,6 +20,7 @@ interface ModalProps {
     onClose: () => void;
     onProjectCreated: () => Promise<void>;
 }
+
 interface CreateProjectInput {
     name: string;
     description: string;
@@ -21,63 +32,95 @@ const CreateProjectModal: React.FC<ModalProps> = ({
     onClose,
     onProjectCreated,
 }) => {
-    const initialData: CreateProjectInput = {
+    const [formData, setFormData] = useState<CreateProjectInput>({
         name: "",
         description: "",
-    };
-    const initialSavedData: Project = {
-        name: "",
-        id: "",
-        description: "",
-        organizationId: "",
-        experiments: [],
-        public: false,
-    };
-    const handleSave = async (data: CreateProjectInput) => {
-        const newProject: Project = await createProject(organizationId, data);
-        await onProjectCreated(); // Call the callback to refresh the project list
-        return newProject;
+    });
+    const [isCreated, setIsCreated] = useState(false);
+    const [createdProject, setCreatedProject] = useState<Project | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleSave = async () => {
+        toast.promise(
+            async () => {
+                setIsLoading(true);
+                try {
+                    const newProject = await createProject(
+                        organizationId,
+                        formData,
+                    );
+                    setCreatedProject(newProject);
+                    setIsCreated(true);
+                    await onProjectCreated(); // Call the callback to refresh the project list
+                    handleClose(); // Automatically close the modal after successful creation
+                    return newProject; // Return for the success message
+                } catch (error) {
+                    console.error("Failed to create project:", error);
+                    throw error; // Rethrow for the error message
+                } finally {
+                    setIsLoading(false);
+                }
+            },
+            {
+                loading: "Creating project...",
+                success: "Project created successfully!",
+                error: "Failed to create project",
+            },
+        );
     };
 
-    const renderForm = (data: CreateProjectInput, setData: any) => (
-        <div>
-            <h2 className="text-xl font-bold mb-4">Create new project</h2>
-            <Separator className="mb-4" />
-            <Input
-                type="text"
-                value={data.name}
-                onChange={(e) => setData({ ...data, name: e.target.value })}
-                placeholder="Project Name"
-                className={"mt-4 mb-4"}
-            />
-            <Input
-                type="text"
-                value={data.description}
-                onChange={(e) =>
-                    setData({ ...data, description: e.target.value })
-                }
-                placeholder="Project Description"
-                className={"mt-4 mb-4"}
-            />
-        </div>
-    );
-    const renderSavedData = (data: Project, setSavedData: any) => (
-        <div>
-            <h2 className="text-xl font-bold mb-4">
-                Project {data.name} Created
-            </h2>
-        </div>
-    );
+    const handleClose = () => {
+        // Reset state when closing
+        setFormData({ name: "", description: "" });
+        setIsCreated(false);
+        setCreatedProject(null);
+        onClose();
+    };
+
     return (
-        <GeneralModal
-            isOpen={isOpen}
-            onClose={onClose}
-            onSave={handleSave}
-            initialData={initialData}
-            initialSavedData={initialSavedData}
-            renderForm={renderForm}
-            renderSavedData={renderSavedData}
-        />
+        <Dialog open={isOpen} onOpenChange={handleClose}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Create new project</DialogTitle>
+                    <DialogDescription>
+                        Fill in the details to create your project
+                    </DialogDescription>
+                </DialogHeader>
+                <Separator className="my-4" />
+                <div className="grid gap-4 py-4">
+                    <Input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                name: e.target.value,
+                            })
+                        }
+                        placeholder="Project Name"
+                    />
+                    <Input
+                        type="text"
+                        value={formData.description}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                description: e.target.value,
+                            })
+                        }
+                        placeholder="Project Description"
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={handleClose}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSave} disabled={isLoading}>
+                        {isLoading ? "Creating..." : "Create"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 

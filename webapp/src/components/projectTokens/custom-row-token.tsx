@@ -3,6 +3,8 @@
 import { IProjectToken } from "@/types/project";
 import CustomRow from "../custom-row";
 import { deleteProjectToken } from "@/server-functions/projectTokens";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function CustomRowToken({
     projectToken,
@@ -11,9 +13,34 @@ export default function CustomRowToken({
     projectToken: IProjectToken;
     onTokenDeleted: () => void;
 }) {
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const handleDelete = async (projectToken: IProjectToken) => {
-        await deleteProjectToken(projectToken.project_id, projectToken.id);
-        onTokenDeleted();
+        if (isDeleting) return;
+
+        setIsDeleting(true);
+
+        try {
+            await toast
+                .promise(
+                    deleteProjectToken(
+                        projectToken.project_id,
+                        projectToken.id,
+                    ),
+                    {
+                        loading: `Deleting token ${projectToken.name}...`,
+                        success: `Token ${projectToken.name} deleted successfully`,
+                        error: (error) =>
+                            `Failed to delete token: ${error instanceof Error ? error.message : "Unknown error"}`,
+                    },
+                )
+                .unwrap();
+            onTokenDeleted();
+        } catch (error) {
+            console.error("Error deleting token:", error);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     return (
@@ -22,7 +49,7 @@ export default function CustomRowToken({
             firstColumn={projectToken.name}
             secondColumn={projectToken.token}
             onDelete={() => handleDelete(projectToken)}
-            deleteDisabled={false}
+            deleteDisabled={isDeleting}
         />
     );
 }

@@ -103,6 +103,21 @@ export default function NavBar({
         }
     }, [selectedOrg, organizationList]);
 
+    // Extract the organization ID from the current path if it exists
+    useEffect(() => {
+        if (pathname && pathname !== "/home" && pathname !== "/profile") {
+            // Extract the org ID from the path (format: /{orgId} or /{orgId}/...)
+            const pathParts = pathname.split("/");
+            if (pathParts.length >= 2 && pathParts[1]) {
+                // Check if this ID is a valid organization
+                const orgId = pathParts[1];
+                if (organizationList?.some((org) => org.id === orgId)) {
+                    setSelectedOrg(orgId);
+                }
+            }
+        }
+    }, [pathname, organizationList, selectedOrg]);
+
     const handleNewOrgClick = async () => {
         setNewOrgModalOpen(true);
         setDropdownOpen(false); // Close the dropdown menu
@@ -169,15 +184,15 @@ export default function NavBar({
                     <div className="flex flex-col gap-2">
                         {selectedOrg && (
                             <Select
-                                defaultValue={selectedOrg}
+                                value={selectedOrg}
                                 onValueChange={(value) => {
                                     setSelectedOrg(value);
                                     setSelected("home");
                                     setSheetOpened?.(false);
                                     router.push(`/${value}`);
                                 }}
-                                open={isDropdownOpen} // Control the dropdown visibility
-                                onOpenChange={setDropdownOpen} // Update the state when the dropdown is opened/closed
+                                open={isDropdownOpen}
+                                onOpenChange={setDropdownOpen}
                             >
                                 <SelectTrigger
                                     className={cn(

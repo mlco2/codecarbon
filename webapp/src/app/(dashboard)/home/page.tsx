@@ -1,4 +1,4 @@
-// "use client";
+"use client";
 
 import {
     Card,
@@ -6,54 +6,51 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { getDefaultOrgId } from "@/server-functions/organizations";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import Loader from "@/components/loader";
+import { Organization } from "@/types/organization";
+import { fetcher } from "@/helpers/swr";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
 
-// This method calls the API to check if the user is created in DB
-async function checkAuth() {
-    const headersList = await headers();
-    const token = headersList.get("X-FiefAuth-Access-Token-Info");
-
-    if (!token) {
-        throw new Error("No token found");
-    }
-    const tokenInfo = JSON.parse(token);
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        headers: {
-            Authorization: `Bearer ${tokenInfo.access_token}`,
-        },
+export default function HomePage() {
+    const router = useRouter();
+    const [redirecting, setRedirecting] = useState(true);
+    
+    // Fetch organizations to find the default
+    const { data: organizations, error } = useSWR<Organization[]>('/organizations', fetcher, {
+        revalidateOnFocus: false,
     });
-
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch /auth/login");
-    }
-}
-
-export default async function HomePage({
-    searchParams,
-}: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-    const { auth } = await searchParams;
-
-    if (auth) {
-        try {
-            await checkAuth();
-        } catch (error) {
-            console.error("Error with /check/auth:", error);
+    
+    useEffect(() => {
+        // Check if we have organizations data
+        if (organizations && organizations.length > 0) {
+            // Find default org ID - using the first organization
+            const defaultOrgId = organizations[0].id;
+            
+            // Save to localStorage
+            try {
+                localStorage.setItem("organizationId", defaultOrgId);
+                localStorage.setItem("organizationName", organizations[0].name || '');
+            } catch (error) {
+                console.error("Error writing to localStorage:", error);
+            }
+            
+            // Navigate to the organization page without a page reload
+            router.push(`/${defaultOrgId}`);
+        } else if (organizations && organizations.length === 0 || error) {
+            setRedirecting(false);
         }
+    }, [organizations, router, error]);
+    
+    // Show a loader while we fetch the data and redirect
+    if (redirecting) {
+        return <Loader />;
     }
-
-    const orgId = await getDefaultOrgId();
-    if (orgId) {
-        redirect(`/${orgId}`);
-    }
-
+    
+    // Fallback content if there are no organizations
     return (
         <div className="container mx-auto p-4">
-            {/* Change to a proper readme or get started guide */}
             <Card className="mx-auto">
                 <CardHeader>
                     <CardTitle>Get Started</CardTitle>

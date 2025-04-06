@@ -9,6 +9,7 @@ import { User } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
+import { toast } from "sonner";
 
 export default function MembersList({
     users,
@@ -34,45 +35,65 @@ export default function MembersList({
             const email = (
                 document.getElementById("emailInput") as HTMLInputElement
             ).value;
+
             // Validate email
             emailSchema.parse({ email });
             setError(null);
 
             const body = JSON.stringify({ email });
-            const result = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/add-user`,
-                {
-                    method: "POST",
-                    headers: {
-                        Accept: "application/json",
-                        "Content-Type": "application/json",
+
+            await toast
+                .promise(
+                    fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/add-user`,
+                        {
+                            method: "POST",
+                            headers: {
+                                Accept: "application/json",
+                                "Content-Type": "application/json",
+                            },
+                            body: body,
+                        },
+                    ).then(async (result) => {
+                        const data = await result.json();
+                        if (result.status !== 200) {
+                            const errorObject = data.detail;
+                            let errorMessage = "Failed to add user";
+
+                            if (
+                                Array.isArray(errorObject) &&
+                                errorObject.length > 0
+                            ) {
+                                errorMessage = errorObject
+                                    .map((error: any) => error.msg)
+                                    .join("\n");
+                            } else if (errorObject) {
+                                errorMessage = JSON.stringify(errorObject);
+                            }
+
+                            throw new Error(errorMessage);
+                        }
+                        return data;
+                    }),
+                    {
+                        loading: `Adding user ${email}...`,
+                        success: `User ${email} added successfully`,
+                        error: (err) => `${err.message}`,
                     },
-                    body: body,
-                },
-            );
+                )
+                .unwrap();
 
-            const data = await result.json();
-            if (result.status !== 200) {
-                const errorObject = data.detail;
-
-                if (Array.isArray(errorObject) && errorObject.length > 0) {
-                    const errorMessage = errorObject
-                        .map((error: any) => error.msg)
-                        .join("\n");
-                    setError(errorMessage);
-                } else {
-                    setError(JSON.stringify(errorObject));
-                }
-            } else {
-                router.refresh();
-                setDialogOpen(false);
-            }
+            // On success
+            router.refresh();
+            setDialogOpen(false);
         } catch (err) {
             if (err instanceof z.ZodError) {
                 setError(err.errors[0].message);
-                return;
+            } else {
+                setError(
+                    err instanceof Error ? err.message : "An error occurred",
+                );
             }
-            setError("An error occurred");
         } finally {
             setIsLoading(false);
         }

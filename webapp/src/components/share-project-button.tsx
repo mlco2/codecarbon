@@ -67,12 +67,7 @@ export default function ShareProjectButton({
     };
 
     if (!isPublic) {
-        return (
-            <Badge variant="outline" className="flex items-center gap-1">
-                <LockIcon className="h-3 w-3" />
-                Private
-            </Badge>
-        );
+        return null;
     }
 
     return (

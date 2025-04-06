@@ -44,7 +44,11 @@ export default function OrganizationPage({
     useEffect(() => {
         async function fetchOrganizationReport() {
             try {
-                const organizationReport = await getOrganizationEmissionsByProject(organizationId, date);
+                const organizationReport =
+                    await getOrganizationEmissionsByProject(
+                        organizationId,
+                        date,
+                    );
                 if (organizationReport) {
                     setOrganizationReport(organizationReport);
                 }
@@ -106,7 +110,7 @@ export default function OrganizationPage({
                     <div className="grid grid-cols-3 gap-4">
                         <div className="flex flex-col items-center justify-center">
                             <Image
-                                src="/household_consumption.svg"
+                                src="/icons/household_consumption.svg"
                                 alt="Household consumption icon"
                                 width={64}
                                 height={64}
@@ -121,7 +125,7 @@ export default function OrganizationPage({
                         </div>
                         <div className="flex flex-col items-center justify-center">
                             <Image
-                                src="/transportation.svg"
+                                src="/icons/transportation.svg"
                                 alt="Transportation icon"
                                 width={64}
                                 height={64}
@@ -136,7 +140,7 @@ export default function OrganizationPage({
                         </div>
                         <div className="flex flex-col items-center justify-center">
                             <Image
-                                src="/tv.svg"
+                                src="/icons/tv.svg"
                                 alt="TV icon"
                                 width={64}
                                 height={64}
