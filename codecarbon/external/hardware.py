@@ -269,6 +269,9 @@ class CPU(BaseHardware):
 
     def total_power(self) -> Power:
         self._power_history.append(self._get_power_from_cpus())
+        if len(self._power_history) == 0:
+            logger.warning("Power history is empty, returning 0 W")
+            return Power.from_watts(0)
         power_history_in_W = [power.W for power in self._power_history]
         cpu_power = sum(power_history_in_W) / len(power_history_in_W)
         self._power_history = []
