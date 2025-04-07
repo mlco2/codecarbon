@@ -13,14 +13,12 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Emission } from "@/types/emission";
 import { EmissionsTimeSeries } from "@/types/emissions-time-series";
-import { RunMetadata } from "@/types/run-metadata";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import { ExportCsvButton } from "@/components/export-csv-button";
-import { fetchApi } from "@/utils/api";
+import { getEmissionsTimeSeries } from "@/server-functions/runs";
 import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
 import { Cpu, HardDrive, Server } from "lucide-react";
 
@@ -242,64 +240,4 @@ export default function EmissionsTimeSeriesChart({
             </Card>
         </div>
     );
-}
-
-export async function getEmissionsTimeSeries(
-    runId: string,
-): Promise<EmissionsTimeSeries> {
-    try {
-        const runMetadataData = await fetchApi<RunMetadata>(`/runs/${runId}`);
-        const emissionsData = await fetchApi<{ items: Emission[] }>(
-            `/runs/${runId}/emissions`,
-        );
-
-        if (!runMetadataData || !emissionsData) {
-            return {
-                runId,
-                emissions: [],
-                metadata: null,
-            };
-        }
-
-        const metadata: RunMetadata = {
-            timestamp: runMetadataData.timestamp,
-            experiment_id: runMetadataData.experiment_id,
-            os: runMetadataData.os,
-            python_version: runMetadataData.python_version,
-            codecarbon_version: runMetadataData.codecarbon_version,
-            cpu_count: runMetadataData.cpu_count,
-            cpu_model: runMetadataData.cpu_model,
-            gpu_count: runMetadataData.gpu_count,
-            gpu_model: runMetadataData.gpu_model,
-            longitude: runMetadataData.longitude,
-            latitude: runMetadataData.latitude,
-            region: runMetadataData.region,
-            provider: runMetadataData.provider,
-            ram_total_size: runMetadataData.ram_total_size,
-            tracking_mode: runMetadataData.tracking_mode,
-        };
-
-        const emissions: Emission[] = emissionsData.items.map((item: any) => ({
-            emission_id: item.run_id,
-            timestamp: item.timestamp,
-            emissions_sum: item.emissions_sum,
-            emissions_rate: item.emissions_rate,
-            cpu_power: item.cpu_power,
-            gpu_power: item.gpu_power,
-            ram_power: item.ram_power,
-            cpu_energy: item.cpu_energy,
-            gpu_energy: item.gpu_energy,
-            ram_energy: item.ram_energy,
-            energy_consumed: item.energy_consumed,
-        }));
-
-        return {
-            runId,
-            emissions,
-            metadata,
-        };
-    } catch (error) {
-        console.error("Failed to fetch emissions time series:", error);
-        throw error;
-    }
 }

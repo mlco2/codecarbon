@@ -1,17 +1,40 @@
+import { getRunMetadata } from "@/server-functions/runs";
+import { Emission } from "@/types/emission";
 import { EmissionsTimeSeries } from "@/types/emissions-time-series";
 import { ExperimentReport } from "@/types/experiment-report";
-import { RunReport } from "@/types/run-report";
 import { RunMetadata } from "@/types/run-metadata";
-import { Emission } from "@/types/emission";
-import { getRunMetadata } from "@/server-functions/runs";
+import { RunReport } from "@/types/run-report";
+
+// Enhanced run report with metadata and emissions
+interface EnhancedRunReport extends Omit<RunReport, "emissions"> {
+    metadata?: RunMetadata;
+    emissions?: Emission[];
+    emissions_value: number; // Renamed from 'emissions' to avoid type conflict
+}
+
+// Extended experiment type that includes runs
+interface ExperimentWithRuns extends ExperimentReport {
+    runs: EnhancedRunReport[];
+}
+
+// Project type with experiments data (not extending the Project interface due to incompatible experiments field)
+interface ProjectWithExperiments {
+    id: string;
+    name: string;
+    description: string;
+    public: boolean;
+    organizationId: string;
+    experiments: ExperimentWithRuns[];
+
+    // Additional metadata
+    date_range?: {
+        startDate: string;
+        endDate: string;
+    };
+}
 
 interface ProjectData {
-    projectId: string;
-    projectName: string;
-    experimentReports: ExperimentReport[];
-    runsData?: RunReport[];
-    selectedRunData?: EmissionsTimeSeries;
-    experimentName?: string;
+    projects: ProjectWithExperiments[];
 }
 
 /**
@@ -20,7 +43,9 @@ interface ProjectData {
 export function exportToJson(data: ProjectData): void {
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
-    downloadFile(blob, `${data.projectName.replace(/\s+/g, "_")}_data.json`);
+    // Use the first project's name for the filename
+    const projectName = data.projects[0]?.name || "project";
+    downloadFile(blob, `${projectName.replace(/\s+/g, "_")}_data.json`);
 }
 
 /**
