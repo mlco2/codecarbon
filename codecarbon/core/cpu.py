@@ -66,9 +66,12 @@ def is_rapl_available() -> bool:
 def is_psutil_available():
     try:
         nice = psutil.cpu_times().nice
-        if nice > 0.1:
+        if nice > 0.0001:
             return True
         else:
+            logger.debug(
+                f"is_psutil_available() : psutil.cpu_times().nice is too small : {nice} !"
+            )
             return False
     except Exception as e:
         logger.debug(
