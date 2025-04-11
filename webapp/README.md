@@ -6,9 +6,9 @@ Welcome to the Code Carbon Next.js Project! This README will guide you through t
 
 Before you begin, ensure you have the following installed on your system:
 
-- Node.js (version 14 or later)
-- pnpm (better alternative to npm)
-- Git
+-   Node.js (version 14 or later)
+-   pnpm (better alternative to npm)
+-   Git
 
 ## Getting Started
 
@@ -50,14 +50,14 @@ Follow these steps to get the project up and running on your local machine:
 
 In the project directory, you can run:
 
-- `pnpm dev`: Runs the app in development mode
-- `pnpm build`: Builds the app for production
-- `pnpm start`: Runs the built app in production mode
-- `pnpm lint`: Runs the linter to check for code style issues
+-   `pnpm dev`: Runs the app in development mode
+-   `pnpm build`: Builds the app for production
+-   `pnpm start`: Runs the built app in production mode
+-   `pnpm lint`: Runs the linter to check for code style issues
 
 ## Learn More
 
 To learn more about Next.js, check out the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+-   [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+-   [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.

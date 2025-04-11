@@ -16,38 +16,45 @@ import useSWR from "swr";
 export default function HomePage() {
     const router = useRouter();
     const [redirecting, setRedirecting] = useState(true);
-    
+
     // Fetch organizations to find the default
-    const { data: organizations, error } = useSWR<Organization[]>('/organizations', fetcher, {
-        revalidateOnFocus: false,
-    });
-    
+    const { data: organizations, error } = useSWR<Organization[]>(
+        "/organizations",
+        fetcher,
+        {
+            revalidateOnFocus: false,
+        },
+    );
+
     useEffect(() => {
         // Check if we have organizations data
         if (organizations && organizations.length > 0) {
             // Find default org ID - using the first organization
             const defaultOrgId = organizations[0].id;
-            
+
             // Save to localStorage
             try {
                 localStorage.setItem("organizationId", defaultOrgId);
-                localStorage.setItem("organizationName", organizations[0].name || '');
+                localStorage.setItem(
+                    "organizationName",
+                    organizations[0].name || "",
+                );
             } catch (error) {
                 console.error("Error writing to localStorage:", error);
             }
-            
+
             // Navigate to the organization page without a page reload
             router.push(`/${defaultOrgId}`);
-        } else if (organizations && organizations.length === 0 || error) {
+        } else if ((organizations && organizations.length === 0) || error) {
             setRedirecting(false);
         }
     }, [organizations, router, error]);
-    
+
     // Show a loader while we fetch the data and redirect
     if (redirecting) {
         return <Loader />;
     }
-    
+
     // Fallback content if there are no organizations
     return (
         <div className="container mx-auto p-4">

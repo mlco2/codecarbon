@@ -49,15 +49,14 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
 
         try {
             const access = 2;
-            const newToken = await toast.promise(
-                createProjectToken(projectId, tokenName, access),
-                {
+            const newToken = await toast
+                .promise(createProjectToken(projectId, tokenName, access), {
                     loading: `Creating token ${tokenName}...`,
                     success: `Token ${tokenName} created successfully`,
                     error: (error) =>
                         `Failed to create token: ${error instanceof Error ? error.message : "Unknown error"}`,
-                },
-            ).unwrap();
+                })
+                .unwrap();
 
             setCreatedToken(newToken.token);
             setTokenName("");

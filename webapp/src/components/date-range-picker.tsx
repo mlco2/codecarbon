@@ -18,13 +18,15 @@ interface DateRangePickerProps {
 
 export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
     const [open, setOpen] = useState(false);
-    const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(date);
-    
+    const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(
+        date,
+    );
+
     const handleApply = () => {
         onDateChange(tempDateRange);
         setOpen(false);
     };
-    
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -69,10 +71,12 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
                         >
                             Cancel
                         </Button>
-                        <Button 
+                        <Button
                             size="sm"
                             onClick={handleApply}
-                            disabled={!tempDateRange?.from || !tempDateRange?.to}
+                            disabled={
+                                !tempDateRange?.from || !tempDateRange?.to
+                            }
                         >
                             Apply
                         </Button>

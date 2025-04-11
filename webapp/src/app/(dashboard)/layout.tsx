@@ -20,12 +20,16 @@ export default function MainLayout({
     children: React.ReactNode;
 }>) {
     const [initialLoad, setInitialLoad] = useState(true);
-    
+
     // Fetch organizations for the navbar
-    const { data: orgs, error } = useSWR<Organization[]>('/organizations', fetcher, {
-        revalidateOnFocus: false, 
-    });
-    
+    const { data: orgs, error } = useSWR<Organization[]>(
+        "/organizations",
+        fetcher,
+        {
+            revalidateOnFocus: false,
+        },
+    );
+
     useEffect(() => {
         // Set initial load to false after first data fetch
         if (orgs || error) {
@@ -33,11 +37,11 @@ export default function MainLayout({
             const timer = setTimeout(() => {
                 setInitialLoad(false);
             }, 100);
-            
+
             return () => clearTimeout(timer);
         }
     }, [orgs, error]);
-    
+
     return (
         <div className="grid h-screen w-full md:grid-cols-[220px_1fr]">
             {/* Side bar that shows only on screens larger than 768px */}
