@@ -1,117 +1,123 @@
-"use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ProjectTokensTable } from "../../../../../../components/projectTokens/projectTokenTable";
-import { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
 import { getOneProject, updateProject } from "@/server-functions/projects";
 import { Project } from "@/types/project";
+import { revalidatePath } from "next/cache";
+import { ProjectTokensTable } from "../../../../../../components/projectTokens/projectTokenTable";
+import ShareProjectButton from "@/components/share-project-button";
 
-export default function ProjectSettingsPage({
-    params,
-}: Readonly<{ params: { projectId: string } }>) {
-    const [project, setProject] = useState({
-        name: "Project Name",
-        description: "Project Description",
+// Server Action for updating project
+async function updateProjectAction(projectId: string, formData: FormData) {
+    "use server";
+
+    const name = formData.get("name") as string;
+    const description = formData.get("description") as string;
+    const isPublic = formData.has("isPublic");
+
+    console.log("SAVING PROJECT:", { name, description, public: isPublic });
+
+    const response = await updateProject(projectId, {
+        name,
+        description,
+        public: isPublic,
     });
+    console.log("RESPONSE:", response);
 
-    const [saveSuccess, setSaveSuccess] = useState(false);
+    revalidatePath(`/projects/${projectId}/settings`);
+}
 
-    useEffect(() => {
-        const fetchProject = async () => {
-            // Fetch the project details from the API
-            const response: Project = await getOneProject(params.projectId);
-            setProject(response);
-        };
-        fetchProject();
-    }, [params.projectId]);
+export default async function ProjectSettingsPage({
+    params,
+}: {
+    params: Promise<{ projectId: string }>;
+}) {
+    const { projectId } = await params;
+    const project: Project | null = await getOneProject(projectId);
 
-    const handleClick = async () => {
-        try {
-            // Update the project details
-            const response = await updateProject(params.projectId, project);
-            setSaveSuccess(true);
-        } catch (error) {
-            setSaveSuccess(false);
-        } finally {
-            setTimeout(() => setSaveSuccess(false), 3000); // Hide the success message after 3 seconds
-        }
-    };
+    if (!project) {
+        return <div>Project not found</div>;
+    }
 
-    // Get the projectId from the URL
-    const projectId = params.projectId;
     return (
         <div className="flex px-4 space-y-6 md:px-6 flex-col">
             <div className="space-y-1.5">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-between">
                     <div className="space-y-1.5">
                         <h1 className="text-2xl font-bold">Settings</h1>
                         <p className="font-semi-bold">Project Settings</p>
                     </div>
+                    <div>
+                        <ShareProjectButton
+                            projectId={projectId}
+                            isPublic={project?.public}
+                        />
+                    </div>
                 </div>
             </div>
             <div className="flex">
-                <main className="flex-1 p-4 md:p-8">
+                <div className="flex-1 p-4 md:p-8">
                     <h1 className="text-2xl font-semi-bold">General</h1>
                     <div className="flex-1 p-4 md:p-8">
                         <section className="px-4 space-y-6 md:px-6">
-                            <div className="space-y-4">
-                                <div className="max-w-md">
-                                    <div>
-                                        <Label htmlFor="project-name">
+                            <form
+                                action={updateProjectAction.bind(
+                                    null,
+                                    projectId,
+                                )}
+                            >
+                                <div className="space-y-4">
+                                    <div className="max-w-md">
+                                        <Label htmlFor="name">
                                             Project Name
                                         </Label>
                                         <Input
-                                            id="project-name"
+                                            id="name"
+                                            name="name"
                                             placeholder="Enter project name"
                                             className="mt-1 w-full"
-                                            value={project.name}
-                                            onChange={(e) =>
-                                                setProject({
-                                                    ...project,
-                                                    name: e.target.value,
-                                                })
-                                            }
+                                            defaultValue={project?.name}
                                         />
                                     </div>
-                                </div>
-                                <div className="max-w-md">
-                                    <div>
-                                        <Label htmlFor="project-description">
+                                    <div className="max-w-md">
+                                        <Label htmlFor="description">
                                             Project Description
                                         </Label>
                                         <Input
-                                            id="project-description"
+                                            id="description"
+                                            name="description"
                                             placeholder="Enter project description"
                                             className="mt-1 w-full"
-                                            value={project.description}
-                                            onChange={(e) =>
-                                                setProject({
-                                                    ...project,
-                                                    description: e.target.value,
-                                                })
-                                            }
+                                            defaultValue={project?.description}
                                         />
                                     </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Switch
+                                            id="isPublic"
+                                            name="isPublic"
+                                            defaultChecked={project?.public}
+                                            value="true"
+                                        />
+                                        <Label htmlFor="isPublic">
+                                            Make project public
+                                        </Label>
+                                        <p className="text-sm text-muted-foreground ml-2">
+                                            (enables public sharing link)
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="flex justify-start p-4 mt-6 pr-8">
-                                <Button variant="default" onClick={handleClick}>
-                                    Save Changes
-                                </Button>
-                                {saveSuccess && (
-                                    <p className="text-primary-foreground1 ml-4">
-                                        ✓ Changes saved successfully!
-                                    </p>
-                                )}
-                            </div>
+                                <div className="flex justify-start p-4 mt-6 pr-8">
+                                    <Button type="submit">Save Changes</Button>
+                                </div>
+                            </form>
                         </section>
                     </div>
                     <h1 className="p-4 text-2xl font-semi-bold">API tokens</h1>
                     <section className="px-4 md:px-6">
                         <ProjectTokensTable projectId={projectId} />
                     </section>
-                </main>
+                </div>
             </div>
         </div>
     );

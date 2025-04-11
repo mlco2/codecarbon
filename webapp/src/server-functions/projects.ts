@@ -1,58 +1,57 @@
-import { Project } from "@/types/project";
+import { Project, ProjectInputs } from "@/types/project";
+import { fetchApiServer } from "@/helpers/api-server";
 
 export const createProject = async (
     organizationId: string,
     project: { name: string; description: string },
-): Promise<Project> => {
-    const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                ...project,
-                organization_id: organizationId,
-            }),
-        },
-    );
-    const data = await response.json();
-    return data;
+): Promise<Project | null> => {
+    const result = await fetchApiServer<Project>("/projects", {
+        method: "POST",
+        body: JSON.stringify({
+            ...project,
+            organization_id: organizationId,
+        }),
+    });
+
+    if (!result) {
+        return null;
+    }
+    return result;
 };
+
 export const updateProject = async (
     projectId: string,
-    project: { name: string; description: string },
-): Promise<Project> => {
-    const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
-        {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                ...project,
-            }),
-        },
-    );
-    const data = await response.json();
-    return data;
+    project: ProjectInputs,
+): Promise<Project | null> => {
+    const result = await fetchApiServer<Project>(`/projects/${projectId}`, {
+        method: "PATCH",
+        body: JSON.stringify(project),
+    });
+    if (!result) {
+        return null;
+    }
+    return result;
 };
 
 export const getProjects = async (
     organizationId: string,
-): Promise<Project[]> => {
-    const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects?organization=${organizationId}`,
+): Promise<Project[] | null> => {
+    const projects = await fetchApiServer<Project[]>(
+        `/projects?organization=${organizationId}`,
     );
-    const data = await response.json();
-    return data;
+    if (!projects) {
+        return [];
+    }
+    return projects;
 };
-export const getOneProject = async (projectId: string): Promise<Project> => {
-    const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`,
-    );
-    const data = await response.json();
-    return data;
+
+export const getOneProject = async (
+    projectId: string,
+): Promise<Project | null> => {
+    const project = await fetchApiServer<Project>(`/projects/${projectId}`);
+    console.log("project", JSON.stringify(project, null, 2));
+    if (!project) {
+        return null;
+    }
+    return project;
 };

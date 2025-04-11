@@ -4,5 +4,5 @@ import { RunMetadata } from "@/types/run-metadata";
 export interface EmissionsTimeSeries {
     runId: string;
     emissions: Emission[];
-    metadata: RunMetadata;
+    metadata: RunMetadata | null;
 }
