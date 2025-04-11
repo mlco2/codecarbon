@@ -221,7 +221,7 @@ class ResourceTracker:
         self.set_CPU_tracking()
         self.set_GPU_tracking()
 
-        logger.debug(
+        logger.info(
             f"""The below tracking methods have been set up:
                 RAM Tracking Method: {self.ram_tracker}
                 CPU Tracking Method: {self.cpu_tracker}
