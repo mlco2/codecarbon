@@ -76,7 +76,7 @@ def is_psutil_available():
     except Exception as e:
         logger.debug(
             "Not using the psutil interface, an exception occurred while instantiating "
-            + f"psutil.cpu_percent : {e}",
+            + f"psutil.cpu_times : {e}",
         )
         return False
 
