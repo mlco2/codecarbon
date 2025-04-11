@@ -30,10 +30,23 @@ export default function RadialChart({
 }: Readonly<{ data: chartDataType }>) {
     const chartConfig = {
         value: {
-            label: data.label,
+            label: data?.label || "",
             color: "hsl(var(--primary))",
         },
     } satisfies ChartConfig;
+
+    // Check if data is missing or empty
+    if (!data || data.value === undefined) {
+        return (
+            <Card className="flex flex-col">
+                <CardContent className="flex-1 pb-0 flex items-center justify-center">
+                    <div className="text-muted-foreground text-lg h-[250px] flex items-center">
+                        No data available
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <Card className="flex flex-col">

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/helpers/utils";
 import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 
@@ -16,8 +17,18 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
+    const [open, setOpen] = useState(false);
+    const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(
+        date,
+    );
+
+    const handleApply = () => {
+        onDateChange(tempDateRange);
+        setOpen(false);
+    };
+
     return (
-        <Popover>
+        <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
                     id="date"
@@ -43,14 +54,34 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={date?.from}
-                    selected={date}
-                    onSelect={onDateChange}
-                    numberOfMonths={2}
-                />
+                <div className="p-0">
+                    <Calendar
+                        initialFocus
+                        mode="range"
+                        defaultMonth={date?.from}
+                        selected={tempDateRange}
+                        onSelect={setTempDateRange}
+                        numberOfMonths={2}
+                    />
+                    <div className="flex items-center justify-end gap-2 p-3 border-t">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={handleApply}
+                            disabled={
+                                !tempDateRange?.from || !tempDateRange?.to
+                            }
+                        >
+                            Apply
+                        </Button>
+                    </div>
+                </div>
             </PopoverContent>
         </Popover>
     );
