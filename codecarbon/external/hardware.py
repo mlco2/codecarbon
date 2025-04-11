@@ -185,7 +185,7 @@ class CPU(BaseHardware):
             return CPU._calculate_power_from_cpu_load_treadripper(tdp, cpu_load)
         else:
             # Minimum power consumption is 10% of TDP
-            return min(tdp * (cpu_load / 100.0), tdp * 0.1)
+            return max(tdp * (cpu_load / 100.0), tdp * 0.1)
 
     @staticmethod
     def _calculate_power_from_cpu_load_treadripper(tdp, cpu_load):
