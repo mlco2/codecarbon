@@ -105,7 +105,7 @@ class TestCPULoad(unittest.TestCase):
         tests_values = [
             {
                 "cpu_load": 0.0,
-                "expected_power": 0.0,
+                "expected_power": tdp * 0.1,
             },
             {
                 "cpu_load": 50,
