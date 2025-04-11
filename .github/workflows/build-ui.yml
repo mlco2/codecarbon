@@ -26,7 +26,7 @@ jobs:
                   version: 8
             - name: Install dependencies
               working-directory: ./webapp
-              run: pnpm install --frozen-lockfile
+              run: pnpm install
             - name: Build
               working-directory: ./webapp
               run: pnpm run build
