@@ -4,8 +4,9 @@ from typing import List, Union
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
-from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
 from codecarbon.external.logger import logger
+from codecarbon.external.ram import RAM
 
 
 class ResourceTracker:
@@ -16,8 +17,19 @@ class ResourceTracker:
 
     def set_RAM_tracking(self):
         logger.info("[setup] RAM Tracking...")
-        self.ram_tracker = "3 Watts for 8 GB ratio constant"
-        ram = RAM(tracking_mode=self.tracker._tracking_mode)
+        if self.tracker._force_ram_power is not None:
+            self.ram_tracker = (
+                f"User specified constant: {self.tracker._force_ram_power} Watts"
+            )
+            logger.info(
+                f"Using user-provided RAM power: {self.tracker._force_ram_power} Watts"
+            )
+        else:
+            self.ram_tracker = "RAM power estimation model"
+        ram = RAM(
+            tracking_mode=self.tracker._tracking_mode,
+            force_ram_power=self.tracker._force_ram_power,
+        )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
         self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
@@ -25,14 +37,18 @@ class ResourceTracker:
         logger.info("[setup] CPU Tracking...")
         cpu_number = self.tracker._conf.get("cpu_physical_count")
         tdp = cpu.TDP()
-
-        max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
-        if self.tracker._conf.get("force_mode_cpu_load", False) and tdp.tdp is not None:
-            if tdp.tdp is None:
-                logger.warning(
-                    "Force CPU load mode requested but TDP could not be calculated. Falling back to another mode."
-                )
-            elif cpu.is_psutil_available():
+        if self.tracker._force_cpu_power is not None:
+            logger.info(
+                f"Using user-provided CPU power: {self.tracker._force_cpu_power} Watts"
+            )
+            self.cpu_tracker = "User Input TDP constant"
+            max_power = self.tracker._force_cpu_power
+        else:
+            max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+        if self.tracker._conf.get("force_mode_cpu_load", False) and (
+            tdp.tdp is not None or self.tracker._force_cpu_power is not None
+        ):
+            if cpu.is_psutil_available():
                 # Register a CPU with MODE_CPU_LOAD
                 model = tdp.model
                 hardware_cpu = CPU.from_utils(
@@ -50,7 +66,7 @@ class ResourceTracker:
                 logger.warning(
                     "Force CPU load mode requested but psutil is not available."
                 )
-        if cpu.is_powergadget_available() and self.tracker._default_cpu_power is None:
+        if cpu.is_powergadget_available() and self.tracker._force_cpu_power is None:
             logger.info("Tracking Intel CPU via Power Gadget")
             self.cpu_tracker = "Power Gadget"
             hardware_cpu = CPU.from_utils(
@@ -73,7 +89,7 @@ class ResourceTracker:
         # change code to check if powermetrics needs to be installed or just sudo setup
         elif (
             powermetrics.is_powermetrics_available()
-            and self.tracker._default_cpu_power is None
+            and self.tracker._force_cpu_power is None
         ):
             logger.info("Tracking Apple CPU and GPU via PowerMetrics")
             self.gpu_tracker = "PowerMetrics"
@@ -113,9 +129,9 @@ class ResourceTracker:
             )
             self.cpu_tracker = "TDP constant"
             model = tdp.model
-            if (max_power is None) and self.tracker._default_cpu_power:
+            if (max_power is None) and self.tracker._force_cpu_power:
                 # We haven't been able to calculate CPU power but user has input a default one. We use it
-                user_input_power = self.tracker._default_cpu_power
+                user_input_power = self.tracker._force_cpu_power
                 logger.debug(f"Using user input TDP: {user_input_power} W")
                 self.cpu_tracker = "User Input TDP constant"
                 max_power = user_input_power
@@ -205,7 +221,7 @@ class ResourceTracker:
         self.set_CPU_tracking()
         self.set_GPU_tracking()
 
-        logger.debug(
+        logger.info(
             f"""The below tracking methods have been set up:
                 RAM Tracking Method: {self.ram_tracker}
                 CPU Tracking Method: {self.cpu_tracker}

@@ -32,13 +32,22 @@ Input Parameters
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
    * - pue
-     - | PUE (Power Usage Effectiveness) of the data center where the experiment is being run.
-   * - default_cpu_power
-     - | Default CPU power consumption in watts, defaults to ``42.5``
-       | *(POWER_CONSTANT x CONSUMPTION_PERCENTAGE_CONSTANT)*
+     - | PUE (Power Usage Effectiveness) of the data center
+       | where the experiment is being run.
+   * - force_cpu_power
+     - | Force the CPU max power consumption in watts,
+       | use this if you know the TDP of your machine.
+       | *(POWER_CONSTANT x CONSUMPTION_PERCENTAGE)*
+   * - force_ram_power
+     - | Force the RAM power consumption in watts,
+       | use this if you know the power consumption of your RAM.
+       | Estimate it with ``sudo lshw -C memory -short | grep DIMM``
+       | to get the number of RAM slots used, then do
+       | *RAM power in W = Number of RAM Slots * 5 Watts*
    * - allow_multiple_runs
-     - | Boolean variable indicating if multiple instance of CodeCarbon on the same machine
-       | is allowed, defaults to ``False``.
+     - | Boolean variable indicating if multiple instance of CodeCarbon
+       | on the same machine is allowed,
+       | defaults to ``True`` since v3. Used to be ``False`` in v2.
 
 PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.
 Old data-centers have a PUE up to 2.2, where new green one could be as low as 1.1.
@@ -111,7 +120,8 @@ Specific parameters for offline mode
    * - Parameter
      - Description
    * - country_iso_code
-     - | 3-letter ISO Code of the country where the experiment is being run.
+     - | 3-letter ISO Code of the country
+       | where the experiment is being run.
        | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`_
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted

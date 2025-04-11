@@ -30,6 +30,7 @@
 # - prometheus-client
 # - psutil>=6.0.0
 # - py-cpuinfo
+# - pydantic
 # - pynvml
 # - questionary
 # - rapidfuzz
@@ -38,16 +39,16 @@
 # - typer
 #
 
-alembic==1.14.1
+alembic==1.15.2
     # via hatch.envs.api
-anyio==4.8.0
+anyio==4.9.0
     # via
     #   httpx
     #   starlette
     #   watchfiles
 arrow==1.3.0
     # via hatch.envs.api
-bcrypt==4.2.1
+bcrypt==4.3.0
     # via hatch.envs.api
 certifi==2025.1.31
     # via
@@ -63,15 +64,15 @@ click==8.1.8
     #   hatch.envs.api
     #   typer
     #   uvicorn
-cryptography==44.0.1
+cryptography==44.0.2
     # via jwcrypto
-dependency-injector==4.45.0
+dependency-injector==4.46.0
     # via hatch.envs.api
 dnspython==2.7.0
     # via email-validator
 email-validator==2.2.0
     # via pydantic
-fastapi==0.115.8
+fastapi==0.115.12
     # via
     #   hatch.envs.api
     #   fastapi-pagination
@@ -100,7 +101,7 @@ idna==3.10
     #   email-validator
     #   httpx
     #   requests
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 jwcrypto==1.5.6
     # via fief-client
@@ -114,9 +115,9 @@ markupsafe==3.0.2
     # via mako
 mdurl==0.1.2
     # via markdown-it-py
-mock==5.1.0
+mock==5.2.0
     # via hatch.envs.api
-numpy==2.2.3
+numpy==2.2.4
     # via
     #   hatch.envs.api
     #   pandas
@@ -151,16 +152,16 @@ pyjwt==2.10.1
     # via hatch.envs.api
 pynvml==12.0.0
     # via hatch.envs.api
-pytest==8.3.4
+pytest==8.3.5
     # via hatch.envs.api
 python-dateutil==2.9.0.post0
     # via
     #   hatch.envs.api
     #   arrow
     #   pandas
-python-dotenv==1.0.1
+python-dotenv==1.1.0
     # via uvicorn
-pytz==2025.1
+pytz==2025.2
     # via pandas
 pyyaml==6.0.2
     # via
@@ -168,7 +169,7 @@ pyyaml==6.0.2
     #   uvicorn
 questionary==2.1.0
     # via hatch.envs.api
-rapidfuzz==3.12.1
+rapidfuzz==3.12.2
     # via hatch.envs.api
 requests==2.32.3
     # via
@@ -177,9 +178,9 @@ requests==2.32.3
     #   responses
 requests-mock==1.12.1
     # via hatch.envs.api
-responses==0.25.6
+responses==0.25.7
     # via hatch.envs.api
-rich==13.9.4
+rich==14.0.0
     # via
     #   hatch.envs.api
     #   typer
@@ -195,15 +196,15 @@ sqlalchemy==1.4.54
     # via
     #   hatch.envs.api
     #   alembic
-starlette==0.45.3
+starlette==0.46.1
     # via fastapi
 termcolor==2.3.0
     # via yaspin
-typer==0.15.1
+typer==0.15.2
     # via hatch.envs.api
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing-extensions==4.12.2
+typing-extensions==4.13.0
     # via
     #   alembic
     #   anyio
@@ -211,7 +212,7 @@ typing-extensions==4.12.2
     #   jwcrypto
     #   pydantic
     #   typer
-tzdata==2025.1
+tzdata==2025.2
     # via pandas
 urllib3==2.3.0
     # via
@@ -225,7 +226,7 @@ watchfiles==1.0.4
     # via uvicorn
 wcwidth==0.2.13
     # via prompt-toolkit
-websockets==15.0
+websockets==15.0.1
     # via uvicorn
 yaspin==3.1.0
     # via fief-client
