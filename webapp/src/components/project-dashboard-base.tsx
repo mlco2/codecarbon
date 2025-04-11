@@ -1,21 +1,22 @@
 import { DateRangePicker } from "@/components/date-range-picker";
-import { Separator } from "@/components/ui/separator";
-import Image from "next/image";
-import ExperimentsBarChart from "@/components/experiment-bar-chart";
-import RunsScatterChart from "@/components/runs-scatter-chart";
 import EmissionsTimeSeriesChart from "@/components/emissions-time-series";
+import ExperimentsBarChart from "@/components/experiment-bar-chart";
 import RadialChart from "@/components/radial-chart";
-import { Button, DateRange } from "react-day-picker";
+import RunsScatterChart from "@/components/runs-scatter-chart";
+import { Separator } from "@/components/ui/separator";
+import { getDefaultDateRange } from "@/helpers/date-utils";
+import { ExperimentReport } from "@/types/experiment-report";
 import { Project } from "@/types/project";
 import { ConvertedValues, RadialChartData } from "@/types/project-dashboard";
-import { getDefaultDateRange } from "@/helpers/date-utils";
+import Image from "next/image";
 import { ReactNode, useState } from "react";
+import { DateRange } from "react-day-picker";
 import ChartSkeleton from "./chart-skeleton";
-import { Skeleton } from "./ui/skeleton";
-import { CardContent } from "./ui/card";
-import { Card } from "./ui/card";
-import { ExperimentReport } from "@/types/experiment-report";
 import CreateExperimentModal from "./createExperimentModal";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Skeleton } from "./ui/skeleton";
+import { useRouter } from "next/navigation";
 
 export interface ProjectDashboardBaseProps {
     isPublicView: boolean;
@@ -54,6 +55,7 @@ export default function ProjectDashboardBase({
     headerContent,
     isLoading = false,
 }: ProjectDashboardBaseProps) {
+    const router = useRouter();
     const [isExperimentModalOpen, setIsExperimentModalOpen] = useState(false);
 
     const handleCreateExperimentClick = () => {
@@ -61,7 +63,7 @@ export default function ProjectDashboardBase({
     };
 
     const refreshExperimentList = async () => {
-        // Logic to refresh experiments if needed
+        router.refresh();
     };
 
     const experimentName = experimentsReportData.find(
