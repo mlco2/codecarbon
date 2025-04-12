@@ -85,7 +85,7 @@ We think this is the best way to use CodeCarbon. Still only two lines of code, a
 Using the Explicit Object
 -------------------------
 
-This is the recommended way to use the CodeCarbon tracker in a Notebook : you instantiate the tracker and call the `start()` method at the begginning of the Notebook. You call the stop() method at the end of the Notebook to stop the tracker and get the emissions.
+This is the recommended way to use the CodeCarbon tracker in a Notebook : you instantiate the tracker and call the `start()` method at the beginning of the Notebook. You call the stop() method at the end of the Notebook to stop the tracker and get the emissions.
 
 If not in an interactive Notebook, always use a `try...finally` block to ensure that the tracker is stopped even if an error occurs during training.
 This is important to ensure the CodeCarbon scheduler is stopped. If you don't use `try...finally`, the scheduler will continue running in the background after your computation code has crashed, so your program will never finish.

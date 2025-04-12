@@ -169,7 +169,7 @@
 </section>
 <section id="using-the-explicit-object">
 <h2>Using the Explicit Object<a class="headerlink" href="#using-the-explicit-object" title="Link to this heading"></a></h2>
-<p>This is the recommended way to use the CodeCarbon tracker in a Notebook : you instantiate the tracker and call the <cite>start()</cite> method at the begginning of the Notebook. You call the stop() method at the end of the Notebook to stop the tracker and get the emissions.</p>
+<p>This is the recommended way to use the CodeCarbon tracker in a Notebook : you instantiate the tracker and call the <cite>start()</cite> method at the beginning of the Notebook. You call the stop() method at the end of the Notebook to stop the tracker and get the emissions.</p>
 <p>If not in an interactive Notebook, always use a <cite>try…finally</cite> block to ensure that the tracker is stopped even if an error occurs during training.
 This is important to ensure the CodeCarbon scheduler is stopped. If you don’t use <cite>try…finally</cite>, the scheduler will continue running in the background after your computation code has crashed, so your program will never finish.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
