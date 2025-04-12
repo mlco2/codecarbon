@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Examples &mdash; CodeCarbon 3.0.0_rc5 documentation</title>
+  <title>Examples &mdash; CodeCarbon 3.0.0_rc7 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=0a591694"></script>
+      <script src="_static/documentation_options.js?v=99d918e7"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -170,7 +170,7 @@
 <section id="using-the-explicit-object">
 <h2>Using the Explicit Object<a class="headerlink" href="#using-the-explicit-object" title="Link to this heading"></a></h2>
 <p>This is the recommended way to use the CodeCarbon tracker in a Notebook : you instantiate the tracker and call the <cite>start()</cite> method at the begginning of the Notebook. You call the stop() method at the end of the Notebook to stop the tracker and get the emissions.</p>
-<p>If not in an interractive Notebook, always use a <cite>try…finally</cite> block to ensure that the tracker is stopped even if an error occurs during training.
+<p>If not in an interactive Notebook, always use a <cite>try…finally</cite> block to ensure that the tracker is stopped even if an error occurs during training.
 This is important to ensure the CodeCarbon scheduler is stopped. If you don’t use <cite>try…finally</cite>, the scheduler will continue running in the background after your computation code has crashed, so your program will never finish.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 
