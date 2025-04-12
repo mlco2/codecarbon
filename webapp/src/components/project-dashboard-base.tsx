@@ -206,23 +206,27 @@ export default function ProjectDashboardBase({
                 <div className="flex items-center justify-start px-2">
                     <p className="text-sm font-medium pr-2 text-center">
                         {projectExperiments.length === 0
-                            ? "No experiments have been created yet."
+                            ? isPublicView
+                                ? "No experiment data in the selected date range" // This is because for public projects we show only the experiments that have runs, but for private projects we show in this list as well the projects created but without runs yet
+                                : "No experiments have been created yet."
                             : "Set of experiments included in this project"}
                     </p>
-                    <div className="flex items-center justify-center px-2">
-                        <Button
-                            onClick={handleCreateExperimentClick}
-                            className="bg-primary text-primary-foreground"
-                        >
-                            + Add Experiment
-                        </Button>
-                        <CreateExperimentModal
-                            projectId={project.id}
-                            isOpen={isExperimentModalOpen}
-                            onClose={() => setIsExperimentModalOpen(false)}
-                            onExperimentCreated={refreshExperimentList}
-                        />
-                    </div>
+                    {!isPublicView && (
+                        <div className="flex items-center justify-center px-2">
+                            <Button
+                                onClick={handleCreateExperimentClick}
+                                className="bg-primary text-primary-foreground"
+                            >
+                                + Add Experiment
+                            </Button>
+                            <CreateExperimentModal
+                                projectId={project.id}
+                                isOpen={isExperimentModalOpen}
+                                onClose={() => setIsExperimentModalOpen(false)}
+                                onExperimentCreated={refreshExperimentList}
+                            />
+                        </div>
+                    )}
                 </div>
                 {projectExperiments.length !== 0 && (
                     <Card className="flex flex-col md:flex-row justify-between md:items-center gap-4 py-4 px-4 w-full max-w-3/4">
@@ -231,7 +235,11 @@ export default function ProjectDashboardBase({
                                 <tr>
                                     <th className="text-left">Experiment</th>
                                     <th className="text-left">Description</th>
-                                    <th className="text-left">Experiment id</th>
+                                    {!isPublicView && (
+                                        <th className="text-left">
+                                            Experiment id
+                                        </th>
+                                    )}
                                 </tr>
                             </TableHeader>
                             <TableBody>
@@ -252,7 +260,9 @@ export default function ProjectDashboardBase({
                                     >
                                         <td>{experiment.name}</td>
                                         <td>{experiment.description}</td>
-                                        <td>{experiment.id}</td>
+                                        {!isPublicView && (
+                                            <td>{experiment.id}</td>
+                                        )}
                                     </tr>
                                 ))}
                             </TableBody>

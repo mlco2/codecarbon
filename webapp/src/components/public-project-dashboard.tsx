@@ -2,6 +2,7 @@ import { PublicProjectDashboardProps } from "@/types/public-project-dashboard";
 import ProjectDashboardBase from "./project-dashboard-base";
 import { Badge } from "@/components/ui/badge";
 import { Share2Icon } from "lucide-react";
+import { Experiment } from "@/types/experiment";
 
 export default function PublicProjectDashboard({
     project,
@@ -10,7 +11,6 @@ export default function PublicProjectDashboard({
     radialChartData,
     convertedValues,
     experimentsReportData,
-    projectExperiments,
     runData,
     selectedExperimentId,
     selectedRunId,
@@ -29,6 +29,16 @@ export default function PublicProjectDashboard({
             </div>
             <p className="text-muted-foreground">{project.description}</p>
         </div>
+    );
+    const projectExperiments = experimentsReportData.map(
+        (experiment): Experiment => {
+            return {
+                id: experiment.experiment_id,
+                description: experiment.description || "",
+                name: experiment.name,
+                project_id: project.id,
+            };
+        },
     );
 
     return (

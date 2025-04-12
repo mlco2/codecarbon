@@ -68,6 +68,7 @@ export async function getProjectEmissionsByExperiment(
     return result.map((experimentReport: ExperimentReport) => {
         return {
             experiment_id: experimentReport.experiment_id,
+            description: experimentReport.description,
             name: experimentReport.name,
             emissions: experimentReport.emissions,
             energy_consumed: experimentReport.energy_consumed,

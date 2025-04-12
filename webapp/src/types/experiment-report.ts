@@ -4,4 +4,5 @@ export interface ExperimentReport {
     emissions: number;
     energy_consumed: number;
     duration: number;
+    description?: string;
 }
