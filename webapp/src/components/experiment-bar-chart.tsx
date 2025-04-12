@@ -1,7 +1,7 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { ExperimentReport } from "@/types/experiment-report";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
 import {
     Card,
@@ -16,41 +16,18 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
+import { exportExperimentsToCsv } from "@/utils/export";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ExportCsvButton } from "./export-csv-button";
 
-type Params = {
-    projectId: string;
-    startDate: string;
-    selectedExperimentId: string;
-    endDate: string;
-};
 interface ExperimentsBarChartProps {
-    params: Params;
+    isPublicView: boolean;
+    experimentsReportData: ExperimentReport[];
     onExperimentClick: (experimentId: string) => void;
-}
-
-async function getProjectEmissionsByExperiment(
-    projectId: string,
-    startDate: string,
-    endDate: string,
-): Promise<ExperimentReport[]> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments/sums?start_date=${startDate}&end_date=${endDate}`;
-
-    const res = await fetch(url);
-
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch data");
-    }
-    const result = await res.json();
-    return result.map((experimentReport: ExperimentReport) => {
-        return {
-            experiment_id: experimentReport.experiment_id,
-            name: experimentReport.name,
-            emissions: experimentReport.emissions,
-            energy_consumed: experimentReport.energy_consumed,
-        };
-    });
+    selectedExperimentId: string;
+    localLoading?: boolean;
+    projectName: string;
 }
 
 const chartConfig = {
@@ -65,35 +42,25 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function ExperimentsBarChart({
-    params,
+    isPublicView,
+    experimentsReportData,
     onExperimentClick,
+    selectedExperimentId,
+    localLoading = false,
+    projectName,
 }: ExperimentsBarChartProps) {
-    const [experimentsReportData, setExperimentsReportData] = useState<
-        ExperimentReport[]
-    >([]);
     const [selectedBar, setSelectedBar] = useState(0);
+    const [isExporting, setIsExporting] = useState(false);
 
     const handleBarClick = (data: ExperimentReport, index: number) => {
         onExperimentClick(data.experiment_id);
     };
     useEffect(() => {
         const highlightedBar = experimentsReportData.findIndex(
-            (experiment) =>
-                experiment.experiment_id === params.selectedExperimentId,
+            (experiment) => experiment.experiment_id === selectedExperimentId,
         );
         setSelectedBar(highlightedBar);
-    }, [params.selectedExperimentId, experimentsReportData]);
-    useEffect(() => {
-        const fetchData = async () => {
-            const data = await getProjectEmissionsByExperiment(
-                params.projectId,
-                params.startDate,
-                params.endDate,
-            );
-            setExperimentsReportData(data);
-        };
-        fetchData();
-    }, [params.projectId, params.startDate, params.endDate]);
+    }, [selectedExperimentId, experimentsReportData]);
 
     const CustomBar = (props: any) => {
         const { fill, x, y, width, height, index } = props;
@@ -115,35 +82,74 @@ export default function ExperimentsBarChart({
     };
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Project experiment runs</CardTitle>
-                <CardDescription>
-                    Click an experiment to see the runs on the chart on the
-                    right
-                </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Project experiment runs</CardTitle>
+                    <CardDescription>
+                        Click an experiment to see the runs on the chart on the
+                        right
+                    </CardDescription>
+                </div>
+                {!isPublicView && (
+                    <ExportCsvButton
+                        isDisabled={
+                            isExporting || experimentsReportData.length === 0
+                        }
+                        onDownload={async () => {
+                            setIsExporting(true);
+                            exportExperimentsToCsv(
+                                experimentsReportData,
+                                projectName,
+                            );
+                            setIsExporting(false);
+                        }}
+                        loadingMessage="Exporting experiments..."
+                        successMessage="Experiments exported successfully"
+                        errorMessage="Failed to export experiments"
+                    />
+                )}
             </CardHeader>
             <CardContent>
-                <ChartContainer config={chartConfig}>
-                    <BarChart accessibilityLayer data={experimentsReportData}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="name"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                            tickFormatter={(value) => value.slice(0, 3)}
-                        />
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent indicator="dashed" />}
-                        />
-                        <Bar
-                            dataKey="emissions"
-                            shape={<CustomBar />}
-                            radius={4}
-                        />
-                    </BarChart>
-                </ChartContainer>
+                {localLoading ? (
+                    <div className="flex items-center justify-center h-[300px]">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <ChartContainer config={chartConfig}>
+                        {experimentsReportData.length > 0 ? (
+                            <BarChart
+                                accessibilityLayer
+                                data={experimentsReportData}
+                            >
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="name"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    tickFormatter={(value) => value.slice(0, 3)}
+                                />
+                                <ChartTooltip
+                                    cursor={false}
+                                    content={
+                                        <ChartTooltipContent indicator="dashed" />
+                                    }
+                                />
+                                <Bar
+                                    dataKey="emissions"
+                                    shape={<CustomBar />}
+                                    radius={4}
+                                />
+                            </BarChart>
+                        ) : (
+                            <div className="flex items-center justify-center h-full">
+                                <p className="text-sm text-muted-foreground">
+                                    No data available
+                                </p>
+                            </div>
+                        )}
+                    </ChartContainer>
+                )}
             </CardContent>
         </Card>
     );
