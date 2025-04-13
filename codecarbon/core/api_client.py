@@ -70,7 +70,6 @@ class ApiClient:  # (AsyncClient)
     def _get_headers(self):
         headers = {"Content-Type": "application/json"}
         if self.api_key:
-            print(type(self.api_key))
             # set the x-api-token header
             headers["x-api-token"] = self.api_key
         elif self.access_token:
