@@ -73,9 +73,9 @@ py-cpuinfo==9.0.0
     # via hatch.envs.default
 pycparser==2.22
     # via cffi
-pydantic==2.11.1
+pydantic==2.11.3
     # via hatch.envs.default
-pydantic-core==2.33.0
+pydantic-core==2.33.1
     # via pydantic
 pygments==2.19.1
     # via rich
@@ -89,7 +89,7 @@ pytz==2025.2
     # via pandas
 questionary==2.1.0
     # via hatch.envs.default
-rapidfuzz==3.12.2
+rapidfuzz==3.13.0
     # via hatch.envs.default
 requests==2.32.3
     # via hatch.envs.default
@@ -111,7 +111,7 @@ typer==0.15.2
     # via hatch.envs.default
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing-extensions==4.13.0
+typing-extensions==4.13.2
     # via
     #   anyio
     #   jwcrypto
