@@ -3,7 +3,13 @@ from typing import List, Union
 
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
-from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
+from codecarbon.core.util import (
+    detect_cpu_model,
+    is_linux_os,
+    is_mac_os,
+    is_psutil_available,
+    is_windows_os,
+)
 from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger
 
@@ -16,16 +22,25 @@ class ResourceTracker:
 
     def set_RAM_tracking(self):
         logger.info("[setup] RAM Tracking...")
-        self.ram_tracker = "3 Watts for 8 GB ratio constant"
-        ram = RAM(tracking_mode=self.tracker._tracking_mode)
-        self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
-        self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+        if is_psutil_available() is not None:
+            self.ram_tracker = "RAM Load based on usage"
+            ram = RAM(tracking_mode=self.tracker._tracking_mode)
+            logger.info(f"Total RAM: {ram.machine_memory_GB:.1f} GB")
+            self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
+            self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+        else:
+            logger.warning(
+                "psutil not available for RAM tracking, using constant values"
+            )
+            self.ram_tracker = "3 Watts for 8 GB ratio constant"
+            ram = RAM(tracking_mode=self.tracker._tracking_mode)
+            self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
+            self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
         cpu_number = self.tracker._conf.get("cpu_physical_count")
         tdp = cpu.TDP()
-
         max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
         if self.tracker._conf.get("force_mode_cpu_load", False) and tdp.tdp is not None:
             if tdp.tdp is None:

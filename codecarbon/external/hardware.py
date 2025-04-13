@@ -27,6 +27,7 @@ CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 B_TO_GB = 1024 * 1024 * 1024
 
 MODE_CPU_LOAD = "cpu_load"
+MODE_RAM_LOAD = "ram_load"
 
 
 @dataclass
@@ -358,6 +359,7 @@ class RAM(BaseHardware):
         self._pid = pid
         self._children = children
         self._tracking_mode = tracking_mode
+        logger.info(f"RAM tracking mode: {self._tracking_mode}")
 
     def _get_children_memories(self):
         """
@@ -498,6 +500,25 @@ class RAM(BaseHardware):
             ram_power = Power.from_watts(0)
 
         return ram_power
+
+    def _get_power_from_ram_load(self) -> Power:
+        """
+        Get power consumption based on RAM usage
+        Uses a simple linear model where 3W is consumed per 8GB of RAM
+        """
+        ram = psutil.virtual_memory()
+        ram_usage_percent = ram.percent / 100.0
+        total_power = self.machine_memory_GB * self.power_per_GB
+        power = total_power * ram_usage_percent
+        return Power.from_watts(power)
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        power = self._get_power_from_ram_load()
+        self._current_power = power.W
+        energy = Energy.from_power_and_time(
+            power=power, time=Time.from_seconds(last_duration)
+        )
+        return power, energy
 
 
 @dataclass
