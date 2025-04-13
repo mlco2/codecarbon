@@ -4,7 +4,6 @@ Encapsulates external dependencies to retrieve hardware metadata
 
 import math
 import re
-import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -15,7 +14,7 @@ from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import SLURM_JOB_ID, count_cpus, detect_cpu_model
+from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -185,7 +184,8 @@ class CPU(BaseHardware):
         if "AMD Ryzen Threadripper" in model:
             return CPU._calculate_power_from_cpu_load_treadripper(tdp, cpu_load)
         else:
-            return tdp * (cpu_load / 100.0)
+            # Minimum power consumption is 10% of TDP
+            return max(tdp * (cpu_load / 100.0), tdp * 0.1)
 
     @staticmethod
     def _calculate_power_from_cpu_load_treadripper(tdp, cpu_load):
@@ -270,6 +270,9 @@ class CPU(BaseHardware):
 
     def total_power(self) -> Power:
         self._power_history.append(self._get_power_from_cpus())
+        if len(self._power_history) == 0:
+            logger.warning("Power history is empty, returning 0 W")
+            return Power.from_watts(0)
         power_history_in_W = [power.W for power in self._power_history]
         cpu_power = sum(power_history_in_W) / len(power_history_in_W)
         self._power_history = []
@@ -329,175 +332,6 @@ class CPU(BaseHardware):
             tdp=tdp,
             tracking_mode=tracking_mode,
         )
-
-
-@dataclass
-class RAM(BaseHardware):
-    # 3 watts of power for every 8GB of DDR3 or DDR4 memory
-    # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
-    power_per_GB = 3 / 8  # W/GB
-    memory_size = None
-
-    def __init__(
-        self,
-        pid: int = psutil.Process().pid,
-        children: bool = True,
-        tracking_mode: str = "machine",
-    ):
-        """
-        Instantiate a RAM object from a reference pid. If none is provided, will use the
-        current process's. The `pid` is used to find children processes if `children`
-        is True.
-
-        Args:
-            pid (int, optional): Process id (with respect to which we'll look for
-                                 children). Defaults to psutil.Process().pid.
-            children (int, optional): Look for children of the process when computing
-                                      total RAM used. Defaults to True.
-        """
-        self._pid = pid
-        self._children = children
-        self._tracking_mode = tracking_mode
-
-    def _get_children_memories(self):
-        """
-        Compute the used RAM by the process's children
-
-        Returns:
-            list(int): The list of RAM values
-        """
-        current_process = psutil.Process(self._pid)
-        children = current_process.children(recursive=True)
-        return [child.memory_info().rss for child in children]
-
-    def _read_slurm_scontrol(self):
-        try:
-            logger.debug(
-                "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`..."
-            )
-            return (
-                subprocess.check_output(
-                    [f"scontrol show job {SLURM_JOB_ID}"], shell=True
-                )
-                .decode()
-                .strip()
-            )
-        except subprocess.CalledProcessError:
-            return
-
-    def _parse_scontrol_memory_GB(self, mem):
-        """
-        Parse the memory string (B) returned by scontrol to a float (GB)
-
-        Args:
-            mem (str): Memory string (B) as `[amount][unit]` (e.g. `128G`)
-
-        Returns:
-            float: Memory (GB)
-        """
-        nb = int(mem[:-1])
-        unit = mem[-1]
-        if unit == "T":
-            return nb * 1000
-        if unit == "G":
-            return nb
-        if unit == "M":
-            return nb / 1000
-        if unit == "K":
-            return nb / (1000**2)
-
-    def _parse_scontrol(self, scontrol_str):
-        mem_matches = re.findall(r"AllocTRES=.*?,mem=(\d+[A-Z])", scontrol_str)
-        if len(mem_matches) == 0:
-            # Try with TRES, see https://github.com/mlco2/codecarbon/issues/569#issuecomment-2167706145
-            mem_matches = re.findall(r"TRES=.*?,mem=(\d+[A-Z])", scontrol_str)
-        if len(mem_matches) == 0:
-            logger.warning(
-                "Could not find mem= after running `scontrol show job $SLURM_JOB_ID` "
-                + "to count SLURM-available RAM. Using the machine's total RAM."
-            )
-            return psutil.virtual_memory().total / B_TO_GB
-        if len(mem_matches) > 1:
-            logger.warning(
-                "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
-                + "to count SLURM-available RAM. Using the machine's total RAM."
-            )
-            return psutil.virtual_memory().total / B_TO_GB
-
-        return mem_matches[0].replace("mem=", "")
-
-    @property
-    def slurm_memory_GB(self):
-        """
-        Property to compute the SLURM-available RAM in GigaBytes.
-
-        Returns:
-            float: Memory allocated to the job (GB)
-        """
-        # Prevent calling scontrol at each mesure
-        if self.memory_size:
-            return self.memory_size
-        scontrol_str = self._read_slurm_scontrol()
-        if scontrol_str is None:
-            logger.warning(
-                "Error running `scontrol show job $SLURM_JOB_ID` "
-                + "to retrieve SLURM-available RAM."
-                + "Using the machine's total RAM."
-            )
-            return psutil.virtual_memory().total / B_TO_GB
-        mem = self._parse_scontrol(scontrol_str)
-        if isinstance(mem, str):
-            mem = self._parse_scontrol_memory_GB(mem)
-        self.memory_size = mem
-        return mem
-
-    @property
-    def process_memory_GB(self):
-        """
-        Property to compute the process's total memory usage in bytes.
-
-        Returns:
-            float: RAM usage (GB)
-        """
-        children_memories = self._get_children_memories() if self._children else []
-        main_memory = psutil.Process(self._pid).memory_info().rss
-        memories = children_memories + [main_memory]
-        return sum([m for m in memories if m] + [0]) / B_TO_GB
-
-    @property
-    def machine_memory_GB(self):
-        """
-        Property to compute the machine's total memory in bytes.
-
-        Returns:
-            float: Total RAM (GB)
-        """
-        return (
-            self.slurm_memory_GB
-            if SLURM_JOB_ID
-            else psutil.virtual_memory().total / B_TO_GB
-        )
-
-    def total_power(self) -> Power:
-        """
-        Compute the Power (kW) consumed by the current process (and its children if
-        `children` was True in __init__)
-
-        Returns:
-            Power: kW of power consumption, using self.power_per_GB W/GB
-        """
-        try:
-            memory_GB = (
-                self.machine_memory_GB
-                if self._tracking_mode == "machine"
-                else self.process_memory_GB
-            )
-            ram_power = Power.from_watts(memory_GB * self.power_per_GB)
-        except Exception as e:
-            logger.warning(f"Could not measure RAM Power ({str(e)})")
-            ram_power = Power.from_watts(0)
-
-        return ram_power
 
 
 @dataclass

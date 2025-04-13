@@ -41,16 +41,19 @@ class FileOutput(BaseOutput):
             return list(data.values.keys()) == list_of_column_names
 
     def out(self, total: EmissionsData, delta: EmissionsData):
+        """
+        Save the emissions data to a CSV file.
+        If the file already exists, append the new data to it.
+        param `delta` is not used in this method.
+        """
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(total):
-            logger.info("Backing up old emission file")
+            logger.warning("The CSV format have changed, backing up old emission file.")
             backup(self.save_file_path)
             file_exists = False
         new_df = pd.DataFrame.from_records([dict(total.values)])
-        new_df = new_df.dropna(axis=1, how="all")
         if not file_exists:
-            df = pd.DataFrame(columns=total.values.keys())
-            df = pd.concat([df, new_df])
+            df = new_df
         elif self.on_csv_write == "append":
             df = pd.read_csv(self.save_file_path)
             df = pd.concat([df, new_df])

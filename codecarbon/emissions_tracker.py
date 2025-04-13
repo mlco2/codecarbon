@@ -20,8 +20,9 @@ from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
+from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
 from codecarbon.input import DataSource
@@ -171,7 +172,8 @@ class BaseEmissionsTracker(ABC):
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
-        default_cpu_power: Optional[int] = _sentinel,
+        force_cpu_power: Optional[int] = _sentinel,
+        force_ram_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
@@ -227,7 +229,8 @@ class BaseEmissionsTracker(ABC):
                              Accepts one of "append" or "update". Default is "append".
         :param logger_preamble: String to systematically include in the logger.
                                 messages. Defaults to "".
-        :param default_cpu_power: cpu power to be used as default if the cpu is not known.
+        :param force_cpu_power: cpu power to be used instead of automatic detection.
+        :param force_ram_power: ram power to be used instead of automatic detection.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
@@ -277,7 +280,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
-        self._set_from_conf(default_cpu_power, "default_cpu_power")
+        self._set_from_conf(force_cpu_power, "force_cpu_power")
+        self._set_from_conf(force_ram_power, "force_ram_power")
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False)
         self._set_from_conf(
@@ -521,6 +525,15 @@ class BaseEmissionsTracker(ABC):
         but keep running the experiment.
         :return: CO2 emissions in kgs
         """
+        # if another instance of codecarbon is already running, Nothing to do here
+        if (
+            hasattr(self, "_another_instance_already_running")
+            and self._another_instance_already_running
+        ):
+            logger.warning(
+                "Another instance of codecarbon is already running. Exiting."
+            )
+            return
         if self._start_time is None:
             logger.error("You first need to start the tracker.")
             return None
@@ -996,15 +1009,16 @@ def track_emissions(
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
     logger_preamble: Optional[str] = _sentinel,
-    default_cpu_power: Optional[int] = _sentinel,
-    pue: Optional[int] = _sentinel,
-    allow_multiple_runs: Optional[bool] = _sentinel,
     offline: Optional[bool] = _sentinel,
     country_iso_code: Optional[str] = _sentinel,
     region: Optional[str] = _sentinel,
     cloud_provider: Optional[str] = _sentinel,
     cloud_region: Optional[str] = _sentinel,
     country_2letter_iso_code: Optional[str] = _sentinel,
+    force_cpu_power: Optional[int] = _sentinel,
+    force_ram_power: Optional[int] = _sentinel,
+    pue: Optional[int] = _sentinel,
+    allow_multiple_runs: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1057,8 +1071,6 @@ def track_emissions(
                          Accepts one of "append" or "update". Default is "append".
     :param logger_preamble: String to systematically include in the logger.
                             messages. Defaults to "".
-    :param default_cpu_power: cpu power to be used as default if the cpu is not known.
-    :param pue: PUE (Power Usage Effectiveness) of the datacenter.
     :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
     :param offline: Indicates if the tracker should be run in offline mode.
     :param country_iso_code: 3 letter ISO Code of the country where the experiment is
@@ -1078,6 +1090,10 @@ def track_emissions(
                                      See http://api.electricitymap.org/v3/zones for
                                      a list of codes and their corresponding
                                      locations.
+    :param force_cpu_power: cpu power to be used instead of automatic detection.
+    :param force_ram_power: ram power to be used instead of automatic detection.
+    :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+    :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
 
     :return: The decorated function
     """
@@ -1109,14 +1125,16 @@ def track_emissions(
                     log_level=log_level,
                     on_csv_write=on_csv_write,
                     logger_preamble=logger_preamble,
-                    default_cpu_power=default_cpu_power,
                     pue=pue,
-                    allow_multiple_runs=allow_multiple_runs,
                     country_iso_code=country_iso_code,
                     region=region,
                     cloud_provider=cloud_provider,
                     cloud_region=cloud_region,
                     country_2letter_iso_code=country_2letter_iso_code,
+                    force_cpu_power=force_cpu_power,
+                    force_ram_power=force_ram_power,
+                    pue=pue,
+                    allow_multiple_runs=allow_multiple_runs,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1144,7 +1162,8 @@ def track_emissions(
                     log_level=log_level,
                     on_csv_write=on_csv_write,
                     logger_preamble=logger_preamble,
-                    default_cpu_power=default_cpu_power,
+                    force_cpu_power=force_cpu_power,
+                    force_ram_power=force_ram_power,
                     pue=pue,
                     allow_multiple_runs=allow_multiple_runs,
                 )
