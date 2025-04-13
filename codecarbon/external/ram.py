@@ -156,12 +156,12 @@ class RAM(BaseHardware):
         if self.is_arm_cpu:
             # ARM systems typically use lower power memory
             base_power_per_dimm = 1.5  # Watts
-            # Minimum 3W for ARM as requested
+            # Minimum 3W for ARM
             min_power = 3.0
         else:
             # x86 systems
             base_power_per_dimm = RAM_SLOT_POWER_X86  # Watts
-            # Minimum 5W for x86 as requested (2 sticks at 2.5W)
+            # Minimum 2 Dimm for x86
             min_power = base_power_per_dimm * 2
 
         # Estimate power based on DIMM count with decreasing marginal power per DIMM as count increases
