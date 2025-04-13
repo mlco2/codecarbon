@@ -1,6 +1,6 @@
-import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, Label } from "recharts";
-import { format } from "date-fns";
 import { RunReport } from "@/types/run-report";
+import { format } from "date-fns";
+import { Label, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 
 import {
     Card,
@@ -9,17 +9,22 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { useState, useEffect } from "react";
-import { ChartConfig, ChartContainer } from "./ui/chart";
 import { getRunEmissionsByExperiment } from "@/server-functions/runs";
+import { exportRunsToCsv } from "@/utils/export";
+import { useEffect, useState } from "react";
+import { ExportCsvButton } from "./export-csv-button";
+import { ChartConfig, ChartContainer } from "./ui/chart";
 
 interface RunsScatterChartProps {
+    isPublicView: boolean;
     params: {
         experimentId: string;
         startDate: string;
         endDate: string;
     };
     onRunClick: (runId: string) => void;
+    projectName: string;
+    experimentName?: string;
 }
 
 const chartConfig = {
@@ -34,12 +39,16 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function RunsScatterChart({
+    isPublicView,
     params,
     onRunClick,
+    projectName,
+    experimentName,
 }: RunsScatterChartProps) {
     const [runsReportsData, setExperimentsReportData] = useState<RunReport[]>(
         [],
     );
+    const [isExporting, setIsExporting] = useState(false);
     useEffect(() => {
         const fetchData = async () => {
             const data = await getRunEmissionsByExperiment(
@@ -83,62 +92,93 @@ export default function RunsScatterChart({
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Scatter Chart - Emissions by Run Id</CardTitle>
-                <CardDescription>
-                    Click a run to see time series
-                </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Scatter Chart - Emissions by Run Id</CardTitle>
+                    <CardDescription>
+                        Click a run to see time series
+                    </CardDescription>
+                </div>
+                {!isPublicView && (
+                    <ExportCsvButton
+                        loadingMessage="Exporting runs..."
+                        successMessage="Runs exported successfully"
+                        errorMessage="Failed to export runs"
+                        isDisabled={
+                            isExporting ||
+                            !params.experimentId ||
+                            runsReportsData.length === 0
+                        }
+                        onDownload={async () => {
+                            setIsExporting(true);
+                            await exportRunsToCsv(
+                                runsReportsData,
+                                projectName,
+                                experimentName,
+                            );
+                            setIsExporting(false);
+                        }}
+                    />
+                )}
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig}>
-                    <ScatterChart
-                        width={500}
-                        height={300}
-                        margin={{
-                            top: 20,
-                            right: 20,
-                            bottom: 20,
-                            left: 20,
-                        }}
-                    >
-                        <XAxis
-                            dataKey="timestamp"
-                            name="Timestamp"
-                            type="category"
-                            stroke="currentColor"
-                            tickFormatter={(value) =>
-                                format(new Date(value), "yyyy-MM-dd HH:mm")
-                            }
+                    {runsReportsData.length > 0 ? (
+                        <ScatterChart
+                            width={500}
+                            height={300}
+                            margin={{
+                                top: 20,
+                                right: 20,
+                                bottom: 20,
+                                left: 20,
+                            }}
                         >
-                            <Label
-                                value="Timestamp"
-                                offset={-10}
-                                position="insideBottom"
-                                style={{ fill: "currentColor" }}
+                            <XAxis
+                                dataKey="timestamp"
+                                name="Timestamp"
+                                type="category"
+                                stroke="currentColor"
+                                tickFormatter={(value) =>
+                                    format(new Date(value), "yyyy-MM-dd HH:mm")
+                                }
+                            >
+                                <Label
+                                    value="Timestamp"
+                                    offset={-10}
+                                    position="insideBottom"
+                                    style={{ fill: "currentColor" }}
+                                />
+                            </XAxis>
+                            <YAxis
+                                dataKey="emissions"
+                                name="Emissions"
+                                type="number"
+                                stroke="currentColor"
+                            >
+                                <Label
+                                    value="Emissions (kg eq CO2)"
+                                    angle={-90}
+                                    position="insideLeft"
+                                    style={{ fill: "currentColor" }}
+                                />
+                            </YAxis>
+                            <Tooltip content={<CustomTooltip />} />
+                            <Scatter
+                                name="Emissions"
+                                data={runsReportsData}
+                                fill="hsl(var(--primary))"
+                                onClick={(data) => onRunClick(data.runId)}
+                                cursor="pointer"
                             />
-                        </XAxis>
-                        <YAxis
-                            dataKey="emissions"
-                            name="Emissions"
-                            type="number"
-                            stroke="currentColor"
-                        >
-                            <Label
-                                value="Emissions (kg eq CO2)"
-                                angle={-90}
-                                position="insideLeft"
-                                style={{ fill: "currentColor" }}
-                            />
-                        </YAxis>
-                        <Tooltip content={<CustomTooltip />} />
-                        <Scatter
-                            name="Emissions"
-                            data={runsReportsData}
-                            fill="hsl(var(--primary))"
-                            onClick={(data) => onRunClick(data.runId)}
-                            cursor="pointer"
-                        />
-                    </ScatterChart>
+                        </ScatterChart>
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-muted-foreground text-sm">
+                                No data available
+                            </p>
+                        </div>
+                    )}
                 </ChartContainer>
             </CardContent>
         </Card>

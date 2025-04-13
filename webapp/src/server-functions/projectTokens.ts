@@ -1,4 +1,3 @@
-"use server";
 import { IProjectToken } from "@/types/project";
 
 /**
@@ -10,6 +9,11 @@ export async function getProjectTokens(
     try {
         const URL = `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/api-tokens`;
         const res = await fetch(URL);
+        if (!res.ok) {
+            // This will activate the closest `error.js` Error Boundary
+            console.error("Failed to fetch data", res.statusText);
+            throw new Error("Failed to fetch data");
+        }
         const data = await res.json();
         return data;
     } catch (error) {

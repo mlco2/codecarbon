@@ -84,6 +84,18 @@ class ApiClient:  # (AsyncClient)
         """
         self.access_token = token
 
+    def check_auth(self):
+        """
+        Check API access to user account
+        """
+        url = self.url + "/auth/check"
+        headers = self._get_headers()
+        r = requests.get(url=url, timeout=2, headers=headers)
+        if r.status_code != 200:
+            self._log_error(url, {}, r)
+            return None
+        return r.json()
+
     def get_list_organizations(self):
         """
         List all organizations

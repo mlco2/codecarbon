@@ -2640,6 +2640,7 @@ Intel Core m3-8100Y,5
 Intel Core m3-8114Y,28
 Intel Core i7-2720QM,45
 Intel Core i7-2760QM,45
+Intel(R) Core(TM) Ultra 7 165H,28
 Intel Mobile Celeron 266,9.8
 Intel Mobile Celeron 300,11.1
 Intel Mobile Celeron 333,11.8
@@ -3906,6 +3907,7 @@ Intel Xeon Silver 4314,135
 Intel Xeon Silver 4316,150
 Intel Xeon W-10855M,45
 Intel Xeon W-10885M,45
+Intel Xeon W-11955M,45
 Intel Xeon W-1250,80
 Intel Xeon W-1250E,80
 Intel Xeon W-1250P,125

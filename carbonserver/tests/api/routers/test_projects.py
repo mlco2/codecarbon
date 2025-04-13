@@ -12,8 +12,46 @@ from carbonserver.api.routers import projects
 from carbonserver.api.schemas import Project
 from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
 
+
+@pytest.fixture
+def custom_test_server() -> FastAPI:
+    container = ServerContainer()
+    container.wire(modules=[projects])
+
+    app = FastAPI()
+    app.container = container
+    app.include_router(projects.router)
+    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
+        FakeUserWithAuthDependency
+    )
+    app.container.auth_context.override(providers.Factory(FakeAuthContext))
+    yield app
+
+
+@pytest.fixture
+def custom_test_server_with_auth() -> FastAPI:
+    container = ServerContainer()
+    container.wire(modules=[projects])
+
+    app = FastAPI()
+    app.container = container
+    app.include_router(projects.router)
+    yield app
+
+
+@pytest.fixture
+def client(custom_test_server):
+    yield TestClient(custom_test_server)
+
+
+@pytest.fixture
+def client_with_auth(custom_test_server_with_auth):
+    yield TestClient(custom_test_server_with_auth)
+
+
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 PROJECT_ID_2 = "e52fe339-164d-4c2b-a8c0-f562dfce066d"
+PROJECT_ID_3 = "df1ebed2-ee06-4d2f-9da4-27676e3a9bf3"
 
 ORGANIZATION_ID = "c13e851f-5c2f-403d-98d0-51fe15df3bc3"
 ORGANIZATION_ID_2 = "c13e851f-5c2f-403d-98d0-51fe15df3bc4"
@@ -34,6 +72,7 @@ PROJECT_1 = {
     "description": "API for Code Carbon",
     "organization_id": ORGANIZATION_ID,
     "experiments": [],
+    "public": False,
 }
 
 PROJECT_2 = {
@@ -41,27 +80,17 @@ PROJECT_2 = {
     "name": "API Code Carbon",
     "description": "Calculates CO2 emissions of AI projects",
     "organization_id": ORGANIZATION_ID_2,
+    "public": False,
 }
 
-
-@pytest.fixture
-def custom_test_server() -> FastAPI:
-    container = ServerContainer()
-    container.wire(modules=[projects])
-
-    app = FastAPI()
-    app.container = container
-    app.include_router(projects.router)
-    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
-        FakeUserWithAuthDependency
-    )
-    app.container.auth_context.override(providers.Factory(FakeAuthContext))
-    yield app
-
-
-@pytest.fixture
-def client(custom_test_server):
-    yield TestClient(custom_test_server)
+PROJECT_3 = {
+    "id": PROJECT_ID_3,
+    "name": "Public project",
+    "description": "Public project",
+    "organization_id": ORGANIZATION_ID_2,
+    "experiments": [],
+    "public": True,
+}
 
 
 def test_add_project(client, custom_test_server):
@@ -130,3 +159,32 @@ def test_get_projects_from_organization_returns_correct_project(
         actual_project_list = response.json()
     assert response.status_code == status.HTTP_200_OK
     assert actual_project_list == expected_project_list
+
+
+@pytest.mark.xfail(raises=Exception)
+def test_get_private_project_no_auth(client_with_auth, custom_test_server_with_auth):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_project = PROJECT_1
+    repository_mock.get_one_project.return_value = Project(**expected_project)
+    repository_mock.is_project_public.return_value = False
+
+    with custom_test_server_with_auth.container.project_repository.override(
+        repository_mock
+    ):
+        client_with_auth.get("/projects/{PROJECT_ID}")
+
+
+def test_get_public_project_no_auth(client_with_auth, custom_test_server_with_auth):
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    expected_project = PROJECT_3
+    repository_mock.get_one_project.return_value = Project(**expected_project)
+    repository_mock.is_project_public.return_value = True
+
+    with custom_test_server_with_auth.container.project_repository.override(
+        repository_mock
+    ):
+        response = client_with_auth.get("/projects/{PROJECT_ID}")
+        actual_project = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_project == expected_project

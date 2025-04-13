@@ -38,7 +38,7 @@ class Lock:
         """Ensures the lock file is removed when the script is interrupted."""
         logger.debug(f"Signal {signum} received. Releasing lock and exiting.")
         self.release()
-        os._exit(1)  # Exit immediately to prevent further execution
+        raise SystemExit(1)  # Exit gracefully to prevent further execution
 
     def acquire(self):
         """Creates a lock file and ensures it's the only instance running."""

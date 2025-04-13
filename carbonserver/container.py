@@ -72,6 +72,7 @@ class ServerContainer(containers.DeclarativeContainer):
         AuthContext,
         user_repository=user_repository,
         token_repository=project_token_repository,
+        project_repository=project_repository,
     )
 
     emission_service = providers.Factory(
@@ -103,6 +104,7 @@ class ServerContainer(containers.DeclarativeContainer):
     project_token_service = providers.Factory(
         ProjectTokenService,
         project_token_repository=project_token_repository,
+        auth_context=auth_context,
     )
 
     run_repository = providers.Factory(

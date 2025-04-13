@@ -2,10 +2,10 @@ from contextlib import AbstractContextManager
 from typing import List
 
 from dependency_injector.providers import Callable
-from fastapi import HTTPException
 from sqlalchemy import Text, and_, cast, func
 
 from carbonserver.api.domain.projects import Projects
+from carbonserver.api.errors import NotFoundError, NotFoundErrorEnum, UserException
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
@@ -38,8 +38,11 @@ class SqlAlchemyRepository(Projects):
                 .first()
             )
             if db_project is None:
-                raise HTTPException(
-                    status_code=404, detail=f"Project {project_id} not found"
+                raise UserException(
+                    NotFoundError(
+                        code=NotFoundErrorEnum.NOT_FOUND,
+                        message=f"Project not found: {project_id}",
+                    )
                 )
             session.delete(db_project)
             session.commit()
@@ -52,8 +55,11 @@ class SqlAlchemyRepository(Projects):
                 .first()
             )
             if e is None:
-                raise HTTPException(
-                    status_code=404, detail=f"Project {project_id} not found"
+                raise UserException(
+                    NotFoundError(
+                        code=NotFoundErrorEnum.NOT_FOUND,
+                        message=f"Project not found: {project_id}",
+                    )
                 )
             experiments = (
                 session.query(cast(SqlModelExperiment.id, Text))
@@ -63,6 +69,22 @@ class SqlAlchemyRepository(Projects):
             project = self.map_sql_to_schema(e)
             project.experiments = [experiment[0] for experiment in experiments]
             return project
+
+    def is_project_public(self, project_id) -> bool:
+        with self.session_factory() as session:
+            db_project = (
+                session.query(SqlModelProject)
+                .filter(SqlModelProject.id == project_id)
+                .first()
+            )
+            if db_project is None:
+                raise UserException(
+                    NotFoundError(
+                        code=NotFoundErrorEnum.NOT_FOUND,
+                        message=f"Project not found: {project_id}",
+                    )
+                )
+            return db_project.public
 
     def get_projects_from_organization(self, organization_id) -> List[Project]:
         """Find the list of projects from a organization in database and return it
@@ -149,8 +171,11 @@ class SqlAlchemyRepository(Projects):
                 .first()
             )
             if db_project is None:
-                raise HTTPException(
-                    status_code=404, detail=f"Project {project_id} not found"
+                raise UserException(
+                    NotFoundError(
+                        code=NotFoundErrorEnum.NOT_FOUND,
+                        message=f"Project not found: {project_id}",
+                    )
                 )
             for attr, value in project.dict().items():
                 if value is not None:
@@ -171,5 +196,6 @@ class SqlAlchemyRepository(Projects):
             id=str(project.id),
             name=project.name,
             description=project.description,
+            public=project.public,
             organization_id=str(project.organization_id),
         )

@@ -1,39 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { use, useEffect, useState } from "react";
 
-import { DateRange } from "react-day-picker";
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import { Separator } from "@/components/ui/separator";
 import RadialChart from "@/components/radial-chart";
-import { fetcher } from "@/helpers/swr";
-import { Organization } from "@/types/organization";
-import { OrganizationReport } from "@/types/organization-report";
-import useSWR from "swr";
-import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
 import {
-    getEquivalentCitizenPercentage,
     getEquivalentCarKm,
+    getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
+import { fetcher } from "@/helpers/swr";
+import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
+import { Organization } from "@/types/organization";
+import { OrganizationReport } from "@/types/organization-report";
+import { DateRange } from "react-day-picker";
+import useSWR from "swr";
 
 export default function OrganizationPage({
     params,
 }: {
-    params: { organizationId: string };
+    params: Promise<{ organizationId: string }>;
 }) {
+    const { organizationId } = use(params);
     const {
         data: organization,
         isLoading,
         error,
-    } = useSWR<Organization>(
-        `/organizations/${params.organizationId}`,
-        fetcher,
-        {
-            refreshInterval: 1000 * 60, // Refresh every minute
-        },
-    );
+    } = useSWR<Organization>(`/organizations/${organizationId}`, fetcher, {
+        refreshInterval: 1000 * 60, // Refresh every minute
+    });
 
     const today = new Date();
     const [date, setDate] = useState<DateRange | undefined>({
@@ -46,18 +43,24 @@ export default function OrganizationPage({
 
     useEffect(() => {
         async function fetchOrganizationReport() {
-            const organizationReport: OrganizationReport | null =
-                await getOrganizationEmissionsByProject(
-                    params.organizationId,
-                    date,
-                );
-            if (organizationReport) {
-                setOrganizationReport(organizationReport);
+            try {
+                const organizationReport =
+                    await getOrganizationEmissionsByProject(
+                        organizationId,
+                        date,
+                    );
+                if (organizationReport) {
+                    setOrganizationReport(organizationReport);
+                }
+            } catch (error) {
+                console.error("Failed to fetch organization report:", error);
+                // Keep the default empty report with zeros
             }
         }
 
         fetchOrganizationReport();
-    }, [params.organizationId, date]);
+    }, [organizationId, date]);
+
     if (isLoading) {
         return <Loader />;
     }
@@ -103,13 +106,14 @@ export default function OrganizationPage({
         <div className="h-full w-full overflow-auto">
             {!organization && <ErrorMessage />}
             {organization && (
-                <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-                    <Separator className="h-[0.5px] bg-muted-foreground" />
+                <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
                     <div className="grid grid-cols-3 gap-4">
                         <div className="flex flex-col items-center justify-center">
-                            <img
-                                src="/household_consumption.svg"
-                                alt="Logo 1"
+                            <Image
+                                src="/icons/household_consumption.svg"
+                                alt="Household consumption icon"
+                                width={64}
+                                height={64}
                                 className="h-16 w-16"
                             />
                             <p className="text-xs text-gray-500">
@@ -120,9 +124,11 @@ export default function OrganizationPage({
                             </p>
                         </div>
                         <div className="flex flex-col items-center justify-center">
-                            <img
-                                src="/transportation.svg"
-                                alt="Logo 2"
+                            <Image
+                                src="/icons/transportation.svg"
+                                alt="Transportation icon"
+                                width={64}
+                                height={64}
                                 className="h-16 w-16"
                             />
                             <p className="text-xs text-gray-500">
@@ -133,9 +139,11 @@ export default function OrganizationPage({
                             </p>
                         </div>
                         <div className="flex flex-col items-center justify-center">
-                            <img
-                                src="/tv.svg"
-                                alt="Logo 3"
+                            <Image
+                                src="/icons/tv.svg"
+                                alt="TV icon"
+                                width={64}
+                                height={64}
                                 className="h-16 w-16"
                             />
                             <p className="text-xs text-gray-500">
@@ -151,7 +159,7 @@ export default function OrganizationPage({
                         <RadialChart data={RadialChartData.emissions} />
                         <RadialChart data={RadialChartData.duration} />
                     </div>
-                </main>
+                </div>
             )}
         </div>
     );

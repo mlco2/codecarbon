@@ -24,7 +24,6 @@ SESSION_COOKIE_NAME = "user_session"
 
 router = APIRouter()
 
-
 fief = FiefAsync(
     settings.fief_url, settings.fief_client_id, settings.fief_client_secret
 )
@@ -34,11 +33,13 @@ fief = FiefAsync(
 @inject
 def check_login(
     auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
+    sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ):
     """
     return user data or redirect to login screen
     null value if not logged in
     """
+    sign_up_service.check_jwt_user(auth_user.auth_user, create=True)
     return {"user": auth_user.auth_user}
 
 
@@ -69,7 +70,7 @@ async def get_login(
     login and redirect to frontend app with token
     """
     login_url = request.url_for("login")
-    print("login_url", login_url)
+
     if code:
         res = requests.post(
             f"{settings.fief_url}/api/token",
@@ -84,6 +85,8 @@ async def get_login(
 
         # check if the user exists in local DB ; create if needed
         if "id_token" not in res.json():
+            if "access_token" not in res.json():
+                return Response(content="Invalid code", status_code=400)
             # get profile data from fief server if not present in response
             id_token = requests.get(
                 settings.fief_url + "/api/userinfo",

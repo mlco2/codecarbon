@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
 from carbonserver.api.infra.repositories.repository_projects import (
@@ -52,8 +53,8 @@ class ProjectService:
         else:
             return self._repository.patch_project(project_id, project)
 
-    def get_one_project(self, project_id: str, user: User):
-        if not self._auth_context.isOperationAuthorizedOnProject(project_id, user):
+    def get_one_project(self, project_id: str, user: Optional[User]):
+        if not self._auth_context.can_read_project(project_id, user):
             raise UserException(
                 NotAllowedError(
                     code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,

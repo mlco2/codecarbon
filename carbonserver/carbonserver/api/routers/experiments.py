@@ -10,6 +10,7 @@ from starlette import status
 from carbonserver.api.schemas import Experiment, ExperimentCreate, ExperimentReport
 from carbonserver.api.services.auth_service import (
     MandatoryUserWithAuthDependency,
+    OptionalUserWithAuthDependency,
     UserWithAuthDependency,
 )
 from carbonserver.api.services.experiments_service import ExperimentService
@@ -36,6 +37,7 @@ def add_experiment(
         Provide[ServerContainer.experiment_service]
     ),
 ) -> Experiment:
+    experiment.timestamp = datetime.now()
     return experiment_service.add_experiment(experiment, user=auth_user.db_user)
 
 
@@ -48,7 +50,7 @@ def add_experiment(
 @inject
 def read_experiment(
     experiment_id: str,
-    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
@@ -65,7 +67,7 @@ def read_experiment(
 @inject
 def read_project_experiments(
     project_id: str,
-    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     experiment_service: ExperimentService = Depends(
         Provide[ServerContainer.experiment_service]
     ),
@@ -83,7 +85,7 @@ def read_project_experiments(
 @inject
 def read_project_detailed_sums_by_experiment(
     project_id: str,
-    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     project_global_sum_by_experiment_usecase: ProjectSumsByExperimentUsecase = Depends(

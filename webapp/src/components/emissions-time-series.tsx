@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
     Card,
     CardContent,
@@ -16,13 +14,19 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart";
 import { EmissionsTimeSeries } from "@/types/emissions-time-series";
-import { Emission } from "@/types/emission";
-import { RunMetadata } from "@/types/run-metadata";
+import * as React from "react";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
+import { ExportCsvButton } from "@/components/export-csv-button";
+import { getEmissionsTimeSeries } from "@/server-functions/runs";
+import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
 import { Cpu, HardDrive, Server } from "lucide-react";
 
 interface EmissionsTimeSeriesChartProps {
+    isPublicView: boolean;
     runId: string;
+    projectName?: string;
+    experimentName?: string;
 }
 
 const chartConfig = {
@@ -37,7 +41,10 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function EmissionsTimeSeriesChart({
+    isPublicView,
     runId,
+    projectName = "project",
+    experimentName,
 }: EmissionsTimeSeriesChartProps) {
     const [activeChart, setActiveChart] =
         React.useState<keyof typeof chartConfig>("emissions_rate");
@@ -67,7 +74,7 @@ export default function EmissionsTimeSeriesChart({
         return <div>Loading...</div>;
     }
 
-    if (!emissionTimeSeries) {
+    if (!emissionTimeSeries || !emissionTimeSeries.metadata) {
         return <div>No data available</div>;
     }
 
@@ -125,10 +132,34 @@ export default function EmissionsTimeSeriesChart({
             <Card>
                 <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
                     <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-                        <CardTitle>Emissions Time Series</CardTitle>
-                        <CardDescription>
-                            Showing emissions rate and energy consumed over time
-                        </CardDescription>
+                        <div className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Emissions Time Series</CardTitle>
+                                <CardDescription>
+                                    Showing emissions rate and energy consumed
+                                    over time
+                                </CardDescription>
+                            </div>
+                            {!isPublicView && (
+                                <ExportCsvButton
+                                    isDisabled={
+                                        !emissionTimeSeries ||
+                                        !emissionTimeSeries.emissions.length
+                                    }
+                                    onDownload={async () => {
+                                        if (!emissionTimeSeries) return;
+                                        exportEmissionsTimeSeriesCsv(
+                                            emissionTimeSeries,
+                                            projectName,
+                                            experimentName,
+                                        );
+                                    }}
+                                    loadingMessage="Exporting time series..."
+                                    successMessage="Time series exported successfully"
+                                    errorMessage="Failed to export time series"
+                                />
+                            )}
+                        </div>
                     </div>
                     <div className="flex">
                         {Object.keys(chartConfig).map((key) => {
@@ -209,56 +240,4 @@ export default function EmissionsTimeSeriesChart({
             </Card>
         </div>
     );
-}
-
-async function getEmissionsTimeSeries(
-    runId: string,
-): Promise<EmissionsTimeSeries> {
-    const runMetadataResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/runs/${runId}`,
-    );
-    const runMetadataData = await runMetadataResponse.json();
-
-    const emissionsResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/runs/${runId}/emissions`,
-    );
-    const emissionsData = await emissionsResponse.json();
-
-    const metadata: RunMetadata = {
-        timestamp: runMetadataData.timestamp,
-        experiment_id: runMetadataData.experiment_id,
-        os: runMetadataData.os,
-        python_version: runMetadataData.python_version,
-        codecarbon_version: runMetadataData.codecarbon_version,
-        cpu_count: runMetadataData.cpu_count,
-        cpu_model: runMetadataData.cpu_model,
-        gpu_count: runMetadataData.gpu_count,
-        gpu_model: runMetadataData.gpu_model,
-        longitude: runMetadataData.longitude,
-        latitude: runMetadataData.latitude,
-        region: runMetadataData.region,
-        provider: runMetadataData.provider,
-        ram_total_size: runMetadataData.ram_total_size,
-        tracking_mode: runMetadataData.tracking_mode,
-    };
-
-    const emissions: Emission[] = emissionsData.items.map((item: any) => ({
-        emission_id: item.run_id,
-        timestamp: item.timestamp,
-        emissions_sum: item.emissions_sum,
-        emissions_rate: item.emissions_rate,
-        cpu_power: item.cpu_power,
-        gpu_power: item.gpu_power,
-        ram_power: item.ram_power,
-        cpu_energy: item.cpu_energy,
-        gpu_energy: item.gpu_energy,
-        ram_energy: item.ram_energy,
-        energy_consumed: item.energy_consumed,
-    }));
-
-    return {
-        runId,
-        emissions,
-        metadata,
-    };
 }

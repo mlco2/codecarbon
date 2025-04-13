@@ -1,3 +1,6 @@
+import os
+
+import logfire
 from container import ServerContainer, settings
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
@@ -77,11 +80,16 @@ def init_db(container):
 
 
 def init_server(container):
+    logfire.configure(
+        token=settings.logfire_token, send_to_logfire=settings.send_to_logfire
+    )
     server = FastAPI(
         servers=[
             {"url": "/api/"},
         ],
     )
+    logfire.instrument_fastapi(server)
+
     server.container = container
     server.include_router(users.router)
     server.include_router(authenticate.router)
@@ -94,6 +102,10 @@ def init_server(container):
     server.include_router(emissions.router)
     add_pagination(server)
 
+    # Add CORS from env variable
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "")
+    CORS_ORIGINS = [origin.strip() for origin in CORS_ORIGINS.split(",")]
+
     origins = [
         "https://api.codecarbon.io",
         "https://dashboard.codecarbon.io",
@@ -102,6 +114,7 @@ def init_server(container):
         "http://localhost",
         "http://localhost:3000",
         "http://localhost:8000",
+        *CORS_ORIGINS,
     ]
 
     if settings.frontend_url != "":

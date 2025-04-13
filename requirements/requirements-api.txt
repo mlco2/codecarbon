@@ -7,6 +7,8 @@
 # - dependency-injector<5.0.0
 # - fastapi<1.0.0
 # - fief-client[fastapi]
+# - logfire
+# - logfire[fastapi]
 # - httpx
 # - pydantic[email]<2.0.0
 # - psycopg2-binary<3.0.0
@@ -38,16 +40,18 @@
 # - typer
 #
 
-alembic==1.14.1
+alembic==1.15.2
     # via hatch.envs.api
-anyio==4.8.0
+anyio==4.9.0
     # via
     #   httpx
     #   starlette
     #   watchfiles
 arrow==1.3.0
     # via hatch.envs.api
-bcrypt==4.2.1
+asgiref==3.8.1
+    # via opentelemetry-instrumentation-asgi
+bcrypt==4.3.0
     # via hatch.envs.api
 certifi==2025.1.31
     # via
@@ -63,15 +67,22 @@ click==8.1.8
     #   hatch.envs.api
     #   typer
     #   uvicorn
-cryptography==44.0.1
+cryptography==44.0.2
     # via jwcrypto
-dependency-injector==4.45.0
+dependency-injector==4.46.0
     # via hatch.envs.api
+deprecated==1.2.18
+    # via
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-semantic-conventions
 dnspython==2.7.0
     # via email-validator
 email-validator==2.2.0
     # via pydantic
-fastapi==0.115.8
+executing==2.2.0
+    # via logfire
+fastapi==0.115.12
     # via
     #   hatch.envs.api
     #   fastapi-pagination
@@ -80,13 +91,15 @@ fastapi-pagination==0.9.1
     # via hatch.envs.api
 fief-client==0.20.0
     # via hatch.envs.api
+googleapis-common-protos==1.69.2
+    # via opentelemetry-exporter-otlp-proto-http
 greenlet==3.1.1
     # via sqlalchemy
 h11==0.14.0
     # via
     #   httpcore
     #   uvicorn
-httpcore==1.0.7
+httpcore==1.0.8
     # via httpx
 httptools==0.6.4
     # via uvicorn
@@ -100,13 +113,17 @@ idna==3.10
     #   email-validator
     #   httpx
     #   requests
-iniconfig==2.0.0
+importlib-metadata==8.6.1
+    # via opentelemetry-api
+iniconfig==2.1.0
     # via pytest
 jwcrypto==1.5.6
     # via fief-client
+logfire==3.14.0
+    # via hatch.envs.api
 makefun==1.15.6
     # via fief-client
-mako==1.3.9
+mako==1.3.10
     # via alembic
 markdown-it-py==3.0.0
     # via rich
@@ -114,16 +131,57 @@ markupsafe==3.0.2
     # via mako
 mdurl==0.1.2
     # via markdown-it-py
-mock==5.1.0
+mock==5.2.0
     # via hatch.envs.api
-numpy==2.2.3
+numpy==2.2.4
     # via
     #   hatch.envs.api
     #   pandas
 nvidia-ml-py==12.570.86
     # via pynvml
+opentelemetry-api==1.32.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-otlp-proto-common==1.32.0
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-http==1.32.0
+    # via logfire
+opentelemetry-instrumentation==0.53b0
+    # via
+    #   logfire
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-asgi==0.53b0
+    # via opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-fastapi==0.53b0
+    # via logfire
+opentelemetry-proto==1.32.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-sdk==1.32.0
+    # via
+    #   logfire
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-semantic-conventions==0.53b0
+    # via
+    #   opentelemetry-instrumentation
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
+    #   opentelemetry-sdk
+opentelemetry-util-http==0.53b0
+    # via
+    #   opentelemetry-instrumentation-asgi
+    #   opentelemetry-instrumentation-fastapi
 packaging==24.2
-    # via pytest
+    # via
+    #   opentelemetry-instrumentation
+    #   pytest
 pandas==2.2.3
     # via hatch.envs.api
 pluggy==1.5.0
@@ -132,6 +190,11 @@ prometheus-client==0.21.1
     # via hatch.envs.api
 prompt-toolkit==3.0.50
     # via questionary
+protobuf==5.29.4
+    # via
+    #   googleapis-common-protos
+    #   logfire
+    #   opentelemetry-proto
 psutil==7.0.0
     # via hatch.envs.api
 psycopg2-binary==2.9.10
@@ -151,16 +214,16 @@ pyjwt==2.10.1
     # via hatch.envs.api
 pynvml==12.0.0
     # via hatch.envs.api
-pytest==8.3.4
+pytest==8.3.5
     # via hatch.envs.api
 python-dateutil==2.9.0.post0
     # via
     #   hatch.envs.api
     #   arrow
     #   pandas
-python-dotenv==1.0.1
+python-dotenv==1.1.0
     # via uvicorn
-pytz==2025.1
+pytz==2025.2
     # via pandas
 pyyaml==6.0.2
     # via
@@ -168,20 +231,22 @@ pyyaml==6.0.2
     #   uvicorn
 questionary==2.1.0
     # via hatch.envs.api
-rapidfuzz==3.12.1
+rapidfuzz==3.13.0
     # via hatch.envs.api
 requests==2.32.3
     # via
     #   hatch.envs.api
+    #   opentelemetry-exporter-otlp-proto-http
     #   requests-mock
     #   responses
 requests-mock==1.12.1
     # via hatch.envs.api
-responses==0.25.6
+responses==0.25.7
     # via hatch.envs.api
-rich==13.9.4
+rich==14.0.0
     # via
     #   hatch.envs.api
+    #   logfire
     #   typer
 shellingham==1.5.4
     # via typer
@@ -195,37 +260,45 @@ sqlalchemy==1.4.54
     # via
     #   hatch.envs.api
     #   alembic
-starlette==0.45.3
+starlette==0.46.2
     # via fastapi
 termcolor==2.3.0
     # via yaspin
-typer==0.15.1
+typer==0.15.2
     # via hatch.envs.api
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   alembic
     #   anyio
     #   fastapi
     #   jwcrypto
+    #   logfire
+    #   opentelemetry-sdk
     #   pydantic
     #   typer
-tzdata==2025.1
+tzdata==2025.2
     # via pandas
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   requests
     #   responses
-uvicorn==0.34.0
+uvicorn==0.34.1
     # via hatch.envs.api
 uvloop==0.21.0
     # via uvicorn
-watchfiles==1.0.4
+watchfiles==1.0.5
     # via uvicorn
 wcwidth==0.2.13
     # via prompt-toolkit
-websockets==15.0
+websockets==15.0.1
     # via uvicorn
+wrapt==1.17.2
+    # via
+    #   deprecated
+    #   opentelemetry-instrumentation
 yaspin==3.1.0
     # via fief-client
+zipp==3.21.0
+    # via importlib-metadata

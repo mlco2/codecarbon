@@ -28,7 +28,7 @@
 # - fire
 #
 
-anyio==4.8.0
+anyio==4.9.0
     # via httpx
 arrow==1.3.0
     # via hatch.envs.test.py3.10
@@ -48,20 +48,14 @@ click==8.1.8
     #   hatch.envs.test.py3.10
     #   flask
     #   typer
-cryptography==44.0.1
+cryptography==44.0.2
     # via jwcrypto
-dash==2.18.2
+dash==3.0.2
     # via
     #   hatch.envs.test.py3.10
     #   dash-bootstrap-components
 dash-bootstrap-components==0.13.1
     # via hatch.envs.test.py3.10
-dash-core-components==2.0.0
-    # via dash
-dash-html-components==2.0.0
-    # via dash
-dash-table==5.0.0
-    # via dash
 exceptiongroup==1.2.2
     # via
     #   anyio
@@ -74,7 +68,7 @@ flask==3.0.3
     # via dash
 h11==0.14.0
     # via httpcore
-httpcore==1.0.7
+httpcore==1.0.8
     # via httpx
 httpx==0.27.2
     # via fief-client
@@ -85,11 +79,11 @@ idna==3.10
     #   requests
 importlib-metadata==8.6.1
     # via dash
-iniconfig==2.0.0
+iniconfig==2.1.0
     # via pytest
 itsdangerous==2.2.0
     # via flask
-jinja2==3.1.5
+jinja2==3.1.6
     # via flask
 jwcrypto==1.5.6
     # via fief-client
@@ -101,13 +95,13 @@ markupsafe==3.0.2
     #   werkzeug
 mdurl==0.1.2
     # via markdown-it-py
-mock==5.1.0
+mock==5.2.0
     # via hatch.envs.test.py3.10
-narwhals==1.27.1
+narwhals==1.34.1
     # via plotly
 nest-asyncio==1.6.0
     # via dash
-numpy==2.2.3 ; python_version >= "3.9"
+numpy==2.2.4 ; python_version >= "3.9"
     # via
     #   hatch.envs.test.py3.10
     #   pandas
@@ -119,7 +113,7 @@ packaging==24.2
     #   pytest
 pandas==2.2.3
     # via hatch.envs.test.py3.10
-plotly==6.0.0
+plotly==6.0.1
     # via dash
 pluggy==1.5.0
     # via pytest
@@ -137,19 +131,19 @@ pygments==2.19.1
     # via rich
 pynvml==12.0.0
     # via hatch.envs.test.py3.10
-pytest==8.3.4
+pytest==8.3.5
     # via hatch.envs.test.py3.10
 python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   pandas
-pytz==2025.1
+pytz==2025.2
     # via pandas
 pyyaml==6.0.2
     # via responses
 questionary==2.1.0
     # via hatch.envs.test.py3.10
-rapidfuzz==3.12.1
+rapidfuzz==3.13.0
     # via hatch.envs.test.py3.10
 requests==2.32.3
     # via
@@ -159,11 +153,11 @@ requests==2.32.3
     #   responses
 requests-mock==1.12.1
     # via hatch.envs.test.py3.10
-responses==0.25.6
+responses==0.25.7
     # via hatch.envs.test.py3.10
 retrying==1.3.4
     # via dash
-rich==13.9.4
+rich==14.0.0
     # via
     #   hatch.envs.test.py3.10
     #   typer
@@ -183,20 +177,20 @@ termcolor==2.3.0
     #   yaspin
 tomli==2.2.1
     # via pytest
-typer==0.15.1
+typer==0.15.2
     # via hatch.envs.test.py3.10
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   anyio
     #   dash
     #   jwcrypto
     #   rich
     #   typer
-tzdata==2025.1
+tzdata==2025.2
     # via pandas
-urllib3==2.3.0
+urllib3==2.4.0
     # via
     #   requests
     #   responses

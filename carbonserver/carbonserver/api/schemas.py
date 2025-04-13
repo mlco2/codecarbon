@@ -23,11 +23,17 @@ class Empty(BaseModel, extra=Extra.forbid):
 class UserBase(BaseModel):
     email: str
 
+    def __repr__(self):
+        return f"User(email={self.email})"
+
 
 class UserAutoCreate(UserBase):
     name: str
     email: EmailStr
     id: UUID
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id})"
 
 
 class UserAuthenticate(UserBase):
@@ -43,6 +49,9 @@ class User(UserBase):
 
     class Config:
         orm_mode = True
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id}, organizations={self.organizations})"
 
 
 class EmissionBase(BaseModel):
@@ -171,15 +180,15 @@ class RunReport(RunBase):
 
 
 class ExperimentBase(BaseModel):
-    timestamp: datetime
     name: str
     description: str
     country_name: Optional[str] = None
     country_iso_code: Optional[str] = None
     region: Optional[str] = None
-    on_cloud: bool
+    on_cloud: Optional[bool] = None
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
+    timestamp: Optional[datetime] = None
     project_id: UUID
 
     class Config:
@@ -206,6 +215,7 @@ class ExperimentCreate(ExperimentBase):
 
 class Experiment(ExperimentBase):
     id: UUID
+    timestamp: datetime
 
 
 class ExperimentReport(ExperimentBase):
@@ -279,6 +289,7 @@ class ProjectCreate(ProjectBase):
 class ProjectPatch(BaseModel):
     name: Optional[str]
     description: Optional[str]
+    public: Optional[bool]
 
     # do not allow the organization_id
 
@@ -342,6 +353,7 @@ class ProjectTokenCreate(BaseModel):
 class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[str]] = []
+    public: Optional[bool]
 
 
 class ProjectReport(ProjectBase):
