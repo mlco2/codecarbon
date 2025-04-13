@@ -248,12 +248,13 @@ For example, in servers you could have thousands of GB of RAM but the power cons
 <li><p>For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)</p></li>
 <li><p>For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)</p></li>
 <li><p>Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)</p></li>
-<li><p>Ensures at least 3W for ARM systems as requested</p></li>
+<li><p>Ensures at least 3W for ARM systems</p></li>
 </ul>
 <p>Example Power Estimates:</p>
 <ul class="simple">
-<li><p><strong>Small laptop (8GB RAM)</strong>: ~5W (2 DIMMs at 5W each)</p></li>
+<li><p><strong>Small laptop (8GB RAM)</strong>: ~10W (2 DIMMs at 5W each)</p></li>
 <li><p><strong>Desktop (32GB RAM)</strong>: ~20W (4 DIMMs at 5W each)</p></li>
+<li><p><strong>Desktop (64GB RAM)</strong>: ~20W (4 DIMMs at 5W each), the same as 32GB</p></li>
 <li><p><strong>Small server (128GB RAM)</strong>: ~40W (8 DIMMs with efficiency scaling)</p></li>
 <li><p><strong>Large server (1TB RAM)</strong>: ~40W (using 8x128GB DIMMs with high efficiency scaling)</p></li>
 </ul>

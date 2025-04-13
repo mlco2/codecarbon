@@ -109,12 +109,13 @@ For example keep a minimum of 2 modules. Except for ARM CPU like rapsberry pi wh
 - For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)
 - For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)
 - Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)
-- Ensures at least 3W for ARM systems as requested
+- Ensures at least 3W for ARM systems
 
 Example Power Estimates:
 
-- **Small laptop (8GB RAM)**: ~5W (2 DIMMs at 5W each)
+- **Small laptop (8GB RAM)**: ~10W (2 DIMMs at 5W each)
 - **Desktop (32GB RAM)**: ~20W (4 DIMMs at 5W each)
+- **Desktop (64GB RAM)**: ~20W (4 DIMMs at 5W each), the same as 32GB
 - **Small server (128GB RAM)**: ~40W (8 DIMMs with efficiency scaling)
 - **Large server (1TB RAM)**: ~40W (using 8x128GB DIMMs with high efficiency scaling)
 
