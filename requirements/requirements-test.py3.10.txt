@@ -48,7 +48,7 @@ click==8.1.8
     #   hatch.envs.test.py3.10
     #   flask
     #   typer
-cryptography==44.0.0
+cryptography==44.0.1
     # via jwcrypto
 dash==2.18.2
     # via
