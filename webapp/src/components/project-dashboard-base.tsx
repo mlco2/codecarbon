@@ -17,6 +17,8 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 import { useRouter } from "next/navigation";
+import { Table, TableBody, TableHeader } from "./ui/table";
+import { Experiment } from "@/types/experiment";
 
 export interface ProjectDashboardBaseProps {
     isPublicView: boolean;
@@ -26,6 +28,7 @@ export interface ProjectDashboardBaseProps {
     radialChartData: RadialChartData;
     convertedValues: ConvertedValues;
     experimentsReportData: ExperimentReport[];
+    projectExperiments: Experiment[];
     runData: {
         experimentId: string;
         startDate: string;
@@ -47,6 +50,7 @@ export default function ProjectDashboardBase({
     radialChartData,
     convertedValues,
     experimentsReportData,
+    projectExperiments,
     runData,
     selectedExperimentId,
     selectedRunId,
@@ -91,18 +95,6 @@ export default function ProjectDashboardBase({
                         }
                     />
                 </div>
-                <Button
-                    onClick={handleCreateExperimentClick}
-                    className="bg-primary text-primary-foreground"
-                >
-                    + Add Experiment
-                </Button>
-                <CreateExperimentModal
-                    projectId={project.id}
-                    isOpen={isExperimentModalOpen}
-                    onClose={() => setIsExperimentModalOpen(false)}
-                    onExperimentCreated={refreshExperimentList}
-                />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                 <div className="grid grid-cols-1 gap-4">
@@ -210,6 +202,74 @@ export default function ProjectDashboardBase({
             </div>
 
             <Separator className="h-[0.5px] bg-muted-foreground my-6" />
+            <Card className="flex flex-col md:flex-row justify-start gap-4 px-4 py-4 w-full max-w-3/4">
+                <div className="flex items-center justify-start px-2">
+                    <p className="text-sm font-medium pr-2 text-center">
+                        {projectExperiments.length === 0
+                            ? isPublicView
+                                ? "No experiment data in the selected date range" // This is because for public projects we show only the experiments that have runs, but for private projects we show in this list as well the projects created but without runs yet
+                                : "No experiments have been created yet."
+                            : "Set of experiments included in this project"}
+                    </p>
+                    {!isPublicView && (
+                        <div className="flex items-center justify-center px-2">
+                            <Button
+                                onClick={handleCreateExperimentClick}
+                                className="bg-primary text-primary-foreground"
+                            >
+                                + Add Experiment
+                            </Button>
+                            <CreateExperimentModal
+                                projectId={project.id}
+                                isOpen={isExperimentModalOpen}
+                                onClose={() => setIsExperimentModalOpen(false)}
+                                onExperimentCreated={refreshExperimentList}
+                            />
+                        </div>
+                    )}
+                </div>
+                {projectExperiments.length !== 0 && (
+                    <Card className="flex flex-col md:flex-row justify-between md:items-center gap-4 py-4 px-4 w-full max-w-3/4">
+                        <Table>
+                            <TableHeader>
+                                <tr>
+                                    <th className="text-left">Experiment</th>
+                                    <th className="text-left">Description</th>
+                                    {!isPublicView && (
+                                        <th className="text-left">
+                                            Experiment id
+                                        </th>
+                                    )}
+                                </tr>
+                            </TableHeader>
+                            <TableBody>
+                                {projectExperiments.map((experiment) => (
+                                    <tr
+                                        key={experiment.id}
+                                        className={`cursor-pointer hover:bg-muted/50 ${
+                                            experiment.id ===
+                                            selectedExperimentId
+                                                ? "bg-primary/10"
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            onExperimentClick(
+                                                experiment.id || "",
+                                            )
+                                        }
+                                    >
+                                        <td>{experiment.name}</td>
+                                        <td>{experiment.description}</td>
+                                        {!isPublicView && (
+                                            <td>{experiment.id}</td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Card>
+                )}
+            </Card>
             <div className="grid gap-8 md:grid-cols-2">
                 {isLoading ? (
                     <>
@@ -223,6 +283,7 @@ export default function ProjectDashboardBase({
                             experimentsReportData={experimentsReportData}
                             onExperimentClick={onExperimentClick}
                             projectName={project.name}
+                            selectedExperimentId={selectedExperimentId}
                         />
                         <RunsScatterChart
                             isPublicView={isPublicView}
@@ -237,7 +298,7 @@ export default function ProjectDashboardBase({
                     </>
                 )}
             </div>
-            {selectedRunId && (
+            {selectedRunId && selectedRunId != "" && (
                 <>
                     <Separator className="h-[0.5px] bg-muted-foreground my-6" />
                     <div className="w-full">

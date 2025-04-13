@@ -26,6 +26,7 @@ export default function ProjectDashboard({
     radialChartData,
     convertedValues,
     experimentsReportData,
+    projectExperiments,
     runData,
     selectedExperimentId,
     selectedRunId,
@@ -185,6 +186,7 @@ export default function ProjectDashboard({
                 selectedRunId={selectedRunId}
                 onExperimentClick={onExperimentClick}
                 onRunClick={onRunClick}
+                projectExperiments={projectExperiments}
                 headerContent={headerContent}
                 isLoading={isLoading}
             />

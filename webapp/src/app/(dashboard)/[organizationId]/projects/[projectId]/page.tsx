@@ -8,8 +8,12 @@ import {
     getEquivalentTvTime,
 } from "@/helpers/constants";
 import { getDefaultDateRange } from "@/helpers/date-utils";
-import { getProjectEmissionsByExperiment } from "@/server-functions/experiments";
+import {
+    getExperiments,
+    getProjectEmissionsByExperiment,
+} from "@/server-functions/experiments";
 import { getOneProject } from "@/server-functions/projects";
+import { Experiment } from "@/types/experiment";
 import { ExperimentReport } from "@/types/experiment-report";
 import { Project } from "@/types/project";
 import { use, useCallback, useEffect, useState } from "react";
@@ -51,7 +55,11 @@ export default function ProjectPage({
         emissions: { label: "kg eq CO2", value: 0 },
         duration: { label: "days", value: 0 },
     });
-
+    // The experiments of the current project. We need this because experimentReport only contains the experiments that have been run
+    const [projectExperiments, setProjectExperiments] = useState<Experiment[]>(
+        [],
+    );
+    // The reports (if any) of the experiments
     const [experimentsReportData, setExperimentsReportData] = useState<
         ExperimentReport[]
     >([]);
@@ -70,14 +78,19 @@ export default function ProjectPage({
 
     const [selectedExperimentId, setSelectedExperimentId] =
         useState<string>("");
-
     const [selectedRunId, setSelectedRunId] = useState<string>("");
 
+    const refreshExperimentList = useCallback(async () => {
+        // Logic to refresh experiments if needed
+        const experiments: Experiment[] = await getExperiments(projectId);
+        setProjectExperiments(experiments);
+    }, []);
+
+    /** Use effect functions */
     useEffect(() => {
-        // Replace with your actual API endpoint
         const fetchProjectDetails = async () => {
             try {
-                const project = await getOneProject(projectId);
+                const project: Project | null = await getOneProject(projectId);
                 if (!project) {
                     return;
                 }
@@ -88,8 +101,9 @@ export default function ProjectPage({
         };
 
         fetchProjectDetails();
-    }, [projectId]);
-
+        refreshExperimentList();
+    }, [projectId, refreshExperimentList]);
+    // Fetch the experiment report of the current project
     useEffect(() => {
         async function fetchData() {
             setIsLoading(true);
@@ -167,18 +181,29 @@ export default function ProjectPage({
         }
     }, [projectId, date]);
 
-    const handleExperimentClick = useCallback((experimentId: string) => {
-        setSelectedExperimentId(experimentId);
-        setRunData((prevData) => ({
-            ...prevData,
-            experimentId: experimentId,
-        }));
-        setSelectedRunId(""); // Réinitialiser le runId sélectionné
-    }, []);
+    const handleExperimentClick = useCallback(
+        (experimentId: string) => {
+            if (experimentId === selectedExperimentId) {
+                setSelectedExperimentId("");
+                setSelectedRunId("");
+                return;
+            }
+            setSelectedExperimentId(experimentId);
+            setSelectedRunId("");
+        },
+        [selectedExperimentId],
+    );
 
-    const handleRunClick = useCallback((runId: string) => {
-        setSelectedRunId(runId);
-    }, []);
+    const handleRunClick = useCallback(
+        (runId: string) => {
+            if (runId === selectedRunId) {
+                setSelectedRunId("");
+                return;
+            }
+            setSelectedRunId(runId);
+        },
+        [selectedRunId],
+    );
 
     return (
         <div className="h-full w-full overflow-auto">
@@ -213,6 +238,7 @@ export default function ProjectPage({
                     runData={runData}
                     selectedExperimentId={selectedExperimentId}
                     selectedRunId={selectedRunId}
+                    projectExperiments={projectExperiments}
                     onExperimentClick={handleExperimentClick}
                     onRunClick={handleRunClick}
                     onSettingsClick={handleSettingsClick}

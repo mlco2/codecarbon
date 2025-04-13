@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/chart";
 import { exportExperimentsToCsv } from "@/utils/export";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExportCsvButton } from "./export-csv-button";
 
 interface ExperimentsBarChartProps {
     isPublicView: boolean;
     experimentsReportData: ExperimentReport[];
     onExperimentClick: (experimentId: string) => void;
+    selectedExperimentId: string;
     localLoading?: boolean;
     projectName: string;
 }
@@ -44,6 +45,7 @@ export default function ExperimentsBarChart({
     isPublicView,
     experimentsReportData,
     onExperimentClick,
+    selectedExperimentId,
     localLoading = false,
     projectName,
 }: ExperimentsBarChartProps) {
@@ -52,8 +54,13 @@ export default function ExperimentsBarChart({
 
     const handleBarClick = (data: ExperimentReport, index: number) => {
         onExperimentClick(data.experiment_id);
-        setSelectedBar(index);
     };
+    useEffect(() => {
+        const highlightedBar = experimentsReportData.findIndex(
+            (experiment) => experiment.experiment_id === selectedExperimentId,
+        );
+        setSelectedBar(highlightedBar);
+    }, [selectedExperimentId, experimentsReportData]);
 
     const CustomBar = (props: any) => {
         const { fill, x, y, width, height, index } = props;
