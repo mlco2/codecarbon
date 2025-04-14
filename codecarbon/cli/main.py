@@ -3,6 +3,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4
 
 import questionary
 import requests
@@ -16,6 +17,7 @@ from typing_extensions import Annotated
 from codecarbon import __app_name__, __version__
 from codecarbon.cli.cli_utils import (
     create_new_config_file,
+    get_api_enabled,
     get_api_endpoint,
     get_config,
     get_existing_local_exp_id,
@@ -201,13 +203,29 @@ def config():
     else:
         file_path = create_new_config_file()
 
+    api_enabled = get_api_enabled()
+    api_enabled = typer.prompt(
+        f"API is currently {'enabled' if api_enabled == '1' else 'disabled'}. Press enter to continue or change to 0/1",
+        type=str,
+        default="0",
+    )
+    overwrite_local_config("api_enabled", api_enabled, path=file_path)
+
+    if api_enabled == "0":
+        overwrite_local_config("experiment_id", str(uuid4()), path=file_path)
+        return
+
     api_endpoint = get_api_endpoint(file_path)
     api_endpoint = typer.prompt(
-        f"Current API endpoint is {api_endpoint}. Press enter to continue or input other url",
+        f"Current API endpoint is at {api_endpoint}. Press enter to continue or input other url",
         type=str,
         default=api_endpoint,
     )
     overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
+
+    print(f"Logging into the auth server at {AUTH_SERVER_URL}")
+    fief_auth.authorize()
+
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(_get_access_token())
     organizations = api.get_list_organizations()
@@ -334,8 +352,8 @@ def monitor(
         int, typer.Argument(help="Number of measures between API calls.")
     ] = 30,
     api: Annotated[
-        bool, typer.Option(help="Choose to call Code Carbon API or not")
-    ] = True,
+        Optional[bool], typer.Option(help="Choose to call Code Carbon API or not")
+    ] = None,
 ):
     """Monitor your machine's carbon emissions.
 
@@ -344,6 +362,8 @@ def monitor(
         api_call_interval (Annotated[int, typer.Argument, optional): Number of measures before calling API. Defaults to 30.
         api (Annotated[bool, typer.Option, optional): Choose to call Code Carbon API or not. Defaults to True.
     """
+    if api is None:
+        api = get_api_enabled() == "1"
     experiment_id = get_existing_local_exp_id()
     if api:
         if experiment_id is None:
