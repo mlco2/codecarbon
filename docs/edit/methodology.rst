@@ -148,3 +148,70 @@ CodeCarbon uses a scheduler that, by default, calls for a measure every 15 secon
 The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.
 
 The scheduler is started when the first ``start`` method is called and stopped when ``stop`` method is called.
+
+
+Estimation of Equivalent Usage Emissions
+----------------------------------------
+
+The CodeCarbon dashboard provides equivalent emissions and energy usage comparisons to help users better understand the carbon impact of their activities. These comparisons are based on the following assumptions:
+
+Car Usage
+~~~~~~~~~
+
+- **Emission factor**: *0.12 kgCO₂ per kilometer driven*.
+- This value is derived from the average emissions of a European passenger car under normal driving conditions.
+
+Source : `European Environment Agency <https://co2cars.apps.eea.europa.eu/?source=%7B%22track_total_hits%22%3Atrue%2C%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22constant_score%22%3A%7B%22filter%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22year%22%3A2023%7D%7D%5D%7D%7D%2C%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22scStatus%22%3A%22Provisional%22%7D%7D%5D%7D%7D%5D%7D%7D%7D%7D%5D%7D%7D%2C%22display_type%22%3A%22tabular%22%7D>`_
+
+
+TV Usage
+~~~~~~~~
+
+- **Energy consumption**: *138 Wh per day based on average use*.
+- This assumes:
+  - An average daily usage of 6.5 hours.
+  - A modern television with a power consumption of approximately *21.2 W per hour*.
+
+Source : `The French Agency for Ecological Transition <https://agirpourlatransition.ademe.fr/particuliers/maison/economies-denergie-deau/electricite-combien-consomment-appareils-maison>`_
+
+US Citizen Weekly Emissions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **Annual emissions**: *13.3 tons of CO₂ equivalent per year* for an average US citizen.
+- **Weekly emissions**: This value is divided by the 52 weeks in a year to estimate weekly emissions:
+
+.. math::
+   \text{Weekly Emissions} = \frac{\text{Annual Emissions (tons)}}{52}
+
+.. math::
+   \text{Weekly Emissions} = \frac{13.3}{52} \approx 0.256 \, \text{tons of CO₂ equivalent per week.}
+
+Source : `IEA CO2 total emissions per capita by region, 2000-2023 <https://www.iea.org/data-and-statistics/charts/co2-total-emissions-per-capita-by-region-2000-2023>`_
+
+Calculation Formula
+~~~~~~~~~~~~~~~~~~~
+
+The equivalent emissions are calculated using this formula:
+
+.. math::
+   \text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}
+For example:
+
+- **Car Usage**: *1 kWh* of energy consumption is approximately equivalent to:
+  - *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
+  - *11.9 hours of TV usage* (*1 ÷ 0.084*), if emissions are considered.
+
+- **US Citizen Emissions**:
+  - *1 kWh* of energy consumption can be compared to a fraction of the average weekly emissions of a US citizen:
+
+.. math::
+   \text{US Citizen Equivalent} = \frac{\text{Total Emissions (tons)}}{0.256}
+
+These estimates are approximate and subject to regional variations in:
+- Grid emissions intensity.
+- Vehicle efficiencies.
+
+Source Code
+~~~~~~~~~~~
+
+The emission factors used are defined in the `CodeCarbon source code <https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts>`_. They are based on publicly available data and general assumptions.
