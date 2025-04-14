@@ -66,7 +66,7 @@ class UserWithAuthDependency:
         """
         self.error_if_not_found = error_if_not_found
 
-    def __call__(
+    async def __call__(
         self,
         auth_user_cookie: Optional[FiefUserInfo] = Depends(
             fief_auth_cookie.current_user(optional=True)
@@ -85,6 +85,11 @@ class UserWithAuthDependency:
                 algorithms=["HS256", "RS256"],
             )
         elif bearer_token is not None:
+            if settings.environment != "develop":
+                try:
+                    await fief.validate_access_token(bearer_token.credentials)
+                except Exception:
+                    raise HTTPException(status_code=401, detail="Invalid token")
             # cli user using fief token
             self.auth_user = jwt.decode(
                 bearer_token.credentials,
