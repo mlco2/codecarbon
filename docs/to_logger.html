@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Collecting emissions to a logger &mdash; CodeCarbon 2.8.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+  <title>Collecting emissions to a logger &mdash; CodeCarbon 2.8.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=5e07a493"></script>
+      <script src="_static/documentation_options.js?v=958e345e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -58,6 +58,7 @@
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_installation.html">Advanced Installation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul class="current">
@@ -112,7 +113,7 @@ It allows to leverage powerful logging systems, to centralize emissions to some 
 is also supported but lack of network connectivity may forbid to stream tracking data to some central or cloud-based collector.</p>
 <section id="python-logger">
 <h3>Python logger<a class="headerlink" href="#python-logger" title="Link to this heading"></a></h3>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="c1"># Create a dedicated logger (log name can be the CodeCarbon project name for example)</span>
 <span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">log_name</span><span class="p">)</span>
@@ -132,7 +133,7 @@ is also supported but lack of network connectivity may forbid to stream tracking
 </section>
 <section id="google-cloud-logging">
 <h3>Google Cloud Logging<a class="headerlink" href="#google-cloud-logging" title="Link to this heading"></a></h3>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">google.cloud.logging</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">google.cloud.logging</span>
 
 
 <span class="c1"># Create a Cloud Logging client (specify project name if needed, otherwise Google SDK default project name is used)</span>
