@@ -30,7 +30,7 @@ class TestApi(unittest.TestCase):
             endpoint_url="http://test.com",
             api_key="Toto",
             conf=None,
-            do_not_create_run=True,
+            create_run_automatically=False,
         )
         self.assertIsNone(api.experiment_id)
         self.assertEqual(api.api_key, "Toto")

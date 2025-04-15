@@ -44,7 +44,7 @@ class ApiClient:  # (AsyncClient)
         api_key=None,
         access_token=None,
         conf=None,
-        do_not_create_run=False,
+        create_run_automatically=True,
     ):
         """
         :endpoint_url: URL of the API endpoint
@@ -52,7 +52,7 @@ class ApiClient:  # (AsyncClient)
         :api_key: Code Carbon API_KEY
         :access_token: Code Carbon API access token
         :conf: Metadata of the experiment
-        :do_not_create_run: If True, do not create a run. To use API in read only mode.
+        :create_run_automatically: If False, do not create a run. To use API in read only mode.
         """
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
         self.url = endpoint_url
@@ -60,7 +60,7 @@ class ApiClient:  # (AsyncClient)
         self.api_key = api_key
         self.conf = conf
         self.access_token = access_token
-        if self.experiment_id is not None and do_not_create_run is False:
+        if self.experiment_id is not None and create_run_automatically:
             self._create_run(self.experiment_id)
 
     def _get_headers(self):
