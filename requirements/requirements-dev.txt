@@ -106,7 +106,7 @@ pre-commit==4.2.0
     # via hatch.envs.dev
 prometheus-client==0.21.1
     # via hatch.envs.dev
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via questionary
 psutil==7.0.0
     # via hatch.envs.dev

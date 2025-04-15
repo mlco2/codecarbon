@@ -65,7 +65,7 @@ pandas==2.2.3
     # via hatch.envs.default
 prometheus-client==0.21.1
     # via hatch.envs.default
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via questionary
 psutil==7.0.0
     # via hatch.envs.default

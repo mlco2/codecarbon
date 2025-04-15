@@ -99,7 +99,7 @@ plotly==6.0.1
     # via dash
 prometheus-client==0.21.1
     # via hatch.envs.carbonboard
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via questionary
 psutil==7.0.0
     # via hatch.envs.carbonboard

@@ -118,7 +118,7 @@ pluggy==1.5.0
     # via pytest
 prometheus-client==0.21.1
     # via hatch.envs.test.py3.11
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via questionary
 psutil==7.0.0
     # via hatch.envs.test.py3.11
