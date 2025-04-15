@@ -338,7 +338,7 @@ Dependencies are defined in different places:
 No software is complete without great documentation!
 To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
 
-In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run:
+In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run in root folder:
 
 ```
 hatch run docs:build
