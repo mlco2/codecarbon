@@ -39,16 +39,20 @@ class ApiClient:  # (AsyncClient)
 
     def __init__(
         self,
-        # endpoint_url="https://api.codecarbon.io",
-        endpoint_url="https://dash-dev.cleverapps.io/api",  # beta API
+        endpoint_url="https://api.codecarbon.io",
         experiment_id=None,
         api_key=None,
         access_token=None,
         conf=None,
+        create_run_automatically=True,
     ):
         """
-        :project_id: ID of the existing project
+        :endpoint_url: URL of the API endpoint
+        :experiment_id: ID of the experiment
         :api_key: Code Carbon API_KEY
+        :access_token: Code Carbon API access token
+        :conf: Metadata of the experiment
+        :create_run_automatically: If False, do not create a run. To use API in read only mode.
         """
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
         self.url = endpoint_url
@@ -56,16 +60,8 @@ class ApiClient:  # (AsyncClient)
         self.api_key = api_key
         self.conf = conf
         self.access_token = access_token
-        if self.experiment_id is not None:
+        if self.experiment_id is not None and create_run_automatically:
             self._create_run(self.experiment_id)
-        import warnings
-
-        # FIXME: remove this warning in the future, once the release is created
-        warnings.warn(
-            "Beta API will be reworked, and some features will be removed. If you have data persisted through the API, please be warned that it will be erased with the next API release",
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
     def _get_headers(self):
         headers = {"Content-Type": "application/json"}
@@ -203,9 +199,8 @@ class ApiClient:  # (AsyncClient)
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
         if self.run_id is None:
-            # TODO : raise an Exception ?
-            logger.debug(
-                "ApiClient.add_emission need a run_id : the initial call may "
+            logger.warning(
+                "ApiClient.add_emission() need a run_id : the initial call may "
                 + "have failed. Retrying..."
             )
             self._create_run(self.experiment_id)
@@ -247,14 +242,15 @@ class ApiClient:  # (AsyncClient)
             return False
         return True
 
-    def _create_run(self, experiment_id):
+    def _create_run(self, experiment_id: str):
         """
         Create the experiment for project_id
-        # TODO : Allow to give an existing experiment_id
         """
         if self.experiment_id is None:
             # TODO : raise an Exception ?
-            logger.error("ApiClient FATAL The API _create_run needs an experiment_id !")
+            logger.error(
+                "ApiClient FATAL The ApiClient._create_run() needs an experiment_id !"
+            )
             return None
         try:
             run = RunCreate(

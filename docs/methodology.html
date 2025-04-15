@@ -6,16 +6,17 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Methodology &mdash; CodeCarbon 2.8.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+  <title>Methodology &mdash; CodeCarbon 2.8.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=5e07a493"></script>
+      <script src="_static/documentation_options.js?v=958e345e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -57,6 +58,14 @@
 <li class="toctree-l3"><a class="reference internal" href="#how-codecarbon-works">How CodeCarbon Works</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#estimation-of-equivalent-usage-emissions">Estimation of Equivalent Usage Emissions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#car-usage">Car Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tv-usage">TV Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#us-citizen-weekly-emissions">US Citizen Weekly Emissions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#calculation-formula">Calculation Formula</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
@@ -71,6 +80,7 @@
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_installation.html">Advanced Installation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -235,6 +245,63 @@ All CPUs listed in this directory will be tracked. <a class="reference external"
 <p>CodeCarbon uses a scheduler that, by default, calls for a measure every 15 seconds, so it has no significant overhead.</p>
 <p>The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.</p>
 <p>The scheduler is started when the first <code class="docutils literal notranslate"><span class="pre">start</span></code> method is called and stopped when <code class="docutils literal notranslate"><span class="pre">stop</span></code> method is called.</p>
+</section>
+</section>
+<section id="estimation-of-equivalent-usage-emissions">
+<h2>Estimation of Equivalent Usage Emissions<a class="headerlink" href="#estimation-of-equivalent-usage-emissions" title="Link to this heading"></a></h2>
+<p>The CodeCarbon dashboard provides equivalent emissions and energy usage comparisons to help users better understand the carbon impact of their activities. These comparisons are based on the following assumptions:</p>
+<section id="car-usage">
+<h3>Car Usage<a class="headerlink" href="#car-usage" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Emission factor</strong>: <em>0.12 kgCO₂ per kilometer driven</em>.</p></li>
+<li><p>This value is derived from the average emissions of a European passenger car under normal driving conditions.</p></li>
+</ul>
+<p>Source : <a class="reference external" href="https://co2cars.apps.eea.europa.eu/?source=%7B%22track_total_hits%22%3Atrue%2C%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22constant_score%22%3A%7B%22filter%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22year%22%3A2023%7D%7D%5D%7D%7D%2C%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22scStatus%22%3A%22Provisional%22%7D%7D%5D%7D%7D%5D%7D%7D%7D%7D%5D%7D%7D%2C%22display_type%22%3A%22tabular%22%7D">European Environment Agency</a></p>
+</section>
+<section id="tv-usage">
+<h3>TV Usage<a class="headerlink" href="#tv-usage" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Energy consumption</strong>: <em>138 Wh per day based on average use</em>.</p></li>
+<li><p>This assumes:
+- An average daily usage of 6.5 hours.
+- A modern television with a power consumption of approximately <em>21.2 W per hour</em>.</p></li>
+</ul>
+<p>Source : <a class="reference external" href="https://agirpourlatransition.ademe.fr/particuliers/maison/economies-denergie-deau/electricite-combien-consomment-appareils-maison">The French Agency for Ecological Transition</a></p>
+</section>
+<section id="us-citizen-weekly-emissions">
+<h3>US Citizen Weekly Emissions<a class="headerlink" href="#us-citizen-weekly-emissions" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Annual emissions</strong>: <em>13.3 tons of CO₂ equivalent per year</em> for an average US citizen.</p></li>
+<li><p><strong>Weekly emissions</strong>: This value is divided by the 52 weeks in a year to estimate weekly emissions:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\text{Weekly Emissions} = \frac{\text{Annual Emissions (tons)}}{52}\]</div>
+<div class="math notranslate nohighlight">
+\[\text{Weekly Emissions} = \frac{13.3}{52} \approx 0.256 \, \text{tons of CO₂ equivalent per week.}\]</div>
+<p>Source : <a class="reference external" href="https://www.iea.org/data-and-statistics/charts/co2-total-emissions-per-capita-by-region-2000-2023">IEA CO2 total emissions per capita by region, 2000-2023</a></p>
+</section>
+<section id="calculation-formula">
+<h3>Calculation Formula<a class="headerlink" href="#calculation-formula" title="Link to this heading"></a></h3>
+<p>The equivalent emissions are calculated using this formula:</p>
+<div class="math notranslate nohighlight">
+\[\text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}\]</div>
+<p>For example:</p>
+<ul class="simple">
+<li><p><strong>Car Usage</strong>: <em>1 kWh</em> of energy consumption is approximately equivalent to:
+- <em>8.33 kilometers driven by a car</em> (<em>1 ÷ 0.12</em>).
+- <em>11.9 hours of TV usage</em> (<em>1 ÷ 0.084</em>), if emissions are considered.</p></li>
+<li><p><strong>US Citizen Emissions</strong>:
+- <em>1 kWh</em> of energy consumption can be compared to a fraction of the average weekly emissions of a US citizen:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\text{US Citizen Equivalent} = \frac{\text{Total Emissions (tons)}}{0.256}\]</div>
+<p>These estimates are approximate and subject to regional variations in:
+- Grid emissions intensity.
+- Vehicle efficiencies.</p>
+</section>
+<section id="source-code">
+<h3>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h3>
+<p>The emission factors used are defined in the <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts">CodeCarbon source code</a>. They are based on publicly available data and general assumptions.</p>
 </section>
 </section>
 </section>
