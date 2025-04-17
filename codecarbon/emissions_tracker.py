@@ -1126,7 +1126,6 @@ def track_emissions(
                     log_level=log_level,
                     on_csv_write=on_csv_write,
                     logger_preamble=logger_preamble,
-                    pue=pue,
                     country_iso_code=country_iso_code,
                     region=region,
                     cloud_provider=cloud_provider,
