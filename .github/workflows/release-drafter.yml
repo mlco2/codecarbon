@@ -3,7 +3,7 @@ name: Release Drafter
 on:
   push:
     # branches to consider in the event; optional, defaults to all
-    branches: [master, codecarbon_v3_rc]
+    branches: [master]
 
 jobs:
   update_release_draft:
