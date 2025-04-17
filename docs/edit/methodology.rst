@@ -72,6 +72,7 @@ As you can see, we try to be as accurate as possible in estimating carbon intens
 
 Power Usage
 -----------
+
 Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
 ``measure_power_secs``, with default value 15 seconds, that can be passed when instantiating the emissions' tracker.
 
@@ -85,15 +86,63 @@ Tracks Nvidia GPUs energy consumption using ``pynvml`` library (installed with t
 RAM
 ~~~~
 
-CodeCarbon uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
-This measure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.
+CodeCarbon v2 uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
+
+But this is not a good measure because it doesn't take into account the number of RAM slots used in the machine, that really drive the power consumption, not the amount of RAM.
+For example, in servers you could have thousands of GB of RAM but the power consumption would not be proportional to the amount of memory used, but to the number of memory modules used.
+
+Old machine could use 2 Mb memory stick, where modern servers will use 128 Mb memory stick.
+
+So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:
+.. code-block:: text
+
+    RAM Power Consumption = 5 Watts * Number of RAM slots used
+
+But getting the number of RAM slots used is not possible as you need root access to get the number of RAM slots used. So we use an heuristic based on the RAM size.
+
+For example keep a minimum of 2 modules. Except for ARM CPU like rapsberry pi where we will consider a 3W constant. Then consider the max RAM per module is 128GB and that RAM module only exist in power of 2 (2, 4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the RAM by the number of modules used.
+
+- For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the minimum power
+- Base power per DIMM is 5W for x86 systems and 1.5W for ARM systems
+- For standard systems (up to 4 DIMMs): linear scaling at full power per DIMM
+- For medium systems (5-8 DIMMs): decreasing efficiency (90% power per additional DIMM)
+- For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)
+- For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)
+- Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)
+- Ensures at least 3W for ARM systems
+
+Example Power Estimates:
+
+- **Small laptop (8GB RAM)**: ~10W (2 DIMMs at 5W each)
+- **Desktop (32GB RAM)**: ~20W (4 DIMMs at 5W each)
+- **Desktop (64GB RAM)**: ~20W (4 DIMMs at 5W each), the same as 32GB
+- **Small server (128GB RAM)**: ~40W (8 DIMMs with efficiency scaling)
+- **Large server (1TB RAM)**: ~40W (using 8x128GB DIMMs with high efficiency scaling)
+
+This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn't scale linearly with capacity, but rather with the number of physical modules. Since we don't have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.
+
+If you know the exact RAM power consumption of your system, then provide it using the `force_ram_power` parameter, which will override the automatic estimation.
+
+For example, in a Ubuntu machine, you can get the number of RAM slots used with the following command:
+
+.. code-block:: bash
+
+    sudo lshw -C memory -short | grep DIMM
+
+    /0/37/0                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+    /0/37/1                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+    /0/37/2                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+    /0/37/3                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+
+Here we count 4 RAM slots used, so the power consumption will be 4 x 5 = 20 Watts, just add `force_ram_power=20` to the init of CodeCarbon.
+
 
 CPU
 ~~~~
 
 - **On Windows or Mac (Intel)**
 
-Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ .
+Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ . But has been discontinued. There is a discussion about it on `github issues #457 <https://github.com/mlco2/codecarbon/issues/457>`_.
 
 - **Apple Silicon Chips (M1, M2)**
 
@@ -120,19 +169,89 @@ If you do not want to give sudo rights to your user, then CodeCarbon will fall b
 
 - **On Linux**
 
-Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``/sys/class/powercap/intel-rapl`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
-All CPUs listed in this directory will be tracked. `Help us improve this and make it configurable <https://github.com/mlco2/codecarbon/issues/156>`_.
+Tracks Intel and AMD processor energy consumption from Intel RAPL files at ``/sys/class/powercap/intel-rapl/subsystem`` ( `reference <https://web.eece.maine.edu/~vweaver/projects/rapl/>`_ ).
+All CPUs listed in this directory will be tracked.
 
-*Note*: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path
+*Note*: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path and if the user has the necessary permissions to read them.
 
 
-If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fallback mode:
+CPU hardware
+------------
+
+The CPU die is the processing unit itself. It's a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible1. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.
+
+In Linux kernel, energy_uj is a current energy counter in micro joules. It is used to measure CPU core's energy consumption.
+
+Micro joules is then converted in kWh, with formulas kWh=energy * 10 ** (-6) * 2.77778e-7
+
+For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read two files :
+/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj
+
+
+RAPL Metrics
+------------
+RAPL stand for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
+
+See https://blog.chih.me/read-cpu-power-with-RAPL.html for more information.
+
+Despite the name Intel RAPL, it support AMD processors since kernel 5.8.
+
+It is some files in /sys/class/powercap/intel-rapl/subsystem/ that give the energy consumption of the CPU, and sometime RAM.
+There are folder for each `domain`, and in each folder there are a file `name` with the name of the domain and a `energy_uj` for the amount of energy in micro-joules.
+
+The drawback of RAPL is that not every CPU use it the same way. We focus on the `package` domain, but some CPU have more domain like `core`, `uncore`, `dram`, `psys`, `gpu`, `psys` and `psys-io`.
+
+For example :
+- Intel put all the physical cores consumption in `core` and the `package` include `core`.
+- For AMD, `core` have very low energy, so we don't know if it is included in the `package` or not.
+
+Our friend from Scaphandre, a tool to monitor energy consumption, have a good article about RAPL https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html and also a discussion with good references: https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231 and point out that this topic is not well documented.
+
+
+
+https://user-images.githubusercontent.com/894892/120764898-ecf07280-c518-11eb-9155-92780cabcf52.png
+Source :“RAPL in Action: Experiences in Using RAPL for Power Measurements,” (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z. Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp. 1–26, Apr. 2018, doi: 10.1145/3177754.)
+
+Metric comparison
+
+Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
+Power plug measure when idle (10% CPU): 125 W
+package-0-die-0 : 68 W
+package-0-die-1 : 68 W
+CodeCarbon : 137 W
+
+Power plug measure when loaded (100% CPU): 256 W - 125W in idle = 131 W
+CorWatt	PkgWatt
+	133.13	169.82
+	7.54	169.82
+CodeCarbon : 330 W
+package-0-die-0 : 166 W
+package-0-die-1 : 166 W
+
+RAPL: 234 sec. Joule Counter Range, at 280 Watts
+
+
+CPU metrics priority
+--------------------
+
+CodeCarbon will first try to read the energy consumption of the CPU from low level interface like RAPL or ``powermetrics``.
+If none of the tracking tools are available, CodeCarbon will be switched to a fallback mode:
  - It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
- - If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
- - We could not find any good resource showing statistical relationships between TDP and average power, so we empirically tested that 50% is a decent approximation.
+ - If the CPU is not found in the data source, a global constant will be applied.
+ - If ``psutil`` is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.
+ - CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
+
+Here is a drawing of the fallback mode:
+
+.. image:: ./images/cpu_fallback.png
+            :align: center
+            :alt: CPU Fallback
+
+The code doing this is available in `codecarbon/core/resource_tracker.py <https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L24>`_.
 
 The net Energy Used is the net power supply consumed during the compute time, measured as ``kWh``.
 
+We compute energy consumption as the product of the power consumed and the time the power was consumed for. The formula is:
 ``Energy = Power * Time``
 
 References

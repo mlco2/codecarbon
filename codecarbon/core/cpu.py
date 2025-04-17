@@ -5,12 +5,14 @@ https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget
 """
 
 import os
+import re
 import shutil
 import subprocess
 import sys
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
+import psutil
 from rapidfuzz import fuzz, process, utils
 
 from codecarbon.core.rapl import RAPLFile
@@ -18,6 +20,9 @@ from codecarbon.core.units import Time
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
+
+# default W value per core for a CPU if no model is found in the ref csv
+DEFAULT_POWER_PER_CORE = 4
 
 
 def is_powergadget_available() -> bool:
@@ -54,6 +59,24 @@ def is_rapl_available() -> bool:
             "Not using the RAPL interface, an exception occurred while instantiating "
             + "IntelRAPL : %s",
             e,
+        )
+        return False
+
+
+def is_psutil_available():
+    try:
+        nice = psutil.cpu_times().nice
+        if nice > 0.0001:
+            return True
+        else:
+            logger.debug(
+                f"is_psutil_available() : psutil.cpu_times().nice is too small : {nice} !"
+            )
+            return False
+    except Exception as e:
+        logger.debug(
+            "Not using the psutil interface, an exception occurred while instantiating "
+            + f"psutil.cpu_times : {e}",
         )
         return False
 
@@ -237,7 +260,7 @@ class IntelRAPL:
 
     """
 
-    def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl"):
+    def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl/subsystem"):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
         self._rapl_files = []
@@ -275,6 +298,8 @@ class IntelRAPL:
             with open(path) as f:
                 name = f.read().strip()
                 # Fake the name used by Power Gadget
+                # We ignore "core" in name as it seems to be included in "package" for Intel CPU.
+                # TODO: Use "dram" for memory power
                 if "package" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
@@ -294,7 +319,7 @@ class IntelRAPL:
                     logger.debug("We will read Intel RAPL files at %s", rapl_file)
                 except PermissionError as e:
                     raise PermissionError(
-                        "Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
+                        "PermissionError : Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
                         + " Please view https://github.com/mlco2/codecarbon/issues/244"
                         + " for workarounds : %s",
                         e,
@@ -332,8 +357,6 @@ class IntelRAPL:
         """
         Return CPU details without computing them.
         """
-        logger.debug("get_static_cpu_details %s", self._cpu_details)
-
         return self._cpu_details
 
     def start(self) -> None:
@@ -426,6 +449,18 @@ class TDP:
         start_cpu = model_raw.find(" CPU @ ")
         if start_cpu > 0:
             model_raw = model_raw[0:start_cpu]
+        model_raw = model_raw.replace(" CPU", "")
+        model_raw = re.sub(r" @\s*\d+\.\d+GHz", "", model_raw)
+        direct_match = process.extractOne(
+            model_raw,
+            cpu_df["Name"],
+            processor=lambda s: s.lower(),
+            scorer=fuzz.ratio,
+            score_cutoff=THRESHOLD_DIRECT,
+        )
+
+        if direct_match:
+            return direct_match[0]
         indirect_matches = process.extract(
             model_raw,
             cpu_df["Name"],
@@ -467,10 +502,18 @@ class TDP:
                 + " Please contact us.",
                 cpu_model_detected,
             )
+            if is_psutil_available():
+                # Count thread of the CPU
+                threads = psutil.cpu_count(logical=True)
+                estimated_tdp = threads * DEFAULT_POWER_PER_CORE
+                logger.warning(
+                    f"We will use the default power consumption of {DEFAULT_POWER_PER_CORE} W per thread for your {threads} CPU, so {estimated_tdp}W."
+                )
+                return cpu_model_detected, estimated_tdp
             return cpu_model_detected, None
         logger.warning(
             "We were unable to detect your CPU using the `cpuinfo` package."
-            + " Resorting to a default power consumption of 85W."
+            + " Resorting to a default power consumption."
         )
         return "Unknown", None
 
