@@ -1,6 +1,6 @@
 """
 Contains implementations of the Public facing API: EmissionsTracker,
-OfflineEmissionsTracker and @track_emissions
+OfflineEmissionsTracker, context manager and decorator @track_emissions
 """
 
 import dataclasses
