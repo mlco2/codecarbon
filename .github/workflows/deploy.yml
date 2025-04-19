@@ -2,6 +2,10 @@ name: Deploy to Clever Cloud
 
 on:
   push:
+    paths:
+      - "carbonserver/**"
+      - "webapp/**"
+      - "pyproject.toml"
     branches: [master]
 
 jobs:

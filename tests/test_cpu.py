@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import unittest
 from unittest import mock
@@ -12,6 +13,7 @@ from codecarbon.core.cpu import (
     is_powergadget_available,
 )
 from codecarbon.core.units import Energy, Power, Time
+from codecarbon.core.util import count_physical_cpus
 from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
 
@@ -198,6 +200,11 @@ class TestTDP(unittest.TestCase):
             tdp._get_matching_cpu(model, cpu_data, greedy=False),
             "Intel Xeon Silver 4208",
         )
+        model = "Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "Intel Xeon E5-2620 v3",
+        )
         # Does not match when missing part replaced by (here wrong) other part.
         # Which here is good. Could happen if Intel creates a model with the
         # same name than AMD ("5800K"), but only AMD exists in our cpu list.
@@ -290,3 +297,29 @@ class TestTDP(unittest.TestCase):
         self.assertIsNone(
             tdp._get_matching_cpu(model, cpu_data, greedy=False),
         )
+
+
+class TestPhysicalCPU(unittest.TestCase):
+    def test_count_physical_cpus_windows(self):
+        with mock.patch("platform.system", return_value="Windows"):
+            with mock.patch.dict(os.environ, {"NUMBER_OF_PROCESSORS": "4"}):
+                assert count_physical_cpus() == 4
+
+            with mock.patch.dict(os.environ, {}, clear=True):
+                assert count_physical_cpus() == 1
+
+    def test_count_physical_cpus_linux(self):
+        with mock.patch("platform.system", return_value="Linux"):
+            lscpu_output = "Socket(s): 2\n"
+            with mock.patch("subprocess.check_output", return_value=lscpu_output):
+                assert count_physical_cpus() == 2
+
+            lscpu_output = "Some other output\n"
+            with mock.patch("subprocess.check_output", return_value=lscpu_output):
+                assert count_physical_cpus() == 1
+
+            with mock.patch(
+                "subprocess.check_output",
+                side_effect=subprocess.CalledProcessError(1, "lscpu"),
+            ):
+                assert count_physical_cpus() == 1

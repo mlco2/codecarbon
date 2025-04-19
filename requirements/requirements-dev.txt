@@ -11,8 +11,9 @@
 # - fief-client[cli]
 # - pandas
 # - prometheus-client
-# - psutil
+# - psutil>=6.0.0
 # - py-cpuinfo
+# - pydantic
 # - pynvml
 # - questionary
 # - rapidfuzz
@@ -21,7 +22,9 @@
 # - typer
 #
 
-anyio==4.8.0
+annotated-types==0.7.0
+    # via pydantic
+anyio==4.9.0
     # via httpx
 arrow==1.3.0
     # via hatch.envs.dev
@@ -29,7 +32,7 @@ black==25.1.0
     # via hatch.envs.dev
 bumpver==2024.1130
     # via hatch.envs.dev
-certifi==2024.12.14
+certifi==2025.1.31
     # via
     #   httpcore
     #   httpx
@@ -48,21 +51,21 @@ click==8.1.8
     #   typer
 colorama==0.4.6
     # via bumpver
-cryptography==44.0.0
+cryptography==44.0.2
     # via jwcrypto
 distlib==0.3.9
     # via virtualenv
 fief-client==0.20.0
     # via hatch.envs.dev
-filelock==3.17.0
+filelock==3.18.0
     # via virtualenv
 h11==0.14.0
     # via httpcore
-httpcore==1.0.7
+httpcore==1.0.8
     # via httpx
 httpx==0.27.2
     # via fief-client
-identify==2.6.6
+identify==2.6.9
     # via pre-commit
 idna==3.10
     # via
@@ -77,7 +80,7 @@ markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
-mypy==1.14.1
+mypy==1.15.0
     # via hatch.envs.dev
 mypy-extensions==1.0.0
     # via
@@ -85,7 +88,7 @@ mypy-extensions==1.0.0
     #   mypy
 nodeenv==1.9.1
     # via pre-commit
-numpy==2.2.2
+numpy==2.2.4
     # via pandas
 nvidia-ml-py==12.570.86
     # via pynvml
@@ -95,22 +98,26 @@ pandas==2.2.3
     # via hatch.envs.dev
 pathspec==0.12.1
     # via black
-platformdirs==4.3.6
+platformdirs==4.3.7
     # via
     #   black
     #   virtualenv
-pre-commit==4.1.0
+pre-commit==4.2.0
     # via hatch.envs.dev
 prometheus-client==0.21.1
     # via hatch.envs.dev
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via questionary
-psutil==6.1.1
+psutil==7.0.0
     # via hatch.envs.dev
 py-cpuinfo==9.0.0
     # via hatch.envs.dev
 pycparser==2.22
     # via cffi
+pydantic==2.11.3
+    # via hatch.envs.dev
+pydantic-core==2.33.1
+    # via pydantic
 pygments==2.19.1
     # via rich
 pynvml==12.0.0
@@ -119,21 +126,21 @@ python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   pandas
-pytz==2024.2
+pytz==2025.2
     # via pandas
 pyyaml==6.0.2
     # via pre-commit
 questionary==2.1.0
     # via hatch.envs.dev
-rapidfuzz==3.11.0
+rapidfuzz==3.13.0
     # via hatch.envs.dev
 requests==2.32.3
     # via hatch.envs.dev
-rich==13.9.4
+rich==14.0.0
     # via
     #   hatch.envs.dev
     #   typer
-ruff==0.9.3
+ruff==0.11.5
     # via hatch.envs.dev
 shellingham==1.5.4
     # via typer
@@ -147,21 +154,26 @@ termcolor==2.3.0
     # via yaspin
 toml==0.10.2
     # via bumpver
-typer==0.15.1
+typer==0.15.2
     # via hatch.envs.dev
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   anyio
     #   jwcrypto
     #   mypy
+    #   pydantic
+    #   pydantic-core
     #   typer
-tzdata==2025.1
+    #   typing-inspection
+typing-inspection==0.4.0
+    # via pydantic
+tzdata==2025.2
     # via pandas
-urllib3==2.3.0
+urllib3==2.4.0
     # via requests
-virtualenv==20.29.1
+virtualenv==20.30.0
     # via pre-commit
 wcwidth==0.2.13
     # via prompt-toolkit

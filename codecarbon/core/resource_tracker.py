@@ -4,8 +4,9 @@ from typing import List, Union
 from codecarbon.core import cpu, gpu, macmon, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
 from codecarbon.external.logger import logger
+from codecarbon.external.ram import RAM
 
 
 class ResourceTracker:
@@ -21,44 +22,87 @@ class ResourceTracker:
             logger.info("Tracking Apple RAM via MacMon")
             self.ram_tracker = "MacMon"
             ram = AppleSiliconChip.from_utils(self.tracker._output_dir, chip_part="RAM")
-            self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
-            self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
         else:
             if macmon.is_macmon_available():
                 logger.warning(
                     "MacMon is installed but cannot track RAM power on M1 chips, reverting to constant RAM power"
                 )
-            self.ram_tracker = "3 Watts for 8 GB ratio constant"
-            logger.info(f"Tracking RAM via constant ratio: {self.ram_tracker}")
 
-            ram = RAM(tracking_mode=self.tracker._tracking_mode)
-            self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
-            self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+            if self.tracker._force_ram_power is not None:
+                self.ram_tracker = (
+                    f"User specified constant: {self.tracker._force_ram_power} Watts"
+                )
+                logger.info(
+                    f"Using user-provided RAM power: {self.tracker._force_ram_power} Watts"
+                )
+            else:
+                self.ram_tracker = "RAM power estimation model"
+                logger.info("Using RAM power estimation model based on the RAM size")
+            ram = RAM(
+                tracking_mode=self.tracker._tracking_mode,
+                force_ram_power=self.tracker._force_ram_power,
+            )
+        self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
+        self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
-        if cpu.is_powergadget_available() and self.tracker._default_cpu_power is None:
+        cpu_number = self.tracker._conf.get("cpu_physical_count")
+        tdp = cpu.TDP()
+        if self.tracker._force_cpu_power is not None:
+            logger.info(
+                f"Using user-provided CPU power: {self.tracker._force_cpu_power} Watts"
+            )
+            self.cpu_tracker = "User Input TDP constant"
+            max_power = self.tracker._force_cpu_power
+        else:
+            max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+        if self.tracker._conf.get("force_mode_cpu_load", False) and (
+            tdp.tdp is not None or self.tracker._force_cpu_power is not None
+        ):
+            if cpu.is_psutil_available():
+                # Register a CPU with MODE_CPU_LOAD
+                model = tdp.model
+                hardware_cpu = CPU.from_utils(
+                    self.tracker._output_dir,
+                    MODE_CPU_LOAD,
+                    model,
+                    max_power,
+                    tracking_mode=self.tracker._tracking_mode,
+                )
+                self.cpu_tracker = MODE_CPU_LOAD
+                self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+                self.tracker._hardware.append(hardware_cpu)
+                return
+            else:
+                logger.warning(
+                    "Force CPU load mode requested but psutil is not available."
+                )
+        if cpu.is_powergadget_available() and self.tracker._force_cpu_power is None:
             logger.info("Tracking Intel CPU via Power Gadget")
             self.cpu_tracker = "Power Gadget"
-            hardware = CPU.from_utils(self.tracker._output_dir, "intel_power_gadget")
-            self.tracker._hardware.append(hardware)
-            self.tracker._conf["cpu_model"] = hardware.get_model()
-        elif cpu.is_rapl_available():
-            logger.info("Tracking Intel CPU via RAPL interface")
-            self.cpu_tracker = "RAPL"
-            hardware = CPU.from_utils(self.tracker._output_dir, "intel_rapl")
-            self.tracker._hardware.append(hardware)
-            self.tracker._conf["cpu_model"] = hardware.get_model()
-        elif self.tracker._default_cpu_power is None and macmon.is_macmon_available():
-            self.cpu_tracker = "MacMon"
-            logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
-            hardware_cpu = AppleSiliconChip.from_utils(
-                self.tracker._output_dir, chip_part="CPU"
+            hardware_cpu = CPU.from_utils(
+                self.tracker._output_dir, "intel_power_gadget"
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
-
+        elif cpu.is_rapl_available():
+            logger.info("Tracking Intel CPU via RAPL interface")
+            self.cpu_tracker = "RAPL"
+            hardware_cpu = CPU.from_utils(
+                output_dir=self.tracker._output_dir, mode="intel_rapl"
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+            if "AMD Ryzen Threadripper" in self.tracker._conf["cpu_model"]:
+                logger.warning(
+                    "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."
+                )
+        # change code to check if powermetrics needs to be installed or just sudo setup
+        elif self.tracker._default_cpu_power is None and macmon.is_macmon_available():
+            self.cpu_tracker = "MacMon"
+            logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
         elif (
             self.tracker._default_cpu_power is None
             and powermetrics.is_powermetrics_available()
@@ -82,35 +126,62 @@ class ResourceTracker:
             elif is_windows_os():
                 cpu_tracking_install_instructions = "Windows OS detected: Please install Intel Power Gadget to measure CPU"
             elif is_linux_os():
-                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at \\sys\\class\\powercap\\intel-rapl to measure CPU"
+                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at /sys/class/powercap/intel-rapl/subsystem to measure CPU"
             logger.warning(
-                f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
+                f"No CPU tracking mode found. Falling back on estimation based on TDP for CPU. \n {cpu_tracking_install_instructions}\n"
             )
             self.cpu_tracker = "TDP constant"
-            tdp = cpu.TDP()
-            power = tdp.tdp
             model = tdp.model
-            if (power is None) and self.tracker._default_cpu_power:
+            if (max_power is None) and self.tracker._force_cpu_power:
                 # We haven't been able to calculate CPU power but user has input a default one. We use it
-                user_input_power = self.tracker._default_cpu_power
+                user_input_power = self.tracker._force_cpu_power
                 logger.debug(f"Using user input TDP: {user_input_power} W")
                 self.cpu_tracker = "User Input TDP constant"
-                power = user_input_power
+                max_power = user_input_power
             logger.info(f"CPU Model on constant consumption mode: {model}")
             self.tracker._conf["cpu_model"] = model
             if tdp:
-                hardware = CPU.from_utils(
-                    self.tracker._output_dir, "constant", model, power
-                )
-                self.tracker._hardware.append(hardware)
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU load mode."
+                    )
+                    hardware_cpu = CPU.from_utils(
+                        self.tracker._output_dir,
+                        MODE_CPU_LOAD,
+                        model,
+                        max_power,
+                        tracking_mode=self.tracker._tracking_mode,
+                    )
+                    self.cpu_tracker = MODE_CPU_LOAD
+                else:
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU constant mode."
+                    )
+                    hardware_cpu = CPU.from_utils(
+                        self.tracker._output_dir, "constant", model, max_power
+                    )
+                    self.cpu_tracker = "global constant"
+                self.tracker._hardware.append(hardware_cpu)
             else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. "
-                    + "Falling back on a global constant."
-                )
-                self.cpu_tracker = "global constant"
-                hardware = CPU.from_utils(self.tracker._output_dir, "constant")
-                self.tracker._hardware.append(hardware)
+                if cpu.is_psutil_available():
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on CPU load mode."
+                    )
+                    hardware_cpu = CPU.from_utils(
+                        self.tracker._output_dir,
+                        MODE_CPU_LOAD,
+                        model,
+                        max_power,
+                        tracking_mode=self.tracker._tracking_mode,
+                    )
+                    self.cpu_tracker = MODE_CPU_LOAD
+                else:
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on a global constant."
+                    )
+                    self.cpu_tracker = "global constant"
+                    hardware_cpu = CPU.from_utils(self.tracker._output_dir, "constant")
+                self.tracker._hardware.append(hardware_cpu)
 
     def set_GPU_tracking(self):
         logger.info("[setup] GPU Tracking...")
@@ -140,6 +211,8 @@ class ResourceTracker:
                 self.tracker._conf["gpu_count"] = len(
                     gpu_devices.devices.get_gpu_static_info()
                 )
+            self.gpu_tracker = "pynvml"
+
         elif macmon.is_macmon_available():
             logger.info("Tracking Apple GPU via MacMon")
             hardware_gpu = AppleSiliconChip.from_utils(
@@ -161,11 +234,15 @@ class ResourceTracker:
             logger.info("No GPU found.")
 
     def set_CPU_GPU_ram_tracking(self):
+        """
+        Set up CPU, GPU and RAM tracking based on the user's configuration.
+        param tracker: BaseEmissionsTracker object
+        """
         self.set_RAM_tracking()
         self.set_CPU_tracking()
         self.set_GPU_tracking()
 
-        logger.debug(
+        logger.info(
             f"""The below tracking methods have been set up:
                 RAM Tracking Method: {self.ram_tracker}
                 CPU Tracking Method: {self.cpu_tracker}

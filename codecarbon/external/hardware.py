@@ -2,8 +2,8 @@
 Encapsulates external dependencies to retrieve hardware metadata
 """
 
+import math
 import re
-import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -15,7 +15,7 @@ from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.macmon import MacMon, is_macmon_available
 from codecarbon.core.powermetrics import ApplePowermetrics, is_powermetrics_available
 from codecarbon.core.units import Energy, Power, Time
-from codecarbon.core.util import SLURM_JOB_ID, detect_cpu_model
+from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -25,6 +25,8 @@ POWER_CONSTANT = 85
 CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
 B_TO_GB = 1024 * 1024 * 1024
+
+MODE_CPU_LOAD = "cpu_load"
 
 
 @dataclass
@@ -147,13 +149,21 @@ class CPU(BaseHardware):
         mode: str,
         model: str,
         tdp: int,
-        rapl_dir: str = "/sys/class/powercap/intel-rapl",
+        rapl_dir: str = "/sys/class/powercap/intel-rapl/subsystem",
+        tracking_mode: str = "machine",
     ):
+        assert tracking_mode in ["machine", "process"]
+        self._power_history: List[Power] = []
         self._output_dir = output_dir
         self._mode = mode
         self._model = model
         self._tdp = tdp
         self._is_generic_tdp = False
+        self._tracking_mode = tracking_mode
+        self._pid = psutil.Process().pid
+        self._cpu_count = count_cpus()
+        self._process = psutil.Process(self._pid)
+
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
@@ -170,12 +180,63 @@ class CPU(BaseHardware):
 
         return s + ")"
 
+    @staticmethod
+    def _calculate_power_from_cpu_load(tdp, cpu_load, model):
+        if "AMD Ryzen Threadripper" in model:
+            return CPU._calculate_power_from_cpu_load_treadripper(tdp, cpu_load)
+        else:
+            # Minimum power consumption is 10% of TDP
+            return max(tdp * (cpu_load / 100.0), tdp * 0.1)
+
+    @staticmethod
+    def _calculate_power_from_cpu_load_treadripper(tdp, cpu_load):
+        load = cpu_load / 100.0
+
+        if load < 0.1:  # Below 10% CPU load
+            return tdp * (0.05 * load * 10)
+        elif load <= 0.3:  # 10-30% load - linear phase
+            return tdp * (0.05 + 1.8 * (load - 0.1))
+        elif load <= 0.5:  # 30-50% load - adjusted coefficients
+            # Increased base power and adjusted curve
+            base_power = 0.45  # Increased from 0.41
+            power_range = 0.50  # Increased from 0.44
+            factor = ((load - 0.3) / 0.2) ** 1.8  # Reduced power from 2.0 to 1.8
+            return tdp * (base_power + power_range * factor)
+        else:  # Above 50% - plateau phase
+            return tdp * (0.85 + 0.15 * (1 - math.exp(-(load - 0.5) * 5)))
+
+    def _get_power_from_cpu_load(self):
+        """
+        When in MODE_CPU_LOAD
+        """
+        if self._tracking_mode == "machine":
+            tdp = self._tdp
+            cpu_load = psutil.cpu_percent(interval=0.5)
+            power = self._calculate_power_from_cpu_load(tdp, cpu_load, self._model)
+            logger.debug(
+                f"A TDP of {self._tdp} W and a CPU load of {cpu_load:.1f}% give an estimation of {power:1f} W for whole machine."
+            )
+        elif self._tracking_mode == "process":
+            cpu_load = self._process.cpu_percent(interval=0.5) / self._cpu_count
+            power = self._calculate_power_from_cpu_load(
+                self._tdp, cpu_load, self._model
+            )
+            logger.debug(
+                f"A TDP of {self._tdp} W and a CPU load of {cpu_load:.1f}% give an estimation of {power:1f} W for process {self._pid}."
+            )
+        else:
+            raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
+        return Power.from_watts(power)
+
     def _get_power_from_cpus(self) -> Power:
         """
         Get CPU power
         :return: power in kW
         """
-        if self._mode == "constant":
+        if self._mode == MODE_CPU_LOAD:
+            power = self._get_power_from_cpu_load()
+            return power
+        elif self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
         if self._mode == "intel_rapl":
@@ -209,20 +270,38 @@ class CPU(BaseHardware):
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
-        cpu_power = self._get_power_from_cpus()
-        return cpu_power
+        self._power_history.append(self._get_power_from_cpus())
+        if len(self._power_history) == 0:
+            logger.warning("Power history is empty, returning 0 W")
+            return Power.from_watts(0)
+        power_history_in_W = [power.W for power in self._power_history]
+        cpu_power = sum(power_history_in_W) / len(power_history_in_W)
+        self._power_history = []
+        return Power.from_watts(cpu_power)
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
         if self._mode == "intel_rapl":
             energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
             power = self.total_power()
+            # Patch AMD Threadripper that count 2x the power
+            if "AMD Ryzen Threadripper" in self._model:
+                power = power / 2
+                energy = energy / 2
             return power, energy
-        # If not intel_rapl
+        # If not intel_rapl, we call the parent method from BaseHardware
+        # to compute energy from power and time
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
         if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
             self._intel_interface.start()
+        if self._mode == MODE_CPU_LOAD:
+            # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
+            _ = self._get_power_from_cpu_load()
+
+    def monitor_power(self):
+        cpu_power = self._get_power_from_cpus()
+        self._power_history.append(cpu_power)
 
     def get_model(self):
         return self._model
@@ -234,6 +313,7 @@ class CPU(BaseHardware):
         mode: str,
         model: Optional[str] = None,
         tdp: Optional[int] = None,
+        tracking_mode: str = "machine",
     ) -> "CPU":
         if model is None:
             model = detect_cpu_model()
@@ -246,176 +326,13 @@ class CPU(BaseHardware):
             cpu._is_generic_tdp = True
             return cpu
 
-        return cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
-
-
-@dataclass
-class RAM(BaseHardware):
-    # 3 watts of power for every 8GB of DDR3 or DDR4 memory
-    # https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use
-    power_per_GB = 3 / 8  # W/GB
-    memory_size = None
-
-    def __init__(
-        self,
-        pid: int = psutil.Process().pid,
-        children: bool = True,
-        tracking_mode: str = "machine",
-    ):
-        """
-        Instantiate a RAM object from a reference pid. If none is provided, will use the
-        current process's. The `pid` is used to find children processes if `children`
-        is True.
-
-        Args:
-            pid (int, optional): Process id (with respect to which we'll look for
-                                 children). Defaults to psutil.Process().pid.
-            children (int, optional): Look for children of the process when computing
-                                      total RAM used. Defaults to True.
-        """
-        self._pid = pid
-        self._children = children
-        self._tracking_mode = tracking_mode
-
-    def _get_children_memories(self):
-        """
-        Compute the used RAM by the process's children
-
-        Returns:
-            list(int): The list of RAM values
-        """
-        current_process = psutil.Process(self._pid)
-        children = current_process.children(recursive=True)
-        return [child.memory_info().rss for child in children]
-
-    def _read_slurm_scontrol(self):
-        try:
-            logger.debug(
-                "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`..."
-            )
-            return (
-                subprocess.check_output(
-                    [f"scontrol show job {SLURM_JOB_ID}"], shell=True
-                )
-                .decode()
-                .strip()
-            )
-        except subprocess.CalledProcessError:
-            return
-
-    def _parse_scontrol_memory_GB(self, mem):
-        """
-        Parse the memory string (B) returned by scontrol to a float (GB)
-
-        Args:
-            mem (str): Memory string (B) as `[amount][unit]` (e.g. `128G`)
-
-        Returns:
-            float: Memory (GB)
-        """
-        nb = int(mem[:-1])
-        unit = mem[-1]
-        if unit == "T":
-            return nb * 1000
-        if unit == "G":
-            return nb
-        if unit == "M":
-            return nb / 1000
-        if unit == "K":
-            return nb / (1000**2)
-
-    def _parse_scontrol(self, scontrol_str):
-        mem_matches = re.findall(r"AllocTRES=.*?,mem=(\d+[A-Z])", scontrol_str)
-        if len(mem_matches) == 0:
-            # Try with TRES, see https://github.com/mlco2/codecarbon/issues/569#issuecomment-2167706145
-            mem_matches = re.findall(r"TRES=.*?,mem=(\d+[A-Z])", scontrol_str)
-        if len(mem_matches) == 0:
-            logger.warning(
-                "Could not find mem= after running `scontrol show job $SLURM_JOB_ID` "
-                + "to count SLURM-available RAM. Using the machine's total RAM."
-            )
-            return psutil.virtual_memory().total / B_TO_GB
-        if len(mem_matches) > 1:
-            logger.warning(
-                "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
-                + "to count SLURM-available RAM. Using the machine's total RAM."
-            )
-            return psutil.virtual_memory().total / B_TO_GB
-
-        return mem_matches[0].replace("mem=", "")
-
-    @property
-    def slurm_memory_GB(self):
-        """
-        Property to compute the SLURM-available RAM in GigaBytes.
-
-        Returns:
-            float: Memory allocated to the job (GB)
-        """
-        # Prevent calling scontrol at each mesure
-        if self.memory_size:
-            return self.memory_size
-        scontrol_str = self._read_slurm_scontrol()
-        if scontrol_str is None:
-            logger.warning(
-                "Error running `scontrol show job $SLURM_JOB_ID` "
-                + "to retrieve SLURM-available RAM."
-                + "Using the machine's total RAM."
-            )
-            return psutil.virtual_memory().total / B_TO_GB
-        mem = self._parse_scontrol(scontrol_str)
-        if isinstance(mem, str):
-            mem = self._parse_scontrol_memory_GB(mem)
-        self.memory_size = mem
-        return mem
-
-    @property
-    def process_memory_GB(self):
-        """
-        Property to compute the process's total memory usage in bytes.
-
-        Returns:
-            float: RAM usage (GB)
-        """
-        children_memories = self._get_children_memories() if self._children else []
-        main_memory = psutil.Process(self._pid).memory_info().rss
-        memories = children_memories + [main_memory]
-        return sum([m for m in memories if m] + [0]) / B_TO_GB
-
-    @property
-    def machine_memory_GB(self):
-        """
-        Property to compute the machine's total memory in bytes.
-
-        Returns:
-            float: Total RAM (GB)
-        """
-        return (
-            self.slurm_memory_GB
-            if SLURM_JOB_ID
-            else psutil.virtual_memory().total / B_TO_GB
+        return cls(
+            output_dir=output_dir,
+            mode=mode,
+            model=model,
+            tdp=tdp,
+            tracking_mode=tracking_mode,
         )
-
-    def total_power(self) -> Power:
-        """
-        Compute the Power (kW) consumed by the current process (and its children if
-        `children` was True in __init__)
-
-        Returns:
-            Power: kW of power consumption, using self.power_per_GB W/GB
-        """
-        try:
-            memory_GB = (
-                self.machine_memory_GB
-                if self._tracking_mode == "machine"
-                else self.process_memory_GB
-            )
-            ram_power = Power.from_watts(memory_GB * self.power_per_GB)
-        except Exception as e:
-            logger.warning(f"Could not measure RAM Power ({str(e)})")
-            ram_power = Power.from_watts(0)
-
-        return ram_power
 
 
 @dataclass

@@ -1,4 +1,4 @@
-// "use client";
+"use client";
 
 import {
     Card,
@@ -6,69 +6,65 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { fiefAuth } from "@/helpers/fief";
-import { getDefaultOrgId } from "@/server-functions/organizations";
-import { redirect } from "next/navigation";
+import Loader from "@/components/loader";
+import { Organization } from "@/types/organization";
+import { fetcher } from "@/helpers/swr";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
 
-// This method calls the API to check if the user is created in DB
-async function checkAuth() {
-    const token = fiefAuth.getAccessTokenInfo();
-    if (!token) {
-        throw new Error("No token found");
-    }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        headers: {
-            Authorization: `Bearer ${token?.access_token}`,
+export default function HomePage() {
+    const router = useRouter();
+    const [redirecting, setRedirecting] = useState(true);
+
+    // Fetch organizations to find the default
+    const { data: organizations, error } = useSWR<Organization[]>(
+        "/organizations",
+        fetcher,
+        {
+            revalidateOnFocus: false,
         },
-    });
+    );
 
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        throw new Error("Failed to fetch /auth/login");
-    }
+    useEffect(() => {
+        // Check if we have organizations data
+        if (organizations && organizations.length > 0) {
+            // Find default org ID - using the first organization
+            const defaultOrgId = organizations[0].id;
 
-    return res.json();
-}
+            // Save to localStorage
+            try {
+                localStorage.setItem("organizationId", defaultOrgId);
+                localStorage.setItem(
+                    "organizationName",
+                    organizations[0].name || "",
+                );
+            } catch (error) {
+                console.error("Error writing to localStorage:", error);
+            }
 
-export default async function HomePage({
-    params,
-    searchParams,
-}: {
-    params: { slug: string };
-    searchParams: { [key: string]: string | string[] | undefined };
-}) {
-    if (searchParams && searchParams["auth"]) {
-        try {
-            const res = await checkAuth();
-        } catch (error) {
-            console.error("Error with /check/auth:", error);
+            // Navigate to the organization page without a page reload
+            router.push(`/${defaultOrgId}`);
+        } else if ((organizations && organizations.length === 0) || error) {
+            setRedirecting(false);
         }
+    }, [organizations, router, error]);
+
+    // Show a loader while we fetch the data and redirect
+    if (redirecting) {
+        return <Loader />;
     }
 
-    const orgId = await getDefaultOrgId();
-    if (orgId) {
-        redirect(`/${orgId}`);
-    }
-
+    // Fallback content if there are no organizations
     return (
         <div className="container mx-auto p-4">
-            {/* Change to a proper readme or get started guide */}
-            <Card className="max-w-md mx-auto">
+            <Card className="mx-auto">
                 <CardHeader>
                     <CardTitle>Get Started</CardTitle>
                     <CardDescription>
                         You can do that by installing the command line tool and
                         running:
-                        <span
-                            style={{
-                                display: "block",
-                                whiteSpace: "pre-wrap",
-                                borderLeft: "2px solid #3498db",
-                                wordWrap: "break-word",
-                                paddingLeft: "1em",
-                                margin: "1em",
-                            }}
-                        >
+                        <span className="block whitespace-pre-wrap border-l-2 border-[#3498db] break-words pl-4 m-4">
                             codecarbon login <br />
                             codecarbon config <br />
                             codecarbon monitor

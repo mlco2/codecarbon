@@ -1,54 +1,99 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import ExperimentsBarChart from "@/components/experiment-bar-chart";
-import RunsScatterChart from "@/components/runs-scatter-chart";
-import EmissionsTimeSeriesChart from "@/components/emissions-time-series";
-import RadialChart from "@/components/radial-chart";
-import { Separator } from "@/components/ui/separator";
-import { ExperimentReport } from "@/types/experiment-report";
-import { DateRange } from "react-day-picker";
-import { DateRangePicker } from "@/components/date-range-picker";
-import { addMonths, startOfDay, endOfDay } from "date-fns";
-import { useRouter } from "next/navigation";
-import { SettingsIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { getOneProject } from "@/server-functions/projects";
-import { Project } from "@/types/project";
-import { getProjectEmissionsByExperiment } from "@/server-functions/experiments";
+import BreadcrumbHeader from "@/components/breadcrumb";
+import ProjectDashboard from "@/components/project-dashboard";
 import {
     getEquivalentCarKm,
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
-
-// Fonction pour obtenir la plage de dates par défaut
-const getDefaultDateRange = (): { from: Date; to: Date } => {
-    const today = new Date();
-    return {
-        from: startOfDay(addMonths(today, -2)),
-        to: endOfDay(today),
-    };
-};
+import { getDefaultDateRange } from "@/helpers/date-utils";
+import {
+    getExperiments,
+    getProjectEmissionsByExperiment,
+} from "@/server-functions/experiments";
+import { getOneProject } from "@/server-functions/projects";
+import { Experiment } from "@/types/experiment";
+import { ExperimentReport } from "@/types/experiment-report";
+import { Project } from "@/types/project";
+import { use, useCallback, useEffect, useState } from "react";
+import { DateRange } from "react-day-picker";
 
 export default function ProjectPage({
     params,
 }: Readonly<{
-    params: {
+    params: Promise<{
         projectId: string;
         organizationId: string;
-    };
+    }>;
 }>) {
+    const { projectId, organizationId } = use(params);
+    const [isLoading, setIsLoading] = useState(true);
+
     const [project, setProject] = useState({
         name: "",
         description: "",
     } as Project);
 
+    // This function now just refreshes the project data instead of navigating
+    const handleSettingsClick = async () => {
+        try {
+            const updatedProject = await getOneProject(projectId);
+            if (updatedProject) {
+                setProject(updatedProject);
+            }
+        } catch (error) {
+            console.error("Error refreshing project data:", error);
+        }
+    };
+
+    const default_date = getDefaultDateRange();
+    const [date, setDate] = useState<DateRange>(default_date);
+
+    const [radialChartData, setRadialChartData] = useState({
+        energy: { label: "kWh", value: 0 },
+        emissions: { label: "kg eq CO2", value: 0 },
+        duration: { label: "days", value: 0 },
+    });
+    // The experiments of the current project. We need this because experimentReport only contains the experiments that have been run
+    const [projectExperiments, setProjectExperiments] = useState<Experiment[]>(
+        [],
+    );
+    // The reports (if any) of the experiments
+    const [experimentsReportData, setExperimentsReportData] = useState<
+        ExperimentReport[]
+    >([]);
+
+    const [runData, setRunData] = useState({
+        experimentId: "",
+        startDate: default_date.from.toISOString(),
+        endDate: default_date.to.toISOString(),
+    });
+
+    const [convertedValues, setConvertedValues] = useState({
+        citizen: "0",
+        transportation: "0",
+        tvTime: "0",
+    });
+
+    const [selectedExperimentId, setSelectedExperimentId] =
+        useState<string>("");
+    const [selectedRunId, setSelectedRunId] = useState<string>("");
+
+    const refreshExperimentList = useCallback(async () => {
+        // Logic to refresh experiments if needed
+        const experiments: Experiment[] = await getExperiments(projectId);
+        setProjectExperiments(experiments);
+    }, []);
+
+    /** Use effect functions */
     useEffect(() => {
-        // Replace with your actual API endpoint
         const fetchProjectDetails = async () => {
             try {
-                const project: Project = await getOneProject(params.projectId);
+                const project: Project | null = await getOneProject(projectId);
+                if (!project) {
+                    return;
+                }
                 setProject(project);
             } catch (error) {
                 console.error("Error fetching project description:", error);
@@ -56,247 +101,150 @@ export default function ProjectPage({
         };
 
         fetchProjectDetails();
-    }, [params.projectId]);
-    const router = useRouter();
-    const handleSettingsClick = () => {
-        router.push(
-            `/${params.organizationId}/projects/${params.projectId}/settings`,
-        );
-    };
-
-    const default_date = getDefaultDateRange();
-    const [date, setDate] = useState<DateRange>(default_date);
-    const [experimentReport, setExperimentReport] = useState<
-        ExperimentReport[]
-    >([]);
-    const [radialChartData, setRadialChartData] = useState({
-        energy: { label: "kWh", value: 0 },
-        emissions: { label: "kg eq CO2", value: 0 },
-        duration: { label: "days", value: 0 },
-    });
-    const [experimentsData, setExperimentsData] = useState({
-        projectId: params.projectId,
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
-    const [runData, setRunData] = useState({
-        experimentId: "",
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
-    const [convertedValues, setConvertedValues] = useState({
-        citizen: "0",
-        transportation: "0",
-        tvTime: "0",
-    });
-    const [selectedExperimentId, setSelectedExperimentId] =
-        useState<string>("");
-    const [selectedRunId, setSelectedRunId] = useState<string>("");
-
+        refreshExperimentList();
+    }, [projectId, refreshExperimentList]);
+    // Fetch the experiment report of the current project
     useEffect(() => {
         async function fetchData() {
-            const report = await getProjectEmissionsByExperiment(
-                params.projectId,
-                date,
-            );
-            setExperimentReport(report);
+            setIsLoading(true);
+            try {
+                const report = await getProjectEmissionsByExperiment(
+                    projectId,
+                    date,
+                );
 
-            const newRadialChartData = {
-                energy: {
-                    label: "kWh",
-                    value: parseFloat(
-                        report
-                            .reduce(
-                                (n, { energy_consumed }) => n + energy_consumed,
-                                0,
-                            )
-                            .toFixed(2),
-                    ),
-                },
-                emissions: {
-                    label: "kg eq CO2",
-                    value: parseFloat(
-                        report
-                            .reduce((n, { emissions }) => n + emissions, 0)
-                            .toFixed(2),
-                    ),
-                },
-                duration: {
-                    label: "days",
-                    value: parseFloat(
-                        report
-                            .reduce(
-                                (n, { duration }) => n + duration / 86400,
-                                0,
-                            )
-                            .toFixed(2),
-                    ),
-                },
-            };
-            setRadialChartData(newRadialChartData);
+                const newRadialChartData = {
+                    energy: {
+                        label: "kWh",
+                        value: parseFloat(
+                            report
+                                .reduce(
+                                    (n, { energy_consumed }) =>
+                                        n + energy_consumed,
+                                    0,
+                                )
+                                .toFixed(2),
+                        ),
+                    },
+                    emissions: {
+                        label: "kg eq CO2",
+                        value: parseFloat(
+                            report
+                                .reduce((n, { emissions }) => n + emissions, 0)
+                                .toFixed(2),
+                        ),
+                    },
+                    duration: {
+                        label: "days",
+                        value: parseFloat(
+                            report
+                                .reduce(
+                                    (n, { duration }) => n + duration / 86400,
+                                    0,
+                                )
+                                .toFixed(2),
+                        ),
+                    },
+                };
+                setRadialChartData(newRadialChartData);
 
-            setExperimentsData({
-                projectId: params.projectId,
-                startDate: date?.from?.toISOString() ?? "",
-                endDate: date?.to?.toISOString() ?? "",
-            });
+                setExperimentsReportData(report);
 
-            setRunData({
-                experimentId: report[0]?.experiment_id ?? "",
-                startDate: date?.from?.toISOString() ?? "",
-                endDate: date?.to?.toISOString() ?? "",
-            });
+                setRunData({
+                    experimentId: report[0]?.experiment_id ?? "",
+                    startDate: date?.from?.toISOString() ?? "",
+                    endDate: date?.to?.toISOString() ?? "",
+                });
 
-            setSelectedExperimentId(report[0]?.experiment_id ?? "");
+                setSelectedExperimentId(report[0]?.experiment_id ?? "");
 
-            setConvertedValues({
-                citizen: getEquivalentCitizenPercentage(
-                    newRadialChartData.emissions.value,
-                ).toFixed(2),
-                transportation: getEquivalentCarKm(
-                    newRadialChartData.emissions.value,
-                ).toFixed(2),
-                tvTime: getEquivalentTvTime(
-                    newRadialChartData.energy.value,
-                ).toFixed(2),
-            });
+                setConvertedValues({
+                    citizen: getEquivalentCitizenPercentage(
+                        newRadialChartData.emissions.value,
+                    ).toFixed(2),
+                    transportation: getEquivalentCarKm(
+                        newRadialChartData.emissions.value,
+                    ).toFixed(2),
+                    tvTime: getEquivalentTvTime(
+                        newRadialChartData.energy.value,
+                    ).toFixed(2),
+                });
+            } catch (error) {
+                console.error("Error fetching project data:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
 
-        fetchData();
-    }, [params.projectId, date]);
+        if (projectId) {
+            fetchData();
+        }
+    }, [projectId, date]);
 
-    const handleExperimentClick = useCallback((experimentId: string) => {
-        setSelectedExperimentId(experimentId);
-        setRunData((prevData) => ({
-            ...prevData,
-            experimentId: experimentId,
-        }));
-        setSelectedRunId(""); // Réinitialiser le runId sélectionné
-    }, []);
+    const handleExperimentClick = useCallback(
+        (experimentId: string) => {
+            if (experimentId === selectedExperimentId) {
+                setSelectedExperimentId("");
+                setSelectedRunId("");
+                return;
+            }
+            setSelectedExperimentId(experimentId);
+            setSelectedRunId("");
+        },
+        [selectedExperimentId],
+    );
 
-    const handleRunClick = useCallback((runId: string) => {
-        setSelectedRunId(runId);
-    }, []);
+    const handleRunClick = useCallback(
+        (runId: string) => {
+            if (runId === selectedRunId) {
+                setSelectedRunId("");
+                return;
+            }
+            setSelectedRunId(runId);
+        },
+        [selectedRunId],
+    );
 
     return (
         <div className="h-full w-full overflow-auto">
-            <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                    <div>
-                        <h1 className="text-2xl font-semi-bold">
-                            Project {project.name}
-                        </h1>
-                        <Button
-                            onClick={handleSettingsClick}
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-full"
-                        >
-                            <SettingsIcon />
-                        </Button>
-                        <span className="text-sm font-semi-bold">
-                            {project.description}
-                        </span>
-                    </div>
-                    <div>
-                        <DateRangePicker
-                            date={date}
-                            onDateChange={(newDate) =>
-                                setDate(newDate || getDefaultDateRange())
-                            }
-                        />
-                    </div>
-                </div>
-                <Separator className="h-[0.5px] bg-muted-foreground" />
-                <div className="grid grid-cols-4 gap-4">
-                    <div className="grid grid-cols-1 gap-4">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="flex items-center justify-center">
-                                <img
-                                    src="/household_consumption.svg"
-                                    alt="Logo 1"
-                                    className="h-16 w-16"
-                                />
-                            </div>
-                            <div className="flex flex-col col-span-2 justify-center">
-                                <p className="text-4xl text-primary">
-                                    {convertedValues.citizen} %
-                                </p>
-                                <p className="text-sm font-medium">
-                                    Of a U.S citizen weekly energy emissions
-                                </p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="flex items-center justify-center">
-                                <img
-                                    src="/transportation.svg"
-                                    alt="Logo 2"
-                                    className="h-16 w-16"
-                                />
-                            </div>
-                            <div className="flex flex-col col-span-2 justify-center">
-                                <p className="text-4xl text-primary">
-                                    {convertedValues.transportation}
-                                </p>
-                                <p className="text-sm font-medium">
-                                    Kilometers ridden
-                                </p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="flex items-center justify-center">
-                                <img
-                                    src="/tv.svg"
-                                    alt="Logo 3"
-                                    className="h-16 w-16"
-                                />
-                            </div>
-                            <div className="flex flex-col col-span-2 justify-center">
-                                <p className="text-4xl text-primary">
-                                    {convertedValues.tvTime} days
-                                </p>
-                                <p className="text-sm font-medium">
-                                    Of watching TV
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-span-1">
-                        <RadialChart data={radialChartData.energy} />
-                    </div>
-                    <div className="col-span-1">
-                        <RadialChart data={radialChartData.emissions} />
-                    </div>
-                    <div className="col-span-1">
-                        <RadialChart data={radialChartData.duration} />
-                    </div>
-                </div>
-
-                <Separator className="h-[0.5px] bg-muted-foreground" />
-                <div className="grid gap-4 md:grid-cols-2 md:gap-8">
-                    <ExperimentsBarChart
-                        params={experimentsData}
-                        onExperimentClick={handleExperimentClick}
-                    />
-                    <RunsScatterChart
-                        params={{
-                            ...runData,
-                            experimentId: selectedExperimentId,
-                        }}
-                        onRunClick={handleRunClick}
-                    />
-                </div>
-                <Separator className="h-[0.5px] bg-muted-foreground" />
-                <div className="grid gap-4 md:grid-cols-1 md:gap-8">
-                    {selectedRunId && (
-                        <>
-                            <EmissionsTimeSeriesChart runId={selectedRunId} />
-                            <Separator className="h-[0.5px] bg-muted-foreground" />
-                        </>
-                    )}
-                </div>
-            </main>
+            <BreadcrumbHeader
+                pathSegments={[
+                    {
+                        title:
+                            localStorage.getItem("organizationName") ||
+                            organizationId,
+                        href: `/${organizationId}`,
+                    },
+                    {
+                        title: "Projects",
+                        href: `/${organizationId}/projects`,
+                    },
+                    {
+                        title: `Project ${project.name || ""}`,
+                        href: null,
+                    },
+                ]}
+            />
+            <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
+                <ProjectDashboard
+                    project={project}
+                    date={date}
+                    onDateChange={(newDates: DateRange | undefined) =>
+                        setDate(newDates || getDefaultDateRange())
+                    }
+                    radialChartData={radialChartData}
+                    convertedValues={convertedValues}
+                    experimentsReportData={experimentsReportData}
+                    runData={runData}
+                    selectedExperimentId={selectedExperimentId}
+                    selectedRunId={selectedRunId}
+                    projectExperiments={projectExperiments}
+                    onExperimentClick={handleExperimentClick}
+                    onRunClick={handleRunClick}
+                    onSettingsClick={handleSettingsClick}
+                    isLoading={isLoading}
+                />
+            </div>
         </div>
     );
 }

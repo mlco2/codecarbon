@@ -1,0 +1,46 @@
+---
+- name: Allow CodeCarbon to read RAPL files
+  hosts: all
+  vars_files:
+    - "../vars/main.yml"
+  become: true
+  become_method: sudo
+
+  tasks:
+  - name: Set RAPL directory permissions
+    shell: |
+        chmod -R g+r {{ rapl_base_path }}
+        chown -R root:{{ codecarbon_group }} {{ rapl_base_path }}
+    ignore_errors: yes  # In case RAPL is not available
+  # This does not work because there is loop in folder symlink
+  # - name: Set RAPL directory permissions
+  #   file:
+  #     path: "{{ rapl_base_path }}"
+  #     state: directory
+  #     owner: root
+  #     group: "{{ codecarbon_group }}"
+  #     mode: "g+r"
+  #     recurse: yes
+  #   ignore_errors: yes  # In case RAPL is not available
+  - name: Install sysfsutils
+    apt:
+       name: sysfsutils
+       state: present
+  - name: Find all RAPL energy_uj files
+    find:
+       paths: "{{ rapl_base_path }}"
+       patterns: 
+         - "energy_uj"
+         - "name"
+       recurse: yes
+    register: rapl_files
+  - name: Configure sysfs for RAPL permissions
+    blockinfile:
+       path: /etc/sysfs.conf
+       create: yes
+       block: |
+         {% for file in rapl_files.files %}
+         mode {{ file.path | replace('/sys/','class/') }} = 0440
+         owner {{ file.path | replace('/sys/','class/') }} = root:{{ codecarbon_group }}
+         {% endfor %}
+

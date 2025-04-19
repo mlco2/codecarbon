@@ -13,7 +13,7 @@ import {
 import { TableCell, TableRow } from "./ui/table";
 
 export default function CustomRow({
-    key,
+    rowKey,
     firstColumn,
     secondColumn,
     href,
@@ -22,7 +22,7 @@ export default function CustomRow({
     deleteDisabled = true,
     settingsDisabled = true,
 }: {
-    key: string;
+    rowKey: string;
     firstColumn: string;
     secondColumn: string;
     href?: string;
@@ -35,7 +35,7 @@ export default function CustomRow({
     const cellClassName = `font-medium ${href && "hover:cursor-pointer"} `;
 
     return (
-        <TableRow key={key}>
+        <TableRow key={rowKey}>
             <TableCell
                 onClick={() => href && router.push(href)}
                 className={`text-left ${cellClassName}`}

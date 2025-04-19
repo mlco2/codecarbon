@@ -1,0 +1,35 @@
+name: build ui
+
+on:
+    pull_request:
+        paths:
+            - "webapp/**"
+            - "pyproject.toml"
+    push:
+        paths:
+            - "webapp/**"
+            - "pyproject.toml"
+        branches: [master]
+
+jobs:
+    build-ui:
+        runs-on: ubuntu-22.04
+        steps:
+            - uses: actions/checkout@v4
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 8
+            - name: Install dependencies
+              working-directory: ./webapp
+              run: pnpm install
+            - name: Build
+              working-directory: ./webapp
+              run: pnpm run build
+            - name: Check formatting with Prettier
+              working-directory: ./webapp
+              run: pnpm exec prettier . --check

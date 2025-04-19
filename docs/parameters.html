@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parameters &mdash; CodeCarbon 2.8.3 documentation</title>
+  <title>Parameters &mdash; CodeCarbon 3.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=5e07a493"></script>
+      <script src="_static/documentation_options.js?v=acc74ff5"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -64,6 +64,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_installation.html">Advanced Installation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -147,21 +148,34 @@
 </tr>
 <tr class="row-odd"><td><p>pue</p></td>
 <td><div class="line-block">
-<div class="line">PUE (Power Usage Effectiveness) of the data center where the experiment is being run.</div>
+<div class="line">PUE (Power Usage Effectiveness) of the data center</div>
+<div class="line">where the experiment is being run.</div>
 </div>
 </td>
 </tr>
-<tr class="row-even"><td><p>default_cpu_power</p></td>
+<tr class="row-even"><td><p>force_cpu_power</p></td>
 <td><div class="line-block">
-<div class="line">Default CPU power consumption in watts, defaults to <code class="docutils literal notranslate"><span class="pre">42.5</span></code></div>
-<div class="line"><em>(POWER_CONSTANT x CONSUMPTION_PERCENTAGE_CONSTANT)</em></div>
+<div class="line">Force the CPU max power consumption in watts,</div>
+<div class="line">use this if you know the TDP of your machine.</div>
+<div class="line"><em>(POWER_CONSTANT x CONSUMPTION_PERCENTAGE)</em></div>
 </div>
 </td>
 </tr>
-<tr class="row-odd"><td><p>allow_multiple_runs</p></td>
+<tr class="row-odd"><td><p>force_ram_power</p></td>
 <td><div class="line-block">
-<div class="line">Boolean variable indicating if multiple instance of CodeCarbon on the same machine</div>
-<div class="line">is allowed, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</div>
+<div class="line">Force the RAM power consumption in watts,</div>
+<div class="line">use this if you know the power consumption of your RAM.</div>
+<div class="line">Estimate it with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">lshw</span> <span class="pre">-C</span> <span class="pre">memory</span> <span class="pre">-short</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">DIMM</span></code></div>
+<div class="line">to get the number of RAM slots used, then do</div>
+<div class="line"><em>RAM power in W = Number of RAM Slots * 5 Watts</em></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p>allow_multiple_runs</p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if multiple instance of CodeCarbon</div>
+<div class="line">on the same machine is allowed,</div>
+<div class="line">defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code> since v3. Used to be <code class="docutils literal notranslate"><span class="pre">False</span></code> in v2.</div>
 </div>
 </td>
 </tr>
@@ -300,7 +314,8 @@ If you set <code class="docutils literal notranslate"><span class="pre">gpu_ids<
 <tbody>
 <tr class="row-even"><td><p>country_iso_code</p></td>
 <td><div class="line-block">
-<div class="line">3-letter ISO Code of the country where the experiment is being run.</div>
+<div class="line">3-letter ISO Code of the country</div>
+<div class="line">where the experiment is being run.</div>
 <div class="line">Available countries are listed in <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">global_energy_mix.json</a></div>
 </div>
 </td>
