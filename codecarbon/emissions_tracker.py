@@ -322,7 +322,7 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
         logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
         logger.info(
-            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get('cpu_physical_  count')} physical CPU(s)"
+            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get('cpu_physical_count')} physical CPU(s)"
         )
         logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
         logger.info(f"  GPU count: {self._conf.get('gpu_count')}")

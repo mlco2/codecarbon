@@ -124,7 +124,7 @@ class ResourceTracker:
             elif is_linux_os():
                 cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at /sys/class/powercap/intel-rapl/subsystem to measure CPU"
             logger.warning(
-                f"No CPU tracking mode found. Falling back on CPU constant mode. \n {cpu_tracking_install_instructions}\n"
+                f"No CPU tracking mode found. Falling back on estimation based on TDP for CPU. \n {cpu_tracking_install_instructions}\n"
             )
             self.cpu_tracker = "TDP constant"
             model = tdp.model
