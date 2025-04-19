@@ -142,15 +142,31 @@ CPU
 
 - **On Windows or Mac (Intel)**
 
-Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ . But has been discontinued. There is a discussion about it on `github issues #457 <https://github.com/mlco2/codecarbon/issues/457>`_.
+Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ .
+WARNING : The Intel Power Gadget is not available on Apple Silicon Macs. 
+WARNING 2 : Intel Power Gadget has been deprecated by Intel, and it is not available for the latest processors. We are looking for alternatives.
+There is a discussion about it on `github issues #457 <https://github.com/mlco2/codecarbon/issues/457>`_.
 
-- **Apple Silicon Chips (M1, M2)**
+- **Apple Silicon Chips (M1, M2, M3, M4)**
 
 Apple Silicon Chips contain both the CPU and the GPU.
 
-Codecarbon tracks Apple Silicon Chip energy consumption using ``powermetrics``. It should be available natively on any mac.
-However, this tool is only usable with ``sudo`` rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
-(if you know of any solution for this do not hesitate and `open an issue with your proposed solution <https://github.com/mlco2/codecarbon/issues/>`_).
+There are two options to track the energy consumption of the Apple Silicon Chip:
+ - `Powermetrics <https://www.unix.com/man-page/osx/1/powermetrics/>`_ The mac native utility to monitor energy consumption on Apple Silicon Macs.
+ - `macmon <https://github.com/vladkens/macmon>`_ : a utility that allows you to monitor the energy consumption of your Apple Silicon Mac, it has the advantage of not requiring sudo privileges.
+
+In order to provide the easiest for the user, codecarbon uses macmon if it is available, otherwise it falls back to powermetrics, and if none of them are available, it falls back to constant mode using TDP.
+Powermetrics should be available natively on any mac, but macmon requires installation.
+
+To use the ``macmon`` utility, you can use the following command:
+
+.. code-block:: bash
+
+    brew install macmon
+
+And ``codecarbon`` will automatically detect and use it.
+
+If you prefer to use ``powermetrics`` with ``codecarbon`` then you need to give it ``sudo`` rights.
 
 To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command:
 
