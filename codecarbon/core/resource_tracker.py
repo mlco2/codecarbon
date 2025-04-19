@@ -100,13 +100,10 @@ class ResourceTracker:
                     "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."
                 )
         # change code to check if powermetrics needs to be installed or just sudo setup
-        elif self.tracker._default_cpu_power is None and macmon.is_macmon_available():
+        elif macmon.is_macmon_available():
             self.cpu_tracker = "MacMon"
             logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
-        elif (
-            self.tracker._default_cpu_power is None
-            and powermetrics.is_powermetrics_available()
-        ):
+        elif powermetrics.is_powermetrics_available():
             self.cpu_tracker = "PowerMetrics"
             logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
             hardware_cpu = AppleSiliconChip.from_utils(
