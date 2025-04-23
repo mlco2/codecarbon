@@ -81,7 +81,7 @@ class FileOutput(BaseOutput):
         save_task_file_path = os.path.join(
             self.output_dir, "emissions_" + experiment_name + "_" + run_id + ".csv"
         )
-        df = pd.DataFrame(columns=data[0].values.keys())
+        df = pd.DataFrame(columns=list(data[0].values.keys()))
         new_df = pd.DataFrame.from_records(
             [dict(data_point.values) for data_point in data]
         )

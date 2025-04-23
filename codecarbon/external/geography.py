@@ -24,12 +24,13 @@ class CloudMetadata:
 
     @classmethod
     def from_utils(cls) -> "CloudMetadata":
-        def extract_gcp_region(zone: str) -> str:
+        def extract_gcp_region(zone: str) -> Optional[str]:
             """
             projects/705208488469/zones/us-central1-a -> us-central1
             """
             google_region_regex = r"[a-z]+-[a-z]+[0-9]"
-            return re.search(google_region_regex, zone).group(0)
+            match = re.search(google_region_regex, zone)
+            return match.group(0) if match else None
 
         extract_region_for_provider: Dict[str, Callable] = {
             "aws": lambda x: x["metadata"].get("region"),
@@ -37,13 +38,17 @@ class CloudMetadata:
             "gcp": lambda x: extract_gcp_region(x["metadata"].get("zone")),
         }
 
-        cloud_metadata: Dict = get_env_cloud_details()
+        cloud_metadata: Optional[Dict] = get_env_cloud_details()
 
         if cloud_metadata is None or cloud_metadata["metadata"] == {}:
             return cls(provider=None, region=None)
 
-        provider: str = cloud_metadata["provider"].lower()
-        region: str = extract_region_for_provider.get(provider)(cloud_metadata)
+        provider: Optional[str] = cloud_metadata["provider"].lower()
+        extract_func = (
+            extract_region_for_provider.get(provider) if provider is not None else None
+        )
+        region: Optional[str] = extract_func(cloud_metadata) if extract_func else None
+
         if region is None:
             logger.warning(
                 f"Cloud provider '{provider}' detected, but unable to read region. Using country value instead."
@@ -60,7 +65,7 @@ class CloudMetadata:
 class GeoMetadata:
     def __init__(
         self,
-        country_iso_code: str,
+        country_iso_code: Optional[str],
         country_name: Optional[str] = None,
         region: Optional[str] = None,
         latitude: Optional[float] = None,
@@ -93,12 +98,17 @@ class GeoMetadata:
         try:
             response: Dict = requests.get(url, timeout=0.5).json()
 
+            latitude_value = response.get("latitude")
+            longitude_value = response.get("longitude")
+
             return cls(
                 country_iso_code=response["country_code3"].upper(),
                 country_name=response["country"],
                 region=response.get("region", "").lower(),
-                latitude=float(response.get("latitude")),
-                longitude=float(response.get("longitude")),
+                latitude=float(latitude_value) if latitude_value is not None else None,
+                longitude=(
+                    float(longitude_value) if longitude_value is not None else None
+                ),
                 country_2letter_iso_code=response.get("country_code"),
             )
         except Exception as e:
@@ -119,14 +129,17 @@ class GeoMetadata:
                 country_code_3_url, timeout=0.5
             ).json()
 
+            lat_value = geo_response.get("lat")
+            lon_value = geo_response.get("lon")
+
             return cls(
                 country_iso_code=next(
                     iter(country_code_response["data"].keys())
                 ).upper(),
                 country_name=country_name,
                 region=geo_response.get("regionName", "").lower(),
-                latitude=float(geo_response.get("lat")),
-                longitude=float(geo_response.get("lon")),
+                latitude=float(lat_value) if lat_value is not None else None,
+                longitude=float(lon_value) if lon_value is not None else None,
                 country_2letter_iso_code=geo_response.get("countryCode"),
             )
         except Exception as e:

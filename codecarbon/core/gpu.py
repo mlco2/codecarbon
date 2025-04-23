@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pynvml
 
@@ -25,7 +25,7 @@ class GPUDevice:
             calculate `energy_delta`. Defaults to an initial value of 0 kWh.
     """
 
-    handle: any
+    handle: Any
     gpu_index: int
     # Energy consumed in kWh
     energy_delta: Energy = field(default_factory=lambda: Energy(0))
@@ -108,7 +108,7 @@ class GPUDevice:
 
         return str_or_bytes
 
-    def _get_total_energy_consumption(self) -> int:
+    def _get_total_energy_consumption(self) -> Optional[int]:
         """Returns total energy consumption for this GPU in millijoules (mJ) since the driver was last reloaded
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
         """

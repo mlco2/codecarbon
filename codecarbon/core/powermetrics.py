@@ -109,7 +109,7 @@ class ApplePowermetrics:
         """
         if self._system.startswith("darwin"):
             cpu_model = detect_cpu_model()
-            if cpu_model.startswith("Apple"):
+            if cpu_model is not None and cpu_model.startswith("Apple"):
                 if shutil.which(self._osx_silicon_exec):
                     self._cli = self._osx_silicon_exec
                 else:

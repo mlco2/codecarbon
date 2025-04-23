@@ -1,4 +1,4 @@
-""" add codecarbon version
+"""add codecarbon version
 
 Revision ID: 298059b19bde
 Revises: edcd10edf11d

@@ -73,7 +73,13 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     file_path.rename(backup_path)
 
 
-def detect_cpu_model() -> str:
+def detect_cpu_model() -> Optional[str]:
+    """
+    Detects the CPU model using cpuinfo.
+
+    Returns:
+        Optional[str]: The detected CPU model name, or None if detection fails
+    """
     cpu_info = cpuinfo.get_cpu_info()
     if cpu_info:
         cpu_model_detected = cpu_info.get("brand_raw", "")
@@ -81,22 +87,22 @@ def detect_cpu_model() -> str:
     return None
 
 
-def is_mac_os() -> str:
+def is_mac_os() -> bool:
     system = sys.platform.lower()
     return system.startswith("dar")
 
 
-def is_windows_os() -> str:
+def is_windows_os() -> bool:
     system = sys.platform.lower()
     return system.startswith("win")
 
 
-def is_linux_os() -> str:
+def is_linux_os() -> bool:
     system = sys.platform.lower()
     return system.startswith("lin")
 
 
-def count_physical_cpus():
+def count_physical_cpus() -> int:
     import platform
     import subprocess
 
@@ -119,7 +125,8 @@ def count_physical_cpus():
 
 def count_cpus() -> int:
     if SLURM_JOB_ID is None:
-        return psutil.cpu_count()
+        cpu_count = psutil.cpu_count()
+        return cpu_count if cpu_count is not None else 1
 
     try:
         logger.debug(
@@ -134,7 +141,8 @@ def count_cpus() -> int:
             "Error running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count(logical=True)
+        cpu_count = psutil.cpu_count(logical=True)
+        return cpu_count if cpu_count is not None else 1
 
     num_cpus_matches = re.findall(r"NumCPUs=\d+", scontrol)
 
@@ -143,14 +151,16 @@ def count_cpus() -> int:
             "Could not find NumCPUs= after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count(logical=True)
+        cpu_count = psutil.cpu_count(logical=True)
+        return cpu_count if cpu_count is not None else 1
 
     if len(num_cpus_matches) > 1:
         logger.warning(
             "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count(logical=True)
+        cpu_count = psutil.cpu_count(logical=True)
+        return cpu_count if cpu_count is not None else 1
 
     num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
     logger.debug(f"Detected {num_cpus} cpus available on SLURM.")

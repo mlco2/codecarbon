@@ -1,7 +1,7 @@
 import configparser
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 from codecarbon.external.logger import logger
 
@@ -44,13 +44,13 @@ def parse_env_config() -> dict:
     }
 
 
-def parse_gpu_ids(gpu_ids_str: str) -> List[int]:
+def parse_gpu_ids(gpu_ids_str: Union[str, List[int]]) -> List[int]:
     """
     Transforms the potential gpu_ids string into a list of int values
 
     Args:
-        gpu_ids_str (str): The config file or environment variable value for `gpu_ids`
-        which is read as a string and should be parsed into a list of ints
+        gpu_ids_str (Union[str, List[int]]): The config file or environment variable value for `gpu_ids`
+        which is read as a string or list and should be parsed into a list of ints
 
     Returns:
         list[int]: The list of GPU ids available declared by the user.

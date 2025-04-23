@@ -1,5 +1,4 @@
 from collections import Counter
-from typing import List, Union
 
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
@@ -31,7 +30,7 @@ class ResourceTracker:
             force_ram_power=self.tracker._force_ram_power,
         )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
-        self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
+        self.tracker._hardware = [ram]
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
@@ -111,10 +110,9 @@ class ResourceTracker:
             # Explain what to install to increase accuracy
             cpu_tracking_install_instructions = ""
             if is_mac_os():
-                if (
-                    "M1" in detect_cpu_model()
-                    or "M2" in detect_cpu_model()
-                    or "M3" in detect_cpu_model()
+                cpu_model = detect_cpu_model()
+                if cpu_model is not None and (
+                    "M1" in cpu_model or "M2" in cpu_model or "M3" in cpu_model
                 ):
                     cpu_tracking_install_instructions = ""
                     cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
@@ -188,7 +186,7 @@ class ResourceTracker:
                 isinstance(self.tracker._gpu_ids, list)
                 and all(isinstance(gpu_id, int) for gpu_id in self.tracker._gpu_ids)
             ):
-                self.tracker._gpu_ids: List[int] = parse_gpu_ids(self.tracker._gpu_ids)
+                self.tracker._gpu_ids = parse_gpu_ids(self.tracker._gpu_ids)
                 self.tracker._conf["gpu_ids"] = self.tracker._gpu_ids
                 self.tracker._conf["gpu_count"] = len(self.tracker._gpu_ids)
             else:

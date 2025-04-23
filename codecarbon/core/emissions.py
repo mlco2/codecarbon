@@ -25,7 +25,7 @@ class Emissions:
         self._co2_signal_api_token = co2_signal_api_token
 
     def get_cloud_emissions(
-        self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
+        self, energy: Energy, cloud: CloudMetadata, geo: Optional[GeoMetadata] = None
     ) -> float:
         """
         Computes emissions for cloud infra
@@ -58,12 +58,15 @@ class Emissions:
                 carbon_intensity_per_source = (
                     DataSource().get_carbon_intensity_per_source_data()
                 )
-                emissions = (
-                    EmissionsPerKWh.from_g_per_kWh(
-                        carbon_intensity_per_source.get("world_average")
-                    ).kgs_per_kWh
-                    * energy.kWh
-                )  # kgs
+                world_average = carbon_intensity_per_source.get("world_average")
+                if world_average is not None:
+                    emissions = (
+                        EmissionsPerKWh.from_g_per_kWh(world_average).kgs_per_kWh
+                        * energy.kWh
+                    )  # kgs
+                else:
+                    # Fallback if world_average is None
+                    emissions = 0.0
         return emissions
 
     def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
@@ -134,7 +137,8 @@ class Emissions:
                 )
 
         compute_with_regional_data: bool = (geo.region is not None) and (
-            geo.country_iso_code.upper() in ["USA", "CAN"]
+            geo.country_iso_code is not None
+            and geo.country_iso_code.upper() in ["USA", "CAN"]
         )
 
         if compute_with_regional_data:
@@ -159,6 +163,11 @@ class Emissions:
         :return: CO2 emissions in kg
         """
         try:
+            if geo.country_iso_code is None:
+                raise ValueError(
+                    "country_iso_code cannot be None for region emissions calculation"
+                )
+
             country_emissions_data = self._data_source.get_country_emissions_data(
                 geo.country_iso_code.lower()
             )
@@ -176,6 +185,11 @@ class Emissions:
         except DataSourceException:
             # This country has regional data at the energy mix level,
             # not the emissions level
+            if geo.country_iso_code is None:
+                raise ValueError(
+                    "country_iso_code cannot be None for energy mix data retrieval"
+                )
+
             country_energy_mix_data = self._data_source.get_country_energy_mix_data(
                 geo.country_iso_code.lower()
             )
@@ -197,6 +211,20 @@ class Emissions:
         """
         energy_mix = self._data_source.get_global_energy_mix_data()
 
+        if geo.country_iso_code is None:
+            logger.warning("country_iso_code is None, using world average.")
+            carbon_intensity_per_source = (
+                DataSource().get_carbon_intensity_per_source_data()
+            )
+            world_average = carbon_intensity_per_source.get("world_average")
+            if world_average is not None:
+                return (
+                    EmissionsPerKWh.from_g_per_kWh(world_average).kgs_per_kWh
+                    * energy.kWh
+                )
+            else:
+                return 0.0
+
         if geo.country_iso_code not in energy_mix:
             logger.warning(
                 f"We do not have data for {geo.country_iso_code}, using world average."
@@ -204,12 +232,14 @@ class Emissions:
             carbon_intensity_per_source = (
                 DataSource().get_carbon_intensity_per_source_data()
             )
-            return (
-                EmissionsPerKWh.from_g_per_kWh(
-                    carbon_intensity_per_source.get("world_average")
-                ).kgs_per_kWh
-                * energy.kWh
-            )  # kgs
+            world_average = carbon_intensity_per_source.get("world_average")
+            if world_average is not None:
+                return (
+                    EmissionsPerKWh.from_g_per_kWh(world_average).kgs_per_kWh
+                    * energy.kWh
+                )  # kgs
+            else:
+                return 0.0
 
         country_energy_mix: Dict = energy_mix[geo.country_iso_code]
         emissions_per_kWh = self._global_energy_mix_to_emissions_rate(
@@ -232,8 +262,9 @@ class Emissions:
             in Kgs.CO2 / kWh
         """
         # If we have the chance to have the carbon intensity for this country
-        if energy_mix.get("carbon_intensity"):
-            return EmissionsPerKWh.from_g_per_kWh(energy_mix.get("carbon_intensity"))
+        carbon_intensity = energy_mix.get("carbon_intensity")
+        if carbon_intensity is not None:
+            return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
 
         # Else we compute it from the energy mix.
         # Read carbon_intensity from the json data file.
@@ -250,7 +281,7 @@ class Emissions:
                 carbon_intensity_for_type = carbon_intensity_per_source.get(
                     energy_type[: -len("_TWh")]
                 )
-                if carbon_intensity_for_type:  # to ignore "total_TWh"
+                if carbon_intensity_for_type is not None:  # to ignore "total_TWh"
                     carbon_intensity += (
                         energy_per_year / energy_sum
                     ) * carbon_intensity_for_type
@@ -261,9 +292,11 @@ class Emissions:
             logger.error(
                 f"We find {energy_sum_computed} TWh instead of {energy_sum} TWh for {energy_mix.get('country_name')}, using world average."
             )
-            return EmissionsPerKWh.from_g_per_kWh(
-                carbon_intensity_per_source.get("world_average")
-            )
+            world_average = carbon_intensity_per_source.get("world_average")
+            if world_average is not None:
+                return EmissionsPerKWh.from_g_per_kWh(world_average)
+            else:
+                return EmissionsPerKWh.from_g_per_kWh(0.0)  # Default fallback
 
         return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
 
