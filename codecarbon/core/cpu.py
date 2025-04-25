@@ -65,10 +65,17 @@ def is_rapl_available() -> bool:
 
 def is_psutil_available():
     try:
-        # Check if we can get CPU utilization as a basic test
-        # instead of relying on specific attributes
-        _ = psutil.cpu_percent(interval=0.1)
-        return True
+        cpu_times = psutil.cpu_times()
+
+        for field in cpu_times._fields:
+            value = getattr(cpu_times, field)
+            if isinstance(value, (int, float)) and value > 0.0001:
+                return True
+
+        logger.debug(
+            "is_psutil_available() : No values greater than 0.0001 found in psutil.cpu_times()!"
+        )
+        return False
     except Exception as e:
         logger.debug(
             "Not using the psutil interface, an exception occurred: %s",
