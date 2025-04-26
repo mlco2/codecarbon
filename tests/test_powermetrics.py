@@ -1,6 +1,5 @@
 import os
 import unittest
-import unittest.result
 from unittest import mock
 
 import pytest

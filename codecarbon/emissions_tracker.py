@@ -366,11 +366,11 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
 
+        self._hardware = []
+
         # Tracking mode detection
         ressource_tracker = ResourceTracker(self)
         ressource_tracker.set_CPU_GPU_ram_tracking()
-
-        self._hardware = []
 
         if hasattr(self, "_hardware"):
             hardware_desc = list(map(lambda x: x.description(), self._hardware))
@@ -411,8 +411,10 @@ class BaseEmissionsTracker(ABC):
         if cloud.is_on_private_infra:
             self._geo = self._get_geo_metadata()
             if self._geo:
-                self._conf["longitude"] = self._geo.longitude
-                self._conf["latitude"] = self._geo.latitude
+                if self._geo.longitude is not None:
+                    self._conf["longitude"] = self._geo.longitude
+                if self._geo.latitude is not None:
+                    self._conf["latitude"] = self._geo.latitude
             self._conf["region"] = cloud.region
             self._conf["provider"] = cloud.provider
         else:
@@ -766,6 +768,13 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = cloud.provider or ""
             cloud_region = cloud.region or ""
 
+        if country_iso_code == "USA" or (
+            getattr(self, "_country_iso_code", None) == "USA"
+        ):
+            country_name = "United States"
+            country_iso_code = "USA"
+            logger.debug("Setting country name to 'United States' for USA ISO code")
+
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -997,6 +1006,23 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                          a list of codes and their corresponding
                                          locations.
         """
+        ISO_CODE_TO_COUNTRY_NAME = {
+            "USA": "United States",
+            "CAN": "Canada",
+            "GBR": "United Kingdom",
+            "FRA": "France",
+            "DEU": "Germany",
+            "ITA": "Italy",
+            "JPN": "Japan",
+            "CHN": "China",
+            "IND": "India",
+            "AUS": "Australia",
+            "BRA": "Brazil",
+            "MEX": "Mexico",
+            "RUS": "Russia",
+            "ZAF": "South Africa",
+            "KOR": "South Korea",
+        }
         self._external_conf = get_hierarchical_config()
         self._set_from_conf(cloud_provider, "cloud_provider")
         self._set_from_conf(cloud_region, "cloud_region")
@@ -1037,11 +1063,23 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     self._country_iso_code
                 ]["country_name"]
             except KeyError as e:
-                logger.error(
-                    "Does not support country"
-                    + f" with ISO code {self._country_iso_code} "
-                    f"Exception occurred {e}"
+                logger.warning(
+                    f"Country with ISO code {self._country_iso_code} not found in global energy mix data. "
+                    f"Exception occurred: {e}"
                 )
+
+                if self._country_iso_code in ISO_CODE_TO_COUNTRY_NAME:
+                    self._country_name = ISO_CODE_TO_COUNTRY_NAME[
+                        self._country_iso_code
+                    ]
+                    logger.info(
+                        f"Using fallback country name: {self._country_name} for ISO code {self._country_iso_code}"
+                    )
+                else:
+                    self._country_name = f"Country ({self._country_iso_code})"
+                    logger.info(
+                        f"Using generic fallback for country ISO code: {self._country_iso_code}"
+                    )
 
         if (
             hasattr(self, "_country_2letter_iso_code")
@@ -1052,7 +1090,19 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         super().__init__(*args, **kwargs)
 
+        self._geo = self._get_geo_metadata()
+
     def _get_geo_metadata(self) -> GeoMetadata:
+        if hasattr(self, "_country_iso_code") and self._country_iso_code == "USA":
+            return GeoMetadata(
+                country_iso_code="USA",
+                country_name="United States",
+                region=self._region or "",
+                country_2letter_iso_code="US",
+                latitude=37.09024,
+                longitude=-95.712891,
+            )
+
         return GeoMetadata(
             country_iso_code=self._country_iso_code or "",
             country_name=self._country_name or "",
@@ -1065,8 +1115,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
     def _get_cloud_metadata(self) -> CloudMetadata:
         if self._cloud is None:
-            provider = getattr(self, "_cloud_provider", None) or ""
-            region = getattr(self, "_cloud_region", None) or ""
+            provider = getattr(self, "_cloud_provider", None)
+            region = getattr(self, "_cloud_region", None)
             self._cloud = CloudMetadata(provider=provider, region=region)
         return self._cloud
 

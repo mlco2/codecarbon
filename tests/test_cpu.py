@@ -107,8 +107,8 @@ class TestIntelRAPL(unittest.TestCase):
         cpu = CPU(
             output_dir="",
             mode="intel_rapl",
-            model=None,
-            tdp=None,
+            model="",
+            tdp=0,
             rapl_dir=self.rapl_dir,
         )
         expected_energy = Energy(0)
@@ -226,8 +226,10 @@ class TestTDP(unittest.TestCase):
         # In greedy mode: should return the first model that contains the
         # same words from the cpu list.
         model = "AMD Ryzen 3"
+        result = tdp._get_matching_cpu(model, cpu_data, greedy=True)
+        self.assertIsNotNone(result)
         self.assertRegex(
-            tdp._get_matching_cpu(model, cpu_data, greedy=True),
+            result if result is not None else "",
             r"AMD Ryzen 3.*",
         )
 
@@ -242,8 +244,10 @@ class TestTDP(unittest.TestCase):
         # In greedy mode: should return the first model that contains the
         # same words from the cpu list.
         model = "AMD Ryzen PRO 3"
+        result = tdp._get_matching_cpu(model, cpu_data, greedy=True)
+        self.assertIsNotNone(result)
         self.assertRegex(
-            tdp._get_matching_cpu(model, cpu_data, greedy=True),
+            result if result is not None else "",
             r"AMD Ryzen 3 PRO.*",
         )
 
@@ -261,8 +265,10 @@ class TestTDP(unittest.TestCase):
         # In greedy mode: should return the first model that contains almost
         # all the same words from the cpu list.
         model = "AMD Ryzen 3 1200 PRO"
+        result = tdp._get_matching_cpu(model, cpu_data, greedy=True)
+        self.assertIsNotNone(result)
         self.assertRegex(
-            tdp._get_matching_cpu(model, cpu_data, greedy=True),
+            result if result is not None else "",
             r"AMD Ryzen 3.*1200",
         )
 

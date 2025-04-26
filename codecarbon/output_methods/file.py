@@ -1,5 +1,6 @@
 import csv
 import os
+from pathlib import Path
 from typing import List
 
 import pandas as pd
@@ -24,8 +25,9 @@ class FileOutput(BaseOutput):
                 + " (should be one of 'append' or 'update'"
             )
         self.output_file_name: str = output_file_name
-        if not os.path.exists(output_dir):
-            raise OSError(f"Folder '{output_dir}' doesn't exist !")
+
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+
         self.output_dir: str = output_dir
         self.on_csv_write: str = on_csv_write
         self.save_file_path = os.path.join(self.output_dir, self.output_file_name)
@@ -34,11 +36,18 @@ class FileOutput(BaseOutput):
         )
 
     def has_valid_headers(self, data: EmissionsData):
-        with open(self.save_file_path) as csv_file:
-            csv_reader = csv.DictReader(csv_file)
-            dict_from_csv = dict(list(csv_reader)[0])
-            list_of_column_names = list(dict_from_csv.keys())
-            return list(data.values.keys()) == list_of_column_names
+        try:
+            with open(self.save_file_path) as csv_file:
+                csv_reader = csv.DictReader(csv_file)
+                rows = list(csv_reader)
+                if not rows:
+                    return False
+                dict_from_csv = dict(rows[0])
+                list_of_column_names = list(dict_from_csv.keys())
+                return list(data.values.keys()) == list_of_column_names
+        except Exception as e:
+            logger.warning(f"Error checking CSV headers: {e}")
+            return False
 
     def out(self, total: EmissionsData, delta: EmissionsData):
         """
@@ -77,15 +86,15 @@ class FileOutput(BaseOutput):
         df.to_csv(self.save_file_path, index=False)
 
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
+        if not data:
+            logger.warning("No task data to save")
+            return
+
         run_id = data[0].run_id
         save_task_file_path = os.path.join(
             self.output_dir, "emissions_" + experiment_name + "_" + run_id + ".csv"
         )
-        df = pd.DataFrame(columns=list(data[0].values.keys()))
-        new_df = pd.DataFrame.from_records(
-            [dict(data_point.values) for data_point in data]
-        )
-        # Filter out empty or all-NA columns, to avoid warnings from Pandas
-        new_df = new_df.dropna(axis=1, how="all")
-        df = pd.concat([df, new_df], ignore_index=True)
+
+        df = pd.DataFrame.from_records([dict(data_point.values) for data_point in data])
+        df = df.dropna(axis=1, how="all")
         df.to_csv(save_task_file_path, index=False)

@@ -18,7 +18,7 @@ class TestCPULoad(unittest.TestCase):
         mocked_is_rapl_available,
     ):
         cpu = CPU.from_utils(
-            None,
+            "",
             MODE_CPU_LOAD,
             "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz",
             100,
@@ -41,7 +41,7 @@ class TestCPULoad(unittest.TestCase):
         mocked_get_power_from_cpu_load,
     ):
         cpu = CPU.from_utils(
-            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+            "", MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
         )
         cpu.start()
         sleep(0.5)
@@ -51,9 +51,9 @@ class TestCPULoad(unittest.TestCase):
 
     def test_cpu_load_detection(
         self,
-        mocked_is_psutil_available,
-        mocked_is_powergadget_available,
         mocked_is_rapl_available,
+        mocked_is_powergadget_available,
+        mocked_is_psutil_available,
     ):
         tracker = OfflineEmissionsTracker(country_iso_code="FRA")
         for hardware in tracker._hardware:
@@ -63,8 +63,8 @@ class TestCPULoad(unittest.TestCase):
             raise Exception("No CPU load !!!")
         tracker.start()
         sleep(0.5)
-        emission = tracker.stop()
-        self.assertGreater(emission, 0.0)
+        tracker.stop()
+        self.assertGreater(tracker._total_energy.kWh, 0.0)
 
     def test_cpu_calculate_power_from_cpu_load_threadripper(
         self,
@@ -74,7 +74,7 @@ class TestCPULoad(unittest.TestCase):
     ):
         tdp = 100
         cpu_model = "AMD Ryzen Threadripper 3990X 64-Core Processor"
-        cpu = CPU.from_utils(None, MODE_CPU_LOAD, cpu_model, tdp)
+        cpu = CPU.from_utils("", MODE_CPU_LOAD, cpu_model, tdp)
         tests_values = [
             {
                 "cpu_load": 0.0,
@@ -101,7 +101,7 @@ class TestCPULoad(unittest.TestCase):
     ):
         tdp = 100
         cpu_model = "Random Processor"
-        cpu = CPU.from_utils(None, MODE_CPU_LOAD, cpu_model, tdp)
+        cpu = CPU.from_utils("", MODE_CPU_LOAD, cpu_model, tdp)
         tests_values = [
             {
                 "cpu_load": 0.0,

@@ -186,14 +186,14 @@ class TestCarbonTracker(unittest.TestCase):
         )
 
         # WHEN
-        @track_emissions(project_name=self.project_name, output_dir=self.temp_path)
+        @track_emissions(project_name=self.project_name, output_dir=str(self.temp_path))
         def dummy_train_model():
             return 42
 
         dummy_train_model()
 
         # THEN
-        self.verify_output_file(self.emissions_file_path, 2)
+        self.verify_output_file(str(self.emissions_file_path), 2)
 
     @responses.activate
     def test_decorator_ONLINE_WITH_ARGS(
@@ -213,14 +213,14 @@ class TestCarbonTracker(unittest.TestCase):
         )
 
         # WHEN
-        @track_emissions(project_name=self.project_name, output_dir=self.temp_path)
+        @track_emissions(project_name=self.project_name, output_dir=str(self.temp_path))
         def dummy_train_model():
             return 42
 
         dummy_train_model()
 
         # THEN
-        self.verify_output_file(self.emissions_file_path, 2)
+        self.verify_output_file(str(self.emissions_file_path), 2)
 
     def test_decorator_OFFLINE_NO_COUNTRY(
         self,
@@ -252,14 +252,14 @@ class TestCarbonTracker(unittest.TestCase):
             offline=True,
             country_iso_code="CAN",
             project_name=self.project_name,
-            output_dir=self.temp_path,
+            output_dir=str(self.temp_path),
             experiment_id="test",
         )
         def dummy_train_model():
             return 42
 
         dummy_train_model()
-        self.verify_output_file(self.emissions_file_path, 2)
+        self.verify_output_file(str(self.emissions_file_path), 2)
 
     def test_decorator_OFFLINE_WITH_CLOUD_ARGS(
         self,
@@ -275,14 +275,14 @@ class TestCarbonTracker(unittest.TestCase):
             offline=True,
             cloud_provider="gcp",
             cloud_region="us-central1",
-            output_dir=self.temp_path,
+            output_dir=str(self.temp_path),
             experiment_id="test",
         )
         def dummy_train_model():
             return 42
 
         dummy_train_model()
-        self.verify_output_file(self.emissions_file_path, 2)
+        self.verify_output_file(str(self.emissions_file_path), 2)
 
     def test_offline_tracker_country_name(
         self,
@@ -332,8 +332,10 @@ class TestCarbonTracker(unittest.TestCase):
             self.emissions_file_path.with_suffix(".csv.bak")
         )
 
-        self.verify_output_file(self.emissions_file_path, 2)
-        self.verify_output_file(self.emissions_file_path.with_suffix(".csv.bak"), 2)
+        self.verify_output_file(str(self.emissions_file_path), 2)
+        self.verify_output_file(
+            str(self.emissions_file_path.with_suffix(".csv.bak")), 2
+        )
 
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("Morocco", emissions_backup_df["country_name"].values[0])
@@ -361,7 +363,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         emissions_df = pd.read_csv(self.emissions_file_path)
 
-        self.verify_output_file(self.emissions_file_path, 3)
+        self.verify_output_file(str(self.emissions_file_path), 3)
 
         print(emissions_df["cpu_power"].values[0])
 
