@@ -9,8 +9,8 @@
   tasks:
   - name: Set RAPL directory permissions
     shell: |
-        chmod -R g+r {{ rapl_base_path }}
-        chown -R root:{{ codecarbon_group }} {{ rapl_base_path }}
+        chmod -R g+r {{ rapl_base_path }}/*
+        chown -R root:{{ codecarbon_group }} {{ rapl_base_path }}/*
     ignore_errors: yes  # In case RAPL is not available
   # This does not work because there is loop in folder symlink
   # - name: Set RAPL directory permissions
