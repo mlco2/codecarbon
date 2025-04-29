@@ -65,18 +65,21 @@ def is_rapl_available() -> bool:
 
 def is_psutil_available():
     try:
-        nice = psutil.cpu_times().nice
-        if nice > 0.0001:
-            return True
-        else:
-            logger.debug(
-                f"is_psutil_available() : psutil.cpu_times().nice is too small : {nice} !"
-            )
-            return False
+        cpu_times = psutil.cpu_times()
+
+        for field in cpu_times._fields:
+            value = getattr(cpu_times, field)
+            if isinstance(value, (int, float)) and value > 0.0001:
+                return True
+
+        logger.debug(
+            "is_psutil_available() : No values greater than 0.0001 found in psutil.cpu_times()!"
+        )
+        return False
     except Exception as e:
         logger.debug(
-            "Not using the psutil interface, an exception occurred while instantiating "
-            + f"psutil.cpu_times : {e}",
+            "Not using the psutil interface, an exception occurred: %s",
+            e,
         )
         return False
 
@@ -113,7 +116,7 @@ class IntelPowerGadget:
         self._system = sys.platform.lower()
         self._duration = duration
         self._resolution = resolution
-        self._windows_exec_backup = None
+        self._windows_exec_backup: Optional[str] = None
         self._setup_cli()
 
     def _setup_cli(self) -> None:
@@ -122,21 +125,29 @@ class IntelPowerGadget:
         """
         if self._system.startswith("win"):
             self._get_windows_exec_backup()
-            if shutil.which(self._windows_exec):
-                self._cli = shutil.which(
-                    self._windows_exec
-                )  # Windows exec is a relative path
-            elif shutil.which(self._windows_exec_backup):
-                self._cli = self._windows_exec_backup
+            exec_path = shutil.which(self._windows_exec)
+            backup_path = (
+                shutil.which(self._windows_exec_backup)
+                if self._windows_exec_backup
+                else None
+            )
+
+            if exec_path:
+                self._cli = exec_path  # Windows exec is a relative path
+            elif backup_path:
+                self._cli = backup_path
             else:
                 raise FileNotFoundError(
                     f"Intel Power Gadget executable not found on {self._system}"
                 )
         elif self._system.startswith("darwin"):
-            if shutil.which(self._osx_exec):
-                self._cli = self._osx_exec
-            elif shutil.which(self._osx_exec_backup):
-                self._cli = self._osx_exec_backup
+            exec_path = shutil.which(self._osx_exec)
+            backup_path = shutil.which(self._osx_exec_backup)
+
+            if exec_path:
+                self._cli = exec_path
+            elif backup_path:
+                self._cli = backup_path
             else:
                 raise FileNotFoundError(
                     f"Intel Power Gadget executable not found on {self._system}"
@@ -173,13 +184,13 @@ class IntelPowerGadget:
         if self._system.startswith("win"):
             returncode = subprocess.call(
                 [
-                    self._cli,
+                    str(self._cli),
                     "-duration",
                     str(self._duration),
                     "-resolution",
                     str(self._resolution),
                     "-file",
-                    self._log_file_path,
+                    str(self._log_file_path),
                 ],
                 shell=True,
                 stdout=subprocess.PIPE,
@@ -391,7 +402,7 @@ class TDP:
     @staticmethod
     def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
         """Extract constant power from matched CPU"""
-        return float(cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0])
+        return int(float(cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0]))
 
     def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
         cpu_power_df = DataSource().get_cpu_power_data()
@@ -403,7 +414,7 @@ class TDP:
 
     def _get_matching_cpu(
         self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
-    ) -> str:
+    ) -> Optional[str]:
         """
         Get matching cpu name
 
@@ -479,11 +490,11 @@ class TDP:
 
         return None
 
-    def _main(self) -> Tuple[str, int]:
+    def _main(self) -> Tuple[str, Optional[int]]:
         """
         Get CPU power from constant mode
 
-        :return: model name (str), power in Watt (int)
+        :return: model name (str), power in Watt (Optional[int])
         """
         cpu_model_detected = detect_cpu_model()
 
@@ -505,7 +516,9 @@ class TDP:
             if is_psutil_available():
                 # Count thread of the CPU
                 threads = psutil.cpu_count(logical=True)
-                estimated_tdp = threads * DEFAULT_POWER_PER_CORE
+                estimated_tdp = (
+                    threads * DEFAULT_POWER_PER_CORE if threads is not None else 0
+                )
                 logger.warning(
                     f"We will use the default power consumption of {DEFAULT_POWER_PER_CORE} W per thread for your {threads} CPU, so {estimated_tdp}W."
                 )

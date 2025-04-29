@@ -74,7 +74,7 @@ class TestApi(unittest.TestCase):
             carbon_emission = EmissionsData(
                 timestamp="222",
                 project_name="",
-                run_id=uuid4(),
+                run_id=str(uuid4()),
                 experiment_id="test",
                 duration=1.5,
                 emissions=2.0,

@@ -1,5 +1,4 @@
 """
-
 Based on https://kernelpanic.io/the-modern-way-to-call-apis-in-python
 
 TODO : use async call to API
@@ -9,6 +8,7 @@ TODO : use async call to API
 import dataclasses
 import json
 from datetime import timedelta, tzinfo
+from typing import Any, Dict, List, Optional, Union
 
 import arrow
 import requests
@@ -25,7 +25,7 @@ from codecarbon.external.logger import logger
 # from codecarbon.output import EmissionsData
 
 
-def get_datetime_with_timezone():
+def get_datetime_with_timezone() -> str:
     timestamp = str(arrow.now().isoformat())
     return timestamp
 
@@ -35,16 +35,16 @@ class ApiClient:  # (AsyncClient)
     This class call the Code Carbon API
     """
 
-    run_id = None
+    run_id: Optional[str] = None
 
     def __init__(
         self,
-        endpoint_url="https://api.codecarbon.io",
-        experiment_id=None,
-        api_key=None,
-        access_token=None,
-        conf=None,
-        create_run_automatically=True,
+        endpoint_url: str = "https://api.codecarbon.io",
+        experiment_id: Optional[str] = None,
+        api_key: Optional[str] = None,
+        access_token: Optional[str] = None,
+        conf: Optional[Dict[str, Any]] = None,
+        create_run_automatically: bool = True,
     ):
         """
         :endpoint_url: URL of the API endpoint
@@ -58,12 +58,12 @@ class ApiClient:  # (AsyncClient)
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
-        self.conf = conf
+        self.conf = conf or {}
         self.access_token = access_token
         if self.experiment_id is not None and create_run_automatically:
             self._create_run(self.experiment_id)
 
-    def _get_headers(self):
+    def _get_headers(self) -> Dict[str, str]:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             # set the x-api-token header
@@ -72,14 +72,14 @@ class ApiClient:  # (AsyncClient)
             headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
 
-    def set_access_token(self, token: str):
+    def set_access_token(self, token: str) -> None:
         """This method sets the access token to be used for the API.
         Args:
             token (str): access token to be used for the API
         """
         self.access_token = token
 
-    def check_auth(self):
+    def check_auth(self) -> Optional[Dict[str, Any]]:
         """
         Check API access to user account
         """
@@ -91,7 +91,7 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def get_list_organizations(self):
+    def get_list_organizations(self) -> Optional[List[Dict[str, Any]]]:
         """
         List all organizations
         """
@@ -103,7 +103,9 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def check_organization_exists(self, organization_name: str):
+    def check_organization_exists(
+        self, organization_name: str
+    ) -> Union[Dict[str, Any], bool]:
         """
         Check if an organization exists
         """
@@ -115,26 +117,30 @@ class ApiClient:  # (AsyncClient)
                 return organization
         return False
 
-    def create_organization(self, organization: OrganizationCreate):
+    def create_organization(
+        self, organization: OrganizationCreate
+    ) -> Optional[Dict[str, Any]]:
         """
         Create an organization
         """
         payload = dataclasses.asdict(organization)
         url = self.url + "/organizations"
-        if organization := self.check_organization_exists(organization.name):
-            logger.warning(
-                f"Organization {organization['name']} already exists. Skipping creation."
-            )
-            return organization
-        else:
-            headers = self._get_headers()
-            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
-            if r.status_code != 201:
-                self._log_error(url, payload, r)
-                return None
-            return r.json()
 
-    def get_organization(self, organization_id):
+        existing_org = self.check_organization_exists(organization.name)
+        if isinstance(existing_org, dict):
+            logger.warning(
+                f"Organization {existing_org['name']} already exists. Skipping creation."
+            )
+            return existing_org
+
+        headers = self._get_headers()
+        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
+        if r.status_code != 201:
+            self._log_error(url, payload, r)
+            return None
+        return r.json()
+
+    def get_organization(self, organization_id: str) -> Optional[Dict[str, Any]]:
         """
         Get an organization
         """
@@ -146,12 +152,19 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def update_organization(self, organization: OrganizationCreate):
+    def update_organization(
+        self, organization: OrganizationCreate
+    ) -> Optional[Dict[str, Any]]:
         """
         Update an organization
         """
         payload = dataclasses.asdict(organization)
         headers = self._get_headers()
+
+        if organization.id is None:
+            logger.error("Organization ID is required for updating an organization")
+            return None
+
         url = self.url + "/organizations/" + organization.id
         r = requests.patch(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 200:
@@ -159,7 +172,9 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def list_projects_from_organization(self, organization_id):
+    def list_projects_from_organization(
+        self, organization_id: str
+    ) -> Optional[List[Dict[str, Any]]]:
         """
         List all projects
         """
@@ -171,7 +186,7 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def create_project(self, project: ProjectCreate):
+    def create_project(self, project: ProjectCreate) -> Optional[Dict[str, Any]]:
         """
         Create a project
         """
@@ -184,7 +199,7 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def get_project(self, project_id):
+    def get_project(self, project_id: str) -> Optional[Dict[str, Any]]:
         """
         Get a project
         """
@@ -196,7 +211,7 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def add_emission(self, carbon_emission: dict):
+    def add_emission(self, carbon_emission: Dict[str, Any]) -> bool:
         assert self.experiment_id is not None
         if self.run_id is None:
             logger.warning(
@@ -208,7 +223,7 @@ class ApiClient:  # (AsyncClient)
                 logger.error(
                     "ApiClient.add_emission still no run_id, aborting for this time !"
                 )
-            return False
+                return False
         if carbon_emission["duration"] < 1:
             logger.warning(
                 "ApiClient : emissions not sent because of a duration smaller than 1."
@@ -242,7 +257,7 @@ class ApiClient:  # (AsyncClient)
             return False
         return True
 
-    def _create_run(self, experiment_id: str):
+    def _create_run(self, experiment_id: str) -> Optional[str]:
         """
         Create the experiment for project_id
         """
@@ -292,8 +307,9 @@ class ApiClient:  # (AsyncClient)
             )
         except Exception as e:
             logger.error(e, exc_info=True)
+        return None
 
-    def list_experiments_from_project(self, project_id: str):
+    def list_experiments_from_project(self, project_id: str) -> List[Dict[str, Any]]:
         """
         List all experiments for a project
         """
@@ -305,13 +321,13 @@ class ApiClient:  # (AsyncClient)
             return []
         return r.json()
 
-    def set_experiment(self, experiment_id: str):
+    def set_experiment(self, experiment_id: str) -> None:
         """
         Set the experiment id
         """
         self.experiment_id = experiment_id
 
-    def add_experiment(self, experiment: ExperimentCreate):
+    def add_experiment(self, experiment: ExperimentCreate) -> Optional[Dict[str, Any]]:
         """
         Create an experiment, used by the CLI, not the package.
         ::experiment:: The experiment to create.
@@ -325,7 +341,7 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def get_experiment(self, experiment_id):
+    def get_experiment(self, experiment_id: str) -> Optional[Dict[str, Any]]:
         """
         Get an experiment by id
         """
@@ -337,7 +353,9 @@ class ApiClient:  # (AsyncClient)
             return None
         return r.json()
 
-    def _log_error(self, url, payload, response):
+    def _log_error(
+        self, url: str, payload: Dict[str, Any], response: requests.Response
+    ) -> None:
         if len(payload) > 0:
             logger.error(
                 f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
@@ -348,14 +366,14 @@ class ApiClient:  # (AsyncClient)
             f"ApiClient API return http code {response.status_code} and answer : {response.text}"
         )
 
-    def close_experiment(self):
+    def close_experiment(self) -> None:
         """
         Tell the API that the experiment has ended.
         """
 
 
 class simple_utc(tzinfo):
-    def tzname(self, **kwargs):
+    def tzname(self, dt=None) -> str:
         return "UTC"
 
     def utcoffset(self, dt):

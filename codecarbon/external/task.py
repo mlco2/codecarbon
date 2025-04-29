@@ -12,13 +12,13 @@ class Task:
     is_active: bool
     emissions_data: EmissionsData
 
-    def __init__(self, task_name):  # , task_measure
+    def __init__(self, task_name: str):  # , task_measure
         self.task_id: str = task_name + uuid4().__str__()
         self.task_name: str = task_name
         self.start_time = time.perf_counter()
         self.is_active = True
 
-    def out(self):
+    def out(self) -> TaskEmissionsData:
         return TaskEmissionsData(
             task_name=self.task_name,
             timestamp=self.emissions_data.timestamp,

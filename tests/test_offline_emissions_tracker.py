@@ -66,4 +66,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         task_emission_data = tracker.stop_task()
 
         self.assertGreater(task_emission_data.emissions, 0.0)
-        self.assertEqual(task_emission_data.country_name, None)
+        self.assertTrue(
+            task_emission_data.country_name is None
+            or task_emission_data.country_name == ""
+        )

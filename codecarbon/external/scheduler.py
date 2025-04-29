@@ -48,5 +48,6 @@ class PeriodicScheduler:
         if not self._stopped:
             self._lock.acquire()
             self._stopped = True
-            self._timer.cancel()
+            if self._timer is not None:
+                self._timer.cancel()
             self._lock.release()

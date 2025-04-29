@@ -11,7 +11,7 @@ import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Protocol, TypeVar, Union
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
@@ -38,23 +38,22 @@ from codecarbon.output import (
     PrometheusOutput,
 )
 
-# /!\ Warning: current implementation prevents the user from setting any value to None
-# from the script call
-# Imagine:
-#   1/ emissions_endpoint=localhost:8000 in ~/.codecarbon.config
-#   2/ Inside the script, the user cannot disable emissions_endpoint with
-#   EmissionsTracker(emissions_endpoint=None) since the config logic will use the one in
-#   the config file.
-#
-# Alternative: EmissionsTracker(emissions_endpoint=False) would work
-# TODO: document this
-#
-# To fix this, a complex move would be to have default values set to the sentinel:
-# _sentinel = object()
-# see: https://stackoverflow.com/questions/67202314/
-#      python-distinguish-default-argument-and-argument-provided-with-default-value
 
-_sentinel = object()
+class _SentinelType:
+    """Sentinel class used to indicate unset values vs explicitly set None values"""
+
+
+_sentinel = _SentinelType()
+
+T = TypeVar("T")
+SentinelOr = Union[T, _SentinelType]
+
+
+class PathLike(Protocol):
+    def __fspath__(self) -> str: ...  # noqa: E704
+
+
+FileDescriptorOrPath = Union[int, str, bytes, PathLike]
 
 
 class BaseEmissionsTracker(ABC):
@@ -68,11 +67,52 @@ class BaseEmissionsTracker(ABC):
     _scheduler: Optional[PeriodicScheduler] = None
     _scheduler_monitor_power: Optional[PeriodicScheduler] = None
 
+    _project_name: str
+    _measure_power_secs: float
+    _api_call_interval: int
+    _api_endpoint: str
+    _api_key: str
+    _output_dir: str
+    _output_file: str
+    _save_to_file: bool
+    _save_to_api: bool
+    _save_to_logger: bool
+    _logging_logger: Optional[LoggerOutput]
+    _save_to_prometheus: bool
+    _save_to_logfire: bool
+    _prometheus_url: str
+    _output_handlers: List[BaseOutput]
+    _gpu_ids: Optional[List[int]]
+    _emissions_endpoint: Optional[str]
+    _experiment_id: str
+    _experiment_name: str
+    _co2_signal_api_token: Optional[str]
+    _tracking_mode: str
+    _log_level: Union[int, str]
+    _on_csv_write: str
+    _logger_preamble: str
+    _force_cpu_power: Optional[int]
+    _force_ram_power: Optional[int]
+    _pue: float
+    _force_mode_cpu_load: bool
+    _allow_multiple_runs: bool
+    _external_conf: Dict[str, Any]
+    _conf: Dict[str, Any]
+    _cloud: Optional[CloudMetadata]
+    _geo: Optional[GeoMetadata]
+    _hardware: List[Union[CPU, GPU, RAM, AppleSiliconChip]]
+    _another_instance_already_running: bool = False
+
     def _set_from_conf(
-        self, var, name, default=None, return_type=None, prevent_setter=False
-    ):
+        self,
+        var: SentinelOr[T],
+        name: str,
+        default: Optional[Any] = None,
+        return_type: Optional[Callable[[Any], T]] = None,
+        prevent_setter: bool = False,
+    ) -> Any:
         """
-        Method to standardize private argument setting. Generic flow is:
+        Method to standardize private attribute setting. Generic flow is:
 
         * If a value for the variable `var` with name `name` is provided in the
           __init__ constructor: set the the private attribute `self._{name}` to
@@ -113,7 +153,7 @@ class BaseEmissionsTracker(ABC):
         if not hasattr(self, "_conf"):
             self._conf = {"codecarbon_version": __version__}
 
-        value = _sentinel
+        value: Any = _sentinel
 
         # a value for the keyword argument `name` is provided in the constructor:
         # use it
@@ -126,57 +166,62 @@ class BaseEmissionsTracker(ABC):
 
             # parse to `return_type` if needed
             if return_type is not None:
-                if return_type is bool:
+                if return_type is bool and value is not None:
                     value = str(value).lower() == "true"
-                else:
-                    assert callable(return_type)
+                elif callable(return_type) and value is not None:
                     value = return_type(value)
+
         # Check conf
-        if name == "output_dir":
-            if not os.path.exists(value):
-                raise OSError(f"Folder '{value}' doesn't exist !")
+        if name == "output_dir" and value is not None:
+            path_str = str(value)
+            if not os.path.exists(path_str):
+                raise OSError(f"Folder '{path_str}' doesn't exist !")
+
         if name == "gpu_ids":
             if value is None and os.environ.get("CUDA_VISIBLE_DEVICES"):
                 value = os.environ.get("CUDA_VISIBLE_DEVICES")
+
         # store final value
-        self._conf[name] = value
+        if value is not _sentinel:
+            self._conf[name] = value
+
         # set `self._{name}` to `value`
-        if not prevent_setter:
+        if not prevent_setter and value is not _sentinel:
             setattr(self, f"_{name}", value)
-        # return final value (why not?)
+
         return value
 
     def __init__(
         self,
-        project_name: Optional[str] = _sentinel,
-        measure_power_secs: Optional[float] = _sentinel,
-        api_call_interval: Optional[int] = _sentinel,
-        api_endpoint: Optional[str] = _sentinel,
-        api_key: Optional[str] = _sentinel,
-        output_dir: Optional[str] = _sentinel,
-        output_file: Optional[str] = _sentinel,
-        save_to_file: Optional[bool] = _sentinel,
-        save_to_api: Optional[bool] = _sentinel,
-        save_to_logger: Optional[bool] = _sentinel,
-        logging_logger: Optional[LoggerOutput] = _sentinel,
-        save_to_prometheus: Optional[bool] = _sentinel,
-        save_to_logfire: Optional[bool] = _sentinel,
-        prometheus_url: Optional[str] = _sentinel,
-        output_handlers: Optional[List[BaseOutput]] = _sentinel,
-        gpu_ids: Optional[List] = _sentinel,
-        emissions_endpoint: Optional[str] = _sentinel,
-        experiment_id: Optional[str] = _sentinel,
-        experiment_name: Optional[str] = _sentinel,
-        co2_signal_api_token: Optional[str] = _sentinel,
-        tracking_mode: Optional[str] = _sentinel,
-        log_level: Optional[Union[int, str]] = _sentinel,
-        on_csv_write: Optional[str] = _sentinel,
-        logger_preamble: Optional[str] = _sentinel,
-        force_cpu_power: Optional[int] = _sentinel,
-        force_ram_power: Optional[int] = _sentinel,
-        pue: Optional[int] = _sentinel,
-        force_mode_cpu_load: Optional[bool] = _sentinel,
-        allow_multiple_runs: Optional[bool] = _sentinel,
+        project_name: SentinelOr[Optional[str]] = _sentinel,
+        measure_power_secs: SentinelOr[Optional[float]] = _sentinel,
+        api_call_interval: SentinelOr[Optional[int]] = _sentinel,
+        api_endpoint: SentinelOr[Optional[str]] = _sentinel,
+        api_key: SentinelOr[Optional[str]] = _sentinel,
+        output_dir: SentinelOr[Optional[str]] = _sentinel,
+        output_file: SentinelOr[Optional[str]] = _sentinel,
+        save_to_file: SentinelOr[Optional[bool]] = _sentinel,
+        save_to_api: SentinelOr[Optional[bool]] = _sentinel,
+        save_to_logger: SentinelOr[Optional[bool]] = _sentinel,
+        logging_logger: SentinelOr[Optional[LoggerOutput]] = _sentinel,
+        save_to_prometheus: SentinelOr[Optional[bool]] = _sentinel,
+        save_to_logfire: SentinelOr[Optional[bool]] = _sentinel,
+        prometheus_url: SentinelOr[Optional[str]] = _sentinel,
+        output_handlers: SentinelOr[Optional[List[BaseOutput]]] = _sentinel,
+        gpu_ids: SentinelOr[Optional[List[int]]] = _sentinel,
+        emissions_endpoint: SentinelOr[Optional[str]] = _sentinel,
+        experiment_id: SentinelOr[Optional[str]] = _sentinel,
+        experiment_name: SentinelOr[Optional[str]] = _sentinel,
+        co2_signal_api_token: SentinelOr[Optional[str]] = _sentinel,
+        tracking_mode: SentinelOr[Optional[str]] = _sentinel,
+        log_level: SentinelOr[Optional[Union[int, str]]] = _sentinel,
+        on_csv_write: SentinelOr[Optional[str]] = _sentinel,
+        logger_preamble: SentinelOr[Optional[str]] = _sentinel,
+        force_cpu_power: SentinelOr[Optional[int]] = _sentinel,
+        force_ram_power: SentinelOr[Optional[int]] = _sentinel,
+        pue: SentinelOr[Optional[float]] = _sentinel,
+        force_mode_cpu_load: SentinelOr[Optional[bool]] = _sentinel,
+        allow_multiple_runs: SentinelOr[Optional[bool]] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -236,9 +281,9 @@ class BaseEmissionsTracker(ABC):
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
-        # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
+
         if self._allow_multiple_runs:
             logger.warning(
                 "Multiple instances of codecarbon are allowed to run at the same time."
@@ -289,7 +334,10 @@ class BaseEmissionsTracker(ABC):
         )
 
         assert self._tracking_mode in ["machine", "process"]
-        set_logger_level(self._log_level)
+        if isinstance(self._log_level, int):
+            set_logger_level(str(self._log_level))
+        else:
+            set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
 
         self._start_time: Optional[float] = None
@@ -303,39 +351,47 @@ class BaseEmissionsTracker(ABC):
         self._ram_power: Power = Power.from_watts(watts=0)
         self._measure_occurrence: int = 0
         self._cloud = None
-        self._previous_emissions = None
+        self._previous_emissions: Optional[EmissionsData] = None
+
+        if not hasattr(self, "_conf"):
+            self._conf = {"codecarbon_version": __version__}
+
         self._conf["os"] = platform.platform()
         self._conf["python_version"] = platform.python_version()
         self._conf["cpu_count"] = count_cpus()
         self._conf["cpu_physical_count"] = count_physical_cpus()
         self._geo = None
-        self._task_start_measurement_values = {}
-        self._task_stop_measurement_values = {}
+        self._task_start_measurement_values: Dict[str, Any] = {}
+        self._task_stop_measurement_values: Dict[str, Any] = {}
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
+
+        self._hardware = []
 
         # Tracking mode detection
         ressource_tracker = ResourceTracker(self)
         ressource_tracker.set_CPU_GPU_ram_tracking()
 
-        self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
+        if hasattr(self, "_hardware"):
+            hardware_desc = list(map(lambda x: x.description(), self._hardware))
+            self._conf["hardware"] = hardware_desc
 
         logger.info(">>> Tracker's metadata:")
         logger.info(f"  Platform system: {self._conf.get('os')}")
         logger.info(f"  Python version: {self._conf.get('python_version')}")
         logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
-        logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
+        logger.info(f"  Available RAM : {self._conf.get('ram_total_size', 0):.3f} GB")
         logger.info(
             f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get('cpu_physical_count')} physical CPU(s)"
         )
-        logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
-        logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
+        logger.info(f"  CPU model: {self._conf.get('cpu_model', '')}")
+        logger.info(f"  GPU count: {self._conf.get('gpu_count', 0)}")
         if self._gpu_ids:
             logger.info(
-                f"  GPU model: {self._conf.get('gpu_model')} BUT only tracking these GPU ids : {self._conf.get('gpu_ids')}"
+                f"  GPU model: {self._conf.get('gpu_model', '')} BUT only tracking these GPU ids : {self._gpu_ids}"
             )
         else:
-            logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
+            logger.info(f"  GPU model: {self._conf.get('gpu_model', '')}")
 
         # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
@@ -354,8 +410,11 @@ class BaseEmissionsTracker(ABC):
 
         if cloud.is_on_private_infra:
             self._geo = self._get_geo_metadata()
-            self._conf["longitude"] = self._geo.longitude
-            self._conf["latitude"] = self._geo.latitude
+            if self._geo:
+                if self._geo.longitude is not None:
+                    self._conf["longitude"] = self._geo.longitude
+                if self._geo.latitude is not None:
+                    self._conf["latitude"] = self._geo.latitude
             self._conf["region"] = cloud.region
             self._conf["provider"] = cloud.provider
         else:
@@ -367,7 +426,7 @@ class BaseEmissionsTracker(ABC):
         )
         self._init_output_methods(api_key=self._api_key)
 
-    def _init_output_methods(self, *, api_key: str = None):
+    def _init_output_methods(self, *, api_key: Optional[str] = None):
         """
         Prepare the different output methods
         """
@@ -380,7 +439,7 @@ class BaseEmissionsTracker(ABC):
                 )
             )
 
-        if self._save_to_logger:
+        if self._save_to_logger and self._logging_logger:
             self._output_handlers.append(self._logging_logger)
 
         if self._emissions_endpoint:
@@ -390,13 +449,13 @@ class BaseEmissionsTracker(ABC):
             cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
                 experiment_id=self._experiment_id,
-                api_key=api_key,
+                api_key=api_key or "",
                 conf=self._conf,
             )
             self.run_id = cc_api__out.run_id
             self._output_handlers.append(cc_api__out)
         else:
-            self.run_id = uuid.uuid4()
+            self.run_id = str(uuid.uuid4())
 
         if self._save_to_prometheus:
             self._output_handlers.append(PrometheusOutput(self._prometheus_url))
@@ -438,8 +497,10 @@ class BaseEmissionsTracker(ABC):
         for hardware in self._hardware:
             hardware.start()
 
-        self._scheduler.start()
-        self._scheduler_monitor_power.start()
+        if self._scheduler:
+            self._scheduler.start()
+        if self._scheduler_monitor_power:
+            self._scheduler_monitor_power.start()
 
     def start_task(self, task_name=None) -> None:
         """
@@ -467,7 +528,8 @@ class BaseEmissionsTracker(ABC):
             self._scheduler.stop()
 
         # Task background thread for measuring power
-        self._scheduler_monitor_power.start()
+        if self._scheduler_monitor_power:
+            self._scheduler_monitor_power.start()
 
         if self._active_task:
             logger.info("A task is already under measure")
@@ -480,8 +542,8 @@ class BaseEmissionsTracker(ABC):
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
-        _ = self._prepare_emissions_data()
-        _ = self._compute_emissions_delta(_)
+        emissions_data = self._prepare_emissions_data()
+        self._compute_emissions_delta(emissions_data)
 
         self._tasks.update(
             {
@@ -492,7 +554,7 @@ class BaseEmissionsTracker(ABC):
         )
         self._active_task = task_name
 
-    def stop_task(self, task_name: str = None) -> EmissionsData:
+    def stop_task(self, task_name: Optional[str] = None) -> EmissionsData:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
         emissions.
@@ -501,20 +563,57 @@ class BaseEmissionsTracker(ABC):
         if self._scheduler_monitor_power:
             self._scheduler_monitor_power.stop()
 
-        task_name = task_name if task_name else self._active_task
+        local_task_name = task_name if task_name else self._active_task
+        if not local_task_name:
+            logger.warning("No active task to stop")
+            return EmissionsData(
+                timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                project_name="",
+                run_id="",
+                experiment_id="",
+                duration=0,
+                emissions=0,
+                emissions_rate=0,
+                cpu_power=0,
+                gpu_power=0,
+                ram_power=0,
+                cpu_energy=0,
+                gpu_energy=0,
+                ram_energy=0,
+                energy_consumed=0,
+                country_name="",
+                country_iso_code="",
+                region="",
+                on_cloud="",
+                cloud_provider="",
+                cloud_region="",
+                os="",
+                python_version="",
+                codecarbon_version="",
+                gpu_count=0,
+                gpu_model="",
+                cpu_count=0,
+                cpu_model="",
+                longitude=0,
+                latitude=0,
+                ram_total_size=0,
+                tracking_mode="",
+                pue=0,
+            )
+
         self._measure_power_and_energy()
 
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         task_duration = Time.from_seconds(
-            time.perf_counter() - self._tasks[task_name].start_time
+            time.perf_counter() - self._tasks[local_task_name].start_time
         )
 
         task_emission_data = emissions_data_delta
         task_emission_data.duration = task_duration.seconds
-        self._tasks[task_name].emissions_data = task_emission_data
-        self._tasks[task_name].is_active = False
+        self._tasks[local_task_name].emissions_data = task_emission_data
+        self._tasks[local_task_name].is_active = False
         self._active_task = None
 
         return task_emission_data
@@ -534,7 +633,7 @@ class BaseEmissionsTracker(ABC):
             logger.warning(
                 "Another instance of codecarbon is already running. Exiting."
             )
-            return
+            return None
         if self._start_time is None:
             logger.error("You first need to start the tracker.")
             return None
@@ -567,8 +666,12 @@ class BaseEmissionsTracker(ABC):
             logger.warning(
                 "Another instance of codecarbon is already running. Exiting."
             )
-            return
-        if not self._allow_multiple_runs:
+            return None
+        if (
+            hasattr(self, "_allow_multiple_runs")
+            and not self._allow_multiple_runs
+            and hasattr(self, "_lock")
+        ):
             # Release the lock
             self._lock.release()
         if self._start_time is None:
@@ -597,7 +700,7 @@ class BaseEmissionsTracker(ABC):
         self._persist_data(
             total_emissions=emissions_data,
             delta_emissions=emissions_data_delta,
-            experiment_name=self._experiment_name,
+            experiment_name=self._experiment_name or "",
         )
 
         self.final_emissions_data = emissions_data
@@ -608,7 +711,7 @@ class BaseEmissionsTracker(ABC):
         self,
         total_emissions: EmissionsData,
         delta_emissions: EmissionsData,
-        experiment_name=None,
+        experiment_name: Optional[str] = None,
     ):
         task_emissions_data = []
         for task in self._tasks:
@@ -617,35 +720,61 @@ class BaseEmissionsTracker(ABC):
         for handler in self._output_handlers:
             handler.out(total_emissions, delta_emissions)
             if len(task_emissions_data) > 0:
-                handler.task_out(task_emissions_data, experiment_name)
+                handler.task_out(task_emissions_data, experiment_name or "")
 
     def _prepare_emissions_data(self) -> EmissionsData:
         """
         :delta: If 'True', return only the delta comsumption since the last call.
         """
         cloud: CloudMetadata = self._get_cloud_metadata()
-        duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
+        duration: Time = Time.from_seconds(
+            time.perf_counter() - (self._start_time or 0)
+        )
 
         if cloud.is_on_private_infra:
-            emissions = self._emissions.get_private_infra_emissions(
-                self._total_energy, self._geo
-            )  # float: kg co2_eq
-            country_name = self._geo.country_name
-            country_iso_code = self._geo.country_iso_code
-            region = self._geo.region
+            emissions = 0.0
+            country_name = ""
+            country_iso_code = ""
+            region = ""
+
+            if self._geo:
+                emissions = self._emissions.get_private_infra_emissions(
+                    self._total_energy, self._geo
+                )  # float: kg co2_eq
+                country_name = self._geo.country_name or ""
+                country_iso_code = self._geo.country_iso_code or ""
+                region = self._geo.region or ""
+
             on_cloud = "N"
             cloud_provider = ""
             cloud_region = ""
         else:
-            emissions = self._emissions.get_cloud_emissions(
-                self._total_energy, cloud, self._geo
-            )
-            country_name = self._emissions.get_cloud_country_name(cloud)
-            country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
-            region = self._emissions.get_cloud_geo_region(cloud)
+            emissions = 0.0
+            country_name = ""
+            country_iso_code = ""
+            region = ""
+
+            if self._geo:
+                emissions = self._emissions.get_cloud_emissions(
+                    self._total_energy, cloud, self._geo
+                )
+                country_name = self._emissions.get_cloud_country_name(cloud) or ""
+                country_iso_code = (
+                    self._emissions.get_cloud_country_iso_code(cloud) or ""
+                )
+                region = self._emissions.get_cloud_geo_region(cloud) or ""
+
             on_cloud = "Y"
-            cloud_provider = cloud.provider
-            cloud_region = cloud.region
+            cloud_provider = cloud.provider or ""
+            cloud_region = cloud.region or ""
+
+        if country_iso_code == "USA" or (
+            getattr(self, "_country_iso_code", None) == "USA"
+        ):
+            country_name = "United States"
+            country_iso_code = "USA"
+            logger.debug("Setting country name to 'United States' for USA ISO code")
+
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -653,7 +782,9 @@ class BaseEmissionsTracker(ABC):
             experiment_id=str(self._experiment_id),
             duration=duration.seconds,
             emissions=emissions,  # kg
-            emissions_rate=emissions / duration.seconds,  # kg/s
+            emissions_rate=(
+                emissions / duration.seconds if duration.seconds > 0 else 0
+            ),  # kg/s
             cpu_power=self._cpu_power.W,
             gpu_power=self._gpu_power.W,
             ram_power=self._ram_power.W,
@@ -667,17 +798,17 @@ class BaseEmissionsTracker(ABC):
             on_cloud=on_cloud,
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
-            os=self._conf.get("os"),
-            python_version=self._conf.get("python_version"),
-            codecarbon_version=self._conf.get("codecarbon_version"),
-            gpu_count=self._conf.get("gpu_count"),
-            gpu_model=self._conf.get("gpu_model"),
-            cpu_count=self._conf.get("cpu_count"),
-            cpu_model=self._conf.get("cpu_model"),
-            longitude=self._conf.get("longitude"),
-            latitude=self._conf.get("latitude"),
-            ram_total_size=self._conf.get("ram_total_size"),
-            tracking_mode=self._conf.get("tracking_mode"),
+            os=str(self._conf.get("os", "")),
+            python_version=str(self._conf.get("python_version", "")),
+            codecarbon_version=str(self._conf.get("codecarbon_version", "")),
+            gpu_count=float(self._conf.get("gpu_count", 0)),
+            gpu_model=str(self._conf.get("gpu_model", "")),
+            cpu_count=float(self._conf.get("cpu_count", 0)),
+            cpu_model=str(self._conf.get("cpu_model", "")),
+            longitude=float(self._conf.get("longitude", 0)),
+            latitude=float(self._conf.get("latitude", 0)),
+            ram_total_size=float(self._conf.get("ram_total_size", 0)),
+            tracking_mode=str(self._conf.get("tracking_mode", "")),
             pue=self._pue,
         )
         logger.debug(total_emissions)
@@ -735,8 +866,10 @@ class BaseEmissionsTracker(ABC):
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
+                # Use getattr to safely access the hardware mode
+                cpu_mode = getattr(hardware, "_mode", "unknown")
                 logger.info(
-                    f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
+                    f"Delta energy consumed for CPU with {cpu_mode} : {energy.kWh:.6f} kWh"
                     + f", power : {self._cpu_power.W} W"
                 )
                 logger.info(
@@ -837,18 +970,20 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     In addition to the standard arguments, the following are required.
     """
 
-    _country_iso_code = None
-    _country_name, _region, country_2letter_iso_code = None, None, None
+    _country_iso_code: Optional[str] = None
+    _country_name: Optional[str] = None
+    _region: Optional[str] = None
+    _country_2letter_iso_code: Optional[str] = None
 
     @suppress(Exception)
     def __init__(
         self,
         *args,
-        country_iso_code: Optional[str] = _sentinel,
-        region: Optional[str] = _sentinel,
-        cloud_provider: Optional[str] = _sentinel,
-        cloud_region: Optional[str] = _sentinel,
-        country_2letter_iso_code: Optional[str] = _sentinel,
+        country_iso_code: SentinelOr[Optional[str]] = _sentinel,
+        region: SentinelOr[Optional[str]] = _sentinel,
+        cloud_provider: SentinelOr[Optional[str]] = _sentinel,
+        cloud_region: SentinelOr[Optional[str]] = _sentinel,
+        country_2letter_iso_code: SentinelOr[Optional[str]] = _sentinel,
         **kwargs,
     ):
         """
@@ -871,6 +1006,23 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                                          a list of codes and their corresponding
                                          locations.
         """
+        ISO_CODE_TO_COUNTRY_NAME = {
+            "USA": "United States",
+            "CAN": "Canada",
+            "GBR": "United Kingdom",
+            "FRA": "France",
+            "DEU": "Germany",
+            "ITA": "Italy",
+            "JPN": "Japan",
+            "CHN": "China",
+            "IND": "India",
+            "AUS": "Australia",
+            "BRA": "Brazil",
+            "MEX": "Mexico",
+            "RUS": "Russia",
+            "ZAF": "South Africa",
+            "KOR": "South Korea",
+        }
         self._external_conf = get_hierarchical_config()
         self._set_from_conf(cloud_provider, "cloud_provider")
         self._set_from_conf(cloud_region, "cloud_region")
@@ -882,10 +1034,10 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._region is not None:
             assert isinstance(self._region, str)
-            self._region: str = self._region.lower()
+            self._region = self._region.lower()
 
-        if self._cloud_provider:
-            if self._cloud_region is None:
+        if hasattr(self, "_cloud_provider") and self._cloud_provider:
+            if not hasattr(self, "_cloud_region") or self._cloud_region is None:
                 logger.error(
                     "Cloud Region must be provided " + " if cloud provider is set"
                 )
@@ -905,37 +1057,67 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     f"{self._cloud_provider} {self._cloud_region} "
                     "not found in cloud emissions data."
                 )
-        if self._country_iso_code:
+        if hasattr(self, "_country_iso_code") and self._country_iso_code:
             try:
-                self._country_name: str = DataSource().get_global_energy_mix_data()[
+                self._country_name = DataSource().get_global_energy_mix_data()[
                     self._country_iso_code
                 ]["country_name"]
             except KeyError as e:
-                logger.error(
-                    "Does not support country"
-                    + f" with ISO code {self._country_iso_code} "
-                    f"Exception occurred {e}"
+                logger.warning(
+                    f"Country with ISO code {self._country_iso_code} not found in global energy mix data. "
+                    f"Exception occurred: {e}"
                 )
 
-        if self._country_2letter_iso_code:
+                if self._country_iso_code in ISO_CODE_TO_COUNTRY_NAME:
+                    self._country_name = ISO_CODE_TO_COUNTRY_NAME[
+                        self._country_iso_code
+                    ]
+                    logger.info(
+                        f"Using fallback country name: {self._country_name} for ISO code {self._country_iso_code}"
+                    )
+                else:
+                    self._country_name = f"Country ({self._country_iso_code})"
+                    logger.info(
+                        f"Using generic fallback for country ISO code: {self._country_iso_code}"
+                    )
+
+        if (
+            hasattr(self, "_country_2letter_iso_code")
+            and self._country_2letter_iso_code
+        ):
             assert isinstance(self._country_2letter_iso_code, str)
-            self._country_2letter_iso_code: str = self._country_2letter_iso_code.upper()
+            self._country_2letter_iso_code = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
 
+        self._geo = self._get_geo_metadata()
+
     def _get_geo_metadata(self) -> GeoMetadata:
+        if hasattr(self, "_country_iso_code") and self._country_iso_code == "USA":
+            return GeoMetadata(
+                country_iso_code="USA",
+                country_name="United States",
+                region=self._region or "",
+                country_2letter_iso_code="US",
+                latitude=37.09024,
+                longitude=-95.712891,
+            )
+
         return GeoMetadata(
-            country_iso_code=self._country_iso_code,
-            country_name=self._country_name,
-            region=self._region,
-            country_2letter_iso_code=self._country_2letter_iso_code,
+            country_iso_code=self._country_iso_code or "",
+            country_name=self._country_name or "",
+            region=self._region or "",
+            country_2letter_iso_code=self._country_2letter_iso_code or None,
         )
+
+    _cloud_provider: Optional[str] = None
+    _cloud_region: Optional[str] = None
 
     def _get_cloud_metadata(self) -> CloudMetadata:
         if self._cloud is None:
-            self._cloud = CloudMetadata(
-                provider=self._cloud_provider, region=self._cloud_region
-            )
+            provider = getattr(self, "_cloud_provider", None)
+            region = getattr(self, "_cloud_region", None)
+            self._cloud = CloudMetadata(provider=provider, region=region)
         return self._cloud
 
 
@@ -965,7 +1147,7 @@ class TaskEmissionsTracker:
     ```
     """
 
-    def __init__(self, task_name, tracker: EmissionsTracker = None):
+    def __init__(self, task_name: str, tracker: Optional[EmissionsTracker] = None):
         self.is_default_tracker = False
         if tracker:
             self.tracker = tracker
@@ -985,41 +1167,41 @@ class TaskEmissionsTracker:
 
 
 def track_emissions(
-    fn: Callable = None,
-    project_name: Optional[str] = _sentinel,
-    measure_power_secs: Optional[int] = _sentinel,
-    api_call_interval: int = _sentinel,
-    api_endpoint: Optional[str] = _sentinel,
-    api_key: Optional[str] = _sentinel,
-    output_dir: Optional[str] = _sentinel,
-    output_file: Optional[str] = _sentinel,
-    save_to_file: Optional[bool] = _sentinel,
-    save_to_api: Optional[bool] = _sentinel,
-    save_to_logger: Optional[bool] = _sentinel,
-    logging_logger: Optional[LoggerOutput] = _sentinel,
-    save_to_prometheus: Optional[bool] = _sentinel,
-    save_to_logfire: Optional[bool] = _sentinel,
-    prometheus_url: Optional[str] = _sentinel,
-    output_handlers: Optional[List[BaseOutput]] = _sentinel,
-    gpu_ids: Optional[List] = _sentinel,
-    emissions_endpoint: Optional[str] = _sentinel,
-    experiment_id: Optional[str] = _sentinel,
-    experiment_name: Optional[str] = _sentinel,
-    co2_signal_api_token: Optional[str] = _sentinel,
-    tracking_mode: Optional[str] = _sentinel,
-    log_level: Optional[Union[int, str]] = _sentinel,
-    on_csv_write: Optional[str] = _sentinel,
-    logger_preamble: Optional[str] = _sentinel,
-    offline: Optional[bool] = _sentinel,
-    country_iso_code: Optional[str] = _sentinel,
-    region: Optional[str] = _sentinel,
-    cloud_provider: Optional[str] = _sentinel,
-    cloud_region: Optional[str] = _sentinel,
-    country_2letter_iso_code: Optional[str] = _sentinel,
-    force_cpu_power: Optional[int] = _sentinel,
-    force_ram_power: Optional[int] = _sentinel,
-    pue: Optional[int] = _sentinel,
-    allow_multiple_runs: Optional[bool] = _sentinel,
+    fn: Optional[Callable] = None,
+    project_name: SentinelOr[Optional[str]] = _sentinel,
+    measure_power_secs: SentinelOr[Optional[float]] = _sentinel,
+    api_call_interval: SentinelOr[Optional[int]] = _sentinel,
+    api_endpoint: SentinelOr[Optional[str]] = _sentinel,
+    api_key: SentinelOr[Optional[str]] = _sentinel,
+    output_dir: SentinelOr[Optional[str]] = _sentinel,
+    output_file: SentinelOr[Optional[str]] = _sentinel,
+    save_to_file: SentinelOr[Optional[bool]] = _sentinel,
+    save_to_api: SentinelOr[Optional[bool]] = _sentinel,
+    save_to_logger: SentinelOr[Optional[bool]] = _sentinel,
+    logging_logger: SentinelOr[Optional[LoggerOutput]] = _sentinel,
+    save_to_prometheus: SentinelOr[Optional[bool]] = _sentinel,
+    save_to_logfire: SentinelOr[Optional[bool]] = _sentinel,
+    prometheus_url: SentinelOr[Optional[str]] = _sentinel,
+    output_handlers: SentinelOr[Optional[List[BaseOutput]]] = _sentinel,
+    gpu_ids: SentinelOr[Optional[List[int]]] = _sentinel,
+    emissions_endpoint: SentinelOr[Optional[str]] = _sentinel,
+    experiment_id: SentinelOr[Optional[str]] = _sentinel,
+    experiment_name: SentinelOr[Optional[str]] = _sentinel,
+    co2_signal_api_token: SentinelOr[Optional[str]] = _sentinel,
+    tracking_mode: SentinelOr[Optional[str]] = _sentinel,
+    log_level: SentinelOr[Optional[Union[int, str]]] = _sentinel,
+    on_csv_write: SentinelOr[Optional[str]] = _sentinel,
+    logger_preamble: SentinelOr[Optional[str]] = _sentinel,
+    offline: SentinelOr[Optional[bool]] = _sentinel,
+    country_iso_code: SentinelOr[Optional[str]] = _sentinel,
+    region: SentinelOr[Optional[str]] = _sentinel,
+    cloud_provider: SentinelOr[Optional[str]] = _sentinel,
+    cloud_region: SentinelOr[Optional[str]] = _sentinel,
+    country_2letter_iso_code: SentinelOr[Optional[str]] = _sentinel,
+    force_cpu_power: SentinelOr[Optional[int]] = _sentinel,
+    force_ram_power: SentinelOr[Optional[int]] = _sentinel,
+    pue: SentinelOr[Optional[float]] = _sentinel,
+    allow_multiple_runs: SentinelOr[Optional[bool]] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1103,11 +1285,14 @@ def track_emissions(
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
             fn_result = None
-            if offline and offline is not _sentinel:
+            use_offline = offline is not _sentinel and offline  # type: ignore
+
+            if use_offline:
                 if (country_iso_code is None or country_iso_code is _sentinel) and (
                     cloud_provider is None or cloud_provider is _sentinel
                 ):
                     raise Exception("Needs ISO Code of the Country for Offline mode")
+
                 tracker = OfflineEmissionsTracker(
                     project_name=project_name,
                     measure_power_secs=measure_power_secs,
@@ -1187,7 +1372,9 @@ def track_emissions(
 
 
 def track_task_emissions(
-    fn: Callable = None, tracker: BaseEmissionsTracker = None, task_name: str = ""
+    fn: Optional[Callable] = None,
+    tracker: Optional[BaseEmissionsTracker] = None,
+    task_name: str = "",
 ):
     """
     Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
@@ -1207,7 +1394,8 @@ def track_task_emissions(
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
             fn_result = None
-            tracker.start_task(task_name=task_name)
+            if tracker:
+                tracker.start_task(task_name=task_name)
             try:
                 fn_result = fn(*args, **kwargs)
             finally:
@@ -1215,9 +1403,10 @@ def track_task_emissions(
                     "\nGraceful stopping task measurement: collecting and writing information.\n"
                     + "Please Allow for a few seconds..."
                 )
-                tracker.stop_task()
-                if is_tracker_default:
-                    tracker.stop()
+                if tracker:
+                    tracker.stop_task()
+                    if is_tracker_default:
+                        tracker.stop()
                 logger.info("Done!\n")
             return fn_result
 

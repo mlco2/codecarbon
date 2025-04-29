@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -69,7 +70,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
     print("Config file content : ")
     print(d)
     try:
-        if "organization_id" not in d:
+        if d is None or "organization_id" not in d:
             print(
                 "No organization_id in config, follow setup instruction to complete your configuration file!",
             )
@@ -211,9 +212,14 @@ def config():
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(_get_access_token())
     organizations = api.get_list_organizations()
+
+    organization_options = []
+    if organizations:
+        organization_options = [org["name"] for org in organizations]
+
     org = questionary_prompt(
         "Pick existing organization from list or Create new organization ?",
-        [org["name"] for org in organizations] + ["Create New Organization"],
+        organization_options + ["Create New Organization"],
         default="Create New Organization",
     )
 
@@ -232,18 +238,35 @@ def config():
             print("Error creating organization")
             return
         print(f"Created organization : {organization}")
+        org_id = organization.get("id") if isinstance(organization, dict) else None
     else:
-        organization = [orga for orga in organizations if orga["name"] == org][0]
-    org_id = organization["id"]
+        matching_orgs = []
+        if organizations:
+            matching_orgs = [orga for orga in organizations if orga["name"] == org]
+        if not matching_orgs:
+            print(f"Error: Organization '{org}' not found")
+            return
+        organization = matching_orgs[0]
+        org_id = organization["id"]
+
+    if org_id is None:
+        print("Error: Could not determine organization ID")
+        return
+
     overwrite_local_config("organization_id", org_id, path=file_path)
 
     projects = api.list_projects_from_organization(org_id)
-    project_names = [project["name"] for project in projects] if projects else []
+
+    project_options = []
+    if projects:
+        project_options = [project["name"] for project in projects]
+
     project = questionary_prompt(
         "Pick existing project from list or Create new project ?",
-        project_names + ["Create New Project"],
+        project_options + ["Create New Project"],
         default="Create New Project",
     )
+
     if project == "Create New Project":
         project_name = typer.prompt("Project name", default="Code Carbon user test")
         project_description = typer.prompt(
@@ -254,23 +277,43 @@ def config():
             description=project_description,
             organization_id=org_id,
         )
-        project = api.create_project(project=project_create)
-        print(f"Created project : {project}")
+        project_data = api.create_project(project=project_create)
+        if project_data is None:
+            print("Error creating project")
+            return
+        print(f"Created project : {project_data}")
+        project_id = project_data.get("id") if isinstance(project_data, dict) else None
     else:
-        project = [p for p in projects if p["name"] == project][0]
-    project_id = project["id"]
+        if projects:
+            matching_projects = [p for p in projects if p["name"] == project]
+            if matching_projects:
+                project_data = matching_projects[0]
+                project_id = project_data["id"]
+            else:
+                print(f"Error: Project '{project}' not found")
+                return
+        else:
+            print("Error: No projects available")
+            return
+
+    if project_id is None:
+        print("Error: Could not determine project ID")
+        return
+
     overwrite_local_config("project_id", project_id, path=file_path)
 
     experiments = api.list_experiments_from_project(project_id)
-    experiments_names = (
-        [experiment["name"] for experiment in experiments] if experiments else []
-    )
+
+    experiment_options = []
+    if experiments:
+        experiment_options = [experiment["name"] for experiment in experiments]
 
     experiment = questionary_prompt(
         "Pick existing experiment from list or Create new experiment ?",
-        experiments_names + ["Create New Experiment"],
+        experiment_options + ["Create New Experiment"],
         default="Create New Experiment",
     )
+
     if experiment == "Create New Experiment":
         print("Creating new experiment")
         exp_name = typer.prompt("Experiment name :", default="Code Carbon user test")
@@ -299,24 +342,52 @@ def config():
             country_iso_code = None
         if region == "Auto":
             region = None
+
+        timestamp = get_datetime_with_timezone()
+        if isinstance(timestamp, str):
+            timestamp = datetime.fromisoformat(timestamp)
+
         experiment_create = ExperimentCreate(
-            timestamp=get_datetime_with_timezone(),
+            timestamp=timestamp,
             name=exp_name,
             description=exp_description,
             on_cloud=exp_on_cloud,
-            project_id=project["id"],
+            project_id=project_id,
             country_name=country_name,
             country_iso_code=country_iso_code,
             region=region,
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
-        experiment = api.add_experiment(experiment=experiment_create)
+        experiment_data = api.add_experiment(experiment=experiment_create)
+        if experiment_data is None:
+            print("Error creating experiment")
+            return
 
     else:
-        experiment = [e for e in experiments if e["name"] == experiment][0]
+        if experiments:
+            matching_experiments = [e for e in experiments if e["name"] == experiment]
+            if matching_experiments:
+                experiment_data = matching_experiments[0]
+            else:
+                print(f"Error: Experiment '{experiment}' not found")
+                return
+        else:
+            print("Error: No experiments available")
+            return
 
-    overwrite_local_config("experiment_id", experiment["id"], path=file_path)
+    if experiment_data is None:
+        print("Error: Could not determine experiment data")
+        return
+
+    experiment_id = (
+        experiment_data.get("id") if isinstance(experiment_data, dict) else None
+    )
+    if experiment_id is None:
+        print("Error: Could not determine experiment ID")
+        return
+
+    overwrite_local_config("experiment_id", experiment_id, path=file_path)
     api_key = get_api_key(project_id)
     overwrite_local_config("api_key", api_key, path=file_path)
     show_config(file_path)

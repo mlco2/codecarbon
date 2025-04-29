@@ -332,7 +332,12 @@ class RAM(BaseHardware):
                 if self._tracking_mode == "machine"
                 else self.process_memory_GB
             )
-            ram_power = Power.from_watts(self._calculate_ram_power(memory_GB))
+            if memory_GB is None:
+                logger.warning(
+                    "Memory size could not be determined, defaulting to 0 GB for RAM power estimation."
+                )
+                memory_GB = 0.0
+            ram_power = Power.from_watts(self._calculate_ram_power(float(memory_GB)))
             logger.debug(
                 f"RAM power estimation: {ram_power.W:.2f}W for {memory_GB:.2f}GB"
             )
