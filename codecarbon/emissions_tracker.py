@@ -130,7 +130,7 @@ class BaseEmissionsTracker(ABC):
                     assert callable(return_type)
                     try:
                         value = return_type(value)
-                    except ValueError:
+                    except (ValueError, TypeError):
                         logger.error(
                             f"CONFIG - Value for '{name}' must be of type '{return_type.__name__}'. Got '{value}' instead. It will be ignored."
                         )
