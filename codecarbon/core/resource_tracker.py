@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import List, Union
 
-from codecarbon.core import cpu, gpu, powermetrics
+from codecarbon.core import cpu, gpu, macmon, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
 from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
@@ -17,19 +17,32 @@ class ResourceTracker:
 
     def set_RAM_tracking(self):
         logger.info("[setup] RAM Tracking...")
-        if self.tracker._force_ram_power is not None:
-            self.ram_tracker = (
-                f"User specified constant: {self.tracker._force_ram_power} Watts"
-            )
-            logger.info(
-                f"Using user-provided RAM power: {self.tracker._force_ram_power} Watts"
-            )
+
+        if macmon.is_macmon_available() and "M1" not in detect_cpu_model():
+            logger.info("Tracking Apple RAM via MacMon")
+            self.ram_tracker = "MacMon"
+            ram = AppleSiliconChip.from_utils(self.tracker._output_dir, chip_part="RAM")
+
         else:
-            self.ram_tracker = "RAM power estimation model"
-        ram = RAM(
-            tracking_mode=self.tracker._tracking_mode,
-            force_ram_power=self.tracker._force_ram_power,
-        )
+            if macmon.is_macmon_available():
+                logger.warning(
+                    "MacMon is installed but cannot track RAM power on M1 chips, reverting to constant RAM power"
+                )
+
+            if self.tracker._force_ram_power is not None:
+                self.ram_tracker = (
+                    f"User specified constant: {self.tracker._force_ram_power} Watts"
+                )
+                logger.info(
+                    f"Using user-provided RAM power: {self.tracker._force_ram_power} Watts"
+                )
+            else:
+                self.ram_tracker = "RAM power estimation model"
+                logger.info("Using RAM power estimation model based on the RAM size")
+            ram = RAM(
+                tracking_mode=self.tracker._tracking_mode,
+                force_ram_power=self.tracker._force_ram_power,
+            )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
         self.tracker._hardware: List[Union[RAM, CPU, GPU, AppleSiliconChip]] = [ram]
 
@@ -87,37 +100,24 @@ class ResourceTracker:
                     "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."
                 )
         # change code to check if powermetrics needs to be installed or just sudo setup
-        elif (
-            powermetrics.is_powermetrics_available()
-            and self.tracker._force_cpu_power is None
-        ):
-            logger.info("Tracking Apple CPU and GPU via PowerMetrics")
-            self.gpu_tracker = "PowerMetrics"
+        elif macmon.is_macmon_available():
+            self.cpu_tracker = "MacMon"
+            logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
+        elif powermetrics.is_powermetrics_available():
             self.cpu_tracker = "PowerMetrics"
+            logger.info(f"Tracking Apple CPU using {self.cpu_tracker}")
             hardware_cpu = AppleSiliconChip.from_utils(
                 self.tracker._output_dir, chip_part="CPU"
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
 
-            hardware_gpu = AppleSiliconChip.from_utils(
-                self.tracker._output_dir, chip_part="GPU"
-            )
-            self.tracker._hardware.append(hardware_gpu)
-
-            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
-            self.tracker._conf["gpu_count"] = 1
         else:
             # Explain what to install to increase accuracy
             cpu_tracking_install_instructions = ""
             if is_mac_os():
-                if (
-                    "M1" in detect_cpu_model()
-                    or "M2" in detect_cpu_model()
-                    or "M3" in detect_cpu_model()
-                ):
-                    cpu_tracking_install_instructions = ""
-                    cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
+                if any((m in detect_cpu_model() for m in ["M1", "M2", "M3", "M4"])):
+                    cpu_tracking_install_instructions = "Mac OS and ARM processor detected: Please enable PowerMetrics with sudo or MacMon to measure CPU"
                 else:
                     cpu_tracking_install_instructions = "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
             elif is_windows_os():
@@ -209,6 +209,24 @@ class ResourceTracker:
                     gpu_devices.devices.get_gpu_static_info()
                 )
             self.gpu_tracker = "pynvml"
+
+        elif macmon.is_macmon_available():
+            logger.info("Tracking Apple GPU via MacMon")
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="GPU"
+            )
+            self.tracker._hardware.append(hardware_gpu)
+            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
+            self.tracker._conf["gpu_count"] = 1
+
+        elif powermetrics.is_powermetrics_available():
+            logger.info("Tracking Apple GPU via PowerMetrics")
+            hardware_gpu = AppleSiliconChip.from_utils(
+                self.tracker._output_dir, chip_part="GPU"
+            )
+            self.tracker._hardware.append(hardware_gpu)
+            self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
+            self.tracker._conf["gpu_count"] = 1
         else:
             logger.info("No GPU found.")
 

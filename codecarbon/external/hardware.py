@@ -12,7 +12,8 @@ import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
-from codecarbon.core.powermetrics import ApplePowermetrics
+from codecarbon.core.macmon import MacMon, is_macmon_available
+from codecarbon.core.powermetrics import ApplePowermetrics, is_powermetrics_available
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
@@ -344,7 +345,12 @@ class AppleSiliconChip(BaseHardware):
     ):
         self._output_dir = output_dir
         self._model = model
-        self._interface = ApplePowermetrics(self._output_dir)
+        if is_macmon_available():
+            self._interface = MacMon(self._output_dir)
+        elif is_powermetrics_available():
+            self._interface = ApplePowermetrics(self._output_dir)
+        else:
+            raise Exception("No supported interface found for Apple Silicon Chip.")
         self.chip_part = chip_part
 
     def __repr__(self) -> str:
@@ -404,3 +410,13 @@ class AppleSiliconChip(BaseHardware):
                 logger.warning("Could not read AppleSiliconChip model.")
 
         return cls(output_dir=output_dir, model=model, chip_part=chip_part)
+
+    @property
+    def machine_memory_GB(self):
+        """
+        Property to compute the machine's total memory in bytes.
+
+        Returns:
+            float: Total RAM (GB)
+        """
+        return psutil.virtual_memory().total / B_TO_GB
