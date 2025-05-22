@@ -123,14 +123,18 @@ class BaseEmissionsTracker(ABC):
             # no value provided in the constructor for `name`: check in the conf
             # (using the provided default value)
             value = self._external_conf.get(name, default)
-
-            # parse to `return_type` if needed
-            if return_type is not None:
+            if value is not None and return_type is not None:
                 if return_type is bool:
                     value = str(value).lower() == "true"
                 else:
                     assert callable(return_type)
-                    value = return_type(value)
+                    try:
+                        value = return_type(value)
+                    except (ValueError, TypeError):
+                        logger.error(
+                            f"CONFIG - Value for '{name}' must be of type '{return_type.__name__}'. Got '{value}' instead. It will be ignored."
+                        )
+                        value = None
         # Check conf
         if name == "output_dir":
             if not os.path.exists(value):
@@ -280,10 +284,10 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
-        self._set_from_conf(force_cpu_power, "force_cpu_power")
-        self._set_from_conf(force_ram_power, "force_ram_power")
+        self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
+        self._set_from_conf(force_ram_power, "force_ram_power", None, float)
         self._set_from_conf(pue, "pue", 1.0, float)
-        self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False)
+        self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
