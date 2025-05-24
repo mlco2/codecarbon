@@ -63,7 +63,7 @@ Then, for example, if the Energy Mix of the Grid Electricity is 25% Coal, 35% Pe
 
     Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
 
-But it doesn't happen anymore because Our World in Data now provides the global carbon intensity of electricity per country ( `source <https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data>`_ ). Some countries are missing data for last year, so we use the previous year data available.
+But it doesn't append anymore because Our World in Data now provides the global carbon intensity of electricity per country ( `source <https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data>`_ ). Some countries is missing data for last year, so we use the previous year data available.
 
 If ever we have neither the global carbon intensity of a country nor it's electricity mix, we apply a world average of 475 gCO2.eq/KWh ( `source <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_ ).
 
@@ -94,7 +94,6 @@ For example, in servers you could have thousands of GB of RAM but the power cons
 Old machine could use 2 Mb memory stick, where modern servers will use 128 Mb memory stick.
 
 So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:
-
 .. code-block:: text
 
     RAM Power Consumption = 5 Watts * Number of RAM slots used

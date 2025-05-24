@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CodeCarbon API &mdash; CodeCarbon 3.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
@@ -104,7 +104,7 @@
 </div>
 <a class="reference internal image-reference" href="https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/code_carbon_archi.png"><img alt="Summary" class="align-center" src="https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/code_carbon_archi.png" style="width: 700px; height: 400px;" />
 </a>
-<a class="reference internal image-reference" href="https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg"><img alt="Summary" class="align-center" src="https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg" style="width: 700px; height: 400px;" />
+<a class="reference internal image-reference" href="https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg"><img alt="Summary" class="align-center" src="https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg" style="width: 700px;" />
 </a>
 <p>Before using it, you need an experiment_id, to get one, run:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon init</span>
@@ -116,10 +116,10 @@
 </pre></div>
 </div>
 <p>Or use the API in your code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">codecarbon</span><span class="w"> </span><span class="kn">import</span> <span class="n">track_emissions</span>
 
 <span class="nd">@track_emissions</span><span class="p">(</span><span class="n">save_to_api</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">train_model</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_model</span><span class="p">():</span>
     <span class="c1"># GPU intensive training code  goes here</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -132,7 +132,7 @@
 <p>And so on for your team, project and experiment.</p>
 <p>You then have to set you experiment id in CodeCarbon, with two options:</p>
 <p>In the code:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">codecarbon</span> <span class="kn">import</span> <span class="n">track_emissions</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">codecarbon</span><span class="w"> </span><span class="kn">import</span> <span class="n">track_emissions</span>
 
 <span class="nd">@track_emissions</span><span class="p">(</span>
     <span class="n">measure_power_secs</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
@@ -140,7 +140,7 @@
     <span class="n">experiment_id</span><span class="o">=</span><span class="s2">&quot;your experiment id&quot;</span><span class="p">,</span>
     <span class="n">save_to_api</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="k">def</span> <span class="nf">train_model</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_model</span><span class="p">():</span>
     <span class="o">...</span>
 </pre></div>
 </div>
