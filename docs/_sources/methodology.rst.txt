@@ -94,6 +94,7 @@ For example, in servers you could have thousands of GB of RAM but the power cons
 Old machine could use 2 Mb memory stick, where modern servers will use 128 Mb memory stick.
 
 So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:
+
 .. code-block:: text
 
     RAM Power Consumption = 5 Watts * Number of RAM slots used
