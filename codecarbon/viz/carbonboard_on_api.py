@@ -272,7 +272,7 @@ def viz(port: int = 8051, debug: bool = False) -> None:
     conf = get_hierarchical_config()
     df = Data.get_data_from_api(conf.get("api_endpoint", "http://localhost:8000"))
     app = render_app(df)
-    app.run_server(port=port, debug=debug)
+    app.run(port=port, debug=debug)
 
 
 def main():
