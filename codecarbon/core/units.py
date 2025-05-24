@@ -61,6 +61,9 @@ class Energy:
 
     kWh: float = field(compare=True)
 
+    def __post_init__(self):
+        self.kWh = float(self.kWh)
+
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
         assert isinstance(power.kW, float)
@@ -134,10 +137,8 @@ class Power:
         Returns:
             Power: Resulting Power estimation
         """
-        delta_energy = abs(e2.kWh - e1.kWh)
-        assert isinstance(delta_energy, float)
+        delta_energy = float(abs(e2.kWh - e1.kWh))
         kW = delta_energy / delay.hours if delay.hours != 0.0 else 0.0
-        assert isinstance(delta_energy, float)
         return cls(kW=kW)
 
     @classmethod
