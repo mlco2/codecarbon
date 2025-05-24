@@ -59,7 +59,7 @@ fief-client==0.20.0
     # via hatch.envs.dev
 filelock==3.18.0
     # via virtualenv
-h11==0.14.0
+h11==0.16.0
     # via httpcore
 httpcore==1.0.8
     # via httpx
