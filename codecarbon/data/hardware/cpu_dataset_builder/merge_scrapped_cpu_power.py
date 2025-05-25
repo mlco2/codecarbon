@@ -139,7 +139,7 @@ combined_df = pd.concat([cpu_power_df, new_cpus])
 
 # Reset index and sort
 combined_df.reset_index(inplace=True)
-combined_df.sort_values(by="Name", inplace=True)
+combined_df.sort_values(by="Name", inplace=True, kind="mergesort")
 
 # Drop duplicates, keeping the first occurrence (which would be the updated/new one if there were any issues)
 combined_df.drop_duplicates(subset=["Name"], keep="first", inplace=True)
