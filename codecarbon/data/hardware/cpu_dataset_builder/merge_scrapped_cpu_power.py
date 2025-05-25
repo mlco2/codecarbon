@@ -3,6 +3,7 @@ This script updates the CPU power data by reading from Intel and AMD CPU data fi
 cleaning the CPU names, and merging the data into an existing CPU power CSV file.
 It ensures that the TDP values are numeric and updates existing entries or adds new ones.
 
+cd codecarbon/data/hardware/cpu_dataset_builder
 hatch run python merge_scrapped_cpu_power.py
 
 """
@@ -37,6 +38,7 @@ def clean_intel_cpu_name(name):
     name = re.sub(r" Processor", "", name)
     name = re.sub(r" Coprocessor", "", name)
     name = re.sub(r"™", "", name)
+    name = re.sub(r" with.*", "", name)
     name = name.strip()
     if not name.startswith("Intel "):
         name = "Intel " + name
@@ -61,7 +63,7 @@ def clean_amd_cpu_name(name):
     name = name.replace(r"(TM)", "")
     name = re.sub(r" Processor", "", name)
     name = re.sub(r"™", "", name)
-    name = re.sub(r" with.*Graphics", "", name)  # Remove "with ... Graphics" suffix
+    name = re.sub(r" with.*", "", name)
     name = name.strip()
     if not name.startswith("AMD "):
         name = "AMD " + name
