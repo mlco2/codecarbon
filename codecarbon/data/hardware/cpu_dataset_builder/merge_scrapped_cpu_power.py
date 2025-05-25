@@ -7,9 +7,9 @@ hatch run python merge_scrapped_cpu_power.py
 
 """
 
-import pandas as pd
 import re
 
+import pandas as pd
 
 # Define file paths
 intel_cpu_file = "intel_cpu_ark_dataset.csv"
@@ -67,6 +67,7 @@ def clean_amd_cpu_name(name):
         name = "AMD " + name
     return name
 
+
 def extract_tdp_value(tdp_str):
     if pd.isna(tdp_str):
         return None
@@ -81,6 +82,7 @@ def extract_tdp_value(tdp_str):
         return float(tdp_str)
     except ValueError:
         return None
+
 
 amd_desktop_df["Name"] = amd_desktop_df["Name"].apply(clean_amd_cpu_name)
 amd_desktop_df.rename(columns={"Default TDP": "TDP"}, inplace=True)
