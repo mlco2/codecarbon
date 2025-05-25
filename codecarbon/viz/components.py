@@ -9,8 +9,8 @@ from dash import dcc, html
 
 from codecarbon.viz.units import (
     EmissionUnit,
-    get_emissions_unit,
     extends_emissions_units,
+    get_emissions_unit,
 )
 
 

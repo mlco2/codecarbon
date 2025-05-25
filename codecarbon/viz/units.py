@@ -1,5 +1,6 @@
-import pandas as pd
 from enum import Enum
+
+import pandas as pd
 
 
 class EmissionUnit(str, Enum):

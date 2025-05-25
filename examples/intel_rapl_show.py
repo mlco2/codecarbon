@@ -219,7 +219,7 @@ class IntelRAPL:
                 power = self.read_power_consumption(domain)
                 if power is not None:
                     print(
-                        f"Domain '{domain.get("path").split('/')[-1]}/{domain.get("name")}' as a power consumption of {power:.2f} Watts"
+                        f"Domain '{domain.get('path').split('/')[-1]}/{domain.get('name')}' as a power consumption of {power:.2f} Watts"
                     )
                     total_power += power
             print(f"Total Power Consumption: {total_power:.2f} Watts")
