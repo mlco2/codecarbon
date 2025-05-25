@@ -40,7 +40,7 @@ cryptography==44.0.2
     # via jwcrypto
 fief-client==0.20.0
     # via hatch.envs.default
-h11==0.14.0
+h11==0.16.0
     # via httpcore
 httpcore==1.0.8
     # via httpx
