@@ -12,7 +12,7 @@ import re
 
 
 # Define file paths
-intel_cpu_file = 'intel_cpu_data.csv'
+intel_cpu_file = 'intel_cpu_ark_dataset.csv'
 cpu_power_file = 'cpu_power.csv'
 
 # Read Intel CPU data

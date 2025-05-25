@@ -175,7 +175,7 @@ class IntelCpuScraper:
 
         print(f"Scraping complete. Found {len(self.results)} CPUs.")
 
-    def save_to_csv(self, filename="intel_cpu_data.csv"):
+    def save_to_csv(self, filename="intel_cpu_ark_dataset.csv"):
         """Save the scraped data to a CSV file."""
         filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
         if not self.results:
