@@ -3,7 +3,7 @@ This script updates the CPU power data by reading from Intel and AMD CPU data fi
 cleaning the CPU names, and merging the data into an existing CPU power CSV file.
 It ensures that the TDP values are numeric and updates existing entries or adds new ones.
 
-hatch run python update_cpu_power.py
+hatch run python merge_scrapped_cpu_power.py
 
 """
 
@@ -15,7 +15,7 @@ import re
 intel_cpu_file = "intel_cpu_ark_dataset.csv"
 amd_desktop_cpu_file = "amd_cpu_desktop_dataset.csv"
 amd_server_cpu_file = "amd_cpu_server_dataset.csv"
-cpu_power_file = "cpu_power.csv"
+cpu_power_file = "../cpu_power.csv"
 
 # Read Intel CPU data
 try:
