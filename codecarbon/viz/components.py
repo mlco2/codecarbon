@@ -670,7 +670,7 @@ class Components:
             px.bar(
                 project_data,
                 y=(
-                    f"emissions_in_{unit}"
+                    f"emissions_in_{unit.value}"
                     if unit != EmissionUnit.KILOGRAM
                     else "emissions"
                 ),
