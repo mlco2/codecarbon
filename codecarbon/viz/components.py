@@ -7,6 +7,12 @@ import plotly.express as px
 from dash import dash_table as dt
 from dash import dcc, html
 
+from codecarbon.viz.units import (
+    EmissionUnit,
+    extends_emissions_units,
+    get_emissions_unit,
+)
+
 
 class Components:
     def __init__(self):
@@ -656,15 +662,24 @@ class Components:
     def get_project_emissions_bar_chart_figure(project_data: dt.DataTable):
         # Note: necessary to both convert to pandas and replace null values for hover value
         project_data = pd.DataFrame(project_data)
+        project_data = extends_emissions_units(project_data)
         project_data = project_data.replace(np.nan, "", regex=True)
+        unit = get_emissions_unit(project_data)
         hover_data = {c: True for c in project_data.columns}
         bar = (
             px.bar(
                 project_data,
-                y="emissions",
+                y=(
+                    f"emissions_in_{unit.value}"
+                    if unit != EmissionUnit.KILOGRAM
+                    else "emissions"
+                ),
                 hover_data=hover_data,
                 labels={
-                    "emissions": "Carbon Equivalent (KgCO2eq)",
+                    "index": "Entry",
+                    "emissions": "Carbon Equivalent (kgCO2eq)",
+                    "emissions_in_g": "Carbon Equivalent (gCO2eq)",
+                    "emissions_in_t": "Carbon Equivalent (tCO2eq)",
                     "energy_consumed": "Energy Consumed (kWh)",
                     "timestamp": "Timestamp",
                     "project_name": "Project Name",

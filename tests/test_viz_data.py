@@ -31,7 +31,7 @@ def test_get_project_data(emissions_data: pd.DataFrame):
 
 
 def test_get_global_emissions_choropleth_data(
-    global_energy_mix_data: Dict[str, Dict[str, Any]]
+    global_energy_mix_data: Dict[str, Dict[str, Any]],
 ):
     viz_data = data.Data()
     choropleth_data = viz_data.get_global_emissions_choropleth_data(
