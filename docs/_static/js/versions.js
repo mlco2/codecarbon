@@ -1,6 +1,6 @@
 const themeFlyoutDisplay = "hidden";
-const themeVersionSelector = true;
-const themeLanguageSelector = true;
+const themeVersionSelector = "True";
+const themeLanguageSelector = "True";
 
 if (themeFlyoutDisplay === "attached") {
   function renderLanguages(config) {
@@ -8,14 +8,10 @@ if (themeFlyoutDisplay === "attached") {
       return "";
     }
 
-    // Insert the current language to the options on the selector
-    let languages = config.projects.translations.concat(config.projects.current);
-    languages = languages.sort((a, b) => a.language.name.localeCompare(b.language.name));
-
     const languagesHTML = `
       <dl>
         <dt>Languages</dt>
-        ${languages
+        ${config.projects.translations
           .map(
             (translation) => `
         <dd ${translation.slug == config.projects.current.slug ? 'class="rtd-current-item"' : ""}>

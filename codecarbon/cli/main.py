@@ -139,8 +139,8 @@ def api_get():
 def login():
     get_fief_auth().authorize()
     api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
-    id_token = _get_id_token()
-    api.set_access_token(id_token)
+    access_token = _get_access_token()
+    api.set_access_token(access_token)
     api.check_auth()
 
 
