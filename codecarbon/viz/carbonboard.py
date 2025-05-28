@@ -270,7 +270,7 @@ def render_app(df: pd.DataFrame):
 def viz(filepath: str, port: int = 8050, debug: bool = False) -> None:
     df = pd.read_csv(filepath)
     app = render_app(df)
-    app.run_server(port=port, debug=debug)
+    app.run(port=port, debug=debug)
 
 
 def main():
