@@ -2,6 +2,8 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 
+from codecarbon.external.logger import logger
+
 
 @dataclass
 class EmissionsData:
@@ -51,10 +53,35 @@ class EmissionsData:
         self.duration = delta_duration
         delta_emissions = self.emissions - previous_emission.emissions
         self.emissions = delta_emissions
+
+        logger.info(
+            f"EMISSION_DATA_DEBUG: Before CPU delta: "
+            f"self.cpu_energy={self.cpu_energy}, previous_emission.cpu_energy={previous_emission.cpu_energy}"
+        )
         self.cpu_energy -= previous_emission.cpu_energy
+        logger.info(f"EMISSION_DATA_DEBUG: After CPU delta: self.cpu_energy={self.cpu_energy}")
+
+        logger.info(
+            f"EMISSION_DATA_DEBUG: Before GPU delta: "
+            f"self.gpu_energy={self.gpu_energy}, previous_emission.gpu_energy={previous_emission.gpu_energy}"
+        )
         self.gpu_energy -= previous_emission.gpu_energy
+        logger.info(f"EMISSION_DATA_DEBUG: After GPU delta: self.gpu_energy={self.gpu_energy}")
+
+        logger.info(
+            f"EMISSION_DATA_DEBUG: Before RAM delta: "
+            f"self.ram_energy={self.ram_energy}, previous_emission.ram_energy={previous_emission.ram_energy}"
+        )
         self.ram_energy -= previous_emission.ram_energy
+        logger.info(f"EMISSION_DATA_DEBUG: After RAM delta: self.ram_energy={self.ram_energy}")
+
+        logger.info(
+            f"EMISSION_DATA_DEBUG: Before energy_consumed delta: "
+            f"self.energy_consumed={self.energy_consumed}, previous_emission.energy_consumed={previous_emission.energy_consumed}"
+        )
         self.energy_consumed -= previous_emission.energy_consumed
+        logger.info(f"EMISSION_DATA_DEBUG: After energy_consumed delta: self.energy_consumed={self.energy_consumed}")
+
         if delta_duration > 0:
             # emissions_rate in g/s : delta_emissions in kg.CO2 / delta_duration in s
             self.emissions_rate = delta_emissions / delta_duration
