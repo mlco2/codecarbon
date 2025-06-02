@@ -486,7 +486,9 @@ class BaseEmissionsTracker(ABC):
         for hardware in self._hardware:
             hardware.start()
         prepared_data_for_task_start = self._prepare_emissions_data()
-        self._active_task_emissions_at_start = dataclasses.replace(prepared_data_for_task_start)
+        self._active_task_emissions_at_start = dataclasses.replace(
+            prepared_data_for_task_start
+        )
         # The existing call to _compute_emissions_delta uses the result of _prepare_emissions_data.
         # Let's make sure it uses the same one we captured.
         self._compute_emissions_delta(prepared_data_for_task_start)
@@ -527,7 +529,9 @@ class BaseEmissionsTracker(ABC):
         # #     f"Total Energy: {self._total_energy.kWh} kWh"
         # # )
 
-        emissions_data = self._prepare_emissions_data() # This is emissions_data_at_stop
+        emissions_data = (
+            self._prepare_emissions_data()
+        )  # This is emissions_data_at_stop
 
         # # logger.info(
         # #     f"STOP_TASK_DEBUG: emissions_data (totals at task stop): "
@@ -544,7 +548,7 @@ class BaseEmissionsTracker(ABC):
         # #         f"Total Energy: {self._previous_emissions.energy_consumed} kWh"
         # #     )
 
-        emissions_data_delta: EmissionsData # Type hint for clarity
+        emissions_data_delta: EmissionsData  # Type hint for clarity
 
         if self._active_task_emissions_at_start is None:
             # This logger.warning should remain, as it's not a DEBUG log but a genuine warning for an unexpected state.
@@ -563,7 +567,9 @@ class BaseEmissionsTracker(ABC):
             emissions_data_delta.energy_consumed = 0.0
         else:
             emissions_data_delta = dataclasses.replace(emissions_data)
-            emissions_data_delta.compute_delta_emission(self._active_task_emissions_at_start)
+            emissions_data_delta.compute_delta_emission(
+                self._active_task_emissions_at_start
+            )
             # # logger.info(
             # #     f"STOP_TASK_DEBUG: emissions_data_delta (task-specific): "
             # #     # ... fields ...
@@ -578,12 +584,14 @@ class BaseEmissionsTracker(ABC):
 
         # task_emission_data is the final delta object to be returned and stored
         task_emission_data = emissions_data_delta
-        task_emission_data.duration = task_duration.seconds # Set the correct duration for the task
+        task_emission_data.duration = (
+            task_duration.seconds
+        )  # Set the correct duration for the task
 
         self._tasks[task_name].emissions_data = task_emission_data
         self._tasks[task_name].is_active = False
         self._active_task = None
-        self._active_task_emissions_at_start = None # Clear task-specific start data
+        self._active_task_emissions_at_start = None  # Clear task-specific start data
 
         return task_emission_data
 
