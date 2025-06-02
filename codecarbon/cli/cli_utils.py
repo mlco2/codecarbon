@@ -37,6 +37,21 @@ def get_api_endpoint(path: Optional[Path] = None):
     return "https://api.codecarbon.io"
 
 
+def get_api_enabled(path: Optional[Path] = None):
+    p = path or Path.cwd().resolve() / ".codecarbon.config"
+    if p.exists():
+        config = configparser.ConfigParser()
+        config.read(str(p))
+        if "codecarbon" in config.sections():
+            d = dict(config["codecarbon"])
+            if "api_enabled" in d:
+                return "1"
+            else:
+                with p.open("a") as f:
+                    f.write("api_enabled=0\n")
+    return "0"
+
+
 def get_existing_local_exp_id(path: Optional[Path] = None):
     p = path or Path.cwd().resolve() / ".codecarbon.config"
     if p.exists():
