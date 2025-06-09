@@ -132,6 +132,14 @@ class TestApp(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             # Since we mocked show_config, we might not see the expected output
             # Just check that the command completed successfully
+            self.assertIn(
+                "Creating new experiment",
+                result.stdout,
+            )
+            self.assertIn(
+                "Consult configuration documentation for more configuration options",
+                result.stdout,
+            )
         finally:
             # Clean up the temporary file
             try:
