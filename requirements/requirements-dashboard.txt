@@ -125,7 +125,7 @@ questionary==2.1.0
     # via hatch.envs.dashboard
 rapidfuzz==3.13.0
     # via hatch.envs.dashboard
-requests==2.32.3
+requests==2.32.4
     # via
     #   hatch.envs.dashboard
     #   dash
