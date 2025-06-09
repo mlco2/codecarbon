@@ -94,17 +94,17 @@ class TestApp(unittest.TestCase):
         mock_typer_prompt.side_effect = [
             temp_codecarbon_config.name,  # file path in create_new_config_file
             "https://api.codecarbon.io",  # api_endpoint
-            "Code Carbon user test",      # org_name
-            "Code Carbon user test",      # org_description
-            "Code Carbon user test",      # project_name
-            "Code Carbon user test",      # project_description
-            "Code Carbon user test",      # exp_name
-            "Code Carbon user test",      # exp_description
-            "n",                          # Running on cloud
-            "France",                       # country_name
-            "FRA",                       # country_iso_code
-            "FR",                       # region
-            "Europe/Paris",            # TODO: This one more line make test works, there is a bug somewhere...
+            "Code Carbon user test",  # org_name
+            "Code Carbon user test",  # org_description
+            "Code Carbon user test",  # project_name
+            "Code Carbon user test",  # project_description
+            "Code Carbon user test",  # exp_name
+            "Code Carbon user test",  # exp_description
+            "n",  # Running on cloud
+            "France",  # country_name
+            "FRA",  # country_iso_code
+            "FR",  # region
+            "Europe/Paris",  # TODO: This one more line make test works, there is a bug somewhere...
         ]
 
         mock_prompt.side_effect = [
@@ -119,14 +119,15 @@ class TestApp(unittest.TestCase):
                 codecarbon,
                 ["config"],
             )
-            print("Exit code:", result.exit_code)
-            print("STDOUT:", result.stdout)
-            print("STDERR:", result.stderr)
-            print("Exception:", result.exception)
             if result.exception:
                 import traceback
+
                 print("Traceback:")
-                traceback.print_exception(type(result.exception), result.exception, result.exception.__traceback__)
+                traceback.print_exception(
+                    type(result.exception),
+                    result.exception,
+                    result.exception.__traceback__,
+                )
 
             self.assertEqual(result.exit_code, 0)
             # Since we mocked show_config, we might not see the expected output
