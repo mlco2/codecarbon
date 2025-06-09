@@ -108,6 +108,7 @@ features = ["viz"]
 dependencies = [
    "mock",
    "pytest",
+   "typer",
    "responses",
    "numpy<2.0.0;python_version<'3.9'",
    "numpy;python_version>='3.9'",

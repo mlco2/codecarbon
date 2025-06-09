@@ -21,6 +21,7 @@ class TestUnsupportedGPU(unittest.TestCase):
     @patch("codecarbon.core.gpu.pynvml")
     def test_emissions_tracker_unsupported_gpu(self, mock_pynvml):
         mock_pynvml.NVMLError_NotSupported = self.NVMLError_NotSupported
+        mock_pynvml.NVMLError = Exception  # Set up the base exception class that gpu.py expects
         mock_pynvml.NVML_ERROR_NOT_SUPPORTED = self.NVML_ERROR_NOT_SUPPORTED
 
         mock_pynvml.nvmlInit.return_value = None

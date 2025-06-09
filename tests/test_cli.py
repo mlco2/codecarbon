@@ -52,18 +52,22 @@ class TestApp(unittest.TestCase):
         self.assertIn(__app_name__, result.stdout)
         self.assertIn(__version__, result.stdout)
 
+    @patch("codecarbon.cli.main.show_config")
     @patch("codecarbon.cli.main.get_api_key")
     @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
     @patch("codecarbon.cli.main._get_access_token")
+    @patch("typer.prompt")
     def test_config_no_local_new_all(
         self,
+        mock_typer_prompt,
         mock_token,
         mock_prompt,
         mock_confirm,
         mock_path_exists,
         mock_get_api_key,
+        mock_show_config,
         MockApiClient,
     ):
         temp_dir = os.getenv("RUNNER_TEMP", tempfile.gettempdir())
@@ -84,6 +88,23 @@ class TestApp(unittest.TestCase):
         MockApiClient.return_value = self.mock_api_client
         mock_get_api_key.return_value = "api_key"
         mock_token.return_value = "user_token"
+        mock_show_config.return_value = None  # Mock show_config to avoid issues
+        
+        # Set up typer.prompt to return appropriate values
+        mock_typer_prompt.side_effect = [
+            temp_codecarbon_config.name,  # file path in create_new_config_file
+            "https://api.codecarbon.io",  # api_endpoint
+            "Code Carbon user test",      # org_name
+            "Code Carbon user test",      # org_description
+            "Code Carbon user test",      # project_name
+            "Code Carbon user test",      # project_description
+            "Code Carbon user test",      # exp_name
+            "Code Carbon user test",      # exp_description
+            "Auto",                       # country_name
+            "Auto",                       # country_iso_code
+            "Auto",                       # region
+        ]
+        
         mock_prompt.side_effect = [
             "Create New Organization",
             "Create New Project",
@@ -94,7 +115,6 @@ class TestApp(unittest.TestCase):
         result = self.runner.invoke(
             codecarbon,
             ["config"],
-            input=f"{temp_codecarbon_config.name}\n",
         )
         print(result)
         self.assertEqual(result.exit_code, 0)
