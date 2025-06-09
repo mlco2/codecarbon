@@ -136,7 +136,7 @@ questionary==2.1.0
     # via hatch.envs.dev
 rapidfuzz==3.13.0
     # via hatch.envs.dev
-requests==2.32.3
+requests==2.32.4
     # via hatch.envs.dev
 rich==14.0.0
     # via

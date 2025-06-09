@@ -100,7 +100,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.2.0
     # via hatch.envs.test.py3.10
-narwhals==1.41.1
+narwhals==1.42.0
     # via plotly
 nest-asyncio==1.6.0
     # via dash
@@ -154,7 +154,7 @@ questionary==2.1.0
     # via hatch.envs.test.py3.10
 rapidfuzz==3.13.0
     # via hatch.envs.test.py3.10
-requests==2.32.3
+requests==2.32.4
     # via
     #   hatch.envs.test.py3.10
     #   dash
@@ -217,7 +217,7 @@ werkzeug==3.0.6
     #   flask
 yaspin==3.1.0
     # via fief-client
-zipp==3.22.0
+zipp==3.23.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

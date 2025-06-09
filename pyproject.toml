@@ -108,7 +108,6 @@ features = ["viz"]
 dependencies = [
    "mock",
    "pytest",
-   "typer",
    "responses",
    "numpy<2.0.0;python_version<'3.9'",
    "numpy;python_version>='3.9'",
@@ -147,7 +146,6 @@ dependencies = [
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
     "fastapi-pagination==0.9.1",
-    "pytest",
     "mock",
     "pytest",
     "responses",

@@ -16,7 +16,6 @@
 # - sqlalchemy<2.0.0
 # - uvicorn[standard]<1.0.0
 # - fastapi-pagination==0.9.1
-# - pytest
 # - mock
 # - pytest
 # - responses
@@ -231,7 +230,7 @@ questionary==2.1.0
     # via hatch.envs.api
 rapidfuzz==3.13.0
     # via hatch.envs.api
-requests==2.32.3
+requests==2.32.4
     # via
     #   hatch.envs.api
     #   opentelemetry-exporter-otlp-proto-http
@@ -299,5 +298,5 @@ wrapt==1.17.2
     # via opentelemetry-instrumentation
 yaspin==3.1.0
     # via fief-client
-zipp==3.22.0
+zipp==3.23.0
     # via importlib-metadata
