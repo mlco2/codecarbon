@@ -25,7 +25,7 @@
 # - rich
 # - typer
 # - dash
-# - dash-bootstrap-components<1.0.0
+# - dash-bootstrap-components>1.0.0
 # - fire
 #
 
@@ -46,18 +46,18 @@ cffi==1.17.1
     # via cryptography
 charset-normalizer==3.4.2
     # via requests
-click==8.1.8
+click==8.2.1
     # via
     #   hatch.envs.test.py3.11
     #   flask
     #   typer
-cryptography==45.0.2
+cryptography==45.0.3
     # via jwcrypto
 dash==3.0.4
     # via
     #   hatch.envs.test.py3.11
     #   dash-bootstrap-components
-dash-bootstrap-components==0.13.1
+dash-bootstrap-components==2.0.3
     # via hatch.envs.test.py3.11
 fief-client==0.20.0
     # via hatch.envs.test.py3.11
@@ -96,11 +96,11 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.2.0
     # via hatch.envs.test.py3.11
-narwhals==1.40.0
+narwhals==1.42.0
     # via plotly
 nest-asyncio==1.6.0
     # via dash
-numpy==2.2.6 ; python_version >= "3.9"
+numpy==2.3.0 ; python_version >= "3.9"
     # via
     #   hatch.envs.test.py3.11
     #   pandas
@@ -110,13 +110,13 @@ packaging==25.0
     # via
     #   plotly
     #   pytest
-pandas==2.2.3
+pandas==2.3.0
     # via hatch.envs.test.py3.11
-plotly==6.1.1
+plotly==6.1.2
     # via dash
 pluggy==1.6.0
     # via pytest
-prometheus-client==0.22.0
+prometheus-client==0.22.1
     # via hatch.envs.test.py3.11
 prompt-toolkit==3.0.51
     # via questionary
@@ -131,10 +131,12 @@ pydantic==2.11.5
 pydantic-core==2.33.2
     # via pydantic
 pygments==2.19.1
-    # via rich
+    # via
+    #   pytest
+    #   rich
 pynvml==12.0.0
     # via hatch.envs.test.py3.11
-pytest==8.3.5
+pytest==8.4.0
     # via hatch.envs.test.py3.11
 python-dateutil==2.9.0.post0
     # via
@@ -148,7 +150,7 @@ questionary==2.1.0
     # via hatch.envs.test.py3.11
 rapidfuzz==3.13.0
     # via hatch.envs.test.py3.11
-requests==2.32.3
+requests==2.32.4
     # via
     #   hatch.envs.test.py3.11
     #   dash
@@ -178,11 +180,11 @@ termcolor==2.3.0
     # via
     #   fire
     #   yaspin
-typer==0.15.4
+typer==0.16.0
     # via hatch.envs.test.py3.11
 types-python-dateutil==2.9.0.20250516
     # via arrow
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via
     #   anyio
     #   dash
@@ -207,7 +209,7 @@ werkzeug==3.0.6
     #   flask
 yaspin==3.1.0
     # via fief-client
-zipp==3.21.0
+zipp==3.23.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
