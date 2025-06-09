@@ -56,11 +56,11 @@ region to host infrastructure for the concerned cloud provider.
             :height: 450px
             :width: 750px
 
-Online (Beta)
+Online
 --------------
 
-A ``Dash App`` is also available for those who chose to connect the package to the API then data are public and available for all to explore.
-`preview <https://dashboard.codecarbon.io/>`_
+A dashboard is also available for those who chose to connect the package to the public API.
+`Got to online dashboard <https://dashboard.codecarbon.io/>`_
 
 from global...
 ~~~~~~~~~~~~~~

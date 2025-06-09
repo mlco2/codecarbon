@@ -54,7 +54,7 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 viz = [
     "dash",
-    "dash_bootstrap_components < 1.0.0",
+    "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
 
@@ -128,16 +128,6 @@ python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 [tool.hatch.envs.docs.scripts]
 build = "cd docs/edit && make docs"
 
-[tool.hatch.envs.dashboard]
-dependencies = [
-    "dash>=2.2.0",
-    "dash_bootstrap_components",
-    "plotly>=5.6.0",
-]
-
-[tool.hatch.envs.dashboard.scripts]
-run = "cd dashboard && python carbon_board_API.py"
-
 [tool.hatch.envs.api]
 python = "3.11"
 dependencies = [
@@ -156,7 +146,6 @@ dependencies = [
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
     "fastapi-pagination==0.9.1",
-    "pytest",
     "mock",
     "pytest",
     "responses",
@@ -186,7 +175,7 @@ include = [
 ]
 
 [tool.bumpver]
-current_version = "3.0.1"
+current_version = "3.0.2"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
