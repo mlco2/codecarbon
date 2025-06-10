@@ -2,8 +2,6 @@ import json
 from collections import OrderedDict
 from dataclasses import dataclass
 
-from codecarbon.external.logger import logger
-
 
 @dataclass
 class EmissionsData:

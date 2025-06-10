@@ -10,12 +10,12 @@ import pandas as pd
 import requests
 import responses
 
+from codecarbon.core.units import Energy, Power
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
     track_emissions,
 )
-from codecarbon.core.units import Energy, Power
 from codecarbon.external.geography import CloudMetadata
 from tests.fake_modules import pynvml as fake_pynvml
 from tests.testdata import (
@@ -407,31 +407,41 @@ class TestCarbonTracker(unittest.TestCase):
         )
         self.assertIsInstance(tracker.final_emissions, float)
 
-    @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy") # Corrected path for RAM
-    @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy") # Path for CPU is likely correct
+    @mock.patch(
+        "codecarbon.external.ram.RAM.measure_power_and_energy"
+    )  # Corrected path for RAM
+    @mock.patch(
+        "codecarbon.external.hardware.CPU.measure_power_and_energy"
+    )  # Path for CPU is likely correct
     def test_task_energy_with_live_update_interference(
         self,
-        mock_cpu_measure,                 # Method decorator (innermost)
-        mock_ram_measure,                 # Method decorator (outermost)
-        mock_setup_intel_cli,             # Class decorator (innermost)
-        mock_log_values,                  # Class decorator
-        mocked_env_cloud_details,         # Class decorator
-        mocked_get_gpu_details,           # Class decorator
-        mocked_is_gpu_details_available   # Class decorator (outermost relevant one)
+        mock_cpu_measure,  # Method decorator (innermost)
+        mock_ram_measure,  # Method decorator (outermost)
+        mock_setup_intel_cli,  # Class decorator (innermost)
+        mock_log_values,  # Class decorator
+        mocked_env_cloud_details,  # Class decorator
+        mocked_get_gpu_details,  # Class decorator
+        mocked_is_gpu_details_available,  # Class decorator (outermost relevant one)
     ):
         # --- Test Setup ---
         # Configure mocks to return specific, non-zero energy values
         cpu_energy_val_task = 0.0001
         ram_energy_val_task = 0.00005
-        mock_cpu_measure.return_value = (Power.from_watts(10), Energy.from_energy(kWh=cpu_energy_val_task))
-        mock_ram_measure.return_value = (Power.from_watts(5), Energy.from_energy(kWh=ram_energy_val_task))
+        mock_cpu_measure.return_value = (
+            Power.from_watts(10),
+            Energy.from_energy(kWh=cpu_energy_val_task),
+        )
+        mock_ram_measure.return_value = (
+            Power.from_watts(5),
+            Energy.from_energy(kWh=ram_energy_val_task),
+        )
 
         tracker = EmissionsTracker(
             project_name="TestLiveUpdateInterference",
             measure_power_secs=1,
             api_call_interval=1,  # Trigger live update on first opportunity
-            output_handlers=[], # Clear any default handlers like FileOutput
-            save_to_file=False, # Ensure no file is created by default
+            output_handlers=[],  # Clear any default handlers like FileOutput
+            save_to_file=False,  # Ensure no file is created by default
             save_to_api=False,
             # Config file is mocked by get_custom_mock_open in setUp
         )
@@ -459,14 +469,31 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIsNotNone(task_data, "Task data should not be None")
 
         self.assertGreater(task_data.cpu_energy, 0, "CPU energy should be non-zero")
-        self.assertAlmostEqual(task_data.cpu_energy, cpu_energy_val_task, places=7, msg="CPU energy does not match expected task energy")
+        self.assertAlmostEqual(
+            task_data.cpu_energy,
+            cpu_energy_val_task,
+            places=7,
+            msg="CPU energy does not match expected task energy",
+        )
 
         self.assertGreater(task_data.ram_energy, 0, "RAM energy should be non-zero")
-        self.assertAlmostEqual(task_data.ram_energy, ram_energy_val_task, places=7, msg="RAM energy does not match expected task energy")
+        self.assertAlmostEqual(
+            task_data.ram_energy,
+            ram_energy_val_task,
+            places=7,
+            msg="RAM energy does not match expected task energy",
+        )
 
         expected_total_energy = cpu_energy_val_task + ram_energy_val_task
-        self.assertGreater(task_data.energy_consumed, 0, "Total energy consumed should be non-zero")
-        self.assertAlmostEqual(task_data.energy_consumed, expected_total_energy, places=7, msg="Total energy consumed does not match sum of components")
+        self.assertGreater(
+            task_data.energy_consumed, 0, "Total energy consumed should be non-zero"
+        )
+        self.assertAlmostEqual(
+            task_data.energy_consumed,
+            expected_total_energy,
+            places=7,
+            msg="Total energy consumed does not match sum of components",
+        )
 
         # Verify mocks were called as expected
         # They are called once in _measure_power_and_energy inside stop_task
