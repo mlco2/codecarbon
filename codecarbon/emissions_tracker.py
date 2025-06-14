@@ -475,7 +475,7 @@ class BaseEmissionsTracker(ABC):
         self._scheduler_monitor_power.start()
 
         if self._active_task:
-            logger.info("A task is already under measure")
+            logger.warning("A task is already under measure")
             return
         if not task_name:
             task_name = uuid.uuid4().__str__()
@@ -512,47 +512,16 @@ class BaseEmissionsTracker(ABC):
             self._scheduler_monitor_power.stop()
 
         task_name = task_name if task_name else self._active_task
-
-        # # logger.info(
-        # #     f"STOP_TASK_DEBUG: Before _measure_power_and_energy: "
-        # #     f"CPU Energy: {self._total_cpu_energy.kWh} kWh, "
-        # #     f"GPU Energy: {self._total_gpu_energy.kWh} kWh, "
-        # #     f"RAM Energy: {self._total_ram_energy.kWh} kWh, "
-        # #     f"Total Energy: {self._total_energy.kWh} kWh"
-        # # )
+        if self._tasks.get(task_name) is None:
+            logger.warning("stop_task : No active task to stop.")
+            return None
         self._measure_power_and_energy()
-        # # logger.info(
-        # #     f"STOP_TASK_DEBUG: After _measure_power_and_energy: "
-        # #     f"CPU Energy: {self._total_cpu_energy.kWh} kWh, "
-        # #     f"GPU Energy: {self._total_gpu_energy.kWh} kWh, "
-        # #     f"RAM Energy: {self._total_ram_energy.kWh} kWh, "
-        # #     f"Total Energy: {self._total_energy.kWh} kWh"
-        # # )
-
         emissions_data = (
             self._prepare_emissions_data()
         )  # This is emissions_data_at_stop
 
-        # # logger.info(
-        # #     f"STOP_TASK_DEBUG: emissions_data (totals at task stop): "
-        # #     f"CPU Energy: {emissions_data.cpu_energy} kWh, "
-        # #     f"GPU Energy: {emissions_data.gpu_energy} kWh, "
-        # #     f"RAM Energy: {emissions_data.ram_energy} kWh, "
-        # #     f"Total Energy: {emissions_data.energy_consumed} kWh"
-        # # )
-        # if self._previous_emissions is not None: # This was a debug log for _previous_emissions
-        # #     logger.info(
-        # #         f"STOP_TASK_DEBUG: self._previous_emissions (value before task-specific delta calc): "
-        # #         f"CPU Energy: {self._previous_emissions.cpu_energy} kWh, "
-        # #         # ... other fields ...
-        # #         f"Total Energy: {self._previous_emissions.energy_consumed} kWh"
-        # #     )
-
-        emissions_data_delta: EmissionsData  # Type hint for clarity
-
         if self._active_task_emissions_at_start is None:
-            # This logger.warning should remain, as it's not a DEBUG log but a genuine warning for an unexpected state.
-            logger.warning(
+            logger.error(
                 f"Task {task_name}: _active_task_emissions_at_start was None. "
                 "This indicates an issue, possibly start_task was not called or was corrupted. "
                 "Reporting zero delta for this task to avoid errors."
@@ -570,10 +539,6 @@ class BaseEmissionsTracker(ABC):
             emissions_data_delta.compute_delta_emission(
                 self._active_task_emissions_at_start
             )
-            # # logger.info(
-            # #     f"STOP_TASK_DEBUG: emissions_data_delta (task-specific): "
-            # #     # ... fields ...
-            # # )
 
         # Update global _previous_emissions state using the current totals at task stop.
         self._compute_emissions_delta(emissions_data)
@@ -697,13 +662,9 @@ class BaseEmissionsTracker(ABC):
 
     def _prepare_emissions_data(self) -> EmissionsData:
         """
-        :delta: If 'True', return only the delta comsumption since the last call.
+        Prepare the emissions data to be sent to the API or written to a file.
+        :return: EmissionsData object with the total emissions data.
         """
-        # logger.info(
-        #     f"PREPARE_EMISSIONS_DATA_DEBUG: Current total energy values being used: "
-        #     f"CPU={self._total_cpu_energy.kWh}, GPU={self._total_gpu_energy.kWh}, "
-        #     f"RAM={self._total_ram_energy.kWh}, Total={self._total_energy.kWh}"
-        # )
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
 
@@ -765,21 +726,15 @@ class BaseEmissionsTracker(ABC):
         return total_emissions
 
     def _compute_emissions_delta(self, total_emissions: EmissionsData) -> EmissionsData:
-        # logger.info(
-        #     f"COMPUTE_EMISSIONS_DELTA_DEBUG: Input total_emissions: "
-        #     f"CPU={total_emissions.cpu_energy}, GPU={total_emissions.gpu_energy}, "
-        #     f"RAM={total_emissions.ram_energy}, Total={total_emissions.energy_consumed}"
-        # )
+        """
+        Compute the delta emissions since the last call to this method.
+        :param total_emissions: The total emissions data to compute the delta from.
+        :return: EmissionsData with the delta emissions.
+        """
         if self._previous_emissions is None:
-            # logger.info("COMPUTE_EMISSIONS_DELTA_DEBUG: self._previous_emissions is None.")
             self._previous_emissions = total_emissions
             delta_emissions: EmissionsData = total_emissions
         else:
-            # logger.info(
-            #     f"COMPUTE_EMISSIONS_DELTA_DEBUG: Existing self._previous_emissions: "
-            #     f"CPU={self._previous_emissions.cpu_energy}, GPU={self._previous_emissions.gpu_energy}, "
-            #     f"RAM={self._previous_emissions.ram_energy}, Total={self._previous_emissions.energy_consumed}"
-            # )
             # Create a copy
             delta_emissions = dataclasses.replace(total_emissions)
             # Compute emissions rate from delta
@@ -787,12 +742,6 @@ class BaseEmissionsTracker(ABC):
             # TODO : find a way to store _previous_emissions only when
             # TODO : the API call succeeded
             self._previous_emissions = total_emissions
-
-        # logger.info(
-        #     f"COMPUTE_EMISSIONS_DELTA_DEBUG: Returning delta_emissions: "
-        #     f"CPU={delta_emissions.cpu_energy}, GPU={delta_emissions.gpu_energy}, "
-        #     f"RAM={delta_emissions.ram_energy}, Total={delta_emissions.energy_consumed}"
-        # )
         return delta_emissions
 
     @abstractmethod
