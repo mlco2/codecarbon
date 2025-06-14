@@ -406,6 +406,7 @@ class TestCarbonTracker(unittest.TestCase):
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
         )
         self.assertIsInstance(tracker.final_emissions, float)
+        self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
 
     @mock.patch(
         "codecarbon.external.ram.RAM.measure_power_and_energy"
