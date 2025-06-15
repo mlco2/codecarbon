@@ -163,6 +163,8 @@ class TestConfig(unittest.TestCase):
             """\
             [codecarbon]
             measure_power_secs=10
+            force_cpu_power=toto
+            force_ram_power=50.5
             output_dir=ERROR:not overwritten
             save_to_file=ERROR:not overwritten
             """
@@ -184,6 +186,8 @@ class TestConfig(unittest.TestCase):
                     project_name="test-project", co2_signal_api_token="signal-token"
                 )
             self.assertEqual(tracker._measure_power_secs, 10)
+            self.assertEqual(tracker._force_cpu_power, None)
+            self.assertEqual(tracker._force_ram_power, 50.5)
             self.assertEqual(tracker._output_dir, "/success/overwritten")
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")
             self.assertEqual(tracker._gpu_ids, [0, 1])

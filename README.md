@@ -26,7 +26,7 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
 
 # About CodeCarbon 💡
 
-**CodeCarbon** started with a quite simple question: 
+**CodeCarbon** started with a quite simple question:
 
 **What is the carbon emission impact of my computer program? :shrug:**
 
@@ -63,11 +63,27 @@ To see more installation options please refer to the documentation: [**Installat
 
 ## Start to estimate your impact 📏
 
+### Without using the online dashboard
+
+```python
+from codecarbon import track_emissions
+@track_emissions()
+def your_function_to_track():
+  # your code
+```
+
+After running your code, you will find an `emissions.csv` that you can visualize with `carbonboard --filepath="examples/emissions.csv"`.
+
+### With the online dashboard
+
+To use the online dashboard you need to create an account on [**CodeCarbon Dashboard**](https://dashboard.codecarbon.io/).
+Once you have an account, you can create an experiment_id to track your emissions.
+
 To get an experiment_id enter:
 ```python
-! codecarbon init
+! codecarbon login
 ```
-You can now store it in a **.codecarbon.config** at the root of your project 
+You can now store it in a **.codecarbon.config** at the root of your project
 ```python
 [codecarbon]
 log_level = DEBUG
@@ -98,7 +114,6 @@ There is other ways to use **codecarbon** package, please refer to the documenta
 You can now visualize your experiment emissions on the [dashboard](https://dashboard.codecarbon.io/).
 ![dashboard](docs/edit/images/dashboard.png)
 
-*Note that for now, all emissions data send to codecarbon API are public.*
 
 > Hope you enjoy your first steps monitoring your carbon computing impact!
 > Thanks to the incredible codecarbon community 💪🏼 a lot more options are available using *codecarbon* including:
@@ -126,8 +141,8 @@ Contact [@vict0rsch](https://github.com/vict0rsch) to be added to our slack work
 
 If you find CodeCarbon useful for your research, you can find a citation under a variety of formats on [Zenodo](https://zenodo.org/records/11171501).
 
-Here is a sample for BibTeX: 
-```tex 
+Here is a sample for BibTeX:
+```tex
 @software{benoit_courty_2024_11171501,
   author       = {Benoit Courty and
                   Victor Schmidt and

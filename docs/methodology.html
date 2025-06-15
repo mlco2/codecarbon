@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Methodology &mdash; CodeCarbon 3.0.0 documentation</title>
+  <title>Methodology &mdash; CodeCarbon 3.0.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=acc74ff5"></script>
+      <script src="_static/documentation_options.js?v=3f474186"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -182,7 +182,7 @@ energy sources that are used to generate electricity, including fossil fuels and
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
 </pre></div>
 </div>
-<p>But it doesn’t append anymore because Our World in Data now provides the global carbon intensity of electricity per country ( <a class="reference external" href="https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data">source</a> ). Some countries is missing data for last year, so we use the previous year data available.</p>
+<p>But it doesn’t happen anymore because Our World in Data now provides the global carbon intensity of electricity per country ( <a class="reference external" href="https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data">source</a> ). Some countries are missing data for last year, so we use the previous year data available.</p>
 <p>If ever we have neither the global carbon intensity of a country nor it’s electricity mix, we apply a world average of 475 gCO2.eq/KWh ( <a class="reference external" href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">source</a> ).</p>
 <p>As you can see, we try to be as accurate as possible in estimating carbon intensity of electricity. Still there is room for improvement and all contributions are welcome.</p>
 </section>
@@ -201,11 +201,10 @@ energy sources that are used to generate electricity, including fossil fuels and
 <p>But this is not a good measure because it doesn’t take into account the number of RAM slots used in the machine, that really drive the power consumption, not the amount of RAM.
 For example, in servers you could have thousands of GB of RAM but the power consumption would not be proportional to the amount of memory used, but to the number of memory modules used.</p>
 <p>Old machine could use 2 Mb memory stick, where modern servers will use 128 Mb memory stick.</p>
-<p>So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:
-.. code-block:: text</p>
-<blockquote>
-<div><p>RAM Power Consumption = 5 Watts * Number of RAM slots used</p>
-</div></blockquote>
+<p>So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>RAM Power Consumption = 5 Watts * Number of RAM slots used
+</pre></div>
+</div>
 <p>But getting the number of RAM slots used is not possible as you need root access to get the number of RAM slots used. So we use an heuristic based on the RAM size.</p>
 <p>For example keep a minimum of 2 modules. Except for ARM CPU like rapsberry pi where we will consider a 3W constant. Then consider the max RAM per module is 128GB and that RAM module only exist in power of 2 (2, 4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the RAM by the number of modules used.</p>
 <ul class="simple">
