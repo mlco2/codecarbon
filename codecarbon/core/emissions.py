@@ -19,10 +19,14 @@ from codecarbon.input import DataSource, DataSourceException
 
 class Emissions:
     def __init__(
-        self, data_source: DataSource, co2_signal_api_token: Optional[str] = None
+        self,
+        data_source: DataSource,
+        co2_signal_api_token: Optional[str] = None,
+        custom_carbon_intensity_g_co2e_kwh: Optional[float] = None,
     ):
         self._data_source = data_source
         self._co2_signal_api_token = co2_signal_api_token
+        self._custom_carbon_intensity_g_co2e_kwh = custom_carbon_intensity_g_co2e_kwh
 
     def get_cloud_emissions(
         self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
@@ -34,6 +38,11 @@ class Emissions:
         :param geo: Instance of GeoMetadata to fallback if we don't find cloud carbon intensity
         :return: CO2 emissions in kg
         """
+        if self._custom_carbon_intensity_g_co2e_kwh is not None:
+            logger.info(
+                f"Using custom carbon intensity for cloud emissions: {self._custom_carbon_intensity_g_co2e_kwh} gCO2e/kWh"
+            )
+            return energy.kWh * (self._custom_carbon_intensity_g_co2e_kwh / 1000.0)
 
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         try:
@@ -123,6 +132,12 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
+        if self._custom_carbon_intensity_g_co2e_kwh is not None:
+            logger.info(
+                f"Using custom carbon intensity for private infrastructure emissions: {self._custom_carbon_intensity_g_co2e_kwh} gCO2e/kWh"
+            )
+            return energy.kWh * (self._custom_carbon_intensity_g_co2e_kwh / 1000.0)
+
         if self._co2_signal_api_token:
             try:
                 return co2_signal.get_emissions(energy, geo, self._co2_signal_api_token)
