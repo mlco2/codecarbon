@@ -1,9 +1,9 @@
 import os
+import signal
 import sys
 import time
 from pathlib import Path
 from typing import Optional
-import signal
 
 import questionary
 import requests
@@ -328,19 +328,31 @@ def config():
 
 @codecarbon.command("monitor", short_help="Monitor your machine's carbon emissions.")
 def monitor(
-    measure_power_secs: Annotated[int, typer.Argument(help="Interval between two measures.")] = 10,
-    api_call_interval: Annotated[int, typer.Argument(help="Number of measures between API calls.")] = 30,
-    api: Annotated[bool, typer.Option(help="Choose to call Code Carbon API or not")] = True,
+    measure_power_secs: Annotated[
+        int, typer.Argument(help="Interval between two measures.")
+    ] = 10,
+    api_call_interval: Annotated[
+        int, typer.Argument(help="Number of measures between API calls.")
+    ] = 30,
+    api: Annotated[
+        bool, typer.Option(help="Choose to call Code Carbon API or not")
+    ] = True,
     offline: Annotated[bool, typer.Option(help="Run in offline mode")] = False,
-    country_iso_code: Annotated[str, typer.Option(help="3-letter country ISO code for offline mode")] = None,
-    region: Annotated[str, typer.Option(help="Region/province for offline mode")] = None,
+    country_iso_code: Annotated[
+        str, typer.Option(help="3-letter country ISO code for offline mode")
+    ] = None,
+    region: Annotated[
+        str, typer.Option(help="Region/province for offline mode")
+    ] = None,
 ):
     """Monitor your machine's carbon emissions."""
     if offline:
         if not country_iso_code:
-            print("ERROR: country_iso_code is required for offline mode", file=sys.stderr)
+            print(
+                "ERROR: country_iso_code is required for offline mode", file=sys.stderr
+            )
             raise typer.Exit(1)
-        
+
         tracker = OfflineEmissionsTracker(
             measure_power_secs=measure_power_secs,
             country_iso_code=country_iso_code,
@@ -349,9 +361,12 @@ def monitor(
     else:
         experiment_id = get_existing_local_exp_id()
         if api and experiment_id is None:
-            print("ERROR: No experiment id, call 'codecarbon config' first.", file=sys.stderr)
+            print(
+                "ERROR: No experiment id, call 'codecarbon config' first.",
+                file=sys.stderr,
+            )
             raise typer.Exit(1)
-            
+
         tracker = EmissionsTracker(
             measure_power_secs=measure_power_secs,
             api_call_interval=api_call_interval,
@@ -366,15 +381,16 @@ def monitor(
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-
     print("CodeCarbon is going in an infinite loop to monitor this machine.")
     print("Press Ctrl+C to stop and save emissions data.")
 
     tracker.start()
     try:
         while True:
-            if (hasattr(tracker, "_another_instance_already_running") 
-                and tracker._another_instance_already_running):
+            if (
+                hasattr(tracker, "_another_instance_already_running")
+                and tracker._another_instance_already_running
+            ):
                 print("Another instance of CodeCarbon is already running. Exiting.")
                 break
             time.sleep(300)
@@ -382,6 +398,7 @@ def monitor(
         print(f"\nError occurred: {e}")
         tracker.stop()
         raise e
+
 
 def questionary_prompt(prompt, list_options, default):
     value = questionary.select(
