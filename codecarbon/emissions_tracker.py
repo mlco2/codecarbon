@@ -182,6 +182,40 @@ class BaseEmissionsTracker(ABC):
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
     ):
+        self._external_conf = get_hierarchical_config()
+
+        # Process custom_carbon_intensity_g_co2e_kwh immediately after loading _external_conf
+        custom_intensity_str = self._external_conf.get("custom_carbon_intensity_g_co2e_kwh")
+        parsed_intensity = None
+        if custom_intensity_str is not None:
+            custom_intensity_str_stripped = custom_intensity_str.strip()
+            if custom_intensity_str_stripped == "":
+                logger.warning(
+                    f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str}'. "
+                    "It cannot be empty or whitespace. Using default calculation methods."
+                )
+            else:
+                try:
+                    value = float(custom_intensity_str_stripped)
+                    if value > 0:
+                        parsed_intensity = value
+                        # logger.info( # Info log for successful positive value (if enabled)
+                        #    f"CODECARBON : Parsed custom carbon intensity: {value} gCO2e/kWh."
+                        # )
+                    else: # Zero or negative
+                        logger.warning(
+                            f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
+                            "It must be a positive number. Using default calculation methods."
+                        )
+                except ValueError: # Non-numeric
+                    logger.warning(
+                        f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
+                        "It must be a numeric value. Using default calculation methods."
+                    )
+        self.custom_carbon_intensity_g_co2e_kwh = parsed_intensity
+        # The info log about *using* the custom intensity will be added later if value is not None,
+        # or handled by the Emissions class. For now, this sets the attribute.
+
         """
         :param project_name: Project name for current experiment run, default name
                              is "codecarbon".
@@ -241,10 +275,10 @@ class BaseEmissionsTracker(ABC):
         """
 
         # logger.info("base tracker init")
-        self._external_conf = get_hierarchical_config()
+        # self._external_conf = get_hierarchical_config() # Moved to the top
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
-        if self._allow_multiple_runs:
-            logger.warning(
+        if self._allow_multiple_runs: # This uses self._allow_multiple_runs which is set by _set_from_conf
+            logger.warning( # This log might still occur if allow_multiple_runs is True in mock_get_config
                 "Multiple instances of codecarbon are allowed to run at the same time."
             )
         else:
@@ -292,7 +326,18 @@ class BaseEmissionsTracker(ABC):
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
 
-        assert self._tracking_mode in ["machine", "process"]
+        # Read custom carbon intensity from config - THIS BLOCK WAS MOVED UP
+        # custom_intensity_str = self._external_conf.get("custom_carbon_intensity_g_co2e_kwh")
+        # ...
+        # self.custom_carbon_intensity_g_co2e_kwh = parsed_intensity
+
+        # Conditional info log for using custom intensity
+        if self.custom_carbon_intensity_g_co2e_kwh is not None:
+             logger.info(
+                f"CODECARBON : Using custom carbon intensity: {self.custom_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
+            )
+
+        assert self._tracking_mode in ["machine", "process"] # self._tracking_mode is set by a _set_from_conf call
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
 
@@ -367,7 +412,9 @@ class BaseEmissionsTracker(ABC):
             self._conf["provider"] = cloud.provider
 
         self._emissions: Emissions = Emissions(
-            self._data_source, self._co2_signal_api_token
+            self._data_source,
+            self._co2_signal_api_token,
+            self.custom_carbon_intensity_g_co2e_kwh,
         )
         self._init_output_methods(api_key=self._api_key)
 
