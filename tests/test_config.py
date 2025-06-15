@@ -199,6 +199,7 @@ class TestConfig(unittest.TestCase):
             force_ram_power=50.5
             output_dir=ERROR:not overwritten
             save_to_file=ERROR:not overwritten
+            custom_carbon_intensity_g_co2e_kwh=123.4
             """
         )
         local_conf = dedent(
@@ -225,6 +226,7 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")
             self.assertEqual(tracker._gpu_ids, ["0", "1"])
             self.assertEqual(tracker._electricitymaps_api_token, "signal-token")
+            self.assertEqual(tracker.custom_carbon_intensity_g_co2e_kwh, 123.4)
             self.assertEqual(tracker._project_name, "test-project")
             self.assertTrue(tracker._save_to_file)
 

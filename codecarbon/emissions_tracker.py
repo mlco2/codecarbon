@@ -276,6 +276,33 @@ class BaseEmissionsTracker(ABC):
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
+        custom_intensity_str = self._external_conf.get(
+            "custom_carbon_intensity_g_co2e_kwh"
+        )
+        parsed_intensity = None
+        if custom_intensity_str is not None:
+            custom_intensity_str_stripped = custom_intensity_str.strip()
+            if custom_intensity_str_stripped == "":
+                logger.warning(
+                    f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str}'. "
+                    "It cannot be empty or whitespace. Using default calculation methods."
+                )
+            else:
+                try:
+                    value = float(custom_intensity_str_stripped)
+                    if value > 0:
+                        parsed_intensity = value
+                    else:
+                        logger.warning(
+                            f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
+                            "It must be a positive number. Using default calculation methods."
+                        )
+                except ValueError:
+                    logger.warning(
+                        f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
+                        "It must be a numeric value. Using default calculation methods."
+                    )
+        self.custom_carbon_intensity_g_co2e_kwh = parsed_intensity
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
         if self._allow_multiple_runs:
             logger.warning(
@@ -352,6 +379,11 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
+
+        if self.custom_carbon_intensity_g_co2e_kwh is not None:
+            logger.info(
+                f"CODECARBON : Using custom carbon intensity: {self.custom_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
+            )
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -446,7 +478,9 @@ class BaseEmissionsTracker(ABC):
             self._conf["provider"] = cloud.provider
 
         self._emissions: Emissions = Emissions(
-            self._data_source, self._electricitymaps_api_token
+            self._data_source,
+            self._electricitymaps_api_token,
+            custom_carbon_intensity_g_co2e_kwh=self.custom_carbon_intensity_g_co2e_kwh,
         )
         self._init_output_methods(api_key=self._api_key)
 
