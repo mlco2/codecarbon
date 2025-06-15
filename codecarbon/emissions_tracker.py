@@ -317,6 +317,7 @@ class BaseEmissionsTracker(ABC):
         self._task_stop_measurement_values = {}
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
+        self._active_task_emissions_at_start: Optional[EmissionsData] = None
 
         # Tracking mode detection
         ressource_tracker = ResourceTracker(self)
@@ -474,7 +475,7 @@ class BaseEmissionsTracker(ABC):
         self._scheduler_monitor_power.start()
 
         if self._active_task:
-            logger.info("A task is already under measure")
+            logger.warning("A task is already under measure")
             return
         if not task_name:
             task_name = uuid.uuid4().__str__()
@@ -484,8 +485,13 @@ class BaseEmissionsTracker(ABC):
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
-        _ = self._prepare_emissions_data()
-        _ = self._compute_emissions_delta(_)
+        prepared_data_for_task_start = self._prepare_emissions_data()
+        self._active_task_emissions_at_start = dataclasses.replace(
+            prepared_data_for_task_start
+        )
+        # The existing call to _compute_emissions_delta uses the result of _prepare_emissions_data.
+        # Let's make sure it uses the same one we captured.
+        self._compute_emissions_delta(prepared_data_for_task_start)
 
         self._tasks.update(
             {
@@ -506,20 +512,51 @@ class BaseEmissionsTracker(ABC):
             self._scheduler_monitor_power.stop()
 
         task_name = task_name if task_name else self._active_task
+        if self._tasks.get(task_name) is None:
+            logger.warning("stop_task : No active task to stop.")
+            return None
         self._measure_power_and_energy()
+        emissions_data = (
+            self._prepare_emissions_data()
+        )  # This is emissions_data_at_stop
 
-        emissions_data = self._prepare_emissions_data()
-        emissions_data_delta = self._compute_emissions_delta(emissions_data)
+        if self._active_task_emissions_at_start is None:
+            logger.error(
+                f"Task {task_name}: _active_task_emissions_at_start was None. "
+                "This indicates an issue, possibly start_task was not called or was corrupted. "
+                "Reporting zero delta for this task to avoid errors."
+            )
+            emissions_data_delta = dataclasses.replace(emissions_data)
+            # Zero out energy fields for the delta
+            emissions_data_delta.emissions = 0.0
+            emissions_data_delta.emissions_rate = 0.0
+            emissions_data_delta.cpu_energy = 0.0
+            emissions_data_delta.gpu_energy = 0.0
+            emissions_data_delta.ram_energy = 0.0
+            emissions_data_delta.energy_consumed = 0.0
+        else:
+            emissions_data_delta = dataclasses.replace(emissions_data)
+            emissions_data_delta.compute_delta_emission(
+                self._active_task_emissions_at_start
+            )
+
+        # Update global _previous_emissions state using the current totals at task stop.
+        self._compute_emissions_delta(emissions_data)
 
         task_duration = Time.from_seconds(
             time.perf_counter() - self._tasks[task_name].start_time
         )
 
+        # task_emission_data is the final delta object to be returned and stored
         task_emission_data = emissions_data_delta
-        task_emission_data.duration = task_duration.seconds
+        task_emission_data.duration = (
+            task_duration.seconds
+        )  # Set the correct duration for the task
+
         self._tasks[task_name].emissions_data = task_emission_data
         self._tasks[task_name].is_active = False
         self._active_task = None
+        self._active_task_emissions_at_start = None  # Clear task-specific start data
 
         return task_emission_data
 
@@ -625,7 +662,8 @@ class BaseEmissionsTracker(ABC):
 
     def _prepare_emissions_data(self) -> EmissionsData:
         """
-        :delta: If 'True', return only the delta comsumption since the last call.
+        Prepare the emissions data to be sent to the API or written to a file.
+        :return: EmissionsData object with the total emissions data.
         """
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
@@ -688,9 +726,14 @@ class BaseEmissionsTracker(ABC):
         return total_emissions
 
     def _compute_emissions_delta(self, total_emissions: EmissionsData) -> EmissionsData:
-        delta_emissions: EmissionsData = total_emissions
+        """
+        Compute the delta emissions since the last call to this method.
+        :param total_emissions: The total emissions data to compute the delta from.
+        :return: EmissionsData with the delta emissions.
+        """
         if self._previous_emissions is None:
             self._previous_emissions = total_emissions
+            delta_emissions: EmissionsData = total_emissions
         else:
             # Create a copy
             delta_emissions = dataclasses.replace(total_emissions)
