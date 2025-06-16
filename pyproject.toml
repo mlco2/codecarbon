@@ -60,7 +60,7 @@ viz = [
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
-codecarbon = "codecarbon.cli.main:codecarbon"
+codecarbon = "codecarbon.cli.main:main"
 
 [tool.hatch.env]
 requires = [
