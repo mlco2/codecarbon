@@ -2,9 +2,9 @@ name: "CodeQL Advanced"
 
 on:
   push:
-    branches: [ "master", "codecarbon_v3_rc" ]
+    branches: [ "master"]
   pull_request:
-    branches: [ "master", "codecarbon_v3_rc" ]
+    branches: [ "master"]
   schedule:
     - cron: '36 17 * * 6'
 
@@ -16,7 +16,7 @@ jobs:
     #   - https://gh.io/supported-runners-and-hardware-resources
     #   - https://gh.io/using-larger-runners (GitHub.com only)
     # Consider using larger runners or machines with greater resources for possible analysis time improvements.
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     permissions:
       # required for all workflows
       security-events: write
