@@ -41,6 +41,19 @@ DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 codecarbon = typer.Typer(no_args_is_help=True)
 
 
+def main():
+    """
+    Main entry point for the CodeCarbon CLI application.
+    This function catches any exceptions raised during the execution of the CLI commands
+    and prints an error message in red using Rich's print function.
+    """
+    try:
+        codecarbon()
+    except Exception as e:
+        print(f"[bold red]Error:[/bold red] {e}")
+        raise sys.exit(1)
+
+
 def _version_callback(value: bool) -> None:
     if value:
         print(f"{__app_name__} v{__version__}")
@@ -48,7 +61,7 @@ def _version_callback(value: bool) -> None:
 
 
 @codecarbon.callback()
-def main(
+def version(
     version: Optional[bool] = typer.Option(
         None,
         "--version",
@@ -410,4 +423,4 @@ def questionary_prompt(prompt, list_options, default):
 
 
 if __name__ == "__main__":
-    codecarbon()
+    main()
