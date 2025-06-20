@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { fiefAuth } from "@/helpers/fief";
 import { LogIn } from "lucide-react";
 
 export default async function Home() {
     return (
-        <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
-            <div className="mx-auto text-center">
+        <main className="flex min-h-[100dvh] flex-col justify-between items-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto text-center mt-32 sm:mt-48">
                 <h1 className="text-4xl font-semi-bold tracking-tight text-foreground sm:text-5xl">
                     Welcome to Code Carbon!
                 </h1>
@@ -22,6 +21,29 @@ export default async function Home() {
                         </Button>
                     </a>
                 </div>
+            </div>
+            <div className="mx-auto text-center mb-4">
+                <p className="mt-4 text-sm text-muted-foreground">
+                    New to Code Carbon? More info about the project can be found
+                    at{" "}
+                    <a
+                        href="https://codecarbon.io"
+                        className="text-primary underline"
+                    >
+                        https://codecarbon.io
+                    </a>
+                    .
+                </p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                    To contribute, check out our{" "}
+                    <a
+                        href="https://github.com/mlco2/codecarbon"
+                        className="text-primary underline"
+                    >
+                        Github repository
+                    </a>
+                    .
+                </p>
             </div>
         </main>
     );
