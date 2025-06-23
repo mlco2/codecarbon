@@ -25,3 +25,6 @@ from codecarbon.output_methods.metrics.logfire import LogfireOutput  # noqa: F40
 
 # output is sent to metrics
 from codecarbon.output_methods.metrics.prometheus import PrometheusOutput  # noqa: F401
+
+# output for carbon offset
+from codecarbon.output_methods.offset import OneClickImpactOutput  # noqa: F401

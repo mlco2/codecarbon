@@ -37,6 +37,7 @@ CodeCarbon
 
    output
    to_logger
+   offsetting
    visualize
 
 

@@ -35,6 +35,7 @@ from codecarbon.output import (
     HTTPOutput,
     LogfireOutput,
     LoggerOutput,
+    OneClickImpactOutput,
     PrometheusOutput,
 )
 
@@ -181,6 +182,10 @@ class BaseEmissionsTracker(ABC):
         pue: Optional[int] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
+        offset_api_key: Optional[str] = _sentinel,
+        offset_environment: Optional[str] = _sentinel,
+        offset_threshold: Optional[float] = _sentinel,
+        auto_offset: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -238,6 +243,10 @@ class BaseEmissionsTracker(ABC):
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
+        :param offset_api_key: API key for 1ClickImpact.com carbon offset service.
+        :param offset_environment: Environment for 1ClickImpact ('production' or 'sandbox'). Defaults to 'production'.
+        :param offset_threshold: Minimum emissions threshold in kg CO2 before triggering offset. Defaults to 0.5 kg.
+        :param auto_offset: Whether to automatically offset emissions. Defaults to True.
         """
 
         # logger.info("base tracker init")
@@ -288,6 +297,10 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
+        self._set_from_conf(offset_api_key, "offset_api_key")
+        self._set_from_conf(offset_environment, "offset_environment", "production")
+        self._set_from_conf(offset_threshold, "offset_threshold", 0.5, float)
+        self._set_from_conf(auto_offset, "auto_offset", True, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -408,6 +421,20 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
+
+        if self._offset_api_key:
+            try:
+                offset_output = OneClickImpactOutput(
+                    api_key=self._offset_api_key,
+                    environment=self._offset_environment,
+                    offset_threshold=self._offset_threshold,
+                    auto_offset=self._auto_offset,
+                )
+                self._output_handlers.append(offset_output)
+                logger.info("1ClickImpact.com carbon offset integration enabled")
+            except Exception as e:
+                logger.error(f"Failed to initialize 1ClickImpact.com integration: {e}")
+                logger.warning("Continuing without carbon offset functionality")
 
     def service_shutdown(self, signum, frame):
         logger.warning("service_shutdown - Caught signal %d" % signum)
@@ -1067,6 +1094,10 @@ def track_emissions(
     force_ram_power: Optional[int] = _sentinel,
     pue: Optional[int] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
+    offset_api_key: Optional[str] = _sentinel,
+    offset_environment: Optional[str] = _sentinel,
+    offset_threshold: Optional[float] = _sentinel,
+    auto_offset: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1142,6 +1173,10 @@ def track_emissions(
     :param force_ram_power: ram power to be used instead of automatic detection.
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
     :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
+    :param offset_api_key: API key for 1ClickImpact.com carbon offset service.
+    :param offset_environment: Environment for 1ClickImpact ('production' or 'sandbox'). Defaults to 'production'.
+    :param offset_threshold: Minimum emissions threshold in kg CO2 before triggering offset. Defaults to 0.5 kg.
+    :param auto_offset: Whether to automatically offset emissions. Defaults to True.
 
     :return: The decorated function
     """
@@ -1182,6 +1217,10 @@ def track_emissions(
                     force_ram_power=force_ram_power,
                     pue=pue,
                     allow_multiple_runs=allow_multiple_runs,
+                    offset_api_key=offset_api_key,
+                    offset_environment=offset_environment,
+                    offset_threshold=offset_threshold,
+                    auto_offset=auto_offset,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1213,6 +1252,10 @@ def track_emissions(
                     force_ram_power=force_ram_power,
                     pue=pue,
                     allow_multiple_runs=allow_multiple_runs,
+                    offset_api_key=offset_api_key,
+                    offset_environment=offset_environment,
+                    offset_threshold=offset_threshold,
+                    auto_offset=auto_offset,
                 )
             tracker.start()
             try:
