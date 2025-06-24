@@ -3,11 +3,10 @@
 Tests for OneClickImpact carbon offset integration
 """
 
-import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
 from codecarbon.external.geography import CloudMetadata
@@ -19,16 +18,8 @@ from tests.testdata import (
     TWO_GPU_DETAILS_RESPONSE,
     TWO_GPU_DETAILS_RESPONSE_HANDLES,
 )
-from tests.testutils import get_custom_mock_open
 
-# Mock the makeimpact module at the module level to prevent password prompts
-mock_makeimpact = MagicMock()
-mock_oneclick_impact = MagicMock()
-mock_makeimpact.OneClickImpact = mock_oneclick_impact
-sys.modules["makeimpact"] = mock_makeimpact
-
-# Empty config to prevent loading user config
-empty_conf = "[codecarbon]"
+TEST_API_KEY = "test_key"
 
 
 @patch("codecarbon.core.gpu.pynvml", fake_pynvml)
@@ -50,14 +41,24 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_path = Path(self.temp_dir.name)
         self.emissions_file_path = self.temp_path / "emissions.csv"
-        # Reset the mock for each test
-        mock_oneclick_impact.reset_mock()
 
-        patcher = patch(
-            "builtins.open", new_callable=get_custom_mock_open(empty_conf, empty_conf)
-        )
+        # Create a mock SDK instance
+        self.mock_sdk = Mock()
+
+        # Create a mock response object that tests can configure
+        self.mock_response = Mock()
+
+        # Set default response so response.carbon_captured is True
+        self.mock_response.carbon_captured = 1
+
+        # Configure the capture_carbon method to return the mock response object
+        self.mock_sdk.capture_carbon.return_value = self.mock_response
+
+        # Patch the OneClickImpact class to return our mock
+        patcher = patch("codecarbon.output_methods.offset.OneClickImpact")
         self.addCleanup(patcher.stop)
-        patcher.start()
+        self.mock_oneclick_impact = patcher.start()
+        self.mock_oneclick_impact.return_value = self.mock_sdk
 
     def tearDown(self):
         fake_pynvml.INIT_MOCK.reset_mock()
@@ -72,18 +73,15 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test OneClickImpactOutput initialization"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-
         # Test initialization with default parameters
         output = OneClickImpactOutput(
-            api_key="test_key",
+            api_key=TEST_API_KEY,
             environment="sandbox",
             offset_threshold=1,
             auto_offset=True,
         )
 
-        self.assertEqual(output.api_key, "test_key")
+        self.assertEqual(output.api_key, TEST_API_KEY)
         self.assertEqual(output.environment, "sandbox")
         self.assertEqual(output.offset_threshold, 1)
         self.assertEqual(output.auto_offset, True)
@@ -98,10 +96,8 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test kg to lbs conversion with rounding"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
 
-        output = OneClickImpactOutput(api_key="test_key")
+        output = OneClickImpactOutput(api_key=TEST_API_KEY)
 
         # Test conversion: 1 kg = 2.20462 lbs, rounded to 2 lbs
         self.assertEqual(output._kg_to_lbs(1.0), 2)
@@ -119,15 +115,13 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test threshold validation and correction"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
 
         # Test threshold below minimum gets corrected to 0.5
-        output = OneClickImpactOutput(api_key="test_key", offset_threshold=0)
+        output = OneClickImpactOutput(api_key=TEST_API_KEY, offset_threshold=0)
         self.assertEqual(output.offset_threshold, 0.5)
 
         # Test valid threshold is preserved
-        output = OneClickImpactOutput(api_key="test_key", offset_threshold=3)
+        output = OneClickImpactOutput(api_key=TEST_API_KEY, offset_threshold=3)
         self.assertEqual(output.offset_threshold, 3)
 
     def test_offset_emissions(
@@ -139,22 +133,19 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test offset emissions functionality"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
-
-        output = OneClickImpactOutput(api_key="test_key")
+        output = OneClickImpactOutput(api_key=TEST_API_KEY)
 
         # Test successful offset with 1 kg CO2
         result = output._offset_emissions(1.0)  # 1 kg CO2
 
         self.assertTrue(result)
-        mock_sdk.capture_carbon.assert_called_once()
+        self.mock_sdk.capture_carbon.assert_called_once()
 
         # Check that the call was made with rounded lbs (1.0 kg * 2.20462 = 2 lbs rounded)
-        call_args = mock_sdk.capture_carbon.call_args[1]
+        call_args = self.mock_sdk.capture_carbon.call_args[1]
         expected_lbs = round(1.0 * 2.20462)  # Should be 2 lbs
         self.assertEqual(call_args["amount"], expected_lbs)
+        self.assertEqual(output.accumulated_emissions_kg, 0.0)  # Reset after offset
 
     def test_offset_emissions_error_handling(
         self,
@@ -165,11 +156,10 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test error handling in offset emissions"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.side_effect = Exception("API Error")
+        # Configure the mock SDK to raise an exception
+        self.mock_sdk.capture_carbon.side_effect = Exception("API Error")
 
-        output = OneClickImpactOutput(api_key="test_key")
+        output = OneClickImpactOutput(api_key=TEST_API_KEY)
 
         # Test failed offset
         result = output._offset_emissions(0.001)
@@ -191,12 +181,8 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mock_requests_get.return_value.json.return_value = GEO_METADATA_CANADA
         mock_requests_get.return_value.status_code = 200
 
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
-
         output = OneClickImpactOutput(
-            api_key="test_key", offset_threshold=2, auto_offset=True  # 2kg threshold
+            api_key=TEST_API_KEY, offset_threshold=2, auto_offset=True  # 2kg threshold
         )
 
         # Create mock emissions data
@@ -235,7 +221,7 @@ class TestOneClickImpactIntegration(unittest.TestCase):
 
         # First call - should not trigger offset (below threshold)
         output.out(emissions_data, emissions_data)
-        mock_sdk.capture_carbon.assert_not_called()
+        self.mock_sdk.capture_carbon.assert_not_called()
         self.assertEqual(output.accumulated_emissions_kg, 1.0)
 
         # Second call - should trigger offset (exceeds threshold)
@@ -243,7 +229,7 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         output.out(emissions_data, emissions_data)
 
         # Should have been called once with accumulated emissions (2.5 kg total)
-        mock_sdk.capture_carbon.assert_called_once()
+        self.mock_sdk.capture_carbon.assert_called_once()
         self.assertEqual(output.accumulated_emissions_kg, 0.0)  # Reset after offset
 
     def test_manual_offset(
@@ -255,12 +241,9 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test manual offset functionality"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
 
         output = OneClickImpactOutput(
-            api_key="test_key", auto_offset=False  # Disable auto offset
+            api_key=TEST_API_KEY, auto_offset=False  # Disable auto offset
         )
 
         # Accumulate some emissions manually
@@ -270,7 +253,7 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         result = output.manual_offset()
 
         self.assertTrue(result)
-        mock_sdk.capture_carbon.assert_called_once()
+        self.mock_sdk.capture_carbon.assert_called_once()
         self.assertEqual(output.accumulated_emissions_kg, 0.0)
 
     @patch("requests.get")
@@ -288,16 +271,12 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mock_requests_get.return_value.json.return_value = GEO_METADATA_CANADA
         mock_requests_get.return_value.status_code = 200
 
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
-
         # Test that tracker initializes OneClickImpact when API key is provided
         tracker = EmissionsTracker(
             project_name="test_project",
             output_dir=self.temp_path,
             output_file="test_emissions.csv",
-            offset_api_key="test_key",
+            offset_api_key=TEST_API_KEY,
             offset_environment="sandbox",
             auto_offset=True,
             measure_power_secs=1,
@@ -313,7 +292,7 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         self.assertEqual(len(oneclick_handlers), 1)
 
         oneclick_handler = oneclick_handlers[0]
-        self.assertEqual(oneclick_handler.api_key, "test_key")
+        self.assertEqual(oneclick_handler.api_key, TEST_API_KEY)
         self.assertEqual(oneclick_handler.environment, "sandbox")
 
     def test_import_error_handling(
@@ -337,7 +316,7 @@ class TestOneClickImpactIntegration(unittest.TestCase):
 
             # Now creating OneClickImpactOutput should raise ImportError
             with self.assertRaises(ImportError) as context:
-                OneClickImpactOutput(api_key="test_key")
+                OneClickImpactOutput(api_key=TEST_API_KEY)
 
             # Verify the error message
             self.assertIn("makeimpact package is required", str(context.exception))
@@ -361,14 +340,10 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mock_requests_get.return_value.json.return_value = GEO_METADATA_CANADA
         mock_requests_get.return_value.status_code = 200
 
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
-
         @track_emissions(
             project_name="decorator_test",
             output_dir=self.temp_path,
-            offset_api_key="test_key",
+            offset_api_key=TEST_API_KEY,
             auto_offset=True,
             save_to_file=False,  # Prevent file creation in test
         )
@@ -387,12 +362,11 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test that emissions accumulate correctly over multiple calls"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
 
         output = OneClickImpactOutput(
-            api_key="test_key", offset_threshold=5, auto_offset=True  # Higher threshold
+            api_key=TEST_API_KEY,
+            offset_threshold=5,
+            auto_offset=True,  # Higher threshold
         )
 
         # Create mock emissions data
@@ -432,20 +406,20 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         # First call - should accumulate but not trigger offset
         output.out(emissions_data, emissions_data)
         self.assertEqual(output.accumulated_emissions_kg, 1.5)
-        mock_sdk.capture_carbon.assert_not_called()
+        self.mock_sdk.capture_carbon.assert_not_called()
 
         # Second call - should accumulate but still not trigger offset
         emissions_data.emissions = 2.0  # Additional 2.0 kg CO2, total 3.5 kg
         output.out(emissions_data, emissions_data)
         self.assertEqual(output.accumulated_emissions_kg, 3.5)
-        mock_sdk.capture_carbon.assert_not_called()
+        self.mock_sdk.capture_carbon.assert_not_called()
 
         # Third call - should trigger offset (exceeds 5kg threshold)
         emissions_data.emissions = 2.0  # Additional 2.0 kg CO2, total 5.5 kg
         output.out(emissions_data, emissions_data)
 
         # Should have been called once with accumulated emissions (5.5 kg total)
-        mock_sdk.capture_carbon.assert_called_once()
+        self.mock_sdk.capture_carbon.assert_called_once()
         self.assertEqual(output.accumulated_emissions_kg, 0.0)  # Reset after offset
 
     def test_auto_offset_disabled(
@@ -457,12 +431,9 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test that auto offset can be disabled"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
 
         output = OneClickImpactOutput(
-            api_key="test_key",
+            api_key=TEST_API_KEY,
             offset_threshold=0.5,  # Low threshold
             auto_offset=False,  # Disabled
         )
@@ -507,7 +478,7 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         self.assertEqual(
             output.accumulated_emissions_kg, 5.0
         )  # Emissions should accumulate
-        mock_sdk.capture_carbon.assert_not_called()
+        self.mock_sdk.capture_carbon.assert_not_called()
 
     def test_environment_configuration(
         self,
@@ -518,16 +489,16 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test different environment configurations"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
 
         # Test sandbox environment
-        output_sandbox = OneClickImpactOutput(api_key="test_key", environment="sandbox")
+        output_sandbox = OneClickImpactOutput(
+            api_key=TEST_API_KEY, environment="sandbox"
+        )
         self.assertEqual(output_sandbox.environment, "sandbox")
 
         # Test production environment
         output_production = OneClickImpactOutput(
-            api_key="test_key", environment="production"
+            api_key=TEST_API_KEY, environment="production"
         )
         self.assertEqual(output_production.environment, "production")
 
@@ -540,11 +511,8 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test handling of very small emission values - should not call capture_carbon for < 1 lb"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
 
-        output = OneClickImpactOutput(api_key="test_key")
+        output = OneClickImpactOutput(api_key=TEST_API_KEY)
 
         # Test very small emission value (0.0001 kg = 0.1 g)
         # This converts to 0 lbs when rounded: round(0.0001 * 2.20462) = round(0.00022) = 0
@@ -554,7 +522,7 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         # Should return False because amount is less than 1 lb
         self.assertFalse(result)
         # Should not call capture_carbon with less than 1 lb
-        mock_sdk.capture_carbon.assert_not_called()
+        self.mock_sdk.capture_carbon.assert_not_called()
 
     def test_minimum_offset_threshold(
         self,
@@ -565,32 +533,29 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test that offset only happens when converted amount is at least 1 lb"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
 
-        output = OneClickImpactOutput(api_key="test_key")
+        output = OneClickImpactOutput(api_key=TEST_API_KEY)
 
         # Test with amount that converts to exactly 1 lb
         # 1 lb = 0.453592 kg, so we need slightly more than that to round to 1 lb
         # 0.45 kg * 2.20462 = 0.992079 ≈ 1 lb when rounded
         result_below_1lb = output._offset_emissions(0.45)  # Should round to 1 lb
         self.assertTrue(result_below_1lb)
-        mock_sdk.capture_carbon.assert_called_once()
+        self.mock_sdk.capture_carbon.assert_called_once()
 
         # Verify it was called with 1 lb
-        call_args = mock_sdk.capture_carbon.call_args[1]
+        call_args = self.mock_sdk.capture_carbon.call_args[1]
         self.assertEqual(call_args["amount"], 1)
 
         # Reset mock for next test
-        mock_sdk.reset_mock()
+        self.mock_sdk.reset_mock()
 
         # Test with amount that converts to less than 1 lb
         result_below_1lb = output._offset_emissions(
             0.22
         )  # 0.22 kg * 2.20462 = 0.485 ≈ 0 lbs when rounded
         self.assertFalse(result_below_1lb)
-        mock_sdk.capture_carbon.assert_not_called()
+        self.mock_sdk.capture_carbon.assert_not_called()
 
     def test_accumulation_with_small_emissions(
         self,
@@ -601,15 +566,12 @@ class TestOneClickImpactIntegration(unittest.TestCase):
         mocked_is_gpu_details_available,
     ):
         """Test that small emissions accumulate even if individual amounts are below 1 lb threshold"""
-        mock_sdk = Mock()
-        mock_oneclick_impact.return_value = mock_sdk
-        mock_sdk.capture_carbon.return_value = {"status": "success"}
 
         output = OneClickImpactOutput(
-            api_key="test_key", offset_threshold=1, auto_offset=True  # 1 kg threshold
+            api_key=TEST_API_KEY, offset_threshold=2, auto_offset=True  # 2 kg threshold
         )
 
-        # Create emissions data with small amount (below 1 lb when converted)
+        # Create emissions data with small amount (below 2 kg)
         emissions_data = EmissionsData(
             timestamp="2023-01-01T00:00:00",
             project_name="test",
@@ -643,25 +605,28 @@ class TestOneClickImpactIntegration(unittest.TestCase):
             tracking_mode="machine",
         )
 
-        # First call - should accumulate but not trigger offset (below threshold)
+        # First call - should accumulate but not trigger offset
         output.out(emissions_data, emissions_data)
         self.assertEqual(output.accumulated_emissions_kg, 0.3)
-        mock_sdk.capture_carbon.assert_not_called()
+        self.mock_sdk.capture_carbon.assert_not_called()
 
         # Second call - should accumulate and trigger offset (above threshold)
         emissions_data.emissions = 0.8  # Additional 0.8 kg, total 1.1 kg
         output.out(emissions_data, emissions_data)
+        self.assertEqual(output.accumulated_emissions_kg, 1.1)
 
-        # Should have been called once with accumulated emissions (1.1 kg = ~2.4 lbs = 2 lbs rounded)
-        mock_sdk.capture_carbon.assert_called_once()
-        call_args = mock_sdk.capture_carbon.call_args[1]
-        expected_lbs = round(1.1 * 2.20462)  # Should be 2 lbs
+        # Should not call capture_carbon yet because 1.1 kg is still below 2 kg threshold
+        self.mock_sdk.capture_carbon.assert_not_called()
+
+        # Third call - should trigger offset (exceeds 2 kg threshold)
+        emissions_data.emissions = 1.0  # Additional 1.0 kg, total 2.1 kg
+        output.out(emissions_data, emissions_data)
+        self.assertEqual(output.accumulated_emissions_kg, 0.0)
+        # Should have been called once with accumulated emissions (2.1 kg = ~4.63 lbs = 5 lbs rounded)
+        self.mock_sdk.capture_carbon.assert_called_once()
+        call_args = self.mock_sdk.capture_carbon.call_args[1]
+        expected_lbs = round(2.1 * 2.20462)  # Should be 5 lbs
         self.assertEqual(call_args["amount"], expected_lbs)
-        self.assertEqual(output.accumulated_emissions_kg, 0.0)  # Reset after offset
-        call_args = mock_sdk.capture_carbon.call_args[1]
-        expected_lbs = round(1.1 * 2.20462)  # Should be 2 lbs
-        self.assertEqual(call_args["amount"], expected_lbs)
-        self.assertEqual(output.accumulated_emissions_kg, 0.0)  # Reset after offset
 
 
 if __name__ == "__main__":

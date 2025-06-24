@@ -139,9 +139,10 @@ class OneClickImpactOutput(BaseOutput):
 
             # Call OneClickImpact API to purchase carbon credits
             response = self.sdk.capture_carbon(amount=emissions_lbs)
-
-            if response and response.get("status") == "success":
-                logger.info(f"Carbon offset successful: {emissions_lbs} lbs CO2")
+            if response and response.carbon_captured:
+                logger.info(
+                    f"Carbon offset successful: {response.carbon_captured} lbs CO2"
+                )
                 return True
             else:
                 logger.error(f"Carbon offset failed: {response}")
