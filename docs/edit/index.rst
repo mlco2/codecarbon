@@ -28,6 +28,7 @@ CodeCarbon
    api
    parameters
    examples
+   offsetting
    comet
    advanced_installation
 
@@ -37,7 +38,6 @@ CodeCarbon
 
    output
    to_logger
-   offsetting
    visualize
 
 
