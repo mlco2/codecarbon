@@ -1,5 +1,4 @@
 name: build server
-
 on:
   pull_request:
       paths:
@@ -10,27 +9,21 @@ on:
       - "carbonserver/**"
       - "pyproject.toml"
     branches: [master]
-
 jobs:
   build_server:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: 3.12
-    - name: Clean pip cache
-      run: pip cache purge
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-
+      run: uv sync --extra api
     - name: Unit tests on api
-      run: |
-        pip install hatch==1.13.0 hatchling==1.25.0
-        hatch run api:test-unit
-
+      run: uv run task test-api-unit
   test_api_server:
     runs-on: ubuntu-latest
     # Service containers to run with `container-job`
@@ -43,8 +36,6 @@ jobs:
         env:
           POSTGRES_DB: codecarbon_db
           POSTGRES_PASSWORD: supersecret
-          POSTGRES_USER: codecarbon-user
-          POSTGRES_HOST: localhost
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -52,39 +43,36 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5480:5432
-
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
     steps:
-      # Downloads a copy of the code in your repository before running CI tests
-      - name: Check out repository code
-        uses: actions/checkout@v4
-
-      # Performs a clean installation of all dependencies
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install hatch==1.13.0 hatchling==1.25.0
-
-      - name: Setup PostgreSQL
-        # Runs a script that creates a PostgreSQL table, populates
-        # the table with data, and then retrieves the data.
-        run: hatch run api:setup-db
-
-        env:
-          # The hostname used to communicate with the PostgreSQL service container
-          DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
-
-      - name: Run API tests
-        env:
-          CODECARBON_API_URL: http://localhost:8008
-          # The hostname used to communicate with the PostgreSQL service container
-          DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
-        run: |
-          # hatch run api:server-ci &
-          sleep 2
-          # netstat -o -n -a | grep 8008
-          # hatch run api:test-integ
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
+    - name: Install dependencies
+      run: uv sync --extra api
+    - name: Setup database
+      env:
+        POSTGRES_HOST: localhost
+        POSTGRES_PASSWORD: supersecret
+        POSTGRES_USER: postgres
+        POSTGRES_DB: codecarbon_db
+        POSTGRES_PORT: 5432
+      run: uv run task setup-db
+    - name: Integration tests on api
+      env:
+        POSTGRES_HOST: localhost
+        POSTGRES_PASSWORD: supersecret
+        POSTGRES_USER: postgres
+        POSTGRES_DB: codecarbon_db
+        POSTGRES_PORT: 5432
+      run: |
+        # uv run task dashboard-ci &
+        # sleep 10  # wait for server to start
+        # netstat -o -n -a | grep 8008
+        # uv run task test-api-integ
+        echo "Integration tests temporarily disabled - need to fix server startup"
