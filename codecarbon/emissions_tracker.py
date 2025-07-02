@@ -180,6 +180,7 @@ class BaseEmissionsTracker(ABC):
         force_ram_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
+        force_mode_constant: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
     ):
         """
@@ -237,6 +238,7 @@ class BaseEmissionsTracker(ABC):
         :param force_ram_power: ram power to be used instead of automatic detection.
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
+        :param force_mode_constant: Force the addition of a CPU in constant mode, bypassing psutil
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
         """
 
@@ -288,6 +290,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
+        self._set_from_conf(force_mode_constant, "force_mode_constant", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
