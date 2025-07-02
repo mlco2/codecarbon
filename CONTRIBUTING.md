@@ -70,7 +70,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 <!-- TOC --><a name="installation"></a>
 ### Installation
 
-CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
+CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/), or better, faster, stronger with [UV](https://github.com/astral-sh/uv).
 
 Between April 2024 and July 2025 we use Hatch for managing development environment. Since August 2025 we use UV manages the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
 
@@ -87,19 +87,8 @@ Then, clone the repository and create the environment with:
 ```sh
 git clone https://github.com/mlco2/codecarbon.git
 cd codecarbon
-uv venv
-uv pip install -e .
-uv pip install -e ".[dev,test]"
-```
-
-To activate the virtual environment:
-
-```sh
-# On Linux/macOS
-source .venv/bin/activate
-
-# On Windows
-.venv\Scripts\activate
+uv sync
+uv run task pre-commit-install
 ```
 
 <!-- TOC --><a name="some-uv-commands"></a>
@@ -108,20 +97,12 @@ source .venv/bin/activate
 UV simplifies Python package management with fast, reliable commands:
 
 ```sh
-# Install the package in development mode
-uv pip install -e .
-
-# Install with optional dependencies
-uv pip install -e ".[viz]"
-
-# Install dev dependencies
-uv pip install -e ".[dev]"
-
-# Run a script defined in pyproject.toml
-uv run test
-
-# Update all dependencies
-uv pip compile requirements.in -o requirements.txt
+# Show dependencies
+uv tree
+# Add a dependency
+uv add --dev pytest
+# List all task for CodeCarbon
+uv run task -l
 ```
 
 <!-- TOC --><a name="tests"></a>
@@ -130,22 +111,12 @@ uv pip compile requirements.in -o requirements.txt
 You can run the unit tests by running UV in the terminal when in the root package directory:
 
 ```sh
-uv run test
-```
-
-To run integration tests:
-
-```sh
-uv run test-integ
+uv run task test-package
 ```
 
 You can also run a specific test:
 
 ```sh
-uv run pytest tests/test_cloud.py
-
-# or
-
 uv run python -m unittest tests.test_your_feature.YourTestCase.test_function
 ```
 
@@ -308,15 +279,16 @@ to regenerate the html files.
 <!-- TOC --><a name="release-process"></a>
 ### Release process
 
--   Merge all PRs.
--   Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
--   Run `uv run python3 .github/check_version.py` to check version consistancy.
--   Update the dependencies with `uv pip compile requirements.in -o requirements.txt`.
--   [Build Documentation](#documentation) if needed with `uv run docs`.
--   Push the changes.
--   Merge the PR.
--   Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
--   [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+- Merge all PRs.
+- Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
+- Run `uv run python3 .github/check_version.py` to check version consistancy.
+- Update the dependencies with `uv sync --upgrade`
+- Export a requirements.txt `uv pip freeze > requirements.txt`.
+- [Build Documentation](#documentation) with `uv run --only-group doc task docs`.
+- Push the changes.
+- Merge the PR.
+- Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
+- [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
 -   For conda, we now have a [feedstock](https://github.com/conda-forge/codecarbon-feedstock/pulls) to publish to Conda-Forge channel.
 

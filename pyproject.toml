@@ -59,6 +59,7 @@ dev = [
     "ruff",
     "black",
     "mypy",
+    "pytest>=7.4.4",
 ]
 # TODO: Put in detached ?
 doc = [
