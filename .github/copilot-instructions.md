@@ -17,7 +17,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
    - User management and data persistence
    - Run with: `hatch run api:docker` or `hatch run api:local`
 
-3. **📊 dashboard/** - Python Dashboard (Dash-based)
+3. **📊 dashboard/viz** - Python Dashboard (Dash-based)
    - Interactive dashboard using Dash/Plotly
    - Visualizes emission data from CSV files
    - Run with: `hatch run dashboard:run`
@@ -40,7 +40,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 ### Prerequisites
 - Python 3.7+ (preferably 3.11+)
 - Hatch (Python project manager): `pip install hatch`
-- Node.js & pnpm (for webapp): `npm install -g pnpm`
+- Node.js & pnpm (for webapp): `npm install -g pnpm` or `curl -fsSL https://get.pnpm.io/install.sh | sh -`
 - Docker (for API development)
 
 ### Quick Start
@@ -49,10 +49,10 @@ This repository contains multiple components for tracking and reducing CO2 emiss
    ```bash
    # Run tests
    hatch run test:package
-   
+
    # Run specific test
    hatch -e test.py3.11 run pytest tests/test_emissions_tracker.py
-   
+
    # Lint and format
    hatch run dev:lint
    hatch run dev:format
@@ -62,10 +62,10 @@ This repository contains multiple components for tracking and reducing CO2 emiss
    ```bash
    # Start API with Docker (recommended)
    hatch run api:docker
-   
+
    # Or run locally (requires PostgreSQL setup)
    hatch run api:local
-   
+
    # Test API
    hatch run api:test-unit
    hatch run api:test-integ
@@ -75,7 +75,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
    ```bash
    # Python dashboard
    hatch run dashboard:run
-   
+
    # Next.js webapp
    cd webapp
    pnpm install
@@ -104,7 +104,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 ### Adding New Features
 1. **Check existing tests** in `tests/` for similar functionality
 2. **Add unit tests** first (test-driven development)
-3. **Update documentation** if public API changes
+3. **Update documentation** if public interface changes
 4. **Follow coding style**: Use `hatch run dev:format` and `hatch run dev:lint`
 
 ### API Development
@@ -114,7 +114,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 4. **Test with Postman** - collection in `carbonserver/tests/postman/`
 
 ### Dashboard Development
-1. **Python Dashboard**: Uses Dash + Plotly, see `dashboard/layout/components.py`
+1. **Python Dashboard**: Uses Dash + Plotly, see `codecarbon/viz`
 2. **Next.js Dashboard**: Modern React components in `webapp/src/`
 3. **Connect to API**: Set `CODECARBON_API_URL=http://localhost:8008` for local development
 
