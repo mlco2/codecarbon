@@ -72,7 +72,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 
 CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 
-Since April 2024 we use UV for managing development environment. UV manages the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
+Between April 2024 and July 2025 we use Hatch for managing development environment. Since August 2025 we use UV manages the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
 
 We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 

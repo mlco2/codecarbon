@@ -35,27 +35,38 @@ class ResourceTracker:
 
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
-        if self.tracker._conf.get("force_mode_cpu_load", False):
+        cpu_number = self.tracker._conf.get("cpu_physical_count")
+        tdp = cpu.TDP()
+        if self.tracker._force_cpu_power is not None:
+            logger.info(
+                f"Using user-provided CPU power: {self.tracker._force_cpu_power} Watts"
+            )
+            self.cpu_tracker = "User Input TDP constant"
+            max_power = self.tracker._force_cpu_power
+        else:
+            max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+        if self.tracker._conf.get("force_mode_cpu_load", False) and (
+            tdp.tdp is not None or self.tracker._force_cpu_power is not None
+        ):
             if cpu.is_psutil_available():
                 # Register a CPU with MODE_CPU_LOAD
-                tdp = cpu.TDP()
-                power = tdp.tdp
                 model = tdp.model
-                hardware = CPU.from_utils(
+                hardware_cpu = CPU.from_utils(
                     self.tracker._output_dir,
                     MODE_CPU_LOAD,
                     model,
-                    power,
+                    max_power,
                     tracking_mode=self.tracker._tracking_mode,
                 )
-                self.cpu_tracker = "load"
-                self.tracker._hardware.append(hardware)
+                self.cpu_tracker = MODE_CPU_LOAD
+                self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+                self.tracker._hardware.append(hardware_cpu)
                 return
             else:
                 logger.warning(
                     "Force CPU load mode requested but psutil is not available."
                 )
-        if cpu.is_powergadget_available() and self.tracker._default_cpu_power is None:
+        if cpu.is_powergadget_available() and self.tracker._force_cpu_power is None:
             logger.info("Tracking Intel CPU via Power Gadget")
             self.cpu_tracker = "Power Gadget"
             hardware_cpu = CPU.from_utils(
@@ -66,11 +77,11 @@ class ResourceTracker:
         elif cpu.is_rapl_available():
             logger.info("Tracking Intel CPU via RAPL interface")
             self.cpu_tracker = "RAPL"
-            hardware = CPU.from_utils(
+            hardware_cpu = CPU.from_utils(
                 output_dir=self.tracker._output_dir, mode="intel_rapl"
             )
-            self.tracker._hardware.append(hardware)
-            self.tracker._conf["cpu_model"] = hardware.get_model()
+            self.tracker._hardware.append(hardware_cpu)
+            self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
             if "AMD Ryzen Threadripper" in self.tracker._conf["cpu_model"]:
                 logger.warning(
                     "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."

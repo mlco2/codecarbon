@@ -512,9 +512,6 @@ class BaseEmissionsTracker(ABC):
             self._scheduler_monitor_power.stop()
 
         task_name = task_name if task_name else self._active_task
-        self._measure_power_and_energy()
-
-        task_name = task_name if task_name else self._active_task
         if self._tasks.get(task_name) is None:
             logger.warning("stop_task : No active task to stop.")
             return None
