@@ -316,9 +316,9 @@ Inside the docker container, run:
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
 
 ```bash
-uv run carbonboard --filepath="examples/emissions.csv"
+uv run --extra viz-legacy  task carbonboard --filepath="examples/emissions.csv"
 
-# or
+# or, if you don't want to use UV
 pip install codecarbon["viz"]
 python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
@@ -335,7 +335,7 @@ carbonboard --filepath="examples/emissions.csv" --port=8050
 To test the new dashboard that uses the API, run:
 
 ```sh
-uv run dashboard
+uv run  task local
 ```
 
 Then, click on the url displayed in the terminal.

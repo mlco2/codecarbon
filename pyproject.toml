@@ -61,7 +61,6 @@ dev = [
     "mypy",
     "pytest>=7.4.4",
 ]
-# TODO: Put in detached ?
 doc = [
   "sphinx",
   "sphinx_rtd_theme",
@@ -115,14 +114,13 @@ codecarbon = "codecarbon.cli.main:main"
 
 [tool.taskipy.tasks]
 pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit hook." }
-local = "cd carbonserver && uvicorn main:app --reload"
-server-ci = "cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008"
+dashboard = "cd carbonserver && uvicorn main:app --reload"
+dashboard-ci = "cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008"
 docker = "docker-compose up -d"
 test-api-unit = "cd carbonserver && python -m pytest -vv tests/api/routers/test_projects.py && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/"
 test-api-integ = "cd carbonserver && python -m pytest -vv tests/api/integration/"
 setup-db = "cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
 downgrade-db = "cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base"
-run = "cd dashboard && python carbon_board_API.py"
 build-doc = "cd docs/edit && make docs"
 precommit-install = "pre-commit install"
 precommit-update = "pre-commit autoupdate"
@@ -134,7 +132,6 @@ test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m 'not integ_tes
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
-dashboard = "cd dashboard && python carbon_board_API.py"
 
 [tool.bumpver]
 current_version = "3.0.0_rc3"
