@@ -100,7 +100,6 @@ api  = [
     "fastapi-pagination==0.9.1",
     "pytest",
     "mock",
-    "pytest",
     "responses",
     "numpy",
     "psutil",
