@@ -28,6 +28,7 @@ CodeCarbon
    api
    parameters
    examples
+   offsetting
    comet
    advanced_installation
 

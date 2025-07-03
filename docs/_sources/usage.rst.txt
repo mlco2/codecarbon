@@ -15,17 +15,17 @@ Command line
 ~~~~~~~~~~~~
 
 
-Create a minimal configuration file (just follow the prompts) : 
+Create a minimal configuration file (just follow the prompts) :
 
 .. code-block:: console
 
-  codecarbon config  
+  codecarbon config
 
 .. image:: https://asciinema.org/a/667970.svg
             :align: center
             :alt: Init config
             :target: https://asciinema.org/a/667970
-            
+
 You can use the same command to modify an existing config :
 
 .. image:: https://asciinema.org/a/667971.svg
@@ -38,12 +38,12 @@ If you want to track the emissions of a computer without having to modify your c
 
 .. code-block:: console
 
-    codecarbon monitor  
+    codecarbon monitor
 
 You have to stop the monitoring manually with ``Ctrl+C``.
 
-In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything 
-to an API running on "localhost:8008" (Or you can start a private local API with "docker-compose up"). Using the public API with 
+In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
+to an API running on "localhost:8008" (Or you can start a private local API with "docker-compose up"). Using the public API with
 this is not supported yet (coming soon!)
 
 .. image:: https://asciinema.org/a/667984.svg
@@ -52,6 +52,11 @@ this is not supported yet (coming soon!)
             :target: https://asciinema.org/a/667984
 
 
+The command line could also works without internet by providing the country code like this:
+
+.. code-block:: console
+
+    codecarbon monitor --offline --country-iso-code FRA
 
 Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
 
