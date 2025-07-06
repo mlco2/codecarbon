@@ -76,11 +76,7 @@ Between April 2024 and July 2025 we use Hatch for managing development environme
 
 We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
-Please install [UV](https://github.com/astral-sh/uv) following [installation instructions](https://github.com/astral-sh/uv#installation), or with:
-
-```sh
-pip install uv
-```
+Please install [UV](https://github.com/astral-sh/uv) following [installation instructions](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer).
 
 Then, clone the repository and create the environment with:
 
