@@ -36,6 +36,8 @@ jobs:
         env:
           POSTGRES_DB: codecarbon_db
           POSTGRES_PASSWORD: supersecret
+          POSTGRES_USER: codecarbon-user
+          POSTGRES_HOST: localhost
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -44,7 +46,7 @@ jobs:
           --health-retries 5
         ports:
           # Maps tcp port 5432 on service container to the host
-          - 5432:5432
+          - 5480:5432
     steps:
     - uses: actions/checkout@v4
     - name: Install uv
@@ -57,19 +59,12 @@ jobs:
       run: uv sync --extra api
     - name: Setup database
       env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PASSWORD: supersecret
-        POSTGRES_USER: postgres
-        POSTGRES_DB: codecarbon_db
-        POSTGRES_PORT: 5432
+        DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
       run: uv run task setup-db
     - name: Integration tests on api
       env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PASSWORD: supersecret
-        POSTGRES_USER: postgres
-        POSTGRES_DB: codecarbon_db
-        POSTGRES_PORT: 5432
+        CODECARBON_API_URL: http://localhost:8008
+        DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
       run: |
         # uv run task dashboard-ci &
         # sleep 10  # wait for server to start

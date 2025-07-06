@@ -53,13 +53,16 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 [dependency-groups]
 dev = [
-    "taskipy>=1.14.1",
+    "taskipy",
     "bumpver",
     "pre-commit",
     "ruff",
     "black",
     "mypy",
-    "pytest>=7.4.4",
+    "pytest",
+    "requests",
+    "requests-mock",
+    "responses",
 ]
 doc = [
   "sphinx",
@@ -106,6 +109,7 @@ api  = [
     "requests-mock",
     "rapidfuzz",
     "PyJWT",
+    "logfire[fastapi]>=1.0.1",
 ]
 
 [project.scripts]
@@ -128,7 +132,7 @@ precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
 mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
 lint = "black --check --diff . && ruff check . && mypy ."
 format = "black . && ruff --fix --exit-non-zero-on-fix ."
-test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m 'not integ_test' tests/"
+test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"

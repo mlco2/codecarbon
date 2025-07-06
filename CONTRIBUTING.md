@@ -99,8 +99,12 @@ UV simplifies Python package management with fast, reliable commands:
 ```sh
 # Show dependencies
 uv tree
-# Add a dependency
+# Add a default dependency
+uv add pandas
+# Add a dev dependency
 uv add --dev pytest
+# Add a dependency for an extra feature
+uv add --optional api logfire[fastapi]
 # List all task for CodeCarbon
 uv run task -l
 ```
