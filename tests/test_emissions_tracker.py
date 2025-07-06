@@ -406,10 +406,12 @@ class TestCarbonTracker(unittest.TestCase):
         )
         self.assertIsInstance(tracker.final_emissions, float)
 
+
 # Note: Removed test_carbon_tracker_offline_context_manager from this class as it was misplaced.
 # This was already noted, the actual test method needs to be removed if present in TestBaseTrackerConfig.
 # The previous diff for TestBaseTrackerConfig did not show this method, so it might have been removed already
 # or was part of a bad merge. Checking the class TestBaseTrackerConfig below.
+
 
 @mock.patch("codecarbon.core.gpu.pynvml", fake_pynvml)
 @mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=False)
@@ -436,7 +438,9 @@ class TestBaseTrackerConfig(unittest.TestCase):
         # Default behavior for Path.exists: False, so new locks can be acquired.
 
         def very_simple_path_exists_side_effect(path_instance_arg):
-            print(f"DEBUG: Path.exists called for {str(path_instance_arg)} -> MOCK RETURNING FALSE")
+            print(
+                f"DEBUG: Path.exists called for {str(path_instance_arg)} -> MOCK RETURNING FALSE"
+            )
             return False
 
         # self.mock_path_exists is the MagicMock for Path.exists
@@ -447,82 +451,116 @@ class TestBaseTrackerConfig(unittest.TestCase):
         self.mock_os_path_exists = self.os_path_exists_patcher.start()
         self.addCleanup(self.os_path_exists_patcher.stop)
 
-
     @mock.patch("codecarbon.emissions_tracker.logger")
     @mock.patch("codecarbon.emissions_tracker.get_hierarchical_config")
     def test_custom_intensity_positive_value(
-        self, mock_get_config, mock_logger, mock_setup_intel_cli, mock_log_values, mock_get_gpu_details, mock_is_gpu_details_available
+        self,
+        mock_get_config,
+        mock_logger,
+        mock_setup_intel_cli,
+        mock_log_values,
+        mock_get_gpu_details,
+        mock_is_gpu_details_available,
     ):
         mock_get_config.return_value = {
             "custom_carbon_intensity_g_co2e_kwh": "50.0",
-            "allow_multiple_runs": True # This will cause an info log
+            "allow_multiple_runs": True,  # This will cause an info log
         }
-        tracker = EmissionsTracker() # Changed from OfflineEmissionsTracker
+        tracker = EmissionsTracker()  # Changed from OfflineEmissionsTracker
         self.assertEqual(tracker.custom_carbon_intensity_g_co2e_kwh, 50.0)
         # Check if the specific info log for custom intensity is present
         found_info_log = False
         for call_args in mock_logger.info.call_args_list:
-            if "CODECARBON : Using custom carbon intensity: 50.0 gCO2e/kWh." in call_args[0][0]: # Added prefix and period
+            if (
+                "CODECARBON : Using custom carbon intensity: 50.0 gCO2e/kWh."
+                in call_args[0][0]
+            ):  # Added prefix and period
                 found_info_log = True
                 break
-        self.assertTrue(found_info_log, "Expected info log for custom carbon intensity not found.")
+        self.assertTrue(
+            found_info_log, "Expected info log for custom carbon intensity not found."
+        )
 
     @mock.patch("codecarbon.emissions_tracker.logger")
     @mock.patch("codecarbon.emissions_tracker.get_hierarchical_config")
     def test_custom_intensity_zero_value(
-        self, mock_get_config, mock_logger, mock_setup_intel_cli, mock_log_values, mock_get_gpu_details, mock_is_gpu_details_available
+        self,
+        mock_get_config,
+        mock_logger,
+        mock_setup_intel_cli,
+        mock_log_values,
+        mock_get_gpu_details,
+        mock_is_gpu_details_available,
     ):
         mock_get_config.return_value = {
             "custom_carbon_intensity_g_co2e_kwh": "0.0",
-            "allow_multiple_runs": False # To prevent other warnings
+            "allow_multiple_runs": False,  # To prevent other warnings
         }
         tracker = EmissionsTracker()
         self.assertIsNone(tracker.custom_carbon_intensity_g_co2e_kwh)
         mock_logger.warning.assert_called_once_with(
-            "CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '0.0'. " # Added prefix
+            "CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '0.0'. "  # Added prefix
             "It must be a positive number. Using default calculation methods."
         )
 
     @mock.patch("codecarbon.emissions_tracker.logger")
     @mock.patch("codecarbon.emissions_tracker.get_hierarchical_config")
     def test_custom_intensity_negative_value(
-        self, mock_get_config, mock_logger, mock_setup_intel_cli, mock_log_values, mock_get_gpu_details, mock_is_gpu_details_available
+        self,
+        mock_get_config,
+        mock_logger,
+        mock_setup_intel_cli,
+        mock_log_values,
+        mock_get_gpu_details,
+        mock_is_gpu_details_available,
     ):
         mock_get_config.return_value = {
             "custom_carbon_intensity_g_co2e_kwh": "-50.0",
-            "allow_multiple_runs": False # To prevent other warnings
+            "allow_multiple_runs": False,  # To prevent other warnings
         }
-        tracker = EmissionsTracker() # Changed from OfflineEmissionsTracker
+        tracker = EmissionsTracker()  # Changed from OfflineEmissionsTracker
         self.assertIsNone(tracker.custom_carbon_intensity_g_co2e_kwh)
         mock_logger.warning.assert_called_once_with(
-            "CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '-50.0'. " # Added prefix
+            "CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '-50.0'. "  # Added prefix
             "It must be a positive number. Using default calculation methods."
         )
 
     @mock.patch("codecarbon.emissions_tracker.logger")
     @mock.patch("codecarbon.emissions_tracker.get_hierarchical_config")
     def test_custom_intensity_invalid_string_value(
-        self, mock_get_config, mock_logger, mock_setup_intel_cli, mock_log_values, mock_get_gpu_details, mock_is_gpu_details_available
+        self,
+        mock_get_config,
+        mock_logger,
+        mock_setup_intel_cli,
+        mock_log_values,
+        mock_get_gpu_details,
+        mock_is_gpu_details_available,
     ):
         mock_get_config.return_value = {
             "custom_carbon_intensity_g_co2e_kwh": "abc",
-            "allow_multiple_runs": False # To prevent other warnings
+            "allow_multiple_runs": False,  # To prevent other warnings
         }
-        tracker = EmissionsTracker() # Changed from OfflineEmissionsTracker
+        tracker = EmissionsTracker()  # Changed from OfflineEmissionsTracker
         self.assertIsNone(tracker.custom_carbon_intensity_g_co2e_kwh)
         mock_logger.warning.assert_called_once_with(
-            "CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: 'abc'. " # Added prefix
+            "CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: 'abc'. "  # Added prefix
             "It must be a numeric value. Using default calculation methods."
         )
 
     @mock.patch("codecarbon.emissions_tracker.logger")
     @mock.patch("codecarbon.emissions_tracker.get_hierarchical_config")
     def test_custom_intensity_empty_whitespace_value(
-        self, mock_get_config, mock_logger, mock_setup_intel_cli, mock_log_values, mock_get_gpu_details, mock_is_gpu_details_available
+        self,
+        mock_get_config,
+        mock_logger,
+        mock_setup_intel_cli,
+        mock_log_values,
+        mock_get_gpu_details,
+        mock_is_gpu_details_available,
     ):
         mock_get_config.return_value = {
             "custom_carbon_intensity_g_co2e_kwh": "   ",
-            "allow_multiple_runs": False
+            "allow_multiple_runs": False,
         }
         tracker = EmissionsTracker()
         self.assertIsNone(tracker.custom_carbon_intensity_g_co2e_kwh)
@@ -534,16 +572,26 @@ class TestBaseTrackerConfig(unittest.TestCase):
     @mock.patch("codecarbon.emissions_tracker.logger")
     @mock.patch("codecarbon.emissions_tracker.get_hierarchical_config")
     def test_custom_intensity_missing_value(
-        self, mock_get_config, mock_logger, mock_setup_intel_cli, mock_log_values, mock_get_gpu_details, mock_is_gpu_details_available
+        self,
+        mock_get_config,
+        mock_logger,
+        mock_setup_intel_cli,
+        mock_log_values,
+        mock_get_gpu_details,
+        mock_is_gpu_details_available,
     ):
-        mock_get_config.return_value = {"allow_multiple_runs": False, "output_dir": "."} # Key missing, and prevent other warning
+        mock_get_config.return_value = {
+            "allow_multiple_runs": False,
+            "output_dir": ".",
+        }  # Key missing, and prevent other warning
         # self.mock_path_exists.return_value = False # Removed, side_effect in setUp should handle it
 
         tracker = EmissionsTracker()
         self.assertIsNone(tracker.custom_carbon_intensity_g_co2e_kwh)
-        mock_logger.warning.assert_not_called() # No warning specifically for missing key for custom intensity
+        mock_logger.warning.assert_not_called()  # No warning specifically for missing key for custom intensity
         mock_logger.error.assert_not_called()
         # self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2) # This assertion belongs to the removed test.
+
 
 # Removing test_carbon_tracker_offline_context_manager from the file to avoid collection conflicts
 # with TestBaseTrackerConfig if it's causing any issues.

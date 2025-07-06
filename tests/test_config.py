@@ -1,5 +1,6 @@
 import os
 import unittest
+from os import Path
 from textwrap import dedent
 from unittest import mock
 from unittest.mock import patch
@@ -122,28 +123,36 @@ class TestConfig(unittest.TestCase):
 
         # Mock open to simulate only the global file existing and being read
         def mock_path_exists_side_effect(*args_received, **kwargs_received):
-            print(f"mock_path_exists_side_effect called with: args={args_received}, kwargs={kwargs_received}")
+            print(
+                f"mock_path_exists_side_effect called with: args={args_received}, kwargs={kwargs_received}"
+            )
             if not args_received:
                 # This would explain the TypeError if it's called with no args
                 print("ERROR: mock_path_exists_side_effect called with no arguments!")
-                return False # Default or raise error
+                return False  # Default or raise error
             path_instance = args_received[0]
             path_str_resolved = str(path_instance.expanduser().resolve())
             # Only the global path should "exist" for this test
-            if path_str_resolved == str((Path.home() / ".codecarbon.config").expanduser().resolve()):
+            if path_str_resolved == str(
+                (Path.home() / ".codecarbon.config").expanduser().resolve()
+            ):
                 return True
             # Allow local path to "not exist" explicitly if needed by other tests,
             # but for this test, default to False for unspecified paths.
-            if path_str_resolved == str((Path.cwd() / ".codecarbon.config").expanduser().resolve()):
+            if path_str_resolved == str(
+                (Path.cwd() / ".codecarbon.config").expanduser().resolve()
+            ):
                 return False
-            return False # Default for any other path checks, e.g. parent dirs
+            return False  # Default for any other path checks, e.g. parent dirs
 
         # This mock_open will be used when Path(global_path).exists() is true
         m_open = mock.mock_open(read_data=global_conf_content)
 
-        with patch("builtins.open", m_open), \
-             patch("pathlib.Path.exists", side_effect=mock_path_exists_side_effect), \
-             patch("codecarbon.core.config.parse_env_config", return_value={"codecarbon": {}}): # Ensure no env interference
+        with patch("builtins.open", m_open), patch(
+            "pathlib.Path.exists", side_effect=mock_path_exists_side_effect
+        ), patch(
+            "codecarbon.core.config.parse_env_config", return_value={"codecarbon": {}}
+        ):  # Ensure no env interference
 
             conf = get_hierarchical_config()
             self.assertEqual(conf.get("custom_carbon_intensity_g_co2e_kwh"), "67.89")
@@ -212,18 +221,26 @@ class TestConfig(unittest.TestCase):
             """
         )
 
-        def path_exists_side_effect(*args, **kwargs_inner): # Renamed kwargs to avoid conflict
+        def path_exists_side_effect(
+            *args, **kwargs_inner
+        ):  # Renamed kwargs to avoid conflict
             # args[0] should be the Path instance
-            print(f"MOCK pathlib.Path.exists called with args: {args}, kwargs: {kwargs_inner}")
+            print(
+                f"MOCK pathlib.Path.exists called with args: {args}, kwargs: {kwargs_inner}"
+            )
             if not args:
                 print("MOCK pathlib.Path.exists: ERROR - called with no args")
                 return False
             path_instance = args[0]
             s_path = str(path_instance.expanduser().resolve())
-            if s_path == str((Path.home() / ".codecarbon.config").expanduser().resolve()):
+            if s_path == str(
+                (Path.home() / ".codecarbon.config").expanduser().resolve()
+            ):
                 print(f"Mocking Path.exists for global: {s_path} -> True")
                 return True
-            if s_path == str((Path.cwd() / ".codecarbon.config").expanduser().resolve()):
+            if s_path == str(
+                (Path.cwd() / ".codecarbon.config").expanduser().resolve()
+            ):
                 print(f"Mocking Path.exists for local: {s_path} -> False")
                 return False
             print(f"Mocking Path.exists for other: {s_path} -> False")
@@ -232,9 +249,11 @@ class TestConfig(unittest.TestCase):
         # Mock open to provide content for the global file
         m_open = mock.mock_open(read_data=global_conf_content)
 
-        with patch("builtins.open", m_open), \
-             patch("pathlib.Path.exists", side_effect=path_exists_side_effect), \
-             patch("codecarbon.core.config.parse_env_config", return_value={"codecarbon": {}}):
+        with patch("builtins.open", m_open), patch(
+            "pathlib.Path.exists", side_effect=path_exists_side_effect
+        ), patch(
+            "codecarbon.core.config.parse_env_config", return_value={"codecarbon": {}}
+        ):
 
             conf = get_hierarchical_config()
             self.assertEqual(conf.get("measure_power_secs"), "10")
@@ -286,7 +305,6 @@ class TestConfig(unittest.TestCase):
     #         self.assertEqual(tracker._co2_signal_api_token, "signal-token")
     #         self.assertEqual(tracker._project_name, "test-project") # This would be overwritten by env
     #         self.assertTrue(tracker._save_to_file)
-
 
     @mock.patch.dict(
         os.environ,

@@ -185,7 +185,9 @@ class BaseEmissionsTracker(ABC):
         self._external_conf = get_hierarchical_config()
 
         # Process custom_carbon_intensity_g_co2e_kwh immediately after loading _external_conf
-        custom_intensity_str = self._external_conf.get("custom_carbon_intensity_g_co2e_kwh")
+        custom_intensity_str = self._external_conf.get(
+            "custom_carbon_intensity_g_co2e_kwh"
+        )
         parsed_intensity = None
         if custom_intensity_str is not None:
             custom_intensity_str_stripped = custom_intensity_str.strip()
@@ -202,12 +204,12 @@ class BaseEmissionsTracker(ABC):
                         # logger.info( # Info log for successful positive value (if enabled)
                         #    f"CODECARBON : Parsed custom carbon intensity: {value} gCO2e/kWh."
                         # )
-                    else: # Zero or negative
+                    else:  # Zero or negative
                         logger.warning(
                             f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
                             "It must be a positive number. Using default calculation methods."
                         )
-                except ValueError: # Non-numeric
+                except ValueError:  # Non-numeric
                     logger.warning(
                         f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
                         "It must be a numeric value. Using default calculation methods."
@@ -277,8 +279,10 @@ class BaseEmissionsTracker(ABC):
         # logger.info("base tracker init")
         # self._external_conf = get_hierarchical_config() # Moved to the top
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
-        if self._allow_multiple_runs: # This uses self._allow_multiple_runs which is set by _set_from_conf
-            logger.warning( # This log might still occur if allow_multiple_runs is True in mock_get_config
+        if (
+            self._allow_multiple_runs
+        ):  # This uses self._allow_multiple_runs which is set by _set_from_conf
+            logger.warning(  # This log might still occur if allow_multiple_runs is True in mock_get_config
                 "Multiple instances of codecarbon are allowed to run at the same time."
             )
         else:
@@ -333,11 +337,14 @@ class BaseEmissionsTracker(ABC):
 
         # Conditional info log for using custom intensity
         if self.custom_carbon_intensity_g_co2e_kwh is not None:
-             logger.info(
+            logger.info(
                 f"CODECARBON : Using custom carbon intensity: {self.custom_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
             )
 
-        assert self._tracking_mode in ["machine", "process"] # self._tracking_mode is set by a _set_from_conf call
+        assert self._tracking_mode in [
+            "machine",
+            "process",
+        ]  # self._tracking_mode is set by a _set_from_conf call
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
 
