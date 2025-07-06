@@ -1,45 +1,37 @@
 # This workflow will upload a Python Package using Twine when a release is created
 # For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
 # documentation.
-
 name: Upload Python Package
-
 on:
   release:
     types: [published]
-
 permissions:
   contents: read
-
 jobs:
   deploy-pypi:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: 3.12
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
     - name: Check versions
       run: |
-          pip install -U pip requests
+          uv pip install --system requests
           python3 .github/check_version.py
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch==1.13.0 hatchling==1.25.0
     - name: Build package
-      run: hatch build -c
+      run: uv build
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}
-
   publish-to-conda:
     runs-on: ubuntu-24.04
     needs: [ deploy-pypi ]
@@ -64,8 +56,8 @@ jobs:
           shell: bash -l {0}
           run: codecarbon --help
         - name: Conda upload already build package
-          # This shell is made necessary by https://github.com/conda-incubator/setup-miniconda/issues/128
           shell: bash -l {0}
+          env:
+            ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
           run: |
-            conda install --yes anaconda-client
-            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload --user codecarbon /tmp/conda-bld/noarch/codecarbon-*
+            anaconda upload --user codecarbon /tmp/conda-bld/noarch/codecarbon-*.tar.bz2

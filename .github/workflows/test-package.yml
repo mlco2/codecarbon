@@ -5,7 +5,7 @@ on:
     paths:
       - "codecarbon/**"
       - "pyproject.toml"
-      - "requirements.txt"
+      - "uv.lock"
 
 jobs:
   python-test:
@@ -15,14 +15,13 @@ jobs:
           python-version: ["3.9", "3.12", "3.13"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: ${{ matrix.python-version }}
+        version: "latest"
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch==1.13.0 hatchling==1.25.0
+      run: uv sync --python ${{ matrix.python-version }}
     - name: Test package
-      run: |
-        hatch run +py=${{ matrix.python-version }} test:package
+      run: uv run --python ${{ matrix.python-version }} task test-package
