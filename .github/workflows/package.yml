@@ -1,35 +1,33 @@
 name: package
-
 on:
   push:
     paths:
       - "codecarbon/**"
       - "pyproject.toml"
     branches: [master]
-
 jobs:
     build-package:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        - name: Set up Python
-          uses: actions/setup-python@v5
+        - name: Install uv
+          uses: astral-sh/setup-uv@v3
           with:
-              python-version: 3.12
+            version: "latest"
+        - name: Set up Python
+          run: uv python install 3.12
         - name: Check versions
           run: |
-              pip install -U pip requests
+              uv pip install --system requests
               python3 .github/check_version.py -o
         - name: Build pip package
           run: |
-              pip install -U pip build
-              python3 -m build
+              uv build
         - name: Archive Pypi artifacts
           uses: actions/upload-artifact@v4
           with:
               name: pypi_dist
               path: dist
-
     python-test:
         runs-on: ubuntu-24.04
         strategy:
@@ -37,18 +35,18 @@ jobs:
               python-version: ["3.9", "3.12", "3.13"]
         steps:
         - uses: actions/checkout@v4
+        - name: Install uv
+          uses: astral-sh/setup-uv@v3
+          with:
+            version: "latest"
         - name: Set up Python ${{ matrix.python-version }}
           uses: actions/setup-python@v5
           with:
             python-version: ${{ matrix.python-version }}
         - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install hatch==1.13.0 hatchling==1.25.0
+          run: uv sync
         - name: Test package
-          run: |
-            hatch run +py=${{ matrix.python-version }} test:package
-
+          run: uv run task test-package
     build-conda:
         runs-on: ubuntu-24.04
         steps:
@@ -68,7 +66,6 @@ jobs:
                 build-args: --channel codecarbon --channel conda-forge --output-dir /tmp/conda-bld
                 recipe-path: .conda/recipe.yaml
                 upload-artifact: false
-
     test-conda:
         runs-on: ubuntu-24.04
         needs: [ build-conda ]
