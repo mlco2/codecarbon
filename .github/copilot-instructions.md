@@ -1,6 +1,14 @@
 # CodeCarbon Copilot Instructions
 
-This repository contains multiple components for tracking and reducing CO2 emissions from computing. Here's what you need to know to navigate and contribute effectively.
+This repository contains multiple components for tracking CO2 emissions from computing.
+
+CodeCarbon works by measuring electricity consumption on the computer and convert it to CO2 emissions using electricity carbon intensity from the grid where the computer is located.
+
+It's a mono-repo for a Python package, a centralized API and an online dashboard.
+
+The package also have a command line to monitor computer's emissions without wrinting Python code.
+
+Here's what you need to know to navigate and contribute effectively.
 
 ## Repository Structure
 
@@ -146,11 +154,11 @@ uv run task -l
 ## Documentation and Help
 
 ### Key Documentation Files
-- **CONTRIBUTING.md**: Detailed contribution guidelines and setup
-- **README.md**: Project overview and quickstart
-- **carbonserver/README.md**: API architecture and database schema
-- **webapp/README.md**: Next.js dashboard setup
-- **carbonserver/tests/TESTING.md**: Comprehensive testing guide
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Detailed contribution guidelines and setup
+- **[README.md](README.md)**: Project overview and quickstart
+- **[carbonserver/README.md](carbonserver/README.md)**: API architecture and database schema
+- **[webapp/README.md](webapp/README.md)**: Next.js dashboard setup
+- **[carbonserver/tests/TESTING.md](carbonserver/tests/TESTING.md)**: Comprehensive testing guide
 
 ### VS Code Debugging
 The repository includes VS Code launch configurations in CONTRIBUTING.md for:
@@ -187,4 +195,4 @@ The package can work standalone (offline mode) or connect to the API for cloud f
 5. **Check CI**: Ensure your changes pass the same checks as GitHub Actions
 6. **Read architecture docs**: Understand the emission calculation methodology in docs/
 
-Remember: CodeCarbon is about measuring and reducing computing emissions. Every contribution helps make computing more sustainable! 🌱
+Remember: CodeCarbon is about measuring computing emissions, in the goal of helping to reduce them. Every contribution helps make computing more sustainable! 🌱
