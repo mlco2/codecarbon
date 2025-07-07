@@ -15,12 +15,12 @@ This repository contains multiple components for tracking and reducing CO2 emiss
    - FastAPI-based REST API
    - PostgreSQL database integration
    - User management and data persistence
-   - Run with: `hatch run api:docker` or `hatch run api:local`
+   - Run with: `uv run task docker` or `uv run task dashboard`
 
 3. **📊 dashboard/viz** - Python Dashboard (Dash-based)
    - Interactive dashboard using Dash/Plotly
    - Visualizes emission data from CSV files
-   - Run with: `hatch run dashboard:run`
+   - Run with: `uv run task carbonboard`
 
 4. **🌐 webapp/** - Next.js Web Dashboard
    - Modern React/Next.js web application
@@ -30,7 +30,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 ### Key Directories
 
 - **tests/** - Unit tests for the core package
-- **docs/** - Sphinx documentation (build with `hatch run docs:build`)
+- **docs/** - Sphinx documentation (build with `uv run task docs`)
 - **examples/** - Usage examples and demos
 - **deploy/** - Deployment configurations and scripts
 - **requirements/** - Dependency specifications for different environments
@@ -39,7 +39,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 
 ### Prerequisites
 - Python 3.7+ (preferably 3.11+)
-- Hatch (Python project manager): `pip install hatch`
+- uv (Python project manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - Node.js & pnpm (for webapp): `npm install -g pnpm` or `curl -fsSL https://get.pnpm.io/install.sh | sh -`
 - Docker (for API development)
 
@@ -48,33 +48,33 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 1. **Core Package Development:**
    ```bash
    # Run tests
-   hatch run test:package
+   uv run task test-package
 
    # Run specific test
-   hatch -e test.py3.11 run pytest tests/test_emissions_tracker.py
+   uv run pytest tests/test_emissions_tracker.py
 
    # Lint and format
-   hatch run dev:lint
-   hatch run dev:format
+   uv run task lint
+   uv run task format
    ```
 
 2. **API Development:**
    ```bash
    # Start API with Docker (recommended)
-   hatch run api:docker
+   uv run task docker
 
    # Or run locally (requires PostgreSQL setup)
-   hatch run api:local
+   uv run task dashboard
 
    # Test API
-   hatch run api:test-unit
-   hatch run api:test-integ
+   uv run task test-api-unit
+   uv run task test-api-integ
    ```
 
 3. **Dashboard Development:**
    ```bash
    # Python dashboard
-   hatch run dashboard:run
+   uv run task carbonboard
 
    # Next.js webapp
    cd webapp
@@ -87,11 +87,11 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 ### Core Package Tests
 - **Unit tests**: `tests/test_*.py` - Test individual components
 - **Integration tests**: Include real hardware testing with `CODECARBON_ALLOW_MULTIPLE_RUNS=True`
-- **Run specific tests**: `hatch -e test.py3.11 run pytest tests/test_specific.py`
+- **Run specific tests**: `uv run pytest tests/test_specific.py`
 
 ### API Tests
-- **Unit tests**: `hatch run api:test-unit` - Test business logic
-- **Integration tests**: `hatch run api:test-integ` - Test with database
+- **Unit tests**: `uv run task test-api-unit` - Test business logic
+- **Integration tests**: `uv run task test-api-integ` - Test with database
 - **See**: `carbonserver/tests/TESTING.md` for detailed testing guide
 
 ### Manual Testing
@@ -105,7 +105,7 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 1. **Check existing tests** in `tests/` for similar functionality
 2. **Add unit tests** first (test-driven development)
 3. **Update documentation** if public interface changes
-4. **Follow coding style**: Use `hatch run dev:format` and `hatch run dev:lint`
+4. **Follow coding style**: Use `uv run task format` and `uv run task lint`
 
 ### API Development
 1. **Follow FastAPI patterns** - see routers in `carbonserver/carbonserver/api/routers/`
@@ -120,18 +120,21 @@ This repository contains multiple components for tracking and reducing CO2 emiss
 
 ## Environment Management
 
-### Hatch Environments
+### UV Task Management
 ```bash
-# List all environments
-hatch env show
+# List all available tasks
+uv run task -l
 
-# Main environments:
-# - default: Core package development
-# - test: Testing with multiple Python versions
-# - dev: Development tools (linting, formatting)
-# - api: API development and testing
-# - dashboard: Dashboard development
-# - docs: Documentation building
+# Main tasks:
+# - test-package: Core package testing
+# - lint: Code linting and style checks
+# - format: Code formatting
+# - test-api-unit: API unit tests
+# - test-api-integ: API integration tests
+# - dashboard: Run API locally
+# - docker: Start API with Docker
+# - carbonboard: Python dashboard
+# - docs: Build documentation
 ```
 
 ### Configuration Files
@@ -179,8 +182,8 @@ The package can work standalone (offline mode) or connect to the API for cloud f
 
 1. **Start with tests**: Run existing tests first to understand current state
 2. **Use examples**: Check `examples/` directory for usage patterns
-3. **Environment isolation**: Use hatch environments to avoid conflicts
-4. **Incremental development**: Test frequently with `hatch run test:package`
+3. **Environment isolation**: Use uv for dependency management and virtual environments
+4. **Incremental development**: Test frequently with `uv run task test-package`
 5. **Check CI**: Ensure your changes pass the same checks as GitHub Actions
 6. **Read architecture docs**: Understand the emission calculation methodology in docs/
 
