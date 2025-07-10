@@ -11,17 +11,20 @@ on:
             - "pyproject.toml"
         branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
     build-ui:
         runs-on: ubuntu-22.04
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
             - name: Use Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
               with:
                   node-version: "18"
             - name: Setup pnpm
-              uses: pnpm/action-setup@v2
+              uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
               with:
                   version: 8
             - name: Install dependencies
