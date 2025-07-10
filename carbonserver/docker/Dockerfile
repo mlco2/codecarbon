@@ -3,7 +3,7 @@
 # Use Ubuntu to install 3 versions of Python for testing
 # For production, you could use python:3.8-slim
 
-FROM ubuntu:22.04
+FROM ubuntu:22.04@sha256:3c61d3759c2639d4b836d32a2d3c83fa0214e36f195a3421018dbaaf79cbe37f
 
 # set work directory
 WORKDIR /carbonserver
