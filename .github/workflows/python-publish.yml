@@ -23,8 +23,7 @@ jobs:
       run: uv python install 3.12
     - name: Check versions
       run: |
-          uv pip install --system requests
-          python3 .github/check_version.py
+          uv run python .github/check_version.py
     - name: Build package
       run: uv build
     - name: Publish package

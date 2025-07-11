@@ -3,7 +3,7 @@ To test it, you need to set:
 export CODECARBON_API_URL=http://localhost:8008
 export DATABASE_URL=postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
 Then execute the tests:
-hatch run api:test-integ
+uv run task test-api-integ
 """
 
 import os

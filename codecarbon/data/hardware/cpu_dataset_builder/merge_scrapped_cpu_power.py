@@ -4,7 +4,7 @@ cleaning the CPU names, and merging the data into an existing CPU power CSV file
 It ensures that the TDP values are numeric and updates existing entries or adds new ones.
 
 cd codecarbon/data/hardware/cpu_dataset_builder
-hatch run python merge_scrapped_cpu_power.py
+uv run python merge_scrapped_cpu_power.py
 
 """
 

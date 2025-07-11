@@ -256,7 +256,7 @@ You can also run `pre-commit` with `uv run pre-commit run -v` if you have some c
 Dependencies are defined in different places:
 
 -   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
--   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by [Hatch plugin pip-compile](https://github.com/juftin/hatch-pip-compile), do not edit them.
+-   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by UV, do not edit them.
 -   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
 
@@ -299,7 +299,7 @@ Start a Docker image in the same directory and bind-mount the current directory 
 
 Inside the docker container, run:
 
--   `conda install -y conda-build conda-verify conda-forge::hatchling`
+-   `conda install -y conda-build conda-verify`
 -   `cd /data && mkdir -p /conda_dist`
 -   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
 -   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`

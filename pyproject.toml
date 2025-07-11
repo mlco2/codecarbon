@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "codecarbon"
@@ -41,6 +41,12 @@ dependencies = [
     "rich",
     "typer"
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "codecarbon._version.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["codecarbon*"]
 
 [project.urls]
 Homepage = "https://codecarbon.io/"
@@ -131,7 +137,7 @@ precommit-update = "pre-commit autoupdate"
 precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
 mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
 lint = "black --check --diff . && ruff check . && mypy ."
-format = "black . && ruff --fix --exit-non-zero-on-fix ."
+format = "black . && ruff check --fix --exit-non-zero-on-fix ."
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
@@ -147,96 +153,4 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 ]
 "docs/edit/conf.py" = [
     '^release = "{version}"$',
-]
-
-
-
-[tool.hatch.env]
-requires = [
-    "hatch-pip-compile"
-]
-
-[tool.hatch.envs.default]
-# pip-compile automate the export of environments.txt
-type = "pip-compile"
-
-[tool.hatch.envs.carbonboard]
-features = ["viz"]
-
-[tool.hatch.envs.carbonboard.scripts]
-run = "carbonboard {args:.}"
-
-[tool.hatch.envs.docs]
-# detached means that other deps won't be installed
-detached = true
-dependencies = [
-  "sphinx",
-  "sphinx_rtd_theme",
-]
-pip-compile-constraint = ""
-
-
-[tool.hatch.envs.dev.scripts]
-precommit-install = "pre-commit install"
-precommit-update = "pre-commit autoupdate"
-precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
-mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
-lint = ["black --check --diff .", "ruff check .", "mypy ."]
-format = ["black .", "ruff --fix --exit-non-zero-on-fix ."]
-test = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m 'not integ_test' tests/"
-test-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
-docs = "cd docs/edit && make docs"
-carbonboard = "python codecarbon/viz/carbonboard.py"
-
-[[tool.hatch.envs.test.matrix]]
-# Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7
-python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-
-[tool.hatch.envs.docs.scripts]
-build = "cd docs/edit && make docs"
-
-[tool.hatch.envs.api]
-python = "3.11"
-dependencies = [
-    "alembic<2.0.0",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "fief-client[fastapi]",
-    "logfire",
-    "logfire[fastapi]",
-    "httpx",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination==0.9.1",
-    "mock",
-    "pytest",
-    "responses",
-    "numpy",
-    "psutil",
-    "requests-mock",
-    "rapidfuzz",
-    "PyJWT",
-]
-
-
-[tool.hatch.scripts.api]
-local = "cd carbonserver && uvicorn main:app --reload"
-server-ci = "cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008"
-docker = "docker-compose up -d"
-test-unit = "cd carbonserver && python -m pytest -vv tests/api/routers/test_projects.py && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/"
-test-integ = "cd carbonserver && python -m pytest -vv tests/api/integration/"
-setup-db = "cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
-downgrade-db = "cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base"
-
-[tool.hatch.version]
-path = "codecarbon/_version.py"
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "/codecarbon",
 ]

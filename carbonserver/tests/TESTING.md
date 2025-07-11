@@ -60,8 +60,8 @@ pip install -r requirements-dev.txt # Install test dependencies
 
 ### Run tests
 ```bash
-hatch run api:test-unit # Unit tests on api
-hatch run api:test-integ # Integration tests
+uv run task test-api-unit # Unit tests on api
+uv run task test-api-integ # Integration tests
 ```
 
 
