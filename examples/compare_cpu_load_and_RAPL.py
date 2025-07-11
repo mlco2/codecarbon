@@ -8,13 +8,13 @@ To run this script:
 sudo apt install stress-ng
 
 # If you want to monitor a Tapo P110 smart plug
-hatch run pip install tapo
+uv run pip install tapo
 export TAPO_USERNAME=XXX
 export TAPO_PASSWORD=XXX
 export IP_ADDRESS=192.168.0.XXX
 
 # Run the script
-hatch run python examples/compare_cpu_load_and_RAPL.py
+uv run python examples/compare_cpu_load_and_RAPL.py
 
 """
 

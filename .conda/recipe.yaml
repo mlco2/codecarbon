@@ -25,7 +25,8 @@ requirements:
   host:
     - python
     - pip
-    - hatchling
+    - setuptools
+    - wheel
   run:
     # Will be replaced by the dependencies from the pyproject.toml file
     - dependencies
