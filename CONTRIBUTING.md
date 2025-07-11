@@ -249,8 +249,6 @@ If any of the linters/formatters fail, check the difference with `git diff`, add
 
 You can also run `pre-commit` with `uv run pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
 
-It's nice to keep it up-to-date with `uv run precommit-update` sometimes.
-
 
 <!-- TOC --><a name="dependencies-management"></a>
 ### Dependencies management
@@ -284,6 +282,7 @@ to regenerate the html files.
 - Run `uv run python3 .github/check_version.py` to check version consistancy.
 - Update the dependencies with `uv sync --upgrade`
 - Export a requirements.txt `uv pip freeze > requirements.txt`.
+- Keep pre-commit up-to-date with `uv run task precommit-update`.
 - [Build Documentation](#documentation) with `uv run --only-group doc task docs`.
 - Push the changes.
 - Merge the PR.
