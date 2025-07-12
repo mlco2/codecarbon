@@ -20,8 +20,7 @@ jobs:
           run: uv python install 3.12
         - name: Check versions
           run: |
-              uv pip install --system requests
-              python3 .github/check_version.py -o
+              uv run python .github/check_version.py -o
         - name: Build pip package
           run: |
               uv build

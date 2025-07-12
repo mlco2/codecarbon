@@ -5,8 +5,8 @@ Intel CPU Scraper
 This script uses requests and BeautifulSoup to scrape CPU names and their associated TDP values
 from the Intel ARK website using the advanced filter search URL.
 
-hatch run pip install beautifulsoup4
-hatch run python intel_cpu_scrapper.py
+uv run pip install beautifulsoup4
+uv run python intel_cpu_scrapper.py
 
 """
 
