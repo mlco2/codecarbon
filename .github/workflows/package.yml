@@ -1,6 +1,8 @@
 permissions:
   contents: read
 name: package
+permissions:
+  contents: read
 on:
   push:
     paths:
