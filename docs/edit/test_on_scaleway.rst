@@ -34,7 +34,6 @@ Install and run the test:
     cd codecarbon
     git checkout use-cpu-load
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    source ~/.bashrc
     uv run python examples/compare_cpu_load_and_RAPL.py
 
 To do a full code CPU load, we run the following command:
