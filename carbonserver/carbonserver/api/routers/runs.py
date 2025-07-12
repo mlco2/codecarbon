@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Union
 
 import dateutil.relativedelta
-from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Header
 from starlette import status
@@ -14,6 +13,7 @@ from carbonserver.api.services.run_service import RunService
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
     ExperimentSumsByRunUsecase,
 )
+from carbonserver.container import ServerContainer
 from carbonserver.logger import logger
 
 RUNS_ROUTER_TAGS = ["Runs"]

@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "carbonserver"
+version = "0.1.0"
+requires-python = "==3.12.*"
+authors = [
+    { name = "DataForGood" },
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "alembic<2.0.0",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "fief-client[fastapi]",
+    "fastapi[standard]",
+    "logfire",
+    "httpx",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination==0.9.1",
+    "mock",
+    "pytest",
+    "responses",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
+    "PyJWT",
+    "logfire[fastapi]>=1.0.1",
+]
+
+[project.urls]
+Homepage = "https://codecarbon.io/"
+Repository = "https://github.com/mlco2/codecarbon"
+Dashboard = "http://dashboard.codecarbon.io/"
+Documentation = "https://mlco2.github.io/codecarbon/"
+Issues = "https://github.com/mlco2/codecarbon/issues"
+Changelog = "https://github.com/mlco2/codecarbon/releases"
+
+[tool.hatch.build]
+exclude = ["*"]

@@ -1,7 +1,6 @@
 import os
 
 import logfire
-from container import ServerContainer, settings
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from pydantic import ValidationError
@@ -11,6 +10,8 @@ from starlette.responses import JSONResponse
 
 from carbonserver.api.errors import DBException, UserException, get_http_exception
 from carbonserver.api.infra.database import sql_models
+from carbonserver.config import settings
+from carbonserver.container import ServerContainer
 from carbonserver.api.routers import (
     authenticate,
     emissions,
@@ -87,6 +88,8 @@ def init_server(container):
         servers=[
             {"url": "/api/"},
         ],
+        port=settings.api_port,
+        host=settings.server_host,
     )
     logfire.instrument_fastapi(server)
 

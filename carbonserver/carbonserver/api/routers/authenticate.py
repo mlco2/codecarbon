@@ -4,7 +4,7 @@ import random
 from typing import Optional
 
 import requests
-from container import ServerContainer
+from carbonserver.container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import RedirectResponse
