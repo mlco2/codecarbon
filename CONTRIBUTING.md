@@ -144,15 +144,9 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 <!-- TOC --><a name="update-all-dependancies"></a>
 ### Update all dependancies
 
-```sh
-uv pip compile requirements.in -o requirements.txt
-```
-
 For multiple requirement files:
-
 ```sh
-uv pip compile requirements/dev.in -o requirements/dev.txt
-uv pip compile requirements/test.in -o requirements/test.txt
+uv sync --upgrade
 ```
 
 <!-- TOC --><a name="branching-and-pull-requests"></a>
@@ -256,7 +250,7 @@ You can also run `pre-commit` with `uv run pre-commit run -v` if you have some c
 Dependencies are defined in different places:
 
 -   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
--   In [requirements.txt](requirements.txt) and [requirements/](requirements/), those are locked dependencies managed by UV, do not edit them.
+-   In [uv.lock](uv.lock), those are the locked dependencies managed by UV, do not edit them.
 -   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
 
@@ -268,8 +262,8 @@ To make generating documentation easier, we use [`sphinx` package](https://www.s
 
 In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run in root folder:
 
-```
-uv run docs
+```sh
+uv run --only-group doc task docs
 ```
 
 to regenerate the html files.
@@ -281,8 +275,6 @@ to regenerate the html files.
 - Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
 - Run `uv run python3 .github/check_version.py` to check version consistancy.
 - Update the dependencies with `uv sync --upgrade`
-- Export a requirements.txt `uv pip freeze > requirements.txt`.
-- Keep pre-commit up-to-date with `uv run task precommit-update`.
 - [Build Documentation](#documentation) with `uv run --only-group doc task docs`.
 - Push the changes.
 - Merge the PR.
@@ -303,8 +295,6 @@ Inside the docker container, run:
 -   `cd /data && mkdir -p /conda_dist`
 -   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
 -   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
-
-
 
 <!-- TOC --><a name="api-and-dashboard"></a>
 ## API and Dashboard

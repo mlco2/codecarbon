@@ -41,7 +41,6 @@ Here's what you need to know to navigate and contribute effectively.
 - **docs/** - Sphinx documentation (build with `uv run task docs`)
 - **examples/** - Usage examples and demos
 - **deploy/** - Deployment configurations and scripts
-- **requirements/** - Dependency specifications for different environments
 
 ## Development Setup
 
@@ -149,7 +148,6 @@ uv run task -l
 - **pyproject.toml**: Main project configuration
 - **.codecarbon.config**: Runtime configuration for API connection
 - **docker-compose.yml**: Local development with PostgreSQL
-- **requirements/**: Pinned dependencies for different environments
 
 ## Documentation and Help
 
