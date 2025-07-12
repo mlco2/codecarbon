@@ -7,6 +7,7 @@ on:
       - "webapp/**"
       - "pyproject.toml"
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -39,7 +40,7 @@ jobs:
         APP_NAME: cc_api_prod
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f --app $CLEVER_APP_ID
+        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME
 
     - name: Deploy frontend to Clever Cloud (PROD)
       env:
