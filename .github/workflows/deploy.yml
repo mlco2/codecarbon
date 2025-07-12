@@ -7,6 +7,7 @@ on:
       - "webapp/**"
       - "pyproject.toml"
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
