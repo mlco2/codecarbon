@@ -26,6 +26,8 @@ jobs:
       run: uv run task test-api-unit
   test_api_server:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     # Service containers to run with `container-job`
     services:
       # Label used to access the service container
