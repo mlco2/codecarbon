@@ -187,8 +187,6 @@ test = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest -vv -m 'not integ_test' tests
 test-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
-dashboard = "cd dashboard && python carbon_board_API.py"
-
 
 [[tool.hatch.envs.test.matrix]]
 # Python 3.7 does not works with pip-tools, but CodeCarbon could run in 3.7
@@ -224,16 +222,6 @@ dependencies = [
     "rapidfuzz",
     "PyJWT",
 ]
-
-[tool.hatch.envs.dashboard]
-dependencies = [
-    "dash>=2.2.0",
-    "dash_bootstrap_components",
-    "plotly>=5.6.0",
-]
-
-[tool.hatch.envs.dashboard.scripts]
-run = "cd dashboard && python carbon_board_API.py"
 
 
 [tool.hatch.scripts.api]
