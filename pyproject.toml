@@ -50,15 +50,16 @@ version = {attr = "codecarbon._version.__version__"}
 include-package-data = false
 
 [tool.setuptools.packages.find]
-include = ["codecarbon"]
+include = ["codecarbon*"]
 exclude = ["*.json", "**/*.csv", "*.geojson"]
 
 [tool.setuptools.package-data]
 codecarbon = [
     "data/cloud/impact.csv",
-    #"data/hardware/cpu_power.csv",
-    #"data/**/*.json",
-    "codecarbon/data/canada_provinces.geojson",
+    "data/hardware/cpu_power.csv",
+    "data/canada_provinces.geojson",
+    "data/private_infra/global_energy_mix.json",
+    "data/private_infra/carbon_intensity_per_source.json",
 ]
 
 [project.urls]
