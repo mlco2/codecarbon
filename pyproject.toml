@@ -48,6 +48,12 @@ version = {attr = "codecarbon._version.__version__"}
 [tool.setuptools.packages.find]
 include = ["codecarbon*"]
 
+[tool.setuptools.package-data]
+codecarbon = [
+    "data/**/*.csv",
+    "data/**/*.json",
+]
+
 [project.urls]
 Homepage = "https://codecarbon.io/"
 Repository = "https://github.com/mlco2/codecarbon"
@@ -144,7 +150,7 @@ docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.0.3"
+current_version = "3.0.3.post1"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
