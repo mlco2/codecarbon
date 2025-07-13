@@ -7,6 +7,8 @@ name = "codecarbon"
 dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.7"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Mila" },
     { name = "DataForGood" },
@@ -15,7 +17,6 @@ authors = [
     { name = "Haverford College" },
 ]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -45,13 +46,19 @@ dependencies = [
 [tool.setuptools.dynamic]
 version = {attr = "codecarbon._version.__version__"}
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages.find]
-include = ["codecarbon*"]
+include = ["codecarbon"]
+exclude = ["*.json", "**/*.csv", "*.geojson"]
 
 [tool.setuptools.package-data]
 codecarbon = [
-    "data/**/*.csv",
-    "data/**/*.json",
+    "data/cloud/impact.csv",
+    #"data/hardware/cpu_power.csv",
+    #"data/**/*.json",
+    "codecarbon/data/canada_provinces.geojson",
 ]
 
 [project.urls]
@@ -145,12 +152,13 @@ mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional -
 lint = "black --check --diff . && ruff check . && mypy ."
 format = "black . && ruff check --fix --exit-non-zero-on-fix ."
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
+test-package-integrity = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest tests/test_package_integrity.py -vv"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.0.3.post1"
+current_version = "3.0.3"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
