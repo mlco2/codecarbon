@@ -40,8 +40,9 @@ jobs:
         - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
           with:
             sparse-checkout: |
-              tests/test_package_integrity.py
+              tests/*.py
               pytest.ini
+              pyproject.toml
             sparse-checkout-cone-mode: false
         - name: Install uv
           uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
@@ -70,30 +71,13 @@ jobs:
           run: |
             # Run the package integrity tests to verify all data files are included
             uv run python -m pytest tests/test_package_integrity.py -v
+            uv run task test-package
         - name: Test CLI functionality
           run: |
             # Test that the CLI is functional
             codecarbon --help
             python -c "from codecarbon import EmissionsTracker; print('✓ Package import successful')"
-    python-test-with-source:
-        runs-on: ubuntu-24.04
-        strategy:
-            matrix:
-              python-version: ["3.9", "3.12", "3.13"]
-        steps:
-        - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        - name: Install uv
-          uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
-          with:
-            version: "latest"
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-          with:
-            python-version: ${{ matrix.python-version }}
-        - name: Install dependencies
-          run: uv sync
-        - name: Test package (development mode)
-          run: uv run task test-package
+
     build-conda:
         runs-on: ubuntu-24.04
         steps:
