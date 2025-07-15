@@ -1,5 +1,5 @@
 torch>1.13.0  # PyTorch vulnerable to arbitrary code execution, see https://github.com/mlco2/codecarbon/security/dependabot/1
-tensorflow
+tensorflow>2.19.0 
 keras-tuner
 torchvision
 sklearn
