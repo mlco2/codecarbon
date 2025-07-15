@@ -2,12 +2,12 @@
 import dataclasses
 import re
 import secrets
-from cryptography.fernet import Fernet
 import subprocess
 import time
 
 import requests
 import typer
+from cryptography.fernet import Fernet
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
@@ -41,7 +41,11 @@ class Settings:
     hostname: str = "codecarbon.local"
     admin_email: str = "admin@localhost"
     fief_admin_password: str = Fernet.generate_key().decode()  # Generate encryption key
-    encrypted_fief_admin_password: str = Fernet(fief_admin_password.encode()).encrypt(secrets.token_urlsafe(20).encode()).decode()
+    encrypted_fief_admin_password: str = (
+        Fernet(fief_admin_password.encode())
+        .encrypt(secrets.token_urlsafe(20).encode())
+        .decode()
+    )
     use_https: bool = False
 
 
