@@ -2,6 +2,7 @@
 import dataclasses
 import re
 import secrets
+from cryptography.fernet import Fernet
 import subprocess
 import time
 
@@ -39,7 +40,8 @@ class Settings:
     fief_hostname: str = "fief.local"
     hostname: str = "codecarbon.local"
     admin_email: str = "admin@localhost"
-    fief_admin_password: str = secrets.token_urlsafe(20)
+    fief_admin_password: str = Fernet.generate_key().decode()  # Generate encryption key
+    encrypted_fief_admin_password: str = Fernet(fief_admin_password.encode()).encrypt(secrets.token_urlsafe(20).encode()).decode()
     use_https: bool = False
 
 
@@ -67,7 +69,7 @@ def _setup(settings: Settings):
         "AUTH_HOSTNAME": settings.fief_hostname,
         "FIEF_HOSTNAME": settings.fief_hostname,
         "FIEF_DOMAIN": settings.fief_hostname,
-        "FIEF_MAIN_USER_PASSWORD": settings.fief_admin_password,
+        "FIEF_MAIN_USER_PASSWORD": settings.encrypted_fief_admin_password,
         "ADMIN_EMAIL": settings.admin_email,
         "FRONTEND_URL": f"http://{settings.hostname}",
         "FIEF_URL": f"http://{settings.fief_hostname}",
