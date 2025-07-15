@@ -301,8 +301,9 @@ Inside the docker container, run:
 If you want to check the build is working, you could run:
 
 ```bash
-docker build -f docker/Dockerfile -t codecarbon-test .
-docker run -it --rm -v $PWD:/data codecarbon-test /bin/bash
+rm dist/*
+uv build
+docker run -it --rm -v $PWD:/data python:3.13 /bin/bash
 pip install pytest pytest-mock requests-mock responses pandas
 pip install --no-cache-dir /data/dist/codecarbon-*.whl -U --force-reinstall
 cp /data/tests/test_package_integrity.py .
