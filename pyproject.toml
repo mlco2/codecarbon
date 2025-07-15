@@ -7,6 +7,8 @@ name = "codecarbon"
 dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.7"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Mila" },
     { name = "DataForGood" },
@@ -15,7 +17,6 @@ authors = [
     { name = "Haverford College" },
 ]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -45,8 +46,23 @@ dependencies = [
 [tool.setuptools.dynamic]
 version = {attr = "codecarbon._version.__version__"}
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages.find]
 include = ["codecarbon*"]
+exclude = ["*.json", "**/*.csv", "*.geojson"]
+
+[tool.setuptools.package-data]
+codecarbon = [
+    "data/cloud/impact.csv",
+    "data/hardware/cpu_power.csv",
+    "data/canada_provinces.geojson",
+    "data/private_infra/global_energy_mix.json",
+    "data/private_infra/carbon_intensity_per_source.json",
+    "data/private_infra/2016/usa_emissions.json",
+    "data/private_infra/2016/canada_energy_mix.json",
+]
 
 [project.urls]
 Homepage = "https://codecarbon.io/"
@@ -144,7 +160,7 @@ docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.0.3"
+current_version = "3.0.4"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

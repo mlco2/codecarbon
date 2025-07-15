@@ -296,6 +296,20 @@ Inside the docker container, run:
 -   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
 -   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
 
+#### Test the build in Docker
+
+If you want to check the build is working, you could run:
+
+```bash
+rm dist/*
+uv build
+docker run -it --rm -v $PWD:/data python:3.13 /bin/bash
+pip install pytest pytest-mock requests-mock responses pandas
+pip install --no-cache-dir /data/dist/codecarbon-*.whl -U --force-reinstall
+cp /data/tests/test_package_integrity.py .
+pytest test_package_integrity.py
+```
+
 <!-- TOC --><a name="api-and-dashboard"></a>
 ## API and Dashboard
 
