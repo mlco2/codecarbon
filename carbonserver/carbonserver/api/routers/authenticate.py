@@ -118,7 +118,8 @@ async def get_login(
             SESSION_COOKIE_NAME,
             res.json()["access_token"],
             httponly=True,
-            secure=False,
+            secure=True,
+            samesite='Lax',
         )
         return response
 
