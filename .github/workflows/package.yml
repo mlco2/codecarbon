@@ -8,87 +8,110 @@ on:
       - "pyproject.toml"
     branches: [master]
 jobs:
-    build-package:
-      runs-on: ubuntu-latest
+
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - name: Install uv
+      uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
+      with:
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
+    - name: Check versions
+      run: uv run python .github/check_version.py -o
+    - name: Build pip package
+      run: uv build
+    - name: Archive Pypi artifacts
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: pypi_dist
+        path: dist
+
+  test-package-from-wheel:
+    runs-on: ubuntu-24.04
+    needs: [build-package]
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        sparse-checkout: |
+            tests/
+            pytest.ini
+        sparse-checkout-cone-mode: false
+    - name: Install uv
+      uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
+      with:
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
+    - name: Download built package
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      with:
+        name: pypi_dist
+        path: dist
+    - name: Create clean virtual environment
+      run: |
+        uv venv .venv --python 3.12
+        echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+        echo "$PWD/.venv/bin" >> $GITHUB_PATH
+    - name: Install package from wheel (without source)
+      run: |
+        # Install the wheel and test dependencies without the source code
+        uv pip install dist/*.whl
+        uv pip install pytest pytest-mock requests-mock responses pandas
+    - name: Test package integrity
+      run: |
+        # Run the package integrity tests to verify all data files are included
+        uv run python -m pytest tests/test_package_integrity.py -v
+        CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/
+    - name: Test CLI functionality
+      run: |
+        # Test that the CLI is functional
+        codecarbon --help
+        python -c "from codecarbon import EmissionsTracker; print('✓ Package import successful')"
+
+  build-conda:
+      runs-on: ubuntu-24.04
       steps:
-        - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        - name: Install uv
-          uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
-          with:
-            version: "latest"
-        - name: Set up Python
-          run: uv python install 3.12
-        - name: Check versions
-          run: |
-              uv run python .github/check_version.py -o
-        - name: Build pip package
-          run: |
-              uv build
-        - name: Archive Pypi artifacts
-          uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-          with:
-              name: pypi_dist
-              path: dist
-    python-test:
-        runs-on: ubuntu-24.04
-        strategy:
-            matrix:
-              python-version: ["3.9", "3.12", "3.13"]
-        steps:
-        - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        - name: Install uv
-          uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
-          with:
-            version: "latest"
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-          with:
-            python-version: ${{ matrix.python-version }}
-        - name: Install dependencies
-          run: uv sync
-        - name: Test package
-          run: uv run task test-package
-    build-conda:
-        runs-on: ubuntu-24.04
-        steps:
-            - name: Checkout
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-            - name: Cache build
-              uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-              with:
-                path: /tmp/conda-bld
-                key: build-conda-${{ github.sha }}
-            - name: set version
-              run: |
-                python3 .github/pyproject_versions.py --replace True
-            - name: Build conda package
-              uses: prefix-dev/rattler-build-action@20cb88d3095cc01fa181385021c57f886d624879 # v0.2.16
-              with:
-                build-args: --channel codecarbon --channel conda-forge --output-dir /tmp/conda-bld
-                recipe-path: .conda/recipe.yaml
-                upload-artifact: false
-    test-conda:
-        runs-on: ubuntu-24.04
-        needs: [ build-conda ]
-        steps:
-            # Checkout needed to get github.sha
-            - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-            - name: Setup conda
-              uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830 # v3.1.1
-              with:
-                activate-environment: codecarbon
-                miniforge-version: latest
-                python-version: 3.12
-                use-mamba: true
-            - name: Restore build
-              uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-              with:
-                path: /tmp/conda-bld
-                key: build-conda-${{ github.sha }}
-                fail-on-cache-miss: true
-            - name: Install package
-              shell: bash -l {0}
-              run: mamba install --channel file:///tmp/conda-bld --channel codecarbon codecarbon
-            - name: Test conda package
-              shell: bash -l {0}
-              run: codecarbon --help
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Cache build
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: /tmp/conda-bld
+          key: build-conda-${{ github.sha }}
+      - name: set version
+        run: |
+          python3 .github/pyproject_versions.py --replace True
+      - name: Build conda package
+        uses: prefix-dev/rattler-build-action@20cb88d3095cc01fa181385021c57f886d624879 # v0.2.16
+        with:
+          build-args: --channel codecarbon --channel conda-forge --output-dir /tmp/conda-bld
+          recipe-path: .conda/recipe.yaml
+          upload-artifact: false
+  test-conda:
+      runs-on: ubuntu-24.04
+      needs: [ build-conda ]
+      steps:
+      # Checkout needed to get github.sha
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830 # v3.1.1
+        with:
+          activate-environment: codecarbon
+          miniforge-version: latest
+          python-version: 3.12
+          use-mamba: true
+      - name: Restore build
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: /tmp/conda-bld
+          key: build-conda-${{ github.sha }}
+          fail-on-cache-miss: true
+      - name: Install package
+        shell: bash -l {0}
+        run: mamba install --channel file:///tmp/conda-bld --channel codecarbon codecarbon
+      - name: Test conda package
+        shell: bash -l {0}
+        run: codecarbon --help

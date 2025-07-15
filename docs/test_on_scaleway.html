@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test of CodeCarbon on Scaleway hardware &mdash; CodeCarbon 3.0.3 documentation</title>
+  <title>Test of CodeCarbon on Scaleway hardware &mdash; CodeCarbon 3.0.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=9b3fc59f"></script>
+      <script src="_static/documentation_options.js?v=50b65552"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -112,8 +112,8 @@ EM-B112X-SSD    2 x Intel(R) Xeon(R) CPU E5-2620 v3 &#64; 2.40GHz</p>
 <span class="go">git clone https://github.com/mlco2/codecarbon.git</span>
 <span class="go">cd codecarbon</span>
 <span class="go">git checkout use-cpu-load</span>
-<span class="go">pipx install hatch</span>
-<span class="go">hatch run python examples/compare_cpu_load_and_RAPL.py</span>
+<span class="go">curl -LsSf https://astral.sh/uv/install.sh | sh</span>
+<span class="go">uv run python examples/compare_cpu_load_and_RAPL.py</span>
 </pre></div>
 </div>
 <p>To do a full code CPU load, we run the following command:</p>

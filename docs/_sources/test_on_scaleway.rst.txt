@@ -33,8 +33,8 @@ Install and run the test:
     git clone https://github.com/mlco2/codecarbon.git
     cd codecarbon
     git checkout use-cpu-load
-    pipx install hatch
-    hatch run python examples/compare_cpu_load_and_RAPL.py
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    uv run python examples/compare_cpu_load_and_RAPL.py
 
 To do a full code CPU load, we run the following command:
 
