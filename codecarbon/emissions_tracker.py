@@ -758,6 +758,9 @@ class BaseEmissionsTracker(ABC):
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
             wue=self._wue,
+            cpu_utilization_percent=psutil.cpu_percent(),
+            ram_utilization_percent=psutil.virtual_memory().percent,
+            ram_used_gb=psutil.virtual_memory().used / (1024 ** 3),
         )
         logger.debug(total_emissions)
         return total_emissions
