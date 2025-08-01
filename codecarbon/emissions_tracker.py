@@ -13,6 +13,8 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import psutil
+
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
@@ -760,7 +762,7 @@ class BaseEmissionsTracker(ABC):
             wue=self._wue,
             cpu_utilization_percent=psutil.cpu_percent(),
             ram_utilization_percent=psutil.virtual_memory().percent,
-            ram_used_gb=psutil.virtual_memory().used / (1024 ** 3),
+            ram_used_gb=psutil.virtual_memory().used / (1024**3),
         )
         logger.debug(total_emissions)
         return total_emissions

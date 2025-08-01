@@ -259,7 +259,7 @@ class IntelPowerGadget:
         self._windows_exec_backup = None
         self._setup_cli()
 
-    def _setup_cli() -> None:
+    def _setup_cli(self) -> None:
         """
         Setup cli command to run Intel Power Gadget
         """
@@ -362,7 +362,7 @@ class IntelPowerGadget:
             # CPU and RAM utilization
             cpu_details["cpu_utilization_percent"] = psutil.cpu_percent()
             cpu_details["ram_utilization_percent"] = psutil.virtual_memory().percent
-            cpu_details["ram_used_gb"] = psutil.virtual_memory().used / (1024 ** 3)
+            cpu_details["ram_used_gb"] = psutil.virtual_memory().used / (1024**3)
         except Exception as e:
             logger.info(
                 f"Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
@@ -830,7 +830,7 @@ class IntelRAPL:
             # CPU and RAM utilization
             cpu_details["cpu_utilization_percent"] = psutil.cpu_percent()
             cpu_details["ram_utilization_percent"] = psutil.virtual_memory().percent
-            cpu_details["ram_used_gb"] = psutil.virtual_memory().used / (1024 ** 3)
+            cpu_details["ram_used_gb"] = psutil.virtual_memory().used / (1024**3)
         except Exception as e:
             logger.info(
                 "\tRAPL - Unable to read Intel RAPL files at %s\n \
