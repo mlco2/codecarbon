@@ -155,9 +155,29 @@ class TestEmissions(unittest.TestCase):
             ),
         )
 
+        # emissions should be a cross product of the ontario energy mix and the energy intensity
+        # manually_computed_emissions = 3 * (0.995725971 * 0.0 +  0.8166885263 * 0.1 + 0.7438415916 * 8.6 + 0.635 * 0.0 + 0.038 * 0.0 + 0.026 * 23.4 + 0.029 * 50.1 + 0.048 * 5.2 + 0.026 * 11.7) / 100.1 
+        manually_computed_emissions = 3 * (0.995725971 * 0.0 +  0.8166885263 * 0.1 + 0.7438415916 * 8.6 ) / 100.1 
+
+        
+        """
+        formula is 
+        ( coal kgc02 * proportion of coal in the energy mix + 
+        petroleum kgc02 * proportion of petroleum in the energy mix +
+        naturalGas kgc02 * proportion of natural gas in the energy mix) / total energy mix
+
+        # not included are:
+        fossil kgc02 * proportion of fossil in the energy mix +
+        geothermal kgc02 * proportion of geothermal in the energy mix +
+        hydroelectricity kgc02 * proportion of hydroelectricity in the energy mix +
+        nuclear kgc02 * proportion of nuclear in the energy mix +
+        solar kgc02 * proportion of solar in the energy mix +
+        wind kgc02 * proportion of wind in the energy mix) / total energy mix * energy consumed
+        """
+
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.12, places=2)
+        self.assertAlmostEqual(emissions, manually_computed_emissions, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_unknown_country(self):
         """
