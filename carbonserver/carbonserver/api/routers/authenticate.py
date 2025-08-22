@@ -4,7 +4,6 @@ import random
 from typing import Optional
 
 import requests
-from carbonserver.container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import RedirectResponse
@@ -16,6 +15,7 @@ from carbonserver.api.services.auth_service import (
 )
 from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.config import settings
+from carbonserver.container import ServerContainer
 
 AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
 LOGGER = logging.getLogger(__name__)

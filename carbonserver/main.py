@@ -10,8 +10,6 @@ from starlette.responses import JSONResponse
 
 from carbonserver.api.errors import DBException, UserException, get_http_exception
 from carbonserver.api.infra.database import sql_models
-from carbonserver.config import settings
-from carbonserver.container import ServerContainer
 from carbonserver.api.routers import (
     authenticate,
     emissions,
@@ -22,6 +20,8 @@ from carbonserver.api.routers import (
     runs,
     users,
 )
+from carbonserver.config import settings
+from carbonserver.container import ServerContainer
 from carbonserver.database.database import engine
 from carbonserver.logger import logger
 
