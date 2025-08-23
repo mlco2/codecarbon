@@ -1,6 +1,5 @@
 from typing import List
 
-from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
@@ -11,6 +10,7 @@ from carbonserver.api.services.auth_service import (
     UserWithAuthDependency,
 )
 from carbonserver.api.services.project_token_service import ProjectTokenService
+from carbonserver.container import ServerContainer
 
 PROJECTS_TOKENS_ROUTER_TAGS = ["Project tokens"]
 
