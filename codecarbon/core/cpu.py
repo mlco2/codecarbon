@@ -81,6 +81,13 @@ def is_psutil_available():
         return False
 
 
+def is_raspberry() -> bool:
+    """
+    Check if raspberry power util is present
+    """
+    return os.path.exists("/usr/bin/vcgencmd")
+
+
 class IntelPowerGadget:
     """
     A class to interface with Intel Power Gadget for monitoring CPU power consumption on Windows and (non-Apple Silicon) macOS.
