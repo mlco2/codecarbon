@@ -32,16 +32,16 @@ class TestConfig(unittest.TestCase):
 
     def test_parse_gpu_ids(self):
         for ids, target in [
-            ("0,1,2", [0, 1, 2]),
-            ("[0, 1, 2", [0, 1, 2]),
-            ("(0, 1, 2)", [0, 1, 2]),
-            ("[1]", [1]),
-            ("1", [1]),
-            ("0", [0]),
+            ("0,1,2", ["0", "1", "2"]),
+            ("[0, 1, 2", ["0", "1", "2"]),
+            ("(0, 1, 2)", ["0", "1", "2"]),
+            ("[1]", ["1"]),
+            ("1", ["1"]),
+            ("0", ["0"]),
+            ("MIGf1e", ["MIGf1e"]),
             ("", []),
             ([], []),
-            ([1, 2, 3], [1, 2, 3]),
-            (1, 1),
+            ([1, 2, 3], ["1", "2", "3"]),
         ]:
             self.assertEqual(parse_gpu_ids(ids), target)
 
@@ -101,6 +101,7 @@ class TestConfig(unittest.TestCase):
             "USER": "useless key",
             "CODECARBON_ENV_OVERWRITE": "SUCCESS:overwritten",
             "CODECARBON_ENV_NEW_KEY": "cool value",
+            "CODECARBON_ALLOW_MULTIPLE_RUNS": "True",
         },
     )
     def test_read_confs_and_parse_envs(self):
@@ -145,9 +146,8 @@ class TestConfig(unittest.TestCase):
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
             conf = dict(get_hierarchical_config())
-            target = {
-                "allow_multiple_runs": "True"
-            }  # allow_multiple_runs is a default value
+            # allow_multiple_runs is set in pytest.ini and not mocked, so it's visible here.
+            target = {"allow_multiple_runs": "True"}
             self.assertDictEqual(conf, target)
 
     @mock.patch.dict(
@@ -190,7 +190,7 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(tracker._force_ram_power, 50.5)
             self.assertEqual(tracker._output_dir, "/success/overwritten")
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")
-            self.assertEqual(tracker._gpu_ids, [0, 1])
+            self.assertEqual(tracker._gpu_ids, ["0", "1"])
             self.assertEqual(tracker._co2_signal_api_token, "signal-token")
             self.assertEqual(tracker._project_name, "test-project")
             self.assertTrue(tracker._save_to_file)
@@ -206,7 +206,7 @@ class TestConfig(unittest.TestCase):
             tracker = EmissionsTracker(
                 project_name="test-project", allow_multiple_runs=True
             )
-        self.assertEqual(tracker._gpu_ids, [2, 3])
+        self.assertEqual(tracker._gpu_ids, ["2", "3"])
 
     @mock.patch.dict(
         os.environ,
@@ -220,7 +220,7 @@ class TestConfig(unittest.TestCase):
             tracker = EmissionsTracker(
                 project_name="test-project", allow_multiple_runs=True
             )
-        self.assertEqual(tracker._gpu_ids, [99])
+        self.assertEqual(tracker._gpu_ids, ["99"])
         gpu_count = 0
         for hardware in tracker._hardware:
             if isinstance(hardware, GPU):
