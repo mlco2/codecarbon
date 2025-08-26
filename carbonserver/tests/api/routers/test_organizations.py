@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
-from container import ServerContainer
 from dependency_injector import providers
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
@@ -17,6 +16,7 @@ from carbonserver.api.routers import organizations
 from carbonserver.api.routers.authenticate import UserWithAuthDependency
 from carbonserver.api.schemas import Organization, OrganizationUser
 from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
+from carbonserver.container import ServerContainer
 
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 

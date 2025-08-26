@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import dateutil.relativedelta
-from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from starlette import status
@@ -15,6 +14,7 @@ from carbonserver.api.services.auth_service import (
 )
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
+from carbonserver.container import ServerContainer
 
 PROJECTS_ROUTER_TAGS = ["Projects"]
 

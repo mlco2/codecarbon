@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 import jwt
-from container import ServerContainer
 from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyCookie, HTTPBearer, OAuth2AuthorizationCodeBearer
@@ -14,6 +13,7 @@ from starlette.responses import Response
 
 from carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
+from carbonserver.container import ServerContainer
 
 OAUTH_SCOPES = ["openid", "email", "profile"]
 fief = FiefAsync(

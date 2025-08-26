@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import dateutil.relativedelta
-from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr
@@ -23,6 +22,7 @@ from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.usecases.organization.organization_sum import (
     OrganizationSumsUsecase,
 )
+from carbonserver.container import ServerContainer
 
 ORGANIZATIONS_ROUTER_TAGS = ["Organizations"]
 

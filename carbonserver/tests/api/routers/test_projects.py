@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
-from container import ServerContainer
 from dependency_injector import providers
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
@@ -11,6 +10,7 @@ from carbonserver.api.infra.repositories.repository_projects import SqlAlchemyRe
 from carbonserver.api.routers import projects
 from carbonserver.api.schemas import Project
 from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
+from carbonserver.container import ServerContainer
 
 
 @pytest.fixture

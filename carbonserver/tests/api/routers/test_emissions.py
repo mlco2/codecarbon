@@ -2,7 +2,6 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
-from container import ServerContainer
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from fastapi_pagination import add_pagination
@@ -16,6 +15,7 @@ from carbonserver.api.infra.repositories.repository_projects_tokens import (
 )
 from carbonserver.api.routers import emissions
 from carbonserver.api.schemas import AccessLevel, Emission, ProjectToken
+from carbonserver.container import ServerContainer
 
 RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
 RUN_2_ID = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
