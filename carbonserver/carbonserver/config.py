@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     jwt_key: str = Field("", env="JWT_KEY")
     logfire_token: str = Field("", env="LOGFIRE_TOKEN")
     send_to_logfire: bool = Field(False, env="LOGFIRE_SEND_TO_LOGFIRE")
+    api_port: int = Field(8080, env="API_PORT")
+    server_host: str = Field("0.0.0.0", env="SERVER_HOST")
 
 
 settings = Settings()

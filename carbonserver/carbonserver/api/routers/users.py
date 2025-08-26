@@ -1,9 +1,9 @@
-from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, status
 
 from carbonserver.api.schemas import User
 from carbonserver.api.services.user_service import UserService
+from carbonserver.container import ServerContainer
 
 USERS_ROUTER_TAGS = ["Users"]
 

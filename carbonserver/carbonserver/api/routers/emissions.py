@@ -1,7 +1,6 @@
 from typing import Generic, TypeVar
 from uuid import UUID
 
-from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Header, Query
 from fastapi_pagination import Page, paginate
@@ -12,6 +11,7 @@ from starlette import status
 from carbonserver.api.schemas import AccessLevel, Emission, EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.project_token_service import ProjectTokenService
+from carbonserver.container import ServerContainer
 
 # T, Params and Page are needed to override default pagination of get_emissions_from_run
 T = TypeVar("T")
