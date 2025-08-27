@@ -4,7 +4,7 @@ from unittest import mock
 
 from codecarbon.core.units import Power
 from codecarbon.emissions_tracker import OfflineEmissionsTracker
-from codecarbon.external.hardware import CPU, MODE_CPU_LOAD
+from codecarbon.external.hardware import CPU, MODE_CPU_LOAD, AppleSiliconChip
 
 
 @mock.patch("codecarbon.core.cpu.is_psutil_available", return_value=True)
@@ -57,7 +57,9 @@ class TestCPULoad(unittest.TestCase):
     ):
         tracker = OfflineEmissionsTracker(country_iso_code="FRA")
         for hardware in tracker._hardware:
-            if isinstance(hardware, CPU) and hardware._mode == MODE_CPU_LOAD:
+            if (
+                isinstance(hardware, CPU) and hardware._mode == MODE_CPU_LOAD
+            ) or isinstance(hardware, AppleSiliconChip):
                 break
         else:
             raise Exception("No CPU load !!!")
