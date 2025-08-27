@@ -183,11 +183,18 @@ class ResourceTracker:
     def set_GPU_tracking(self):
         logger.info("[setup] GPU Tracking...")
         if self.tracker._gpu_ids:
-            self.tracker._gpu_ids = parse_gpu_ids(self.tracker._gpu_ids)
-            if self.tracker._gpu_ids:
+            # If _gpu_ids is a string or a list of int, parse it to a list of ints
+            if isinstance(self.tracker._gpu_ids, str) or (
+                isinstance(self.tracker._gpu_ids, list)
+                and all(isinstance(gpu_id, int) for gpu_id in self.tracker._gpu_ids)
+            ):
+                self.tracker._gpu_ids: List[int] = parse_gpu_ids(self.tracker._gpu_ids)
                 self.tracker._conf["gpu_ids"] = self.tracker._gpu_ids
                 self.tracker._conf["gpu_count"] = len(self.tracker._gpu_ids)
-
+            else:
+                logger.warning(
+                    "Invalid gpu_ids format. Expected a string or a list of ints."
+                )
         if gpu.is_gpu_details_available():
             logger.info("Tracking Nvidia GPU via pynvml")
             gpu_devices = GPU.from_utils(self.tracker._gpu_ids)
