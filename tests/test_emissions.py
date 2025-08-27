@@ -154,10 +154,13 @@ class TestEmissions(unittest.TestCase):
                 country_iso_code="CAN", country_name="Canada", region="ontario"
             ),
         )
+        manually_computed_emissions = (
+            3 * (0.995725971 * 0.0 + 0.8166885263 * 0.1 + 0.7438415916 * 8.6) / 100.1
+        )
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.12, places=2)
+        self.assertAlmostEqual(emissions, manually_computed_emissions, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_unknown_country(self):
         """
