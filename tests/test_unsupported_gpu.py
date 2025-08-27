@@ -20,7 +20,7 @@ class TestUnsupportedGPU(unittest.TestCase):
             os.remove(self.output_csv)
 
     # If we run this on macOS, NVMLError_NotSupported has no effect
-    # and we end up with non-zero valus for GPU energy and power because
+    # and we end up with non-zero values for GPU energy and power because
     # we use the non-NVML code-path in hardware.AppleSiliconChip().
     @unittest.skipIf(sys.platform == "darwin", "NVML not available on macOS")
     @patch("codecarbon.core.gpu.pynvml")
