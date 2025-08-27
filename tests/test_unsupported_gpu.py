@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -18,6 +19,10 @@ class TestUnsupportedGPU(unittest.TestCase):
         if os.path.exists(self.output_csv):
             os.remove(self.output_csv)
 
+    # If we run this on macOS, NVMLError_NotSupported has no effect
+    # and we end up with non-zero valus for GPU energy and power because
+    # we use the non-NVML code-path in hardware.AppleSiliconChip().
+    @unittest.skipIf(sys.platform == "darwin", "NVML not available on macOS")
     @patch("codecarbon.core.gpu.pynvml")
     def test_emissions_tracker_unsupported_gpu(self, mock_pynvml):
         mock_pynvml.NVMLError_NotSupported = self.NVMLError_NotSupported
