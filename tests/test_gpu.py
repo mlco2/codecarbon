@@ -50,7 +50,7 @@ class FakeGPUEnv:
         self.DETAILS = {
             "handle_0": {
                 "name": b"GeForce GTX 1080",
-                "uuid": b"uuid#1",
+                "uuid": b"uuid-1",
                 "memory": real_pynvml.c_nvmlMemory_t(1024, 100, 924),
                 "temperature": 75,
                 "power_usage": 26,
@@ -66,7 +66,7 @@ class FakeGPUEnv:
             },
             "handle_1": {
                 "name": b"GeForce GTX 1080",
-                "uuid": b"uuid#2",
+                "uuid": b"uuid-2",
                 "memory": real_pynvml.c_nvmlMemory_t(1024, 200, 824),
                 "temperature": 79,
                 "power_usage": 29,
@@ -84,7 +84,7 @@ class FakeGPUEnv:
         self.expected = [
             {
                 "name": "GeForce GTX 1080",
-                "uuid": "uuid#1",
+                "uuid": "uuid-1",
                 "total_memory": 1024,
                 "free_memory": 100,
                 "used_memory": 924,
@@ -102,7 +102,7 @@ class FakeGPUEnv:
             },
             {
                 "name": "GeForce GTX 1080",
-                "uuid": "uuid#2",
+                "uuid": "uuid-2",
                 "total_memory": 1024,
                 "free_memory": 200,
                 "used_memory": 824,
@@ -146,14 +146,14 @@ class TestGpu(FakeGPUEnv):
         expected = [
             {
                 "name": "GeForce GTX 1080",
-                "uuid": "uuid#1",
+                "uuid": "uuid-1",
                 "total_memory": 1024,
                 "power_limit": 149,
                 "gpu_index": 0,
             },
             {
                 "name": "GeForce GTX 1080",
-                "uuid": "uuid#2",
+                "uuid": "uuid-2",
                 "total_memory": 1024,
                 "power_limit": 149,
                 "gpu_index": 1,
@@ -310,6 +310,33 @@ class TestGpu(FakeGPUEnv):
         gpu2_power = Power.from_energies_and_delay(gpu2_energy1, gpu2_energy2, Time(5))
         expected_power = gpu2_power
         tc.assertAlmostEqual(expected_power.kW, gpu.total_power().kW)
+
+    def test_get_gpu_ids(self):
+        """
+        Check parsing of gpu_ids in various forms.
+        """
+        # Prepare
+        from codecarbon.external.hardware import GPU
+
+        for test_ids, expected_ids in [
+            ([0, 1], [0, 1]),
+            ([0, 1, 2], [0, 1]),
+            ([2], []),
+            (["0", "1"], [0, 1]),
+            # Only two GPUS in the system, so ignore the third (index 2)
+            (["0", "1", "2"], [0, 1]),
+            (["2"], []),
+            # Check UUID-to-index mapping
+            (["uuid-1"], [0]),
+            (["uuid-1", "uuid-2"], [0, 1]),
+            (["uuid-3"], []),
+            # Check UUID-to-index mapping when we need to strip the prefix
+            (["MIG-uuid-1"], [0]),
+            (["MIG-uuid-3"], []),
+        ]:
+            gpu = GPU(test_ids)
+            result = gpu._get_gpu_ids()
+            assert result == expected_ids
 
 
 class TestGpuNotAvailable:

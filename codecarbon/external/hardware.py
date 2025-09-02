@@ -102,25 +102,40 @@ class GPU(BaseHardware):
         Get the Ids of the GPUs that we will monitor
         :return: list of ids
         """
-        gpu_ids = []
         if self.gpu_ids is not None:
-            # Check that the provided GPU ids are valid
-            if not set(self.gpu_ids).issubset(set(range(self.num_gpus))):
-                logger.warning(
-                    f"Unknown GPU ids {gpu_ids}, only {self.num_gpus} GPUs available."
-                )
-            # Keep only the GPUs that are in the provided list
-            for gpu_id in range(self.num_gpus):
-                if gpu_id in self.gpu_ids:
-                    gpu_ids.append(gpu_id)
+            uuids_to_ids = {
+                gpu.get("uuid"): gpu.get("gpu_index")
+                for gpu in self.devices.get_gpu_static_info()
+            }
+            monitored_gpu_ids = []
+
+            for gpu_id in self.gpu_ids:
+                found_gpu_id = False
+                # Is it an index into the number of GPUs on the system?
+                if isinstance(gpu_id, int) or gpu_id.isdigit():
+                    gpu_id = int(gpu_id)
+                    if 0 <= gpu_id < self.num_gpus:
+                        monitored_gpu_ids.append(gpu_id)
+                        found_gpu_id = True
+                # Check if it matches a prefix of any UUID on the system after stripping any 'MIG-'
+                # id prefix per https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-environment-variables
                 else:
-                    logger.info(
-                        f"GPU number {gpu_id} will not be monitored, at your request."
+                    stripped_gpu_id_str = gpu_id.lstrip("MIG-")
+                    for uuid, id in uuids_to_ids.items():
+                        if uuid.startswith(stripped_gpu_id_str):
+                            monitored_gpu_ids.append(id)
+                            found_gpu_id = True
+                            break
+                if not found_gpu_id:
+                    logger.warning(
+                        f"GPU with ID '{gpu_id}' not found or invalid. It will be ignored."
                     )
-            self.gpu_ids = gpu_ids
+
+            monitored_gpu_ids = sorted(list(set(monitored_gpu_ids)))
+            self.gpu_ids = monitored_gpu_ids
+            return monitored_gpu_ids
         else:
-            gpu_ids = set(range(self.num_gpus))
-        return gpu_ids
+            return list(range(self.num_gpus))
 
     def total_power(self) -> Power:
         return self._total_power
@@ -135,7 +150,7 @@ class GPU(BaseHardware):
         new_gpu_ids = gpus._get_gpu_ids()
         if len(new_gpu_ids) < gpus.num_gpus:
             logger.warning(
-                f"You have {gpus.num_gpus} GPUs but we will monitor only {len(gpu_ids)} of them. Check your configuration."
+                f"You have {gpus.num_gpus} GPUs but we will monitor only {len(new_gpu_ids)} ({new_gpu_ids}) of them. Check your configuration."
             )
         return cls(gpu_ids=new_gpu_ids)
 
