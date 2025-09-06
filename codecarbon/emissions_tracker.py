@@ -843,7 +843,7 @@ class BaseEmissionsTracker(ABC):
             raise e
 
         warning_duration = self._measure_power_secs * 3
-        if last_duration > warning_duration and self._active_task is None:
+        if last_duration > warning_duration and not self._scheduler._stopped:
             warn_msg = (
                 "Background scheduler didn't run for a long period"
                 + " (%ds), results might be inaccurate"
