@@ -520,7 +520,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
         self.assertIsInstance(tracker.final_emissions, float)
-    
+
     @mock.patch("codecarbon.emissions_tracker.logger")
     def test_scheduler_warning_suppressed_when_stopped(
         self,
@@ -538,24 +538,31 @@ class TestCarbonTracker(unittest.TestCase):
         ) as tracker:
             # Stop the scheduler to simulate task mode or manual stopping
             tracker._scheduler.stop()
-            
+
             # Artificially set last measured time to simulate long delay
             import time
+
             tracker._last_measured_time = time.perf_counter() - 10  # 10 seconds ago
-            
+
             # Reset mock to clear any previous warning calls
             mock_logger.warning.reset_mock()
-            
+
             # Call _measure_power_and_energy directly - this would normally trigger warning
             tracker._measure_power_and_energy()
-            
+
             # Verify that if warning was called, it wasn't the scheduler warning
             if mock_logger.warning.called:
                 for call in mock_logger.warning.call_args_list:
                     args, kwargs = call
-                    if args and "Background scheduler didn't run for a long period" in str(args[0]):
-                        self.fail("Scheduler warning was called when it should have been suppressed")
-    
+                    if (
+                        args
+                        and "Background scheduler didn't run for a long period"
+                        in str(args[0])
+                    ):
+                        self.fail(
+                            "Scheduler warning was called when it should have been suppressed"
+                        )
+
     @mock.patch("codecarbon.emissions_tracker.logger")
     def test_scheduler_warning_shown_when_running(
         self,
@@ -573,24 +580,31 @@ class TestCarbonTracker(unittest.TestCase):
         ) as tracker:
             # Ensure scheduler is running (default state)
             self.assertFalse(tracker._scheduler._stopped)
-            
+
             # Artificially set last measured time to simulate long delay
             import time
+
             tracker._last_measured_time = time.perf_counter() - 10  # 10 seconds ago
-            
+
             # Reset mock to clear any previous warning calls
             mock_logger.warning.reset_mock()
-            
+
             # Call _measure_power_and_energy directly - this should trigger warning
             tracker._measure_power_and_energy()
-            
+
             # Verify warning was logged since scheduler should be running
             scheduler_warning_found = False
             if mock_logger.warning.called:
                 for call in mock_logger.warning.call_args_list:
                     args, kwargs = call
-                    if args and "Background scheduler didn't run for a long period" in str(args[0]):
+                    if (
+                        args
+                        and "Background scheduler didn't run for a long period"
+                        in str(args[0])
+                    ):
                         scheduler_warning_found = True
                         break
-            
-            self.assertTrue(scheduler_warning_found, "Expected scheduler warning was not found")
+
+            self.assertTrue(
+                scheduler_warning_found, "Expected scheduler warning was not found"
+            )
