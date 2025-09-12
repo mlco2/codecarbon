@@ -111,18 +111,21 @@ class GPU(BaseHardware):
 
             for gpu_id in self.gpu_ids:
                 found_gpu_id = False
-                # Is it an index into the number of GPUs on the system?
+                # Does it look like an index into the number of GPUs on the system?
                 if isinstance(gpu_id, int) or gpu_id.isdigit():
                     gpu_id = int(gpu_id)
                     if 0 <= gpu_id < self.num_gpus:
                         monitored_gpu_ids.append(gpu_id)
                         found_gpu_id = True
-                # Check if it matches a prefix of any UUID on the system after stripping any 'MIG-'
-                # id prefix per https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-environment-variables
+                # Does it match a prefix of any UUID on the system after stripping any 'MIG-'
+                # id prefix per https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-environment-variables ?
                 else:
                     stripped_gpu_id_str = gpu_id.lstrip("MIG-")
                     for uuid, id in uuids_to_ids.items():
                         if uuid.startswith(stripped_gpu_id_str):
+                            logger.debug(
+                                f"Matching GPU ID {stripped_gpu_id_str} (originally {gpu_id}) against {uuid} for GPU index {id}"
+                            )
                             monitored_gpu_ids.append(id)
                             found_gpu_id = True
                             break
