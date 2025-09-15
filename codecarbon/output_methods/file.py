@@ -36,7 +36,11 @@ class FileOutput(BaseOutput):
     def has_valid_headers(self, data: EmissionsData):
         with open(self.save_file_path) as csv_file:
             csv_reader = csv.DictReader(csv_file)
-            dict_from_csv = dict(list(csv_reader)[0])
+            csv_entries_list = list(csv_reader)
+            if len(csv_entries_list) == 0:
+                # No entries
+                return True
+            dict_from_csv = dict(csv_entries_list[0])
             list_of_column_names = list(dict_from_csv.keys())
             return list(data.values.keys()) == list_of_column_names
 
@@ -48,7 +52,7 @@ class FileOutput(BaseOutput):
         """
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(total):
-            logger.warning("The CSV format have changed, backing up old emission file.")
+            logger.warning("The CSV format has changed, backing up old emission file.")
             backup(self.save_file_path)
             file_exists = False
         new_df = pd.DataFrame.from_records([dict(total.values)])
