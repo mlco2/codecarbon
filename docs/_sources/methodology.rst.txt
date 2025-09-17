@@ -237,6 +237,7 @@ CPU metrics priority
 
 CodeCarbon will first try to read the energy consumption of the CPU from low level interface like RAPL or ``powermetrics``.
 If none of the tracking tools are available, CodeCarbon will be switched to a fallback mode:
+
 - It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
 - If the CPU is not found in the data source, a global constant will be applied.
 - If ``psutil`` is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.
@@ -317,6 +318,7 @@ The equivalent emissions are calculated using this formula:
    \text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}
 
 For example:
+
 - **Car Usage**: *1 kWh* of energy consumption is approximately equivalent to:
 
   - *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
