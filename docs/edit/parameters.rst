@@ -22,14 +22,14 @@ Input Parameters
    * - measure_power_secs
      - Interval (in seconds) to measure hardware power usage, defaults to ``15``
    * - tracking_mode
-     - | ``machine`` measure the power consumptions of the entire machine (defaults)
+     - | ``machine`` measure the power consumptions of the entire machine (default)
        | ``process`` try and isolate the tracked processes in isolation
    * - gpu_ids
      - | Comma-separated list of GPU ids to track, defaults to ``None``
        | These can either be integer indexes of GPUs on the system, or prefixes
        | to match against GPU identifiers as described `here <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-environment-variables>`_
    * - log_level
-     - | Global codecarbon log level (by order of verbosity): "debug", "info" (defaults),
+     - | Global codecarbon log level (by order of verbosity): "debug", "info" (default),
        | "warning", "error", or "critical"
    * - co2_signal_api_token
      - | API token for co2signal.com (requires sign-up for free beta)
@@ -51,10 +51,10 @@ Input Parameters
        | on the same machine is allowed,
        | defaults to ``True`` since v3. Used to be ``False`` in v2.
 
-PUE is a multiplication factor provided by the user, so it is up to the user to get it from his cloud provider.
-Old data-centers have a PUE up to 2.2, where new green one could be as low as 1.1.
+PUE is a multiplication factor provided by the user, so it is up to the user to get it from their cloud provider.
+Old data-centers have a PUE up to 2.2, where new greener ones could be as low as 1.1.
 
-If you, or your provider, use ``CUDA_VISIBLE_DEVICES`` to set the GPU you want to use, CodeCarbon will automaticly set this value to ``gpu_ids``.
+If you, or your provider, use ``CUDA_VISIBLE_DEVICES`` to set the GPUs you want to use, CodeCarbon will automaticly populate this value into ``gpu_ids``.
 If you set ``gpu_ids`` manually, it will override the ``CUDA_VISIBLE_DEVICES`` for CodeCarbon measures.
 
 Output parameters
@@ -124,9 +124,9 @@ Specific parameters for offline mode
    * - country_iso_code
      - | 3-letter ISO Code of the country
        | where the experiment is being run.
-       | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`_
+       | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`__
    * - region
-     - | Optional Name of the Province/State/City, where the infrastructure is hosted
+     - | Optional name of the Province/State/City, where the infrastructure is hosted
        | Currently, supported only for US States and Canada
        | for example - California or New York, from the `list <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json>`_
    * - cloud_provider
@@ -159,7 +159,7 @@ Decorator ``track_emissions`` in addition to standard arguments, requires the fo
        | defaults to ``False``
    * - country_iso_code
      - | 3 letter ISO Code of the country where the experiment is being run.
-       | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json>`_
+       | Available countries are listed in `global_energy_mix.json <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/global_energy_mix.json>`__
    * - region
      - | Optional Name of the Province/State/City, where the infrastructure is hosted
        | Currently, supported only for US States

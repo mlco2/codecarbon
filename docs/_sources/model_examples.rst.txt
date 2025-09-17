@@ -92,7 +92,7 @@ NB : presented on a log scale
 
 References
 ----------
-`Measuring the Carbon intensity of AI in Cloud Instance <https://facctconference.org/static/pdfs_2022/facct22-145.pdf>`_
+`Measuring the Carbon intensity of AI in Cloud Instance <https://dl.acm.org/doi/10.1145/3531146.3533234>`_
 
 Another source comparing models carbon intensity:
 `Energy and Policy Considerations for Deep Learning in NLP <https://arxiv.org/pdf/1906.02243.pdf>`_

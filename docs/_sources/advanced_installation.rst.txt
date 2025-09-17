@@ -122,7 +122,7 @@ This section describes how to deploy CodeCarbon as a system service using Ansibl
 It automate the manual installation done in the previous chapter.
 
 What the Playbook Does
---------------------
+----------------------
 The Ansible playbook automates the following tasks:
 
 * Creates a dedicated system user and group for CodeCarbon
@@ -134,14 +134,14 @@ The Ansible playbook automates the following tasks:
 * Starts and enables the service
 
 Prerequisites
-------------
+-------------
 * Ansible installed on your machine
 * Debian-based target system(s)
 * SSH access to target system(s)
 * CodeCarbon API credentials from the dashboard
 
 Directory Structure
------------------
+-------------------
 .. code-block:: text
 
     codecarbon/deploy/ansible/codecarbon_cli_as_a_service/
@@ -158,11 +158,11 @@ Directory Structure
         └── main.yml
 
 Quick Start
-----------
+-----------
 
 1. Set the the target to install in ``hosts``:
 
-   .. code-block:: txt
+   .. code-block:: text
 
        yourservername.yourdomain.com   hostname=yourservername ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
 
