@@ -308,11 +308,13 @@ package-0-die-1 : 166 W</p>
 <section id="cpu-metrics-priority">
 <h2>CPU metrics priority<a class="headerlink" href="#cpu-metrics-priority" title="Link to this heading"></a></h2>
 <p>CodeCarbon will first try to read the energy consumption of the CPU from low level interface like RAPL or <code class="docutils literal notranslate"><span class="pre">powermetrics</span></code>.
-If none of the tracking tools are available, CodeCarbon will be switched to a fallback mode:
-- It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
-- If the CPU is not found in the data source, a global constant will be applied.
-- If <code class="docutils literal notranslate"><span class="pre">psutil</span></code> is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.
-- CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.</p>
+If none of the tracking tools are available, CodeCarbon will be switched to a fallback mode:</p>
+<ul class="simple">
+<li><p>It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).</p></li>
+<li><p>If the CPU is not found in the data source, a global constant will be applied.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">psutil</span></code> is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.</p></li>
+<li><p>CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.</p></li>
+</ul>
 <p>Here is a drawing of the fallback mode:</p>
 <img alt="CPU Fallback" class="align-center" src="_images/cpu_fallback.png" />
 <p>The code doing this is available in <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L24">codecarbon/core/resource_tracker.py</a>.</p>
@@ -368,15 +370,14 @@ If none of the tracking tools are available, CodeCarbon will be switched to a fa
 <p>The equivalent emissions are calculated using this formula:</p>
 <div class="math notranslate nohighlight">
 \[\text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}\]</div>
-<p>For example:
-- <strong>Car Usage</strong>: <em>1 kWh</em> of energy consumption is approximately equivalent to:</p>
-<blockquote>
-<div><ul class="simple">
+<p>For example:</p>
+<ul class="simple">
+<li><p><strong>Car Usage</strong>: <em>1 kWh</em> of energy consumption is approximately equivalent to:</p>
+<ul>
 <li><p><em>8.33 kilometers driven by a car</em> (<em>1 ÷ 0.12</em>).</p></li>
 <li><p><em>11.9 hours of TV usage</em> (<em>1 ÷ 0.084</em>), if emissions are considered.</p></li>
 </ul>
-</div></blockquote>
-<ul class="simple">
+</li>
 <li><p><strong>US Citizen Emissions</strong>:</p>
 <ul>
 <li><p><em>1 kWh</em> of energy consumption can be compared to a fraction of the average weekly emissions of a US citizen:</p></li>
