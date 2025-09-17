@@ -24,7 +24,7 @@ energy sources that are used to generate electricity, including fossil fuels and
             :height: 300px
             :width: 350px
 
-When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`_ ) or per country ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`_ ).
+When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv>`__) or per country ( `here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json>`__ ).
 
 If we don't have the global carbon intensity or electricity of a country, but we have its electricity mix, we used to compute the carbon intensity of electricity using this table:
 
@@ -63,9 +63,9 @@ Then, for example, if the Energy Mix of the Grid Electricity is 25% Coal, 35% Pe
 
     Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
 
-But it doesn't happen anymore because Our World in Data now provides the global carbon intensity of electricity per country ( `source <https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data>`_ ). Some countries are missing data for last year, so we use the previous year data available.
+But it doesn't happen anymore because Our World in Data now provides the global carbon intensity of electricity per country ( `source <https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data>`__ ). Some countries are missing data for last year, so we use the previous year data available.
 
-If ever we have neither the global carbon intensity of a country nor it's electricity mix, we apply a world average of 475 gCO2.eq/KWh ( `source <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_ ).
+If ever we have neither the global carbon intensity of a country nor it's electricity mix, we apply a world average of 475 gCO2.eq/KWh ( `source <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`__ ).
 
 As you can see, we try to be as accurate as possible in estimating carbon intensity of electricity. Still there is room for improvement and all contributions are welcome.
 
@@ -86,7 +86,7 @@ Tracks Nvidia GPUs energy consumption using ``pynvml`` library (installed with t
 RAM
 ~~~~
 
-CodeCarbon v2 uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`_ .
+CodeCarbon v2 uses a 3 Watts for 8 GB ratio `source <https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use>`__ .
 
 But this is not a good measure because it doesn't take into account the number of RAM slots used in the machine, that really drive the power consumption, not the amount of RAM.
 For example, in servers you could have thousands of GB of RAM but the power consumption would not be proportional to the amount of memory used, but to the number of memory modules used.
@@ -143,7 +143,7 @@ CPU
 
 - **On Windows or Mac (Intel)**
 
-Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`_ . But has been discontinued. There is a discussion about it on `github issues #457 <https://github.com/mlco2/codecarbon/issues/457>`_.
+Tracks Intel processors energy consumption using the ``Intel Power Gadget``. You need to install it yourself from this `source <https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html>`__ . But has been discontinued. There is a discussion about it on `github issues #457 <https://github.com/mlco2/codecarbon/issues/457>`_.
 
 - **Apple Silicon Chips (M1, M2)**
 
@@ -179,7 +179,7 @@ All CPUs listed in this directory will be tracked.
 CPU hardware
 ------------
 
-The CPU die is the processing unit itself. It's a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible1. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.
+The CPU die is the processing unit itself. It's a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.
 
 In Linux kernel, energy_uj is a current energy counter in micro joules. It is used to measure CPU core's energy consumption.
 
@@ -191,22 +191,22 @@ For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read 
 
 RAPL Metrics
 ------------
-RAPL stand for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
+RAPL stands for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
 
 See https://blog.chih.me/read-cpu-power-with-RAPL.html for more information.
 
 Despite the name Intel RAPL, it support AMD processors since kernel 5.8.
 
-It is some files in /sys/class/powercap/intel-rapl/subsystem/ that give the energy consumption of the CPU, and sometime RAM.
-There are folder for each `domain`, and in each folder there are a file `name` with the name of the domain and a `energy_uj` for the amount of energy in micro-joules.
+It is some files in /sys/class/powercap/intel-rapl/subsystem/ that give the energy consumption of the CPU, and sometimes RAM.
+There are folders for each `domain`, and in each folder there is a file `name` with the name of the domain and an `energy_uj` for the amount of energy in micro-joules.
 
-The drawback of RAPL is that not every CPU use it the same way. We focus on the `package` domain, but some CPU have more domain like `core`, `uncore`, `dram`, `psys`, `gpu`, `psys` and `psys-io`.
+The drawback of RAPL is that not every CPU uses it the same way. We focus on the `package` domain, but some CPUs have more domains like `core`, `uncore`, `dram`, `psys`, `gpu`, `psys` and `psys-io`.
 
 For example :
-- Intel put all the physical cores consumption in `core` and the `package` include `core`.
-- For AMD, `core` have very low energy, so we don't know if it is included in the `package` or not.
+- Intel puts all the physical cores consumption in `core` and the `package` includes `core`.
+- For AMD, `core` has very low energy, so we don't know if it is included in the `package` or not.
 
-Our friend from Scaphandre, a tool to monitor energy consumption, have a good article about RAPL https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html and also a discussion with good references: https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231 and point out that this topic is not well documented.
+Our friends from Scaphandre, a tool to monitor energy consumption, have a good article about RAPL https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html and also a discussion with good references: https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231 and point out that this topic is not well documented.
 
 
 
@@ -223,8 +223,8 @@ CodeCarbon : 137 W
 
 Power plug measure when loaded (100% CPU): 256 W - 125W in idle = 131 W
 CorWatt	PkgWatt
-	133.13	169.82
-	7.54	169.82
+133.13	169.82
+7.54	169.82
 CodeCarbon : 330 W
 package-0-die-0 : 166 W
 package-0-die-1 : 166 W
@@ -237,10 +237,10 @@ CPU metrics priority
 
 CodeCarbon will first try to read the energy consumption of the CPU from low level interface like RAPL or ``powermetrics``.
 If none of the tracking tools are available, CodeCarbon will be switched to a fallback mode:
- - It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
- - If the CPU is not found in the data source, a global constant will be applied.
- - If ``psutil`` is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.
- - CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
+- It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).
+- If the CPU is not found in the data source, a global constant will be applied.
+- If ``psutil`` is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.
+- CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.
 
 Here is a drawing of the fallback mode:
 
@@ -315,13 +315,15 @@ The equivalent emissions are calculated using this formula:
 
 .. math::
    \text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}
-For example:
 
+For example:
 - **Car Usage**: *1 kWh* of energy consumption is approximately equivalent to:
+
   - *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
   - *11.9 hours of TV usage* (*1 ÷ 0.084*), if emissions are considered.
 
 - **US Citizen Emissions**:
+
   - *1 kWh* of energy consumption can be compared to a fraction of the average weekly emissions of a US citizen:
 
 .. math::
