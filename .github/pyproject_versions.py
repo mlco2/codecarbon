@@ -164,9 +164,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-r",
         "--replace",
-        type=bool,
-        default=False,
-        required=False,
+        action="store_true",
         help="replace in file",
     )
     parser.add_argument(
@@ -179,8 +177,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o",
         "--only_package_version",
-        type=bool,
-        default=False,
+        action="store_true",
         help="Only display current package version",
     )
     parser.add_argument(
@@ -204,7 +201,7 @@ if __name__ == "__main__":
     info = get_versions()
     file = args.filename
     if args.only_package_version:
-        print(f'{info["package_version"]}')  # Fixed: was "openfisca_france"
+        print(f'{info["package_version"]}')
         exit()
     logging.info("Versions :")
     print(info)  # noqa: T201
