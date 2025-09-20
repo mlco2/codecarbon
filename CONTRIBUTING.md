@@ -273,7 +273,7 @@ to regenerate the html files.
 
 - Merge all PRs.
 - Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
-- Run `uv run python3 .github/check_version.py` to check version consistancy.
+- Run `uv run python .github/pyproject_versions.py -c` to check version consistancy.
 - Update the dependencies with `uv sync --upgrade`
 - [Build Documentation](#documentation) with `uv run --only-group doc task docs`.
 - Push the changes.

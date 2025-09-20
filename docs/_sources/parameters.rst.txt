@@ -25,7 +25,9 @@ Input Parameters
      - | ``machine`` measure the power consumptions of the entire machine (defaults)
        | ``process`` try and isolate the tracked processes in isolation
    * - gpu_ids
-     - User-specified known gpu ids to track, defaults to ``None``
+     - | Comma-separated list of GPU ids to track, defaults to ``None``
+       | These can either be integer indexes of GPUs on the system, or prefixes
+       | to match against GPU identifiers as described `here <https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-environment-variables>`_
    * - log_level
      - | Global codecarbon log level (by order of verbosity): "debug", "info" (defaults),
        | "warning", "error", or "critical"
