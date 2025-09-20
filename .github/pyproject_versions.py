@@ -68,7 +68,7 @@ def get_all_versions() -> dict:
     return versions
 
 
-def check_version_coherence() -> bool:
+def check_version_coherence(quiet=False) -> bool:
     """
     Check that all version files have the same version.
 
@@ -82,9 +82,10 @@ def check_version_coherence() -> bool:
 
         if len(unique_versions) == 1:
             version = list(unique_versions)[0]
-            logging.info(
-                f"✓ Version coherence check passed. All files have version: {version}"
-            )
+            if not quiet:
+                logging.info(
+                    f"✓ Version coherence check passed. All files have version: {version}"
+                )
             return True
         else:
             logging.error(
@@ -194,7 +195,7 @@ if __name__ == "__main__":
         sys.exit(0 if coherence_ok else 1)
 
     # Always check coherence before doing replacements or showing versions
-    if not check_version_coherence():
+    if not check_version_coherence(quiet=True):
         logging.error("Aborting due to version coherence issues.")
         sys.exit(1)
 

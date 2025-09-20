@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python
       run: uv python install 3.12
     - name: Check versions
-      run: uv run python .github/check_version.py -o
+      run: uv run python .github/pyproject_versions.py  -o
     - name: Build pip package
       run: uv build
     - name: Archive Pypi artifacts
@@ -83,7 +83,7 @@ jobs:
           key: build-conda-${{ github.sha }}
       - name: set version
         run: |
-          python3 .github/pyproject_versions.py --check_coherence --replace True
+          python3 .github/pyproject_versions.py --check_coherence --replace
       - name: Build conda package
         uses: prefix-dev/rattler-build-action@20cb88d3095cc01fa181385021c57f886d624879 # v0.2.16
         with:
