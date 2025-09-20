@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python
       run: uv python install 3.12
     - name: Check versions
-      run: uv run python .github/pyproject_versions.py  -o
+      run: uv run python .github/pyproject_versions.py -o
     - name: Build pip package
       run: uv build
     - name: Archive Pypi artifacts
