@@ -16,6 +16,7 @@ from rapidfuzz import fuzz, process, utils
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
