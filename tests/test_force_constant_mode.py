@@ -6,7 +6,6 @@ from unittest import mock
 
 import pandas as pd
 
-from codecarbon.core import cpu
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
@@ -39,21 +38,21 @@ class TestForceConstantMode(unittest.TestCase):
     def test_force_constant_mode_online(self):
         """Test force_mode_constant parameter with online tracker"""
         tracker = EmissionsTracker(
-            output_dir=self.emissions_path, 
+            output_dir=self.emissions_path,
             output_file=self.emissions_file,
-            force_mode_constant=True
+            force_mode_constant=True,
         )
         tracker.start()
         light_computation(run_time_secs=1)
         emissions = tracker.stop()
-        
+
         # Check that emissions were calculated
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
-        
+
         # Verify output file was created
         self.verify_output_file(self.emissions_file_path)
-        
+
         # Check CSV content shows constant mode
         df = pd.read_csv(self.emissions_file_path)
         # The cpu_power should be a constant value (not varying like in load mode)
@@ -65,12 +64,12 @@ class TestForceConstantMode(unittest.TestCase):
             country_iso_code="USA",
             output_dir=self.emissions_path,
             output_file=self.emissions_file,
-            force_mode_constant=True
+            force_mode_constant=True,
         )
         tracker.start()
         light_computation(run_time_secs=1)
         emissions = tracker.stop()
-        
+
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.verify_output_file(self.emissions_file_path)
@@ -82,15 +81,15 @@ class TestForceConstantMode(unittest.TestCase):
             output_dir=self.emissions_path,
             output_file=self.emissions_file,
             force_mode_constant=True,
-            force_cpu_power=custom_cpu_power
+            force_cpu_power=custom_cpu_power,
         )
         tracker.start()
         light_computation(run_time_secs=1)
         emissions = tracker.stop()
-        
+
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
-        
+
         # Check that the custom CPU power was used
         df = pd.read_csv(self.emissions_file_path)
         # CPU power should be 50% of the TDP (constant mode assumption)
@@ -104,12 +103,12 @@ class TestForceConstantMode(unittest.TestCase):
         tracker = EmissionsTracker(
             output_dir=self.emissions_path,
             output_file=self.emissions_file,
-            force_mode_constant=True
+            force_mode_constant=True,
         )
         tracker.start()
         light_computation(run_time_secs=1)
         emissions = tracker.stop()
-        
+
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.verify_output_file(self.emissions_file_path)
@@ -120,12 +119,12 @@ class TestForceConstantMode(unittest.TestCase):
             output_dir=self.emissions_path,
             output_file=self.emissions_file,
             force_mode_constant=True,
-            force_mode_cpu_load=True  # This should be ignored
+            force_mode_cpu_load=True,  # This should be ignored
         )
         tracker.start()
         light_computation(run_time_secs=1)
         emissions = tracker.stop()
-        
+
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
         self.verify_output_file(self.emissions_file_path)
@@ -135,7 +134,7 @@ class TestForceConstantMode(unittest.TestCase):
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
         assert len(lines) == 2  # Header + 1 data row
-        
+
         # Check that it's a valid CSV with expected columns
         df = pd.read_csv(file_path)
         expected_columns = ["emissions", "cpu_power", "cpu_energy"]
