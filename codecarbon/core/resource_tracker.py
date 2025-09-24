@@ -45,10 +45,12 @@ class ResourceTracker:
             max_power = self.tracker._force_cpu_power
         else:
             max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
-        
+
         # Check for forced constant mode first
         if self.tracker._conf.get("force_mode_constant", False):
-            logger.info("Force constant mode requested - bypassing psutil and using constant CPU power")
+            logger.info(
+                "Force constant mode requested - bypassing psutil and using constant CPU power"
+            )
             model = tdp.model
             if max_power is None and self.tracker._force_cpu_power:
                 max_power = self.tracker._force_cpu_power
@@ -63,7 +65,7 @@ class ResourceTracker:
             )
             self.tracker._hardware.append(hardware_cpu)
             return
-            
+
         if self.tracker._conf.get("force_mode_cpu_load", False) and (
             tdp.tdp is not None or self.tracker._force_cpu_power is not None
         ):

@@ -11,6 +11,7 @@ import cpuinfo
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -129,7 +130,7 @@ def count_cpus() -> int:
         # Fallback to using os.cpu_count() or physical CPU count
         cpu_count = os.cpu_count()
         return cpu_count if cpu_count is not None else 1
-    
+
     if SLURM_JOB_ID is None:
         return psutil.cpu_count()
 
