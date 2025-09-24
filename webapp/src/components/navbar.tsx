@@ -26,6 +26,7 @@ import CreateOrganizationModal from "./createOrganizationModal";
 import { getOrganizations } from "@/server-functions/organizations";
 import { Button } from "./ui/button";
 
+const USER_PROFILE_URL = process.env.NEXT_PUBLIC_FIEF_BASE_URL; // Redirect to Fief profile to handle profile updates there
 export default function NavBar({
     orgs,
     setSheetOpened,
@@ -255,7 +256,7 @@ export default function NavBar({
                             onClick={() => {
                                 setSelected("profile");
                                 setSheetOpened?.(false);
-                                router.push(`/profile`);
+                                window.location.href = USER_PROFILE_URL!; // Redirect to Fief profile to handle profile updates there
                             }}
                             paddingY={1.5}
                             icon={<UserIcon className={iconStyles} />}
