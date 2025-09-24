@@ -7,7 +7,6 @@ on:
       - "webapp/**"
       - "pyproject.toml"
     branches: [master]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -56,5 +55,9 @@ jobs:
         CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_PROD }}
         APP_NAME: cc_dashboard_prod
       run: |
+        echo $CLEVER_APP_ID
+        echo $APP_NAME
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f -a $APP_NAME --quiet
+        # As the clever tools CLI aliasing is escaping _ character, a temporary hard-coded value is needed
+        # waiting for a fix from Clever
+        ./clever-tools-latest_linux/clever deploy -f -a ccdashboardprod --quiet
