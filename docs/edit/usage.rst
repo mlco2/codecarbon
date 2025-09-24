@@ -9,7 +9,7 @@ The CO2 tracking tool can be used along with any computing framework. It support
 Online Mode
 -----------
 When the environment has internet access, the ``EmissionsTracker`` object or the ``track_emissions`` decorator can be used, which has
-``offline`` parameter set to ``False`` by default.
+the ``offline`` parameter set to ``False`` by default.
 
 Command line
 ~~~~~~~~~~~~

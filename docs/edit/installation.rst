@@ -15,7 +15,7 @@ For installing conda, follow the instructions on the
 From PyPi repository
 --------------------
 
-The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`_.
+The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`__.
 
 To install the package, run the following command in your terminal.
 
@@ -26,7 +26,7 @@ To install the package, run the following command in your terminal.
 From conda repository
 ---------------------
 
-The package is hosted on the conda repository `here <https://anaconda.org/codecarbon/codecarbon>`_.
+The package is hosted on the conda repository `here <https://anaconda.org/codecarbon/codecarbon>`__.
 
 To install the package, run the following command in your terminal.
 
