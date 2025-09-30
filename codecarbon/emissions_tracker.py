@@ -17,7 +17,7 @@ from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
-from codecarbon.core.units import Energy, Power, Time
+from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
@@ -179,6 +179,7 @@ class BaseEmissionsTracker(ABC):
         force_cpu_power: Optional[int] = _sentinel,
         force_ram_power: Optional[int] = _sentinel,
         pue: Optional[int] = _sentinel,
+        wue: Optional[bool] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
     ):
@@ -238,6 +239,7 @@ class BaseEmissionsTracker(ABC):
         :param pue: PUE (Power Usage Effectiveness) of the datacenter.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple instances of codecarbon running in parallel. Defaults to False.
+        :param wue: WUE (Water Usage Effectiveness) of the datacenter, L/kWh.
         """
 
         # logger.info("base tracker init")
@@ -287,6 +289,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
         self._set_from_conf(pue, "pue", 1.0, float)
+        self._set_from_conf(wue, "wue", 0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
@@ -299,6 +302,7 @@ class BaseEmissionsTracker(ABC):
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_water: Water = Water.from_litres(litres=0)
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -703,6 +707,7 @@ class BaseEmissionsTracker(ABC):
             gpu_energy=self._total_gpu_energy.kWh,
             ram_energy=self._total_ram_energy.kWh,
             energy_consumed=self._total_energy.kWh,
+            water_consumed=self._total_water.litres,
             country_name=country_name,
             country_iso_code=country_iso_code,
             region=region,
@@ -721,6 +726,7 @@ class BaseEmissionsTracker(ABC):
             ram_total_size=self._conf.get("ram_total_size"),
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
+            wue=self._wue,
         )
         logger.debug(total_emissions)
         return total_emissions
@@ -778,7 +784,9 @@ class BaseEmissionsTracker(ABC):
             ) = hardware.measure_power_and_energy(last_duration=last_duration)
             # Apply the PUE of the datacenter to the consumed energy
             energy *= self._pue
+            water = Water.from_litres(litres=self._wue * energy.kWh)
             self._total_energy += energy
+            self._total_water += water
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
@@ -825,7 +833,7 @@ class BaseEmissionsTracker(ABC):
                 f"Done measure for {hardware.__class__.__name__} - measurement time: {h_time:,.4f} s - last call {last_duration:,.2f} s"
             )
         logger.info(
-            f"{self._total_energy.kWh:.6f} kWh of electricity used since the beginning."
+            f"{self._total_energy.kWh:.6f} kWh of electricity and {self._total_water.litres:.6f} L of water were used since the beginning."
         )
 
     def _measure_power_and_energy(self) -> None:
@@ -1066,6 +1074,7 @@ def track_emissions(
     force_cpu_power: Optional[int] = _sentinel,
     force_ram_power: Optional[int] = _sentinel,
     pue: Optional[int] = _sentinel,
+    wue: Optional[float] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
 ):
     """
@@ -1141,6 +1150,7 @@ def track_emissions(
     :param force_cpu_power: cpu power to be used instead of automatic detection.
     :param force_ram_power: ram power to be used instead of automatic detection.
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
+    :param wue: WUE (Water Usage Effectiveness) of the datacenter, L/kWh.
     :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
 
     :return: The decorated function
@@ -1181,6 +1191,7 @@ def track_emissions(
                     force_cpu_power=force_cpu_power,
                     force_ram_power=force_ram_power,
                     pue=pue,
+                    wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
                 )
             else:
@@ -1212,6 +1223,7 @@ def track_emissions(
                     force_cpu_power=force_cpu_power,
                     force_ram_power=force_ram_power,
                     pue=pue,
+                    wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
                 )
             tracker.start()

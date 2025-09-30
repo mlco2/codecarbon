@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import tempfile
 import time
 import unittest
@@ -37,6 +38,16 @@ def heavy_computation(run_time_secs: float = 3):
 empty_conf = "[codecarbon]"
 
 
+if sys.platform == "darwin":
+    mock_platform_cli_setup = mock.patch(
+        "codecarbon.core.powermetrics.ApplePowermetrics._setup_cli"
+    )
+else:
+    mock_platform_cli_setup = mock.patch(
+        "codecarbon.core.cpu.IntelPowerGadget._setup_cli"
+    )
+
+
 @mock.patch("codecarbon.core.gpu.pynvml", fake_pynvml)
 @mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
 @mock.patch(
@@ -48,7 +59,7 @@ empty_conf = "[codecarbon]"
     return_value=CloudMetadata(provider=None, region=None),
 )
 @mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
-@mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
+@mock_platform_cli_setup
 class TestCarbonTracker(unittest.TestCase):
     def setUp(self) -> None:
         fake_pynvml.DETAILS = TWO_GPU_DETAILS_RESPONSE_HANDLES
@@ -73,7 +84,7 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_carbon_tracker_TWO_GPU_PRIVATE_INFRA_CANADA(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -89,7 +100,7 @@ class TestCarbonTracker(unittest.TestCase):
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
         # WHEN
         tracker.start()
-        heavy_computation()
+        heavy_computation(run_time_secs=5)
         emissions = tracker.stop()
 
         # THEN
@@ -108,7 +119,7 @@ class TestCarbonTracker(unittest.TestCase):
     def test_carbon_tracker_timeout(
         self,
         mocked_requests_get,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -135,7 +146,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_graceful_start_failure(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -153,7 +164,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_graceful_stop_failure(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -172,7 +183,7 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_decorator_ONLINE_NO_ARGS(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -199,7 +210,7 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_decorator_ONLINE_WITH_ARGS(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -225,7 +236,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_NO_COUNTRY(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -241,7 +252,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_WITH_LOC_ARGS(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -264,7 +275,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_decorator_OFFLINE_WITH_CLOUD_ARGS(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -287,7 +298,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_offline_tracker_country_name(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -309,7 +320,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_offline_tracker_invalid_headers(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -341,7 +352,7 @@ class TestCarbonTracker(unittest.TestCase):
 
     def test_offline_tracker_valid_headers(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -378,7 +389,7 @@ class TestCarbonTracker(unittest.TestCase):
     @responses.activate
     def test_carbon_tracker_online_context_manager_TWO_GPU_PRIVATE_INFRA_CANADA(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -394,7 +405,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         # WHEN
         with EmissionsTracker(measure_power_secs=1, save_to_file=False) as tracker:
-            heavy_computation()
+            heavy_computation(run_time_secs=5)
 
         # THEN
         self.assertGreaterEqual(
@@ -408,17 +419,18 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIsInstance(tracker.final_emissions, float)
         self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
 
+    @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
+    @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
     @mock.patch(
-        "codecarbon.external.ram.RAM.measure_power_and_energy"
-    )  # Corrected path for RAM
-    @mock.patch(
-        "codecarbon.external.hardware.CPU.measure_power_and_energy"
-    )  # Path for CPU is likely correct
+        "codecarbon.external.hardware.AppleSiliconChip.measure_power_and_energy",
+        autospec=True,
+    )
     def test_task_energy_with_live_update_interference(
         self,
+        mock_apple_silicon_measure,
         mock_cpu_measure,  # Method decorator (innermost)
         mock_ram_measure,  # Method decorator (outermost)
-        mock_setup_intel_cli,  # Class decorator (innermost)
+        mock_cli_setup,  # Class decorator (innermost)
         mock_log_values,  # Class decorator
         mocked_env_cloud_details,  # Class decorator
         mocked_get_gpu_details,  # Class decorator
@@ -428,6 +440,19 @@ class TestCarbonTracker(unittest.TestCase):
         # Configure mocks to return specific, non-zero energy values
         cpu_energy_val_task = 0.0001
         ram_energy_val_task = 0.00005
+
+        # On a Mac, AppleSiliconChip.measure_power_and_energy is called for both CPUs and GPU
+        # so we need to check which it is before returning a value.
+        # We chose to return 0 for a GPU to be consistent when testing on Intel.
+        def apple_silicon_side_effect(hardware, *args, **kwargs):
+            if hardware.chip_part == "CPU":
+                return (
+                    Power.from_watts(10),
+                    Energy.from_energy(kWh=cpu_energy_val_task),
+                )
+            return (Power.from_watts(0), Energy.from_energy(kWh=0))
+
+        mock_apple_silicon_measure.side_effect = apple_silicon_side_effect
         mock_cpu_measure.return_value = (
             Power.from_watts(10),
             Energy.from_energy(kWh=cpu_energy_val_task),
@@ -497,14 +522,18 @@ class TestCarbonTracker(unittest.TestCase):
         )
 
         # Verify mocks were called as expected
-        # They are called once in _measure_power_and_energy inside stop_task
-        mock_cpu_measure.assert_called_once()
+        # They are called from within _measure_power_and_energy inside stop_task.
+        # As noted above, mock_apple_silicon_measure is called twice on a Mac, once for CPU and once for GPU.
+        assert (
+            mock_cpu_measure.call_count == 1
+            or mock_apple_silicon_measure.call_count == 2
+        )
         mock_ram_measure.assert_called_once()
 
     @responses.activate
     def test_carbon_tracker_offline_context_manager(
         self,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -525,7 +554,7 @@ class TestCarbonTracker(unittest.TestCase):
     def test_scheduler_warning_suppressed_when_stopped(
         self,
         mock_logger,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
@@ -567,7 +596,7 @@ class TestCarbonTracker(unittest.TestCase):
     def test_scheduler_warning_shown_when_running(
         self,
         mock_logger,
-        mock_setup_intel_cli,
+        mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,

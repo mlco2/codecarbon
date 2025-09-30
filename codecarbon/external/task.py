@@ -34,6 +34,7 @@ class Task:
             gpu_energy=self.emissions_data.gpu_energy,
             ram_energy=self.emissions_data.ram_energy,
             energy_consumed=self.emissions_data.energy_consumed,
+            water_consumed=self.emissions_data.water_consumed,
             country_name=self.emissions_data.country_name,
             country_iso_code=self.emissions_data.country_iso_code,
             region=self.emissions_data.region,
