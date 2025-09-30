@@ -90,7 +90,6 @@ class Energy:
         return Energy(self.kWh + other.kWh)
 
     def __mul__(self, factor: float) -> "Energy":
-        assert isinstance(factor, float)
         assert isinstance(self.kWh, float)
         result = Energy(self.kWh * factor)
         return result
