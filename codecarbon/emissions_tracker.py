@@ -20,7 +20,7 @@ from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip, Raspberry
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
@@ -769,6 +769,7 @@ class BaseEmissionsTracker(ABC):
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
+            logger.info(f"measuring from {hardware=}")
             h_time = time.perf_counter()
             # Compute last_duration again for more accuracy
             last_duration = time.perf_counter() - self._last_measured_time
@@ -803,6 +804,21 @@ class BaseEmissionsTracker(ABC):
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
                     + f". RAM Power : {self._ram_power.W} W"
                 )
+            elif isinstance(hardware, Raspberry):
+                if hardware.chip_part == "CPU":
+                    self._total_cpu_energy += energy
+                    self._cpu_power = power
+                    logger.info(
+                        f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
+                        + f". Total CPU Power : {self._cpu_power.W} W"
+                    )
+                elif hardware.chip_part == "RAM":
+                    self._total_ram_energy += energy
+                    self._ram_power = power
+                    logger.info(
+                        f"Energy consumed for RAMs : {self._total_ram_energy.kWh:.6f} kWh"
+                        + f". Total RAM Power : {self._ram_power.W} W"
+                    )
             elif isinstance(hardware, AppleSiliconChip):
                 if hardware.chip_part == "CPU":
                     self._total_cpu_energy += energy

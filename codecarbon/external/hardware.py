@@ -6,6 +6,7 @@ import math
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from subprocess import run
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
@@ -424,5 +425,97 @@ class AppleSiliconChip(BaseHardware):
             model = detect_cpu_model()
             if model is None:
                 logger.warning("Could not read AppleSiliconChip model.")
+
+        return cls(output_dir=output_dir, model=model, chip_part=chip_part)
+
+
+@dataclass
+class Raspberry(BaseHardware):
+    def __init__(
+        self,
+        output_dir: str,
+        model: str,
+        chip_part: str = "CPU",
+    ):
+        if chip_part == "CPU":
+            self.WANTED_COMPONENTS = (
+                "3V7_WL_SW",
+                "3V3_SYS",
+                "1V8_SYS",
+                "1V1_SYS",
+                "0V8_SW",
+                "VDD_CORE",
+                "3V3_DAC",
+                "3V3_ADC",
+                "0V8_AON",
+            )
+        elif chip_part == "RAM":
+            self.WANTED_COMPONENTS = ("DDR_VDD2", "DDR_VDD2", "DDR_VDDQ")
+        else:
+            raise Exception("Unknown chip part", chip_part)
+
+        self._output_dir = output_dir
+        self._model = model
+        self.chip_part = chip_part
+
+    def __repr__(self) -> str:
+        return f"Raspberry ({self._model} > {self.chip_part})"
+
+    def _get_power(self) -> Power:
+        """ """
+        measure: Dict = self.get_measure()
+        return Power.from_watts(measure["power"])
+
+    def _get_energy(self, delay: Time) -> Energy:
+        """
+        Get Chip part energy deltas
+        Args:
+            chip_part (str): Chip part to get power from (Processor, GPU, etc.)
+        :return: energy in kWh
+        """
+        energy = Energy.from_power_and_time(
+            power=self._get_power(), time=Time.from_seconds(delay)
+        )
+        return energy
+
+    def total_power(self) -> Power:
+        return self._get_power()
+
+    def get_model(self):
+        return self._model
+
+    def get_measure(self):
+        components = {}
+        res = run(["vcgencmd", "pmic_read_adc"], capture_output=True)
+        lines = res.stdout.decode("utf-8").splitlines()
+        for line in lines:
+            res = re.search(
+                "([A-Z_0-9]+)_[VA] (current|volt)\(([0-9]+)\)=([0-9.]+)",  # noqa: W605
+                line,
+            )
+            component_name, measure_type, idx, value = res.groups()
+            component = components[component_name] = components.get(component_name, {})
+            component[measure_type] = float(value)
+        pi_power = 0
+
+        for component_name, component in components.items():
+            try:
+                component["power"] = component["volt"] * component["current"]
+                if component_name in self.WANTED_COMPONENTS:
+                    pi_power += component["power"]
+            except Exception:
+                ...
+        return {
+            "power": pi_power,
+        }
+
+    @classmethod
+    def from_utils(
+        cls, output_dir: str, model: Optional[str] = None, chip_part: str = "CPU"
+    ) -> "Raspberry":
+        if model is None:
+            model = detect_cpu_model()
+            if model is None:
+                logger.warning("Could not read Raspberry model.")
 
         return cls(output_dir=output_dir, model=model, chip_part=chip_part)
