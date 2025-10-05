@@ -2,22 +2,13 @@
 
 import BreadcrumbHeader from "@/components/breadcrumb";
 import ProjectDashboard from "@/components/project-dashboard";
-import {
-    getEquivalentCarKm,
-    getEquivalentCitizenPercentage,
-    getEquivalentTvTime,
-} from "@/helpers/constants";
 import { getDefaultDateRange } from "@/helpers/date-utils";
-import {
-    getExperiments,
-    getProjectEmissionsByExperiment,
-} from "@/server-functions/experiments";
+import { getProjectEmissionsByExperiment } from "@/server-functions/experiments";
 import { getOneProject } from "@/server-functions/projects";
-import { Experiment } from "@/types/experiment";
-import { ExperimentReport } from "@/types/experiment-report";
 import { Project } from "@/types/project";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
+import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 export default function ProjectPage({
     params,
@@ -28,7 +19,6 @@ export default function ProjectPage({
     }>;
 }>) {
     const { projectId, organizationId } = use(params);
-    const [isLoading, setIsLoading] = useState(true);
 
     const [project, setProject] = useState({
         name: "",
@@ -50,41 +40,22 @@ export default function ProjectPage({
     const default_date = getDefaultDateRange();
     const [date, setDate] = useState<DateRange>(default_date);
 
-    const [radialChartData, setRadialChartData] = useState({
-        energy: { label: "kWh", value: 0 },
-        emissions: { label: "kg eq CO2", value: 0 },
-        duration: { label: "days", value: 0 },
-    });
-    // The experiments of the current project. We need this because experimentReport only contains the experiments that have been run
-    const [projectExperiments, setProjectExperiments] = useState<Experiment[]>(
-        [],
-    );
-    // The reports (if any) of the experiments
-    const [experimentsReportData, setExperimentsReportData] = useState<
-        ExperimentReport[]
-    >([]);
-
-    const [runData, setRunData] = useState({
-        experimentId: "",
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
-
-    const [convertedValues, setConvertedValues] = useState({
-        citizen: "0",
-        transportation: "0",
-        tvTime: "0",
-    });
-
-    const [selectedExperimentId, setSelectedExperimentId] =
-        useState<string>("");
-    const [selectedRunId, setSelectedRunId] = useState<string>("");
-
-    const refreshExperimentList = useCallback(async () => {
-        // Logic to refresh experiments if needed
-        const experiments: Experiment[] = await getExperiments(projectId);
-        setProjectExperiments(experiments);
-    }, [projectId]);
+    // Use custom hook for dashboard state and logic
+    const {
+        radialChartData,
+        convertedValues,
+        experimentsReportData,
+        projectExperiments,
+        runData,
+        selectedExperimentId,
+        selectedRunId,
+        isLoading,
+        handleExperimentClick,
+        handleRunClick,
+        refreshExperimentList,
+        setExperimentsReportData,
+        setIsLoading,
+    } = useProjectDashboard(projectId, date);
 
     /** Use effect functions */
     useEffect(() => {
@@ -103,6 +74,7 @@ export default function ProjectPage({
         fetchProjectDetails();
         refreshExperimentList();
     }, [projectId, refreshExperimentList]);
+
     // Fetch the experiment report of the current project
     useEffect(() => {
         async function fetchData() {
@@ -112,63 +84,7 @@ export default function ProjectPage({
                     projectId,
                     date,
                 );
-
-                const newRadialChartData = {
-                    energy: {
-                        label: "kWh",
-                        value: parseFloat(
-                            report
-                                .reduce(
-                                    (n, { energy_consumed }) =>
-                                        n + energy_consumed,
-                                    0,
-                                )
-                                .toFixed(2),
-                        ),
-                    },
-                    emissions: {
-                        label: "kg eq CO2",
-                        value: parseFloat(
-                            report
-                                .reduce((n, { emissions }) => n + emissions, 0)
-                                .toFixed(2),
-                        ),
-                    },
-                    duration: {
-                        label: "days",
-                        value: parseFloat(
-                            report
-                                .reduce(
-                                    (n, { duration }) => n + duration / 86400,
-                                    0,
-                                )
-                                .toFixed(2),
-                        ),
-                    },
-                };
-                setRadialChartData(newRadialChartData);
-
                 setExperimentsReportData(report);
-
-                setRunData({
-                    experimentId: report[0]?.experiment_id ?? "",
-                    startDate: date?.from?.toISOString() ?? "",
-                    endDate: date?.to?.toISOString() ?? "",
-                });
-
-                setSelectedExperimentId(report[0]?.experiment_id ?? "");
-
-                setConvertedValues({
-                    citizen: getEquivalentCitizenPercentage(
-                        newRadialChartData.emissions.value,
-                    ).toFixed(2),
-                    transportation: getEquivalentCarKm(
-                        newRadialChartData.emissions.value,
-                    ).toFixed(2),
-                    tvTime: getEquivalentTvTime(
-                        newRadialChartData.energy.value,
-                    ).toFixed(2),
-                });
             } catch (error) {
                 console.error("Error fetching project data:", error);
             } finally {
@@ -179,31 +95,7 @@ export default function ProjectPage({
         if (projectId) {
             fetchData();
         }
-    }, [projectId, date]);
-
-    const handleExperimentClick = useCallback(
-        (experimentId: string) => {
-            if (experimentId === selectedExperimentId) {
-                setSelectedExperimentId("");
-                setSelectedRunId("");
-                return;
-            }
-            setSelectedExperimentId(experimentId);
-            setSelectedRunId("");
-        },
-        [selectedExperimentId],
-    );
-
-    const handleRunClick = useCallback(
-        (runId: string) => {
-            if (runId === selectedRunId) {
-                setSelectedRunId("");
-                return;
-            }
-            setSelectedRunId(runId);
-        },
-        [selectedRunId],
-    );
+    }, [projectId, date, setExperimentsReportData, setIsLoading]);
 
     return (
         <div className="h-full w-full overflow-auto">

@@ -1,16 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { DateRange } from "react-day-picker";
 import { decryptProjectId } from "@/utils/crypto";
 import { ExperimentReport } from "@/types/experiment-report";
 import PublicProjectDashboard from "@/components/public-project-dashboard";
-import {
-    getEquivalentCarKm,
-    getEquivalentCitizenPercentage,
-    getEquivalentTvTime,
-} from "@/helpers/constants";
 import { fetchApi } from "@/utils/api";
 import { Project } from "@/types/project";
 import ErrorMessage from "@/components/error-message";
@@ -18,8 +13,7 @@ import Loader from "@/components/loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getDefaultDateRange } from "@/helpers/date-utils";
-import { Experiment } from "@/types/experiment";
-import { getExperiments } from "@/server-functions/experiments";
+import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 export default function PublicProjectPage({
     params,
@@ -29,7 +23,6 @@ export default function PublicProjectPage({
     const { projectId: encryptedId } = use(params);
     const router = useRouter();
 
-    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [projectId, setProjectId] = useState<string | null>(null);
     const [project, setProject] = useState<Project | null>(null);
@@ -37,41 +30,23 @@ export default function PublicProjectPage({
     // Dashboard state
     const default_date = getDefaultDateRange();
     const [date, setDate] = useState<DateRange>(default_date);
-    // The experiments of the current project. We need this because experimentReport only contains the experiments that have been run
-    const [projectExperiments, setProjectExperiments] = useState<Experiment[]>(
-        [],
-    );
-    // The reports (if any) of the experiments
-    const [experimentsReportData, setExperimentsReportData] = useState<
-        ExperimentReport[]
-    >([]);
 
-    const [radialChartData, setRadialChartData] = useState({
-        energy: { label: "kWh", value: 0 },
-        emissions: { label: "kg eq CO2", value: 0 },
-        duration: { label: "days", value: 0 },
-    });
-
-    const [runData, setRunData] = useState({
-        experimentId: "",
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
-    const [convertedValues, setConvertedValues] = useState({
-        citizen: "0",
-        transportation: "0",
-        tvTime: "0",
-    });
-    const [selectedExperimentId, setSelectedExperimentId] =
-        useState<string>("");
-    const [selectedRunId, setSelectedRunId] = useState<string>("");
-
-    const refreshExperimentList = useCallback(async () => {
-        if (!projectId) return;
-        // Logic to refresh experiments if needed
-        const experiments: Experiment[] = await getExperiments(projectId);
-        setProjectExperiments(experiments);
-    }, [projectId]);
+    // Use custom hook for dashboard state and logic
+    const {
+        radialChartData,
+        convertedValues,
+        experimentsReportData,
+        projectExperiments,
+        runData,
+        selectedExperimentId,
+        selectedRunId,
+        isLoading,
+        handleExperimentClick,
+        handleRunClick,
+        refreshExperimentList,
+        setExperimentsReportData,
+        setIsLoading,
+    } = useProjectDashboard(projectId, date);
 
     // Decrypt the project ID
     useEffect(() => {
@@ -89,7 +64,7 @@ export default function PublicProjectPage({
         };
 
         decrypt();
-    }, [encryptedId]);
+    }, [encryptedId, setIsLoading]);
 
     // Fetch project data
     useEffect(() => {
@@ -122,12 +97,12 @@ export default function PublicProjectPage({
             fetchProjectData();
             refreshExperimentList();
         }
-    }, [projectId, project, refreshExperimentList]);
+    }, [projectId, project, refreshExperimentList, setIsLoading]);
 
     // Fetch experiments and emissions data
     useEffect(() => {
         async function fetchData() {
-            if (!projectId) return;
+            if (!projectId || !project) return;
 
             setIsLoading(true);
             try {
@@ -140,64 +115,6 @@ export default function PublicProjectPage({
                 }
 
                 setExperimentsReportData(report);
-
-                const newRadialChartData = {
-                    energy: {
-                        label: "kWh",
-                        value: parseFloat(
-                            report
-                                .reduce(
-                                    (n, { energy_consumed }) =>
-                                        n + energy_consumed,
-                                    0,
-                                )
-                                .toFixed(2),
-                        ),
-                    },
-                    emissions: {
-                        label: "kg eq CO2",
-                        value: parseFloat(
-                            report
-                                .reduce((n, { emissions }) => n + emissions, 0)
-                                .toFixed(2),
-                        ),
-                    },
-                    duration: {
-                        label: "days",
-                        value: parseFloat(
-                            report
-                                .reduce(
-                                    (n, { duration }) => n + duration / 86400,
-                                    0,
-                                )
-                                .toFixed(2),
-                        ),
-                    },
-                };
-
-                setRadialChartData(newRadialChartData);
-
-                if (report.length > 0) {
-                    setRunData({
-                        experimentId: report[0]?.experiment_id ?? "",
-                        startDate: date?.from?.toISOString() ?? "",
-                        endDate: date?.to?.toISOString() ?? "",
-                    });
-
-                    setSelectedExperimentId(report[0]?.experiment_id ?? "");
-                }
-
-                setConvertedValues({
-                    citizen: getEquivalentCitizenPercentage(
-                        newRadialChartData.emissions.value,
-                    ).toFixed(2),
-                    transportation: getEquivalentCarKm(
-                        newRadialChartData.emissions.value,
-                    ).toFixed(2),
-                    tvTime: getEquivalentTvTime(
-                        newRadialChartData.energy.value,
-                    ).toFixed(2),
-                });
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
@@ -208,20 +125,7 @@ export default function PublicProjectPage({
         if (projectId && project) {
             fetchData();
         }
-    }, [projectId, project, date]);
-
-    const handleExperimentClick = useCallback((experimentId: string) => {
-        setSelectedExperimentId(experimentId);
-        setRunData((prevData) => ({
-            ...prevData,
-            experimentId: experimentId,
-        }));
-        setSelectedRunId(""); // Reset the run ID
-    }, []);
-
-    const handleRunClick = useCallback((runId: string) => {
-        setSelectedRunId(runId);
-    }, []);
+    }, [projectId, project, date, setExperimentsReportData, setIsLoading]);
 
     // Show full page loader only during initial load
     if (isLoading && !project) {
