@@ -14,14 +14,10 @@ export async function getOrganizationEmissionsByProject(
             endpoint += `?start_date=${dateRange.from.toISOString()}&end_date=${dateRange.to.toISOString()}`;
         }
 
-        const result = await fetchApiServer<any>(endpoint);
-
-        if (!result) {
-            return null;
-        }
+        const result = await fetchApiServer<OrganizationReport>(endpoint);
 
         // Handle case when no emissions data is found
-        if (!result || result === null) {
+        if (!result) {
             // Return zeros for all metrics
             return {
                 name: "",
@@ -31,12 +27,7 @@ export async function getOrganizationEmissionsByProject(
             };
         }
 
-        return {
-            name: result.name || "",
-            emissions: result.emissions || 0,
-            energy_consumed: result.energy_consumed || 0,
-            duration: result.duration || 0,
-        };
+        return result;
     } catch (error) {
         console.error("Error fetching organization emissions:", error);
         // Return default values if there's an error
