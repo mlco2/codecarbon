@@ -27,7 +27,6 @@ export default function CreateExperimentModal({
     onClose: () => void;
     onExperimentCreated: () => void;
 }) {
-    console.log("projectId", projectId);
     const [isCopied, setIsCopied] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isCreated, setIsCreated] = useState(false);
@@ -74,7 +73,6 @@ export default function CreateExperimentModal({
         setIsSaving(true);
 
         try {
-            console.log("experimentData", experimentData);
             const newExperiment = await createExperiment(experimentData);
             setCreatedExperiment(newExperiment);
             setIsCreated(true);

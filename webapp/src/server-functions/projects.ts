@@ -49,10 +49,6 @@ export const getOneProject = async (
     projectId: string,
 ): Promise<Project | null> => {
     const project = await fetchApiServer<Project>(`/projects/${projectId}`);
-    console.log("project", JSON.stringify(project, null, 2));
-    if (!project) {
-        return null;
-    }
     return project;
 };
 

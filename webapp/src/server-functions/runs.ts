@@ -23,8 +23,7 @@ export async function getRunEmissionsByExperiment(
     const res = await fetch(url);
 
     if (!res.ok) {
-        // Log error waiting for a better error management
-        console.log("Failed to fetch data");
+        console.error("Failed to fetch run data:", res.statusText);
         return [];
     }
     const result = await res.json();
