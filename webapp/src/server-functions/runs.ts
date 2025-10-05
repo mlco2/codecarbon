@@ -4,10 +4,9 @@ import { RunMetadata } from "@/types/run-metadata";
 import { fetchApi } from "@/utils/api";
 import { RunReport } from "@/types/run-report";
 
-export async function getRunMetadata(runId: string): Promise<RunMetadata> {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/runs/${runId}`;
-    const res = await fetch(url);
-    return await res.json();
+export async function getRunMetadata(runId: string): Promise<RunMetadata | null> {
+    const result = await fetchApi<RunMetadata>(`/runs/${runId}`);
+    return result;
 }
 
 export async function getRunEmissionsByExperiment(
@@ -19,14 +18,14 @@ export async function getRunEmissionsByExperiment(
         return [];
     }
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`;
-    const res = await fetch(url);
+    const result = await fetchApi<RunReport[]>(
+        `/experiments/${experimentId}/runs/sums?start_date=${startDate}&end_date=${endDate}`,
+    );
 
-    if (!res.ok) {
-        console.error("Failed to fetch run data:", res.statusText);
+    if (!result) {
         return [];
     }
-    const result = await res.json();
+
     return result.map((runReport: any) => {
         return {
             runId: runReport.run_id,
