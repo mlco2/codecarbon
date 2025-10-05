@@ -114,7 +114,8 @@ export function useProjectDashboard(
 
             setSelectedExperimentId(report[0]?.experiment_id ?? "");
 
-            const newConvertedValues = calculateConvertedValues(newRadialChartData);
+            const newConvertedValues =
+                calculateConvertedValues(newRadialChartData);
             setConvertedValues(newConvertedValues);
         },
         [date],

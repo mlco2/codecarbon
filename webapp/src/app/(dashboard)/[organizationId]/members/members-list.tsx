@@ -45,13 +45,10 @@ export default function MembersList({
 
             await toast
                 .promise(
-                    fetchApi(
-                        `/organizations/${organizationId}/add-user`,
-                        {
-                            method: "POST",
-                            body: body,
-                        },
-                    ).then(async (result) => {
+                    fetchApi(`/organizations/${organizationId}/add-user`, {
+                        method: "POST",
+                        body: body,
+                    }).then(async (result) => {
                         if (!result) {
                             throw new Error("Failed to add user");
                         }

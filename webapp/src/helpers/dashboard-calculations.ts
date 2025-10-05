@@ -45,7 +45,10 @@ export function calculateRadialChartData(
             label: "days",
             value: parseFloat(
                 report
-                    .reduce((n, { duration }) => n + duration / SECONDS_PER_DAY, 0)
+                    .reduce(
+                        (n, { duration }) => n + duration / SECONDS_PER_DAY,
+                        0,
+                    )
                     .toFixed(2),
             ),
         },
