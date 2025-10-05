@@ -69,7 +69,6 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
                         defaultMonth={date?.from}
                         selected={tempDateRange}
                         onSelect={(range) => {
-                            console.log("onSelect called with:", range);
                             setTempDateRange(range);
                         }}
                         numberOfMonths={2}
