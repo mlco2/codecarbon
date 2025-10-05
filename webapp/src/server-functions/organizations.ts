@@ -13,19 +13,20 @@ export async function getOrganizationEmissionsByProject(
         endpoint += `?start_date=${dateRange.from.toISOString()}&end_date=${dateRange.to.toISOString()}`;
     }
 
-    const result = await fetchApiServer<OrganizationReport>(endpoint);
+        const result = await fetchApiServer<OrganizationReport>(endpoint);
 
-    // Return empty data on failure (Pattern A - Read operation)
-    if (!result) {
-        return {
-            name: "",
-            emissions: 0,
-            energy_consumed: 0,
-            duration: 0,
-        };
-    }
+        // Handle case when no emissions data is found
+        if (!result) {
+            // Return zeros for all metrics
+            return {
+                name: "",
+                emissions: 0,
+                energy_consumed: 0,
+                duration: 0,
+            };
+        }
 
-    return result;
+        return result;
 }
 
 export async function getDefaultOrgId(): Promise<string | null> {
