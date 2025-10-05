@@ -36,8 +36,6 @@ const CreateProjectModal: React.FC<ModalProps> = ({
         name: "",
         description: "",
     });
-    const [isCreated, setIsCreated] = useState(false);
-    const [createdProject, setCreatedProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSave = async () => {
@@ -49,8 +47,6 @@ const CreateProjectModal: React.FC<ModalProps> = ({
                         organizationId,
                         formData,
                     );
-                    setCreatedProject(newProject);
-                    setIsCreated(true);
                     await onProjectCreated(); // Call the callback to refresh the project list
                     handleClose(); // Automatically close the modal after successful creation
                     return newProject; // Return for the success message
@@ -72,8 +68,6 @@ const CreateProjectModal: React.FC<ModalProps> = ({
     const handleClose = () => {
         // Reset state when closing
         setFormData({ name: "", description: "" });
-        setIsCreated(false);
-        setCreatedProject(null);
         onClose();
     };
 

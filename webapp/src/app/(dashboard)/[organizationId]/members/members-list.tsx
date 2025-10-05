@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
+import { fetchApi } from "@/utils/api";
 
 export default function MembersList({
     users,
@@ -44,36 +45,14 @@ export default function MembersList({
 
             await toast
                 .promise(
-                    fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/organizations/${organizationId}/add-user`,
-                        {
-                            method: "POST",
-                            headers: {
-                                Accept: "application/json",
-                                "Content-Type": "application/json",
-                            },
-                            body: body,
-                        },
-                    ).then(async (result) => {
-                        const data = await result.json();
-                        if (result.status !== 200) {
-                            const errorObject = data.detail;
-                            let errorMessage = "Failed to add user";
-
-                            if (
-                                Array.isArray(errorObject) &&
-                                errorObject.length > 0
-                            ) {
-                                errorMessage = errorObject
-                                    .map((error: any) => error.msg)
-                                    .join("\n");
-                            } else if (errorObject) {
-                                errorMessage = JSON.stringify(errorObject);
-                            }
-
-                            throw new Error(errorMessage);
+                    fetchApi(`/organizations/${organizationId}/add-user`, {
+                        method: "POST",
+                        body: body,
+                    }).then(async (result) => {
+                        if (!result) {
+                            throw new Error("Failed to add user");
                         }
-                        return data;
+                        return result;
                     }),
                     {
                         loading: `Adding user ${email}...`,
