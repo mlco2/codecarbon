@@ -4,6 +4,7 @@ import {
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "./constants";
+import { SECONDS_PER_DAY } from "./time-constants";
 
 export type RadialChartData = {
     energy: { label: string; value: number };
@@ -44,7 +45,7 @@ export function calculateRadialChartData(
             label: "days",
             value: parseFloat(
                 report
-                    .reduce((n, { duration }) => n + duration / 86400, 0)
+                    .reduce((n, { duration }) => n + duration / SECONDS_PER_DAY, 0)
                     .toFixed(2),
             ),
         },
