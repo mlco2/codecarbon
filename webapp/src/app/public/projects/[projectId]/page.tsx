@@ -66,6 +66,13 @@ export default function PublicProjectPage({
         useState<string>("");
     const [selectedRunId, setSelectedRunId] = useState<string>("");
 
+    const refreshExperimentList = useCallback(async () => {
+        if (!projectId) return;
+        // Logic to refresh experiments if needed
+        const experiments: Experiment[] = await getExperiments(projectId);
+        setProjectExperiments(experiments);
+    }, [projectId]);
+
     // Decrypt the project ID
     useEffect(() => {
         const decrypt = async () => {
@@ -115,7 +122,7 @@ export default function PublicProjectPage({
             fetchProjectData();
             refreshExperimentList();
         }
-    }, [projectId, project]);
+    }, [projectId, project, refreshExperimentList]);
 
     // Fetch experiments and emissions data
     useEffect(() => {
@@ -202,12 +209,6 @@ export default function PublicProjectPage({
             fetchData();
         }
     }, [projectId, project, date]);
-    const refreshExperimentList = useCallback(async () => {
-        if (!projectId) return;
-        // Logic to refresh experiments if needed
-        const experiments: Experiment[] = await getExperiments(projectId);
-        setProjectExperiments(experiments);
-    }, []);
 
     const handleExperimentClick = useCallback((experimentId: string) => {
         setSelectedExperimentId(experimentId);

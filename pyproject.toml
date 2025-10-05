@@ -172,3 +172,6 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 "docs/edit/conf.py" = [
     '^release = "{version}"$',
 ]
+
+[tool.pytest.ini_options]
+pythonpath = "."
