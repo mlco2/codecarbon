@@ -81,7 +81,7 @@ Currently, the package supports the following hardware infrastructure.
 GPU
 ~~~~
 
-Tracks Nvidia GPUs energy consumption using ``pynvml`` library (installed with the package).
+Tracks Nvidia GPUs energy consumption using ``nvidia-ml-py`` library (installed with the package).
 
 RAM
 ~~~~
