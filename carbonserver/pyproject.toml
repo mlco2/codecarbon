@@ -51,3 +51,6 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 [tool.hatch.build]
 exclude = ["*"]
+
+[tool.pytest.ini_options]
+pythonpath = "."

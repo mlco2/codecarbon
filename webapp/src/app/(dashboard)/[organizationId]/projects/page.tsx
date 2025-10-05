@@ -3,16 +3,20 @@
 import BreadcrumbHeader from "@/components/breadcrumb";
 import CreateProjectModal from "@/components/createProjectModal";
 import CustomRow from "@/components/custom-row";
+import DeleteProjectModal from "@/components/delete-project-modal";
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { fetcher } from "@/helpers/swr";
-import { getProjects } from "@/server-functions/projects";
+import { REFRESH_INTERVAL_ONE_MINUTE } from "@/helpers/time-constants";
+import { useModal } from "@/hooks/useModal";
+import { getProjects, deleteProject } from "@/server-functions/projects";
 import { Project } from "@/types/project";
 import { use, useEffect, useState } from "react";
 import useSWR from "swr";
+import { toast } from "sonner";
 
 export default function ProjectsPage({
     params,
@@ -20,23 +24,46 @@ export default function ProjectsPage({
     params: Promise<{ organizationId: string }>;
 }) {
     const { organizationId } = use(params);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const createModal = useModal();
+    const deleteModal = useModal();
     const [projectList, setProjectList] = useState<Project[]>([]);
+    const [projectToDelete, setProjectToDelete] = useState<Project | null>(
+        null,
+    );
+
     const handleClick = async () => {
-        setIsModalOpen(true);
+        createModal.open();
     };
+
     const refreshProjectList = async () => {
         // Fetch the updated list of projects from the server
         const projectList = await getProjects(organizationId);
         setProjectList(projectList || []);
     };
+
+    const handleDeleteClick = (project: Project) => {
+        setProjectToDelete(project);
+        deleteModal.open();
+    };
+
+    const handleDeleteConfirm = async (projectId: string) => {
+        try {
+            await deleteProject(projectId);
+            toast.success("Project deleted successfully");
+            await refreshProjectList();
+        } catch (error) {
+            console.error("Error deleting project:", error);
+            toast.error("Failed to delete project");
+        }
+    };
+
     // Fetch the updated list of projects from the server
     const {
         data: projects,
         error,
         isLoading,
     } = useSWR<Project[]>(`/projects?organization=${organizationId}`, fetcher, {
-        refreshInterval: 1000 * 60, // Refresh every minute
+        refreshInterval: REFRESH_INTERVAL_ONE_MINUTE,
     });
 
     useEffect(() => {
@@ -79,8 +106,8 @@ export default function ProjectsPage({
                     </Button>
                     <CreateProjectModal
                         organizationId={organizationId}
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
+                        isOpen={createModal.isOpen}
+                        onClose={createModal.close}
                         onProjectCreated={refreshProjectList}
                     />
                 </div>
@@ -105,11 +132,24 @@ export default function ProjectsPage({
                                             href={`/${organizationId}/projects/${project.id}`}
                                             hrefSettings={`/${organizationId}/projects/${project.id}/settings`}
                                             settingsDisabled={false}
+                                            deleteDisabled={false}
+                                            onDelete={async () =>
+                                                handleDeleteClick(project)
+                                            }
                                         />
                                     ))}
                         </TableBody>
                     </Table>
                 </Card>
+                {projectToDelete && (
+                    <DeleteProjectModal
+                        open={deleteModal.isOpen}
+                        onOpenChange={deleteModal.setIsOpen}
+                        projectName={projectToDelete.name}
+                        projectId={projectToDelete.id}
+                        onDelete={handleDeleteConfirm}
+                    />
+                )}
             </div>
         </div>
     );
