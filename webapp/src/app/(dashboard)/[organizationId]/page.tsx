@@ -11,7 +11,11 @@ import {
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
-import { REFRESH_INTERVAL_ONE_MINUTE, THIRTY_DAYS_MS, SECONDS_PER_DAY } from "@/helpers/time-constants";
+import {
+    REFRESH_INTERVAL_ONE_MINUTE,
+    THIRTY_DAYS_MS,
+    SECONDS_PER_DAY,
+} from "@/helpers/time-constants";
 import { fetcher } from "@/helpers/swr";
 import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
 import { Organization } from "@/types/organization";
@@ -87,7 +91,9 @@ export default function OrganizationPage({
             label: "days",
             value: organizationReport?.duration
                 ? parseFloat(
-                      (organizationReport.duration / SECONDS_PER_DAY).toFixed(2),
+                      (organizationReport.duration / SECONDS_PER_DAY).toFixed(
+                          2,
+                      ),
                   )
                 : 0,
         },
