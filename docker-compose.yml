@@ -14,12 +14,12 @@ services:
       - ./carbonserver:/carbonserver
     labels:
       - "traefik.enable=true"
-      # - > 
+      # - >
       #   traefik.http.routers.carbonserver.rule=(
       #   Host(`${APP_HOSTNAME}`) && (
-      #     PathPrefix(`/users`) || PathPrefix(`/auth`) || PathPrefix(`/docs`) || 
-      #     PathPrefix(`/organizations`) || PathPrefix(`/runs`) || PathPrefix(`/emissions`) || 
-      #     PathPrefix(`/projects`)|| PathPrefix(`/api`) || PathPrefix(`/auth-callback`)  
+      #     PathPrefix(`/users`) || PathPrefix(`/auth`) || PathPrefix(`/docs`) ||
+      #     PathPrefix(`/organizations`) || PathPrefix(`/runs`) || PathPrefix(`/emissions`) ||
+      #     PathPrefix(`/projects`)|| PathPrefix(`/api`) || PathPrefix(`/auth-callback`)
       #   ))"
       - "traefik.http.routers.carbonserver.rule=(Host(`${APP_HOSTNAME}`) && (PathPrefix(`/users`) || PathPrefix(`/auth`)|| PathPrefix(`/docs`)|| PathPrefix(`/organizations`) || PathPrefix(`/runs`) || PathPrefix(`/emissions`) || PathPrefix(`/projects`)|| PathPrefix(`/api`) || PathPrefix(`/auth-callback`)  ))"
       - "traefik.http.routers.carbonserver.entrypoints=web,websecure"
@@ -59,7 +59,7 @@ services:
       - "traefik.http.routers.ui.priority=1"
       - "traefik.http.services.ui.loadbalancer.server.port=3000"
       - "traefik.docker.network=shared"
-      
+
     # ports:
     #     - "3000:3000"
     networks:
