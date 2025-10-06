@@ -84,7 +84,7 @@ export default function ProjectPage({
         // Logic to refresh experiments if needed
         const experiments: Experiment[] = await getExperiments(projectId);
         setProjectExperiments(experiments);
-    }, []);
+    }, [projectId]);
 
     /** Use effect functions */
     useEffect(() => {
