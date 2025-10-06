@@ -28,7 +28,7 @@ RUN ln -sf /usr/bin/pip3 /usr/bin/pip && \
     ln -sf /usr/bin/python3.11 /usr/bin/python3 
 
 COPY ./requirements/requirements-api.txt /carbonserver/requirements-api.txt
-RUN pip install -r /carbonserver/requirements-api.txt
+RUN pip install -r /carbonserver/requirements-api.txt --require-hashes
 
 COPY ./carbonserver/docker/entrypoint.sh /opt
 RUN chmod a+x /opt/entrypoint.sh
