@@ -53,7 +53,7 @@ The following packages are used by the CodeCarbon package, and will be installed
     prometheus_client
     psutil
     py-cpuinfo
-    pynvml
+    nvidia-ml-py
     rapidfuzz
     requests
     questionary
