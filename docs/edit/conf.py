@@ -24,7 +24,7 @@ author = "BCG GAMMA, Comet.ml, Haverford College, MILA, Data For Good"
 
 # The full version, including alpha/beta/rc tags
 
-release = "3.0.6"
+release = "3.0.7"
 
 # -- General configuration ---------------------------------------------------
 
