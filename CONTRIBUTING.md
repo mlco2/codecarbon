@@ -103,6 +103,8 @@ uv add --dev pytest
 uv add --optional api logfire[fastapi]
 # List all task for CodeCarbon
 uv run task -l
+# Run a specific version of python
+uv run --python 3.14 codecarbon monitor
 ```
 
 <!-- TOC --><a name="tests"></a>
