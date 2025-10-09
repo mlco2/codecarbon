@@ -90,7 +90,6 @@ class Energy:
         return Energy(self.kWh + other.kWh)
 
     def __mul__(self, factor: float) -> "Energy":
-        assert isinstance(factor, float)
         assert isinstance(self.kWh, float)
         result = Energy(self.kWh * factor)
         return result
@@ -162,3 +161,19 @@ class Power:
 
     def __floordiv__(self, divisor: float) -> "Power":
         return Power(self.kW // divisor)
+
+
+@dataclass
+class Water:
+    """
+    Measured in litres
+    """
+
+    litres: float
+
+    @classmethod
+    def from_litres(cls, litres: float) -> "Water":
+        return cls(litres=litres)
+
+    def __add__(self, other: "Water") -> "Water":
+        return Water(self.litres + other.litres)

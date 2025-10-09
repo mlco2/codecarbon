@@ -86,6 +86,7 @@ class TestApi(unittest.TestCase):
                 gpu_power=0,
                 ram_power=0.15,
                 energy_consumed=3.0,
+                water_consumed=0.0,
                 country_name="Groland",
                 country_iso_code="GRD",
                 region="EU",

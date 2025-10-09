@@ -24,6 +24,7 @@ def test_has_valid_headers_true_and_false():
         "gpu_energy",
         "ram_energy",
         "energy_consumed",
+        "water_consumed",
         "country_name",
         "country_iso_code",
         "region",
@@ -42,6 +43,7 @@ def test_has_valid_headers_true_and_false():
         "tracking_mode",
         "on_cloud",
         "pue",
+        "wue",
     ]
     # All string fields
     str_fields = [
@@ -83,6 +85,7 @@ def test_has_valid_headers_true_and_false():
         gpu_energy=row["gpu_energy"],
         ram_energy=row["ram_energy"],
         energy_consumed=row["energy_consumed"],
+        water_consumed=row["water_consumed"],
         country_name=row["country_name"],
         country_iso_code=row["country_iso_code"],
         region=row["region"],
@@ -101,6 +104,7 @@ def test_has_valid_headers_true_and_false():
         tracking_mode=row["tracking_mode"],
         on_cloud=row["on_cloud"],
         pue=row["pue"],
+        wue=row["wue"],
     )
     # Create a temp directory and file
     with tempfile.TemporaryDirectory() as tmpdir:

@@ -36,6 +36,11 @@ Input Parameters
    * - pue
      - | PUE (Power Usage Effectiveness) of the data center
        | where the experiment is being run.
+   * - wue
+     - | WUE (Water Usage Effectiveness) of the data center
+       | where the experiment is being run.
+       | Units of *L/kWh* - how many litres of water are consumed per kilowatt-hour
+       | of electricity consumed.
    * - force_cpu_power
      - | Force the CPU max power consumption in watts,
        | use this if you know the TDP of your machine.
