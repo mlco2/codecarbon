@@ -69,23 +69,25 @@ class TestIntelRAPL(unittest.TestCase):
     def setUp(self) -> None:
         self.rapl_dir = os.path.join(os.path.dirname(__file__), "test_data", "rapl")
         if sys.platform.lower().startswith("lin"):
-            os.makedirs(os.path.join(self.rapl_dir, "intel-rapl:0"), exist_ok=True)
-            with open(os.path.join(self.rapl_dir, "intel-rapl:0/name"), "w") as f:
+            # Create proper RAPL hierarchy: rapl_dir/intel-rapl/intel-rapl:N/
+            provider_dir = os.path.join(self.rapl_dir, "intel-rapl")
+            os.makedirs(os.path.join(provider_dir, "intel-rapl:0"), exist_ok=True)
+            with open(os.path.join(provider_dir, "intel-rapl:0/name"), "w") as f:
                 f.write("package-0")
-            with open(os.path.join(self.rapl_dir, "intel-rapl:0/energy_uj"), "w") as f:
+            with open(os.path.join(provider_dir, "intel-rapl:0/energy_uj"), "w") as f:
                 f.write("52649883221")
             with open(
-                os.path.join(self.rapl_dir, "intel-rapl:0/max_energy_range_uj"), "w"
+                os.path.join(provider_dir, "intel-rapl:0/max_energy_range_uj"), "w"
             ) as f:
                 f.write("262143328850")
 
-            os.makedirs(os.path.join(self.rapl_dir, "intel-rapl:1"), exist_ok=True)
-            with open(os.path.join(self.rapl_dir, "intel-rapl:1/name"), "w") as f:
+            os.makedirs(os.path.join(provider_dir, "intel-rapl:1"), exist_ok=True)
+            with open(os.path.join(provider_dir, "intel-rapl:1/name"), "w") as f:
                 f.write("psys")
-            with open(os.path.join(self.rapl_dir, "intel-rapl:1/energy_uj"), "w") as f:
+            with open(os.path.join(provider_dir, "intel-rapl:1/energy_uj"), "w") as f:
                 f.write("117870082040")
             with open(
-                os.path.join(self.rapl_dir, "intel-rapl:1/max_energy_range_uj"), "w"
+                os.path.join(provider_dir, "intel-rapl:1/max_energy_range_uj"), "w"
             ) as f:
                 f.write("262143328850")
 

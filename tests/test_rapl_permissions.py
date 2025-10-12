@@ -5,15 +5,18 @@ import sys
 
 import pytest
 
-from codecarbon.core.cpu import IntelRAPL
+from codecarbon.core.cpu import IntelRAPL, is_rapl_available
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_main_rapl_permission_error(tmp_path):
     """If the main/package energy file is not readable we must fail loudly."""
     base = tmp_path
-    # create minimal RAPL tree
-    d0 = base / "intel-rapl:0"
+    # Create proper RAPL hierarchy: base/intel-rapl/intel-rapl:N/
+    rapl_provider = base / "intel-rapl"
+    rapl_provider.mkdir()
+
+    d0 = rapl_provider / "intel-rapl:0"
     d0.mkdir()
     (d0 / "name").write_text("package-0")
     energy0 = d0 / "energy_uj"
@@ -21,7 +24,7 @@ def test_main_rapl_permission_error(tmp_path):
     (d0 / "max_energy_range_uj").write_text("262143328850")
 
     # another domain (readable)
-    d1 = base / "intel-rapl:1"
+    d1 = rapl_provider / "intel-rapl:1"
     d1.mkdir()
     (d1 / "name").write_text("psys")
     (d1 / "energy_uj").write_text("117870082040")
@@ -31,8 +34,17 @@ def test_main_rapl_permission_error(tmp_path):
     mode_before = energy0.stat().st_mode
     try:
         os.chmod(energy0, 0)
-        with pytest.raises(PermissionError):
-            IntelRAPL(rapl_dir=str(base))
+        # The lightweight availability check should return False when the
+        # main/package counter is unreadable.
+        assert not is_rapl_available(rapl_dir=str(base))
+
+        # Creating the IntelRAPL instance should *not* raise; it should
+        # skip unreadable domains and continue.
+        rapl = IntelRAPL(rapl_dir=str(base))
+        # The unreadable main domain should be skipped; only the readable
+        # non-main domain should be present.
+        assert len(rapl._rapl_files) == 1
+        assert rapl._rapl_files[0].path.endswith("intel-rapl/intel-rapl:1/energy_uj")
     finally:
         # restore permissions so tmp_path can be cleaned up
         try:
@@ -45,13 +57,17 @@ def test_main_rapl_permission_error(tmp_path):
 def test_non_main_rapl_permission_warning_and_skip(tmp_path, caplog):
     """If a non-main domain (e.g. psys) is unreadable, it should be skipped and warn."""
     base = tmp_path
-    d0 = base / "intel-rapl:0"
+    # Create proper RAPL hierarchy: base/intel-rapl/intel-rapl:N/
+    rapl_provider = base / "intel-rapl"
+    rapl_provider.mkdir()
+
+    d0 = rapl_provider / "intel-rapl:0"
     d0.mkdir()
     (d0 / "name").write_text("package-0")
     (d0 / "energy_uj").write_text("52649883221")
     (d0 / "max_energy_range_uj").write_text("262143328850")
 
-    d1 = base / "intel-rapl:1"
+    d1 = rapl_provider / "intel-rapl:1"
     d1.mkdir()
     (d1 / "name").write_text("psys")
     energy1 = d1 / "energy_uj"
@@ -66,7 +82,7 @@ def test_non_main_rapl_permission_warning_and_skip(tmp_path, caplog):
         rapl = IntelRAPL(rapl_dir=str(base))
         # The unreadable non-main domain should be skipped
         assert len(rapl._rapl_files) == 1
-        assert rapl._rapl_files[0].path.endswith("intel-rapl:0/energy_uj")
+        assert rapl._rapl_files[0].path.endswith("intel-rapl/intel-rapl:0/energy_uj")
 
         # A warning about permission denied should be emitted
         messages = [r.getMessage() for r in caplog.records]
