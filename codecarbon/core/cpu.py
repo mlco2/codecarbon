@@ -44,23 +44,119 @@ def is_powergadget_available() -> bool:
         return False
 
 
-def is_rapl_available() -> bool:
+def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
     """
     Checks if Intel RAPL is available on the system.
 
     Returns:
         bool: `True` if Intel RAPL is available, `False` otherwise.
     """
+    # Lightweight detection: scan common powercap locations for a readable
+    # package/main `energy_uj` file. We avoid instantiating `IntelRAPL` here so
+    # that callers can decide to create the full interface only when this
+    # pre-check passes. This prevents raising during global initialization and
+    # lets callers fall back gracefully.
+    if rapl_dir is None:
+        rapl_dir = "/sys/class/powercap/intel-rapl/subsystem"
+
+    default_rapl_dir = "/sys/class/powercap/intel-rapl/subsystem"
+    is_default_dir = os.path.abspath(rapl_dir) == os.path.abspath(default_rapl_dir)
+
+    if is_default_dir:
+        # Production: scan all common RAPL locations
+        candidate_bases = [
+            rapl_dir,
+            os.path.dirname(rapl_dir),
+            "/sys/class/powercap",
+            "/sys/devices/virtual/powercap",
+        ]
+    else:
+        # Testing or custom directory: only scan the specified location
+        candidate_bases = [
+            rapl_dir,
+            os.path.dirname(rapl_dir),
+        ]
+
+    seen = set()
+    candidate_bases = [
+        p
+        for p in candidate_bases
+        if p and not (p in seen or seen.add(p)) and os.path.exists(p)
+    ]
+
     try:
-        IntelRAPL()
-        return True
-    except Exception as e:
-        logger.debug(
-            "Not using the RAPL interface, an exception occurred while instantiating "
-            + "IntelRAPL : %s",
-            e,
-        )
-        return False
+        for base in candidate_bases:
+            try:
+                for entry in os.listdir(base):
+                    if not entry.startswith("intel-rapl"):
+                        continue
+                    entry_path = os.path.join(base, entry)
+                    if not os.path.isdir(entry_path):
+                        continue
+
+                    # Look for domain directories (contain ':') under provider
+                    for sub in os.listdir(entry_path):
+                        sub_path = os.path.join(entry_path, sub)
+                        if ":" not in sub or not os.path.isdir(sub_path):
+                            continue
+
+                        energy_path = os.path.join(sub_path, "energy_uj")
+                        name_path = os.path.join(sub_path, "name")
+
+                        # Determine if this domain looks like the main/package domain
+                        is_main = False
+                        try:
+                            if os.path.exists(name_path):
+                                with open(name_path, "r") as nf:
+                                    name = nf.read().strip().lower()
+                                    if "package" in name:
+                                        is_main = True
+                        except Exception:
+                            # If we cannot read the name file, fall back to basename rule
+                            pass
+                        if sub.endswith(":0"):
+                            is_main = True
+
+                        if os.path.exists(energy_path) and os.access(
+                            energy_path, os.R_OK
+                        ):
+                            if is_main:
+                                return True
+
+                # Also support trees where `intel-rapl:$i` entries are directly inside `base`
+                for item in os.listdir(base):
+                    if ":" not in item:
+                        continue
+                    p = os.path.join(base, item)
+                    if not os.path.isdir(p):
+                        continue
+                    energy_path = os.path.join(p, "energy_uj")
+                    name_path = os.path.join(p, "name")
+
+                    is_main = False
+                    try:
+                        if os.path.exists(name_path):
+                            with open(name_path, "r") as nf:
+                                name = nf.read().strip().lower()
+                                if "package" in name:
+                                    is_main = True
+                    except Exception:
+                        pass
+                    if item.endswith(":0"):
+                        is_main = True
+                    if os.path.exists(energy_path) and os.access(energy_path, os.R_OK):
+                        if is_main:
+                            return True
+            except Exception:
+                # Ignore ephemeral errors during detection and continue scanning
+                logger.debug(
+                    "Error while scanning %s for RAPL domains", base, exc_info=True
+                )
+                continue
+    except Exception:
+        logger.debug("Unexpected error while checking RAPL availability", exc_info=True)
+
+    return False
 
 
 def is_psutil_available():
@@ -292,12 +388,30 @@ class IntelRAPL:
         # that expose an `energy_uj` file. We try to be tolerant to permission
         # errors and simply skip unreadable entries instead of failing the whole
         # tracker when one RAPL subtree is not accessible (e.g., intel-rapl-mmio).
-        candidate_bases = [
-            self._lin_rapl_dir,
-            os.path.dirname(self._lin_rapl_dir),
-            "/sys/class/powercap",
-            "/sys/devices/virtual/powercap",
-        ]
+        #
+        # When using the default RAPL directory, we scan all common system locations
+        # to ensure we don't miss any RAPL providers (including intel-rapl-mmio).
+        # When a custom rapl_dir is provided (e.g., for testing), we only scan
+        # that directory and its parent to avoid interference with system files.
+        default_rapl_dir = "/sys/class/powercap/intel-rapl/subsystem"
+        is_default_dir = os.path.abspath(self._lin_rapl_dir) == os.path.abspath(
+            default_rapl_dir
+        )
+
+        if is_default_dir:
+            # Production: scan all common RAPL locations
+            candidate_bases = [
+                self._lin_rapl_dir,
+                os.path.dirname(self._lin_rapl_dir),
+                "/sys/class/powercap",
+                "/sys/devices/virtual/powercap",
+            ]
+        else:
+            # Testing or custom directory: only scan the specified location
+            candidate_bases = [
+                self._lin_rapl_dir,
+                os.path.dirname(self._lin_rapl_dir),
+            ]
 
         # Deduplicate while preserving order and keep only existing paths
         seen = set()
@@ -308,6 +422,7 @@ class IntelRAPL:
         ]
 
         domain_dirs = []
+        found_main_readable = False
         for base in candidate_bases:
             try:
                 for entry in os.listdir(base):
@@ -389,69 +504,63 @@ class IntelRAPL:
                 rapl_file = os.path.join(domain_dir, "energy_uj")
                 rapl_file_max = os.path.join(domain_dir, "max_energy_range_uj")
 
-                # Quick sanity check: can we read the energy value? If not, either
-                # fail (for main/package domains) or skip gracefully.
+                # Quick sanity check: can we read the energy value? If not,
+                # skip gracefully but mark whether we found a readable main
+                # domain. We avoid raising here: callers should use
+                # `is_rapl_available()` to pre-check availability and decide
+                # whether to instantiate the full interface.
                 is_required_main = ("package" in name.lower()) or os.path.basename(
                     domain_dir
                 ).endswith(":0")
                 try:
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
-                except PermissionError as e:
+                    # If the main/package counter is readable, mark availability
+                    if is_required_main:
+                        found_main_readable = True
+                except PermissionError:
                     msg = f"Permission denied reading RAPL file {rapl_file}."
                     suggestion = "You can grant read permission with: sudo chmod -R a+r /sys/class/powercap/*"
-                    if is_required_main:
-                        # Fail early if the main package energy file is not readable
-                        raise PermissionError(msg + " " + suggestion) from e
-                    else:
-                        logger.warning("%s %s; skipping.", msg, suggestion)
-                        continue
+                    logger.warning("%s %s; skipping.", msg, suggestion)
+                    # do not raise; skip this domain
+                    continue
                 except Exception as e:
-                    if is_required_main:
-                        # If the main file is unreadable or non-numeric, fail early
-                        raise RuntimeError(
-                            f"Unable to read main RAPL file {rapl_file}: {e}"
-                        ) from e
-                    else:
-                        logger.debug(
-                            "Skipping non-numeric or unreadable RAPL file %s: %s",
-                            rapl_file,
-                            e,
-                        )
-                        continue
+                    logger.debug(
+                        "Skipping non-numeric or unreadable RAPL file %s: %s",
+                        rapl_file,
+                        e,
+                    )
+                    continue
 
                 try:
                     self._rapl_files.append(
                         RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
                     )
                     logger.debug("We will read Intel RAPL files at %s", rapl_file)
-                except Exception as e:
-                    if isinstance(e, PermissionError) and is_required_main:
-                        raise
-                    if isinstance(e, PermissionError):
-                        logger.warning(
-                            "Permission denied while initializing RAPL file %s: %s",
-                            rapl_file,
-                            e,
-                        )
-                    else:
-                        logger.debug(
-                            "Unable to initialize RAPLFile for %s: %s", rapl_file, e
-                        )
-                    continue
-            except Exception as e:
-                if isinstance(e, PermissionError):
-                    # If we get a permission error here and it's not handled above,
-                    # surface it as a warning unless it's the main domain which
-                    # should have failed earlier.
+                except PermissionError as e:
                     logger.warning(
-                        "Permission error while processing RAPL domain %s: %s",
-                        domain_dir,
+                        "Permission denied while initializing RAPL file %s: %s",
+                        rapl_file,
                         e,
                     )
-                else:
-                    logger.debug("Error processing RAPL domain %s: %s", domain_dir, e)
+                    continue
+                except Exception as e:
+                    logger.debug(
+                        "Unable to initialize RAPLFile for %s: %s", rapl_file, e
+                    )
+                    continue
+            except Exception as e:
+                # Log and continue on any per-domain failure; availability is
+                # determined from whether a main/package counter was readable.
+                logger.warning("Error processing RAPL domain %s: %s", domain_dir, e)
                 continue
+
+        # Save whether we found a readable main/package energy counter so
+        # callers can query `intel_rapl._available` if desired.
+        try:
+            self._available = bool(found_main_readable)
+        except Exception:
+            self._available = False
 
     def get_cpu_details(self, duration: Time) -> Dict:
         """
