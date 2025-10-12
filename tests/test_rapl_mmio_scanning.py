@@ -14,7 +14,7 @@ from codecarbon.core.cpu import IntelRAPL, is_rapl_available
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
-def test_multiple_rapl_providers_with_mixed_permissions(tmp_path, caplog):
+def test_multiple_rapl_providers_with_mixed_permissions(tmp_path):
     """
     Verify that multiple RAPL providers (intel-rapl and intel-rapl-mmio) are
     scanned, and permission errors on one provider don't prevent using the other.
@@ -44,7 +44,19 @@ def test_multiple_rapl_providers_with_mixed_permissions(tmp_path, caplog):
 
     # Make the MMIO energy file unreadable
     mode_before = energy_mmio.stat().st_mode
-    caplog.set_level(logging.WARNING, logger="codecarbon")
+
+    # Add a custom handler to capture warnings (since logger.propagate = False)
+    from codecarbon.external.logger import logger as codecarbon_logger
+
+    log_records = []
+
+    class TestHandler(logging.Handler):
+        def emit(self, record):
+            log_records.append(record)
+
+    test_handler = TestHandler()
+    test_handler.setLevel(logging.WARNING)
+    codecarbon_logger.addHandler(test_handler)
 
     try:
         os.chmod(energy_mmio, 0)
@@ -60,13 +72,14 @@ def test_multiple_rapl_providers_with_mixed_permissions(tmp_path, caplog):
         assert "intel-rapl/intel-rapl:0/energy_uj" in rapl._rapl_files[0].path
 
         # A warning should be emitted for the unreadable MMIO domain
-        messages = [r.getMessage() for r in caplog.records]
+        messages = [r.getMessage() for r in log_records]
         assert any(
             "Permission denied reading RAPL file" in m and "intel-rapl-mmio" in m
             for m in messages
         ), f"Expected permission warning for intel-rapl-mmio, got: {messages}"
 
     finally:
+        codecarbon_logger.removeHandler(test_handler)
         try:
             os.chmod(energy_mmio, stat.S_IMODE(mode_before) or 0o644)
         except Exception:
