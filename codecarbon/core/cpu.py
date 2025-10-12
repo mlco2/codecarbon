@@ -288,42 +288,170 @@ class IntelRAPL:
         """
         Fetches RAPL files from the RAPL directory
         """
+        # We'll scan common powercap locations and look for domain directories
+        # that expose an `energy_uj` file. We try to be tolerant to permission
+        # errors and simply skip unreadable entries instead of failing the whole
+        # tracker when one RAPL subtree is not accessible (e.g., intel-rapl-mmio).
+        candidate_bases = [
+            self._lin_rapl_dir,
+            os.path.dirname(self._lin_rapl_dir),
+            "/sys/class/powercap",
+            "/sys/devices/virtual/powercap",
+        ]
 
-        # consider files like `intel-rapl:$i`
-        files = list(filter(lambda x: ":" in x, os.listdir(self._lin_rapl_dir)))
+        # Deduplicate while preserving order and keep only existing paths
+        seen = set()
+        candidate_bases = [
+            p
+            for p in candidate_bases
+            if p and not (p in seen or seen.add(p)) and os.path.exists(p)
+        ]
+
+        domain_dirs = []
+        for base in candidate_bases:
+            try:
+                for entry in os.listdir(base):
+                    # Look for powercap provider directories like 'intel-rapl' or 'intel-rapl-mmio'
+                    if not entry.startswith("intel-rapl"):
+                        continue
+                    entry_path = os.path.join(base, entry)
+                    if not os.path.isdir(entry_path):
+                        continue
+                    # Look for domain directories under the provider that usually contain ':' in their name
+                    try:
+                        for sub in os.listdir(entry_path):
+                            sub_path = os.path.join(entry_path, sub)
+                            if ":" in sub and os.path.isdir(sub_path):
+                                # Only consider if energy file exists
+                                if os.path.exists(os.path.join(sub_path, "energy_uj")):
+                                    domain_dirs.append(sub_path)
+                    except Exception as e:
+                        if isinstance(e, PermissionError):
+                            logger.warning(
+                                "Permission denied listing %s: %s", entry_path, e
+                            )
+                        else:
+                            logger.debug("Cannot list %s: %s", entry_path, e)
+            except Exception as e:
+                if isinstance(e, PermissionError):
+                    logger.warning(
+                        "Permission denied scanning %s for RAPL domains: %s", base, e
+                    )
+                else:
+                    logger.debug("Cannot scan %s for RAPL domains: %s", base, e)
+
+        # Fallback: if none found and the configured path looks like it directly
+        # contains domain entries, try listing it (preserves backward compatibility).
+        if not domain_dirs:
+            try:
+                for item in os.listdir(self._lin_rapl_dir):
+                    if ":" in item:
+                        path = os.path.join(self._lin_rapl_dir, item)
+                        if os.path.isdir(path) and os.path.exists(
+                            os.path.join(path, "energy_uj")
+                        ):
+                            domain_dirs.append(path)
+            except Exception:
+                # ignore: we'll handle the empty domain_dirs case below
+                pass
+
+        # Remove duplicates
+        domain_dirs = list(dict.fromkeys(domain_dirs))
 
         i = 0
-        for file in files:
-            path = os.path.join(self._lin_rapl_dir, file, "name")
-            with open(path) as f:
-                name = f.read().strip()
-                # Fake the name used by Power Gadget
-                # We ignore "core" in name as it seems to be included in "package" for Intel CPU.
-                # TODO: Use "dram" for memory power
+        for domain_dir in domain_dirs:
+            try:
+                name_path = os.path.join(domain_dir, "name")
+                name = None
+                if os.path.exists(name_path):
+                    try:
+                        with open(name_path) as f:
+                            name = f.read().strip()
+                    except Exception as e:
+                        if isinstance(e, PermissionError):
+                            logger.warning(
+                                "Permission denied reading name file %s: %s",
+                                name_path,
+                                e,
+                            )
+                        else:
+                            logger.debug(
+                                "Unable to read name file %s: %s", name_path, e
+                            )
+                if not name:
+                    # Use the domain directory basename as a fallback
+                    name = os.path.basename(domain_dir)
+
                 if "package" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
-                # RAPL file to take measurement from
-                rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
-                # RAPL file containing maximum possible value of energy_uj above which it wraps
-                rapl_file_max = os.path.join(
-                    self._lin_rapl_dir, file, "max_energy_range_uj"
-                )
+
+                rapl_file = os.path.join(domain_dir, "energy_uj")
+                rapl_file_max = os.path.join(domain_dir, "max_energy_range_uj")
+
+                # Quick sanity check: can we read the energy value? If not, either
+                # fail (for main/package domains) or skip gracefully.
+                is_required_main = ("package" in name.lower()) or os.path.basename(
+                    domain_dir
+                ).endswith(":0")
                 try:
-                    # Try to read the file to be sure we can
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
+                except PermissionError as e:
+                    msg = f"Permission denied reading RAPL file {rapl_file}."
+                    suggestion = "You can grant read permission with: sudo chmod -R a+r /sys/class/powercap/*"
+                    if is_required_main:
+                        # Fail early if the main package energy file is not readable
+                        raise PermissionError(msg + " " + suggestion) from e
+                    else:
+                        logger.warning("%s %s; skipping.", msg, suggestion)
+                        continue
+                except Exception as e:
+                    if is_required_main:
+                        # If the main file is unreadable or non-numeric, fail early
+                        raise RuntimeError(
+                            f"Unable to read main RAPL file {rapl_file}: {e}"
+                        ) from e
+                    else:
+                        logger.debug(
+                            "Skipping non-numeric or unreadable RAPL file %s: %s",
+                            rapl_file,
+                            e,
+                        )
+                        continue
+
+                try:
                     self._rapl_files.append(
                         RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
                     )
                     logger.debug("We will read Intel RAPL files at %s", rapl_file)
-                except PermissionError as e:
-                    raise PermissionError(
-                        "PermissionError : Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
-                        + " Please view https://github.com/mlco2/codecarbon/issues/244"
-                        + " for workarounds : %s",
+                except Exception as e:
+                    if isinstance(e, PermissionError) and is_required_main:
+                        raise
+                    if isinstance(e, PermissionError):
+                        logger.warning(
+                            "Permission denied while initializing RAPL file %s: %s",
+                            rapl_file,
+                            e,
+                        )
+                    else:
+                        logger.debug(
+                            "Unable to initialize RAPLFile for %s: %s", rapl_file, e
+                        )
+                    continue
+            except Exception as e:
+                if isinstance(e, PermissionError):
+                    # If we get a permission error here and it's not handled above,
+                    # surface it as a warning unless it's the main domain which
+                    # should have failed earlier.
+                    logger.warning(
+                        "Permission error while processing RAPL domain %s: %s",
+                        domain_dir,
                         e,
-                    ) from e
+                    )
+                else:
+                    logger.debug("Error processing RAPL domain %s: %s", domain_dir, e)
+                continue
 
     def get_cpu_details(self, duration: Time) -> Dict:
         """
