@@ -27,6 +27,7 @@ export default function ProjectsPage({
     const createModal = useModal();
     const deleteModal = useModal();
     const [projectList, setProjectList] = useState<Project[]>([]);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(
         null,
     );
@@ -43,7 +44,7 @@ export default function ProjectsPage({
 
     const handleDeleteClick = (project: Project) => {
         setProjectToDelete(project);
-        deleteModal.open();
+        setDeleteModalOpen(true);
     };
 
     const handleDeleteConfirm = async (projectId: string) => {
@@ -143,8 +144,8 @@ export default function ProjectsPage({
                 </Card>
                 {projectToDelete && (
                     <DeleteProjectModal
-                        open={deleteModal.isOpen}
-                        onOpenChange={deleteModal.setIsOpen}
+                        open={deleteModalOpen}
+                        onOpenChange={setDeleteModalOpen}
                         projectName={projectToDelete.name}
                         projectId={projectToDelete.id}
                         onDelete={handleDeleteConfirm}
