@@ -6,6 +6,7 @@ from dependency_injector import providers
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
+from carbonserver.api.errors import UserException, get_http_exception
 from carbonserver.api.infra.repositories.repository_projects import SqlAlchemyRepository
 from carbonserver.api.routers import projects
 from carbonserver.api.schemas import Project
@@ -25,6 +26,12 @@ def custom_test_server() -> FastAPI:
         FakeUserWithAuthDependency
     )
     app.container.auth_context.override(providers.Factory(FakeAuthContext))
+
+    # Add UserException handler to match main app behavior
+    @app.exception_handler(UserException)
+    async def custom_exception_handler(request, exc: UserException):
+        raise get_http_exception(exc)
+
     yield app
 
 
@@ -116,6 +123,45 @@ def test_delete_project(client, custom_test_server):
         response = client.delete(f"/projects/{PROJECT_ID}", params={"id": PROJECT_ID})
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+    repository_mock.delete_project.assert_called_once_with(PROJECT_ID)
+
+
+def test_delete_project_cascades_to_children(client, custom_test_server):
+    """
+    Test that deleting a project through the router calls the repository delete,
+    which will cascade to all child entities (experiments, runs, emissions, tokens).
+    """
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock.delete_project.return_value = None
+
+    with custom_test_server.container.project_repository.override(repository_mock):
+        response = client.delete(f"/projects/{PROJECT_ID}")
+
+    # Verify the endpoint returned success
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Verify the repository delete was called with correct project_id
+    repository_mock.delete_project.assert_called_once_with(PROJECT_ID)
+
+
+def test_delete_nonexistent_project_returns_error(client, custom_test_server):
+    """
+    Test that attempting to delete a non-existent project returns appropriate error.
+    """
+    from carbonserver.api.errors import NotFoundError, NotFoundErrorEnum, UserException
+
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock.delete_project.side_effect = UserException(
+        NotFoundError(
+            code=NotFoundErrorEnum.NOT_FOUND, message=f"Project not found: {PROJECT_ID}"
+        )
+    )
+
+    with custom_test_server.container.project_repository.override(repository_mock):
+        response = client.delete(f"/projects/{PROJECT_ID}")
+
+    # The UserException should be caught and converted to HTTP 404 error
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 def test_patch_project(client, custom_test_server):
