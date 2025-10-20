@@ -87,6 +87,9 @@ class EmissionBase(BaseModel):
     ram_energy: Optional[float] = Field(
         ..., ge=0, description="The ram_energy must be greater than zero"
     )
+    wue: Optional[float] = Field(
+        default=0, ge=0, description="The WUE (Water Usage Effectiveness) must be greater than or equal to zero"
+    )
 
     class Config:
         schema_extra = {
@@ -103,6 +106,7 @@ class EmissionBase(BaseModel):
                 "gpu_energy": 0.0,
                 "ram_energy": 2.0,
                 "energy_consumed": 57.21874,
+                "wue": 0,
             }
         }
 
