@@ -88,7 +88,9 @@ class EmissionBase(BaseModel):
         ..., ge=0, description="The ram_energy must be greater than zero"
     )
     wue: Optional[float] = Field(
-        default=0, ge=0, description="The WUE (Water Usage Effectiveness) must be greater than or equal to zero"
+        default=0,
+        ge=0,
+        description="The WUE (Water Usage Effectiveness) must be greater than or equal to zero",
     )
 
     class Config:
