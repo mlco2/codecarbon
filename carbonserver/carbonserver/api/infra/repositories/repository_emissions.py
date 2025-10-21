@@ -41,6 +41,7 @@ class SqlAlchemyRepository(Emissions):
                 gpu_energy=emission.gpu_energy,
                 ram_energy=emission.ram_energy,
                 energy_consumed=emission.energy_consumed,
+                wue=emission.wue,
                 run_id=emission.run_id,
             )
             session.add(db_emission)
@@ -104,5 +105,6 @@ class SqlAlchemyRepository(Emissions):
             gpu_energy=emission.gpu_energy,
             ram_energy=emission.ram_energy,
             energy_consumed=emission.energy_consumed,
+            wue=emission.wue,
             run_id=emission.run_id,
         )

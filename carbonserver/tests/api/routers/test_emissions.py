@@ -37,6 +37,7 @@ EMISSION_TO_CREATE = {
     "gpu_energy": 0.0,
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
+    "wue": 0,
 }
 
 EMISSION_1 = {
@@ -53,6 +54,7 @@ EMISSION_1 = {
     "gpu_energy": 0.0,
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
+    "wue": 0,
 }
 
 EMISSION_2 = {
@@ -69,6 +71,7 @@ EMISSION_2 = {
     "gpu_energy": 0.0,
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
+    "wue": 0,
 }
 
 
@@ -86,6 +89,7 @@ EMISSION_3 = {
     "gpu_energy": 0.0,
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
+    "wue": 0,
 }
 
 
@@ -196,3 +200,113 @@ def test_get_emissions_from_run_retreives_all_emissions_from_run(
     assert not diff
     assert len(actual_emission_ids_list) == len(set(actual_emission_ids_list))
     assert EMISSION_3["id"] not in actual_emission_ids_list
+
+
+def test_add_emission_with_default_wue_value(client, custom_test_server):
+    """Test that WUE defaults to 0 when not provided"""
+    # Prepare the test - create emission without WUE field
+    emission_without_wue = {
+        "timestamp": "2021-04-04T08:43:00+02:00",
+        "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
+        "duration": 98745,
+        "emissions_sum": 206.548444,
+        "emissions_rate": 89.548444,
+        "cpu_power": 0.3,
+        "gpu_power": 0.0,
+        "ram_power": 0.15,
+        "cpu_energy": 55.21874,
+        "gpu_energy": 0.0,
+        "ram_energy": 2.0,
+        "energy_consumed": 57.21874,
+        # Note: wue is not provided, should default to 0
+    }
+
+    repository_mock = mock.Mock(spec=EmissionRepository)
+    repository_mock.add_emission.return_value = UUID(EMISSION_ID)
+
+    # Setup the project token repository
+    project_tokens_repository_mock = mock.Mock(spec=ProjectTokenRepository)
+    PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
+    PROJECT_TOKEN_ID = UUID("e60afb92-17b7-4720-91a0-1ae91e409ba7")
+    PROJECT_TOKEN = ProjectToken(
+        id=PROJECT_TOKEN_ID,
+        project_id=PROJECT_ID,
+        name="Project",
+        token="token",
+        access=AccessLevel.WRITE.value,
+    )
+    project_tokens_repository_mock.get_project_token_by_run_id_and_token.return_value = (
+        PROJECT_TOKEN
+    )
+
+    # Call the endpoint
+    with custom_test_server.container.emission_repository.override(
+        repository_mock
+    ) and custom_test_server.container.project_token_repository.override(
+        project_tokens_repository_mock
+    ):
+        response = client.post(
+            "/emissions", json=emission_without_wue, headers={"x-api-token": "token"}
+        )
+
+    # Asserts
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # Verify that the repository was called with WUE defaulting to 0
+    called_emission = repository_mock.add_emission.call_args[0][0]
+    assert called_emission.wue == 0, "WUE should default to 0 when not provided"
+
+
+def test_add_emission_with_custom_wue_value(client, custom_test_server):
+    """Test that custom WUE value is properly saved"""
+    # Prepare the test - create emission with custom WUE value
+    emission_with_wue = {
+        "timestamp": "2021-04-04T08:43:00+02:00",
+        "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
+        "duration": 98745,
+        "emissions_sum": 206.548444,
+        "emissions_rate": 89.548444,
+        "cpu_power": 0.3,
+        "gpu_power": 0.0,
+        "ram_power": 0.15,
+        "cpu_energy": 55.21874,
+        "gpu_energy": 0.0,
+        "ram_energy": 2.0,
+        "energy_consumed": 57.21874,
+        "wue": 1.5,
+    }
+
+    repository_mock = mock.Mock(spec=EmissionRepository)
+    repository_mock.add_emission.return_value = UUID(EMISSION_ID)
+
+    # Setup the project token repository
+    project_tokens_repository_mock = mock.Mock(spec=ProjectTokenRepository)
+    PROJECT_ID = UUID("f52fe339-164d-4c2b-a8c0-f562dfce066d")
+    PROJECT_TOKEN_ID = UUID("e60afb92-17b7-4720-91a0-1ae91e409ba7")
+    PROJECT_TOKEN = ProjectToken(
+        id=PROJECT_TOKEN_ID,
+        project_id=PROJECT_ID,
+        name="Project",
+        token="token",
+        access=AccessLevel.WRITE.value,
+    )
+    project_tokens_repository_mock.get_project_token_by_run_id_and_token.return_value = (
+        PROJECT_TOKEN
+    )
+
+    # Call the endpoint
+    with custom_test_server.container.emission_repository.override(
+        repository_mock
+    ) and custom_test_server.container.project_token_repository.override(
+        project_tokens_repository_mock
+    ):
+        response = client.post(
+            "/emissions", json=emission_with_wue, headers={"x-api-token": "token"}
+        )
+
+    # Asserts
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # Verify that the repository was called with the correct WUE value
+    called_emission = repository_mock.add_emission.call_args[0][0]
+    assert called_emission.wue == 1.5, "WUE should be set to the provided value"

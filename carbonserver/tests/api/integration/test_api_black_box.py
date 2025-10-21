@@ -279,6 +279,7 @@ default_emission = {
     "gpu_energy": 105.50,
     "ram_energy": 60.50,
     "energy_consumed": 65.50,
+    "wue": 0,
 }
 
 
@@ -297,6 +298,7 @@ def add_emission(run_id: str):
         "gpu_energy": default_emission["gpu_energy"],
         "ram_energy": default_emission["ram_energy"],
         "energy_consumed": default_emission["energy_consumed"],
+        "wue": default_emission["wue"],
     }
     r = requests.post(
         url=URL + "/emissions/",
