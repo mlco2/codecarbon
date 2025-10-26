@@ -51,6 +51,15 @@ Input Parameters
        | Estimate it with ``sudo lshw -C memory -short | grep DIMM``
        | to get the number of RAM slots used, then do
        | *RAM power in W = Number of RAM Slots * 5 Watts*
+   * - force_mode_cpu_load
+     - | Force the use of CPU load mode for measuring CPU power consumption,
+       | defaults to ``False``. When enabled, uses psutil to monitor CPU load
+       | and estimates power consumption based on TDP and current CPU usage.
+   * - force_mode_constant
+     - | Force the use of constant mode for CPU power consumption measurement,
+       | defaults to ``False``. When enabled, bypasses psutil completely and
+       | uses a constant power consumption based on CPU TDP. Useful when
+       | psutil overhead is significant or psutil is unavailable.
    * - allow_multiple_runs
      - | Boolean variable indicating if multiple instance of CodeCarbon
        | on the same machine is allowed,
