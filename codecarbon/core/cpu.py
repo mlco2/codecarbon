@@ -443,17 +443,23 @@ class IntelRAPL:
                     except Exception as e:
                         if isinstance(e, PermissionError):
                             logger.warning(
-                                "Permission denied listing %s: %s", entry_path, e
+                                "\tRAPL - Permission denied listing %s: %s",
+                                entry_path,
+                                e,
                             )
                         else:
-                            logger.debug("Cannot list %s: %s", entry_path, e)
+                            logger.debug("\tRAPL - Cannot list %s: %s", entry_path, e)
             except Exception as e:
                 if isinstance(e, PermissionError):
                     logger.warning(
-                        "Permission denied scanning %s for RAPL domains: %s", base, e
+                        "\tRAPL - Permission denied scanning %s for RAPL domains: %s",
+                        base,
+                        e,
                     )
                 else:
-                    logger.debug("Cannot scan %s for RAPL domains: %s", base, e)
+                    logger.debug(
+                        "\tRAPL - Cannot scan %s for RAPL domains: %s", base, e
+                    )
 
         # Fallback: if none found and the configured path looks like it directly
         # contains domain entries, try listing it (preserves backward compatibility).
@@ -473,6 +479,12 @@ class IntelRAPL:
         # Remove duplicates
         domain_dirs = list(dict.fromkeys(domain_dirs))
 
+        # Build a list of successfully readable domains with their metadata
+        # We'll deduplicate at the end, after we know which ones are readable
+        readable_domains = (
+            []
+        )  # List of (name, domain_dir, is_mmio, rapl_file, rapl_file_max)
+
         i = 0
         for domain_dir in domain_dirs:
             try:
@@ -485,13 +497,13 @@ class IntelRAPL:
                     except Exception as e:
                         if isinstance(e, PermissionError):
                             logger.warning(
-                                "Permission denied reading name file %s: %s",
+                                "\tRAPL - Permission denied reading name file %s: %s",
                                 name_path,
                                 e,
                             )
                         else:
                             logger.debug(
-                                "Unable to read name file %s: %s", name_path, e
+                                "\tRAPL - Unable to read name file %s: %s", name_path, e
                             )
                 if not name:
                     # Use the domain directory basename as a fallback
@@ -519,40 +531,127 @@ class IntelRAPL:
                     if is_required_main:
                         found_main_readable = True
                 except PermissionError:
-                    msg = f"Permission denied reading RAPL file {rapl_file}."
+                    msg = f"\tRAPL - Permission denied reading RAPL file {rapl_file}."
                     suggestion = "You can grant read permission with: sudo chmod -R a+r /sys/class/powercap/*"
                     logger.warning("%s %s; skipping.", msg, suggestion)
                     # do not raise; skip this domain
                     continue
                 except Exception as e:
                     logger.debug(
-                        "Skipping non-numeric or unreadable RAPL file %s: %s",
+                        "\tRAPL - Skipping non-numeric or unreadable RAPL file %s: %s",
                         rapl_file,
                         e,
                     )
                     continue
 
-                try:
-                    self._rapl_files.append(
-                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
-                    )
-                    logger.debug("We will read Intel RAPL files at %s", rapl_file)
-                except PermissionError as e:
-                    logger.warning(
-                        "Permission denied while initializing RAPL file %s: %s",
-                        rapl_file,
-                        e,
-                    )
-                    continue
-                except Exception as e:
-                    logger.debug(
-                        "Unable to initialize RAPLFile for %s: %s", rapl_file, e
-                    )
-                    continue
+                # This domain is readable, add it to our list
+                is_mmio = "intel-rapl-mmio" in domain_dir
+                readable_domains.append(
+                    (name, domain_dir, is_mmio, rapl_file, rapl_file_max)
+                )
             except Exception as e:
                 # Log and continue on any per-domain failure; availability is
                 # determined from whether a main/package counter was readable.
-                logger.warning("Error processing RAPL domain %s: %s", domain_dir, e)
+                logger.warning(
+                    "\tRAPL - Error processing RAPL domain %s: %s", domain_dir, e
+                )
+                continue
+
+        # Deduplicate readable domains with same name, preferring MMIO over MSR-based
+        # This prevents double-counting when same domain appears in both
+        # intel-rapl and intel-rapl-mmio (e.g., package-0)
+
+        # First, check if we have a psys (platform/system) domain
+        # psys provides total platform power and already includes package, core, uncore, etc.
+        # Using psys alone is the best way to avoid double-counting on modern Intel systems
+        psys_domain = None
+        for domain_tuple in readable_domains:
+            name, domain_dir, is_mmio, rapl_file, rapl_file_max = domain_tuple
+
+            # Check if this is a psys domain
+            try:
+                name_path = os.path.join(domain_dir, "name")
+                if os.path.exists(name_path):
+                    with open(name_path) as f:
+                        domain_name = f.read().strip().lower()
+                        if domain_name == "psys":
+                            psys_domain = domain_tuple
+                            logger.info(
+                                "\tRAPL - Found psys (platform/system) domain - this provides "
+                                "total platform power and avoids double-counting"
+                            )
+                            break
+            except Exception:
+                pass
+
+        # If psys is available, use ONLY psys to avoid all double-counting
+        if psys_domain:
+            logger.info(
+                "\tRAPL - Using only psys domain for power measurement to ensure accuracy. "
+                "Other domains (package, core, uncore) are subsets of psys."
+            )
+            domain_map = {"psys": psys_domain}
+        else:
+            # No psys available, fall back to deduplicating package/core/uncore domains
+            logger.warning(
+                "\tRAPL - No psys domain found, using individual domains (package, core, uncore)"
+            )
+            domain_map = (
+                {}
+            )  # name -> (name, domain_dir, is_mmio, rapl_file, rapl_file_max)
+            for domain_tuple in readable_domains:
+                name, domain_dir, is_mmio, rapl_file, rapl_file_max = domain_tuple
+
+                # Extract the base name (without "Processor Energy Delta_X" numbering)
+                # to properly identify duplicates
+                base_name = name
+                if "Processor Energy" in name:
+                    # This is a package domain, use the original domain name for deduplication
+                    try:
+                        name_path = os.path.join(domain_dir, "name")
+                        if os.path.exists(name_path):
+                            with open(name_path) as f:
+                                base_name = f.read().strip()
+                    except Exception:
+                        base_name = os.path.basename(domain_dir)
+
+                # If we haven't seen this base name, or we're replacing MSR with MMIO, keep it
+                if base_name not in domain_map or (
+                    is_mmio and not domain_map[base_name][2]
+                ):
+                    domain_map[base_name] = domain_tuple
+
+        logger.debug(
+            "\tRAPL - Found %d unique RAPL domains after deduplication (from %d readable domains)",
+            len(domain_map),
+            len(readable_domains),
+        )
+
+        # Now create RAPLFile objects for deduplicated domains
+        for name, _, is_mmio, rapl_file, rapl_file_max in domain_map.values():
+            try:
+                # Determine interface type for logging
+                interface_type = "MMIO" if is_mmio else "MSR"
+                self._rapl_files.append(
+                    RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
+                )
+                logger.debug(
+                    "\tRAPL - Reading RAPL domain '%s' via %s interface at %s",
+                    name,
+                    interface_type,
+                    rapl_file,
+                )
+            except PermissionError as e:
+                logger.warning(
+                    "\tRAPL - Permission denied while initializing RAPL file %s: %s",
+                    rapl_file,
+                    e,
+                )
+                continue
+            except Exception as e:
+                logger.debug(
+                    "\tRAPL - Unable to initialize RAPLFile for %s: %s", rapl_file, e
+                )
                 continue
 
         # Save whether we found a readable main/package energy counter so
@@ -580,7 +679,7 @@ class IntelRAPL:
                     )
         except Exception as e:
             logger.info(
-                "Unable to read Intel RAPL files at %s\n \
+                "\tRAPL - Unable to read Intel RAPL files at %s\n \
                 Exception occurred %s",
                 self._rapl_files,
                 e,

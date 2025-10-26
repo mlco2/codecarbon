@@ -137,3 +137,124 @@ def test_all_providers_unreadable_returns_false(tmp_path):
             os.chmod(energy_mmio, stat.S_IMODE(mode_before_mmio) or 0o644)
         except Exception:
             pass
+
+
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
+def test_rapl_deduplication_prefers_mmio(tmp_path):
+    """
+    Verify that when the same domain (e.g., package-0) appears in both
+    intel-rapl and intel-rapl-mmio, only the MMIO version is used to
+    prevent double-counting.
+    """
+    base = tmp_path
+
+    # Create intel-rapl provider with package-0 domain
+    rapl_provider = base / "intel-rapl"
+    rapl_provider.mkdir()
+
+    d0_msr = rapl_provider / "intel-rapl:0"
+    d0_msr.mkdir()
+    (d0_msr / "name").write_text("package-0")
+    (d0_msr / "energy_uj").write_text("52649883221")
+    (d0_msr / "max_energy_range_uj").write_text("262143328850")
+
+    # Create intel-rapl-mmio provider with the same package-0 domain
+    mmio_provider = base / "intel-rapl-mmio"
+    mmio_provider.mkdir()
+
+    d0_mmio = mmio_provider / "intel-rapl-mmio:0"
+    d0_mmio.mkdir()
+    (d0_mmio / "name").write_text("package-0")
+    (d0_mmio / "energy_uj").write_text("99999999999")
+    (d0_mmio / "max_energy_range_uj").write_text("262143328850")
+
+    # Create a unique domain in MSR (core)
+    d0_core = rapl_provider / "intel-rapl:0:0"
+    d0_core.mkdir()
+    (d0_core / "name").write_text("core")
+    (d0_core / "energy_uj").write_text("11111111111")
+    (d0_core / "max_energy_range_uj").write_text("262143328850")
+
+    # is_rapl_available should return True
+    assert is_rapl_available(rapl_dir=str(base))
+
+    # Create IntelRAPL instance
+    rapl = IntelRAPL(rapl_dir=str(base))
+
+    # Should have exactly 2 RAPL files: package-0 (MMIO) and core (MSR)
+    assert len(rapl._rapl_files) == 2, f"Expected 2 files, got {len(rapl._rapl_files)}"
+
+    # Verify package-0 is from MMIO (newer interface)
+    package_files = [f for f in rapl._rapl_files if "Processor Energy" in f.name]
+    assert (
+        len(package_files) == 1
+    ), "Should have exactly one package domain after deduplication"
+
+    # The package file should be from intel-rapl-mmio
+    assert (
+        "intel-rapl-mmio" in package_files[0].path
+    ), f"Expected MMIO path, got: {package_files[0].path}"
+
+    # Verify core domain is present
+    core_files = [f for f in rapl._rapl_files if "core" in f.name.lower()]
+    assert len(core_files) == 1, "Should have the core domain"
+    assert "intel-rapl:0:0" in core_files[0].path
+
+
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
+def test_psys_only_when_available(tmp_path):
+    """
+    Verify that when psys (platform/system) domain is available, CodeCarbon uses
+    ONLY psys to avoid all double-counting, as psys already includes package, core, uncore.
+    """
+    base = tmp_path
+
+    # Create intel-rapl provider
+    rapl_provider = base / "intel-rapl"
+    rapl_provider.mkdir()
+
+    # Create psys domain (platform power - most comprehensive)
+    d_psys = rapl_provider / "intel-rapl:1"
+    d_psys.mkdir()
+    (d_psys / "name").write_text("psys")
+    (d_psys / "energy_uj").write_text("99999999999")
+    (d_psys / "max_energy_range_uj").write_text("262143328850")
+
+    # Create package-0 domain (subset of psys)
+    d_package = rapl_provider / "intel-rapl:0"
+    d_package.mkdir()
+    (d_package / "name").write_text("package-0")
+    (d_package / "energy_uj").write_text("52649883221")
+    (d_package / "max_energy_range_uj").write_text("262143328850")
+
+    # Create core domain (subset of package and psys)
+    d_core = rapl_provider / "intel-rapl:0:0"
+    d_core.mkdir()
+    (d_core / "name").write_text("core")
+    (d_core / "energy_uj").write_text("11111111111")
+    (d_core / "max_energy_range_uj").write_text("262143328850")
+
+    # Create uncore domain (subset of package and psys)
+    d_uncore = rapl_provider / "intel-rapl:0:1"
+    d_uncore.mkdir()
+    (d_uncore / "name").write_text("uncore")
+    (d_uncore / "energy_uj").write_text("22222222222")
+    (d_uncore / "max_energy_range_uj").write_text("262143328850")
+
+    # is_rapl_available should return True
+    assert is_rapl_available(rapl_dir=str(base))
+
+    # Create IntelRAPL instance
+    rapl = IntelRAPL(rapl_dir=str(base))
+
+    # Should have ONLY 1 RAPL file: psys
+    # This avoids double-counting since psys already includes package, core, uncore
+    assert (
+        len(rapl._rapl_files) == 1
+    ), f"Expected 1 file (psys only), got {len(rapl._rapl_files)}"
+
+    # Verify it's the psys domain
+    assert (
+        "psys" in rapl._rapl_files[0].name.lower()
+        or "intel-rapl:1" in rapl._rapl_files[0].path
+    ), f"Expected psys domain, got: {rapl._rapl_files[0].name} at {rapl._rapl_files[0].path}"

@@ -93,9 +93,9 @@ class TestIntelRAPL(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
     def test_intel_rapl(self):
+        # When psys is available, CodeCarbon uses ONLY psys to avoid double-counting
+        # since psys (platform/system) already includes package, core, uncore, etc.
         expected_cpu_details = {
-            "Processor Energy Delta_0(kWh)": 0.0,
-            "Processor Power Delta_0(kWh)": 0.0,
             "psys": 0.0,
         }
 
