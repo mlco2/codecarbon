@@ -3,6 +3,50 @@
 # The script can be used to monitor power consumption over time for a specific power domain
 # The power consumption is read from the energy counter in microjoules and converted to watts
 
+"""
+
+Sample output for Intel(R) Core(TM) Ultra 7 265H
+https://www.intel.com/content/www/us/en/products/sku/241750/intel-core-ultra-7-processor-265h-24m-cache-up-to-5-30-ghz/specifications.html
+- Processor Base Power 28 W
+- Maximum Turbo Power 115 W
+- Minimum Assured Power 20 W
+
+
+
+Available Power Domains:
+[{'path': 'intel-rapl:1', 'name': 'psys', 'is_mmio': False}, {'path': 'intel-rapl:0:0', 'name': 'core', 'is_mmio': False}, {'path': 'intel-rapl-mmio:0', 'name': 'package-0', 'is_mmio': True}, {'path': 'intel-rapl:0:1', 'name': 'uncore', 'is_mmio': False}]
+Starting Power Monitoring (deduplication: True):
+
+Monitoring domains:
+  - psys (intel-rapl:1) via MSR
+  - core (intel-rapl:0:0) via MSR
+  - package-0 (intel-rapl-mmio:0) via MMIO
+  - uncore (intel-rapl:0:1) via MSR
+
+
+Idle :
+ - Domain 'psys' (MSR): 8.03 Watts
+ - Domain 'core' (MSR): 1.51 Watts
+ - Domain 'package-0' (MMIO): 4.61 Watts
+ - Domain 'uncore' (MSR): 0.57 Watts
+ - Total Power Consumption: 14.72 Watts
+
+With `7z b` to load the CPU:
+
+ - Domain 'psys' (MSR): 22.89 Watts
+ - Domain 'core' (MSR): 14.49 Watts
+ - Domain 'package-0' (MMIO): 18.51 Watts
+ - Domain 'uncore' (MSR): 0.19 Watts
+ - Total Power Consumption: 56.07 Watts
+
+ psys (9.61W) ← Most comprehensive
+├── package-0 (3.78W)
+│   ├── core (0.84W) ← CPU cores only
+│   └── uncore (0.21W) ← Memory controller, cache, iGPU
+└── Other platform components (~5.8W)
+    └── Chipset, PCIe, etc.
+
+"""
 import json
 import os
 import time
@@ -22,7 +66,10 @@ class RAPLDomainInspector:
             # Iterate through all RAPL domains
             for domain_dir in os.listdir(self.rapl_base_path):
                 print(domain_dir)
-                if not domain_dir.startswith("intel-rapl:"):
+                if not (
+                    domain_dir.startswith("intel-rapl:")
+                    or domain_dir.startswith("intel-rapl-mmio:")
+                ):
                     continue
 
                 domain_path = os.path.join(self.rapl_base_path, domain_dir)
@@ -134,17 +181,23 @@ class IntelRAPL:
         # Base path for RAPL power readings in sysfs
         self.rapl_base_path = "/sys/class/powercap/intel-rapl/subsystem"
 
-    def list_power_domains(self):
+    def list_power_domains(self, deduplicate=True):
         """
-        List available RAPL power domains
+        List available RAPL power domains (including intel-rapl and intel-rapl-mmio)
+
+        :param deduplicate: If True, avoid duplicate domains with same name, preferring MMIO
+        :return: List of domain info dictionaries
         """
-        self.domains = []
+        all_domains = []
         try:
             for domain in os.listdir(self.rapl_base_path):
-                if domain.startswith("intel-rapl:"):
+                if domain.startswith("intel-rapl:") or domain.startswith(
+                    "intel-rapl-mmio:"
+                ):
                     domain_info = {
                         "path": domain,
                         "name": "",
+                        "is_mmio": domain.startswith("intel-rapl-mmio:"),
                     }
                     if os.path.exists(
                         os.path.join(self.rapl_base_path, domain, "name")
@@ -153,11 +206,38 @@ class IntelRAPL:
                             os.path.join(self.rapl_base_path, domain, "name"), "r"
                         ) as f:
                             domain_info["name"] = f.read().strip()
-                    self.domains.append(domain_info)
+                    all_domains.append(domain_info)
+
+            # Deduplicate if requested
+            if deduplicate:
+                self.domains = self._deduplicate_domains(all_domains)
+            else:
+                self.domains = all_domains
+
             return self.domains
         except Exception as e:
             print(f"Error listing power domains: {e}")
             return []
+
+    def _deduplicate_domains(self, domains):
+        """
+        Remove duplicate domains with the same name, preferring MMIO over MSR-based
+
+        :param domains: List of domain info dictionaries
+        :return: Deduplicated list
+        """
+        domain_map = {}
+
+        for domain in domains:
+            name = domain["name"]
+
+            # If we haven't seen this name, or we're replacing MSR with MMIO
+            if name not in domain_map or (
+                domain["is_mmio"] and not domain_map[name]["is_mmio"]
+            ):
+                domain_map[name] = domain
+
+        return list(domain_map.values())
 
     def read_power_consumption(self, domain=None, interval=1):
         """
@@ -201,16 +281,25 @@ class IntelRAPL:
             print(f"Error reading power for {domain}: {e}")
             return None
 
-    def monitor_power(self, interval=1, duration=10):
+    def monitor_power(self, interval=1, duration=10, deduplicate=True):
         """
         Monitor power consumption over time
 
         :param interval: Sampling interval in seconds
         :param duration: Total monitoring duration in seconds
+        :param deduplicate: If True, avoid counting duplicate domains (e.g., same package via MSR and MMIO)
         """
-        print("Starting Power Monitoring:")
+        print(f"Starting Power Monitoring (deduplication: {deduplicate}):")
         if not self.domains:
-            self.domains = self.list_power_domains()
+            self.domains = self.list_power_domains(deduplicate=deduplicate)
+
+        # Show which domains are being monitored
+        print("\nMonitoring domains:")
+        for domain in self.domains:
+            interface = "MMIO" if domain.get("is_mmio") else "MSR"
+            print(f"  - {domain.get('name')} ({domain.get('path')}) via {interface}")
+        print()
+
         start_time = time.time()
 
         while time.time() - start_time < duration:
@@ -218,11 +307,12 @@ class IntelRAPL:
             for domain in self.domains:
                 power = self.read_power_consumption(domain)
                 if power is not None:
+                    interface = "MMIO" if domain.get("is_mmio") else "MSR"
                     print(
-                        f"Domain '{domain.get('path').split('/')[-1]}/{domain.get('name')}' as a power consumption of {power:.2f} Watts"
+                        f"Domain '{domain.get('name')}' ({interface}): {power:.2f} Watts"
                     )
                     total_power += power
-            print(f"Total Power Consumption: {total_power:.2f} Watts")
+            print(f"Total Power Consumption: {total_power:.2f} Watts\n")
 
             time.sleep(interval)
 
