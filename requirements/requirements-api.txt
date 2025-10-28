@@ -216,7 +216,7 @@ sqlalchemy==1.4.54
     # via
     #   carbonserver (pyproject.toml)
     #   alembic
-starlette==0.47.2
+starlette==0.49.1
     # via fastapi
 typer==0.16.1
     # via
