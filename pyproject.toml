@@ -162,7 +162,7 @@ docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.0.7"
+current_version = "3.0.8"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
