@@ -2,7 +2,14 @@
 
 Estimate and track carbon emissions from your computer, quantify and analyze their impact.
 
-[**Documentation**](https://mlco2.github.io/codecarbon)
+CodeCarbon websites:
+- [Main website](https://codecarbon.io) to learn why we do this.
+- [Dashboard](https://dashboard.codecarbon.io/) to see your emissions, [read the API doc](https://mlco2.github.io/codecarbon/api.html) before.
+- [Documentation](https://mlco2.github.io/codecarbon) to learn how to use the package and our methodology.
+- [GitHub](https://github.com/mlco2/codecarbon) to look at the source code and contribute.
+- [Discord](https://discord.gg/GS9js2XkJR) to chat with us.
+
+<!--  ![Discord Shield](https://discord.com/api/guilds/1090365182909350019/widget.png?style=shield) -->
 
 <br/>
 
@@ -10,7 +17,7 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
 [![](https://anaconda.org/codecarbon/codecarbon/badges/version.svg)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
-[![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon)
+<!-- [![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon) -->
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon)
 
 
