@@ -85,6 +85,26 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
     ]
 
     try:
+        already_warned = False
+
+        def warn_permission_denied(energy_path: str):
+            nonlocal already_warned
+            if not already_warned:
+                logger.warning(
+                    "\tRAPL - Permission denied reading RAPL file %s. "
+                    "You can grant read permission with: "
+                    "sudo chmod -R a+r /sys/class/powercap/*",
+                    energy_path,
+                )
+                already_warned = True
+            else:
+                logger.debug(
+                    "\tRAPL - Permission denied reading RAPL file %s. "
+                    "You can grant read permission with: "
+                    "sudo chmod -R a+r /sys/class/powercap/*",
+                    energy_path,
+                )
+
         for base in candidate_bases:
             try:
                 for entry in os.listdir(base):
@@ -122,12 +142,7 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
                                 if is_main:
                                     return True
                             else:
-                                logger.warning(
-                                    "\tRAPL - Permission denied reading RAPL file %s. "
-                                    "You can grant read permission with: "
-                                    "sudo chmod -R a+r /sys/class/powercap/*",
-                                    energy_path,
-                                )
+                                warn_permission_denied(energy_path)
 
                 # Also support trees where `intel-rapl:$i` entries are directly inside `base`
                 for item in os.listdir(base):
@@ -155,12 +170,7 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
                             if is_main:
                                 return True
                         else:
-                            logger.warning(
-                                "\tRAPL - Permission denied reading RAPL file %s. "
-                                "You can grant read permission with: "
-                                "sudo chmod -R a+r /sys/class/powercap/*",
-                                energy_path,
-                            )
+                            warn_permission_denied(energy_path)
             except Exception:
                 # Ignore ephemeral errors during detection and continue scanning
                 logger.debug(
@@ -523,7 +533,7 @@ class IntelRAPL:
                     # Use the domain directory basename as a fallback
                     name = os.path.basename(domain_dir)
 
-                if "package" in name:
+                if "package" in name or "psys" in name:
                     name = f"Processor Energy Delta_{i}(kWh)"
                     i += 1
 
