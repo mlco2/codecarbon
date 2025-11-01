@@ -44,23 +44,143 @@ def is_powergadget_available() -> bool:
         return False
 
 
-def is_rapl_available() -> bool:
+def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
     """
     Checks if Intel RAPL is available on the system.
 
     Returns:
         bool: `True` if Intel RAPL is available, `False` otherwise.
     """
+    # Lightweight detection: scan common powercap locations for a readable
+    # package/main `energy_uj` file. We avoid instantiating `IntelRAPL` here so
+    # that callers can decide to create the full interface only when this
+    # pre-check passes. This prevents raising during global initialization and
+    # lets callers fall back gracefully.
+    if rapl_dir is None:
+        rapl_dir = "/sys/class/powercap/intel-rapl/subsystem"
+
+    default_rapl_dir = "/sys/class/powercap/intel-rapl/subsystem"
+    is_default_dir = os.path.abspath(rapl_dir) == os.path.abspath(default_rapl_dir)
+
+    if is_default_dir:
+        # Production: scan all common RAPL locations
+        candidate_bases = [
+            rapl_dir,
+            os.path.dirname(rapl_dir),
+            "/sys/class/powercap",
+            "/sys/devices/virtual/powercap",
+        ]
+    else:
+        # Testing or custom directory: only scan the specified location
+        candidate_bases = [
+            rapl_dir,
+            os.path.dirname(rapl_dir),
+        ]
+
+    seen = set()
+    candidate_bases = [
+        p
+        for p in candidate_bases
+        if p and not (p in seen or seen.add(p)) and os.path.exists(p)
+    ]
+
     try:
-        IntelRAPL()
-        return True
-    except Exception as e:
-        logger.debug(
-            "Not using the RAPL interface, an exception occurred while instantiating "
-            + "IntelRAPL : %s",
-            e,
-        )
-        return False
+        already_warned = False
+
+        def warn_permission_denied(energy_path: str):
+            nonlocal already_warned
+            if not already_warned:
+                logger.warning(
+                    "\tRAPL - Permission denied reading RAPL file %s. "
+                    "You can grant read permission with: "
+                    "sudo chmod -R a+r /sys/class/powercap/*",
+                    energy_path,
+                )
+                already_warned = True
+            else:
+                logger.debug(
+                    "\tRAPL - Permission denied reading RAPL file %s. "
+                    "You can grant read permission with: "
+                    "sudo chmod -R a+r /sys/class/powercap/*",
+                    energy_path,
+                )
+
+        for base in candidate_bases:
+            try:
+                for entry in os.listdir(base):
+                    if not entry.startswith("intel-rapl"):
+                        continue
+                    entry_path = os.path.join(base, entry)
+                    if not os.path.isdir(entry_path):
+                        continue
+
+                    # Look for domain directories (contain ':') under provider
+                    for sub in os.listdir(entry_path):
+                        sub_path = os.path.join(entry_path, sub)
+                        if ":" not in sub or not os.path.isdir(sub_path):
+                            continue
+
+                        energy_path = os.path.join(sub_path, "energy_uj")
+                        name_path = os.path.join(sub_path, "name")
+
+                        # Determine if this domain looks like the main/package domain
+                        is_main = False
+                        try:
+                            if os.path.exists(name_path):
+                                with open(name_path, "r") as nf:
+                                    name = nf.read().strip().lower()
+                                    if "package" in name:
+                                        is_main = True
+                        except Exception:
+                            # If we cannot read the name file, fall back to basename rule
+                            pass
+                        if sub.endswith(":0"):
+                            is_main = True
+
+                        if os.path.exists(energy_path):
+                            if os.access(energy_path, os.R_OK):
+                                if is_main:
+                                    return True
+                            else:
+                                warn_permission_denied(energy_path)
+
+                # Also support trees where `intel-rapl:$i` entries are directly inside `base`
+                for item in os.listdir(base):
+                    if ":" not in item:
+                        continue
+                    p = os.path.join(base, item)
+                    if not os.path.isdir(p):
+                        continue
+                    energy_path = os.path.join(p, "energy_uj")
+                    name_path = os.path.join(p, "name")
+
+                    is_main = False
+                    try:
+                        if os.path.exists(name_path):
+                            with open(name_path, "r") as nf:
+                                name = nf.read().strip().lower()
+                                if "package" in name:
+                                    is_main = True
+                    except Exception:
+                        pass
+                    if item.endswith(":0"):
+                        is_main = True
+                    if os.path.exists(energy_path):
+                        if os.access(energy_path, os.R_OK):
+                            if is_main:
+                                return True
+                        else:
+                            warn_permission_denied(energy_path)
+            except Exception:
+                # Ignore ephemeral errors during detection and continue scanning
+                logger.debug(
+                    "Error while scanning %s for RAPL domains", base, exc_info=True
+                )
+                continue
+    except Exception:
+        logger.debug("Unexpected error while checking RAPL availability", exc_info=True)
+
+    return False
 
 
 def is_psutil_available():
@@ -247,6 +367,7 @@ class IntelRAPL:
         _rapl_files (List[RAPLFile]): A list of RAPLFile objects representing the files to read energy data from.
         _cpu_details (Dict): A dictionary storing the latest CPU energy details.
         _last_mesure (int): Placeholder for storing the last measurement time.
+        _include_dram (bool): Whether to include DRAM power in measurements (default: True for complete hardware measurement).
 
     Methods:
         start():
@@ -260,10 +381,13 @@ class IntelRAPL:
 
     """
 
-    def __init__(self, rapl_dir="/sys/class/powercap/intel-rapl/subsystem"):
+    def __init__(
+        self, rapl_dir="/sys/class/powercap/intel-rapl/subsystem", include_dram=True
+    ):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
         self._rapl_files = []
+        self._include_dram = include_dram
         self._setup_rapl()
         self._cpu_details: Dict = {}
 
@@ -286,44 +410,347 @@ class IntelRAPL:
 
     def _fetch_rapl_files(self) -> None:
         """
-        Fetches RAPL files from the RAPL directory
+        Fetches RAPL files from the RAPL directory.
+
+        By default, reads CPU package + DRAM domains for complete hardware power measurement.
+        Set include_dram=False to measure only CPU package power.
         """
+        # We'll scan common powercap locations and look for domain directories
+        # that expose an `energy_uj` file. We try to be tolerant to permission
+        # errors and simply skip unreadable entries instead of failing the whole
+        # tracker when one RAPL subtree is not accessible (e.g., intel-rapl-mmio).
+        #
+        # When using the default RAPL directory, we scan all common system locations
+        # to ensure we don't miss any RAPL providers (including intel-rapl-mmio).
+        # When a custom rapl_dir is provided (e.g., for testing), we only scan
+        # that directory and its parent to avoid interference with system files.
+        default_rapl_dir = "/sys/class/powercap/intel-rapl/subsystem"
+        is_default_dir = os.path.abspath(self._lin_rapl_dir) == os.path.abspath(
+            default_rapl_dir
+        )
 
-        # consider files like `intel-rapl:$i`
-        files = list(filter(lambda x: ":" in x, os.listdir(self._lin_rapl_dir)))
+        if is_default_dir:
+            # Production: scan all common RAPL locations
+            candidate_bases = [
+                self._lin_rapl_dir,
+                os.path.dirname(self._lin_rapl_dir),
+                "/sys/class/powercap",
+                "/sys/devices/virtual/powercap",
+            ]
+        else:
+            # Testing or custom directory: only scan the specified location
+            candidate_bases = [
+                self._lin_rapl_dir,
+                os.path.dirname(self._lin_rapl_dir),
+            ]
 
-        i = 0
-        for file in files:
-            path = os.path.join(self._lin_rapl_dir, file, "name")
-            with open(path) as f:
-                name = f.read().strip()
-                # Fake the name used by Power Gadget
-                # We ignore "core" in name as it seems to be included in "package" for Intel CPU.
-                # TODO: Use "dram" for memory power
-                if "package" in name:
-                    name = f"Processor Energy Delta_{i}(kWh)"
-                    i += 1
-                # RAPL file to take measurement from
-                rapl_file = os.path.join(self._lin_rapl_dir, file, "energy_uj")
-                # RAPL file containing maximum possible value of energy_uj above which it wraps
-                rapl_file_max = os.path.join(
-                    self._lin_rapl_dir, file, "max_energy_range_uj"
-                )
+        # Deduplicate while preserving order and keep only existing paths
+        seen = set()
+        candidate_bases = [
+            p
+            for p in candidate_bases
+            if p and not (p in seen or seen.add(p)) and os.path.exists(p)
+        ]
+
+        domain_dirs = []
+        found_main_readable = False
+        for base in candidate_bases:
+            try:
+                for entry in os.listdir(base):
+                    # Look for powercap provider directories like 'intel-rapl' or 'intel-rapl-mmio'
+                    if not entry.startswith("intel-rapl"):
+                        continue
+                    entry_path = os.path.join(base, entry)
+                    if not os.path.isdir(entry_path):
+                        continue
+                    # Look for domain directories under the provider that usually contain ':' in their name
+                    try:
+                        for sub in os.listdir(entry_path):
+                            sub_path = os.path.join(entry_path, sub)
+                            if ":" in sub and os.path.isdir(sub_path):
+                                # Only consider if energy file exists
+                                if os.path.exists(os.path.join(sub_path, "energy_uj")):
+                                    domain_dirs.append(sub_path)
+                    except Exception as e:
+                        if isinstance(e, PermissionError):
+                            logger.warning(
+                                "\tRAPL - Permission denied listing %s: %s",
+                                entry_path,
+                                e,
+                            )
+                        else:
+                            logger.debug("\tRAPL - Cannot list %s: %s", entry_path, e)
+            except Exception as e:
+                if isinstance(e, PermissionError):
+                    logger.warning(
+                        "\tRAPL - Permission denied scanning %s for RAPL domains: %s",
+                        base,
+                        e,
+                    )
+                else:
+                    logger.debug(
+                        "\tRAPL - Cannot scan %s for RAPL domains: %s", base, e
+                    )
+
+        # Fallback: if none found and the configured path looks like it directly
+        # contains domain entries, try listing it (preserves backward compatibility).
+        if not domain_dirs:
+            try:
+                for item in os.listdir(self._lin_rapl_dir):
+                    if ":" in item:
+                        path = os.path.join(self._lin_rapl_dir, item)
+                        if os.path.isdir(path) and os.path.exists(
+                            os.path.join(path, "energy_uj")
+                        ):
+                            domain_dirs.append(path)
+            except Exception:
+                # ignore: we'll handle the empty domain_dirs case below
+                pass
+
+        # Remove duplicates
+        domain_dirs = list(dict.fromkeys(domain_dirs))
+
+        # Build a list of successfully readable domains with their metadata
+        readable_domains = (
+            []
+        )  # List of (name, domain_dir, is_mmio, rapl_file, rapl_file_max)
+
+        for domain_dir in domain_dirs:
+            try:
+                name_path = os.path.join(domain_dir, "name")
+                name = None
+                domain_name = None  # Store original domain name for classification
+                if os.path.exists(name_path):
+                    try:
+                        with open(name_path) as f:
+                            domain_name = f.read().strip()
+                            name = domain_name
+                    except Exception as e:
+                        if isinstance(e, PermissionError):
+                            logger.warning(
+                                "\tRAPL - Permission denied reading name file %s: %s",
+                                name_path,
+                                e,
+                            )
+                        else:
+                            logger.debug(
+                                "\tRAPL - Unable to read name file %s: %s", name_path, e
+                            )
+                if not name:
+                    # Use the domain directory basename as a fallback
+                    name = os.path.basename(domain_dir)
+                    domain_name = name
+
+                # Keep original domain name for now; will rename after selection/deduplication
+
+                rapl_file = os.path.join(domain_dir, "energy_uj")
+                rapl_file_max = os.path.join(domain_dir, "max_energy_range_uj")
+
+                # Quick sanity check: can we read the energy value?
+                is_required_main = (
+                    domain_name and "package" in domain_name.lower()
+                ) or os.path.basename(domain_dir).endswith(":0")
                 try:
-                    # Try to read the file to be sure we can
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
-                    self._rapl_files.append(
-                        RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
-                    )
-                    logger.debug("We will read Intel RAPL files at %s", rapl_file)
-                except PermissionError as e:
-                    raise PermissionError(
-                        "PermissionError : Unable to read Intel RAPL files for CPU power, we will use a constant for your CPU power."
-                        + " Please view https://github.com/mlco2/codecarbon/issues/244"
-                        + " for workarounds : %s",
+                    if is_required_main:
+                        found_main_readable = True
+                except PermissionError:
+                    msg = f"\tRAPL - Permission denied reading RAPL file {rapl_file}."
+                    suggestion = "You can grant read permission with: sudo chmod -R a+r /sys/class/powercap/*"
+                    logger.warning("%s %s; skipping.", msg, suggestion)
+                    continue
+                except Exception as e:
+                    logger.debug(
+                        "\tRAPL - Skipping non-numeric or unreadable RAPL file %s: %s",
+                        rapl_file,
                         e,
-                    ) from e
+                    )
+                    continue
+
+                # This domain is readable, add it to our list with original domain_name
+                is_mmio = "intel-rapl-mmio" in domain_dir
+                readable_domains.append(
+                    (name, domain_dir, is_mmio, rapl_file, rapl_file_max, domain_name)
+                )
+            except Exception as e:
+                logger.warning(
+                    "\tRAPL - Error processing RAPL domain %s: %s", domain_dir, e
+                )
+                continue
+
+        # Strategy: Prefer package domains (most reliable), optionally include DRAM
+        # This follows powerstat's approach: sum unique top-level domains
+        package_domains = []
+        psys_domains = []
+        dram_domains = []
+        subdomain_of_package = []  # core, uncore under package
+
+        for domain_tuple in readable_domains:
+            name, domain_dir, is_mmio, rapl_file, rapl_file_max, domain_name = (
+                domain_tuple
+            )
+
+            if domain_name:
+                domain_lower = domain_name.lower()
+                if "package" in domain_lower:
+                    package_domains.append(domain_tuple)
+                    logger.debug(
+                        "\tRAPL - Found package domain '%s' at %s",
+                        domain_name,
+                        domain_dir,
+                    )
+                elif domain_lower == "psys":
+                    psys_domains.append(domain_tuple)
+                    logger.debug(
+                        "\tRAPL - Found psys domain at %s",
+                        domain_dir,
+                    )
+                elif "dram" in domain_lower:
+                    # DRAM is a top-level domain (memory power)
+                    # Only include if it's a top-level domain (intel-rapl:X or intel-rapl-mmio:X)
+                    # not a subdomain (intel-rapl:X:Y)
+                    parent_dir = os.path.dirname(domain_dir)
+                    if (
+                        parent_dir.endswith(("intel-rapl", "intel-rapl-mmio"))
+                        or os.path.basename(domain_dir).count(":") == 1
+                    ):
+                        dram_domains.append(domain_tuple)
+                        logger.debug(
+                            "\tRAPL - Found top-level DRAM domain '%s' at %s",
+                            domain_name,
+                            domain_dir,
+                        )
+                    else:
+                        subdomain_of_package.append(domain_tuple)
+                        logger.debug(
+                            "\tRAPL - Found DRAM subdomain '%s' at %s (will be skipped to avoid double-counting)",
+                            domain_name,
+                            domain_dir,
+                        )
+                elif any(sub in domain_lower for sub in ["core", "uncore"]):
+                    # These are subdomains of package, never include to avoid double-counting
+                    subdomain_of_package.append(domain_tuple)
+                    logger.debug(
+                        "\tRAPL - Found subdomain '%s' at %s",
+                        domain_name,
+                        domain_dir,
+                    )
+
+        # Decision logic following powerstat's approach for complete hardware measurement
+        if package_domains:
+            # Use package domains (most reliable) - do NOT include subdomains to avoid double-counting
+            # Package domain already includes core+uncore (but NOT dram on most systems)
+            logger.info(
+                "\tRAPL - Using %d package domain(s) for CPU power measurement",
+                len(package_domains),
+            )
+            domains_to_use = package_domains
+
+            # Include DRAM by default for complete hardware measurement (CodeCarbon's mission)
+            if self._include_dram and dram_domains:
+                logger.info(
+                    "\tRAPL - Including %d DRAM domain(s) for complete hardware power measurement (CPU+DRAM)",
+                    len(dram_domains),
+                )
+                domains_to_use.extend(dram_domains)
+            elif dram_domains and not self._include_dram:
+                logger.info(
+                    "\tRAPL - Found %d DRAM domain(s) but not including (include_dram=False). Set include_dram=True for complete hardware measurement.",
+                    len(dram_domains),
+                )
+
+            if psys_domains:
+                logger.info(
+                    "\tRAPL - psys domain detected but not used (package+dram domains are more reliable and update correctly under load)"
+                )
+        elif psys_domains:
+            logger.warning(
+                "\tRAPL - No package domains found, falling back to psys (platform/system) domain. "
+                "Note: psys may not update correctly on all Intel systems and includes non-CPU components. "
+                "If power readings don't change under load, this is a known firmware/kernel issue."
+            )
+            domains_to_use = psys_domains
+        else:
+            logger.warning(
+                "\tRAPL - No package or psys domains found, using all available domains"
+            )
+            domains_to_use = readable_domains
+
+        # Deduplicate by domain name (not by numbered name), preferring MMIO over MSR
+        domain_map = {}
+
+        for domain_tuple in domains_to_use:
+            name, domain_dir, is_mmio, rapl_file, rapl_file_max, domain_name = (
+                domain_tuple
+            )
+
+            # Use original domain_name for deduplication to avoid duplicates like
+            # intel-rapl:0 and intel-rapl-mmio:0 both having "package-0"
+            base_name = domain_name if domain_name else os.path.basename(domain_dir)
+
+            # Prefer MMIO over MSR interface if both exist
+            if base_name not in domain_map or (
+                is_mmio and not domain_map[base_name][2]
+            ):
+                domain_map[base_name] = domain_tuple
+
+        logger.info(
+            "\tRAPL - Selected %d unique RAPL domain(s) after deduplication",
+            len(domain_map),
+        )
+
+        # Create RAPLFile objects for selected domains
+        # Assign indices consistently after selection/deduplication
+        domain_index = 0
+        for (
+            name,
+            _,
+            is_mmio,
+            rapl_file,
+            rapl_file_max,
+            domain_name,
+        ) in domain_map.values():
+            try:
+                # Rename package/psys domains for CodeCarbon compatibility with consistent numbering
+                if domain_name and (
+                    "package" in domain_name.lower() or "psys" in domain_name.lower()
+                ):
+                    display_name = f"Processor Energy Delta_{domain_index}(kWh)"
+                    domain_index += 1
+                else:
+                    display_name = name
+
+                interface_type = "MMIO" if is_mmio else "MSR"
+                self._rapl_files.append(
+                    RAPLFile(name=display_name, path=rapl_file, max_path=rapl_file_max)
+                )
+                logger.info(
+                    "\tRAPL - Monitoring domain '%s' (displayed as '%s') via %s at %s",
+                    domain_name,
+                    display_name,
+                    interface_type,
+                    rapl_file,
+                )
+            except PermissionError as e:
+                logger.warning(
+                    "\tRAPL - Permission denied initializing RAPL file %s: %s",
+                    rapl_file,
+                    e,
+                )
+                continue
+            except Exception as e:
+                logger.debug(
+                    "\tRAPL - Unable to initialize RAPLFile for %s: %s", rapl_file, e
+                )
+                continue
+
+        # Save whether we found a readable main/package energy counter so
+        # callers can query `intel_rapl._available` if desired.
+        try:
+            self._available = bool(found_main_readable)
+        except Exception:
+            self._available = False
 
     def get_cpu_details(self, duration: Time) -> Dict:
         """
@@ -343,7 +770,7 @@ class IntelRAPL:
                     )
         except Exception as e:
             logger.info(
-                "Unable to read Intel RAPL files at %s\n \
+                "\tRAPL - Unable to read Intel RAPL files at %s\n \
                 Exception occurred %s",
                 self._rapl_files,
                 e,

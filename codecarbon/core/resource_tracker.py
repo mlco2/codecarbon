@@ -74,7 +74,7 @@ class ResourceTracker:
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
-        elif cpu.is_rapl_available():
+        elif cpu.is_rapl_available() and self.tracker._force_cpu_power is None:
             logger.info("Tracking Intel CPU via RAPL interface")
             self.cpu_tracker = "RAPL"
             hardware_cpu = CPU.from_utils(
@@ -123,7 +123,7 @@ class ResourceTracker:
             elif is_windows_os():
                 cpu_tracking_install_instructions = "Windows OS detected: Please install Intel Power Gadget to measure CPU"
             elif is_linux_os():
-                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist at /sys/class/powercap/intel-rapl/subsystem to measure CPU"
+                cpu_tracking_install_instructions = "Linux OS detected: Please ensure RAPL files exist, and are readable, at /sys/class/powercap/intel-rapl/subsystem to measure CPU"
             logger.warning(
                 f"No CPU tracking mode found. Falling back on estimation based on TDP for CPU. \n {cpu_tracking_install_instructions}\n"
             )

@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 import pandas as pd
+import psutil
 
 from codecarbon.core import cpu
 from codecarbon.emissions_tracker import (
@@ -107,9 +108,15 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         emissions = tracker.stop()
         assert isinstance(emissions, float)
         self.assertNotEqual(emissions, 0.0)
-        # Assert the content stored. cpu_power should be a random value between 0 and 250
+        # Get CPU load
+        cpu_load = psutil.cpu_percent(interval=1) / 100.0
+        # Assert the content stored. cpu_power should be approximately load * min(TDP, forced CPU power)
         assertdf = pd.read_csv(self.emissions_file_path)
-        self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER / 4)
+        # self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER / 4)
+        self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load + 200)
+        self.assertGreater(
+            assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load - 200
+        )
 
     def test_decorator_constant(self):
         @track_emissions(
