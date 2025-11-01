@@ -361,8 +361,10 @@ class BaseEmissionsTracker(ABC):
 
         cloud: CloudMetadata = self._get_cloud_metadata()
 
+        # Always populate geo metadata as it's needed for fallback when cloud region is not found
+        self._geo = self._get_geo_metadata()
+
         if cloud.is_on_private_infra:
-            self._geo = self._get_geo_metadata()
             self._conf["longitude"] = self._geo.longitude
             self._conf["latitude"] = self._geo.latitude
             self._conf["region"] = cloud.region
@@ -686,9 +688,34 @@ class BaseEmissionsTracker(ABC):
             emissions = self._emissions.get_cloud_emissions(
                 self._total_energy, cloud, self._geo
             )
-            country_name = self._emissions.get_cloud_country_name(cloud)
-            country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
-            region = self._emissions.get_cloud_geo_region(cloud)
+            # Try to get cloud region metadata, fall back to geo metadata if not found
+            try:
+                country_name = self._emissions.get_cloud_country_name(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for country name"
+                )
+                country_name = self._geo.country_name
+
+            try:
+                country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for country ISO code"
+                )
+                country_iso_code = self._geo.country_iso_code
+
+            try:
+                region = self._emissions.get_cloud_geo_region(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for region"
+                )
+                region = self._geo.region
+
             on_cloud = "Y"
             cloud_provider = cloud.provider
             cloud_region = cloud.region
