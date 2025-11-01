@@ -144,7 +144,8 @@ def test_rapl_deduplication_prefers_mmio(tmp_path):
     """
     Verify that when the same domain (e.g., package-0) appears in both
     intel-rapl and intel-rapl-mmio, only the MMIO version is used to
-    prevent double-counting.
+    prevent double-counting. Subdomains (core, uncore) are filtered out
+    when package domains exist to avoid double-counting.
     """
     base = tmp_path
 
@@ -181,8 +182,9 @@ def test_rapl_deduplication_prefers_mmio(tmp_path):
     # Create IntelRAPL instance
     rapl = IntelRAPL(rapl_dir=str(base))
 
-    # Should have exactly 2 RAPL files: package-0 (MMIO) and core (MSR)
-    assert len(rapl._rapl_files) == 2, f"Expected 2 files, got {len(rapl._rapl_files)}"
+    # Should have exactly 1 RAPL file: package-0 (MMIO)
+    # Core domain is filtered out to avoid double-counting since it's a subdomain of package
+    assert len(rapl._rapl_files) == 1, f"Expected 1 file, got {len(rapl._rapl_files)}"
 
     # Verify package-0 is from MMIO (newer interface)
     package_files = [f for f in rapl._rapl_files if "Processor Energy" in f.name]
@@ -195,17 +197,13 @@ def test_rapl_deduplication_prefers_mmio(tmp_path):
         "intel-rapl-mmio" in package_files[0].path
     ), f"Expected MMIO path, got: {package_files[0].path}"
 
-    # Verify core domain is present
-    core_files = [f for f in rapl._rapl_files if "core" in f.name.lower()]
-    assert len(core_files) == 1, "Should have the core domain"
-    assert "intel-rapl:0:0" in core_files[0].path
-
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
-def test_psys_only_when_available(tmp_path):
+def test_psys_not_preferred_when_package_available(tmp_path):
     """
-    Verify that when psys (platform/system) domain is available, CodeCarbon uses
-    ONLY psys to avoid all double-counting, as psys already includes package, core, uncore.
+    Verify that when both psys and package domains are available, CodeCarbon prefers
+    package domains over psys because package domains are more reliable and update
+    correctly under load, while psys may not on some Intel systems.
     """
     base = tmp_path
 
@@ -247,14 +245,19 @@ def test_psys_only_when_available(tmp_path):
     # Create IntelRAPL instance
     rapl = IntelRAPL(rapl_dir=str(base))
 
-    # Should have ONLY 1 RAPL file: psys
-    # This avoids double-counting since psys already includes package, core, uncore
+    # Should have 1 RAPL file: package-0 (not psys)
+    # Package domains are preferred over psys for reliability
     assert (
         len(rapl._rapl_files) == 1
-    ), f"Expected 1 file (psys only), got {len(rapl._rapl_files)}"
+    ), f"Expected 1 file (package), got {len(rapl._rapl_files)}"
 
-    # Verify it's the psys domain
+    # Verify it's the package domain (not psys)
     assert (
-        "psys" in rapl._rapl_files[0].name.lower()
-        or "intel-rapl:1" in rapl._rapl_files[0].path
-    ), f"Expected psys domain, got: {rapl._rapl_files[0].name} at {rapl._rapl_files[0].path}"
+        "Processor Energy" in rapl._rapl_files[0].name
+        and "intel-rapl:0" in rapl._rapl_files[0].path
+    ), f"Expected package-0 domain, got: {rapl._rapl_files[0].name} at {rapl._rapl_files[0].path}"
+
+    # Verify psys is NOT used (should be logged as detected but not used)
+    assert (
+        "intel-rapl:1" not in rapl._rapl_files[0].path
+    ), "psys should not be used when package domains are available"
