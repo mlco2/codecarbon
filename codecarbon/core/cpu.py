@@ -117,11 +117,17 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
                         if sub.endswith(":0"):
                             is_main = True
 
-                        if os.path.exists(energy_path) and os.access(
-                            energy_path, os.R_OK
-                        ):
-                            if is_main:
-                                return True
+                        if os.path.exists(energy_path):
+                            if os.access(energy_path, os.R_OK):
+                                if is_main:
+                                    return True
+                            else:
+                                logger.warning(
+                                    "\tRAPL - Permission denied reading RAPL file %s. "
+                                    "You can grant read permission with: "
+                                    "sudo chmod -R a+r /sys/class/powercap/*",
+                                    energy_path,
+                                )
 
                 # Also support trees where `intel-rapl:$i` entries are directly inside `base`
                 for item in os.listdir(base):
@@ -144,9 +150,17 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
                         pass
                     if item.endswith(":0"):
                         is_main = True
-                    if os.path.exists(energy_path) and os.access(energy_path, os.R_OK):
-                        if is_main:
-                            return True
+                    if os.path.exists(energy_path):
+                        if os.access(energy_path, os.R_OK):
+                            if is_main:
+                                return True
+                        else:
+                            logger.warning(
+                                "\tRAPL - Permission denied reading RAPL file %s. "
+                                "You can grant read permission with: "
+                                "sudo chmod -R a+r /sys/class/powercap/*",
+                                energy_path,
+                            )
             except Exception:
                 # Ignore ephemeral errors during detection and continue scanning
                 logger.debug(
