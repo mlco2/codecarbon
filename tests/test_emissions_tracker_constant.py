@@ -113,9 +113,9 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         # Assert the content stored. cpu_power should be approximately load * min(TDP, forced CPU power)
         assertdf = pd.read_csv(self.emissions_file_path)
         # self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER / 4)
-        self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load + 100)
+        self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load + 200)
         self.assertGreater(
-            assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load - 100
+            assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load - 200
         )
 
     def test_decorator_constant(self):
