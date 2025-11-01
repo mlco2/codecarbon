@@ -304,10 +304,6 @@ class CPU(BaseHardware):
         if self._mode == "intel_rapl":
             energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
             power = self.total_power()
-            # Patch AMD Threadripper that count 2x the power
-            if "AMD Ryzen Threadripper" in self._model:
-                power = power / 2
-                energy = energy / 2
             return power, energy
         # If not intel_rapl, we call the parent method from BaseHardware
         # to compute energy from power and time
