@@ -138,9 +138,13 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 -   7Zip is often already installed, running it with `7z b` makes a quick CPU test.
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
+-   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://mlco2.github.io/codecarbon/test_on_scaleway.html) to install it.
+-   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
 
-`nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
+To monitor the power consumption of your computer while stressing it, you can use:
 
+-   `nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
+-   [powerstat](https://github.com/ColinIanKing/powerstat) can be used to see the metrics of the CPU and compare it with CodeCarbon. It's available on major distribution, like Debian-based Linux distributions with `sudo apt install powerstat`.
 
 
 <!-- TOC --><a name="update-all-dependancies"></a>
