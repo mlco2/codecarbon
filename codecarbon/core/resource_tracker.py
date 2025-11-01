@@ -74,7 +74,7 @@ class ResourceTracker:
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
-        elif cpu.is_rapl_available():
+        elif cpu.is_rapl_available() and self.tracker._force_cpu_power is None:
             logger.info("Tracking Intel CPU via RAPL interface")
             self.cpu_tracker = "RAPL"
             hardware_cpu = CPU.from_utils(
