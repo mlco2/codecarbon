@@ -144,7 +144,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 To monitor the power consumption of your computer while stressing it, you can use:
 
 -   `nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
--   [powerstat](https://github.com/ColinIanKing/powerstat) can be used to see the metrics of the CPU and compare it with CodeCarbon. It's available on major distribution, like Debian-based Linux distributions with `sudo apt install powerstat`.
+-   [powerstat](https://github.com/ColinIanKing/powerstat) can be used to see the metrics of the CPU and compare it with CodeCarbon. It's available on major distribution, like Debian-based Linux distributions with `sudo apt install powerstat`. Run it with `sudo powerstat -a -R 1 60`.
 
 
 <!-- TOC --><a name="update-all-dependancies"></a>
