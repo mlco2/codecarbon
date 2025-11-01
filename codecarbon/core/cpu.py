@@ -515,7 +515,6 @@ class IntelRAPL:
             []
         )  # List of (name, domain_dir, is_mmio, rapl_file, rapl_file_max)
 
-        i = 0
         for domain_dir in domain_dirs:
             try:
                 name_path = os.path.join(domain_dir, "name")
@@ -542,18 +541,15 @@ class IntelRAPL:
                     name = os.path.basename(domain_dir)
                     domain_name = name
 
-                # Rename package/psys domains for CodeCarbon compatibility
-                if "package" in name.lower() or "psys" in name.lower():
-                    name = f"Processor Energy Delta_{i}(kWh)"
-                    i += 1
+                # Keep original domain name for now; will rename after selection/deduplication
 
                 rapl_file = os.path.join(domain_dir, "energy_uj")
                 rapl_file_max = os.path.join(domain_dir, "max_energy_range_uj")
 
                 # Quick sanity check: can we read the energy value?
-                is_required_main = ("package" in name.lower()) or os.path.basename(
-                    domain_dir
-                ).endswith(":0")
+                is_required_main = (
+                    domain_name and "package" in domain_name.lower()
+                ) or os.path.basename(domain_dir).endswith(":0")
                 try:
                     with open(rapl_file, "r") as f:
                         _ = float(f.read())
@@ -705,6 +701,8 @@ class IntelRAPL:
         )
 
         # Create RAPLFile objects for selected domains
+        # Assign indices consistently after selection/deduplication
+        domain_index = 0
         for (
             name,
             _,
@@ -714,14 +712,23 @@ class IntelRAPL:
             domain_name,
         ) in domain_map.values():
             try:
+                # Rename package/psys domains for CodeCarbon compatibility with consistent numbering
+                if domain_name and (
+                    "package" in domain_name.lower() or "psys" in domain_name.lower()
+                ):
+                    display_name = f"Processor Energy Delta_{domain_index}(kWh)"
+                    domain_index += 1
+                else:
+                    display_name = name
+
                 interface_type = "MMIO" if is_mmio else "MSR"
                 self._rapl_files.append(
-                    RAPLFile(name=name, path=rapl_file, max_path=rapl_file_max)
+                    RAPLFile(name=display_name, path=rapl_file, max_path=rapl_file_max)
                 )
                 logger.info(
                     "\tRAPL - Monitoring domain '%s' (displayed as '%s') via %s at %s",
                     domain_name,
-                    name,
+                    display_name,
                     interface_type,
                     rapl_file,
                 )
