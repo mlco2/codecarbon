@@ -227,6 +227,13 @@ CodeCarbon
 Monitoring domain 'package-0' (displayed as 'Processor Energy Delta_0(kWh)') via MMIO at /sys/class/powercap/intel-rapl/subsystem/intel-rapl-mmio/intel-rapl-mmio:0/energy_uj
 package-0 : 4 W
 
+Domain 'psys' (MSR): 6.66 Watts
+Domain 'core' (MSR): 0.35 Watts
+Domain 'package-0' (MMIO): 3.85 Watts
+Domain 'uncore' (MSR): 0.02 Watts
+Total Power Consumption: 10.88 Watts
+
+
 When loaded with stress-ng :
 Powertop measure when loaded : The battery reports a discharge rate of 27 W
 CodeCarbon : 22 W
@@ -235,6 +242,15 @@ stress-ng: info:  [29608]  core                   15.37 W
 stress-ng: info:  [29608]  pkg-0                  21.35 W
 stress-ng: info:  [29608]  psys                   24.69 W
 stress-ng: info:  [29608]  uncore                  0.07 W
+
+`uv run examples/rapl/intel_rapl_show.py`
+Domain 'psys' (MSR): 22.60 Watts
+Domain 'core' (MSR): 12.39 Watts
+Domain 'package-0' (MMIO): 16.24 Watts
+Domain 'uncore' (MSR): 0.04 Watts
+Total Power Consumption: 51.26 Watts
+
+Here we get only 16W for the CPU, it not much given the TDP of 28W, but maybe it is because this CPU include GPU and NPU or we miss something ?
 
 ## Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz with a TDP of 15.0 W
 
