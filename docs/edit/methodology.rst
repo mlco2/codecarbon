@@ -236,6 +236,42 @@ stress-ng: info:  [29608]  pkg-0                  21.35 W
 stress-ng: info:  [29608]  psys                   24.69 W
 stress-ng: info:  [29608]  uncore                  0.07 W
 
+## Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz with a TDP of 15.0 W
+
+Idle : 2W
+`powertop`
+The battery reports a discharge rate of 9.31 W
+
+`uv run examples/rapl/intel_rapl_show.py`
+Domain 'psys' (MSR): 12.21 Watts
+Domain 'dram' (MMIO): 0.54 Watts
+Domain 'core' (MSR): 0.46 Watts
+Domain 'package-0' (MMIO): 1.44 Watts
+Domain 'uncore' (MSR): 0.04 Watts
+Total Power Consumption: 14.69 Watts
+
+
+Under load
+
+`powertop`
+The battery reports a discharge rate of 8.40 W => Seems unreliable on this hardware
+
+`uv run examples/rapl/intel_rapl_show.py`
+Domain 'psys' (MSR): 30.00 Watts => Seems to include core and package-0 than already include core, resulting in triple-count !
+Domain 'dram' (MMIO): 0.58 Watts
+Domain 'core' (MSR): 14.83 Watts => 'core' seems included in package-0
+Domain 'package-0' (MMIO): 15.34 Watts => It's in line with TDP of this CPU.
+Domain 'uncore' (MSR): 0.10 Watts
+Total Power Consumption: 60.85 Watts
+
+`sudo stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s`
+stress-ng: info:  [52145] cpu:
+stress-ng: info:  [52145]  core                   14.00 W
+stress-ng: info:  [52145]  dram                    1.23 W
+stress-ng: info:  [52145]  pkg-0                  15.73 W
+stress-ng: info:  [52145]  psys                   29.97 W
+stress-ng: info:  [52145]  uncore                  0.54 W
+
 
 ## Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
 Power plug measure when idle (10% CPU): 125 W
