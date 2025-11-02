@@ -253,6 +253,8 @@ Total Power Consumption: 14.69 Watts
 
 Under load
 
+[codecarbon INFO @ 14:59:19] 	RAPL - Monitoring domain 'package-0' (displayed as 'Processor Energy Delta_0(kWh)') via MMIO at /sys/class/powercap/intel-rapl/subsystem/intel-rapl-mmio/intel-rapl-mmio:0/energy_uj
+CodeCarbon : 15.5 W
 `powertop`
 The battery reports a discharge rate of 8.40 W => Seems unreliable on this hardware
 
