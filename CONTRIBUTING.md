@@ -140,6 +140,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
 -   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://mlco2.github.io/codecarbon/test_on_scaleway.html) to install it.
 -   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
+-   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and avaliable for Windows and Linux.
 
 To monitor the power consumption of your computer while stressing it, you can use:
 
