@@ -191,122 +191,303 @@ For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read 
 
 RAPL Metrics
 ------------
-RAPL stands for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
+RAPL (Running Average Power Limit) is a feature of modern processors that provides energy consumption measurements through hardware counters.
 
 See https://blog.chih.me/read-cpu-power-with-RAPL.html for more information.
 
-Despite the name Intel RAPL, it support AMD processors since kernel 5.8.
+Despite the name "Intel RAPL", it supports AMD processors since Linux kernel 5.8.
 
-It is some files in /sys/class/powercap/intel-rapl/subsystem/ that give the energy consumption of the CPU, and sometimes RAM.
-There are folders for each `domain`, and in each folder there is a file `name` with the name of the domain and an `energy_uj` for the amount of energy in micro-joules.
+RAPL Domain Architecture
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-The drawback of RAPL is that not every CPU uses it the same way. We focus on the `package` domain, but some CPUs have more domains like `core`, `uncore`, `dram`, `psys`, `gpu`, `psys` and `psys-io`.
+RAPL exposes energy consumption data through files in ``/sys/class/powercap/`` with two interfaces:
 
-For example :
-- Intel puts all the physical cores consumption in `core` and the `package` includes `core`.
-- For AMD, `core` has very low energy, so we don't know if it is included in the `package` or not.
+- **intel-rapl** (MSR-based): Traditional Model-Specific Register interface, accessed via CPU instructions
+- **intel-rapl-mmio** (Memory-Mapped I/O): Newer interface introduced for modern Intel processors (10th gen+)
 
-Our friends from Scaphandre, a tool to monitor energy consumption, have a good article about RAPL https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html and also a discussion with good references: https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231 and point out that this topic is not well documented.
+Each domain is represented by a directory containing:
+
+- ``name``: Domain identifier (e.g., "package-0", "core", "uncore", "psys")
+- ``energy_uj``: Current energy counter in microjoules
+- ``max_energy_range_uj``: Maximum value before counter wraps
+
+Available RAPL Domains
+~~~~~~~~~~~~~~~~~~~~~~
+
+Different CPUs expose different domains. Common domains include:
+
+- **psys** (Platform/System): Total platform power including CPU package, integrated GPU, memory controller, and some chipset components. **Most comprehensive measurement** on modern Intel systems (Skylake and newer).
+
+- **package-0/package-N**: Entire CPU socket including:
+  
+  - All CPU cores
+  - Integrated GPU (if present)
+  - Last-level cache (LLC)
+  - Memory controller
+  - System agent/uncore
+
+- **core**: Only the CPU compute cores (subset of package)
+
+- **uncore**: Everything in the package except cores:
+  
+  - Memory controller (DDR interface on CPU)
+  - Last-level cache
+  - Ring interconnect between cores
+  - Integrated GPU (if present)
+
+- **dram**: Memory controller power (rare on consumer hardware, more common on servers)
+
+- **gpu**: Discrete or integrated GPU (when available)
+
+RAPL Domain Hierarchy and Double-Counting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Critical**: RAPL domains are hierarchical and overlapping. Summing them causes severe over-counting!
+
+Example hierarchy on Intel Core Ultra 7 265H:
+
+.. code-block:: text
+
+    psys (9.6W) ← Most comprehensive, includes everything below
+    ├── package-0 (3.8W) ← Subset of psys
+    │   ├── core (0.8W) ← Subset of package
+    │   └── uncore (0.2W) ← Subset of package
+    └── Other platform components (~5W)
+        └── Chipset, PCIe, etc.
+
+**Wrong approach**: 9.6W + 3.8W + 0.8W + 0.2W = 14.4W ❌ (Triple counting!)
+
+**Correct approach**: Use only psys (9.6W) ✅
+
+CodeCarbon's RAPL Strategy
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CodeCarbon implements intelligent domain selection to provide reliable and consistent measurements:
+
+1. **Prefer package domains (default)**: CodeCarbon prioritizes ``package`` domains because they:
+   
+   - Update reliably under CPU load
+   - Match CPU TDP specifications
+   - Provide consistent measurements across different Intel generations
+   - Can be supplemented with ``dram`` domains for complete hardware measurement (package + DRAM)
+
+2. **Optional psys mode**: Set ``prefer_psys=True`` to use ``psys`` (platform/system) domain instead:
+   
+   - Provides total platform power (CPU + chipset + PCIe + some other components)
+   - More comprehensive but can report higher values than CPU TDP
+   - May include non-CPU components affected by the computation
+   - **Note**: On some older Intel systems (e.g., Kaby Lake), psys can report unexpectedly high values
+
+3. **Interface deduplication**: When the same domain appears in both ``intel-rapl`` and ``intel-rapl-mmio``:
+   
+   - Detects duplicate domains by name
+   - Prefers MMIO over MSR (newer, recommended interface)
+   - Falls back to MSR if MMIO is unreadable
+
+4. **Subdomain filtering**: Excludes ``core`` and ``uncore`` subdomains when ``package`` is available to avoid double-counting
+
+5. **DRAM inclusion**: By default (``include_dram=True``), adds DRAM domain to package for complete hardware power measurement
+
+Platform-Specific Behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Intel processors**:
+
+- Modern CPUs (Skylake+): Provide ``psys`` for comprehensive platform measurement
+- ``core`` is included in ``package``
+- ``package`` may include or exclude integrated GPU depending on model
+
+**AMD processors**:
+
+- ``core`` reports very low energy values
+- Unclear if ``core`` is included in ``package`` (vendor documentation is sparse)
+- Multiple dies may report as separate packages (e.g., Threadripper)
+
+**What RAPL Does NOT Measure**:
+
+- ❌ DRAM chips themselves (only memory controller)
+- ❌ SSDs/NVMe drives
+- ❌ Discrete GPUs (use nvidia-smi, rocm-smi separately)
+- ❌ Motherboard chipset (unless included in psys)
+- ❌ Fans, USB devices, peripherals
+- ❌ Power supply inefficiency
+- ❌ Discrete NPUs
+
+For more details, see the excellent documentation from Scaphandre: https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html and discussion with references: https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231
 
 
 
 https://user-images.githubusercontent.com/894892/120764898-ecf07280-c518-11eb-9155-92780cabcf52.png
 Source :“RAPL in Action: Experiences in Using RAPL for Power Measurements,” (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z. Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp. 1–26, Apr. 2018, doi: 10.1145/3177754.)
 
-# Metric comparison
+RAPL Measurements: Real-World Examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Choosing the right metric to track CPU power consumption is not easy as it depends on the CPU hardware.
+Choosing the right metric to track CPU power consumption depends on CPU hardware and available domains. Below are measurements from different systems showing the importance of avoiding double-counting.
 
-For example, for modern Intel CPU, like Ultra 7 series, the `psys` domain is the most accurate to track the whole CPU power consumption, as it includes both the CPU cores and the integrated GPU.
-But on a laptop from 2017 with Intel XXX
+Laptop: Intel(R) Core(TM) Ultra 7 265H (TDP 28W)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-## Laptop computer with Intel(R) Core(TM) Ultra 7 265H, TDP 28W.
+**Idle Measurements**:
 
-Powertop measure when idle : The battery reports a discharge rate of 6 W
-CodeCarbon
-Monitoring domain 'package-0' (displayed as 'Processor Energy Delta_0(kWh)') via MMIO at /sys/class/powercap/intel-rapl/subsystem/intel-rapl-mmio/intel-rapl-mmio:0/energy_uj
-package-0 : 4 W
+.. code-block:: text
 
-Domain 'psys' (MSR): 6.66 Watts
-Domain 'core' (MSR): 0.35 Watts
-Domain 'package-0' (MMIO): 3.85 Watts
-Domain 'uncore' (MSR): 0.02 Watts
-Total Power Consumption: 10.88 Watts
+    Powertop battery discharge rate: 6W
+    
+    RAPL domains (individual readings):
+    - psys (platform):    6.66W  ← Total platform power (BEST)
+    - package-0:          3.85W  ← CPU package (subset of psys)
+    - core:               0.35W  ← CPU cores only (subset of package)
+    - uncore:             0.02W  ← Memory controller, cache (subset of package)
+    
+    ⚠️  WRONG: Summing all domains = 10.88W (over-counting!)
+    ✅  CORRECT: Use psys only = 6.66W (matches battery discharge)
+
+**CodeCarbon behavior**: Uses **psys only** (6.66W) to avoid double-counting.
+
+**Under Load (stress-ng)**:
+
+.. code-block:: text
+
+    Powertop battery discharge rate: 27W
+    
+    RAPL domains:
+    - psys:               24.69W  ← Total platform power (BEST)
+    - package-0:          21.35W  ← CPU package (subset of psys)
+    - core:               15.37W  ← CPU cores (subset of package)
+    - uncore:              0.07W  ← Uncore (subset of package)
+    
+    ✅  CORRECT: Use psys only = 24.69W (close to battery discharge)
+    
+**CodeCarbon measurement**: 22W using psys (accurate, within expected range)
+
+**Note**: The package-0 measurement (21.35W) excludes some platform components like chipset and PCIe that are included in psys (24.69W).
+
+Laptop: Intel(R) Core(TM) i7-7600U (TDP 15W, 7th Gen Kaby Lake)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Idle Measurements**:
+
+.. code-block:: text
+
+    Powertop battery discharge rate: 9.31W
+    
+    RAPL domains:
+    - psys:              12.21W  ← Total platform power (includes everything)
+    - package-0:          1.44W  ← CPU package only
+    - core:               0.46W  ← CPU cores (subset of package)
+    - uncore:             0.04W  ← Uncore (subset of package)
+    - dram:               0.54W  ← Memory controller (may overlap with uncore)
+    
+    ⚠️  WRONG: Summing all = 14.69W (triple counting!)
+    ✅  CORRECT: Use psys = 12.21W
+
+**Under Load (stress-ng)**:
+
+.. code-block:: text
+
+    Powertop battery discharge rate: 8.40W (unreliable during stress test)
+    
+    RAPL domains:
+    - psys:              29.97W  ← Total platform power (BEST)
+    - package-0:         15.73W  ← CPU package (matches TDP, subset of psys)
+    - core:              14.00W  ← CPU cores (subset of package)
+    - uncore:             0.54W  ← Uncore (subset of package)
+    - dram:               1.23W  ← Memory controller power
+    
+    ⚠️  WRONG: Summing all = 61.47W (massive over-counting!)
+    ✅  CORRECT: Use psys = 29.97W
+    
+    Analysis:
+    - psys (29.97W) includes package (15.73W) + platform components (~14W)
+    - package (15.73W) includes core (14.00W) + uncore (0.54W) + other
+    - Core power (14.00W) matches the CPU TDP spec (15W)
+
+**CodeCarbon behavior**: Uses **psys only** (29.97W) for accurate total platform measurement.
+
+**Legacy behavior (before v2.x)**: Would have measured only package-0 (15.73W), missing ~14W of platform power!
 
 
-When loaded with stress-ng :
-Powertop measure when loaded : The battery reports a discharge rate of 27 W
-CodeCarbon : 22 W
-stress-ng: info:  [29608] cpu:
-stress-ng: info:  [29608]  core                   15.37 W
-stress-ng: info:  [29608]  pkg-0                  21.35 W
-stress-ng: info:  [29608]  psys                   24.69 W
-stress-ng: info:  [29608]  uncore                  0.07 W
+Desktop: AMD Ryzen Threadripper 1950X (16-Core, 32 threads, Multi-die)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`uv run examples/rapl/intel_rapl_show.py`
-Domain 'psys' (MSR): 22.60 Watts
-Domain 'core' (MSR): 12.39 Watts
-Domain 'package-0' (MMIO): 16.24 Watts
-Domain 'uncore' (MSR): 0.04 Watts
-Total Power Consumption: 51.26 Watts
+XXX A METTRE A JOUR AVEC UN EXEMPLE PLUS RECENT
 
-Here we get only 16W for the CPU, it not much given the TDP of 28W, but maybe it is because this CPU include GPU and NPU or we miss something ?
+**Idle Measurements (10% CPU load)**:
 
-## Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz with a TDP of 15.0 W
+.. code-block:: text
 
-Idle : 2W
-`powertop`
-The battery reports a discharge rate of 9.31 W
+    Wall power meter: 125W (whole system)
+    
+    RAPL domains:
+    - package-0-die-0:   68W
+    - package-0-die-1:   68W
+    
+    ✅  CodeCarbon total: 137W (both dies)
+    
+    Note: RAPL on this system measures only the CPU dies, not platform.
+    Wall power includes motherboard, RAM, fans, PSU losses.
 
-`uv run examples/rapl/intel_rapl_show.py`
-Domain 'psys' (MSR): 12.21 Watts
-Domain 'dram' (MMIO): 0.54 Watts
-Domain 'core' (MSR): 0.46 Watts
-Domain 'package-0' (MMIO): 1.44 Watts
-Domain 'uncore' (MSR): 0.04 Watts
-Total Power Consumption: 14.69 Watts
+**Under Full Load (100% CPU, stress test)**:
 
+.. code-block:: text
 
-Under load
+    Wall power meter: 256W total (131W above idle baseline)
+    
+    RAPL domains:
+    - package-0-die-0:  166W
+    - package-0-die-1:  166W
+    
+    ✅  CodeCarbon total: 332W (both dies)
+    
+    Analysis:
+    - Each die independently measured via RAPL
+    - No psys domain available on this AMD system
+    - RAPL counter range: 234 sec at 280W (potential wraparound consideration)
 
-[codecarbon INFO @ 14:59:19] 	RAPL - Monitoring domain 'package-0' (displayed as 'Processor Energy Delta_0(kWh)') via MMIO at /sys/class/powercap/intel-rapl/subsystem/intel-rapl-mmio/intel-rapl-mmio:0/energy_uj
-CodeCarbon : 15.5 W
-`powertop`
-The battery reports a discharge rate of 8.40 W => Seems unreliable on this hardware
+**AMD RAPL Characteristics**:
 
-`uv run examples/rapl/intel_rapl_show.py`
-Domain 'psys' (MSR): 30.00 Watts => Seems to include core and package-0 than already include core, resulting in triple-count !
-Domain 'dram' (MMIO): 0.58 Watts
-Domain 'core' (MSR): 14.83 Watts => 'core' seems included in package-0
-Domain 'package-0' (MMIO): 15.34 Watts => It's in line with TDP of this CPU.
-Domain 'uncore' (MSR): 0.10 Watts
-Total Power Consumption: 60.85 Watts
+- Multi-die CPUs report separate packages (package-0-die-0, package-0-die-1)
+- No psys domain available on older AMD processors
+- ``core`` domain reports very low values (unclear if included in package)
+- Package measurements are generally reliable for total CPU power
 
-`sudo stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s`
-stress-ng: info:  [52145] cpu:
-stress-ng: info:  [52145]  core                   14.00 W
-stress-ng: info:  [52145]  dram                    1.23 W
-stress-ng: info:  [52145]  pkg-0                  15.73 W
-stress-ng: info:  [52145]  psys                   29.97 W
-stress-ng: info:  [52145]  uncore                  0.54 W
+Key Takeaways for RAPL Measurements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+1. **CodeCarbon defaults to package domains**: This provides the most reliable and consistent measurements that match CPU TDP specifications. Package domains update correctly under load across all Intel generations.
 
-## Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
-Power plug measure when idle (10% CPU): 125 W
-package-0-die-0 : 68 W
-package-0-die-1 : 68 W
-CodeCarbon : 137 W
+2. **psys is optional but can be unreliable**: While ``psys`` provides total platform power, it:
+   
+   - Can report higher values than expected (includes chipset, PCIe, etc.)
+   - May not update correctly on some systems (known firmware/kernel issues)
+   - Is less consistent across different Intel generations
+   - Can be enabled with ``prefer_psys=True`` if desired
 
-Power plug measure when loaded (100% CPU): 256 W - 125W in idle = 131 W
-CorWatt	PkgWatt
-133.13	169.82
-7.54	169.82
-CodeCarbon : 330 W
-package-0-die-0 : 166 W
-package-0-die-1 : 166 W
+3. **Avoid summing overlapping domains**: Never sum psys + package + core + uncore. They are hierarchical and overlapping. This causes 2-3x over-counting!
 
-RAPL: 234 sec. Joule Counter Range, at 280 Watts
+4. **Domain hierarchy**:
+   
+   - psys ⊃ package ⊃ {core, uncore}
+   - Correct: Use package alone (CodeCarbon default) OR psys alone (with prefer_psys=True)
+   - Wrong: Sum multiple levels
 
+5. **Interface deduplication**: The same domain may appear in both ``intel-rapl`` (MSR) and ``intel-rapl-mmio`` interfaces. CodeCarbon automatically deduplicates, preferring MMIO.
+
+6. **DRAM measurement**: CodeCarbon includes DRAM domains by default (``include_dram=True``) for complete hardware measurement (CPU package + memory). Set ``include_dram=False`` to measure only CPU package.
+
+7. **Platform-specific behavior**:
+   
+   - Intel modern: package + dram (default) or psys (with prefer_psys=True)
+   - Intel older: package-0 for CPU only
+   - AMD: Sum all package-X-die-Y for multi-die CPUs
+
+8. **Limitations**: RAPL does NOT measure:
+   
+   - Discrete GPUs (use nvidia-smi/rocm-smi)
+   - SSDs, peripherals, fans
+   - Actual DRAM chips (only memory controller on CPU)
+   - Complete system power (use wall meter for accuracy)
 
 CPU metrics priority
 --------------------

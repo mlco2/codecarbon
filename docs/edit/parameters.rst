@@ -51,6 +51,19 @@ Input Parameters
        | Estimate it with ``sudo lshw -C memory -short | grep DIMM``
        | to get the number of RAM slots used, then do
        | *RAM power in W = Number of RAM Slots * 5 Watts*
+   * - rapl_include_dram
+     - | Boolean variable indicating if DRAM (memory) power should be included
+       | in RAPL measurements on Linux systems, defaults to ``True``.
+       | When ``True``, measures complete hardware power (CPU package + DRAM).
+       | Set to ``False`` to measure only CPU package power.
+       | Note: Only affects systems where RAPL exposes separate DRAM domains.
+   * - rapl_prefer_psys
+     - | Boolean variable indicating if psys (platform/system) RAPL domain should be
+       | preferred over package domains on Linux systems, defaults to ``False``.
+       | When ``True``, uses psys domain for total platform power (CPU + chipset + PCIe).
+       | When ``False`` (default), uses package domains which are more reliable and
+       | consistent with CPU TDP specifications.
+       | Note: psys can report higher values than CPU TDP and may be unreliable on older systems.
    * - allow_multiple_runs
      - | Boolean variable indicating if multiple instance of CodeCarbon
        | on the same machine is allowed,
