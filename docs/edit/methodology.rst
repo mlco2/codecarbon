@@ -213,9 +213,31 @@ Our friends from Scaphandre, a tool to monitor energy consumption, have a good a
 https://user-images.githubusercontent.com/894892/120764898-ecf07280-c518-11eb-9155-92780cabcf52.png
 Source :“RAPL in Action: Experiences in Using RAPL for Power Measurements,” (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z. Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp. 1–26, Apr. 2018, doi: 10.1145/3177754.)
 
-Metric comparison
+# Metric comparison
 
-Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
+Choosing the right metric to track CPU power consumption is not easy as it depends on the CPU hardware.
+
+For example, for modern Intel CPU, like Ultra 7 series, the `psys` domain is the most accurate to track the whole CPU power consumption, as it includes both the CPU cores and the integrated GPU.
+But on a laptop from 2017 with Intel XXX
+
+## Laptop computer with Intel(R) Core(TM) Ultra 7 265H, TDP 28W.
+
+Powertop measure when idle : The battery reports a discharge rate of 6 W
+CodeCarbon
+Monitoring domain 'package-0' (displayed as 'Processor Energy Delta_0(kWh)') via MMIO at /sys/class/powercap/intel-rapl/subsystem/intel-rapl-mmio/intel-rapl-mmio:0/energy_uj
+package-0 : 4 W
+
+When loaded with stress-ng :
+Powertop measure when loaded : The battery reports a discharge rate of 27 W
+CodeCarbon : 22 W
+stress-ng: info:  [29608] cpu:
+stress-ng: info:  [29608]  core                   15.37 W
+stress-ng: info:  [29608]  pkg-0                  21.35 W
+stress-ng: info:  [29608]  psys                   24.69 W
+stress-ng: info:  [29608]  uncore                  0.07 W
+
+
+## Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
 Power plug measure when idle (10% CPU): 125 W
 package-0-die-0 : 68 W
 package-0-die-1 : 68 W
