@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test script comparing CPU-only (package) vs CPU+DRAM power measurement.
-This shows how include_dram=True gets closer to powerstat's readings.
+This shows how rapl_include_dram=True gets closer to powerstat's readings.
 """
 import subprocess
 import time
@@ -15,11 +15,11 @@ print("=" * 80)
 
 # Initialize both modes
 print("\n1. CPU-only mode (default - most accurate for CPU power):")
-rapl_cpu_only = IntelRAPL(include_dram=False)
+rapl_cpu_only = IntelRAPL(rapl_include_dram=False)
 rapl_cpu_only.start()
 
 print("\n2. CPU+DRAM mode (matches powerstat's approach):")
-rapl_with_dram = IntelRAPL(include_dram=True)
+rapl_with_dram = IntelRAPL(rapl_include_dram=True)
 rapl_with_dram.start()
 
 # Idle measurement
@@ -88,7 +88,7 @@ print(
   - Best for comparing CPU performance/efficiency
   - Shown: {cpu_only_power_load:.1f}W under load
 
-✓ CPU+DRAM (include_dram=True): Closer to powerstat
+✓ CPU+DRAM (rapl_include_dram=True): Closer to powerstat
   - Includes memory power consumption
   - Better represents computing workload
   - Shown: {cpu_dram_power_load:.1f}W under load

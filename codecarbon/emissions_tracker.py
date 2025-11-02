@@ -182,6 +182,8 @@ class BaseEmissionsTracker(ABC):
         wue: Optional[bool] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
+        rapl_include_dram: Optional[bool] = _sentinel,
+        rapl_prefer_psys: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -291,6 +293,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(wue, "wue", 0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
+        self._set_from_conf(rapl_include_dram, "rapl_include_dram", True, bool)
+        self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -1107,6 +1111,8 @@ def track_emissions(
     pue: Optional[int] = _sentinel,
     wue: Optional[float] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
+    rapl_include_dram: Optional[bool] = _sentinel,
+    rapl_prefer_psys: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1183,6 +1189,8 @@ def track_emissions(
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
     :param wue: WUE (Water Usage Effectiveness) of the datacenter, L/kWh.
     :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
+    :param rapl_include_dram: Include DRAM domain for RAPL measurements (default: True).
+    :param rapl_prefer_psys: Prefer psys (platform) domain over package domains for RAPL (default: False).
 
     :return: The decorated function
     """
@@ -1224,6 +1232,8 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
+                    rapl_include_dram=rapl_include_dram,
+                    rapl_prefer_psys=rapl_prefer_psys,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1256,6 +1266,8 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
+                    rapl_include_dram=rapl_include_dram,
+                    rapl_prefer_psys=rapl_prefer_psys,
                 )
             tracker.start()
             try:

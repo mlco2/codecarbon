@@ -78,7 +78,10 @@ class ResourceTracker:
             logger.info("Tracking Intel CPU via RAPL interface")
             self.cpu_tracker = "RAPL"
             hardware_cpu = CPU.from_utils(
-                output_dir=self.tracker._output_dir, mode="intel_rapl"
+                output_dir=self.tracker._output_dir,
+                mode="intel_rapl",
+                rapl_include_dram=self.tracker._rapl_include_dram,
+                rapl_prefer_psys=self.tracker._rapl_prefer_psys,
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()

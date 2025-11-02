@@ -26,7 +26,7 @@ Changed RAPL domain selection to **prefer `package-0` over `psys`**:
 
 if package_domains:
     domains_to_use = package_domains
-    if self._include_dram and dram_domains:
+    if self._rapl_include_dram and dram_domains:
         domains_to_use.extend(dram_domains)
 elif psys_domains:
     # Fallback with warning
@@ -39,7 +39,7 @@ Implemented `include_dram` parameter (defaults to `True` for complete hardware m
 ```python
 class IntelRAPL:
     def __init__(self, rapl_dir="...", include_dram=True):
-        self._include_dram = include_dram
+        self.rapl_include_dram = include_dram
 ```
 
 **Default behavior:** CPU package + DRAM (aligns with CodeCarbon's mission)

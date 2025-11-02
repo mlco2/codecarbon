@@ -367,7 +367,18 @@ class IntelRAPL:
         _rapl_files (List[RAPLFile]): A list of RAPLFile objects representing the files to read energy data from.
         _cpu_details (Dict): A dictionary storing the latest CPU energy details.
         _last_mesure (int): Placeholder for storing the last measurement time.
-        _include_dram (bool): Whether to include DRAM power in measurements (default: True for complete hardware measurement).
+        rapl_include_dram (bool): Whether to include DRAM power in measurements (default: True for complete hardware measurement).
+        rapl_prefer_psys (bool): Whether to prefer psys domain over package domains (default: False).
+                                When True, uses psys (platform/system) domain which includes CPU + platform components.
+                                When False (default), uses package domains which are more reliable and match CPU TDP specs.
+
+    Args:
+        rapl_dir (str): Path to RAPL directory (default: "/sys/class/powercap/intel-rapl/subsystem")
+        rapl_include_dram (bool): Include DRAM domain for complete hardware measurement (default: True).
+                                  Set to False to measure only CPU package power.
+        rapl_prefer_psys (bool): Prefer psys (platform) domain over package domains (default: False).
+                                Set to True to measure total platform power (CPU + chipset + PCIe).
+                                Note: psys can report higher values than CPU TDP and may be less reliable on older systems.
 
     Methods:
         start():
@@ -382,12 +393,16 @@ class IntelRAPL:
     """
 
     def __init__(
-        self, rapl_dir="/sys/class/powercap/intel-rapl/subsystem", include_dram=True
+        self,
+        rapl_dir="/sys/class/powercap/intel-rapl/subsystem",
+        rapl_include_dram=True,
+        rapl_prefer_psys=False,
     ):
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
         self._rapl_files = []
-        self._include_dram = include_dram
+        self.rapl_include_dram = rapl_include_dram
+        self.rapl_prefer_psys = rapl_prefer_psys
         self._setup_rapl()
         self._cpu_details: Dict = {}
 
@@ -413,7 +428,7 @@ class IntelRAPL:
         Fetches RAPL files from the RAPL directory.
 
         By default, reads CPU package + DRAM domains for complete hardware power measurement.
-        Set include_dram=False to measure only CPU package power.
+        Set rapl_include_dram=False to measure only CPU package power.
         """
         # We'll scan common powercap locations and look for domain directories
         # that expose an `energy_uj` file. We try to be tolerant to permission
@@ -637,8 +652,20 @@ class IntelRAPL:
                         domain_dir,
                     )
 
-        # Decision logic following powerstat's approach for complete hardware measurement
-        if package_domains:
+        # Decision logic: prefer package domains (most reliable and consistent)
+        # psys can be used optionally but includes platform components beyond CPU
+        if self.rapl_prefer_psys and psys_domains:
+            logger.info(
+                "\tRAPL - Using psys (platform/system) domain (rapl_prefer_psys=True). "
+                "Note: psys includes CPU + platform components (chipset, PCIe, etc.) "
+                "and may report higher values than CPU TDP spec."
+            )
+            domains_to_use = psys_domains
+            if package_domains:
+                logger.info(
+                    "\tRAPL - Package domains available but not used due to rapl_prefer_psys=True"
+                )
+        elif package_domains:
             # Use package domains (most reliable) - do NOT include subdomains to avoid double-counting
             # Package domain already includes core+uncore (but NOT dram on most systems)
             logger.info(
@@ -648,27 +675,30 @@ class IntelRAPL:
             domains_to_use = package_domains
 
             # Include DRAM by default for complete hardware measurement (CodeCarbon's mission)
-            if self._include_dram and dram_domains:
+            if self.rapl_include_dram and dram_domains:
                 logger.info(
                     "\tRAPL - Including %d DRAM domain(s) for complete hardware power measurement (CPU+DRAM)",
                     len(dram_domains),
                 )
                 domains_to_use.extend(dram_domains)
-            elif dram_domains and not self._include_dram:
+            elif dram_domains and not self.rapl_include_dram:
                 logger.info(
-                    "\tRAPL - Found %d DRAM domain(s) but not including (include_dram=False). Set include_dram=True for complete hardware measurement.",
+                    "\tRAPL - Found %d DRAM domain(s) but not including (rapl_include_dram=False). "
+                    "Set rapl_include_dram=True for complete hardware measurement.",
                     len(dram_domains),
                 )
 
             if psys_domains:
                 logger.info(
-                    "\tRAPL - psys domain detected but not used (package+dram domains are more reliable and update correctly under load)"
+                    "\tRAPL - psys domain detected but not used (rapl_prefer_psys=False). "
+                    "Package domains are more consistent with CPU TDP specs. "
+                    "Set rapl_prefer_psys=True to use psys for total platform power (includes chipset, PCIe, etc.)"
                 )
         elif psys_domains:
             logger.warning(
                 "\tRAPL - No package domains found, falling back to psys (platform/system) domain. "
-                "Note: psys may not update correctly on all Intel systems and includes non-CPU components. "
-                "If power readings don't change under load, this is a known firmware/kernel issue."
+                "Note: psys includes CPU + platform components and may not match CPU TDP. "
+                "Power readings may vary significantly from CPU specifications."
             )
             domains_to_use = psys_domains
         else:

@@ -17,8 +17,8 @@ print("\n1. Default IntelRAPL() - should include DRAM:")
 rapl_default = IntelRAPL()
 rapl_default.start()
 
-print("\n2. Explicit include_dram=False - CPU only:")
-rapl_cpu_only = IntelRAPL(include_dram=False)
+print("\n2. Explicit rapl_include_dram=False - CPU only:")
+rapl_cpu_only = IntelRAPL(rapl_include_dram=False)
 rapl_cpu_only.start()
 
 # Idle measurement
