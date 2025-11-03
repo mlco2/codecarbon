@@ -85,10 +85,6 @@ class ResourceTracker:
             )
             self.tracker._hardware.append(hardware_cpu)
             self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
-            if "AMD Ryzen Threadripper" in self.tracker._conf["cpu_model"]:
-                logger.warning(
-                    "The RAPL energy and power reported is divided by 2 for all 'AMD Ryzen Threadripper' as it seems to give better results."
-                )
         # change code to check if powermetrics needs to be installed or just sudo setup
         elif (
             powermetrics.is_powermetrics_available()
