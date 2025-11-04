@@ -36,7 +36,7 @@ export async function fetchApiClient<T>(
         } catch (e) {
             // Ignore JSON parsing errors
         }
-        console.log(errorMessage);
+        console.error(errorMessage);
         return null;
     }
 
