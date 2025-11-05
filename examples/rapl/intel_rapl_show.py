@@ -51,6 +51,8 @@ import json
 import os
 import time
 
+import cpuinfo
+
 
 class RAPLDomainInspector:
     def __init__(self):
@@ -312,7 +314,9 @@ class IntelRAPL:
                         f"Domain '{domain.get('name')}' ({interface}): {power:.2f} Watts"
                     )
                     total_power += power
-            print(f"Total Power Consumption: {total_power:.2f} Watts\n")
+            print(
+                f"Sum of power (without deduplication !!!): {total_power:.2f} Watts\n"
+            )
 
             time.sleep(interval)
 
@@ -345,3 +349,9 @@ if __name__ == "__main__":
     print(rapl.list_power_domains())
     # Monitor power consumption
     rapl.monitor_power(interval=1, duration=5)
+    cpu_info = cpuinfo.get_cpu_info()
+    if cpu_info:
+        cpu_model_detected = cpu_info.get("brand_raw", "")
+        print(f"Detected CPU Model: {cpu_model_detected}")
+    else:
+        print("Could not detect CPU model.")
