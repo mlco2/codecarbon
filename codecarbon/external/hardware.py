@@ -168,7 +168,7 @@ class CPU(BaseHardware):
         tdp: int,
         rapl_dir: str = "/sys/class/powercap/intel-rapl/subsystem",
         tracking_mode: str = "machine",
-        rapl_include_dram: bool = True,
+        rapl_include_dram: bool = False,
         rapl_prefer_psys: bool = False,
     ):
         assert tracking_mode in ["machine", "process"]
@@ -337,7 +337,7 @@ class CPU(BaseHardware):
         model: Optional[str] = None,
         tdp: Optional[int] = None,
         tracking_mode: str = "machine",
-        rapl_include_dram: bool = True,
+        rapl_include_dram: bool = False,
         rapl_prefer_psys: bool = False,
     ) -> "CPU":
         if model is None:

@@ -367,14 +367,14 @@ class IntelRAPL:
         _rapl_files (List[RAPLFile]): A list of RAPLFile objects representing the files to read energy data from.
         _cpu_details (Dict): A dictionary storing the latest CPU energy details.
         _last_mesure (int): Placeholder for storing the last measurement time.
-        rapl_include_dram (bool): Whether to include DRAM power in measurements (default: True for complete hardware measurement).
+        rapl_include_dram (bool): Whether to include DRAM power in measurements (default: False for complete hardware measurement).
         rapl_prefer_psys (bool): Whether to prefer psys domain over package domains (default: False).
                                 When True, uses psys (platform/system) domain which includes CPU + platform components.
                                 When False (default), uses package domains which are more reliable and match CPU TDP specs.
 
     Args:
         rapl_dir (str): Path to RAPL directory (default: "/sys/class/powercap/intel-rapl/subsystem")
-        rapl_include_dram (bool): Include DRAM domain for complete hardware measurement (default: True).
+        rapl_include_dram (bool): Include DRAM domain for complete hardware measurement (default: False).
                                   Set to False to measure only CPU package power.
         rapl_prefer_psys (bool): Prefer psys (platform) domain over package domains (default: False).
                                 Set to True to measure total platform power (CPU + chipset + PCIe).
@@ -395,7 +395,7 @@ class IntelRAPL:
     def __init__(
         self,
         rapl_dir="/sys/class/powercap/intel-rapl/subsystem",
-        rapl_include_dram=True,
+        rapl_include_dram=False,
         rapl_prefer_psys=False,
     ):
         self._lin_rapl_dir = rapl_dir
@@ -427,8 +427,8 @@ class IntelRAPL:
         """
         Fetches RAPL files from the RAPL directory.
 
-        By default, reads CPU package + DRAM domains for complete hardware power measurement.
-        Set rapl_include_dram=False to measure only CPU package power.
+        By default, reads CPU package only
+        Set rapl_include_dram=True to measure CPU package + DRAM domains
         """
         # We'll scan common powercap locations and look for domain directories
         # that expose an `energy_uj` file. We try to be tolerant to permission

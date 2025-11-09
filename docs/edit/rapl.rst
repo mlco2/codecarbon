@@ -60,7 +60,7 @@ Different CPUs expose different domains. Common domains include:
   - Ring interconnect between cores
   - Integrated GPU (if present)
 
-- **dram**: Memory controller power (rare on consumer hardware, more common on servers)
+- **dram**: Memory controller power, rare on consumer hardware, more common on servers. We still have to figure out if it is accurate.
 
 - **gpu**: Discrete or integrated GPU (when available)
 
@@ -111,7 +111,7 @@ CodeCarbon implements intelligent domain selection to provide reliable and consi
 
 4. **Subdomain filtering**: Excludes ``core`` and ``uncore`` subdomains when ``package`` is available to avoid double-counting
 
-5. **DRAM inclusion**: By default (``include_dram=True``), adds DRAM domain to package for complete hardware power measurement
+5. **DRAM exclusion**: By default (``include_dram=False``), don't adds DRAM domain to package. As DRAM is supposed to be in RAM power, not CPU in a future version of CodeCarbon.
 
 Platform-Specific Behavior
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -334,11 +334,11 @@ Key Takeaways for RAPL Measurements
 
 5. **Interface deduplication**: The same domain may appear in both ``intel-rapl`` (MSR) and ``intel-rapl-mmio`` interfaces. CodeCarbon automatically deduplicates, preferring MMIO.
 
-6. **DRAM measurement**: CodeCarbon includes DRAM domains by default (``include_dram=True``) for complete hardware measurement (CPU package + memory). Set ``include_dram=False`` to measure only CPU package.
+6. **DRAM measurement**: CodeCarbon does not include DRAM domains by default (``include_dram=False``) for CPU hardware measurement. Set ``include_dram=True`` to measure CPU package + DRAM domains.
 
 7. **Platform-specific behavior**:
 
-   - Intel modern: package + dram (default) or psys (with prefer_psys=True)
+   - Intel modern: package or psys (with prefer_psys=True)
    - Intel older: package-0 for CPU only
    - AMD: Sum all package-X-die-Y for multi-die CPUs
 
@@ -346,5 +346,5 @@ Key Takeaways for RAPL Measurements
 
    - Discrete GPUs (use nvidia-smi/rocm-smi)
    - SSDs, peripherals, fans
-   - Actual DRAM chips (only memory controller on CPU)
+   - Actual DRAM chips, we still have to investigate on this point
    - Complete system power (use wall meter for accuracy)

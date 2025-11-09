@@ -53,10 +53,11 @@ Input Parameters
        | *RAM power in W = Number of RAM Slots * 5 Watts*
    * - rapl_include_dram
      - | Boolean variable indicating if DRAM (memory) power should be included
-       | in RAPL measurements on Linux systems, defaults to ``True``.
+       | in RAPL measurements on Linux systems, defaults to ``False``.
        | When ``True``, measures complete hardware power (CPU package + DRAM).
        | Set to ``False`` to measure only CPU package power.
        | Note: Only affects systems where RAPL exposes separate DRAM domains.
+       | In a future version DRAM power will probably be included in RAM.
    * - rapl_prefer_psys
      - | Boolean variable indicating if psys (platform/system) RAPL domain should be
        | preferred over package domains on Linux systems, defaults to ``False``.

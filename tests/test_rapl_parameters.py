@@ -11,9 +11,9 @@ from codecarbon.core.cpu import IntelRAPL
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
-def test_rapl_include_dram_default_true(tmp_path):
+def test_rapl_include_dram_default_false(tmp_path):
     """
-    Verify that rapl_include_dram defaults to True and includes DRAM domains.
+    Verify that rapl_include_dram defaults to False and excludes DRAM domains.
     """
     base = tmp_path
     rapl_provider = base / "intel-rapl"
@@ -36,13 +36,12 @@ def test_rapl_include_dram_default_true(tmp_path):
     # Create IntelRAPL with default parameters
     rapl = IntelRAPL(rapl_dir=str(base))
 
-    # Should have 2 RAPL files: package-0 + dram
-    assert len(rapl._rapl_files) == 2, f"Expected 2 files, got {len(rapl._rapl_files)}"
+    # Should have 1 RAPL files: package-0
+    assert len(rapl._rapl_files) == 1, f"Expected 1 files, got {len(rapl._rapl_files)}"
 
     # Verify both package and dram are present
     names = [f.name for f in rapl._rapl_files]
     assert any("Processor Energy" in name for name in names), "Missing package domain"
-    assert any("dram" in name.lower() for name in names), "Missing DRAM domain"
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
@@ -457,8 +456,8 @@ def test_rapl_parameters_stored_correctly(tmp_path):
     # Test default values
     rapl_default = IntelRAPL(rapl_dir=str(base))
     assert (
-        rapl_default.rapl_include_dram is True
-    ), "Default rapl_include_dram should be True"
+        rapl_default.rapl_include_dram is False
+    ), "Default rapl_include_dram should be False"
     assert (
         rapl_default.rapl_prefer_psys is False
     ), "Default rapl_prefer_psys should be False"
