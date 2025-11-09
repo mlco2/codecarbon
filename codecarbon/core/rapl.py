@@ -22,26 +22,7 @@ class RAPLFile:
     max_energy_reading: Energy = field(default_factory=lambda: Energy(0))
 
     def __post_init__(self):
-        try:
-            self.last_energy = self._get_value()
-        except Exception as e:
-            # Be tolerant to permission / IO errors during initialization.
-            # If we cannot read the initial energy, default to 0 and continue;
-            # the caller will skip or produce zeros for this RAPL file.
-            if isinstance(e, PermissionError):
-                logger.warning(
-                    "Unable to read initial RAPL energy from %s due to permission error: %s",
-                    self.path,
-                    e,
-                )
-            else:
-                logger.debug(
-                    "Unable to read initial RAPL energy from %s: %s",
-                    self.path,
-                    e,
-                )
-            self.last_energy = Energy.from_ujoules(0)
-
+        self.last_energy = self._get_value()
         try:
             with open(self.max_path, "r") as f:
                 max_micro_joules = float(f.read())

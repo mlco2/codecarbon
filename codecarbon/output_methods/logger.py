@@ -24,9 +24,7 @@ class LoggerOutput(BaseOutput):
             logger.error(e, exc_info=True)
 
     def live_out(self, total: EmissionsData, delta: EmissionsData):
-        # Logger output should only be written on flush/stop (via out()),
-        # not during periodic measurements to avoid duplicate log entries
-        pass
+        self.out(total, delta)
 
 
 class GoogleCloudLoggerOutput(LoggerOutput):
@@ -42,6 +40,4 @@ class GoogleCloudLoggerOutput(LoggerOutput):
             logger.error(e, exc_info=True)
 
     def live_out(self, total: EmissionsData, delta: EmissionsData):
-        # Logger output should only be written on flush/stop (via out()),
-        # not during periodic measurements to avoid duplicate log entries
-        pass
+        self.out(total, delta)
