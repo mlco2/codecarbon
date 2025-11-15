@@ -16,6 +16,7 @@ CodeCarbon
 
    motivation
    methodology
+   rapl
    model_examples
    faq
 

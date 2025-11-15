@@ -23,20 +23,46 @@ class RAPLFile:
 
     def __post_init__(self):
         self.last_energy = self._get_value()
-        with open(self.max_path, "r") as f:
-            max_micro_joules = float(f.read())
-
-            self.max_energy_reading = Energy.from_ujoules(max_micro_joules)
+        try:
+            with open(self.max_path, "r") as f:
+                max_micro_joules = float(f.read())
+                self.max_energy_reading = Energy.from_ujoules(max_micro_joules)
+        except Exception as e:
+            # If we cannot read the max range, log and set to 0 so wrap detection
+            # will be effectively disabled for this file.
+            if isinstance(e, PermissionError):
+                logger.warning(
+                    "Unable to read max_energy_range_uj from %s due to permission error: %s",
+                    self.max_path,
+                    e,
+                )
+            else:
+                logger.debug(
+                    "Unable to read max_energy_range_uj from %s: %s",
+                    self.max_path,
+                    e,
+                )
+            self.max_energy_reading = Energy.from_ujoules(0)
 
     def _get_value(self) -> Energy:
         """
         Reads the value in the file at the path
         """
-        with open(self.path, "r") as f:
-            micro_joules = float(f.read())
-
-            e = Energy.from_ujoules(micro_joules)
-            return e
+        try:
+            with open(self.path, "r") as f:
+                micro_joules = float(f.read())
+                return Energy.from_ujoules(micro_joules)
+        except Exception as e:
+            # Be tolerant to transient IO / permission errors while reading energy.
+            if isinstance(e, PermissionError):
+                logger.warning(
+                    "Unable to read RAPL value from %s due to permission error: %s",
+                    self.path,
+                    e,
+                )
+            else:
+                logger.debug("Unable to read RAPL value from %s: %s", self.path, e)
+            return Energy.from_ujoules(0)
 
     def start(self) -> None:
         self.last_energy = self._get_value()

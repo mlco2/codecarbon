@@ -182,6 +182,8 @@ class BaseEmissionsTracker(ABC):
         wue: Optional[bool] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
+        rapl_include_dram: Optional[bool] = _sentinel,
+        rapl_prefer_psys: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -291,6 +293,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(wue, "wue", 0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
+        self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
+        self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -361,8 +365,10 @@ class BaseEmissionsTracker(ABC):
 
         cloud: CloudMetadata = self._get_cloud_metadata()
 
+        # Always populate geo metadata as it's needed for fallback when cloud region is not found
+        self._geo = self._get_geo_metadata()
+
         if cloud.is_on_private_infra:
-            self._geo = self._get_geo_metadata()
             self._conf["longitude"] = self._geo.longitude
             self._conf["latitude"] = self._geo.latitude
             self._conf["region"] = cloud.region
@@ -686,9 +692,34 @@ class BaseEmissionsTracker(ABC):
             emissions = self._emissions.get_cloud_emissions(
                 self._total_energy, cloud, self._geo
             )
-            country_name = self._emissions.get_cloud_country_name(cloud)
-            country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
-            region = self._emissions.get_cloud_geo_region(cloud)
+            # Try to get cloud region metadata, fall back to geo metadata if not found
+            try:
+                country_name = self._emissions.get_cloud_country_name(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for country name"
+                )
+                country_name = self._geo.country_name
+
+            try:
+                country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for country ISO code"
+                )
+                country_iso_code = self._geo.country_iso_code
+
+            try:
+                region = self._emissions.get_cloud_geo_region(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for region"
+                )
+                region = self._geo.region
+
             on_cloud = "Y"
             cloud_provider = cloud.provider
             cloud_region = cloud.region
@@ -1080,6 +1111,8 @@ def track_emissions(
     pue: Optional[int] = _sentinel,
     wue: Optional[float] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
+    rapl_include_dram: Optional[bool] = _sentinel,
+    rapl_prefer_psys: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1156,6 +1189,8 @@ def track_emissions(
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
     :param wue: WUE (Water Usage Effectiveness) of the datacenter, L/kWh.
     :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
+    :param rapl_include_dram: Include DRAM domain for RAPL measurements (default: False).
+    :param rapl_prefer_psys: Prefer psys (platform) domain over package domains for RAPL (default: False).
 
     :return: The decorated function
     """
@@ -1197,6 +1232,8 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
+                    rapl_include_dram=rapl_include_dram,
+                    rapl_prefer_psys=rapl_prefer_psys,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1229,6 +1266,8 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
+                    rapl_include_dram=rapl_include_dram,
+                    rapl_prefer_psys=rapl_prefer_psys,
                 )
             tracker.start()
             try:
