@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parameters &mdash; CodeCarbon 3.0.9 documentation</title>
+  <title>Parameters &mdash; CodeCarbon 3.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=2b2cf8e3"></script>
+      <script src="_static/documentation_options.js?v=dd1205ac"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -46,6 +46,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rapl.html">RAPL Metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
@@ -182,6 +183,28 @@
 <div class="line">Estimate it with <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">lshw</span> <span class="pre">-C</span> <span class="pre">memory</span> <span class="pre">-short</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">DIMM</span></code></div>
 <div class="line">to get the number of RAM slots used, then do</div>
 <div class="line"><em>RAM power in W = Number of RAM Slots * 5 Watts</em></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p>rapl_include_dram</p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if DRAM (memory) power should be included</div>
+<div class="line">in RAPL measurements on Linux systems, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</div>
+<div class="line">When <code class="docutils literal notranslate"><span class="pre">True</span></code>, measures complete hardware power (CPU package + DRAM).</div>
+<div class="line">Set to <code class="docutils literal notranslate"><span class="pre">False</span></code> to measure only CPU package power.</div>
+<div class="line">Note: Only affects systems where RAPL exposes separate DRAM domains.</div>
+<div class="line">In a future version DRAM power will probably be included in RAM.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p>rapl_prefer_psys</p></td>
+<td><div class="line-block">
+<div class="line">Boolean variable indicating if psys (platform/system) RAPL domain should be</div>
+<div class="line">preferred over package domains on Linux systems, defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</div>
+<div class="line">When <code class="docutils literal notranslate"><span class="pre">True</span></code>, uses psys domain for total platform power (CPU + chipset + PCIe).</div>
+<div class="line">When <code class="docutils literal notranslate"><span class="pre">False</span></code> (default), uses package domains which are more reliable and</div>
+<div class="line">consistent with CPU TDP specifications.</div>
+<div class="line">Note: psys can report higher values than CPU TDP and may be unreliable on older systems.</div>
 </div>
 </td>
 </tr>
