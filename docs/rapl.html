@@ -1,0 +1,448 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAPL Metrics &mdash; CodeCarbon 3.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=dd1205ac"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Model Comparisons" href="model_examples.html" />
+    <link rel="prev" title="Methodology" href="methodology.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            CodeCarbon
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Introduction</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">RAPL Metrics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#rapl-domain-architecture">RAPL Domain Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#available-rapl-domains">Available RAPL Domains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rapl-domain-hierarchy-and-double-counting">RAPL Domain Hierarchy and Double-Counting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#codecarbon-s-rapl-strategy">CodeCarbon’s RAPL Strategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#platform-specific-behavior">Platform-Specific Behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rapl-measurements-real-world-examples">RAPL Measurements: Real-World Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#laptop-intel-r-core-tm-ultra-7-265h-tdp-28w">Laptop: Intel(R) Core(TM) Ultra 7 265H (TDP 28W)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#laptop-intel-r-core-tm-i7-7600u-tdp-15w-7th-gen-kaby-lake">Laptop: Intel(R) Core(TM) i7-7600U (TDP 15W, 7th Gen Kaby Lake)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#desktop-amd-ryzen-threadripper-1950x-16-core-32-threads-multi-die">Desktop: AMD Ryzen Threadripper 1950X (16-Core, 32 threads, Multi-die)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#key-takeaways-for-rapl-measurements">Key Takeaways for RAPL Measurements</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing CodeCarbon</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#configuration">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">CodeCarbon API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_installation.html">Advanced Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Logging</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize.html">Visualize</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">CodeCarbon</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">RAPL Metrics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/rapl.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="rapl-metrics">
+<h1>RAPL Metrics<a class="headerlink" href="#rapl-metrics" title="Link to this heading"></a></h1>
+<p>RAPL (Running Average Power Limit) is a feature of modern processors that provides energy consumption measurements through hardware counters.</p>
+<p>See <a class="reference external" href="https://blog.chih.me/read-cpu-power-with-RAPL.html">https://blog.chih.me/read-cpu-power-with-RAPL.html</a> for more information.</p>
+<p>Despite the name “Intel RAPL”, it supports AMD processors since Linux kernel 5.8.</p>
+<p>Due to the <a class="reference external" href="https://www.cve.org/CVERecord?id=CVE-2020-8694">CVE-2020-8694 security issue</a> from 2020, all Linux distributions have changed right permission of the RAPL file, to reserve it to superuser.</p>
+<p>There is a workaround, thanks to <a class="reference external" href="https://github.com/prometheus/node_exporter/issues/1892">prometheus/node_exporter#1892</a>:</p>
+<p>Without rebooting you could do <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">chmod</span> <span class="pre">-R</span> <span class="pre">a+r</span> <span class="pre">/sys/class/powercap/*</span></code> but it will be lost at next boot.</p>
+<p>If you want more security you could create a specific group, add your user to this group and set group read permission only.</p>
+<section id="rapl-domain-architecture">
+<h2>RAPL Domain Architecture<a class="headerlink" href="#rapl-domain-architecture" title="Link to this heading"></a></h2>
+<p>RAPL exposes energy consumption data through files in <code class="docutils literal notranslate"><span class="pre">/sys/class/powercap/</span></code> with two interfaces:</p>
+<ul class="simple">
+<li><p><strong>intel-rapl</strong> (MSR-based): Traditional Model-Specific Register interface, accessed via CPU instructions</p></li>
+<li><p><strong>intel-rapl-mmio</strong> (Memory-Mapped I/O): Newer interface introduced for modern Intel processors (10th gen+)</p></li>
+</ul>
+<p>Each domain is represented by a directory containing:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: Domain identifier (e.g., “package-0”, “core”, “uncore”, “psys”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">energy_uj</span></code>: Current energy counter in microjoules</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_energy_range_uj</span></code>: Maximum value before counter wraps</p></li>
+</ul>
+</section>
+<section id="available-rapl-domains">
+<h2>Available RAPL Domains<a class="headerlink" href="#available-rapl-domains" title="Link to this heading"></a></h2>
+<p>Different CPUs expose different domains. Common domains include:</p>
+<ul class="simple">
+<li><p><strong>psys</strong> (Platform/System): Total platform power including CPU package, integrated GPU, memory controller, and some chipset components. <strong>Most comprehensive measurement</strong> on modern Intel systems (Skylake and newer).</p></li>
+<li><p><strong>package-0/package-N</strong>: Entire CPU socket including:</p>
+<ul>
+<li><p>All CPU cores</p></li>
+<li><p>Integrated GPU (if present)</p></li>
+<li><p>Last-level cache (LLC)</p></li>
+<li><p>Memory controller</p></li>
+<li><p>System agent/uncore</p></li>
+</ul>
+</li>
+<li><p><strong>core</strong>: Only the CPU compute cores (subset of package)</p></li>
+<li><p><strong>uncore</strong>: Everything in the package except cores:</p>
+<ul>
+<li><p>Memory controller (DDR interface on CPU)</p></li>
+<li><p>Last-level cache</p></li>
+<li><p>Ring interconnect between cores</p></li>
+<li><p>Integrated GPU (if present)</p></li>
+</ul>
+</li>
+<li><p><strong>dram</strong>: Memory controller power, rare on consumer hardware, more common on servers. We still have to figure out if it is accurate.</p></li>
+<li><p><strong>gpu</strong>: Discrete or integrated GPU (when available)</p></li>
+</ul>
+</section>
+<section id="rapl-domain-hierarchy-and-double-counting">
+<h2>RAPL Domain Hierarchy and Double-Counting<a class="headerlink" href="#rapl-domain-hierarchy-and-double-counting" title="Link to this heading"></a></h2>
+<p><strong>Critical</strong>: RAPL domains are hierarchical and overlapping. Summing them causes severe over-counting!</p>
+<p>Example hierarchy on Intel Core Ultra 7 265H:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>psys (9.6W) ← Most comprehensive, includes everything below
+├── package-0 (3.8W) ← Subset of psys
+│   ├── core (0.8W) ← Subset of package
+│   └── uncore (0.2W) ← Subset of package
+└── Other platform components (~5W)
+    └── Chipset, PCIe, etc.
+</pre></div>
+</div>
+<p><strong>Wrong approach</strong>: 9.6W + 3.8W + 0.8W + 0.2W = 14.4W ❌ (Triple counting!)</p>
+<p><strong>Correct approach</strong>: Use only psys (9.6W) ✅</p>
+</section>
+<section id="codecarbon-s-rapl-strategy">
+<h2>CodeCarbon’s RAPL Strategy<a class="headerlink" href="#codecarbon-s-rapl-strategy" title="Link to this heading"></a></h2>
+<p>CodeCarbon implements intelligent domain selection to provide reliable and consistent measurements:</p>
+<ol class="arabic simple">
+<li><p><strong>Prefer package domains (default)</strong>: CodeCarbon prioritizes <code class="docutils literal notranslate"><span class="pre">package</span></code> domains because they:</p>
+<ul class="simple">
+<li><p>Update reliably under CPU load</p></li>
+<li><p>Match CPU TDP specifications</p></li>
+<li><p>Provide consistent measurements across different Intel generations</p></li>
+<li><p>Can be supplemented with <code class="docutils literal notranslate"><span class="pre">dram</span></code> domains for complete hardware measurement (package + DRAM)</p></li>
+</ul>
+</li>
+<li><p><strong>Optional psys mode</strong>: Set <code class="docutils literal notranslate"><span class="pre">prefer_psys=True</span></code> to use <code class="docutils literal notranslate"><span class="pre">psys</span></code> (platform/system) domain instead:</p>
+<ul class="simple">
+<li><p>Provides total platform power (CPU + chipset + PCIe + some other components)</p></li>
+<li><p>More comprehensive but can report higher values than CPU TDP</p></li>
+<li><p>May include non-CPU components affected by the computation</p></li>
+<li><p><strong>Note</strong>: On some older Intel systems (e.g., Kaby Lake), psys can report unexpectedly high values</p></li>
+</ul>
+</li>
+<li><p><strong>Interface deduplication</strong>: When the same domain appears in both <code class="docutils literal notranslate"><span class="pre">intel-rapl</span></code> and <code class="docutils literal notranslate"><span class="pre">intel-rapl-mmio</span></code>:</p>
+<ul class="simple">
+<li><p>Detects duplicate domains by name</p></li>
+<li><p>Prefers MMIO over MSR (newer, recommended interface)</p></li>
+<li><p>Falls back to MSR if MMIO is unreadable</p></li>
+</ul>
+</li>
+<li><p><strong>Subdomain filtering</strong>: Excludes <code class="docutils literal notranslate"><span class="pre">core</span></code> and <code class="docutils literal notranslate"><span class="pre">uncore</span></code> subdomains when <code class="docutils literal notranslate"><span class="pre">package</span></code> is available to avoid double-counting</p></li>
+<li><p><strong>DRAM exclusion</strong>: By default (<code class="docutils literal notranslate"><span class="pre">include_dram=False</span></code>), don’t adds DRAM domain to package. As DRAM is supposed to be in RAM power, not CPU in a future version of CodeCarbon.</p></li>
+</ol>
+</section>
+<section id="platform-specific-behavior">
+<h2>Platform-Specific Behavior<a class="headerlink" href="#platform-specific-behavior" title="Link to this heading"></a></h2>
+<p><strong>Intel processors</strong>:</p>
+<ul class="simple">
+<li><p>Modern CPUs (Skylake+): Provide <code class="docutils literal notranslate"><span class="pre">psys</span></code> for comprehensive platform measurement</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">core</span></code> is included in <code class="docutils literal notranslate"><span class="pre">package</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">package</span></code> may include or exclude integrated GPU depending on model</p></li>
+</ul>
+<p><strong>AMD processors</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">core</span></code> reports very low energy values</p></li>
+<li><p>Unclear if <code class="docutils literal notranslate"><span class="pre">core</span></code> is included in <code class="docutils literal notranslate"><span class="pre">package</span></code> (vendor documentation is sparse)</p></li>
+<li><p>Multiple dies may report as separate packages (e.g., Threadripper)</p></li>
+</ul>
+<p><strong>What RAPL Does NOT Measure</strong>:</p>
+<ul class="simple">
+<li><p>❌ DRAM chips themselves (only memory controller)</p></li>
+<li><p>❌ SSDs/NVMe drives</p></li>
+<li><p>❌ Discrete GPUs (use nvidia-smi, rocm-smi separately)</p></li>
+<li><p>❌ Motherboard chipset (unless included in psys)</p></li>
+<li><p>❌ Fans, USB devices, peripherals</p></li>
+<li><p>❌ Power supply inefficiency</p></li>
+<li><p>❌ Discrete NPUs</p></li>
+</ul>
+<p>For more details, see the excellent documentation from Scaphandre: <a class="reference external" href="https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html">https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html</a> and discussion with references: <a class="reference external" href="https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231">https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231</a></p>
+<a class="reference internal image-reference" href="https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl.png"><img alt="RAPL Example" class="align-center" src="https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl.png" style="width: 600px;" />
+</a>
+<p>Source :“RAPL in Action: Experiences in Using RAPL for Power Measurements,” (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z. Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp. 1–26, Apr. 2018, doi: 10.1145/3177754.)</p>
+</section>
+<section id="rapl-measurements-real-world-examples">
+<h2>RAPL Measurements: Real-World Examples<a class="headerlink" href="#rapl-measurements-real-world-examples" title="Link to this heading"></a></h2>
+<p>Choosing the right metric to track CPU power consumption depends on CPU hardware and available domains. Below are measurements from different systems showing the importance of avoiding double-counting.</p>
+<p>We investigate RAPL on various architectures :</p>
+<ul class="simple">
+<li><p>2017 Gaming computer with AMD Ryzen Threadripper 1950X</p></li>
+<li><p>2017 Laptop with Intel(R) Core(TM) i7-7600U (TDP 15W)</p></li>
+<li><p>2025 Laptop with Intel(R) Core(TM) Ultra 7 265H (TDP 28W)</p></li>
+</ul>
+<p>Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
+Power plug measure when idle (10% CPU): 125 W
+package-0-die-0 : 68 W
+package-0-die-1 : 68 W
+CodeCarbon : 137 W</p>
+<section id="laptop-intel-r-core-tm-ultra-7-265h-tdp-28w">
+<h3>Laptop: Intel(R) Core(TM) Ultra 7 265H (TDP 28W)<a class="headerlink" href="#laptop-intel-r-core-tm-ultra-7-265h-tdp-28w" title="Link to this heading"></a></h3>
+<p><strong>Idle Measurements</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Powertop battery discharge rate: 6W
+
+RAPL domains (individual readings):
+- psys (platform):    6.66W  ← Total platform power (BEST)
+- package-0:          3.85W  ← CPU package (subset of psys)
+- core:               0.35W  ← CPU cores only (subset of package)
+- uncore:             0.02W  ← Memory controller, cache (subset of package)
+
+⚠️  WRONG: Summing all domains = 10.88W (over-counting!)
+✅  CORRECT: Use psys only = 6.66W (matches battery discharge)
+</pre></div>
+</div>
+<p><strong>CodeCarbon behavior</strong>: Uses <strong>psys only</strong> (6.66W) to avoid double-counting.</p>
+<p><strong>Under Load (stress-ng)</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Powertop battery discharge rate: 27W
+
+RAPL domains:
+- psys:               24.69W  ← Total platform power (BEST)
+- package-0:          21.35W  ← CPU package (subset of psys)
+- core:               15.37W  ← CPU cores (subset of package)
+- uncore:              0.07W  ← Uncore (subset of package)
+
+✅  CORRECT: Use psys only = 24.69W (close to battery discharge)
+</pre></div>
+</div>
+<p><strong>CodeCarbon measurement</strong>: 22W using psys (accurate, within expected range)</p>
+<p><strong>Note</strong>: The package-0 measurement (21.35W) excludes some platform components like chipset and PCIe that are included in psys (24.69W).</p>
+</section>
+<section id="laptop-intel-r-core-tm-i7-7600u-tdp-15w-7th-gen-kaby-lake">
+<h3>Laptop: Intel(R) Core(TM) i7-7600U (TDP 15W, 7th Gen Kaby Lake)<a class="headerlink" href="#laptop-intel-r-core-tm-i7-7600u-tdp-15w-7th-gen-kaby-lake" title="Link to this heading"></a></h3>
+<p><strong>Idle Measurements</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Powertop battery discharge rate: 9.31W
+
+RAPL domains:
+- psys:              12.21W  ← Total platform power (includes everything)
+- package-0:          1.44W  ← CPU package only
+- core:               0.46W  ← CPU cores (subset of package)
+- uncore:             0.04W  ← Uncore (subset of package)
+- dram:               0.54W  ← Memory controller (may overlap with uncore)
+
+⚠️  WRONG: Summing all = 14.69W (triple counting!)
+✅  CORRECT: Use psys = 12.21W
+</pre></div>
+</div>
+<p><strong>Under Load (stress-ng)</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Powertop battery discharge rate: 8.40W (unreliable during stress test)
+
+RAPL domains:
+- psys:              29.97W  ← Total platform power (BEST)
+- package-0:         15.73W  ← CPU package (matches TDP, subset of psys)
+- core:              14.00W  ← CPU cores (subset of package)
+- uncore:             0.54W  ← Uncore (subset of package)
+- dram:               1.23W  ← Memory controller power
+
+⚠️  WRONG: Summing all = 61.47W (massive over-counting!)
+✅  CORRECT: Use psys = 29.97W
+
+Analysis:
+- psys (29.97W) includes package (15.73W) + platform components (~14W)
+- package (15.73W) includes core (14.00W) + uncore (0.54W) + other
+- Core power (14.00W) matches the CPU TDP spec (15W)
+</pre></div>
+</div>
+<p><strong>CodeCarbon behavior</strong>: Uses <strong>psys only</strong> (29.97W) for accurate total platform measurement.</p>
+<p><strong>Legacy behavior (before v2.x)</strong>: Would have measured only package-0 (15.73W), missing ~14W of platform power!</p>
+</section>
+<section id="desktop-amd-ryzen-threadripper-1950x-16-core-32-threads-multi-die">
+<h3>Desktop: AMD Ryzen Threadripper 1950X (16-Core, 32 threads, Multi-die)<a class="headerlink" href="#desktop-amd-ryzen-threadripper-1950x-16-core-32-threads-multi-die" title="Link to this heading"></a></h3>
+<p><strong>Idle Measurements (10% CPU load)</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Wall power meter: 100W (whole system)
+
+
+RAPL domains:
+    Monitoring domains:
+    - core (intel-rapl:0:0) via MSR
+    - package-0 (intel-rapl:0) via MSR
+
+    Domain &#39;core&#39; (MSR): 0.61 Watts
+    Domain &#39;package-0&#39; (MSR): 29.76 Watts
+    Total Power Consumption: 30.37 Watts
+
+    Domain &#39;core&#39; (MSR): 0.20 Watts
+    Domain &#39;package-0&#39; (MSR): 38.62 Watts
+    Total Power Consumption: 38.82 Watts
+
+[codecarbon INFO @ 22:24:44]        RAPL - Monitoring domain &#39;package-0&#39; (displayed as &#39;Processor Energy Delta_0(kWh)&#39;) via MSR at /sys/class/powercap/intel-rapl/subsystem/intel-rapl/intel-rapl:0/energy_uj
+
+✅  CodeCarbon total: ~ 40 W
+
+Note: RAPL on this system measures only the CPU dies, not platform.
+Wall power includes motherboard, RAM, fans, PSU losses.
+</pre></div>
+</div>
+<p><strong>Under Full Load (100% CPU, stress test)</strong>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Wall power meter: ~ 280 W total (131W above idle baseline)
+
+Monitoring domains:
+- core (intel-rapl:0:0) via MSR
+- package-0 (intel-rapl:0) via MSR
+
+Domain &#39;core&#39; (MSR): 8.86 Watts
+Domain &#39;package-0&#39; (MSR): 172.50 Watts
+Total Power Consumption: 181.36 Watts
+
+Domain &#39;core&#39; (MSR): 8.88 Watts
+Domain &#39;package-0&#39; (MSR): 172.16 Watts
+Total Power Consumption: 181.05 Watts
+
+✅  CodeCarbon total: 171 W, in line with the TDP of 180 W
+280 - 100 (idle) = 180 W
+
+Analysis:
+- Each die independently measured via RAPL
+- No psys domain available on this AMD system
+- RAPL counter range: 234 sec at 280W (potential wraparound consideration)
+</pre></div>
+</div>
+<p><strong>AMD RAPL Characteristics</strong>:</p>
+<ul class="simple">
+<li><p>Multi-die CPUs report separate packages (package-0-die-0, package-0-die-1)</p></li>
+<li><p>No psys domain available on older AMD processors</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">core</span></code> domain reports very low values (unclear if included in package)</p></li>
+<li><p>Package measurements are generally reliable for total CPU power</p></li>
+</ul>
+</section>
+</section>
+<section id="key-takeaways-for-rapl-measurements">
+<h2>Key Takeaways for RAPL Measurements<a class="headerlink" href="#key-takeaways-for-rapl-measurements" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>CodeCarbon defaults to package domains</strong>: This provides the most reliable and consistent measurements that match CPU TDP specifications. Package domains update correctly under load across all Intel generations.</p></li>
+<li><p><strong>psys can be unreliable</strong>: While <code class="docutils literal notranslate"><span class="pre">psys</span></code> provides total platform power, it:</p>
+<ul class="simple">
+<li><p>Can report higher values than expected (includes chipset, PCIe, etc.)</p></li>
+<li><p>May not include all CPU components on older Intel systems : on some computers, <code class="docutils literal notranslate"><span class="pre">psys</span></code> is lower than <code class="docutils literal notranslate"><span class="pre">package</span></code>.</p></li>
+<li><p>So it is disabled by default, you can enable it with <code class="docutils literal notranslate"><span class="pre">prefer_psys=True</span></code> if desired</p></li>
+</ul>
+</li>
+<li><p><strong>Avoid summing overlapping domains</strong>: Never sum psys + package + core + uncore. They are hierarchical and overlapping. This causes 2-3x over-counting!</p></li>
+<li><p><strong>Domain hierarchy</strong>:</p>
+<ul class="simple">
+<li><p>psys ⊃ package ⊃ {core, uncore}</p></li>
+<li><p>Correct: Use package alone (CodeCarbon default) OR psys alone (with prefer_psys=True)</p></li>
+<li><p>Wrong: Sum multiple levels</p></li>
+</ul>
+</li>
+<li><p><strong>Interface deduplication</strong>: The same domain may appear in both <code class="docutils literal notranslate"><span class="pre">intel-rapl</span></code> (MSR) and <code class="docutils literal notranslate"><span class="pre">intel-rapl-mmio</span></code> interfaces. CodeCarbon automatically deduplicates, preferring MMIO.</p></li>
+<li><p><strong>DRAM measurement</strong>: CodeCarbon does not include DRAM domains by default (<code class="docutils literal notranslate"><span class="pre">include_dram=False</span></code>) for CPU hardware measurement. Set <code class="docutils literal notranslate"><span class="pre">include_dram=True</span></code> to measure CPU package + DRAM domains.</p></li>
+<li><p><strong>Platform-specific behavior</strong>:</p>
+<ul class="simple">
+<li><p>Intel modern: package or psys (with prefer_psys=True)</p></li>
+<li><p>Intel older: package-0 for CPU only</p></li>
+<li><p>AMD: Sum all package-X-die-Y for multi-die CPUs</p></li>
+</ul>
+</li>
+<li><p><strong>Limitations</strong>: RAPL does NOT measure:</p>
+<ul class="simple">
+<li><p>Discrete GPUs (use nvidia-smi/rocm-smi)</p></li>
+<li><p>SSDs, peripherals, fans</p></li>
+<li><p>Actual DRAM chips, we still have to investigate on this point</p></li>
+<li><p>Complete system power (use wall meter for accuracy)</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="methodology.html" class="btn btn-neutral float-left" title="Methodology" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="model_examples.html" class="btn btn-neutral float-right" title="Model Comparisons" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, BCG GAMMA, Comet.ml, Haverford College, MILA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
