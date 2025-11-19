@@ -16,9 +16,10 @@ class EmissionsData:
     duration: float
     emissions: float
     emissions_rate: float
-    cpu_utilization_percent: float = 0
-    ram_utilization_percent: float = 0
-    ram_used_gb: float = 0
+    cpu_utilization_percent: float
+    gpu_utilization_percent: float
+    ram_utilization_percent: float
+    ram_used_gb: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -80,9 +81,10 @@ class TaskEmissionsData:
     duration: float
     emissions: float
     emissions_rate: float
-    cpu_utilization_percent: float = 0
-    ram_utilization_percent: float = 0
-    ram_used_gb: float = 0
+    cpu_utilization_percent: float
+    gpu_utilization_percent: float
+    ram_utilization_percent: float
+    ram_used_gb: float
     cpu_power: float
     gpu_power: float
     ram_power: float
