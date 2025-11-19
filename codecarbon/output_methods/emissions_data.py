@@ -16,10 +16,6 @@ class EmissionsData:
     duration: float
     emissions: float
     emissions_rate: float
-    cpu_utilization_percent: float
-    gpu_utilization_percent: float
-    ram_utilization_percent: float
-    ram_used_gb: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -44,6 +40,10 @@ class EmissionsData:
     latitude: float
     ram_total_size: float
     tracking_mode: str
+    cpu_utilization_percent: float = 0.0
+    gpu_utilization_percent: float = 0.0
+    ram_utilization_percent: float = 0.0
+    ram_used_gb: float = 0.0
     on_cloud: str = "N"
     pue: float = 1
     wue: float = 0
@@ -81,10 +81,6 @@ class TaskEmissionsData:
     duration: float
     emissions: float
     emissions_rate: float
-    cpu_utilization_percent: float
-    gpu_utilization_percent: float
-    ram_utilization_percent: float
-    ram_used_gb: float
     cpu_power: float
     gpu_power: float
     ram_power: float
@@ -109,6 +105,10 @@ class TaskEmissionsData:
     latitude: float
     ram_total_size: float
     tracking_mode: str
+    cpu_utilization_percent: float = 0.0
+    gpu_utilization_percent: float = 0.0
+    ram_utilization_percent: float = 0.0
+    ram_used_gb: float = 0.0
     on_cloud: str = "N"
 
     @property
