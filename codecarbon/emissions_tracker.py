@@ -309,6 +309,10 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_water: Water = Water.from_litres(litres=0)
+        # CPU and RAM utilization tracking
+        self._cpu_utilization_history: List[float] = []
+        self._ram_utilization_history: List[float] = []
+        self._ram_used_history: List[float] = []
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -451,6 +455,12 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._last_measured_time = self._start_time = time.perf_counter()
+        
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -494,6 +504,12 @@ class BaseEmissionsTracker(ABC):
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
+        
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -733,6 +749,9 @@ class BaseEmissionsTracker(ABC):
             duration=duration.seconds,
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
+            cpu_utilization_percent=sum(self._cpu_utilization_history) / len(self._cpu_utilization_history) if self._cpu_utilization_history else psutil.cpu_percent(),
+            ram_utilization_percent=sum(self._ram_utilization_history) / len(self._ram_utilization_history) if self._ram_utilization_history else psutil.virtual_memory().percent,
+            ram_used_gb=sum(self._ram_used_history) / len(self._ram_used_history) if self._ram_used_history else psutil.virtual_memory().used / (1024**3),
             cpu_power=self._cpu_power.W,
             gpu_power=self._gpu_power.W,
             ram_power=self._ram_power.W,
@@ -760,9 +779,6 @@ class BaseEmissionsTracker(ABC):
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
             wue=self._wue,
-            cpu_utilization_percent=psutil.cpu_percent(),
-            ram_utilization_percent=psutil.virtual_memory().percent,
-            ram_used_gb=psutil.virtual_memory().used / (1024**3),
         )
         logger.debug(total_emissions)
         return total_emissions
@@ -808,6 +824,11 @@ class BaseEmissionsTracker(ABC):
         for hardware in self._hardware:
             if isinstance(hardware, CPU):
                 hardware.monitor_power()
+        
+        # Collect CPU and RAM utilization metrics
+        self._cpu_utilization_history.append(psutil.cpu_percent())
+        self._ram_utilization_history.append(psutil.virtual_memory().percent)
+        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
