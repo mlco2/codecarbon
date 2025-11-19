@@ -239,11 +239,37 @@ class CPU(BaseHardware):
                 f"CPU load {self._tdp} W and {cpu_load:.1f}% {load_factor=} => estimation of {power} W for whole machine."
             )
         elif self._tracking_mode == "process":
+            # Get CPU usage for main process
+            cpu_load = self._process.cpu_percent(interval=0.5)
 
-            cpu_load = self._process.cpu_percent(interval=0.5) / self._cpu_count
+            # Add CPU usage from all child processes (recursive)
+            # This makes CPU tracking consistent with RAM tracking
+            try:
+                children = self._process.children(recursive=True)
+                logger.info(f"Found {len(children)} child processes")
+                for child in children:
+                    try:
+                        # Use interval=0.0 for children to avoid blocking
+                        child_cpu = child.cpu_percent(interval=0.0)
+                        logger.info(f"Child {child.pid} CPU: {child_cpu}")
+                        cpu_load += child_cpu
+                    except (
+                        psutil.NoSuchProcess,
+                        psutil.AccessDenied,
+                        psutil.ZombieProcess,
+                    ):
+                        # Child process may have terminated or we don't have access
+                        continue
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                # Main process terminated or access denied
+                pass
+
+            # Normalize by CPU count
+            logger.info(f"Total CPU load (all processes): {cpu_load}")
+            cpu_load = cpu_load / self._cpu_count
             power = self._tdp * cpu_load / 100
             logger.debug(
-                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid}."
+                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid} (including children)."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
