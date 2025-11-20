@@ -1,4 +1,3 @@
-import dataclasses
 import os
 import shutil
 import tempfile
@@ -55,7 +54,7 @@ class TestFileOutput(unittest.TestCase):
         shutil.rmtree(self.temp_dir)
 
     def test_file_output_initialization(self):
-        file_output = FileOutput("test.csv", self.temp_dir)
+        FileOutput("test.csv", self.temp_dir)
 
     def test_file_output_initialization_invalid_csv_write_mode(self):
         with self.assertRaises(ValueError):
@@ -66,19 +65,17 @@ class TestFileOutput(unittest.TestCase):
             FileOutput("test.csv", "/non/existent/dir")
 
     def test_has_valid_headers_success(self):
-        file_path = os.path.join(self.temp_dir, "test.csv")
         file_output = FileOutput("test.csv", self.temp_dir)
         file_output.out(self.emissions_data, MagicMock())
 
         self.assertTrue(file_output.has_valid_headers(self.emissions_data))
 
     def test_has_valid_headers_failure(self):
-        file_path = os.path.join(self.temp_dir, "test.csv")
         file_output = FileOutput("test.csv", self.temp_dir)
         file_output.out(self.emissions_data, MagicMock())
 
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
-        df.rename(columns={'wue': 'new_header'}, inplace=True)
+        df.rename(columns={"wue": "new_header"}, inplace=True)
         df.to_csv(os.path.join(self.temp_dir, "test.csv"), index=False)
 
         self.assertFalse(file_output.has_valid_headers(self.emissions_data))

@@ -1,10 +1,8 @@
 import csv
-import dataclasses
 import os
 from typing import List
 
 import pandas as pd
-import warnings
 
 from codecarbon.core.util import backup
 from codecarbon.external.logger import logger
@@ -87,7 +85,7 @@ class FileOutput(BaseOutput):
         Args:
             total: data to save.
 
-        
+
         """
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and not self.has_valid_headers(total):
@@ -121,7 +119,9 @@ class FileOutput(BaseOutput):
                 for col, val in dict(total.values).items():
                     # Explicitly cast new values to prevent warnings about incompatible dtypes.
                     update_values[col] = df[col].dtype.type(val)
-                df.loc[df.run_id == total.run_id, update_values.keys()] = update_values.values()
+                df.loc[df.run_id == total.run_id, update_values.keys()] = (
+                    update_values.values()
+                )
 
         df.to_csv(self.save_file_path, index=False)
 
