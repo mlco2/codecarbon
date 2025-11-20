@@ -73,7 +73,6 @@ class FileOutput(BaseOutput):
             list_of_column_names = list(dict_from_csv.keys())
             return list(data.values.keys()) == list_of_column_names
 
-    # TODO: can we remove the second _ parameter?
     def out(self, total: EmissionsData, _: EmissionsData):
         """
         Save the emissions data from a whole run to a CSV file.

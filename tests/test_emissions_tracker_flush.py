@@ -99,5 +99,4 @@ class TestCarbonTrackerFlush(unittest.TestCase):
     def verify_output_file(self, file_path: str, expected_lines=3) -> None:
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
-        print(f"lines: {lines}")
         assert len(lines) == expected_lines
