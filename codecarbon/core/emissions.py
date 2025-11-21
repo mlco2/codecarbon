@@ -19,9 +19,24 @@ from codecarbon.input import DataSource, DataSourceException
 
 class Emissions:
     def __init__(
-        self, data_source: DataSource, electricitymaps_api_token: Optional[str] = None
+        self,
+        data_source: DataSource,
+        electricitymaps_api_token: Optional[str] = None,
+        co2_signal_api_token: Optional[
+            str
+        ] = None,  # Deprecated, for backward compatibility
     ):
         self._data_source = data_source
+
+        # Handle backward compatibility
+        if co2_signal_api_token is not None:
+            logger.warning(
+                "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
+                "Please use 'electricitymaps_api_token' instead."
+            )
+            if electricitymaps_api_token is None:
+                electricitymaps_api_token = co2_signal_api_token
+
         self._electricitymaps_api_token = electricitymaps_api_token
 
     def get_cloud_emissions(
