@@ -171,7 +171,7 @@ class BaseEmissionsTracker(ABC):
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
         experiment_name: Optional[str] = _sentinel,
-        co2_signal_api_token: Optional[str] = _sentinel,
+        electricitymaps_api_token: Optional[str] = _sentinel,
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
@@ -221,8 +221,7 @@ class BaseEmissionsTracker(ABC):
                                    data.
         :param experiment_id: Id of the experiment.
         :param experiment_name: Label of the experiment
-        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
-                                     free beta)
+        :param electricitymaps_api_token: API token for electricitymaps.com (formerly co2signal.com)
         :param tracking_mode: One of "process" or "machine" in order to measure the
                               power consumption due to the entire machine or to try and
                               isolate the tracked processe's in isolation.
@@ -268,7 +267,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
         self._set_from_conf(api_key, "api_key", "api_key")
-        self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
+        self._set_from_conf(electricitymaps_api_token, "electricitymaps_api_token")
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
         self._set_from_conf(experiment_name, "experiment_name", "base")
         self._set_from_conf(gpu_ids, "gpu_ids")
@@ -378,7 +377,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["provider"] = cloud.provider
 
         self._emissions: Emissions = Emissions(
-            self._data_source, self._co2_signal_api_token
+            self._data_source, self._electricitymaps_api_token
         )
         self._init_output_methods(api_key=self._api_key)
 
@@ -956,7 +955,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                              See https://github.com/mlco2/codecarbon/
                                         blob/master/codecarbon/data/cloud/impact.csv
                              for a list of cloud regions.
-        :param country_2letter_iso_code: For use with the CO2Signal emissions API.
+        :param country_2letter_iso_code: For use with the Electricity Maps emissions API.
                                          See http://api.electricitymap.org/v3/zones for
                                          a list of codes and their corresponding
                                          locations.
@@ -1095,7 +1094,7 @@ def track_emissions(
     emissions_endpoint: Optional[str] = _sentinel,
     experiment_id: Optional[str] = _sentinel,
     experiment_name: Optional[str] = _sentinel,
-    co2_signal_api_token: Optional[str] = _sentinel,
+    electricitymaps_api_token: Optional[str] = _sentinel,
     tracking_mode: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
@@ -1150,8 +1149,7 @@ def track_emissions(
                                data.
     :param experiment_id: Id of the experiment.
     :param experiment_name: Label of the experiment
-    :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
-                                 free beta)
+    :param electricitymaps_api_token: API token for electricitymaps.com (formerly co2signal.com)
     :param tracking_mode: One of "process" or "machine" in order to measure the
                           power consumption due to the entire machine or to try and
                           isolate the tracked processe's in isolation.
@@ -1180,7 +1178,7 @@ def track_emissions(
                          See https://github.com/mlco2/codecarbon/
                                             blob/master/codecarbon/data/cloud/impact.csv
                          for a list of cloud regions.
-    :param country_2letter_iso_code: For use with the CO2Signal emissions API.
+    :param country_2letter_iso_code: For use with the Electricity Maps emissions API.
                                      See http://api.electricitymap.org/v3/zones for
                                      a list of codes and their corresponding
                                      locations.
@@ -1217,7 +1215,7 @@ def track_emissions(
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
                     gpu_ids=gpu_ids,
-                    co2_signal_api_token=co2_signal_api_token,
+                    electricitymaps_api_token=electricitymaps_api_token,
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
@@ -1256,7 +1254,7 @@ def track_emissions(
                     emissions_endpoint=emissions_endpoint,
                     experiment_id=experiment_id,
                     experiment_name=experiment_name,
-                    co2_signal_api_token=co2_signal_api_token,
+                    electricitymaps_api_token=electricitymaps_api_token,
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
