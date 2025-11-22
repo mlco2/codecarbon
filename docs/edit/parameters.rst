@@ -31,8 +31,8 @@ Input Parameters
    * - log_level
      - | Global codecarbon log level (by order of verbosity): "debug", "info" (default),
        | "warning", "error", or "critical"
-   * - co2_signal_api_token
-     - | API token for co2signal.com (requires sign-up for free beta)
+   * - electricitymaps_api_token
+     - | API token for electricitymaps.com (formerly co2signal.com)
    * - pue
      - | PUE (Power Usage Effectiveness) of the data center
        | where the experiment is being run.

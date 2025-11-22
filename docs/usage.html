@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quickstart &mdash; CodeCarbon 3.1.0 documentation</title>
+  <title>Quickstart &mdash; CodeCarbon 3.1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=dd1205ac"></script>
+      <script src="_static/documentation_options.js?v=796a81b5"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -287,7 +287,7 @@ additional parameters and configuration options.</p>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>codecarbon<span class="o">]</span>
 <span class="nv">save_to_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span>
 <span class="nv">output_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/Users/victor/emissions
-<span class="nv">co2_signal_api_token</span><span class="o">=</span>script-overwrite
+<span class="nv">electricitymaps_api_token</span><span class="o">=</span>script-overwrite
 <span class="nv">experiment_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>235b1da5-aaaa-aaaa-aaaa-893681599d2c
 <span class="nv">log_level</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>DEBUG
 <span class="nv">tracking_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>process
@@ -308,7 +308,7 @@ additional parameters and configuration options.</p>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="n">EmissionsTracker</span><span class="p">(</span>
 <span class="n">api_call_interval</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
 <span class="n">save_to_api</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="n">co2_signal_api_token</span><span class="o">=</span><span class="s2">&quot;some-token&quot;</span><span class="p">)</span>
+<span class="n">electricitymaps_api_token</span><span class="o">=</span><span class="s2">&quot;some-token&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -325,7 +325,7 @@ additional parameters and configuration options.</p>
     <span class="s2">&quot;tracking_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;process&quot;</span><span class="p">,</span> <span class="c1"># from ./.codecarbon.config</span>
     <span class="s2">&quot;emissions_endpoint&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost:7777&quot;</span><span class="p">,</span> <span class="c1"># from ~/.codecarbon.config</span>
     <span class="s2">&quot;output_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;/Users/victor/emissions&quot;</span><span class="p">,</span> <span class="c1"># from ./.codecarbon.config</span>
-    <span class="s2">&quot;co2_signal_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;some-token&quot;</span><span class="p">,</span> <span class="c1"># from script (override ./.codecarbon.config)</span>
+    <span class="s2">&quot;electricitymaps_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;some-token&quot;</span><span class="p">,</span> <span class="c1"># from script (override ./.codecarbon.config)</span>
     <span class="s2">&quot;gpu_ids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="c1"># from environment variable</span>
 <span class="p">}</span>
 </pre></div>

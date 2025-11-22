@@ -215,7 +215,7 @@ For instance:
             [codecarbon]
             save_to_file = true
             output_dir = /Users/victor/emissions
-            co2_signal_api_token=script-overwrite
+            electricitymaps_api_token=script-overwrite
             experiment_id = 235b1da5-aaaa-aaaa-aaaa-893681599d2c
             log_level = DEBUG
             tracking_mode = process
@@ -235,7 +235,7 @@ For instance:
 	     EmissionsTracker(
             api_call_interval=4,
             save_to_api=True,
-            co2_signal_api_token="some-token")
+            electricitymaps_api_token="some-token")
 
 Yields attributes:
 
@@ -251,7 +251,7 @@ Yields attributes:
         "tracking_mode": "process", # from ./.codecarbon.config
         "emissions_endpoint": "localhost:7777", # from ~/.codecarbon.config
         "output_dir": "/Users/victor/emissions", # from ./.codecarbon.config
-        "co2_signal_api_token": "some-token", # from script (override ./.codecarbon.config)
+        "electricitymaps_api_token": "some-token", # from script (override ./.codecarbon.config)
         "gpu_ids": [0, 1], # from environment variable
     }
 
