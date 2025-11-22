@@ -140,9 +140,14 @@ class Emissions:
         """
         if self._electricitymaps_api_token:
             try:
-                return electricitymaps_api.get_emissions(
+                emissions = electricitymaps_api.get_emissions(
                     energy, geo, self._electricitymaps_api_token
                 )
+                logger.debug(
+                    "electricitymaps_api.get_emissions: "
+                    + f"Retrieved emissions for {geo.country_name} using Electricity Maps API :{emissions}"
+                )
+                return emissions
             except Exception as e:
                 logger.error(
                     "electricitymaps_api.get_emissions: "
