@@ -38,8 +38,6 @@ class TestConfigBackwardCompatibility(unittest.TestCase):
                 "Expected deprecation warning for config parameter",
             )
 
-            tracker.stop()
-
     @patch("os.path.exists", return_value=True)
     def test_new_config_parameter_takes_precedence(self, mock_exists):
         """Test that new config parameter takes precedence over old one."""
@@ -59,8 +57,6 @@ class TestConfigBackwardCompatibility(unittest.TestCase):
 
             # New parameter should take precedence
             self.assertEqual(tracker._electricitymaps_api_token, "new-config-token")
-
-            tracker.stop()
 
 
 if __name__ == "__main__":
