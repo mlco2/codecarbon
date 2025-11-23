@@ -60,7 +60,6 @@ class TestElectricityMapsBackwardCompatibility(unittest.TestCase):
             "Expected deprecation warning not found",
         )
 
-        tracker.stop()
 
     @patch("os.path.exists", return_value=True)
     def test_tracker_new_parameter_takes_precedence(self, mock_exists):
