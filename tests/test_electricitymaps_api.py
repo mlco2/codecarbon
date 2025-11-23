@@ -36,9 +36,10 @@ class TestElectricityMapsAPI(unittest.TestCase):
         assert round(result, 5) == 0.58765
 
     @pytest.mark.integ_test
+    @unittest.skip("Skip real API call in regular test runs")
     def test_get_emissions_with_api_key(self):
         """Test with real API call using provided API key"""
-        api_key = "c3yk3htAFXuWMsg0CSxV"
+        api_key = "YOUR_REAL_API_KEY"
         result = electricitymaps_api.get_emissions(self._energy, self._geo, api_key)
         # Should return a positive emissions value
         assert result > 0

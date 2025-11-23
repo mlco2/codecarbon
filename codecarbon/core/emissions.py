@@ -145,7 +145,7 @@ class Emissions:
                 )
                 logger.debug(
                     "electricitymaps_api.get_emissions: "
-                    + f"Retrieved emissions for {geo.country_name} using Electricity Maps API :{emissions}"
+                    + f"Retrieved emissions for {geo.country_name} using Electricity Maps API :{emissions * 1000} g CO2eq"
                 )
                 return emissions
             except Exception as e:
