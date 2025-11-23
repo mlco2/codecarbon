@@ -38,7 +38,6 @@ class TestConfigBackwardCompatibility(unittest.TestCase):
                 "Expected deprecation warning for config parameter",
             )
 
-            tracker.stop()
 
     @patch("os.path.exists", return_value=True)
     def test_new_config_parameter_takes_precedence(self, mock_exists):
