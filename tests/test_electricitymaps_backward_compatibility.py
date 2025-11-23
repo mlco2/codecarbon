@@ -60,7 +60,6 @@ class TestElectricityMapsBackwardCompatibility(unittest.TestCase):
             "Expected deprecation warning not found",
         )
 
-
     @patch("os.path.exists", return_value=True)
     def test_tracker_new_parameter_takes_precedence(self, mock_exists):
         """Test that new parameter takes precedence in EmissionsTracker."""
@@ -75,7 +74,6 @@ class TestElectricityMapsBackwardCompatibility(unittest.TestCase):
 
         # Still should warn about using deprecated parameter
         self.assertTrue(any("deprecated" in message.lower() for message in log.output))
-
 
 
 if __name__ == "__main__":
