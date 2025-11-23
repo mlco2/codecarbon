@@ -59,7 +59,6 @@ class TestConfigBackwardCompatibility(unittest.TestCase):
             # New parameter should take precedence
             self.assertEqual(tracker._electricitymaps_api_token, "new-config-token")
 
-            tracker.stop()
 
 
 if __name__ == "__main__":
