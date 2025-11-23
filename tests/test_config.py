@@ -183,7 +183,8 @@ class TestConfig(unittest.TestCase):
         ):
             with patch("os.path.exists", return_value=True):
                 tracker = EmissionsTracker(
-                    project_name="test-project", co2_signal_api_token="signal-token"
+                    project_name="test-project",
+                    electricitymaps_api_token="signal-token",
                 )
             self.assertEqual(tracker._measure_power_secs, 10)
             self.assertEqual(tracker._force_cpu_power, None)
@@ -191,7 +192,7 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(tracker._output_dir, "/success/overwritten")
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")
             self.assertEqual(tracker._gpu_ids, ["0", "1"])
-            self.assertEqual(tracker._co2_signal_api_token, "signal-token")
+            self.assertEqual(tracker._electricitymaps_api_token, "signal-token")
             self.assertEqual(tracker._project_name, "test-project")
             self.assertTrue(tracker._save_to_file)
 
