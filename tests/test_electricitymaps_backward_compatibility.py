@@ -77,7 +77,6 @@ class TestElectricityMapsBackwardCompatibility(unittest.TestCase):
         # Still should warn about using deprecated parameter
         self.assertTrue(any("deprecated" in message.lower() for message in log.output))
 
-        tracker.stop()
 
 
 if __name__ == "__main__":
