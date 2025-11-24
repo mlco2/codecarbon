@@ -79,6 +79,8 @@ input parameter (defaults to the current directory), for each experiment tracked
      -  total RAM available (Go)
    * - Tracking_mode:
      - ``machine`` or ``process``(default to ``machine``)
+   * - tracking_pids
+     - Process id to track CPU and RAM usage for ``process`` tracking_mode (default to ``None``)
 
 ..  note::
 

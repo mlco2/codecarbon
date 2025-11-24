@@ -29,6 +29,7 @@ def upgrade():
     op.add_column("runs", sa.Column("provider", sa.String))
     op.add_column("runs", sa.Column("ram_total_size", sa.Float))
     op.add_column("runs", sa.Column("tracking_mode", sa.String))
+    op.add_column("runs", sa.Column("tracking_pids", sa.Integer))
 
 
 def downgrade():
@@ -44,3 +45,4 @@ def downgrade():
     op.drop_column("runs", "provider")
     op.drop_column("runs", "ram_total_size")
     op.drop_column("runs", "tracking_mode")
+    op.drop_column("runs", "tracking_pids")

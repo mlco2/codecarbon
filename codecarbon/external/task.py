@@ -51,5 +51,6 @@ class Task:
             latitude=self.emissions_data.latitude,
             ram_total_size=self.emissions_data.ram_total_size,
             tracking_mode=self.emissions_data.tracking_mode,
+            tracking_pids=self.emissions_data.tracking_pids,
             on_cloud=self.emissions_data.on_cloud,
         )

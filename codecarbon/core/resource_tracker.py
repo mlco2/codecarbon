@@ -28,6 +28,7 @@ class ResourceTracker:
             self.ram_tracker = "RAM power estimation model"
         ram = RAM(
             tracking_mode=self.tracker._tracking_mode,
+            tracking_pids=self.tracker._tracking_pids,
             force_ram_power=self.tracker._force_ram_power,
         )
         self.tracker._conf["ram_total_size"] = ram.machine_memory_GB
@@ -46,6 +47,7 @@ class ResourceTracker:
             model,
             max_power,
             tracking_mode=self.tracker._tracking_mode,
+            tracking_pids=self.tracker._tracking_pids,
         )
         self.cpu_tracker = MODE_CPU_LOAD
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
@@ -141,6 +143,7 @@ class ResourceTracker:
                     model,
                     max_power,
                     tracking_mode=self.tracker._tracking_mode,
+                    tracking_pids=self.tracker._tracking_pids,
                 )
                 self.cpu_tracker = MODE_CPU_LOAD
             else:
@@ -163,6 +166,7 @@ class ResourceTracker:
                     model,
                     max_power,
                     tracking_mode=self.tracker._tracking_mode,
+                    tracking_pids=self.tracker._tracking_pids,
                 )
                 self.cpu_tracker = MODE_CPU_LOAD
             else:

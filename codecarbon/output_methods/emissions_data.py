@@ -40,6 +40,7 @@ class EmissionsData:
     latitude: float
     ram_total_size: float
     tracking_mode: str
+    tracking_pids: int
     on_cloud: str = "N"
     pue: float = 1
     wue: float = 0
@@ -101,6 +102,7 @@ class TaskEmissionsData:
     latitude: float
     ram_total_size: float
     tracking_mode: str
+    tracking_pids: int
     on_cloud: str = "N"
 
     @property

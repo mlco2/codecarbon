@@ -270,6 +270,7 @@ class ApiClient:  # (AsyncClient)
                 provider=self.conf.get("provider"),
                 ram_total_size=self.conf.get("ram_total_size"),
                 tracking_mode=self.conf.get("tracking_mode"),
+                tracking_pids=self.conf.get("tracking_pids"),
             )
             payload = dataclasses.asdict(run)
             url = self.url + "/runs"

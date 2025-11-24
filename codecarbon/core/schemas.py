@@ -49,6 +49,7 @@ class RunBase:
     provider: Optional[str]
     ram_total_size: Optional[float]
     tracking_mode: Optional[str]
+    tracking_pids: Optional[int]
 
 
 class RunCreate(RunBase):

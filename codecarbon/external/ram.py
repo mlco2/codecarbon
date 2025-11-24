@@ -33,10 +33,10 @@ class RAM(BaseHardware):
     is_arm_cpu = False
 
     def __init__(
-        self,
-        pid: int = psutil.Process().pid,
+        self,       
         children: bool = True,
         tracking_mode: str = "machine",
+        tracking_pids: int = None,
         force_ram_power: Optional[int] = None,
     ):
         """
@@ -44,20 +44,30 @@ class RAM(BaseHardware):
         current process's. The `pid` is used to find children processes if `children`
         is True.
 
-        Args:
-            pid (int, optional): Process id (with respect to which we'll look for
-                                 children). Defaults to psutil.Process().pid.
+        Args:            
             children (int, optional): Look for children of the process when computing
                                       total RAM used. Defaults to True.
             tracking_mode (str, optional): Whether to track "machine" or "process" RAM.
                                           Defaults to "machine".
+            tracking_pids (int, optional): Process id to track RAM usage for "process"
+                                            tracking_mode. Defaults to None.
             force_ram_power (int, optional): User-provided RAM power in watts. If provided,
                                            this value is used instead of estimating RAM power.
                                            Defaults to None.
         """
-        self._pid = pid
         self._children = children
         self._tracking_mode = tracking_mode
+        
+        if tracking_mode == "process" and tracking_pids is None:
+            
+            self._tracking_pids = [psutil.Process().pid]
+        else:
+              # Test if individual process or list of ids
+            if self._tracking_pids is not list:  
+                self._tracking_pids = list(self._tracking_pids)    
+            else:
+                self._tracking_pids = tracking_pids
+            
         self._force_ram_power = force_ram_power
         # Check if using ARM architecture
         self.is_arm_cpu = self._detect_arm_cpu()
@@ -192,16 +202,22 @@ class RAM(BaseHardware):
         # Apply minimum power constraint
         return max(min_power, total_power)
 
-    def _get_children_memories(self):
+    def _get_children_memories(self, pid: int):
         """
         Compute the used RAM by the process's children
 
         Returns:
             list(int): The list of RAM values
-        """
-        current_process = psutil.Process(self._pid)
+        """              
+        memories = dict() 
+        current_process = psutil.Process(pid) 
+        
         children = current_process.children(recursive=True)
-        return [child.memory_info().rss for child in children]
+        for child in children:
+            memories[child.pid] = child.memory_info().rss   
+             
+        return memories        
+    
 
     def _read_slurm_scontrol(self):
         try:
@@ -292,10 +308,26 @@ class RAM(BaseHardware):
         Returns:
             float: RAM usage (GB)
         """
-        children_memories = self._get_children_memories() if self._children else []
-        main_memory = psutil.Process(self._pid).memory_info().rss
-        memories = children_memories + [main_memory]
-        return sum([m for m in memories if m] + [0]) / B_TO_GB
+        
+        # Store memory usage in dict to avoid double counting
+        total_memory = dict()
+        
+        for pid in self._tracking_pids:
+            if not psutil.pid_exists(pid):
+                logger.warning(f"Process with pid {pid} does not exist anymore.")
+                continue
+            
+            # Own memory
+            total_memory[pid] = psutil.Process(pid).memory_info().rss
+            
+            # Children's memory
+            children_memories = self._get_children_memories(pid)
+            for child_pid, mem in children_memories.items():
+                total_memory[child_pid] = mem
+        
+        # Reduce to total memory
+        total_memory = sum(total_memory.values())       
+        return total_memory / B_TO_GB
 
     @property
     def machine_memory_GB(self):
