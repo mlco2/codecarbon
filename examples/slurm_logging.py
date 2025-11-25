@@ -32,7 +32,6 @@ def _print_process_tree(proc, indent=0):
         _print_process_tree(child, indent + 4)
 
 def print_process_tree(pid=os.getpid()):
-    logger = logging.getLogger()
     current = psutil.Process(pid)
     log_message("\n=== Parent Tree ===\n")
     p = current

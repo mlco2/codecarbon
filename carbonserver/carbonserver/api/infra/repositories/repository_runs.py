@@ -47,8 +47,7 @@ class SqlAlchemyRepository(Runs):
                 region=run.region,
                 provider=run.provider,
                 ram_total_size=run.ram_total_size,
-                tracking_mode=run.tracking_mode,
-                tracking_pids=run.tracking_pids,
+                tracking_mode=run.tracking_mode,               
             )
             session.add(db_run)
             session.commit()
@@ -114,8 +113,7 @@ class SqlAlchemyRepository(Runs):
             region=run.region,
             provider=run.provider,
             ram_total_size=run.ram_total_size,
-            tracking_mode=run.tracking_mode,
-            tracking_pids=run.tracking_pids,
+            tracking_mode=run.tracking_mode,          
         )
 
     def get_experiment_detailed_sums_by_run(
