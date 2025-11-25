@@ -63,8 +63,8 @@ class RAM(BaseHardware):
             self._tracking_pids = [psutil.Process().pid]
         else:
               # Test if individual process or list of ids
-            if self._tracking_pids is not list:  
-                self._tracking_pids = list(self._tracking_pids)    
+            if tracking_pids is not list:  
+                self._tracking_pids = [tracking_pids]    
             else:
                 self._tracking_pids = tracking_pids
             
@@ -209,14 +209,14 @@ class RAM(BaseHardware):
         Returns:
             list(int): The list of RAM values
         """              
-        memories = dict() 
+        memorie_consumption = dict() 
         current_process = psutil.Process(pid) 
         
         children = current_process.children(recursive=True)
         for child in children:
-            memories[child.pid] = child.memory_info().rss   
+            memorie_consumption[child.pid] = child.memory_info().rss   
              
-        return memories        
+        return memorie_consumption        
     
 
     def _read_slurm_scontrol(self):
@@ -301,7 +301,7 @@ class RAM(BaseHardware):
         return mem
 
     @property
-    def process_memory_GB(self):
+    def process_memory_GB(self) -> float:
         """
         Property to compute the process's total memory usage in bytes.
 
@@ -326,7 +326,9 @@ class RAM(BaseHardware):
                 total_memory[child_pid] = mem
         
         # Reduce to total memory
-        total_memory = sum(total_memory.values())       
+        total_memory = sum(total_memory.values())     
+        logger.debug(f"Process total memory usage: {total_memory / B_TO_GB:.2f} GB")
+          
         return total_memory / B_TO_GB
 
     @property

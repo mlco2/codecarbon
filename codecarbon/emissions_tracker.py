@@ -451,7 +451,7 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
 
         if self._save_to_prometheus:
-            self._output_handlers.append(PrometheusOutput(self._prometheus_url))
+            self._output_handlers.append(PrometheusOutput(self._prometheus_url, jobname=self._project_name + "_" + self._experiment_name))
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
