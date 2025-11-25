@@ -54,7 +54,6 @@ class Run(Base):
     provider = Column(String, nullable=True)
     ram_total_size = Column(Float, nullable=True)
     tracking_mode = Column(String, nullable=True)
-    tracking_pids = Column(Integer, nullable=True)
     experiment = relationship("Experiment", back_populates="runs")
     emissions = relationship(
         "Emission", back_populates="run", cascade="all, delete-orphan"
@@ -78,7 +77,6 @@ class Run(Base):
             f'provider="{self.provider}")>,'
             f'ram_total_size="{self.ram_total_size}")>,'
             f'tracking_mode="{self.tracking_mode}")>,'
-            f'tracking_pids="{self.tracking_pids}")>,'
         )
 
 
