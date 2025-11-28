@@ -451,7 +451,12 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
 
         if self._save_to_prometheus:
-            self._output_handlers.append(PrometheusOutput(self._prometheus_url, jobname=self._project_name + "_" + self._experiment_name))
+            self._output_handlers.append(
+                PrometheusOutput(
+                    self._prometheus_url,
+                    jobname=self._project_name + "_" + self._experiment_name,
+                )
+            )
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
@@ -810,7 +815,7 @@ class BaseEmissionsTracker(ABC):
             longitude=self._conf.get("longitude"),
             latitude=self._conf.get("latitude"),
             ram_total_size=self._conf.get("ram_total_size"),
-            tracking_mode=self._conf.get("tracking_mode"),          
+            tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
             wue=self._wue,
         )

@@ -182,7 +182,7 @@ class CPU(BaseHardware):
         self._tracking_mode = tracking_mode
         self._tracking_pids = tracking_pids
         self._cpu_count = count_cpus()
-        
+
         if tracking_pids is not None:
             # Make list if it is not already a list
             if not isinstance(tracking_pids, list):
@@ -191,8 +191,6 @@ class CPU(BaseHardware):
                 self._tracking_pids = tracking_pids
         else:
             self._tracking_pids = [psutil.Process().pid]
-            
-          
 
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
@@ -242,7 +240,7 @@ class CPU(BaseHardware):
     def _get_power_from_cpu_load(self):
         """
         When in MODE_CPU_LOAD
-        """                  
+        """
         if self._tracking_mode == "machine":
             tdp = self._tdp
             cpu_load = psutil.cpu_percent(
@@ -256,9 +254,9 @@ class CPU(BaseHardware):
                 f"CPU load {self._tdp} W and {cpu_load:.1f}% {load_factor=} => estimation of {power} W for whole machine."
             )
         elif self._tracking_mode == "process":
-            
+
             cpu_load = 0
-            
+
             for pid in self._tracking_pids:
                 if not psutil.pid_exists(pid):
                     # Log a warning and continue
@@ -266,7 +264,7 @@ class CPU(BaseHardware):
                     continue
                 self._process = psutil.Process(pid)
                 cpu_load += self._process.cpu_percent(interval=0.5)
-                
+
                 try:
                     children = self._process.children(recursive=True)
                     for child in children:
@@ -281,19 +279,19 @@ class CPU(BaseHardware):
                             psutil.ZombieProcess,
                         ):
                             # Child process may have terminated or we don't have access
-                            continue                
+                            continue
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     # Main process terminated or access denied
-                    pass  
-                
+                    pass
+
             # Normalize by CPU count
             logger.info(f"Total CPU load (all processes): {cpu_load}")
             cpu_load = cpu_load / self._cpu_count
             power = self._tdp * cpu_load / 100
             logger.debug(
                 f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid} (including children)."
-            )    
-          
+            )
+
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
         return Power.from_watts(power)

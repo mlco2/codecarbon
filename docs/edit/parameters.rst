@@ -24,6 +24,9 @@ Input Parameters
    * - tracking_mode
      - | ``machine`` measure the power consumptions of the entire machine (default)
        | ``process`` try and isolate the tracked processes in isolation
+   * - tracking_pids
+     - | List of PIDs to track when using ``process`` tracking mode,
+       | defaults to ``None``, which tracks the current process
    * - gpu_ids
      - | Comma-separated list of GPU ids to track, defaults to ``None``
        | These can either be integer indexes of GPUs on the system, or prefixes

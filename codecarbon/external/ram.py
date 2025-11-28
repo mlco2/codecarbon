@@ -33,7 +33,7 @@ class RAM(BaseHardware):
     is_arm_cpu = False
 
     def __init__(
-        self,       
+        self,
         children: bool = True,
         tracking_mode: str = "machine",
         tracking_pids: int = None,
@@ -44,7 +44,7 @@ class RAM(BaseHardware):
         current process's. The `pid` is used to find children processes if `children`
         is True.
 
-        Args:            
+        Args:
             children (int, optional): Look for children of the process when computing
                                       total RAM used. Defaults to True.
             tracking_mode (str, optional): Whether to track "machine" or "process" RAM.
@@ -57,17 +57,17 @@ class RAM(BaseHardware):
         """
         self._children = children
         self._tracking_mode = tracking_mode
-        
+
         if tracking_mode == "process" and tracking_pids is None:
-            
+
             self._tracking_pids = [psutil.Process().pid]
         else:
-              # Test if individual process or list of ids
-            if tracking_pids is not list:  
-                self._tracking_pids = [tracking_pids]    
+            # Test if individual process or list of ids
+            if tracking_pids is not list:
+                self._tracking_pids = [tracking_pids]
             else:
                 self._tracking_pids = tracking_pids
-            
+
         self._force_ram_power = force_ram_power
         # Check if using ARM architecture
         self.is_arm_cpu = self._detect_arm_cpu()
@@ -208,16 +208,15 @@ class RAM(BaseHardware):
 
         Returns:
             list(int): The list of RAM values
-        """              
-        memorie_consumption = dict() 
-        current_process = psutil.Process(pid) 
-        
+        """
+        memorie_consumption = dict()
+        current_process = psutil.Process(pid)
+
         children = current_process.children(recursive=True)
         for child in children:
-            memorie_consumption[child.pid] = child.memory_info().rss   
-             
-        return memorie_consumption        
-    
+            memorie_consumption[child.pid] = child.memory_info().rss
+
+        return memorie_consumption
 
     def _read_slurm_scontrol(self):
         try:
@@ -308,27 +307,27 @@ class RAM(BaseHardware):
         Returns:
             float: RAM usage (GB)
         """
-        
+
         # Store memory usage in dict to avoid double counting
         total_memory = dict()
-        
+
         for pid in self._tracking_pids:
             if not psutil.pid_exists(pid):
                 logger.warning(f"Process with pid {pid} does not exist anymore.")
                 continue
-            
+
             # Own memory
             total_memory[pid] = psutil.Process(pid).memory_info().rss
-            
+
             # Children's memory
             children_memories = self._get_children_memories(pid)
             for child_pid, mem in children_memories.items():
                 total_memory[child_pid] = mem
-        
+
         # Reduce to total memory
-        total_memory = sum(total_memory.values())     
+        total_memory = sum(total_memory.values())
         logger.debug(f"Process total memory usage: {total_memory / B_TO_GB:.2f} GB")
-          
+
         return total_memory / B_TO_GB
 
     @property
