@@ -68,10 +68,10 @@ class FileOutput(BaseOutput):
                 # No entries
                 return True
             dict_from_csv = dict(csv_entries_list[0])
-            list_of_column_names = list(dict_from_csv.keys())
-            return list(data.values.keys()) == list_of_column_names
+            list_of_column_names = sorted(dict_from_csv.keys())
+            return sorted(data.values.keys()) == list_of_column_names
 
-    def out(self, total: EmissionsData, _: EmissionsData):
+    def out(self, total: EmissionsData, _):
         """
         Save the emissions data from a whole run to a CSV file.
 
