@@ -289,7 +289,7 @@ class CPU(BaseHardware):
             cpu_load = cpu_load / self._cpu_count
             power = self._tdp * cpu_load / 100
             logger.debug(
-                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid} (including children)."
+                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for processes {self._tracking_pids} (including children)."
             )
 
         else:
