@@ -6,33 +6,26 @@ import { DateRange } from "react-day-picker";
 export async function createExperiment(
     experiment: Experiment,
 ): Promise<Experiment> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/experiments`, {
+    const result = await fetchApi<Experiment>("/experiments", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            ...experiment,
-        }),
+        body: JSON.stringify(experiment),
     });
 
-    if (!res.ok) {
+    if (!result) {
         throw new Error("Failed to create experiment");
     }
 
-    const result = await res.json();
     return result;
 }
 export async function getExperiments(projectId: string): Promise<Experiment[]> {
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}/experiments`,
+    const result = await fetchApi<Experiment[]>(
+        `/projects/${projectId}/experiments`,
     );
 
-    if (!res.ok) {
-        throw new Error("Failed to fetch experiments");
+    if (!result) {
+        return [];
     }
 
-    const result = await res.json();
     return result.map((experiment: Experiment) => {
         return {
             id: experiment.id,
