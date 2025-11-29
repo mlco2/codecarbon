@@ -35,6 +35,8 @@ registry = CollectorRegistry()
 # TODO: Set up the possible labels
 labelnames = [
     "project_name",
+    "experiment_id",
+    "experiment_name",
     "country_name",
     "country_iso_code",
     "region",
@@ -77,8 +79,9 @@ class PrometheusOutput(BaseOutput):
     Send emissions data to prometheus pushgateway
     """
 
-    def __init__(self, prometheus_url: str):
+    def __init__(self, prometheus_url: str, jobname: str = "codecarbon"):
         self.prometheus_url = prometheus_url
+        self.jobname = jobname
 
     def out(self, total: EmissionsData, delta: EmissionsData):
         try:
@@ -124,7 +127,7 @@ class PrometheusOutput(BaseOutput):
         # Send the new metric values
         push_to_gateway(
             self.prometheus_url,
-            job="codecarbon",
+            job=self.jobname,
             registry=registry,
             handler=self._auth_handler,
         )
