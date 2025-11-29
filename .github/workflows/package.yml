@@ -59,7 +59,7 @@ jobs:
       run: |
         # Install the wheel and test dependencies without the source code
         uv pip install dist/*.whl
-        uv pip install pytest pytest-mock requests-mock responses pandas
+        uv pip install pytest pytest-mock requests-mock responses pandas logfire
     - name: Test package integrity
       run: |
         # Run the package integrity tests to verify all data files are included
