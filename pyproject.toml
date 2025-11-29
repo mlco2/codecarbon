@@ -90,6 +90,7 @@ dev = [
     "requests",
     "requests-mock",
     "responses",
+    "logfire>=1.0.1",
 ]
 doc = [
   "sphinx",
