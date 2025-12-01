@@ -50,6 +50,6 @@ class Task:
             longitude=self.emissions_data.longitude,
             latitude=self.emissions_data.latitude,
             ram_total_size=self.emissions_data.ram_total_size,
-            tracking_mode=self.emissions_data.tracking_mode,            
+            tracking_mode=self.emissions_data.tracking_mode,
             on_cloud=self.emissions_data.on_cloud,
         )
