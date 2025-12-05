@@ -1,8 +1,9 @@
 import math
 import re
 import subprocess
+import traceback
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 import psutil
 
@@ -36,7 +37,7 @@ class RAM(BaseHardware):
         self,
         children: bool = True,
         tracking_mode: str = "machine",
-        tracking_pids: int = None,
+        tracking_pids: Optional[List[int]] = None,
         force_ram_power: Optional[int] = None,
     ):
         """
@@ -59,14 +60,9 @@ class RAM(BaseHardware):
         self._tracking_mode = tracking_mode
 
         if tracking_mode == "process" and tracking_pids is None:
-
             self._tracking_pids = [psutil.Process().pid]
         else:
-            # Test if individual process or list of ids
-            if tracking_pids is not list:
-                self._tracking_pids = [tracking_pids]
-            else:
-                self._tracking_pids = tracking_pids
+            self._tracking_pids = tracking_pids
 
         self._force_ram_power = force_ram_power
         # Check if using ARM architecture
@@ -371,6 +367,7 @@ class RAM(BaseHardware):
             )
         except Exception as e:
             logger.warning(f"Could not measure RAM Power ({str(e)})")
+            logger.warning(traceback.format_exc())
             ram_power = Power.from_watts(0)
 
         return ram_power

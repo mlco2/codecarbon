@@ -93,9 +93,7 @@ class PrometheusOutput(BaseOutput):
     def __del__(self):
         # Cleanup metrics from pushgateway on shutdown, prometheus should already have scraped them
         try:
-            delete_from_gateway(
-                self.prometheus_url, job=self.jobname, registry=registry
-            )
+            delete_from_gateway(self.prometheus_url, job=self.jobname)
         except Exception as e:
             logger.error(e, exc_info=True)
 

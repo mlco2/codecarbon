@@ -387,6 +387,12 @@ class BaseEmissionsTracker(ABC):
         else:
             logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
 
+        if self._tracking_mode == "process":
+            logger.info("  Tracking mode: process")
+            logger.info("  Tracked PIDs: " + str(self._tracking_pids))
+        else:
+            logger.info("  Tracking mode: machine")
+
         # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
         self._scheduler = PeriodicScheduler(
