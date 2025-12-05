@@ -1,7 +1,12 @@
 import dataclasses
 import os
 
-from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+from prometheus_client import (
+    CollectorRegistry,
+    Gauge,
+    delete_from_gateway,
+    push_to_gateway,
+)
 from prometheus_client.exposition import basic_auth_handler
 
 from codecarbon.external.logger import logger
@@ -15,6 +20,7 @@ from codecarbon.output_methods.metrics.metric_docs import (
     emissions_doc,
     emissions_rate_doc,
     energy_consumed_doc,
+    energy_consumed_total_doc,
     gpu_energy_doc,
     gpu_power_doc,
     ram_energy_doc,
@@ -72,6 +78,7 @@ cpu_energy_gauge = generate_gauge(cpu_energy_doc)
 gpu_energy_gauge = generate_gauge(gpu_energy_doc)
 ram_energy_gauge = generate_gauge(ram_energy_doc)
 energy_consumed_gauge = generate_gauge(energy_consumed_doc)
+energy_consumed_total_gauge = generate_gauge(energy_consumed_total_doc)
 
 
 class PrometheusOutput(BaseOutput):
@@ -83,9 +90,18 @@ class PrometheusOutput(BaseOutput):
         self.prometheus_url = prometheus_url
         self.jobname = jobname
 
+    def __del__(self):
+        # Cleanup metrics from pushgateway on shutdown, prometheus should already have scraped them
+        try:
+            delete_from_gateway(
+                self.prometheus_url, job=self.jobname, registry=registry
+            )
+        except Exception as e:
+            logger.error(e, exc_info=True)
+
     def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            self.add_emission(dataclasses.asdict(delta))
+            self.add_emission(dataclasses.asdict(delta), dataclasses.asdict(total))
         except Exception as e:
             logger.error(e, exc_info=True)
 
@@ -99,7 +115,7 @@ class PrometheusOutput(BaseOutput):
             url, method, timeout, headers, data, username, password
         )
 
-    def add_emission(self, carbon_emission: dict):
+    def add_emission(self, carbon_emission: dict, total_emission: dict):
         """
         Send emissions data to push gateway
         """
@@ -130,4 +146,9 @@ class PrometheusOutput(BaseOutput):
             job=self.jobname,
             registry=registry,
             handler=self._auth_handler,
+        )
+
+        # Now set the total energy consumed
+        energy_consumed_total_gauge.labels(**labels).set(
+            total_emission["energy_consumed"]
         )
