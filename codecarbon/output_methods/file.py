@@ -88,6 +88,11 @@ class FileOutput(BaseOutput):
 
         """
         file_exists: bool = os.path.isfile(self.save_file_path)
+        if file_exists and os.path.getsize(self.save_file_path) == 0:
+            logger.warning(
+                f"File {self.save_file_path} exists but is empty. Treating as new file."
+            )
+            file_exists = False
         if file_exists and not self.has_valid_headers(total):
             logger.warning("The CSV format has changed, backing up old emission file.")
             backup(self.save_file_path)
@@ -96,30 +101,14 @@ class FileOutput(BaseOutput):
         if not file_exists:
             df = new_df
         elif self.on_csv_write == "append":
-            try:
-                df = pd.read_csv(self.save_file_path)
-            except pd.errors.EmptyDataError:
-                logger.warning(
-                    f"File {self.save_file_path} exists but is empty. Creating new file."
-                )
-                df = new_df
-                df.to_csv(self.save_file_path, index=False)
-                return
+            df = pd.read_csv(self.save_file_path)
             # Filter out empty or all-NA columns, to avoid warnings from Pandas,
             # see https://github.com/pandas-dev/pandas/issues/55928
             df = df.dropna(axis=1, how="all")
             new_df = new_df.dropna(axis=1, how="all")
             df = pd.concat([df, new_df])
         else:
-            try:
-                df = pd.read_csv(self.save_file_path)
-            except pd.errors.EmptyDataError:
-                logger.warning(
-                    f"File {self.save_file_path} exists but is empty. Creating new file."
-                )
-                df = new_df
-                df.to_csv(self.save_file_path, index=False)
-                return
+            df = pd.read_csv(self.save_file_path)
             df_run = df.loc[df.run_id == total.run_id]
             if len(df_run) < 1:
                 df = pd.concat([df, new_df])
