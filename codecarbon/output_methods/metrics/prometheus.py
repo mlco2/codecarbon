@@ -101,7 +101,9 @@ class PrometheusOutput(BaseOutput):
 
     def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            self.add_emission(dataclasses.asdict(delta), dataclasses.asdict(total))
+            delta_with_total = dataclasses.asdict(delta)
+            delta_with_total["energy_consumed_total"] = total.energy_consumed
+            self.add_emission(delta_with_total)
         except Exception as e:
             logger.error(e, exc_info=True)
 
@@ -115,7 +117,7 @@ class PrometheusOutput(BaseOutput):
             url, method, timeout, headers, data, username, password
         )
 
-    def add_emission(self, carbon_emission: dict, total_emission: dict):
+    def add_emission(self, carbon_emission: dict):
         """
         Send emissions data to push gateway
         """
@@ -137,6 +139,7 @@ class PrometheusOutput(BaseOutput):
             (gpu_energy_gauge, "gpu_energy"),
             (ram_energy_gauge, "ram_energy"),
             (energy_consumed_gauge, "energy_consumed"),
+            (energy_consumed_total_gauge, "energy_consumed_total"),
         ]:
             gauge.labels(**labels).set(carbon_emission[emission_name])
 
@@ -146,9 +149,4 @@ class PrometheusOutput(BaseOutput):
             job=self.jobname,
             registry=registry,
             handler=self._auth_handler,
-        )
-
-        # Now set the total energy consumed
-        energy_consumed_total_gauge.labels(**labels).set(
-            total_emission["energy_consumed"]
         )
