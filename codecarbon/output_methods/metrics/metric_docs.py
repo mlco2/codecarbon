@@ -64,3 +64,8 @@ energy_consumed_doc = MetricDocumentation(
     "codecarbon_energy_consumed",
     description="Sum of cpu_energy, gpu_energy and ram_energy (kW)",
 )
+
+energy_consumed_total_doc = MetricDocumentation(
+    "codecarbon_energy_consumed_total",
+    description="CumSum of cpu_energy, gpu_energy and ram_energy (kW)",
+)

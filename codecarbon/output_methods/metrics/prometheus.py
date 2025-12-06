@@ -1,7 +1,12 @@
 import dataclasses
 import os
 
-from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+from prometheus_client import (
+    CollectorRegistry,
+    Gauge,
+    delete_from_gateway,
+    push_to_gateway,
+)
 from prometheus_client.exposition import basic_auth_handler
 
 from codecarbon.external.logger import logger
@@ -15,6 +20,7 @@ from codecarbon.output_methods.metrics.metric_docs import (
     emissions_doc,
     emissions_rate_doc,
     energy_consumed_doc,
+    energy_consumed_total_doc,
     gpu_energy_doc,
     gpu_power_doc,
     ram_energy_doc,
@@ -35,6 +41,8 @@ registry = CollectorRegistry()
 # TODO: Set up the possible labels
 labelnames = [
     "project_name",
+    "experiment_id",
+    "experiment_name",
     "country_name",
     "country_iso_code",
     "region",
@@ -70,6 +78,7 @@ cpu_energy_gauge = generate_gauge(cpu_energy_doc)
 gpu_energy_gauge = generate_gauge(gpu_energy_doc)
 ram_energy_gauge = generate_gauge(ram_energy_doc)
 energy_consumed_gauge = generate_gauge(energy_consumed_doc)
+energy_consumed_total_gauge = generate_gauge(energy_consumed_total_doc)
 
 
 class PrometheusOutput(BaseOutput):
@@ -77,12 +86,22 @@ class PrometheusOutput(BaseOutput):
     Send emissions data to prometheus pushgateway
     """
 
-    def __init__(self, prometheus_url: str):
+    def __init__(self, prometheus_url: str, jobname: str = "codecarbon"):
         self.prometheus_url = prometheus_url
+        self.jobname = jobname
+
+    def __del__(self):
+        # Cleanup metrics from pushgateway on shutdown, prometheus should already have scraped them
+        try:
+            delete_from_gateway(self.prometheus_url, job=self.jobname)
+        except Exception as e:
+            logger.error(e, exc_info=True)
 
     def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            self.add_emission(dataclasses.asdict(delta))
+            delta_with_total = dataclasses.asdict(delta)
+            delta_with_total["energy_consumed_total"] = total.energy_consumed
+            self.add_emission(delta_with_total)
         except Exception as e:
             logger.error(e, exc_info=True)
 
@@ -118,13 +137,14 @@ class PrometheusOutput(BaseOutput):
             (gpu_energy_gauge, "gpu_energy"),
             (ram_energy_gauge, "ram_energy"),
             (energy_consumed_gauge, "energy_consumed"),
+            (energy_consumed_total_gauge, "energy_consumed_total"),
         ]:
             gauge.labels(**labels).set(carbon_emission[emission_name])
 
         # Send the new metric values
         push_to_gateway(
             self.prometheus_url,
-            job="codecarbon",
+            job=self.jobname,
             registry=registry,
             handler=self._auth_handler,
         )
