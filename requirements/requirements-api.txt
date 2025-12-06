@@ -240,7 +240,7 @@ typing-extensions==4.15.0
     #   rich-toolkit
     #   starlette
     #   typer
-urllib3==2.5.0
+urllib3==2.6.0
     # via
     #   requests
     #   responses
