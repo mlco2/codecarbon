@@ -701,6 +701,10 @@ class BaseEmissionsTracker(ABC):
 
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
+
+        for handler in self._output_handlers:
+            handler.exit()
+
         return emissions_data.emissions
 
     def _persist_data(

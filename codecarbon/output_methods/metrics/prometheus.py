@@ -3,6 +3,7 @@ import os
 
 from prometheus_client import (
     CollectorRegistry,
+    Counter,
     Gauge,
     delete_from_gateway,
     push_to_gateway,
@@ -68,6 +69,15 @@ def generate_gauge(metric_doc: MetricDocumentation):
     )
 
 
+def generate_counter(metric_doc: MetricDocumentation):
+    return Counter(
+        metric_doc.name,
+        metric_doc.description,
+        labelnames,
+        registry=registry,
+    )
+
+
 duration_gauge = generate_gauge(duration_doc)
 emissions_gauge = generate_gauge(emissions_doc)
 emissions_rate_gauge = generate_gauge(emissions_rate_doc)
@@ -78,7 +88,7 @@ cpu_energy_gauge = generate_gauge(cpu_energy_doc)
 gpu_energy_gauge = generate_gauge(gpu_energy_doc)
 ram_energy_gauge = generate_gauge(ram_energy_doc)
 energy_consumed_gauge = generate_gauge(energy_consumed_doc)
-energy_consumed_total_gauge = generate_gauge(energy_consumed_total_doc)
+energy_consumed_total = generate_counter(energy_consumed_total_doc)
 
 
 class PrometheusOutput(BaseOutput):
@@ -90,18 +100,18 @@ class PrometheusOutput(BaseOutput):
         self.prometheus_url = prometheus_url
         self.jobname = jobname
 
-    def __del__(self):
+    def exit(self):
         # Cleanup metrics from pushgateway on shutdown, prometheus should already have scraped them
+        # Otherwise they will persist with their last values
         try:
+            logger.info("Deleting metrics from Prometheus Pushgateway")
             delete_from_gateway(self.prometheus_url, job=self.jobname)
         except Exception as e:
             logger.error(e, exc_info=True)
 
     def out(self, total: EmissionsData, delta: EmissionsData):
         try:
-            delta_with_total = dataclasses.asdict(delta)
-            delta_with_total["energy_consumed_total"] = total.energy_consumed
-            self.add_emission(delta_with_total)
+            self.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)
 
@@ -137,9 +147,12 @@ class PrometheusOutput(BaseOutput):
             (gpu_energy_gauge, "gpu_energy"),
             (ram_energy_gauge, "ram_energy"),
             (energy_consumed_gauge, "energy_consumed"),
-            (energy_consumed_total_gauge, "energy_consumed_total"),
         ]:
             gauge.labels(**labels).set(carbon_emission[emission_name])
+
+        # Update the total energy consumed counter
+        #
+        energy_consumed_total.labels(**labels).inc(carbon_emission["energy_consumed"])
 
         # Send the new metric values
         push_to_gateway(
