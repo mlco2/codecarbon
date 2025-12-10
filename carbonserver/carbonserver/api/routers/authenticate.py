@@ -24,9 +24,16 @@ SESSION_COOKIE_NAME = "user_session"
 
 router = APIRouter()
 
-fief = FiefAsync(
-    settings.fief_url, settings.fief_client_id, settings.fief_client_secret
-)
+# fief = FiefAsync(
+#     settings.fief_url, settings.fief_client_id, settings.fief_client_secret
+# )
+
+
+
+
+# Set up our OIDC
+from fastapi_oidc import IDToken
+from fastapi_oidc import get_auth
 
 
 @router.get("/auth/check", name="auth-check")
@@ -46,6 +53,7 @@ def check_login(
 @router.get("/auth/auth-callback", name="auth_callback")
 async def auth_callback(request: Request, response: Response, code: str = Query(...)):
     redirect_uri = request.url_for("auth_callback")
+    raise Exception("...")
     tokens, _ = await fief.auth_callback(code, redirect_uri)
     response = RedirectResponse(request.url_for("auth-user"))
     response.set_cookie(
@@ -72,6 +80,7 @@ async def get_login(
     login_url = request.url_for("login")
 
     if code:
+        print("code...")
         res = requests.post(
             f"{settings.fief_url}/api/token",
             data={
@@ -82,6 +91,7 @@ async def get_login(
                 "client_secret": settings.fief_client_secret,
             },
         )
+        print(res.content)
 
         # check if the user exists in local DB ; create if needed
         if "id_token" not in res.json():
@@ -97,10 +107,12 @@ async def get_login(
             sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
 
         creds = base64.b64encode(res.content).decode()
+        print("creds...")
         base_url = request.base_url
         if settings.frontend_url != "":
             base_url = settings.frontend_url + "/"
         url = f"{base_url}home?auth=true&creds={creds}"
+        print("redir => ", url)
 
         # NOTE: RedirectResponse doesn't work with clevercloud
         # response = RedirectResponse(url=url)
@@ -121,7 +133,7 @@ async def get_login(
             secure=True,
         )
         return response
-
+    print(f"{settings.fief_url=}")
     state = str(int(random.random() * 1000))
     url = f"{settings.fief_url}/authorize?response_type=code&client_id={settings.fief_client_id}&redirect_uri={login_url}&scope={' '.join(OAUTH_SCOPES)}&state={state}"
     return RedirectResponse(url=url)

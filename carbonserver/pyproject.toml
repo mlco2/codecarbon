@@ -39,6 +39,8 @@ dependencies = [
     "rapidfuzz",
     "PyJWT",
     "logfire[fastapi]>=1.0.1",
+    "fastapi-oidc",
+    "pydantic-settings",
 ]
 
 [project.urls]
