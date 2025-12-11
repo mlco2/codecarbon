@@ -28,14 +28,6 @@ jobs:
         tar -xvf clever-tools-${CC_VERSION}_linux.tar.gz
         PATH=${PATH}:$(pwd)/clever-tools-${CC_VERSION}_linux
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
-      with:
-        version: "latest"
-
-    - name: Set up Python
-      run: uv python install 3.12
-
     - name: Login to Clever Cloud
       env:
         CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
@@ -46,7 +38,6 @@ jobs:
         CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_PROD }}
         APP_NAME: cc_api_prod
       run: |
-        uv pip compile pyproject.toml --extra api --output-file requirements/requirements-api.txt
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
         ./clever-tools-latest_linux/clever deploy -f
 
