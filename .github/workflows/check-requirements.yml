@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - "pyproject.toml"
+      - "uv.lock"
       - "requirements/requirements-api.txt"
       - ".github/workflows/check-requirements.yml"
   push:
     branches: [master]
     paths:
       - "pyproject.toml"
+      - "uv.lock"
       - "requirements/requirements-api.txt"
 
 permissions:
@@ -30,9 +32,9 @@ jobs:
     - name: Set up Python
       run: uv python install 3.12
 
-    - name: Generate requirements file
+    - name: Generate requirements file from lock
       run: |
-        uv pip compile pyproject.toml --extra api --output-file requirements/requirements-api-check.txt
+        uv export --extra api --no-hashes --format requirements-txt > requirements/requirements-api-check.txt
 
     - name: Check if requirements file is up-to-date
       run: |
@@ -40,7 +42,7 @@ jobs:
           echo "❌ Error: requirements/requirements-api.txt is out of date!"
           echo ""
           echo "Please regenerate it by running:"
-          echo "  uv pip compile pyproject.toml --extra api --output-file requirements/requirements-api.txt"
+          echo "  uv export --extra api --no-hashes --format requirements-txt > requirements/requirements-api.txt"
           echo ""
           echo "Then commit the updated file."
           exit 1

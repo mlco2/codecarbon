@@ -8,13 +8,15 @@ This file contains all dependencies needed to run the CodeCarbon API server (car
 
 ### Updating the file
 
-When you modify dependencies in `pyproject.toml` (especially those under the `[project.optional-dependencies.api]` section), you **must** regenerate this file:
+When you modify dependencies in `pyproject.toml` or when `uv.lock` changes (especially those under the `[project.optional-dependencies.api]` section), you **must** regenerate this file:
 
 ```bash
-uv pip compile pyproject.toml --extra api --output-file requirements/requirements-api.txt
+uv export --extra api --no-hashes --format requirements-txt > requirements/requirements-api.txt
 ```
 
 Then commit the updated file.
+
+**Note:** This uses `uv.lock` to ensure fully reproducible builds with the exact same versions that are tested in CI.
 
 ### CI Check
 
