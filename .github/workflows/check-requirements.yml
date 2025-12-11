@@ -34,7 +34,7 @@ jobs:
 
     - name: Generate requirements file from lock
       run: |
-        uv export --extra api --no-emit-workspace --no-dev --no-annotate --no-hashes --output-file  requirements/requirements-api-check.txt
+        uv export --extra api --no-emit-workspace --no-dev --no-annotate --no-hashes --format requirements-txt > requirements/requirements-api-check.txt
 
     - name: Check if requirements file is up-to-date
       run: |
@@ -42,7 +42,7 @@ jobs:
           echo "❌ Error: requirements/requirements-api.txt is out of date!"
           echo ""
           echo "Please regenerate it by running:"
-          echo "uv export --extra api --no-emit-workspace --no-dev --no-annotate --no-hashes --output-file  requirements/requirements-api.txt"
+          echo "uv export --extra api --no-emit-workspace --no-dev --no-annotate --no-hashes --format requirements-txt > requirements/requirements-api.txt"
           echo ""
           echo "Then commit the updated file."
           exit 1
