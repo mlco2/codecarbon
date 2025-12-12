@@ -1,8 +1,16 @@
 """
 This example demonstrates how to use CodeCarbon with command line tools.
 
-Here we measure the emissions of an speech-to-text with WhisperX.
+⚠️  IMPORTANT LIMITATION:
+CodeCarbon tracks emissions at the MACHINE level when monitoring external commands
+via subprocess. It measures total system power during the command execution, which
+includes the command itself AND all other system processes.
 
+For accurate process-level tracking, the tracking code must be embedded in the
+application being measured (not possible with external binaries like WhisperX).
+
+This example measures emissions during WhisperX execution, but cannot isolate
+WhisperX's exact contribution from other system activity.
 """
 
 import subprocess
