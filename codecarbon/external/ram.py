@@ -50,7 +50,7 @@ class RAM(BaseHardware):
                                       total RAM used. Defaults to True.
             tracking_mode (str, optional): Whether to track "machine" or "process" RAM.
                                           Defaults to "machine".
-            tracking_pids (int, optional): Process id to track RAM usage for "process"
+            tracking_pids ([int], optional): Process id to track RAM usage for "process"
                                             tracking_mode. Defaults to None.
             force_ram_power (int, optional): User-provided RAM power in watts. If provided,
                                            this value is used instead of estimating RAM power.

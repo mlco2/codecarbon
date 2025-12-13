@@ -57,7 +57,7 @@ class TestPIDTracking(unittest.TestCase):
             output_dir=self.emissions_path,
             output_file=self.emissions_file + "_global.csv",
             tracking_mode="process",
-            tracking_pids=os.getpid(),
+            tracking_pids=[os.getpid()],
         )
 
         tracker_pid.start()
@@ -76,4 +76,10 @@ class TestPIDTracking(unittest.TestCase):
         assert isinstance(emissions_pid, float)
 
         self.assertNotEqual(emissions_pid, 0.0)
-        self.assertAlmostEqual(emissions_self, emissions_pid, 2)
+
+        # Compare emissions from both trackers, should be less than 10% difference
+        diff = abs(emissions_pid - emissions_self)
+        avg = (emissions_pid + emissions_self) / 2
+        percent_diff = (diff / avg) * 100
+        print(f"Percent difference: {percent_diff}%")
+        self.assertLessEqual(percent_diff, 10.0)

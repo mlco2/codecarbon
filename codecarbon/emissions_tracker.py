@@ -176,7 +176,7 @@ class BaseEmissionsTracker(ABC):
             str
         ] = _sentinel,  # Deprecated, use electricitymaps_api_token
         tracking_mode: Optional[str] = _sentinel,
-        tracking_pids: Optional[int] = _sentinel,
+        tracking_pids: Optional[List[int]] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
@@ -1182,7 +1182,7 @@ def track_emissions(
         str
     ] = _sentinel,  # Deprecated, use electricitymaps_api_token
     tracking_mode: Optional[str] = _sentinel,
-    tracking_pids: Optional[int] = _sentinel,
+    tracking_pids: Optional[List[int]] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
     logger_preamble: Optional[str] = _sentinel,
