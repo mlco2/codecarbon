@@ -46,7 +46,7 @@ class TestPIDTracking(unittest.TestCase):
 
     def test_carbon_pid_tracking_offline(self):
 
-        # Subprocess PIDs are childs, therefore booth should be equal
+        # Subprocess PIDs are children, therefore both should be equal
         tracker_pid = OfflineEmissionsTracker(
             output_dir=self.emissions_path,
             output_file=self.emissions_file + "_pid.csv",
