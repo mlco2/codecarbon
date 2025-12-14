@@ -43,6 +43,11 @@ export async function fetchApiServer<T>(
             return null;
         }
 
+        // Handle 204 No Content responses (e.g., DELETE operations)
+        if (response.status === 204) {
+            return null;
+        }
+
         // Special handling for endpoints that might return null
         if (
             endpoint.includes("/organizations/") &&

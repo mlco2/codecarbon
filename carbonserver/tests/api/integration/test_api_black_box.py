@@ -68,8 +68,6 @@ def del_test_user():
     with Session(engine) as session:
         session.execute(stmt)
         session.commit()
-    # Clean up user before ending test execution by pytest
-    # delete(SqlModelUser).where(SqlModelUser.email == USER_EMAIL)
 
 
 def is_key_value_exist(list_of_dict, key, value):
@@ -90,83 +88,6 @@ def is_key_all_values_equal(list_of_dict, key, value):
         if d[key] != value:
             return False
     return True
-
-
-# def test_api01_user_create():
-#     tc.assertIsNotNone(URL)
-#     # we delete it if exist
-#     del_test_user()
-#     payload = {
-#         "email": USER_EMAIL,
-#         "name": "toto",
-#         "password": USER_PASSWORD,
-#     }
-#     r = requests.post(url=URL + "/user", json=payload, timeout=2)
-#     tc.assertEqual(r.status_code, 201)
-#     tc.assertEqual(r.json()["email"], USER_EMAIL)
-#     tc.assertTrue(r.json()["is_active"])
-
-
-# def test_api02_user_signup():
-#     global user_id, org_id, team_id, api_key
-#     # signup is creating a user, we delete it if exist
-#     del_test_user()
-#     payload = {
-#         "email": USER_EMAIL,
-#         "name": "toto",
-#         "password": USER_PASSWORD,
-#     }
-#     r = requests.post(url=URL + "/user/signup/", json=payload, timeout=2)
-#     tc.assertEqual(r.status_code, 201)
-#     tc.assertEqual(r.json()["email"], USER_EMAIL)
-#     tc.assertTrue(r.json()["is_active"])
-#     user_id = r.json()["id"]
-#     api_key = r.json()["api_key"]
-#     org_id = r.json()["organizations"][0]
-#     team_id = r.json()["teams"][0]
-
-
-# def test_api03_users_list():
-#     r = requests.get(url=URL + "/users", timeout=2)
-#     tc.assertEqual(r.status_code, 200)
-#     assert is_key_value_exist(r.json(), "id", user_id)
-
-
-# def test_api04_get_user():
-#     r = requests.get(url=URL + "/user/" + user_id, timeout=2)
-#     tc.assertEqual(r.status_code, 200)
-#     assert r.json()["id"] == user_id
-#     tc.assertEqual(r.json()["email"], USER_EMAIL)
-
-
-# def test_api05_auth_success():
-#     payload = {"email": USER_EMAIL, "password": USER_PASSWORD}
-#     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
-#     tc.assertEqual(r.status_code, 200)
-#     assert r.json()["access_token"] == "a"
-#     assert r.json()["token_type"] == "access"
-
-
-# def test_api06_auth_wrong_email():
-#     payload = {
-#         "email": "long.user.email.that.cant.exist.3495739@asdfijvneurvbier.fr",
-#         "password": USER_PASSWORD,
-#     }
-#     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
-#     assert r.status_code == 401
-
-
-# def test_api07_auth_wrong_password():
-#     payload = {"email": USER_EMAIL, "password": "wrong-password"}
-#     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
-#     assert r.status_code == 401
-
-
-# def test_api08_user_deleted():
-#     del_test_user()
-#     payload = {"email": USER_EMAIL, "password": USER_PASSWORD}
-#     r = requests.post(url=URL + "/authenticate/", json=payload, timeout=2)
-#     assert r.status_code == 401
 
 
 def test_api00_uuid_missing():
@@ -358,6 +279,7 @@ default_emission = {
     "gpu_energy": 105.50,
     "ram_energy": 60.50,
     "energy_consumed": 65.50,
+    "wue": 0,
 }
 
 
@@ -376,6 +298,7 @@ def add_emission(run_id: str):
         "gpu_energy": default_emission["gpu_energy"],
         "ram_energy": default_emission["ram_energy"],
         "energy_consumed": default_emission["energy_consumed"],
+        "wue": default_emission["wue"],
     }
     r = requests.post(
         url=URL + "/emissions/",

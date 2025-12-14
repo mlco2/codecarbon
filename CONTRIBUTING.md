@@ -103,6 +103,8 @@ uv add --dev pytest
 uv add --optional api logfire[fastapi]
 # List all task for CodeCarbon
 uv run task -l
+# Run a specific version of python
+uv run --python 3.14 codecarbon monitor
 ```
 
 <!-- TOC --><a name="tests"></a>
@@ -136,9 +138,14 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 -   7Zip is often already installed, running it with `7z b` makes a quick CPU test.
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
+-   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://mlco2.github.io/codecarbon/test_on_scaleway.html) to install it.
+-   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
+-   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and avaliable for Windows and Linux.
 
-`nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
+To monitor the power consumption of your computer while stressing it, you can use:
 
+-   `nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
+-   [powerstat](https://github.com/ColinIanKing/powerstat) can be used to see the metrics of the CPU and compare it with CodeCarbon. It's available on major distribution, like Debian-based Linux distributions with `sudo apt install powerstat`. Run it with `sudo powerstat -a -R 1 60`.
 
 
 <!-- TOC --><a name="update-all-dependancies"></a>
@@ -217,7 +224,7 @@ Then run opened test with this button:
 <!-- TOC --><a name="coding-style-linting"></a>
 ### Coding style && Linting
 
-The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `uv run precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `uv run task precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
 
 ```log
 [INFO] Initializing environment for https://github.com/psf/black.

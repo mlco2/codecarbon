@@ -2,7 +2,14 @@
 
 Estimate and track carbon emissions from your computer, quantify and analyze their impact.
 
-[**Documentation**](https://mlco2.github.io/codecarbon)
+CodeCarbon websites:
+- [Main website](https://codecarbon.io) to learn why we do this.
+- [Dashboard](https://dashboard.codecarbon.io/) to see your emissions, [read the API doc](https://mlco2.github.io/codecarbon/api.html) before.
+- [Documentation](https://mlco2.github.io/codecarbon) to learn how to use the package and our methodology.
+- [GitHub](https://github.com/mlco2/codecarbon) to look at the source code and contribute.
+- [Discord](https://discord.gg/GS9js2XkJR) to chat with us.
+
+<!--  ![Discord Shield](https://discord.com/api/guilds/1090365182909350019/widget.png?style=shield) -->
 
 <br/>
 
@@ -10,7 +17,7 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
 [![](https://anaconda.org/codecarbon/codecarbon/badges/version.svg)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
-[![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon)
+<!-- [![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon) -->
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon)
 
 
@@ -136,7 +143,7 @@ In order to contribute a change to our code base, please submit a pull request (
 
 Check out our [contribution guidelines :arrow_upper_right:](https://github.com/mlco2/codecarbon/blob/master/CONTRIBUTING.md)
 
-Contact [@vict0rsch](https://github.com/vict0rsch) to be added to our slack workspace if you want to contribute regularly!
+Feel free to chat with us on [Discord](https://discord.gg/GS9js2XkJR).
 
 # How To Cite 📝
 
@@ -187,7 +194,11 @@ Here is a sample for BibTeX:
 
 # Contact 📝
 
-Maintainers are [@vict0rsch](https://github.com/vict0rsch) [@benoit-cty](https://github.com/benoit-cty) and [@SaboniAmine](https://github.com/saboniamine). Codecarbon is developed by volunteers from [**Mila**](http://mila.quebec) and the [**DataForGoodFR**](https://twitter.com/dataforgood_fr) community alongside donated professional time of engineers at [**Comet.ml**](https://comet.ml) and [**BCG GAMMA**](https://www.bcg.com/en-nl/beyond-consulting/bcg-gamma/default).
+Feel free to chat with us on [Discord](https://discord.gg/GS9js2XkJR).
+
+Codecarbon was formerly developed by volunteers from [**Mila**](http://mila.quebec) and the [**DataForGoodFR**](https://twitter.com/dataforgood_fr) community alongside donated professional time of engineers at [**Comet.ml**](https://comet.ml) and [**BCG GAMMA**](https://www.bcg.com/en-nl/beyond-consulting/bcg-gamma/default).
+
+Now CodeCarbon is supported by [**Code Carbon**](https://www.helloasso.com/associations/code-carbon), a French non-profit organization whose mission is to accelerate the development and adoption of CodeCarbon.
 
 ## Star History
 

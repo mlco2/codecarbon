@@ -55,3 +55,9 @@ export const getOneProject = async (
     }
     return project;
 };
+
+export const deleteProject = async (projectId: string): Promise<void> => {
+    await fetchApiServer(`/projects/${projectId}`, {
+        method: "DELETE",
+    });
+};

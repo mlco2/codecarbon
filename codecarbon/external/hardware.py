@@ -168,6 +168,8 @@ class CPU(BaseHardware):
         tdp: int,
         rapl_dir: str = "/sys/class/powercap/intel-rapl/subsystem",
         tracking_mode: str = "machine",
+        rapl_include_dram: bool = False,
+        rapl_prefer_psys: bool = False,
     ):
         assert tracking_mode in ["machine", "process"]
         self._power_history: List[Power] = []
@@ -184,7 +186,11 @@ class CPU(BaseHardware):
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":
-            self._intel_interface = IntelRAPL(rapl_dir=rapl_dir)
+            self._intel_interface = IntelRAPL(
+                rapl_dir=rapl_dir,
+                rapl_include_dram=rapl_include_dram,
+                rapl_prefer_psys=rapl_prefer_psys,
+            )
 
     def __repr__(self) -> str:
         if self._mode != "constant":
@@ -304,10 +310,6 @@ class CPU(BaseHardware):
         if self._mode == "intel_rapl":
             energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
             power = self.total_power()
-            # Patch AMD Threadripper that count 2x the power
-            if "AMD Ryzen Threadripper" in self._model:
-                power = power / 2
-                energy = energy / 2
             return power, energy
         # If not intel_rapl, we call the parent method from BaseHardware
         # to compute energy from power and time
@@ -335,6 +337,8 @@ class CPU(BaseHardware):
         model: Optional[str] = None,
         tdp: Optional[int] = None,
         tracking_mode: str = "machine",
+        rapl_include_dram: bool = False,
+        rapl_prefer_psys: bool = False,
     ) -> "CPU":
         if model is None:
             model = detect_cpu_model()
@@ -343,7 +347,14 @@ class CPU(BaseHardware):
 
         if tdp is None:
             tdp = POWER_CONSTANT
-            cpu = cls(output_dir=output_dir, mode=mode, model=model, tdp=tdp)
+            cpu = cls(
+                output_dir=output_dir,
+                mode=mode,
+                model=model,
+                tdp=tdp,
+                rapl_include_dram=rapl_include_dram,
+                rapl_prefer_psys=rapl_prefer_psys,
+            )
             cpu._is_generic_tdp = True
             return cpu
 
@@ -353,6 +364,8 @@ class CPU(BaseHardware):
             model=model,
             tdp=tdp,
             tracking_mode=tracking_mode,
+            rapl_include_dram=rapl_include_dram,
+            rapl_prefer_psys=rapl_prefer_psys,
         )
 
 

@@ -25,12 +25,14 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "arrow",
     "click",
     "fief-client[cli]",
-    "pandas",
+    "pandas>=2.3.3;python_version>='3.14'",
+    "pandas;python_version<'3.14'",
     "prometheus_client",
     "psutil >= 6.0.0",
     "py-cpuinfo",
@@ -62,6 +64,9 @@ codecarbon = [
     "data/private_infra/carbon_intensity_per_source.json",
     "data/private_infra/2016/usa_emissions.json",
     "data/private_infra/2023/canada_energy_mix.json",
+    "viz/assets/car_icon.png",
+    "viz/assets/house_icon.png",
+    "viz/assets/tv_icon.png"
 ]
 
 [project.urls]
@@ -85,6 +90,7 @@ dev = [
     "requests",
     "requests-mock",
     "responses",
+    "logfire>=1.0.1",
 ]
 doc = [
   "sphinx",
@@ -122,7 +128,7 @@ api  = [
     "requests<3.0.0",
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
-    "fastapi-pagination==0.9.1",
+    "fastapi-pagination<1.0.0",
     "pytest",
     "mock",
     "responses",
@@ -160,7 +166,7 @@ docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.0.6"
+current_version = "3.2.0"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
@@ -170,3 +176,6 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 "docs/edit/conf.py" = [
     '^release = "{version}"$',
 ]
+
+[tool.pytest.ini_options]
+pythonpath = "."

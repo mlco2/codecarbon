@@ -31,11 +31,16 @@ Input Parameters
    * - log_level
      - | Global codecarbon log level (by order of verbosity): "debug", "info" (default),
        | "warning", "error", or "critical"
-   * - co2_signal_api_token
-     - | API token for co2signal.com (requires sign-up for free beta)
+   * - electricitymaps_api_token
+     - | API token for electricitymaps.com (formerly co2signal.com)
    * - pue
      - | PUE (Power Usage Effectiveness) of the data center
        | where the experiment is being run.
+   * - wue
+     - | WUE (Water Usage Effectiveness) of the data center
+       | where the experiment is being run.
+       | Units of *L/kWh* - how many litres of water are consumed per kilowatt-hour
+       | of electricity consumed.
    * - force_cpu_power
      - | Force the CPU max power consumption in watts,
        | use this if you know the TDP of your machine.
@@ -46,6 +51,20 @@ Input Parameters
        | Estimate it with ``sudo lshw -C memory -short | grep DIMM``
        | to get the number of RAM slots used, then do
        | *RAM power in W = Number of RAM Slots * 5 Watts*
+   * - rapl_include_dram
+     - | Boolean variable indicating if DRAM (memory) power should be included
+       | in RAPL measurements on Linux systems, defaults to ``False``.
+       | When ``True``, measures complete hardware power (CPU package + DRAM).
+       | Set to ``False`` to measure only CPU package power.
+       | Note: Only affects systems where RAPL exposes separate DRAM domains.
+       | In a future version DRAM power will probably be included in RAM.
+   * - rapl_prefer_psys
+     - | Boolean variable indicating if psys (platform/system) RAPL domain should be
+       | preferred over package domains on Linux systems, defaults to ``False``.
+       | When ``True``, uses psys domain for total platform power (CPU + chipset + PCIe).
+       | When ``False`` (default), uses package domains which are more reliable and
+       | consistent with CPU TDP specifications.
+       | Note: psys can report higher values than CPU TDP and may be unreliable on older systems.
    * - allow_multiple_runs
      - | Boolean variable indicating if multiple instance of CodeCarbon
        | on the same machine is allowed,

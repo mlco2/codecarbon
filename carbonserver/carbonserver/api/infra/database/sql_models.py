@@ -21,7 +21,8 @@ class Emission(Base):
     gpu_energy = Column(Float)
     ram_energy = Column(Float)
     energy_consumed = Column(Float)
-    run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id"))
+    wue = Column(Float, nullable=False, default=0)
+    run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"))
     run = relationship("Run", back_populates="emissions")
 
     def __repr__(self):
@@ -37,7 +38,9 @@ class Run(Base):
     __tablename__ = "runs"
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
-    experiment_id = Column(UUID(as_uuid=True), ForeignKey("experiments.id"))
+    experiment_id = Column(
+        UUID(as_uuid=True), ForeignKey("experiments.id", ondelete="CASCADE")
+    )
     os = Column(String, nullable=True)
     python_version = Column(String, nullable=True)
     codecarbon_version = Column(String, nullable=True)
@@ -52,7 +55,9 @@ class Run(Base):
     ram_total_size = Column(Float, nullable=True)
     tracking_mode = Column(String, nullable=True)
     experiment = relationship("Experiment", back_populates="runs")
-    emissions = relationship("Emission", back_populates="run")
+    emissions = relationship(
+        "Emission", back_populates="run", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return (
@@ -87,9 +92,13 @@ class Experiment(Base):
     on_cloud = Column(Boolean, default=False)
     cloud_provider = Column(String)
     cloud_region = Column(String)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
+    project_id = Column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE")
+    )
     project = relationship("Project", back_populates="experiments")
-    runs = relationship("Run", back_populates="experiment")
+    runs = relationship(
+        "Run", back_populates="experiment", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return (
@@ -111,9 +120,13 @@ class Project(Base):
     description = Column(String)
     public = Column(Boolean, default=False)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
-    experiments = relationship("Experiment", back_populates="project")
+    experiments = relationship(
+        "Experiment", back_populates="project", cascade="all, delete-orphan"
+    )
     organization = relationship("Organization", back_populates="projects")
-    project_tokens = relationship("ProjectToken", back_populates="project")
+    project_tokens = relationship(
+        "ProjectToken", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return (
@@ -176,7 +189,9 @@ class User(Base):
 class ProjectToken(Base):
     __tablename__ = "project_tokens"
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
+    project_id = Column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE")
+    )
     name = Column(String)
     hashed_token = Column(String, nullable=False)
     lookup_value = Column(

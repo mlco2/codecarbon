@@ -22,13 +22,21 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
         date,
     );
 
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen);
+        if (newOpen) {
+            // Sync tempDateRange with current date when opening
+            setTempDateRange(date);
+        }
+    };
+
     const handleApply = () => {
         onDateChange(tempDateRange);
         setOpen(false);
     };
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
                 <Button
                     id="date"
@@ -60,14 +68,20 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
                         mode="range"
                         defaultMonth={date?.from}
                         selected={tempDateRange}
-                        onSelect={setTempDateRange}
+                        onSelect={(range) => {
+                            console.log("onSelect called with:", range);
+                            setTempDateRange(range);
+                        }}
                         numberOfMonths={2}
                     />
                     <div className="flex items-center justify-end gap-2 p-3 border-t">
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setOpen(false)}
+                            onClick={() => {
+                                setTempDateRange(date);
+                                setOpen(false);
+                            }}
                         >
                             Cancel
                         </Button>
