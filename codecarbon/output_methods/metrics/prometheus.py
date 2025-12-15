@@ -1,7 +1,14 @@
 import dataclasses
 import os
 
-from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+from prometheus_client import (
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    delete_from_gateway,
+    push_to_gateway,
+)
+
 from prometheus_client.exposition import basic_auth_handler
 
 from codecarbon.external.logger import logger
@@ -15,6 +22,7 @@ from codecarbon.output_methods.metrics.metric_docs import (
     emissions_doc,
     emissions_rate_doc,
     energy_consumed_doc,
+    energy_consumed_total_doc,
     gpu_energy_doc,
     gpu_power_doc,
     ram_energy_doc,
@@ -58,6 +66,14 @@ def generate_gauge(metric_doc: MetricDocumentation):
         labelnames,
         registry=registry,
     )
+    
+def generate_counter(metric_doc: MetricDocumentation):
+    return Counter(
+        metric_doc.name,
+        metric_doc.description,
+        labelnames,
+        registry=registry,
+    )
 
 
 duration_gauge = generate_gauge(duration_doc)
@@ -70,6 +86,7 @@ cpu_energy_gauge = generate_gauge(cpu_energy_doc)
 gpu_energy_gauge = generate_gauge(gpu_energy_doc)
 ram_energy_gauge = generate_gauge(ram_energy_doc)
 energy_consumed_gauge = generate_gauge(energy_consumed_doc)
+energy_consumed_total = generate_counter(energy_consumed_total_doc)
 
 
 class PrometheusOutput(BaseOutput):
@@ -77,8 +94,18 @@ class PrometheusOutput(BaseOutput):
     Send emissions data to prometheus pushgateway
     """
 
-    def __init__(self, prometheus_url: str):
+    def __init__(self, prometheus_url: str, jobname: str = "codecarbon"):
         self.prometheus_url = prometheus_url
+        self.jobname = jobname
+        
+    def exit(self):
+        # Cleanup metrics from pushgateway on shutdown, prometheus should already have read them
+        # Otherwise they will persist with their last values
+        try:
+            logger.info("Deleting metrics from Prometheus Pushgateway")
+            delete_from_gateway(self.prometheus_url, job=self.jobname)
+        except Exception as e:
+            logger.error(e, exc_info=True)
 
     def out(self, total: EmissionsData, delta: EmissionsData):
         try:
@@ -120,11 +147,16 @@ class PrometheusOutput(BaseOutput):
             (energy_consumed_gauge, "energy_consumed"),
         ]:
             gauge.labels(**labels).set(carbon_emission[emission_name])
+            
+            
+        # Update the total energy consumed counter
+        # This is separate from the total values given to self.out(...)
+        energy_consumed_total.labels(**labels).inc(carbon_emission["energy_consumed"])
 
         # Send the new metric values
         push_to_gateway(
             self.prometheus_url,
-            job="codecarbon",
+            job=self.jobname,
             registry=registry,
             handler=self._auth_handler,
         )

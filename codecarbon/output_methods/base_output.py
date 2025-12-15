@@ -22,3 +22,6 @@ class BaseOutput:
 
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
         pass
+    
+    def exit(self):
+        pass

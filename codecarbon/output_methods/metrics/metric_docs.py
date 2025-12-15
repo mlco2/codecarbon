@@ -50,17 +50,22 @@ ram_power_doc = MetricDocumentation(
 )
 cpu_energy_doc = MetricDocumentation(
     "codecarbon_cpu_energy",
-    description="Energy used per CPU (kWh)",
+    description="Energy used per CPU since last reading (kWh)",
 )
 gpu_energy_doc = MetricDocumentation(
     "codecarbon_gpu_energy",
-    description="Energy used per GPU (kWh)",
+    description="Energy used per GPU since last reading (kWh)",
 )
 ram_energy_doc = MetricDocumentation(
     "codecarbon_ram_energy",
-    description="Energy used per RAM (kWh)",
+    description="Energy used per RAM since last reading (kWh)",
 )
 energy_consumed_doc = MetricDocumentation(
     "codecarbon_energy_consumed",
-    description="Sum of cpu_energy, gpu_energy and ram_energy (kW)",
+    description="Sum of cpu_energy, gpu_energy and ram_energy (kWh)",
+)
+
+energy_consumed_total_doc = MetricDocumentation(
+    "codecarbon_energy_total",
+    description="Accumulated cpu_energy, gpu_energy and ram_energy (kWh)",
 )
