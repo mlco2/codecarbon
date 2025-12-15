@@ -8,7 +8,6 @@ from prometheus_client import (
     delete_from_gateway,
     push_to_gateway,
 )
-
 from prometheus_client.exposition import basic_auth_handler
 
 from codecarbon.external.logger import logger
@@ -66,7 +65,8 @@ def generate_gauge(metric_doc: MetricDocumentation):
         labelnames,
         registry=registry,
     )
-    
+
+
 def generate_counter(metric_doc: MetricDocumentation):
     return Counter(
         metric_doc.name,
@@ -97,7 +97,7 @@ class PrometheusOutput(BaseOutput):
     def __init__(self, prometheus_url: str, jobname: str = "codecarbon"):
         self.prometheus_url = prometheus_url
         self.jobname = jobname
-        
+
     def exit(self):
         # Cleanup metrics from pushgateway on shutdown, prometheus should already have read them
         # Otherwise they will persist with their last values
@@ -147,8 +147,7 @@ class PrometheusOutput(BaseOutput):
             (energy_consumed_gauge, "energy_consumed"),
         ]:
             gauge.labels(**labels).set(carbon_emission[emission_name])
-            
-            
+
         # Update the total energy consumed counter
         # This is separate from the total values given to self.out(...)
         energy_consumed_total.labels(**labels).inc(carbon_emission["energy_consumed"])
