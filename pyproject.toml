@@ -98,22 +98,16 @@ doc = [
 ]
 
 [project.optional-dependencies]
-viz-legacy = [
+carbonboard = [
     "dash",
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
-
-viz = [
-   "mock",
-   "pytest",
-   "responses",
-   "numpy<2.0.0;python_version<'3.9'",
-   "numpy;python_version>='3.9'",
-   "psutil",
-   "requests-mock",
-   "rapidfuzz",
-   "importlib_resources;python_version<'3.9'"
+# Backwards compatibility alias - will be removed in v4.0.0
+viz-legacy = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
 ]
 api  = [
     "alembic<2.0.0",
