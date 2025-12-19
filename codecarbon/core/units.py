@@ -49,6 +49,34 @@ class EmissionsPerKWh:
         return cls(kgs_per_kWh=kgs_per_kWh)
 
 
+@dataclass
+class WaterPerKWh:
+    """
+    Measured in L/kWh
+    """
+
+    GALIMP_KWH_TO_L_KWH = 4.546091879
+    GALUS_KWH_TO_L_KWH = 3.785411784
+
+    l_per_kWh: float
+
+    @classmethod
+    def from_gal_imp_per_kWh(cls, gal_imp_per_kWh: float) -> "WaterPerKWh":
+        return cls(l_per_kWh=gal_imp_per_kWh * WaterPerKWh.GALIMP_KWH_TO_L_KWH)
+
+    @classmethod
+    def from_gal_us_per_kWh(cls, gal_us_per_kWh: float) -> "WaterPerKWh":
+        return cls(l_per_kWh=gal_us_per_kWh * WaterPerKWh.GALUS_KWH_TO_L_KWH)
+
+    @classmethod
+    def from_gal_us_per_MWh(cls, gal_us_per_MWh: float) -> "WaterPerKWh":
+        return cls(l_per_kWh=gal_us_per_MWh * 1000 * WaterPerKWh.GALUS_KWH_TO_L_KWH)
+
+    @classmethod
+    def from_l_per_kWh(cls, l_per_kWh: float) -> "WaterPerKWh":
+        return cls(l_per_kWh=l_per_kWh)
+
+
 @dataclass(order=True)
 class Energy:
     """

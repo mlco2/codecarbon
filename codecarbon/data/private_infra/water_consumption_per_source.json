@@ -1,0 +1,17 @@
+{
+    "unit": "gal us Water.eq/MWh",
+    "world_average": 216.621083,
+    "world_average_source":"https://www.mdpi.com/2073-4441/12/9/2482",
+    "coal": 550,
+    "coal_source": "https://iopscience.iop.org/article/10.1088/1748-9326/8/1/015031/meta",
+    "natural_gas": 210,
+    "natural_gas_source": "https://iopscience.iop.org/article/10.1088/1748-9326/8/1/015031/meta",
+    "geothermal": 290,
+    "geothermal_source": "https://iopscience.iop.org/article/10.1088/1748-9326/8/1/015031/meta",
+    "nuclear": 775,
+    "nuclear_source": "https://iopscience.iop.org/article/10.1088/1748-9326/8/1/015031/meta",
+    "solar": 85,
+    "solar_source": "https://iopscience.iop.org/article/10.1088/1748-9326/8/1/015031/meta",
+    "wind": 11,
+    "wind_source": "https://iopscience.iop.org/article/10.1088/1748-9326/8/1/015031/meta"
+}
