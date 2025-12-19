@@ -27,6 +27,7 @@ class DataSource:
             "can_energy_mix_data_path": "data/private_infra/2023/canada_energy_mix.json",  # noqa: E501
             "global_energy_mix_data_path": "data/private_infra/global_energy_mix.json",  # noqa: E501
             "carbon_intensity_per_source_path": "data/private_infra/carbon_intensity_per_source.json",
+            "water_consumption_per_source_path": "data/private_infra/water_consumption_per_source.json",
             "cpu_power_path": "data/hardware/cpu_power.csv",
         }
         self.module_name = "codecarbon"
@@ -60,6 +61,15 @@ class DataSource:
         """
         return self.get_ressource_path(
             self.module_name, self.config["carbon_intensity_per_source_path"]
+        )
+
+    @property
+    def water_consumption_per_source_path(self):
+        """
+        Get the path from the package resources.
+        """
+        return self.get_ressource_path(
+            self.module_name, self.config["water_consumption_per_source_path"]
         )
 
     def country_emissions_data_path(self, country: str):
@@ -128,6 +138,14 @@ class DataSource:
         with open(self.carbon_intensity_per_source_path) as f:
             carbon_intensity_per_source: Dict = json.load(f)
         return carbon_intensity_per_source
+
+    def get_water_consumption_per_source_data(self) -> Dict:
+        """
+        Returns Carbon intensity per source. In lWater.eq/MWh.
+        """
+        with open(self.water_consumption_per_source_path) as f:
+            water_consumption_per_source: Dict = json.load(f)
+        return water_consumption_per_source
 
     def get_cpu_power_data(self) -> pd.DataFrame:
         """
