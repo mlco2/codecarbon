@@ -326,12 +326,14 @@ pytest test_package_integrity.py
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
 
 ```bash
-uv run --extra viz-legacy  task carbonboard --filepath="examples/emissions.csv"
+uv run --extra carbonboard task carbonboard --filepath="examples/emissions.csv"
 
 # or, if you don't want to use UV
-pip install codecarbon["viz"]
+pip install codecarbon[carbonboard]
 python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
+
+> **Note:** The `viz-legacy` extra is deprecated but still works for backwards compatibility. It will be removed in v4.0.0. Please use `carbonboard` instead.
 
 If you have the package installed, you can run the CLI command:
 
