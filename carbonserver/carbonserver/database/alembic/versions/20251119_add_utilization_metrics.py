@@ -1,7 +1,7 @@
 """add_utilization_metrics_to_emissions
 
 Revision ID: 20251119_add_utilization
-Revises: 202501_f3a10
+Revises: 3212895acafd
 Create Date: 2025-11-19 18:52:00.000000
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20251119_add_utilization"
-down_revision = "f3a10c95079f"
+down_revision = "3212895acafd"
 branch_labels = None
 depends_on = None
 
