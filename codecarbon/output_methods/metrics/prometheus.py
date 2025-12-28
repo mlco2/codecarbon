@@ -94,16 +94,16 @@ class PrometheusOutput(BaseOutput):
     Send emissions data to prometheus pushgateway
     """
 
-    def __init__(self, prometheus_url: str, jobname: str = "codecarbon"):
+    def __init__(self, prometheus_url: str, job_name: str = "codecarbon"):
         self.prometheus_url = prometheus_url
-        self.jobname = jobname
+        self.job_name = job_name
 
     def exit(self):
         # Cleanup metrics from pushgateway on shutdown, prometheus should already have read them
         # Otherwise they will persist with their last values
         try:
             logger.info("Deleting metrics from Prometheus Pushgateway")
-            delete_from_gateway(self.prometheus_url, job=self.jobname)
+            delete_from_gateway(self.prometheus_url, job=self.job_name)
         except Exception as e:
             logger.error(e, exc_info=True)
 
@@ -155,7 +155,7 @@ class PrometheusOutput(BaseOutput):
         # Send the new metric values
         push_to_gateway(
             self.prometheus_url,
-            job=self.jobname,
+            job=self.job_name,
             registry=registry,
             handler=self._auth_handler,
         )
