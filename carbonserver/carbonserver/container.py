@@ -11,6 +11,9 @@ from carbonserver.api.infra.repositories import (
     repository_users,
 )
 from carbonserver.api.services.auth_context import AuthContext
+from carbonserver.api.services.auth_providers.auth_provider_factory import (
+    get_auth_provider,
+)
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.services.organization_service import OrganizationService
@@ -39,6 +42,11 @@ class ServerContainer(containers.DeclarativeContainer):
         Database,
         db_url=db_url,
     )
+
+    # Authentication provider (configurable via AUTH_PROVIDER env var)
+    # Options: 'fief' (default) or 'none' (dev/testing only)
+    auth_provider = providers.Callable(get_auth_provider)
+
     emission_repository = providers.Factory(
         repository_emissions.SqlAlchemyRepository,
         session_factory=db.provided.session,
