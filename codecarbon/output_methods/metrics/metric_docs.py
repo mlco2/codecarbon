@@ -67,5 +67,5 @@ energy_consumed_doc = MetricDocumentation(
 
 energy_consumed_total_doc = MetricDocumentation(
     "codecarbon_energy_total",
-    description="Accumulated cpu_energy, gpu_energy and ram_energy (kWh)",
+    description="Accumulated cpu_energy, gpu_energy and ram_energy (kWh) since the start of the run",
 )
