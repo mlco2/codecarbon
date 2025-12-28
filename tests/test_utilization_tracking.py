@@ -9,7 +9,7 @@ from unittest import mock
 
 import pandas as pd
 
-from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
+from codecarbon.emissions_tracker import OfflineEmissionsTracker
 from tests.testutils import get_custom_mock_open
 
 empty_conf = "[codecarbon]"

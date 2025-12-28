@@ -25,7 +25,7 @@ def test_basic_tracking():
     tracker.stop()
     emissions = tracker.final_emissions_data
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Duration: {emissions.duration:.2f} seconds")
     print(f"  CPU Utilization: {emissions.cpu_utilization_percent:.2f}%")
     print(f"  RAM Utilization: {emissions.ram_utilization_percent:.2f}%")
@@ -59,7 +59,7 @@ def test_task_tracking():
     task_emissions = tracker.stop_task()
     tracker.stop()
 
-    print(f"\nTask Results:")
+    print("\nTask Results:")
     print(f"  Duration: {task_emissions.duration:.2f} seconds")
     print(f"  CPU Utilization: {task_emissions.cpu_utilization_percent:.2f}%")
     print(f"  RAM Utilization: {task_emissions.ram_utilization_percent:.2f}%")
@@ -94,7 +94,7 @@ def test_averaging():
     instant_cpu_start = psutil.cpu_percent()
     instant_ram_start = psutil.virtual_memory().percent
 
-    print(f"Instantaneous at start:")
+    print("Instantaneous at start:")
     print(f"  CPU: {instant_cpu_start:.2f}%")
     print(f"  RAM: {instant_ram_start:.2f}%")
 
@@ -106,14 +106,14 @@ def test_averaging():
     instant_cpu_end = psutil.cpu_percent()
     instant_ram_end = psutil.virtual_memory().percent
 
-    print(f"\nInstantaneous at end:")
+    print("\nInstantaneous at end:")
     print(f"  CPU: {instant_cpu_end:.2f}%")
     print(f"  RAM: {instant_ram_end:.2f}%")
 
     tracker.stop()
     emissions = tracker.final_emissions_data
 
-    print(f"\nAveraged over period:")
+    print("\nAveraged over period:")
     print(f"  CPU: {emissions.cpu_utilization_percent:.2f}%")
     print(f"  RAM: {emissions.ram_utilization_percent:.2f}%")
 
