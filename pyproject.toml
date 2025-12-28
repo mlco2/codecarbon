@@ -90,6 +90,7 @@ dev = [
     "requests",
     "requests-mock",
     "responses",
+    "logfire>=1.0.1",
 ]
 doc = [
   "sphinx",
@@ -97,22 +98,16 @@ doc = [
 ]
 
 [project.optional-dependencies]
-viz-legacy = [
+carbonboard = [
     "dash",
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
-
-viz = [
-   "mock",
-   "pytest",
-   "responses",
-   "numpy<2.0.0;python_version<'3.9'",
-   "numpy;python_version>='3.9'",
-   "psutil",
-   "requests-mock",
-   "rapidfuzz",
-   "importlib_resources;python_version<'3.9'"
+# Backwards compatibility alias - will be removed in v4.0.0
+viz-legacy = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
 ]
 api  = [
     "alembic<2.0.0",
@@ -165,7 +160,7 @@ docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.1.1"
+current_version = "3.2.0"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

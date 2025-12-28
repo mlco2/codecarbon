@@ -68,10 +68,10 @@ class FileOutput(BaseOutput):
                 # No entries
                 return True
             dict_from_csv = dict(csv_entries_list[0])
-            list_of_column_names = list(dict_from_csv.keys())
-            return list(data.values.keys()) == list_of_column_names
+            list_of_column_names = sorted(dict_from_csv.keys())
+            return sorted(data.values.keys()) == list_of_column_names
 
-    def out(self, total: EmissionsData, _: EmissionsData):
+    def out(self, total: EmissionsData, _):
         """
         Save the emissions data from a whole run to a CSV file.
 
@@ -88,6 +88,11 @@ class FileOutput(BaseOutput):
 
         """
         file_exists: bool = os.path.isfile(self.save_file_path)
+        if file_exists and os.path.getsize(self.save_file_path) == 0:
+            logger.warning(
+                f"File {self.save_file_path} exists but is empty. Treating as new file."
+            )
+            file_exists = False
         if file_exists and not self.has_valid_headers(total):
             logger.warning("The CSV format has changed, backing up old emission file.")
             backup(self.save_file_path)

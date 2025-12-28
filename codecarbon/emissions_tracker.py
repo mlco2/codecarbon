@@ -183,8 +183,8 @@ class BaseEmissionsTracker(ABC):
         logger_preamble: Optional[str] = _sentinel,
         force_cpu_power: Optional[int] = _sentinel,
         force_ram_power: Optional[int] = _sentinel,
-        pue: Optional[int] = _sentinel,
-        wue: Optional[bool] = _sentinel,
+        pue: Optional[float] = _sentinel,
+        wue: Optional[float] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
@@ -348,6 +348,11 @@ class BaseEmissionsTracker(ABC):
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
+        # Running average tracking for power
+        self._cpu_power_sum: float = 0.0
+        self._gpu_power_sum: float = 0.0
+        self._ram_power_sum: float = 0.0
+        self._power_measurement_count: int = 0
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
@@ -772,6 +777,24 @@ class BaseEmissionsTracker(ABC):
             on_cloud = "Y"
             cloud_provider = cloud.provider
             cloud_region = cloud.region
+
+        # Calculate average power values across all measurements
+        avg_cpu_power = (
+            self._cpu_power_sum / self._power_measurement_count
+            if self._power_measurement_count > 0
+            else self._cpu_power.W
+        )
+        avg_gpu_power = (
+            self._gpu_power_sum / self._power_measurement_count
+            if self._power_measurement_count > 0
+            else self._gpu_power.W
+        )
+        avg_ram_power = (
+            self._ram_power_sum / self._power_measurement_count
+            if self._power_measurement_count > 0
+            else self._ram_power.W
+        )
+
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -784,9 +807,9 @@ class BaseEmissionsTracker(ABC):
             gpu_utilization_percent=sum(self._gpu_utilization_history) / len(self._gpu_utilization_history) if self._gpu_utilization_history else 0,
             ram_utilization_percent=sum(self._ram_utilization_history) / len(self._ram_utilization_history) if self._ram_utilization_history else 0,
             ram_used_gb=sum(self._ram_used_history) / len(self._ram_used_history) if self._ram_used_history else 0,
-            cpu_power=self._cpu_power.W,
-            gpu_power=self._gpu_power.W,
-            ram_power=self._ram_power.W,
+            cpu_power=avg_cpu_power,
+            gpu_power=avg_gpu_power,
+            ram_power=avg_ram_power,
             cpu_energy=self._total_cpu_energy.kWh,
             gpu_energy=self._total_gpu_energy.kWh,
             ram_energy=self._total_ram_energy.kWh,
@@ -887,6 +910,8 @@ class BaseEmissionsTracker(ABC):
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
+                # Accumulate for running average
+                self._cpu_power_sum += power.W
                 logger.info(
                     f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
                     + f", power : {self._cpu_power.W} W"
@@ -897,6 +922,8 @@ class BaseEmissionsTracker(ABC):
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
+                # Accumulate for running average
+                self._gpu_power_sum += power.W
                 logger.info(
                     f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                     + f". Total GPU Power : {self._gpu_power.W} W"
@@ -904,6 +931,8 @@ class BaseEmissionsTracker(ABC):
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
                 self._ram_power = power
+                # Accumulate for running average
+                self._ram_power_sum += power.W
                 logger.info(
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
                     + f". RAM Power : {self._ram_power.W} W"
@@ -912,6 +941,8 @@ class BaseEmissionsTracker(ABC):
                 if hardware.chip_part == "CPU":
                     self._total_cpu_energy += energy
                     self._cpu_power = power
+                    # Accumulate for running average
+                    self._cpu_power_sum += power.W
                     logger.info(
                         f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
                         + f". Total CPU Power : {self._cpu_power.W} W"
@@ -919,6 +950,8 @@ class BaseEmissionsTracker(ABC):
                 elif hardware.chip_part == "GPU":
                     self._total_gpu_energy += energy
                     self._gpu_power = power
+                    # Accumulate for running average
+                    self._gpu_power_sum += power.W
                     logger.info(
                         f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                         + f". Total GPU Power : {self._gpu_power.W} W"
@@ -929,6 +962,8 @@ class BaseEmissionsTracker(ABC):
             logger.debug(
                 f"Done measure for {hardware.__class__.__name__} - measurement time: {h_time:,.4f} s - last call {last_duration:,.2f} s"
             )
+        # Increment measurement count for power averaging
+        self._power_measurement_count += 1
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity and {self._total_water.litres:.6f} L of water were used since the beginning."
         )
@@ -1177,7 +1212,7 @@ def track_emissions(
     country_2letter_iso_code: Optional[str] = _sentinel,
     force_cpu_power: Optional[int] = _sentinel,
     force_ram_power: Optional[int] = _sentinel,
-    pue: Optional[int] = _sentinel,
+    pue: Optional[float] = _sentinel,
     wue: Optional[float] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
     rapl_include_dram: Optional[bool] = _sentinel,
