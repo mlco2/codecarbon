@@ -25,13 +25,3 @@ export async function fetchApi<T>(
         throw error;
     }
 }
-
-// Helper function to check if we're running on the client
-export function isClient(): boolean {
-    return typeof window !== "undefined";
-}
-
-// Helper function to check if we're running on the server
-export function isServer(): boolean {
-    return typeof window === "undefined";
-}
