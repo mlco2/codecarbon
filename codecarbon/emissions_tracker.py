@@ -13,6 +13,8 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import psutil
+
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
@@ -335,6 +337,11 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_water: Water = Water.from_litres(litres=0)
+        # CPU and RAM utilization tracking
+        self._cpu_utilization_history: List[float] = []
+        self._gpu_utilization_history: List[float] = []
+        self._ram_utilization_history: List[float] = []
+        self._ram_used_history: List[float] = []
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -482,6 +489,13 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._last_measured_time = self._start_time = time.perf_counter()
+
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        self._gpu_utilization_history.clear()
+
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -525,6 +539,13 @@ class BaseEmissionsTracker(ABC):
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
+
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        self._gpu_utilization_history.clear()
+
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -782,6 +803,26 @@ class BaseEmissionsTracker(ABC):
             duration=duration.seconds,
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
+            cpu_utilization_percent=(
+                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
+                if self._cpu_utilization_history
+                else 0
+            ),
+            gpu_utilization_percent=(
+                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
+                if self._gpu_utilization_history
+                else 0
+            ),
+            ram_utilization_percent=(
+                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
+                if self._ram_utilization_history
+                else 0
+            ),
+            ram_used_gb=(
+                sum(self._ram_used_history) / len(self._ram_used_history)
+                if self._ram_used_history
+                else 0
+            ),
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
@@ -854,6 +895,21 @@ class BaseEmissionsTracker(ABC):
         for hardware in self._hardware:
             if isinstance(hardware, CPU):
                 hardware.monitor_power()
+
+        # Collect CPU and RAM utilization metrics
+        self._cpu_utilization_history.append(psutil.cpu_percent())
+        self._ram_utilization_history.append(psutil.virtual_memory().percent)
+        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
+
+        # Collect GPU utilization metrics
+        for hardware in self._hardware:
+            if isinstance(hardware, GPU):
+                gpu_details = hardware.devices.get_gpu_details()
+                for gpu_detail in gpu_details:
+                    if "gpu_utilization" in gpu_detail:
+                        self._gpu_utilization_history.append(
+                            gpu_detail["gpu_utilization"]
+                        )
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
