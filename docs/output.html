@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Output &mdash; CodeCarbon 3.1.1 documentation</title>
+  <title>Output &mdash; CodeCarbon 3.2.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=796a81b5"></script>
+      <script src="_static/documentation_options.js?v=eb155f5e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -145,13 +145,13 @@ input parameter (defaults to the current directory), for each experiment tracked
 <td><p>emissions divided per duration, in Kg/s</p></td>
 </tr>
 <tr class="row-even"><td><p>cpu_power</p></td>
-<td><p>CPU power (W)</p></td>
+<td><p>Mean CPU power (W)</p></td>
 </tr>
 <tr class="row-odd"><td><p>gpu_power</p></td>
-<td><p>GPU power (W)</p></td>
+<td><p>Mean GPU power (W)</p></td>
 </tr>
 <tr class="row-even"><td><p>ram_power</p></td>
-<td><p>RAM power (W)</p></td>
+<td><p>Mean RAM power (W)</p></td>
 </tr>
 <tr class="row-odd"><td><p>cpu_energy</p></td>
 <td><p>Energy used per CPU (kWh)</p></td>
@@ -226,8 +226,20 @@ input parameter (defaults to the current directory), for each experiment tracked
 <tr class="row-odd"><td><p>ram_total_size</p></td>
 <td><p>total RAM available (Go)</p></td>
 </tr>
-<tr class="row-even"><td><p>Tracking_mode:</p></td>
+<tr class="row-even"><td><p>tracking_mode:</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">machine</span></code> or <code class="docutils literal notranslate"><span class="pre">process``(default</span> <span class="pre">to</span> <span class="pre">``machine</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>cpu_utilization_percent</p></td>
+<td><p>Average CPU utilization during tracking period (%)</p></td>
+</tr>
+<tr class="row-even"><td><p>gpu_utilization_percent</p></td>
+<td><p>Average GPU utilization during tracking period (%)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ram_utilization_percent</p></td>
+<td><p>Average RAM utilization during tracking period (%)</p></td>
+</tr>
+<tr class="row-even"><td><p>ram_used_gb</p></td>
+<td><p>Average RAM used during tracking period (GB)</p></td>
 </tr>
 </tbody>
 </table>

@@ -392,7 +392,7 @@ api_endpoint = http://localhost:8008
 Before using it, you need an experiment_id, to get one, run:
 
 ```
-codecarbon init
+codecarbon login
 ```
 
 It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.
