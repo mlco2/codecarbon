@@ -251,6 +251,7 @@ export default function NavBar({
                             onClose={() => setNewOrgModalOpen(false)}
                             onOrganizationCreated={refreshOrgList}
                         />
+                        { USER_PROFILE_URL &&
                         <NavItem
                             isSelected={selected === "profile"}
                             onClick={() => {
@@ -263,6 +264,7 @@ export default function NavBar({
                         >
                             Profile
                         </NavItem>
+                        }
                         <NavItem
                             onClick={() => {
                                 setSheetOpened?.(false);
