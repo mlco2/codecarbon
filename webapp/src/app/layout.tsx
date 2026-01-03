@@ -1,6 +1,4 @@
 "use client";
-
-import { FiefAuthProvider } from "@fief/fief/nextjs/react";
 import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { SWRProvider } from "../helpers/swr";
@@ -19,13 +17,6 @@ export default function RootLayout({
             {/* suppressHydrationWarning is a Next theme recommendation */}
             <body className={font.className}>
                 <SWRProvider>
-                    <FiefAuthProvider
-                        currentUserPath={`${process.env.NEXT_PUBLIC_API_URL}/auth/check`}
-                        state={{
-                            userinfo: null,
-                            accessTokenInfo: null,
-                        }}
-                    >
                         <ThemeProvider
                             attribute="class"
                             defaultTheme="dark"
@@ -35,7 +26,6 @@ export default function RootLayout({
                             {children}
                             <Toaster />
                         </ThemeProvider>
-                    </FiefAuthProvider>
                 </SWRProvider>
             </body>
         </html>
