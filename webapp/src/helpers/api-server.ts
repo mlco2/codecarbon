@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { SESSION_COOKIE_NAME } from "./fief";
+import { SESSION_COOKIE_NAME } from "./auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
