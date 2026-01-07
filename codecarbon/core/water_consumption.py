@@ -52,6 +52,7 @@ class WaterConsumption:
                 ).l_per_kWh
                 * energy.kWh
             )  # l
+
         return water_consumption
 
     def get_cloud_country_name(self, cloud: CloudMetadata) -> str:
