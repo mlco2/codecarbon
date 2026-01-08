@@ -70,7 +70,7 @@ class WaterPerKWh:
 
     @classmethod
     def from_gal_us_per_MWh(cls, gal_us_per_MWh: float) -> "WaterPerKWh":
-        return cls(l_per_kWh=gal_us_per_MWh * 1000 * WaterPerKWh.GALUS_KWH_TO_L_KWH)
+        return cls(l_per_kWh=gal_us_per_MWh * 0.001 * WaterPerKWh.GALUS_KWH_TO_L_KWH)
 
     @classmethod
     def from_l_per_kWh(cls, l_per_kWh: float) -> "WaterPerKWh":
