@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
+from codecarbon.core.water_consumption import WaterConsumption
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
@@ -413,6 +414,9 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source, self._electricitymaps_api_token
         )
+        self._water_consumption: WaterConsumption = WaterConsumption(
+            self._data_source, self._electricitymaps_api_token
+        )
         self._init_output_methods(api_key=self._api_key)
 
     def _init_output_methods(self, *, api_key: str = None):
@@ -577,6 +581,7 @@ class BaseEmissionsTracker(ABC):
             emissions_data_delta.gpu_energy = 0.0
             emissions_data_delta.ram_energy = 0.0
             emissions_data_delta.energy_consumed = 0.0
+            emissions_data_delta.water_consumed = 0.0
         else:
             emissions_data_delta = dataclasses.replace(emissions_data)
             emissions_data_delta.compute_delta_emission(
@@ -715,6 +720,9 @@ class BaseEmissionsTracker(ABC):
             emissions = self._emissions.get_private_infra_emissions(
                 self._total_energy, self._geo
             )  # float: kg co2_eq
+            water_consumed=self._water_consumption.get_private_infra_water_consumption(
+                self._total_energy, self._geo
+            )  # float liters
             country_name = self._geo.country_name
             country_iso_code = self._geo.country_iso_code
             region = self._geo.region
@@ -723,6 +731,9 @@ class BaseEmissionsTracker(ABC):
             cloud_region = ""
         else:
             emissions = self._emissions.get_cloud_emissions(
+                self._total_energy, cloud, self._geo
+            )
+            water_consumed = self._water_consumption.get_cloud_water_consumption(
                 self._total_energy, cloud, self._geo
             )
             # Try to get cloud region metadata, fall back to geo metadata if not found
@@ -773,6 +784,12 @@ class BaseEmissionsTracker(ABC):
             if self._power_measurement_count > 0
             else self._ram_power.W
         )
+
+        # Allows user to still use WUE
+        if self._wue>0:
+            water_consumed=self._total_energy.kWh * self._wue
+
+        self._total_water = Water.from_litres(litres=water_consumed)
 
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
@@ -866,9 +883,9 @@ class BaseEmissionsTracker(ABC):
             ) = hardware.measure_power_and_energy(last_duration=last_duration)
             # Apply the PUE of the datacenter to the consumed energy
             energy *= self._pue
-            water = Water.from_litres(litres=self._wue * energy.kWh)
+            #water = Water.from_litres(litres=self._wue * energy.kWh)
             self._total_energy += energy
-            self._total_water += water
+            #self._total_water += water
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
@@ -927,7 +944,7 @@ class BaseEmissionsTracker(ABC):
         # Increment measurement count for power averaging
         self._power_measurement_count += 1
         logger.info(
-            f"{self._total_energy.kWh:.6f} kWh of electricity and {self._total_water.litres:.6f} L of water were used since the beginning."
+            f"{self._total_energy.kWh:.6f} kWh of electricity were used since the beginning."
         )
 
     def _measure_power_and_energy(self) -> None:
