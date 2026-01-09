@@ -168,6 +168,7 @@ class CPU(BaseHardware):
         tdp: int,
         rapl_dir: str = "/sys/class/powercap/intel-rapl/subsystem",
         tracking_mode: str = "machine",
+        tracking_pids: Optional[List[int]] = None,
         rapl_include_dram: bool = False,
         rapl_prefer_psys: bool = False,
     ):
@@ -179,9 +180,17 @@ class CPU(BaseHardware):
         self._tdp = tdp
         self._is_generic_tdp = False
         self._tracking_mode = tracking_mode
-        self._pid = psutil.Process().pid
+        self._tracking_pids = tracking_pids
         self._cpu_count = count_cpus()
-        self._process = psutil.Process(self._pid)
+                
+        if tracking_pids is not None:
+            # Make list if it is not already a list
+            if not isinstance(tracking_pids, list):
+                self._tracking_pids = [tracking_pids]
+            else:
+                self._tracking_pids = tracking_pids
+        else:
+            self._tracking_pids = [psutil.Process().pid]
 
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
@@ -246,10 +255,41 @@ class CPU(BaseHardware):
             )
         elif self._tracking_mode == "process":
 
-            cpu_load = self._process.cpu_percent(interval=0.5) / self._cpu_count
+            cpu_load = 0
+
+            for pid in self._tracking_pids:
+                if not psutil.pid_exists(pid):
+                    # Log a warning and continue
+                    logger.warning(f"Process with pid {pid} does not exist anymore.")
+                    continue
+                self._process = psutil.Process(pid)
+                cpu_load += self._process.cpu_percent(interval=0.5)
+
+                try:
+                    children = self._process.children(recursive=True)
+                    for child in children:
+                        try:
+                            # Use interval=0.0 for children to avoid blocking
+                            child_cpu = child.cpu_percent(interval=0.0)
+                            logger.info(f"Child {child.pid} CPU: {child_cpu}")
+                            cpu_load += child_cpu
+                        except (
+                            psutil.NoSuchProcess,
+                            psutil.AccessDenied,
+                            psutil.ZombieProcess,
+                        ):
+                            # Child process may have terminated or we don't have access
+                            continue
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    # Main process terminated or access denied
+                    pass
+
+            # Normalize by CPU count
+            logger.info(f"Total CPU load (all processes): {cpu_load}")
+            cpu_load = cpu_load / self._cpu_count
             power = self._tdp * cpu_load / 100
             logger.debug(
-                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid}."
+                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for processes {self._tracking_pids} (including children)."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
@@ -337,6 +377,7 @@ class CPU(BaseHardware):
         model: Optional[str] = None,
         tdp: Optional[int] = None,
         tracking_mode: str = "machine",
+        tracking_pids: Optional[List[int]] = None,
         rapl_include_dram: bool = False,
         rapl_prefer_psys: bool = False,
     ) -> "CPU":
@@ -364,6 +405,7 @@ class CPU(BaseHardware):
             model=model,
             tdp=tdp,
             tracking_mode=tracking_mode,
+            tracking_pids=tracking_pids,
             rapl_include_dram=rapl_include_dram,
             rapl_prefer_psys=rapl_prefer_psys,
         )

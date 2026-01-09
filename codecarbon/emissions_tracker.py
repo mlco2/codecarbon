@@ -178,6 +178,7 @@ class BaseEmissionsTracker(ABC):
             str
         ] = _sentinel,  # Deprecated, use electricitymaps_api_token
         tracking_mode: Optional[str] = _sentinel,
+        tracking_pids: Optional[List[int]] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
@@ -233,6 +234,8 @@ class BaseEmissionsTracker(ABC):
                               power consumption due to the entire machine or to try and
                               isolate the tracked processe's in isolation.
                               Defaults to "machine".
+        :param tracking_pids: PID of the process to be tracked when using "process" mode.
+                             Defaults to None, which means the current process.
         :param log_level: Global codecarbon log level. Accepts one of:
                             {"debug", "info", "warning", "error", "critical"}.
                           Defaults to "info".
@@ -316,6 +319,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
+        self._set_from_conf(tracking_pids, "tracking_pids", None, int)
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
@@ -389,6 +393,12 @@ class BaseEmissionsTracker(ABC):
             )
         else:
             logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
+
+        if self._tracking_mode == "process":
+            logger.info("  Tracking mode: process")
+            logger.info("  Tracked PIDs: " + str(self._tracking_pids))
+        else:
+            logger.info("  Tracking mode: machine")
 
         # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
@@ -1219,6 +1229,7 @@ def track_emissions(
         str
     ] = _sentinel,  # Deprecated, use electricitymaps_api_token
     tracking_mode: Optional[str] = _sentinel,
+    tracking_pids: Optional[List[int]] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
     logger_preamble: Optional[str] = _sentinel,
@@ -1279,6 +1290,8 @@ def track_emissions(
                           power consumption due to the entire machine or to try and
                           isolate the tracked processe's in isolation.
                           Defaults to "machine".
+    :param tracking_pids: PID of the process to be tracked when using "process" mode.
+                          Defaults to None, which means the current process.
     :param log_level: Global codecarbon log level. Accepts one of:
                       {"debug", "info", "warning", "error", "critical"}.
                       Defaults to "info".
@@ -1353,6 +1366,7 @@ def track_emissions(
                     gpu_ids=gpu_ids,
                     electricitymaps_api_token=_electricitymaps_token,
                     tracking_mode=tracking_mode,
+                    tracking_pids=tracking_pids,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
                     logger_preamble=logger_preamble,
@@ -1392,6 +1406,7 @@ def track_emissions(
                     experiment_name=experiment_name,
                     electricitymaps_api_token=_electricitymaps_token,
                     tracking_mode=tracking_mode,
+                    tracking_pids=tracking_pids,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
                     logger_preamble=logger_preamble,
