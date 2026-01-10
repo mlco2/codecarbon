@@ -70,4 +70,3 @@ jobs:
         # Test that the CLI is functional
         codecarbon --help
         python -c "from codecarbon import EmissionsTracker; print('✓ Package import successful')"
-
