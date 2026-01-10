@@ -63,7 +63,7 @@ pip install codecarbon
 
 **Using Conda environments**
 If you're using Conda, you can install CodeCarbon with pip in your Conda environment:
-```python
+```bash
 conda activate your_env
 pip install codecarbon
 ```
