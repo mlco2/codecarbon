@@ -6,7 +6,9 @@ from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyCookie, HTTPBearer, OAuth2AuthorizationCodeBearer
 
-from carbonserver.api.services.auth_providers.auth_provider import AuthProvider
+from carbonserver.api.services.auth_providers.oidc_auth_provider import (
+    OIDCAuthProvider,
+)
 from carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
 from carbonserver.container import ServerContainer
@@ -23,16 +25,26 @@ class FullUser:
 SESSION_COOKIE_NAME = "user_session"
 
 
-def get_oauth_scheme(auth_provider: AuthProvider) -> OAuth2AuthorizationCodeBearer:
+def get_oauth_scheme(
+    auth_provider: Optional[OIDCAuthProvider],
+) -> OAuth2AuthorizationCodeBearer:
     """
     Get the OAuth2 scheme for the configured auth provider.
 
     Args:
-        auth_provider: The authentication provider instance
+        auth_provider: The authentication provider instance (None if auth disabled)
 
     Returns:
         OAuth2AuthorizationCodeBearer configured for the provider
     """
+    if auth_provider is None:
+        # Return a dummy scheme when auth is disabled
+        return OAuth2AuthorizationCodeBearer(
+            "http://localhost/authorize",
+            "http://localhost/token",
+            scopes={x: x for x in OAUTH_SCOPES},
+            auto_error=False,
+        )
     return OAuth2AuthorizationCodeBearer(
         auth_provider.get_authorize_endpoint(),
         auth_provider.get_token_endpoint(),
@@ -63,7 +75,9 @@ class UserWithAuthDependency:
         user_service: Optional[UserService] = Depends(
             Provide[ServerContainer.user_service]
         ),
-        auth_provider: AuthProvider = Depends(Provide[ServerContainer.auth_provider]),
+        auth_provider: Optional[OIDCAuthProvider] = Depends(
+            Provide[ServerContainer.auth_provider]
+        ),
     ):
         self.user_service = user_service
         if cookie_token is not None:
@@ -73,7 +87,7 @@ class UserWithAuthDependency:
                 algorithms=["HS256", "RS256"],
             )
         elif bearer_token is not None:
-            if settings.environment != "develop":
+            if settings.environment != "develop" and auth_provider is not None:
                 try:
                     await auth_provider.validate_access_token(bearer_token.credentials)
                 except Exception:

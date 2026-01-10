@@ -2,7 +2,7 @@
 OIDC Authentication Provider Implementation
 
 This module provides a generic OIDC authentication provider implementation using fastapi-oidc.
-It can work with any OIDC-compliant provider, including Fief.
+It can work with any OIDC-compliant provider (Fief, Keycloak, Auth0, etc.).
 """
 
 import asyncio
@@ -13,12 +13,10 @@ import httpx
 from fastapi_oidc import discovery
 from jose import jwt
 
-from carbonserver.api.services.auth_providers.auth_provider import AuthProvider
-
 DEFAULT_SIGNATURE_CACHE_TTL = 3600  # seconds
 
 
-class OIDCAuthProvider(AuthProvider):
+class OIDCAuthProvider:
     """
     Generic OIDC authentication provider implementation.
 

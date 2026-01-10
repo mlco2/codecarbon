@@ -5,10 +5,12 @@ from typing import Optional
 
 import requests
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 
-from carbonserver.api.services.auth_providers.auth_provider import AuthProvider
+from carbonserver.api.services.auth_providers.oidc_auth_provider import (
+    OIDCAuthProvider,
+)
 from carbonserver.api.services.auth_service import (
     OptionalUserWithAuthDependency,
     UserWithAuthDependency,
@@ -30,7 +32,9 @@ router = APIRouter()
 def check_login(
     auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
-    auth_provider: AuthProvider = Depends(Provide[ServerContainer.auth_provider]),
+    auth_provider: Optional[OIDCAuthProvider] = Depends(
+        Provide[ServerContainer.auth_provider]
+    ),
 ):
     """
     return user data or redirect to login screen
@@ -46,8 +50,12 @@ async def auth_callback(
     request: Request,
     response: Response,
     code: str = Query(...),
-    auth_provider: AuthProvider = Depends(Provide[ServerContainer.auth_provider]),
+    auth_provider: Optional[OIDCAuthProvider] = Depends(
+        Provide[ServerContainer.auth_provider]
+    ),
 ):
+    if auth_provider is None:
+        raise HTTPException(status_code=501, detail="Authentication not configured")
     redirect_uri = request.url_for("auth_callback")
     tokens, _ = await auth_provider.handle_auth_callback(code, str(redirect_uri))
     response = RedirectResponse(request.url_for("auth-user"))
@@ -68,11 +76,15 @@ async def get_login(
     state: Optional[str] = None,
     code: Optional[str] = None,
     sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
-    auth_provider: AuthProvider = Depends(Provide[ServerContainer.auth_provider]),
+    auth_provider: Optional[OIDCAuthProvider] = Depends(
+        Provide[ServerContainer.auth_provider]
+    ),
 ):
     """
     login and redirect to frontend app with token
     """
+    if auth_provider is None:
+        raise HTTPException(status_code=501, detail="Authentication not configured")
     login_url = request.url_for("login")
 
     if code:
