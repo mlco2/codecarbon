@@ -7,12 +7,29 @@ class Settings(BaseSettings):
         env="DATABASE_URL",
     )
     # Authentication provider settings
-    auth_provider: str = Field("fief", env="AUTH_PROVIDER")  # Options: 'fief', 'none'
+    auth_provider: str = Field(
+        "oidc", env="AUTH_PROVIDER"
+    )  # Options: 'oidc', 'fief' (deprecated), 'none'
 
-    # Fief-specific settings (kept for backward compatibility)
-    fief_client_id: str = Field("", env="FIEF_CLIENT_ID")
-    fief_client_secret: str = Field("", env="FIEF_CLIENT_SECRET")
-    fief_url: str = Field("https://auth.codecarbon.io/codecarbon-dev", env="FIEF_URL")
+    # OIDC settings (with backward compatibility for Fief environment variables)
+    oidc_client_id: str = Field("", env="OIDC_CLIENT_ID,FIEF_CLIENT_ID")
+    oidc_client_secret: str = Field("", env="OIDC_CLIENT_SECRET,FIEF_CLIENT_SECRET")
+    oidc_issuer_url: str = Field(
+        "https://auth.codecarbon.io/codecarbon-dev", env="OIDC_ISSUER_URL,FIEF_URL"
+    )
+
+    # Deprecated: Old Fief-specific settings (use OIDC settings instead)
+    @property
+    def fief_client_id(self) -> str:
+        return self.oidc_client_id
+
+    @property
+    def fief_client_secret(self) -> str:
+        return self.oidc_client_secret
+
+    @property
+    def fief_url(self) -> str:
+        return self.oidc_issuer_url
 
     frontend_url: str = Field("", env="FRONTEND_URL")
     environment: str = Field("production")

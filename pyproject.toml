@@ -132,6 +132,7 @@ api  = [
     "pytest",
     "mock",
     "responses",
+    "fastapi-oidc;python_version>='3.10'",
     "numpy",
     "psutil",
     "requests-mock",

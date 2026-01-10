@@ -4,7 +4,7 @@ Unit tests for authentication provider interface and implementations.
 
 import pytest
 
-from carbonserver.api.services.auth_providers.fief_auth_provider import FiefAuthProvider
+from carbonserver.api.services.auth_providers.oidc_auth_provider import OIDCAuthProvider
 
 
 class TestAuthProviderInterface:
@@ -32,9 +32,9 @@ class TestAuthProviderInterface:
         assert provider.get_authorize_endpoint() == "http://localhost/authorize"
         assert provider.get_client_credentials() == ("no-auth", "no-auth")
 
-    def test_fief_provider_interface(self):
-        """Test that FiefAuthProvider implements all required methods."""
-        provider = FiefAuthProvider(
+    def test_oidc_provider_interface(self):
+        """Test that OIDCAuthProvider implements all required methods."""
+        provider = OIDCAuthProvider(
             base_url="https://auth.example.com",
             client_id="test_client",
             client_secret="test_secret",
@@ -58,14 +58,19 @@ class TestAuthProviderInterface:
 class TestAuthProviderFactory:
     """Test the auth provider factory."""
 
-    def test_factory_creates_fief_provider(self):
-        """Test that factory creates Fief provider when configured."""
+    def test_factory_creates_oidc_provider(self):
+        """Test that factory creates OIDC provider when configured."""
         from carbonserver.api.services.auth_providers.auth_provider_factory import (
             create_auth_provider,
         )
 
+        # Test with 'oidc'
+        provider = create_auth_provider("oidc")
+        assert isinstance(provider, OIDCAuthProvider)
+
+        # Test backward compatibility with 'fief'
         provider = create_auth_provider("fief")
-        assert isinstance(provider, FiefAuthProvider)
+        assert isinstance(provider, OIDCAuthProvider)
 
     def test_factory_creates_no_auth_provider(self):
         """Test that factory creates no-auth provider when configured."""

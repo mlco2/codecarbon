@@ -8,8 +8,8 @@ provider based on configuration settings.
 from typing import Optional
 
 from carbonserver.api.services.auth_providers.auth_provider import AuthProvider
-from carbonserver.api.services.auth_providers.fief_auth_provider import FiefAuthProvider
 from carbonserver.api.services.auth_providers.no_auth_provider import NoAuthProvider
+from carbonserver.api.services.auth_providers.oidc_auth_provider import OIDCAuthProvider
 from carbonserver.config import settings
 
 
@@ -39,11 +39,11 @@ def create_auth_provider(provider_name: Optional[str] = None) -> AuthProvider:
     provider_type = provider_name or settings.auth_provider
     provider_type = provider_type.lower()
 
-    if provider_type == "fief":
-        return FiefAuthProvider(
-            base_url=settings.fief_url,
-            client_id=settings.fief_client_id,
-            client_secret=settings.fief_client_secret,
+    if provider_type in ("oidc", "fief"):  # Support 'fief' for backward compatibility
+        return OIDCAuthProvider(
+            base_url=settings.oidc_issuer_url,
+            client_id=settings.oidc_client_id,
+            client_secret=settings.oidc_client_secret,
         )
     elif provider_type == "none":
         # No authentication - for development/internal use only
@@ -51,7 +51,7 @@ def create_auth_provider(provider_name: Optional[str] = None) -> AuthProvider:
     else:
         raise ValueError(
             f"Unknown authentication provider: {provider_type}. "
-            f"Supported providers: 'fief', 'none'"
+            f"Supported providers: 'oidc', 'fief' (deprecated), 'none'"
         )
 
 
