@@ -12,11 +12,9 @@ class Settings(BaseSettings):
     )  # Options: 'oidc', 'fief' (deprecated), 'none'
 
     # OIDC settings (with backward compatibility for Fief environment variables)
-    oidc_client_id: str = Field("", env="OIDC_CLIENT_ID,FIEF_CLIENT_ID")
-    oidc_client_secret: str = Field("", env="OIDC_CLIENT_SECRET,FIEF_CLIENT_SECRET")
-    oidc_issuer_url: str = Field(
-        "https://auth.codecarbon.io/codecarbon-dev", env="OIDC_ISSUER_URL,FIEF_URL"
-    )
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    oidc_issuer_url: str = "https://auth.codecarbon.io/codecarbon-dev"
 
     # Deprecated: Old Fief-specific settings (use OIDC settings instead)
     @property
@@ -38,6 +36,14 @@ class Settings(BaseSettings):
     send_to_logfire: bool = Field(False, env="LOGFIRE_SEND_TO_LOGFIRE")
     api_port: int = Field(8080, env="API_PORT")
     server_host: str = Field("0.0.0.0", env="SERVER_HOST")
+
+    class Config:
+        # Define alternative environment variable names for backward compatibility
+        fields = {
+            "oidc_client_id": {"env": ["OIDC_CLIENT_ID", "FIEF_CLIENT_ID"]},
+            "oidc_client_secret": {"env": ["OIDC_CLIENT_SECRET", "FIEF_CLIENT_SECRET"]},
+            "oidc_issuer_url": {"env": ["OIDC_ISSUER_URL", "FIEF_URL"]},
+        }
 
 
 settings = Settings()
