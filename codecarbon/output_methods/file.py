@@ -88,6 +88,11 @@ class FileOutput(BaseOutput):
 
         """
         file_exists: bool = os.path.isfile(self.save_file_path)
+        if file_exists and os.path.getsize(self.save_file_path) == 0:
+            logger.warning(
+                f"File {self.save_file_path} exists but is empty. Treating as new file."
+            )
+            file_exists = False
         if file_exists and not self.has_valid_headers(total):
             logger.warning("The CSV format has changed, backing up old emission file.")
             backup(self.save_file_path)

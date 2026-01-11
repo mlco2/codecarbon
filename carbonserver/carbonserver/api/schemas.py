@@ -87,6 +87,15 @@ class EmissionBase(BaseModel):
     ram_energy: Optional[float] = Field(
         ..., ge=0, description="The ram_energy must be greater than zero"
     )
+    cpu_utilization_percent: Optional[float] = Field(
+        None, ge=0, le=100, description="The CPU utilization must be between 0 and 100"
+    )
+    gpu_utilization_percent: Optional[float] = Field(
+        None, ge=0, le=100, description="The GPU utilization must be between 0 and 100"
+    )
+    ram_utilization_percent: Optional[float] = Field(
+        None, ge=0, le=100, description="The RAM utilization must be between 0 and 100"
+    )
     wue: Optional[float] = Field(
         default=0,
         ge=0,
@@ -183,6 +192,9 @@ class RunReport(RunBase):
     duration: float
     emissions_rate: float
     emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
 
 
 class ExperimentBase(BaseModel):
@@ -246,6 +258,9 @@ class ExperimentReport(ExperimentBase):
     duration: int
     emissions_rate: float
     emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
 
     class Config:
         schema_extra = {
@@ -377,6 +392,9 @@ class ProjectReport(ProjectBase):
     duration: int
     emissions_rate: float
     emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
 
 
 class OrganizationBase(BaseModel):
@@ -420,6 +438,9 @@ class OrganizationReport(OrganizationBase):
     duration: int
     emissions_rate: float
     emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
 
 
 class Membership(BaseModel):

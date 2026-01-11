@@ -261,7 +261,7 @@ tzdata==2025.2
     # via
     #   arrow
     #   pandas
-urllib3==2.5.0
+urllib3==2.6.3
     # via
     #   requests
     #   responses

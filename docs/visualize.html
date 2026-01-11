@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualize &mdash; CodeCarbon 3.1.1 documentation</title>
+  <title>Visualize &mdash; CodeCarbon 3.2.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=796a81b5"></script>
+      <script src="_static/documentation_options.js?v=eb155f5e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -66,6 +66,8 @@
 <li class="toctree-l1"><a class="reference internal" href="to_logger.html">Collecting emissions to a logger</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Visualize</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#offline">Offline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#summary-and-equivalents">Summary and Equivalents</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#regional-comparisons">Regional Comparisons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cloud-regions">Cloud Regions</a></li>
@@ -112,6 +114,19 @@
 <h2>Offline<a class="headerlink" href="#offline" title="Link to this heading"></a></h2>
 <p>The package also comes with a <code class="docutils literal notranslate"><span class="pre">Dash</span> <span class="pre">App</span></code> containing illustrations to understand the emissions logged from various experiments across projects.
 The App currently consumes logged information from a CSV file, generated from an in-built logger in the package.</p>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>The carbonboard visualization tool requires additional dependencies. Install them with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;codecarbon[carbonboard]&#39;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">viz-legacy</span></code> extra is deprecated but still works for backwards compatibility. It will be removed in v4.0.0. Please use <code class="docutils literal notranslate"><span class="pre">carbonboard</span></code> instead.</p>
+</div>
+</section>
+<section id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h3>
 <p>The App can be run by executing the below CLI command that needs following arguments:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">filepath</span></code> - path to the CSV file containing logged information across experiments and projects</p></li>
@@ -120,6 +135,7 @@ The App currently consumes logged information from a CSV file, generated from an
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>carbonboard<span class="w"> </span>--filepath<span class="o">=</span><span class="s2">&quot;examples/emissions.csv&quot;</span><span class="w"> </span>--port<span class="o">=</span><span class="m">3333</span>
 </pre></div>
 </div>
+</section>
 <section id="summary-and-equivalents">
 <h3>Summary and Equivalents<a class="headerlink" href="#summary-and-equivalents" title="Link to this heading"></a></h3>
 <p>Users can get an understanding of net power consumption and emissions generated across projects and can dive into a particular project.
@@ -176,7 +192,6 @@ If ever your project has several experiments you can switch from one experiment�
 <p>The app also provides a visualization of regional carbon intensity of electricity production.</p>
 <a class="reference internal image-reference" href="_images/carbon_map.png"><img alt="carbon intensity carbon_map" class="align-center" src="_images/carbon_map.png" style="width: 750px;" />
 </a>
-<p>Note that for now, all data sent to CodeCarbon API are public.</p>
 </section>
 </section>
 </section>
