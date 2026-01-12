@@ -327,7 +327,7 @@ class BaseEmissionsTracker(ABC):
 
         # Check if tracking pids are child of each other
         pid_check = set()
-        for pid in tracking_pids:
+        for pid in self._tracking_pids:
             try:
                 process = psutil.Process(pid)
                 pids_to_track = {pid} | {
