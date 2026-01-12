@@ -61,7 +61,7 @@ class RAM(BaseHardware):
             self._tracking_pids = [psutil.Process().pid]
         else:
             self._tracking_pids = tracking_pids
-            
+
         self._force_ram_power = force_ram_power
         # Check if using ARM architecture
         self.is_arm_cpu = self._detect_arm_cpu()
@@ -301,7 +301,7 @@ class RAM(BaseHardware):
         Returns:
             float: RAM usage (GB)
         """
-       
+
         # Store memory usage in dict to avoid double counting
         total_memory = dict()
 
