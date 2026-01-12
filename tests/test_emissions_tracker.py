@@ -420,7 +420,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
 
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
-    @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
+    @mock.patch("codecarbon.external.cpu.CPU.measure_power_and_energy")
     @mock.patch(
         "codecarbon.external.hardware.AppleSiliconChip.measure_power_and_energy",
         autospec=True,
