@@ -6,6 +6,7 @@ OfflineEmissionsTracker, context manager and decorator @track_emissions
 import dataclasses
 import os
 import platform
+import re
 import time
 import uuid
 from abc import ABC, abstractmethod
@@ -454,7 +455,16 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
 
         if self._save_to_prometheus:
-            self._output_handlers.append(PrometheusOutput(self._prometheus_url))
+            self._output_handlers.append(
+                PrometheusOutput(
+                    self._prometheus_url,
+                    job_name=re.sub(
+                        r"[^a-zA-Z0-9_-]",
+                        "_",
+                        f"{self._project_name}_{self._experiment_name}",
+                    ),
+                )
+            )
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
@@ -707,6 +717,10 @@ class BaseEmissionsTracker(ABC):
 
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
+
+        for handler in self._output_handlers:
+            handler.exit()
+
         return emissions_data.emissions
 
     def _persist_data(
