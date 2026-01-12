@@ -57,10 +57,8 @@ class RAM(BaseHardware):
         """
         self._children = children
         self._tracking_mode = tracking_mode
-        if tracking_mode == "process" and tracking_pids is None:
-            self._tracking_pids = [psutil.Process().pid]
-        else:
-            self._tracking_pids = tracking_pids
+
+        self._tracking_pids = tracking_pids
 
         self._force_ram_power = force_ram_power
         # Check if using ARM architecture

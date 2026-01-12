@@ -50,15 +50,6 @@ class CPU(BaseHardware):
         self._tracking_pids = tracking_pids
         self._cpu_count = count_cpus()
 
-        if tracking_pids is not None:
-            # Make list if it is not already a list
-            if not isinstance(tracking_pids, list):
-                self._tracking_pids = [tracking_pids]
-            else:
-                self._tracking_pids = tracking_pids
-        else:
-            self._tracking_pids = [psutil.Process().pid]
-
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
         elif self._mode == "intel_rapl":

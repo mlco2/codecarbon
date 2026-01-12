@@ -321,9 +321,11 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
-        self._set_from_conf(tracking_pids, "tracking_pids", [], List[int])
-        # Check if tracking pids are child of each other
+        self._set_from_conf(
+            tracking_pids, "tracking_pids", [psutil.Process().pid], List[int]
+        )
 
+        # Check if tracking pids are child of each other
         pid_check = set()
         for pid in tracking_pids:
             try:
