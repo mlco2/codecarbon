@@ -31,7 +31,7 @@ class TestCPULoad(unittest.TestCase):
         self.assertGreaterEqual(power.W, 0.0)
 
     @mock.patch(
-        "codecarbon.external.hardware.CPU._get_power_from_cpu_load",
+        "codecarbon.external.cpu.CPU._get_power_from_cpu_load",
         return_value=Power.from_watts(50),
     )
     def test_cpu_total_power(
