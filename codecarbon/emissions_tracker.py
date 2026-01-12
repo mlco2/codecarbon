@@ -324,6 +324,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(
             tracking_pids, "tracking_pids", [psutil.Process().pid], List[int]
         )
+        if self._tracking_pids is None or len(self._tracking_pids) == 0:
+            self._tracking_pids = [psutil.Process().pid]
 
         # Check if tracking pids are child of each other
         pid_check = set()
