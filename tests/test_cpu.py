@@ -14,7 +14,7 @@ from codecarbon.core.cpu import (
 )
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_physical_cpus
-from codecarbon.external.hardware import CPU
+from codecarbon.external.cpu import CPU
 from codecarbon.input import DataSource
 
 
