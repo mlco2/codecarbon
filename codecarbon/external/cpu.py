@@ -121,14 +121,14 @@ class CPU(BaseHardware):
                     logger.warning(f"Process with pid {pid} does not exist anymore.")
                     continue
                 self._process = psutil.Process(pid)
-                cpu_load += self._process.cpu_percent(interval=0.5, percpu=False)
+                cpu_load += self._process.cpu_percent(interval=0.5)
 
                 try:
                     children = self._process.children(recursive=True)
                     for child in children:
                         try:
                             # Use interval=0.0 for children to avoid blocking
-                            child_cpu = child.cpu_percent(interval=0.0, percpu=False)
+                            child_cpu = child.cpu_percent(interval=0.0)
                             logger.debug(f"Child {child.pid} CPU: {child_cpu}")
                             cpu_load += child_cpu
                         except (
