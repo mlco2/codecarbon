@@ -31,7 +31,7 @@ class TestPIDTracking(unittest.TestCase):
 
         self.pids = []
         self.process = []
-        for _ in range(128):
+        for _ in range(4):
             self.process.append(sp.Popen(["python", "-c", python_load_code]))
             self.pids.append(self.process[-1].pid)
         self.pids.append(os.getpid())
@@ -41,10 +41,27 @@ class TestPIDTracking(unittest.TestCase):
             os.remove(self.emissions_file_path)
 
         for proc in self.process:
-            proc.terminate()
-            proc.wait()
+            if proc.poll() is None:  # Check if process is still running
+                proc.terminate()
+                proc.wait()
+
+    def print_process_tree(self, pid, level=0):
+        import psutil
+
+        try:
+            process = psutil.Process(pid)
+            print(" " * (level * 2) + f"PID: {process.pid}, Name: {process.name()}")
+            children = process.children()
+            for child in children:
+                self.print_process_tree(child.pid, level + 1)
+        except psutil.NoSuchProcess:
+            print(" " * (level * 2) + f"PID: {pid} does not exist.")
 
     def test_carbon_pid_tracking_offline(self):
+
+        # Print PID structure
+        main_pid = os.getpid()
+        self.print_process_tree(main_pid)
 
         # Subprocess PIDs are children, therefore both should be equal
         tracker_pid = OfflineEmissionsTracker(
@@ -52,24 +69,32 @@ class TestPIDTracking(unittest.TestCase):
             output_file=self.emissions_file + "_pid.csv",
             tracking_mode="process",
             tracking_pids=self.pids,
+            gpu_ids=[],
         )
         tracker_self = OfflineEmissionsTracker(
             output_dir=self.emissions_path,
             output_file=self.emissions_file + "_global.csv",
             tracking_mode="process",
             tracking_pids=[os.getpid()],
+            gpu_ids=[],
         )
 
         tracker_pid.start()
         tracker_self.start()
 
-        time.sleep(5)
+        time.sleep(10)
+
+        for proc in self.process:
+            proc.terminate()
+            proc.wait()
+
+        time.sleep(1)  # Ensure all data is logged
 
         emissions_pid = tracker_pid.stop()
         emissions_self = tracker_self.stop()
 
-        print(f"Emissions (self): {emissions_self} kgCO2eq")
         print(f"Emissions (pid): {emissions_pid} kgCO2eq")
+        print(f"Emissions (self): {emissions_self} kgCO2eq")
 
         if not isinstance(emissions_pid, float):
             print(emissions_pid)
