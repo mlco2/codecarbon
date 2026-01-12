@@ -3,6 +3,7 @@ import re
 import subprocess
 import sys
 from contextlib import contextmanager
+from functools import lru_cache
 from os.path import expandvars
 from pathlib import Path
 from typing import Optional, Union
@@ -73,7 +74,8 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     file_path.rename(backup_path)
 
 
-def detect_cpu_model() -> str:
+@lru_cache(maxsize=1)
+def detect_cpu_model() -> Optional[str]:
     cpu_info = cpuinfo.get_cpu_info()
     if cpu_info:
         cpu_model_detected = cpu_info.get("brand_raw", "")
@@ -81,17 +83,17 @@ def detect_cpu_model() -> str:
     return None
 
 
-def is_mac_os() -> str:
+def is_mac_os() -> bool:
     system = sys.platform.lower()
     return system.startswith("dar")
 
 
-def is_windows_os() -> str:
+def is_windows_os() -> bool:
     system = sys.platform.lower()
     return system.startswith("win")
 
 
-def is_linux_os() -> str:
+def is_linux_os() -> bool:
     system = sys.platform.lower()
     return system.startswith("lin")
 

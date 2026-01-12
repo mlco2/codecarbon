@@ -5,3 +5,4 @@
 select = C,E,F,W,B
 ignore = E203, E501, W503, B008
 copyright-check = True
+max-complexity = 15

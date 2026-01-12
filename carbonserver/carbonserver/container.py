@@ -11,6 +11,9 @@ from carbonserver.api.infra.repositories import (
     repository_users,
 )
 from carbonserver.api.services.auth_context import AuthContext
+from carbonserver.api.services.auth_providers.oidc_auth_provider import (
+    OIDCAuthProvider,
+)
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
 from carbonserver.api.services.organization_service import OrganizationService
@@ -39,6 +42,22 @@ class ServerContainer(containers.DeclarativeContainer):
         Database,
         db_url=db_url,
     )
+
+    # Authentication provider (configurable via AUTH_PROVIDER env var)
+    # Options: 'oidc' (default) or 'none' (dev/testing only)
+    # Returns OIDCAuthProvider or None based on settings
+    auth_provider = providers.Callable(
+        lambda: (
+            OIDCAuthProvider(
+                base_url=settings.oidc_issuer_url,
+                client_id=settings.oidc_client_id,
+                client_secret=settings.oidc_client_secret,
+            )
+            if settings.auth_provider.lower() in ("oidc", "fief")
+            else None
+        )
+    )
+
     emission_repository = providers.Factory(
         repository_emissions.SqlAlchemyRepository,
         session_factory=db.provided.session,

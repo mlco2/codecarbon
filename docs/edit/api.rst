@@ -8,7 +8,9 @@ CodeCarbon API
 ~~~~~~~~~~~~~~
 
 .. warning::
-    This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!
+    This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server.
+
+    Thanks to `CleverCloud <https://www.clever.cloud/>`_ the use of API is free as soon as it remains under certain limits.
 
 
 .. image:: https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/code_carbon_archi.png
@@ -22,11 +24,13 @@ CodeCarbon API
             :alt: Summary
             :width: 700px
 
-Before using it, you need an experiment_id, to get one, run:
+Before using it, you need to create on account on the `CodeCarbon dashboard <https://dashboard.codecarbon.io/>`_
+
+Then login from your terminal:
 
 .. code-block:: console
 
-    codecarbon init
+    codecarbon login
 
 It will create an experiment_id for the default project and save it to ``codecarbon.config``
 

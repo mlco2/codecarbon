@@ -19,7 +19,7 @@ class HTTPOutput(BaseOutput):
     def __init__(self, endpoint_url: str):
         self.endpoint_url: str = endpoint_url
 
-    def out(self, total: EmissionsData, delta: EmissionsData):
+    def out(self, total: EmissionsData, _: EmissionsData):
         try:
             payload = dataclasses.asdict(total)
             payload["user"] = getpass.getuser()
@@ -56,14 +56,14 @@ class CodeCarbonAPIOutput(BaseOutput):
         )
         self.run_id = self.api.run_id
 
-    def live_out(self, total: EmissionsData, delta: EmissionsData):
+    def live_out(self, _, delta: EmissionsData):
         # Called at regular intervals
         try:
             self.api.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)
 
-    def out(self, total: EmissionsData, delta: EmissionsData):
+    def out(self, _, delta: EmissionsData):
         # Called on exit
         try:
             self.api.add_emission(dataclasses.asdict(delta))

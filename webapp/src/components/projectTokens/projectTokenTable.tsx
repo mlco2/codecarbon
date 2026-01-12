@@ -127,8 +127,8 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                         </div>
                         <p className="text-l mt-4 p-2">
                             Make sure to copy the token above as it will not be
-                            shown again. We&apos;ll don&apos;t store it for
-                            security reasons.
+                            shown again. We don&apos;t store it for security
+                            reasons.
                         </p>
                         <Button onClick={resetTokenCreation} className="mt-4">
                             Done

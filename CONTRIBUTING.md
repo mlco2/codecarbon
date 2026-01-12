@@ -70,7 +70,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 <!-- TOC --><a name="installation"></a>
 ### Installation
 
-CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/), or better, faster, stronger with [UV](https://github.com/astral-sh/uv).
+CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [UV](https://github.com/astral-sh/uv).
 
 Between April 2024 and July 2025 we use Hatch for managing development environment. Since August 2025 we use UV manages the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
 
@@ -138,9 +138,14 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 -   7Zip is often already installed, running it with `7z b` makes a quick CPU test.
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
+-   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://mlco2.github.io/codecarbon/test_on_scaleway.html) to install it.
+-   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
+-   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and avaliable for Windows and Linux.
 
-`nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
+To monitor the power consumption of your computer while stressing it, you can use:
 
+-   `nvidia-smi` is a useful tool to see the metrics of the GPU and compare it with CodeCarbon.
+-   [powerstat](https://github.com/ColinIanKing/powerstat) can be used to see the metrics of the CPU and compare it with CodeCarbon. It's available on major distribution, like Debian-based Linux distributions with `sudo apt install powerstat`. Run it with `sudo powerstat -a -R 1 60`.
 
 
 <!-- TOC --><a name="update-all-dependancies"></a>
@@ -219,7 +224,7 @@ Then run opened test with this button:
 <!-- TOC --><a name="coding-style-linting"></a>
 ### Coding style && Linting
 
-The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `uv run precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
+The coding style and linting rules are automatically applied and enforced by [pre-commit](https://pre-commit.com/). This tool helps to maintain the same code style across the code-base such to ease the review and collaboration process. Once installed ([https://pre-commit.com/#installation](https://pre-commit.com/#installation)), you can install a Git hook to automatically run pre-commit (and all configured linters/auto-formatters) before doing a commit with `uv run task precommit-install`. Then once you tried to commit, the linters/formatters will run automatically. It should display something similar to:
 
 ```log
 [INFO] Initializing environment for https://github.com/psf/black.
@@ -253,7 +258,6 @@ Dependencies are defined in different places:
 
 -   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
 -   In [uv.lock](uv.lock), those are the locked dependencies managed by UV, do not edit them.
--   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
 
 <!-- TOC --><a name="build-documentation-"></a>
@@ -283,20 +287,6 @@ to regenerate the html files.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
--   For conda, we now have a [feedstock](https://github.com/conda-forge/codecarbon-feedstock/pulls) to publish to Conda-Forge channel.
-
-If you still want to publish to the Anaconda CodeCarbon channel:
-
-Start a Docker image in the same directory and bind-mount the current directory with:
-
-`docker run -ti --rm=true -v $PWD:/data continuumio/anaconda3`.
-
-Inside the docker container, run:
-
--   `conda install -y conda-build conda-verify`
--   `cd /data && mkdir -p /conda_dist`
--   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
--   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
 
 #### Test the build in Docker
 
@@ -321,12 +311,14 @@ pytest test_package_integrity.py
 To run locally the dashboard application, you can use it out on a sample data file such as the one in `examples/emissions.csv`, and run it with the following command from the code base:
 
 ```bash
-uv run --extra viz-legacy  task carbonboard --filepath="examples/emissions.csv"
+uv run --extra carbonboard task carbonboard --filepath="examples/emissions.csv"
 
 # or, if you don't want to use UV
-pip install codecarbon["viz"]
+pip install codecarbon[carbonboard]
 python codecarbon/viz/carbonboard.py --filepath="examples/emissions.csv"
 ```
+
+> **Note:** The `viz-legacy` extra is deprecated but still works for backwards compatibility. It will be removed in v4.0.0. Please use `carbonboard` instead.
 
 If you have the package installed, you can run the CLI command:
 
@@ -385,7 +377,7 @@ api_endpoint = http://localhost:8008
 Before using it, you need an experiment_id, to get one, run:
 
 ```
-codecarbon init
+codecarbon login
 ```
 
 It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.

@@ -10,7 +10,7 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from codecarbon.core import co2_signal
+from codecarbon.core import electricitymaps_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
@@ -19,10 +19,25 @@ from codecarbon.input import DataSource, DataSourceException
 
 class Emissions:
     def __init__(
-        self, data_source: DataSource, co2_signal_api_token: Optional[str] = None
+        self,
+        data_source: DataSource,
+        electricitymaps_api_token: Optional[str] = None,
+        co2_signal_api_token: Optional[
+            str
+        ] = None,  # Deprecated, for backward compatibility
     ):
         self._data_source = data_source
-        self._co2_signal_api_token = co2_signal_api_token
+
+        # Handle backward compatibility
+        if co2_signal_api_token is not None:
+            logger.warning(
+                "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
+                "Please use 'electricitymaps_api_token' instead."
+            )
+            if electricitymaps_api_token is None:
+                electricitymaps_api_token = co2_signal_api_token
+
+        self._electricitymaps_api_token = electricitymaps_api_token
 
     def get_cloud_emissions(
         self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
@@ -123,12 +138,19 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
-        if self._co2_signal_api_token:
+        if self._electricitymaps_api_token:
             try:
-                return co2_signal.get_emissions(energy, geo, self._co2_signal_api_token)
+                emissions = electricitymaps_api.get_emissions(
+                    energy, geo, self._electricitymaps_api_token
+                )
+                logger.debug(
+                    "electricitymaps_api.get_emissions: "
+                    + f"Retrieved emissions for {geo.country_name} using Electricity Maps API :{emissions * 1000} g CO2eq"
+                )
+                return emissions
             except Exception as e:
                 logger.error(
-                    "co2_signal.get_emissions: "
+                    "electricitymaps_api.get_emissions: "
                     + str(e)
                     + " >>> Using CodeCarbon's data."
                 )

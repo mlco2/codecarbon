@@ -13,8 +13,6 @@ CodeCarbon websites:
 
 <br/>
 
-[![](https://anaconda.org/conda-forge/codecarbon/badges/version.svg)](https://anaconda.org/conda-forge/codecarbon)
-[![](https://anaconda.org/codecarbon/codecarbon/badges/version.svg)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
 <!-- [![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon) -->
@@ -63,10 +61,13 @@ Our hope is that this package will be used widely for estimating the carbon foot
 pip install codecarbon
 ```
 
-**From Conda repository**
-```python
-conda install -c codecarbon codecarbon
+**Using Conda environments**
+If you're using Conda, you can install CodeCarbon with pip in your Conda environment:
+```bash
+conda activate your_env
+pip install codecarbon
 ```
+
 To see more installation options please refer to the documentation: [**Installation**](https://mlco2.github.io/codecarbon/installation.html#)
 
 ## Start to estimate your impact 📏
@@ -143,7 +144,7 @@ In order to contribute a change to our code base, please submit a pull request (
 
 Check out our [contribution guidelines :arrow_upper_right:](https://github.com/mlco2/codecarbon/blob/master/CONTRIBUTING.md)
 
-Contact [@vict0rsch](https://github.com/vict0rsch) to be added to our slack workspace if you want to contribute regularly!
+Feel free to chat with us on [Discord](https://discord.gg/GS9js2XkJR).
 
 # How To Cite 📝
 
@@ -194,7 +195,11 @@ Here is a sample for BibTeX:
 
 # Contact 📝
 
-Maintainers are [@vict0rsch](https://github.com/vict0rsch) [@benoit-cty](https://github.com/benoit-cty) and [@SaboniAmine](https://github.com/saboniamine). Codecarbon is developed by volunteers from [**Mila**](http://mila.quebec) and the [**DataForGoodFR**](https://twitter.com/dataforgood_fr) community alongside donated professional time of engineers at [**Comet.ml**](https://comet.ml) and [**BCG GAMMA**](https://www.bcg.com/en-nl/beyond-consulting/bcg-gamma/default).
+Feel free to chat with us on [Discord](https://discord.gg/GS9js2XkJR).
+
+Codecarbon was formerly developed by volunteers from [**Mila**](http://mila.quebec) and the [**DataForGoodFR**](https://twitter.com/dataforgood_fr) community alongside donated professional time of engineers at [**Comet.ml**](https://comet.ml) and [**BCG GAMMA**](https://www.bcg.com/en-nl/beyond-consulting/bcg-gamma/default).
+
+Now CodeCarbon is supported by [**Code Carbon**](https://www.helloasso.com/associations/code-carbon), a French non-profit organization whose mission is to accelerate the development and adoption of CodeCarbon.
 
 ## Star History
 

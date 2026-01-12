@@ -27,3 +27,7 @@ jobs:
       run: uv sync --python ${{ matrix.python-version }}
     - name: Test package
       run: uv run --python ${{ matrix.python-version }} task test-package
+    - name: Install carbonboard dependencies
+      run: uv pip install --python ${{ matrix.python-version }} dash 'dash_bootstrap_components>1.0.0' fire
+    - name: Test carbonboard visualization
+      run: uv run --python ${{ matrix.python-version }} pytest -vv tests/test_viz_data.py tests/test_viz_units.py

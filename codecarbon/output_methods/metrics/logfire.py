@@ -59,7 +59,7 @@ class LogfireOutput(BaseOutput):
             "codecarbon_ram_energy", unit="(kWh)", description="Energy used per RAM"
         )
 
-    def out(self, total: EmissionsData, delta: EmissionsData):
+    def out(self, _, delta: EmissionsData):
         try:
             self.duration.add(delta.duration)
             self.emissions.add(delta.emissions)
@@ -75,5 +75,5 @@ class LogfireOutput(BaseOutput):
         except Exception as e:
             logger.error(e, exc_info=True)
 
-    def live_out(self, total: EmissionsData, delta: EmissionsData):
-        self.out(total, delta)
+    def live_out(self, _: EmissionsData, delta: EmissionsData):
+        self.out(None, delta)

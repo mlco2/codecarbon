@@ -1,6 +1,32 @@
-import dash
-import dash_bootstrap_components as dbc
-import fire
+import sys
+
+try:
+    import dash
+    import dash_bootstrap_components as dbc
+except ImportError:
+    print(
+        "\n❌ Error: Carbonboard requires additional dependencies that are not installed.\n"
+        "\nTo install them, run:\n"
+        "    pip install codecarbon[carbonboard]\n"
+        "\nOr if using uv:\n"
+        "    uv pip install codecarbon[carbonboard]\n",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+try:
+    import fire
+except ImportError:
+    print(
+        "\n❌ Error: Carbonboard requires 'fire' which is not installed.\n"
+        "\nTo install it, run:\n"
+        "    pip install codecarbon[carbonboard]\n"
+        "\nOr if using uv:\n"
+        "    uv pip install codecarbon[carbonboard]\n",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
 import pandas as pd
 from dash import dash_table as dt
 from dash import dcc

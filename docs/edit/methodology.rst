@@ -191,46 +191,13 @@ For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read 
 
 RAPL Metrics
 ------------
-RAPL stands for Running Average Power Limit, it is a feature of processors (CPU) that provide the energy consumption of the processor.
+RAPL (Running Average Power Limit) is a feature of modern processors that provides energy consumption measurements through hardware counters.
 
 See https://blog.chih.me/read-cpu-power-with-RAPL.html for more information.
 
-Despite the name Intel RAPL, it support AMD processors since kernel 5.8.
+Despite the name "Intel RAPL", it supports AMD processors since Linux kernel 5.8.
 
-It is some files in /sys/class/powercap/intel-rapl/subsystem/ that give the energy consumption of the CPU, and sometimes RAM.
-There are folders for each `domain`, and in each folder there is a file `name` with the name of the domain and an `energy_uj` for the amount of energy in micro-joules.
-
-The drawback of RAPL is that not every CPU uses it the same way. We focus on the `package` domain, but some CPUs have more domains like `core`, `uncore`, `dram`, `psys`, `gpu`, `psys` and `psys-io`.
-
-For example :
-- Intel puts all the physical cores consumption in `core` and the `package` includes `core`.
-- For AMD, `core` has very low energy, so we don't know if it is included in the `package` or not.
-
-Our friends from Scaphandre, a tool to monitor energy consumption, have a good article about RAPL https://hubblo-org.github.io/scaphandre-documentation/explanations/rapl-domains.html and also a discussion with good references: https://github.com/hubblo-org/scaphandre/issues/116#issuecomment-854453231 and point out that this topic is not well documented.
-
-
-
-https://user-images.githubusercontent.com/894892/120764898-ecf07280-c518-11eb-9155-92780cabcf52.png
-Source :“RAPL in Action: Experiences in Using RAPL for Power Measurements,” (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z. Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp. 1–26, Apr. 2018, doi: 10.1145/3177754.)
-
-Metric comparison
-
-Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads) Processor.
-Power plug measure when idle (10% CPU): 125 W
-package-0-die-0 : 68 W
-package-0-die-1 : 68 W
-CodeCarbon : 137 W
-
-Power plug measure when loaded (100% CPU): 256 W - 125W in idle = 131 W
-CorWatt	PkgWatt
-133.13	169.82
-7.54	169.82
-CodeCarbon : 330 W
-package-0-die-0 : 166 W
-package-0-die-1 : 166 W
-
-RAPL: 234 sec. Joule Counter Range, at 280 Watts
-
+Read more about how we use it in :doc:`rapl`.
 
 CPU metrics priority
 --------------------
@@ -270,6 +237,8 @@ The measure itself is fast and CodeCarbon is designed to be as light as possible
 
 The scheduler is started when the first ``start`` method is called and stopped when ``stop`` method is called.
 
+Another scheduler (_scheduler_monitor_power) is used to monitor only the power consumption of the hardware every second.
+It is needed for hardware that do not have energy counters but only instant power, like in CPU load mode.
 
 Estimation of Equivalent Usage Emissions
 ----------------------------------------

@@ -101,37 +101,25 @@ class PrometheusOutput(BaseOutput):
         Send emissions data to push gateway
         """
 
-        # Save the values of the metrics to the local registry
-        duration_gauge.labels(carbon_emission["project_name"]).set(
-            int(carbon_emission["duration"])
-        )
-        emissions_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["emissions"]
-        )
-        emissions_rate_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["emissions_rate"]
-        )
-        cpu_power_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["cpu_power"]
-        )
-        gpu_power_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["gpu_power"]
-        )
-        ram_power_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["ram_power"]
-        )
-        cpu_energy_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["cpu_energy"]
-        )
-        gpu_energy_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["gpu_energy"]
-        )
-        ram_energy_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["ram_energy"]
-        )
-        energy_consumed_gauge.labels(carbon_emission["project_name"]).set(
-            carbon_emission["energy_consumed"]
-        )
+        # We set label values to '' by default because if we set them to None
+        # they get turned into 'None' by gauage.labels(), which is more
+        # confusing than an empty string.
+        labels = dict.fromkeys(labelnames, "")
+        labels["project_name"] = carbon_emission["project_name"]
+
+        for gauge, emission_name in [
+            (duration_gauge, "duration"),
+            (emissions_gauge, "emissions"),
+            (emissions_rate_gauge, "emissions_rate"),
+            (cpu_power_gauge, "cpu_power"),
+            (gpu_power_gauge, "gpu_power"),
+            (ram_power_gauge, "ram_power"),
+            (cpu_energy_gauge, "cpu_energy"),
+            (gpu_energy_gauge, "gpu_energy"),
+            (ram_energy_gauge, "ram_energy"),
+            (energy_consumed_gauge, "energy_consumed"),
+        ]:
+            gauge.labels(**labels).set(carbon_emission[emission_name])
 
         # Send the new metric values
         push_to_gateway(

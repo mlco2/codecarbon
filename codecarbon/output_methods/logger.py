@@ -16,15 +16,15 @@ class LoggerOutput(BaseOutput):
         self.logger = logger
         self.logging_severity = severity
 
-    def out(self, total: EmissionsData, delta: EmissionsData):
+    def out(self, total: EmissionsData, _):
         try:
             payload = dataclasses.asdict(total)
             self.logger.log(self.logging_severity, msg=json.dumps(payload))
         except Exception as e:
             logger.error(e, exc_info=True)
 
-    def live_out(self, total: EmissionsData, delta: EmissionsData):
-        self.out(total, delta)
+    def live_out(self, total: EmissionsData, _):
+        self.out(total, None)
 
 
 class GoogleCloudLoggerOutput(LoggerOutput):
@@ -32,12 +32,12 @@ class GoogleCloudLoggerOutput(LoggerOutput):
     Send emissions data to GCP Cloud Logging
     """
 
-    def out(self, total: EmissionsData, delta: EmissionsData):
+    def out(self, total: EmissionsData, _):
         try:
             payload = dataclasses.asdict(total)
             self.logger.log_struct(payload, severity=self.logging_severity)
         except Exception as e:
             logger.error(e, exc_info=True)
 
-    def live_out(self, total: EmissionsData, delta: EmissionsData):
-        self.out(total, delta)
+    def live_out(self, total: EmissionsData, _):
+        self.out(total, None)

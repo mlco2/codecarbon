@@ -1,4 +1,4 @@
-# Read package version in pyproject.toml and replace it in .conda/recipe.yaml
+# Read package version in pyproject.toml
 # Also provides version coherence checking across multiple files
 
 import argparse
@@ -132,48 +132,10 @@ def get_versions():
     }
 
 
-def replace_in_file(filepath: str, info: dict):
-    """
-    ::filepath:: Path to recipe.yaml, with filename
-    ::info:: Dict with information to populate
-    """
-    with open(filepath, "rt") as fin:
-        meta = fin.read()
-    # Replace with info from pyproject.toml
-    if PACKAGE_VERSION not in meta:
-        raise Exception(f"{PACKAGE_VERSION=} not found in {filepath}")
-    meta = meta.replace(PACKAGE_VERSION, info["package_version"])
-    if "    - dependencies" not in meta:
-        raise Exception(f'"    - dependencies" not found in {filepath}')
-    dependencies = ""
-    for dep in info["dependencies"]:
-        if "fief-client" in dep:
-            # Prevent to have unsupported "fief-client[cli]" in dependencies
-            dependencies += "    - fief-client-fastapi\n    - yaspin\n"
-        else:
-            dependencies += f"    - {dep}\n"
-    meta = meta.replace("    - dependencies", dependencies)
-    with open(filepath, "wt") as fout:
-        fout.write(meta)
-    logging.info(
-        f"File {filepath} has been updated with informations from pyproject.toml."
-    )
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-r",
-        "--replace",
-        action="store_true",
-        help="replace in file",
-    )
-    parser.add_argument(
-        "-f",
-        "--filename",
-        type=str,
-        default=".conda/recipe.yaml",
-        help="Path to recipe.yaml, with filename",
+def main():
+    """Main entry point for the script."""
+    parser = argparse.ArgumentParser(
+        description="Read package version and check version coherence"
     )
     parser.add_argument(
         "-o",
@@ -187,27 +149,39 @@ if __name__ == "__main__":
         action="store_true",
         help="Check version coherence across all bumpver-managed files",
     )
+
+    # Parse arguments - all arguments are optional, so this works fine with no args
     args = parser.parse_args()
 
-    # Check version coherence first if requested or before any operations
+    # Check version coherence first if requested
     if args.check_coherence:
         coherence_ok = check_version_coherence()
         sys.exit(0 if coherence_ok else 1)
 
-    # Always check coherence before doing replacements or showing versions
-    if not check_version_coherence(quiet=True):
-        logging.error("Aborting due to version coherence issues.")
+    # If only_package_version is requested, just print version and exit
+    if args.only_package_version:
+        try:
+            info = get_versions()
+            print(f'{info["package_version"]}')
+            sys.exit(0)
+        except Exception as e:
+            logging.error(f"Error getting version: {e}")
+            sys.exit(1)
+
+    # Default behavior: check coherence quietly, then show versions
+    try:
+        if not check_version_coherence(quiet=True):
+            logging.error("Aborting due to version coherence issues.")
+            sys.exit(1)
+
+        info = get_versions()
+        logging.info("Versions:")
+        print(info)  # noqa: T201
+        sys.exit(0)
+    except Exception as e:
+        logging.error(f"Error: {e}")
         sys.exit(1)
 
-    info = get_versions()
-    file = args.filename
-    if args.only_package_version:
-        print(f'{info["package_version"]}')
-        exit()
-    logging.info("Versions :")
-    print(info)  # noqa: T201
-    if args.replace:
-        logging.info(f"Replace in {file}")
-        replace_in_file(file, info)
-    else:
-        logging.info("Dry mode, no replace made")
+
+if __name__ == "__main__":
+    main()

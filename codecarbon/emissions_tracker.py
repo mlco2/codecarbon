@@ -13,6 +13,8 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import psutil
+
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
@@ -171,17 +173,22 @@ class BaseEmissionsTracker(ABC):
         emissions_endpoint: Optional[str] = _sentinel,
         experiment_id: Optional[str] = _sentinel,
         experiment_name: Optional[str] = _sentinel,
-        co2_signal_api_token: Optional[str] = _sentinel,
+        electricitymaps_api_token: Optional[str] = _sentinel,
+        co2_signal_api_token: Optional[
+            str
+        ] = _sentinel,  # Deprecated, use electricitymaps_api_token
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
         force_cpu_power: Optional[int] = _sentinel,
         force_ram_power: Optional[int] = _sentinel,
-        pue: Optional[int] = _sentinel,
-        wue: Optional[bool] = _sentinel,
+        pue: Optional[float] = _sentinel,
+        wue: Optional[float] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
+        rapl_include_dram: Optional[bool] = _sentinel,
+        rapl_prefer_psys: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -219,8 +226,9 @@ class BaseEmissionsTracker(ABC):
                                    data.
         :param experiment_id: Id of the experiment.
         :param experiment_name: Label of the experiment
-        :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
-                                     free beta)
+        :param electricitymaps_api_token: API token for electricitymaps.com (formerly co2signal.com)
+        :param co2_signal_api_token: [DEPRECATED] Use electricitymaps_api_token instead.
+                                     Old parameter name for backward compatibility.
         :param tracking_mode: One of "process" or "machine" in order to measure the
                               power consumption due to the entire machine or to try and
                               isolate the tracked processe's in isolation.
@@ -266,7 +274,31 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
         self._set_from_conf(api_key, "api_key", "api_key")
-        self._set_from_conf(co2_signal_api_token, "co2_signal_api_token")
+
+        # Handle backward compatibility for co2_signal_api_token
+        if co2_signal_api_token is not _sentinel:
+            logger.warning(
+                "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
+                "Please use 'electricitymaps_api_token' instead."
+            )
+            if electricitymaps_api_token is _sentinel:
+                electricitymaps_api_token = co2_signal_api_token
+
+        self._set_from_conf(electricitymaps_api_token, "electricitymaps_api_token")
+        # Also check for old config name for backward compatibility
+        if (
+            not hasattr(self, "_electricitymaps_api_token")
+            or self._electricitymaps_api_token is None
+        ):
+            self._set_from_conf(_sentinel, "co2_signal_api_token", prevent_setter=True)
+            old_token = self._external_conf.get("co2_signal_api_token")
+            if old_token:
+                logger.warning(
+                    "Configuration parameter 'co2_signal_api_token' is deprecated. "
+                    "Please update your config to use 'electricitymaps_api_token' instead."
+                )
+                self._electricitymaps_api_token = old_token
+
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
         self._set_from_conf(experiment_name, "experiment_name", "base")
         self._set_from_conf(gpu_ids, "gpu_ids")
@@ -291,6 +323,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(wue, "wue", 0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
+        self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
+        self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -303,12 +337,22 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_water: Water = Water.from_litres(litres=0)
+        # CPU and RAM utilization tracking
+        self._cpu_utilization_history: List[float] = []
+        self._gpu_utilization_history: List[float] = []
+        self._ram_utilization_history: List[float] = []
+        self._ram_used_history: List[float] = []
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
+        # Running average tracking for power
+        self._cpu_power_sum: float = 0.0
+        self._gpu_power_sum: float = 0.0
+        self._ram_power_sum: float = 0.0
+        self._power_measurement_count: int = 0
         self._measure_occurrence: int = 0
         self._cloud = None
         self._previous_emissions = None
@@ -361,8 +405,10 @@ class BaseEmissionsTracker(ABC):
 
         cloud: CloudMetadata = self._get_cloud_metadata()
 
+        # Always populate geo metadata as it's needed for fallback when cloud region is not found
+        self._geo = self._get_geo_metadata()
+
         if cloud.is_on_private_infra:
-            self._geo = self._get_geo_metadata()
             self._conf["longitude"] = self._geo.longitude
             self._conf["latitude"] = self._geo.latitude
             self._conf["region"] = cloud.region
@@ -372,7 +418,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["provider"] = cloud.provider
 
         self._emissions: Emissions = Emissions(
-            self._data_source, self._co2_signal_api_token
+            self._data_source, self._electricitymaps_api_token
         )
         self._init_output_methods(api_key=self._api_key)
 
@@ -443,6 +489,13 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._last_measured_time = self._start_time = time.perf_counter()
+
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        self._gpu_utilization_history.clear()
+
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -486,6 +539,13 @@ class BaseEmissionsTracker(ABC):
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
+
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        self._gpu_utilization_history.clear()
+
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -686,12 +746,55 @@ class BaseEmissionsTracker(ABC):
             emissions = self._emissions.get_cloud_emissions(
                 self._total_energy, cloud, self._geo
             )
-            country_name = self._emissions.get_cloud_country_name(cloud)
-            country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
-            region = self._emissions.get_cloud_geo_region(cloud)
+            # Try to get cloud region metadata, fall back to geo metadata if not found
+            try:
+                country_name = self._emissions.get_cloud_country_name(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for country name"
+                )
+                country_name = self._geo.country_name
+
+            try:
+                country_iso_code = self._emissions.get_cloud_country_iso_code(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for country ISO code"
+                )
+                country_iso_code = self._geo.country_iso_code
+
+            try:
+                region = self._emissions.get_cloud_geo_region(cloud)
+            except ValueError:
+                logger.debug(
+                    f"Cloud region {cloud.region} not found in cloud data, "
+                    "using geo metadata for region"
+                )
+                region = self._geo.region
+
             on_cloud = "Y"
             cloud_provider = cloud.provider
             cloud_region = cloud.region
+
+        # Calculate average power values across all measurements
+        avg_cpu_power = (
+            self._cpu_power_sum / self._power_measurement_count
+            if self._power_measurement_count > 0
+            else self._cpu_power.W
+        )
+        avg_gpu_power = (
+            self._gpu_power_sum / self._power_measurement_count
+            if self._power_measurement_count > 0
+            else self._gpu_power.W
+        )
+        avg_ram_power = (
+            self._ram_power_sum / self._power_measurement_count
+            if self._power_measurement_count > 0
+            else self._ram_power.W
+        )
+
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
@@ -700,9 +803,29 @@ class BaseEmissionsTracker(ABC):
             duration=duration.seconds,
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
-            cpu_power=self._cpu_power.W,
-            gpu_power=self._gpu_power.W,
-            ram_power=self._ram_power.W,
+            cpu_utilization_percent=(
+                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
+                if self._cpu_utilization_history
+                else 0
+            ),
+            gpu_utilization_percent=(
+                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
+                if self._gpu_utilization_history
+                else 0
+            ),
+            ram_utilization_percent=(
+                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
+                if self._ram_utilization_history
+                else 0
+            ),
+            ram_used_gb=(
+                sum(self._ram_used_history) / len(self._ram_used_history)
+                if self._ram_used_history
+                else 0
+            ),
+            cpu_power=avg_cpu_power,
+            gpu_power=avg_gpu_power,
+            ram_power=avg_ram_power,
             cpu_energy=self._total_cpu_energy.kWh,
             gpu_energy=self._total_gpu_energy.kWh,
             ram_energy=self._total_ram_energy.kWh,
@@ -773,6 +896,21 @@ class BaseEmissionsTracker(ABC):
             if isinstance(hardware, CPU):
                 hardware.monitor_power()
 
+        # Collect CPU and RAM utilization metrics
+        self._cpu_utilization_history.append(psutil.cpu_percent())
+        self._ram_utilization_history.append(psutil.virtual_memory().percent)
+        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
+
+        # Collect GPU utilization metrics
+        for hardware in self._hardware:
+            if isinstance(hardware, GPU):
+                gpu_details = hardware.devices.get_gpu_details()
+                for gpu_detail in gpu_details:
+                    if "gpu_utilization" in gpu_detail:
+                        self._gpu_utilization_history.append(
+                            gpu_detail["gpu_utilization"]
+                        )
+
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
             h_time = time.perf_counter()
@@ -790,6 +928,8 @@ class BaseEmissionsTracker(ABC):
             if isinstance(hardware, CPU):
                 self._total_cpu_energy += energy
                 self._cpu_power = power
+                # Accumulate for running average
+                self._cpu_power_sum += power.W
                 logger.info(
                     f"Delta energy consumed for CPU with {hardware._mode} : {energy.kWh:.6f} kWh"
                     + f", power : {self._cpu_power.W} W"
@@ -800,6 +940,8 @@ class BaseEmissionsTracker(ABC):
             elif isinstance(hardware, GPU):
                 self._total_gpu_energy += energy
                 self._gpu_power = power
+                # Accumulate for running average
+                self._gpu_power_sum += power.W
                 logger.info(
                     f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                     + f". Total GPU Power : {self._gpu_power.W} W"
@@ -807,6 +949,8 @@ class BaseEmissionsTracker(ABC):
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
                 self._ram_power = power
+                # Accumulate for running average
+                self._ram_power_sum += power.W
                 logger.info(
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
                     + f". RAM Power : {self._ram_power.W} W"
@@ -815,6 +959,8 @@ class BaseEmissionsTracker(ABC):
                 if hardware.chip_part == "CPU":
                     self._total_cpu_energy += energy
                     self._cpu_power = power
+                    # Accumulate for running average
+                    self._cpu_power_sum += power.W
                     logger.info(
                         f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
                         + f". Total CPU Power : {self._cpu_power.W} W"
@@ -822,6 +968,8 @@ class BaseEmissionsTracker(ABC):
                 elif hardware.chip_part == "GPU":
                     self._total_gpu_energy += energy
                     self._gpu_power = power
+                    # Accumulate for running average
+                    self._gpu_power_sum += power.W
                     logger.info(
                         f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                         + f". Total GPU Power : {self._gpu_power.W} W"
@@ -832,6 +980,8 @@ class BaseEmissionsTracker(ABC):
             logger.debug(
                 f"Done measure for {hardware.__class__.__name__} - measurement time: {h_time:,.4f} s - last call {last_duration:,.2f} s"
             )
+        # Increment measurement count for power averaging
+        self._power_measurement_count += 1
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity and {self._total_water.litres:.6f} L of water were used since the beginning."
         )
@@ -925,7 +1075,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                              See https://github.com/mlco2/codecarbon/
                                         blob/master/codecarbon/data/cloud/impact.csv
                              for a list of cloud regions.
-        :param country_2letter_iso_code: For use with the CO2Signal emissions API.
+        :param country_2letter_iso_code: For use with the Electricity Maps emissions API.
                                          See http://api.electricitymap.org/v3/zones for
                                          a list of codes and their corresponding
                                          locations.
@@ -1064,7 +1214,10 @@ def track_emissions(
     emissions_endpoint: Optional[str] = _sentinel,
     experiment_id: Optional[str] = _sentinel,
     experiment_name: Optional[str] = _sentinel,
-    co2_signal_api_token: Optional[str] = _sentinel,
+    electricitymaps_api_token: Optional[str] = _sentinel,
+    co2_signal_api_token: Optional[
+        str
+    ] = _sentinel,  # Deprecated, use electricitymaps_api_token
     tracking_mode: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
@@ -1077,9 +1230,11 @@ def track_emissions(
     country_2letter_iso_code: Optional[str] = _sentinel,
     force_cpu_power: Optional[int] = _sentinel,
     force_ram_power: Optional[int] = _sentinel,
-    pue: Optional[int] = _sentinel,
+    pue: Optional[float] = _sentinel,
     wue: Optional[float] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
+    rapl_include_dram: Optional[bool] = _sentinel,
+    rapl_prefer_psys: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1117,8 +1272,9 @@ def track_emissions(
                                data.
     :param experiment_id: Id of the experiment.
     :param experiment_name: Label of the experiment
-    :param co2_signal_api_token: API token for co2signal.com (requires sign-up for
-                                 free beta)
+    :param electricitymaps_api_token: API token for electricitymaps.com (formerly co2signal.com)
+    :param co2_signal_api_token: [DEPRECATED] Use electricitymaps_api_token instead.
+                                 Old parameter name for backward compatibility.
     :param tracking_mode: One of "process" or "machine" in order to measure the
                           power consumption due to the entire machine or to try and
                           isolate the tracked processe's in isolation.
@@ -1147,7 +1303,7 @@ def track_emissions(
                          See https://github.com/mlco2/codecarbon/
                                             blob/master/codecarbon/data/cloud/impact.csv
                          for a list of cloud regions.
-    :param country_2letter_iso_code: For use with the CO2Signal emissions API.
+    :param country_2letter_iso_code: For use with the Electricity Maps emissions API.
                                      See http://api.electricitymap.org/v3/zones for
                                      a list of codes and their corresponding
                                      locations.
@@ -1156,6 +1312,8 @@ def track_emissions(
     :param pue: PUE (Power Usage Effectiveness) of the datacenter.
     :param wue: WUE (Water Usage Effectiveness) of the datacenter, L/kWh.
     :param allow_multiple_runs: Prevent multiple instances of codecarbon running. Defaults to False.
+    :param rapl_include_dram: Include DRAM domain for RAPL measurements (default: False).
+    :param rapl_prefer_psys: Prefer psys (platform) domain over package domains for RAPL (default: False).
 
     :return: The decorated function
     """
@@ -1164,6 +1322,17 @@ def track_emissions(
         @wraps(fn)
         def wrapped_fn(*args, **kwargs):
             fn_result = None
+
+            # Handle backward compatibility for co2_signal_api_token
+            _electricitymaps_token = electricitymaps_api_token
+            if co2_signal_api_token is not _sentinel:
+                logger.warning(
+                    "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
+                    "Please use 'electricitymaps_api_token' instead."
+                )
+                if electricitymaps_api_token is _sentinel:
+                    _electricitymaps_token = co2_signal_api_token
+
             if offline and offline is not _sentinel:
                 if (country_iso_code is None or country_iso_code is _sentinel) and (
                     cloud_provider is None or cloud_provider is _sentinel
@@ -1182,7 +1351,7 @@ def track_emissions(
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
                     gpu_ids=gpu_ids,
-                    co2_signal_api_token=co2_signal_api_token,
+                    electricitymaps_api_token=_electricitymaps_token,
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
@@ -1197,6 +1366,8 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
+                    rapl_include_dram=rapl_include_dram,
+                    rapl_prefer_psys=rapl_prefer_psys,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1219,7 +1390,7 @@ def track_emissions(
                     emissions_endpoint=emissions_endpoint,
                     experiment_id=experiment_id,
                     experiment_name=experiment_name,
-                    co2_signal_api_token=co2_signal_api_token,
+                    electricitymaps_api_token=_electricitymaps_token,
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
@@ -1229,6 +1400,8 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     allow_multiple_runs=allow_multiple_runs,
+                    rapl_include_dram=rapl_include_dram,
+                    rapl_prefer_psys=rapl_prefer_psys,
                 )
             tracker.start()
             try:
