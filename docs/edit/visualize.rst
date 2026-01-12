@@ -14,7 +14,7 @@ The carbonboard visualization tool requires additional dependencies. Install the
 
 .. code-block:: bash
 
-    pip install codecarbon[carbonboard]
+    pip install 'codecarbon[carbonboard]'
 
 .. note::
    The ``viz-legacy`` extra is deprecated but still works for backwards compatibility. It will be removed in v4.0.0. Please use ``carbonboard`` instead.

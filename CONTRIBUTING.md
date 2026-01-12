@@ -70,7 +70,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 <!-- TOC --><a name="installation"></a>
 ### Installation
 
-CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/), or better, faster, stronger with [UV](https://github.com/astral-sh/uv).
+CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [UV](https://github.com/astral-sh/uv).
 
 Between April 2024 and July 2025 we use Hatch for managing development environment. Since August 2025 we use UV manages the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
 
@@ -258,7 +258,6 @@ Dependencies are defined in different places:
 
 -   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
 -   In [uv.lock](uv.lock), those are the locked dependencies managed by UV, do not edit them.
--   In [.conda/meta.yaml](.conda/meta.yaml#L21), those are the dependencies for the Conda pacakge targeting Python 3.7 and higher versions.
 
 
 <!-- TOC --><a name="build-documentation-"></a>
@@ -288,20 +287,6 @@ to regenerate the html files.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
--   For conda, we now have a [feedstock](https://github.com/conda-forge/codecarbon-feedstock/pulls) to publish to Conda-Forge channel.
-
-If you still want to publish to the Anaconda CodeCarbon channel:
-
-Start a Docker image in the same directory and bind-mount the current directory with:
-
-`docker run -ti --rm=true -v $PWD:/data continuumio/anaconda3`.
-
-Inside the docker container, run:
-
--   `conda install -y conda-build conda-verify`
--   `cd /data && mkdir -p /conda_dist`
--   `conda build --python 3.11 .conda/ -c conda-forge --output-folder /conda_dist`
--   `anaconda upload --user codecarbon /conda_dist/noarch/codecarbon-*.tar.bz2`
 
 #### Test the build in Docker
 
@@ -392,7 +377,7 @@ api_endpoint = http://localhost:8008
 Before using it, you need an experiment_id, to get one, run:
 
 ```
-codecarbon init
+codecarbon login
 ```
 
 It will ask the API for an experiment_id on the default project and save it to `.codecarbon.config` for you.

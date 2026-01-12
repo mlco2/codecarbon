@@ -77,8 +77,16 @@ input parameter (defaults to the current directory), for each experiment tracked
        | This is done for privacy protection.
    * - ram_total_size
      -  total RAM available (Go)
-   * - Tracking_mode:
+   * - tracking_mode:
      - ``machine`` or ``process``(default to ``machine``)
+   * - cpu_utilization_percent
+     - Average CPU utilization during tracking period (%)
+   * - gpu_utilization_percent
+     - Average GPU utilization during tracking period (%)
+   * - ram_utilization_percent
+     - Average RAM utilization during tracking period (%)
+   * - ram_used_gb
+     - Average RAM used during tracking period (GB)
 
 ..  note::
 
