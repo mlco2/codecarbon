@@ -20,7 +20,8 @@ B_TO_GB = 1024 * 1024 * 1024
 class BaseHardware(ABC):
     @abstractmethod
     def total_power(self) -> Power:
-        pass
+        raise NotImplementedError()
+        # pass
 
     def description(self) -> str:
         return repr(self)
@@ -31,13 +32,9 @@ class BaseHardware(ABC):
         hardware and convert it to energy.
         """
         power = self.total_power()
+
         energy = Energy.from_power_and_time(
             power=power, time=Time.from_seconds(last_duration)
-        )
-
-        logger.warning(
-            f"""Using base implementation of measure_power_and_energy for {self}. Power: {power}, Energy: {energy}.
-            \nThis implementation only supports total power measurement without tracking specific components!"""
         )
 
         return power, energy
