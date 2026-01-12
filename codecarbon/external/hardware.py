@@ -7,13 +7,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
-
 from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
-
 
 B_TO_GB = 1024 * 1024 * 1024
 
@@ -36,12 +34,12 @@ class BaseHardware(ABC):
         energy = Energy.from_power_and_time(
             power=power, time=Time.from_seconds(last_duration)
         )
-        
+
         logger.warning(
             f"""Using base implementation of measure_power_and_energy for {self}. Power: {power}, Energy: {energy}.
             \nThis implementation only supports total power measurement without tracking specific components!"""
         )
-        
+
         return power, energy
 
     def start(self) -> None:  # noqa B027
@@ -152,8 +150,6 @@ class GPU(BaseHardware):
                 f"You have {gpus.num_gpus} GPUs but we will monitor only {len(new_gpu_ids)} ({new_gpu_ids}) of them. Check your configuration."
             )
         return cls(gpu_ids=new_gpu_ids)
-
-
 
 
 @dataclass

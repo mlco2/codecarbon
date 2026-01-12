@@ -5,16 +5,15 @@ CPU Power consumption and metrics handling
 import math
 import re
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
-from codecarbon.external.logger import logger
-
 from codecarbon.external.hardware import BaseHardware
+from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
 POWER_CONSTANT = 85
@@ -24,6 +23,7 @@ CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 
 
 MODE_CPU_LOAD = "cpu_load"
+
 
 @dataclass
 class CPU(BaseHardware):
@@ -49,7 +49,7 @@ class CPU(BaseHardware):
         self._tracking_mode = tracking_mode
         self._tracking_pids = tracking_pids
         self._cpu_count = count_cpus()
-                
+
         if tracking_pids is not None:
             # Make list if it is not already a list
             if not isinstance(tracking_pids, list):
@@ -103,8 +103,7 @@ class CPU(BaseHardware):
             return tdp * (base_power + power_range * factor)
         else:  # Above 50% - plateau phase
             return tdp * (0.85 + 0.15 * (1 - math.exp(-(load - 0.5) * 5)))
-        
-        
+
     def get_cpu_load(self) -> float:
         """
         Get CPU load percentage
@@ -149,16 +148,15 @@ class CPU(BaseHardware):
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
         return cpu_load
-    
 
     def _get_power_from_cpu_load(self):
         """
         When in MODE_CPU_LOAD
         """
-        
+
         cpu_load = self.get_cpu_load()
-        
-        if self._tracking_mode == "machine":                   
+
+        if self._tracking_mode == "machine":
             logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
             # Cubic relationship with minimum 10% of TDP
             load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
@@ -168,7 +166,7 @@ class CPU(BaseHardware):
             )
         elif self._tracking_mode == "process":
             # Normalize by CPU count
-            logger.info(f"Total CPU load (all processes): {cpu_load}")           
+            logger.info(f"Total CPU load (all processes): {cpu_load}")
             power = self._tdp * cpu_load / 100
             logger.debug(
                 f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for processes {self._tracking_pids} (including children)."
@@ -202,14 +200,16 @@ class CPU(BaseHardware):
                 logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
             else:
                 logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
-                
+
         # Rescale power with correct tracking mode
         # Machine -> 100%
         # Process -> With CPU load
         cpu_load = self.get_cpu_load()
         power = self._tdp * cpu_load / 100
-        logger.debug(f"Estimated CPU power for processes {self._tracking_pids} (including children): {power} W based on CPU load {cpu_load} % and TDP {self._tdp} W.")
-                
+        logger.debug(
+            f"Estimated CPU power for processes {self._tracking_pids} (including children): {power} W based on CPU load {cpu_load} % and TDP {self._tdp} W."
+        )
+
         return Power.from_watts(power)
 
     def _get_energy_from_cpus(self, delay: Time) -> Energy:
@@ -224,16 +224,17 @@ class CPU(BaseHardware):
             if re.match(r"^Processor Energy Delta_\d", metric):
                 delta_energy += value
                 logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
-                
+
         # Rescale energy with correct tracking mode
         # get_cpu_details should never return total energy
         # Machine -> 100%
         # Process -> With CPU load
         cpu_load = self.get_cpu_load()
         delta_energy = self._tdp * cpu_load / 100
-        logger.debug(f"Estimated CPU power for processes {self._tracking_pids} (including children): {delta_energy} W based on CPU load {cpu_load} % and TDP {self._tdp} W.")
-                
-                
+        logger.debug(
+            f"Estimated CPU power for processes {self._tracking_pids} (including children): {delta_energy} W based on CPU load {cpu_load} % and TDP {self._tdp} W."
+        )
+
         return Energy.from_energy(delta_energy)
 
     def total_power(self) -> Power:
