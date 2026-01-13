@@ -33,9 +33,9 @@ class CPU(BaseHardware):
         mode: str,
         model: str,
         tdp: int,
+        tracking_pids: Optional[List[int]],
         rapl_dir: str = "/sys/class/powercap/intel-rapl/subsystem",
         tracking_mode: str = "machine",
-        tracking_pids: Optional[List[int]] = None,
         rapl_include_dram: bool = False,
         rapl_prefer_psys: bool = False,
     ):

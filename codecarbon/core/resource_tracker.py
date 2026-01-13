@@ -59,7 +59,12 @@ class ResourceTracker:
         """Set up CPU tracking using Intel Power Gadget."""
         logger.info("Tracking Intel CPU via Power Gadget")
         self.cpu_tracker = "Power Gadget"
-        hardware_cpu = CPU.from_utils(self.tracker._output_dir, "intel_power_gadget")
+        hardware_cpu = CPU.from_utils(
+            self.tracker._output_dir,
+            "intel_power_gadget",
+            tracking_mode=self.tracker._tracking_mode,
+            tracking_pids=self.tracker._tracking_pids,
+        )
         self.tracker._hardware.append(hardware_cpu)
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
         return True
@@ -73,6 +78,8 @@ class ResourceTracker:
             mode="intel_rapl",
             rapl_include_dram=self.tracker._rapl_include_dram,
             rapl_prefer_psys=self.tracker._rapl_prefer_psys,
+            tracking_mode=self.tracker._tracking_mode,
+            tracking_pids=self.tracker._tracking_pids,
         )
         self.tracker._hardware.append(hardware_cpu)
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
@@ -83,6 +90,11 @@ class ResourceTracker:
         logger.info("Tracking Apple CPU and GPU via PowerMetrics")
         self.gpu_tracker = "PowerMetrics"
         self.cpu_tracker = "PowerMetrics"
+
+        if self.tracker._tracking_mode != "machine":
+            logger.warning(
+                "PowerMetrics only supports 'machine' tracking mode. Overriding tracking mode to 'machine'."
+            )
 
         hardware_cpu = AppleSiliconChip.from_utils(
             self.tracker._output_dir, chip_part="CPU"
@@ -152,7 +164,12 @@ class ResourceTracker:
                     "No CPU tracking mode found. Falling back on CPU constant mode."
                 )
                 hardware_cpu = CPU.from_utils(
-                    self.tracker._output_dir, "constant", model, max_power
+                    self.tracker._output_dir,
+                    "constant",
+                    model,
+                    max_power,
+                    tracking_mode=self.tracker._tracking_mode,
+                    tracking_pids=self.tracker._tracking_pids,
                 )
                 self.cpu_tracker = "global constant"
             self.tracker._hardware.append(hardware_cpu)
@@ -175,7 +192,12 @@ class ResourceTracker:
                     "Failed to match CPU TDP constant. Falling back on a global constant."
                 )
                 self.cpu_tracker = "global constant"
-                hardware_cpu = CPU.from_utils(self.tracker._output_dir, "constant")
+                hardware_cpu = CPU.from_utils(
+                    self.tracker._output_dir,
+                    "constant",
+                    tracking_mode=self.tracker._tracking_mode,
+                    tracking_pids=self.tracker._tracking_pids,
+                )
             self.tracker._hardware.append(hardware_cpu)
 
     def set_CPU_tracking(self):

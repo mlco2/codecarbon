@@ -1,3 +1,4 @@
+import os
 import unittest
 from time import sleep
 from unittest import mock
@@ -24,6 +25,7 @@ class TestCPULoad(unittest.TestCase):
             "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz",
             100,
             tracking_mode="process",
+            tracking_pids=[os.getpid()],
         )
         cpu.start()
         sleep(0.5)
@@ -42,7 +44,11 @@ class TestCPULoad(unittest.TestCase):
         mocked_get_power_from_cpu_load,
     ):
         cpu = CPU.from_utils(
-            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+            None,
+            MODE_CPU_LOAD,
+            "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz",
+            100,
+            tracking_mode="machine",
         )
         cpu.start()
         sleep(0.5)
@@ -77,7 +83,9 @@ class TestCPULoad(unittest.TestCase):
     ):
         tdp = 100
         cpu_model = "AMD Ryzen Threadripper 3990X 64-Core Processor"
-        cpu = CPU.from_utils(None, MODE_CPU_LOAD, cpu_model, tdp)
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, cpu_model, tdp, tracking_mode="machine"
+        )
         tests_values = [
             {
                 "cpu_load": 0.0,
@@ -104,7 +112,9 @@ class TestCPULoad(unittest.TestCase):
     ):
         tdp = 100
         cpu_model = "Random Processor"
-        cpu = CPU.from_utils(None, MODE_CPU_LOAD, cpu_model, tdp)
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, cpu_model, tdp, tracking_mode="machine"
+        )
         tests_values = [
             {
                 "cpu_load": 0.0,
