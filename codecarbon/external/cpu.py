@@ -287,6 +287,8 @@ class CPU(BaseHardware):
                 tdp=tdp,
                 rapl_include_dram=rapl_include_dram,
                 rapl_prefer_psys=rapl_prefer_psys,
+                tracking_mode=tracking_mode,
+                tracking_pids=tracking_pids,
             )
             cpu._is_generic_tdp = True
             return cpu
