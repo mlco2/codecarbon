@@ -167,7 +167,7 @@ psycopg2-binary==2.9.11
     # via codecarbon (pyproject.toml)
 py-cpuinfo==9.0.0
     # via codecarbon (pyproject.toml)
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   python-jose
     #   rsa
