@@ -107,6 +107,12 @@ In your command prompt use:
 ```codecarbon monitor```
 The package will track your emissions independently from your code.
 
+### Detecting your hardware 🔍
+
+In your command prompt use:
+```codecarbon detect```
+The package will detect and print your hardware information (RAM, CPU, GPU).
+
 ### In your Python code 🐍
 ```python
 from codecarbon import track_emissions

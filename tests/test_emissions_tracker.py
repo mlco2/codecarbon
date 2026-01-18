@@ -637,3 +637,22 @@ class TestCarbonTracker(unittest.TestCase):
             self.assertTrue(
                 scheduler_warning_found, "Expected scheduler warning was not found"
             )
+
+    def test_get_detected_hardware(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+    ):
+        tracker = EmissionsTracker(save_to_file=False)
+        hardware_info = tracker.get_detected_hardware()
+        self.assertIsInstance(hardware_info, dict)
+        self.assertIn("ram_total_size", hardware_info)
+        self.assertIn("cpu_count", hardware_info)
+        self.assertIn("cpu_physical_count", hardware_info)
+        self.assertIn("cpu_model", hardware_info)
+        self.assertIn("gpu_count", hardware_info)
+        self.assertIn("gpu_model", hardware_info)
+        self.assertIn("gpu_ids", hardware_info)

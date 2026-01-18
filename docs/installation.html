@@ -54,7 +54,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installing CodeCarbon</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#from-pypi-repository">From PyPi repository</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#from-conda-repository">From conda repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-conda-environments">Using Conda environments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 </ul>
 </li>
@@ -99,13 +99,6 @@
              
   <section id="installing-codecarbon">
 <span id="installation"></span><h1>Installing CodeCarbon<a class="headerlink" href="#installing-codecarbon" title="Link to this heading"></a></h1>
-<p>Create a virtual environment using <cite>conda</cite> for easier management of dependencies and packages.
-For installing conda, follow the instructions on the
-<a class="reference external" href="https://docs.conda.io/projects/conda/en/latest/user-guide/install">official conda website</a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>codecarbon
-conda<span class="w"> </span>activate<span class="w"> </span>codecarbon
-</pre></div>
-</div>
 <section id="from-pypi-repository">
 <h2>From PyPi repository<a class="headerlink" href="#from-pypi-repository" title="Link to this heading"></a></h2>
 <p>The package is hosted on the pip repository <a class="reference external" href="https://pypi.org/project/codecarbon/">here</a>.</p>
@@ -114,12 +107,17 @@ conda<span class="w"> </span>activate<span class="w"> </span>codecarbon
 </pre></div>
 </div>
 </section>
-<section id="from-conda-repository">
-<h2>From conda repository<a class="headerlink" href="#from-conda-repository" title="Link to this heading"></a></h2>
-<p>The package is hosted on the conda repository <a class="reference external" href="https://anaconda.org/codecarbon/codecarbon">here</a>.</p>
-<p>To install the package, run the following command in your terminal.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>codecarbon<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>codecarbon
+<section id="using-conda-environments">
+<h2>Using Conda environments<a class="headerlink" href="#using-conda-environments" title="Link to this heading"></a></h2>
+<p>If you’re using Conda for environment management, you can install CodeCarbon with pip in your Conda environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>codecarbon
+conda<span class="w"> </span>activate<span class="w"> </span>codecarbon
+pip<span class="w"> </span>install<span class="w"> </span>codecarbon
 </pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>While CodeCarbon can be used in Conda environments, we no longer maintain Conda packages. We recommend using <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">codecarbon</span></code> within your Conda environment, which works seamlessly with Conda.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

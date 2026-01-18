@@ -42,6 +42,14 @@ If you want to track the emissions of a computer without having to modify your c
 
 You have to stop the monitoring manually with ``Ctrl+C``.
 
+If you want to detect the hardware of your computer without starting any measurement, you can use:
+
+.. code-block:: console
+
+    codecarbon detect
+
+It will print the detected RAM, CPU and GPU information.
+
 In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
 to an API running on "localhost:8008" (Or you can start a private local API with "docker-compose up"). Using the public API with
 this is not supported yet (coming soon!)
