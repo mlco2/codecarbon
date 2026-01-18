@@ -24,3 +24,15 @@ jobs:
       run: |
         pip install pre-commit==3.7.0
         pre-commit run --show-diff-on-failure --color=always --all-files
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync --all-groups && uv add --dev pip-audit
+      - name: Run pip-audit
+        run: uv run pip-audit   # Will fail if vulnerabilities are found
