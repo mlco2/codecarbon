@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 import dateutil.relativedelta
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, File, UploadFile, Form
 from starlette import status
 
 from carbonserver.api.errors import EmptyResultException
@@ -135,3 +135,31 @@ def read_project_last_run(
     except EmptyResultException as e:
         logger.warning(f"read_project_last_run : {e}")
         return Empty()
+
+@router.post(
+    "/runs/remote",
+    tags=RUNS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def run_remote(
+    codecarbon_api_key: str = Form(...),
+    experiment_id: str = Form(...),
+    injected_code_file: UploadFile = File(..., description="Python code file to inject"),
+    kaggle_api_key: str = Form(...),
+    kaggle_username: str = Form(...),
+    notebook_title: str = Form(...),
+    api_endpoint: str = Form('https://api.codecarbon.io'),
+    run_service: RunService = Depends(Provide[ServerContainer.run_service]),
+) -> dict:
+    try:
+        # Read the file content as string
+        # Seek to beginning in case file was partially read
+        injected_code_file.file.seek(0)
+        injected_code = injected_code_file.file.read().decode('utf-8')
+        if not injected_code or not injected_code.strip():
+            return {"status": "error", "message": "Uploaded file is empty"}, status.HTTP_400_BAD_REQUEST
+        return run_service.run_remote(codecarbon_api_key, experiment_id, injected_code, kaggle_api_key, kaggle_username, notebook_title, api_endpoint)
+    except Exception as e:
+        logger.error(f"run_remote : {e}")
+        return {"status": "error", "message": str(e)}
