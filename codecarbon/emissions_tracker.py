@@ -369,8 +369,9 @@ class BaseEmissionsTracker(ABC):
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
 
         # Tracking mode detection
-        ressource_tracker = ResourceTracker(self)
-        ressource_tracker.set_CPU_GPU_ram_tracking()
+        self._hardware = []
+        resource_tracker = ResourceTracker(self)
+        resource_tracker.set_CPU_GPU_ram_tracking()
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
@@ -378,18 +379,20 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  Platform system: {self._conf.get('os')}")
         logger.info(f"  Python version: {self._conf.get('python_version')}")
         logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
-        logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
+
+        hardware_info = self.get_detected_hardware()
+        logger.info(f"  Available RAM : {hardware_info['ram_total_size']:.3f} GB")
         logger.info(
-            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get('cpu_physical_count')} physical CPU(s)"
+            f"  CPU count: {hardware_info['cpu_count']} thread(s) in {hardware_info['cpu_physical_count']} physical CPU(s)"
         )
-        logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
-        logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
+        logger.info(f"  CPU model: {hardware_info['cpu_model']}")
+        logger.info(f"  GPU count: {hardware_info['gpu_count']}")
         if self._gpu_ids:
             logger.info(
-                f"  GPU model: {self._conf.get('gpu_model')} BUT only tracking these GPU ids : {self._conf.get('gpu_ids')}"
+                f"  GPU model: {hardware_info['gpu_model']} BUT only tracking these GPU ids : {hardware_info['gpu_ids']}"
             )
         else:
-            logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
+            logger.info(f"  GPU model: {hardware_info['gpu_model']}")
 
         # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
@@ -468,6 +471,22 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
+
+    def get_detected_hardware(self) -> Dict[str, Any]:
+        """
+        Get the detected hardware.
+        :return: A dictionary containing hardware data.
+        """
+        hardware_info = {
+            "ram_total_size": self._conf.get("ram_total_size"),
+            "cpu_count": self._conf.get("cpu_count"),
+            "cpu_physical_count": self._conf.get("cpu_physical_count"),
+            "cpu_model": self._conf.get("cpu_model"),
+            "gpu_count": self._conf.get("gpu_count"),
+            "gpu_model": self._conf.get("gpu_model"),
+            "gpu_ids": self._conf.get("gpu_ids"),
+        }
+        return hardware_info
 
     def service_shutdown(self, signum, frame):
         logger.warning("service_shutdown - Caught signal %d" % signum)
