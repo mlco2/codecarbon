@@ -64,9 +64,7 @@ class OIDCAuthProvider:
         oidc_config = await self._get_openid_configuration()
         return await asyncio.to_thread(self._discovery.signing_algos, oidc_config)
 
-    async def _decode_token(
-        self, token: str, *, audience: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def _decode_token(self, token: str) -> Dict[str, Any]:
         oidc_config = await self._get_openid_configuration()
         jwks = await self._get_jwks()
         algorithms = await self._get_algorithms()
@@ -74,9 +72,8 @@ class OIDCAuthProvider:
             token,
             jwks,
             algorithms=algorithms,
-            audience=audience or self.client_id,
             issuer=oidc_config.get("issuer", self.base_url),
-            options={"verify_at_hash": False},
+            options={"verify_aud": False, "verify_at_hash": False},
         )
 
     async def get_auth_url(
