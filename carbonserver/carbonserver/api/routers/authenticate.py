@@ -32,9 +32,6 @@ router = APIRouter()
 def check_login(
     auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
-    auth_provider: Optional[OIDCAuthProvider] = Depends(
-        Provide[ServerContainer.auth_provider]
-    ),
 ):
     """
     return user data or redirect to login screen
