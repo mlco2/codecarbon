@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=78.1.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -39,10 +39,12 @@ dependencies = [
     "pydantic",
     "nvidia-ml-py",
     "rapidfuzz",
-    "requests",
+    "requests>=2.32.4; python_version>='3.8'",
+    "requests>=2.31.0; python_version<'3.8'",
     "questionary",
     "rich",
-    "typer"
+    "typer",
+    "urllib3>=2.2.2; python_version>='3.8'"
 ]
 
 [tool.setuptools.dynamic]
@@ -84,13 +86,22 @@ dev = [
     "bumpver",
     "pre-commit",
     "ruff",
-    "black",
+    "black>=24.3.0; python_version>='3.8'",
+    "black>=23.3.0; python_version<'3.8'",
     "mypy",
     "pytest",
-    "requests",
+    "requests>=2.32.4; python_version>='3.8'",
+    "requests>=2.31.0; python_version<'3.8'",
     "requests-mock",
     "responses",
     "logfire>=1.0.1",
+    "pip-audit>=2.6.1",
+    "werkzeug>=3.1.4; python_version>='3.10'",
+    "werkzeug>=2.3.8; python_version>='3.8'",
+    "werkzeug>=2.2.3; python_version<'3.8'",
+    "filelock>=3.20.1; python_version>='3.10'",
+    "filelock>=3.16.1; python_version>='3.8'",
+    "filelock>=3.12.2; python_version<'3.8'",
 ]
 doc = [
   "sphinx",
@@ -114,12 +125,14 @@ api  = [
     "bcrypt<5.0.0",
     "python-dateutil<3.0.0",
     "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
+    "fastapi>=0.109.1,<1.0.0; python_version>='3.8'",
+    "fastapi>=0.103.2,<1.0.0; python_version<'3.8'",
     "fief-client[fastapi]",
     "httpx",
     "pydantic[email]<2.0.0",
     "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
+    "requests>=2.32.0,<3.0.0; python_version>='3.8'",
+    "requests>=2.31.0,<3.0.0; python_version<'3.8'",
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
     "fastapi-pagination<1.0.0",
@@ -127,12 +140,15 @@ api  = [
     "mock",
     "responses",
     "fastapi-oidc;python_version>='3.10'",
-    "numpy",
+    "numpy>=1.22; python_version>='3.8'",
+    "numpy>=1.21.6; python_version<'3.8'",
     "psutil",
     "requests-mock",
     "rapidfuzz",
     "PyJWT",
     "logfire[fastapi]>=1.0.1",
+    "starlette>=0.40.0; python_version>='3.8'",
+    "urllib3>=2.2.2; python_version>='3.8'",
 ]
 
 [project.scripts]
