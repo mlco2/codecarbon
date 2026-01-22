@@ -144,7 +144,7 @@ class GPUDevice:
         try:
             return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
         except pynvml.NVMLError_NotSupported:
-                # this error is currently thrown for the NVIDIA Blackwell GPU, due to memory sharing on NVIDIA DGX Spark
+            # error thrown for the NVIDIA Blackwell GPU of DGX Spark, due to memory sharing -> return defaults instead
             return pynvml.c_nvmlMemory_t(-1, -1, -1)
 
     def _get_temperature(self) -> int:
