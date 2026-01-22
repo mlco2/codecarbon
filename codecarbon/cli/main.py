@@ -8,8 +8,6 @@ from typing import Optional
 import questionary
 import requests
 import typer
-from fief_client import Fief
-from fief_client.integrations.cli import FiefAuth
 from rich import print
 from rich.prompt import Confirm
 from typing_extensions import Annotated
@@ -22,6 +20,7 @@ from codecarbon.cli.cli_utils import (
     get_existing_local_exp_id,
     overwrite_local_config,
 )
+from codecarbon.cli.oidc_auth import OIDCAuth
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
@@ -114,15 +113,14 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         )
 
 
-def get_fief_auth():
-    fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
-    fief_auth = FiefAuth(fief, "./credentials.json")
-    return fief_auth
+def get_oidc_auth():
+    oidc_auth = OIDCAuth(AUTH_SERVER_URL, AUTH_CLIENT_ID, "./credentials.json")
+    return oidc_auth
 
 
 def _get_access_token():
     try:
-        access_token_info = get_fief_auth().access_token_info()
+        access_token_info = get_oidc_auth().access_token_info()
         access_token = access_token_info["access_token"]
         return access_token
     except Exception as e:
@@ -132,7 +130,7 @@ def _get_access_token():
 
 
 def _get_id_token():
-    id_token = get_fief_auth()._tokens["id_token"]
+    id_token = get_oidc_auth().get_id_token()
     return id_token
 
 
@@ -151,7 +149,7 @@ def api_get():
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
-    get_fief_auth().authorize()
+    get_oidc_auth().authorize()
     api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
     access_token = _get_access_token()
     api.set_access_token(access_token)
