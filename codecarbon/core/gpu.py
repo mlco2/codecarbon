@@ -143,7 +143,7 @@ class GPUDevice:
         """
         try:
             return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
-        except (pynvml.NVMLError_NotSupported):
+        except pynvml.NVMLError_NotSupported:
                 # this error is currently thrown for the NVIDIA Blackwell GPU, due to memory sharing on NVIDIA DGX Spark
             return pynvml.c_nvmlMemory_t(-1, -1, -1)
 
