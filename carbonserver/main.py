@@ -24,6 +24,7 @@ from carbonserver.config import settings
 from carbonserver.container import ServerContainer
 from carbonserver.database.database import engine
 from carbonserver.logger import logger
+from starlette.middleware.sessions import SessionMiddleware
 
 
 async def db_exception_handler(request: Request, exc: DBException):
@@ -53,6 +54,7 @@ def create_app() -> FastAPI:
     server.add_exception_handler(DBException, db_exception_handler)
     server.add_exception_handler(ValidationError, validation_exception_handler)
     server.add_exception_handler(Exception, generic_exception_handler)
+    server.add_middleware(SessionMiddleware, secret_key="some-random-string")
 
     return server
 
