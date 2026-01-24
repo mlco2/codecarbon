@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     oidc_client_id: str = ""
     oidc_client_secret: str = ""
     oidc_issuer_url: str = "https://auth.codecarbon.io/codecarbon-dev"
+    oidc_well_known_url: str = ""
 
     # Deprecated: Old Fief-specific settings (use OIDC settings instead)
     @property
@@ -43,6 +44,12 @@ class Settings(BaseSettings):
             "oidc_client_id": {"env": ["OIDC_CLIENT_ID", "FIEF_CLIENT_ID"]},
             "oidc_client_secret": {"env": ["OIDC_CLIENT_SECRET", "FIEF_CLIENT_SECRET"]},
             "oidc_issuer_url": {"env": ["OIDC_ISSUER_URL", "FIEF_URL"]},
+            "oidc_well_known_url": {
+                "env": [
+                    "OIDC_WELL_KNOWN_URL",
+                    "FIEF_URL" + "/.well-known/openid-configuration",
+                ]
+            },
         }
 
 

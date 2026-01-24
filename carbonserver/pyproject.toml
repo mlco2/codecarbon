@@ -40,6 +40,8 @@ dependencies = [
     "PyJWT",
     "logfire[fastapi]>=1.0.1",
     "fastapi-oidc>=0.0.9",
+    "authlib>=1.6.6",
+    "itsdangerous>=2.2.0",
 ]
 
 [project.urls]
