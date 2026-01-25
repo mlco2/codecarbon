@@ -99,7 +99,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.2.0
     # via codecarbon (pyproject.toml)
-numpy==2.3.5
+numpy==2.4.1
     # via
     #   codecarbon (pyproject.toml)
     #   pandas
@@ -156,7 +156,7 @@ prometheus-client==0.23.1
     # via codecarbon (pyproject.toml)
 prompt-toolkit==3.0.52
     # via questionary
-protobuf==6.33.1
+protobuf==6.33.4
     # via
     #   googleapis-common-protos
     #   logfire
@@ -236,7 +236,7 @@ sqlalchemy==1.4.54
     # via
     #   codecarbon (pyproject.toml)
     #   alembic
-starlette==0.50.0
+starlette==0.52.1
     # via fastapi
 termcolor==3.2.0
     # via yaspin
