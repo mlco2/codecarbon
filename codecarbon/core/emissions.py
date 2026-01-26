@@ -155,6 +155,30 @@ class Emissions:
                     + " >>> Using CodeCarbon's data."
                 )
 
+                # NORDIC EMISSION FACTORS DOCUMENTATION
+                # ==========================================
+                # Static emission factors for Nordic electricity regions.
+                # These values represent the carbon intensity (gCO2eq/kWh) of electricity
+                # production in specific Nordic bidding zones.
+                #
+                # DATA SOURCES:
+                # - Sweden/Norway (SE1-4, NO1-5): 18 gCO2eq/kWh
+                #   Based on Nordic grid average (<60 gCO2eq/kWh per ENTSO-E)
+                #   Source: https://transparency.entsoe.eu/
+                #   Nordic Energy Research: https://www.nordicenergy.org/indicators/
+                #
+                # - Finland (FI): 72 gCO2eq/kWh
+                #   Source: Fingrid real-time CO2 emissions estimate
+                #   https://www.fingrid.fi/en/electricity-market-information/real-time-co2-emissions-estimate/
+                #
+                # UPDATE PROCEDURE:
+                # To update these values annually:
+                # 1. Check latest data from ENTSO-E Transparency Platform
+                # 2. Check Fingrid for Finnish-specific data
+                # 3. Update codecarbon/data/private_infra/nordic_emissions.json
+                # 4. Values should reflect the most recent annual average
+                #
+                
                         # Check for Nordic regions (SE1-4, NO1-5, FI) and use static emission factors
                                 nordic_regions = ["SE1", "SE2", "SE3", "SE4", "NO1", "NO2", "NO3", "NO4", "NO5", "FI"]
                                         if geo.region is not None and geo.region.upper() in nordic_regions:
