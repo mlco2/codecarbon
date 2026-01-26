@@ -34,7 +34,7 @@ except ImportError:
     print("WARNING : No tapo module found !!!")
 
 from codecarbon import EmissionsTracker
-from codecarbon.external.hardware import CPU, MODE_CPU_LOAD
+from codecarbon.external.cpu import CPU, MODE_CPU_LOAD
 
 measure_power_secs = 10
 test_phase_duration = 30
