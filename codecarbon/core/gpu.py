@@ -141,7 +141,11 @@ class GPUDevice:
         """Returns memory info in bytes
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g2dfeb1db82aa1de91aa6edf941c85ca8
         """
-        return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
+        try:
+            return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
+        except pynvml.NVMLError_NotSupported:
+            # error thrown for the NVIDIA Blackwell GPU of DGX Spark, due to memory sharing -> return defaults instead
+            return pynvml.c_nvmlMemory_t(-1, -1, -1)
 
     def _get_temperature(self) -> int:
         """Returns degrees in the Celsius scale

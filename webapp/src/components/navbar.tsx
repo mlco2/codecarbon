@@ -251,18 +251,20 @@ export default function NavBar({
                             onClose={() => setNewOrgModalOpen(false)}
                             onOrganizationCreated={refreshOrgList}
                         />
-                        <NavItem
-                            isSelected={selected === "profile"}
-                            onClick={() => {
-                                setSelected("profile");
-                                setSheetOpened?.(false);
-                                window.location.href = USER_PROFILE_URL!; // Redirect to Fief profile to handle profile updates there
-                            }}
-                            paddingY={1.5}
-                            icon={<UserIcon className={iconStyles} />}
-                        >
-                            Profile
-                        </NavItem>
+                        {USER_PROFILE_URL && (
+                            <NavItem
+                                isSelected={selected === "profile"}
+                                onClick={() => {
+                                    setSelected("profile");
+                                    setSheetOpened?.(false);
+                                    window.location.href = USER_PROFILE_URL!; // Redirect to Fief profile to handle profile updates there
+                                }}
+                                paddingY={1.5}
+                                icon={<UserIcon className={iconStyles} />}
+                            >
+                                Profile
+                            </NavItem>
+                        )}
                         <NavItem
                             onClick={() => {
                                 setSheetOpened?.(false);
