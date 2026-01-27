@@ -183,11 +183,8 @@ class Emissions:
                                 nordic_regions = ["SE1", "SE2", "SE3", "SE4", "NO1", "NO2", "NO3", "NO4", "NO5", "FI"]
                                         if geo.region is not None and geo.region.upper() in nordic_regions:
                                                         try:
-                                                                            import json
-                                                                                            from pathlib import Path
-                                                                                                            nordic_file = Path(__file__).parent.parent / "data" / "private_infra" / "nordic_emissions.json"
-                                                                                                                            with open(nordic_file, 'r') as f:
-                                                                                                                                                    nordic_data = json.load(f)
+                                                                                            # Get Nordic energy mix data from cache
+                nordic_data = self._data_source.get_nordic_country_energy_mix_data()                                                             nordic_data = json.load(f)
                                                                                                                                                                     region_data = nordic_data["data"].get(geo.region.upper())
                                                                                                                                                                                     if region_data:
                                                                                                                                                                                                             emission_factor_g = region_data["emission_factor"]  # gCO2eq/kWh
