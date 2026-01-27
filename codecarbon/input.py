@@ -62,7 +62,7 @@ def _load_static_data() -> None:
 
 
     # Nordic country energy mix - used for emissions calculations
-    path = _get_resource_path("data/private_infra/nordic_country_energy_mix.json")
+    path = _get_resource_path("data/private_infra/nordic_emissions.json")
     with open(path) as f:
         _CACHE["nordic_country_energy_mix"] = json.load(f)
 
