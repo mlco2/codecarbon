@@ -184,7 +184,7 @@ class Emissions:
                                         if geo.region is not None and geo.region.upper() in nordic_regions:
                                                         try:
                                                                                             # Get Nordic energy mix data from cache
-                nordic_data = self._data_source.get_nordic_country_energy_mix_data()                                                             nordic_data = json.load(f)
+                nordic_data = self._data_source.get_nordic_country_energy_mix_data()                                                            
                                                                                                                                                                     region_data = nordic_data["data"].get(geo.region.upper())
                                                                                                                                                                                     if region_data:
                                                                                                                                                                                                             emission_factor_g = region_data["emission_factor"]  # gCO2eq/kWh
