@@ -172,3 +172,34 @@ class TestEmissions(unittest.TestCase):
         )
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 0.475, places=2)
+
+            def test_get_emissions_PRIVATE_INFRA_NORDIC_REGION(self):
+        # WHEN
+        # Test Nordic region (Sweden SE2)
+        
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kWh=1.0),
+            GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="SE2"),
+        )
+
+        # THEN
+        # Nordic regions use static emission factors from the JSON file
+        # SE2 has an emission factor specified in nordic_country_energy_mix.json
+        assert isinstance(emissions, float)
+        assert emissions > 0, "Nordic region emissions should be positive"
+
+    def test_get_emissions_PRIVATE_INFRA_NORDIC_FINLAND(self):
+        # WHEN
+        # Test Nordic region (Finland)
+        
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kWh=2.5),
+            GeoMetadata(country_iso_code="FIN", country_name="Finland", region="FI"),
+        )
+
+        # THEN
+        # Finland (FI) should use Nordic static emission factors
+        assert isinstance(emissions, float)
+        assert emissions > 0, "Finland emissions should be positive"
+        # With 2.5 kWh, emissions should be proportional to energy consumed
+        assert emissions > 0.1, "Expected reasonable emission value for 2.5 kWh"
