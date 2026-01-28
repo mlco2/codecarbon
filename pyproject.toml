@@ -42,7 +42,7 @@ dependencies = [
     "requests",
     "questionary",
     "rich",
-    "typer"
+    "typer",
 ]
 
 [tool.setuptools.dynamic]
@@ -133,6 +133,9 @@ api  = [
     "rapidfuzz",
     "PyJWT",
     "logfire[fastapi]>=1.0.1",
+    "libcst",
+    "kaggle",
+    "python-multipart"
 ]
 
 [project.scripts]
