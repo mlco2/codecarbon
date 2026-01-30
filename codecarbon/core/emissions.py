@@ -178,25 +178,45 @@ class Emissions:
                 # 3. Update codecarbon/data/private_infra/nordic_emissions.json
                 # 4. Values should reflect the most recent annual average
                 #
-                
-                        # Check for Nordic regions (SE1-4, NO1-5, FI) and use static emission factors
-                                nordic_regions = ["SE1", "SE2", "SE3", "SE4", "NO1", "NO2", "NO3", "NO4", "NO5", "FI"]
-                                        if geo.region is not None and geo.region.upper() in nordic_regions:
-                                                        try:
-                                                                                            # Get Nordic energy mix data from cache
-                nordic_data = self._data_source.get_nordic_country_energy_mix_data()                                                            
-                                                                                                                                                                    region_data = nordic_data["data"].get(geo.region.upper())
-                                                                                                                                                                                    if region_data:
-                                                                                                                                                                                                            emission_factor_g = region_data["emission_factor"]  # gCO2eq/kWh
-                                                                                                                                                                                                                                emission_factor_kg = emission_factor_g / 1000  # Convert to kgCO2eq/kWh
-                                                                                                                                                                                                                                                    emissions = emission_factor_kg * energy.kWh  # kgCO2eq
-                                                                                                                                                                                                                                                                        logger.debug(f"Nordic region {geo.region}: Retrieved emissions using static factor "
-                                                                                                                                                                                                                                                                                                + f"{emission_factor_g} gCO2eq/kWh: {emissions * 1000} g CO2eq"
-                                                                                                                                                                                                                                                                                                                    )
-                                                                                                                                                                                                                                                                                                                                        return emissions
-                                                                                                                                                                                                                                                                                                                                                    except Exception as e:
-                                                                                                                                                                                                                                                                                                                                                                        logger.warning(f"Error loading Nordic emissions data for {geo.region}: {e}. "
-                                                                                                                                                                                                                                                                                                                                                                                            + "Falling back to default emission calculation.")
+
+                # Check for Nordic regions (SE1-4, NO1-5, FI) and use static emission factors
+                nordic_regions = [
+                    "SE1",
+                    "SE2",
+                    "SE3",
+                    "SE4",
+                    "NO1",
+                    "NO2",
+                    "NO3",
+                    "NO4",
+                    "NO5",
+                    "FI",
+                ]
+                if geo.region is not None and geo.region.upper() in nordic_regions:
+                    try:
+                        # Get Nordic energy mix data from cache
+                        nordic_data = (
+                            self._data_source.get_nordic_country_energy_mix_data()
+                        )
+                        region_data = nordic_data["data"].get(geo.region.upper())
+                        if region_data:
+                            emission_factor_g = region_data[
+                                "emission_factor"
+                            ]  # gCO2eq/kWh
+                            emission_factor_kg = (
+                                emission_factor_g / 1000
+                            )  # Convert to kgCO2eq/kWh
+                            emissions = emission_factor_kg * energy.kWh  # kgCO2eq
+                            logger.debug(
+                                f"Nordic region {geo.region}: Retrieved emissions using static factor "
+                                + f"{emission_factor_g} gCO2eq/kWh: {emissions * 1000} g CO2eq"
+                            )
+                            return emissions
+                    except Exception as e:
+                        logger.warning(
+                            f"Error loading Nordic emissions data for {geo.region}: {e}. "
+                            + "Falling back to default emission calculation."
+                        )
 
         compute_with_regional_data: bool = (geo.region is not None) and (
             geo.country_iso_code.upper() in ["USA", "CAN"]
