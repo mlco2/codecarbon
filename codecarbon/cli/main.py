@@ -347,28 +347,35 @@ def config():
 )
 def run(
     ctx: typer.Context,
+    log_level: Annotated[
+        str, typer.Option(help="Log level (critical, error, warning, info, debug)")
+    ] = "error",
 ):
     """
     Run a command and track its carbon emissions.
 
-    This command wraps any executable and measures the machine's total power
+    This command wraps any executable and measures the process's total power
     consumption during its execution. When the command completes, a summary
     report is displayed and emissions data is saved to a CSV file.
 
-    Note: This tracks machine-level emissions (entire system), not just the
-    specific command. For process-specific tracking, the command must be
-    instrumented with the CodeCarbon Python library.
+    Note: This tracks process-level emissions (only the specific command), not the
+    entire machine. For machine-level tracking, use the `monitor` command.
 
     Examples:
 
-        # Run any shell command
+        Do not use quotes around the command. Use -- to separate CodeCarbon args.
+
+        # Run any shell command:
         codecarbon run -- ./benchmark.sh
 
-        # Commands with arguments (use single quotes for special chars)
+        # Commands with arguments (use single quotes for special chars):
         codecarbon run -- python -c 'print("Hello World!")'
 
-        # Pipe the command output
+        # Pipe the command output:
         codecarbon run -- npm run test > output.txt
+
+        # Display the CodeCarbon detailed logs:
+        codecarbon run --log-level debug -- python --version
 
     The emissions data is appended to emissions.csv (default) in the current
     directory. The file path is shown in the final report.
@@ -376,7 +383,7 @@ def run(
     # Suppress all CodeCarbon logs during execution
     from codecarbon.external.logger import set_logger_level
 
-    set_logger_level("critical")
+    set_logger_level(log_level)
 
     # Get the command from remaining args
     command = ctx.args
@@ -388,8 +395,10 @@ def run(
         )
         raise typer.Exit(1)
 
-    # Initialize tracker with minimal logging
-    tracker = EmissionsTracker(log_level="error", save_to_logger=False)
+    # Initialize tracker with specified logging level
+    tracker = EmissionsTracker(
+        log_level=log_level, save_to_logger=False, tracking_mode="process"
+    )
 
     print("🌱 CodeCarbon: Starting emissions tracking...")
     print(f"   Command: {' '.join(command)}")
