@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: "25"
+  NODE_VERSION: "24"
 
 jobs:
     build-ui:
