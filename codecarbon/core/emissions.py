@@ -155,71 +155,8 @@ class Emissions:
                     + " >>> Using CodeCarbon's data."
                 )
 
-                # NORDIC EMISSION FACTORS DOCUMENTATION
-                # ==========================================
-                # Static emission factors for Nordic electricity regions.
-                # These values represent the carbon intensity (gCO2eq/kWh) of electricity
-                # production in specific Nordic bidding zones.
-                #
-                # DATA SOURCES:
-                # - Sweden/Norway (SE1-4, NO1-5): 18 gCO2eq/kWh
-                #   Based on Nordic grid average (<60 gCO2eq/kWh per ENTSO-E)
-                #   Source: https://transparency.entsoe.eu/
-                #   Nordic Energy Research: https://www.nordicenergy.org/indicators/
-                #
-                # - Finland (FI): 72 gCO2eq/kWh
-                #   Source: Fingrid real-time CO2 emissions estimate
-                #   https://www.fingrid.fi/en/electricity-market-information/real-time-co2-emissions-estimate/
-                #
-                # UPDATE PROCEDURE:
-                # To update these values annually:
-                # 1. Check latest data from ENTSO-E Transparency Platform
-                # 2. Check Fingrid for Finnish-specific data
-                # 3. Update codecarbon/data/private_infra/nordic_emissions.json
-                # 4. Values should reflect the most recent annual average
-                #
-
-                # Check for Nordic regions (SE1-4, NO1-5, FI) and use static emission factors
-                nordic_regions = [
-                    "SE1",
-                    "SE2",
-                    "SE3",
-                    "SE4",
-                    "NO1",
-                    "NO2",
-                    "NO3",
-                    "NO4",
-                    "NO5",
-                    "FI",
-                ]
-                if geo.region is not None and geo.region.upper() in nordic_regions:
-                    try:
-                        # Get Nordic energy mix data from cache
-                        nordic_data = (
-                            self._data_source.get_nordic_country_energy_mix_data()
-                        )
-                        region_data = nordic_data["data"].get(geo.region.upper())
-                        if region_data:
-                            emission_factor_g = region_data[
-                                "emission_factor"
-                            ]  # gCO2eq/kWh
-                            emission_factor_kg = (
-                                emission_factor_g / 1000
-                            )  # Convert to kgCO2eq/kWh
-                            emissions = emission_factor_kg * energy.kWh  # kgCO2eq
-                            logger.debug(
-                                f"Nordic region {geo.region}: Retrieved emissions using static factor "
-                                + f"{emission_factor_g} gCO2eq/kWh: {emissions * 1000} g CO2eq"
-                            )
-                            return emissions
-                    except Exception as e:
-                        logger.warning(
-                            f"Error loading Nordic emissions data for {geo.region}: {e}. "
-                            + "Falling back to default emission calculation."
-                        )
-
         compute_with_regional_data: bool = (geo.region is not None) and (
-            geo.country_iso_code.upper() in ["USA", "CAN"]
+            geo.country_iso_code.upper() in ["USA", "CAN", "SWE", "NOR", "FIN"]
         )
 
         if compute_with_regional_data:
@@ -233,16 +170,72 @@ class Emissions:
                 )
         return self.get_country_emissions(energy, geo)
 
+    def _try_get_nordic_region_emissions(
+        self, energy: Energy, geo: GeoMetadata
+    ) -> Optional[float]:
+        nordic_regions = {
+            "SE1",
+            "SE2",
+            "SE3",
+            "SE4",
+            "NO1",
+            "NO2",
+            "NO3",
+            "NO4",
+            "NO5",
+            "FI",
+        }
+        if geo.region is None:
+            return None
+
+        region_upper = geo.region.upper()
+        if region_upper not in nordic_regions:
+            return None
+
+        try:
+            nordic_data = self._data_source.get_nordic_country_energy_mix_data()
+            region_data = nordic_data["data"].get(region_upper)
+            if region_data:
+                emission_factor_g = region_data["emission_factor"]
+                emission_factor_kg = emission_factor_g / 1000
+                emissions = emission_factor_kg * energy.kWh
+                logger.debug(
+                    f"Nordic region {geo.region}: Retrieved emissions using static factor "
+                    + f"{emission_factor_g} gCO2eq/kWh: {emissions * 1000} g CO2eq"
+                )
+                return emissions
+        except Exception as e:
+            logger.warning(
+                f"Error loading Nordic emissions data for {geo.region}: {e}. "
+                + "Falling back to default emission calculation."
+            )
+        return None
+
     def get_region_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
         Computes emissions for a region on private infra.
         Given an quantity of power consumed, use regional data
          on emissions per unit power consumed or the mix of energy sources.
         https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
+
+        get_private_infra_emissions
+        ├─ Electricity Maps API (si token)
+        ├─ get_region_emissions (USA/CAN/SWE/NOR/FIN)
+        │   └─ _try_get_nordic_region_emissions (pour SWE/NOR/FIN)
+        │   └─ country_emissions_data (pour USA)
+        │   └─ country_energy_mix_data (pour CAN)
+        └─ get_country_emissions (fallback)
+
         :param energy: Mean power consumption of the process (kWh)
         :param geo: Country and region metadata.
         :return: CO2 emissions in kg
         """
+        # Handle Nordic regions (Sweden, Norway, Finland electricity bidding zones)
+        nordic_emissions = self._try_get_nordic_region_emissions(energy, geo)
+        if nordic_emissions is not None:
+            return nordic_emissions
+
+        # Handle USA and Canada regional data
         try:
             country_emissions_data = self._data_source.get_country_emissions_data(
                 geo.country_iso_code.lower()
