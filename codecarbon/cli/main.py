@@ -454,7 +454,7 @@ def run(
                 output_path = os.path.abspath(output_path)
             print(f"   Saved to: {output_path}")
 
-        print("   ⚠️  Note: Measured entire machine (includes all system processes)")
+        print("   ⚠️  Note: Tracked the command process and its children")
         print("=" * 60)
 
     raise typer.Exit(exit_code)
