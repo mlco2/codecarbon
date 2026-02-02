@@ -97,7 +97,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mock==5.2.0
     # via codecarbon (pyproject.toml)
-numpy==2.4.1
+numpy==2.4.2
     # via
     #   codecarbon (pyproject.toml)
     #   pandas
@@ -154,7 +154,7 @@ prometheus-client==0.23.1
     # via codecarbon (pyproject.toml)
 prompt-toolkit==3.0.52
     # via questionary
-protobuf==6.33.4
+protobuf==6.33.5
     # via
     #   googleapis-common-protos
     #   logfire
