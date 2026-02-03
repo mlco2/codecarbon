@@ -59,8 +59,6 @@ fief-client==0.20.0
     # via codecarbon (pyproject.toml)
 googleapis-common-protos==1.72.0
     # via opentelemetry-exporter-otlp-proto-http
-greenlet==3.2.4
-    # via sqlalchemy
 h11==0.16.0
     # via
     #   httpcore
@@ -236,7 +234,7 @@ sqlalchemy==1.4.54
     # via
     #   codecarbon (pyproject.toml)
     #   alembic
-starlette==0.52.1
+starlette==0.50.0
     # via fastapi
 termcolor==3.2.0
     # via yaspin
