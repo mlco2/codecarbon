@@ -657,8 +657,6 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIn("gpu_model", hardware_info)
         self.assertIn("gpu_ids", hardware_info)
 
-
-class TestVariableEmissions(unittest.TestCase):
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_geo_metadata")
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_cloud_metadata")
     @mock.patch("codecarbon.core.electricitymaps_api.requests.get")
@@ -675,6 +673,11 @@ class TestVariableEmissions(unittest.TestCase):
         mock_get,
         mock_cloud,
         mock_geo,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_cloud_metadata_class,
+        mocked_get_gpu_details,
+        mocked_is_gpu_details_available,
     ):
         # Setup mocks
         mock_geo.return_value = mock.MagicMock(
@@ -727,7 +730,6 @@ class TestVariableEmissions(unittest.TestCase):
         # Start tracking
         tracker.start()
 
-        # Step 1
         tracker._measure_power_and_energy()
         # total_energy = 1.0, intensity = 100 => emissions = 0.1 kg
         data1 = tracker._prepare_emissions_data()
@@ -736,14 +738,14 @@ class TestVariableEmissions(unittest.TestCase):
         # Step 2
         tracker._measure_power_and_energy()
         # total_energy = 2.0, delta_energy = 1.0, intensity = 200 => delta_emissions = 0.2 kg
-        # total_emissions = 0.1 + 0.2 = 0.3 kg
+        # total_emissions = 0.3 kg
         data2 = tracker._prepare_emissions_data()
         self.assertAlmostEqual(data2.emissions, 0.3)
 
         # Step 3
         tracker._measure_power_and_energy()
         # total_energy = 3.0, delta_energy = 1.0, intensity = 300 => delta_emissions = 0.3 kg
-        # total_emissions = 0.3 + 0.3 = 0.6 kg
+        # total_emissions = 0.6 kg
         data3 = tracker._prepare_emissions_data()
         self.assertAlmostEqual(data3.emissions, 0.6)
 
