@@ -26,7 +26,12 @@ jobs:
     - name: Install dependencies
       run: uv sync --python ${{ matrix.python-version }}
     - name: Test package
-      run: uv run --python ${{ matrix.python-version }} task test-package
+      run: uv run --python ${{ matrix.python-version }} task test-coverage
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
     - name: Install carbonboard dependencies
       run: uv pip install --python ${{ matrix.python-version }} dash 'dash_bootstrap_components>1.0.0' fire
     - name: Test carbonboard visualization

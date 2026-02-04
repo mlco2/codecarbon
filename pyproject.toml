@@ -91,6 +91,7 @@ dev = [
     "requests-mock",
     "responses",
     "logfire>=1.0.1",
+    "pytest-cov",
 ]
 doc = [
   "sphinx",
@@ -156,12 +157,13 @@ mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional -
 lint = "black --check --diff . && ruff check . && mypy ."
 format = "black . && ruff check --fix --exit-non-zero-on-fix ."
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
+test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov=codecarbon --cov-report=xml --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.1"
+current_version = "3.2.2"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
