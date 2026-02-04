@@ -337,6 +337,8 @@ class BaseEmissionsTracker(ABC):
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_emissions: float = 0.0
+        self._last_energy_covered: Energy = Energy.from_energy(kWh=0)
         self._total_water: Water = Water.from_litres(litres=0)
         # CPU and RAM utilization tracking
         self._cpu_utilization_history: List[float] = []
@@ -757,18 +759,36 @@ class BaseEmissionsTracker(ABC):
             if len(task_emissions_data) > 0:
                 handler.task_out(task_emissions_data, experiment_name)
 
+    def _update_emissions(self) -> None:
+        """
+        Compute emissions for the energy consumed since the last update
+        and add them to the total emissions.
+        """
+        delta_energy = self._total_energy - self._last_energy_covered
+        if delta_energy.kWh > 0:
+            cloud: CloudMetadata = self._get_cloud_metadata()
+            if cloud.is_on_private_infra:
+                delta_emissions = self._emissions.get_private_infra_emissions(
+                    delta_energy, self._geo
+                )
+            else:
+                delta_emissions = self._emissions.get_cloud_emissions(
+                    delta_energy, cloud, self._geo
+                )
+            self._total_emissions += delta_emissions
+            self._last_energy_covered = self._total_energy
+
     def _prepare_emissions_data(self) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
         :return: EmissionsData object with the total emissions data.
         """
+        self._update_emissions()
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
 
+        emissions = self._total_emissions
         if cloud.is_on_private_infra:
-            emissions = self._emissions.get_private_infra_emissions(
-                self._total_energy, self._geo
-            )  # float: kg co2_eq
             country_name = self._geo.country_name
             country_iso_code = self._geo.country_iso_code
             region = self._geo.region
@@ -776,9 +796,6 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = ""
             cloud_region = ""
         else:
-            emissions = self._emissions.get_cloud_emissions(
-                self._total_energy, cloud, self._geo
-            )
             # Try to get cloud region metadata, fall back to geo metadata if not found
             try:
                 country_name = self._emissions.get_cloud_country_name(cloud)
