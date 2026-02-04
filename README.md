@@ -17,6 +17,7 @@ CodeCarbon websites:
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
 <!-- [![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon) -->
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon)
+[![codecov](https://codecov.io/gh/mlco2/codecarbon/graph/badge.svg)](https://codecov.io/gh/mlco2/codecarbon)
 
 
 - [About CodeCarbon 💡](#about-codecarbon-)
