@@ -30,7 +30,7 @@ classifiers = [
 dependencies = [
     "arrow",
     "click",
-    "fief-client[cli]",
+    "python-jose[cryptography]",
     "pandas>=2.3.3;python_version>='3.14'",
     "pandas;python_version<'3.14'",
     "prometheus_client",
