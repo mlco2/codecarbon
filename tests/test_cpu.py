@@ -11,11 +11,26 @@ from codecarbon.core.cpu import (
     IntelPowerGadget,
     IntelRAPL,
     is_powergadget_available,
+    is_psutil_available,
 )
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_physical_cpus
 from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
+
+
+class TestCPU(unittest.TestCase):
+    def test_is_psutil_available(self):
+        @mock.patch("psutil.cpu_times")
+        def test_is_psutil_available(self, mock_cpu_times):
+            # Test when psutil is available
+            mock_cpu_times.return_value = mock.Mock()
+            self.assertTrue(is_psutil_available())  # noqa: E712
+
+        @mock.patch("psutil.cpu_times", side_effect=AttributeError)
+        def test_is_psutil_not_available(self, mock_cpu_times):
+            # Test when psutil is not available
+            self.assertFalse(is_psutil_available())  # noqa: E712
 
 
 class TestIntelPowerGadget(unittest.TestCase):
@@ -306,10 +321,15 @@ class TestTDP(unittest.TestCase):
 class TestPhysicalCPU(unittest.TestCase):
     def test_count_physical_cpus_windows(self):
         with mock.patch("platform.system", return_value="Windows"):
-            with mock.patch.dict(os.environ, {"NUMBER_OF_PROCESSORS": "4"}):
+
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="4")
+            ):
                 assert count_physical_cpus() == 4
 
-            with mock.patch.dict(os.environ, {}, clear=True):
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="")
+            ):
                 assert count_physical_cpus() == 1
 
     def test_count_physical_cpus_linux(self):
