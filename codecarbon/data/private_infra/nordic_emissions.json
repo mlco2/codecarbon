@@ -1,0 +1,69 @@
+{
+  "data": {
+    "SE1": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Sweden Bidding Zone 1 (Northern Sweden)",
+      "year": 2024
+    },
+    "SE2": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Sweden Bidding Zone 2 (Central Sweden)",
+      "year": 2024
+    },
+    "SE3": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Sweden Bidding Zone 3 (Southern Sweden)",
+      "year": 2024
+    },
+    "SE4": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Sweden Bidding Zone 4 (Stockholm region)",
+      "year": 2024
+    },
+    "NO1": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Norway Bidding Zone 1 (Oslo)",
+      "year": 2024
+    },
+    "NO2": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Norway Bidding Zone 2 (Southern Norway)",
+      "year": 2024
+    },
+    "NO3": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Norway Bidding Zone 3 (Central Norway)",
+      "year": 2024
+    },
+    "NO4": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Norway Bidding Zone 4 (Northern Norway)",
+      "year": 2024
+    },
+    "NO5": {
+      "emission_factor": 18.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Norway Bidding Zone 5 (Western Norway)",
+      "year": 2024
+    },
+    "FI": {
+      "emission_factor": 72.0,
+      "unit": "gCO2eq/kWh",
+      "description": "Finland",
+      "year": 2025
+    }
+  },
+  "metadata": {
+    "source": "Based on historical averages from ENTSO-E data",
+    "last_updated": "2026-01-24",
+    "notes": "Static emission factors for Nordic regions. Sweden and Norway have very low carbon intensity due to high renewable energy (primarily hydro and nuclear). Finland has higher emissions due to greater fossil fuel dependency."
+  }
+}

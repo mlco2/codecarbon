@@ -172,3 +172,51 @@ class TestEmissions(unittest.TestCase):
         )
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 0.475, places=2)
+
+    def test_get_emissions_PRIVATE_INFRA_NORDIC_REGION(self):
+        # WHEN
+        # Test Nordic region (Sweden SE2)
+
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kWh=1.0),
+            GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="SE2"),
+        )
+
+        # THEN
+        # Nordic regions use static emission factors from the JSON file
+        # SE2 has an emission factor specified in nordic_country_energy_mix.json
+        assert isinstance(emissions, float)
+        self.assertAlmostEqual(emissions, 0.018, places=6)
+
+    def test_get_emissions_PRIVATE_INFRA_NORDIC_FINLAND(self):
+        # WHEN
+        # Test Nordic region (Finland)
+
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kWh=2.5),
+            GeoMetadata(country_iso_code="FIN", country_name="Finland", region="FI"),
+        )
+
+        # THEN
+        # Finland (FI) should use Nordic static emission factors
+        assert isinstance(emissions, float)
+        expected_emissions = 0.072 * 2.5
+        self.assertAlmostEqual(emissions, expected_emissions, places=6)
+
+    def test_get_emissions_PRIVATE_INFRA_NORDIC_REGION_uses_static_factor_without_token(
+        self,
+    ):
+        # GIVEN
+        energy = Energy.from_energy(kWh=1.0)
+        geo = GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="SE2")
+
+        # WHEN
+        emissions = self._emissions.get_private_infra_emissions(energy, geo)
+
+        # THEN
+        expected_country = self._emissions.get_country_emissions(energy, geo)
+        nordic_data = self._data_source.get_nordic_country_energy_mix_data()
+        emission_factor_g = nordic_data["data"]["SE2"]["emission_factor"]
+        expected_nordic = (emission_factor_g / 1000) * energy.kWh
+        self.assertAlmostEqual(emissions, expected_nordic, places=6)
+        self.assertNotAlmostEqual(emissions, expected_country, places=4)
