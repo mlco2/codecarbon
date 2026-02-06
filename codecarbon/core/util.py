@@ -103,7 +103,10 @@ def count_physical_cpus():
     import subprocess
 
     if platform.system() == "Windows":
-        return int(os.environ.get("NUMBER_OF_PROCESSORS", 1))
+        # Windows does not have a straightforward way to count physical CPUs (sockets).
+        # Env variable NUMBER_OF_PROCESSORS gives logical processors, not physical sockets.
+        # return int(os.environ.get("NUMBER_OF_PROCESSORS", 1))
+        return _windows_get_physical_sockets()
     else:
         try:
             output = subprocess.check_output(["lscpu"], text=True)
@@ -117,6 +120,36 @@ def count_physical_cpus():
                 f"Error while trying to count physical CPUs: {e}. Defaulting to 1."
             )
             return 1
+
+
+def _windows_get_physical_sockets():
+    try:
+        # use PowerShell to count number of objects of class Win32_Processor
+        cmd = [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            "(Get-CimInstance -ClassName Win32_Processor).Count",
+        ]
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=10, check=True
+        )
+
+        output = result.stdout.strip()
+
+        # Fallback: if empty, at least one socket exists
+        if not output:
+            logger.debug(
+                "PowerShell command returned empty output for socket count. Defaulting to 1."
+            )
+            output = 1
+
+        logger.debug(f"Detected {output} physical sockets on Windows.")
+        return int(output)
+
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
+        logger.error(f"Error detecting physical sockets on Windows: {e}")
+        return 1  # Fallback:at least one socket
 
 
 def count_cpus() -> int:
