@@ -1,6 +1,7 @@
 from time import perf_counter
 
-from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
+from codecarbon.external.cpu import CPU
+from codecarbon.external.hardware import GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger
 
 
