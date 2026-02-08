@@ -103,9 +103,6 @@ def count_physical_cpus():
     import subprocess
 
     if platform.system() == "Windows":
-        # Windows does not have a straightforward way to count physical CPUs (sockets).
-        # Env variable NUMBER_OF_PROCESSORS gives logical processors, not physical sockets.
-        # return int(os.environ.get("NUMBER_OF_PROCESSORS", 1))
         return _windows_get_physical_sockets()
     else:
         try:

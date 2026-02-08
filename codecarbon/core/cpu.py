@@ -222,8 +222,10 @@ def is_psutil_available():
                 return False
 
         else:
-            #Fallback: check is psutil 'working' by calling cpu_percent
-            logger.debug("is_psutil_available(): no 'nice' attribute, using fallback check.")
+            # Fallback: check if psutil works by calling cpu_percent
+            logger.debug(
+                "is_psutil_available(): no 'nice' attribute, using fallback check."
+            )
 
             # check CPU utilization usable
             psutil.cpu_percent(interval=0.0, percpu=False)
