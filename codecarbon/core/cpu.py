@@ -208,14 +208,29 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
 
 def is_psutil_available():
     try:
-        nice = psutil.cpu_times().nice
-        if nice > 0.0001:
-            return True
+        cpu_times = psutil.cpu_times()
+
+        # platforms like Windows do not have 'nice' attribute
+        if hasattr(cpu_times, "nice"):
+            nice = cpu_times.nice
+            if nice > 0.0001:
+                return True
+            else:
+                logger.debug(
+                    f"is_psutil_available(): psutil.cpu_times().nice is too small: {nice}"
+                )
+                return False
+
         else:
+            # Fallback: check if psutil works by calling cpu_percent
             logger.debug(
-                f"is_psutil_available() : psutil.cpu_times().nice is too small : {nice} !"
+                "is_psutil_available(): no 'nice' attribute, using fallback check."
             )
-            return False
+
+            # check CPU utilization usable
+            psutil.cpu_percent(interval=0.0, percpu=False)
+            return True
+
     except Exception as e:
         logger.debug(
             "Not using the psutil interface, an exception occurred while instantiating "
