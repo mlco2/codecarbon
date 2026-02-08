@@ -29,6 +29,14 @@ class TestCPU(unittest.TestCase):
         self.assertTrue(is_psutil_available())
 
     @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_with_small_nice(self, mock_cpu_times):
+        # Test when nice attribute is too small
+        mock_times = mock.Mock()
+        mock_times.nice = 0.00001
+        mock_cpu_times.return_value = mock_times
+        self.assertFalse(is_psutil_available())
+
+    @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_without_nice(self, mock_cpu_times):
         # Create a mock without 'nice' attribute (like Windows)
         mock_times = mock.Mock(spec=[])  # Empty spec = no attributes
@@ -338,6 +346,28 @@ class TestPhysicalCPU(unittest.TestCase):
 
             with mock.patch(
                 "subprocess.run", return_value=mock.Mock(returncode=0, stdout="")
+            ):
+                assert count_physical_cpus() == 1
+
+    def test_count_physical_cpus_windows_with_error(self):
+        with mock.patch("platform.system", return_value="Windows"):
+            # Test CalledProcessError
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.CalledProcessError(1, "powershell"),
+            ):
+                assert count_physical_cpus() == 1
+
+            # Test TimeoutExpired
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.TimeoutExpired("powershell", 10),
+            ):
+                assert count_physical_cpus() == 1
+
+            # Test ValueError when converting invalid output
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="invalid")
             ):
                 assert count_physical_cpus() == 1
 
