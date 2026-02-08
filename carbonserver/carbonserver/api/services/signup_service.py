@@ -1,9 +1,17 @@
 import logging
+from contextlib import nullcontext
 from uuid import UUID
 
 import jwt
-import logfire
 from fastapi import HTTPException
+
+try:
+    import logfire
+
+    LOGFIRE_AVAILABLE = True
+except (ImportError, AttributeError) as e:
+    LOGFIRE_AVAILABLE = False
+    logging.getLogger(__name__).warning(f"Logfire not available: {e}")
 
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
@@ -20,6 +28,7 @@ from carbonserver.api.schemas import (
     User,
     UserAutoCreate,
 )
+from carbonserver.config import settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,10 +48,16 @@ class SignUpService:
         self,
         user: UserAutoCreate,
     ) -> User:
-        with logfire.span("User applicative creation", service="signup"):
+        span_context = (
+            logfire.span("User applicative creation", service="signup")
+            if settings.send_to_logfire and LOGFIRE_AVAILABLE
+            else nullcontext()
+        )
+        with span_context:
             created_user = self._user_repository.create_user(user)
             subscribed_user = self.new_user_setup(created_user)
-            logfire.info(str(subscribed_user))
+            if settings.send_to_logfire and LOGFIRE_AVAILABLE:
+                logfire.info(str(subscribed_user))
             LOGGER.info(f"User {subscribed_user.id} created")
         return subscribed_user
 
