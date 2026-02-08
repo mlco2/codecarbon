@@ -20,17 +20,26 @@ from codecarbon.input import DataSource
 
 
 class TestCPU(unittest.TestCase):
-    def test_is_psutil_available(self):
-        @mock.patch("psutil.cpu_times")
-        def test_is_psutil_available(self, mock_cpu_times):
-            # Test when psutil is available
-            mock_cpu_times.return_value = mock.Mock()
-            self.assertTrue(is_psutil_available())  # noqa: E712
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_with_nice(self, mock_cpu_times):
+        # Create a mock with 'nice' attribute
+        mock_times = mock.Mock()
+        mock_times.nice = 0.1
+        mock_cpu_times.return_value = mock_times
+        self.assertTrue(is_psutil_available())
 
-        @mock.patch("psutil.cpu_times", side_effect=AttributeError)
-        def test_is_psutil_not_available(self, mock_cpu_times):
-            # Test when psutil is not available
-            self.assertFalse(is_psutil_available())  # noqa: E712
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_without_nice(self, mock_cpu_times):
+        # Create a mock without 'nice' attribute (like Windows)
+        mock_times = mock.Mock(spec=[])  # Empty spec = no attributes
+        mock_cpu_times.return_value = mock_times
+        with mock.patch("psutil.cpu_percent") as mock_cpu_percent:
+            self.assertTrue(is_psutil_available())
+            mock_cpu_percent.assert_called_once_with(interval=0.0, percpu=False)
+
+    @mock.patch("psutil.cpu_times", side_effect=Exception("Test error"))
+    def test_is_psutil_not_available_on_exception(self, mock_cpu_times):
+        self.assertFalse(is_psutil_available())
 
 
 class TestIntelPowerGadget(unittest.TestCase):
