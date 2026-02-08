@@ -132,15 +132,7 @@ def _windows_get_physical_sockets():
             cmd, capture_output=True, text=True, timeout=10, check=True
         )
 
-        output = result.stdout.strip()
-
-        # Fallback: if empty, at least one socket exists
-        if not output:
-            logger.debug(
-                "PowerShell command returned empty output for socket count. Defaulting to 1."
-            )
-            output = 1
-
+        output = result.stdout.strip() or "1"
         logger.debug(f"Detected {output} physical sockets on Windows.")
         return int(output)
 
