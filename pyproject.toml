@@ -91,6 +91,7 @@ dev = [
     "requests-mock",
     "responses",
     "pytest-cov",
+    "logfire>=1.0.1",  # For testing Logfire output method
 ]
 doc = [
   "sphinx",

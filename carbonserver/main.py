@@ -7,16 +7,6 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-try:
-    import logfire
-
-    LOGFIRE_AVAILABLE = True
-except (ImportError, AttributeError) as e:
-    LOGFIRE_AVAILABLE = False
-    import logging
-
-    logging.getLogger(__name__).warning(f"Logfire not available: {e}")
-
 from carbonserver.api.errors import DBException, UserException, get_http_exception
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
@@ -99,13 +89,6 @@ def init_server(container):
         port=settings.api_port,
         host=settings.server_host,
     )
-
-    # Only configure and instrument Logfire if telemetry is enabled and available
-    if settings.send_to_logfire and LOGFIRE_AVAILABLE:
-        logfire.configure(
-            token=settings.logfire_token, send_to_logfire=settings.send_to_logfire
-        )
-        logfire.instrument_fastapi(server)
 
     server.container = container
     server.include_router(users.router)
