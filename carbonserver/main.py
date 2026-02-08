@@ -1,6 +1,5 @@
 import os
 
-import logfire
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from pydantic import ValidationError
@@ -83,9 +82,6 @@ def init_db(container):
 
 
 def init_server(container):
-    logfire.configure(
-        token=settings.logfire_token, send_to_logfire=settings.send_to_logfire
-    )
     server = FastAPI(
         servers=[
             {"url": "/api/"},
@@ -93,7 +89,6 @@ def init_server(container):
         port=settings.api_port,
         host=settings.server_host,
     )
-    logfire.instrument_fastapi(server)
 
     server.container = container
     server.include_router(users.router)

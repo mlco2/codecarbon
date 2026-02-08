@@ -22,7 +22,6 @@ dependencies = [
     "fastapi<1.0.0",
     "fief-client[fastapi]",
     "fastapi[standard]",
-    "logfire",
     "httpx",
     "pydantic[email]<2.0.0",
     "psycopg2-binary<3.0.0",
@@ -38,7 +37,6 @@ dependencies = [
     "requests-mock",
     "rapidfuzz",
     "PyJWT",
-    "logfire[fastapi]>=1.0.1",
     "fastapi-oidc>=0.0.9",
 ]
 

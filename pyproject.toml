@@ -90,8 +90,8 @@ dev = [
     "requests",
     "requests-mock",
     "responses",
-    "logfire>=1.0.1",
     "pytest-cov",
+    "logfire>=1.0.1",  # For testing Logfire output method
 ]
 doc = [
   "sphinx",
@@ -133,7 +133,6 @@ api  = [
     "requests-mock",
     "rapidfuzz",
     "PyJWT",
-    "logfire[fastapi]>=1.0.1",
 ]
 
 [project.scripts]
