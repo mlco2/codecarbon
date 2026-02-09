@@ -832,6 +832,7 @@ class IntelRAPL:
 
             for rapl_file in self._rapl_files:
                 logger.debug(rapl_file)
+                # Delta, if total external/cpu will break
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
                 # We fake the name used by Power Gadget when using RAPL
                 if "Energy" in rapl_file.name:
