@@ -5,19 +5,15 @@ This module provides a generic OIDC authentication provider implementation using
 It can work with any OIDC-compliant provider (Fief, Keycloak, Auth0, etc.).
 """
 
-import asyncio
-from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urlencode
-from carbonserver.config import settings
+from typing import Any, Dict, Optional, Tuple
 
-import httpx
-from fastapi_oidc import discovery, get_auth
-from jose import jwt
+from authlib.integrations.starlette_client import OAuth
+from carbonserver.config import settings
 
 DEFAULT_SIGNATURE_CACHE_TTL = 3600  # seconds
 OAUTH_SCOPES = ["openid", "email", "profile"]
 
-from authlib.integrations.starlette_client import OAuth
+
 oauth = OAuth()
 oauth.register(
     "client",
@@ -26,6 +22,7 @@ oauth.register(
     server_metadata_url=settings.oidc_well_known_url,
     client_kwargs={"scope": "openid profile email"},
 )
+
 
 class OIDCAuthProvider:
     def __init__(

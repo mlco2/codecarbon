@@ -3,9 +3,8 @@ import json
 import logging
 import random
 from typing import Optional
-from authlib.integrations.starlette_client import OAuth, OAuthError
 
-import requests
+from authlib.integrations.starlette_client import OAuthError
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
@@ -88,7 +87,7 @@ async def get_login(
     if code:
         try:
             token = await auth_provider.client.authorize_access_token(request)
-        except OAuthError as error:
+        except OAuthError:
             return "Error"
         user = token.get("userinfo")
         if user:
@@ -121,7 +120,7 @@ async def get_login(
         return response
     return await auth_provider.get_authorize_url(request, str(login_url))
 
-    state = str(int(random.random() * 1000))
+    str(int(random.random() * 1000))
     client_id, _ = auth_provider.get_client_credentials()
     return await auth_provider.client.authorize_redirect(
         request, str(login_url), scope=" ".join(OAUTH_SCOPES)

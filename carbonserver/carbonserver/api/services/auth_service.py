@@ -4,7 +4,7 @@ from typing import Optional
 import jwt
 from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException
-from fastapi.security import APIKeyCookie, HTTPBearer, OAuth2AuthorizationCodeBearer
+from fastapi.security import APIKeyCookie, HTTPBearer
 
 from carbonserver.api.services.auth_providers.oidc_auth_provider import (
     OIDCAuthProvider,
