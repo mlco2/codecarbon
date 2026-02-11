@@ -60,6 +60,11 @@ def _load_static_data() -> None:
     path = _get_resource_path("data/hardware/cpu_power.csv")
     _CACHE["cpu_power"] = pd.read_csv(path)
 
+    # Nordic country energy mix - used for emissions calculations
+    path = _get_resource_path("data/private_infra/nordic_emissions.json")
+    with open(path) as f:
+        _CACHE["nordic_country_energy_mix"] = json.load(f)
+
 
 # Load static data at module import
 _load_static_data()
@@ -188,6 +193,13 @@ class DataSource:
         Data is pre-loaded at module import for performance.
         """
         return _CACHE["cpu_power"]
+
+    def get_nordic_country_energy_mix_data(self) -> Dict:
+        """
+        Returns Nordic Country Energy Mix Data.
+        Data is cached on first access per country.
+        """
+        return _CACHE["nordic_country_energy_mix"]
 
 
 class DataSourceException(Exception):
