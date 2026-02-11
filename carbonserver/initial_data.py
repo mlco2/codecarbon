@@ -37,11 +37,6 @@ def check_initial_data(db):
 def shell(db):
     if settings.environment not in ("develop", "local"):
         raise Exception("This script must be run in develop environment")
-    from carbonserver.api.infra.database.sql_models import (
-        Membership as SqlModelMembership,
-    )
-    from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
-    from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 
     logger.info("Checking initial data...")
     with db.session() as session:
