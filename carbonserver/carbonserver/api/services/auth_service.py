@@ -4,7 +4,7 @@ from typing import Optional
 import jwt
 from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException
-from fastapi.security import APIKeyCookie, HTTPBearer, OAuth2AuthorizationCodeBearer
+from fastapi.security import APIKeyCookie, HTTPBearer
 
 from carbonserver.api.services.auth_providers.oidc_auth_provider import (
     OIDCAuthProvider,
@@ -23,34 +23,6 @@ class FullUser:
 
 
 SESSION_COOKIE_NAME = "user_session"
-
-
-def get_oauth_scheme(
-    auth_provider: Optional[OIDCAuthProvider],
-) -> OAuth2AuthorizationCodeBearer:
-    """
-    Get the OAuth2 scheme for the configured auth provider.
-
-    Args:
-        auth_provider: The authentication provider instance (None if auth disabled)
-
-    Returns:
-        OAuth2AuthorizationCodeBearer configured for the provider
-    """
-    if auth_provider is None:
-        # Return a dummy scheme when auth is disabled
-        return OAuth2AuthorizationCodeBearer(
-            "http://localhost/authorize",
-            "http://localhost/token",
-            scopes={x: x for x in OAUTH_SCOPES},
-            auto_error=False,
-        )
-    return OAuth2AuthorizationCodeBearer(
-        auth_provider.get_authorize_endpoint(),
-        auth_provider.get_token_endpoint(),
-        scopes={x: x for x in OAUTH_SCOPES},
-        auto_error=False,
-    )
 
 
 web_scheme = APIKeyCookie(name=SESSION_COOKIE_NAME, auto_error=False)
