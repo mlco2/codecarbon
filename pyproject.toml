@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -79,7 +79,39 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 
 [dependency-groups]
-api  = [
+dev = [
+    "taskipy",
+    "bumpver",
+    "pre-commit",
+    "ruff",
+    "black",
+    "mypy",
+    "pytest",
+    "requests",
+    "requests-mock",
+    "responses",
+    "pytest-cov",
+    "logfire>=1.0.1",  # For testing Logfire output method
+]
+doc = [
+  "sphinx",
+  "sphinx_rtd_theme>=2.0.0",
+]
+
+[project.optional-dependencies]
+carbonboard = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
+]
+# Backwards compatibility alias - will be removed in v4.0.0
+viz-legacy = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
+]
+
+api = [
     "alembic<2.0.0",
     "authlib>=1.2.1",
     "bcrypt<5.0.0",
@@ -103,38 +135,8 @@ api  = [
     "requests-mock",
     "rapidfuzz",
     "PyJWT",
-    "logfire[fastapi]>=1.0.1",
-]
-dev = [
-    "taskipy",
-    "bumpver",
-    "pre-commit",
-    "ruff",
-    "black",
-    "mypy",
-    "pytest",
-    "requests",
-    "requests-mock",
-    "responses",
-    "logfire>=1.0.1",
-]
-doc = [
-  "sphinx",
-  "sphinx_rtd_theme>=2.0.0",
 ]
 
-[project.optional-dependencies]
-carbonboard = [
-    "dash",
-    "dash_bootstrap_components > 1.0.0",
-    "fire",
-]
-# Backwards compatibility alias - will be removed in v4.0.0
-viz-legacy = [
-    "dash",
-    "dash_bootstrap_components > 1.0.0",
-    "fire",
-]
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
@@ -157,12 +159,13 @@ mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional -
 lint = "black --check --diff . && ruff check . && mypy ."
 format = "black . && ruff check --fix --exit-non-zero-on-fix ."
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
+test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov=codecarbon --cov-report=xml --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.1"
+current_version = "3.2.2"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

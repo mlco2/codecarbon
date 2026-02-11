@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  NODE_VERSION: "24"
+
 jobs:
     build-ui:
         runs-on: ubuntu-22.04
@@ -22,7 +25,7 @@ jobs:
             - name: Use Node.js
               uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
               with:
-                  node-version: "18"
+                  node-version: "${{ env.NODE_VERSION }}"
             - name: Setup pnpm
               uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
               with:

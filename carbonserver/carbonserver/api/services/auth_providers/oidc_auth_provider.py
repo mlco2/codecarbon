@@ -8,6 +8,7 @@ It can work with any OIDC-compliant provider (Fief, Keycloak, Auth0, etc.).
 from typing import Any, Dict, Optional, Tuple
 
 from authlib.integrations.starlette_client import OAuth
+
 from carbonserver.config import settings
 
 DEFAULT_SIGNATURE_CACHE_TTL = 3600  # seconds
