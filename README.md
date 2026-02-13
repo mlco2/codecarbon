@@ -13,12 +13,11 @@ CodeCarbon websites:
 
 <br/>
 
-[![](https://anaconda.org/conda-forge/codecarbon/badges/version.svg)](https://anaconda.org/conda-forge/codecarbon)
-[![](https://anaconda.org/codecarbon/codecarbon/badges/version.svg)](https://anaconda.org/codecarbon/codecarbon)
 [![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/)
 [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731)
 <!-- [![Downloads](https://static.pepy.tech/badge/codecarbon/month)](https://pepy.tech/project/codecarbon) -->
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon)
+[![codecov](https://codecov.io/gh/mlco2/codecarbon/graph/badge.svg)](https://codecov.io/gh/mlco2/codecarbon)
 
 
 - [About CodeCarbon 💡](#about-codecarbon-)
@@ -63,10 +62,13 @@ Our hope is that this package will be used widely for estimating the carbon foot
 pip install codecarbon
 ```
 
-**From Conda repository**
-```python
-conda install -c codecarbon codecarbon
+**Using Conda environments**
+If you're using Conda, you can install CodeCarbon with pip in your Conda environment:
+```bash
+conda activate your_env
+pip install codecarbon
 ```
+
 To see more installation options please refer to the documentation: [**Installation**](https://mlco2.github.io/codecarbon/installation.html#)
 
 ## Start to estimate your impact 📏
@@ -105,6 +107,12 @@ Now you have 2 main options:
 In your command prompt use:
 ```codecarbon monitor```
 The package will track your emissions independently from your code.
+
+### Detecting your hardware 🔍
+
+In your command prompt use:
+```codecarbon detect```
+The package will detect and print your hardware information (RAM, CPU, GPU).
 
 ### In your Python code 🐍
 ```python

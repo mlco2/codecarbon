@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -90,30 +90,25 @@ dev = [
     "requests",
     "requests-mock",
     "responses",
-    "logfire>=1.0.1",
+    "pytest-cov",
+    "logfire>=1.0.1",  # For testing Logfire output method
 ]
 doc = [
   "sphinx",
-  "sphinx_rtd_theme",
+  "sphinx_rtd_theme>=2.0.0",
 ]
 
 [project.optional-dependencies]
-viz-legacy = [
+carbonboard = [
     "dash",
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
-
-viz = [
-   "mock",
-   "pytest",
-   "responses",
-   "numpy<2.0.0;python_version<'3.9'",
-   "numpy;python_version>='3.9'",
-   "psutil",
-   "requests-mock",
-   "rapidfuzz",
-   "importlib_resources;python_version<'3.9'"
+# Backwards compatibility alias - will be removed in v4.0.0
+viz-legacy = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
 ]
 api  = [
     "alembic<2.0.0",
@@ -132,12 +127,12 @@ api  = [
     "pytest",
     "mock",
     "responses",
+    "fastapi-oidc;python_version>='3.10'",
     "numpy",
     "psutil",
     "requests-mock",
     "rapidfuzz",
     "PyJWT",
-    "logfire[fastapi]>=1.0.1",
 ]
 
 [project.scripts]
@@ -161,12 +156,13 @@ mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional -
 lint = "black --check --diff . && ruff check . && mypy ."
 format = "black . && ruff check --fix --exit-non-zero-on-fix ."
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
+test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov=codecarbon --cov-report=xml --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "cd docs/edit && make docs"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.0"
+current_version = "3.2.2"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

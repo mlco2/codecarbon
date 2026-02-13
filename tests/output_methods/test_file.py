@@ -173,6 +173,30 @@ class TestFileOutput(unittest.TestCase):
     #     file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
     #     file_output.out(self.emissions_data, None)
 
+    def test_file_output_out_append_empty_file_exists(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        # Create an empty file
+        with open(file_output.save_file_path, "w") as _:
+            pass
+
+        # This should not raise an error
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 1)
+
+    def test_file_output_out_update_empty_file_exists(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="update")
+        # Create an empty file
+        with open(file_output.save_file_path, "w") as _:
+            pass
+
+        # This should not raise an error
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 1)
+
     def test_file_output_task_out(self):
         task_emissions_data = [
             TaskEmissionsData(

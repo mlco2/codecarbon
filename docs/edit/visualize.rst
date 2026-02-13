@@ -8,6 +8,19 @@ Offline
 The package also comes with a ``Dash App`` containing illustrations to understand the emissions logged from various experiments across projects.
 The App currently consumes logged information from a CSV file, generated from an in-built logger in the package.
 
+Installation
+~~~~~~~~~~~~
+The carbonboard visualization tool requires additional dependencies. Install them with:
+
+.. code-block:: bash
+
+    pip install 'codecarbon[carbonboard]'
+
+.. note::
+   The ``viz-legacy`` extra is deprecated but still works for backwards compatibility. It will be removed in v4.0.0. Please use ``carbonboard`` instead.
+
+Usage
+~~~~~
 The App can be run by executing the below CLI command that needs following arguments:
 
 - ``filepath`` - path to the CSV file containing logged information across experiments and projects
@@ -107,6 +120,5 @@ The app also provides a visualization of regional carbon intensity of electricit
             :alt: carbon intensity carbon_map
             :width: 750px
 
-Note that for now, all data sent to CodeCarbon API are public.
 
 

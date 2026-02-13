@@ -6,16 +6,16 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quickstart &mdash; CodeCarbon 3.1.1 documentation</title>
+  <title>Quickstart &mdash; CodeCarbon 3.2.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=796a81b5"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/documentation_options.js?v=dcedd534"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -135,6 +135,11 @@ the <code class="docutils literal notranslate"><span class="pre">offline</span><
 </pre></div>
 </div>
 <p>You have to stop the monitoring manually with <code class="docutils literal notranslate"><span class="pre">Ctrl+C</span></code>.</p>
+<p>If you want to detect the hardware of your computer without starting any measurement, you can use:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon detect</span>
+</pre></div>
+</div>
+<p>It will print the detected RAM, CPU and GPU information.</p>
 <p>In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
 to an API running on “localhost:8008” (Or you can start a private local API with “docker-compose up”). Using the public API with
 this is not supported yet (coming soon!)</p>

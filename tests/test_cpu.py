@@ -11,11 +11,43 @@ from codecarbon.core.cpu import (
     IntelPowerGadget,
     IntelRAPL,
     is_powergadget_available,
+    is_psutil_available,
 )
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_physical_cpus
 from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
+
+
+class TestCPU(unittest.TestCase):
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_with_nice(self, mock_cpu_times):
+        # Create a mock with 'nice' attribute
+        mock_times = mock.Mock()
+        mock_times.nice = 0.1
+        mock_cpu_times.return_value = mock_times
+        self.assertTrue(is_psutil_available())
+
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_with_small_nice(self, mock_cpu_times):
+        # Test when nice attribute is too small
+        mock_times = mock.Mock()
+        mock_times.nice = 0.00001
+        mock_cpu_times.return_value = mock_times
+        self.assertFalse(is_psutil_available())
+
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_without_nice(self, mock_cpu_times):
+        # Create a mock without 'nice' attribute (like Windows)
+        mock_times = mock.Mock(spec=[])  # Empty spec = no attributes
+        mock_cpu_times.return_value = mock_times
+        with mock.patch("psutil.cpu_percent") as mock_cpu_percent:
+            self.assertTrue(is_psutil_available())
+            mock_cpu_percent.assert_called_once_with(interval=0.0, percpu=False)
+
+    @mock.patch("psutil.cpu_times", side_effect=Exception("Test error"))
+    def test_is_psutil_not_available_on_exception(self, mock_cpu_times):
+        self.assertFalse(is_psutil_available())
 
 
 class TestIntelPowerGadget(unittest.TestCase):
@@ -306,10 +338,37 @@ class TestTDP(unittest.TestCase):
 class TestPhysicalCPU(unittest.TestCase):
     def test_count_physical_cpus_windows(self):
         with mock.patch("platform.system", return_value="Windows"):
-            with mock.patch.dict(os.environ, {"NUMBER_OF_PROCESSORS": "4"}):
+
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="4")
+            ):
                 assert count_physical_cpus() == 4
 
-            with mock.patch.dict(os.environ, {}, clear=True):
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="")
+            ):
+                assert count_physical_cpus() == 1
+
+    def test_count_physical_cpus_windows_with_error(self):
+        with mock.patch("platform.system", return_value="Windows"):
+            # Test CalledProcessError
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.CalledProcessError(1, "powershell"),
+            ):
+                assert count_physical_cpus() == 1
+
+            # Test TimeoutExpired
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.TimeoutExpired("powershell", 10),
+            ):
+                assert count_physical_cpus() == 1
+
+            # Test ValueError when converting invalid output
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="invalid")
+            ):
                 assert count_physical_cpus() == 1
 
     def test_count_physical_cpus_linux(self):

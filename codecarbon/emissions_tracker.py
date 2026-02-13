@@ -6,12 +6,15 @@ OfflineEmissionsTracker, context manager and decorator @track_emissions
 import dataclasses
 import os
 import platform
+import re
 import time
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
+
+import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
@@ -334,7 +337,14 @@ class BaseEmissionsTracker(ABC):
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_emissions: float = 0.0
+        self._last_energy_covered: Energy = Energy.from_energy(kWh=0)
         self._total_water: Water = Water.from_litres(litres=0)
+        # CPU and RAM utilization tracking
+        self._cpu_utilization_history: List[float] = []
+        self._gpu_utilization_history: List[float] = []
+        self._ram_utilization_history: List[float] = []
+        self._ram_used_history: List[float] = []
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -361,8 +371,9 @@ class BaseEmissionsTracker(ABC):
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
 
         # Tracking mode detection
-        ressource_tracker = ResourceTracker(self)
-        ressource_tracker.set_CPU_GPU_ram_tracking()
+        self._hardware = []
+        resource_tracker = ResourceTracker(self)
+        resource_tracker.set_CPU_GPU_ram_tracking()
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
@@ -370,18 +381,20 @@ class BaseEmissionsTracker(ABC):
         logger.info(f"  Platform system: {self._conf.get('os')}")
         logger.info(f"  Python version: {self._conf.get('python_version')}")
         logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
-        logger.info(f"  Available RAM : {self._conf.get('ram_total_size'):.3f} GB")
+
+        hardware_info = self.get_detected_hardware()
+        logger.info(f"  Available RAM : {hardware_info['ram_total_size']:.3f} GB")
         logger.info(
-            f"  CPU count: {self._conf.get('cpu_count')} thread(s) in {self._conf.get('cpu_physical_count')} physical CPU(s)"
+            f"  CPU count: {hardware_info['cpu_count']} thread(s) in {hardware_info['cpu_physical_count']} physical CPU(s)"
         )
-        logger.info(f"  CPU model: {self._conf.get('cpu_model')}")
-        logger.info(f"  GPU count: {self._conf.get('gpu_count')}")
+        logger.info(f"  CPU model: {hardware_info['cpu_model']}")
+        logger.info(f"  GPU count: {hardware_info['gpu_count']}")
         if self._gpu_ids:
             logger.info(
-                f"  GPU model: {self._conf.get('gpu_model')} BUT only tracking these GPU ids : {self._conf.get('gpu_ids')}"
+                f"  GPU model: {hardware_info['gpu_model']} BUT only tracking these GPU ids : {hardware_info['gpu_ids']}"
             )
         else:
-            logger.info(f"  GPU model: {self._conf.get('gpu_model')}")
+            logger.info(f"  GPU model: {hardware_info['gpu_model']}")
 
         # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
         # background thread
@@ -447,10 +460,35 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
 
         if self._save_to_prometheus:
-            self._output_handlers.append(PrometheusOutput(self._prometheus_url))
+            self._output_handlers.append(
+                PrometheusOutput(
+                    self._prometheus_url,
+                    job_name=re.sub(
+                        r"[^a-zA-Z0-9_-]",
+                        "_",
+                        f"{self._project_name}_{self._experiment_name}",
+                    ),
+                )
+            )
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
+
+    def get_detected_hardware(self) -> Dict[str, Any]:
+        """
+        Get the detected hardware.
+        :return: A dictionary containing hardware data.
+        """
+        hardware_info = {
+            "ram_total_size": self._conf.get("ram_total_size"),
+            "cpu_count": self._conf.get("cpu_count"),
+            "cpu_physical_count": self._conf.get("cpu_physical_count"),
+            "cpu_model": self._conf.get("cpu_model"),
+            "gpu_count": self._conf.get("gpu_count"),
+            "gpu_model": self._conf.get("gpu_model"),
+            "gpu_ids": self._conf.get("gpu_ids"),
+        }
+        return hardware_info
 
     def service_shutdown(self, signum, frame):
         logger.warning("service_shutdown - Caught signal %d" % signum)
@@ -482,6 +520,13 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._last_measured_time = self._start_time = time.perf_counter()
+
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        self._gpu_utilization_history.clear()
+
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -525,6 +570,13 @@ class BaseEmissionsTracker(ABC):
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
+
+        # Clear utilization history for fresh measurements
+        self._cpu_utilization_history.clear()
+        self._ram_utilization_history.clear()
+        self._ram_used_history.clear()
+        self._gpu_utilization_history.clear()
+
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
@@ -686,6 +738,10 @@ class BaseEmissionsTracker(ABC):
 
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions
+
+        for handler in self._output_handlers:
+            handler.exit()
+
         return emissions_data.emissions
 
     def _persist_data(
@@ -703,18 +759,36 @@ class BaseEmissionsTracker(ABC):
             if len(task_emissions_data) > 0:
                 handler.task_out(task_emissions_data, experiment_name)
 
+    def _update_emissions(self) -> None:
+        """
+        Compute emissions for the energy consumed since the last update
+        and add them to the total emissions.
+        """
+        delta_energy = self._total_energy - self._last_energy_covered
+        if delta_energy.kWh > 0:
+            cloud: CloudMetadata = self._get_cloud_metadata()
+            if cloud.is_on_private_infra:
+                delta_emissions = self._emissions.get_private_infra_emissions(
+                    delta_energy, self._geo
+                )
+            else:
+                delta_emissions = self._emissions.get_cloud_emissions(
+                    delta_energy, cloud, self._geo
+                )
+            self._total_emissions += delta_emissions
+            self._last_energy_covered = self._total_energy
+
     def _prepare_emissions_data(self) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
         :return: EmissionsData object with the total emissions data.
         """
+        self._update_emissions()
         cloud: CloudMetadata = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
 
+        emissions = self._total_emissions
         if cloud.is_on_private_infra:
-            emissions = self._emissions.get_private_infra_emissions(
-                self._total_energy, self._geo
-            )  # float: kg co2_eq
             country_name = self._geo.country_name
             country_iso_code = self._geo.country_iso_code
             region = self._geo.region
@@ -722,9 +796,6 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = ""
             cloud_region = ""
         else:
-            emissions = self._emissions.get_cloud_emissions(
-                self._total_energy, cloud, self._geo
-            )
             # Try to get cloud region metadata, fall back to geo metadata if not found
             try:
                 country_name = self._emissions.get_cloud_country_name(cloud)
@@ -782,6 +853,26 @@ class BaseEmissionsTracker(ABC):
             duration=duration.seconds,
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
+            cpu_utilization_percent=(
+                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
+                if self._cpu_utilization_history
+                else 0
+            ),
+            gpu_utilization_percent=(
+                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
+                if self._gpu_utilization_history
+                else 0
+            ),
+            ram_utilization_percent=(
+                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
+                if self._ram_utilization_history
+                else 0
+            ),
+            ram_used_gb=(
+                sum(self._ram_used_history) / len(self._ram_used_history)
+                if self._ram_used_history
+                else 0
+            ),
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
@@ -854,6 +945,21 @@ class BaseEmissionsTracker(ABC):
         for hardware in self._hardware:
             if isinstance(hardware, CPU):
                 hardware.monitor_power()
+
+        # Collect CPU and RAM utilization metrics
+        self._cpu_utilization_history.append(psutil.cpu_percent())
+        self._ram_utilization_history.append(psutil.virtual_memory().percent)
+        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
+
+        # Collect GPU utilization metrics
+        for hardware in self._hardware:
+            if isinstance(hardware, GPU):
+                gpu_details = hardware.devices.get_gpu_details()
+                for gpu_detail in gpu_details:
+                    if "gpu_utilization" in gpu_detail:
+                        self._gpu_utilization_history.append(
+                            gpu_detail["gpu_utilization"]
+                        )
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:

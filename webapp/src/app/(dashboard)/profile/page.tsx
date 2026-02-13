@@ -2,11 +2,11 @@ import ErrorMessage from "@/components/error-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { fiefAuth } from "@/helpers/fief";
 import { User } from "@/types/user";
 
 async function getUser(): Promise<User | null> {
-    const userId = await fiefAuth.getUserId();
+    // TODO: implement without fief
+    const userId = null;
     if (!userId) {
         return null;
     }

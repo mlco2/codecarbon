@@ -51,6 +51,12 @@ class TestPrometheusOutput(unittest.TestCase):
         output = prometheus.PrometheusOutput("url")
         output.out(total=EMISSIONS_DATA, delta=EMISSIONS_DATA)
 
+    @patch("codecarbon.output_methods.metrics.prometheus.delete_from_gateway")
+    def test_exit_method(self, mock_delete):
+        output = prometheus.PrometheusOutput("url", job_name="custom_job")
+        output.exit()
+        mock_delete.assert_called_once_with("url", job="custom_job")
+
     @patch(
         "codecarbon.output_methods.metrics.prometheus.push_to_gateway",
         side_effect=Exception("Test error"),

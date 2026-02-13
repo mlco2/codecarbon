@@ -1,6 +1,5 @@
 import os
 
-import logfire
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from pydantic import ValidationError
@@ -20,6 +19,7 @@ from carbonserver.api.routers import (
     runs,
     users,
 )
+from carbonserver.api.services import auth_service
 from carbonserver.config import settings
 from carbonserver.container import ServerContainer
 from carbonserver.database.database import engine
@@ -69,6 +69,7 @@ def init_container():
             organizations,
             users,
             authenticate,
+            auth_service,
         ]
     )
     return container
@@ -81,9 +82,6 @@ def init_db(container):
 
 
 def init_server(container):
-    logfire.configure(
-        token=settings.logfire_token, send_to_logfire=settings.send_to_logfire
-    )
     server = FastAPI(
         servers=[
             {"url": "/api/"},
@@ -91,7 +89,6 @@ def init_server(container):
         port=settings.api_port,
         host=settings.server_host,
     )
-    logfire.instrument_fastapi(server)
 
     server.container = container
     server.include_router(users.router)
