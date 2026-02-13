@@ -18,8 +18,9 @@
    * [Debug in VS Code](#debug-in-vs-code)
    * [Coding style && Linting](#coding-style-linting)
    * [Dependencies management](#dependencies-management)
-   * [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
+   * [Build Documentation 🖨️](#build-documentation)
    * [Release process](#release-process)
+      + [Test the build in Docker](#test-the-build-in-docker)
 - [API and Dashboard](#api-and-dashboard)
    * [CSV Dashboard](#csv-dashboard)
    * [Web dashboard](#web-dashboard)
@@ -260,8 +261,8 @@ Dependencies are defined in different places:
 -   In [uv.lock](uv.lock), those are the locked dependencies managed by UV, do not edit them.
 
 
-<!-- TOC --><a name="build-documentation-"></a>
-### <a name="documentation"></a>Build Documentation 🖨️
+<!-- TOC --><a name="build-documentation"></a>
+### Build Documentation 🖨️
 
 No software is complete without great documentation!
 To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
@@ -288,6 +289,7 @@ to regenerate the html files.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
 
+<!-- TOC --><a name="test-the-build-in-docker"></a>
 #### Test the build in Docker
 
 If you want to check the build is working, you could run:
