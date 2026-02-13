@@ -1,4 +1,3 @@
-from codecarbon.cli.monitor import run_and_monitor
 import os
 import signal
 import sys
@@ -23,6 +22,7 @@ from codecarbon.cli.cli_utils import (
     get_existing_local_exp_id,
     overwrite_local_config,
 )
+from codecarbon.cli.monitor import run_and_monitor
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
