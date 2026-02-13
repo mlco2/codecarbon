@@ -4,6 +4,7 @@ Encapsulates external dependencies to retrieve hardware metadata
 
 import math
 import re
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -182,6 +183,9 @@ class CPU(BaseHardware):
         self._pid = psutil.Process().pid
         self._cpu_count = count_cpus()
         self._process = psutil.Process(self._pid)
+        # For process tracking: store last measurement time and CPU times
+        self._last_measurement_time: Optional[float] = None
+        self._last_cpu_times: Dict[int, float] = {}  # pid -> total cpu time
 
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
@@ -245,11 +249,62 @@ class CPU(BaseHardware):
                 f"CPU load {self._tdp} W and {cpu_load:.1f}% {load_factor=} => estimation of {power} W for whole machine."
             )
         elif self._tracking_mode == "process":
+            # Use CPU times for accurate process tracking
+            current_time = time.time()
+            current_cpu_times: Dict[int, float] = {}
 
-            cpu_load = self._process.cpu_percent(interval=0.5) / self._cpu_count
-            power = self._tdp * cpu_load / 100
+            # Get CPU time for main process and all children
+            try:
+                processes = [self._process] + self._process.children(recursive=True)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                processes = [self._process]
+
+            for proc in processes:
+                try:
+                    cpu_times = proc.cpu_times()
+                    # Total CPU time = user + system time
+                    total_cpu_time = cpu_times.user + cpu_times.system
+                    current_cpu_times[proc.pid] = total_cpu_time
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    logger.debug(
+                        f"Process {proc.pid} disappeared or access denied when getting CPU times."
+                    )
+
+            # Calculate CPU usage based on delta
+            if self._last_measurement_time is not None:
+                time_delta = current_time - self._last_measurement_time
+                if time_delta > 0:
+                    total_cpu_delta = 0.0
+                    for pid, cpu_time in current_cpu_times.items():
+                        last_cpu_time = self._last_cpu_times.get(pid, cpu_time)
+                        cpu_delta = cpu_time - last_cpu_time
+                        if cpu_delta > 0:
+                            total_cpu_delta += cpu_delta
+                            logger.debug(
+                                f"Process {pid} CPU time delta: {cpu_delta:.3f}s"
+                            )
+
+                    # CPU load as percentage (can be > 100% with multiple cores)
+                    # total_cpu_delta is the CPU time used, time_delta is wall clock time
+                    cpu_load = (total_cpu_delta / time_delta) * 100
+                    logger.debug(
+                        f"Total CPU delta: {total_cpu_delta:.3f}s over {time_delta:.3f}s = {cpu_load:.1f}% (across {self._cpu_count} cores)"
+                    )
+                else:
+                    cpu_load = 0.0
+            else:
+                cpu_load = 0.0
+                logger.debug("First measurement, no CPU delta available yet")
+
+            # Store for next measurement
+            self._last_measurement_time = current_time
+            self._last_cpu_times = current_cpu_times
+
+            # Normalize to percentage of total CPU capacity
+            cpu_load_normalized = cpu_load / self._cpu_count
+            power = self._tdp * cpu_load_normalized / 100
             logger.debug(
-                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process {self._pid}."
+                f"CPU load {self._tdp} W and {cpu_load:.1f}% ({cpu_load_normalized:.1f}% normalized) => estimation of {power:.2f} W for process {self._pid} and {len(current_cpu_times) - 1} children."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
@@ -318,8 +373,12 @@ class CPU(BaseHardware):
     def start(self):
         if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
             self._intel_interface.start()
+        # Reset process tracking state for fresh measurements
+        self._last_measurement_time = None
+        self._last_cpu_times = {}
         if self._mode == MODE_CPU_LOAD:
             # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
+            _ = self._get_power_from_cpu_load()
             _ = self._get_power_from_cpu_load()
 
     def monitor_power(self):
