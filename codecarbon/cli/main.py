@@ -1,6 +1,6 @@
+from codecarbon.cli.monitor import run_and_monitor
 import os
 import signal
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -341,132 +341,17 @@ def config():
 
 
 @codecarbon.command(
-    "run",
-    short_help="Run a command and track its emissions.",
+    "monitor",
+    short_help="Monitor your machine's carbon emissions.",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
-def run(
-    ctx: typer.Context,
-    log_level: Annotated[
-        str, typer.Option(help="Log level (critical, error, warning, info, debug)")
-    ] = "error",
-):
-    """
-    Run a command and track its carbon emissions.
-
-    This command wraps any executable and measures the process's total power
-    consumption during its execution. When the command completes, a summary
-    report is displayed and emissions data is saved to a CSV file.
-
-    Note: This tracks process-level emissions (only the specific command), not the
-    entire machine. For machine-level tracking, use the `monitor` command.
-
-    Examples:
-
-        Do not use quotes around the command. Use -- to separate CodeCarbon args.
-
-        # Run any shell command:
-        codecarbon run -- ./benchmark.sh
-
-        # Commands with arguments (use single quotes for special chars):
-        codecarbon run -- python -c 'print("Hello World!")'
-
-        # Pipe the command output:
-        codecarbon run -- npm run test > output.txt
-
-        # Display the CodeCarbon detailed logs:
-        codecarbon run --log-level debug -- python --version
-
-    The emissions data is appended to emissions.csv (default) in the current
-    directory. The file path is shown in the final report.
-    """
-    # Suppress all CodeCarbon logs during execution
-    from codecarbon.external.logger import set_logger_level
-
-    set_logger_level(log_level)
-
-    # Get the command from remaining args
-    command = ctx.args
-
-    if not command:
-        print(
-            "ERROR: No command provided. Use: codecarbon run -- <command>",
-            file=sys.stderr,
-        )
-        raise typer.Exit(1)
-
-    # Initialize tracker with specified logging level
-    tracker = EmissionsTracker(
-        log_level=log_level, save_to_logger=False, tracking_mode="process"
-    )
-
-    print("🌱 CodeCarbon: Starting emissions tracking...")
-    print(f"   Command: {' '.join(command)}")
-    print()
-
-    tracker.start()
-
-    process = None
-    try:
-        # Run the command, streaming output to console
-        process = subprocess.Popen(
-            command,
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-            text=True,
-        )
-
-        # Wait for completion
-        exit_code = process.wait()
-
-    except FileNotFoundError:
-        print(f"❌ Error: Command not found: {command[0]}", file=sys.stderr)
-        exit_code = 127
-    except KeyboardInterrupt:
-        print("\n⚠️  Interrupted by user", file=sys.stderr)
-        if process is not None:
-            process.terminate()
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-        exit_code = 130
-    except Exception as e:
-        print(f"❌ Error running command: {e}", file=sys.stderr)
-        exit_code = 1
-    finally:
-        emissions = tracker.stop()
-        print()
-        print("=" * 60)
-        print("🌱 CodeCarbon Emissions Report")
-        print("=" * 60)
-        print(f"   Command: {' '.join(command)}")
-        if emissions is not None:
-            print(f"   Emissions: {emissions * 1000:.4f} g CO2eq")
-        else:
-            print("   Emissions: N/A")
-
-        # Show where the data was saved
-        if hasattr(tracker, "_conf") and "output_file" in tracker._conf:
-            output_path = tracker._conf["output_file"]
-            # Make it absolute if it's relative
-            if not os.path.isabs(output_path):
-                output_path = os.path.abspath(output_path)
-            print(f"   Saved to: {output_path}")
-
-        print("   ⚠️  Note: Tracked the command process and its children")
-        print("=" * 60)
-
-    raise typer.Exit(exit_code)
-
-
-@codecarbon.command("monitor", short_help="Monitor your machine's carbon emissions.")
 def monitor(
+    ctx: typer.Context,
     measure_power_secs: Annotated[
-        int, typer.Argument(help="Interval between two measures.")
+        int, typer.Option(help="Interval between two measures.")
     ] = 10,
     api_call_interval: Annotated[
-        int, typer.Argument(help="Number of measures between API calls.")
+        int, typer.Option(help="Number of measures between API calls.")
     ] = 30,
     api: Annotated[
         bool, typer.Option(help="Choose to call Code Carbon API or not")
@@ -480,6 +365,13 @@ def monitor(
     ] = None,
 ):
     """Monitor your machine's carbon emissions."""
+
+    # Shared tracker args so monitor and run_and_monitor behave the same
+    tracker_args = {
+        "measure_power_secs": measure_power_secs,
+        "api_call_interval": api_call_interval,
+    }
+    # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
         if not country_iso_code:
             print(
@@ -487,11 +379,11 @@ def monitor(
             )
             raise typer.Exit(1)
 
-        tracker = OfflineEmissionsTracker(
-            measure_power_secs=measure_power_secs,
-            country_iso_code=country_iso_code,
-            region=region,
-        )
+        tracker_args = {
+            **tracker_args,
+            "country_iso_code": country_iso_code,
+            "region": region,
+        }
     else:
         experiment_id = get_existing_local_exp_id()
         if api and experiment_id is None:
@@ -501,11 +393,17 @@ def monitor(
             )
             raise typer.Exit(1)
 
-        tracker = EmissionsTracker(
-            measure_power_secs=measure_power_secs,
-            api_call_interval=api_call_interval,
-            save_to_api=api,
-        )
+        tracker_args = {**tracker_args, "save_to_api": api}
+
+    # If extra args are provided (e.g. `codecarbon monitor -- my_script.py`), delegate to `run_and_monitor`
+    if getattr(ctx, "args", None):
+        return run_and_monitor(ctx, **tracker_args)
+
+    # Instantiate the tracker
+    if offline:
+        tracker = OfflineEmissionsTracker(**tracker_args)
+    else:
+        tracker = EmissionsTracker(**tracker_args)
 
     def signal_handler(signum, frame):
         print("\nReceived signal to stop. Saving emissions data...")
