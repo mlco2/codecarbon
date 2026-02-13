@@ -66,7 +66,67 @@ The command line could also works without internet by providing the country code
 
     codecarbon monitor --offline --country-iso-code FRA
 
-Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
+
+Running Any Command with CodeCarbon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to track emissions while running any command or program (not just Python scripts), you can use the ``codecarbon monitor --`` command.
+This allows non-Python users to measure machine emissions during the execution of any command:
+
+.. code-block:: console
+
+    codecarbon monitor -- <your_command>
+
+Do not surround ``<your_command>`` with quotes. The double hyphen ``--`` indicates the end of CodeCarbon options and the beginning of the command to run.
+
+**Examples:**
+
+.. code-block:: console
+
+    # Run a shell script
+    codecarbon monitor -- ./benchmark.sh
+
+    # Run a command with arguments (use quotes for special characters)
+    codecarbon monitor -- bash -c 'echo "Processing..."; sleep 30; echo "Done!"'
+
+    # Run Python scripts
+    codecarbon monitor -- python train_model.py
+
+    # Run Node.js applications
+    codecarbon monitor -- node app.js
+
+    # Run tests with output redirection
+    codecarbon monitor -- npm run test > output.txt
+
+    # Display the CodeCarbon detailed logs
+    codecarbon monitor --log-level debug -- python --version
+
+**Output:**
+
+When the command completes, CodeCarbon displays a summary report and saves the emissions data to a CSV file:
+
+.. code-block:: console
+
+    🌱 CodeCarbon: Starting emissions tracking...
+       Command: bash -c echo "Processing..."; sleep 30; echo "Done!"
+
+    Processing...
+    Done!
+
+    ============================================================
+    🌱 CodeCarbon Emissions Report
+    ============================================================
+       Command: bash -c echo "Processing..."; sleep 30; echo "Done!"
+       Emissions: 0.0317 g CO2eq
+       Saved to: /home/user/emissions.csv
+       ⚠️  Note: Measured entire machine (includes all system processes)
+    ============================================================
+
+.. note::
+    The ``codecarbon monitor --`` command tracks process-level emissions (only the specific command), not the
+    entire machine. For machine-level tracking, use the ``codecarbon monitor`` command.
+
+For more fine-grained tracking, implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
 
 Explicit Object
 ~~~~~~~~~~~~~~~
