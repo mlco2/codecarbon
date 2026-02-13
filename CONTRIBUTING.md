@@ -118,6 +118,12 @@ You can run the unit tests by running UV in the terminal when in the root packag
 uv run task test-package
 ```
 
+Run a specific test file:
+
+```sh
+uv run python -m pytest tests/test_cpu.py
+```
+
 You can also run a specific test:
 
 ```sh
