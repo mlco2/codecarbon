@@ -79,12 +79,9 @@ def run_and_monitor(
     process = None
     try:
         # Run the command, streaming output to console
-        process = subprocess.Popen(
-            command,
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-            text=True,
-        )
+        # Let the child inherit the parent's std streams so Click's
+        # `CliRunner` can capture output (don't pass StringIO objects).
+        process = subprocess.Popen(command, text=True)
 
         # Wait for completion
         exit_code = process.wait()
