@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "codecarbon"
 dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
@@ -18,7 +18,6 @@ authors = [
 ]
 classifiers = [
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -194,7 +193,7 @@ docs-serve = "zensical serve -f mkdocs.yml"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.2"
+current_version = "3.2.3"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
