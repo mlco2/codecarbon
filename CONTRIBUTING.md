@@ -262,8 +262,8 @@ Dependencies are defined in different places:
 -   In [uv.lock](uv.lock), those are the locked dependencies managed by UV, do not edit them.
 
 
-<!-- TOC --><a name="build-documentation-"></a>
-### <a name="documentation"></a>Build Documentation 🖨️
+<!-- TOC --><a name="build-documentation"></a>
+### Build Documentation 🖨️
 
 No software is complete without great documentation!
 To make generating documentation easier, we use [Zensical](https://zensical.org/).
@@ -283,13 +283,14 @@ to regenerate the html files. For local preview with live reload, run `uv run --
 - Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
 - Run `uv run python .github/pyproject_versions.py -c` to check version consistancy.
 - Update the dependencies with `uv sync --upgrade`
-- [Build Documentation](#documentation) with `uv run --only-group doc task docs`.
+- [Build Documentation](#build-documentation) with `uv run --only-group doc task docs`.
 - Push the changes.
 - Merge the PR.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
 
+<!-- TOC --><a name="test-the-build-in-docker"></a>
 #### Test the build in Docker
 
 If you want to check the build is working, you could run:
