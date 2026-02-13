@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quickstart &mdash; CodeCarbon 3.2.2 documentation</title>
+  <title>Quickstart &mdash; CodeCarbon 3.2.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=dcedd534"></script>
+      <script src="_static/documentation_options.js?v=7895512d"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
@@ -56,6 +56,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#online-mode">Online Mode</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#command-line">Command line</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-any-command-with-codecarbon">Running Any Command with CodeCarbon</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#explicit-object">Explicit Object</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#context-manager">Context manager</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#decorator">Decorator</a></li>
@@ -149,7 +150,59 @@ this is not supported yet (coming soon!)</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor --offline --country-iso-code FRA</span>
 </pre></div>
 </div>
-<p>Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.</p>
+</section>
+<section id="running-any-command-with-codecarbon">
+<h3>Running Any Command with CodeCarbon<a class="headerlink" href="#running-any-command-with-codecarbon" title="Link to this heading"></a></h3>
+<p>If you want to track emissions while running any command or program (not just Python scripts), you can use the <code class="docutils literal notranslate"><span class="pre">codecarbon</span> <span class="pre">monitor</span> <span class="pre">--</span></code> command.
+This allows non-Python users to measure machine emissions during the execution of any command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor -- &lt;your_command&gt;</span>
+</pre></div>
+</div>
+<p>Do not surround <code class="docutils literal notranslate"><span class="pre">&lt;your_command&gt;</span></code> with quotes. The double hyphen <code class="docutils literal notranslate"><span class="pre">--</span></code> indicates the end of CodeCarbon options and the beginning of the command to run.</p>
+<p><strong>Examples:</strong></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp"># </span>Run<span class="w"> </span>a<span class="w"> </span>shell<span class="w"> </span>script
+<span class="go">codecarbon monitor -- ./benchmark.sh</span>
+
+<span class="gp"># </span>Run<span class="w"> </span>a<span class="w"> </span><span class="nb">command</span><span class="w"> </span>with<span class="w"> </span>arguments<span class="w"> </span><span class="o">(</span>use<span class="w"> </span>quotes<span class="w"> </span><span class="k">for</span><span class="w"> </span>special<span class="w"> </span>characters<span class="o">)</span>
+<span class="go">codecarbon monitor -- bash -c &#39;echo &quot;Processing...&quot;; sleep 30; echo &quot;Done!&quot;&#39;</span>
+
+<span class="gp"># </span>Run<span class="w"> </span>Python<span class="w"> </span>scripts
+<span class="go">codecarbon monitor -- python train_model.py</span>
+
+<span class="gp"># </span>Run<span class="w"> </span>Node.js<span class="w"> </span>applications
+<span class="go">codecarbon monitor -- node app.js</span>
+
+<span class="gp"># </span>Run<span class="w"> </span>tests<span class="w"> </span>with<span class="w"> </span>output<span class="w"> </span>redirection
+<span class="go">codecarbon monitor -- npm run test &gt; output.txt</span>
+
+<span class="gp"># </span>Display<span class="w"> </span>the<span class="w"> </span>CodeCarbon<span class="w"> </span>detailed<span class="w"> </span>logs
+<span class="go">codecarbon monitor --log-level debug -- python --version</span>
+</pre></div>
+</div>
+<p><strong>Output:</strong></p>
+<p>When the command completes, CodeCarbon displays a summary report and saves the emissions data to a CSV file:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">🌱 CodeCarbon: Starting emissions tracking...</span>
+<span class="go">   Command: bash -c echo &quot;Processing...&quot;; sleep 30; echo &quot;Done!&quot;</span>
+
+<span class="go">Processing...</span>
+<span class="go">Done!</span>
+
+<span class="go">============================================================</span>
+<span class="go">🌱 CodeCarbon Emissions Report</span>
+<span class="go">============================================================</span>
+<span class="go">   Command: bash -c echo &quot;Processing...&quot;; sleep 30; echo &quot;Done!&quot;</span>
+<span class="go">   Emissions: 0.0317 g CO2eq</span>
+<span class="go">   Saved to: /home/user/emissions.csv</span>
+<span class="go">   ⚠️  Note: Measured entire machine (includes all system processes)</span>
+<span class="go">============================================================</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">codecarbon</span> <span class="pre">monitor</span> <span class="pre">--</span></code> command tracks process-level emissions (only the specific command), not the
+entire machine. For machine-level tracking, use the <code class="docutils literal notranslate"><span class="pre">codecarbon</span> <span class="pre">monitor</span></code> command.</p>
+</div>
+<p>For more fine-grained tracking, implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.</p>
 </section>
 <section id="explicit-object">
 <h3>Explicit Object<a class="headerlink" href="#explicit-object" title="Link to this heading"></a></h3>
