@@ -383,6 +383,82 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         self.assertEqual(resource_tracker.cpu_tracker, "RAPL")
         self.assertEqual(tracker._conf["cpu_model"], "Mock CPU")
 
+    def test_set_cpu_tracking_force_cpu_load_instantiates_tdp(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {"cpu_physical_count": 2, "force_mode_cpu_load": True}
+                self._force_cpu_power = None
+                self._output_dir = ""
+                self._rapl_include_dram = False
+                self._rapl_prefer_psys = False
+                self._tracking_mode = "machine"
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+        fake_tdp = mock.Mock()
+        fake_tdp.tdp = 50
+        fake_tdp.model = "Mock CPU"
+
+        with mock.patch(
+            "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+        ) as mocked_tdp, mock.patch(
+            "codecarbon.core.resource_tracker.ResourceTracker._setup_cpu_load_mode",
+            return_value=True,
+        ) as mocked_setup_cpu_load, mock.patch(
+            "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
+        ) as mocked_fallback, mock.patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=False,
+        ), mock.patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+            return_value=False,
+        ), mock.patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=False,
+        ):
+            resource_tracker.set_CPU_tracking()
+
+        mocked_tdp.assert_called_once_with()
+        mocked_setup_cpu_load.assert_called_once_with(fake_tdp, 100)
+        mocked_fallback.assert_not_called()
+
+    def test_set_cpu_tracking_fallback_instantiates_tdp(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {"cpu_physical_count": 4}
+                self._force_cpu_power = None
+                self._output_dir = ""
+                self._rapl_include_dram = False
+                self._rapl_prefer_psys = False
+                self._tracking_mode = "machine"
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+        fake_tdp = mock.Mock()
+        fake_tdp.tdp = 20
+        fake_tdp.model = "Mock CPU"
+
+        with mock.patch(
+            "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+        ) as mocked_tdp, mock.patch(
+            "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
+        ) as mocked_fallback, mock.patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=False,
+        ), mock.patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+            return_value=False,
+        ), mock.patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=False,
+        ):
+            resource_tracker.set_CPU_tracking()
+
+        mocked_tdp.assert_called_once_with()
+        mocked_fallback.assert_called_once_with(fake_tdp, 80)
+
 
 class TestPhysicalCPU(unittest.TestCase):
     def test_count_physical_cpus_windows(self):
