@@ -11,6 +11,11 @@ import {
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
+import {
+    REFRESH_INTERVAL_ONE_MINUTE,
+    THIRTY_DAYS_MS,
+    SECONDS_PER_DAY,
+} from "@/helpers/time-constants";
 import { fetcher } from "@/helpers/swr";
 import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
 import { Organization } from "@/types/organization";
@@ -29,12 +34,12 @@ export default function OrganizationPage({
         isLoading,
         error,
     } = useSWR<Organization>(`/organizations/${organizationId}`, fetcher, {
-        refreshInterval: 1000 * 60, // Refresh every minute
+        refreshInterval: REFRESH_INTERVAL_ONE_MINUTE,
     });
 
     const today = new Date();
     const [date, setDate] = useState<DateRange | undefined>({
-        from: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
+        from: new Date(today.getTime() - THIRTY_DAYS_MS),
         to: today,
     });
     const [organizationReport, setOrganizationReport] = useState<
@@ -86,7 +91,9 @@ export default function OrganizationPage({
             label: "days",
             value: organizationReport?.duration
                 ? parseFloat(
-                      (organizationReport.duration / 86400, 0).toFixed(2),
+                      (organizationReport.duration / SECONDS_PER_DAY).toFixed(
+                          2,
+                      ),
                   )
                 : 0,
         },
