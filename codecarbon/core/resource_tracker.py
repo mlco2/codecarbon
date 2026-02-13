@@ -176,7 +176,8 @@ class ResourceTracker:
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
         cpu_number = self.tracker._conf.get("cpu_physical_count")
-        tdp = cpu.TDP()
+        tdp = None
+        max_power = None
 
         if self.tracker._force_cpu_power is not None:
             logger.info(
@@ -184,15 +185,16 @@ class ResourceTracker:
             )
             self.cpu_tracker = "User Input TDP constant"
             max_power = self.tracker._force_cpu_power
-        else:
-            max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
 
         # Try force CPU load mode if requested
-        if self.tracker._conf.get("force_mode_cpu_load", False) and (
-            tdp.tdp is not None or self.tracker._force_cpu_power is not None
-        ):
-            if self._setup_cpu_load_mode(tdp, max_power):
-                return
+        if self.tracker._conf.get("force_mode_cpu_load", False):
+            if tdp is None:
+                tdp = cpu.TDP()
+            if max_power is None:
+                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+            if tdp.tdp is not None or self.tracker._force_cpu_power is not None:
+                if self._setup_cpu_load_mode(tdp, max_power):
+                    return
 
         # Try various tracking methods in order of preference
         if cpu.is_powergadget_available() and self.tracker._force_cpu_power is None:
@@ -205,6 +207,10 @@ class ResourceTracker:
         ):
             self._setup_powermetrics()
         else:
+            if tdp is None:
+                tdp = cpu.TDP()
+            if max_power is None:
+                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
             self._setup_fallback_tracking(tdp, max_power)
 
     def set_GPU_tracking(self):
