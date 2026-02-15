@@ -178,7 +178,7 @@ sqlalchemy==1.4.54
     # via
     #   codecarbon (pyproject.toml)
     #   alembic
-starlette==0.52.1
+starlette==0.50.0
     # via fastapi
 termcolor==3.2.0
     # via yaspin
