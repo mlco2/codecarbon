@@ -120,6 +120,7 @@ api = [
     "fastapi<1.0.0",
     "fief-client[fastapi]",
     "httpx",
+    "itsdangerous",
     "pydantic[email]<2.0.0",
     "psycopg2-binary<3.0.0",
     "requests<3.0.0",
