@@ -42,7 +42,7 @@ dependencies = [
     "requests",
     "questionary",
     "rich",
-    "typer"
+    "typer",
 ]
 
 [tool.setuptools.dynamic]
@@ -79,6 +79,32 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 
 [dependency-groups]
+api  = [
+    "alembic<2.0.0",
+    "authlib>=1.2.1",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "fief-client[fastapi]",
+    "httpx",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination<1.0.0",
+    "pytest",
+    "mock",
+    "responses",
+    "fastapi-oidc;python_version>='3.10'",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
+    "PyJWT",
+    "logfire[fastapi]>=1.0.1",
+]
 dev = [
     "taskipy",
     "bumpver",
@@ -110,14 +136,17 @@ viz-legacy = [
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
+
 api  = [
     "alembic<2.0.0",
+    "authlib>=1.2.1",
     "bcrypt<5.0.0",
     "python-dateutil<3.0.0",
     "dependency-injector<5.0.0",
     "fastapi<1.0.0",
     "fief-client[fastapi]",
     "httpx",
+    "itsdangerous",
     "pydantic[email]<2.0.0",
     "psycopg2-binary<3.0.0",
     "requests<3.0.0",
@@ -134,6 +163,7 @@ api  = [
     "rapidfuzz",
     "PyJWT",
 ]
+
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"

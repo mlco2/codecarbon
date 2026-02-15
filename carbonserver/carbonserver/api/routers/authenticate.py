@@ -1,9 +1,10 @@
 import base64
+import json
 import logging
 import random
 from typing import Optional
 
-import requests
+from authlib.integrations.starlette_client import OAuthError
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
@@ -83,31 +84,16 @@ async def get_login(
     if auth_provider is None:
         raise HTTPException(status_code=501, detail="Authentication not configured")
     login_url = request.url_for("login")
-
     if code:
-        client_id, client_secret = auth_provider.get_client_credentials()
-        res = requests.post(
-            auth_provider.get_token_endpoint(),
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": login_url,
-                "client_id": client_id,
-                "client_secret": client_secret,
-            },
-        )
+        try:
+            token = await auth_provider.client.authorize_access_token(request)
+        except OAuthError:
+            return "Error"
+        user = token.get("userinfo")
+        if user:
+            request.session["user"] = dict(user)
 
-        # check if the user exists in local DB ; create if needed
-        if "id_token" not in res.json():
-            if "access_token" not in res.json():
-                return Response(content="Invalid code", status_code=400)
-            # get profile data from auth provider if not present in response
-            id_token = await auth_provider.get_user_info(res.json()["access_token"])
-            sign_up_service.check_jwt_user(id_token)
-        else:
-            sign_up_service.check_jwt_user(res.json()["id_token"], create=True)
-
-        creds = base64.b64encode(res.content).decode()
+        creds = base64.b64encode(json.dumps(token).encode()).decode()
         base_url = request.base_url
         if settings.frontend_url != "":
             base_url = settings.frontend_url + "/"
@@ -127,14 +113,15 @@ async def get_login(
 
         response.set_cookie(
             SESSION_COOKIE_NAME,
-            res.json()["access_token"],
+            token["access_token"],
             httponly=True,
             secure=True,
         )
         return response
+    return await auth_provider.get_authorize_url(request, str(login_url))
 
-    state = str(int(random.random() * 1000))
+    str(int(random.random() * 1000))
     client_id, _ = auth_provider.get_client_credentials()
-    authorize_url = auth_provider.get_authorize_endpoint()
-    url = f"{authorize_url}?response_type=code&client_id={client_id}&redirect_uri={login_url}&scope={' '.join(OAUTH_SCOPES)}&state={state}"
-    return RedirectResponse(url=url)
+    return await auth_provider.client.authorize_redirect(
+        request, str(login_url), scope=" ".join(OAUTH_SCOPES)
+    )
