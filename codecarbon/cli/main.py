@@ -32,7 +32,7 @@ AUTH_CLIENT_ID = os.environ.get(
     "jsUPWIcUECQFE_ouanUuVhXx52TTjEVcVNNtNGeyAtU",
 )
 AUTH_SERVER_URL = os.environ.get(
-    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon"
+    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon-dev"
 )
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 

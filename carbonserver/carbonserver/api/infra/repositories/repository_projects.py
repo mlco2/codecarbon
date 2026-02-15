@@ -186,7 +186,7 @@ class SqlAlchemyRepository(Projects):
                         message=f"Project not found: {project_id}",
                     )
                 )
-            for attr, value in project.dict().items():
+            for attr, value in project.model_dump().items():
                 if value is not None:
                     setattr(db_project, attr, value)
             session.commit()

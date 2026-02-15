@@ -13,10 +13,11 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Extra, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
 
 
-class Empty(BaseModel, extra=Extra.forbid):
+class Empty(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     pass
 
 
@@ -41,14 +42,13 @@ class UserAuthenticate(UserBase):
 
 
 class User(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     name: str
     email: EmailStr
-    organizations: Optional[List[UUID | str]]  # TODO: cleanup type
+    organizations: Optional[List[UUID | str]] = None  # TODO: cleanup type
     is_active: bool
-
-    class Config:
-        orm_mode = True
 
     def __repr__(self):
         return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id}, organizations={self.organizations})"
@@ -102,8 +102,8 @@ class EmissionBase(BaseModel):
         description="The WUE (Water Usage Effectiveness) must be greater than or equal to zero",
     )
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
@@ -120,6 +120,7 @@ class EmissionBase(BaseModel):
                 "wue": 0,
             }
         }
+    )
 
 
 class EmissionCreate(EmissionBase):
@@ -131,24 +132,8 @@ class Emission(EmissionBase):
 
 
 class RunBase(BaseModel):
-    timestamp: datetime
-    experiment_id: UUID
-    os: Optional[str]
-    python_version: Optional[str]
-    codecarbon_version: Optional[str]
-    cpu_count: Optional[int]
-    cpu_model: Optional[str]
-    gpu_count: Optional[int]
-    gpu_model: Optional[str]
-    longitude: Optional[float]
-    latitude: Optional[float]
-    region: Optional[str]
-    provider: Optional[str]
-    ram_total_size: Optional[float]
-    tracking_mode: Optional[str]
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "timestamp": "2021-04-04T08:43:00+02:00",
                 "experiment_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
@@ -167,6 +152,23 @@ class RunBase(BaseModel):
                 "tracking_mode": "Machine",
             }
         }
+    )
+
+    timestamp: datetime
+    experiment_id: UUID
+    os: Optional[str] = None
+    python_version: Optional[str] = None
+    codecarbon_version: Optional[str] = None
+    cpu_count: Optional[int] = None
+    cpu_model: Optional[str] = None
+    gpu_count: Optional[int] = None
+    gpu_model: Optional[str] = None
+    longitude: Optional[float] = None
+    latitude: Optional[float] = None
+    region: Optional[str] = None
+    provider: Optional[str] = None
+    ram_total_size: Optional[float] = None
+    tracking_mode: Optional[str] = None
 
 
 class RunCreate(RunBase):
@@ -180,7 +182,7 @@ class Run(RunBase):
 class RunReport(RunBase):
     run_id: UUID
     timestamp: datetime
-    experiment_id: Optional[UUID]
+    experiment_id: Optional[UUID] = None
     emissions: float
     cpu_power: float
     gpu_power: float
@@ -198,20 +200,9 @@ class RunReport(RunBase):
 
 
 class ExperimentBase(BaseModel):
-    name: str
-    description: str
-    country_name: Optional[str] = None
-    country_iso_code: Optional[str] = None
-    region: Optional[str] = None
-    on_cloud: Optional[bool] = None
-    cloud_provider: Optional[str] = None
-    cloud_region: Optional[str] = None
-    timestamp: Optional[datetime] = None
-    project_id: UUID
-
-    class Config:
-        orm_mode = True
-        schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "name": "Run on AWS",
                 "description": "AWS API for Code Carbon",
@@ -224,7 +215,19 @@ class ExperimentBase(BaseModel):
                 "cloud_region": "eu-west-1a",
                 "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
             }
-        }
+        },
+    )
+
+    name: str
+    description: str
+    country_name: Optional[str] = None
+    country_iso_code: Optional[str] = None
+    region: Optional[str] = None
+    on_cloud: Optional[bool] = None
+    cloud_provider: Optional[str] = None
+    cloud_region: Optional[str] = None
+    timestamp: Optional[datetime] = None
+    project_id: UUID
 
 
 class ExperimentCreate(ExperimentBase):
@@ -237,6 +240,32 @@ class Experiment(ExperimentBase):
 
 
 class ExperimentReport(ExperimentBase):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "experiment_id": "943b2aa5-9e21-41a9-8a38-562505b4b2aa",
+            "timestamp": "2021-10-07T20:19:27.716693",
+            "name": "Code Carbon user test",
+            "description": "Code Carbon user test with default project",
+            "country_name": "France",
+            "country_iso_code": "FRA",
+            "region": "france",
+            "on_cloud": False,
+            "cloud_provider": None,
+            "cloud_region": None,
+            "emission": 152.28955200363455,
+            "cpu_power": 5760,
+            "gpu_power": 2983.9739999999993,
+            "ram_power": 806.0337192959997,
+            "cpu_energy": 191.8251863024175,
+            "gpu_energy": 140.01098718681496,
+            "ram_energy": 26.84332784201141,
+            "energy_consumed": 358.6795013312438,
+            "duration": 7673204,
+            "emissions_rate": 1.0984556074701752,
+            "emissions_count": 64,
+        }
+    )
+
     experiment_id: UUID
     timestamp: datetime
     name: str
@@ -262,45 +291,21 @@ class ExperimentReport(ExperimentBase):
     gpu_utilization_percent: Optional[float] = None
     ram_utilization_percent: Optional[float] = None
 
-    class Config:
-        schema_extra = {
-            "experiment_id": "943b2aa5-9e21-41a9-8a38-562505b4b2aa",
-            "timestamp": "2021-10-07T20:19:27.716693",
-            "name": "Code Carbon user test",
-            "description": "Code Carbon user test with default project",
-            "country_name": "France",
-            "country_iso_code": "FRA",
-            "region": "france",
-            "on_cloud": False,
-            "cloud_provider": None,
-            "cloud_region": None,
-            "emission": 152.28955200363455,
-            "cpu_power": 5760,
-            "gpu_power": 2983.9739999999993,
-            "ram_power": 806.0337192959997,
-            "cpu_energy": 191.8251863024175,
-            "gpu_energy": 140.01098718681496,
-            "ram_energy": 26.84332784201141,
-            "energy_consumed": 358.6795013312438,
-            "duration": 7673204,
-            "emissions_rate": 1.0984556074701752,
-            "emissions_count": 64,
-        }
-
 
 class ProjectBase(BaseModel):
-    name: str
-    description: str
-    organization_id: UUID
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
                 "organization_id": "Code Carbon organization",
             }
         }
+    )
+
+    name: str
+    description: str
+    organization_id: UUID
 
 
 class ProjectCreate(ProjectBase):
@@ -308,19 +313,20 @@ class ProjectCreate(ProjectBase):
 
 
 class ProjectPatch(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
-    public: Optional[bool]
-
-    # do not allow the organization_id
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "API Code Carbon",
                 "description": "API for Code Carbon",
             }
         }
+    )
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+    public: Optional[bool] = None
+
+    # do not allow the organization_id
 
 
 class AccessLevel(Enum):
@@ -331,16 +337,8 @@ class AccessLevel(Enum):
 
 # Used in the responses to the user
 class ProjectToken(BaseModel):
-    id: UUID
-    project_id: UUID
-    name: Optional[str]
-    token: Optional[str] = None
-    last_used: Optional[datetime] = None
-    access: int = AccessLevel.WRITE.value
-    revoked: bool = False
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
                 "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
@@ -350,31 +348,41 @@ class ProjectToken(BaseModel):
                 "revoked": False,
             }
         }
+    )
+
+    id: UUID
+    project_id: UUID
+    name: Optional[str] = None
+    token: Optional[str] = None
+    last_used: Optional[datetime] = None
+    access: int = AccessLevel.WRITE.value
+    revoked: bool = False
 
 
 # Used to handle responses from the database
 class ProjectTokenInternal(ProjectToken):
-    id: Optional[str]
+    id: Optional[str] = None
     hashed_token: str
 
 
 class ProjectTokenCreate(BaseModel):
-    name: Optional[str]
-    access: int = AccessLevel.WRITE.value
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "my project token",
                 "access": 1,
             }
         }
+    )
+
+    name: Optional[str] = None
+    access: int = AccessLevel.WRITE.value
 
 
 class Project(ProjectBase):
     id: UUID
     experiments: Optional[List[str]] = []
-    public: Optional[bool]
+    public: Optional[bool] = None
 
 
 class ProjectReport(ProjectBase):
@@ -398,16 +406,17 @@ class ProjectReport(ProjectBase):
 
 
 class OrganizationBase(BaseModel):
-    name: str
-    description: str
-
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Code Carbon",
                 "description": "Save the world, one run at a time.",
             }
         }
+    )
+
+    name: str
+    description: str
 
 
 class OrganizationCreate(OrganizationBase):
@@ -415,8 +424,8 @@ class OrganizationCreate(OrganizationBase):
 
 
 class OrganizationPatch(OrganizationBase):
-    name: Optional[str]
-    description: Optional[str]
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 
 class Organization(OrganizationBase):
@@ -444,8 +453,8 @@ class OrganizationReport(OrganizationBase):
 
 
 class Membership(BaseModel):
-    user_id = UUID
-    organization_id = UUID
+    user_id: UUID
+    organization_id: UUID
     is_admin: bool
 
 
@@ -455,5 +464,5 @@ class Token(BaseModel):
 
 
 class OrganizationUser(User):
-    organization_id = UUID
+    organization_id: UUID
     is_admin: bool

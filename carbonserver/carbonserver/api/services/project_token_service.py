@@ -36,7 +36,7 @@ class ProjectTokenService:
         api_key = generate_api_key()
         hashed_api_key = get_api_key_hash(api_key=api_key)
         project_token = ProjectTokenInternal(
-            **input_project_token.dict(),
+            **input_project_token.model_dump(),
             project_id=project_id,
             hashed_token=hashed_api_key,
             token=api_key,
