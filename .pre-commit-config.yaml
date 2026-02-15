@@ -1,4 +1,15 @@
 repos:
+    -   repo: https://github.com/PyCQA/autoflake
+        rev: v2.3.1
+        hooks:
+        -   id: autoflake
+            args:
+              [
+                --in-place,
+                --remove-unused-variables,
+                --remove-all-unused-imports,
+                --expand-star-imports,
+              ]
     - repo: https://github.com/pycqa/isort
       rev: 7.0.0
       hooks:
@@ -15,9 +26,3 @@ repos:
           - id: flake8
             args: ["--config=.flake8"]
             additional_dependencies: ['flake8-bugbear==23.9.16']
-    
-    # removes unused imports and unused variables
-    -   repo: https://github.com/PyCQA/autoflake
-        rev: v2.3.1
-        hooks:
-        -   id: autoflake

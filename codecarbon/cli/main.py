@@ -22,6 +22,7 @@ from codecarbon.cli.cli_utils import (
     get_existing_local_exp_id,
     overwrite_local_config,
 )
+from codecarbon.cli.monitor import run_and_monitor
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
@@ -339,13 +340,18 @@ def config():
     )
 
 
-@codecarbon.command("monitor", short_help="Monitor your machine's carbon emissions.")
+@codecarbon.command(
+    "monitor",
+    short_help="Monitor your machine's carbon emissions.",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 def monitor(
+    ctx: typer.Context,
     measure_power_secs: Annotated[
-        int, typer.Argument(help="Interval between two measures.")
+        int, typer.Option(help="Interval between two measures.")
     ] = 10,
     api_call_interval: Annotated[
-        int, typer.Argument(help="Number of measures between API calls.")
+        int, typer.Option(help="Number of measures between API calls.")
     ] = 30,
     api: Annotated[
         bool, typer.Option(help="Choose to call Code Carbon API or not")
@@ -359,6 +365,13 @@ def monitor(
     ] = None,
 ):
     """Monitor your machine's carbon emissions."""
+
+    # Shared tracker args so monitor and run_and_monitor behave the same
+    tracker_args = {
+        "measure_power_secs": measure_power_secs,
+        "api_call_interval": api_call_interval,
+    }
+    # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
         if not country_iso_code:
             print(
@@ -366,11 +379,11 @@ def monitor(
             )
             raise typer.Exit(1)
 
-        tracker = OfflineEmissionsTracker(
-            measure_power_secs=measure_power_secs,
-            country_iso_code=country_iso_code,
-            region=region,
-        )
+        tracker_args = {
+            **tracker_args,
+            "country_iso_code": country_iso_code,
+            "region": region,
+        }
     else:
         experiment_id = get_existing_local_exp_id()
         if api and experiment_id is None:
@@ -380,11 +393,17 @@ def monitor(
             )
             raise typer.Exit(1)
 
-        tracker = EmissionsTracker(
-            measure_power_secs=measure_power_secs,
-            api_call_interval=api_call_interval,
-            save_to_api=api,
-        )
+        tracker_args = {**tracker_args, "save_to_api": api}
+
+    # If extra args are provided (e.g. `codecarbon monitor -- my_script.py`), delegate to `run_and_monitor`
+    if getattr(ctx, "args", None):
+        return run_and_monitor(ctx, **tracker_args)
+
+    # Instantiate the tracker
+    if offline:
+        tracker = OfflineEmissionsTracker(**tracker_args)
+    else:
+        tracker = EmissionsTracker(**tracker_args)
 
     def signal_handler(signum, frame):
         print("\nReceived signal to stop. Saving emissions data...")
