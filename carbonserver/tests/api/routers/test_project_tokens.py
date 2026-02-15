@@ -64,7 +64,7 @@ def test_add_project_token(client, custom_test_server):
         repository_mock
     ):
         response = client.post(
-            "/projects/{PROJECT_ID}/api-tokens", json=PROJECT_TOKEN_TO_CREATE
+            f"/projects/{PROJECT_ID}/api-tokens", json=PROJECT_TOKEN_TO_CREATE
         )
         actual_project_token = response.json()
 
