@@ -174,7 +174,7 @@ pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit ho
 dashboard = "cd carbonserver && uvicorn main:app --reload"
 dashboard-ci = "cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008"
 docker = "docker-compose up -d"
-test-api-unit = "cd carbonserver && python -m pytest -vv tests/api/routers/test_projects.py && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/"
+test-api-unit = "cd carbonserver && python -m pytest -vv tests/api/routers && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/"
 test-api-integ = "cd carbonserver && python -m pytest -vv tests/api/integration/"
 setup-db = "cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
 downgrade-db = "cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base"

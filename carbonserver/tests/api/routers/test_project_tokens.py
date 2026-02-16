@@ -1,6 +1,9 @@
+import re
 from unittest import mock
 
 import pytest
+from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
+from dependency_injector import providers
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
@@ -9,6 +12,7 @@ from carbonserver.api.infra.repositories.repository_projects_tokens import (
 )
 from carbonserver.api.routers import project_api_tokens
 from carbonserver.api.schemas import ProjectToken
+from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
 from carbonserver.container import ServerContainer
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -25,9 +29,10 @@ PROJECT_TOKEN = {
     "id": PROJECT_TOKEN_ID,
     "project_id": PROJECT_ID,
     "name": "Token API Code Carbon",
-    "token": "token",
+    "token": "cpt_some_token",
     "access": 2,
     "last_used": None,
+    "revoked": False,
 }
 
 
@@ -38,6 +43,10 @@ def custom_test_server():
     app = FastAPI()
     app.container = container
     app.include_router(project_api_tokens.router)
+    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
+        FakeUserWithAuthDependency
+    )
+    app.container.auth_context.override(providers.Factory(FakeAuthContext))
     yield app
 
 
@@ -60,7 +69,13 @@ def test_add_project_token(client, custom_test_server):
         actual_project_token = response.json()
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert actual_project_token == expected_project_token
+    # Check all fields except 'token'
+    for key in expected_project_token:
+        if key != "token":
+            assert actual_project_token[key] == expected_project_token[key]
+
+    # Check token format: cpt_ + 32 alphanumeric chars
+    assert re.fullmatch(r"cpt_[a-zA-Z0-9_\-]{43,44}", actual_project_token["token"])
 
 
 def test_delete_project_token(client, custom_test_server):
