@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import random
 from typing import Optional
 
 from authlib.integrations.starlette_client import OAuthError
@@ -89,6 +88,16 @@ async def get_login(
             token = await auth_provider.client.authorize_access_token(request)
         except OAuthError:
             return "Error"
+
+        # check if the user exists in local DB ; create if needed
+        if "id_token" not in token:
+            if "access_token" not in token:
+                return Response(content="Invalid code", status_code=400)
+            # get profile data from auth provider if not present in response
+            id_token = await auth_provider.get_user_info(token["access_token"])
+            sign_up_service.check_jwt_user(id_token)
+        else:
+            sign_up_service.check_jwt_user(token["id_token"], create=True)
         user = token.get("userinfo")
         if user:
             request.session["user"] = dict(user)
@@ -119,9 +128,3 @@ async def get_login(
         )
         return response
     return await auth_provider.get_authorize_url(request, str(login_url))
-
-    str(int(random.random() * 1000))
-    client_id, _ = auth_provider.get_client_credentials()
-    return await auth_provider.client.authorize_redirect(
-        request, str(login_url), scope=" ".join(OAUTH_SCOPES)
-    )
