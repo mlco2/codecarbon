@@ -53,15 +53,23 @@ class OIDCAuthProvider:
 
     async def _decode_token(self, token: str) -> Dict[str, Any]:
         try:
+            print(f"Jwks_data: {token}")
+            print(f"Base url: {fief.base_url}")
+            print(f"Client id: {fief.client_id}")
+            print(f"User info: {await fief.userinfo(token)}")
             access_token_info = await fief.validate_access_token(token)
             return access_token_info
-        except Exception:
+        except Exception as e:
+            print(f"Error validating access token: {e}")
             ...
 
         jwks_data = await self.client.fetch_jwk_set()
+        print(f"Jwks_data: {jwks_data}")
         keyset = JsonWebKey.import_key_set(jwks_data)
         claims = jose_jwt.decode(token, keyset)
         claims.validate()
+        print(f"Decoded claims: {claims}")
+        print(f"Claims validate: {claims.validate()}")
         return dict(claims)
 
     async def validate_access_token(self, token: str) -> bool:

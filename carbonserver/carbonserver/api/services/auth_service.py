@@ -60,6 +60,7 @@ class UserWithAuthDependency:
             )
         elif bearer_token is not None:
             if settings.environment != "develop" and auth_provider is not None:
+                print(f"Validating token with auth provider. Token: {bearer_token}")
                 try:
                     await auth_provider.validate_access_token(bearer_token.credentials)
                 except Exception:
