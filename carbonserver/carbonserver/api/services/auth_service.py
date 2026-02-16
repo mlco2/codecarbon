@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -14,6 +15,7 @@ from carbonserver.config import settings
 from carbonserver.container import ServerContainer
 
 OAUTH_SCOPES = ["openid", "email", "profile"]
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -60,7 +62,9 @@ class UserWithAuthDependency:
             )
         elif bearer_token is not None:
             if settings.environment != "develop" and auth_provider is not None:
-                print(f"Validating token with auth provider. Token: {bearer_token}")
+                LOGGER.debug(
+                    f"Validating token with auth provider. Token: {bearer_token}"
+                )
                 try:
                     await auth_provider.validate_access_token(bearer_token.credentials)
                 except Exception:
