@@ -77,3 +77,7 @@ class OIDCAuthProvider:
     async def validate_access_token(self, token: str) -> bool:
         await self._decode_token(token)
         return True
+
+    async def get_user_info(self, access_token: str) -> Dict[str, Any]:
+        decoded_token = await self._decode_token(access_token)
+        return decoded_token

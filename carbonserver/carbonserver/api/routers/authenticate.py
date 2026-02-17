@@ -93,7 +93,9 @@ async def get_login(
         if "id_token" not in token:
             if "access_token" not in token:
                 return Response(content="Invalid code", status_code=400)
-            sign_up_service.check_jwt_user(token["access_token"])
+            # get profile data from auth provider if not present in response
+            id_token = await auth_provider.get_user_info(token["access_token"])
+            sign_up_service.check_jwt_user(id_token)
         else:
             sign_up_service.check_jwt_user(token["id_token"], create=True)
         user = token.get("userinfo")
