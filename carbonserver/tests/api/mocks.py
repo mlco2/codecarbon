@@ -38,11 +38,3 @@ class FakeAuthContext:
     @staticmethod
     def can_read_project(*args, **kwargs):
         return True
-
-
-class MockAuthProvider:
-    def get_client_credentials(self):
-        return ("clientid", "secret")
-
-    def get_authorize_endpoint(self):
-        return "https://auth.example/authorize"

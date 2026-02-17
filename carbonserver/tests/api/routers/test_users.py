@@ -69,6 +69,24 @@ def client(custom_test_server):
     yield TestClient(custom_test_server)
 
 
+def test_list_users_list_all_existing_users_with_200(client, custom_test_server):
+    repository_mock = mock.Mock(spec=UsersRepository)
+    expected_user = USER_1
+    expected_user_2 = USER_2
+    expected_user_list = [expected_user, expected_user_2]
+    repository_mock.list_users.return_value = [
+        User(**expected_user),
+        User(**expected_user_2),
+    ]
+
+    with custom_test_server.container.user_repository.override(repository_mock):
+        response = client.get("/users")
+        actual_user_list = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert actual_user_list == expected_user_list
+
+
 def test_get_user_by_id_returns_correct_user_with_correct_id(
     client, custom_test_server
 ):
