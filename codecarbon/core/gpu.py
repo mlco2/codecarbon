@@ -1,9 +1,7 @@
 import subprocess
-from typing import List, Any
 from collections import namedtuple
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Union
-
 
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.external.logger import logger
@@ -15,7 +13,7 @@ def is_rocm_system():
         # Check if rocm-smi is available
         subprocess.check_output(["rocm-smi", "--help"])
         return True
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, OSError):
         return False
 
 
@@ -201,9 +199,7 @@ class NvidiaGPUDevice(GPUDevice):
         """Returns degrees in the Celsius scale
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g92d1c5182a14dd4be7090e3c1480b121
         """
-        return pynvml.nvmlDeviceGetTemperature(
-            self.handle, sensor=pynvml.NVML_TEMPERATURE_GPU
-        )
+        return pynvml.nvmlDeviceGetTemperature(self.handle, pynvml.NVML_TEMPERATURE_GPU)
 
     def _get_power_usage(self) -> int:
         """Returns power usage in milliwatts
@@ -215,7 +211,11 @@ class NvidiaGPUDevice(GPUDevice):
         """Returns max power usage in milliwatts
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g263b5bf552d5ec7fcd29a088264d10ad
         """
-        return pynvml.nvmlDeviceGetEnforcedPowerLimit(self.handle)
+        try:
+            return pynvml.nvmlDeviceGetEnforcedPowerLimit(self.handle)
+        except Exception:
+            logger.warning("Failed to retrieve gpu power limit", exc_info=True)
+            return None
 
     def _get_gpu_utilization(self):
         """Returns the % of utilization of the kernels during the last sample
@@ -328,7 +328,8 @@ class AllGPUDevices:
     devices: List[GPUDevice]
 
     def __init__(self) -> None:
-        if is_gpu_details_available():
+        gpu_details_available = is_gpu_details_available()
+        if gpu_details_available:
             logger.debug("GPU available. Starting setup")
             self.device_count = pynvml.nvmlDeviceGetCount()
         else:
@@ -336,7 +337,7 @@ class AllGPUDevices:
             self.device_count = 0
         self.devices = []
 
-        if is_nvidia_system() and PYNVML_AVAILABLE:
+        if gpu_details_available and PYNVML_AVAILABLE:
             logger.debug("PyNVML available. Starting setup")
             pynvml.nvmlInit()
             nvidia_devices_count = pynvml.nvmlDeviceGetCount()
