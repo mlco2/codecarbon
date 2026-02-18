@@ -369,7 +369,71 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
+# TODO: move this in ResourceTracker()
+#         if isinstance(self._gpu_ids, str):
+#             self._gpu_ids: List[int] = parse_gpu_ids(self._gpu_ids)
+#             self._conf["gpu_ids"] = self._gpu_ids
+#             self._conf["gpu_count"] = len(self._gpu_ids)
 
+#         logger.info("[setup] RAM Tracking...")
+#         ram = RAM(tracking_mode=self._tracking_mode)
+#         self._conf["ram_total_size"] = ram.machine_memory_GB
+#         self._hardware: List[Union[RAM, CPU, GPU]] = [ram]
+
+#         # Hardware detection
+#         logger.info("[setup] GPU Tracking...")
+#         if gpu.is_nvidia_system() or gpu.is_rocm_system():
+#             if gpu.is_nvidia_system():
+#                 logger.info("Tracking Nvidia GPUs via PyNVML")
+#             elif gpu.is_rocm_system():
+#                 logger.info("Tracking AMD GPUs via AMDSMI")
+
+#             gpu_devices = GPU.from_utils(self._gpu_ids)
+#             self._hardware.append(gpu_devices)
+#             gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
+#             gpu_names_dict = Counter(gpu_names)
+#             self._conf["gpu_model"] = "".join(
+#                 [f"{i} x {name}" for name, i in gpu_names_dict.items()]
+#             )
+#             self._conf["gpu_count"] = len(gpu_devices.devices.get_gpu_static_info())
+#         else:
+#             logger.info("No GPU found.")
+
+#         logger.info("[setup] CPU Tracking...")
+#         if cpu.is_powergadget_available():
+#             logger.info("Tracking Intel CPU via Power Gadget")
+#             hardware = CPU.from_utils(self._output_dir, "intel_power_gadget")
+#             self._hardware.append(hardware)
+#             self._conf["cpu_model"] = hardware.get_model()
+#         elif cpu.is_rapl_available():
+#             logger.info("Tracking Intel CPU via RAPL interface")
+#             hardware = CPU.from_utils(self._output_dir, "intel_rapl")
+#             self._hardware.append(hardware)
+#             self._conf["cpu_model"] = hardware.get_model()
+#         else:
+#             logger.warning(
+#                 "No CPU tracking mode found. Falling back on CPU constant mode."
+#             )
+#             tdp = cpu.TDP()
+#             power = tdp.tdp
+#             model = tdp.model
+#             if (power is None) and self._default_cpu_power:
+#                 # We haven't been able to calculate CPU power but user has input a default one. We use it
+#                 user_input_power = self._default_cpu_power
+#                 logger.debug(f"Using user input TDP: {user_input_power} W")
+#                 power = user_input_power
+#             logger.info(f"CPU Model on constant consumption mode: {model}")
+#             self._conf["cpu_model"] = model
+#             if tdp:
+#                 hardware = CPU.from_utils(self._output_dir, "constant", model, power)
+#                 self._hardware.append(hardware)
+#             else:
+#                 logger.warning(
+#                     "Failed to match CPU TDP constant. "
+#                     + "Falling back on a global constant."
+#                 )
+#                 hardware = CPU.from_utils(self._output_dir, "constant")
+#                 self._hardware.append(hardware)
         # Tracking mode detection
         self._hardware = []
         resource_tracker = ResourceTracker(self)
