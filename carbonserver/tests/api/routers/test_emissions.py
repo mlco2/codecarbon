@@ -55,6 +55,9 @@ EMISSION_1 = {
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
     "wue": 0,
+    "cpu_utilization_percent": None,
+    "gpu_utilization_percent": None,
+    "ram_utilization_percent": None,
 }
 
 EMISSION_2 = {

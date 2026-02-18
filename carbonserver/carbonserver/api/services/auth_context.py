@@ -14,7 +14,6 @@ from carbonserver.api.schemas import User
 
 
 class AuthContext:
-
     def __init__(
         self,
         user_repository: UserRepository,
@@ -30,7 +29,7 @@ class AuthContext:
             organization_id=organization_id, user=user
         )
 
-    def isOperationAuthorizedOnProject(self, project_id: UUID, user: User):
+    def isOperationAuthorizedOnProject(self, project_id: UUID | str, user: User):
         return self._user_repository.is_user_authorized_on_project(project_id, user.id)
 
     def can_read_project(self, project_id: UUID, user: Optional[User]):

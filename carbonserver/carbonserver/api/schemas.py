@@ -332,7 +332,7 @@ class AccessLevel(Enum):
 # Used in the responses to the user
 class ProjectToken(BaseModel):
     id: UUID
-    project_id: UUID
+    project_id: UUID | str
     name: Optional[str]
     token: Optional[str] = None
     last_used: Optional[datetime] = None
