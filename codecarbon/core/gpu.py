@@ -367,10 +367,8 @@ class AllGPUDevices:
         gpu_details_available = is_gpu_details_available()
         if gpu_details_available:
             logger.debug("GPU available. Starting setup")
-            self.device_count = pynvml.nvmlDeviceGetCount()
         else:
             logger.error("There is no GPU available")
-            self.device_count = 0
         self.devices = []
 
         if PYNVML_AVAILABLE:
