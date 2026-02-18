@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 import pandas as pd
+import psutil
 
 from codecarbon.core import cpu
 from codecarbon.emissions_tracker import (
@@ -15,8 +16,10 @@ from codecarbon.emissions_tracker import (
 
 
 def heavy_computation(run_time_secs: int = 3):
-    end_time: float = time.time() + run_time_secs  # Run for `run_time_secs` seconds
-    while time.time() < end_time:
+    end_time: float = (
+        time.perf_counter() + run_time_secs
+    )  # Run for `run_time_secs` seconds
+    while time.perf_counter() < end_time:
         pass
 
 
@@ -62,16 +65,20 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         self.verify_output_file(self.emissions_file_path)
 
     @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
-    def test_carbon_tracker_offline_constant_default_cpu_power(self, mock_tdp):
+    @mock.patch.object(cpu, "is_psutil_available")
+    def test_carbon_tracker_offline_constant_force_cpu_power(
+        self, mock_tdp, mock_psutil
+    ):
         # Same as test_carbon_tracker_offline_constant test but this time forcing the default cpu power
         USER_INPUT_CPU_POWER = 1_000
         # Mock the output of tdp
         mock_tdp.return_value = None
+        mock_psutil.return_value = False
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA",
             output_dir=self.emissions_path,
             output_file=self.emissions_file,
-            default_cpu_power=USER_INPUT_CPU_POWER,
+            force_cpu_power=USER_INPUT_CPU_POWER,
         )
         tracker.start()
         heavy_computation(run_time_secs=1)
@@ -81,6 +88,35 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         # Assert the content stored. cpu_power should be 50% of input TDP
         assertdf = pd.read_csv(self.emissions_file_path)
         self.assertEqual(USER_INPUT_CPU_POWER / 2, assertdf["cpu_power"][0])
+
+    @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
+    @mock.patch.object(cpu, "is_psutil_available")
+    def test_carbon_tracker_offline_load_force_cpu_power(self, mock_tdp, mock_psutil):
+        # Same as test_carbon_tracker_offline_constant test but this time forcing the default cpu power
+        USER_INPUT_CPU_POWER = 1_000
+        # Mock the output of tdp
+        mock_tdp.return_value = 500
+        mock_psutil.return_value = True
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            output_dir=self.emissions_path,
+            output_file=self.emissions_file,
+            force_cpu_power=USER_INPUT_CPU_POWER,
+        )
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        emissions = tracker.stop()
+        assert isinstance(emissions, float)
+        self.assertNotEqual(emissions, 0.0)
+        # Get CPU load
+        cpu_load = psutil.cpu_percent(interval=1) / 100.0
+        # Assert the content stored. cpu_power should be approximately load * min(TDP, forced CPU power)
+        assertdf = pd.read_csv(self.emissions_file_path)
+        # self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER / 4)
+        self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load + 200)
+        self.assertGreater(
+            assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load - 200
+        )
 
     def test_decorator_constant(self):
         @track_emissions(
@@ -118,11 +154,15 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         try:
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_country_iso_code(cloud)
-            self.assertTrue("Unable to find country name" in context.exception.args[0])
+            self.assertTrue(
+                "Unable to find country ISO Code" in context.exception.args[0]
+            )
 
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_geo_region(cloud)
-            self.assertTrue("Unable to find country name" in context.exception.args[0])
+            self.assertTrue(
+                "Unable to find State/City name for " in context.exception.args[0]
+            )
 
             with self.assertRaises(ValueError) as context:
                 tracker._emissions.get_cloud_country_name(cloud)

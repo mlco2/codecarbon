@@ -87,10 +87,10 @@ def render_app(df: pd.DataFrame):
                 f"{project_summary['region']}, {project_summary['country_name']}"
             )
         project_power_consumption = (
-            f"{round(project_summary['total']['energy_consumed'],1)} kWh"
+            f"{round(project_summary['total']['energy_consumed'], 1)} kWh"
         )
         project_carbon_equivalent = (
-            f"{round(project_summary['total']['emissions'],1)} kg"
+            f"{round(project_summary['total']['emissions'], 1)} kg"
         )
         last_run_power_consumption = (
             f"{project_summary['last_run']['energy_consumed']} kWh"
@@ -272,7 +272,7 @@ def viz(port: int = 8051, debug: bool = False) -> None:
     conf = get_hierarchical_config()
     df = Data.get_data_from_api(conf.get("api_endpoint", "http://localhost:8000"))
     app = render_app(df)
-    app.run_server(port=port, debug=debug)
+    app.run(port=port, debug=debug)
 
 
 def main():

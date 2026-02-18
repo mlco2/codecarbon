@@ -1,44 +1,72 @@
 name: package
-
+permissions:
+  contents: read
 on:
   push:
+    paths:
+      - "codecarbon/**"
+      - "pyproject.toml"
     branches: [master]
-
 jobs:
-    build-package:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v2
-        - name: Set up Python 3.8
-          uses: actions/setup-python@v1
-          with:
-              python-version: 3.8
-        - name: Check versions
-          run: |
-              pip install -U pip requests
-              python3 .github/check_version.py -o
-        - name: Build pip package
-          run: |
-              pip install -U pip build
-              python3 -m build
-        - name: Archive Pypi artifacts
-          uses: actions/upload-artifact@v1
-          with:
-              name: pypi_dist
-              path: dist
-        # - uses: s-weigand/setup-conda@v1
-        #   with:
-        #       activate-conda: true
-        #       conda-channels: conda-forge
-        # Conda package is now build by Conda-forge
-        # See https://github.com/conda-forge/codecarbon-feedstock
-        # - name: Build conda package
-        #   run: |
-        #       conda install conda-build conda-verify
-        #       mkdir -p conda_dist
-        #       conda build --python 3.8 .conda/ -c conda-forge --output-folder conda_dist
-        # - name: Archive Conda artifacts
-        #   uses: actions/upload-artifact@v1
-        #   with:
-        #       name: conda_dist
-        #       path: conda_dist
+
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - name: Install uv
+      uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
+      with:
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
+    - name: Check versions
+      run: uv run python .github/pyproject_versions.py -o
+    - name: Build pip package
+      run: uv build
+    - name: Archive Pypi artifacts
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: pypi_dist
+        path: dist
+
+  test-package-from-wheel:
+    runs-on: ubuntu-24.04
+    needs: [build-package]
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        sparse-checkout: |
+            tests/
+            pytest.ini
+        sparse-checkout-cone-mode: false
+    - name: Install uv
+      uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
+      with:
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
+    - name: Download built package
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      with:
+        name: pypi_dist
+        path: dist
+    - name: Create clean virtual environment
+      run: |
+        uv venv .venv --python 3.12
+        echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
+        echo "$PWD/.venv/bin" >> $GITHUB_PATH
+    - name: Install package from wheel (without source)
+      run: |
+        # Install the wheel and test dependencies without the source code
+        uv pip install dist/*.whl
+        uv pip install pytest pytest-mock requests-mock responses pandas logfire
+    - name: Test package integrity
+      run: |
+        # Run the package integrity tests to verify all data files are included
+        uv run python -m pytest tests/test_package_integrity.py -v
+        CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/
+    - name: Test CLI functionality
+      run: |
+        # Test that the CLI is functional
+        codecarbon --help
+        python -c "from codecarbon import EmissionsTracker; print('✓ Package import successful')"

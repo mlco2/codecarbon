@@ -1,6 +1,6 @@
-from time import time
+from time import perf_counter
 
-from codecarbon.external.hardware import CPU, GPU, RAM
+from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
 from codecarbon.external.logger import logger
 
 
@@ -25,7 +25,7 @@ class MeasurePowerEnergy:
         :param hardware: list of hardware components to measure
         :param pue: Power Usage Effectiveness of the datacenter
         """
-        self._last_measured_time = time()
+        self._last_measured_time = perf_counter()
         self._hardware = hardware
         self._pue = pue
         # TODO: Read initial energy values from hardware
@@ -40,9 +40,9 @@ class MeasurePowerEnergy:
 
     def do_measure(self) -> None:
         for hardware in self._hardware:
-            h_time = time.time()
+            h_time = perf_counter()
             # Compute last_duration again for more accuracy
-            last_duration = time.time() - self._last_measured_time
+            last_duration = perf_counter() - self._last_measured_time
             power, energy = hardware.measure_power_and_energy(
                 last_duration=last_duration
             )
@@ -67,12 +67,27 @@ class MeasurePowerEnergy:
                 self._total_ram_energy += energy
                 self._ram_power = power
                 logger.info(
-                    f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
-                    + f". RAM Power : {self._ram_power.W} W"
+                    f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh."
+                    + f"RAM Power : {self._ram_power.W} W"
                 )
+            elif isinstance(hardware, AppleSiliconChip):
+                if hardware.chip_part == "CPU":
+                    self._total_cpu_energy += energy
+                    self._cpu_power = power
+                    logger.info(
+                        f"Energy consumed for AppleSilicon CPU : {self._total_cpu_energy.kWh:.6f} kWh"
+                        + f".Apple Silicon CPU Power : {self._cpu_power.W} W"
+                    )
+                elif hardware.chip_part == "GPU":
+                    self._total_gpu_energy += energy
+                    self._gpu_power = power
+                    logger.info(
+                        f"Energy consumed for AppleSilicon GPU : {self._total_gpu_energy.kWh:.6f} kWh"
+                        + f".Apple Silicon GPU Power : {self._gpu_power.W} W"
+                    )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
-            h_time = time.time() - h_time
+            h_time = perf_counter() - h_time
             logger.debug(
                 f"{hardware.__class__.__name__} : {hardware.total_power().W:,.2f} "
                 + f"W during {last_duration:,.2f} s [measurement time: {h_time:,.4f}]"

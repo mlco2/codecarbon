@@ -8,8 +8,11 @@ from tests.testdata import (
     CLOUD_METADATA_AWS,
     CLOUD_METADATA_AZURE,
     CLOUD_METADATA_GCP,
+    CLOUD_METADATA_GCP_EMPTY,
+    COUNTRY_METADATA_USA,
     GEO_METADATA_CANADA,
     GEO_METADATA_USA,
+    GEO_METADATA_USA_BACKUP,
 )
 
 
@@ -56,6 +59,18 @@ class TestCloudMetadata(unittest.TestCase):
         self.assertEqual("gcp", cloud.provider)
         self.assertEqual("us-central1", cloud.region)
 
+    @mock.patch(
+        "codecarbon.external.geography.get_env_cloud_details",
+        return_value=CLOUD_METADATA_GCP_EMPTY,
+    )
+    def test_cloud_metadata_GCP_empty(self, mock_get_env_cloud_details):
+        # WHEN
+        cloud = CloudMetadata.from_utils()
+
+        # THEN
+        self.assertIsNone(cloud.provider)
+        self.assertIsNone(cloud.region)
+
 
 class TestGeoMetadata(unittest.TestCase):
     def setUp(self) -> None:
@@ -64,6 +79,28 @@ class TestGeoMetadata(unittest.TestCase):
     @responses.activate
     def test_geo_metadata_USA(self):
         responses.add(responses.GET, self.geo_js_url, json=GEO_METADATA_USA, status=200)
+        geo = GeoMetadata.from_geo_js(self.geo_js_url)
+        self.assertEqual("USA", geo.country_iso_code)
+        self.assertEqual("United States", geo.country_name)
+        self.assertEqual("illinois", geo.region)
+
+    @responses.activate
+    def test_geo_metadata_USA_backup(self):
+        responses.add(
+            responses.GET, self.geo_js_url, json={"error": "not found"}, status=404
+        )
+        responses.add(
+            responses.GET,
+            "https://ip-api.com/json/",
+            json=GEO_METADATA_USA_BACKUP,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            "https://api.first.org/data/v1/countries?q=United%20States&scope=iso",
+            json=COUNTRY_METADATA_USA,
+            status=200,
+        )
         geo = GeoMetadata.from_geo_js(self.geo_js_url)
         self.assertEqual("USA", geo.country_iso_code)
         self.assertEqual("United States", geo.country_name)

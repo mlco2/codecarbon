@@ -1,36 +1,36 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Model Comparisons &mdash; CodeCarbon 2.3.2 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <title>Model Comparisons &mdash; CodeCarbon 3.2.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=67b02a41"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=dcedd534"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Frequently Asked Questions" href="faq.html" />
-    <link rel="prev" title="Methodology" href="methodology.html" />
+    <link rel="prev" title="RAPL Metrics" href="rapl.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-
-
+          
+          
           <a href="index.html" class="icon icon-home">
             CodeCarbon
           </a>
@@ -46,6 +46,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rapl.html">RAPL Metrics</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Model Comparisons</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#impact-of-time-of-year-and-region">Impact of time of year and region</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#comparisons">Comparisons</a></li>
@@ -63,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_installation.html">Advanced Installation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -94,17 +96,17 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-
+             
   <section id="model-comparisons">
 <span id="model-examples"></span><h1>Model Comparisons<a class="headerlink" href="#model-comparisons" title="Link to this heading"></a></h1>
 <p>The following table shows the different electricity consumption of popular NLP and Computer visions models</p>
 <table class="docutils align-center" id="id1">
-<caption><span class="caption-text">Electricity consumtion of AI cloud instance</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<caption><span class="caption-text">Electricity consumption of AI cloud instance</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
 <colgroup>
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
-<col style="width: 25%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Model</p></th>
@@ -177,21 +179,21 @@
 <img alt="Models emissions comparison" class="align-center" src="_images/CO2_emitted_BERT.png" />
 <p>In this case study, time of year might not be relevant in most cases, but localisation can have a great impact on carbon emissions.</p>
 <p>Here, and in the graph below, emissions equivalent are estimated using Microsoft Azure cloud tools.
-CodeCarbon has developped its own mesuring tools. The result could be different.</p>
+CodeCarbon has developed its own measuring tools. The result could be different.</p>
 </section>
 <section id="comparisons">
 <h2>Comparisons<a class="headerlink" href="#comparisons" title="Link to this heading"></a></h2>
 <p>Emissions for the 11 described models can be displayed as below:</p>
 <img alt="Models emissions comparison" class="align-center" src="_images/model_emission_comparison.png" />
 <p>The black line represents the average emissions (across regions and time of year).
-The light blue represents the firts and fourth quartiles.
-On the right side, equivalent sources of emissions are displayed as comparating points (source : <a class="reference external" href="https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator">US Environmental Protection Agency</a>).
+The light blue represents the first and fourth quartiles.
+On the right side, equivalent sources of emissions are displayed as comparison points (source : <a class="reference external" href="https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator">US Environmental Protection Agency</a>).
 NB : presented on a log scale</p>
 </section>
 <section id="references">
 <h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
-<p><a class="reference external" href="https://facctconference.org/static/pdfs_2022/facct22-145.pdf">Mesuring the Carbon intensity of AI in Cloud Instance</a></p>
-<p>Another source comparing models carbon intensity :
+<p><a class="reference external" href="https://dl.acm.org/doi/10.1145/3531146.3533234">Measuring the Carbon intensity of AI in Cloud Instance</a></p>
+<p>Another source comparing models carbon intensity:
 <a class="reference external" href="https://arxiv.org/pdf/1906.02243.pdf">Energy and Policy Considerations for Deep Learning in NLP</a></p>
 </section>
 </section>
@@ -200,7 +202,7 @@ NB : presented on a log scale</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="methodology.html" class="btn btn-neutral float-left" title="Methodology" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rapl.html" class="btn btn-neutral float-left" title="RAPL Metrics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="faq.html" class="btn btn-neutral float-right" title="Frequently Asked Questions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
@@ -213,7 +215,7 @@ NB : presented on a log scale</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
+   
 
 </footer>
         </div>
@@ -224,7 +226,7 @@ NB : presented on a log scale</p>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
+  </script> 
 
 </body>
 </html>

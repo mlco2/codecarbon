@@ -18,6 +18,40 @@ GEO_METADATA_USA = {
     "latitude": "0",
 }
 
+GEO_METADATA_USA_BACKUP = {
+    "organization_name": "foobar",
+    "regionName": "Illinois",
+    "accuracy": 1,
+    "asn": 0,
+    "organization": "foobar",
+    "timezone": "America/Chicago",
+    "lon": "88",
+    "area_code": "0",
+    "ip": "foobar",
+    "city": "Chicago",
+    "country": "United States",
+    "countryCode": "US",
+    "lat": "0",
+}
+
+COUNTRY_METADATA_USA = {
+    "status": "OK",
+    "status-code": 200,
+    "version": "1.0",
+    "access": "public",
+    "data": {
+        "USA": {
+            "id": "USA",
+            "country": "United States of America (the)",
+            "region": "North America",
+        },
+        "UMI": {
+            "id": "UMI",
+            "country": "United States Minor Outlying Islands (the)",
+            "region": "Oceania",
+        },
+    },
+}
 
 GEO_METADATA_CANADA = {
     "organization_name": "foobar",
@@ -186,6 +220,11 @@ CLOUD_METADATA_GCP = {
     "provider": "GCP",
 }
 
+CLOUD_METADATA_GCP_EMPTY = {
+    "experimentKey": "3e84c36ba22c449a9eefdc077f640d30",
+    "metadata": {},
+    "provider": "GCP",
+}
 
 SINGLE_GPU_DETAILS_RESPONSE = [
     {

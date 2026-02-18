@@ -2,17 +2,20 @@ from datetime import datetime
 from unittest import mock
 
 import pytest
-from container import ServerContainer
+from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
+from dependency_injector import providers
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from starlette import status
 from starlette.testclient import TestClient
 
 from carbonserver.api.infra.repositories.repository_experiments import (
-    SqlAlchemyRepository,
+    SqlAlchemyRepository as ExperimentRepository,
 )
 from carbonserver.api.routers import experiments
 from carbonserver.api.schemas import Experiment
+from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
+from carbonserver.container import ServerContainer
 
 PROJECT_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
@@ -103,6 +106,10 @@ def custom_test_server():
     app = FastAPI()
     app.container = container
     app.include_router(experiments.router)
+    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
+        FakeUserWithAuthDependency
+    )
+    app.container.auth_context.override(providers.Factory(FakeAuthContext))
     add_pagination(app)
     yield app
 
@@ -113,12 +120,12 @@ def client(custom_test_server):
 
 
 def test_add_experiment(client, custom_test_server):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock = mock.Mock(spec=ExperimentRepository)
     expected_expriment = EXPERIMENT_1
     repository_mock.add_experiment.return_value = Experiment(**EXPERIMENT_1)
 
     with custom_test_server.container.experiment_repository.override(repository_mock):
-        response = client.post("/experiment", json=EXPERIMENT_TO_CREATE)
+        response = client.post("/experiments", json=EXPERIMENT_TO_CREATE)
         actual_experiment = response.json()
     print(actual_experiment)
     print(type(actual_experiment))
@@ -127,16 +134,16 @@ def test_add_experiment(client, custom_test_server):
 
 
 def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_server):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    # Prepare the test
+    repository_mock = mock.Mock(spec=ExperimentRepository)
     expected_experiment = EXPERIMENT_1
     repository_mock.get_one_experiment.return_value = Experiment(**EXPERIMENT_1)
 
-    with custom_test_server.container.experiment_repository.override(repository_mock):
-        response = client.get(
-            "/experiment/read_experiment/", params={"experiment_id": EXPERIMENT_ID}
-        )
-        actual_experiment = response.json()
+    # Call the endpoint
 
+    with custom_test_server.container.experiment_repository.override(repository_mock):
+        response = client.get(f"/experiments/{EXPERIMENT_ID}")
+        actual_experiment = response.json()
     assert response.status_code == status.HTTP_200_OK
     assert actual_experiment == expected_experiment
 
@@ -144,7 +151,7 @@ def test_get_experiment_by_id_returns_correct_experiment(client, custom_test_ser
 def test_get_experiment_of_project_retrieves_all_experiments_of_project(
     client, custom_test_server
 ):
-    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock = mock.Mock(spec=ExperimentRepository)
     expected_experiments_id_list = [EXPERIMENT_ID, EXPERIMENT_ID_2]
     repository_mock.get_experiments_from_project.return_value = [
         Experiment(**EXPERIMENT_1),
@@ -152,10 +159,7 @@ def test_get_experiment_of_project_retrieves_all_experiments_of_project(
     ]
 
     with custom_test_server.container.experiment_repository.override(repository_mock):
-        response = client.get(
-            "/experiments/project/read_project_experiments/",
-            params={"project_id": PROJECT_ID},
-        )
+        response = client.get(f"/projects/{PROJECT_ID}/experiments")
         actual_experiments_list = response.json()
         actual_experiments_ids_list = [
             experiment["id"] for experiment in actual_experiments_list

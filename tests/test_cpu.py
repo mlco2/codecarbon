@@ -1,22 +1,62 @@
 import os
+import subprocess
 import sys
 import unittest
 from unittest import mock
 
 import pytest
 
-from codecarbon.core.cpu import TDP, IntelPowerGadget, IntelRAPL
+from codecarbon.core.cpu import (
+    TDP,
+    IntelPowerGadget,
+    IntelRAPL,
+    is_powergadget_available,
+    is_psutil_available,
+)
 from codecarbon.core.units import Energy, Power, Time
+from codecarbon.core.util import count_physical_cpus
 from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
+
+
+class TestCPU(unittest.TestCase):
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_with_nice(self, mock_cpu_times):
+        # Create a mock with 'nice' attribute
+        mock_times = mock.Mock()
+        mock_times.nice = 0.1
+        mock_cpu_times.return_value = mock_times
+        self.assertTrue(is_psutil_available())
+
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_with_small_nice(self, mock_cpu_times):
+        # Test when nice attribute is too small
+        mock_times = mock.Mock()
+        mock_times.nice = 0.00001
+        mock_cpu_times.return_value = mock_times
+        self.assertFalse(is_psutil_available())
+
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_available_without_nice(self, mock_cpu_times):
+        # Create a mock without 'nice' attribute (like Windows)
+        mock_times = mock.Mock(spec=[])  # Empty spec = no attributes
+        mock_cpu_times.return_value = mock_times
+        with mock.patch("psutil.cpu_percent") as mock_cpu_percent:
+            self.assertTrue(is_psutil_available())
+            mock_cpu_percent.assert_called_once_with(interval=0.0, percpu=False)
+
+    @mock.patch("psutil.cpu_times", side_effect=Exception("Test error"))
+    def test_is_psutil_not_available_on_exception(self, mock_cpu_times):
+        self.assertFalse(is_psutil_available())
 
 
 class TestIntelPowerGadget(unittest.TestCase):
     @pytest.mark.integ_test
     def test_intel_power_gadget(self):
-        power_gadget = IntelPowerGadget()
-        cpu_details = power_gadget.get_cpu_details()
-        assert len(cpu_details) > 0
+        if is_powergadget_available():
+            power_gadget = IntelPowerGadget()
+            cpu_details = power_gadget.get_cpu_details()
+            assert len(cpu_details) > 0
 
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
@@ -45,48 +85,52 @@ class TestIntelPowerGadget(unittest.TestCase):
             "GT Frequency(MHz)": 125.0,
             "GT Requsted Frequency(MHz)": 125.0,
         }
-
-        power_gadget = IntelPowerGadget(
-            output_dir=os.path.join(os.path.dirname(__file__), "test_data"),
-            log_file_name="mock_intel_power_gadget_data.csv",
-        )
-        cpu_details = power_gadget.get_cpu_details()
-        cpu_details["Cumulative IA Energy_0(mWh)"] = round(
-            cpu_details["Cumulative IA Energy_0(mWh)"], 3
-        )
-        self.assertDictEqual(expected_cpu_details, cpu_details)
+        if is_powergadget_available():
+            power_gadget = IntelPowerGadget(
+                output_dir=os.path.join(os.path.dirname(__file__), "test_data"),
+                log_file_name="mock_intel_power_gadget_data.csv",
+            )
+            cpu_details = power_gadget.get_cpu_details()
+            cpu_details["Cumulative IA Energy_0(mWh)"] = round(
+                cpu_details["Cumulative IA Energy_0(mWh)"], 3
+            )
+            self.assertDictEqual(expected_cpu_details, cpu_details)
 
 
 class TestIntelRAPL(unittest.TestCase):
     def setUp(self) -> None:
         self.rapl_dir = os.path.join(os.path.dirname(__file__), "test_data", "rapl")
         if sys.platform.lower().startswith("lin"):
-            os.makedirs(os.path.join(self.rapl_dir, "intel-rapl:0"), exist_ok=True)
-            with open(os.path.join(self.rapl_dir, "intel-rapl:0/name"), "w") as f:
+            # Create proper RAPL hierarchy: rapl_dir/intel-rapl/intel-rapl:N/
+            provider_dir = os.path.join(self.rapl_dir, "intel-rapl")
+            os.makedirs(os.path.join(provider_dir, "intel-rapl:0"), exist_ok=True)
+            with open(os.path.join(provider_dir, "intel-rapl:0/name"), "w") as f:
                 f.write("package-0")
-            with open(os.path.join(self.rapl_dir, "intel-rapl:0/energy_uj"), "w") as f:
+            with open(os.path.join(provider_dir, "intel-rapl:0/energy_uj"), "w") as f:
                 f.write("52649883221")
             with open(
-                os.path.join(self.rapl_dir, "intel-rapl:0/max_energy_range_uj"), "w"
+                os.path.join(provider_dir, "intel-rapl:0/max_energy_range_uj"), "w"
             ) as f:
                 f.write("262143328850")
 
-            os.makedirs(os.path.join(self.rapl_dir, "intel-rapl:1"), exist_ok=True)
-            with open(os.path.join(self.rapl_dir, "intel-rapl:1/name"), "w") as f:
+            os.makedirs(os.path.join(provider_dir, "intel-rapl:1"), exist_ok=True)
+            with open(os.path.join(provider_dir, "intel-rapl:1/name"), "w") as f:
                 f.write("psys")
-            with open(os.path.join(self.rapl_dir, "intel-rapl:1/energy_uj"), "w") as f:
+            with open(os.path.join(provider_dir, "intel-rapl:1/energy_uj"), "w") as f:
                 f.write("117870082040")
             with open(
-                os.path.join(self.rapl_dir, "intel-rapl:1/max_energy_range_uj"), "w"
+                os.path.join(provider_dir, "intel-rapl:1/max_energy_range_uj"), "w"
             ) as f:
                 f.write("262143328850")
 
     @unittest.skipUnless(sys.platform.lower().startswith("lin"), "requires Linux")
     def test_intel_rapl(self):
+        # The new RAPL implementation prioritizes package domains over psys
+        # because package domains are more reliable and update correctly under load.
+        # When both package and psys are available, only package is used.
         expected_cpu_details = {
             "Processor Energy Delta_0(kWh)": 0.0,
             "Processor Power Delta_0(kWh)": 0.0,
-            "psys": 0.0,
         }
 
         rapl = IntelRAPL(rapl_dir=self.rapl_dir)
@@ -182,6 +226,21 @@ class TestTDP(unittest.TestCase):
             "Intel Core i7-8850H",
         )
 
+        model = "Intel(R) Xeon(R) Gold 6330N CPU @ 2.20Ghz"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "Intel Xeon Gold 6330N",
+        )
+        model = "Intel(R) Xeon(R) Silver 4208 CPU @ 2.10GHz"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "Intel Xeon Silver 4208",
+        )
+        model = "Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz"
+        self.assertEqual(
+            tdp._get_matching_cpu(model, cpu_data, greedy=False),
+            "Intel Xeon E5-2620 v3",
+        )
         # Does not match when missing part replaced by (here wrong) other part.
         # Which here is good. Could happen if Intel creates a model with the
         # same name than AMD ("5800K"), but only AMD exists in our cpu list.
@@ -274,3 +333,56 @@ class TestTDP(unittest.TestCase):
         self.assertIsNone(
             tdp._get_matching_cpu(model, cpu_data, greedy=False),
         )
+
+
+class TestPhysicalCPU(unittest.TestCase):
+    def test_count_physical_cpus_windows(self):
+        with mock.patch("platform.system", return_value="Windows"):
+
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="4")
+            ):
+                assert count_physical_cpus() == 4
+
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="")
+            ):
+                assert count_physical_cpus() == 1
+
+    def test_count_physical_cpus_windows_with_error(self):
+        with mock.patch("platform.system", return_value="Windows"):
+            # Test CalledProcessError
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.CalledProcessError(1, "powershell"),
+            ):
+                assert count_physical_cpus() == 1
+
+            # Test TimeoutExpired
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.TimeoutExpired("powershell", 10),
+            ):
+                assert count_physical_cpus() == 1
+
+            # Test ValueError when converting invalid output
+            with mock.patch(
+                "subprocess.run", return_value=mock.Mock(returncode=0, stdout="invalid")
+            ):
+                assert count_physical_cpus() == 1
+
+    def test_count_physical_cpus_linux(self):
+        with mock.patch("platform.system", return_value="Linux"):
+            lscpu_output = "Socket(s): 2\n"
+            with mock.patch("subprocess.check_output", return_value=lscpu_output):
+                assert count_physical_cpus() == 2
+
+            lscpu_output = "Some other output\n"
+            with mock.patch("subprocess.check_output", return_value=lscpu_output):
+                assert count_physical_cpus() == 1
+
+            with mock.patch(
+                "subprocess.check_output",
+                side_effect=subprocess.CalledProcessError(1, "lscpu"),
+            ):
+                assert count_physical_cpus() == 1

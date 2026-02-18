@@ -1,0 +1,54 @@
+name: Deploy to Clever Cloud
+
+on:
+  push:
+    paths:
+      - "carbonserver/**"
+      - "webapp/**"
+      - "pyproject.toml"
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        fetch-depth: 0 # Same as git fetch --unshallow
+        clean: true    # Remove any untracked files or modifications
+
+    - name: Install Clever Tools CLI
+      run: |
+        CC_VERSION=latest
+        curl -s -O https://clever-tools.clever-cloud.com/releases/${CC_VERSION}/clever-tools-${CC_VERSION}_linux.tar.gz
+        tar -xvf clever-tools-${CC_VERSION}_linux.tar.gz
+        PATH=${PATH}:$(pwd)/clever-tools-${CC_VERSION}_linux
+
+    - name: Login to Clever Cloud
+      env:
+        CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+      run: ./clever-tools-latest_linux/clever login --token ${{ secrets.CLEVER_TOKEN }} --secret ${{ secrets.CLEVER_SECRET }}
+
+    - name: Deploy backend to Clever Cloud (PROD)
+      env:
+        CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_PROD }}
+        APP_NAME: cc_api_prod
+      run: |
+        ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
+        ./clever-tools-latest_linux/clever deploy -f
+
+    - name: Deploy frontend to Clever Cloud (PROD)
+      env:
+        CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_PROD }}
+        APP_NAME: cc_dashboard_prod
+      run: |
+        echo $CLEVER_APP_ID
+        echo $APP_NAME
+        ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
+        # As the clever tools CLI aliasing is escaping _ character, a temporary hard-coded value is needed
+        # waiting for a fix from Clever
+        ./clever-tools-latest_linux/clever deploy -f -a ccdashboardprod --quiet

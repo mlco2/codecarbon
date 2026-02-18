@@ -1,6 +1,32 @@
-import dash
-import dash_bootstrap_components as dbc
-import fire
+import sys
+
+try:
+    import dash
+    import dash_bootstrap_components as dbc
+except ImportError:
+    print(
+        "\n❌ Error: Carbonboard requires additional dependencies that are not installed.\n"
+        "\nTo install them, run:\n"
+        "    pip install codecarbon[carbonboard]\n"
+        "\nOr if using uv:\n"
+        "    uv pip install codecarbon[carbonboard]\n",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+try:
+    import fire
+except ImportError:
+    print(
+        "\n❌ Error: Carbonboard requires 'fire' which is not installed.\n"
+        "\nTo install it, run:\n"
+        "    pip install codecarbon[carbonboard]\n"
+        "\nOr if using uv:\n"
+        "    uv pip install codecarbon[carbonboard]\n",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
 import pandas as pd
 from dash import dash_table as dt
 from dash import dcc
@@ -86,10 +112,10 @@ def render_app(df: pd.DataFrame):
                 f"{project_summary['region']}, {project_summary['country_name']}"
             )
         project_power_consumption = (
-            f"{round(project_summary['total']['energy_consumed'],1)} kWh"
+            f"{round(project_summary['total']['energy_consumed'], 1)} kWh"
         )
         project_carbon_equivalent = (
-            f"{round(project_summary['total']['emissions'],1)} kg"
+            f"{round(project_summary['total']['emissions'], 1)} kg"
         )
         last_run_power_consumption = (
             f"{project_summary['last_run']['energy_consumed']} kWh"
@@ -270,7 +296,7 @@ def render_app(df: pd.DataFrame):
 def viz(filepath: str, port: int = 8050, debug: bool = False) -> None:
     df = pd.read_csv(filepath)
     app = render_app(df)
-    app.run_server(port=port, debug=debug)
+    app.run(port=port, debug=debug)
 
 
 def main():

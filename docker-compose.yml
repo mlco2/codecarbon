@@ -1,87 +1,136 @@
-version: '3.7'
+# cp .env.example .env
+# docker compose up -d
 services:
-
-  # codecarbon_package:
-  #   build:
-  #     context: ./codecarbon/
-  #     dockerfile: ./docker/Dockerfile
-  #   networks:
-  #     - codecarbon_net
-  #   volumes:
-  #     - ./codecarbon:/opt/codecarbon
-  #   depends_on:
-  #     - codecarbon_api
-  #   restart: unless-stopped
-
+  ###############################################
+  # Codecarbon-related services
+  ###############################################
   carbonserver:
+    depends_on:
+      - postgres
     build:
-      context: ./carbonserver/
-      dockerfile: ./docker/Dockerfile
-    #command: cd /carbonserver/carbonserver/database && python3 -m alembic upgrade head && cd ../.. && uvicorn --reload main:app --host 0.0.0.0
+      context: .
+      dockerfile: ./carbonserver/docker/Dockerfile
     volumes:
       - ./carbonserver:/carbonserver
-      # Avoid problems with local tox
-      - /carbonserver/.tox
-    ports:
-      - 8008:8000
+    labels:
+      - "traefik.enable=true"
+      # - >
+      #   traefik.http.routers.carbonserver.rule=(
+      #   Host(`${APP_HOSTNAME}`) && (
+      #     PathPrefix(`/users`) || PathPrefix(`/auth`) || PathPrefix(`/docs`) ||
+      #     PathPrefix(`/organizations`) || PathPrefix(`/runs`) || PathPrefix(`/emissions`) ||
+      #     PathPrefix(`/projects`)|| PathPrefix(`/api`) || PathPrefix(`/auth-callback`)
+      #   ))"
+      - "traefik.http.routers.carbonserver.rule=(Host(`${APP_HOSTNAME}`) && (PathPrefix(`/users`) || PathPrefix(`/auth`)|| PathPrefix(`/docs`)|| PathPrefix(`/organizations`) || PathPrefix(`/runs`) || PathPrefix(`/emissions`) || PathPrefix(`/projects`)|| PathPrefix(`/api`) || PathPrefix(`/auth-callback`)  ))"
+      - "traefik.http.routers.carbonserver.entrypoints=web,websecure"
+      # - "traefik.http.routers.carbonserver.tls.certresolver=myresolver"
+      # - "traefik.http.routers.carbonserver.tls={}"
+      - "traefik.http.routers.carbonserver.priority=10000"
+      - "traefik.http.services.carbonserver.loadbalancer.server.port=8000"
+      - "traefik.docker.network=shared"
+    # ports:
+    #     - "8000:8000"
+    env_file:
+      - ./.env
     environment:
       CODECARBON_LOG_LEVEL: DEBUG
       DATABASE_URL: postgresql://${DATABASE_USER:-codecarbon-user}:${DATABASE_PASS:-supersecret}@${DATABASE_HOST:-postgres}:${DATABASE_PORT:-5432}/${DATABASE_NAME:-codecarbon_db}
     networks:
-      - codecarbon_net
+      - default
+      - shared
+
+  ui:
+    build:
+      context: ./webapp
+      dockerfile: dev.Dockerfile
+
+    # Set environment variables based on the .env file
+    env_file:
+      - ./webapp/.env.development
+    volumes:
+      - ./webapp/src:/app/src
+      - ./webapp/public:/app/public
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ui.rule=Host(`${APP_HOSTNAME}`)"
+      - "traefik.http.routers.ui.entrypoints=web,websecure"
+      # - "traefik.http.routers.ui.tls.certresolver=myresolver"
+      - "traefik.http.routers.ui.priority=1"
+      - "traefik.http.services.ui.loadbalancer.server.port=3000"
+      - "traefik.docker.network=shared"
+
+    # ports:
+    #     - "3000:3000"
+    networks:
+      - default
+      - shared
 
   postgres:
-    container_name: ${DATABASE_HOST:-postgres_codecarbon}
+    # container_name: ${DATABASE_HOST:-postgres_codecarbon}
     environment:
       HOSTNAME: ${DATABASE_HOST:-postgres_codecarbon}
       POSTGRES_DB: ${DATABASE_NAME:-codecarbon_db}
       POSTGRES_PASSWORD: ${DATABASE_PASS:-supersecret}
       POSTGRES_USER: ${DATABASE_USER:-codecarbon-user}
-    image: postgres:12
-    networks:
-      - codecarbon_net
-    ports:
-    - 5480:5432
+    image: postgres:13
+    # ports:
+    #     - 5480:5432
     restart: unless-stopped
     volumes:
-    - postgres_data:/var/lib/postgresql/data:rw
-
-  pgadmin:
-    container_name: pgadmin_codecarbon
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-test@test.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-test}
-    volumes:
-       - pgadmin:/root/.pgadmin
-       - ./carbonserver/docker/pgpassfile:/pgadmin4/pgpassfile
-       - ./carbonserver/docker/pgadmin-servers.json:/pgadmin4/servers.json
-    ports:
-      - "${PGADMIN_PORT:-5080}:80"
+      - postgres_codecarbon_data:/var/lib/postgresql/data:rw
     networks:
-      - codecarbon_net
-    restart: unless-stopped
+      - default
 
-  prometheus:
-      image: prom/prometheus:latest
-      ports:
-          - "9090:9090"
-      volumes:
-        - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
-      depends_on:
-          - "prometheus-pushgateway"
+  # pgadmin:
+  #   # container_name: pgadmin_codecarbon
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-test@test.com}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-test}
+  #   volumes:
+  #     - pgadmin:/root/.pgadmin
+  #     - ./carbonserver/docker/pgpassfile:/pgadmin4/pgpassfile
+  #     - ./carbonserver/docker/pgadmin-servers.json:/pgadmin4/servers.json
+  #   # ports:
+  #   #     - "${PGADMIN_PORT:-5080}:80"
+  #   networks:
+  #     - default
+  #   restart: unless-stopped
 
-  prometheus-pushgateway:
-      image: prom/pushgateway
-      ports:
-          - "9091:9091"
+###############################################
+# Prometheus-related services
+###############################################
+# Uncomment the following to enable prometheus and pushgateway
+
+#   prometheus:
+#     image: prom/prometheus:latest
+#     ports:
+#         - "9090:9090"
+#     volumes:
+#         - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+#     depends_on:
+#         - "prometheus-pushgateway"
+#     networks:
+#       - default
+#       - shared
+
+#   prometheus-pushgateway:
+#     image: prom/pushgateway
+#     ports:
+#       - "9091:9091"
+#     networks:
+#       - default
+#       - shared
 
 volumes:
-  postgres_data:
-    name: postgres_codecarbon_data
+  postgres_codecarbon_data:
+    name: postgres_codecarbon_data1
   pgadmin:
-    name: pgadmin_codecarbon_data
+    name: pgadmin_codecarbon_data1
 
 networks:
-  codecarbon_net:
-    name: codecarbon_network
+  default:
+    driver: bridge
+  shared: # traefik network
+    external: true

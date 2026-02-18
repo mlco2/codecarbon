@@ -1,43 +1,35 @@
 # This workflow will upload a Python Package using Twine when a release is created
 # For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
 # documentation.
-
 name: Upload Python Package
-
 on:
   release:
     types: [published]
-
 permissions:
   contents: read
-
 jobs:
-  deploy:
-
+  deploy-pypi:
     runs-on: ubuntu-latest
-
+    # Specifying a GitHub environment is optional, but strongly encouraged
+    environment: pypi
+    permissions:
+      # IMPORTANT: this permission is mandatory for Trusted Publishing
+      id-token: write
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v3
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - name: Install uv
+      uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
       with:
-        python-version: '3.8'
+        version: "latest"
+    - name: Set up Python
+      run: uv python install 3.12
     - name: Check versions
       run: |
-          pip install -U pip requests
-          python3 .github/check_version.py
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
+          uv run python .github/pyproject_versions.py -c
     - name: Build package
-      run: python -m build
+      run: uv build
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
+      uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1.13.0

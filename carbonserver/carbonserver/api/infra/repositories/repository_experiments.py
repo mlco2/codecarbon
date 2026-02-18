@@ -135,6 +135,15 @@ class SqlAlchemyRepository(Experiments):
                     func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
                     func.sum(SqlModelEmission.duration).label("duration"),
                     func.avg(SqlModelEmission.emissions_rate).label("emissions_rate"),
+                    func.avg(SqlModelEmission.cpu_utilization_percent).label(
+                        "cpu_utilization_percent"
+                    ),
+                    func.avg(SqlModelEmission.gpu_utilization_percent).label(
+                        "gpu_utilization_percent"
+                    ),
+                    func.avg(SqlModelEmission.ram_utilization_percent).label(
+                        "ram_utilization_percent"
+                    ),
                     func.count(SqlModelEmission.emissions_rate).label(
                         "emissions_count"
                     ),

@@ -3,19 +3,10 @@
 Installing CodeCarbon
 =====================
 
-Create a virtual environment using `conda` for easier management of dependencies and packages.
-For installing conda, follow the instructions on the
-`official conda website <https://docs.conda.io/projects/conda/en/latest/user-guide/install>`__
-
-.. code-block::  bash
-
-    conda create --name codecarbon
-    conda activate codecarbon
-
 From PyPi repository
 --------------------
 
-The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`_.
+The package is hosted on the pip repository `here <https://pypi.org/project/codecarbon/>`__.
 
 To install the package, run the following command in your terminal.
 
@@ -23,20 +14,24 @@ To install the package, run the following command in your terminal.
 
     pip install codecarbon
 
-From conda repository
----------------------
+Using Conda environments
+------------------------
 
-The package is hosted on the conda repository `here <https://anaconda.org/codecarbon/codecarbon>`_.
-
-To install the package, run the following command in your terminal.
+If you're using Conda for environment management, you can install CodeCarbon with pip in your Conda environment:
 
 .. code-block::  bash
 
-    conda install -c codecarbon -c conda-forge codecarbon
+    conda create --name codecarbon
+    conda activate codecarbon
+    pip install codecarbon
 
 ..  note::
 
-    We recommend using Python 3.7 or above.
+    While CodeCarbon can be used in Conda environments, we no longer maintain Conda packages. We recommend using ``pip install codecarbon`` within your Conda environment, which works seamlessly with Conda.
+
+..  note::
+
+    We recommend using Python 3.8 or above.
 
 
 Dependencies
@@ -47,13 +42,18 @@ The following packages are used by the CodeCarbon package, and will be installed
 .. code-block::  bash
 
     arrow
+    click
+    fief-client[cli]
     pandas
-    pynvml
-    requests
+    prometheus_client
     psutil
     py-cpuinfo
-    fuzzywuzzy
-    click
-    prometheus_client
+    nvidia-ml-py
+    rapidfuzz
+    requests
+    questionary
+    rich
+    typer
 
-Please refer to `setup.py <https://github.com/mlco2/codecarbon/blob/347a802a3478a5740f04b3a7b6b5f379b38000a7/setup.py#L6>`_ for the latest list of the packages used.
+
+Please refer to `pyproject.toml <https://github.com/mlco2/codecarbon/blob/master/pyproject.toml>`_ for the latest list of the packages used.

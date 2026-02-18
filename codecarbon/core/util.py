@@ -1,7 +1,9 @@
 import os
 import re
 import subprocess
+import sys
 from contextlib import contextmanager
+from functools import lru_cache
 from os.path import expandvars
 from pathlib import Path
 from typing import Optional, Union
@@ -27,7 +29,6 @@ def suppress(*exceptions):
             exceptions if len(exceptions) != 1 else exceptions[0], exc_info=True
         )
         logger.warning("stopping.")
-        pass
 
 
 def resolve_path(path: Union[str, Path]) -> Path:
@@ -48,6 +49,8 @@ def resolve_path(path: Union[str, Path]) -> Path:
 def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     """
     Resolves the path to a path then backs it up, adding the extension provided.
+    Warning : this function will rename the file in place, it's the calling function that will write a new file at the original path.
+    This function will not overwrite existing backups but add a number.
 
     Args:
         file_path (Union[str, Path]): Path to a file to backup.
@@ -61,22 +64,81 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
     idx = 0
     parent = file_path.parent
     file_name = f"{file_path.name}{ext}"
-    backup = parent / file_name
+    backup_path = parent / file_name
 
-    while backup.exists():
+    while backup_path.exists():
         file_name = f"{file_path.name}_{idx}{ext}"
-        backup = parent / file_name
+        backup_path = parent / file_name
         idx += 1
 
-    file_path.rename(backup)
+    file_path.rename(backup_path)
 
 
-def detect_cpu_model() -> str:
+@lru_cache(maxsize=1)
+def detect_cpu_model() -> Optional[str]:
     cpu_info = cpuinfo.get_cpu_info()
     if cpu_info:
         cpu_model_detected = cpu_info.get("brand_raw", "")
         return cpu_model_detected
     return None
+
+
+def is_mac_os() -> bool:
+    system = sys.platform.lower()
+    return system.startswith("dar")
+
+
+def is_windows_os() -> bool:
+    system = sys.platform.lower()
+    return system.startswith("win")
+
+
+def is_linux_os() -> bool:
+    system = sys.platform.lower()
+    return system.startswith("lin")
+
+
+def count_physical_cpus():
+    import platform
+    import subprocess
+
+    if platform.system() == "Windows":
+        return _windows_get_physical_sockets()
+    else:
+        try:
+            output = subprocess.check_output(["lscpu"], text=True)
+            for line in output.split("\n"):
+                if "Socket(s):" in line:
+                    return int(line.split(":")[1].strip())
+            else:
+                return 1
+        except Exception as e:
+            logger.warning(
+                f"Error while trying to count physical CPUs: {e}. Defaulting to 1."
+            )
+            return 1
+
+
+def _windows_get_physical_sockets():
+    try:
+        # use PowerShell to count number of objects of class Win32_Processor
+        cmd = [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            "(Get-CimInstance -ClassName Win32_Processor).Count",
+        ]
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=10, check=True
+        )
+
+        output = result.stdout.strip() or "1"
+        logger.debug(f"Detected {output} physical sockets on Windows.")
+        return int(output)
+
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
+        logger.error(f"Error detecting physical sockets on Windows: {e}")
+        return 1  # Fallback:at least one socket
 
 
 def count_cpus() -> int:
@@ -96,7 +158,7 @@ def count_cpus() -> int:
             "Error running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     num_cpus_matches = re.findall(r"NumCPUs=\d+", scontrol)
 
@@ -105,14 +167,14 @@ def count_cpus() -> int:
             "Could not find NumCPUs= after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     if len(num_cpus_matches) > 1:
         logger.warning(
             "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
-        return psutil.cpu_count()
+        return psutil.cpu_count(logical=True)
 
     num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
     logger.debug(f"Detected {num_cpus} cpus available on SLURM.")

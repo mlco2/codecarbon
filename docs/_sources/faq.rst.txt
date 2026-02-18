@@ -11,7 +11,7 @@ Frequently Asked Questions
 
 		For cloud computing:
 
-		- Google publish carbon intensity of electricity for `Google Cloud Plateform <https://cloud.google.com/sustainability/region-carbon?hl=fr>`_.
+		- Google publish carbon intensity of electricity for `Google Cloud Platform <https://cloud.google.com/sustainability/region-carbon?hl=fr>`_.
 
 		- Unfortunately, Amazon has made a habit of keeping information about its carbon footprint out of public view. Although it released its global carbon footprint, it does not publish datacenter carbon footprints.
 
@@ -22,9 +22,9 @@ Frequently Asked Questions
 
 		- When available we use data from `ourworld in data <https://ourworldindata.org/grapher/carbon-intensity-electricity?tab=table>`_
 
-		- if not available we use the electricity mix of the country find on `globalpetrolprices.com <https://www.globalpetrolprices.com/energy_mix.php>`_ that we multiply by the carbon intensity of the source of electricity (`that you can find here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json>`_)
+		- If not available we use the electricity mix of the country find on `globalpetrolprices.com <https://www.globalpetrolprices.com/energy_mix.php>`_ that we multiply by the carbon intensity of the source of electricity (`that you can find here <https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json>`_)
 
-		- if we have neither we default to a world average of 475 gCO2.eq/KWh from `IEA <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_.
+		- If we have neither we default to a world average of 475 gCO2.eq/KWh from `IEA <https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>`_.
 
 
 * **How do I offset my emissions?**
@@ -32,6 +32,6 @@ Frequently Asked Questions
 
 
 * **How can I help?**
-	If you find a functionality missing in the CodeCarbon repo, please `open an issue <https://github.com/mlco2/codecarbon/issues>`_ so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success.
+	If you find any functionality missing in the CodeCarbon repo, please `open an issue <https://github.com/mlco2/codecarbon/issues>`_ so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success.
 
 

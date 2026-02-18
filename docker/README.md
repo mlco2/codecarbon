@@ -41,7 +41,7 @@ docker logs codecarbon-api_codecarbon_api_1
 
 ## Execute tests
 ```sh
-docker exec codecarbon-api_codecarbon_api_1 tox
+docker exec codecarbon-api_codecarbon_api_1 uv run task test-api-integ
 ```
 
 ## Force build

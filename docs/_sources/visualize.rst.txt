@@ -1,6 +1,6 @@
 .. _visualize:
 
-Visualize 
+Visualize
 =========
 
 Offline
@@ -8,6 +8,19 @@ Offline
 The package also comes with a ``Dash App`` containing illustrations to understand the emissions logged from various experiments across projects.
 The App currently consumes logged information from a CSV file, generated from an in-built logger in the package.
 
+Installation
+~~~~~~~~~~~~
+The carbonboard visualization tool requires additional dependencies. Install them with:
+
+.. code-block:: bash
+
+    pip install 'codecarbon[carbonboard]'
+
+.. note::
+   The ``viz-legacy`` extra is deprecated but still works for backwards compatibility. It will be removed in v4.0.0. Please use ``carbonboard`` instead.
+
+Usage
+~~~~~
 The App can be run by executing the below CLI command that needs following arguments:
 
 - ``filepath`` - path to the CSV file containing logged information across experiments and projects
@@ -56,11 +69,11 @@ region to host infrastructure for the concerned cloud provider.
             :height: 450px
             :width: 750px
 
-Online (Beta)
+Online
 --------------
 
-A ``Dash App`` is also aviable for those who chose to connect the package to the API then data are public and aviable for all to explore.
-`preview <https://dashboard.codecarbon.io/>`_
+A dashboard is also available for those who chose to connect the package to the public API.
+`Got to online dashboard <https://dashboard.codecarbon.io/>`_
 
 from global...
 ~~~~~~~~~~~~~~
@@ -79,7 +92,7 @@ to more and more...
 
 Each project can be divided into several experiments, and in each experiment several runs can happen.
 The total emissions of experiments is shown on the barchart on the right hand side, and the runs on the bubble chart on the left hand side.
-If ever your project has several experiments you can switch from one experiment's runs in the bubble chart to another's by clicking the bar chart.
+If ever your project has several experiments you can switch from one experiment's runs in the bubble chart to another by clicking the bar chart.
 
 .. image:: ./images/Experiment-run.png
             :align: center
@@ -94,7 +107,7 @@ Clicking on one bubble, you can display the runtime series and see its metadata.
 
 .. image:: ./images/run&metadata.png
             :align: center
-            :alt: run time serie and metadata
+            :alt: run time series and metadata
             :width: 750px
 
 Electricity production carbon intensity per country
@@ -107,6 +120,5 @@ The app also provides a visualization of regional carbon intensity of electricit
             :alt: carbon intensity carbon_map
             :width: 750px
 
-Note that for now, all data sent to CodeCarbon API are public.
 
 

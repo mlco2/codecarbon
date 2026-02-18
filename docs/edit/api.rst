@@ -5,26 +5,42 @@ CodeCarbon API
 
 
 CodeCarbon API
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. warning::
-    This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server. All data will be public!
+    This mode use the CodeCarbon API to upload the timeseries of your emissions on a central server.
 
-Before using it, you need an experiment_id, to get one, run:
+    Thanks to `CleverCloud <https://www.clever.cloud/>`_ the use of API is free as soon as it remains under certain limits.
+
+
+.. image:: https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/code_carbon_archi.png
+            :align: center
+            :alt: Summary
+            :height: 400px
+            :width: 700px
+
+.. image:: https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg
+            :align: center
+            :alt: Summary
+            :width: 700px
+
+Before using it, you need to create on account on the `CodeCarbon dashboard <https://dashboard.codecarbon.io/>`_
+
+Then login from your terminal:
 
 .. code-block:: console
 
-    codecarbon init
+    codecarbon login
 
-It will create a experiment_id on the default project and save it to ``codecarbon.config``
+It will create an experiment_id for the default project and save it to ``codecarbon.config``
 
-Then you could tell CodeCarbon to monitor your machine :
+Then you can tell CodeCarbon to monitor your machine:
 
 .. code-block:: console
 
     codecarbon monitor
 
-Or use the API in your code
+Or use the API in your code:
 
 .. code-block:: python
 
@@ -33,12 +49,13 @@ Or use the API in your code
     @track_emissions(save_to_api=True)
     def train_model():
         # GPU intensive training code  goes here
+
     if __name__ =="__main__":
         train_model()
 
 More options could be specified in ``@track_emissions`` or in ``.codecarbon.config``
 
-The `CodeCarbon dasboard <https://dashboard.codecarbon.io/>`_ use `CodeCarbon API <https://api.codecarbon.io/>`_ to get the data
+The `CodeCarbon dashboard <https://dashboard.codecarbon.io/>`_ use `CodeCarbon API <https://api.codecarbon.io/>`_ to get the data
 
 The API do not have a nice web interface to create your own organization and project, you have to use `OpenAPI interface <https://api.codecarbon.io/docs>`_ for that.
 
@@ -51,6 +68,7 @@ In the code:
 .. code-block:: python
 
     from codecarbon import track_emissions
+
     @track_emissions(
         measure_power_secs=30,
         api_call_interval=4,
@@ -58,7 +76,7 @@ In the code:
         save_to_api=True,
     )
     def train_model():
-
+        ...
 
 Or in the config file `.codecarbon.config`:
 
@@ -67,8 +85,3 @@ Or in the config file `.codecarbon.config`:
     [codecarbon]
     experiment_id = your experiment id
     save_to_api = true
-
-But I see that you already did all that and have emissions data in the database, so we have to investigate for a bug in the interface.
-
-Thanks for taking time to report this.
-

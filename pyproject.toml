@@ -1,0 +1,207 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codecarbon"
+dynamic = ["version"]
+readme = "README.md"
+requires-python = ">=3.7"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Mila" },
+    { name = "DataForGood" },
+    { name = "BCG GAMMA" },
+    { name = "Comet.ml" },
+    { name = "Haverford College" },
+]
+classifiers = [
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "arrow",
+    "click",
+    "fief-client[cli]",
+    "pandas>=2.3.3;python_version>='3.14'",
+    "pandas;python_version<'3.14'",
+    "prometheus_client",
+    "psutil >= 6.0.0",
+    "py-cpuinfo",
+    "pydantic",
+    "nvidia-ml-py",
+    "rapidfuzz",
+    "requests",
+    "questionary",
+    "rich",
+    "typer",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "codecarbon._version.__version__"}
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["codecarbon*"]
+exclude = ["*.json", "**/*.csv", "*.geojson"]
+
+[tool.setuptools.package-data]
+codecarbon = [
+    "data/cloud/impact.csv",
+    "data/hardware/cpu_power.csv",
+    "data/canada_provinces.geojson",
+    "data/private_infra/global_energy_mix.json",
+    "data/private_infra/carbon_intensity_per_source.json",
+    "data/private_infra/2016/usa_emissions.json",
+    "data/private_infra/2023/canada_energy_mix.json",
+    "viz/assets/car_icon.png",
+    "viz/assets/house_icon.png",
+    "viz/assets/tv_icon.png"
+]
+
+[project.urls]
+Homepage = "https://codecarbon.io/"
+Repository = "https://github.com/mlco2/codecarbon"
+Dashboard = "http://dashboard.codecarbon.io/"
+Documentation = "https://mlco2.github.io/codecarbon/"
+Issues = "https://github.com/mlco2/codecarbon/issues"
+Changelog = "https://github.com/mlco2/codecarbon/releases"
+
+
+[dependency-groups]
+api  = [
+    "alembic<2.0.0",
+    "authlib>=1.2.1",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "fief-client[fastapi]",
+    "httpx",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination<1.0.0",
+    "pytest",
+    "mock",
+    "responses",
+    "fastapi-oidc;python_version>='3.10'",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
+    "PyJWT",
+    "logfire[fastapi]>=1.0.1",
+]
+dev = [
+    "taskipy",
+    "bumpver",
+    "pre-commit",
+    "ruff",
+    "black",
+    "mypy",
+    "pytest",
+    "requests",
+    "requests-mock",
+    "responses",
+    "pytest-cov",
+    "logfire>=1.0.1",  # For testing Logfire output method
+]
+doc = [
+  "sphinx",
+  "sphinx_rtd_theme>=2.0.0",
+]
+
+[project.optional-dependencies]
+carbonboard = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
+]
+# Backwards compatibility alias - will be removed in v4.0.0
+viz-legacy = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
+]
+
+api  = [
+    "alembic<2.0.0",
+    "authlib>=1.2.1",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "fief-client[fastapi]",
+    "httpx",
+    "itsdangerous",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination<1.0.0",
+    "pytest",
+    "mock",
+    "responses",
+    "fastapi-oidc;python_version>='3.10'",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
+    "PyJWT",
+]
+
+
+[project.scripts]
+carbonboard = "codecarbon.viz.carbonboard:main"
+codecarbon = "codecarbon.cli.main:main"
+
+[tool.taskipy.tasks]
+pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit hook." }
+dashboard = "cd carbonserver && uvicorn main:app --reload"
+dashboard-ci = "cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008"
+docker = "docker-compose up -d"
+test-api-unit = "cd carbonserver && python -m pytest -vv tests/api/routers && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/"
+test-api-integ = "cd carbonserver && python -m pytest -vv tests/api/integration/"
+setup-db = "cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
+downgrade-db = "cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base"
+build-doc = "cd docs/edit && make docs"
+precommit-install = "pre-commit install"
+precommit-update = "pre-commit autoupdate"
+precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
+mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
+lint = "black --check --diff . && ruff check . && mypy ."
+format = "black . && ruff check --fix --exit-non-zero-on-fix ."
+test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
+test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov=codecarbon --cov-report=xml --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
+test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
+docs = "cd docs/edit && make docs"
+carbonboard = "python codecarbon/viz/carbonboard.py"
+
+[tool.bumpver]
+current_version = "3.2.2"
+version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
+
+[tool.bumpver.file_patterns]
+"codecarbon/_version.py" = [
+    '^__version__ = "{version}"$',
+]
+"docs/edit/conf.py" = [
+    '^release = "{version}"$',
+]
+
+[tool.pytest.ini_options]
+pythonpath = "."

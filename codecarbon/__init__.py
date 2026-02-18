@@ -10,3 +10,4 @@ from .emissions_tracker import (
 )
 
 __all__ = ["EmissionsTracker", "OfflineEmissionsTracker", "track_emissions"]
+__app_name__ = "codecarbon"

@@ -16,6 +16,7 @@ CodeCarbon
 
    motivation
    methodology
+   rapl
    model_examples
    faq
 
@@ -29,6 +30,7 @@ CodeCarbon
    parameters
    examples
    comet
+   advanced_installation
 
 .. toctree::
    :caption: Logging

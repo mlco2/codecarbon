@@ -2,30 +2,28 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Union
 
 import dateutil.relativedelta
-from container import ServerContainer
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from starlette import status
 
-from carbonserver.api.dependencies import get_token_header
 from carbonserver.api.errors import EmptyResultException
-from carbonserver.api.schemas import Empty, Run, RunCreate, RunReport
+from carbonserver.api.schemas import AccessLevel, Empty, Run, RunCreate, RunReport
+from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
     ExperimentSumsByRunUsecase,
 )
+from carbonserver.container import ServerContainer
 from carbonserver.logger import logger
 
 RUNS_ROUTER_TAGS = ["Runs"]
 
-router = APIRouter(
-    dependencies=[Depends(get_token_header)],
-)
+router = APIRouter()
 runs_temp_db = []
 
 
 @router.post(
-    "/run",
+    "/runs",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_201_CREATED,
     response_model=Run,
@@ -34,12 +32,22 @@ runs_temp_db = []
 def add_run(
     run: RunCreate,
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
+    project_token_service: ProjectTokenService = Depends(
+        Provide[ServerContainer.project_token_service]
+    ),
+    x_api_token: Optional[str] = Header(None),
 ) -> Run:
+
+    project_token_service.project_token_has_access(
+        AccessLevel.WRITE.value,
+        experiment_id=run.experiment_id,
+        project_token=x_api_token,
+    )
     return run_service.add_run(run)
 
 
 @router.get(
-    "/run/{run_id}",
+    "/runs/{run_id}",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
     response_model=Run,
@@ -66,7 +74,7 @@ def list_runs(
 
 
 @router.get(
-    "/runs/experiment/{experiment_id}",
+    "/experiments/{experiment_id}/runs",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )
@@ -79,7 +87,7 @@ def read_runs_from_experiment(
 
 
 @router.get(
-    "/runs/{experiment_id}/sums/",
+    "/experiments/{experiment_id}/runs/sums/",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

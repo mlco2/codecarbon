@@ -1,7 +1,9 @@
 import configparser
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Union
+
+from codecarbon.external.logger import logger
 
 
 def clean_env_key(k: str) -> str:
@@ -42,24 +44,33 @@ def parse_env_config() -> dict:
     }
 
 
-def parse_gpu_ids(gpu_ids_str: str) -> List[int]:
+def parse_gpu_ids(gpu_ids: Union[str, List[int]]) -> List[str]:
     """
-    Transforms the potential gpu_ids string into a list of int values
+    Transforms the potential gpu_ids into a list of string id values.
+
 
     Args:
-        gpu_ids_str (str): The config file or environment variable value for `gpu_ids`
-        which is read as a string and should be parsed into a list of ints
+        gpu_ids: The config file or environment variable value for `gpu_ids`
 
     Returns:
-        list[int]: The list of GPU ids available declared by the user.
+        list[str]: The list of GPU ids available.
             Potentially empty.
     """
-    if not isinstance(gpu_ids_str, str):
-        return gpu_ids_str
+    if isinstance(gpu_ids, str):
+        # Allow '-' in id strings since UUIDs may include them.
+        gpu_ids = "".join(c for c in gpu_ids if (c.isalnum() or c in ("-", ",")))
+        str_ids = [gpu_id for gpu_id in gpu_ids.split(",") if gpu_id]
+        return str_ids
 
-    gpu_ids_str = "".join(c for c in gpu_ids_str if (c.isalnum() or c == ","))
-    str_ids = [gpu_id for gpu_id in gpu_ids_str.split(",") if gpu_id]
-    return list(map(int, str_ids))
+    elif isinstance(gpu_ids, list) and all(
+        isinstance(gpu_id, int) for gpu_id in gpu_ids
+    ):
+        return list(map(str, gpu_ids))
+
+    else:
+        logger.warning(
+            "Invalid gpu_ids format. Expected a string or a list of ints/strings."
+        )
 
 
 def get_hierarchical_config():
@@ -96,6 +107,16 @@ def get_hierarchical_config():
     home = Path.home()
     global_path = str((home / ".codecarbon.config").expanduser().resolve())
     local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
+    if Path(global_path).exists():
+        logger.info(
+            f"Codecarbon is taking the configuration from global file: {global_path}"
+        )
+        if Path(local_path).exists():
+            logger.info(f"Some variables are overriden by the local file: {local_path}")
+    elif Path(local_path).exists():
+        logger.info(
+            f"Codecarbon is taking the configuration from the local file {local_path}"
+        )
 
     config.read([global_path, local_path])
     config.read_dict(parse_env_config())

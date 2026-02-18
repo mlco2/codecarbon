@@ -30,11 +30,11 @@ input parameter (defaults to the current directory), for each experiment tracked
    * - emissions_rate
      - emissions divided per duration, in Kg/s
    * - cpu_power
-     - CPU power (W)
+     - Mean CPU power (W)
    * - gpu_power
-     - GPU power (W)
+     - Mean GPU power (W)
    * - ram_power
-     - RAM power (W)
+     - Mean RAM power (W)
    * - cpu_energy
      - Energy used per CPU (kWh)
    * - gpu_energy
@@ -77,8 +77,16 @@ input parameter (defaults to the current directory), for each experiment tracked
        | This is done for privacy protection.
    * - ram_total_size
      -  total RAM available (Go)
-   * - Tracking_mode:
+   * - tracking_mode:
      - ``machine`` or ``process``(default to ``machine``)
+   * - cpu_utilization_percent
+     - Average CPU utilization during tracking period (%)
+   * - gpu_utilization_percent
+     - Average GPU utilization during tracking period (%)
+   * - ram_utilization_percent
+     - Average RAM utilization during tracking period (%)
+   * - ram_used_gb
+     - Average RAM used during tracking period (GB)
 
 ..  note::
 
@@ -124,6 +132,37 @@ e.g.
 
 Go to `localhost:9090 <http://localhost:9090>`_. Search for `codecarbon_`. You will see all the metrics there.
 
+Logfire
+----------
+
+Using CodeCarbon with logfire
+`````````````````````````````````
+
+`Logfire <https://docs.pydantic.dev/logfire/>`_ is an observability platform.
+
+CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
+
+
+How to use it
+````````````````````
+
+Run your EmissionTracker as usual, but with the parameter `save_to_logfire` as True.
+e.g.
+
+.. code-block:: python
+
+  ...
+  tracker = OfflineEmissionsTracker(
+              project_name=self.project_name,
+              country_iso_code="USA",
+              save_to_logfire=True,
+          )
+  tracker.start()
+  ...
+
+The first time it will ask to log in into Logfire. Once you log in and set the default logfire project, you are good to go, the metrics will appear following the format `codecarbon_*`.
+
+
 HTTP Output
 -----------
 
@@ -132,7 +171,7 @@ The HTTP Output allow the call of a webhook with emission data when the tracker 
 CodeCarbon API
 --------------
 
-You can send all the data to the CodeCarbon API. So you have all your historical data in one place. By default nothing is send to the API.
+You can send all the data to the CodeCarbon API. So you have all your historical data in one place. By default, nothing is sent to the API.
 
 Logger Output
 -------------

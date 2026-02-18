@@ -66,23 +66,26 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 67.39 / 1000, places=2)
+        self.assertAlmostEqual(emissions, 56.04 / 1000, places=2)
 
-    def test_get_emissions_PRIVATE_INFRA_JOR(self):
+    def test_get_emissions_PRIVATE_INFRA_UNKNOWN(self):
         """
-        Jordania use fossil energy
+        Test with a country that is not in the list of known countries.
         """
         # WHEN
 
         emissions = self._emissions.get_private_infra_emissions(
             Energy.from_energy(kWh=1_000),
-            GeoMetadata(country_iso_code="JOR", country_name="Jordan"),
+            GeoMetadata(country_iso_code="UNK", country_name="Unknown"),
         )
 
         # THEN
-        jor_emissions = 399.909  # Emissions in Kgs of CO2 For 1 000 kWh of energy
+        carbon_intensity_per_source = (
+            DataSource().get_carbon_intensity_per_source_data()
+        )
+        default_emissions = carbon_intensity_per_source.get("world_average")
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, jor_emissions, places=2)
+        self.assertAlmostEqual(emissions, default_emissions, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_NOR(self):
         """
@@ -141,7 +144,7 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.3869, places=2)
+        self.assertAlmostEqual(emissions, 0.5101, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
         # WHEN
@@ -151,10 +154,13 @@ class TestEmissions(unittest.TestCase):
                 country_iso_code="CAN", country_name="Canada", region="ontario"
             ),
         )
+        manually_computed_emissions = (
+            3 * (0.995725971 * 0.0 + 0.8166885263 * 0.1 + 0.7438415916 * 8.6) / 100.1
+        )
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.12, places=2)
+        self.assertAlmostEqual(emissions, manually_computed_emissions, places=2)
 
     def test_get_emissions_PRIVATE_INFRA_unknown_country(self):
         """

@@ -1,23 +1,28 @@
-from container import ServerContainer
-from fastapi import Depends, FastAPI
+import os
+
+from fastapi import FastAPI
 from fastapi_pagination import add_pagination
 from pydantic import ValidationError
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from carbonserver.api.dependencies import get_query_token
-from carbonserver.api.errors import DBException
+from carbonserver.api.errors import DBException, UserException, get_http_exception
 from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
     authenticate,
     emissions,
     experiments,
     organizations,
+    project_api_tokens,
     projects,
     runs,
-    teams,
     users,
 )
+from carbonserver.api.services import auth_service
+from carbonserver.config import settings
+from carbonserver.container import ServerContainer
 from carbonserver.database.database import engine
 from carbonserver.logger import logger
 
@@ -49,6 +54,7 @@ def create_app() -> FastAPI:
     server.add_exception_handler(DBException, db_exception_handler)
     server.add_exception_handler(ValidationError, validation_exception_handler)
     server.add_exception_handler(Exception, generic_exception_handler)
+    server.add_middleware(SessionMiddleware, secret_key="some-random-string")
 
     return server
 
@@ -61,10 +67,11 @@ def init_container():
             runs,
             experiments,
             projects,
-            teams,
+            project_api_tokens,
             organizations,
             users,
             authenticate,
+            auth_service,
         ]
     )
     return container
@@ -77,24 +84,64 @@ def init_db(container):
 
 
 def init_server(container):
-    server = FastAPI(dependencies=[Depends(get_query_token)])
+    server = FastAPI(
+        servers=[
+            {"url": "/api/"},
+        ],
+        port=settings.api_port,
+        host=settings.server_host,
+    )
+
     server.container = container
     server.include_router(users.router)
     server.include_router(authenticate.router)
     server.include_router(organizations.router)
-    server.include_router(teams.router)
     server.include_router(projects.router)
+    server.include_router(project_api_tokens.router)
     server.include_router(experiments.router)
     server.include_router(experiments.router)
     server.include_router(runs.router)
     server.include_router(emissions.router)
     add_pagination(server)
+
+    # Add CORS from env variable
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "")
+    CORS_ORIGINS = [origin.strip() for origin in CORS_ORIGINS.split(",")]
+
+    origins = [
+        "https://api.codecarbon.io",
+        "https://dashboard.codecarbon.io",
+        "https://dash-dev.cleverapps.io/",
+        "https://dash-dev.cleverapps.io/api",
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:8000",
+        *CORS_ORIGINS,
+    ]
+
+    if settings.frontend_url != "":
+        origins.append(settings.frontend_url)
+
+    server.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     return server
 
 
 app = create_app()
+app.mount("/api", app, name="api")
 
 
 @app.get("/")
 def default():
     return {"status": "OK"}
+
+
+@app.exception_handler(UserException)
+async def custom_exception_handler(request: Request, exc: UserException):
+    raise get_http_exception(exc)

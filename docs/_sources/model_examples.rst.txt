@@ -5,8 +5,8 @@ Model Comparisons
 
 The following table shows the different electricity consumption of popular NLP and Computer visions models
 
-.. list-table:: Electricity consumtion of AI cloud instance
-   :widths: 20 20 20 20  
+.. list-table:: Electricity consumption of AI cloud instance
+   :widths: 20 20 20 20
    :align: center
    :header-rows: 1
 
@@ -37,7 +37,7 @@ The following table shows the different electricity consumption of popular NLP a
    * - Dense\ :sub:`201`\
      - 1 P40
      - 0.4
-     - 0.04     
+     - 0.04
    * - ViT\ :sub:`Tiny`\
      - 1 V100
      - 19
@@ -71,8 +71,8 @@ Carbon emissions that would be emitted from training BERT (language modeling on 
 
 In this case study, time of year might not be relevant in most cases, but localisation can have a great impact on carbon emissions.
 
-Here, and in the graph below, emissions equivalent are estimated using Microsoft Azure cloud tools. 
-CodeCarbon has developped its own mesuring tools. The result could be different.
+Here, and in the graph below, emissions equivalent are estimated using Microsoft Azure cloud tools.
+CodeCarbon has developed its own measuring tools. The result could be different.
 
 Comparisons
 ---------------------
@@ -83,16 +83,16 @@ Emissions for the 11 described models can be displayed as below:
             :align: center
             :alt: Models emissions comparison
 
-The black line represents the average emissions (across regions and time of year). 
-The light blue represents the firts and fourth quartiles.
-On the right side, equivalent sources of emissions are displayed as comparating points (source : `US Environmental Protection Agency <https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator>`_).
+The black line represents the average emissions (across regions and time of year).
+The light blue represents the first and fourth quartiles.
+On the right side, equivalent sources of emissions are displayed as comparison points (source : `US Environmental Protection Agency <https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator>`_).
 NB : presented on a log scale
 
 
 
 References
 ----------
-`Mesuring the Carbon intensity of AI in Cloud Instance <https://facctconference.org/static/pdfs_2022/facct22-145.pdf>`_
+`Measuring the Carbon intensity of AI in Cloud Instance <https://dl.acm.org/doi/10.1145/3531146.3533234>`_
 
-Another source comparing models carbon intensity : 
+Another source comparing models carbon intensity:
 `Energy and Policy Considerations for Deep Learning in NLP <https://arxiv.org/pdf/1906.02243.pdf>`_

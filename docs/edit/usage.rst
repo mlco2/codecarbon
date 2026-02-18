@@ -9,20 +9,124 @@ The CO2 tracking tool can be used along with any computing framework. It support
 Online Mode
 -----------
 When the environment has internet access, the ``EmissionsTracker`` object or the ``track_emissions`` decorator can be used, which has
-``offline`` parameter set to ``False`` by default.
+the ``offline`` parameter set to ``False`` by default.
 
 Command line
 ~~~~~~~~~~~~
 
-If you want to track the emissions of a computer without having to modify your code, you can use the command line interface:
+
+Create a minimal configuration file (just follow the prompts) :
 
 .. code-block:: console
 
-    codecarbon monitor --no-api
+  codecarbon config
+
+.. image:: https://asciinema.org/a/667970.svg
+            :align: center
+            :alt: Init config
+            :target: https://asciinema.org/a/667970
+
+You can use the same command to modify an existing config :
+
+.. image:: https://asciinema.org/a/667971.svg
+            :align: center
+            :alt: Modify config
+            :target: https://asciinema.org/a/667971
+
+
+If you want to track the emissions of a computer without having to modify your code, you can use :
+
+.. code-block:: console
+
+    codecarbon monitor
 
 You have to stop the monitoring manually with ``Ctrl+C``.
 
-Implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
+If you want to detect the hardware of your computer without starting any measurement, you can use:
+
+.. code-block:: console
+
+    codecarbon detect
+
+It will print the detected RAM, CPU and GPU information.
+
+In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
+to an API running on "localhost:8008" (Or you can start a private local API with "docker-compose up"). Using the public API with
+this is not supported yet (coming soon!)
+
+.. image:: https://asciinema.org/a/667984.svg
+            :align: center
+            :alt: Monitor example
+            :target: https://asciinema.org/a/667984
+
+
+The command line could also works without internet by providing the country code like this:
+
+.. code-block:: console
+
+    codecarbon monitor --offline --country-iso-code FRA
+
+
+Running Any Command with CodeCarbon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to track emissions while running any command or program (not just Python scripts), you can use the ``codecarbon monitor --`` command.
+This allows non-Python users to measure machine emissions during the execution of any command:
+
+.. code-block:: console
+
+    codecarbon monitor -- <your_command>
+
+Do not surround ``<your_command>`` with quotes. The double hyphen ``--`` indicates the end of CodeCarbon options and the beginning of the command to run.
+
+**Examples:**
+
+.. code-block:: console
+
+    # Run a shell script
+    codecarbon monitor -- ./benchmark.sh
+
+    # Run a command with arguments (use quotes for special characters)
+    codecarbon monitor -- bash -c 'echo "Processing..."; sleep 30; echo "Done!"'
+
+    # Run Python scripts
+    codecarbon monitor -- python train_model.py
+
+    # Run Node.js applications
+    codecarbon monitor -- node app.js
+
+    # Run tests with output redirection
+    codecarbon monitor -- npm run test > output.txt
+
+    # Display the CodeCarbon detailed logs
+    codecarbon monitor --log-level debug -- python --version
+
+**Output:**
+
+When the command completes, CodeCarbon displays a summary report and saves the emissions data to a CSV file:
+
+.. code-block:: console
+
+    🌱 CodeCarbon: Starting emissions tracking...
+       Command: bash -c echo "Processing..."; sleep 30; echo "Done!"
+
+    Processing...
+    Done!
+
+    ============================================================
+    🌱 CodeCarbon Emissions Report
+    ============================================================
+       Command: bash -c echo "Processing..."; sleep 30; echo "Done!"
+       Emissions: 0.0317 g CO2eq
+       Saved to: /home/user/emissions.csv
+       ⚠️  Note: Measured entire machine (includes all system processes)
+    ============================================================
+
+.. note::
+    The ``codecarbon monitor --`` command tracks process-level emissions (only the specific command), not the
+    entire machine. For machine-level tracking, use the ``codecarbon monitor`` command.
+
+For more fine-grained tracking, implementing CodeCarbon in your code allows you to track the emissions of a specific block of code.
 
 Explicit Object
 ~~~~~~~~~~~~~~~
@@ -179,7 +283,7 @@ For instance:
             [codecarbon]
             save_to_file = true
             output_dir = /Users/victor/emissions
-            co2_signal_api_token=script-overwrite
+            electricitymaps_api_token=script-overwrite
             experiment_id = 235b1da5-aaaa-aaaa-aaaa-893681599d2c
             log_level = DEBUG
             tracking_mode = process
@@ -187,19 +291,19 @@ For instance:
 * environment variables will override ``./.codecarbon.config`` if the same parameter is set in both files :
 
 	.. code-block:: bash
-            
+
             export CODECARBON_GPU_IDS="0, 1"
             export CODECARBON_LOG_LEVEL="WARNING"
 
 
-* script parameters will override environment variables if the same parameter is set in both: 
+* script parameters will override environment variables if the same parameter is set in both:
 
 	.. code-block:: python
 
 	     EmissionsTracker(
             api_call_interval=4,
             save_to_api=True,
-            co2_signal_api_token="some-token")
+            electricitymaps_api_token="some-token")
 
 Yields attributes:
 
@@ -215,7 +319,7 @@ Yields attributes:
         "tracking_mode": "process", # from ./.codecarbon.config
         "emissions_endpoint": "localhost:7777", # from ~/.codecarbon.config
         "output_dir": "/Users/victor/emissions", # from ./.codecarbon.config
-        "co2_signal_api_token": "some-token", # from script (override ./.codecarbon.config)
+        "electricitymaps_api_token": "some-token", # from script (override ./.codecarbon.config)
         "gpu_ids": [0, 1], # from environment variable
     }
 
@@ -227,7 +331,7 @@ Yields attributes:
 Access internet through proxy server
 ------------------------------------
 
-If you need a proxy to access internet, which is needed to call a Web API, like `Codecarbon API <https://api.codecarbon.io/docs>`_, you have to set environment variable ``HTTPS_PROXY``, or *HTTP_PROXY* if calling an ``http://`` enpoint.
+If you need a proxy to access internet, which is needed to call a Web API, like `Codecarbon API <https://api.codecarbon.io/docs>`_, you have to set environment variable ``HTTPS_PROXY``, or *HTTP_PROXY* if calling an ``http://`` endpoint.
 
 You could do it in your shell:
 
@@ -240,6 +344,7 @@ Or in your Python code:
 .. code-block:: python
 
     import os
+
     os.environ["HTTPS_PROXY"] = "http://0.0.0.0:0000"
 
 For more information, please read the `requests library proxy documentation <https://requests.readthedocs.io/en/latest/user/advanced/#proxies>`_

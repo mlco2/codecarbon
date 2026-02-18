@@ -1,36 +1,37 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Methodology &mdash; CodeCarbon 2.3.2 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <title>Methodology &mdash; CodeCarbon 3.2.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=67b02a41"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=dcedd534"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Model Comparisons" href="model_examples.html" />
-    <link rel="prev" title="Motivation" href="motivation.html" />
+    <link rel="next" title="RAPL Metrics" href="rapl.html" />
+    <link rel="prev" title="Motivation" href="motivation.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-
-
+          
+          
           <a href="index.html" class="icon icon-home">
             CodeCarbon
           </a>
@@ -53,12 +54,24 @@
 <li class="toctree-l3"><a class="reference internal" href="#cpu">CPU</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#cpu-hardware">CPU hardware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rapl-metrics">RAPL Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cpu-metrics-priority">CPU metrics priority</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#how-codecarbon-works">How CodeCarbon Works</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#estimation-of-equivalent-usage-emissions">Estimation of Equivalent Usage Emissions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#car-usage">Car Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tv-usage">TV Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#us-citizen-weekly-emissions">US Citizen Weekly Emissions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#calculation-formula">Calculation Formula</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code">Source Code</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rapl.html">RAPL Metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
@@ -71,6 +84,7 @@
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_installation.html">Advanced Installation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -102,7 +116,7 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-
+             
   <section id="methodology">
 <span id="id1"></span><h1>Methodology<a class="headerlink" href="#methodology" title="Link to this heading"></a></h1>
 <p>Carbon dioxide (CO₂) emissions, expressed as kilograms of CO₂-equivalents [CO₂eq], are the product of two main factors :</p>
@@ -115,15 +129,16 @@ E = Energy Consumed by the computational infrastructure: quantified as kilowatt-
 <section id="carbon-intensity">
 <h2>Carbon Intensity<a class="headerlink" href="#carbon-intensity" title="Link to this heading"></a></h2>
 <p>Carbon Intensity of the consumed electricity is calculated as a weighted average of the emissions from the different
-energy sources that are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, and natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, this package calculates the Carbon Intensity of the electricity consumed.</p>
-<a class="reference internal image-reference" href="_images/grid_energy_mix.png"><img alt="Grid Energy Mix" class="align-center" src="_images/grid_energy_mix.png" style="width: 350px; height: 300px;" /></a>
-<p>When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a> ) or per country ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">here</a> ).</p>
-<p>If we don’t have the global carbon intensity or electricity of a country, but we have its electricity mix, we compute the carbon intensity of electricity using this table:</p>
-<table class="docutils align-center" id="id5">
-<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
+energy sources that are used to generate electricity, including fossil fuels and renewables. In this toolkit, the fossil fuels coal, petroleum, and natural gas are associated with specific carbon intensities: a known amount of carbon dioxide is emitted for each kilowatt-hour of electricity generated. Renewable or low-carbon fuels include solar power, hydroelectricity, biomass, geothermal, and more. The nearby energy grid contains a mixture of fossil fuels and low-carbon energy sources, called the Energy Mix. Based on the mix of energy sources in the local grid, the Carbon Intensity of the electricity consumed can be computed.</p>
+<a class="reference internal image-reference" href="_images/grid_energy_mix.png"><img alt="Grid Energy Mix" class="align-center" src="_images/grid_energy_mix.png" style="width: 350px; height: 300px;" />
+</a>
+<p>When available, CodeCarbon uses global carbon intensity of electricity per cloud provider ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a>) or per country ( <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">here</a> ).</p>
+<p>If we don’t have the global carbon intensity or electricity of a country, but we have its electricity mix, we used to compute the carbon intensity of electricity using this table:</p>
+<table class="docutils align-center" id="id2">
+<caption><span class="caption-text">Carbon Intensity Across Energy Sources</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
 <colgroup>
-<col style="width: 50%" />
-<col style="width: 50%" />
+<col style="width: 50.0%" />
+<col style="width: 50.0%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Energy Source</p></th>
@@ -168,55 +183,197 @@ energy sources that are used to generate electricity, including fossil fuels and
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
 </pre></div>
 </div>
-<p>If ever we have neither the global carbon intensity of a country nor it’s electricity mix, we apply a world avarage of 475 gCO2.eq/KWh ( <a class="reference external" href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">source</a> ).</p>
+<p>But it doesn’t happen anymore because Our World in Data now provides the global carbon intensity of electricity per country ( <a class="reference external" href="https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data">source</a> ). Some countries are missing data for last year, so we use the previous year data available.</p>
+<p>If ever we have neither the global carbon intensity of a country nor it’s electricity mix, we apply a world average of 475 gCO2.eq/KWh ( <a class="reference external" href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">source</a> ).</p>
 <p>As you can see, we try to be as accurate as possible in estimating carbon intensity of electricity. Still there is room for improvement and all contributions are welcome.</p>
 </section>
 <section id="power-usage">
 <h2>Power Usage<a class="headerlink" href="#power-usage" title="Link to this heading"></a></h2>
 <p>Power supply to the underlying hardware is tracked at frequent time intervals. This is a configurable parameter
-<code class="docutils literal notranslate"><span class="pre">measure_power_secs</span></code>, with default value 15 seconds, that can be passed when instantiating the emissions tracker.</p>
+<code class="docutils literal notranslate"><span class="pre">measure_power_secs</span></code>, with default value 15 seconds, that can be passed when instantiating the emissions’ tracker.</p>
 <p>Currently, the package supports the following hardware infrastructure.</p>
 <section id="gpu">
 <h3>GPU<a class="headerlink" href="#gpu" title="Link to this heading"></a></h3>
-<p>Tracks Nvidia GPUs energy consumption using <code class="docutils literal notranslate"><span class="pre">pynvml</span></code> library (installed with the package).</p>
+<p>Tracks Nvidia GPUs energy consumption using <code class="docutils literal notranslate"><span class="pre">nvidia-ml-py</span></code> library (installed with the package).</p>
 </section>
 <section id="ram">
 <h3>RAM<a class="headerlink" href="#ram" title="Link to this heading"></a></h3>
-<p>CodeCarbon uses a 3 Watts for 8 GB ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .
-This mesure is not satisfying and if ever you have an idea how to enhance it please do not hesitate to contribute.</p>
+<p>CodeCarbon v2 uses a 3 Watts for 8 GB ratio <a class="reference external" href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a> .</p>
+<p>But this is not a good measure because it doesn’t take into account the number of RAM slots used in the machine, that really drive the power consumption, not the amount of RAM.
+For example, in servers you could have thousands of GB of RAM but the power consumption would not be proportional to the amount of memory used, but to the number of memory modules used.</p>
+<p>Old machine could use 2 Mb memory stick, where modern servers will use 128 Mb memory stick.</p>
+<p>So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The energy consumption is calculated as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>RAM Power Consumption = 5 Watts * Number of RAM slots used
+</pre></div>
+</div>
+<p>But getting the number of RAM slots used is not possible as you need root access to get the number of RAM slots used. So we use an heuristic based on the RAM size.</p>
+<p>For example keep a minimum of 2 modules. Except for ARM CPU like rapsberry pi where we will consider a 3W constant. Then consider the max RAM per module is 128GB and that RAM module only exist in power of 2 (2, 4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the RAM by the number of modules used.</p>
+<ul class="simple">
+<li><p>For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the minimum power</p></li>
+<li><p>Base power per DIMM is 5W for x86 systems and 1.5W for ARM systems</p></li>
+<li><p>For standard systems (up to 4 DIMMs): linear scaling at full power per DIMM</p></li>
+<li><p>For medium systems (5-8 DIMMs): decreasing efficiency (90% power per additional DIMM)</p></li>
+<li><p>For large systems (9-16 DIMMs): further reduced efficiency (80% power per additional DIMM)</p></li>
+<li><p>For very large systems (17+ DIMMs): highest efficiency (70% power per additional DIMM)</p></li>
+<li><p>Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)</p></li>
+<li><p>Ensures at least 3W for ARM systems</p></li>
+</ul>
+<p>Example Power Estimates:</p>
+<ul class="simple">
+<li><p><strong>Small laptop (8GB RAM)</strong>: ~10W (2 DIMMs at 5W each)</p></li>
+<li><p><strong>Desktop (32GB RAM)</strong>: ~20W (4 DIMMs at 5W each)</p></li>
+<li><p><strong>Desktop (64GB RAM)</strong>: ~20W (4 DIMMs at 5W each), the same as 32GB</p></li>
+<li><p><strong>Small server (128GB RAM)</strong>: ~40W (8 DIMMs with efficiency scaling)</p></li>
+<li><p><strong>Large server (1TB RAM)</strong>: ~40W (using 8x128GB DIMMs with high efficiency scaling)</p></li>
+</ul>
+<p>This approach significantly improves the accuracy for large servers by recognizing that RAM power consumption doesn’t scale linearly with capacity, but rather with the number of physical modules. Since we don’t have direct access to the actual DIMM configuration, this heuristic provides a more reasonable estimate than the previous linear model.</p>
+<p>If you know the exact RAM power consumption of your system, then provide it using the <cite>force_ram_power</cite> parameter, which will override the automatic estimation.</p>
+<p>For example, in a Ubuntu machine, you can get the number of RAM slots used with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>lshw<span class="w"> </span>-C<span class="w"> </span>memory<span class="w"> </span>-short<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>DIMM
+
+/0/37/0<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/1<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/2<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/3<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+</pre></div>
+</div>
+<p>Here we count 4 RAM slots used, so the power consumption will be 4 x 5 = 20 Watts, just add <cite>force_ram_power=20</cite> to the init of CodeCarbon.</p>
 </section>
 <section id="cpu">
 <h3>CPU<a class="headerlink" href="#cpu" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><strong>On Windows or Mac</strong></p></li>
+<li><p><strong>On Windows or Mac (Intel)</strong></p></li>
 </ul>
-<p>Tracks Intel processors energy consumption using the <code class="docutils literal notranslate"><span class="pre">Intel</span> <span class="pre">Power</span> <span class="pre">Gadget</span></code>. You need to install it yourself from this <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a> .</p>
+<p>Tracks Intel processors energy consumption using the <code class="docutils literal notranslate"><span class="pre">Intel</span> <span class="pre">Power</span> <span class="pre">Gadget</span></code>. You need to install it yourself from this <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a> . But has been discontinued. There is a discussion about it on <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/457">github issues #457</a>.</p>
+<ul class="simple">
+<li><p><strong>Apple Silicon Chips (M1, M2)</strong></p></li>
+</ul>
+<p>Apple Silicon Chips contain both the CPU and the GPU.</p>
+<p>Codecarbon tracks Apple Silicon Chip energy consumption using <code class="docutils literal notranslate"><span class="pre">powermetrics</span></code>. It should be available natively on any mac.
+However, this tool is only usable with <code class="docutils literal notranslate"><span class="pre">sudo</span></code> rights and to our current knowledge, there are no other options to track the energy consumption of the Apple Silicon Chip without administrative rights
+(if you know of any solution for this do not hesitate and <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/">open an issue with your proposed solution</a>).</p>
+<p>To give sudo rights without having to enter a password each time, you can modify the sudoers file with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>visudo
+</pre></div>
+</div>
+<p>Then add the following line at the end of the file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>username<span class="w"> </span><span class="nv">ALL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">(</span>root<span class="o">)</span><span class="w"> </span>NOPASSWD:<span class="w"> </span>/usr/bin/powermetrics
+</pre></div>
+</div>
+<p>If you do not want to give sudo rights to your user, then CodeCarbon will fall back to constant mode to measure CPU energy consumption.</p>
 <ul class="simple">
 <li><p><strong>On Linux</strong></p></li>
 </ul>
-<p>Tracks Intel and AMD processor energy consumption from Intel RAPL files at <code class="docutils literal notranslate"><span class="pre">\sys\class\powercap\intel-rapl</span></code> ( <a class="reference external" href="https://web.eece.maine.edu/~vweaver/projects/rapl/">reference</a> ).
-All CPUs listed in this directory will be tracked. <a class="reference external" href="https://github.com/mlco2/codecarbon/issues/156">Help us improve this and make it configurable</a>.</p>
-<p><em>Note</em>: The Power Consumption will be tracked only if the RAPL files exist at the above mentioned path</p>
-<dl class="simple">
-<dt>If none of the tracking tools are available on a computing resource, CodeCarbon will be switched to a fall back mode:</dt><dd><ul class="simple">
-<li><p>It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).</p></li>
-<li><p>If the CPU is not found in the data source, a global constant will be applied. CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.</p></li>
-<li><p>We could not find any good resource showing statistical relationships between TDP and average power so we empirically tested that 50% is a decent approximation.</p></li>
-</ul>
-</dd>
-</dl>
-<p>The net Energy Used is the net power supply consumed during the compute time, measured as <code class="docutils literal notranslate"><span class="pre">kWh</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">Energy</span> <span class="pre">=</span> <span class="pre">Power</span> <span class="pre">*</span> <span class="pre">Time</span></code></p>
+<p>Tracks Intel and AMD processor energy consumption from Intel RAPL files at <code class="docutils literal notranslate"><span class="pre">/sys/class/powercap/intel-rapl/subsystem</span></code> ( <a class="reference external" href="https://web.eece.maine.edu/~vweaver/projects/rapl/">reference</a> ).
+All CPUs listed in this directory will be tracked.</p>
+<p><em>Note</em>: The Power Consumption will be tracked only if the RAPL files exist at the above-mentioned path and if the user has the necessary permissions to read them.</p>
 </section>
+</section>
+<section id="cpu-hardware">
+<h2>CPU hardware<a class="headerlink" href="#cpu-hardware" title="Link to this heading"></a></h2>
+<p>The CPU die is the processing unit itself. It’s a piece of semiconductor that has been sculpted/etched/deposited by various manufacturing processes into a net of logic blocks that do stuff that makes computing possible. The processor package is what you get when you buy a single processor. It contains one or more dies, plastic/ceramic housing for dies and gold-plated contacts that match those on your motherboard.</p>
+<p>In Linux kernel, energy_uj is a current energy counter in micro joules. It is used to measure CPU core’s energy consumption.</p>
+<p>Micro joules is then converted in kWh, with formulas kWh=energy * 10 ** (-6) * 2.77778e-7</p>
+<p>For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon will read two files :
+/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and /sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj</p>
+</section>
+<section id="rapl-metrics">
+<h2>RAPL Metrics<a class="headerlink" href="#rapl-metrics" title="Link to this heading"></a></h2>
+<p>RAPL (Running Average Power Limit) is a feature of modern processors that provides energy consumption measurements through hardware counters.</p>
+<p>See <a class="reference external" href="https://blog.chih.me/read-cpu-power-with-RAPL.html">https://blog.chih.me/read-cpu-power-with-RAPL.html</a> for more information.</p>
+<p>Despite the name “Intel RAPL”, it supports AMD processors since Linux kernel 5.8.</p>
+<p>Read more about how we use it in <a class="reference internal" href="rapl.html"><span class="doc">RAPL Metrics</span></a>.</p>
+</section>
+<section id="cpu-metrics-priority">
+<h2>CPU metrics priority<a class="headerlink" href="#cpu-metrics-priority" title="Link to this heading"></a></h2>
+<p>CodeCarbon will first try to read the energy consumption of the CPU from low level interface like RAPL or <code class="docutils literal notranslate"><span class="pre">powermetrics</span></code>.
+If none of the tracking tools are available, CodeCarbon will be switched to a fallback mode:</p>
+<ul class="simple">
+<li><p>It will first detect which CPU hardware is currently in use, and then map it to a data source listing 2000+ Intel and AMD CPUs and their corresponding thermal design powers (TDPs).</p></li>
+<li><p>If the CPU is not found in the data source, a global constant will be applied.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">psutil</span></code> is available, CodeCarbon will try to estimate the energy consumption from the TDP and the CPU load.</p></li>
+<li><p>CodeCarbon assumes that 50% of the TDP will be the average power consumption to make this approximation.</p></li>
+</ul>
+<p>Here is a drawing of the fallback mode:</p>
+<img alt="CPU Fallback" class="align-center" src="_images/cpu_fallback.png" />
+<p>The code doing this is available in <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L24">codecarbon/core/resource_tracker.py</a>.</p>
+<p>The net Energy Used is the net power supply consumed during the compute time, measured as <code class="docutils literal notranslate"><span class="pre">kWh</span></code>.</p>
+<p>We compute energy consumption as the product of the power consumed and the time the power was consumed for. The formula is:
+<code class="docutils literal notranslate"><span class="pre">Energy</span> <span class="pre">=</span> <span class="pre">Power</span> <span class="pre">*</span> <span class="pre">Time</span></code></p>
 </section>
 <section id="references">
 <h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
 <p><a class="reference external" href="https://arxiv.org/pdf/1911.08354.pdf">Energy Usage Reports: Environmental awareness as part of algorithmic accountability</a></p>
 <section id="how-codecarbon-works">
 <h3>How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Link to this heading"></a></h3>
-<p>CodeCarbon use a scheduler that, by default, call for the measure every 15 seconds so it has no significant overhead.</p>
+<p>CodeCarbon uses a scheduler that, by default, calls for a measure every 15 seconds, so it has no significant overhead.</p>
 <p>The measure itself is fast and CodeCarbon is designed to be as light as possible with a small memory footprint.</p>
 <p>The scheduler is started when the first <code class="docutils literal notranslate"><span class="pre">start</span></code> method is called and stopped when <code class="docutils literal notranslate"><span class="pre">stop</span></code> method is called.</p>
+<p>Another scheduler (_scheduler_monitor_power) is used to monitor only the power consumption of the hardware every second.
+It is needed for hardware that do not have energy counters but only instant power, like in CPU load mode.</p>
+</section>
+</section>
+<section id="estimation-of-equivalent-usage-emissions">
+<h2>Estimation of Equivalent Usage Emissions<a class="headerlink" href="#estimation-of-equivalent-usage-emissions" title="Link to this heading"></a></h2>
+<p>The CodeCarbon dashboard provides equivalent emissions and energy usage comparisons to help users better understand the carbon impact of their activities. These comparisons are based on the following assumptions:</p>
+<section id="car-usage">
+<h3>Car Usage<a class="headerlink" href="#car-usage" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Emission factor</strong>: <em>0.12 kgCO₂ per kilometer driven</em>.</p></li>
+<li><p>This value is derived from the average emissions of a European passenger car under normal driving conditions.</p></li>
+</ul>
+<p>Source : <a class="reference external" href="https://co2cars.apps.eea.europa.eu/?source=%7B%22track_total_hits%22%3Atrue%2C%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22constant_score%22%3A%7B%22filter%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22year%22%3A2023%7D%7D%5D%7D%7D%2C%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22scStatus%22%3A%22Provisional%22%7D%7D%5D%7D%7D%5D%7D%7D%7D%7D%5D%7D%7D%2C%22display_type%22%3A%22tabular%22%7D">European Environment Agency</a></p>
+</section>
+<section id="tv-usage">
+<h3>TV Usage<a class="headerlink" href="#tv-usage" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Energy consumption</strong>: <em>138 Wh per day based on average use</em>.</p></li>
+<li><p>This assumes:
+- An average daily usage of 6.5 hours.
+- A modern television with a power consumption of approximately <em>21.2 W per hour</em>.</p></li>
+</ul>
+<p>Source : <a class="reference external" href="https://agirpourlatransition.ademe.fr/particuliers/maison/economies-denergie-deau/electricite-combien-consomment-appareils-maison">The French Agency for Ecological Transition</a></p>
+</section>
+<section id="us-citizen-weekly-emissions">
+<h3>US Citizen Weekly Emissions<a class="headerlink" href="#us-citizen-weekly-emissions" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Annual emissions</strong>: <em>13.3 tons of CO₂ equivalent per year</em> for an average US citizen.</p></li>
+<li><p><strong>Weekly emissions</strong>: This value is divided by the 52 weeks in a year to estimate weekly emissions:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\text{Weekly Emissions} = \frac{\text{Annual Emissions (tons)}}{52}\]</div>
+<div class="math notranslate nohighlight">
+\[\text{Weekly Emissions} = \frac{13.3}{52} \approx 0.256 \, \text{tons of CO₂ equivalent per week.}\]</div>
+<p>Source : <a class="reference external" href="https://www.iea.org/data-and-statistics/charts/co2-total-emissions-per-capita-by-region-2000-2023">IEA CO2 total emissions per capita by region, 2000-2023</a></p>
+</section>
+<section id="calculation-formula">
+<h3>Calculation Formula<a class="headerlink" href="#calculation-formula" title="Link to this heading"></a></h3>
+<p>The equivalent emissions are calculated using this formula:</p>
+<div class="math notranslate nohighlight">
+\[\text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}\]</div>
+<p>For example:</p>
+<ul class="simple">
+<li><p><strong>Car Usage</strong>: <em>1 kWh</em> of energy consumption is approximately equivalent to:</p>
+<ul>
+<li><p><em>8.33 kilometers driven by a car</em> (<em>1 ÷ 0.12</em>).</p></li>
+<li><p><em>11.9 hours of TV usage</em> (<em>1 ÷ 0.084</em>), if emissions are considered.</p></li>
+</ul>
+</li>
+<li><p><strong>US Citizen Emissions</strong>:</p>
+<ul>
+<li><p><em>1 kWh</em> of energy consumption can be compared to a fraction of the average weekly emissions of a US citizen:</p></li>
+</ul>
+</li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\text{US Citizen Equivalent} = \frac{\text{Total Emissions (tons)}}{0.256}\]</div>
+<p>These estimates are approximate and subject to regional variations in:
+- Grid emissions intensity.
+- Vehicle efficiencies.</p>
+</section>
+<section id="source-code">
+<h3>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h3>
+<p>The emission factors used are defined in the <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts">CodeCarbon source code</a>. They are based on publicly available data and general assumptions.</p>
 </section>
 </section>
 </section>
@@ -226,7 +383,7 @@ All CPUs listed in this directory will be tracked. <a class="reference external"
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="motivation.html" class="btn btn-neutral float-left" title="Motivation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="model_examples.html" class="btn btn-neutral float-right" title="Model Comparisons" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="rapl.html" class="btn btn-neutral float-right" title="RAPL Metrics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
@@ -238,7 +395,7 @@ All CPUs listed in this directory will be tracked. <a class="reference external"
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
+   
 
 </footer>
         </div>
@@ -249,7 +406,7 @@ All CPUs listed in this directory will be tracked. <a class="reference external"
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
+  </script> 
 
 </body>
 </html>

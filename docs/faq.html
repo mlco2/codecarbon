@@ -1,36 +1,36 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Frequently Asked Questions &mdash; CodeCarbon 2.3.2 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+  <title>Frequently Asked Questions &mdash; CodeCarbon 3.2.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=67b02a41"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=dcedd534"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Installing CodeCarbon" href="installation.html" />
-    <link rel="prev" title="Model Comparisons" href="model_examples.html" />
+    <link rel="prev" title="Model Comparisons" href="model_examples.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
 
-
-
+          
+          
           <a href="index.html" class="icon icon-home">
             CodeCarbon
           </a>
@@ -46,6 +46,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methodology.html">Methodology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rapl.html">RAPL Metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="model_examples.html">Model Comparisons</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Frequently Asked Questions</a></li>
 </ul>
@@ -58,6 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="comet.html">Comet Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_installation.html">Advanced Installation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Logging</span></p>
 <ul>
@@ -89,7 +91,7 @@
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-
+             
   <section id="frequently-asked-questions">
 <span id="faq"></span><h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Link to this heading"></a></h1>
 <ul>
@@ -103,15 +105,15 @@
 <blockquote>
 <div><p>For cloud computing:</p>
 <ul class="simple">
-<li><p>Google publish carbon intensity of electricity for <a class="reference external" href="https://cloud.google.com/sustainability/region-carbon?hl=fr">Google Cloud Plateform</a>.</p></li>
+<li><p>Google publish carbon intensity of electricity for <a class="reference external" href="https://cloud.google.com/sustainability/region-carbon?hl=fr">Google Cloud Platform</a>.</p></li>
 <li><p>Unfortunately, Amazon has made a habit of keeping information about its carbon footprint out of public view. Although it released its global carbon footprint, it does not publish datacenter carbon footprints.</p></li>
 <li><p>Microsoft has a Sustainability Calculator that helps enterprises analyze the carbon emissions of their IT infrastructure. But does not publish datacenter carbon intensity.</p></li>
 </ul>
 <p>For private infra:</p>
 <ul class="simple">
 <li><p>When available we use data from <a class="reference external" href="https://ourworldindata.org/grapher/carbon-intensity-electricity?tab=table">ourworld in data</a></p></li>
-<li><p>if not available we use the electricity mix of the country find on <a class="reference external" href="https://www.globalpetrolprices.com/energy_mix.php">globalpetrolprices.com</a> that we multiply by the carbon intensity of the source of electricity (<a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json">that you can find here</a>)</p></li>
-<li><p>if we have neither we default to a world average of 475 gCO2.eq/KWh from <a class="reference external" href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">IEA</a>.</p></li>
+<li><p>If not available we use the electricity mix of the country find on <a class="reference external" href="https://www.globalpetrolprices.com/energy_mix.php">globalpetrolprices.com</a> that we multiply by the carbon intensity of the source of electricity (<a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json">that you can find here</a>)</p></li>
+<li><p>If we have neither we default to a world average of 475 gCO2.eq/KWh from <a class="reference external" href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">IEA</a>.</p></li>
 </ul>
 </div></blockquote>
 </dd>
@@ -123,7 +125,7 @@
 </dl>
 </li>
 <li><dl class="simple">
-<dt><strong>How can I help?</strong></dt><dd><p>If you find a functionality missing in the CodeCarbon repo, please <a class="reference external" href="https://github.com/mlco2/codecarbon/issues">open an issue</a> so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success.</p>
+<dt><strong>How can I help?</strong></dt><dd><p>If you find any functionality missing in the CodeCarbon repo, please <a class="reference external" href="https://github.com/mlco2/codecarbon/issues">open an issue</a> so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success.</p>
 </dd>
 </dl>
 </li>
@@ -147,7 +149,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
+   
 
 </footer>
         </div>
@@ -158,7 +160,7 @@
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
+  </script> 
 
 </body>
 </html>

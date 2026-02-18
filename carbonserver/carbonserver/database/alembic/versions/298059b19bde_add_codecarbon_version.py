@@ -1,10 +1,11 @@
-""" add codecarbon version
+"""add codecarbon version
 
 Revision ID: 298059b19bde
 Revises: edcd10edf11d
 Create Date: 2022-08-05 18:52:23.199306
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 

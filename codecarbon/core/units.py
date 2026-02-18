@@ -4,6 +4,8 @@ Provides functionality for unit conversions
 
 from dataclasses import dataclass, field
 
+# from pydantic.dataclasses import dataclass, field
+
 
 @dataclass
 class Time:
@@ -59,9 +61,15 @@ class Energy:
 
     kWh: float = field(compare=True)
 
+    def __post_init__(self):
+        self.kWh = float(self.kWh)
+
     @classmethod
     def from_power_and_time(cls, *, power: "Power", time: "Time") -> "Energy":
-        return cls(kWh=power.kW * time.hours)
+        assert isinstance(power.kW, float)
+        assert isinstance(time.hours, float)
+        energy = power.kW * time.hours
+        return cls(kWh=energy)
 
     @classmethod
     def from_ujoules(cls, energy: float) -> "Energy":
@@ -82,7 +90,9 @@ class Energy:
         return Energy(self.kWh + other.kWh)
 
     def __mul__(self, factor: float) -> "Energy":
-        return Energy(self.kWh * factor)
+        assert isinstance(self.kWh, float)
+        result = Energy(self.kWh * factor)
+        return result
 
     def __float__(self) -> float:
         return float(self.kWh)
@@ -126,7 +136,7 @@ class Power:
         Returns:
             Power: Resulting Power estimation
         """
-        delta_energy = abs(e2.kWh - e1.kWh)
+        delta_energy = float(abs(e2.kWh - e1.kWh))
         kW = delta_energy / delay.hours if delay.hours != 0.0 else 0.0
         return cls(kW=kW)
 
@@ -145,3 +155,25 @@ class Power:
 
     def __mul__(self, factor: float) -> "Power":
         return Power(self.kW * factor)
+
+    def __truediv__(self, divisor: float) -> "Power":
+        return Power(self.kW / divisor)
+
+    def __floordiv__(self, divisor: float) -> "Power":
+        return Power(self.kW // divisor)
+
+
+@dataclass
+class Water:
+    """
+    Measured in litres
+    """
+
+    litres: float
+
+    @classmethod
+    def from_litres(cls, litres: float) -> "Water":
+        return cls(litres=litres)
+
+    def __add__(self, other: "Water") -> "Water":
+        return Water(self.litres + other.litres)

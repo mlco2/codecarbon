@@ -15,7 +15,7 @@ class Task:
     def __init__(self, task_name):  # , task_measure
         self.task_id: str = task_name + uuid4().__str__()
         self.task_name: str = task_name
-        self.start_time = time.time()
+        self.start_time = time.perf_counter()
         self.is_active = True
 
     def out(self):
@@ -34,6 +34,7 @@ class Task:
             gpu_energy=self.emissions_data.gpu_energy,
             ram_energy=self.emissions_data.ram_energy,
             energy_consumed=self.emissions_data.energy_consumed,
+            water_consumed=self.emissions_data.water_consumed,
             country_name=self.emissions_data.country_name,
             country_iso_code=self.emissions_data.country_iso_code,
             region=self.emissions_data.region,

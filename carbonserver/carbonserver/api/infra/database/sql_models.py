@@ -3,7 +3,6 @@ import uuid
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import ARRAY
 
 from carbonserver.database.database import Base
 
@@ -22,7 +21,11 @@ class Emission(Base):
     gpu_energy = Column(Float)
     ram_energy = Column(Float)
     energy_consumed = Column(Float)
-    run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id"))
+    cpu_utilization_percent = Column(Float, nullable=True)
+    gpu_utilization_percent = Column(Float, nullable=True)
+    ram_utilization_percent = Column(Float, nullable=True)
+    wue = Column(Float, nullable=False, default=0)
+    run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"))
     run = relationship("Run", back_populates="emissions")
 
     def __repr__(self):
@@ -38,7 +41,9 @@ class Run(Base):
     __tablename__ = "runs"
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     timestamp = Column(DateTime)
-    experiment_id = Column(UUID(as_uuid=True), ForeignKey("experiments.id"))
+    experiment_id = Column(
+        UUID(as_uuid=True), ForeignKey("experiments.id", ondelete="CASCADE")
+    )
     os = Column(String, nullable=True)
     python_version = Column(String, nullable=True)
     codecarbon_version = Column(String, nullable=True)
@@ -53,7 +58,9 @@ class Run(Base):
     ram_total_size = Column(Float, nullable=True)
     tracking_mode = Column(String, nullable=True)
     experiment = relationship("Experiment", back_populates="runs")
-    emissions = relationship("Emission", back_populates="run")
+    emissions = relationship(
+        "Emission", back_populates="run", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return (
@@ -88,9 +95,13 @@ class Experiment(Base):
     on_cloud = Column(Boolean, default=False)
     cloud_provider = Column(String)
     cloud_region = Column(String)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
+    project_id = Column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE")
+    )
     project = relationship("Project", back_populates="experiments")
-    runs = relationship("Run", back_populates="experiment")
+    runs = relationship(
+        "Run", back_populates="experiment", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return (
@@ -110,36 +121,38 @@ class Project(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
-    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id"))
-    experiments = relationship("Experiment", back_populates="project")
-    team = relationship("Team", back_populates="projects")
+    public = Column(Boolean, default=False)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
+    experiments = relationship(
+        "Experiment", back_populates="project", cascade="all, delete-orphan"
+    )
+    organization = relationship("Organization", back_populates="projects")
+    project_tokens = relationship(
+        "ProjectToken", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return (
             f'<Project(id="{self.id}", '
             f'name="{self.name}", '
             f'description="{self.description}", '
-            f'team_id="{self.team_id}")>'
+            f'organization_id="{self.organization_id}", '
         )
 
 
-class Team(Base):
-    __tablename__ = "teams"
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    name = Column(String)
-    description = Column(String)
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id"))
-    projects = relationship("Project", back_populates="team")
-    api_key = Column(String)
-    organization = relationship("Organization", back_populates="teams")
-
-    def __repr__(self):
-        return (
-            f'<Team(id="{self.id}", '
-            f'name="{self.name}", '
-            f'description="{self.description}", '
-            f'organization_id="{self.organization_id}")>'
-        )
+class Membership(Base):
+    __tablename__ = "memberships"
+    organization_id = Column(
+        ForeignKey("organizations.id", ondelete="cascade"),
+        primary_key=True,
+    )  # ondelete='cascade'
+    user_id = Column(
+        ForeignKey("users.id", ondelete="cascade"),
+        primary_key=True,
+    )
+    is_admin = Column(Boolean, nullable=False, default=False)
+    organization = relationship("Organization", back_populates="users")
+    user = relationship("User", back_populates="organizations")
 
 
 class Organization(Base):
@@ -147,8 +160,8 @@ class Organization(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     description = Column(String)
-    api_key = Column(String)
-    teams = relationship("Team", back_populates="organization")
+    projects = relationship("Project", back_populates="organization")
+    users = relationship("Membership", back_populates="organization")
 
     def __repr__(self):
         return (
@@ -163,16 +176,43 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     name = Column(String)
     email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    api_key = Column(String)
     is_active = Column(Boolean, default=True)
-    teams = Column(ARRAY(String, as_tuple=False, dimensions=1))
-    organizations = Column(ARRAY(String, as_tuple=False, dimensions=1))
+    organizations = relationship("Membership", back_populates="user")
 
     def __repr__(self):
         return (
             f'<User(id="{self.id}", '
             f'name="{self.name}", '
             f'is_active="{self.is_active}", '
+            f"organizations={self.organizations}"
             f'email="{self.email}")>'
+        )
+
+
+class ProjectToken(Base):
+    __tablename__ = "project_tokens"
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    project_id = Column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE")
+    )
+    name = Column(String)
+    hashed_token = Column(String, nullable=False)
+    lookup_value = Column(
+        String, nullable=False
+    )  # This is the first 8 characters of the SHA-256 hash of the API key. Used for filtering faster
+    revoked = Column(Boolean, default=False)
+    project = relationship("Project", back_populates="project_tokens")
+    # Dates
+    last_used = Column(DateTime, nullable=True)
+    # Permissions
+    access = Column(Integer)
+
+    def __repr__(self):
+        return (
+            f'<ApiKey(project_id="{self.project_id}", '
+            f'hashed_token="{self.hashed_token}", '
+            f'name="{self.name}", '
+            f'revoked="{self.revoked}", '
+            f'last_used="{self.last_used}", '
+            f'access="{self.access}", '
         )

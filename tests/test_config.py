@@ -11,6 +11,7 @@ from codecarbon.core.config import (
     parse_gpu_ids,
 )
 from codecarbon.emissions_tracker import EmissionsTracker
+from codecarbon.external.hardware import GPU
 from tests.testutils import get_custom_mock_open
 
 
@@ -31,14 +32,16 @@ class TestConfig(unittest.TestCase):
 
     def test_parse_gpu_ids(self):
         for ids, target in [
-            ("0,1,2", [0, 1, 2]),
-            ("[0, 1, 2", [0, 1, 2]),
-            ("(0, 1, 2)", [0, 1, 2]),
-            ("[1]", [1]),
-            ("1", [1]),
-            ("0", [0]),
+            ("0,1,2", ["0", "1", "2"]),
+            ("[0, 1, 2", ["0", "1", "2"]),
+            ("(0, 1, 2)", ["0", "1", "2"]),
+            ("[1]", ["1"]),
+            ("1", ["1"]),
+            ("0", ["0"]),
+            ("MIG-f1e", ["MIG-f1e"]),
             ("", []),
-            (1, 1),
+            ([], []),
+            ([1, 2, 3], ["1", "2", "3"]),
         ]:
             self.assertEqual(parse_gpu_ids(ids), target)
 
@@ -53,7 +56,13 @@ class TestConfig(unittest.TestCase):
     def test_parse_env_config(self):
         self.assertDictEqual(
             parse_env_config(),
-            {"codecarbon": {"test": "test-VALUE", "test_key": "this_other_value"}},
+            {
+                "codecarbon": {
+                    "allow_multiple_runs": "True",
+                    "test": "test-VALUE",
+                    "test_key": "this_other_value",
+                }
+            },
         )
 
     def test_read_confs(self):
@@ -78,6 +87,7 @@ class TestConfig(unittest.TestCase):
         ):
             conf = dict(get_hierarchical_config())
             target = {
+                "allow_multiple_runs": "True",
                 "no_overwrite": "path/to/somewhere",
                 "local_overwrite": "SUCCESS:overwritten",
                 "syntax_test_key": "no/space= problem2",
@@ -91,6 +101,7 @@ class TestConfig(unittest.TestCase):
             "USER": "useless key",
             "CODECARBON_ENV_OVERWRITE": "SUCCESS:overwritten",
             "CODECARBON_ENV_NEW_KEY": "cool value",
+            "CODECARBON_ALLOW_MULTIPLE_RUNS": "True",
         },
     )
     def test_read_confs_and_parse_envs(self):
@@ -117,6 +128,7 @@ class TestConfig(unittest.TestCase):
         ):
             conf = dict(get_hierarchical_config())
             target = {
+                "allow_multiple_runs": "True",
                 "no_overwrite": "path/to/somewhere",
                 "local_overwrite": "SUCCESS:overwritten",
                 "env_overwrite": "SUCCESS:overwritten",
@@ -134,7 +146,8 @@ class TestConfig(unittest.TestCase):
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
             conf = dict(get_hierarchical_config())
-            target = {}
+            # allow_multiple_runs is set in pytest.ini and not mocked, so it's visible here.
+            target = {"allow_multiple_runs": "True"}
             self.assertDictEqual(conf, target)
 
     @mock.patch.dict(
@@ -150,6 +163,8 @@ class TestConfig(unittest.TestCase):
             """\
             [codecarbon]
             measure_power_secs=10
+            force_cpu_power=toto
+            force_ram_power=50.5
             output_dir=ERROR:not overwritten
             save_to_file=ERROR:not overwritten
             """
@@ -166,13 +181,54 @@ class TestConfig(unittest.TestCase):
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
         ):
-            tracker = EmissionsTracker(
-                project_name="test-project", co2_signal_api_token="signal-token"
-            )
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    project_name="test-project",
+                    electricitymaps_api_token="signal-token",
+                )
             self.assertEqual(tracker._measure_power_secs, 10)
+            self.assertEqual(tracker._force_cpu_power, None)
+            self.assertEqual(tracker._force_ram_power, 50.5)
             self.assertEqual(tracker._output_dir, "/success/overwritten")
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")
-            self.assertEqual(tracker._gpu_ids, [0, 1])
-            self.assertEqual(tracker._co2_signal_api_token, "signal-token")
+            self.assertEqual(tracker._gpu_ids, ["0", "1"])
+            self.assertEqual(tracker._electricitymaps_api_token, "signal-token")
             self.assertEqual(tracker._project_name, "test-project")
             self.assertTrue(tracker._save_to_file)
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "2, 3",
+        },
+    )
+    def test_gpu_ids_from_env(self):
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["2", "3"])
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "99",
+        },
+    )
+    def test_too_much_gpu_ids_in_env(self):
+        # GPU numbers start from 0, so 1 mean 2 GPUs
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["99"])
+        gpu_count = 0
+        for hardware in tracker._hardware:
+            if isinstance(hardware, GPU):
+                gpu_count += 1
+        # self.assertEqual(gpu_count, 0)
+        tracker.stop()
+
+
+if __name__ == "__main__":
+    unittest.main()
