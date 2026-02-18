@@ -30,12 +30,20 @@ def is_nvidia_system():
 try:
     import pynvml
 
+    pynvml.nvmlInit()
     PYNVML_AVAILABLE = True
 except ImportError:
     if is_nvidia_system():
         logger.warning(
             "Nvidia GPU detected but pynvml is not available. "
             "Please install pynvml to get GPU metrics."
+        )
+    PYNVML_AVAILABLE = False
+except Exception:
+    if is_nvidia_system():
+        logger.warning(
+            "Nvidia GPU detected but pynvml initialization failed. "
+            "Please ensure NVIDIA drivers are properly installed."
         )
     PYNVML_AVAILABLE = False
 
@@ -365,7 +373,7 @@ class AllGPUDevices:
             self.device_count = 0
         self.devices = []
 
-        if gpu_details_available and PYNVML_AVAILABLE:
+        if PYNVML_AVAILABLE:
             logger.debug("PyNVML available. Starting setup")
             pynvml.nvmlInit()
             nvidia_devices_count = pynvml.nvmlDeviceGetCount()
@@ -374,14 +382,24 @@ class AllGPUDevices:
                 nvidia_gpu_device = NvidiaGPUDevice(handle=handle, gpu_index=i)
                 self.devices.append(nvidia_gpu_device)
 
-        if is_rocm_system() and AMDSMI_AVAILABLE:
+        if AMDSMI_AVAILABLE:
             logger.debug("AMDSMI available. Starting setup")
-            amdsmi.amdsmi_init()
-            amd_devices_handles = amdsmi.amdsmi_get_processor_handles()
-            for i, handle in enumerate(amd_devices_handles):
-                amd_gpu_device = AMDGPUDevice(handle=handle, gpu_index=i)
-                self.devices.append(amd_gpu_device)
-
+            try:
+                amdsmi.amdsmi_init()
+                amd_devices_handles = amdsmi.amdsmi_get_processor_handles()
+                if len(amd_devices_handles) == 0:
+                    print(
+                        "No AMD GPUs foundon machine with amdsmi_get_processor_handles() !"
+                    )
+                else:
+                    for i, handle in enumerate(amd_devices_handles):
+                        logger.debug(
+                            f"Found AMD GPU device with handle {handle} and index {i} : {amdsmi.amdsmi_get_gpu_device_uuid(handle)}"
+                        )
+                        amd_gpu_device = AMDGPUDevice(handle=handle, gpu_index=i)
+                        self.devices.append(amd_gpu_device)
+            except amdsmi.AmdSmiException as e:
+                logger.warning(f"Failed to initialize AMDSMI: {e}", exc_info=True)
         self.device_count = len(self.devices)
 
     def get_gpu_static_info(self) -> List:
@@ -466,9 +484,4 @@ class AllGPUDevices:
 
 def is_gpu_details_available() -> bool:
     """Returns True if the GPU details are available."""
-    try:
-        pynvml.nvmlInit()
-        return True
-
-    except pynvml.NVMLError:
-        return False
+    return PYNVML_AVAILABLE or AMDSMI_AVAILABLE
