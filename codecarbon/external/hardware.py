@@ -82,8 +82,8 @@ class GPU(BaseHardware):
             sum(
                 [
                     gpu_details["delta_energy_consumption"].kWh
-                    for idx, gpu_details in enumerate(all_gpu_details)
-                    if idx in gpu_ids
+                    for gpu_details in all_gpu_details
+                    if gpu_details["gpu_index"] in gpu_ids
                 ]
             )
         )
@@ -91,8 +91,8 @@ class GPU(BaseHardware):
             sum(
                 [
                     gpu_details["power_usage"].kW
-                    for idx, gpu_details in enumerate(all_gpu_details)
-                    if idx in gpu_ids
+                    for gpu_details in all_gpu_details
+                    if gpu_details["gpu_index"] in gpu_ids
                 ]
             )
         )
@@ -111,6 +111,7 @@ class GPU(BaseHardware):
             monitored_gpu_ids = []
 
             for gpu_id in self.gpu_ids:
+                logger.debug(f"Processing GPU ID: '{gpu_id}' (type: {type(gpu_id)})")
                 found_gpu_id = False
                 # Does it look like an index into the number of GPUs on the system?
                 if isinstance(gpu_id, int) or gpu_id.isdigit():
@@ -118,6 +119,10 @@ class GPU(BaseHardware):
                     if 0 <= gpu_id < self.num_gpus:
                         monitored_gpu_ids.append(gpu_id)
                         found_gpu_id = True
+                    else:
+                        logger.warning(
+                            f"GPU ID {gpu_id} out of range [0, {self.num_gpus})"
+                        )
                 # Does it match a prefix of any UUID on the system after stripping any 'MIG-'
                 # id prefix per https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-environment-variables ?
                 else:
@@ -136,6 +141,9 @@ class GPU(BaseHardware):
                     )
 
             monitored_gpu_ids = sorted(list(set(monitored_gpu_ids)))
+            logger.info(
+                f"Monitoring GPUs with indices: {monitored_gpu_ids} out of {self.num_gpus} total GPUs"
+            )
             self.gpu_ids = monitored_gpu_ids
             return monitored_gpu_ids
         else:
