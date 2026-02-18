@@ -22,9 +22,11 @@
 import os.path
 import sys
 from copy import copy, deepcopy
+from types import SimpleNamespace
 from unittest import TestCase, mock
 
 import pynvml as real_pynvml
+import pytest
 
 tc = TestCase()
 
@@ -85,6 +87,7 @@ class FakeGPUEnv:
             {
                 "name": "GeForce GTX 1080",
                 "uuid": "uuid-1",
+                "gpu_index": 0,
                 "total_memory": 1024,
                 "free_memory": 100,
                 "used_memory": 924,
@@ -103,6 +106,7 @@ class FakeGPUEnv:
             {
                 "name": "GeForce GTX 1080",
                 "uuid": "uuid-2",
+                "gpu_index": 1,
                 "total_memory": 1024,
                 "free_memory": 200,
                 "used_memory": 824,
@@ -386,3 +390,73 @@ class TestGpuNotAvailable:
         alldevices = AllGPUDevices()
 
         assert alldevices.get_gpu_static_info() == []
+
+
+class TestAmdGpu:
+    def test_reinit_on_amdsmi_not_initialized_error(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        class FakeAmdSmiLibraryException(Exception):
+            def __init__(self, ret_code):
+                self.ret_code = ret_code
+                super().__init__(
+                    f"Error code:\n        {ret_code} | AMDSMI_STATUS_NOT_INIT - Device not initialized"
+                )
+
+        call_counter = {"count": 0}
+
+        def flaky_vram_usage(_handle):
+            if call_counter["count"] == 0:
+                call_counter["count"] += 1
+                raise FakeAmdSmiLibraryException(32)
+            return {"vram_total": 1000, "vram_used": 250}
+
+        fake_amdsmi = SimpleNamespace(
+            amdsmi_exception=SimpleNamespace(
+                AmdSmiLibraryException=FakeAmdSmiLibraryException
+            ),
+            amdsmi_init=mock.MagicMock(),
+            amdsmi_get_gpu_vram_usage=mock.MagicMock(side_effect=flaky_vram_usage),
+        )
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            memory = device._get_memory_info()
+
+        assert fake_amdsmi.amdsmi_init.call_count == 1
+        assert fake_amdsmi.amdsmi_get_gpu_vram_usage.call_count == 2
+        assert memory.total == 1000 * 1024 * 1024
+        assert memory.used == 250 * 1024 * 1024
+        assert memory.free == 750 * 1024 * 1024
+
+    def test_no_reinit_on_other_amdsmi_library_error(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        class FakeAmdSmiLibraryException(Exception):
+            def __init__(self, ret_code):
+                self.ret_code = ret_code
+                super().__init__(
+                    f"Error code:\n        {ret_code} | SOME_OTHER_AMDSMI_ERROR"
+                )
+
+        fake_amdsmi = SimpleNamespace(
+            amdsmi_exception=SimpleNamespace(
+                AmdSmiLibraryException=FakeAmdSmiLibraryException
+            ),
+            amdsmi_init=mock.MagicMock(),
+            amdsmi_get_gpu_vram_usage=mock.MagicMock(
+                side_effect=FakeAmdSmiLibraryException(31)
+            ),
+        )
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            with pytest.raises(FakeAmdSmiLibraryException):
+                device._get_memory_info()
+
+        assert fake_amdsmi.amdsmi_init.call_count == 0
+        assert fake_amdsmi.amdsmi_get_gpu_vram_usage.call_count == 1

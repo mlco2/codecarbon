@@ -151,15 +151,15 @@ def count_cpus() -> int:
 
     try:
         logger.debug(
-            "SLURM environment detected for job {SLURM_JOB_ID}, running"
-            + " `scontrol show job $SLURM_JOB_ID` to count SLURM-available cpus."
+            f"SLURM environment detected for job {SLURM_JOB_ID}, running"
+            + f" `scontrol show job {SLURM_JOB_ID}` to count SLURM-available cpus."
         )
         scontrol = subprocess.check_output(
             [f"scontrol show job {SLURM_JOB_ID}"], shell=True
         ).decode()
     except subprocess.CalledProcessError:
         logger.warning(
-            "Error running `scontrol show job $SLURM_JOB_ID` "
+            f"Error running `scontrol show job {SLURM_JOB_ID}` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
         return psutil.cpu_count(logical=True)
@@ -168,18 +168,24 @@ def count_cpus() -> int:
 
     if len(num_cpus_matches) == 0:
         logger.warning(
-            "Could not find NumCPUs= after running `scontrol show job $SLURM_JOB_ID` "
+            f"Could not find NumCPUs= after running `scontrol show job {SLURM_JOB_ID}` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
         return psutil.cpu_count(logical=True)
 
     if len(num_cpus_matches) > 1:
         logger.warning(
-            "Unexpected output after running `scontrol show job $SLURM_JOB_ID` "
+            f"Unexpected output after running `scontrol show job {SLURM_JOB_ID}` "
             + "to count SLURM-available cpus. Using the machine's cpu count."
         )
         return psutil.cpu_count(logical=True)
 
     num_cpus = num_cpus_matches[0].replace("NumCPUs=", "")
     logger.debug(f"Detected {num_cpus} cpus available on SLURM.")
+
+    num_gpus_matches = re.findall(r"gres/gpu=\d+", scontrol)
+    if len(num_gpus_matches) > 0:
+        num_gpus = num_gpus_matches[0].replace("gres/gpu=", "")
+        logger.debug(f"Detected {num_gpus} gpus available on SLURM.")
+
     return int(num_cpus)
