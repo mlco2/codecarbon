@@ -50,6 +50,15 @@ except ImportError:
             "Please install amdsmi to get GPU metrics."
         )
     AMDSMI_AVAILABLE = False
+except AttributeError as e:
+    # In some environments, amdsmi may be present but not properly configured, leading to AttributeError when importing
+    logger.warning(
+        "AMD GPU detected but amdsmi is not properly configured. "
+        "Please ensure amdsmi is correctly installed to get GPU metrics."
+        "Tips : check consistency between Python amdsmi package and ROCm versions, and ensure AMD drivers are up to date."
+        f" Error: {e}"
+    )
+    AMDSMI_AVAILABLE = False
 
 
 @dataclass
@@ -248,52 +257,72 @@ class NvidiaGPUDevice(GPUDevice):
 
 class AMDGPUDevice(GPUDevice):
     def _get_total_energy_consumption(self):
-        """Returns energy in "Energy Status Units" which is equivalent to around 15.3 microjoules"""
-        energy_count = amdsmi.amdsmi_dev_get_energy_count(self.handle)
+        """Returns energy in millijoules. Energy Status Units is equivalent to around 15.3 microjoules."""
+        energy_count = amdsmi.amdsmi_get_energy_count(self.handle)
+        # energy_count contains 'power' and 'counter_resolution'
+        # Result is in uJ (microjoules), convert to mJ
         energy = energy_count["power"] * energy_count["counter_resolution"] / 1000
         return energy
 
     def _get_gpu_name(self):
         """Returns the name of the GPU device"""
-        name = amdsmi.amdsmi_get_board_info(self.handle)["manufacturer_name"]
+        try:
+            asic_info = amdsmi.amdsmi_get_gpu_asic_info(self.handle)
+            name = asic_info.get("market_name", "Unknown GPU")
+        except Exception:
+            name = "Unknown GPU"
         return self._to_utf8(name)
 
     def _get_uuid(self):
         """Returns the globally unique GPU device UUID"""
-        uuid = amdsmi.amdsmi_get_device_uuid(self.handle)
+        uuid = amdsmi.amdsmi_get_gpu_device_uuid(self.handle)
         return self._to_utf8(uuid)
 
     def _get_memory_info(self):
         """Returns memory info in bytes"""
-        memory_info = amdsmi.amdsmi_get_vram_usage(self.handle)
+        memory_info = amdsmi.amdsmi_get_gpu_vram_usage(self.handle)
         AMDMemory = namedtuple("AMDMemory", ["total", "used", "free"])
+        # vram_total and vram_used are already in MB
+        total_mb = memory_info["vram_total"]
+        used_mb = memory_info["vram_used"]
         return AMDMemory(
-            total=memory_info["vram_total"] * 1024 * 1024,
-            used=memory_info["vram_used"] * 1024 * 1024,
-            free=(memory_info["vram_total"] - memory_info["vram_used"]) * 1024 * 1024,
+            total=total_mb * 1024 * 1024,
+            used=used_mb * 1024 * 1024,
+            free=(total_mb - used_mb) * 1024 * 1024,
         )
 
     def _get_temperature(self):
-        """Returns degrees in the Celsius scale"""
-        return amdsmi.amdsmi_dev_get_temp_metric(
+        """Returns degrees in the Celsius scale. Returns temperature in millidegrees Celsius."""
+        # amdsmi_get_temp_metric returns temperature in millidegrees Celsius
+        temp_milli_celsius = amdsmi.amdsmi_get_temp_metric(
             self.handle,
             sensor_type=amdsmi.AmdSmiTemperatureType.EDGE,
             metric=amdsmi.AmdSmiTemperatureMetric.CURRENT,
         )
+        # Convert from millidegrees to degrees
+        return temp_milli_celsius // 1000
 
     def _get_power_usage(self):
         """Returns power usage in milliwatts"""
-        return (
-            amdsmi.amdsmi_get_power_measure(self.handle)["average_socket_power"] * 1000
-        )
+        # amdsmi_get_power_info returns power in watts, convert to milliwatts
+        power_info = amdsmi.amdsmi_get_power_info(self.handle)
+        return int(power_info["average_socket_power"] * 1000)
 
     def _get_power_limit(self):
         """Returns max power usage in milliwatts"""
-        return amdsmi.amdsmi_get_power_measure(self.handle)["power_limit"] * 1000
+        # Get power cap info which contains power_cap in uW (microwatts)
+        try:
+            power_cap_info = amdsmi.amdsmi_get_power_cap_info(self.handle)
+            # power_cap is in uW, convert to mW
+            return int(power_cap_info["power_cap"] / 1000)
+        except Exception:
+            logger.warning("Failed to retrieve gpu power cap", exc_info=True)
+            return None
 
     def _get_gpu_utilization(self):
         """Returns the % of utilization of the kernels during the last sample"""
-        return amdsmi.amdsmi_get_gpu_activity(self.handle)["gfx_activity"]
+        activity = amdsmi.amdsmi_get_gpu_activity(self.handle)
+        return activity["gfx_activity"]
 
     def _get_compute_mode(self):
         """Returns the compute mode of the GPU"""
@@ -301,26 +330,25 @@ class AMDGPUDevice(GPUDevice):
 
     def _get_compute_processes(self):
         """Returns the list of processes ids having a compute context on the device with the memory used"""
-        processes_handles = amdsmi.amdsmi_get_process_list(self.handle)
-        processes_infos = [
-            amdsmi.amdsmi_get_process_info(self.handle, p) for p in processes_handles
-        ]
-        return [
-            {"pid": p["pid"], "used_memory": p["memory_usage"]["vram_mem"]}
-            for p in processes_infos
-        ]
+        try:
+            processes = amdsmi.amdsmi_get_gpu_process_list(self.handle)
+            return [{"pid": p["pid"], "used_memory": p["mem"]} for p in processes]
+        except Exception:
+            logger.warning("Failed to retrieve gpu compute processes", exc_info=True)
+            return []
 
     def _get_graphics_processes(self):
         """Returns the list of processes ids having a graphics context on the device with the memory used"""
-        processes_handles = amdsmi.amdsmi_get_process_list(self.handle)
-        processes_infos = [
-            amdsmi.amdsmi_get_process_info(self.handle, p) for p in processes_handles
-        ]
-        return [
-            {"pid": p["pid"], "used_memory": p["memory_usage"]["vram_usage"]}
-            for p in processes_infos
-            if p["engine_usage"]["gfx"] > 0
-        ]
+        try:
+            processes = amdsmi.amdsmi_get_gpu_process_list(self.handle)
+            return [
+                {"pid": p["pid"], "used_memory": p["mem"]}
+                for p in processes
+                if p["engine_usage"].get("gfx", 0) > 0
+            ]
+        except Exception:
+            logger.warning("Failed to retrieve gpu graphics processes", exc_info=True)
+            return []
 
 
 class AllGPUDevices:
@@ -349,7 +377,7 @@ class AllGPUDevices:
         if is_rocm_system() and AMDSMI_AVAILABLE:
             logger.debug("AMDSMI available. Starting setup")
             amdsmi.amdsmi_init()
-            amd_devices_handles = amdsmi.amdsmi_get_device_handles()
+            amd_devices_handles = amdsmi.amdsmi_get_processor_handles()
             for i, handle in enumerate(amd_devices_handles):
                 amd_gpu_device = AMDGPUDevice(handle=handle, gpu_index=i)
                 self.devices.append(amd_gpu_device)
