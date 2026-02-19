@@ -104,6 +104,9 @@ api  = [
     "rapidfuzz",
     "PyJWT",
     "logfire[fastapi]>=1.0.1",
+    "libcst",
+    "kaggle",
+    "python-multipart"
 ]
 dev = [
     "taskipy",
