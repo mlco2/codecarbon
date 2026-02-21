@@ -107,18 +107,7 @@ async def get_login(
         if settings.frontend_url != "":
             base_url = settings.frontend_url + "/"
         url = f"{base_url}home?auth=true&creds={creds}"
-
-        # NOTE: RedirectResponse doesn't work with clevercloud
-        # response = RedirectResponse(url=url)
-        content = f"""<html>
-        <head>
-        <script>
-        window.location.href = "{url}";
-        </script>
-        </head>
-        </html>
-        """
-        response = Response(content=content)
+        response = create_redirect_response(url)
 
         response.set_cookie(
             SESSION_COOKIE_NAME,
@@ -128,3 +117,38 @@ async def get_login(
         )
         return response
     return await auth_provider.get_authorize_url(request, str(login_url))
+
+
+@router.get("/auth/logout", name="logout")
+async def logout(
+    request: Request,
+    response: Response,
+):
+    """
+    Logout user by clearing session and removing cookie
+    """
+    base_url = request.base_url
+    response = create_redirect_response(f"{base_url}")
+    response.delete_cookie(SESSION_COOKIE_NAME)
+    if hasattr(request, "session"):
+        request.session.clear()
+
+    # TODO: also revoke the token at auth provider level if possible
+    return response
+
+
+def create_redirect_response(url: str) -> Response:
+    """RedirectResponse doesn't work with clevercloud, so we return a HTML page with a script to redirect the user
+
+    Ideally we should be able to do `response = RedirectResponse(url=url)` instead.
+    """
+    content = f"""<html>
+        <head>
+        <script>
+        window.location.href = "{url}";
+        </script>
+        </head>
+        </html>
+        """
+    response = Response(content=content)
+    return response
