@@ -1,25 +1,19 @@
-import json
 import os
 import signal
 import sys
 import time
-import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Optional
-from urllib.parse import parse_qs, urlparse
 
 import questionary
 import requests
 import typer
-from authlib.common.security import generate_token
-from authlib.integrations.requests_client import OAuth2Session
-from authlib.oauth2.rfc7636 import create_s256_code_challenge
 from rich import print
 from rich.prompt import Confirm
 from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
+from codecarbon.cli.auth import authorize, get_access_token
 from codecarbon.cli.cli_utils import (
     create_new_config_file,
     get_api_endpoint,
@@ -27,18 +21,11 @@ from codecarbon.cli.cli_utils import (
     get_existing_local_exp_id,
     overwrite_local_config,
 )
+from codecarbon.cli.monitor import run_and_monitor
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 
-AUTH_CLIENT_ID = os.environ.get(
-    "AUTH_CLIENT_ID",
-    "jsUPWIcUECQFE_ouanUuVhXx52TTjEVcVNNtNGeyAtU",
-)
-AUTH_SERVER_WELL_KNOWN = os.environ.get(
-    "AUTH_SERVER_WELL_KNOWN",
-    "https://auth.codecarbon.io/codecarbon/.well-known/openid-configuration",
-)
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
@@ -84,7 +71,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
     d = get_config(path)
     api_endpoint = get_api_endpoint(path)
     api = ApiClient(endpoint_url=api_endpoint)
-    api.set_access_token(_get_access_token())
+    api.set_access_token(get_access_token())
     print("Current configuration : \n")
     print("Config file content : ")
     print(d)
@@ -120,126 +107,6 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         )
 
 
-_REDIRECT_PORT = 8090
-_REDIRECT_URI = f"http://localhost:{_REDIRECT_PORT}/callback"
-_CREDENTIALS_FILE = Path("./credentials.json")
-
-
-class _CallbackHandler(BaseHTTPRequestHandler):
-    """HTTP handler that captures the OAuth2 authorization callback."""
-
-    callback_url = None
-    error = None
-
-    def do_GET(self):
-        _CallbackHandler.callback_url = f"http://localhost:{_REDIRECT_PORT}{self.path}"
-        parsed = urlparse(self.path)
-        params = parse_qs(parsed.query)
-
-        if "error" in params:
-            _CallbackHandler.error = params["error"][0]
-            self.send_response(400)
-            self.send_header("Content-Type", "text/html")
-            self.end_headers()
-            msg = params.get("error_description", [params["error"][0]])[0]
-            self.wfile.write(
-                f"<html><body><h1>Login failed</h1><p>{msg}</p></body></html>".encode()
-            )
-        else:
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.end_headers()
-            self.wfile.write(
-                b"<html><body><h1>Login successful!</h1>"
-                b"<p>You can close this window.</p></body></html>"
-            )
-
-    def log_message(self, format, *args):
-        pass  # Suppress server logs
-
-
-def _discover_endpoints():
-    """Fetch OpenID Connect discovery document."""
-    resp = requests.get(AUTH_SERVER_WELL_KNOWN)
-    resp.raise_for_status()
-    return resp.json()
-
-
-def _authorize():
-    """Run the OAuth2 Authorization Code flow with PKCE."""
-    discovery = _discover_endpoints()
-
-    session = OAuth2Session(
-        client_id=AUTH_CLIENT_ID,
-        redirect_uri=_REDIRECT_URI,
-        scope="openid offline_access",
-        token_endpoint_auth_method="none",
-    )
-
-    code_verifier = generate_token(48)
-    code_challenge = create_s256_code_challenge(code_verifier)
-
-    uri, state = session.create_authorization_url(
-        discovery["authorization_endpoint"],
-        code_challenge=code_challenge,
-        code_challenge_method="S256",
-    )
-
-    # Reset handler state
-    _CallbackHandler.callback_url = None
-    _CallbackHandler.error = None
-
-    server = HTTPServer(("localhost", _REDIRECT_PORT), _CallbackHandler)
-
-    print("Opening browser for authentication...")
-    webbrowser.open(uri)
-
-    server.handle_request()
-    server.server_close()
-
-    if _CallbackHandler.error:
-        raise ValueError(f"Authorization failed: {_CallbackHandler.error}")
-
-    if not _CallbackHandler.callback_url:
-        raise ValueError("Authorization failed: no callback received")
-
-    token = session.fetch_token(
-        discovery["token_endpoint"],
-        authorization_response=_CallbackHandler.callback_url,
-        code_verifier=code_verifier,
-    )
-
-    _save_credentials(token)
-    return token
-
-
-def _save_credentials(tokens):
-    """Save OAuth tokens to credentials file."""
-    with open(_CREDENTIALS_FILE, "w") as f:
-        json.dump(tokens, f)
-
-
-def _load_credentials():
-    """Load OAuth tokens from credentials file."""
-    with open(_CREDENTIALS_FILE, "r") as f:
-        return json.load(f)
-
-
-def _get_access_token():
-    try:
-        creds = _load_credentials()
-        return creds["access_token"]
-    except Exception as e:
-        raise ValueError(
-            f"Not able to retrieve the access token, please run `codecarbon login` first! (error: {e})"
-        )
-
-
-def _get_id_token():
-    creds = _load_credentials()
-    return creds["id_token"]
-
-
 @codecarbon.command(
     "test-api", short_help="Make an authenticated GET request to an API endpoint"
 )
@@ -248,16 +115,16 @@ def api_get():
     ex: test-api
     """
     api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
-    api.set_access_token(_get_access_token())
+    api.set_access_token(get_access_token())
     organizations = api.get_list_organizations()
     print(organizations)
 
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
-    _authorize()
+    authorize()
     api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
-    access_token = _get_access_token()
+    access_token = get_access_token()
     api.set_access_token(access_token)
     api.check_auth()
 
@@ -270,7 +137,7 @@ def get_api_key(project_id: str):
             "name": "api token",
             "x_token": "???",
         },
-        headers={"Authorization": f"Bearer {_get_access_token()}"},
+        headers={"Authorization": f"Bearer {get_access_token()}"},
     )
     api_key = req.json()["token"]
     return api_key
@@ -279,7 +146,7 @@ def get_api_key(project_id: str):
 @codecarbon.command("get-token", short_help="Get project token")
 def get_token(project_id: str):
     # api = ApiClient(endpoint_url=API_URL) # TODO: get endpoint from config
-    # api.set_access_token(_get_access_token())
+    # api.set_access_token(get_access_token())
     token = get_api_key(project_id)
     print("Your token: " + token)
     print("Add it to the api_key field in your configuration file")
@@ -327,7 +194,7 @@ def config():
     )
     overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
     api = ApiClient(endpoint_url=api_endpoint)
-    api.set_access_token(_get_access_token())
+    api.set_access_token(get_access_token())
     organizations = api.get_list_organizations()
     org = questionary_prompt(
         "Pick existing organization from list or Create new organization ?",
