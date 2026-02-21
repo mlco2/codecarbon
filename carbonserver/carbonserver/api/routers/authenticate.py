@@ -120,9 +120,11 @@ async def get_login(
 
 
 @router.get("/auth/logout", name="logout")
+@inject
 async def logout(
     request: Request,
     response: Response,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
 ):
     """
     Logout user by clearing session and removing cookie
