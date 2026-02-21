@@ -1,0 +1,43 @@
+# Zensical Configuration for CodeCarbon Documentation
+site_name: CodeCarbon
+site_description: Track carbon emissions from computing
+site_url: https://mlco2.github.io/codecarbon/
+
+theme:
+  name: zensical
+  palette: 
+    - media: "(prefers-color-scheme: light)"
+      primary: teal
+      accent: teal
+    - media: "(prefers-color-scheme: dark)"
+      primary: teal
+      accent: teal
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - search.highlight
+    - search.share
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Examples: examples.md
+  - API: api.md
+  - Methodology: methodology.md
+  - FAQ: faq.md
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+  - search:
+      lang: en

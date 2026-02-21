@@ -1,0 +1,391 @@
+# Methodology
+
+Carbon dioxide (CO₂) emissions, expressed as kilograms of
+CO₂-equivalents \[CO₂eq\], are the product of two main factors :
+
+``` text
+C = Carbon Intensity of the electricity consumed for computation: quantified as g of CO₂ emitted per kilowatt-hour of electricity.
+
+E = Energy Consumed by the computational infrastructure: quantified as kilowatt-hours.
+```
+
+Carbon dioxide emissions (CO₂eq) can then be calculated as `C * E`
+
+## Carbon Intensity
+
+Carbon Intensity of the consumed electricity is calculated as a weighted
+average of the emissions from the different energy sources that are used
+to generate electricity, including fossil fuels and renewables. In this
+toolkit, the fossil fuels coal, petroleum, and natural gas are
+associated with specific carbon intensities: a known amount of carbon
+dioxide is emitted for each kilowatt-hour of electricity generated.
+Renewable or low-carbon fuels include solar power, hydroelectricity,
+biomass, geothermal, and more. The nearby energy grid contains a mixture
+of fossil fuels and low-carbon energy sources, called the Energy Mix.
+Based on the mix of energy sources in the local grid, the Carbon
+Intensity of the electricity consumed can be computed.
+
+![Grid Energy Mix](./_images/grid_energy_mix.png){.align-center
+width="350px" height="300px"}
+
+When available, CodeCarbon uses global carbon intensity of electricity
+per cloud provider (
+[here](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv))
+or per country (
+[here](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json)
+).
+
+If we don\'t have the global carbon intensity or electricity of a
+country, but we have its electricity mix, we used to compute the carbon
+intensity of electricity using this table:
+
+  -----------------------------------------------------------------------
+  Energy Source                       Carbon Intensity (kg/MWh)
+  ----------------------------------- -----------------------------------
+  Coal                                995
+
+  Petroleum                           816
+
+  Natural Gas                         743
+
+  Geothermal                          38
+
+  Hydroelectricity                    26
+
+  Nuclear                             29
+
+  Solar                               48
+
+  Wind                                26
+  -----------------------------------------------------------------------
+
+  : Carbon Intensity Across Energy Sources
+
+Sources:
+
+:   -   [for fossil
+        energies](https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2)
+    -   [for renewables
+        energies](http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf)
+
+Then, for example, if the Energy Mix of the Grid Electricity is 25%
+Coal, 35% Petroleum, 26% Natural Gas and 14% Nuclear:
+
+``` text
+Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
+```
+
+But it doesn\'t happen anymore because Our World in Data now provides
+the global carbon intensity of electricity per country (
+[source](https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data)
+). Some countries are missing data for last year, so we use the previous
+year data available.
+
+If ever we have neither the global carbon intensity of a country nor
+it\'s electricity mix, we apply a world average of 475 gCO2.eq/KWh (
+[source](https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions)
+).
+
+As you can see, we try to be as accurate as possible in estimating
+carbon intensity of electricity. Still there is room for improvement and
+all contributions are welcome.
+
+## Power Usage
+
+Power supply to the underlying hardware is tracked at frequent time
+intervals. This is a configurable parameter `measure_power_secs`, with
+default value 15 seconds, that can be passed when instantiating the
+emissions\' tracker.
+
+Currently, the package supports the following hardware infrastructure.
+
+### GPU
+
+Tracks Nvidia GPUs energy consumption using `nvidia-ml-py` library
+(installed with the package).
+
+### RAM
+
+CodeCarbon v2 uses a 3 Watts for 8 GB ratio
+[source](https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use)
+.
+
+But this is not a good measure because it doesn\'t take into account the
+number of RAM slots used in the machine, that really drive the power
+consumption, not the amount of RAM. For example, in servers you could
+have thousands of GB of RAM but the power consumption would not be
+proportional to the amount of memory used, but to the number of memory
+modules used.
+
+Old machine could use 2 Mb memory stick, where modern servers will use
+128 Mb memory stick.
+
+So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The
+energy consumption is calculated as follows:
+
+``` text
+RAM Power Consumption = 5 Watts * Number of RAM slots used
+```
+
+But getting the number of RAM slots used is not possible as you need
+root access to get the number of RAM slots used. So we use an heuristic
+based on the RAM size.
+
+For example keep a minimum of 2 modules. Except for ARM CPU like
+rapsberry pi where we will consider a 3W constant. Then consider the max
+RAM per module is 128GB and that RAM module only exist in power of 2 (2,
+4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the
+RAM by the number of modules used.
+
+-   For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the
+    minimum power
+-   Base power per DIMM is 5W for x86 systems and 1.5W for ARM systems
+-   For standard systems (up to 4 DIMMs): linear scaling at full power
+    per DIMM
+-   For medium systems (5-8 DIMMs): decreasing efficiency (90% power per
+    additional DIMM)
+-   For large systems (9-16 DIMMs): further reduced efficiency (80%
+    power per additional DIMM)
+-   For very large systems (17+ DIMMs): highest efficiency (70% power
+    per additional DIMM)
+-   Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)
+-   Ensures at least 3W for ARM systems
+
+Example Power Estimates:
+
+-   **Small laptop (8GB RAM)**: \~10W (2 DIMMs at 5W each)
+-   **Desktop (32GB RAM)**: \~20W (4 DIMMs at 5W each)
+-   **Desktop (64GB RAM)**: \~20W (4 DIMMs at 5W each), the same as 32GB
+-   **Small server (128GB RAM)**: \~40W (8 DIMMs with efficiency
+    scaling)
+-   **Large server (1TB RAM)**: \~40W (using 8x128GB DIMMs with high
+    efficiency scaling)
+
+This approach significantly improves the accuracy for large servers by
+recognizing that RAM power consumption doesn\'t scale linearly with
+capacity, but rather with the number of physical modules. Since we
+don\'t have direct access to the actual DIMM configuration, this
+heuristic provides a more reasonable estimate than the previous linear
+model.
+
+If you know the exact RAM power consumption of your system, then provide
+it using the [force_ram_power]{.title-ref} parameter, which will
+override the automatic estimation.
+
+For example, in a Ubuntu machine, you can get the number of RAM slots
+used with the following command:
+
+``` bash
+sudo lshw -C memory -short | grep DIMM
+
+/0/37/0                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+/0/37/1                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+/0/37/2                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+/0/37/3                                    memory         4GiB DIMM DDR4 Synchrone Unbuffered (Unregistered) 2400 MHz (0,4 ns)
+```
+
+Here we count 4 RAM slots used, so the power consumption will be 4 x 5 =
+20 Watts, just add [force_ram_power=20]{.title-ref} to the init of
+CodeCarbon.
+
+### CPU
+
+-   **On Windows or Mac (Intel)**
+
+Tracks Intel processors energy consumption using the
+`Intel Power Gadget`. You need to install it yourself from this
+[source](https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html)
+. But has been discontinued. There is a discussion about it on [github
+issues #457](https://github.com/mlco2/codecarbon/issues/457).
+
+-   **Apple Silicon Chips (M1, M2)**
+
+Apple Silicon Chips contain both the CPU and the GPU.
+
+Codecarbon tracks Apple Silicon Chip energy consumption using
+`powermetrics`. It should be available natively on any mac. However,
+this tool is only usable with `sudo` rights and to our current
+knowledge, there are no other options to track the energy consumption of
+the Apple Silicon Chip without administrative rights (if you know of any
+solution for this do not hesitate and [open an issue with your proposed
+solution](https://github.com/mlco2/codecarbon/issues/)).
+
+To give sudo rights without having to enter a password each time, you
+can modify the sudoers file with the following command:
+
+``` bash
+sudo visudo
+```
+
+Then add the following line at the end of the file:
+
+``` bash
+username ALL = (root) NOPASSWD: /usr/bin/powermetrics
+```
+
+If you do not want to give sudo rights to your user, then CodeCarbon
+will fall back to constant mode to measure CPU energy consumption.
+
+-   **On Linux**
+
+Tracks Intel and AMD processor energy consumption from Intel RAPL files
+at `/sys/class/powercap/intel-rapl/subsystem` (
+[reference](https://web.eece.maine.edu/~vweaver/projects/rapl/) ). All
+CPUs listed in this directory will be tracked.
+
+*Note*: The Power Consumption will be tracked only if the RAPL files
+exist at the above-mentioned path and if the user has the necessary
+permissions to read them.
+
+## CPU hardware
+
+The CPU die is the processing unit itself. It\'s a piece of
+semiconductor that has been sculpted/etched/deposited by various
+manufacturing processes into a net of logic blocks that do stuff that
+makes computing possible. The processor package is what you get when you
+buy a single processor. It contains one or more dies, plastic/ceramic
+housing for dies and gold-plated contacts that match those on your
+motherboard.
+
+In Linux kernel, energy_uj is a current energy counter in micro joules.
+It is used to measure CPU core\'s energy consumption.
+
+Micro joules is then converted in kWh, with formulas kWh=energy \* 10
+\*\* (-6) \* 2.77778e-7
+
+For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon
+will read two files :
+/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and
+/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj
+
+## RAPL Metrics
+
+RAPL (Running Average Power Limit) is a feature of modern processors
+that provides energy consumption measurements through hardware counters.
+
+See <https://blog.chih.me/read-cpu-power-with-RAPL.html> for more
+information.
+
+Despite the name \"Intel RAPL\", it supports AMD processors since Linux
+kernel 5.8.
+
+Read more about how we use it in `rapl`{.interpreted-text role="doc"}.
+
+## CPU metrics priority
+
+CodeCarbon will first try to read the energy consumption of the CPU from
+low level interface like RAPL or `powermetrics`. If none of the tracking
+tools are available, CodeCarbon will be switched to a fallback mode:
+
+-   It will first detect which CPU hardware is currently in use, and
+    then map it to a data source listing 2000+ Intel and AMD CPUs and
+    their corresponding thermal design powers (TDPs).
+-   If the CPU is not found in the data source, a global constant will
+    be applied.
+-   If `psutil` is available, CodeCarbon will try to estimate the energy
+    consumption from the TDP and the CPU load.
+-   CodeCarbon assumes that 50% of the TDP will be the average power
+    consumption to make this approximation.
+
+Here is a drawing of the fallback mode:
+
+![CPU Fallback](./_images/cpu_fallback.png){.align-center}
+
+The code doing this is available in
+[codecarbon/core/resource_tracker.py](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L24).
+
+The net Energy Used is the net power supply consumed during the compute
+time, measured as `kWh`.
+
+We compute energy consumption as the product of the power consumed and
+the time the power was consumed for. The formula is:
+`Energy = Power * Time`
+
+## References
+
+[Energy Usage Reports: Environmental awareness as part of algorithmic
+accountability](https://arxiv.org/pdf/1911.08354.pdf)
+
+### How CodeCarbon Works
+
+CodeCarbon uses a scheduler that, by default, calls for a measure every
+15 seconds, so it has no significant overhead.
+
+The measure itself is fast and CodeCarbon is designed to be as light as
+possible with a small memory footprint.
+
+The scheduler is started when the first `start` method is called and
+stopped when `stop` method is called.
+
+Another scheduler ([scheduler_monitor_power]{#scheduler_monitor_power})
+is used to monitor only the power consumption of the hardware every
+second. It is needed for hardware that do not have energy counters but
+only instant power, like in CPU load mode.
+
+## Estimation of Equivalent Usage Emissions
+
+The CodeCarbon dashboard provides equivalent emissions and energy usage
+comparisons to help users better understand the carbon impact of their
+activities. These comparisons are based on the following assumptions:
+
+### Car Usage
+
+-   **Emission factor**: *0.12 kgCO₂ per kilometer driven*.
+-   This value is derived from the average emissions of a European
+    passenger car under normal driving conditions.
+
+Source : [European Environment
+Agency](https://co2cars.apps.eea.europa.eu/?source=%7B%22track_total_hits%22%3Atrue%2C%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22constant_score%22%3A%7B%22filter%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22year%22%3A2023%7D%7D%5D%7D%7D%2C%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22scStatus%22%3A%22Provisional%22%7D%7D%5D%7D%7D%5D%7D%7D%7D%7D%5D%7D%7D%2C%22display_type%22%3A%22tabular%22%7D)
+
+### TV Usage
+
+-   **Energy consumption**: *138 Wh per day based on average use*.
+-   This assumes:
+    -   An average daily usage of 6.5 hours.
+    -   A modern television with a power consumption of approximately
+        *21.2 W per hour*.
+
+Source : [The French Agency for Ecological
+Transition](https://agirpourlatransition.ademe.fr/particuliers/maison/economies-denergie-deau/electricite-combien-consomment-appareils-maison)
+
+### US Citizen Weekly Emissions
+
+-   **Annual emissions**: *13.3 tons of CO₂ equivalent per year* for an
+    average US citizen.
+-   **Weekly emissions**: This value is divided by the 52 weeks in a
+    year to estimate weekly emissions:
+
+$$\text{Weekly Emissions} = \frac{\text{Annual Emissions (tons)}}{52}$$
+
+$$\text{Weekly Emissions} = \frac{13.3}{52} \approx 0.256 \, \text{tons of CO₂ equivalent per week.}$$
+
+Source : [IEA CO2 total emissions per capita by region,
+2000-2023](https://www.iea.org/data-and-statistics/charts/co2-total-emissions-per-capita-by-region-2000-2023)
+
+### Calculation Formula
+
+The equivalent emissions are calculated using this formula:
+
+$$\text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}$$
+
+For example:
+
+-   **Car Usage**: *1 kWh* of energy consumption is approximately
+    equivalent to:
+    -   *8.33 kilometers driven by a car* (*1 ÷ 0.12*).
+    -   *11.9 hours of TV usage* (*1 ÷ 0.084*), if emissions are
+        considered.
+-   **US Citizen Emissions**:
+    -   *1 kWh* of energy consumption can be compared to a fraction of
+        the average weekly emissions of a US citizen:
+
+$$\text{US Citizen Equivalent} = \frac{\text{Total Emissions (tons)}}{0.256}$$
+
+These estimates are approximate and subject to regional variations in: -
+Grid emissions intensity. - Vehicle efficiencies.
+
+### Source Code
+
+The emission factors used are defined in the [CodeCarbon source
+code](https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts).
+They are based on publicly available data and general assumptions.
