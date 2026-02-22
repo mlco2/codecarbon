@@ -18,8 +18,9 @@
    * [Debug in VS Code](#debug-in-vs-code)
    * [Coding style && Linting](#coding-style-linting)
    * [Dependencies management](#dependencies-management)
-   * [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
+   * [Build Documentation 🖨️](#build-documentation)
    * [Release process](#release-process)
+      + [Test the build in Docker](#test-the-build-in-docker)
 - [API and Dashboard](#api-and-dashboard)
    * [CSV Dashboard](#csv-dashboard)
    * [Web dashboard](#web-dashboard)
@@ -114,6 +115,12 @@ You can run the unit tests by running UV in the terminal when in the root packag
 
 ```sh
 uv run task test-package
+```
+
+Run a specific test file:
+
+```sh
+uv run python -m pytest tests/test_cpu.py
 ```
 
 You can also run a specific test:
@@ -260,8 +267,8 @@ Dependencies are defined in different places:
 -   In [uv.lock](uv.lock), those are the locked dependencies managed by UV, do not edit them.
 
 
-<!-- TOC --><a name="build-documentation-"></a>
-### <a name="documentation"></a>Build Documentation 🖨️
+<!-- TOC --><a name="build-documentation"></a>
+### Build Documentation 🖨️
 
 No software is complete without great documentation!
 To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
@@ -273,6 +280,31 @@ uv run --only-group doc task docs
 ```
 
 to regenerate the html files.
+
+### Rebase your branch on master 
+
+Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
+```sh
+# Be careful, this command will delete every local changes you have, make sure to commit or stash them before running it
+TARGET_BRANCH=master
+current_branch=$(git symbolic-ref --short HEAD)
+git switch $TARGET_BRANCH && git pull
+git switch $current_branch --force && git fetch origin $TARGET_BRANCH
+git rebase $TARGET_BRANCH
+```
+
+In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to master. This is because the commits from your branch are being applied to master, so they are incoming. In case of a merge, it's the opposite!
+
+Check if everything is fine:
+
+```sh
+git status
+```
+
+Push force
+```sh
+git push --force-with-lease
+```
 
 <!-- TOC --><a name="release-process"></a>
 ### Release process
@@ -288,6 +320,7 @@ to regenerate the html files.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
 
+<!-- TOC --><a name="test-the-build-in-docker"></a>
 #### Test the build in Docker
 
 If you want to check the build is working, you could run:

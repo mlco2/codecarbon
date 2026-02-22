@@ -6,6 +6,14 @@ on:
   pull_request:
     paths:
       - "codecarbon/**"
+      - "test/**"
+      - "pyproject.toml"
+      - "uv.lock"
+  push:
+    branches: [master]
+    paths:
+      - "codecarbon/**"
+      - "test/**"
       - "pyproject.toml"
       - "uv.lock"
 
@@ -28,7 +36,7 @@ jobs:
     - name: Test package
       run: uv run --python ${{ matrix.python-version }} task test-coverage
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
