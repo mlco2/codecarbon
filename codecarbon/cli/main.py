@@ -8,13 +8,12 @@ from typing import Optional
 import questionary
 import requests
 import typer
-from fief_client import Fief
-from fief_client.integrations.cli import FiefAuth
 from rich import print
 from rich.prompt import Confirm
 from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
+from codecarbon.cli.auth import authorize, get_access_token
 from codecarbon.cli.cli_utils import (
     create_new_config_file,
     get_api_endpoint,
@@ -27,13 +26,6 @@ from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 
-AUTH_CLIENT_ID = os.environ.get(
-    "AUTH_CLIENT_ID",
-    "jsUPWIcUECQFE_ouanUuVhXx52TTjEVcVNNtNGeyAtU",
-)
-AUTH_SERVER_URL = os.environ.get(
-    "AUTH_SERVER_URL", "https://auth.codecarbon.io/codecarbon"
-)
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
 DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
@@ -79,7 +71,7 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
     d = get_config(path)
     api_endpoint = get_api_endpoint(path)
     api = ApiClient(endpoint_url=api_endpoint)
-    api.set_access_token(_get_access_token())
+    api.set_access_token(get_access_token())
     print("Current configuration : \n")
     print("Config file content : ")
     print(d)
@@ -115,28 +107,6 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
         )
 
 
-def get_fief_auth():
-    fief = Fief(AUTH_SERVER_URL, AUTH_CLIENT_ID)
-    fief_auth = FiefAuth(fief, "./credentials.json")
-    return fief_auth
-
-
-def _get_access_token():
-    try:
-        access_token_info = get_fief_auth().access_token_info()
-        access_token = access_token_info["access_token"]
-        return access_token
-    except Exception as e:
-        raise ValueError(
-            f"Not able to retrieve the access token, please run `codecarbon login` first! (error: {e})"
-        )
-
-
-def _get_id_token():
-    id_token = get_fief_auth()._tokens["id_token"]
-    return id_token
-
-
 @codecarbon.command(
     "test-api", short_help="Make an authenticated GET request to an API endpoint"
 )
@@ -145,16 +115,16 @@ def api_get():
     ex: test-api
     """
     api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
-    api.set_access_token(_get_access_token())
+    api.set_access_token(get_access_token())
     organizations = api.get_list_organizations()
     print(organizations)
 
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
-    get_fief_auth().authorize()
+    authorize()
     api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
-    access_token = _get_access_token()
+    access_token = get_access_token()
     api.set_access_token(access_token)
     api.check_auth()
 
@@ -167,7 +137,7 @@ def get_api_key(project_id: str):
             "name": "api token",
             "x_token": "???",
         },
-        headers={"Authorization": f"Bearer {_get_access_token()}"},
+        headers={"Authorization": f"Bearer {get_access_token()}"},
     )
     api_key = req.json()["token"]
     return api_key
@@ -176,7 +146,7 @@ def get_api_key(project_id: str):
 @codecarbon.command("get-token", short_help="Get project token")
 def get_token(project_id: str):
     # api = ApiClient(endpoint_url=API_URL) # TODO: get endpoint from config
-    # api.set_access_token(_get_access_token())
+    # api.set_access_token(get_access_token())
     token = get_api_key(project_id)
     print("Your token: " + token)
     print("Add it to the api_key field in your configuration file")
@@ -224,7 +194,7 @@ def config():
     )
     overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
     api = ApiClient(endpoint_url=api_endpoint)
-    api.set_access_token(_get_access_token())
+    api.set_access_token(get_access_token())
     organizations = api.get_list_organizations()
     org = questionary_prompt(
         "Pick existing organization from list or Create new organization ?",
