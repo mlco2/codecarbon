@@ -281,6 +281,31 @@ uv run --only-group doc task docs
 
 to regenerate the html files.
 
+### Rebase your branch on master 
+
+Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
+```sh
+# Be careful, this command will delete every local changes you have, make sure to commit or stash them before running it
+TARGET_BRANCH=master
+current_branch=$(git symbolic-ref --short HEAD)
+git switch $TARGET_BRANCH && git pull
+git switch $current_branch --force && git fetch origin $TARGET_BRANCH
+git rebase $TARGET_BRANCH
+```
+
+In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to master. This is because the commits from your branch are being applied to master, so they are incoming. In case of a merge, it's the opposite!
+
+Check if everything is fine:
+
+```sh
+git status
+```
+
+Push force
+```sh
+git push --force-with-lease
+```
+
 <!-- TOC --><a name="release-process"></a>
 ### Release process
 
