@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional, Tuple
 from authlib.integrations.starlette_client import OAuth
 from authlib.jose import JsonWebKey
 from authlib.jose import jwt as jose_jwt
+from fastapi import Response
 from fief_client import FiefAsync
 
 from carbonserver.config import settings
@@ -81,3 +82,20 @@ class OIDCAuthProvider:
     async def get_user_info(self, access_token: str) -> Dict[str, Any]:
         decoded_token = await self._decode_token(access_token)
         return decoded_token
+
+    @staticmethod
+    def create_redirect_response(url: str) -> Response:
+        """RedirectResponse doesn't work with clevercloud, so we return a HTML page with a script to redirect the user
+
+        Ideally we should be able to do `response = RedirectResponse(url=url)` instead.
+        """
+        content = f"""<html>
+            <head>
+            <script>
+            window.location.href = "{url}";
+            </script>
+            </head>
+            </html>
+            """
+        response = Response(content=content)
+        return response
