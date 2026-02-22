@@ -2,12 +2,10 @@ import { z } from "zod";
 import { fetchApi } from "./client";
 import {
     Emission,
-    EmissionSchema,
     EmissionsTimeSeries,
     RunMetadata,
     RunMetadataSchema,
     RunReport,
-    RunReportSchema,
 } from "./schemas";
 
 export async function getRunMetadata(
@@ -85,39 +83,12 @@ export async function getEmissionsTimeSeries(
             ),
         ]);
 
-        const metadata: RunMetadata = {
-            timestamp: runMetadataData.timestamp,
-            experiment_id: runMetadataData.experiment_id,
-            os: runMetadataData.os,
-            python_version: runMetadataData.python_version,
-            codecarbon_version: runMetadataData.codecarbon_version,
-            cpu_count: runMetadataData.cpu_count,
-            cpu_model: runMetadataData.cpu_model,
-            gpu_count: runMetadataData.gpu_count,
-            gpu_model: runMetadataData.gpu_model,
-            longitude: runMetadataData.longitude,
-            latitude: runMetadataData.latitude,
-            region: runMetadataData.region,
-            provider: runMetadataData.provider,
-            ram_total_size: runMetadataData.ram_total_size,
-            tracking_mode: runMetadataData.tracking_mode,
-        };
-
         const emissions: Emission[] = emissionsData.items.map((item) => ({
+            ...item,
             emission_id: item.run_id,
-            timestamp: item.timestamp,
-            emissions_sum: item.emissions_sum,
-            emissions_rate: item.emissions_rate,
-            cpu_power: item.cpu_power,
-            gpu_power: item.gpu_power,
-            ram_power: item.ram_power,
-            cpu_energy: item.cpu_energy,
-            gpu_energy: item.gpu_energy,
-            ram_energy: item.ram_energy,
-            energy_consumed: item.energy_consumed,
         }));
 
-        return { runId, emissions, metadata };
+        return { runId, emissions, metadata: runMetadataData };
     } catch (error) {
         console.error("[getEmissionsTimeSeries] failed", error);
         return { runId, emissions: [], metadata: null };

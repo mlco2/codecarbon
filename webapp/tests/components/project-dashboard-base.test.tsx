@@ -15,6 +15,14 @@ if (!HTMLCanvasElement.prototype.getContext) {
     HTMLCanvasElement.prototype.getContext = (() => null) as never;
 }
 
+// Radix Select uses these APIs that jsdom doesn't implement.
+if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = () => false;
+}
+if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = () => {};
+}
+
 vi.mock("@/api/runs", () => ({
     getRunEmissionsByExperiment: vi.fn().mockResolvedValue([]),
     getEmissionsTimeSeries: vi.fn(),
@@ -63,7 +71,7 @@ describe("ProjectDashboardBase", () => {
         ).toBeInTheDocument();
     });
 
-    it("calls onExperimentClick with the row's id (not empty string)", async () => {
+    it("calls onExperimentClick with the picked id when an option is chosen", async () => {
         const onExperimentClick = vi.fn();
         renderWithRouter(
             <ProjectDashboardBase
@@ -79,25 +87,31 @@ describe("ProjectDashboardBase", () => {
                 ]}
             />,
         );
-        await userEvent.click(screen.getByTestId("experiment-row-exp-42"));
+        await userEvent.click(screen.getByTestId("experiment-select"));
+        await userEvent.click(screen.getByTestId("experiment-option-exp-42"));
         expect(onExperimentClick).toHaveBeenCalledWith("exp-42");
     });
 
-    it("filters out experiments with no id (defensive against bad data)", () => {
+    it("shows the selected experiment's description and id with a copy button", () => {
         renderWithRouter(
             <ProjectDashboardBase
                 {...baseProps}
+                selectedExperimentId="exp-42"
                 projectExperiments={[
                     {
-                        id: "",
-                        name: "Broken",
-                        description: "no id",
+                        id: "exp-42",
+                        name: "Run 1",
+                        description: "first run",
                         project_id: "p1",
                     },
                 ]}
             />,
         );
-        // Broken experiment shouldn't be rendered as a row.
-        expect(screen.queryByText("Broken")).not.toBeInTheDocument();
+        const details = screen.getByTestId("experiment-details");
+        expect(details).toHaveTextContent("first run");
+        expect(details).toHaveTextContent("exp-42");
+        expect(
+            screen.getByRole("button", { name: /copy experiment id/i }),
+        ).toBeInTheDocument();
     });
 });

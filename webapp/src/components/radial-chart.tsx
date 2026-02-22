@@ -1,6 +1,3 @@
-"use client";
-
-import { TrendingUp } from "lucide-react";
 import {
     Label,
     PolarGrid,
@@ -9,17 +6,14 @@ import {
     RadialBarChart,
 } from "recharts";
 
+import { Card, CardContent } from "@/components/ui/card";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
+    ChartConfig,
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from "@/components/ui/chart";
 
-export const description = "A radial chart with a custom shape";
 type chartDataType = {
     label: string;
     value: number;
@@ -68,7 +62,15 @@ export default function RadialChart({
                             className="first:fill-muted last:fill-background"
                             polarRadius={[86, 74]}
                         />
-                        <RadialBar dataKey="value" background />
+                        <ChartTooltip
+                            cursor={false}
+                            content={<ChartTooltipContent hideLabel />}
+                        />
+                        <RadialBar
+                            dataKey="value"
+                            background
+                            cursor="pointer"
+                        />
                         <PolarRadiusAxis
                             tick={false}
                             tickLine={false}

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/chart";
 import { exportExperimentsToCsv } from "@/utils/export";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { ExportCsvButton } from "./export-csv-button";
 
 interface ExperimentsBarChartProps {
@@ -47,37 +47,38 @@ export default function ExperimentsBarChart({
     localLoading = false,
     projectName,
 }: ExperimentsBarChartProps) {
-    const [selectedBar, setSelectedBar] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
 
-    const handleBarClick = (data: ExperimentReport, index: number) => {
-        onExperimentClick(data.experiment_id);
-    };
-    useEffect(() => {
-        const highlightedBar = experimentsReportData.findIndex(
-            (experiment) => experiment.experiment_id === selectedExperimentId,
-        );
-        setSelectedBar(highlightedBar);
-    }, [selectedExperimentId, experimentsReportData]);
+    const selectedBar = useMemo(
+        () =>
+            experimentsReportData.findIndex(
+                (experiment) =>
+                    experiment.experiment_id === selectedExperimentId,
+            ),
+        [experimentsReportData, selectedExperimentId],
+    );
 
-    const CustomBar = (props: any) => {
-        const { fill, x, y, width, height, index } = props;
-        const barFill =
-            selectedBar === index
-                ? "var(--color-desktop)"
-                : "var(--color-mobile)";
-        return (
-            <rect
-                x={x}
-                y={y}
-                width={width}
-                height={height}
-                fill={barFill}
-                onClick={() => handleBarClick(props.payload, index)}
-                cursor="pointer"
-            />
-        );
-    };
+    const CustomBar = useMemo(
+        () => (props: any) => {
+            const { x, y, width, height, index, payload } = props;
+            const barFill =
+                selectedBar === index
+                    ? "var(--color-desktop)"
+                    : "var(--color-mobile)";
+            return (
+                <rect
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    fill={barFill}
+                    onClick={() => onExperimentClick(payload.experiment_id)}
+                    cursor="pointer"
+                />
+            );
+        },
+        [selectedBar, onExperimentClick],
+    );
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">

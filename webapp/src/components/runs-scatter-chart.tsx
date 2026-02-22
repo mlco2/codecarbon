@@ -50,21 +50,24 @@ export default function RunsScatterChart({
     );
     const [isExporting, setIsExporting] = useState(false);
     useEffect(() => {
-        const fetchData = async () => {
+        let cancelled = false;
+        (async () => {
             const data = await getRunEmissionsByExperiment(
                 params.experimentId,
                 params.startDate,
                 params.endDate,
             );
-            // Sort the data by timestamp
+            if (cancelled) return;
             const sortedData = data.sort(
                 (a, b) =>
                     new Date(a.timestamp).getTime() -
                     new Date(b.timestamp).getTime(),
             );
             setExperimentsReportData(sortedData);
+        })();
+        return () => {
+            cancelled = true;
         };
-        fetchData();
     }, [params.experimentId, params.startDate, params.endDate]);
 
     // Add this custom tooltip function

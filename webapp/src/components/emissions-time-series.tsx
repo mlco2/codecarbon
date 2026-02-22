@@ -18,6 +18,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { ExportCsvButton } from "@/components/export-csv-button";
 import { getEmissionsTimeSeries } from "@/api/runs";
 import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
+import { format } from "date-fns";
 import { Cpu, HardDrive, Server } from "lucide-react";
 
 interface EmissionsTimeSeriesChartProps {
@@ -48,25 +49,30 @@ export default function EmissionsTimeSeriesChart({
         React.useState<keyof typeof chartConfig>("emissions_rate");
     const [emissionTimeSeries, setEmissionTimeSeries] =
         React.useState<EmissionsTimeSeries | null>(null);
-    const [isLoading, setIsLoading] = React.useState(true);
+    const [isLoading, setIsLoading] = React.useState(false);
 
     React.useEffect(() => {
-        async function fetchData() {
+        if (!runId) return;
+        let cancelled = false;
+        (async () => {
             setIsLoading(true);
             try {
                 const data = await getEmissionsTimeSeries(runId);
-                setEmissionTimeSeries(data);
+                if (!cancelled) setEmissionTimeSeries(data);
             } catch (error) {
                 console.error("Failed to fetch emissions time series:", error);
             } finally {
-                setIsLoading(false);
+                if (!cancelled) setIsLoading(false);
             }
-        }
-
-        if (runId) {
-            fetchData();
-        }
+        })();
+        return () => {
+            cancelled = true;
+        };
     }, [runId]);
+
+    if (!runId) {
+        return null;
+    }
 
     if (isLoading) {
         return <div>Loading...</div>;
@@ -196,13 +202,9 @@ export default function EmissionsTimeSeriesChart({
                                 axisLine={false}
                                 tickMargin={8}
                                 minTickGap={32}
-                                tickFormatter={(value) => {
-                                    const date = new Date(value);
-                                    return date.toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                    });
-                                }}
+                                tickFormatter={(value) =>
+                                    format(new Date(value), "MMM d, HH:mm")
+                                }
                             />
                             <YAxis
                                 tickLine={false}
@@ -213,15 +215,12 @@ export default function EmissionsTimeSeriesChart({
                                 content={
                                     <ChartTooltipContent
                                         className="w-[150px]"
-                                        labelFormatter={(value) => {
-                                            return new Date(
-                                                value,
-                                            ).toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                                year: "numeric",
-                                            });
-                                        }}
+                                        labelFormatter={(value) =>
+                                            format(
+                                                new Date(value),
+                                                "MMM d, yyyy HH:mm",
+                                            )
+                                        }
                                     />
                                 }
                             />

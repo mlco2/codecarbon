@@ -14,7 +14,7 @@ export function installMockFetch(): void {
 
     const apiBase = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
     const apiPathPrefix = apiBase
-        ? new URL(apiBase).pathname.replace(/\/$/, "")
+        ? (safeUrl(apiBase)?.pathname.replace(/\/$/, "") ?? "")
         : "";
     const realFetch = window.fetch.bind(window);
 
@@ -29,16 +29,26 @@ export function installMockFetch(): void {
                   ? input.toString()
                   : input.url;
 
-        const isApiCall = apiBase ? rawUrl.startsWith(apiBase) : false;
+        // With an explicit VITE_API_URL we only intercept requests aimed at
+        // it. With no VITE_API_URL (the default dev/mock setup), every
+        // same-origin fetch is treated as an API call — Vite's static
+        // assets are loaded via <script>/<link>/<img>, not fetch(), so
+        // this interception is safe.
+        const absoluteUrl = new URL(rawUrl, window.location.origin);
+        const isApiCall = apiBase
+            ? rawUrl.startsWith(apiBase)
+            : absoluteUrl.origin === window.location.origin;
 
         if (!isApiCall) return realFetch(input, init);
 
-        const url = new URL(rawUrl);
         const relPath =
-            apiPathPrefix && url.pathname.startsWith(apiPathPrefix)
-                ? url.pathname.slice(apiPathPrefix.length) || "/"
-                : url.pathname;
-        const relUrl = new URL(relPath + url.search, "http://mock.local");
+            apiPathPrefix && absoluteUrl.pathname.startsWith(apiPathPrefix)
+                ? absoluteUrl.pathname.slice(apiPathPrefix.length) || "/"
+                : absoluteUrl.pathname;
+        const relUrl = new URL(
+            relPath + absoluteUrl.search,
+            "http://mock.local",
+        );
         const method = (init?.method ?? "GET").toUpperCase();
         const parsedBody = parseBody(init?.body);
         const result = resolveMock(relUrl, method, parsedBody);
@@ -59,6 +69,14 @@ export function installMockFetch(): void {
     console.info(
         "[mock] fetch interceptor installed (VITE_USE_MOCK_DATA=true)",
     );
+}
+
+function safeUrl(value: string): URL | null {
+    try {
+        return new URL(value);
+    } catch {
+        return null;
+    }
 }
 
 function parseBody(body: BodyInit | null | undefined): unknown {

@@ -1,24 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DateRange } from "react-day-picker";
 import { ExperimentReport, Project, Experiment } from "@/api/schemas";
 import PublicProjectDashboard from "@/components/public-project-dashboard";
 import {
-    getEquivalentCarKm,
-    getEquivalentCitizenPercentage,
-    getEquivalentTvTime,
-} from "@/helpers/constants";
+    calculateConvertedValues,
+    calculateRadialChartData,
+    getDefaultConvertedValues,
+    getDefaultRadialChartData,
+} from "@/helpers/dashboard-calculations";
 import { fetchApi } from "@/api/client";
-import {
-    ProjectSchema,
-    ExperimentReportSchema,
-    ExperimentSchema,
-} from "@/api/schemas";
+import { getProjectEmissionsByExperiment } from "@/api/experiments";
+import { ProjectSchema, ExperimentSchema } from "@/api/schemas";
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getDefaultDateRange } from "@/helpers/date-utils";
+import { decryptProjectId } from "@/utils/crypto";
 
 export default function PublicProjectPage() {
     const { projectId: encryptedId } = useParams<{ projectId: string }>();
@@ -29,8 +28,7 @@ export default function PublicProjectPage() {
     const [projectId, setProjectId] = useState<string | null>(null);
     const [project, setProject] = useState<Project | null>(null);
 
-    const default_date = getDefaultDateRange();
-    const [date, setDate] = useState<DateRange>(default_date);
+    const [date, setDate] = useState<DateRange>(() => getDefaultDateRange());
     const [projectExperiments, setProjectExperiments] = useState<Experiment[]>(
         [],
     );
@@ -38,25 +36,32 @@ export default function PublicProjectPage() {
         ExperimentReport[]
     >([]);
 
-    const [radialChartData, setRadialChartData] = useState({
-        energy: { label: "kWh", value: 0 },
-        emissions: { label: "kg eq CO2", value: 0 },
-        duration: { label: "days", value: 0 },
-    });
-
-    const [runData, setRunData] = useState({
-        experimentId: "",
-        startDate: default_date.from.toISOString(),
-        endDate: default_date.to.toISOString(),
-    });
-    const [convertedValues, setConvertedValues] = useState({
-        citizen: "0",
-        transportation: "0",
-        tvTime: "0",
-    });
     const [selectedExperimentId, setSelectedExperimentId] =
         useState<string>("");
     const [selectedRunId, setSelectedRunId] = useState<string>("");
+
+    const radialChartData = useMemo(
+        () =>
+            experimentsReportData.length > 0
+                ? calculateRadialChartData(experimentsReportData)
+                : getDefaultRadialChartData(),
+        [experimentsReportData],
+    );
+    const convertedValues = useMemo(
+        () =>
+            experimentsReportData.length > 0
+                ? calculateConvertedValues(radialChartData)
+                : getDefaultConvertedValues(),
+        [experimentsReportData.length, radialChartData],
+    );
+    const runData = useMemo(
+        () => ({
+            experimentId: selectedExperimentId,
+            startDate: date.from?.toISOString() ?? "",
+            endDate: date.to?.toISOString() ?? "",
+        }),
+        [date, selectedExperimentId],
+    );
 
     const refreshExperimentList = useCallback(async () => {
         if (!projectId) return;
@@ -71,27 +76,54 @@ export default function PublicProjectPage() {
         }
     }, [projectId]);
 
-    // Decrypt the project ID via the backend
+    // Decrypt the project ID client-side. The encrypted token is computed
+    // with the same key in `ShareProjectButton`, so decryption is purely
+    // local — no backend round-trip required.
     useEffect(() => {
         const decrypt = async () => {
+            if (!encryptedId) return;
             try {
-                setIsLoading(true);
-                const result = await fetchApi(
-                    `/projects/public/${encryptedId}`,
-                    ProjectSchema,
-                );
-                setProjectId(result.id);
-                setProject(result);
-            } catch {
+                const decryptedId = await decryptProjectId(encryptedId);
+                setProjectId(decryptedId);
+            } catch (err) {
+                console.error("Failed to decrypt project ID:", err);
                 setError(
                     "Invalid project link or the project no longer exists.",
                 );
-            } finally {
                 setIsLoading(false);
             }
         };
         decrypt();
     }, [encryptedId]);
+
+    // Once we have the real project id, fetch the project. The backend
+    // already serves public projects through the regular endpoint without
+    // authentication.
+    useEffect(() => {
+        const fetchProjectData = async () => {
+            if (!projectId || project) return;
+            try {
+                setIsLoading(true);
+                const projectData = await fetchApi(
+                    `/projects/${projectId}`,
+                    ProjectSchema,
+                );
+                if (!projectData.public) {
+                    setError(
+                        "This project is not available for public viewing.",
+                    );
+                    return;
+                }
+                setProject(projectData);
+            } catch (err) {
+                console.error("Error fetching project:", err);
+                setError("Failed to load project data.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProjectData();
+    }, [projectId, project]);
 
     useEffect(() => {
         if (projectId && project) {
@@ -100,94 +132,37 @@ export default function PublicProjectPage() {
     }, [projectId, project, refreshExperimentList]);
 
     useEffect(() => {
-        async function fetchData() {
-            if (!projectId || !project) return;
-
+        if (!projectId || !project) return;
+        let cancelled = false;
+        (async () => {
             setIsLoading(true);
             try {
-                const report = await fetchApi(
-                    `/projects/${projectId}/experiments/sums?start_date=${date?.from?.toISOString()}&end_date=${date?.to?.toISOString()}`,
-                    ExperimentReportSchema.array(),
+                const report = await getProjectEmissionsByExperiment(
+                    projectId,
+                    date,
                 );
-
-                setExperimentsReportData(report);
-
-                const newRadialChartData = {
-                    energy: {
-                        label: "kWh",
-                        value: parseFloat(
-                            report
-                                .reduce(
-                                    (n, { energy_consumed }) =>
-                                        n + energy_consumed,
-                                    0,
-                                )
-                                .toFixed(2),
-                        ),
-                    },
-                    emissions: {
-                        label: "kg eq CO2",
-                        value: parseFloat(
-                            report
-                                .reduce((n, { emissions }) => n + emissions, 0)
-                                .toFixed(2),
-                        ),
-                    },
-                    duration: {
-                        label: "days",
-                        value: parseFloat(
-                            report
-                                .reduce(
-                                    (n, { duration }) => n + duration / 86400,
-                                    0,
-                                )
-                                .toFixed(2),
-                        ),
-                    },
-                };
-
-                setRadialChartData(newRadialChartData);
-
-                if (report.length > 0) {
-                    setRunData({
-                        experimentId: report[0]?.experiment_id ?? "",
-                        startDate: date?.from?.toISOString() ?? "",
-                        endDate: date?.to?.toISOString() ?? "",
-                    });
-                    setSelectedExperimentId(report[0]?.experiment_id ?? "");
-                }
-
-                setConvertedValues({
-                    citizen: getEquivalentCitizenPercentage(
-                        newRadialChartData.emissions.value,
-                    ).toFixed(2),
-                    transportation: getEquivalentCarKm(
-                        newRadialChartData.emissions.value,
-                    ).toFixed(2),
-                    tvTime: getEquivalentTvTime(
-                        newRadialChartData.energy.value,
-                    ).toFixed(2),
-                });
-            } catch (error) {
-                console.error("Error fetching data:", error);
+                if (!cancelled) setExperimentsReportData(report);
             } finally {
-                setIsLoading(false);
+                if (!cancelled) setIsLoading(false);
             }
-        }
-
-        if (projectId && project) {
-            fetchData();
-        }
+        })();
+        return () => {
+            cancelled = true;
+        };
     }, [projectId, project, date]);
 
-    const handleExperimentClick = useCallback((experimentId: string) => {
-        setSelectedExperimentId(experimentId);
-        setRunData((prevData) => ({ ...prevData, experimentId }));
-        setSelectedRunId("");
-    }, []);
+    const handleExperimentClick = useCallback(
+        (experimentId: string) => {
+            setSelectedExperimentId((current) =>
+                experimentId === current ? "" : experimentId,
+            );
+            setSelectedRunId("");
+        },
+        [],
+    );
 
     const handleRunClick = useCallback((runId: string) => {
-        setSelectedRunId(runId);
+        setSelectedRunId((current) => (runId === current ? "" : runId));
     }, []);
 
     if (isLoading && !project) {
