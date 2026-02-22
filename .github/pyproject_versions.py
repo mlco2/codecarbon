@@ -5,7 +5,6 @@ import argparse
 import logging
 import re
 import sys
-
 import tomllib
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
