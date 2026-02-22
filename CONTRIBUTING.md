@@ -4,32 +4,34 @@
 
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
-- [</a> Have a Question?](#have-a-question)
-- [</a> Found a Bug?](#found-a-bug)
-- [</a> Have a Feature Request?](#have-a-feature-request)
-- [Alternative ways of contributing](#alternative-ways-of-contributing)
-- [</a> Ready to Contribute!](#ready-to-contribute)
-   * [Installation](#installation)
-   * [Some UV commands](#some-uv-commands)
-   * [Tests](#tests)
-   * [Stress your computer](#stress-your-computer)
-   * [Update all dependancies](#update-all-dependancies)
-   * [Branching and Pull Requests](#branching-and-pull-requests)
-   * [Debug in VS Code](#debug-in-vs-code)
-   * [Coding style && Linting](#coding-style-linting)
-   * [Dependencies management](#dependencies-management)
-   * [<a name="documentation"></a>Build Documentation 🖨️](#build-documentation-)
-   * [Release process](#release-process)
-- [API and Dashboard](#api-and-dashboard)
-   * [CSV Dashboard](#csv-dashboard)
-   * [Web dashboard](#web-dashboard)
-   * [API](#api)
-   * [Test the API](#test-the-api)
-   * [Restore database from a production Backup](#restore-database-from-a-production-backup)
-   * [Deployment](#deployment)
-      + [API](#api-1)
-      + [Dashboard](#dashboard)
-- [License](#license)
+- [Contributing to Code Carbon](#contributing-to-code-carbon)
+  - [ Have a Question?](#-have-a-question)
+  - [ Found a Bug?](#-found-a-bug)
+  - [ Have a Feature Request?](#-have-a-feature-request)
+  - [Alternative ways of contributing](#alternative-ways-of-contributing)
+  - [ Ready to Contribute!](#-ready-to-contribute)
+    - [Installation](#installation)
+    - [Some UV commands](#some-uv-commands)
+    - [Tests](#tests)
+    - [Stress your computer](#stress-your-computer)
+    - [Update all dependancies](#update-all-dependancies)
+    - [Branching and Pull Requests](#branching-and-pull-requests)
+    - [Debug in VS Code](#debug-in-vs-code)
+    - [Coding style \&\& Linting](#coding-style--linting)
+    - [Dependencies management](#dependencies-management)
+    - [Build Documentation 🖨️](#build-documentation-️)
+    - [Release process](#release-process)
+      - [Test the build in Docker](#test-the-build-in-docker)
+  - [API and Dashboard](#api-and-dashboard)
+    - [CSV Dashboard](#csv-dashboard)
+    - [Web dashboard](#web-dashboard)
+    - [API](#api)
+    - [Test the API](#test-the-api)
+    - [Restore database from a production Backup](#restore-database-from-a-production-backup)
+    - [Deployment](#deployment)
+      - [API](#api-1)
+      - [Dashboard](#dashboard)
+  - [License](#license)
 
 <!-- TOC end -->
 
@@ -218,7 +220,7 @@ Here is the launch.json to be able to debug examples and tests:
 
 Then run opened test with this button:
 
-![vscode_debug](docs/edit/images/vscode_debug.png)
+![vscode_debug](docs/images/vscode_debug.png)
 
 
 <!-- TOC --><a name="coding-style-linting"></a>
@@ -264,15 +266,15 @@ Dependencies are defined in different places:
 ### <a name="documentation"></a>Build Documentation 🖨️
 
 No software is complete without great documentation!
-To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
+To make generating documentation easier, we use [Zensical](https://zensical.org/).
 
-In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run in root folder:
+In order to make changes, edit the `.md` files in the `/docs` folder, and then run in root folder:
 
 ```sh
 uv run --only-group doc task docs
 ```
 
-to regenerate the html files.
+to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
 
 <!-- TOC --><a name="release-process"></a>
 ### Release process

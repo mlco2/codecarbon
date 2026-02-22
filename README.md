@@ -1,4 +1,4 @@
-![banner](docs/edit/images/banner.png)
+![banner](docs/images/banner.png)
 
 Estimate and track carbon emissions from your computer, quantify and analyze their impact.
 
@@ -22,14 +22,18 @@ CodeCarbon websites:
 
 - [About CodeCarbon 💡](#about-codecarbon-)
 - [Quickstart 🚀](#quickstart-)
-    - [Installation 🔧](#installation-)
-    - [Start to estimate your impact 📏](#start-to-estimate-your-impact-)
-      - [Monitoring your whole machine](#monitoring-your-machine-)
-      - [In your python code](#in-your-python-code-)
-      - [Visualize](#visualize-)
+  - [Installation 🔧](#installation-)
+  - [Start to estimate your impact 📏](#start-to-estimate-your-impact-)
+    - [Without using the online dashboard](#without-using-the-online-dashboard)
+    - [With the online dashboard](#with-the-online-dashboard)
+    - [Monitoring your machine 💻](#monitoring-your-machine-)
+    - [Detecting your hardware 🔍](#detecting-your-hardware-)
+    - [In your Python code 🐍](#in-your-python-code-)
+  - [Visualize 📊](#visualize-)
 - [Contributing 🤝](#contributing-)
 - [How To Cite 📝](#how-to-cite-)
 - [Contact 📝](#contact-)
+  - [Star History](#star-history)
 
 # About CodeCarbon 💡
 
@@ -45,7 +49,7 @@ At **CodeCarbon**, we believe, along with Niels Bohr, that "Nothing exists until
 
 We created a Python package that estimates your hardware electricity power consumption (GPU + CPU + RAM) and we apply to it the carbon intensity of the region where the computing is done.
 
-![calculation Summary](docs/edit/images/calculation.png)
+![calculation Summary](docs/images/calculation.png)
 
 We explain more about this calculation in the [**Methodology**](https://mlco2.github.io/codecarbon/methodology.html#) section of the documentation.
 
@@ -128,7 +132,7 @@ There is other ways to use **codecarbon** package, please refer to the documenta
 ## Visualize 📊
 
 You can now visualize your experiment emissions on the [dashboard](https://dashboard.codecarbon.io/).
-![dashboard](docs/edit/images/dashboard.png)
+![dashboard](docs/images/dashboard.png)
 
 
 > Hope you enjoy your first steps monitoring your carbon computing impact!

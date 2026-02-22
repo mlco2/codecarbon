@@ -1,37 +1,37 @@
-# CodeCarbon
+# Track & reduce CO₂ emissions from your local computing
 
-![Banner](./_images/banner.png){: .align-center width="700px"}
+AI can benefit society in many ways, but given the energy needed to support the computing behind AI, these benefits can come at a high environmental price. Use CodeCarbon to track and reduce your CO₂ output from code running on your own hardware. For tracking emissions from remote GenAI API calls (OpenAI, Anthropic, etc.), see [EcoLogits](https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs).
+
+[**Get Started** →](getting-started/installation.md)
 
 ---
 
-## Welcome to CodeCarbon
+## What we are
 
-CodeCarbon is a Python library that helps you track and reduce the carbon emissions from your computing tasks.
+- **A lightweight, easy to use Python library** – Simple API to track emissions
+- **Open source, free & community driven** – Built by and for the community
+- **Effective visual outputs** – Put emissions in context with real-world equivalents
 
-## Quick Links
+## Computer emits CO₂. We started measuring how much
 
-| Section | Description |
-|---------|-------------|
-| [Installation](./installation/) | Get started with CodeCarbon |
-| [Usage](./usage/) | Learn how to use CodeCarbon |
-| [API Reference](./api/) | Full API documentation |
-| [Examples](./examples/) | Example usage patterns |
-| [Methodology](./methodology/) | How emissions are calculated |
+A single datacenter can consume large amounts of energy to run computing code. An innovative new tracking tool is designed to measure the climate impact of artificial intelligence.
 
-## Features
+*Kana Lottick, Silvia Susai, Sorelle Friedler, and Jonathan Wilson.* [Energy Usage Reports: Environmental awareness as part of algorithmic accountability](http://arxiv.org/abs/1911.08354). *NeurIPS Workshop on Tackling Climate Change with Machine Learning, 2019.*
 
-- **Easy Integration** - Simple API to track emissions
-- **Multiple Output Formats** - CSV, JSON, HTTP, Prometheus, Grafana
-- **Hardware Support** - CPU, GPU, cloud provider detection
-- **International** - Supports multiple countries and grid regions
+<div class="video-wrapper" markdown="1">
+<iframe src="https://player.vimeo.com/video/482564729" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+</div>
 
-## Installation
+## How it works
 
-```bash
-pip install codecarbon
-```
+1. **Download package** – `pip install codecarbon`
+2. **Embed the code** – Add a few lines to your script
+3. **Run and track** – Emissions are measured automatically
+4. **Visualize results** – See your impact in context
 
-## Quick Start
+## Seamless integration
+
+Only a few lines of code:
 
 ```python
 from codecarbon import EmissionsTracker
@@ -42,9 +42,16 @@ tracker.start()
 # Your code here
 
 emissions = tracker.stop()
-print(f"Emissions: {emissions} kg CO2")
+print(f"Emissions: {emissions} kg CO₂")
 ```
 
----
+## Quick links
 
-*For more details, see the [Usage Guide](./usage/).*
+| Section | Description |
+|---------|-------------|
+| [When to use CodeCarbon](introduction/when-to-use.md) | Local vs remote: CodeCarbon vs EcoLogits |
+| [Installation](getting-started/installation.md) | Get started with CodeCarbon |
+| [Usage](getting-started/usage.md) | Learn how to use CodeCarbon |
+| [API Reference](getting-started/api.md) | Full API documentation |
+| [Examples](getting-started/examples.md) | Example usage patterns |
+| [Methodology](introduction/methodology.md) | How emissions are calculated |
