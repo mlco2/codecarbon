@@ -107,18 +107,7 @@ async def get_login(
         if settings.frontend_url != "":
             base_url = settings.frontend_url + "/"
         url = f"{base_url}home?auth=true&creds={creds}"
-
-        # NOTE: RedirectResponse doesn't work with clevercloud
-        # response = RedirectResponse(url=url)
-        content = f"""<html>
-        <head>
-        <script>
-        window.location.href = "{url}";
-        </script>
-        </head>
-        </html>
-        """
-        response = Response(content=content)
+        response = auth_provider.create_redirect_response(url)
 
         response.set_cookie(
             SESSION_COOKIE_NAME,
@@ -128,3 +117,28 @@ async def get_login(
         )
         return response
     return await auth_provider.get_authorize_url(request, str(login_url))
+
+
+@router.get("/auth/logout", name="logout")
+@inject
+async def logout(
+    request: Request,
+    response: Response,
+    auth_user: UserWithAuthDependency = Depends(UserWithAuthDependency),
+    auth_provider: Optional[OIDCAuthProvider] = Depends(
+        Provide[ServerContainer.auth_provider]
+    ),
+):
+    """
+    Logout user by clearing session and removing cookie
+    """
+    if auth_provider is None:
+        raise HTTPException(status_code=501, detail="Authentication not configured")
+    base_url = request.base_url
+    response = auth_provider.create_redirect_response(str(base_url))
+    response.delete_cookie(SESSION_COOKIE_NAME)
+    if hasattr(request, "session"):
+        request.session.clear()
+
+    # TODO: also revoke the token at auth provider level if possible
+    return response

@@ -268,7 +268,7 @@ export default function NavBar({
                         <NavItem
                             onClick={() => {
                                 setSheetOpened?.(false);
-                                router.push("/logout");
+                                router.push("/auth/logout");
                             }}
                             isSelected={false}
                             paddingY={1.5}
