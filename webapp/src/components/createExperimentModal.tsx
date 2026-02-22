@@ -1,10 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { createExperiment } from "@/server-functions/experiments";
+import { useEffect, useRef, useState } from "react";
+import { createExperiment } from "@/api/experiments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Experiment } from "@/types/experiment";
+import { Label } from "@/components/ui/label";
+import { Experiment } from "@/api/schemas";
 import { Separator } from "./ui/separator";
 import { ClipboardCheck, ClipboardCopy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,6 +27,7 @@ export default function CreateExperimentModal({
     onExperimentCreated: () => void;
 }) {
     const [isCopied, setIsCopied] = useState(false);
+    const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isCreated, setIsCreated] = useState(false);
     const [experimentData, setExperimentData] = useState<Experiment>({
@@ -47,6 +47,10 @@ export default function CreateExperimentModal({
             });
         }
     }, [projectId, experimentData]);
+
+    useEffect(() => {
+        return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); };
+    }, []);
 
     const resetForm = () => {
         setExperimentData({
@@ -95,7 +99,7 @@ export default function CreateExperimentModal({
             .then(() => {
                 setIsCopied(true);
                 toast.success("Experiment ID copied to clipboard");
-                setTimeout(() => setIsCopied(false), 2000);
+                copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000);
             })
             .catch((err) => {
                 console.error("Failed to copy experiment id:", err);
@@ -114,7 +118,9 @@ export default function CreateExperimentModal({
                         <Separator className="my-4" />
                         <div className="space-y-4 py-2">
                             <div className="space-y-2">
+                                <Label htmlFor="experiment-name">Experiment Name</Label>
                                 <Input
+                                    id="experiment-name"
                                     type="text"
                                     value={experimentData.name}
                                     onChange={(e) =>
@@ -127,7 +133,9 @@ export default function CreateExperimentModal({
                                 />
                             </div>
                             <div className="space-y-2">
+                                <Label htmlFor="experiment-description">Experiment Description</Label>
                                 <Input
+                                    id="experiment-description"
                                     type="text"
                                     value={experimentData.description}
                                     onChange={(e) =>
@@ -170,6 +178,7 @@ export default function CreateExperimentModal({
                                 <Button
                                     variant="ghost"
                                     size="icon"
+                                    aria-label="Copy experiment ID"
                                     onClick={() =>
                                         handleCopy(createdExperiment?.id)
                                     }

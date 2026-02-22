@@ -1,13 +1,12 @@
-"use client";
-
 import { useState } from "react";
-import { createOrganization } from "@/server-functions/organizations";
+import { createOrganization } from "@/api/organizations";
 import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
-import { Organization } from "@/types/organization";
+import { Label } from "./ui/label";
+import { Organization } from "@/api/schemas";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import {
     Dialog,
     DialogContent,
@@ -38,7 +37,7 @@ const CreateOrganizationModal: React.FC<ModalProps> = ({
         description: "",
     });
     const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
+    const navigate = useNavigate();
 
     const handleSave = async () => {
         if (!formData.name.trim()) {
@@ -56,7 +55,7 @@ const CreateOrganizationModal: React.FC<ModalProps> = ({
                     setFormData({ name: "", description: "" });
                     onClose();
                     if (newOrganization) {
-                        router.push(`/${newOrganization.id}`);
+                        navigate(`/${newOrganization.id}`);
                         return newOrganization;
                     } else {
                         throw new Error("Failed to create organization");
@@ -88,28 +87,36 @@ const CreateOrganizationModal: React.FC<ModalProps> = ({
                 </DialogHeader>
                 <Separator className="my-4" />
                 <div className="grid gap-4 py-4">
-                    <Input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                name: e.target.value,
-                            })
-                        }
-                        placeholder="Organization Name"
-                    />
-                    <Input
-                        type="text"
-                        value={formData.description}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                description: e.target.value,
-                            })
-                        }
-                        placeholder="Organization Description"
-                    />
+                    <div className="space-y-2">
+                        <Label htmlFor="org-name">Organization Name</Label>
+                        <Input
+                            id="org-name"
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
+                            placeholder="Organization Name"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="org-description">Organization Description</Label>
+                        <Input
+                            id="org-description"
+                            type="text"
+                            value={formData.description}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    description: e.target.value,
+                                })
+                            }
+                            placeholder="Organization Description"
+                        />
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={handleClose}>

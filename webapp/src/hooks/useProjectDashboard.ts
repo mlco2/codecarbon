@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
-import { Experiment } from "@/types/experiment";
-import { ExperimentReport } from "@/types/experiment-report";
+import { Experiment, ExperimentReport } from "@/api/schemas";
 import {
     calculateConvertedValues,
     calculateRadialChartData,
@@ -10,7 +9,7 @@ import {
     getDefaultRadialChartData,
     RadialChartData,
 } from "@/helpers/dashboard-calculations";
-import { getExperiments } from "@/server-functions/experiments";
+import { getExperiments } from "@/api/experiments";
 
 export type RunData = {
     experimentId: string;

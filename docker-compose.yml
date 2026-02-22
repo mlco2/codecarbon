@@ -42,14 +42,11 @@ services:
   ui:
     build:
       context: ./webapp
-      dockerfile: dev.Dockerfile
+      dockerfile: Dockerfile
 
     # Set environment variables based on the .env file
     env_file:
       - ./webapp/.env.development
-    volumes:
-      - ./webapp/src:/app/src
-      - ./webapp/public:/app/public
     restart: always
     labels:
       - "traefik.enable=true"
