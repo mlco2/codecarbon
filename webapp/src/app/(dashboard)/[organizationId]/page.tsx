@@ -1,11 +1,25 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { use, useEffect, useState } from "react";
 
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import RadialChart from "@/components/radial-chart";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy-load chart to keep recharts off the critical path
+const RadialChart = dynamic(() => import("@/components/radial-chart"), {
+    loading: () => (
+        <Card className="flex flex-col h-full items-center justify-center">
+            <CardContent className="p-0">
+                <Skeleton className="h-44 w-44 rounded-full" />
+            </CardContent>
+        </Card>
+    ),
+    ssr: false,
+});
 import {
     getEquivalentCarKm,
     getEquivalentCitizenPercentage,
