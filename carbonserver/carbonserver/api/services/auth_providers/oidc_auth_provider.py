@@ -56,10 +56,6 @@ class OIDCAuthProvider:
 
     async def _decode_token(self, token: str) -> Dict[str, Any]:
         try:
-            LOGGER.debug(f"Jwks_data: {token}")
-            LOGGER.debug(f"Base url: {fief.base_url}")
-            LOGGER.debug(f"Client id: {fief.client_id}")
-            LOGGER.debug(f"User info: {await fief.userinfo(token)}")
             access_token_info = await fief.validate_access_token(token)
             return access_token_info
         except Exception as e:
@@ -67,12 +63,9 @@ class OIDCAuthProvider:
             ...
 
         jwks_data = await self.client.fetch_jwk_set()
-        LOGGER.debug(f"Jwks_data: {jwks_data}")
         keyset = JsonWebKey.import_key_set(jwks_data)
         claims = jose_jwt.decode(token, keyset)
         claims.validate()
-        LOGGER.debug(f"Decoded claims: {claims}")
-        LOGGER.debug(f"Claims validate: {claims.validate()}")
         return dict(claims)
 
     async def validate_access_token(self, token: str) -> bool:
@@ -82,6 +75,41 @@ class OIDCAuthProvider:
     async def get_user_info(self, access_token: str) -> Dict[str, Any]:
         decoded_token = await self._decode_token(access_token)
         return decoded_token
+
+    async def revoke_token(self, token: str) -> None:
+        """Revoke an access token at the OIDC provider (RFC 7009).
+        Best-effort — logs and swallows errors so logout always succeeds.
+        """
+        try:
+            metadata = await self.client.load_server_metadata()
+            revocation_endpoint = metadata.get("revocation_endpoint")
+            if not revocation_endpoint:
+                LOGGER.debug(
+                    "OIDC provider does not expose a revocation_endpoint, "
+                    "skipping token revocation"
+                )
+                return
+
+            async with self.client._get_oauth_client(**metadata) as client:
+                resp = await client.request(
+                    "POST",
+                    revocation_endpoint,
+                    withhold_token=True,
+                    data={
+                        "token": token,
+                        "token_type_hint": "access_token",
+                    },
+                )
+                if resp.status_code == 200:
+                    LOGGER.info("Access token revoked successfully")
+                else:
+                    LOGGER.warning(
+                        "Token revocation returned status %s: %s",
+                        resp.status_code,
+                        resp.text,
+                    )
+        except Exception as e:
+            LOGGER.warning("Token revocation failed (non-blocking): %s", e)
 
     @staticmethod
     def create_redirect_response(url: str) -> Response:
