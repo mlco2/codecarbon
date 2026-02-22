@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = { output: "standalone" };
+const nextConfig = {
+    output: "standalone",
+    experimental: {
+        optimizePackageImports: ["lucide-react", "recharts", "date-fns"],
+    },
+};
 
 export default nextConfig;
