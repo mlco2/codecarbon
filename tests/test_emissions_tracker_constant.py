@@ -113,7 +113,9 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         # Assert the content stored. cpu_power should be approximately load * min(TDP, forced CPU power)
         assertdf = pd.read_csv(self.emissions_file_path)
         tolerance = 350
-        self.assertLess(assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load + tolerance)
+        self.assertLess(
+            assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load + tolerance
+        )
         self.assertGreater(
             assertdf["cpu_power"][0], USER_INPUT_CPU_POWER * cpu_load - tolerance
         )
