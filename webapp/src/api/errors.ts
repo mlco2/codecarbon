@@ -31,7 +31,7 @@ export function handleError(error: unknown): void {
     }
     toast.error(error.message);
   } else if (error instanceof ValidationError) {
-    console.error(`[ValidationError] ${error.endpoint}:`, error.zodError.issues);
+    console.error("[ValidationError]", error.endpoint, error.zodError.issues);
     toast.error("Received unexpected data from the server");
   } else if (error instanceof Error) {
     toast.error(error.message);
