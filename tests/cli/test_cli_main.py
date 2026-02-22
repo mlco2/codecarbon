@@ -32,7 +32,7 @@ def test_version_flag():
 def test_api_get_calls_api_and_prints(monkeypatch):
     runner = CliRunner()
     monkeypatch.setattr(cli_main, "ApiClient", FakeApiClient)
-    monkeypatch.setattr(cli_main, "_get_access_token", fake_get_access_token)
+    monkeypatch.setattr(cli_main, "get_access_token", fake_get_access_token)
 
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
     assert result.exit_code == 0
