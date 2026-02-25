@@ -11,6 +11,8 @@ Online Mode
 When the environment has internet access, the ``EmissionsTracker`` object or the ``track_emissions`` decorator can be used, which has
 the ``offline`` parameter set to ``False`` by default.
 
+.. _usage-command-line:
+
 Command line
 ~~~~~~~~~~~~
 
