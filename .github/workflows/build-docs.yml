@@ -1,5 +1,8 @@
 name: Build Documentation
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [master, docs/port-to-zensical]
@@ -30,4 +33,4 @@ jobs:
         run: uv sync --group doc
 
       - name: Build docs
-        run: zensical build -f mkdocs.yml --clean
+        run: uv run zensical build -f mkdocs.yml --clean

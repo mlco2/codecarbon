@@ -18,7 +18,7 @@ on:
     types: [published]
 
 permissions:
-  contents: write  # read for checkout, write for push to gh-pages
+  contents: read
 
 concurrency:
   group: deploy-docs
@@ -27,6 +27,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push to gh-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,12 +53,12 @@ jobs:
             VERSION="${{ github.event.release.tag_name }}"
             VERSION="${VERSION#v}"
           else
-            VERSION=$(python -c "from codecarbon._version import __version__; print(__version__)")
+            VERSION=$(uv run python -c "from codecarbon._version import __version__; print(__version__)")
           fi
           echo "full=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build docs
-        run: zensical build -f mkdocs.yml --clean
+        run: uv run zensical build -f mkdocs.yml --clean
 
       - name: Deploy to GitHub Pages
         env:
