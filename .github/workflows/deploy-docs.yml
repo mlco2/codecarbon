@@ -11,6 +11,7 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+      - "scripts/deploy-docs.sh"
       - "codecarbon/_version.py"
       - "pyproject.toml"
   release:
@@ -38,7 +39,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: uv pip install zensical mike
+        run: pip install zensical mike
 
       - name: Get version
         id: version
