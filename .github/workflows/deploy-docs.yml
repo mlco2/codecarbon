@@ -33,13 +33,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
         with:
-          python-version: "3.11"
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Install dependencies
-        run: pip install zensical mike
+        run: uv sync --group doc
 
       - name: Get version
         id: version
