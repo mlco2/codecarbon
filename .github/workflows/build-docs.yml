@@ -4,81 +4,30 @@ on:
   push:
     branches: [master, docs/port-to-zensical]
     paths:
-      - 'docs/**'
-      - 'zensical.toml'
+      - "docs/**"
+      - "mkdocs.yml"
   pull_request:
     branches: [master]
     paths:
-      - 'docs/**'
-      - 'zensical.toml'
+      - "docs/**"
+      - "mkdocs.yml"
 
 jobs:
-  build-sphinx:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
         with:
-          python-version: '3.12'
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Install dependencies
-        run: |
-          pip install sphinx sphinx_rtd_theme
+        run: uv sync --group doc
 
-      - name: Build docs (Sphinx)
-        working-directory: docs/edit
-        run: |
-          sphinx-build -b html . ../../docs-sphinx
-
-      - name: Upload Sphinx artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation-sphinx
-          path: docs-sphinx/
-
-  build-zensical:
-    needs: build-sphinx
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install Zensical
-        run: pip install zensical
-
-      - name: Build docs (Zensical)
-        run: |
-          zensical build
-
-      - name: Upload Zensical artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation-zensical
-          path: site/
-
-  deploy:
-    needs: build-zensical
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/docs/port-to-zensical'
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: documentation-zensical
-          path: site/
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+      - name: Build docs
+        run: zensical build -f mkdocs.yml --clean
