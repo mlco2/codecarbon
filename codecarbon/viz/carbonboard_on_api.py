@@ -117,6 +117,8 @@ def render_app(df: pd.DataFrame):
             Output(component_id="car_miles", component_property="children"),
             Output(component_id="tv_time", component_property="children"),
             Output(component_id="household_fraction", component_property="children"),
+            Output(component_id="beef_equivalent", component_property="children"),
+            Output(component_id="lentils_equivalent", component_property="children"),
         ],
         [Input(component_id="hidden_project_summary", component_property="data")],
     )
@@ -130,7 +132,18 @@ def render_app(df: pd.DataFrame):
         household_fraction = (
             f"{data.get_household_fraction(project_carbon_equivalent)} %"
         )
-        return house_icon, car_icon, tv_icon, car_miles, tv_time, household_fraction
+        beef_equivalent = data.get_beef_equivalent(project_carbon_equivalent)
+        lentils_equivalent = data.get_lentils_equivalent(project_carbon_equivalent)
+        return (
+            house_icon,
+            car_icon,
+            tv_icon,
+            car_miles,
+            tv_time,
+            household_fraction,
+            beef_equivalent,
+            lentils_equivalent,
+        )
 
     @app.callback(
         [

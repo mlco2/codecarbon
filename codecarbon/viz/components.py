@@ -298,6 +298,88 @@ class Components:
                 ),
             ]
         )
+                html.Br(),
+                html.Br(),
+                html.Div(
+                    [
+                        html.H2(
+                            "Food Production Equivalents",
+                            style={"textAlign": "center"},
+                        ),
+                        html.P(
+                            "Equivalent CO2 emitted by producing:",
+                            style={"textAlign": "center", "fontSize": 14},
+                        ),
+                        html.Br(),
+                        html.P(
+                            [
+                                html.Div(
+                                    [
+                                        html.Strong(
+                                            id="beef_equivalent",
+                                            style={
+                                                "color": "#d9534f",
+                                                "fontSize": 20,
+                                            },
+                                        ),
+                                        html.H5("(27.0 kg CO2e/kg)"),
+                                    ],
+                                    style={
+                                        "float": "left",
+                                        "width": "33%",
+                                        "textAlign": "center",
+                                    },
+                                ),
+                                html.Div(
+                                    [
+                                        html.Strong(
+                                            "vs.",
+                                            style={
+                                                "fontSize": 20,
+                                                "paddingTop": "5px",
+                                            },
+                                        ),
+                                    ],
+                                    style={
+                                        "float": "left",
+                                        "width": "10%",
+                                        "textAlign": "center",
+                                    },
+                                ),
+                                html.Div(
+                                    [
+                                        html.Strong(
+                                            id="lentils_equivalent",
+                                            style={
+                                                "color": "#5cb85c",
+                                                "fontSize": 20,
+                                            },
+                                        ),
+                                        html.H5("(0.9 kg CO2e/kg)"),
+                                    ],
+                                    style={
+                                        "float": "left",
+                                        "width": "33%",
+                                        "textAlign": "center",
+                                    },
+                                ),
+                            ],
+                            style={"paddingLeft": "12%", "paddingRight": "12%"},
+                        ),
+                        html.Br(),
+                        html.Br(),
+                        html.Br(),
+                        html.P(
+                            "Source: Poore & Nemecek (2018), Science 360(6392)",
+                            style={
+                                "textAlign": "center",
+                                "fontSize": 11,
+                                "color": "grey",
+                            },
+                        ),
+                    ],
+                    style={"display": "inline-block", "width": "100%"},
+                ),
 
     @staticmethod
     def get_cloud_emissions_comparison():
