@@ -1,0 +1,63 @@
+# Deploys docs to GitHub Pages with versioning.
+# Configure GitHub Pages: Settings > Pages > Source = "Deploy from a branch" > Branch = gh-pages
+
+# Docs deploy to gh-pages with versioning. Set Pages: Settings > Pages > Source = gh-pages branch.
+
+name: Deploy documentation
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "codecarbon/_version.py"
+      - "pyproject.toml"
+  release:
+    types: [published]
+
+permissions:
+  contents: write  # read for checkout, write for push to gh-pages
+
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: uv pip install zensical mike
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION=$(python -c "from codecarbon._version import __version__; print(__version__)")
+          fi
+          echo "full=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build docs
+        run: zensical build -f mkdocs.yml --clean
+
+      - name: Deploy to GitHub Pages
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/deploy-docs.sh
+          scripts/deploy-docs.sh "${{ steps.version.outputs.full }}"
