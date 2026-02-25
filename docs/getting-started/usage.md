@@ -10,7 +10,7 @@ When the environment has internet access, the `EmissionsTracker` object
 or the `track_emissions` decorator can be used, which has the `offline`
 parameter set to `False` by default.
 
-### Command line
+### Command line {#usage-command-line}
 
 Create a minimal configuration file (just follow the prompts) :
 
