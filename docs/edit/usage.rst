@@ -21,6 +21,18 @@ Create a minimal configuration file (just follow the prompts) :
 
   codecarbon config
 
+If you want to send measurements to the API, authenticate once from your terminal:
+
+.. code-block:: console
+
+  codecarbon login
+
+If you only need local tracking (CSV/logger output) and don't want API auth, run:
+
+.. code-block:: console
+
+  codecarbon monitor --no-api
+
 .. image:: https://asciinema.org/a/667970.svg
             :align: center
             :alt: Init config
@@ -50,9 +62,8 @@ If you want to detect the hardware of your computer without starting any measure
 
 It will print the detected RAM, CPU and GPU information.
 
-In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
-to an API running on "localhost:8008" (Or you can start a private local API with "docker-compose up"). Using the public API with
-this is not supported yet (coming soon!)
+In the following example you will see how to use the CLI to monitor all the emissions of your computer and send everything
+to an API running on ``localhost:8008`` (you can start a private local API with ``docker-compose up``).
 
 .. image:: https://asciinema.org/a/667984.svg
             :align: center

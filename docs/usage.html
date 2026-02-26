@@ -126,6 +126,14 @@ the <code class="docutils literal notranslate"><span class="pre">offline</span><
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon config</span>
 </pre></div>
 </div>
+<p>If you want to send measurements to the API, authenticate once from your terminal:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon login</span>
+</pre></div>
+</div>
+<p>If you only need local tracking (CSV/logger output) and don’t want API auth, run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">codecarbon monitor --no-api</span>
+</pre></div>
+</div>
 <a class="reference external image-reference" href="https://asciinema.org/a/667970"><img alt="Init config" class="align-center" src="https://asciinema.org/a/667970.svg" />
 </a>
 <p>You can use the same command to modify an existing config :</p>
@@ -141,9 +149,8 @@ the <code class="docutils literal notranslate"><span class="pre">offline</span><
 </pre></div>
 </div>
 <p>It will print the detected RAM, CPU and GPU information.</p>
-<p>In the following example you will see how to use the CLI to monitor all the emissions of you computer and sending everything
-to an API running on “localhost:8008” (Or you can start a private local API with “docker-compose up”). Using the public API with
-this is not supported yet (coming soon!)</p>
+<p>In the following example you will see how to use the CLI to monitor all the emissions of your computer and send everything
+to an API running on <code class="docutils literal notranslate"><span class="pre">localhost:8008</span></code> (you can start a private local API with <code class="docutils literal notranslate"><span class="pre">docker-compose</span> <span class="pre">up</span></code>).</p>
 <a class="reference external image-reference" href="https://asciinema.org/a/667984"><img alt="Monitor example" class="align-center" src="https://asciinema.org/a/667984.svg" />
 </a>
 <p>The command line could also works without internet by providing the country code like this:</p>
