@@ -3,6 +3,7 @@
 Installing CodeCarbon
 =====================
 
+
 From PyPi repository
 --------------------
 
@@ -57,3 +58,18 @@ The following packages are used by the CodeCarbon package, and will be installed
 
 
 Please refer to `pyproject.toml <https://github.com/mlco2/codecarbon/blob/master/pyproject.toml>`_ for the latest list of the packages used.
+
+(Non-Python users) Standalone installer
+---------------------------------------
+If you are not using Python but you still would like to run CodeCarbon (for instance to use the :ref:`CodeCarbon Command line <usage-command-line>`)), we provide a standalone installer to download and install CodeCarbon on your machine.
+
+Use curl to download the script and execute it with sh:
+
+.. code-block::  bash
+
+    curl -LsSf https://codecarbon.io/scripts/install.sh | sh
+or for Windows users, using powershell:
+
+.. code-block::  powershell
+
+    powershell -ExecutionPolicy ByPass -c "irm https://codecarbon.io/scripts/install.ps1 | iex"

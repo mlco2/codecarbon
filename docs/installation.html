@@ -14,8 +14,8 @@
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=7895512d"></script>
-      <script src="_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -56,6 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#from-pypi-repository">From PyPi repository</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#using-conda-environments">Using Conda environments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#non-python-users-standalone-installer">(Non-Python users) Standalone installer</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Quickstart</a></li>
@@ -143,6 +144,18 @@ typer
 </pre></div>
 </div>
 <p>Please refer to <a class="reference external" href="https://github.com/mlco2/codecarbon/blob/master/pyproject.toml">pyproject.toml</a> for the latest list of the packages used.</p>
+</section>
+<section id="non-python-users-standalone-installer">
+<h2>(Non-Python users) Standalone installer<a class="headerlink" href="#non-python-users-standalone-installer" title="Link to this heading"></a></h2>
+<p>If you are not using Python but you still would like to run CodeCarbon (for instance to use the <a class="reference internal" href="usage.html#usage-command-line"><span class="std std-ref">CodeCarbon Command line</span></a>)), we provide a standalone installer to download and install CodeCarbon on your machine.</p>
+<p>Use curl to download the script and execute it with sh:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-LsSf<span class="w"> </span>https://codecarbon.io/scripts/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</pre></div>
+</div>
+<p>or for Windows users, using powershell:</p>
+<div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">ByPass</span> <span class="n">-c</span> <span class="s2">&quot;irm https://codecarbon.io/scripts/install.ps1 | iex&quot;</span>
+</pre></div>
+</div>
 </section>
 </section>
 
