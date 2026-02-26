@@ -79,3 +79,36 @@ def test_monitor_run_and_monitor(monkeypatch):
     )
     assert result.exit_code == 0
     assert "Hello, World!" in result.output
+
+
+def test_show_config_handles_access_token_errors(monkeypatch, tmp_path, capsys):
+    class FakeApiClient:
+        def __init__(self, endpoint_url=None):
+            self.endpoint_url = endpoint_url
+
+        def set_access_token(self, token):
+            self.token = token
+
+    def fake_get_access_token():
+        raise ValueError("Not able to retrieve the access token, please run login.")
+
+    monkeypatch.setattr(cli_main, "ApiClient", FakeApiClient)
+    monkeypatch.setattr(
+        cli_main,
+        "get_config",
+        lambda path: {
+            "api_endpoint": "https://api.codecarbon.io",
+            "organization_id": "org-id",
+            "project_id": "project-id",
+            "experiment_id": "experiment-id",
+        },
+    )
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda path: "https://api.codecarbon.io"
+    )
+    monkeypatch.setattr(cli_main, "get_access_token", fake_get_access_token)
+
+    cli_main.show_config(tmp_path / ".codecarbon.config")
+    captured = capsys.readouterr()
+    assert "Could not validate remote configuration details" in captured.out
+    assert "Not able to retrieve the access token" in captured.out

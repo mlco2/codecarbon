@@ -69,13 +69,13 @@ def version(
 
 def show_config(path: Path = Path("./.codecarbon.config")) -> None:
     d = get_config(path)
-    api_endpoint = get_api_endpoint(path)
-    api = ApiClient(endpoint_url=api_endpoint)
-    api.set_access_token(get_access_token())
     print("Current configuration : \n")
     print("Config file content : ")
     print(d)
     try:
+        api_endpoint = get_api_endpoint(path)
+        api = ApiClient(endpoint_url=api_endpoint)
+        api.set_access_token(get_access_token())
         if "organization_id" not in d:
             print(
                 "No organization_id in config, follow setup instruction to complete your configuration file!",
@@ -102,8 +102,8 @@ def show_config(path: Path = Path("./.codecarbon.config")) -> None:
                     print("\nOrganization :")
                     print(org)
     except Exception as e:
-        raise ValueError(
-            f"Your configuration is invalid, please verify your configuration file at {path}. To start from scratch, run `codecarbon config` and overwrite your configuration file. (error: {e})"
+        print(
+            f"[yellow]Could not validate remote configuration details[/yellow]. You can continue with local configuration setup. (error: {e})"
         )
 
 
