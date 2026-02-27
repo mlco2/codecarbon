@@ -1,57 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
-        <loc>https://mlco2.github.io/codecarbon/</loc>
+        <loc>https://docs.codecarbon.io/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/introduction/when-to-use/</loc>
+        <loc>https://docs.codecarbon.io/introduction/when-to-use/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/introduction/motivation/</loc>
+        <loc>https://docs.codecarbon.io/introduction/motivation/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/introduction/methodology/</loc>
+        <loc>https://docs.codecarbon.io/introduction/methodology/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/introduction/rapl/</loc>
+        <loc>https://docs.codecarbon.io/introduction/rapl/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/introduction/model_examples/</loc>
+        <loc>https://docs.codecarbon.io/introduction/model_examples/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/introduction/faq/</loc>
+        <loc>https://docs.codecarbon.io/introduction/faq/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/installation/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/installation/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/usage/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/usage/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/api/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/api/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/parameters/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/parameters/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/examples/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/examples/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/comet/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/comet/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/advanced_installation/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/advanced_installation/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/getting-started/test_on_scaleway/</loc>
+        <loc>https://docs.codecarbon.io/getting-started/test_on_scaleway/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/logging/output/</loc>
+        <loc>https://docs.codecarbon.io/logging/output/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/logging/to_logger/</loc>
+        <loc>https://docs.codecarbon.io/logging/to_logger/</loc>
       </url>
       <url>
-        <loc>https://mlco2.github.io/codecarbon/logging/visualize/</loc>
+        <loc>https://docs.codecarbon.io/logging/visualize/</loc>
       </url>
 </urlset>
