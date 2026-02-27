@@ -256,7 +256,7 @@ flake8...................................................................Passed
 
 If any of the linters/formatters fail, check the difference with `git diff`, add the differences if there is no behavior changes (isort and black might have change some coding style or import order, this is expected it is their job) with `git add` and finally try to commit again `git commit ...`.
 
-You can also run `pre-commit` with `uv run pre-commit run -v` if you have some changes staged but you are not ready yet to commit.
+You can also run `pre-commit` with `uv run pre-commit run --all-files` if you have some changes staged but you are not ready yet to commit.
 
 
 <!-- TOC --><a name="dependencies-management"></a>
