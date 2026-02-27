@@ -18,8 +18,10 @@ A single datacenter can consume large amounts of energy to run computing code. A
 
 *Kana Lottick, Silvia Susai, Sorelle Friedler, and Jonathan Wilson.* [Energy Usage Reports: Environmental awareness as part of algorithmic accountability](http://arxiv.org/abs/1911.08354). *NeurIPS Workshop on Tackling Climate Change with Machine Learning, 2019.*
 
-<div class="video-wrapper" markdown="1">
-<iframe src="https://player.vimeo.com/video/482564729" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+<div class="video-wrapper" markdown="1">>
+<video width="640" height="360" controls >
+    <source src="https://player.vimeo.com/external/482564729.hd.mp4?s=70d4f409870b0af74fa5e61d0d17bfe34a4d4282&profile_id=175" type="video/mp4">
+  </video>
 </div>
 
 ## How it works
