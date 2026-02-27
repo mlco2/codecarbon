@@ -68,6 +68,8 @@ cat > index.html << 'HTMLEOF'
 </html>
 HTMLEOF
 
+echo "docs.codecarbon.io" > CNAME
+
 git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 git add -A
