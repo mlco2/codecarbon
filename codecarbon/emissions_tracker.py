@@ -198,7 +198,8 @@ class BaseEmissionsTracker(ABC):
                                    usage, defaults to 15.
         :param api_call_interval: Number of measurements between API calls (default: 8).
                             -1: call API only on flush() and at the end.
-                            1: at every measure. 2: every 2 measures, and so on.
+                            1: at every measure. 
+                            2: every 2 measures, and so on.
         :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
                              emissions data.
         :param api_key: API key for Code Carbon API (mandatory!).
