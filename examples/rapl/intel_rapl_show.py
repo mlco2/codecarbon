@@ -47,6 +47,7 @@ With `7z b` to load the CPU:
     └── Chipset, PCIe, etc.
 
 """
+
 import json
 import os
 import time

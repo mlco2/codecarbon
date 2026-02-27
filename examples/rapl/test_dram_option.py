@@ -3,6 +3,7 @@
 Test script comparing CPU-only (package) vs CPU+DRAM power measurement.
 This shows how rapl_include_dram=True gets closer to powerstat's readings.
 """
+
 import subprocess
 import time
 

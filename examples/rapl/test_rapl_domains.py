@@ -3,6 +3,7 @@
 Test script to compare package-0 (CPU only) vs psys (platform/system) RAPL domains.
 This helps determine which domain matches powerstat's measurements.
 """
+
 import time
 
 print("=" * 80)
