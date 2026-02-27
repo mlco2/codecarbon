@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { fetcher } from "@/helpers/swr";
+import { REFRESH_INTERVAL_ONE_MINUTE } from "@/helpers/time-constants";
+import { useModal } from "@/hooks/useModal";
 import { getProjects, deleteProject } from "@/server-functions/projects";
 import { Project } from "@/types/project";
 import { use, useEffect, useState } from "react";
@@ -22,15 +24,15 @@ export default function ProjectsPage({
     params: Promise<{ organizationId: string }>;
 }) {
     const { organizationId } = use(params);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const createModal = useModal();
+    const deleteModal = useModal();
     const [projectList, setProjectList] = useState<Project[]>([]);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(
         null,
     );
 
     const handleClick = async () => {
-        setIsModalOpen(true);
+        createModal.open();
     };
 
     const refreshProjectList = async () => {
@@ -41,7 +43,7 @@ export default function ProjectsPage({
 
     const handleDeleteClick = (project: Project) => {
         setProjectToDelete(project);
-        setDeleteModalOpen(true);
+        deleteModal.open();
     };
 
     const handleDeleteConfirm = async (projectId: string) => {
@@ -61,7 +63,7 @@ export default function ProjectsPage({
         error,
         isLoading,
     } = useSWR<Project[]>(`/projects?organization=${organizationId}`, fetcher, {
-        refreshInterval: 1000 * 60, // Refresh every minute
+        refreshInterval: REFRESH_INTERVAL_ONE_MINUTE,
     });
 
     useEffect(() => {
@@ -104,8 +106,8 @@ export default function ProjectsPage({
                     </Button>
                     <CreateProjectModal
                         organizationId={organizationId}
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
+                        isOpen={createModal.isOpen}
+                        onClose={createModal.close}
                         onProjectCreated={refreshProjectList}
                     />
                 </div>
@@ -141,8 +143,8 @@ export default function ProjectsPage({
                 </Card>
                 {projectToDelete && (
                     <DeleteProjectModal
-                        open={deleteModalOpen}
-                        onOpenChange={setDeleteModalOpen}
+                        open={deleteModal.isOpen}
+                        onOpenChange={deleteModal.setIsOpen}
                         projectName={projectToDelete.name}
                         projectId={projectToDelete.id}
                         onDelete={handleDeleteConfirm}

@@ -6,40 +6,17 @@ import { fetchApiServer } from "@/helpers/api-server";
 export async function getOrganizationEmissionsByProject(
     organizationId: string,
     dateRange: DateRange | undefined,
-): Promise<OrganizationReport | null> {
-    try {
-        let endpoint = `/organizations/${organizationId}/sums`;
+): Promise<OrganizationReport> {
+    let endpoint = `/organizations/${organizationId}/sums`;
 
-        if (dateRange?.from && dateRange?.to) {
-            endpoint += `?start_date=${dateRange.from.toISOString()}&end_date=${dateRange.to.toISOString()}`;
-        }
+    if (dateRange?.from && dateRange?.to) {
+        endpoint += `?start_date=${dateRange.from.toISOString()}&end_date=${dateRange.to.toISOString()}`;
+    }
 
-        const result = await fetchApiServer<any>(endpoint);
+    const result = await fetchApiServer<OrganizationReport>(endpoint);
 
-        if (!result) {
-            return null;
-        }
-
-        // Handle case when no emissions data is found
-        if (!result || result === null) {
-            // Return zeros for all metrics
-            return {
-                name: "",
-                emissions: 0,
-                energy_consumed: 0,
-                duration: 0,
-            };
-        }
-
-        return {
-            name: result.name || "",
-            emissions: result.emissions || 0,
-            energy_consumed: result.energy_consumed || 0,
-            duration: result.duration || 0,
-        };
-    } catch (error) {
-        console.error("Error fetching organization emissions:", error);
-        // Return default values if there's an error
+    // Handle case when no emissions data is found
+    if (!result) {
         return {
             name: "",
             emissions: 0,
@@ -47,44 +24,45 @@ export async function getOrganizationEmissionsByProject(
             duration: 0,
         };
     }
+
+    return result;
 }
 
 export async function getDefaultOrgId(): Promise<string | null> {
-    try {
-        const orgs = await fetchApiServer<Organization[]>("/organizations");
-        if (!orgs) {
-            return null;
-        }
+    const orgs = await fetchApiServer<Organization[]>("/organizations");
 
-        if (orgs.length > 0) {
-            return orgs[0].id;
-        }
-    } catch (err) {
-        console.warn("error processing organizations list", err);
+    // Return null on failure (Pattern A - Read operation)
+    if (!orgs || orgs.length === 0) {
+        return null;
     }
-    return null;
+
+    return orgs[0].id;
 }
 
 export async function getOrganizations(): Promise<Organization[]> {
-    try {
-        const orgs = await fetchApiServer<Organization[]>("/organizations");
-        if (!orgs) {
-            return [];
-        }
+    const orgs = await fetchApiServer<Organization[]>("/organizations");
 
-        return orgs;
-    } catch (err) {
-        console.warn("error fetching organizations list", err);
+    // Return empty array on failure (Pattern A - Read operation)
+    if (!orgs) {
         return [];
     }
+
+    return orgs;
 }
 
 export const createOrganization = async (organization: {
     name: string;
     description: string;
-}): Promise<Organization | null> => {
-    return fetchApiServer<Organization>("/organizations", {
+}): Promise<Organization> => {
+    const result = await fetchApiServer<Organization>("/organizations", {
         method: "POST",
         body: JSON.stringify(organization),
     });
+
+    // Throw on failure (Pattern B - Write operation)
+    if (!result) {
+        throw new Error("Failed to create organization");
+    }
+
+    return result;
 };

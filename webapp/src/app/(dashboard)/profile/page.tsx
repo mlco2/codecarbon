@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User } from "@/types/user";
+import { fetchApiServer } from "@/helpers/api-server";
 
 async function getUser(): Promise<User | null> {
     // TODO: implement without fief
@@ -10,17 +11,8 @@ async function getUser(): Promise<User | null> {
     if (!userId) {
         return null;
     }
-    const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`,
-    );
 
-    if (!res.ok) {
-        // This will activate the closest `error.js` Error Boundary
-        console.error("Failed to fetch user", res.statusText);
-        return null;
-    }
-
-    return res.json();
+    return await fetchApiServer<User>(`/users/${userId}`);
 }
 
 export default async function ProfilePage() {

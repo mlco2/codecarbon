@@ -16,14 +16,11 @@ async function updateProjectAction(projectId: string, formData: FormData) {
     const description = formData.get("description") as string;
     const isPublic = formData.has("isPublic");
 
-    console.log("SAVING PROJECT:", { name, description, public: isPublic });
-
-    const response = await updateProject(projectId, {
+    await updateProject(projectId, {
         name,
         description,
         public: isPublic,
     });
-    console.log("RESPONSE:", response);
 
     revalidatePath(`/projects/${projectId}/settings`);
 }

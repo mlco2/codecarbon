@@ -4,7 +4,7 @@ import { fetchApiServer } from "@/helpers/api-server";
 export const createProject = async (
     organizationId: string,
     project: { name: string; description: string },
-): Promise<Project | null> => {
+): Promise<Project> => {
     const result = await fetchApiServer<Project>("/projects", {
         method: "POST",
         body: JSON.stringify({
@@ -13,23 +13,28 @@ export const createProject = async (
         }),
     });
 
+    // Throw on failure (Pattern B - Write operation)
     if (!result) {
-        return null;
+        throw new Error("Failed to create project");
     }
+
     return result;
 };
 
 export const updateProject = async (
     projectId: string,
     project: ProjectInputs,
-): Promise<Project | null> => {
+): Promise<Project> => {
     const result = await fetchApiServer<Project>(`/projects/${projectId}`, {
         method: "PATCH",
         body: JSON.stringify(project),
     });
+
+    // Throw on failure (Pattern B - Write operation)
     if (!result) {
-        return null;
+        throw new Error("Failed to update project");
     }
+
     return result;
 };
 
@@ -49,10 +54,6 @@ export const getOneProject = async (
     projectId: string,
 ): Promise<Project | null> => {
     const project = await fetchApiServer<Project>(`/projects/${projectId}`);
-    console.log("project", JSON.stringify(project, null, 2));
-    if (!project) {
-        return null;
-    }
     return project;
 };
 

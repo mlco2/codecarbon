@@ -1,16 +1,35 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { use, useEffect, useState } from "react";
 
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import RadialChart from "@/components/radial-chart";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy-load chart to keep recharts off the critical path
+const RadialChart = dynamic(() => import("@/components/radial-chart"), {
+    loading: () => (
+        <Card className="flex flex-col h-full items-center justify-center">
+            <CardContent className="p-0">
+                <Skeleton className="h-44 w-44 rounded-full" />
+            </CardContent>
+        </Card>
+    ),
+    ssr: false,
+});
 import {
     getEquivalentCarKm,
     getEquivalentCitizenPercentage,
     getEquivalentTvTime,
 } from "@/helpers/constants";
+import {
+    REFRESH_INTERVAL_ONE_MINUTE,
+    THIRTY_DAYS_MS,
+    SECONDS_PER_DAY,
+} from "@/helpers/time-constants";
 import { fetcher } from "@/helpers/swr";
 import { getOrganizationEmissionsByProject } from "@/server-functions/organizations";
 import { Organization } from "@/types/organization";
@@ -29,12 +48,12 @@ export default function OrganizationPage({
         isLoading,
         error,
     } = useSWR<Organization>(`/organizations/${organizationId}`, fetcher, {
-        refreshInterval: 1000 * 60, // Refresh every minute
+        refreshInterval: REFRESH_INTERVAL_ONE_MINUTE,
     });
 
     const today = new Date();
     const [date, setDate] = useState<DateRange | undefined>({
-        from: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
+        from: new Date(today.getTime() - THIRTY_DAYS_MS),
         to: today,
     });
     const [organizationReport, setOrganizationReport] = useState<
@@ -86,7 +105,9 @@ export default function OrganizationPage({
             label: "days",
             value: organizationReport?.duration
                 ? parseFloat(
-                      (organizationReport.duration / 86400, 0).toFixed(2),
+                      (organizationReport.duration / SECONDS_PER_DAY).toFixed(
+                          2,
+                      ),
                   )
                 : 0,
         },

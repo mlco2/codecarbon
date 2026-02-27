@@ -11,27 +11,10 @@ export async function fetchApi<T>(
     endpoint: string,
     options?: RequestInit,
 ): Promise<T | null> {
-    try {
-        // Check if we're in the browser
-        if (typeof window !== "undefined") {
-            return await fetchApiClient<T>(endpoint, options);
-        } else {
-            // Server-side - use fetchApiServer
-            return await fetchApiServer<T>(endpoint, options);
-        }
-    } catch (error) {
-        // Log and rethrow the error for other endpoints
-        console.error(`API error for ${endpoint}:`, error);
-        throw error;
+    // Both fetchApiClient and fetchApiServer handle errors internally
+    // and return null on failure, so no try/catch needed here
+    if (typeof window !== "undefined") {
+        return await fetchApiClient<T>(endpoint, options);
     }
-}
-
-// Helper function to check if we're running on the client
-export function isClient(): boolean {
-    return typeof window !== "undefined";
-}
-
-// Helper function to check if we're running on the server
-export function isServer(): boolean {
-    return typeof window === "undefined";
+    return await fetchApiServer<T>(endpoint, options);
 }
