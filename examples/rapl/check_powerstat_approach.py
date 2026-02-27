@@ -3,6 +3,7 @@
 Analyze what domains powerstat reads by examining all RAPL domains
 and comparing with powerstat output.
 """
+
 import os
 
 print("=" * 80)
