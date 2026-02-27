@@ -12,7 +12,7 @@
 
 ![CodeCarbon database](https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg){.align-center width="700px"}
 
-Before using it, you need to create on account on the [CodeCarbon
+Before using it, you need to create an account on the [CodeCarbon
 dashboard](https://dashboard.codecarbon.io/)
 
 Then login from your terminal:
@@ -55,7 +55,7 @@ interface](https://api.codecarbon.io/docs) for that.
 
 And so on for your team, project and experiment.
 
-You then have to set you experiment id in CodeCarbon, with two options:
+You then have to set your experiment id in CodeCarbon, with two options:
 
 In the code:
 

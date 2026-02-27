@@ -122,6 +122,7 @@ dev = [
 doc = [
   "zensical",
   "mike",
+  "mkdocstrings[python]>=0.26",
 ]
 
 [project.optional-dependencies]
@@ -190,6 +191,7 @@ test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov --cov-report=x
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "zensical build -f mkdocs.yml"
 docs-serve = "zensical serve -f mkdocs.yml"
+docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]

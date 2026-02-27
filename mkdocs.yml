@@ -48,6 +48,14 @@ theme:
     github: mlco2/codecarbon
 
 plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+            docstring_section_style: table
+            show_source: false
   - mike:
       version_selector: true
       canonical_version: latest
@@ -110,8 +118,8 @@ nav:
   - Getting Started:
     - Installing CodeCarbon: getting-started/installation.md
     - Quickstart: getting-started/usage.md
-    - Parameters: getting-started/parameters.md
     - CodeCarbon API: getting-started/api.md
+    - Parameters: getting-started/parameters.md
     - Examples: getting-started/examples.md
     - Comet Integration: getting-started/comet.md
     - Advanced Installation: getting-started/advanced_installation.md

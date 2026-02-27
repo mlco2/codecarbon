@@ -3,8 +3,8 @@
 We use Scaleway hardware to test CodeCarbon on a real-world scenario. We
 use the following hardware:
 
-> EM-I120E-NVME AMD EPYC 8024P 64 GB 2 x 960 GB NVMe EM-B112X-SSD 2 x
-> Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz
+- **EM-I120E-NVME**: AMD EPYC 8024P, 64 GB, 2×960 GB NVMe
+- **EM-B112X-SSD**: 2× Intel Xeon E5-2620 v3 @ 2.40GHz
 
 85 W TDP for the Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz
 

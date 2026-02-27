@@ -19,7 +19,7 @@ It is hard to quantify the entirety of computing emissions, because there are ma
 ### For private infrastructure:
 
 - **Our World in Data**: When available, we use data from [ourworldindata.org](https://ourworldindata.org/grapher/carbon-intensity-electricity)
-- **Global Petrol Prices**: We use the electricity mix from [globalpetrolprices.com](https://www.globalpetrolprices.com/energy_mix.php) multiplied by carbon intensity
+- **Global Petrol Prices**: We use the electricity mix from [globalpetrolprices.com](https://www.globalpetrolprices.com/energy_mix.php) multiplied by the [carbon intensity of the source of electricity](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/carbon_intensity_per_source.json)
 - **Default**: When no data is available, we default to 475 gCO2.eq/kWh from [IEA](https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions)
 
 ## How do I offset my emissions?
