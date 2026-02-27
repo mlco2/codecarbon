@@ -5,7 +5,7 @@ docs_dir: docs
 site_dir: site
 repo_url: https://github.com/mlco2/codecarbon
 repo_name: mlco2/codecarbon
-edit_uri: edit/main/docs/
+edit_uri: edit/master/docs/
 copyright: "&copy; CodeCarbon"
 
 theme:
@@ -110,11 +110,12 @@ nav:
   - Getting Started:
     - Installing CodeCarbon: getting-started/installation.md
     - Quickstart: getting-started/usage.md
-    - Configuration: getting-started/parameters.md
+    - Parameters: getting-started/parameters.md
     - CodeCarbon API: getting-started/api.md
     - Examples: getting-started/examples.md
     - Comet Integration: getting-started/comet.md
     - Advanced Installation: getting-started/advanced_installation.md
+    - Test on Scaleway: getting-started/test_on_scaleway.md
   - Logging:
     - Output: logging/output.md
     - Collecting emissions to a logger: logging/to_logger.md

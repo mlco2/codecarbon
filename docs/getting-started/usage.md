@@ -44,8 +44,8 @@ It will print the detected RAM, CPU and GPU information.
 
 In the following example you will see how to use the CLI to monitor all
 the emissions of you computer and sending everything to an API running
-on \"localhost:8008\" (Or you can start a private local API with
-\"docker-compose up\"). Using the public API with this is not supported
+on "localhost:8008" (Or you can start a private local API with
+"docker-compose up"). Using the public API with this is not supported
 yet (coming soon!)
 
 [![Monitor example](https://asciinema.org/a/667984.svg){.align-center}](https://asciinema.org/a/667984)
@@ -255,7 +255,7 @@ parameters:
 -   `country_iso_code` the 3-letter alphabet ISO Code of the country
     where the compute infrastructure is hosted
 
-``` python
+```python
 from codecarbon import track_emissions
 @track_emissions(offline=True, country_iso_code="CAN")
 def training_loop():
@@ -274,12 +274,12 @@ parameters and configuration options.
 
 CodeCarbon is structured so that you can configure it in a hierarchical manner:
 
-:   -   *global* parameters in your home folder `~/.codecarbon.config`
-    -   *local* parameters (with respect to the current working
-        directory) in `./.codecarbon.config`
-    -   *environment variables* parameters starting with `CODECARBON_`
-    -   *script* parameters in the tracker's initialization as
-        `EmissionsTracker(param=value)`
+-   *global* parameters in your home folder `~/.codecarbon.config`
+-   *local* parameters (with respect to the current working
+    directory) in `./.codecarbon.config`
+-   *environment variables* parameters starting with `CODECARBON_`
+-   *script* parameters in the tracker's initialization as
+    `EmissionsTracker(param=value)`
 
 !!! warning "Configuration files"
 

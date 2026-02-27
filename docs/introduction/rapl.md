@@ -175,9 +175,11 @@ We investigate RAPL on various architectures :
 -   2017 Laptop with Intel(R) Core(TM) i7-7600U (TDP 15W)
 -   2025 Laptop with Intel(R) Core(TM) Ultra 7 265H (TDP 28W)
 
+``` text
 Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads)
-Processor. Power plug measure when idle (10% CPU): 125 W package-0-die-0
-: 68 W package-0-die-1 : 68 W CodeCarbon : 137 W
+Power plug measure when idle (10% CPU): 125 W
+package-0-die-0: 68 W | package-0-die-1: 68 W | CodeCarbon: 137 W
+```
 
 ### Laptop: Intel(R) Core(TM) Ultra 7 265H (TDP 28W)
 

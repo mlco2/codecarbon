@@ -43,7 +43,7 @@ Experiment.
 
 ![Summary](../images/panel-gallery.gif){.align-center width="700px" height="400px"}
 
-Now back in the `Panels` tab you\'ll see your CodeCarbon Footprint
+Now back in the `Panels` tab you'll see your CodeCarbon Footprint
 visualization in the Comet UI. To render the visualization by default,
 save your `View`. And voilà! Every time you run your experiments,
 you'll be able to visualize your CodeCarbon emissions data alongside

@@ -31,8 +31,7 @@ Send emissions to an HTTP endpoint:
 
 ```python
 tracker = EmissionsTracker(
-    emissions_endpoint="http://your-endpoint.com/emissions",
-    grafana_token="your-token"
+    emissions_endpoint="http://your-endpoint.com/emissions"
 )
 ```
 
@@ -42,6 +41,22 @@ Export metrics to Prometheus:
 
 ```python
 tracker = EmissionsTracker(prometheus_endpoint="http://localhost:8008")
+```
+
+### 5. CodeCarbon API
+
+Send emissions to the CodeCarbon cloud API (requires login):
+
+```python
+tracker = EmissionsTracker(save_to_api=True)
+```
+
+### 6. Logfire
+
+Send emissions to Logfire observability platform:
+
+```python
+tracker = EmissionsTracker(save_to_logfire=True)
 ```
 
 ## Output Fields

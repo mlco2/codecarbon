@@ -72,7 +72,7 @@ def train_model():
     ...
 ```
 
-Or in the config file \`.codecarbon.config\`:
+Or in the config file `.codecarbon.config`:
 
 ``` ini
 [codecarbon]
