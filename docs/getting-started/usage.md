@@ -20,6 +20,12 @@ codecarbon config
 
 [![Init config](https://asciinema.org/a/667970.svg){.align-center}](https://asciinema.org/a/667970)
 
+Then login from your terminal to authenticate CLI/API usage:
+
+``` console
+codecarbon login
+```
+
 You can use the same command to modify an existing config :
 
 [![Modify config](https://asciinema.org/a/667971.svg){.align-center}](https://asciinema.org/a/667971)
@@ -32,6 +38,13 @@ codecarbon monitor
 ```
 
 You have to stop the monitoring manually with `Ctrl+C`.
+
+If you only need local measurement and do not want to send data to the API,
+use:
+
+``` console
+codecarbon monitor --no-api
+```
 
 If you want to detect the hardware of your computer without starting any
 measurement, you can use:
