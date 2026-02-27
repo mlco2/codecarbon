@@ -29,7 +29,7 @@ following arguments:
 
 -   `filepath` - path to the CSV file containing logged information
     across experiments and projects
--   `port` - an optional port number, in case default \[8050\] is used
+- `port` - an optional port number, in case default [8050] is used
     by an existing process
 
 ``` bash
@@ -42,9 +42,9 @@ Users can get an understanding of net power consumption and emissions
 generated across projects and can dive into a particular project. The
 App also provides exemplary equivalents from daily life, for example:
 
--   Weekly Share of an average American household
--   Number of miles driven
--   Time of 32-inch LCD TV watched
+- Weekly Share of an average American household
+- Number of miles driven
+- Time of 32-inch LCD TV watched
 
 ![Summary](../images/summary.png){.align-center width="700px" height="400px"}
 
@@ -69,7 +69,7 @@ A dashboard is also available for those who chose to connect the package
 to the public API. [Got to online
 dashboard](https://dashboard.codecarbon.io/)
 
-### from global\...
+### from global
 
 Showing on the top the global energy consumed and emissions produced at
 an organisation level and the share of each project in this. The App
@@ -78,7 +78,7 @@ understanding of the amount generated.
 
 ![Summary](../images/codecarbon-API-dashboard.png){.align-center width="750px"}
 
-### to more and more\...
+### to more and more
 
 Each project can be divided into several experiments, and in each
 experiment several runs can happen. The total emissions of experiments

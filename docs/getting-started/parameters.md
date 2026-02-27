@@ -32,5 +32,4 @@ If you use `CUDA_VISIBLE_DEVICES` to set GPUs, CodeCarbon will automatically pop
 | `save_to_file` | Save emissions data to file (default: True) |
 | `output_dir` | Directory for emissions data output |
 | `emissions_endpoint` | Endpoint for HTTP output |
-| `grafana_token` | Token for Grafana integration |
 | `prometheus_endpoint` | Endpoint for Prometheus metrics |

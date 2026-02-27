@@ -142,11 +142,11 @@ RAM by the number of modules used.
 Example Power Estimates:
 
 -   **Small laptop (8GB RAM)**: ~10W (2 DIMMs at 5W each)
--   **Desktop (32GB RAM)**: \~20W (4 DIMMs at 5W each)
--   **Desktop (64GB RAM)**: \~20W (4 DIMMs at 5W each), the same as 32GB
--   **Small server (128GB RAM)**: \~40W (8 DIMMs with efficiency
+- **Desktop (32GB RAM)**: ~20W (4 DIMMs at 5W each)
+- **Desktop (64GB RAM)**: ~20W (4 DIMMs at 5W each), the same as 32GB
+- **Small server (128GB RAM)**: ~40W (8 DIMMs with efficiency
     scaling)
--   **Large server (1TB RAM)**: \~40W (using 8x128GB DIMMs with high
+- **Large server (1TB RAM)**: ~40W (using 8x128GB DIMMs with high
     efficiency scaling)
 
 This approach significantly improves the accuracy for large servers by
@@ -238,8 +238,7 @@ motherboard.
 In Linux kernel, energy_uj is a current energy counter in micro joules.
 It is used to measure CPU core's energy consumption.
 
-Micro joules is then converted in kWh, with formulas kWh=energy \* 10
-\*\* (-6) \* 2.77778e-7
+Micro joules is then converted in kWh, with formula `kWh=energy * 10** (-6) * 2.77778e-7`.
 
 For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon
 will read two files :
@@ -254,7 +253,7 @@ that provides energy consumption measurements through hardware counters.
 See <https://blog.chih.me/read-cpu-power-with-RAPL.html> for more
 information.
 
-Despite the name \"Intel RAPL\", it supports AMD processors since Linux
+Despite the name "Intel RAPL", it supports AMD processors since Linux
 kernel 5.8.
 
 Read more about how we use it in [RAPL Metrics](rapl.md).
