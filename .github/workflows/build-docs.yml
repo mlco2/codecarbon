@@ -5,7 +5,7 @@ permissions:
 
 on:
   push:
-    branches: [master, docs/port-to-zensical]
+    branches: [master]
     paths:
       - "docs/**"
       - "mkdocs.yml"

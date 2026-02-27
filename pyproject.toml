@@ -120,6 +120,7 @@ dev = [
     "logfire>=1.0.1",  # For testing Logfire output method
 ]
 doc = [
+  "setuptools",
   "zensical",
   "mike",
   "mkdocstrings[python]>=0.26",
