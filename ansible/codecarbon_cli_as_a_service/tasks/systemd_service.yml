@@ -1,0 +1,21 @@
+---
+- name: Install Systemd service for CodeCarbon
+  hosts: all
+  vars_files:
+    - "../vars/main.yml"
+  become: true
+  become_method: sudo
+
+  tasks:
+  - name: Create systemd service file
+    template:
+       src: ../templates/systemd_service.j2
+       dest: /etc/systemd/system/codecarbon.service
+       mode: '0644'
+
+  - name: Enable and start CodeCarbon service
+    systemd:
+       name: codecarbon
+       enabled: yes
+       state: started
+       daemon_reload: yes

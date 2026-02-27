@@ -1,0 +1,2045 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Measure and reduce carbon emissions from computing - Official Documentation">
+      
+      
+      
+        <link rel="canonical" href="https://mlco2.github.io/codecarbon/introduction/methodology/">
+      
+      
+        <link rel="prev" href="../motivation/">
+      
+      
+        <link rel="next" href="../rapl/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../images/favicon.ico">
+      <meta name="generator" content="zensical-0.0.23">
+    
+    
+      
+        <title>Methodology - CodeCarbon</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.1e989742.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,a=__md_scope)=>JSON.parse(t.getItem(a.pathname+"."+e)),__md_set=(e,t,a=localStorage,_=__md_scope)=>{try{a.setItem(_.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#methodology" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CodeCarbon" class="md-header__button md-logo" aria-label="CodeCarbon" data-md-component="logo">
+      
+  <img src="../../images/codecarbon-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CodeCarbon
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Methodology
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/mlco2/codecarbon" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mlco2/codecarbon
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  Introduction
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../logging/output/" class="md-tabs__link">
+          
+  
+  Logging
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs" class="md-tabs__link">
+        
+  
+  Track GenAI API Calls (EcoLogits) ↗
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CodeCarbon" class="md-nav__button md-logo" aria-label="CodeCarbon" data-md-component="logo">
+      
+  <img src="../../images/codecarbon-logo.svg" alt="logo">
+
+    </a>
+    CodeCarbon
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mlco2/codecarbon" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mlco2/codecarbon
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Introduction
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../when-to-use/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    When to use CodeCarbon
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../motivation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Motivation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Methodology
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Methodology
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#carbon-intensity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Carbon Intensity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#power-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Power Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Power Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RAM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cpu-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU hardware
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rapl-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RAPL Metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cpu-metrics-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU metrics priority
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="References">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-codecarbon-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How CodeCarbon Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#estimation-of-equivalent-usage-emissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estimation of Equivalent Usage Emissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Estimation of Equivalent Usage Emissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#car-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Car Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tv-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TV Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#us-citizen-weekly-emissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        US Citizen Weekly Emissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calculation-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculation Formula
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rapl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RAPL Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Comparisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frequently Asked Questions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installing CodeCarbon
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CodeCarbon API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/comet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comet Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/advanced_installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/test_on_scaleway/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test on Scaleway
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Logging
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../logging/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../logging/to_logger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collecting emissions to a logger
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../logging/visualize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visualize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track GenAI API Calls (EcoLogits) ↗
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#carbon-intensity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Carbon Intensity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#power-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Power Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Power Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GPU
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RAM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cpu-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU hardware
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rapl-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RAPL Metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cpu-metrics-priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU metrics priority
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="References">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-codecarbon-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How CodeCarbon Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#estimation-of-equivalent-usage-emissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Estimation of Equivalent Usage Emissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Estimation of Equivalent Usage Emissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#car-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Car Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tv-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TV Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#us-citizen-weekly-emissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        US Citizen Weekly Emissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calculation-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculation Formula
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Track &amp; reduce CO₂ emissions from your local computing
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../.." class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/mlco2/codecarbon/edit/master/docs/introduction/methodology.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/mlco2/codecarbon/raw/master/docs/introduction/methodology.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
+    </a>
+  
+
+
+<h1 id="methodology">Methodology<a class="headerlink" href="#methodology" title="Permanent link">&para;</a></h1>
+<p>Carbon dioxide (CO₂) emissions, expressed as kilograms of
+CO₂-equivalents (CO₂eq), are the product of two main factors:</p>
+<div class="highlight"><pre><span></span><code>C = Carbon Intensity of the electricity consumed for computation: quantified as g of CO₂ emitted per kilowatt-hour of electricity.
+
+E = Energy Consumed by the computational infrastructure: quantified as kilowatt-hours.
+</code></pre></div>
+<p>Carbon dioxide emissions (CO₂eq) can then be calculated as <code>C * E</code></p>
+<h2 id="carbon-intensity">Carbon Intensity<a class="headerlink" href="#carbon-intensity" title="Permanent link">&para;</a></h2>
+<p>Carbon Intensity of the consumed electricity is calculated as a weighted
+average of the emissions from the different energy sources that are used
+to generate electricity, including fossil fuels and renewables. In this
+toolkit, the fossil fuels coal, petroleum, and natural gas are
+associated with specific carbon intensities: a known amount of carbon
+dioxide is emitted for each kilowatt-hour of electricity generated.
+Renewable or low-carbon fuels include solar power, hydroelectricity,
+biomass, geothermal, and more. The nearby energy grid contains a mixture
+of fossil fuels and low-carbon energy sources, called the Energy Mix.
+Based on the mix of energy sources in the local grid, the Carbon
+Intensity of the electricity consumed can be computed.</p>
+<p><img alt="Grid Energy Mix" class="align-center" height="300px" src="../../images/grid_energy_mix.png" width="350px" /></p>
+<p>When available, CodeCarbon uses global carbon intensity of electricity
+per cloud provider (
+<a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv">here</a>)
+or per country (
+<a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">here</a>
+).</p>
+<p>If we don't have the global carbon intensity or electricity of a
+country, but we have its electricity mix, we used to compute the carbon
+intensity of electricity using this table:</p>
+<table>
+<thead>
+<tr>
+<th>Energy Source</th>
+<th>Carbon Intensity (kg/MWh)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Coal</td>
+<td>995</td>
+</tr>
+<tr>
+<td>Petroleum</td>
+<td>816</td>
+</tr>
+<tr>
+<td>Natural Gas</td>
+<td>743</td>
+</tr>
+<tr>
+<td>Geothermal</td>
+<td>38</td>
+</tr>
+<tr>
+<td>Hydroelectricity</td>
+<td>26</td>
+</tr>
+<tr>
+<td>Nuclear</td>
+<td>29</td>
+</tr>
+<tr>
+<td>Solar</td>
+<td>48</td>
+</tr>
+<tr>
+<td>Wind</td>
+<td>26</td>
+</tr>
+</tbody>
+</table>
+<p><em>Carbon Intensity Across Energy Sources</em></p>
+<p>Sources:</p>
+<ul>
+<li><a href="https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2">for fossil energies</a></li>
+<li><a href="http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf">for renewables energies</a></li>
+</ul>
+<p>Then, for example, if the Energy Mix of the Grid Electricity is 25%
+Coal, 35% Petroleum, 26% Natural Gas and 14% Nuclear:</p>
+<div class="highlight"><pre><span></span><code>Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/kWh
+</code></pre></div>
+<p>But it doesn't happen anymore because Our World in Data now provides
+the global carbon intensity of electricity per country (
+<a href="https://ourworldindata.org/grapher/carbon-intensity-electricity#explore-the-data">source</a>
+). Some countries are missing data for last year, so we use the previous
+year data available.</p>
+<p>If ever we have neither the global carbon intensity of a country nor
+its electricity mix, we apply a world average of 475 gCO2.eq/KWh (
+<a href="https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions">source</a>
+).</p>
+<p>As you can see, we try to be as accurate as possible in estimating
+carbon intensity of electricity. Still there is room for improvement and
+all contributions are welcome.</p>
+<h2 id="power-usage">Power Usage<a class="headerlink" href="#power-usage" title="Permanent link">&para;</a></h2>
+<p>Power supply to the underlying hardware is tracked at frequent time
+intervals. This is a configurable parameter <code>measure_power_secs</code>, with
+default value 15 seconds, that can be passed when instantiating the
+emissions tracker.</p>
+<p>Currently, the package supports the following hardware infrastructure.</p>
+<h3 id="gpu">GPU<a class="headerlink" href="#gpu" title="Permanent link">&para;</a></h3>
+<p>Tracks Nvidia GPUs energy consumption using <code>nvidia-ml-py</code> library
+(installed with the package).</p>
+<h3 id="ram">RAM<a class="headerlink" href="#ram" title="Permanent link">&para;</a></h3>
+<p>CodeCarbon v2 uses a 3 Watts for 8 GB ratio
+<a href="https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use">source</a>
+.</p>
+<p>But this is not a good measure because it doesn't take into account the
+number of RAM slots used in the machine, that really drive the power
+consumption, not the amount of RAM. For example, in servers you could
+have thousands of GB of RAM but the power consumption would not be
+proportional to the amount of memory used, but to the number of memory
+modules used.</p>
+<p>Old machine could use 2 Mb memory stick, where modern servers will use
+128 Mb memory stick.</p>
+<p>So, in CodeCarbon v3 we switch to using 5 Watts for each RAM slot. The
+energy consumption is calculated as follows:</p>
+<div class="highlight"><pre><span></span><code>RAM Power Consumption = 5 Watts * Number of RAM slots used
+</code></pre></div>
+<p>But getting the number of RAM slots used is not possible as you need
+root access to get the number of RAM slots used. So we use an heuristic
+based on the RAM size.</p>
+<p>For example keep a minimum of 2 modules. Except for ARM CPU like
+rapsberry pi where we will consider a 3W constant. Then consider the max
+RAM per module is 128GB and that RAM module only exist in power of 2 (2,
+4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the
+RAM by the number of modules used.</p>
+<ul>
+<li>For ARM CPUs (like Raspberry Pi), a constant 3W will be used as the
+    minimum power</li>
+<li>Base power per DIMM is 5W for x86 systems and 1.5W for ARM systems</li>
+<li>For standard systems (up to 4 DIMMs): linear scaling at full power
+    per DIMM</li>
+<li>For medium systems (5-8 DIMMs): decreasing efficiency (90% power per
+    additional DIMM)</li>
+<li>For large systems (9-16 DIMMs): further reduced efficiency (80%
+    power per additional DIMM)</li>
+<li>For very large systems (17+ DIMMs): highest efficiency (70% power
+    per additional DIMM)</li>
+<li>Ensures at least 10W for x86 systems (assuming 2 DIMMs at minimum)</li>
+<li>Ensures at least 3W for ARM systems</li>
+</ul>
+<p>Example Power Estimates:</p>
+<ul>
+<li><strong>Small laptop (8GB RAM)</strong>: ~10W (2 DIMMs at 5W each)</li>
+<li><strong>Desktop (32GB RAM)</strong>: ~20W (4 DIMMs at 5W each)</li>
+<li><strong>Desktop (64GB RAM)</strong>: ~20W (4 DIMMs at 5W each), the same as 32GB</li>
+<li><strong>Small server (128GB RAM)</strong>: ~40W (8 DIMMs with efficiency
+    scaling)</li>
+<li><strong>Large server (1TB RAM)</strong>: ~40W (using 8x128GB DIMMs with high
+    efficiency scaling)</li>
+</ul>
+<p>This approach significantly improves the accuracy for large servers by
+recognizing that RAM power consumption doesn't scale linearly with
+capacity, but rather with the number of physical modules. Since we
+don't have direct access to the actual DIMM configuration, this
+heuristic provides a more reasonable estimate than the previous linear
+model.</p>
+<p>If you know the exact RAM power consumption of your system, then provide
+it using the <code>force_ram_power</code> parameter, which will
+override the automatic estimation.</p>
+<p>For example, in a Ubuntu machine, you can get the number of RAM slots
+used with the following command:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>lshw<span class="w"> </span>-C<span class="w"> </span>memory<span class="w"> </span>-short<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>DIMM
+
+/0/37/0<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/1<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/2<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+/0/37/3<span class="w">                                    </span>memory<span class="w">         </span>4GiB<span class="w"> </span>DIMM<span class="w"> </span>DDR4<span class="w"> </span>Synchrone<span class="w"> </span>Unbuffered<span class="w"> </span><span class="o">(</span>Unregistered<span class="o">)</span><span class="w"> </span><span class="m">2400</span><span class="w"> </span>MHz<span class="w"> </span><span class="o">(</span><span class="m">0</span>,4<span class="w"> </span>ns<span class="o">)</span>
+</code></pre></div>
+<p>Here we count 4 RAM slots used, so the power consumption will be 4 x 5 =
+20 Watts, just add <code>force_ram_power=20</code> to the init of
+CodeCarbon.</p>
+<h3 id="cpu">CPU<a class="headerlink" href="#cpu" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>On Windows or Mac (Intel)</strong></li>
+</ul>
+<p>Tracks Intel processors energy consumption using the
+<code>Intel Power Gadget</code>. You need to install it yourself from this
+<a href="https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html">source</a>
+. But has been discontinued. There is a discussion about it on <a href="https://github.com/mlco2/codecarbon/issues/457">github
+issues #457</a>.</p>
+<ul>
+<li><strong>Apple Silicon Chips (M1, M2)</strong></li>
+</ul>
+<p>Apple Silicon Chips contain both the CPU and the GPU.</p>
+<p>Codecarbon tracks Apple Silicon Chip energy consumption using
+<code>powermetrics</code>. It should be available natively on any mac. However,
+this tool is only usable with <code>sudo</code> rights and to our current
+knowledge, there are no other options to track the energy consumption of
+the Apple Silicon Chip without administrative rights (if you know of any
+solution for this do not hesitate and <a href="https://github.com/mlco2/codecarbon/issues/">open an issue with your proposed
+solution</a>).</p>
+<p>To give sudo rights without having to enter a password each time, you
+can modify the sudoers file with the following command:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>visudo
+</code></pre></div>
+<p>Then add the following line at the end of the file:</p>
+<div class="highlight"><pre><span></span><code>username<span class="w"> </span><span class="nv">ALL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">(</span>root<span class="o">)</span><span class="w"> </span>NOPASSWD:<span class="w"> </span>/usr/bin/powermetrics
+</code></pre></div>
+<p>If you do not want to give sudo rights to your user, then CodeCarbon
+will fall back to constant mode to measure CPU energy consumption.</p>
+<ul>
+<li><strong>On Linux</strong></li>
+</ul>
+<p>Tracks Intel and AMD processor energy consumption from Intel RAPL files
+at <code>/sys/class/powercap/intel-rapl/subsystem</code> (
+<a href="https://web.eece.maine.edu/~vweaver/projects/rapl/">reference</a> ). All
+CPUs listed in this directory will be tracked.</p>
+<p><em>Note</em>: The Power Consumption will be tracked only if the RAPL files
+exist at the above-mentioned path and if the user has the necessary
+permissions to read them.</p>
+<h2 id="cpu-hardware">CPU hardware<a class="headerlink" href="#cpu-hardware" title="Permanent link">&para;</a></h2>
+<p>The CPU die is the processing unit itself. It's a piece of
+semiconductor that has been sculpted/etched/deposited by various
+manufacturing processes into a net of logic blocks that do stuff that
+makes computing possible. The processor package is what you get when you
+buy a single processor. It contains one or more dies, plastic/ceramic
+housing for dies and gold-plated contacts that match those on your
+motherboard.</p>
+<p>In Linux kernel, energy_uj is a current energy counter in micro joules.
+It is used to measure CPU core's energy consumption.</p>
+<p>Micro joules is then converted in kWh, with formula <code>kWh=energy * 10** (-6) * 2.77778e-7</code>.</p>
+<p>For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon
+will read two files :
+/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and
+/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj</p>
+<h2 id="rapl-metrics">RAPL Metrics<a class="headerlink" href="#rapl-metrics" title="Permanent link">&para;</a></h2>
+<p>RAPL (Running Average Power Limit) is a feature of modern processors
+that provides energy consumption measurements through hardware counters.</p>
+<p>See <a href="https://blog.chih.me/read-cpu-power-with-RAPL.html">https://blog.chih.me/read-cpu-power-with-RAPL.html</a> for more
+information.</p>
+<p>Despite the name "Intel RAPL", it supports AMD processors since Linux
+kernel 5.8.</p>
+<p>Read more about how we use it in <a href="../rapl/">RAPL Metrics</a>.</p>
+<h2 id="cpu-metrics-priority">CPU metrics priority<a class="headerlink" href="#cpu-metrics-priority" title="Permanent link">&para;</a></h2>
+<p>CodeCarbon will first try to read the energy consumption of the CPU from
+low level interface like RAPL or <code>powermetrics</code>. If none of the tracking
+tools are available, CodeCarbon will be switched to a fallback mode:</p>
+<ul>
+<li>It will first detect which CPU hardware is currently in use, and
+    then map it to a data source listing 2000+ Intel and AMD CPUs and
+    their corresponding thermal design powers (TDPs).</li>
+<li>If the CPU is not found in the data source, a global constant will
+    be applied.</li>
+<li>If <code>psutil</code> is available, CodeCarbon will try to estimate the energy
+    consumption from the TDP and the CPU load.</li>
+<li>CodeCarbon assumes that 50% of the TDP will be the average power
+    consumption to make this approximation.</li>
+</ul>
+<p>Here is a drawing of the fallback mode:</p>
+<p><img alt="CPU Fallback" class="align-center" src="../../images/cpu_fallback.png" /></p>
+<p>The code doing this is available in
+<a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L24">codecarbon/core/resource_tracker.py</a>.</p>
+<p>The net Energy Used is the net power supply consumed during the compute
+time, measured as <code>kWh</code>.</p>
+<p>We compute energy consumption as the product of the power consumed and
+the time the power was consumed for. The formula is:
+<code>Energy = Power * Time</code></p>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<p><a href="https://arxiv.org/pdf/1911.08354.pdf">Energy Usage Reports: Environmental awareness as part of algorithmic
+accountability</a></p>
+<h3 id="how-codecarbon-works">How CodeCarbon Works<a class="headerlink" href="#how-codecarbon-works" title="Permanent link">&para;</a></h3>
+<p>CodeCarbon uses a scheduler that, by default, calls for a measure every
+15 seconds, so it has no significant overhead.</p>
+<p>The measure itself is fast and CodeCarbon is designed to be as light as
+possible with a small memory footprint.</p>
+<p>The scheduler is started when the first <code>start</code> method is called and
+stopped when <code>stop</code> method is called.</p>
+<p>Another scheduler (<code>scheduler_monitor_power</code>)
+is used to monitor only the power consumption of the hardware every
+second. It is needed for hardware that do not have energy counters but
+only instant power, like in CPU load mode.</p>
+<h2 id="estimation-of-equivalent-usage-emissions">Estimation of Equivalent Usage Emissions<a class="headerlink" href="#estimation-of-equivalent-usage-emissions" title="Permanent link">&para;</a></h2>
+<p>The CodeCarbon dashboard provides equivalent emissions and energy usage
+comparisons to help users better understand the carbon impact of their
+activities. These comparisons are based on the following assumptions:</p>
+<h3 id="car-usage">Car Usage<a class="headerlink" href="#car-usage" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Emission factor</strong>: <em>0.12 kgCO₂ per kilometer driven</em>.</li>
+<li>This value is derived from the average emissions of a European
+    passenger car under normal driving conditions.</li>
+</ul>
+<p>Source : <a href="https://co2cars.apps.eea.europa.eu/?source=%7B%22track_total_hits%22%3Atrue%2C%22query%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22constant_score%22%3A%7B%22filter%22%3A%7B%22bool%22%3A%7B%22must%22%3A%5B%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22year%22%3A2023%7D%7D%5D%7D%7D%2C%7B%22bool%22%3A%7B%22should%22%3A%5B%7B%22term%22%3A%7B%22scStatus%22%3A%22Provisional%22%7D%7D%5D%7D%7D%5D%7D%7D%7D%7D%5D%7D%7D%2C%22display_type%22%3A%22tabular%22%7D">European Environment
+Agency</a></p>
+<h3 id="tv-usage">TV Usage<a class="headerlink" href="#tv-usage" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Energy consumption</strong>: <em>138 Wh per day based on average use</em>.</li>
+<li>This assumes:<ul>
+<li>An average daily usage of 6.5 hours.</li>
+<li>A modern television with a power consumption of approximately
+    <em>21.2 W per hour</em>.</li>
+</ul>
+</li>
+</ul>
+<p>Source : <a href="https://agirpourlatransition.ademe.fr/particuliers/maison/economies-denergie-deau/electricite-combien-consomment-appareils-maison">The French Agency for Ecological
+Transition</a></p>
+<h3 id="us-citizen-weekly-emissions">US Citizen Weekly Emissions<a class="headerlink" href="#us-citizen-weekly-emissions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Annual emissions</strong>: <em>13.3 tons of CO₂ equivalent per year</em> for an
+    average US citizen.</li>
+<li><strong>Weekly emissions</strong>: This value is divided by the 52 weeks in a
+    year to estimate weekly emissions:</li>
+</ul>
+<div class="arithmatex">\[\text{Weekly Emissions} = \frac{\text{Annual Emissions (tons)}}{52}\]</div>
+<div class="arithmatex">\[\text{Weekly Emissions} = \frac{13.3}{52} \approx 0.256 \, \text{tons of CO₂ equivalent per week.}\]</div>
+<p>Source : <a href="https://www.iea.org/data-and-statistics/charts/co2-total-emissions-per-capita-by-region-2000-2023">IEA CO2 total emissions per capita by region,
+2000-2023</a></p>
+<h3 id="calculation-formula">Calculation Formula<a class="headerlink" href="#calculation-formula" title="Permanent link">&para;</a></h3>
+<p>The equivalent emissions are calculated using this formula:</p>
+<div class="arithmatex">\[\text{Equivalent Emissions} = \frac{\text{Total Emissions (kgCO₂)}}{\text{Emission Factor (kgCO₂/unit)}}\]</div>
+<p>For example:</p>
+<ul>
+<li><strong>Car Usage</strong>: <em>1 kWh</em> of energy consumption is approximately
+    equivalent to:<ul>
+<li><em>8.33 kilometers driven by a car</em> (<em>1 ÷ 0.12</em>).</li>
+<li><em>11.9 hours of TV usage</em> (<em>1 ÷ 0.084</em>), if emissions are
+    considered.</li>
+</ul>
+</li>
+<li><strong>US Citizen Emissions</strong>:<ul>
+<li><em>1 kWh</em> of energy consumption can be compared to a fraction of
+    the average weekly emissions of a US citizen:</li>
+</ul>
+</li>
+</ul>
+<div class="arithmatex">\[\text{US Citizen Equivalent} = \frac{\text{Total Emissions (tons)}}{0.256}\]</div>
+<p>These estimates are approximate and subject to regional variations in:</p>
+<ul>
+<li>Grid emissions intensity.</li>
+<li>Vehicle efficiencies.</li>
+</ul>
+<h3 id="source-code">Source Code<a class="headerlink" href="#source-code" title="Permanent link">&para;</a></h3>
+<p>The emission factors used are defined in the <a href="https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts">CodeCarbon source
+code</a>.
+They are based on publicly available data and general assumptions.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../motivation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Motivation">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Motivation
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../rapl/" class="md-footer__link md-footer__link--next" aria-label="Next: RAPL Metrics">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                RAPL Metrics
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      &copy; CodeCarbon
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/mlco2/codecarbon" target="_blank" rel="noopener" title="CodeCarbon on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.action.view","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.instant","navigation.instant.progress","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.sections","navigation.path","navigation.top","navigation.footer","search.highlight"],"search":"../../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.5fcf0de6.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,66 @@
+services:
+
+  fief-server:
+    image: ghcr.io/fief-dev/fief:latest
+    command: fief run-server
+    env_file:
+      - .env.fief
+    depends_on:
+      - postgres-fief
+      - redis
+    ports:
+      - "8000:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fief.rule=Host(`${FIEF_DOMAIN:?}`)"
+      - "traefik.http.routers.fief.entrypoints=web,websecure"
+      # - "traefik.http.routers.fief.tls.certresolver=myresolver"
+      - "traefik.http.services.fief.loadbalancer.server.port=8000"
+      - "traefik.docker.network=shared"
+    networks:
+      - default
+      - shared
+
+  fief-worker:
+    image: ghcr.io/fief-dev/fief:latest
+    command: fief run-worker -p 1 -t 1
+    env_file:
+      - .env.fief
+    depends_on:
+      - postgres-fief
+      - redis
+    networks:
+      - default
+
+  postgres-fief:
+    image: postgres:alpine
+    env_file:
+      - .env.fief    
+
+    volumes:
+      - postgres_fief_data:/var/lib/postgresql/data
+    networks:
+      - default
+
+  redis:
+    image: redis:alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+    env_file:
+      - .env.fief
+    networks:
+      - default
+
+
+volumes:
+  postgres_fief_data:
+    name: postgres_fief_data
+  redis-data:
+    name: redis_data
+
+networks:
+  default:
+    driver: bridge
+  shared: # traefik network
+    external: true
