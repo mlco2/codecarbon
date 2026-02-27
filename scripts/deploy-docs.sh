@@ -9,7 +9,7 @@ VERSION_FULL="${1:?Usage: deploy-docs.sh VERSION_FULL}"
 VERSION_MINOR="${VERSION_FULL%.*}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SITE_DIR="${2:-site}"
-DEPLOY_DIR="${3:-deploy}"
+DEPLOY_DIR="${3:-.deploy-docs-workdir}"
 
 cd "$REPO_ROOT"
 mkdir -p "$DEPLOY_DIR"
