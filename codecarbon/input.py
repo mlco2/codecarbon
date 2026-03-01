@@ -8,19 +8,12 @@ They are loaded once at module import to avoid repeated file I/O on the hot path
 
 import atexit
 import json
-import sys
 from contextlib import ExitStack
+from importlib.resources import as_file as importlib_resources_as_file
+from importlib.resources import files as importlib_resources_files
 from typing import Any, Dict
 
 import pandas as pd
-
-if sys.version_info >= (3, 9):
-    from importlib.resources import as_file as importlib_resources_as_file
-    from importlib.resources import files as importlib_resources_files
-else:
-    from importlib_resources import as_file as importlib_resources_as_file
-    from importlib_resources import files as importlib_resources_files
-
 
 _CACHE: Dict[str, Any] = {}
 _MODULE_NAME = "codecarbon"

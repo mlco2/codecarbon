@@ -78,6 +78,8 @@ Between April 2024 and July 2025 we use Hatch for managing development environme
 
 We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
+We have dropped support of Python 3.8 and 3.9 since version 3.2.4 of CodeCarbon.
+
 Please install [UV](https://github.com/astral-sh/uv) following [installation instructions](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer).
 
 Then, clone the repository and create the environment with:
@@ -511,7 +513,7 @@ CC_PIP_REQUIREMENTS_FILE="requirements.txt"
 CC_POST_BUILD_HOOK="cd $APP_HOME/carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
 CC_PYTHON_BACKEND="uvicorn"
 CC_PYTHON_MODULE="main:app"
-CC_PYTHON_VERSION="3.8"
+CC_PYTHON_VERSION="3.13"
 DATABASE_URL="postgresql://secret_do_not_publish_this"
 PORT="8080"
 ```
@@ -547,7 +549,7 @@ Config on CleverCloud:
 APP_FOLDER="dashboard"
 CC_PIP_REQUIREMENTS_FILE="requirements-dashboard.txt"
 CC_PYTHON_MODULE="carbon_board_API:server"
-CC_PYTHON_VERSION="3.8"
+CC_PYTHON_VERSION="3.13"
 CODECARBON_API_URL="https://api.codecarbon.io"
 PORT="8000"
 ```
