@@ -1,0 +1,12 @@
+:{$CC_STATIC_PORT:8080} {
+	root * dist
+	encode gzip
+	try_files {path} /index.html
+	file_server
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

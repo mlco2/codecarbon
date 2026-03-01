@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Project } from "@/types/project";
-import { createProject } from "@/server-functions/projects";
+import { Project } from "@/api/schemas";
+import { createProject } from "@/api/projects";
 import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import {
     Dialog,
@@ -36,8 +37,6 @@ const CreateProjectModal: React.FC<ModalProps> = ({
         name: "",
         description: "",
     });
-    const [isCreated, setIsCreated] = useState(false);
-    const [createdProject, setCreatedProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSave = async () => {
@@ -49,8 +48,6 @@ const CreateProjectModal: React.FC<ModalProps> = ({
                         organizationId,
                         formData,
                     );
-                    setCreatedProject(newProject);
-                    setIsCreated(true);
                     await onProjectCreated(); // Call the callback to refresh the project list
                     handleClose(); // Automatically close the modal after successful creation
                     return newProject; // Return for the success message
@@ -72,8 +69,6 @@ const CreateProjectModal: React.FC<ModalProps> = ({
     const handleClose = () => {
         // Reset state when closing
         setFormData({ name: "", description: "" });
-        setIsCreated(false);
-        setCreatedProject(null);
         onClose();
     };
 
@@ -88,28 +83,36 @@ const CreateProjectModal: React.FC<ModalProps> = ({
                 </DialogHeader>
                 <Separator className="my-4" />
                 <div className="grid gap-4 py-4">
-                    <Input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                name: e.target.value,
-                            })
-                        }
-                        placeholder="Project Name"
-                    />
-                    <Input
-                        type="text"
-                        value={formData.description}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                description: e.target.value,
-                            })
-                        }
-                        placeholder="Project Description"
-                    />
+                    <div className="space-y-2">
+                        <Label htmlFor="project-name">Project Name</Label>
+                        <Input
+                            id="project-name"
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
+                            placeholder="Project Name"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="project-description">Project Description</Label>
+                        <Input
+                            id="project-description"
+                            type="text"
+                            value={formData.description}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    description: e.target.value,
+                                })
+                            }
+                            placeholder="Project Description"
+                        />
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={handleClose}>

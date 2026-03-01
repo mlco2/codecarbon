@@ -1,24 +1,20 @@
 import { DateRangePicker } from "@/components/date-range-picker";
-import EmissionsTimeSeriesChart from "@/components/emissions-time-series";
-import ExperimentsBarChart from "@/components/experiment-bar-chart";
-import RadialChart from "@/components/radial-chart";
-import RunsScatterChart from "@/components/runs-scatter-chart";
 import { Separator } from "@/components/ui/separator";
 import { getDefaultDateRange } from "@/helpers/date-utils";
-import { ExperimentReport } from "@/types/experiment-report";
-import { Project } from "@/types/project";
-import { ConvertedValues, RadialChartData } from "@/types/project-dashboard";
-import Image from "next/image";
-import { ReactNode, useState } from "react";
+import { ExperimentReport, Project, ConvertedValues, RadialChartData, Experiment } from "@/api/schemas";
+import { lazy, ReactNode, Suspense, useState } from "react";
 import { DateRange } from "react-day-picker";
 import ChartSkeleton from "./chart-skeleton";
 import CreateExperimentModal from "./createExperimentModal";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
-import { useRouter } from "next/navigation";
 import { Table, TableBody, TableHeader } from "./ui/table";
-import { Experiment } from "@/types/experiment";
+
+const RadialChart = lazy(() => import("@/components/radial-chart"));
+const ExperimentsBarChart = lazy(() => import("@/components/experiment-bar-chart"));
+const RunsScatterChart = lazy(() => import("@/components/runs-scatter-chart"));
+const EmissionsTimeSeriesChart = lazy(() => import("@/components/emissions-time-series"));
 
 export interface ProjectDashboardBaseProps {
     isPublicView: boolean;
@@ -59,7 +55,6 @@ export default function ProjectDashboardBase({
     headerContent,
     isLoading = false,
 }: ProjectDashboardBaseProps) {
-    const router = useRouter();
     const [isExperimentModalOpen, setIsExperimentModalOpen] = useState(false);
 
     const handleCreateExperimentClick = () => {
@@ -67,7 +62,9 @@ export default function ProjectDashboardBase({
     };
 
     const refreshExperimentList = async () => {
-        router.refresh();
+        // In Vite+React Router, we don't have router.refresh()
+        // The parent component handles data refresh via callbacks
+        window.location.reload();
     };
 
     const experimentName = experimentsReportData.find(
@@ -108,7 +105,7 @@ export default function ProjectDashboardBase({
                         <>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="flex items-center justify-center">
-                                    <Image
+                                    <img
                                         src="/icons/household_consumption.svg"
                                         alt="Household consumption icon"
                                         width={64}
@@ -127,7 +124,7 @@ export default function ProjectDashboardBase({
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="flex items-center justify-center">
-                                    <Image
+                                    <img
                                         src="/icons/transportation.svg"
                                         alt="Transportation icon"
                                         width={64}
@@ -146,7 +143,7 @@ export default function ProjectDashboardBase({
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="flex items-center justify-center">
-                                    <Image
+                                    <img
                                         src="/icons/tv.svg"
                                         alt="TV icon"
                                         width={64}
@@ -174,7 +171,7 @@ export default function ProjectDashboardBase({
                             </CardContent>
                         </Card>
                     ) : (
-                        <RadialChart data={radialChartData.energy} />
+                        <Suspense fallback={<Card className="flex flex-col h-full items-center justify-center"><CardContent className="p-0"><Skeleton className="h-44 w-44 rounded-full" /></CardContent></Card>}><RadialChart data={radialChartData.energy} /></Suspense>
                     )}
                 </div>
                 <div className="col-span-1 items-center justify-center w-full h-full">
@@ -185,7 +182,7 @@ export default function ProjectDashboardBase({
                             </CardContent>
                         </Card>
                     ) : (
-                        <RadialChart data={radialChartData.emissions} />
+                        <Suspense fallback={<Card className="flex flex-col h-full items-center justify-center"><CardContent className="p-0"><Skeleton className="h-44 w-44 rounded-full" /></CardContent></Card>}><RadialChart data={radialChartData.emissions} /></Suspense>
                     )}
                 </div>
                 <div className="col-span-1 items-center justify-center w-full h-full">
@@ -196,7 +193,7 @@ export default function ProjectDashboardBase({
                             </CardContent>
                         </Card>
                     ) : (
-                        <RadialChart data={radialChartData.duration} />
+                        <Suspense fallback={<Card className="flex flex-col h-full items-center justify-center"><CardContent className="p-0"><Skeleton className="h-44 w-44 rounded-full" /></CardContent></Card>}><RadialChart data={radialChartData.duration} /></Suspense>
                     )}
                 </div>
             </div>
@@ -278,23 +275,27 @@ export default function ProjectDashboardBase({
                     </>
                 ) : (
                     <>
-                        <ExperimentsBarChart
-                            isPublicView={isPublicView}
-                            experimentsReportData={experimentsReportData}
-                            onExperimentClick={onExperimentClick}
-                            projectName={project.name}
-                            selectedExperimentId={selectedExperimentId}
-                        />
-                        <RunsScatterChart
-                            isPublicView={isPublicView}
-                            params={{
-                                ...runData,
-                                experimentId: selectedExperimentId,
-                            }}
-                            onRunClick={onRunClick}
-                            projectName={project.name}
-                            experimentName={experimentName}
-                        />
+                        <Suspense fallback={<ChartSkeleton height={300} />}>
+                            <ExperimentsBarChart
+                                isPublicView={isPublicView}
+                                experimentsReportData={experimentsReportData}
+                                onExperimentClick={onExperimentClick}
+                                projectName={project.name}
+                                selectedExperimentId={selectedExperimentId}
+                            />
+                        </Suspense>
+                        <Suspense fallback={<ChartSkeleton height={300} />}>
+                            <RunsScatterChart
+                                isPublicView={isPublicView}
+                                params={{
+                                    ...runData,
+                                    experimentId: selectedExperimentId,
+                                }}
+                                onRunClick={onRunClick}
+                                projectName={project.name}
+                                experimentName={experimentName}
+                            />
+                        </Suspense>
                     </>
                 )}
             </div>
@@ -305,12 +306,14 @@ export default function ProjectDashboardBase({
                         {isLoading ? (
                             <ChartSkeleton height={350} />
                         ) : (
-                            <EmissionsTimeSeriesChart
-                                isPublicView={isPublicView}
-                                runId={selectedRunId}
-                                projectName={project.name}
-                                experimentName={experimentName}
-                            />
+                            <Suspense fallback={<ChartSkeleton height={350} />}>
+                                <EmissionsTimeSeriesChart
+                                    isPublicView={isPublicView}
+                                    runId={selectedRunId}
+                                    projectName={project.name}
+                                    experimentName={experimentName}
+                                />
+                            </Suspense>
                         )}
                     </div>
                 </>

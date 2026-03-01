@@ -1,8 +1,6 @@
-"use client";
-
-import { IProjectToken } from "@/types/project";
+import { IProjectToken } from "@/api/schemas";
 import CustomRow from "../custom-row";
-import { deleteProjectToken } from "@/server-functions/projectTokens";
+import { deleteProjectToken } from "@/api/projectTokens";
 import { useState } from "react";
 import { toast } from "sonner";
 

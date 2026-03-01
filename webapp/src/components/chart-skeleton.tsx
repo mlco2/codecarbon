@@ -19,7 +19,7 @@ export default function ChartSkeleton({
                 <Skeleton className="h-4 w-4/5" />
             </CardHeader>
             <CardContent>
-                <Skeleton className={`w-full h-[${height}px]`} />
+                <Skeleton className="w-full" style={{ height }} />
             </CardContent>
         </Card>
     );
