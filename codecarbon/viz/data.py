@@ -95,6 +95,59 @@ class Data:
         """
         return f"{project_carbon_equivalent / 160.58 * 100:.2f}"
 
+    def get_food_production_equivalent(self, project_carbon_equivalent: float):
+        """
+        Calculates the equivalent mass of food production for the given CO2 emissions.
+
+        Returns a dict with kg of each food type that would produce the same emissions.
+
+        Emission factors (kg CO2e per kg of product) from Poore & Nemecek (2018),
+        "Reducing food's environmental impacts through producers and consumers",
+        Science 360(6392), pp. 987-992. doi:10.1126/science.aaq0216
+
+        :param project_carbon_equivalent: total project emissions in kg CO2e
+        :return: dict of food type -> kg produced with equivalent emissions
+        """
+        # kg CO2e per kg of food product (global mean, farm to retail)
+        emission_factors = {
+            "beef": 27.0,
+            "cheese": 13.5,
+            "chicken": 6.9,
+            "rice": 4.0,
+            "tofu": 3.5,
+            "lentils": 0.9,
+        }
+        return {
+            food: round(project_carbon_equivalent / factor, 1)
+            for food, factor in emission_factors.items()
+        }
+
+    def get_beef_equivalent(self, project_carbon_equivalent: float):
+        """
+        Returns formatted string of kg of beef production with equivalent emissions.
+        Beef: 27.0 kg CO2e/kg (Poore & Nemecek 2018)
+        :param project_carbon_equivalent: total project emissions in kg CO2e
+        :return: formatted string
+        """
+        kg_beef = project_carbon_equivalent / 27.0
+        if kg_beef >= 1:
+            return f"{kg_beef:.1f} kg of beef"
+        else:
+            return f"{kg_beef * 1000:.0f} g of beef"
+
+    def get_lentils_equivalent(self, project_carbon_equivalent: float):
+        """
+        Returns formatted string of kg of lentils production with equivalent emissions.
+        Lentils: 0.9 kg CO2e/kg (Poore & Nemecek 2018)
+        :param project_carbon_equivalent: total project emissions in kg CO2e
+        :return: formatted string
+        """
+        kg_lentils = project_carbon_equivalent / 0.9
+        if kg_lentils >= 1:
+            return f"{kg_lentils:.1f} kg of lentils"
+        else:
+            return f"{kg_lentils * 1000:.0f} g of lentils"
+
     def get_global_emissions_choropleth_data(
         self, net_energy_consumed: float
     ) -> List[Dict]:
