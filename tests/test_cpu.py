@@ -353,24 +353,30 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         cpu_device = mock.Mock()
         cpu_device.get_model.return_value = "Mock CPU"
 
-        with mock.patch(
-            "codecarbon.core.resource_tracker.cpu.TDP",
-            side_effect=AssertionError(
-                "TDP should not be instantiated when RAPL is active"
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.TDP",
+                side_effect=AssertionError(
+                    "TDP should not be instantiated when RAPL is active"
+                ),
+            ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+                return_value=False,
             ),
-        ) as mocked_tdp, mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
-            return_value=True,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.CPU.from_utils",
-            return_value=cpu_device,
-        ) as mocked_from_utils:
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+                return_value=True,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.CPU.from_utils",
+                return_value=cpu_device,
+            ) as mocked_from_utils,
+        ):
             resource_tracker.set_CPU_tracking()
 
         mocked_tdp.assert_not_called()
@@ -400,22 +406,29 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         fake_tdp.tdp = 50
         fake_tdp.model = "Mock CPU"
 
-        with mock.patch(
-            "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
-        ) as mocked_tdp, mock.patch(
-            "codecarbon.core.resource_tracker.ResourceTracker._setup_cpu_load_mode",
-            return_value=True,
-        ) as mocked_setup_cpu_load, mock.patch(
-            "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
-        ) as mocked_fallback, mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
-            return_value=False,
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+            ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.ResourceTracker._setup_cpu_load_mode",
+                return_value=True,
+            ) as mocked_setup_cpu_load,
+            mock.patch(
+                "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
+            ) as mocked_fallback,
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+                return_value=False,
+            ),
         ):
             resource_tracker.set_CPU_tracking()
 
@@ -440,19 +453,25 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         fake_tdp.tdp = 20
         fake_tdp.model = "Mock CPU"
 
-        with mock.patch(
-            "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
-        ) as mocked_tdp, mock.patch(
-            "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
-        ) as mocked_fallback, mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
-            return_value=False,
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+            ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
+            ) as mocked_fallback,
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+                return_value=False,
+            ),
         ):
             resource_tracker.set_CPU_tracking()
 
