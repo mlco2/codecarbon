@@ -3,6 +3,7 @@
 Test script to compare RAPL domains (package-0 vs psys) with reliable CPU stress using 7z b.
 This helps diagnose why RAPL readings might not match powerstat measurements.
 """
+
 import os
 import subprocess
 import time

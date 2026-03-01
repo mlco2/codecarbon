@@ -38,7 +38,7 @@ Here's what you need to know to navigate and contribute effectively.
 ### Key Directories
 
 - **tests/** - Unit tests for the core package
-- **docs/** - Sphinx documentation (build with `uv run task docs`)
+- **docs/** - Zensical documentation (build with `uv run task docs`)
 - **examples/** - Usage examples and demos
 - **deploy/** - Deployment configurations and scripts
 

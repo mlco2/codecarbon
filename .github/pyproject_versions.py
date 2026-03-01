@@ -35,7 +35,7 @@ def get_version_from_file(filepath: str, pattern: str) -> str:
 
 def get_all_versions() -> dict:
     """
-    Read versions from all three files managed by bumpver.
+    Read versions from files managed by bumpver.
 
     :return: Dict containing versions from all files
     """
@@ -58,11 +58,6 @@ def get_all_versions() -> dict:
     # Get version from codecarbon/_version.py
     versions["codecarbon_version"] = get_version_from_file(
         "codecarbon/_version.py", r'^__version__\s*=\s*["\']([^"\']+)["\']'
-    )
-
-    # Get version from docs/edit/conf.py
-    versions["docs_conf"] = get_version_from_file(
-        "docs/edit/conf.py", r'^release\s*=\s*["\']([^"\']+)["\']'
     )
 
     return versions
@@ -95,7 +90,6 @@ def check_version_coherence(quiet=False) -> bool:
                 file_mapping = {
                     "pyproject_toml": "pyproject.toml [tool.bumpver] current_version",
                     "codecarbon_version": "codecarbon/_version.py __version__",
-                    "docs_conf": "docs/edit/conf.py release",
                 }
                 logging.error(f"  {file_mapping[file_key]}: {version}")
             logging.error(

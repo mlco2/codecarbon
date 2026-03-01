@@ -2,6 +2,7 @@
 """
 Test that CodeCarbon now defaults to including DRAM for complete hardware measurement.
 """
+
 import subprocess
 import time
 

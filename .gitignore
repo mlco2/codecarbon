@@ -103,6 +103,8 @@ venv.bak/
 
 # mkdocs documentation
 /site
+/deploy
+.deploy-docs-workdir/
 
 # mypy
 .mypy_cache/

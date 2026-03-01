@@ -120,8 +120,10 @@ dev = [
     "logfire>=1.0.1",  # For testing Logfire output method
 ]
 doc = [
-  "sphinx",
-  "sphinx_rtd_theme>=3.1.0",
+  "setuptools",
+  "zensical",
+  "mike",
+  "mkdocstrings[python]>=0.26",
 ]
 
 [project.optional-dependencies]
@@ -178,7 +180,7 @@ test-api-unit = "cd carbonserver && python -m pytest -vv tests/api/routers && py
 test-api-integ = "cd carbonserver && python -m pytest -vv tests/api/integration/"
 setup-db = "cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
 downgrade-db = "cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base"
-build-doc = "cd docs/edit && make docs"
+build-doc = "zensical build -f mkdocs.yml"
 precommit-install = "pre-commit install"
 precommit-update = "pre-commit autoupdate"
 precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
@@ -188,7 +190,9 @@ format = "black . && ruff check --fix --exit-non-zero-on-fix ."
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov --cov-report=xml --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
-docs = "cd docs/edit && make docs"
+docs = "zensical build -f mkdocs.yml"
+docs-serve = "zensical serve -f mkdocs.yml"
+docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
@@ -198,9 +202,6 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 [tool.bumpver.file_patterns]
 "codecarbon/_version.py" = [
     '^__version__ = "{version}"$',
-]
-"docs/edit/conf.py" = [
-    '^release = "{version}"$',
 ]
 
 [tool.pytest.ini_options]

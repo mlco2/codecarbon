@@ -4,33 +4,34 @@
 
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
-- [</a> Have a Question?](#have-a-question)
-- [</a> Found a Bug?](#found-a-bug)
-- [</a> Have a Feature Request?](#have-a-feature-request)
-- [Alternative ways of contributing](#alternative-ways-of-contributing)
-- [</a> Ready to Contribute!](#ready-to-contribute)
-   * [Installation](#installation)
-   * [Some UV commands](#some-uv-commands)
-   * [Tests](#tests)
-   * [Stress your computer](#stress-your-computer)
-   * [Update all dependancies](#update-all-dependancies)
-   * [Branching and Pull Requests](#branching-and-pull-requests)
-   * [Debug in VS Code](#debug-in-vs-code)
-   * [Coding style && Linting](#coding-style-linting)
-   * [Dependencies management](#dependencies-management)
-   * [Build Documentation 🖨️](#build-documentation)
-   * [Release process](#release-process)
-      + [Test the build in Docker](#test-the-build-in-docker)
-- [API and Dashboard](#api-and-dashboard)
-   * [CSV Dashboard](#csv-dashboard)
-   * [Web dashboard](#web-dashboard)
-   * [API](#api)
-   * [Test the API](#test-the-api)
-   * [Restore database from a production Backup](#restore-database-from-a-production-backup)
-   * [Deployment](#deployment)
-      + [API](#api-1)
-      + [Dashboard](#dashboard)
-- [License](#license)
+- [Contributing to Code Carbon](#contributing-to-code-carbon)
+  - [ Have a Question?](#-have-a-question)
+  - [ Found a Bug?](#-found-a-bug)
+  - [ Have a Feature Request?](#-have-a-feature-request)
+  - [Alternative ways of contributing](#alternative-ways-of-contributing)
+  - [ Ready to Contribute!](#-ready-to-contribute)
+    - [Installation](#installation)
+    - [Some UV commands](#some-uv-commands)
+    - [Tests](#tests)
+    - [Stress your computer](#stress-your-computer)
+    - [Update all dependancies](#update-all-dependancies)
+    - [Branching and Pull Requests](#branching-and-pull-requests)
+    - [Debug in VS Code](#debug-in-vs-code)
+    - [Coding style \&\& Linting](#coding-style--linting)
+    - [Dependencies management](#dependencies-management)
+    - [Build Documentation 🖨️](#build-documentation-️)
+    - [Release process](#release-process)
+      - [Test the build in Docker](#test-the-build-in-docker)
+  - [API and Dashboard](#api-and-dashboard)
+    - [CSV Dashboard](#csv-dashboard)
+    - [Web dashboard](#web-dashboard)
+    - [API](#api)
+    - [Test the API](#test-the-api)
+    - [Restore database from a production Backup](#restore-database-from-a-production-backup)
+    - [Deployment](#deployment)
+      - [API](#api-1)
+      - [Dashboard](#dashboard)
+  - [License](#license)
 
 <!-- TOC end -->
 
@@ -225,7 +226,7 @@ Here is the launch.json to be able to debug examples and tests:
 
 Then run opened test with this button:
 
-![vscode_debug](docs/edit/images/vscode_debug.png)
+![vscode_debug](docs/images/vscode_debug.png)
 
 
 <!-- TOC --><a name="coding-style-linting"></a>
@@ -271,15 +272,40 @@ Dependencies are defined in different places:
 ### Build Documentation 🖨️
 
 No software is complete without great documentation!
-To make generating documentation easier, we use [`sphinx` package](https://www.sphinx-doc.org/en/master/usage/installation.html#installation-from-pypi).
+To make generating documentation easier, we use [Zensical](https://zensical.org/).
 
-In order to make changes, edit the `.rst` files that are in the `/docs/edit` folder, and then run in root folder:
+In order to make changes, edit the `.md` files in the `/docs` folder, and then run in root folder:
 
 ```sh
 uv run --only-group doc task docs
 ```
 
-to regenerate the html files.
+to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
+
+### Rebase your branch on master 
+
+Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
+```sh
+# Be careful, this command will delete every local changes you have, make sure to commit or stash them before running it
+TARGET_BRANCH=master
+current_branch=$(git symbolic-ref --short HEAD)
+git switch $TARGET_BRANCH && git pull
+git switch $current_branch --force && git fetch origin $TARGET_BRANCH
+git rebase $TARGET_BRANCH
+```
+
+In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to master. This is because the commits from your branch are being applied to master, so they are incoming. In case of a merge, it's the opposite!
+
+Check if everything is fine:
+
+```sh
+git status
+```
+
+Push force
+```sh
+git push --force-with-lease
+```
 
 ### Rebase your branch on master 
 
@@ -313,7 +339,7 @@ git push --force-with-lease
 - Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
 - Run `uv run python .github/pyproject_versions.py -c` to check version consistancy.
 - Update the dependencies with `uv sync --upgrade`
-- [Build Documentation](#documentation) with `uv run --only-group doc task docs`.
+- [Build Documentation](#build-documentation) with `uv run --only-group doc task docs`.
 - Push the changes.
 - Merge the PR.
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.

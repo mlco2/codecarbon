@@ -1,0 +1,131 @@
+site_name: CodeCarbon
+site_description: Measure and reduce carbon emissions from computing - Official Documentation
+site_url: https://docs.codecarbon.io/
+docs_dir: docs
+site_dir: site
+repo_url: https://github.com/mlco2/codecarbon
+repo_name: mlco2/codecarbon
+edit_uri: edit/master/docs/
+copyright: "&copy; CodeCarbon"
+
+theme:
+  name: zensical
+  favicon: images/favicon.ico
+  logo: images/codecarbon-logo.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: lucide/sun
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: lucide/moon
+        name: Switch to light mode
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+  icon:
+    github: mlco2/codecarbon
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+            docstring_section_style: table
+            show_source: false
+  - mike:
+      version_selector: true
+      canonical_version: latest
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra:
+  version:
+    provider: mike
+    default: latest
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/mlco2/codecarbon
+      name: CodeCarbon on GitHub
+
+nav:
+  - Introduction:
+    - Home: index.md
+    - When to use CodeCarbon: introduction/when-to-use.md
+    - Motivation: introduction/motivation.md
+    - Methodology: introduction/methodology.md
+    - RAPL Metrics: introduction/rapl.md
+    - Model Comparisons: introduction/model_examples.md
+    - Frequently Asked Questions: introduction/faq.md
+  - Getting Started:
+    - Installing CodeCarbon: getting-started/installation.md
+    - Quickstart: getting-started/usage.md
+    - CodeCarbon API: getting-started/api.md
+    - Parameters: getting-started/parameters.md
+    - Examples: getting-started/examples.md
+    - Comet Integration: getting-started/comet.md
+    - Advanced Installation: getting-started/advanced_installation.md
+    - Test on Scaleway: getting-started/test_on_scaleway.md
+  - Logging:
+    - Output: logging/output.md
+    - Collecting emissions to a logger: logging/to_logger.md
+    - Visualize: logging/visualize.md
+  - Track GenAI API Calls (EcoLogits) ↗: https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs
