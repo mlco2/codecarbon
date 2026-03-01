@@ -197,6 +197,138 @@ class TestFileOutput(unittest.TestCase):
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(len(df), 1)
 
+    def test_file_output_out_append_no_gpu_consistent_columns(self):
+        """Regression test: successive appends with gpu_count=None/gpu_model=None must
+        never trigger a format-change warning or produce a .bak backup file.
+
+        The bug: dropna(axis=1, how="all") was applied to the *existing* CSV DataFrame
+        as well as to new_df.  On a CPU-only machine both gpu_count and gpu_model are
+        NaN in every row, so after the second write those columns were silently dropped.
+        The third write then detected a schema mismatch and backed up the file.
+        """
+        no_gpu_data = EmissionsData(
+            timestamp="2023-01-01T00:00:00",
+            project_name="test_project",
+            run_id="test_run_id",
+            experiment_id="test_experiment_id",
+            duration=10,
+            emissions=0.5,
+            emissions_rate=0.05,
+            cpu_power=20,
+            gpu_power=0,
+            ram_power=5,
+            cpu_energy=200,
+            gpu_energy=0,
+            ram_energy=50,
+            energy_consumed=250,
+            water_consumed=0.1,
+            country_name="Testland",
+            country_iso_code="TS",
+            region="Test Region",
+            cloud_provider="",
+            cloud_region="",
+            os="TestOS",
+            python_version="3.8",
+            codecarbon_version="2.0",
+            cpu_count=4,
+            cpu_model="Test CPU",
+            gpu_count=None,
+            gpu_model=None,
+            longitude=0,
+            latitude=0,
+            ram_total_size=16,
+            tracking_mode="machine",
+        )
+
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+
+        # Write four times — prior to the fix, the 3rd write triggered a backup.
+        for _ in range(4):
+            file_output.out(no_gpu_data, None)
+            self.assertTrue(
+                file_output.has_valid_headers(no_gpu_data),
+                "CSV headers became invalid after an append (gpu_count/gpu_model "
+                "columns were dropped by dropna).",
+            )
+
+        # No .bak file should have been created.
+        bak_path = file_output.save_file_path + ".bak"
+        self.assertFalse(
+            os.path.exists(bak_path),
+            "A backup file was created even though the CSV schema did not change.",
+        )
+
+        # All four rows must be present.
+        df = pd.read_csv(file_output.save_file_path)
+        self.assertEqual(len(df), 4)
+
+        # gpu_count and gpu_model columns must still be present (as NaN).
+        self.assertIn("gpu_count", df.columns)
+        self.assertIn("gpu_model", df.columns)
+
+    def test_file_output_out_append_no_gpu_zero_defaults(self):
+        """Test that gpu_count=0 and gpu_model="" (the new tracker defaults for
+        CPU-only machines) produce consistent CSV columns across successive writes.
+        """
+        no_gpu_data = EmissionsData(
+            timestamp="2023-01-01T00:00:00",
+            project_name="test_project",
+            run_id="test_run_id",
+            experiment_id="test_experiment_id",
+            duration=10,
+            emissions=0.5,
+            emissions_rate=0.05,
+            cpu_power=20,
+            gpu_power=0,
+            ram_power=5,
+            cpu_energy=200,
+            gpu_energy=0,
+            ram_energy=50,
+            energy_consumed=250,
+            water_consumed=0.1,
+            country_name="Testland",
+            country_iso_code="TS",
+            region="Test Region",
+            cloud_provider="",
+            cloud_region="",
+            os="TestOS",
+            python_version="3.8",
+            codecarbon_version="2.0",
+            cpu_count=4,
+            cpu_model="Test CPU",
+            gpu_count=0,
+            gpu_model="",
+            longitude=0,
+            latitude=0,
+            ram_total_size=16,
+            tracking_mode="machine",
+        )
+
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+
+        for _ in range(4):
+            file_output.out(no_gpu_data, None)
+            self.assertTrue(
+                file_output.has_valid_headers(no_gpu_data),
+                "CSV headers should remain consistent with gpu_count=0 / gpu_model=''.",
+            )
+
+        bak_path = file_output.save_file_path + ".bak"
+        self.assertFalse(
+            os.path.exists(bak_path),
+            "No backup should be created when columns are consistent.",
+        )
+
+        df = pd.read_csv(file_output.save_file_path)
+        self.assertEqual(len(df), 4)
+        self.assertIn("gpu_count", df.columns)
+        self.assertIn("gpu_model", df.columns)
+        # With 0/"" defaults, gpu_count should be 0 (not NaN)
+        self.assertTrue((df["gpu_count"] == 0).all())
+        # gpu_model="" is read back as NaN by pandas (empty string in CSV),
+        # but the column must still be present.
+        self.assertIn("gpu_model", df.columns)
+
     def test_file_output_task_out(self):
         task_emissions_data = [
             TaskEmissionsData(

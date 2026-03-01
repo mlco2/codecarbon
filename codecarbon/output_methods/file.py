@@ -102,9 +102,8 @@ class FileOutput(BaseOutput):
             df = new_df
         elif self.on_csv_write == "append":
             df = pd.read_csv(self.save_file_path)
-            # Filter out empty or all-NA columns, to avoid warnings from Pandas,
+            # Filter out empty or all-NA columns only from new_df, to avoid warnings from Pandas,
             # see https://github.com/pandas-dev/pandas/issues/55928
-            df = df.dropna(axis=1, how="all")
             new_df = new_df.dropna(axis=1, how="all")
             df = pd.concat([df, new_df])
         else:
@@ -134,19 +133,17 @@ class FileOutput(BaseOutput):
         """
         Save the emissions data from a single task in an experiment run to a CSV file.
 
-        Does not attempt to backup existing files or prevent ovewritting them.
+        Does not attempt to backup existing files or prevent overwriting them.
         """
         run_id = data[0].run_id
         save_task_file_path = os.path.join(
             self.output_dir, "emissions_" + experiment_name + "_" + run_id + ".csv"
         )
-        df = pd.DataFrame(columns=data[0].values.keys())
         new_df = pd.DataFrame.from_records(
             [dict(data_point.values) for data_point in data]
         )
-        # Filter out empty or all-NA columns, to avoid warnings from Pandas
+        # Filter out empty or all-NA columns only from new_df, to avoid warnings from Pandas
         # see https://github.com/pandas-dev/pandas/issues/55928
-        df = df.dropna(axis=1, how="all")
         new_df = new_df.dropna(axis=1, how="all")
-        df = pd.concat([df, new_df], ignore_index=True)
+        df = new_df
         df.to_csv(save_task_file_path, index=False)

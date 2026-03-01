@@ -237,6 +237,8 @@ class ResourceTracker:
             self.gpu_tracker = "pynvml"
         else:
             logger.info("No GPU found.")
+            self.tracker._conf.setdefault("gpu_count", 0)
+            self.tracker._conf.setdefault("gpu_model", "")
 
     def set_CPU_GPU_ram_tracking(self):
         """
