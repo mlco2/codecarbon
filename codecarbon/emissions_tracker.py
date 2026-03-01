@@ -383,7 +383,6 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
-
         # Tracking mode detection
         self._hardware = []
         resource_tracker = ResourceTracker(self)

@@ -215,14 +215,20 @@ class ResourceTracker:
 
     def set_GPU_tracking(self):
         logger.info("[setup] GPU Tracking...")
-        if self.tracker._gpu_ids:
+        if isinstance(self.tracker._gpu_ids, str):
             self.tracker._gpu_ids = parse_gpu_ids(self.tracker._gpu_ids)
-            if self.tracker._gpu_ids:
-                self.tracker._conf["gpu_ids"] = self.tracker._gpu_ids
-                self.tracker._conf["gpu_count"] = len(self.tracker._gpu_ids)
+            self.tracker._conf["gpu_ids"] = self.tracker._gpu_ids
+            self.tracker._conf["gpu_count"] = len(self.tracker._gpu_ids)
 
-        if gpu.is_gpu_details_available():
-            logger.info("Tracking Nvidia GPU via pynvml")
+        is_nvidia = gpu.is_nvidia_system()
+        is_rocm = gpu.is_rocm_system()
+        if is_nvidia or is_rocm:
+            if is_nvidia:
+                logger.info("Tracking Nvidia GPUs via PyNVML")
+                self.gpu_tracker = "pynvml"
+            else:
+                logger.info("Tracking AMD GPUs via AMDSMI")
+                self.gpu_tracker = "amdsmi"
             gpu_devices = GPU.from_utils(self.tracker._gpu_ids)
             self.tracker._hardware.append(gpu_devices)
             gpu_names = [n["name"] for n in gpu_devices.devices.get_gpu_static_info()]
@@ -230,11 +236,9 @@ class ResourceTracker:
             self.tracker._conf["gpu_model"] = "".join(
                 [f"{i} x {name}" for name, i in gpu_names_dict.items()]
             )
-            if self.tracker._conf.get("gpu_count") is None:
-                self.tracker._conf["gpu_count"] = len(
-                    gpu_devices.devices.get_gpu_static_info()
-                )
-            self.gpu_tracker = "pynvml"
+            self.tracker._conf["gpu_count"] = len(
+                gpu_devices.devices.get_gpu_static_info()
+            )
         else:
             logger.info("No GPU found.")
 
