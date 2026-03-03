@@ -38,7 +38,7 @@ Only a few lines of code:
 ```python
 from codecarbon import EmissionsTracker
 
-tracker = EmissionsTracker()
+tracker = EmissionsTracker(save_to_file=False, log_level="error")
 tracker.start()
 
 # Your code here
