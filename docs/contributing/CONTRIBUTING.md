@@ -284,7 +284,58 @@ uv run --only-group doc task docs
 
 to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
 
+<<<<<<< HEAD:docs/contributing/CONTRIBUTING.md
 ### Rebase your branch on master
+=======
+#### Testing documentation code examples
+
+Python code blocks in the docs can be checked to catch examples that have drifted out of sync with the library. Run the check with:
+
+```sh
+uv run task docs-check-drift
+```
+
+This executes every ` ```python ` fenced block found under `docs/` using [mktestdocs](https://github.com/koaning/mktestdocs). The check is driven by `scripts/check-docs-drift.py`.
+
+**Adding a new code block to the docs?** Use a ` ```python ` fence so it is picked up. If the block cannot run in CI (e.g. it requires TensorFlow, a live API, or other external dependencies), add `# skip` as the first line inside the block:
+
+````markdown
+```python
+# skip
+import tensorflow as tf
+...
+```
+````
+
+Blocks marked `# skip` are excluded from the check but still rendered normally in the documentation.
+
+### Rebase your branch on master 
+
+Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
+```sh
+# Be careful, this command will delete every local changes you have, make sure to commit or stash them before running it
+TARGET_BRANCH=master
+current_branch=$(git symbolic-ref --short HEAD)
+git switch $TARGET_BRANCH && git pull
+git switch $current_branch --force && git fetch origin $TARGET_BRANCH
+git rebase $TARGET_BRANCH
+```
+
+In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to master. This is because the commits from your branch are being applied to master, so they are incoming. In case of a merge, it's the opposite!
+
+Check if everything is fine:
+
+```sh
+git status
+```
+
+Push force
+```sh
+git push --force-with-lease
+```
+
+### Rebase your branch on master 
+>>>>>>> 70df9abf (feat: add mktestdocs to catch docs/code drift (closes #1083)):CONTRIBUTING.md
 
 Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh
