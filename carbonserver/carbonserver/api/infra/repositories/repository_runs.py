@@ -142,6 +142,7 @@ class SqlAlchemyRepository(Runs):
                     func.sum(SqlModelEmission.gpu_energy).label("gpu_energy"),
                     func.sum(SqlModelEmission.ram_energy).label("ram_energy"),
                     func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
+                    func.sum(SqlModelEmission.water_consumed).label("water_consumed"),
                     func.sum(SqlModelEmission.duration).label("duration"),
                     func.avg(SqlModelEmission.emissions_rate).label("emissions_rate"),
                     func.count(SqlModelEmission.emissions_rate).label(

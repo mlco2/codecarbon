@@ -22,6 +22,7 @@ class Emission(Base):
     ram_energy = Column(Float)
     energy_consumed = Column(Float)
     wue = Column(Float, nullable=False, default=0)
+    water_consumed = Column(Float, nullable=False, default=0)
     run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"))
     run = relationship("Run", back_populates="emissions")
 

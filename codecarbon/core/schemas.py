@@ -22,6 +22,7 @@ class EmissionBase:
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
+    water_consumed: float
 
 
 class EmissionCreate(EmissionBase):

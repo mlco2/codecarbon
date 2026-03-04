@@ -227,6 +227,7 @@ class ApiClient:  # (AsyncClient)
             gpu_energy=carbon_emission["gpu_energy"],
             ram_energy=carbon_emission["ram_energy"],
             energy_consumed=carbon_emission["energy_consumed"],
+            water_consumed=carbon_emission.get("water_consumed", 0.0),
         )
         try:
             payload = dataclasses.asdict(emission)
@@ -240,6 +241,7 @@ class ApiClient:  # (AsyncClient)
         except Exception as e:
             logger.error(e, exc_info=True)
             return False
+        print(f"DEBUG: Sending payload to API: {emission}")
         return True
 
     def _create_run(self, experiment_id: str):
