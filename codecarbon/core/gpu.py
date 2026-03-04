@@ -180,39 +180,23 @@ class NvidiaGPUDevice(GPUDevice):
         """Returns total energy consumption for this GPU in millijoules (mJ) since the driver was last reloaded
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
         """
-        if USE_PYNVML:
-            try:
-                return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
-            except pynvml.NVMLError:
-                logger.warning(
-                    "Failed to retrieve gpu total energy consumption", exc_info=True
-                )
-                return None
-        elif USE_AMDSMI:
-            # returns energy in "Energy Status Units" which is equivalent to around 15.3 microjoules
-            energy = amdsmi.amdsmi_dev_get_energy_count(self.handle)
-            return energy["power"] * energy["counter_resolution"] / 1000
-        else:
-            raise Exception("No GPU interface available")
+        try:
+            return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+        except pynvml.NVMLError:
+            logger.warning(
+                "Failed to retrieve gpu total energy consumption", exc_info=True
+            )
+            return None
 
     def _get_gpu_name(self) -> Any:
         """Returns the name of the GPU device
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1ga5361803e044c6fdf3b08523fb6d1481
         """
-        if USE_PYNVML:
-            try:
-                name = pynvml.nvmlDeviceGetName(self.handle)
-                return self._to_utf8(name)
-            except UnicodeDecodeError:
-                return "Unknown GPU"
-        elif USE_AMDSMI:
-            try:
-                name = amdsmi.amdsmi_get_board_info(self.handle)["manufacturer_name"]
-                return self._to_utf8(name)
-            except UnicodeDecodeError:
-                return "Unknown GPU"
-        else:
-            raise Exception("No GPU interface available")
+        try:
+            name = pynvml.nvmlDeviceGetName(self.handle)
+            return self._to_utf8(name)
+        except UnicodeDecodeError:
+            return "Unknown GPU"
 
     def _get_uuid(self):
         """Returns the globally unique GPU device UUID
@@ -225,25 +209,11 @@ class NvidiaGPUDevice(GPUDevice):
         """Returns memory info in bytes
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g2dfeb1db82aa1de91aa6edf941c85ca8
         """
-        if USE_PYNVML:
-            try:
-                return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
-            except pynvml.NVMLError_NotSupported:
-                # error thrown for the NVIDIA Blackwell GPU of DGX Spark, due to memory sharing -> return defaults instead
-                return pynvml.c_nvmlMemory_t(-1, -1, -1)
-        elif USE_AMDSMI:
-            # returns memory in megabytes (amd-smi metric --mem-usage)
-            memory_info = amdsmi.amdsmi_get_vram_usage(self.handle)
-            AMDMemory = namedtuple("AMDMemory", ["total", "used", "free"])
-            return AMDMemory(
-                total=memory_info["vram_total"] * 1024 * 1024,
-                used=memory_info["vram_used"] * 1024 * 1024,
-                free=(memory_info["vram_total"] - memory_info["vram_used"])
-                * 1024
-                * 1024,
-            )
-        else:
-            raise Exception("No GPU interface available")
+        try:
+            return pynvml.nvmlDeviceGetMemoryInfo(self.handle)
+        except pynvml.NVMLError_NotSupported:
+            # error thrown for the NVIDIA Blackwell GPU of DGX Spark, due to memory sharing -> return defaults instead
+            return pynvml.c_nvmlMemory_t(-1, -1, -1)
 
     def _get_temperature(self) -> int:
         """Returns degrees in the Celsius scale
@@ -484,7 +454,7 @@ class AMDGPUDevice(GPUDevice):
 class AllGPUDevices:
     device_count: int
     devices: List[GPUDevice]
-    
+
     def __init__(self) -> None:
         gpu_details_available = is_gpu_details_available()
         if gpu_details_available:
