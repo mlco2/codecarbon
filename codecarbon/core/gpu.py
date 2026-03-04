@@ -252,17 +252,18 @@ class NvidiaGPUDevice(GPUDevice):
         return pynvml.nvmlDeviceGetTemperature(self.handle, pynvml.NVML_TEMPERATURE_GPU)
 
     def _get_power_usage(self) -> int:
-        """Returns power usage in milliwatts
+        """Returns power usage in Watts
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g7ef7dff0ff14238d08a19ad7fb23fc87
         """
-        return pynvml.nvmlDeviceGetPowerUsage(self.handle)
+        return pynvml.nvmlDeviceGetPowerUsage(self.handle) / 1000
 
     def _get_power_limit(self) -> Union[int, None]:
-        """Returns max power usage in milliwatts
+        """Returns max power usage in Watts
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g263b5bf552d5ec7fcd29a088264d10ad
         """
         try:
-            return pynvml.nvmlDeviceGetEnforcedPowerLimit(self.handle)
+            # convert from milliwatts to watts
+            return pynvml.nvmlDeviceGetEnforcedPowerLimit(self.handle) / 1000
         except Exception:
             logger.warning("Failed to retrieve gpu power limit", exc_info=True)
             return None
@@ -412,27 +413,26 @@ class AMDGPUDevice(GPUDevice):
         return temp
 
     def _get_power_usage(self):
-        """Returns power usage in milliwatts"""
-        # amdsmi_get_power_info returns power in watts, convert to milliwatts
+        """Returns power usage in Watts"""
         power_info = self._call_amdsmi_with_reinit(
             amdsmi.amdsmi_get_power_info, self.handle
         )
-        power = int(power_info["average_socket_power"] * 1000)
+        power = int(power_info["average_socket_power"])
         if power == 0:
             # In some cases, the average_socket_power can be 0 or not available, try to get it from metrics info as a fallback
             metrics_info = self._get_gpu_metrics_info()
-            power = int(metrics_info.get("average_socket_power", 0) * 1000)
+            power = int(metrics_info.get("average_socket_power", 0))
         return power
 
     def _get_power_limit(self):
-        """Returns max power usage in milliwatts"""
+        """Returns max power usage in Watts"""
         # Get power cap info which contains power_cap in uW (microwatts)
         try:
             power_cap_info = self._call_amdsmi_with_reinit(
                 amdsmi.amdsmi_get_power_cap_info, self.handle
             )
-            # power_cap is in uW, convert to mW
-            return int(power_cap_info["power_cap"] / 1000)
+            # power_cap is in uW, convert to W
+            return int(power_cap_info["power_cap"] / 1_000_000)
         except Exception:
             logger.warning("Failed to retrieve gpu power cap", exc_info=True)
             return None
