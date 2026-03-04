@@ -332,20 +332,26 @@ class AMDGPUDevice(GPUDevice):
             energy_count = self._call_amdsmi_with_reinit(
                 amdsmi.amdsmi_get_energy_count, self.handle
             )
+            energy_key = None
+            if "energy_accumulator" in energy_count:
+                energy_key = "energy_accumulator"
+            elif "power" in energy_count:
+                energy_key = "power"
+            if energy_key is None:
+                logger.warning(
+                    f"Neither 'energy_accumulator' nor 'power' found in energy_count: {energy_count}"
+                )
+                return None
             # The amdsmi library returns a dict with energy counter and resolution
             # The counter is the actual accumulated value, resolution tells us how much each unit is worth
-            counter_value = energy_count.get("energy_accumulator", 0)
+            counter_value = energy_count.get(energy_key, 0)
             counter_resolution_uj = energy_count.get("counter_resolution", 0)
             if counter_value == 0 and counter_resolution_uj > 0:
                 # In some cases, the energy_accumulator is 0 but it exist in the metrics info, try to get it from there as a fallback
                 metrics_info = self._get_gpu_metrics_info()
-                counter_value = metrics_info.get("energy_accumulator", 0)
+                counter_value = metrics_info.get(energy_key, 0)
                 logger.debug(
-                    f"Energy accumulator value from metrics info : {counter_value} for GPU {self._gpu_name} with handle {self.handle} {metrics_info=}"
-                )
-
-            if counter_value == 0 or counter_resolution_uj == 0:
-                logger.warning(
+                    f"Energy accumulator value from metrics info : {counter_value} for GPU handle {self.handle} {metrics_info=}"
                     f"Failed to retrieve AMD GPU energy accumulator. energy_count: {energy_count} {counter_value=} {counter_resolution_uj=}",
                     exc_info=True,
                 )
