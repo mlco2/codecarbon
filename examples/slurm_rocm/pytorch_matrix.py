@@ -209,6 +209,9 @@ def _cleanup_resources(devices, results, matrices):
 @track_emissions(
     measure_power_secs=5,
     log_level="debug",
+    offline=True,
+    country_iso_code="FRA",
+    pue=1.1,
 )
 def train_model():
     """

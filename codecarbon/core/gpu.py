@@ -407,20 +407,25 @@ class AMDGPUDevice(GPUDevice):
 
     def _get_temperature(self):
         """Returns degrees in the Celsius scale. Returns temperature in millidegrees Celsius."""
-        # amdsmi_get_temp_metric returns temperature in millidegrees Celsius
-        temp_milli_celsius = self._call_amdsmi_with_reinit(
-            amdsmi.amdsmi_get_temp_metric,
-            self.handle,
-            sensor_type=amdsmi.AmdSmiTemperatureType.EDGE,
-            metric=amdsmi.AmdSmiTemperatureMetric.CURRENT,
-        )
-        # Convert from millidegrees to degrees
-        temp = temp_milli_celsius // 1000
-        # In some cases, the edge temperature can be 0 or not available, try to get it from metrics info as a fallback
-        if temp == 0:
-            metrics_info = self._get_gpu_metrics_info()
-            temp_celsius = metrics_info.get("temperature_edge", 0)
-            temp = temp_celsius
+        try:
+            # amdsmi_get_temp_metric returns temperature in millidegrees Celsius
+            temp_milli_celsius = self._call_amdsmi_with_reinit(
+                amdsmi.amdsmi_get_temp_metric,
+                self.handle,
+                sensor_type=amdsmi.AmdSmiTemperatureType.HOTSPOT,
+                metric=amdsmi.AmdSmiTemperatureMetric.CURRENT,
+            )
+            # Convert from millidegrees to degrees
+            temp = temp_milli_celsius // 1000
+            # In some cases, the hotspot temperature can be 0 or not available, try to get it from metrics info as a fallback
+            if temp == 0:
+                metrics_info = self._get_gpu_metrics_info()
+                temp_celsius = metrics_info.get("temperature_hotspot", 0)
+                temp = temp_celsius
+        except amdsmi.amdsmi_exception.AmdSmiLibraryException as e:
+            logger.debug(f"Failed to retrieve gpu temperature: {e}")
+            temp = 0
+
         return temp
 
     def _get_power_usage(self):
