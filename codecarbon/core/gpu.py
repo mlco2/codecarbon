@@ -269,12 +269,14 @@ class NvidiaGPUDevice(GPUDevice):
 
 
 class AMDGPUDevice(GPUDevice):
-    _DUAL_GCD_POWER_LIMITED_MODELS = ("MI250", "MI250X", "MI300X", "MI300A")
     _dual_gcd_warning_emitted = False
 
     def _is_dual_gcd_power_limited_model(self, gpu_name: str) -> bool:
         name = gpu_name.upper()
-        return any(model in name for model in self._DUAL_GCD_POWER_LIMITED_MODELS)
+        # Dual-GCD models: MI2xx (except MI210) and MI3xx series
+        if "MI210" in name:
+            return False
+        return "MI2" in name or "MI3" in name
 
     def _init_static_details(self) -> None:
         super()._init_static_details()
