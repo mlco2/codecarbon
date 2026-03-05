@@ -17,7 +17,7 @@ from rapidfuzz import fuzz, process, utils
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
-from codecarbon.core.util import detect_cpu_model
+from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource
 
@@ -1001,7 +1001,7 @@ class TDP:
             )
             if is_psutil_available():
                 # Count thread of the CPU
-                threads = psutil.cpu_count(logical=True)
+                threads = count_cpus()
                 estimated_tdp = threads * DEFAULT_POWER_PER_CORE
                 logger.warning(
                     f"We will use the default power consumption of {DEFAULT_POWER_PER_CORE} W per thread for your {threads} CPU, so {estimated_tdp}W."
