@@ -57,3 +57,18 @@ In short:
 3. Divide Energy Delta by `last_duration` = **Interval Average Power**
 4. Keep track of the sums of Interval Average Power
 5. Divide by number of samples = **Global Average Power representation**.
+
+## Challenges and Edge Cases
+
+Because power is derived from the difference between two accumulating numbers and a time delta, several edge cases can lead to anomalies (like sudden values of millions of Watts):
+
+### 1. Counter Wrapping and Resets
+Hardware counters have maximum bounds (e.g., 32-bit or 64-bit integers). Once they reach their maximum limit, they wrap around to zero. If the current energy is less than the previous energy, a naive calculation would be negative. CodeCarbon must detect this and safely handle the overflow to prevent negative power outputs. Similarly, if the hardware resets or the driver reloads mid-run, the counter might abruptly restart from 0.
+
+### 2. Micro-Intervals and Tiny Time Deltas
+If two measurements happen too close together (due to thread scheduling anomalies, initial configuration, or rapid manual tracking calls), the time delta (`last_duration`) becomes extremely small. Dividing even a tiny, expected energy delta by an artificially small time slice can cause the derived Power (W) to explode into mathematically huge numbers (e.g., measuring 2.5 million Watts), even if the underlying counter merely shifted by a fraction of a Joule.
+
+### 3. Multi-Chip Modules (MCM)
+Modern hardware, such as AMD's MI250X GPUs, often places multiple compute dies (GCDs) on a single package. The driver might expose energy counters that behave differently than expected (e.g., counters resetting to zero, or different sensors polling at different intervals). Misaligning the tracking scope or reading uninitialized accumulators early in the run can lead to wildly skewed deltas that propagate into massive power spikes.
+
+By relying heavily on energy accumulators rather than instantaneous power readings, CodeCarbon ensures a highly accurate sum of the total consumed energy. However, whenever you see an impossibly high "power" reading in the logs or emissions files, it is almost certainly a calculation artifact of dividing an unexpected energy delta by a time interval.
