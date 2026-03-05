@@ -536,3 +536,57 @@ class TestAmdGpu:
             result = device._get_total_energy_consumption()
 
         assert result is None
+
+
+class TestGpuMethods:
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_rocm_system(self, mock_subprocess):
+        from codecarbon.core.gpu import is_rocm_system
+
+        mock_subprocess.return_value = b"rocm-smi"
+        assert is_rocm_system()
+
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_rocm_system_fail(self, mock_subprocess):
+        import subprocess
+
+        from codecarbon.core.gpu import is_rocm_system
+
+        mock_subprocess.side_effect = subprocess.CalledProcessError(1, "cmd")
+        assert not is_rocm_system()
+
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_nvidia_system(self, mock_subprocess):
+        from codecarbon.core.gpu import is_nvidia_system
+
+        mock_subprocess.return_value = b"nvidia-smi"
+        assert is_nvidia_system()
+
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_nvidia_system_fail(self, mock_subprocess):
+        import subprocess
+
+        from codecarbon.core.gpu import is_nvidia_system
+
+        mock_subprocess.side_effect = subprocess.CalledProcessError(1, "cmd")
+        assert not is_nvidia_system()
+
+
+class TestGpuTracking:
+    @mock.patch("codecarbon.core.gpu.is_rocm_system", return_value=True)
+    @mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=False)
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_rocm_initialization(self, mock_subprocess, mock_nvidia, mock_rocm):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        # Should not crash on init
+        AllGPUDevices()
+
+    @mock.patch("codecarbon.core.gpu.is_rocm_system", return_value=False)
+    @mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=True)
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_nvidia_initialization(self, mock_subprocess, mock_nvidia, mock_rocm):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        # Should not crash on init
+        AllGPUDevices()
