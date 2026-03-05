@@ -153,7 +153,6 @@ class BaseEmissionsTracker(ABC):
                 value = os.environ.get("CUDA_VISIBLE_DEVICES")
             elif value is None and os.environ.get("ROCR_VISIBLE_DEVICES"):
                 value = os.environ.get("ROCR_VISIBLE_DEVICES")
-            logger.debug(f"_set_from_conf() gpu_ids: {value}")
         # store final value
         self._conf[name] = value
         # set `self._{name}` to `value`
