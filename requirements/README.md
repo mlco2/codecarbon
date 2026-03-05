@@ -8,10 +8,10 @@ This file contains all dependencies needed to run the CodeCarbon API server (car
 
 ### Updating the file
 
-When you modify dependencies in `pyproject.toml` (especially those under the `[project.optional-dependencies.api]` section), you **must** regenerate this file:
+When you modify dependencies in `carbonserver/pyproject.toml`, you **must** regenerate this file:
 
 ```bash
-uv pip compile pyproject.toml --extra api --output-file requirements/requirements-api.txt
+uv pip compile carbonserver/pyproject.toml --output-file requirements/requirements-api.txt
 ```
 
 Then commit the updated file.

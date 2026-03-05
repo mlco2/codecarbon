@@ -26,7 +26,6 @@ classifiers = [
 ]
 dependencies = [
     "arrow",
-    "authlib>=1.2.1",
     "click",
     "pandas>=2.3.3;python_version>='3.14'",
     "pandas;python_version<'3.14'",
@@ -71,39 +70,12 @@ codecarbon = [
 Homepage = "https://codecarbon.io/"
 Repository = "https://github.com/mlco2/codecarbon"
 Dashboard = "http://dashboard.codecarbon.io/"
-Documentation = "https://mlco2.github.io/codecarbon/"
+Documentation = "https://docs.codecarbon.io/"
 Issues = "https://github.com/mlco2/codecarbon/issues"
 Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 
 [dependency-groups]
-api  = [
-    "alembic<2.0.0",
-    "authlib>=1.2.1",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "fief-client[fastapi]",
-    "httpx",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
-    "pytest",
-    "mock",
-    "responses",
-    "fastapi-oidc;python_version>='3.10'",
-    "numpy",
-    "psutil",
-    "requests-mock",
-    "rapidfuzz",
-    "PyJWT",
-    "logfire[fastapi]>=1.0.1",
-    "itsdangerous",
-]
 dev = [
     "taskipy",
     "bumpver",
@@ -138,33 +110,6 @@ viz-legacy = [
     "fire",
 ]
 
-api  = [
-    "alembic<2.0.0",
-    "authlib>=1.2.1",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "fief-client[fastapi]",
-    "httpx",
-    "itsdangerous",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
-    "pytest",
-    "mock",
-    "responses",
-    "fastapi-oidc;python_version>='3.10'",
-    "numpy",
-    "psutil",
-    "requests-mock",
-    "rapidfuzz",
-    "PyJWT",
-]
-
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
@@ -172,13 +117,14 @@ codecarbon = "codecarbon.cli.main:main"
 
 [tool.taskipy.tasks]
 pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit hook." }
-dashboard = "cd carbonserver && uvicorn main:app --reload"
-dashboard-ci = "cd carbonserver && uvicorn main:app --host 0.0.0.0 --port 8008"
+dashboard = "uv run --project carbonserver uvicorn main:app --reload"
+dashboard-ci = "uv run --project carbonserver uvicorn main:app --host 0.0.0.0 --port 8008"
 docker = "docker-compose up -d"
-test-api-unit = "cd carbonserver && python -m pytest -vv tests/api/routers && python -m pytest -vv tests/api/service/ && python -m pytest -vv tests/api/usecase/"
-test-api-integ = "cd carbonserver && python -m pytest -vv tests/api/integration/"
-setup-db = "cd carbonserver && python3 -m alembic -c carbonserver/database/alembic.ini upgrade head"
-downgrade-db = "cd carbonserver && python -m alembic -c carbonserver/database/alembic.ini downgrade base"
+test-api-unit = "uv run --project carbonserver python -m pytest -vv carbonserver/tests/api/routers && uv run --project carbonserver python -m pytest -vv carbonserver/tests/api/service/ && uv run --project carbonserver python -m pytest -vv carbonserver/tests/api/usecase/"
+test-api-integ = "uv run --project carbonserver python -m pytest -vv carbonserver/tests/api/integration/"
+setup-db = "uv run --project carbonserver python -m alembic -c carbonserver/carbonserver/database/alembic.ini upgrade head"
+downgrade-db = "uv run --project carbonserver python -m alembic -c carbonserver/carbonserver/database/alembic.ini downgrade base"
+carbonserver-api-requirements = "uv pip compile carbonserver/pyproject.toml --output-file requirements/requirements-api.txt"
 build-doc = "zensical build -f mkdocs.yml"
 precommit-install = "pre-commit install"
 precommit-update = "pre-commit autoupdate"
