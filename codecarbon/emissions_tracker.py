@@ -4,7 +4,6 @@ OfflineEmissionsTracker, context manager and decorator @track_emissions
 """
 
 import dataclasses
-import logging
 import os
 import platform
 import re
@@ -20,7 +19,6 @@ import psutil
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config
 from codecarbon.core.emissions import Emissions
-from codecarbon.core.gpu import AMDGPUDevice
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
@@ -1025,24 +1023,21 @@ class BaseEmissionsTracker(ABC):
                     + f". Total GPU Power : {self._gpu_power.W} W"
                 )
                 # Check if any of the actual GPU devices are AMD
-                if (
-                    logger.isEnabledFor(logging.DEBUG)
-                    and hardware.devices.devices
-                    and isinstance(hardware.devices.devices[0], AMDGPUDevice)
-                ):
-                    gpu_ids_to_monitor = hardware.gpu_ids
-                    gpu_details = hardware.devices.get_gpu_details()
-                    for gpu_detail in gpu_details:
-                        if (
-                            gpu_detail["gpu_index"] in gpu_ids_to_monitor
-                            and "gpu_utilization" in gpu_detail
-                        ):
-                            logger.debug(
-                                f"\tGPU {gpu_detail['gpu_index']} details : {gpu_detail}"
-                            )
-                            logger.debug(
-                                f"\tAMD GPU {gpu_detail['gpu_index']} metrics info : {hardware.devices.devices[0]._get_gpu_metrics_info()}"
-                            )
+                # if (
+                #     logger.isEnabledFor(logging.DEBUG)
+                #     and hardware.devices.devices
+                #     and isinstance(hardware.devices.devices[0], AMDGPUDevice)
+                # ):
+                #     gpu_ids_to_monitor = hardware.gpu_ids
+                #     gpu_details = hardware.devices.get_gpu_details()
+                #     for gpu_detail in gpu_details:
+                #         if (
+                #             gpu_detail["gpu_index"] in gpu_ids_to_monitor
+                #             and "gpu_utilization" in gpu_detail
+                #         ):
+                #             logger.debug(
+                #                 f"\tAMD GPU {gpu_detail['gpu_index']} metrics info : {hardware.devices.devices[0]._get_gpu_metrics_info()}"
+                #             )
 
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
