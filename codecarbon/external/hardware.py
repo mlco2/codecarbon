@@ -118,6 +118,7 @@ class GPU(BaseHardware):
                     gpu_id = int(gpu_id)
                     if 0 <= gpu_id < self.num_gpus:
                         monitored_gpu_ids.append(gpu_id)
+                        self._emit_selection_warning_for_gpu_id(gpu_id)
                         found_gpu_id = True
                     else:
                         logger.warning(
@@ -133,6 +134,7 @@ class GPU(BaseHardware):
                                 f"Matching GPU ID {stripped_gpu_id_str} (originally {gpu_id}) against {uuid} for GPU index {id}"
                             )
                             monitored_gpu_ids.append(id)
+                            self._emit_selection_warning_for_gpu_id(id)
                             found_gpu_id = True
                             break
                 if not found_gpu_id:
@@ -148,6 +150,14 @@ class GPU(BaseHardware):
             return monitored_gpu_ids
         else:
             return list(range(self.num_gpus))
+
+    def _emit_selection_warning_for_gpu_id(self, gpu_id: int) -> None:
+        for device in self.devices.devices:
+            if device.gpu_index != gpu_id:
+                continue
+            emit_warning = getattr(device, "emit_selection_warning", None)
+            if callable(emit_warning):
+                emit_warning()
 
     def total_power(self) -> Power:
         return self._total_power
