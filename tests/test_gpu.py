@@ -19,10 +19,12 @@
 # OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+import builtins
+import importlib.util
 import os.path
 import sys
 from copy import copy, deepcopy
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from unittest import TestCase, mock
 
 import pynvml as real_pynvml
@@ -536,3 +538,498 @@ class TestAmdGpu:
             result = device._get_total_energy_consumption()
 
         assert result is None
+
+    def test_is_dual_gcd_power_limited_model_mi210(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        assert device._is_dual_gcd_power_limited_model("AMD Instinct MI210") is False
+
+    def test_emit_selection_warning_noop_when_not_dual_gcd(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device._known_zero_energy_counter = False
+        device.gpu_index = 0
+        device._gpu_name = "AMD Instinct MI100"
+
+        with mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock:
+            device.emit_selection_warning()
+
+        warning_mock.assert_not_called()
+
+    def test_get_gpu_metrics_info_calls_amdsmi(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_gpu_metrics_info=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(return_value={"ok": True})
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            result = device._get_gpu_metrics_info()
+
+        device._call_amdsmi_with_reinit.assert_called_once_with(
+            fake_amdsmi.amdsmi_get_gpu_metrics_info, "fake_handle"
+        )
+        assert result == {"ok": True}
+
+    def test_get_total_energy_consumption_uses_power_key(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_energy_count=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"power": 123, "counter_resolution": 1000}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            result = device._get_total_energy_consumption()
+
+        assert result == 123
+
+    def test_get_total_energy_consumption_missing_keys_warns(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_energy_count=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"counter_resolution": 1000}
+        )
+
+        with (
+            mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True),
+            mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock,
+        ):
+            result = device._get_total_energy_consumption()
+
+        assert result is None
+        warning_mock.assert_called()
+
+    def test_get_total_energy_consumption_exception_warns(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_energy_count=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(side_effect=Exception("boom"))
+
+        with (
+            mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True),
+            mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock,
+        ):
+            result = device._get_total_energy_consumption()
+
+        assert result is None
+        warning_mock.assert_called()
+
+    def test_get_gpu_name_success_and_failure(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_gpu_asic_info=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"market_name": "AMD Instinct MI100"}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_gpu_name() == "AMD Instinct MI100"
+
+        device._call_amdsmi_with_reinit = mock.MagicMock(side_effect=Exception("boom"))
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_gpu_name() == "Unknown GPU"
+
+    def test_get_uuid(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_gpu_device_uuid=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(return_value="uuid-123")
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_uuid() == "uuid-123"
+
+    def test_get_temperature_fallback_and_exception(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        class FakeAmdSmiLibraryException(Exception):
+            pass
+
+        fake_amdsmi = SimpleNamespace(
+            amdsmi_exception=SimpleNamespace(
+                AmdSmiLibraryException=FakeAmdSmiLibraryException
+            ),
+            AmdSmiTemperatureType=SimpleNamespace(HOTSPOT="hotspot"),
+            AmdSmiTemperatureMetric=SimpleNamespace(CURRENT="current"),
+            amdsmi_get_temp_metric=mock.MagicMock(),
+        )
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(return_value=0)
+        device._get_gpu_metrics_info = mock.MagicMock(
+            return_value={"temperature_hotspot": 42}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_temperature() == 42
+
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            side_effect=FakeAmdSmiLibraryException("fail")
+        )
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_temperature() == 0
+
+    def test_get_power_usage_fallback_paths(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_power_info=mock.MagicMock())
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"average_socket_power": "bad"}
+        )
+        device._get_gpu_metrics_info = mock.MagicMock(
+            return_value={"average_socket_power": 75}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_power_usage() == 75
+
+        device._get_gpu_metrics_info = mock.MagicMock(
+            return_value={"average_socket_power": "bad"}
+        )
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_power_usage() == 0
+
+    def test_get_power_limit_success_and_exception(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_power_cap_info=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"power_cap": 2_000_000}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_power_limit() == 2
+
+        device._call_amdsmi_with_reinit = mock.MagicMock(side_effect=Exception("boom"))
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_power_limit() is None
+
+    def test_get_gpu_utilization_and_compute_mode(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_gpu_activity=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"gfx_activity": 87}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_gpu_utilization() == 87
+            assert device._get_compute_mode() is None
+
+    def test_get_compute_and_graphics_processes(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_gpu_process_list=mock.MagicMock())
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value=[
+                {"pid": 1, "mem": 10, "engine_usage": {"gfx": 0}},
+                {"pid": 2, "mem": 20, "engine_usage": {"gfx": 5}},
+            ]
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_compute_processes() == [
+                {"pid": 1, "used_memory": 10},
+                {"pid": 2, "used_memory": 20},
+            ]
+            assert device._get_graphics_processes() == [{"pid": 2, "used_memory": 20}]
+
+        device._call_amdsmi_with_reinit = mock.MagicMock(side_effect=Exception("boom"))
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            assert device._get_compute_processes() == []
+            assert device._get_graphics_processes() == []
+
+
+class TestAllGPUDevicesAmd:
+    def test_init_with_no_amd_handles(self, capsys):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        fake_amdsmi = SimpleNamespace(
+            amdsmi_init=mock.MagicMock(),
+            amdsmi_get_processor_handles=mock.MagicMock(return_value=[]),
+            amdsmi_get_gpu_device_uuid=mock.MagicMock(return_value="uuid"),
+        )
+
+        with (
+            mock.patch("codecarbon.core.gpu.AMDSMI_AVAILABLE", True),
+            mock.patch("codecarbon.core.gpu.PYNVML_AVAILABLE", False),
+            mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True),
+        ):
+            AllGPUDevices()
+
+        captured = capsys.readouterr()
+        assert "No AMD GPUs foundon machine" in captured.out
+
+    def test_init_with_amd_handles_and_bdf_fallback(self):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        class DummyAmdDevice:
+            def __init__(self, handle, gpu_index):
+                self.handle = handle
+                self.gpu_index = gpu_index
+
+        fake_amdsmi = SimpleNamespace(
+            amdsmi_init=mock.MagicMock(),
+            amdsmi_get_processor_handles=mock.MagicMock(return_value=["h1", "h2"]),
+            amdsmi_get_gpu_device_bdf=mock.MagicMock(
+                side_effect=["0000:01:00.0", Exception("boom")]
+            ),
+            amdsmi_get_gpu_device_uuid=mock.MagicMock(
+                side_effect=lambda handle: f"uuid-{handle}"
+            ),
+        )
+
+        with (
+            mock.patch("codecarbon.core.gpu.AMDSMI_AVAILABLE", True),
+            mock.patch("codecarbon.core.gpu.PYNVML_AVAILABLE", False),
+            mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True),
+            mock.patch("codecarbon.core.gpu.AMDGPUDevice", DummyAmdDevice),
+        ):
+            devices = AllGPUDevices()
+
+        assert [d.handle for d in devices.devices] == ["h1", "h2"]
+
+    def test_init_amd_exception_warns(self):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        class FakeAmdSmiException(Exception):
+            pass
+
+        fake_amdsmi = SimpleNamespace(
+            amdsmi_init=mock.MagicMock(side_effect=FakeAmdSmiException("boom")),
+            AmdSmiException=FakeAmdSmiException,
+        )
+
+        with (
+            mock.patch("codecarbon.core.gpu.AMDSMI_AVAILABLE", True),
+            mock.patch("codecarbon.core.gpu.PYNVML_AVAILABLE", False),
+            mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True),
+            mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock,
+        ):
+            AllGPUDevices()
+
+        warning_mock.assert_called()
+
+    def test_methods_handle_exceptions_and_start(self):
+        from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Time
+
+        class ExplodingDevice:
+            def __init__(self):
+                self.started = False
+
+            def start(self):
+                self.started = True
+
+            def get_static_details(self):
+                raise RuntimeError("boom")
+
+            def get_gpu_details(self):
+                raise RuntimeError("boom")
+
+            def delta(self, _duration):
+                raise RuntimeError("boom")
+
+        devices = AllGPUDevices.__new__(AllGPUDevices)
+        exploding = ExplodingDevice()
+        devices.devices = [exploding]
+        devices.device_count = 1
+
+        devices.start()
+        assert exploding.started is True
+        assert devices.get_gpu_static_info() == []
+        assert devices.get_gpu_details() == []
+        assert devices.get_delta(Time(1)) == []
+
+
+class TestGpuImportWarnings:
+    def _exec_gpu_module(self, import_func, check_output):
+        base_spec = importlib.util.find_spec("codecarbon.core.gpu")
+        module_spec = importlib.util.spec_from_file_location(
+            "gpu_import_test", base_spec.origin
+        )
+        module = importlib.util.module_from_spec(module_spec)
+        with (
+            mock.patch("subprocess.check_output", side_effect=check_output),
+            mock.patch.object(builtins, "__import__", new=import_func),
+        ):
+            module_spec.loader.exec_module(module)
+        return module
+
+    def test_import_warns_when_modules_missing(self):
+        real_import = builtins.__import__
+
+        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name in ("pynvml", "amdsmi"):
+                raise ImportError("missing")
+            return real_import(name, globals, locals, fromlist, level)
+
+        def check_output(_cmd, *args, **kwargs):
+            return b"ok"
+
+        old_pynvml = sys.modules.pop("pynvml", None)
+        old_amdsmi = sys.modules.pop("amdsmi", None)
+        try:
+            with mock.patch(
+                "codecarbon.external.logger.logger.warning"
+            ) as warning_mock:
+                self._exec_gpu_module(fake_import, check_output)
+        finally:
+            if old_pynvml is not None:
+                sys.modules["pynvml"] = old_pynvml
+            if old_amdsmi is not None:
+                sys.modules["amdsmi"] = old_amdsmi
+
+        messages = " ".join(str(c.args[0]) for c in warning_mock.call_args_list)
+        assert "pynvml is not available" in messages
+        assert "amdsmi is not available" in messages
+
+    def test_import_warns_when_pynvml_init_fails(self):
+        fake_pynvml = ModuleType("pynvml")
+
+        def nvml_init():
+            raise RuntimeError("boom")
+
+        fake_pynvml.nvmlInit = nvml_init
+        old_pynvml = sys.modules.get("pynvml")
+        sys.modules["pynvml"] = fake_pynvml
+
+        real_import = builtins.__import__
+
+        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "amdsmi":
+                raise ImportError("missing")
+            return real_import(name, globals, locals, fromlist, level)
+
+        def check_output(cmd, *args, **kwargs):
+            if cmd[0] == "nvidia-smi":
+                return b"ok"
+            raise OSError("missing")
+
+        try:
+            with mock.patch(
+                "codecarbon.external.logger.logger.warning"
+            ) as warning_mock:
+                self._exec_gpu_module(fake_import, check_output)
+        finally:
+            if old_pynvml is None:
+                sys.modules.pop("pynvml", None)
+            else:
+                sys.modules["pynvml"] = old_pynvml
+
+        assert any(
+            "pynvml initialization failed" in str(c.args[0])
+            for c in warning_mock.call_args_list
+        )
+
+    def test_import_warns_when_amdsmi_attribute_error(self):
+        fake_pynvml = ModuleType("pynvml")
+        fake_pynvml.nvmlInit = lambda: None
+        old_pynvml = sys.modules.get("pynvml")
+        sys.modules["pynvml"] = fake_pynvml
+
+        real_import = builtins.__import__
+
+        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "amdsmi":
+                raise AttributeError("broken")
+            return real_import(name, globals, locals, fromlist, level)
+
+        def check_output(cmd, *args, **kwargs):
+            if cmd[0] == "rocm-smi":
+                return b"ok"
+            raise OSError("missing")
+
+        try:
+            with mock.patch(
+                "codecarbon.external.logger.logger.warning"
+            ) as warning_mock:
+                self._exec_gpu_module(fake_import, check_output)
+        finally:
+            if old_pynvml is None:
+                sys.modules.pop("pynvml", None)
+            else:
+                sys.modules["pynvml"] = old_pynvml
+
+        assert any(
+            "amdsmi is not properly configured" in str(c.args[0])
+            for c in warning_mock.call_args_list
+        )
+
+
+class TestGpuMethods:
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_rocm_system(self, mock_subprocess):
+        from codecarbon.core.gpu import is_rocm_system
+
+        mock_subprocess.return_value = b"rocm-smi"
+        assert is_rocm_system()
+
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_rocm_system_fail(self, mock_subprocess):
+        import subprocess
+
+        from codecarbon.core.gpu import is_rocm_system
+
+        mock_subprocess.side_effect = subprocess.CalledProcessError(1, "cmd")
+        assert not is_rocm_system()
+
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_nvidia_system(self, mock_subprocess):
+        from codecarbon.core.gpu import is_nvidia_system
+
+        mock_subprocess.return_value = b"nvidia-smi"
+        assert is_nvidia_system()
+
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_is_nvidia_system_fail(self, mock_subprocess):
+        import subprocess
+
+        from codecarbon.core.gpu import is_nvidia_system
+
+        mock_subprocess.side_effect = subprocess.CalledProcessError(1, "cmd")
+        assert not is_nvidia_system()
+
+
+class TestGpuTracking:
+    @mock.patch("codecarbon.core.gpu.is_rocm_system", return_value=True)
+    @mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=False)
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_rocm_initialization(self, mock_subprocess, mock_nvidia, mock_rocm):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        # Should not crash on init
+        AllGPUDevices()
+
+    @mock.patch("codecarbon.core.gpu.is_rocm_system", return_value=False)
+    @mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=True)
+    @mock.patch("codecarbon.core.gpu.subprocess.check_output")
+    def test_nvidia_initialization(self, mock_subprocess, mock_nvidia, mock_rocm):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        # Should not crash on init
+        AllGPUDevices()

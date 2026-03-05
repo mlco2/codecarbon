@@ -1,9 +1,10 @@
 import shutil
 import tempfile
+from unittest import mock
 
 import pytest
 
-from codecarbon.core.util import backup, detect_cpu_model, is_mac_arm, resolve_path
+from codecarbon.core.util import backup, count_cpus, detect_cpu_model, is_mac_arm, resolve_path
 
 
 def test_detect_cpu_model_caching():
@@ -72,3 +73,57 @@ def test_backup():
 )
 def test_is_mac_arm(cpu_model, expected):
     assert is_mac_arm(cpu_model) == expected
+def test_count_cpus_no_slurm():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
+        with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+            assert count_cpus() == 4
+
+
+def test_count_cpus_slurm():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output"
+        ) as mock_subprocess_output:
+            mock_subprocess_output.return_value = b"NumCPUs=8 gres/gpu=2\n"
+            assert count_cpus() == 8
+
+
+def test_count_cpus_slurm_no_gpu():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output"
+        ) as mock_subprocess_output:
+            mock_subprocess_output.return_value = b"NumCPUs=16\n"
+            assert count_cpus() == 16
+
+
+def test_count_cpus_slurm_exception():
+    import subprocess
+
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output",
+            side_effect=subprocess.CalledProcessError(1, "cmd"),
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                assert count_cpus() == 4
+
+
+def test_count_cpus_slurm_malformed():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output",
+            return_value=b"Something Else\n",
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                assert count_cpus() == 4
+
+
+def test_count_cpus_slurm_too_many_matches():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output",
+            return_value=b"NumCPUs=8 NumCPUs=16\n",
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                assert count_cpus() == 4
