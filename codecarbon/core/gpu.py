@@ -433,11 +433,20 @@ class AMDGPUDevice(GPUDevice):
         power_info = self._call_amdsmi_with_reinit(
             amdsmi.amdsmi_get_power_info, self.handle
         )
-        power = int(power_info["average_socket_power"])
+
+        try:
+            power = int(power_info.get("average_socket_power", 0))
+        except (ValueError, TypeError):
+            power = 0
+
         if power == 0:
             # In some cases, the average_socket_power can be 0 or not available, try to get it from metrics info as a fallback
-            metrics_info = self._get_gpu_metrics_info()
-            power = int(metrics_info.get("average_socket_power", 0))
+            try:
+                metrics_info = self._get_gpu_metrics_info()
+                power = int(metrics_info.get("average_socket_power", 0))
+            except (ValueError, TypeError):
+                power = 0
+
         return power
 
     def _get_power_limit(self):
