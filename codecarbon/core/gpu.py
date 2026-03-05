@@ -544,6 +544,11 @@ class AllGPUDevices:
                 logger.warning(f"Failed to initialize AMDSMI: {e}", exc_info=True)
         self.device_count = len(self.devices)
 
+    def start(self) -> None:
+        for device in self.devices:
+            if hasattr(device, "start"):
+                device.start()
+
     def get_gpu_static_info(self) -> List:
         """Get all GPUs static information.
         >>> get_gpu_static_info()
