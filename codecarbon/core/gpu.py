@@ -284,23 +284,24 @@ class AMDGPUDevice(GPUDevice):
         )
 
     def emit_selection_warning(self) -> None:
-        if (
-            self._known_zero_energy_counter
-            and not self.__class__._dual_gcd_warning_emitted
-        ):
+        if not self._known_zero_energy_counter:
+            return
+
+        if not self.__class__._dual_gcd_warning_emitted:
             logger.warning(
                 "Detected AMD Instinct MI250/MI250X/MI300X/MI300A family GPU. "
                 "These dual-GCD devices report power on one GCD while the other reports zero."
             )
-            if self.gpu_index % 2 == 1:
-                logger.warning(
-                    f"GPU {self._gpu_name} with index {self.gpu_index} is expected to report zero energy consumption due to being the second GCD in a dual-GCD configuration."
-                )
-            else:
-                logger.warning(
-                    f"GPU {self._gpu_name} with index {self.gpu_index} is expected to report both GCDs' energy consumption as it is the first GCD in a dual-GCD configuration."
-                )
             self.__class__._dual_gcd_warning_emitted = True
+
+        if self.gpu_index % 2 == 1:
+            logger.warning(
+                f"GPU {self._gpu_name} with index {self.gpu_index} is expected to report zero energy consumption due to being the second GCD in a dual-GCD configuration."
+            )
+        else:
+            logger.warning(
+                f"GPU {self._gpu_name} with index {self.gpu_index} is expected to report both GCDs' energy consumption as it is the first GCD in a dual-GCD configuration."
+            )
 
     def _is_amdsmi_not_initialized_error(self, error: Exception) -> bool:
         ret_code = getattr(error, "ret_code", None)
