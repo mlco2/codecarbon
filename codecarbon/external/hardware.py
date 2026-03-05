@@ -68,6 +68,7 @@ class GPU(BaseHardware):
         self._total_power = Power(
             0  # It will be 0 until we call for the first time measure_power_and_energy
         )
+        self._gpu_ids_resolved = False
 
     def start(self) -> None:
         if hasattr(self.devices, "start"):
@@ -107,6 +108,11 @@ class GPU(BaseHardware):
         Get the Ids of the GPUs that we will monitor
         :return: list of ids
         """
+        if getattr(self, "_gpu_ids_resolved", False):
+            return (
+                self.gpu_ids if self.gpu_ids is not None else list(range(self.num_gpus))
+            )
+
         if self.gpu_ids is not None:
             uuids_to_ids = {
                 gpu.get("uuid"): gpu.get("gpu_index")
@@ -151,8 +157,10 @@ class GPU(BaseHardware):
                 f"Monitoring GPUs with indices: {monitored_gpu_ids} out of {self.num_gpus} total GPUs"
             )
             self.gpu_ids = monitored_gpu_ids
+            self._gpu_ids_resolved = True
             return monitored_gpu_ids
         else:
+            self._gpu_ids_resolved = True
             return list(range(self.num_gpus))
 
     def _emit_selection_warning_for_gpu_id(self, gpu_id: int) -> None:
@@ -172,7 +180,7 @@ class GPU(BaseHardware):
         new_gpu_ids = gpus._get_gpu_ids()
         if len(new_gpu_ids) < gpus.num_gpus:
             logger.warning(
-                f"You have {gpus.num_gpus} GPUs but we will monitor only {len(new_gpu_ids)} ({new_gpu_ids}) of them. Check your configuration."
+                f"You have {gpus.num_gpus} GPUs but we will monitor only {len(new_gpu_ids)} ({new_gpu_ids}) of them."
             )
         return cls(gpu_ids=new_gpu_ids)
 
