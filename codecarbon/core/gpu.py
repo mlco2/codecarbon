@@ -266,6 +266,37 @@ class NvidiaGPUDevice(GPUDevice):
 
 
 class AMDGPUDevice(GPUDevice):
+    _DUAL_GCD_POWER_LIMITED_MODELS = ("MI250", "MI250X", "MI300X", "MI300A")
+    _dual_gcd_warning_emitted = False
+
+    def _is_dual_gcd_power_limited_model(self, gpu_name: str) -> bool:
+        name = gpu_name.upper()
+        return any(model in name for model in self._DUAL_GCD_POWER_LIMITED_MODELS)
+
+    def _init_static_details(self) -> None:
+        super()._init_static_details()
+
+        self._known_zero_energy_counter = self._is_dual_gcd_power_limited_model(
+            self._gpu_name
+        )
+        if (
+            self._known_zero_energy_counter
+            and not self.__class__._dual_gcd_warning_emitted
+        ):
+            logger.warning(
+                "Detected AMD Instinct MI250/MI250X/MI300X/MI300A family GPU. "
+                "These dual-GCD devices report power on one GCD while the other reports zero."
+            )
+            if self.gpu_index % 2 == 1:
+                logger.warning(
+                    f"GPU {self._gpu_name} with index {self.gpu_index} is expected to report zero energy consumption due to being the second GCD in a dual-GCD configuration."
+                )
+            else:
+                logger.warning(
+                    f"GPU {self._gpu_name} with index {self.gpu_index} is expected to report both GCDs' energy consumption as it is the first GCD in a dual-GCD configuration."
+                )
+            self.__class__._dual_gcd_warning_emitted = True
+
     def _is_amdsmi_not_initialized_error(self, error: Exception) -> bool:
         ret_code = getattr(error, "ret_code", None)
         if ret_code == 32:
@@ -320,12 +351,10 @@ class AMDGPUDevice(GPUDevice):
                 # In some cases, the energy_accumulator is 0 but it exist in the metrics info, try to get it from there as a fallback
                 metrics_info = self._get_gpu_metrics_info()
                 counter_value = metrics_info.get(energy_key, 0)
-                logger.debug(
-                    f"Energy accumulator value from metrics info : {counter_value} for GPU handle {self.handle} {metrics_info=}"
-                    f"Failed to retrieve AMD GPU energy accumulator. energy_count: {energy_count} {counter_value=} {counter_resolution_uj=}",
-                    exc_info=True,
-                )
-                return None
+                if counter_value == 0:
+                    if getattr(self, "_known_zero_energy_counter", False):
+                        return 0
+                    return None
 
             # energy_in_µJ = counter_value * resolution_in_µJ
             # Divide by 1000 to convert µJ to mJ

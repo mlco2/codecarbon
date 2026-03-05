@@ -460,3 +460,78 @@ class TestAmdGpu:
 
         assert fake_amdsmi.amdsmi_init.call_count == 0
         assert fake_amdsmi.amdsmi_get_gpu_vram_usage.call_count == 1
+
+    def test_warn_dual_gcd_models_only_once_on_startup(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        AMDGPUDevice._dual_gcd_warning_emitted = False
+
+        device_1 = AMDGPUDevice.__new__(AMDGPUDevice)
+        device_1.gpu_index = 0
+        device_1._get_gpu_name = mock.MagicMock(return_value="AMD Instinct MI300X")
+        device_1._get_uuid = mock.MagicMock(return_value="uuid-1")
+        device_1._get_power_limit = mock.MagicMock(return_value=700)
+        device_1._get_memory_info = mock.MagicMock(
+            return_value=SimpleNamespace(total=1024)
+        )
+
+        device_2 = AMDGPUDevice.__new__(AMDGPUDevice)
+        device_2.gpu_index = 1
+        device_2._get_gpu_name = mock.MagicMock(return_value="AMD Instinct MI300X")
+        device_2._get_uuid = mock.MagicMock(return_value="uuid-2")
+        device_2._get_power_limit = mock.MagicMock(return_value=700)
+        device_2._get_memory_info = mock.MagicMock(
+            return_value=SimpleNamespace(total=1024)
+        )
+
+        with mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock:
+            device_1._init_static_details()
+            device_2._init_static_details()
+
+        assert device_1._known_zero_energy_counter is True
+        assert device_2._known_zero_energy_counter is True
+        # First device emits 2 warnings: generic + device-specific
+        # Second device emits nothing because _dual_gcd_warning_emitted is already True
+        assert warning_mock.call_count == 2
+
+        AMDGPUDevice._dual_gcd_warning_emitted = False
+
+    def test_get_total_energy_consumption_returns_zero_for_known_dual_gcd_model(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_energy_count=mock.MagicMock())
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._known_zero_energy_counter = True
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"energy_accumulator": 0, "counter_resolution": 1000}
+        )
+        device._get_gpu_metrics_info = mock.MagicMock(
+            return_value={"energy_accumulator": 0}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            result = device._get_total_energy_consumption()
+
+        assert result == 0
+
+    def test_get_total_energy_consumption_returns_none_for_other_models(self):
+        from codecarbon.core.gpu import AMDGPUDevice
+
+        fake_amdsmi = SimpleNamespace(amdsmi_get_energy_count=mock.MagicMock())
+
+        device = AMDGPUDevice.__new__(AMDGPUDevice)
+        device.handle = "fake_handle"
+        device._known_zero_energy_counter = False
+        device._call_amdsmi_with_reinit = mock.MagicMock(
+            return_value={"energy_accumulator": 0, "counter_resolution": 1000}
+        )
+        device._get_gpu_metrics_info = mock.MagicMock(
+            return_value={"energy_accumulator": 0}
+        )
+
+        with mock.patch("codecarbon.core.gpu.amdsmi", fake_amdsmi, create=True):
+            result = device._get_total_energy_consumption()
+
+        assert result is None

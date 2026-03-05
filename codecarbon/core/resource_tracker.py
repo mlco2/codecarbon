@@ -5,7 +5,6 @@ from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
 from codecarbon.core.util import (
     detect_cpu_model,
-    is_amd_system, is_nvidia_system,
     is_linux_os,
     is_mac_arm,
     is_mac_os,
