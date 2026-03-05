@@ -69,6 +69,10 @@ class GPU(BaseHardware):
             0  # It will be 0 until we call for the first time measure_power_and_energy
         )
 
+    def start(self) -> None:
+        if hasattr(self.devices, "start"):
+            self.devices.start()
+
     def measure_power_and_energy(
         self, last_duration: float, gpu_ids: Iterable[int] = None
     ) -> Tuple[Power, Energy]:
@@ -161,10 +165,6 @@ class GPU(BaseHardware):
 
     def total_power(self) -> Power:
         return self._total_power
-
-    def start(self) -> None:
-        for d in self.devices.devices:
-            d.start()
 
     @classmethod
     def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
