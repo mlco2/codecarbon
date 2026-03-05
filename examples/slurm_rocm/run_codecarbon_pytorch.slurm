@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=cad15147
-#SBATCH --constraint=MI250
+#SBATCH --constraint=MI300
 #SBATCH --nodes=1
 #SBATCH --time=0:25:00
 #SBATCH --gpus-per-node=2
@@ -15,26 +15,8 @@
 module purge
 module load cpe/24.07
 module load rocm/7.0.1
-# DO NOT 'module load rocm' here as it pollutes LD_LIBRARY_PATH and breaks the PyTorch wheel's LLVM/Comgr!
-# We just manually set ROCM_PATH so amdsmi wrapper works.
-# export ROCM_PATH=/opt/rocm-7.0.1
 module load python/3.12
 export PYTHONPATH=/opt/rocm-7.0.1/share/amd_smi:$PYTHONPATH
-
-
-# For Adastra's MI250 nodes managed by SLURM, overriding HIP_VISIBLE_DEVICES completely breaks PyTorch visibility!
-# We MUST NOT override HIP_VISIBLE_DEVICES and must allow the ROCm driver to consume ROCR_VISIBLE_DEVICES natively.
-#export HIP_LAUNCH_BLOCKING=1
-#export MPICH_GPU_SUPPORT_ENABLED=1
-# Important: To bypass the "HIP error: invalid argument" on Adastra, we don't change device IDs.
-# We change the way PyTorch maps memory using the underlying allocator.
-# export PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.8,max_split_size_mb:128
-
-# Extended Debugging Variables for Segmentation Faults
-#export TORCH_SHOW_CPP_STACKTRACES=1
-#export PYTORCH_NO_CUDA_MEMORY_CACHING=1
-#export AMD_LOG_LEVEL=4
-#export HSAKMT_DEBUG_LEVEL=7
 
 # Print environment info
 echo "=== Job Environment ==="
@@ -58,12 +40,7 @@ python3 -m pip list | grep -E "(torch|amd)"
 which python3
 python3 --version
 
-# Test PyTorch ROCm detection
 echo "=== PyTorch ROCm Test ==="
-# Set environment flags to serialize HIP kernel execution so the segfault throws at the exact call
-#export AMD_SERIALIZE_KERNEL=1
-#export HSA_ENABLE_SDMA=0
-
 python3 << 'EOF'
 import os
 import torch
@@ -85,14 +62,4 @@ else:
 EOF
 
 echo "=== Running Training Script ==="
-# On Adastra, we need srun to bind the GPU even within sbatch
-# Try the GPU stress test using ROCm utilities
-# pip install flash-attn --no-build-isolation
-# python transformer_onnx.py
-# python transformer_flash.py
-# srun \
-#   --kill-on-bad-exit=1 \
-#   --gpu-bind=closest \
-#   bash -c "catchsegv python pytorch_matrix.py; dmesg -T | tail -n 50"
-
 srun python examples/slurm_rocm/pytorch_matrix.py
