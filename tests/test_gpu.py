@@ -461,7 +461,7 @@ class TestAmdGpu:
         assert fake_amdsmi.amdsmi_init.call_count == 0
         assert fake_amdsmi.amdsmi_get_gpu_vram_usage.call_count == 1
 
-    def test_warn_dual_gcd_models_only_once_on_startup(self):
+    def test_warn_dual_gcd_models_only_once_on_selection(self):
         from codecarbon.core.gpu import AMDGPUDevice
 
         AMDGPUDevice._dual_gcd_warning_emitted = False
@@ -487,6 +487,8 @@ class TestAmdGpu:
         with mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock:
             device_1._init_static_details()
             device_2._init_static_details()
+            device_1.emit_selection_warning()
+            device_2.emit_selection_warning()
 
         assert device_1._known_zero_energy_counter is True
         assert device_2._known_zero_energy_counter is True

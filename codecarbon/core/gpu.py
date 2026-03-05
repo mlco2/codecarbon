@@ -172,6 +172,9 @@ class GPUDevice:
 
         return str_or_bytes
 
+    def emit_selection_warning(self) -> None:
+        return None
+
 
 @dataclass
 class NvidiaGPUDevice(GPUDevice):
@@ -279,6 +282,8 @@ class AMDGPUDevice(GPUDevice):
         self._known_zero_energy_counter = self._is_dual_gcd_power_limited_model(
             self._gpu_name
         )
+
+    def emit_selection_warning(self) -> None:
         if (
             self._known_zero_energy_counter
             and not self.__class__._dual_gcd_warning_emitted
