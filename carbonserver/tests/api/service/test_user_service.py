@@ -19,7 +19,7 @@ USER_1 = User(
     name="Gontran Bonheur",
     email="xyz@email.com",
     api_key=API_KEY,
-    organizations=["DataForGood"],
+    organizations=[ORG_ID],
     is_active=True,
 )
 
@@ -28,7 +28,7 @@ USER_2 = User(
     name="Jonnhy Monnay",
     email="1234+1@email.fr",
     api_key=API_KEY,
-    organizations=["DataForGood"],
+    organizations=[ORG_ID],
     is_active=True,
 )
 
