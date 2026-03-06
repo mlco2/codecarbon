@@ -9,15 +9,16 @@ import {
 import {
     getEmissionsTimeSeries,
     getRunEmissionsByExperiment,
-} from "@/server-functions/runs";
-import { ProjectDashboardProps } from "@/types/project-dashboard";
+} from "@/api/runs";
+import { ProjectDashboardProps } from "@/api/schemas";
 import { exportToJson } from "@/utils/export";
-import { Download, LockIcon, SettingsIcon, Share2Icon } from "lucide-react";
+import { Download, LockIcon, RefreshCw, SettingsIcon, Share2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import ProjectDashboardBase from "./project-dashboard-base";
 import ProjectSettingsModal from "./project-settings-modal";
 import ShareProjectButton from "./share-project-button";
+import { useModal } from "@/hooks/useModal";
 
 export default function ProjectDashboard({
     project,
@@ -33,10 +34,21 @@ export default function ProjectDashboard({
     onExperimentClick,
     onRunClick,
     onSettingsClick,
+    onRefresh,
     isLoading,
 }: ProjectDashboardProps) {
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const settingsModal = useModal();
     const [isExporting, setIsExporting] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await onRefresh();
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     const handleJsonExport = () => {
         if (isExporting) return;
@@ -133,6 +145,25 @@ export default function ProjectDashboard({
                 )}
             </div>
             <div className="flex items-center gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                className="p-1 rounded-full"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Refresh data"
+                                onClick={handleRefresh}
+                                disabled={isRefreshing}
+                            >
+                                <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Refresh data</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
                 <ShareProjectButton
                     projectId={project.id}
                     isPublic={project.public}
@@ -144,6 +175,7 @@ export default function ProjectDashboard({
                                 className="p-1 rounded-full"
                                 variant="outline"
                                 size="icon"
+                                aria-label="Download JSON export"
                                 onClick={handleJsonExport}
                                 disabled={isExporting}
                             >
@@ -163,7 +195,8 @@ export default function ProjectDashboard({
                     className="p-1 rounded-full"
                     variant="outline"
                     size="icon"
-                    onClick={() => setIsSettingsModalOpen(true)}
+                    aria-label="Project settings"
+                    onClick={settingsModal.open}
                 >
                     <SettingsIcon className="h-5 w-5" />
                 </Button>
@@ -192,8 +225,8 @@ export default function ProjectDashboard({
             />
 
             <ProjectSettingsModal
-                open={isSettingsModalOpen}
-                onOpenChange={setIsSettingsModalOpen}
+                open={settingsModal.isOpen}
+                onOpenChange={settingsModal.setIsOpen}
                 project={project}
                 onProjectUpdated={() => {
                     // Call the original onSettingsClick to refresh the data
@@ -208,7 +241,7 @@ export function ProjectVisibilityBadge({ isPublic }: { isPublic: boolean }) {
     return isPublic ? (
         <Badge
             variant="default"
-            className="flex items-center gap-1 bg-green-900 text-white hover:bg-green-900"
+            className="flex items-center gap-1 bg-primary/20 text-primary hover:bg-primary/20"
         >
             <Share2Icon className="h-3 w-3" />
             Public
@@ -216,7 +249,7 @@ export function ProjectVisibilityBadge({ isPublic }: { isPublic: boolean }) {
     ) : (
         <Badge
             variant="default"
-            className="flex items-center gap-1 bg-red-900 text-white hover:bg-red-900"
+            className="flex items-center gap-1 bg-destructive/20 text-destructive-foreground hover:bg-destructive/20"
         >
             <LockIcon className="h-3 w-3" />
             Private

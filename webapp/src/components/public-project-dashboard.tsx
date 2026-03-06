@@ -1,8 +1,8 @@
-import { PublicProjectDashboardProps } from "@/types/public-project-dashboard";
+import { PublicProjectDashboardProps } from "@/api/schemas";
 import ProjectDashboardBase from "./project-dashboard-base";
 import { Badge } from "@/components/ui/badge";
 import { Share2Icon } from "lucide-react";
-import { Experiment } from "@/types/experiment";
+import { Experiment } from "@/api/schemas";
 
 export default function PublicProjectDashboard({
     project,

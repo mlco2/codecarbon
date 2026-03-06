@@ -1,13 +1,15 @@
 {
-    "name": "carboncode_nextjs",
+    "name": "codecarbon-webapp",
     "version": "0.1.0",
     "private": true,
-    "main": "myapp.js",
+    "type": "module",
     "scripts": {
-        "dev": "next dev --turbopack",
-        "build": "next build",
-        "start": "next start",
-        "lint": "next lint"
+        "dev": "vite",
+        "build": "tsc -b && vite build",
+        "preview": "vite preview",
+        "lint": "eslint .",
+        "test": "vitest",
+        "test:run": "vitest run"
     },
     "dependencies": {
         "@radix-ui/react-dialog": "^1.1.15",
@@ -25,13 +27,11 @@
         "clsx": "^2.1.1",
         "copy-to-clipboard": "^3.3.3",
         "date-fns": "^3.6.0",
-        "glob": "^11.1.0",
         "lucide-react": "^0.411.0",
-        "next": "15.4.10",
-        "next-themes": "^0.4.6",
         "react": "19.1.0",
         "react-day-picker": "^9.13.0",
         "react-dom": "19.1.0",
+        "react-router-dom": "^6.28.0",
         "recharts": "^2.15.4",
         "sonner": "^2.0.7",
         "swr": "^2.3.8",
@@ -41,15 +41,21 @@
         "zod": "^3.25.76"
     },
     "devDependencies": {
+        "@testing-library/jest-dom": "^6.6.3",
+        "@testing-library/react": "^16.1.0",
+        "@testing-library/user-event": "^14.5.2",
         "@types/node": "^20.19.30",
         "@types/react": "19.1.0",
         "@types/react-dom": "19.1.1",
+        "@vitejs/plugin-react": "^4.3.4",
         "eslint": "^9.39.2",
-        "eslint-config-next": "15.2.4",
         "eslint-config-prettier": "^9.1.2",
+        "jsdom": "^25.0.1",
         "postcss": "^8.5.6",
         "prettier": "3.3.3",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vite": "^6.0.5",
+        "vitest": "^2.1.8"
     },
     "overrides": {
         "@types/react": "19.1.0",
