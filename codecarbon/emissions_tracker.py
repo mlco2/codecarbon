@@ -1021,22 +1021,6 @@ class BaseEmissionsTracker(ABC):
                     f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                     + f". Total GPU Power : {self._gpu_power.W} W"
                 )
-                # Check if any of the actual GPU devices are AMD
-                # if (
-                #     logger.isEnabledFor(logging.DEBUG)
-                #     and hardware.devices.devices
-                #     and isinstance(hardware.devices.devices[0], AMDGPUDevice)
-                # ):
-                #     gpu_ids_to_monitor = hardware.gpu_ids
-                #     gpu_details = hardware.devices.get_gpu_details()
-                #     for gpu_detail in gpu_details:
-                #         if (
-                #             gpu_detail["gpu_index"] in gpu_ids_to_monitor
-                #             and "gpu_utilization" in gpu_detail
-                #         ):
-                #             logger.debug(
-                #                 f"\tAMD GPU {gpu_detail['gpu_index']} metrics info : {hardware.devices.devices[0]._get_gpu_metrics_info()}"
-                #             )
 
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
