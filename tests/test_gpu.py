@@ -56,6 +56,18 @@ class FakeGPUEnv:
         ):
             sys.modules.pop(module_name, None)
 
+        import codecarbon.core
+
+        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
+            if hasattr(codecarbon.core, attr):
+                delattr(codecarbon.core, attr)
+
+        import codecarbon.core
+
+        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
+            if hasattr(codecarbon.core, attr):
+                delattr(codecarbon.core, attr)
+
         # Setup the state, strings are returned as bytes
         self.DETAILS = {
             "handle_0": {
@@ -189,14 +201,18 @@ class TestGpu(FakeGPUEnv):
         def raiseException(handle):
             raise Exception("Some bad exception")
 
-        pynvml.nvmlDeviceGetEnforcedPowerLimit = raiseException
-        alldevices = AllGPUDevices()
+        original_limit = pynvml.nvmlDeviceGetEnforcedPowerLimit
+        try:
+            pynvml.nvmlDeviceGetEnforcedPowerLimit = raiseException
+            alldevices = AllGPUDevices()
 
-        expected_power_limit = deepcopy(self.expected)
-        expected_power_limit[0]["power_limit"] = None
-        expected_power_limit[1]["power_limit"] = None
+            expected_power_limit = deepcopy(self.expected)
+            expected_power_limit[0]["power_limit"] = None
+            expected_power_limit[1]["power_limit"] = None
 
-        assert alldevices.get_gpu_details() == expected_power_limit
+            assert alldevices.get_gpu_details() == expected_power_limit
+        finally:
+            pynvml.nvmlDeviceGetEnforcedPowerLimit = original_limit
 
     def test_gpu_not_ready(self):
         import pynvml
@@ -206,14 +222,18 @@ class TestGpu(FakeGPUEnv):
         def raise_exception(handle):
             raise pynvml.NVMLError("System is not in ready state")
 
-        pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
-        alldevices = AllGPUDevices()
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        try:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            alldevices = AllGPUDevices()
 
-        expected = deepcopy(self.expected)
-        expected[0]["total_energy_consumption"] = None
-        expected[1]["total_energy_consumption"] = None
+            expected = deepcopy(self.expected)
+            expected[0]["total_energy_consumption"] = None
+            expected[1]["total_energy_consumption"] = None
 
-        assert alldevices.get_gpu_details() == expected
+            assert alldevices.get_gpu_details() == expected
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
 
     def test_gpu_metadata_total_power(self):
         """
@@ -373,6 +393,18 @@ class TestGpuNotAvailable:
             "codecarbon.core.gpu_device",
         ):
             sys.modules.pop(module_name, None)
+
+        import codecarbon.core
+
+        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
+            if hasattr(codecarbon.core, attr):
+                delattr(codecarbon.core, attr)
+
+        import codecarbon.core
+
+        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
+            if hasattr(codecarbon.core, attr):
+                delattr(codecarbon.core, attr)
 
         import pynvml
 
@@ -892,6 +924,16 @@ class TestGpuImportWarnings:
             "codecarbon.core.gpu_device",
         ):
             sys.modules.pop(module_name, None)
+        import codecarbon.core
+
+        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
+            if hasattr(codecarbon.core, attr):
+                delattr(codecarbon.core, attr)
+        import codecarbon.core
+
+        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
+            if hasattr(codecarbon.core, attr):
+                delattr(codecarbon.core, attr)
         with (
             mock.patch("subprocess.check_output", side_effect=check_output),
             mock.patch.object(builtins, "__import__", new=import_func),
@@ -1035,6 +1077,16 @@ class TestGpuMethods:
 
 
 class TestGpuTracking:
+    def setup_method(self):
+        for module_name in list(sys.modules.keys()):
+            if module_name.startswith("codecarbon.core.gpu"):
+                sys.modules.pop(module_name, None)
+        import codecarbon.core
+
+        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
+            if hasattr(codecarbon.core, attr):
+                delattr(codecarbon.core, attr)
+
     @mock.patch("codecarbon.core.gpu.is_rocm_system", return_value=True)
     @mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=False)
     @mock.patch("codecarbon.core.gpu_amd.subprocess.check_output")
