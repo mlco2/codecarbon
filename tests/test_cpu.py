@@ -7,6 +7,7 @@ from unittest import mock
 import pytest
 
 from codecarbon.core.cpu import (
+    DEFAULT_POWER_PER_CORE,
     TDP,
     IntelPowerGadget,
     IntelRAPL,
@@ -335,6 +336,23 @@ class TestTDP(unittest.TestCase):
             tdp._get_matching_cpu(model, cpu_data, greedy=False),
         )
 
+    def test_main_fallback_default_power_when_unknown_cpu(self):
+        with (
+            mock.patch(
+                "codecarbon.core.cpu.detect_cpu_model", return_value="Mystery CPU"
+            ),
+            mock.patch(
+                "codecarbon.core.cpu.TDP._get_cpu_power_from_registry",
+                return_value=None,
+            ),
+            mock.patch("codecarbon.core.cpu.is_psutil_available", return_value=True),
+            mock.patch("codecarbon.core.cpu.count_cpus", return_value=8),
+        ):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Mystery CPU")
+        self.assertEqual(tdp.tdp, 8 * DEFAULT_POWER_PER_CORE)
+
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):
     def test_set_cpu_tracking_skips_tdp_when_rapl_available(self):
@@ -477,6 +495,49 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
         mocked_tdp.assert_called_once_with()
         mocked_fallback.assert_called_once_with(fake_tdp, 80)
+
+
+class TestResourceTrackerGPUTracking(unittest.TestCase):
+    def test_set_gpu_tracking_rocm_with_string_ids(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = "0,1"
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+        fake_devices = mock.Mock()
+        fake_devices.devices.get_gpu_static_info.return_value = [
+            {"name": "AMD Instinct MI300X"},
+            {"name": "AMD Instinct MI300X"},
+        ]
+
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.parse_gpu_ids", return_value=[0, 1]
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_nvidia_system",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_rocm_system",
+                return_value=True,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.GPU.from_utils",
+                return_value=fake_devices,
+            ),
+        ):
+            resource_tracker.set_GPU_tracking()
+
+        self.assertEqual(tracker._gpu_ids, [0, 1])
+        self.assertEqual(tracker._conf["gpu_ids"], [0, 1])
+        self.assertEqual(tracker._conf["gpu_count"], 2)
+        self.assertEqual(resource_tracker.gpu_tracker, "amdsmi")
+        self.assertEqual(tracker._conf["gpu_model"], "2 x AMD Instinct MI300X")
+        self.assertEqual(tracker._hardware, [fake_devices])
 
 
 class TestPhysicalCPU(unittest.TestCase):
