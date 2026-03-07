@@ -1,8 +1,17 @@
 """
-pip install --upgrade pip
-pip install amdsmi==6.4.3
-pip3 install torch==2.9.1 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.4
-pip install numpy
+Multi-GPU matrix multiplication example using PyTorch with ROCm AMD GPUs,
+designed to run for 2 minutes at 100% load.
+This script includes detailed logging of environment variables, GPU availability, memory usage, and computation progress.
+It also handles GPU memory allocation failures gracefully by attempting a smaller matrix size if the initial allocation fails.
+The script is decorated with CodeCarbon's `track_emissions` to measure energy consumption during the computation.
+
+Tested with:
+```
+# Look at https://download.pytorch.org/whl/torch/ for the correct version matching your Python (cp312) and ROCM version.
+# torch-2.10.0+rocm7.0-cp312-cp312-manylinux_2_28_x86_64.whl
+pip3 install torch==2.10.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm7.0
+pip install amdsmi==7.0.1
+```
 """
 
 import logging
