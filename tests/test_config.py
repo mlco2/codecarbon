@@ -229,6 +229,34 @@ class TestConfig(unittest.TestCase):
         # self.assertEqual(gpu_count, 0)
         tracker.stop()
 
+    @mock.patch.dict(
+        os.environ,
+        {
+            "ROCR_VISIBLE_DEVICES": "1, 2",
+        },
+    )
+    def test_gpu_ids_from_rocr_visible_devices(self):
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["1", "2"])
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "0, 1",
+            "ROCR_VISIBLE_DEVICES": "1, 2",
+        },
+    )
+    def test_cuda_visible_devices_takes_precedence_over_rocr_visible_devices(self):
+        # CUDA_VISIBLE_DEVICES should take precedence as NVIDIA GPUs are checked first
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["0", "1"])
+
 
 if __name__ == "__main__":
     unittest.main()

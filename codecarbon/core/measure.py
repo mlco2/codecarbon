@@ -1,3 +1,7 @@
+"""
+TODO: This look like this class is not used yet, but it will be nice to use it the future for readability of codecarbon/emissions_tracker.py
+"""
+
 from time import perf_counter
 
 from codecarbon.external.hardware import CPU, GPU, RAM, AppleSiliconChip
@@ -60,7 +64,7 @@ class MeasurePowerEnergy:
                 self._total_gpu_energy += energy
                 self._gpu_power = power
                 logger.info(
-                    f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
+                    f"do_measure() Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                     + f". Total GPU Power : {self._gpu_power.W} W"
                 )
             elif isinstance(hardware, RAM):
