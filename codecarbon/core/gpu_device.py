@@ -108,4 +108,9 @@ class GPUDevice:
         return str_or_bytes
 
     def emit_selection_warning(self) -> None:
+        """Hook for backend-specific warnings when a GPU is explicitly selected.
+
+        Backends that need to emit warnings for selected devices should override
+        this method. The default implementation is intentionally a no-op.
+        """
         return None

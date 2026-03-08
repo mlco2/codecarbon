@@ -45,8 +45,8 @@ class AllGPUDevices:
                 gpu_amd.amdsmi.amdsmi_init()
                 amd_devices_handles = gpu_amd.amdsmi.amdsmi_get_processor_handles()
                 if len(amd_devices_handles) == 0:
-                    print(
-                        "No AMD GPUs foundon machine with amdsmi_get_processor_handles() !"
+                    logger.warning(
+                        "No AMD GPUs found on machine with amdsmi_get_processor_handles() !"
                     )
                 else:
                     for i, handle in enumerate(amd_devices_handles):

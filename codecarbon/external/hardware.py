@@ -167,9 +167,7 @@ class GPU(BaseHardware):
         for device in self.devices.devices:
             if device.gpu_index != gpu_id:
                 continue
-            emit_warning = getattr(device, "emit_selection_warning", None)
-            if callable(emit_warning):
-                emit_warning()
+            device.emit_selection_warning()
 
     def total_power(self) -> Power:
         return self._total_power
