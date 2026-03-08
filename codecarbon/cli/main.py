@@ -345,7 +345,7 @@ def monitor(
     if offline:
         if not country_iso_code:
             print(
-                "ERROR: country_iso_code is required for offline mode", file=sys.stderr
+                "ERROR: Country ISO code is required for offline mode. Add it to your configuration or provide it via the command line: `--country-iso-code FRA`", file=sys.stderr
             )
             raise typer.Exit(1)
 
@@ -358,7 +358,7 @@ def monitor(
         experiment_id = get_existing_local_exp_id()
         if api and experiment_id is None:
             print(
-                "ERROR: No experiment id, call 'codecarbon config' first.",
+                "ERROR: No experiment id, call 'codecarbon config' first. Or run in offline mode with `--offline --country-iso-code FRA` flag if you don't want to connect to the API.",
                 file=sys.stderr,
             )
             raise typer.Exit(1)
