@@ -345,7 +345,8 @@ def monitor(
     if offline:
         if not country_iso_code:
             print(
-                "ERROR: Country ISO code is required for offline mode. Add it to your configuration or provide it via the command line: `--country-iso-code FRA`", file=sys.stderr
+                "ERROR: Country ISO code is required for offline mode. Add it to your configuration or provide it via the command line: `--country-iso-code FRA`",
+                file=sys.stderr,
             )
             raise typer.Exit(1)
 
