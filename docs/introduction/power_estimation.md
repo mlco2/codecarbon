@@ -9,7 +9,8 @@ While energy is the metric primarily responsible for CO₂ emissions estimations
 The most accurate tracking methods rely on built-in hardware energy counters rather than instantaneous power draw. For example:
 - **NVIDIA GPUs** using `nvmlDeviceGetTotalEnergyConsumption` return accumulated energy in millijoules.
 - **AMD GPUs** using `amdsmi_get_energy_count` yield a counter that is multiplied by its resolution and converted into millijoules.
-- **Intel CPUs** using the RAPL interface read from files like `energy_uj` to get accumulated microjoules.
+- **CPUs** using the RAPL interface read from files like `energy_uj` to get accumulated microjoules.
+- **RAM** using the RAPL interface read from files like `energy_uj` to get accumulated microjoules. See `rapl_include_dram` option. Not used by default. 
 
 At every measurement interval, CodeCarbon calculates the `energy_delta` by subtracting the previously tracked `last_energy` from the current total energy reading.
 
