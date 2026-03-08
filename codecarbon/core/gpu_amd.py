@@ -255,7 +255,6 @@ class AMDGPUDevice(GPUDevice):
             )
             return [{"pid": p["pid"], "used_memory": p["mem"]} for p in processes]
         except Exception:
-            # logger.warning("Failed to retrieve gpu compute processes", exc_info=True)
             return []
 
     def _get_graphics_processes(self):
@@ -270,5 +269,4 @@ class AMDGPUDevice(GPUDevice):
                 if p["engine_usage"].get("gfx", 0) > 0
             ]
         except Exception:
-            # logger.warning("Failed to retrieve gpu graphics processes", exc_info=True)
             return []
