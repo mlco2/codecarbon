@@ -396,7 +396,7 @@ class TestAmdGpu:
 
 
 class TestAllGPUDevicesAmd:
-    def test_init_with_no_amd_handles(self, capsys):
+    def test_init_with_no_amd_handles(self):
         from codecarbon.core.gpu import AllGPUDevices
 
         fake_amdsmi = SimpleNamespace(
@@ -409,11 +409,13 @@ class TestAllGPUDevicesAmd:
             mock.patch("codecarbon.core.gpu.AMDSMI_AVAILABLE", True),
             mock.patch("codecarbon.core.gpu.PYNVML_AVAILABLE", False),
             mock.patch("codecarbon.core.gpu_amd.amdsmi", fake_amdsmi, create=True),
+            mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock,
         ):
             AllGPUDevices()
 
-        captured = capsys.readouterr()
-        assert "No AMD GPUs foundon machine" in captured.out
+        warning_mock.assert_called_once_with(
+            "No AMD GPUs found on machine with amdsmi_get_processor_handles() !"
+        )
 
     def test_init_with_amd_handles_and_bdf_fallback(self):
         from codecarbon.core.gpu import AllGPUDevices
