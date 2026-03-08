@@ -284,7 +284,7 @@ uv run --only-group doc task docs
 
 to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
 
-### Rebase your branch on master 
+### Rebase your branch on master
 
 Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh
@@ -309,7 +309,7 @@ Push force
 git push --force-with-lease
 ```
 
-### Rebase your branch on master 
+### Rebase your branch on master
 
 Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh
