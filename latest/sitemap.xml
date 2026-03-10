@@ -1,13 +1,57 @@
-{#-
-  This file was automatically generated - do not edit
--#}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  {%- for page in pages -%}
-    {%- if page.canonical_url %}
       <url>
-        <loc>{{ page.canonical_url }}</loc>
+        <loc>https://docs.codecarbon.io/</loc>
       </url>
-    {%- endif -%}
-  {%- endfor %}
+      <url>
+        <loc>https://docs.codecarbon.io/introduction/when-to-use/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/introduction/motivation/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/introduction/methodology/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/introduction/rapl/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/introduction/model_examples/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/introduction/faq/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/installation/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/usage/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/api/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/parameters/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/examples/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/comet/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/advanced_installation/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/getting-started/test_on_scaleway/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/logging/output/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/logging/to_logger/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/logging/visualize/</loc>
+      </url>
 </urlset>
