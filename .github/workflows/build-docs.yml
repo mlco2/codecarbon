@@ -41,6 +41,5 @@ jobs:
           # If output contains common error indicators, fail the step.
           if grep -Ei "\b(error|failed|traceback|exception)\b" docs_build.log >/dev/null; then
             echo "Documentation build produced errors; failing workflow."
-            tail -n 200 docs_build.log
             exit 1
           fi
