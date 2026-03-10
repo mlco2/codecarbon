@@ -19,7 +19,8 @@ All parameters are documented below:
 
 ::: codecarbon.emissions_tracker.BaseEmissionsTracker
     options:
-      members: __init__
+      members: 
+        - __init__
       merge_init_into_class: true
       show_root_heading: true
       show_signature: false
@@ -30,7 +31,8 @@ All parameters are documented below:
 
 ::: codecarbon.emissions_tracker.OfflineEmissionsTracker
     options:
-      members: __init__
+      members: 
+        - __init__
       merge_init_into_class: true
       show_root_heading: true
       show_signature: false
