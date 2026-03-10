@@ -175,7 +175,7 @@ class SqlAlchemyRepository(Organizations):
                     status_code=404, detail=f"Organization {organization_id} not found"
                 )
 
-            for attr, value in organization.dict().items():
+            for attr, value in organization.model_dump().items():
                 if value is not None:
                     setattr(db_organization, attr, value)
             session.commit()

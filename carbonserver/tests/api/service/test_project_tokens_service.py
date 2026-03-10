@@ -36,7 +36,7 @@ ORG_USER = OrganizationUser(
     name="user1",
     email="user1@local.com",
     is_active=True,
-    organization_id="someorgid",
+    organization_id="a52fe339-164d-4c2b-a8c0-f562dfce066d",
     is_admin=True,
 )
 

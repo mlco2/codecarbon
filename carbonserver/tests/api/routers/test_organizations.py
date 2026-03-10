@@ -169,6 +169,7 @@ def test_fetch_org_users(client, custom_test_server):
             "name": "user1",
             "organizations": None,
             "is_active": True,
+            "organization_id": ORG_1["id"],
             "is_admin": True,
         }
     ]
