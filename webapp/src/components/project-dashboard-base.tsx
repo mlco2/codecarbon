@@ -1,14 +1,11 @@
 import { DateRangePicker } from "@/components/date-range-picker";
-import EmissionsTimeSeriesChart from "@/components/emissions-time-series";
-import ExperimentsBarChart from "@/components/experiment-bar-chart";
-import RadialChart from "@/components/radial-chart";
-import RunsScatterChart from "@/components/runs-scatter-chart";
 import { Separator } from "@/components/ui/separator";
 import { getDefaultDateRange } from "@/helpers/date-utils";
 import { ExperimentReport } from "@/types/experiment-report";
 import { Project } from "@/types/project";
 import { ConvertedValues, RadialChartData } from "@/types/project-dashboard";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { ReactNode, useState } from "react";
 import { DateRange } from "react-day-picker";
 import ChartSkeleton from "./chart-skeleton";
@@ -19,6 +16,30 @@ import { Skeleton } from "./ui/skeleton";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableHeader } from "./ui/table";
 import { Experiment } from "@/types/experiment";
+
+// Lazy-load chart components to keep recharts (~370kB) off the critical path
+const RadialChart = dynamic(() => import("@/components/radial-chart"), {
+    loading: () => (
+        <Card className="flex flex-col h-full items-center justify-center">
+            <CardContent className="p-0">
+                <Skeleton className="h-44 w-44 rounded-full" />
+            </CardContent>
+        </Card>
+    ),
+    ssr: false,
+});
+const ExperimentsBarChart = dynamic(
+    () => import("@/components/experiment-bar-chart"),
+    { loading: () => <ChartSkeleton height={300} />, ssr: false },
+);
+const RunsScatterChart = dynamic(
+    () => import("@/components/runs-scatter-chart"),
+    { loading: () => <ChartSkeleton height={300} />, ssr: false },
+);
+const EmissionsTimeSeriesChart = dynamic(
+    () => import("@/components/emissions-time-series"),
+    { loading: () => <ChartSkeleton height={350} />, ssr: false },
+);
 
 export interface ProjectDashboardBaseProps {
     isPublicView: boolean;

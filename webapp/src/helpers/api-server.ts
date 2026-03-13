@@ -39,7 +39,7 @@ export async function fetchApiServer<T>(
             } catch (e) {
                 // Ignore JSON parsing errors
             }
-            console.log(errorMessage);
+            console.error(errorMessage);
             return null;
         }
 
@@ -48,35 +48,16 @@ export async function fetchApiServer<T>(
             return null;
         }
 
-        // Special handling for endpoints that might return null
-        if (
-            endpoint.includes("/organizations/") &&
-            endpoint.includes("/sums")
-        ) {
-            // For organization sums endpoint that might return null
-            try {
-                return await response.json();
-            } catch (e) {
-                // If JSON parsing fails (e.g., empty response), return default values
-                console.warn(
-                    "Empty response from organization sums endpoint, using default values",
-                );
-                return {
-                    name: "",
-                    description: "",
-                    emissions: 0,
-                    energy_consumed: 0,
-                    duration: 0,
-                    cpu_power: 0,
-                    gpu_power: 0,
-                    ram_power: 0,
-                    emissions_rate: 0,
-                    emissions_count: 0,
-                } as unknown as T;
-            }
+        // Parse JSON response
+        try {
+            return await response.json();
+        } catch (e) {
+            // If JSON parsing fails (e.g., empty response body), return null
+            console.warn(
+                `Empty or invalid JSON response from ${endpoint}, returning null`,
+            );
+            return null;
         }
-
-        return await response.json();
     } catch (error) {
         // Log server-side error with more details
         console.error("API server request failed:", {
@@ -84,25 +65,7 @@ export async function fetchApiServer<T>(
             error: error instanceof Error ? error.message : String(error),
         });
 
-        // For organization sums endpoint, return default values instead of throwing
-        if (
-            endpoint.includes("/organizations/") &&
-            endpoint.includes("/sums")
-        ) {
-            return {
-                name: "",
-                description: "",
-                emissions: 0,
-                energy_consumed: 0,
-                duration: 0,
-                cpu_power: 0,
-                gpu_power: 0,
-                ram_power: 0,
-                emissions_rate: 0,
-                emissions_count: 0,
-            } as unknown as T;
-        }
-
-        throw new Error("API request failed. Please try again.");
+        // Return null to let callers handle defaults appropriately
+        return null;
     }
 }
