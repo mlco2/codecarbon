@@ -9,8 +9,11 @@ from tests.testdata import (
     CLOUD_METADATA_AZURE,
     CLOUD_METADATA_GCP,
     CLOUD_METADATA_GCP_EMPTY,
+    COUNTRY_METADATA_CANADA,
     COUNTRY_METADATA_USA,
     GEO_METADATA_CANADA,
+    GEO_METADATA_CANADA_BACKUP,
+    GEO_METADATA_CANADA_EMPTY_REGION,
     GEO_METADATA_USA,
     GEO_METADATA_USA_BACKUP,
 )
@@ -115,3 +118,31 @@ class TestGeoMetadata(unittest.TestCase):
         self.assertEqual("CAN", geo.country_iso_code)
         self.assertEqual("Canada", geo.country_name)
         self.assertEqual("ontario", geo.region)
+
+    @responses.activate
+    def test_geo_metadata_empty_region_falls_back_to_backup(self):
+        """When geojs returns an empty region, fall through to ip-api.com backup."""
+        responses.add(
+            responses.GET,
+            self.geo_js_url,
+            json=GEO_METADATA_CANADA_EMPTY_REGION,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            "https://ip-api.com/json/",
+            json=GEO_METADATA_CANADA_BACKUP,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            "https://api.first.org/data/v1/countries?q=Canada&scope=iso",
+            json=COUNTRY_METADATA_CANADA,
+            status=200,
+        )
+        geo = GeoMetadata.from_geo_js(self.geo_js_url)
+        self.assertEqual("CAN", geo.country_iso_code)
+        self.assertEqual("Canada", geo.country_name)
+        self.assertEqual("british columbia", geo.region)
+        self.assertAlmostEqual(2.0, geo.latitude, places=2)
+        self.assertAlmostEqual(2.0, geo.longitude, places=2)

@@ -92,15 +92,16 @@ class GeoMetadata:
     def from_geo_js(cls, url: str) -> "GeoMetadata":
         try:
             response: Dict = requests.get(url, timeout=0.5).json()
-
-            return cls(
-                country_iso_code=response["country_code3"].upper(),
-                country_name=response["country"],
-                region=response.get("region", "").lower(),
-                latitude=float(response.get("latitude")),
-                longitude=float(response.get("longitude")),
-                country_2letter_iso_code=response.get("country_code"),
-            )
+            region = response.get("region", "")
+            if region:
+                return cls(
+                    country_iso_code=response["country_code3"].upper(),
+                    country_name=response["country"],
+                    region=region.lower(),
+                    latitude=float(response.get("latitude")),
+                    longitude=float(response.get("longitude")),
+                    country_2letter_iso_code=response.get("country_code"),
+                )
         except Exception as e:
             # If there is a timeout, we will try using a backup API
             logger.warning(

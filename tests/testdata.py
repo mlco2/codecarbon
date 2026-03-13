@@ -71,6 +71,49 @@ GEO_METADATA_CANADA = {
     "latitude": "1",
 }
 
+GEO_METADATA_CANADA_EMPTY_REGION = {
+    "organization_name": "foobar",
+    "region": "",
+    "accuracy": 100,
+    "asn": 0,
+    "organization": "foobar",
+    "timezone": "America/Toronto",
+    "longitude": "1",
+    "country_code3": "CAN",
+    "area_code": "0",
+    "ip": "foobar",
+    "city": "Toronto",
+    "country": "Canada",
+    "continent_code": "NA",
+    "country_code": "CA",
+    "latitude": "1",
+}
+
+GEO_METADATA_CANADA_BACKUP = {
+    "country": "Canada",
+    "countryCode": "CA",
+    "region": "BC",
+    "regionName": "British Columbia",
+    "city": "Vancouver",
+    "lat": "2",
+    "lon": "2",
+    "timezone": "America/Vancouver",
+}
+
+COUNTRY_METADATA_CANADA = {
+    "status": "OK",
+    "status-code": 200,
+    "version": "1.0",
+    "access": "public",
+    "data": {
+        "CAN": {
+            "id": "CAN",
+            "country": "Canada",
+            "region": "North America",
+        }
+    },
+}
+
 CLOUD_METADATA_AWS = {
     "provider": "AWS",
     "metadata": {
