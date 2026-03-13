@@ -134,11 +134,16 @@ async def logout(
     """
     if auth_provider is None:
         raise HTTPException(status_code=501, detail="Authentication not configured")
+
+    # Revoke the access token at the OIDC provider before clearing it locally
+    access_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if access_token:
+        await auth_provider.revoke_token(access_token)
+
     base_url = request.base_url
     response = auth_provider.create_redirect_response(str(base_url))
     response.delete_cookie(SESSION_COOKIE_NAME)
     if hasattr(request, "session"):
         request.session.clear()
 
-    # TODO: also revoke the token at auth provider level if possible
     return response
