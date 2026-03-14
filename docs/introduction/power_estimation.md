@@ -7,6 +7,7 @@ While energy is the metric primarily responsible for CO₂ emissions estimations
 ## 1. Energy as the Source of Truth
 
 The most accurate tracking methods rely on built-in hardware energy counters rather than instantaneous power draw. For example:
+
 - **NVIDIA GPUs** using `nvmlDeviceGetTotalEnergyConsumption` return accumulated energy in millijoules.
 - **AMD GPUs** using `amdsmi_get_energy_count` yield a counter that is multiplied by its resolution and converted into millijoules.
 - **CPUs** using the RAPL interface read from files like `energy_uj` to get accumulated microjoules.
@@ -40,6 +41,7 @@ The tracker has designated logic blocks for different components (e.g., CPU, RAM
 Inside the main `EmissionsTracker`, the energy values are securely accumulated over the session's lifespan.
 
 For recording the power, a running sum is maintained:
+
 - As CodeCarbon sequentially takes measurements, it tracks the output of `power.W`.
 - It dynamically increments running variables like `_gpu_power_sum`, `_cpu_power_sum`, `_ram_power_sum`.
 - It increments a global counter `_power_measurement_count`.
@@ -53,6 +55,7 @@ This smoothing process prevents singular short measurement anomalies from skewin
 ## Summary Pipeline
 
 In short:
+
 1. **Hardware Counters (Accumulated Energy)**
 2. Subtract `last_energy` = **Energy Delta**
 3. Divide Energy Delta by `last_duration` = **Interval Average Power**
