@@ -1,6 +1,6 @@
-# CodeCarbon on CINES Adastra HPC with AMD ROCM
+# ROCm and PyTorch on SLURM SuperComputer
 
-This project was provided with computing and storage resources by GENCI at CINES thanks to the grant AD010615147R1 on the supercomputer Adastra's MI250x/MI300 partition.
+This project was provided with computing and storage resources by GENCI at CINES thanks to the grant AD010615147R1 on the [supercomputer Adastra](https://dci.dci-gitlab.cines.fr/webextranet/architecture/index.html)'s MI250x/MI300 partition.
 
 Thanks to this grant we were able to develop and test the AMD ROCM support in CodeCarbon, and provide this quick start guide to help other users of Adastra HPC to easily monitor the carbon emissions of their machine learning workloads running on AMD GPUs.
 
