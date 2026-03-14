@@ -2,7 +2,7 @@ from collections import Counter
 from typing import List, Union
 
 from codecarbon.core import cpu, gpu, powermetrics
-from codecarbon.core.config import parse_gpu_ids
+from codecarbon.core.config import normalize_gpu_ids
 from codecarbon.core.util import (
     detect_cpu_model,
     is_linux_os,
@@ -221,9 +221,9 @@ class ResourceTracker:
 
     def set_GPU_tracking(self):
         logger.info("[setup] GPU Tracking...")
-        if isinstance(self.tracker._gpu_ids, str):
-            self.tracker._gpu_ids = parse_gpu_ids(self.tracker._gpu_ids)
-            self.tracker._conf["gpu_ids"] = self.tracker._gpu_ids
+        self.tracker._gpu_ids = normalize_gpu_ids(self.tracker._gpu_ids)
+        self.tracker._conf["gpu_ids"] = self.tracker._gpu_ids
+        if self.tracker._gpu_ids is not None:
             self.tracker._conf["gpu_count"] = len(self.tracker._gpu_ids)
 
         is_nvidia = gpu.is_nvidia_system()

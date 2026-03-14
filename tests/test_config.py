@@ -7,6 +7,7 @@ from unittest.mock import patch
 from codecarbon.core.config import (
     clean_env_key,
     get_hierarchical_config,
+    normalize_gpu_ids,
     parse_env_config,
     parse_gpu_ids,
 )
@@ -44,6 +45,20 @@ class TestConfig(unittest.TestCase):
             ([1, 2, 3], ["1", "2", "3"]),
         ]:
             self.assertEqual(parse_gpu_ids(ids), target)
+
+    def test_normalize_gpu_ids(self):
+        for ids, target in [
+            (None, None),
+            ("0,1,2", ["0", "1", "2"]),
+            ("MIG-f1e$%^", ["MIG-f1e"]),
+            ([1, 2, 3], [1, 2, 3]),
+            (
+                [0, "MIG-f1e$%^", "1, 2", "GPU-abcd!"],
+                [0, "MIG-f1e", "1", "2", "GPU-abcd"],
+            ),
+            ([0, {"invalid": "entry"}, "GPU-123"], [0, "GPU-123"]),
+        ]:
+            self.assertEqual(normalize_gpu_ids(ids), target)
 
     @mock.patch.dict(
         os.environ,
