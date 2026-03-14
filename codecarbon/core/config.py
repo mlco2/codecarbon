@@ -99,7 +99,8 @@ def normalize_gpu_ids(
                 normalized_gpu_ids.extend(parse_gpu_ids(gpu_id))
             else:
                 logger.warning(
-                    f"Ignoring invalid gpu_id entry '{gpu_id}' ({type(gpu_id).__name__}); expected int or str."
+                    "Ignoring invalid gpu_id entry of type %s; expected int or str.",
+                    type(gpu_id).__name__,
                 )
         return normalized_gpu_ids
 
