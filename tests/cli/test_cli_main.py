@@ -43,7 +43,7 @@ def test_monitor_offline_requires_country_iso_code():
     runner = CliRunner()
     result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
     assert result.exit_code != 0
-    assert "country_iso_code is required for offline mode" in result.output
+    assert "Country ISO code is required for offline mode" in result.output
 
 
 def test_detect_monkeypatched_tracker(monkeypatch):
