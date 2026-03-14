@@ -13,9 +13,11 @@ def set_logger_format(custom_preamble: Optional[str] = ""):
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
 
-    if logger.hasHandlers():
-        logger.handlers.clear()
-
+    logger.handlers = [
+        h for h in logger.handlers
+        if isinstance(h, logging.FileHandler)
+        or not isinstance(h,logging.StreamHandler)
+    ]
     logger.addHandler(handler)
 
 
