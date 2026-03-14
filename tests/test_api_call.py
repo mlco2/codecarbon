@@ -2,9 +2,11 @@ import dataclasses
 import unittest
 from uuid import uuid4
 
+import requests
 import requests_mock
 
 from codecarbon.core.api_client import ApiClient
+from codecarbon.core.schemas import ProjectCreate
 from codecarbon.output import EmissionsData
 
 conf = {
@@ -106,3 +108,34 @@ class TestApi(unittest.TestCase):
                 tracking_mode="Machine",
             )
             assert api.add_emission(dataclasses.asdict(carbon_emission))
+
+    @requests_mock.Mocker()
+    def test_call_api_error(self, m):
+        mock_url = "http://test.com"
+        m.get(
+            mock_url + "/organizations",
+            json={"detail": "Internal Server Error"},
+            status_code=500,
+        )
+        m.post(
+            mock_url + "/projects",
+            json={"detail": "Bad Request"},
+            status_code=400,
+        )
+        api = ApiClient(
+            experiment_id=None,
+            endpoint_url=mock_url,
+            api_key="api-key",
+            conf={},
+            create_run_automatically=False,
+        )
+        with self.assertRaises(requests.exceptions.HTTPError):
+            api.get_list_organizations()
+        with self.assertRaises(requests.exceptions.HTTPError):
+            api.create_project(
+                ProjectCreate(
+                    name="test_project",
+                    description="test_description",
+                    organization_id="test_org_id",
+                )
+            )
