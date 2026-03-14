@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import psutil
 
 from codecarbon._version import __version__
-from codecarbon.core.config import get_hierarchical_config
+from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
@@ -153,6 +153,7 @@ class BaseEmissionsTracker(ABC):
                 value = os.environ.get("CUDA_VISIBLE_DEVICES")
             elif value is None and os.environ.get("ROCR_VISIBLE_DEVICES"):
                 value = os.environ.get("ROCR_VISIBLE_DEVICES")
+            value = normalize_gpu_ids(value)
         # store final value
         self._conf[name] = value
         # set `self._{name}` to `value`

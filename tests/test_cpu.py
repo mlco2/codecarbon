@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 
+from codecarbon.core.config import normalize_gpu_ids
 from codecarbon.core.cpu import (
     DEFAULT_POWER_PER_CORE,
     TDP,
@@ -498,6 +499,34 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
 
 class TestResourceTrackerGPUTracking(unittest.TestCase):
+    def test_normalize_gpu_ids_mixed_list_with_escaping(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = [0, "MIG-f1e$%^", "1, 2", "GPU-abcd!"]
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+
+        normalized_gpu_ids = normalize_gpu_ids(resource_tracker.tracker._gpu_ids)
+
+        self.assertEqual(normalized_gpu_ids, [0, "MIG-f1e", "1", "2", "GPU-abcd"])
+
+    def test_normalize_gpu_ids_mixed_list_ignores_invalid_entries(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = [0, {"invalid": "entry"}, "GPU-123"]
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+
+        normalized_gpu_ids = normalize_gpu_ids(resource_tracker.tracker._gpu_ids)
+
+        self.assertEqual(normalized_gpu_ids, [0, "GPU-123"])
+
     def test_set_gpu_tracking_rocm_with_string_ids(self):
         class DummyTracker:
             def __init__(self):
@@ -515,7 +544,8 @@ class TestResourceTrackerGPUTracking(unittest.TestCase):
 
         with (
             mock.patch(
-                "codecarbon.core.resource_tracker.parse_gpu_ids", return_value=[0, 1]
+                "codecarbon.core.resource_tracker.normalize_gpu_ids",
+                return_value=[0, 1],
             ),
             mock.patch(
                 "codecarbon.core.resource_tracker.gpu.is_nvidia_system",
@@ -538,6 +568,43 @@ class TestResourceTrackerGPUTracking(unittest.TestCase):
         self.assertEqual(resource_tracker.gpu_tracker, "amdsmi")
         self.assertEqual(tracker._conf["gpu_model"], "2 x AMD Instinct MI300X")
         self.assertEqual(tracker._hardware, [fake_devices])
+
+    def test_set_gpu_tracking_rocm_with_mixed_ids(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = [0, "MIG-f1e$%^", "1, 2"]
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+        fake_devices = mock.Mock()
+        fake_devices.devices.get_gpu_static_info.return_value = [
+            {"name": "AMD Instinct MI300X"},
+            {"name": "AMD Instinct MI300X"},
+        ]
+
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_nvidia_system",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_rocm_system",
+                return_value=True,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.GPU.from_utils",
+                return_value=fake_devices,
+            ) as mocked_gpu_from_utils,
+        ):
+            resource_tracker.set_GPU_tracking()
+
+        expected_gpu_ids = [0, "MIG-f1e", "1", "2"]
+        mocked_gpu_from_utils.assert_called_once_with(expected_gpu_ids)
+        self.assertEqual(tracker._gpu_ids, expected_gpu_ids)
+        self.assertEqual(tracker._conf["gpu_ids"], expected_gpu_ids)
+        self.assertEqual(tracker._conf["gpu_count"], 2)
 
 
 class TestPhysicalCPU(unittest.TestCase):

@@ -1,7 +1,7 @@
 import configparser
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 from codecarbon.external.logger import logger
 
@@ -71,6 +71,42 @@ def parse_gpu_ids(gpu_ids: Union[str, List[int]]) -> List[str]:
         logger.warning(
             "Invalid gpu_ids format. Expected a string or a list of ints/strings."
         )
+
+
+def normalize_gpu_ids(
+    gpu_ids: Optional[Union[str, List[Union[int, str]]]],
+) -> Optional[List[Union[int, str]]]:
+    """
+    Normalize GPU IDs from config/user input into a list of ids consumable by hardware
+    resolution code.
+
+    Supports:
+    - comma-separated string values (sanitized via parse_gpu_ids)
+    - lists containing ints and/or strings
+    """
+    if gpu_ids is None:
+        return None
+
+    if isinstance(gpu_ids, str):
+        return parse_gpu_ids(gpu_ids)
+
+    if isinstance(gpu_ids, list):
+        normalized_gpu_ids: List[Union[int, str]] = []
+        for gpu_id in gpu_ids:
+            if isinstance(gpu_id, int):
+                normalized_gpu_ids.append(gpu_id)
+            elif isinstance(gpu_id, str):
+                normalized_gpu_ids.extend(parse_gpu_ids(gpu_id))
+            else:
+                logger.warning(
+                    f"Ignoring invalid gpu_id entry '{gpu_id}' ({type(gpu_id).__name__}); expected int or str."
+                )
+        return normalized_gpu_ids
+
+    logger.warning(
+        "Invalid gpu_ids format. Expected a string or a list of ints/strings."
+    )
+    return None
 
 
 def get_hierarchical_config():
