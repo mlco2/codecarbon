@@ -128,4 +128,5 @@ nav:
     - Output: logging/output.md
     - Collecting emissions to a logger: logging/to_logger.md
     - Visualize: logging/visualize.md
+  - Telemetry: telemetry.md
   - Track GenAI API Calls (EcoLogits) ↗: https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs
