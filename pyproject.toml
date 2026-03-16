@@ -49,6 +49,21 @@ telemetry = [
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp",
 ]
+openllmetry = [
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+]
+carbonboard = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
+]
+# Backwards compatibility alias - will be removed in v4.0.0
+viz-legacy = [
+    "dash",
+    "dash_bootstrap_components > 1.0.0",
+    "fire",
+]
 
 [tool.setuptools.dynamic]
 version = {attr = "codecarbon._version.__version__"}
@@ -105,20 +120,6 @@ doc = [
   "mike",
   "mkdocstrings[python]>=0.26",
 ]
-
-[project.optional-dependencies]
-carbonboard = [
-    "dash",
-    "dash_bootstrap_components > 1.0.0",
-    "fire",
-]
-# Backwards compatibility alias - will be removed in v4.0.0
-viz-legacy = [
-    "dash",
-    "dash_bootstrap_components > 1.0.0",
-    "fire",
-]
-
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"

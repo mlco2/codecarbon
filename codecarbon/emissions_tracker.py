@@ -168,6 +168,7 @@ class BaseEmissionsTracker(ABC):
         logging_logger: Optional[LoggerOutput] = _sentinel,
         save_to_prometheus: Optional[bool] = _sentinel,
         save_to_logfire: Optional[bool] = _sentinel,
+        save_to_openllmetry: Optional[bool] = _sentinel,
         prometheus_url: Optional[str] = _sentinel,
         output_handlers: Optional[List[BaseOutput]] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
@@ -328,6 +329,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logging_logger, "logging_logger")
         self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
         self._set_from_conf(save_to_logfire, "save_to_logfire", False, bool)
+        # Check for environment variable CODECARBON_OPENLLMETRY
+        self._set_from_conf(save_to_openllmetry, "save_to_openllmetry", False, bool)
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
@@ -487,6 +490,16 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
+
+        if self._save_to_openllmetry:
+            try:
+                from codecarbon.output_methods.openllmetry import OpenLlmetyOutput
+                self._output_handlers.append(OpenLlmetyOutput())
+            except ImportError as e:
+                logger.warning(
+                    f"OpenLlmety output method not available: {e}. "
+                    "Please install OpenTelemetry packages or codecarbon[openllmetry]"
+                )
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """

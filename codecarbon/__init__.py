@@ -8,20 +8,18 @@ from .emissions_tracker import (
     OfflineEmissionsTracker,
     track_emissions,
 )
-from .core.telemetry import (
-    TelemetryConfig,
-    TelemetryTier,
-    init_telemetry,
-    set_telemetry,
+from .output_methods.openllmetry import (
+    enable_openllmetry,
+    disable_openllmetry,
+    is_openllmetry_enabled,
 )
 
 __all__ = [
     "EmissionsTracker",
     "OfflineEmissionsTracker",
     "track_emissions",
-    "TelemetryConfig",
-    "TelemetryTier",
-    "init_telemetry",
-    "set_telemetry",
+    "enable_openllmetry",
+    "disable_openllmetry",
+    "is_openllmetry_enabled",
 ]
 __app_name__ = "codecarbon"
