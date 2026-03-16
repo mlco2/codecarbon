@@ -9,7 +9,6 @@ from tests.testdata import (
     CLOUD_METADATA_AZURE,
     CLOUD_METADATA_GCP,
     CLOUD_METADATA_GCP_EMPTY,
-    COUNTRY_METADATA_USA,
     GEO_METADATA_CANADA,
     GEO_METADATA_USA,
     GEO_METADATA_USA_BACKUP,
@@ -91,14 +90,27 @@ class TestGeoMetadata(unittest.TestCase):
         )
         responses.add(
             responses.GET,
-            "https://ip-api.com/json/",
+            "https://ipinfo.io/json",
             json=GEO_METADATA_USA_BACKUP,
             status=200,
         )
+        geo = GeoMetadata.from_geo_js(self.geo_js_url)
+        self.assertEqual("USA", geo.country_iso_code)
+        self.assertEqual("United States", geo.country_name)
+        self.assertEqual("illinois", geo.region)
+
+    @responses.activate
+    def test_geo_metadata_empty_region_fallback(self):
+        empty_region_response = GEO_METADATA_USA.copy()
+        empty_region_response["region"] = ""
+
+        responses.add(
+            responses.GET, self.geo_js_url, json=empty_region_response, status=200
+        )
         responses.add(
             responses.GET,
-            "https://api.first.org/data/v1/countries?q=United%20States&scope=iso",
-            json=COUNTRY_METADATA_USA,
+            "https://ipinfo.io/json",
+            json=GEO_METADATA_USA_BACKUP,
             status=200,
         )
         geo = GeoMetadata.from_geo_js(self.geo_js_url)

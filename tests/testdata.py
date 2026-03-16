@@ -19,38 +19,14 @@ GEO_METADATA_USA = {
 }
 
 GEO_METADATA_USA_BACKUP = {
-    "organization_name": "foobar",
-    "regionName": "Illinois",
-    "accuracy": 1,
-    "asn": 0,
-    "organization": "foobar",
-    "timezone": "America/Chicago",
-    "lon": "88",
-    "area_code": "0",
     "ip": "foobar",
     "city": "Chicago",
-    "country": "United States",
-    "countryCode": "US",
-    "lat": "0",
-}
-
-COUNTRY_METADATA_USA = {
-    "status": "OK",
-    "status-code": 200,
-    "version": "1.0",
-    "access": "public",
-    "data": {
-        "USA": {
-            "id": "USA",
-            "country": "United States of America (the)",
-            "region": "North America",
-        },
-        "UMI": {
-            "id": "UMI",
-            "country": "United States Minor Outlying Islands (the)",
-            "region": "Oceania",
-        },
-    },
+    "region": "Illinois",
+    "country": "US",
+    "loc": "0,88",
+    "org": "foobar",
+    "postal": "60601",
+    "timezone": "America/Chicago",
 }
 
 GEO_METADATA_CANADA = {
