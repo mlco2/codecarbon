@@ -13,7 +13,7 @@ anyio==4.12.1
     #   httpx
     #   starlette
     #   watchfiles
-authlib==1.6.8
+authlib==1.6.9
     # via carbonserver (carbonserver/pyproject.toml)
 bcrypt==4.3.0
     # via carbonserver (carbonserver/pyproject.toml)
