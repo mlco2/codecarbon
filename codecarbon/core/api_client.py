@@ -237,11 +237,9 @@ class ApiClient:  # (AsyncClient)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return False
-            logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
         except Exception as e:
             logger.error(e, exc_info=True)
             return False
-        print(f"DEBUG: Sending payload to API: {emission}")
         return True
 
     def _create_run(self, experiment_id: str):
