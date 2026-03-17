@@ -99,7 +99,7 @@ class ResourceTracker:
         """Get CPU tracking installation instructions for the current OS."""
         if is_mac_os():
             cpu_model = detect_cpu_model()
-            if "M1" in cpu_model or "M2" in cpu_model or "M3" in cpu_model:
+            if any(chip in cpu_model for chip in ("M1", "M2", "M3", "M4")):
                 return "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
             else:
                 return "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
