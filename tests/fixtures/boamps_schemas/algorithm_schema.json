@@ -1,0 +1,65 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "https://raw.githubusercontent.com/Boavizta/BoAmps/main/model/algorithm_schema.json",
+    "title": "algorithm",
+    "description": "the type of algorithm used by the computing task",
+    "type": "object",
+    "properties": {
+      "trainingType": {
+        "type": "string",
+        "description": "if applicable, type of training (if the stage corresponds to a training) : supervisedLearning, unsupervisedLearning, semiSupervisedLearning, reinforcementLearning, transferLearning ..."
+      },
+      "algorithmType": {
+        "type": "string",
+        "description": "the type of algorithm used, example : embeddings creation, rag, nlp, neural network, llm..."
+      },
+      "algorithmName": {
+        "type": "string",
+        "description": "the case-sensitive common name of the algorithm, example: randomForest, naive bayes, cnn, rnn, transformers, if you are directly using a foundation model, let it empty and fill the field foundationModelName..."
+      },
+      "algorithmUri": {
+        "type": "string",
+        "description": "the URI of the model, if publicly available"
+      },
+      "foundationModelName": {
+        "type": "string",
+        "description": "if a foundation model is used, its case-sensitive common name, example: llama3.1-8b, gpt4-o..."
+      },
+      "foundationModelUri": {
+        "type": "string",
+        "description": "the URI of the foundation model, if publicly available"
+      },
+      "parametersNumber": {
+        "type": "number",
+        "description" : "number of billions of total parameters of your model, e.g. 8 for llama3.1-8b"
+      },
+      "framework": {
+        "type": "string",
+        "description": "the common name of the software framework implementing the algorithm, if any"
+      },
+      "frameworkVersion": {
+        "type": "string",
+        "description": "the version of the software framework implementing the algorithm, if any"
+      },
+      "classPath": {
+        "type": "string",
+        "description": "the full class path of the algorithm within the framework, with elements separated by dots"
+      },
+      "layersNumber": {
+        "type": "number",
+        "description" : "if deep learning, precise the number of layers in your network"
+      },
+      "epochsNumber":{
+         "type": "number",
+         "description" : "if training, the number of complete passes through the training dataset"
+      },
+      "optimizer":{
+        "type": "string",
+        "description" : "the algorithm used to optimize the models weights, e.g. gridSearch, lora, adam"
+      },
+      "quantization":{
+        "type":"string", 
+        "description": "the type of quantization used : fp32, fp16, b16, int8 ... "
+      }
+    }
+  }
