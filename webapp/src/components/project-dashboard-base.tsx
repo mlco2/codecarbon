@@ -185,6 +185,17 @@ export default function ProjectDashboardBase({
                             </CardContent>
                         </Card>
                     ) : (
+                        <RadialChart data={radialChartData.water} />
+                    )}
+                </div>
+                <div className="col-span-1 items-center justify-center w-full h-full">
+                    {isLoading ? (
+                        <Card className="flex flex-col h-full items-center justify-center">
+                            <CardContent className="p-0">
+                                <Skeleton className="h-44 w-44 rounded-full" />
+                            </CardContent>
+                        </Card>
+                    ) : (
                         <RadialChart data={radialChartData.emissions} />
                     )}
                 </div>

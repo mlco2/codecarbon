@@ -34,6 +34,7 @@ export async function getRunEmissionsByExperiment(
             emissions: runReport.emissions,
             timestamp: runReport.timestamp,
             energy_consumed: runReport.energy_consumed,
+            water_consumed: runReport.water_consumed,
             duration: runReport.duration,
         };
     });
@@ -86,6 +87,7 @@ export async function getEmissionsTimeSeries(
             gpu_energy: item.gpu_energy,
             ram_energy: item.ram_energy,
             energy_consumed: item.energy_consumed,
+            water_consumed: item.water_consumed,
         }));
 
         return {

@@ -3,5 +3,6 @@ export interface RunReport {
     emissions: number;
     timestamp: string;
     energy_consumed: number;
+    water_consumed: number;
     duration: number;
 }

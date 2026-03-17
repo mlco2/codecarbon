@@ -60,12 +60,12 @@ export function exportExperimentsToCsv(
     const csvRows: string[] = [];
 
     // Add header row with exact field names
-    csvRows.push("experiment_id,name,emissions,energy_consumed,duration");
+    csvRows.push("experiment_id,name,emissions,energy_consumed,water_consumed,duration");
 
     if (experiments && experiments.length > 0) {
         experiments.forEach((exp) => {
             csvRows.push(
-                `${exp.experiment_id},${exp.name},${exp.emissions},${exp.energy_consumed},${exp.duration}`,
+                `${exp.experiment_id},${exp.name},${exp.emissions},${exp.energy_consumed},${exp.water_consumed},${exp.duration}`,
             );
         });
     }
@@ -102,13 +102,13 @@ export async function exportRunsToCsv(
 
     // Extended header row with metadata fields
     csvRows.push(
-        "runId,timestamp,emissions,energy_consumed,duration,os,python_version,codecarbon_version,cpu_count,cpu_model,gpu_count,gpu_model,region,provider,ram_total_size,tracking_mode",
+        "runId,timestamp,emissions,energy_consumed,water_consumed,duration,os,python_version,codecarbon_version,cpu_count,cpu_model,gpu_count,gpu_model,region,provider,ram_total_size,tracking_mode",
     );
 
     if (runs && runs.length > 0) {
         runs.forEach((run) => {
             const metadata = metadataMap.get(run.runId);
-            let row = `${run.runId},${run.timestamp},${run.emissions},${run.energy_consumed},${run.duration}`;
+            let row = `${run.runId},${run.timestamp},${run.emissions},${run.energy_consumed},${run.water_consumed},${run.duration}`;
 
             // Add metadata fields if available
             if (metadata) {
@@ -147,13 +147,13 @@ export function exportEmissionsTimeSeriesCsv(
 
     // Add emissions data header and rows
     csvRows.push(
-        "timestamp,emissions_sum,emissions_rate,cpu_power,gpu_power,ram_power,cpu_energy,gpu_energy,ram_energy,energy_consumed",
+        "timestamp,emissions_sum,emissions_rate,cpu_power,gpu_power,ram_power,cpu_energy,gpu_energy,ram_energy,energy_consumed,water_consumed",
     );
 
     if (timeSeries.emissions && timeSeries.emissions.length > 0) {
         timeSeries.emissions.forEach((emission) => {
             csvRows.push(
-                `${emission.timestamp},${emission.emissions_sum},${emission.emissions_rate},${emission.cpu_power},${emission.gpu_power},${emission.ram_power},${emission.cpu_energy},${emission.gpu_energy},${emission.ram_energy},${emission.energy_consumed}`,
+                `${emission.timestamp},${emission.emissions_sum},${emission.emissions_rate},${emission.cpu_power},${emission.gpu_power},${emission.ram_power},${emission.cpu_energy},${emission.gpu_energy},${emission.ram_energy},${emission.energy_consumed},${emission.water_consumed}`,
             );
         });
     }

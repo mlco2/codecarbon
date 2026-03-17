@@ -7,6 +7,7 @@ export interface RadialChartData {
     energy: { label: string; value: number };
     emissions: { label: string; value: number };
     duration: { label: string; value: number };
+    water: { label: string; value: number };
 }
 
 export interface ConvertedValues {

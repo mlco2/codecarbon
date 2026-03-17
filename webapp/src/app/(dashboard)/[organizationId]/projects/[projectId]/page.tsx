@@ -52,6 +52,7 @@ export default function ProjectPage({
 
     const [radialChartData, setRadialChartData] = useState({
         energy: { label: "kWh", value: 0 },
+        water: { label: "L", value: 0 },
         emissions: { label: "kg eq CO2", value: 0 },
         duration: { label: "days", value: 0 },
     });
@@ -123,7 +124,19 @@ export default function ProjectPage({
                                         n + energy_consumed,
                                     0,
                                 )
-                                .toFixed(2),
+                                .toFixed(6),
+                        ),
+                    },
+                    water: {
+                        label: "L",
+                        value: parseFloat(
+                            report
+                                .reduce(
+                                    (n, { water_consumed }) => 
+                                        n + water_consumed,
+                                    0,
+                                )
+                                .toFixed(6),
                         ),
                     },
                     emissions: {

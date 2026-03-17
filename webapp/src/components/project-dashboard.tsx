@@ -80,6 +80,7 @@ export default function ProjectDashboard({
                             name: exp.name,
                             emissions: exp.emissions,
                             energy_consumed: exp.energy_consumed,
+                            water_consumed: exp.water_consumed,
                             duration: exp.duration,
                             runs: runsWithDetails,
                         };

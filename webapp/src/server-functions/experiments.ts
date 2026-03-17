@@ -72,6 +72,7 @@ export async function getProjectEmissionsByExperiment(
             name: experimentReport.name,
             emissions: experimentReport.emissions,
             energy_consumed: experimentReport.energy_consumed,
+            water_consumed: experimentReport.water_consumed,
             duration: experimentReport.duration,
         };
     });

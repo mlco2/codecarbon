@@ -27,6 +27,7 @@ export async function getOrganizationEmissionsByProject(
                 name: "",
                 emissions: 0,
                 energy_consumed: 0,
+                water_consumed: 0,
                 duration: 0,
             };
         }
@@ -35,6 +36,7 @@ export async function getOrganizationEmissionsByProject(
             name: result.name || "",
             emissions: result.emissions || 0,
             energy_consumed: result.energy_consumed || 0,
+            water_consumed: result.water_consumed || 0,
             duration: result.duration || 0,
         };
     } catch (error) {
@@ -44,6 +46,7 @@ export async function getOrganizationEmissionsByProject(
             name: "",
             emissions: 0,
             energy_consumed: 0,
+            water_consumed: 0,
             duration: 0,
         };
     }

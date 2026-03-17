@@ -10,4 +10,5 @@ export interface Emission {
     gpu_energy: number;
     ram_energy: number;
     energy_consumed: number;
+    water_consumed: number;
 }

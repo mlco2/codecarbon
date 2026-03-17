@@ -39,7 +39,7 @@ export default function OrganizationPage({
     });
     const [organizationReport, setOrganizationReport] = useState<
         OrganizationReport | undefined
-    >({ name: "", duration: 0, emissions: 0, energy_consumed: 0 });
+    >({ name: "", duration: 0, emissions: 0, energy_consumed: 0, water_consumed: 0,});
 
     useEffect(() => {
         async function fetchOrganizationReport() {
@@ -74,6 +74,12 @@ export default function OrganizationPage({
             label: "kWh",
             value: organizationReport?.energy_consumed
                 ? parseFloat(organizationReport.energy_consumed.toFixed(2))
+                : 0,
+        },
+        water: {
+            label: "L",
+            value: organizationReport?.water_consumed
+                ? parseFloat(organizationReport.water_consumed.toFixed(2))
                 : 0,
         },
         emissions: {
@@ -154,8 +160,9 @@ export default function OrganizationPage({
                             </p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                         <RadialChart data={RadialChartData.energy} />
+                        <RadialChart data={RadialChartData.water} />
                         <RadialChart data={RadialChartData.emissions} />
                         <RadialChart data={RadialChartData.duration} />
                     </div>
