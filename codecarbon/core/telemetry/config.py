@@ -5,8 +5,12 @@ Handles the 3-tier telemetry system:
 - off: No telemetry
 - internal: Private telemetry (helps CodeCarbon improve)  
 - public: Public telemetry (shares emissions for leaderboard)
+
+For Tier 1 (internal): POST to /telemetry endpoint
+For Tier 2 (public): Uses core public API with project token
 """
 
+import json
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -20,11 +24,17 @@ from codecarbon.external.logger import logger
 # Environment variable name for telemetry setting
 TELEMETRY_ENV_VAR = "CODECARBON_TELEMETRY"
 
-# Environment variable for OTEL endpoint
+# Environment variable for project token (Tier 2 / public)
+TELEMETRY_PROJECT_TOKEN_ENV_VAR = "CODECARBON_TELEMETRY_PROJECT_TOKEN"
+
+# Environment variable for API endpoint
+TELEMETRY_API_ENDPOINT_ENV_VAR = "CODECARBON_TELEMETRY_API_ENDPOINT"
+
+# Legacy OTEL endpoint env var (for backward compatibility)
 OTEL_ENDPOINT_ENV_VAR = "CODECARBON_OTEL_ENDPOINT"
 
-# Default OTEL endpoint (can be configured by CodeCarbon team)
-DEFAULT_OTEL_ENDPOINT = "https://otlp.example.com/v1/traces"
+# Default API endpoint
+DEFAULT_API_ENDPOINT = "https://api.codecarbon.io"
 
 
 class TelemetryTier(str, Enum):
@@ -40,9 +50,12 @@ class TelemetryConfig:
     """Telemetry configuration."""
 
     tier: TelemetryTier
-    otel_endpoint: Optional[str]
+    project_token: Optional[str]
+    api_endpoint: Optional[str]
     has_consent: bool
     first_run: bool
+    # Legacy OTEL support (still used for internal tier)
+    otel_endpoint: Optional[str] = None
 
     @property
     def is_enabled(self) -> bool:
@@ -125,6 +138,16 @@ def get_otel_endpoint() -> Optional[str]:
     return os.environ.get(OTEL_ENDPOINT_ENV_VAR)
 
 
+def get_telemetry_project_token() -> Optional[str]:
+    """Get telemetry project token from environment."""
+    return os.environ.get(TELEMETRY_PROJECT_TOKEN_ENV_VAR)
+
+
+def get_telemetry_api_endpoint() -> Optional[str]:
+    """Get telemetry API endpoint from environment."""
+    return os.environ.get(TELEMETRY_API_ENDPOINT_ENV_VAR)
+
+
 def get_telemetry_config(force_first_run: bool = False) -> TelemetryConfig:
     """
     Get the telemetry configuration.
@@ -140,12 +163,19 @@ def get_telemetry_config(force_first_run: bool = False) -> TelemetryConfig:
     Returns:
         TelemetryConfig object
     """
+    # Get common config values
+    project_token = get_telemetry_project_token()
+    api_endpoint = get_telemetry_api_endpoint()
+    otel_endpoint = get_otel_endpoint()
+
     # Check environment variable first
     tier = detect_tier_from_env()
     if tier is not None:
         return TelemetryConfig(
             tier=tier,
-            otel_endpoint=get_otel_endpoint(),
+            project_token=project_token,
+            api_endpoint=api_endpoint,
+            otel_endpoint=otel_endpoint,
             has_consent=True,
             first_run=False,
         )
@@ -156,7 +186,9 @@ def get_telemetry_config(force_first_run: bool = False) -> TelemetryConfig:
         tier, dont_ask = saved
         return TelemetryConfig(
             tier=tier,
-            otel_endpoint=get_otel_endpoint(),
+            project_token=project_token,
+            api_endpoint=api_endpoint,
+            otel_endpoint=otel_endpoint,
             has_consent=True,
             first_run=False,
         )
@@ -164,7 +196,9 @@ def get_telemetry_config(force_first_run: bool = False) -> TelemetryConfig:
     # First run - default to internal (telemetry enabled by default to help CodeCarbon improve)
     return TelemetryConfig(
         tier=TelemetryTier.INTERNAL,
-        otel_endpoint=get_otel_endpoint(),
+        project_token=project_token,
+        api_endpoint=api_endpoint,
+        otel_endpoint=otel_endpoint,
         has_consent=True,
         first_run=True,
     )

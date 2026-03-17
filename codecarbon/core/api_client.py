@@ -353,6 +353,35 @@ class ApiClient:  # (AsyncClient)
         Tell the API that the experiment has ended.
         """
 
+    def add_telemetry(self, telemetry_data: dict, api_key: str = None) -> bool:
+        """
+        Send telemetry data to the /telemetry endpoint (Tier 1).
+        
+        Args:
+            telemetry_data: Dictionary containing telemetry payload
+            api_key: Optional API key for authentication
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            url = self.url + "/telemetry"
+            headers = self._get_headers()
+            
+            # Use provided api_key or fall back to instance api_key
+            if api_key:
+                headers["x-api-token"] = api_key
+                
+            r = requests.post(url=url, json=telemetry_data, timeout=5, headers=headers)
+            if r.status_code not in (200, 201):
+                self._log_error(url, telemetry_data, r)
+                return False
+            logger.debug(f"Telemetry data sent successfully to {url}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send telemetry data: {e}")
+            return False
+
 
 class simple_utc(tzinfo):
     def tzname(self, **kwargs):

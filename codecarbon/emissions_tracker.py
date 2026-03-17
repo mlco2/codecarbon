@@ -756,7 +756,37 @@ class BaseEmissionsTracker(ABC):
         for handler in self._output_handlers:
             handler.exit()
 
+        # Log telemetry configuration warning
+        self._log_telemetry_warning()
+
         return emissions_data.emissions
+
+    def _log_telemetry_warning(self) -> None:
+        """
+        Log a warning about telemetry configuration at the end of each run.
+        """
+        from codecarbon.core.telemetry.config import (
+            TELEMETRY_ENV_VAR,
+            TELEMETRY_PROJECT_TOKEN_ENV_VAR,
+            get_telemetry_config,
+        )
+        
+        config = get_telemetry_config()
+        
+        if not config.is_enabled:
+            logger.warning(
+                f"Telemetry is disabled. To enable, run: codecarbon telemetry setup\n"
+                f"Or set environment variable: export {TELEMETRY_ENV_VAR}=internal"
+            )
+        elif config.is_public and not config.project_token:
+            logger.warning(
+                f"Telemetry is set to 'public' but no project token is configured.\n"
+                f"To configure Tier 2 (public) telemetry, run: codecarbon telemetry setup\n"
+                f"Or set: export {TELEMETRY_PROJECT_TOKEN_ENV_VAR}=<your_project_token>"
+            )
+        elif config.is_enabled and not config.first_run:
+            # Telemetry is properly configured
+            logger.debug(f"Telemetry enabled: tier={config.tier.value}")
 
     def _persist_data(
         self,
