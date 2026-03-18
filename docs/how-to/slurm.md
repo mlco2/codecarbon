@@ -1,16 +1,25 @@
-# ROCm and PyTorch on SLURM SuperComputer
+# Using CodeCarbon on SLURM (Adastra/ROCm Example)
 
-This project was provided with computing and storage resources by GENCI at CINES thanks to the grant AD010615147R1 on the [supercomputer Adastra](https://dci.dci-gitlab.cines.fr/webextranet/architecture/index.html)'s MI250x/MI300 partition.
+This guide walks through using CodeCarbon on SLURM-based HPC clusters. The examples are specific to the Adastra supercomputer with AMD ROCm GPUs, but the general approach applies to any SLURM cluster with internet-connected login nodes.
 
-Thanks to this grant we were able to develop and test the AMD ROCM support in CodeCarbon, and provide this quick start guide to help other users of Adastra HPC to easily monitor the carbon emissions of their machine learning workloads running on AMD GPUs.
+**For a general approach to running CodeCarbon on any Linux server without HPC complexity, see the [Linux Service guide](linux-service.md).**
 
-It was tested on Adastra but it will likely work on any SLURM cluster with AMD GPUs and ROCM support.
+---
 
-## Quick Start Guide
+## About This Example
 
-Adastra security rules require users to connect through a fixed IP. We choose to setup a small host in the cloud to act as a bastion server, allowing us to connect to Adastra from anywhere without needing to change our IP address.
+The Adastra supercomputer (powered by GENCI/CINES) has a multi-node HPC architecture: login nodes with internet access and compute nodes without. This guide was developed and tested on Adastra's MI250x/MI300 GPUs, and should work on similar AMD ROCm setups.
 
-Adastra architecture is quite standard for a HPC cluster, with a login node and compute nodes. The login node has internet access and is the only one accessible from outside, while the compute nodes are where the GPU workloads run, without internet access.
+## Architecture Overview
+
+Adastra uses a standard HPC security model:
+
+- **Login nodes** have internet access and are accessible from outside
+- **Compute nodes** run your GPU workloads without direct internet access
+- Python environments are set up on login nodes and shared via network storage
+- Jobs are submitted from the login node using `sbatch`
+
+For sites requiring jump hosts (bastion servers), SSH jump (`-J`) can route through an intermediate server.
 
 The Python environment is setup on the login node, and referenced by the compute nodes.
 

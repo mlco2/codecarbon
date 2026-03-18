@@ -35,7 +35,7 @@ Yes! CodeCarbon supports:
 
 ## Can I use CodeCarbon in a Docker container?
 
-Yes. See our [Advanced Installation](../how-to/installation.md) guide for Docker setup.
+Yes. CodeCarbon can be installed and used in Docker containers just like any other Python package using `pip install codecarbon`. Refer to the [installation guide](../how-to/installation.md) for details.
 
 ## How can I help?
 

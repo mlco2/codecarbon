@@ -1,26 +1,25 @@
 # Use the Cloud API & Dashboard
 
-!!! warning "API mode"
+This guide shows how to send your emissions data to the CodeCarbon cloud platform, where you can visualize results and collaborate with your team on a shared dashboard.
 
-    This mode uses the CodeCarbon API to upload the timeseries of your
-    emissions on a central server.
+!!! warning "API Mode"
 
-    Thanks to [CleverCloud](https://www.clever.cloud/) the use of API is
-    free as soon as it remains under certain limits.
+    API mode uploads your emissions data to CodeCarbon's central server. Thanks to [CleverCloud](https://www.clever.cloud/), usage is free within reasonable limits.
 
 ![CodeCarbon architecture](https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/code_carbon_archi.png){.align-center width="700px" height="400px"}
 
-![CodeCarbon database](https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg){.align-center width="700px"}
-
 ## Prerequisites
 
+First, we'll create an account and authenticate your local environment:
+
 1. Create an account on the [CodeCarbon dashboard](https://dashboard.codecarbon.io/)
-2. Run `codecarbon login` from your terminal (see the [CLI tutorial](../tutorials/cli.md) for setup details)
+2. Run `codecarbon login` from your terminal to authenticate
 
-This will create an experiment_id for the default project and save it to
-`.codecarbon.config`.
+The login command will create a default project and save your credentials to `.codecarbon.config`.
 
-## Send emissions from your code
+## Send Emissions from Your Code
+
+With your account set up, you're ready to start sending emissions data. Use the `save_to_api=True` parameter to upload tracking data:
 
 ``` python
 from codecarbon import track_emissions
@@ -33,28 +32,18 @@ if __name__ =="__main__":
     train_model()
 ```
 
-More options could be specified in `@track_emissions` or in
-`.codecarbon.config`
+The decorator will automatically send your emissions data to the dashboard. You can also specify additional options in `@track_emissions()` or in `.codecarbon.config`.
 
-The [CodeCarbon dashboard](https://dashboard.codecarbon.io/) use
-[CodeCarbon API](https://api.codecarbon.io/) to get the data
+## Create Projects & Experiments
 
-The API do not have a nice web interface to create your own organization
-and project, you have to use [OpenAPI
-interface](https://api.codecarbon.io/docs) for that.
+By default, `codecarbon login` creates a default experiment in your first project. If you want to organize runs by experiment, you can specify an `experiment_id` explicitly. Set the experiment ID in two ways:
 
-And so on for your team, project and experiment.
-
-You then have to set your experiment id in CodeCarbon, with two options:
-
-In the code:
+**Option 1: In your code**
 
 ``` python
 from codecarbon import track_emissions
 
 @track_emissions(
-    measure_power_secs=30,
-    api_call_interval=4,
     experiment_id="your experiment id",
     save_to_api=True,
 )
@@ -62,7 +51,7 @@ def train_model():
     ...
 ```
 
-Or in the config file `.codecarbon.config`:
+**Option 2: In `.codecarbon.config`**
 
 ``` ini
 [codecarbon]
@@ -70,4 +59,6 @@ experiment_id = your experiment id
 save_to_api = true
 ```
 
-Once your experiments are running, [visualize your emissions](visualize.md) on the dashboard or locally with carbonboard.
+## View Your Results
+
+Once your runs complete, visit the [CodeCarbon dashboard](https://dashboard.codecarbon.io/) to see your results. For more visualization options, see the [visualization guide](visualize.md).

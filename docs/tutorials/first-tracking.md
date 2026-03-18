@@ -2,8 +2,7 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mlco2/codecarbon/blob/master/docs/tutorials/first-tracking.ipynb)
 
-This tutorial walks you through tracking your first carbon emissions with CodeCarbon.
-By the end, you will have:
+In this tutorial, you'll track your first carbon emissions in under 5 minutes. By the end, you will have:
 
 1. Installed CodeCarbon
 2. Tracked emissions from a simple computation
@@ -13,6 +12,8 @@ By the end, you will have:
 
 ## Step 1: Install CodeCarbon
 
+Let's start by installing the CodeCarbon package:
+
 
 ```python
 !pip install codecarbon
@@ -20,8 +21,7 @@ By the end, you will have:
 
 ## Step 2: Track emissions from a computation
 
-The simplest way to use CodeCarbon is as a **context manager**. Everything inside the `with` block is tracked.
-
+With CodeCarbon installed, we're ready to write our first tracking script. The simplest way to use CodeCarbon is as a **context manager**. Everything inside the `with` block is tracked.
 
 ```python
 from codecarbon import EmissionsTracker
@@ -37,7 +37,7 @@ print(f"Computation result: {total}")
 
 ## Step 3: Inspect the results
 
-CodeCarbon saved the emissions data to a CSV file. Let's take a look:
+Now that the tracker has run, let's look at what it recorded. CodeCarbon saves the emissions data to a CSV file called `emissions.csv`:
 
 
 ```python
