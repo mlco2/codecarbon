@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
+    "appdirs",
     "arrow",
     "authlib>=1.2.1",
     "click",
@@ -41,6 +42,13 @@ dependencies = [
     "rich",
     "typer",
     "pycountry",
+]
+
+[project.optional-dependencies]
+telemetry = [
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
 ]
 
 [tool.setuptools.dynamic]

@@ -108,3 +108,81 @@ def create_new_config_file():
         f.write("[codecarbon]\n")
     typer.echo(f"Config file created at {file_path}")
     return file_path
+
+
+def save_telemetry_config_to_file(
+    tier: str = None,
+    project_token: str = None,
+    api_endpoint: str = None,
+    path: Path = None
+) -> None:
+    """
+    Save telemetry configuration as JSON in the existing config file.
+    
+    Args:
+        tier: Telemetry tier (off, internal, public)
+        project_token: Project token for Tier 2
+        api_endpoint: API endpoint for telemetry
+        path: Path to config file (defaults to ~/.codecarbon.config)
+    """
+    import json
+    
+    p = path or Path.home() / ".codecarbon.config"
+    
+    # Read existing config or create new
+    config = configparser.ConfigParser()
+    if p.exists():
+        config.read(str(p))
+    
+    if "codecarbon" not in config.sections():
+        config.add_section("codecarbon")
+    
+    # Build JSON config for telemetry
+    telemetry_config = {}
+    if tier:
+        telemetry_config["telemetry_tier"] = tier
+    if project_token:
+        telemetry_config["telemetry_project_token"] = project_token
+    if api_endpoint:
+        telemetry_config["telemetry_api_endpoint"] = api_endpoint
+    
+    # Save as JSON string
+    if telemetry_config:
+        config["codecarbon"]["telemetry"] = json.dumps(telemetry_config)
+    
+    with p.open("w") as f:
+        config.write(f)
+    logger.info(f"Telemetry config saved to {p}")
+
+
+def load_telemetry_config_from_file(path: Path = None) -> dict:
+    """
+    Load telemetry configuration from the existing config file.
+    
+    Args:
+        path: Path to config file (defaults to ~/.codecarbon.config)
+        
+    Returns:
+        Dictionary with telemetry configuration
+    """
+    import json
+    
+    p = path or Path.home() / ".codecarbon.config"
+    
+    if not p.exists():
+        return {}
+    
+    config = configparser.ConfigParser()
+    config.read(str(p))
+    
+    if "codecarbon" not in config.sections():
+        return {}
+    
+    telemetry_str = config["codecarbon"].get("telemetry")
+    if telemetry_str:
+        try:
+            return json.loads(telemetry_str)
+        except json.JSONDecodeError:
+            return {}
+    
+    return {}
