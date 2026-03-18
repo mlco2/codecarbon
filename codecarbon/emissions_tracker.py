@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import psutil
 
 from codecarbon._version import __version__
-from codecarbon.core.config import get_hierarchical_config
+from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
@@ -143,8 +143,17 @@ class BaseEmissionsTracker(ABC):
             if not os.path.exists(value):
                 raise OSError(f"Folder '{value}' doesn't exist !")
         if name == "gpu_ids":
+            logger.debug(
+                f"CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES')}"
+            )
+            logger.debug(
+                f"ROCR_VISIBLE_DEVICES: {os.environ.get('ROCR_VISIBLE_DEVICES')}"
+            )
             if value is None and os.environ.get("CUDA_VISIBLE_DEVICES"):
                 value = os.environ.get("CUDA_VISIBLE_DEVICES")
+            elif value is None and os.environ.get("ROCR_VISIBLE_DEVICES"):
+                value = os.environ.get("ROCR_VISIBLE_DEVICES")
+            value = normalize_gpu_ids(value)
         # store final value
         self._conf[name] = value
         # set `self._{name}` to `value`
@@ -383,7 +392,6 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
-
         # Tracking mode detection
         self._hardware = []
         resource_tracker = ResourceTracker(self)
@@ -968,9 +976,13 @@ class BaseEmissionsTracker(ABC):
         # Collect GPU utilization metrics
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
+                gpu_ids_to_monitor = hardware.gpu_ids
                 gpu_details = hardware.devices.get_gpu_details()
                 for gpu_detail in gpu_details:
-                    if "gpu_utilization" in gpu_detail:
+                    if (
+                        gpu_detail["gpu_index"] in gpu_ids_to_monitor
+                        and "gpu_utilization" in gpu_detail
+                    ):
                         self._gpu_utilization_history.append(
                             gpu_detail["gpu_utilization"]
                         )
@@ -1010,6 +1022,7 @@ class BaseEmissionsTracker(ABC):
                     f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                     + f". Total GPU Power : {self._gpu_power.W} W"
                 )
+
             elif isinstance(hardware, RAM):
                 self._total_ram_energy += energy
                 self._ram_power = power
@@ -1035,7 +1048,7 @@ class BaseEmissionsTracker(ABC):
                     # Accumulate for running average
                     self._gpu_power_sum += power.W
                     logger.info(
-                        f"Energy consumed for all GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
+                        f"Energy consumed for all AppleSilicon GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                         + f". Total GPU Power : {self._gpu_power.W} W"
                     )
             else:
