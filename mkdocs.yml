@@ -49,6 +49,28 @@ theme:
 
 plugins:
   - search
+  - redirects:
+      redirect_maps:
+        "introduction/when-to-use.md": "explanation/when-to-use.md"
+        "introduction/motivation.md": "explanation/why.md"
+        "introduction/methodology.md": "explanation/methodology.md"
+        "introduction/rapl.md": "explanation/rapl.md"
+        "introduction/power_estimation.md": "explanation/power-estimation.md"
+        "introduction/model_examples.md": "explanation/model-comparisons.md"
+        "introduction/faq.md": "explanation/faq.md"
+        "getting-started/installation.md": "how-to/installation.md"
+        "getting-started/usage.md": "tutorials/cli.md"
+        "getting-started/api.md": "how-to/cloud-api.md"
+        "getting-started/parameters.md": "reference/api.md"
+        "getting-started/examples.md": "reference/examples.md"
+        "getting-started/comet.md": "how-to/comet.md"
+        "getting-started/test_on_scaleway.md": "how-to/test-on-scaleway.md"
+        "advanced/linux_service.md": "how-to/linux-service.md"
+        "advanced/ansible.md": "how-to/ansible.md"
+        "advanced/adastra.md": "how-to/slurm.md"
+        "logging/output.md": "reference/output.md"
+        "logging/to_logger.md": "how-to/logging.md"
+        "logging/visualize.md": "how-to/visualize.md"
   - mkdocstrings:
       handlers:
         python:
@@ -107,29 +129,33 @@ extra:
       name: CodeCarbon on GitHub
 
 nav:
-  - Introduction:
-    - Home: index.md
-    - When to use CodeCarbon: introduction/when-to-use.md
-    - Motivation: introduction/motivation.md
-    - Methodology: introduction/methodology.md
-    - RAPL Metrics: introduction/rapl.md
-    - Power Estimation: introduction/power_estimation.md
-    - Model Comparisons: introduction/model_examples.md
-    - Frequently Asked Questions: introduction/faq.md
-  - Getting Started:
-    - Installing CodeCarbon: getting-started/installation.md
-    - Quickstart: getting-started/usage.md
-    - CodeCarbon API: getting-started/api.md
-    - Parameters: getting-started/parameters.md
-    - Examples: getting-started/examples.md
-    - Test on Scaleway: getting-started/test_on_scaleway.md
-  - Advanced Usage:
-    - Install CodeCarbon as a Linux service: advanced/linux_service.md
-    - Deploy with Ansible: advanced/ansible.md
-    - Comet Integration: getting-started/comet.md
-    - ROCm and PyTorch on SLURM SuperComputer: advanced/adastra.md
-  - Logging:
-    - Output: logging/output.md
-    - Collecting emissions to a logger: logging/to_logger.md
-    - Visualize: logging/visualize.md
+  - Home: index.md
+  - Tutorials:
+    - Your First Emissions Tracking: tutorials/first-tracking.md
+    - Tracking with the CLI: tutorials/cli.md
+    - Tracking with Python: tutorials/python-api.md
+  - How-to Guides:
+    - Installation: how-to/installation.md
+    - Configure CodeCarbon: how-to/configuration.md
+    - Use the Cloud API & Dashboard: how-to/cloud-api.md
+    - Log to External Systems: how-to/logging.md
+    - Integrate with Comet: how-to/comet.md
+    - Visualize Emissions: how-to/visualize.md
+    - Deploy as a Linux Service: how-to/linux-service.md
+    - Deploy with Ansible: how-to/ansible.md
+    - Run on SLURM (ROCm/PyTorch): how-to/slurm.md
+    - Test on Scaleway: how-to/test-on-scaleway.md
+  - Explanation:
+    - Why CodeCarbon: explanation/why.md
+    - When to Use CodeCarbon vs EcoLogits: explanation/when-to-use.md
+    - Methodology: explanation/methodology.md
+    - RAPL Metrics: explanation/rapl.md
+    - Power Estimation: explanation/power-estimation.md
+    - Model Comparisons: explanation/model-comparisons.md
+    - FAQ: explanation/faq.md
+  - Reference:
+    - API Reference: reference/api.md
+    - Output Formats: reference/output.md
+    - Examples: reference/examples.md
+    - CLI Reference: reference/cli.md
   - Track GenAI API Calls (EcoLogits) ↗: https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs

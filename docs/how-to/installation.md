@@ -59,7 +59,7 @@ for the latest list of the packages used.
 
 ## (Non-Python users) Standalone installer
 
-If you are not using Python but would like to run CodeCarbon (for instance to use the [CodeCarbon Command line](usage.md#usage-command-line)), we
+If you are not using Python but would like to run CodeCarbon (for instance to use the [CodeCarbon Command line](../tutorials/cli.md)), we
 provide a standalone installer.
 
 Use curl to download and run the script:

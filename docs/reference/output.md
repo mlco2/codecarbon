@@ -108,4 +108,4 @@ You can send all your data to the CodeCarbon API so you have your historical dat
 
 ## Logger Output
 
-See [Collecting emissions to a logger](to_logger.md).
+See [Collecting emissions to a logger](../how-to/logging.md).
