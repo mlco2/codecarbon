@@ -4,7 +4,6 @@ This file validates that code blocks in the documentation are correct and
 can be executed successfully.
 """
 
-import os
 from pathlib import Path
 
 import pytest
