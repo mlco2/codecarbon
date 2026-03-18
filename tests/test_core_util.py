@@ -1,7 +1,9 @@
 import shutil
 import tempfile
 
-from codecarbon.core.util import backup, detect_cpu_model, resolve_path
+import pytest
+
+from codecarbon.core.util import backup, detect_cpu_model, is_mac_arm, resolve_path
 
 
 def test_detect_cpu_model_caching():
@@ -42,3 +44,31 @@ def test_backup():
     backup(first_file.name)
     backup_of_backup_path = resolve_path(f"{first_file.name}_0.bak")
     assert backup_of_backup_path.exists()
+
+
+@pytest.mark.parametrize(
+    "cpu_model, expected",
+    [
+        # Apple Silicon chips that should match
+        ("Apple M1", True),
+        ("Apple M2", True),
+        ("Apple M3", True),
+        ("Apple M4", True),
+        ("Apple M1 Pro", True),
+        ("Apple M2 Max", True),
+        ("Apple M3 Ultra", True),
+        ("Apple M4 Pro", True),
+        ("Apple M10", True),
+        # Non-Apple ARM or unrelated chips that should NOT match
+        ("Intel Core i7-9750H", False),
+        ("AMD Ryzen 9 5900X", False),
+        ("Qualcomm Snapdragon 8cx Gen 3", False),
+        # Partial matches that should NOT match (no word boundary)
+        ("SuperM2000 Processor", False),
+        ("M2fast chip", False),
+        # Empty string
+        ("", False),
+    ],
+)
+def test_is_mac_arm(cpu_model, expected):
+    assert is_mac_arm(cpu_model) == expected

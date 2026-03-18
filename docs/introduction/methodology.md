@@ -186,7 +186,7 @@ Tracks Intel processors energy consumption using the
 . But has been discontinued. There is a discussion about it on [github
 issues #457](https://github.com/mlco2/codecarbon/issues/457).
 
--   **Apple Silicon Chips (M1, M2, M3, M4)**
+-   **Apple Silicon Chips (M1, M2, M3, ...)**
 
 Apple Silicon Chips contain both the CPU and the GPU.
 

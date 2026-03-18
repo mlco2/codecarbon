@@ -3,7 +3,13 @@ from typing import List, Union
 
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import parse_gpu_ids
-from codecarbon.core.util import detect_cpu_model, is_linux_os, is_mac_os, is_windows_os
+from codecarbon.core.util import (
+    detect_cpu_model,
+    is_linux_os,
+    is_mac_arm,
+    is_mac_os,
+    is_windows_os,
+)
 from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
 from codecarbon.external.logger import logger
 from codecarbon.external.ram import RAM
@@ -99,7 +105,7 @@ class ResourceTracker:
         """Get CPU tracking installation instructions for the current OS."""
         if is_mac_os():
             cpu_model = detect_cpu_model()
-            if any(chip in cpu_model for chip in ("M1", "M2", "M3", "M4")):
+            if cpu_model and is_mac_arm(cpu_model):
                 return "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
             else:
                 return "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
