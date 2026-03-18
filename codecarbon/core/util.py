@@ -88,6 +88,10 @@ def is_mac_os() -> bool:
     return system.startswith("dar")
 
 
+def is_mac_arm(cpu_model: str) -> bool:
+    return bool(re.search(r"\bM\d{1,2}\b", cpu_model))
+
+
 def is_windows_os() -> bool:
     system = sys.platform.lower()
     return system.startswith("win")
