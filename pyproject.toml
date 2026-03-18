@@ -99,6 +99,7 @@ doc = [
   "zensical",
   "mike",
   "mkdocstrings[python]>=0.26",
+  "mkdocs-redirects",
 ]
 
 [project.optional-dependencies]

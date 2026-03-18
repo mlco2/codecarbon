@@ -1,4 +1,4 @@
-# CodeCarbon API
+# Use the Cloud API & Dashboard
 
 !!! warning "API mode"
 
@@ -12,25 +12,15 @@
 
 ![CodeCarbon database](https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/CodecarbonDB.jpg){.align-center width="700px"}
 
-Before using it, you need to create an account on the [CodeCarbon
-dashboard](https://dashboard.codecarbon.io/)
+## Prerequisites
 
-Then login from your terminal:
+1. Create an account on the [CodeCarbon dashboard](https://dashboard.codecarbon.io/)
+2. Run `codecarbon login` from your terminal (see the [CLI tutorial](../tutorials/cli.md) for setup details)
 
-``` console
-codecarbon login
-```
+This will create an experiment_id for the default project and save it to
+`.codecarbon.config`.
 
-It will create an experiment_id for the default project and save it to
-`codecarbon.config`
-
-Then you can tell CodeCarbon to monitor your machine:
-
-``` console
-codecarbon monitor
-```
-
-Or use the API in your code:
+## Send emissions from your code
 
 ``` python
 from codecarbon import track_emissions
@@ -79,3 +69,5 @@ Or in the config file `.codecarbon.config`:
 experiment_id = your experiment id
 save_to_api = true
 ```
+
+Once your experiments are running, [visualize your emissions](visualize.md) on the dashboard or locally with carbonboard.

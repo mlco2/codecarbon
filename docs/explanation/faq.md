@@ -35,7 +35,7 @@ Yes! CodeCarbon supports:
 
 ## Can I use CodeCarbon in a Docker container?
 
-Yes. See our [Advanced Installation](../getting-started/advanced_installation.md) guide for Docker setup.
+Yes. See our [Advanced Installation](../how-to/installation.md) guide for Docker setup.
 
 ## How can I help?
 
