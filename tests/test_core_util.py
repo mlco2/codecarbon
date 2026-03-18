@@ -4,7 +4,13 @@ from unittest import mock
 
 import pytest
 
-from codecarbon.core.util import backup, count_cpus, detect_cpu_model, is_mac_arm, resolve_path
+from codecarbon.core.util import (
+    backup,
+    count_cpus,
+    detect_cpu_model,
+    is_mac_arm,
+    resolve_path,
+)
 
 
 def test_detect_cpu_model_caching():
@@ -73,6 +79,8 @@ def test_backup():
 )
 def test_is_mac_arm(cpu_model, expected):
     assert is_mac_arm(cpu_model) == expected
+
+
 def test_count_cpus_no_slurm():
     with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
         with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
