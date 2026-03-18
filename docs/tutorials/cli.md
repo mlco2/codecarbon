@@ -1,6 +1,8 @@
 # Tracking with the CLI {#usage-command-line}
 
-CodeCarbon provides a command-line interface to track emissions without modifying your code.
+By the end of this tutorial, you'll be able to monitor any process's carbon emissions from the command line without writing any Python code.
+
+CodeCarbon provides a command-line interface to track emissions without modifying your source code. In this tutorial, you'll set up the CLI, monitor your machine's emissions, and run commands with built-in emissions tracking.
 
 ## Setup
 
@@ -22,7 +24,9 @@ You can use the same command to modify an existing config :
 
 [![Modify config](https://asciinema.org/a/667971.svg){.align-center}](https://asciinema.org/a/667971)
 
-## Monitor your machine
+With the configuration created, you're ready to start monitoring.
+
+## Monitor Your Machine
 
 If you want to track the emissions of a computer without having to
 modify your code, you can use :
@@ -40,7 +44,15 @@ use:
 codecarbon monitor --no-api
 ```
 
-## Detect hardware
+You can also run CodeCarbon in offline mode without internet:
+
+``` console
+codecarbon monitor --offline --country-iso-code FRA
+```
+
+## Detect Your Hardware
+
+Next, let's check what hardware CodeCarbon detected on your machine:
 
 If you want to detect the hardware of your computer without starting any
 measurement, you can use:
@@ -49,31 +61,13 @@ measurement, you can use:
 codecarbon detect
 ```
 
-It will print the detected RAM, CPU and GPU information.
+This will display your detected RAM, CPU, and GPU information, which CodeCarbon uses to estimate energy consumption.
 
-## Monitor with API
+## Track Any Command
 
-In the following example you will see how to use the CLI to monitor all
-the emissions of you computer and sending everything to an API running
-on "localhost:8008" (Or you can start a private local API with
-"docker-compose up"). Using the public API with this is not supported
-yet (coming soon!)
+The most powerful CLI feature is the ability to track any command or process automatically. This is especially useful for non-Python users or for monitoring existing shell scripts.
 
-[![Monitor example](https://asciinema.org/a/667984.svg){.align-center}](https://asciinema.org/a/667984)
-
-The command line could also works without internet by providing the
-country code like this:
-
-``` console
-codecarbon monitor --offline --country-iso-code FRA
-```
-
-## Running Any Command with CodeCarbon
-
-If you want to track emissions while running any command or program (not
-just Python scripts), you can use the `codecarbon monitor --` command.
-This allows non-Python users to measure machine emissions during the
-execution of any command:
+Use the `codecarbon monitor --` command to automatically track emissions from any process:
 
 ``` console
 codecarbon monitor -- <your_command>
@@ -129,14 +123,19 @@ Done!
 
 !!! note "Note"
 
-    The `codecarbon monitor --` command tracks process-level emissions (only
-    the specific command), not the entire machine. For machine-level
-    tracking, use the `codecarbon monitor` command.
+    The `codecarbon monitor --` command tracks the specific process you run. For continuous machine-level tracking, use the plain `codecarbon monitor` command instead.
 
-    For more fine-grained tracking, implementing CodeCarbon in your code
-    allows you to track the emissions of a specific block of code.
+---
 
-## See also
+## What's Next?
+
+You've now learned how to track emissions from the command line. Next steps:
+
+- **Track in Python**: Use the [Python API tutorial](python-api.md) for fine-grained tracking within your code.
+- **Send to Dashboard**: Learn how to [send data to the CodeCarbon dashboard](../how-to/cloud-api.md).
+- **Configure Details**: See the [configuration guide](../how-to/configuration.md) for advanced options like proxy setup.
+
+## See Also
 
 - [CLI Reference](../reference/cli.md) for a complete list of commands and options
 - [Use the Cloud API & Dashboard](../how-to/cloud-api.md) to send emissions to the online dashboard

@@ -1,6 +1,8 @@
 # Visualize
 
-## Offline
+CodeCarbon provides two ways to visualize your emissions data: a local Python dashboard for offline analysis, and an online web dashboard for cloud-based tracking and team collaboration.
+
+## Offline Visualization (carbonboard)
 
 The package also comes with a `Dash App` containing illustrations to
 understand the emissions logged from various experiments across
@@ -63,13 +65,11 @@ region to host infrastructure for the concerned cloud provider.
 
 ![Cloud Emissions](../images/cloud_emissions.png){.align-center width="750px" height="450px"}
 
-## Online
+## Online Dashboard
 
-A dashboard is also available for those who chose to connect the package
-to the public API. [Got to online
-dashboard](https://dashboard.codecarbon.io/)
+For team-based tracking and cloud-hosted visualization, use the [CodeCarbon online dashboard](https://dashboard.codecarbon.io/). To get started, follow the [Cloud API setup guide](cloud-api.md).
 
-### from global
+### Organization & Project Overview
 
 Showing on the top the global energy consumed and emissions produced at
 an organisation level and the share of each project in this. The App
@@ -78,21 +78,17 @@ understanding of the amount generated.
 
 ![Summary](../images/codecarbon-API-dashboard.png){.align-center width="750px"}
 
-### to more and more
+The top shows your organization-level energy consumption and emissions, broken down by project. CodeCarbon also provides real-world comparisons (weekly US household emissions, miles driven, etc.).
 
-Each project can be divided into several experiments, and in each
-experiment several runs can happen. The total emissions of experiments
-is shown on the barchart on the right hand side, and the runs on the
-bubble chart on the left hand side. If ever your project has several
-experiments you can switch from one experiment's runs in the bubble
-chart to another by clicking the bar chart.
+### Experiments, Runs & Detailed Metrics
+
+Each project contains experiments, and each experiment can have multiple runs. The bar chart shows total emissions per experiment, while the bubble chart displays individual runs. Click on bars to switch between experiments, and click on bubbles to see detailed time-series data and metadata.
 
 ![experiment and run](../images/Experiment-run.png){.align-center width="750px"}
 
-### detailed
+### Drill Down Into a Run
 
-Clicking on one bubble, you can display the runtime series and see its
-metadata.
+Click on any bubble to see the full time-series graph and detailed metadata for that run, including timestamps, energy breakdowns, and hardware information.
 
 ![run time series and metadata](../images/run&metadata.png){.align-center width="750px"}
 

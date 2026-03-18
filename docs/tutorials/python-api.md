@@ -1,21 +1,16 @@
 # Tracking with Python
 
-CodeCarbon can be used along with any computing framework. It
-supports both `online` (with internet access) and `offline` (without
-internet access) modes.
+In this tutorial, you'll learn the three main ways to use CodeCarbon in your Python code. You can use CodeCarbon with any computing framework, and it supports both `online` (with internet access) and `offline` (without internet access) modes.
+
+By the end of this tutorial, you'll understand which usage pattern works best for your use case.
 
 ## Online Mode
 
-When the environment has internet access, the `EmissionsTracker` object
-or the `track_emissions` decorator can be used, which has the `offline`
-parameter set to `False` by default.
+When the environment has internet access, CodeCarbon will send your emissions data to the central API (optional). Let's start with three usage patterns: explicit object, context manager, and decorator.
 
 ### Explicit Object
 
-In the case of absence of a single entry and stop point for the training
-code base, users can instantiate a `EmissionsTracker` object and pass it
-as a parameter to function calls to start and stop the emissions
-tracking of the compute section.
+The explicit object pattern is useful when your code doesn't have a single entry and exit point—for example, in Jupyter notebooks where you want to start tracking in one cell and stop in a much later cell.
 
 ``` python
 from codecarbon import EmissionsTracker
@@ -28,16 +23,11 @@ finally:
      tracker.stop()
 ```
 
-This mode is recommended when using a Jupyter Notebook. You call
-`tracker.start()` at the beginning of the Notebook, and call
-`tracker.stop()` in the last cell.
+Call `tracker.start()` at the beginning of your Notebook (or script), and call `tracker.stop()` at the end. You can also call `tracker.flush()` to write emissions to disk or the API without stopping the tracker entirely.
 
-This mode also allows you to record the monitoring with
-`tracker.flush()` that writes the emissions to disk or call the API
-depending on the configuration, but keep running the experiment.
+**Advanced: Task-Level Monitoring**
 
-If you want to monitor small piece of code, like a model inference, you
-could use the task manager:
+For fine-grained tracking of individual tasks within a single run, use the task manager:
 
 ``` python
 try:
@@ -52,18 +42,11 @@ finally:
     _ = tracker.stop()
 ```
 
-This way CodeCarbon will track the emissions of each task . The task
-will not be written to disk to prevent overhead, you have to get the
-results from the return of `stop_task()`. If no name is provided,
-CodeCarbon will generate a uuid.
+The task manager tracks each sub-task independently. Tasks are not written to disk by default (to reduce overhead), so retrieve results from the `stop_task()` return value.
 
-Please note that you can't use task mode and normal mode at the same
-time. Because `start_task` will stop the scheduler as we do not want it
-to interfere with the task measurement.
+### Context Manager
 
-### Context manager
-
-The `Emissions tracker` also works as a context manager.
+Now that you've seen the explicit object approach, let's look at the more idiomatic **context manager** pattern. This is the recommended way for most use cases.
 
 ``` python
 from codecarbon import EmissionsTracker
@@ -72,14 +55,11 @@ with EmissionsTracker() as tracker:
     # Compute intensive training code goes here
 ```
 
-This mode is recommended when you want to monitor a specific block of
-code.
+This pattern is recommended when you want to monitor a specific block of code. The context manager automatically calls `start()` on entry and `stop()` on exit, making it safe and concise.
 
 ### Decorator
 
-In case the training code base is wrapped in a function, users can use
-the decorator `@track_emissions` within the function to enable tracking
-emissions of the training code.
+Finally, if your training code is wrapped in a function, you can use the `@track_emissions` decorator for the simplest syntax.
 
 ``` python
 from codecarbon import track_emissions
@@ -89,22 +69,16 @@ def training_loop():
     # Compute intensive training code goes here
 ```
 
-This mode is recommended if you have a training function.
+The decorator automatically wraps your function with tracking and writes results to `emissions.csv`. Use this when your code is neatly encapsulated in a function.
 
-!!! note "Note"
-
-    This will write a csv file named emissions.csv in the current directory.
+!!! note
+    All patterns create an `emissions.csv` file in your current directory containing detailed tracking data.
 
 ## Offline Mode
 
-An offline version is available to support restricted environments
-without internet access. The internal computations remain unchanged;
-however, a `country_iso_code` parameter, which corresponds to the
-3-letter alphabet ISO Code of the country where the compute
-infrastructure is hosted, is required to fetch Carbon Intensity details
-of the regional electricity used. A complete list of country ISO codes
-can be found on
-[Wikipedia](https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes).
+So far we've assumed an internet connection. CodeCarbon also works fully **offline** without internet access. The internal computations remain unchanged; however, you must provide a `country_iso_code` parameter (3-letter ISO code) so CodeCarbon can estimate the carbon intensity of your regional electricity grid. See [Wikipedia](https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes) for a complete list of country codes.
+
+The three usage patterns (explicit object, context manager, decorator) work the same in offline mode:
 
 ### Explicit Object
 
@@ -119,36 +93,43 @@ tracker.start()
 tracker.stop()
 ```
 
-### Context manager
+### Context Manager
 
-The `OfflineEmissionsTracker` also works as a context manager
+The `OfflineEmissionsTracker` also works as a context manager:
 
 ``` python
 from codecarbon import OfflineEmissionsTracker
 
-with OfflineEmissionsTracker() as tracker:
-# GPU intensive training code  goes here
+with OfflineEmissionsTracker(country_iso_code="CAN") as tracker:
+    # GPU intensive training code goes here
 ```
 
 ### Decorator
 
-The `track_emissions` decorator in offline mode requires following two
-parameters:
+The decorator in offline mode requires two additional parameters:
 
--   `offline` needs to be set to `True`, which defaults to `False` for
-    online mode.
--   `country_iso_code` the 3-letter alphabet ISO Code of the country
-    where the compute infrastructure is hosted
-
-```python
+``` python
 from codecarbon import track_emissions
+
 @track_emissions(offline=True, country_iso_code="CAN")
 def training_loop():
     # training code goes here
     pass
 ```
 
-The Carbon emissions will be saved to a `emissions.csv` file in the same
-directory. Please refer to the
-[API Reference](../reference/api.md) for additional
-parameters and configuration options.
+---
+
+## What's Next?
+
+You've now learned the three main patterns for tracking emissions in Python. Each pattern serves different use cases:
+
+- **Use the explicit object pattern** when your code runs across multiple cells or functions with unclear start/end points (e.g., Jupyter notebooks).
+- **Use the context manager pattern** for most new code—it's concise, safe, and idiomatic.
+- **Use the decorator pattern** when your entire tracking scope is a single function.
+- **Use offline mode** when you're in an environment without internet access.
+
+Explore these related guides:
+
+- [CLI tutorial](cli.md) — Track emissions from any command without writing Python code.
+- [How-to: Cloud API](../how-to/cloud-api.md) — Send emissions data to the CodeCarbon dashboard.
+- [API Reference](../reference/api.md) — Complete list of all parameters and configuration options.

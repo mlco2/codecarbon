@@ -1,17 +1,10 @@
-# Examples
+# Code Examples
 
-Following are examples to train a Deep Learning model on MNIST Data to
-recognize digits in images using TensorFlow.
+This page shows code snippets for common CodeCarbon usage patterns. For a guided tutorial introduction to these patterns, see the [Python API tutorial](../tutorials/python-api.md).
 
-## Using the Decorator
+## Decorator Pattern
 
-This is the simplest way to use the CodeCarbon tracker with two lines of
-code. You just need to copy-paste `from codecarbon import track_emissions`
-and add the `@track_emissions` decorator to your training function. The emissions will be tracked
-automatically and printed at the end of the training.
-
-But you can't get them in your code, see the Context Manager section
-below for that.
+Use the `@track_emissions` decorator to track an entire function with minimal code:
 
 ``` python
 import tensorflow as tf
@@ -130,5 +123,41 @@ finally:
     print(emissions)
 ```
 
-Other examples are available in the [project GitHub
-repository](https://github.com/mlco2/codecarbon/tree/master/examples).
+## PyTorch & HuggingFace Example
+
+Here's the same model training pattern using PyTorch and HuggingFace Transformers:
+
+``` python
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, AdamW
+from torch.utils.data import DataLoader
+from codecarbon import EmissionsTracker
+
+# Load model and tokenizer
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased")
+
+# Prepare some dummy data
+texts = ["This is a positive review", "This is a negative review"] * 5
+labels = [1, 0] * 5
+
+# Tokenize
+tokens = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+
+# Track training emissions
+with EmissionsTracker(project_name="huggingface-training") as tracker:
+    optimizer = AdamW(model.parameters(), lr=5e-5)
+
+    for epoch in range(3):
+        outputs = model(**tokens, labels=torch.tensor(labels))
+        loss = outputs.loss
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+    print(f"Training emissions: {tracker.final_emissions * 1000:.4f} g CO2eq")
+```
+
+---
+
+More examples are available in the [CodeCarbon GitHub repository](https://github.com/mlco2/codecarbon/tree/master/examples).
