@@ -377,6 +377,7 @@ dev = [
     { name = "black" },
     { name = "bumpver" },
     { name = "logfire" },
+    { name = "mktestdocs" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -428,6 +429,7 @@ dev = [
     { name = "black" },
     { name = "bumpver" },
     { name = "logfire", specifier = ">=1.0.1" },
+    { name = "mktestdocs" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -1198,6 +1200,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/29/33/c225eaf898634bdda489a6766fc35d1683c640bffe0e0acd10646b13536d/mkdocstrings_python-2.0.3.tar.gz", hash = "sha256:c518632751cc869439b31c9d3177678ad2bfa5c21b79b863956ad68fc92c13b8", size = 199083, upload-time = "2026-02-20T10:38:36.368Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/28/79f0f8de97cce916d5ae88a7bee1ad724855e83e6019c0b4d5b3fabc80f3/mkdocstrings_python-2.0.3-py3-none-any.whl", hash = "sha256:0b83513478bdfd803ff05aa43e9b1fca9dd22bcd9471f09ca6257f009bc5ee12", size = 104779, upload-time = "2026-02-20T10:38:34.517Z" },
+]
+
+[[package]]
+name = "mktestdocs"
+version = "0.2.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fd/04/aced274f9ea76dfdb7a36c1b729863ebbf61e94b60a0d1eefa2556a61df5/mktestdocs-0.2.5.tar.gz", hash = "sha256:7935d4e665b34b690cdf14749abb842723652485f67af12dce51099bcb98e105", size = 10519, upload-time = "2025-07-25T12:39:29.073Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4f/eb/3686be82dfeb12eb968f002254464e282722e4ac52c465c2998764583f34/mktestdocs-0.2.5-py3-none-any.whl", hash = "sha256:2b20d2387b2025597f3129773edef16d09b08b1b6d31da6cc51af5b693c10430", size = 9096, upload-time = "2025-07-25T12:39:27.985Z" },
 ]
 
 [[package]]

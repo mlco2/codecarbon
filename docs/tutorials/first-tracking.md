@@ -14,9 +14,8 @@ In this tutorial, you'll track your first carbon emissions in under 5 minutes. B
 
 Let's start by installing the CodeCarbon package:
 
-
-```python
-!pip install codecarbon
+```console
+pip install codecarbon
 ```
 
 ## Step 2: Track emissions from a computation

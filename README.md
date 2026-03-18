@@ -12,11 +12,22 @@ Estimate and track carbon emissions from your computer, quantify and analyze the
 
 > **Tracking GenAI API calls?** CodeCarbon measures emissions from **local computing** (your hardware). To track emissions from remote GenAI API calls (OpenAI, Anthropic, Mistral, etc.), use [**EcoLogits**](https://ecologits.ai/). Both tools are complementary.
 
-## Quickstart
+## Installation
 
 ```bash
 pip install codecarbon
 ```
+
+If you use Conda:
+
+```bash
+conda activate your_env
+pip install codecarbon
+```
+
+More installation options: [installation docs](https://docs.codecarbon.io/how-to/installation/).
+
+## Quickstart (Python)
 
 ```python
 from codecarbon import EmissionsTracker
@@ -31,6 +42,33 @@ print(f"Emissions: {emissions} kg CO₂")
 ```
 
 [**Learn more** →](https://docs.codecarbon.io/tutorials/first-tracking/)
+
+## Quickstart (CLI)
+
+Track a command without changing your code:
+
+```bash
+codecarbon monitor --no-api -- python train.py
+```
+
+Detect your hardware:
+
+```bash
+codecarbon detect
+```
+
+Full CLI guide: [CLI tutorial](https://docs.codecarbon.io/tutorials/cli/).
+
+## Configuration
+
+You can configure CodeCarbon using:
+
+- `~/.codecarbon.config` (global)
+- `./.codecarbon.config` (project-local)
+- `CODECARBON_*` environment variables
+- Python arguments (`EmissionsTracker(...)`)
+
+Configuration precedence and examples: [configuration guide](https://docs.codecarbon.io/how-to/configuration/).
 
 ## How it works
 
@@ -78,7 +116,7 @@ Check out our [contribution guidelines](https://github.com/mlco2/codecarbon/blob
 
 Feel free to chat with us on [Discord](https://discord.gg/GS9js2XkJR).
 
-## How To Cite
+## Citation
 
 If you find CodeCarbon useful for your research, you can find a citation under a variety of formats on [Zenodo](https://zenodo.org/records/11171501).
 

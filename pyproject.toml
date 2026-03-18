@@ -93,6 +93,7 @@ dev = [
     "pytest-cov",
     "logfire>=1.0.1",  # For testing Logfire output method
     "jsonschema",  # For BoAmps schema validation tests
+    "mktestdocs",  # For testing documentation code blocks
 ]
 doc = [
   "setuptools",
