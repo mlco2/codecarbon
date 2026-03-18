@@ -16,6 +16,9 @@
         <loc>https://docs.codecarbon.io/introduction/rapl/</loc>
       </url>
       <url>
+        <loc>https://docs.codecarbon.io/introduction/power_estimation/</loc>
+      </url>
+      <url>
         <loc>https://docs.codecarbon.io/introduction/model_examples/</loc>
       </url>
       <url>
@@ -37,13 +40,19 @@
         <loc>https://docs.codecarbon.io/getting-started/examples/</loc>
       </url>
       <url>
+        <loc>https://docs.codecarbon.io/getting-started/test_on_scaleway/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/advanced/linux_service/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/advanced/ansible/</loc>
+      </url>
+      <url>
         <loc>https://docs.codecarbon.io/getting-started/comet/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/advanced_installation/</loc>
-      </url>
-      <url>
-        <loc>https://docs.codecarbon.io/getting-started/test_on_scaleway/</loc>
+        <loc>https://docs.codecarbon.io/advanced/adastra/</loc>
       </url>
       <url>
         <loc>https://docs.codecarbon.io/logging/output/</loc>
