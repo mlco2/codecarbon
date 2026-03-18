@@ -363,6 +363,18 @@ cp /data/tests/test_package_integrity.py .
 pytest test_package_integrity.py
 ```
 
+### Contribute to a fork branch
+
+When a user open a PR from a fork, we are allowed to push to the fork branch.
+
+If you want to do so, do the following:
+
+```bash
+git remote add <user_name> https://github.com/<user_name>/codecarbon.git
+git fetch <user_name> <git_branch>
+git checkout -b <git_branch> <user_name>/<git_branch>
+```
+
 <!-- TOC --><a name="api-and-dashboard"></a>
 ## API and Dashboard
 

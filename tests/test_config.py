@@ -7,6 +7,7 @@ from unittest.mock import patch
 from codecarbon.core.config import (
     clean_env_key,
     get_hierarchical_config,
+    normalize_gpu_ids,
     parse_env_config,
     parse_gpu_ids,
 )
@@ -44,6 +45,20 @@ class TestConfig(unittest.TestCase):
             ([1, 2, 3], ["1", "2", "3"]),
         ]:
             self.assertEqual(parse_gpu_ids(ids), target)
+
+    def test_normalize_gpu_ids(self):
+        for ids, target in [
+            (None, None),
+            ("0,1,2", ["0", "1", "2"]),
+            ("MIG-f1e$%^", ["MIG-f1e"]),
+            ([1, 2, 3], [1, 2, 3]),
+            (
+                [0, "MIG-f1e$%^", "1, 2", "GPU-abcd!"],
+                [0, "MIG-f1e", "1", "2", "GPU-abcd"],
+            ),
+            ([0, {"invalid": "entry"}, "GPU-123"], [0, "GPU-123"]),
+        ]:
+            self.assertEqual(normalize_gpu_ids(ids), target)
 
     @mock.patch.dict(
         os.environ,
@@ -228,6 +243,34 @@ class TestConfig(unittest.TestCase):
                 gpu_count += 1
         # self.assertEqual(gpu_count, 0)
         tracker.stop()
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "ROCR_VISIBLE_DEVICES": "1, 2",
+        },
+    )
+    def test_gpu_ids_from_rocr_visible_devices(self):
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["1", "2"])
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "0, 1",
+            "ROCR_VISIBLE_DEVICES": "1, 2",
+        },
+    )
+    def test_cuda_visible_devices_takes_precedence_over_rocr_visible_devices(self):
+        # CUDA_VISIBLE_DEVICES should take precedence as NVIDIA GPUs are checked first
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["0", "1"])
 
 
 if __name__ == "__main__":

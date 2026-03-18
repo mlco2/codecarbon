@@ -111,7 +111,10 @@ viz-legacy = [
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
-
+# To support AMD GPU
+amdsmi = [
+    "amdsmi>=6.0.0"
+]
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
