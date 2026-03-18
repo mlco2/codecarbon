@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.units import Energy
@@ -220,3 +221,57 @@ class TestEmissions(unittest.TestCase):
         expected_nordic = (emission_factor_g / 1000) * energy.kWh
         self.assertAlmostEqual(emissions, expected_nordic, places=6)
         self.assertNotAlmostEqual(emissions, expected_country, places=4)
+
+    def test_try_get_nordic_region_emissions_returns_none_without_region(self):
+        # GIVEN
+        energy = Energy.from_energy(kWh=1.0)
+        geo = GeoMetadata(country_iso_code="SWE", country_name="Sweden", region=None)
+
+        # WHEN
+        emissions = self._emissions._try_get_nordic_region_emissions(energy, geo)
+
+        # THEN
+        self.assertIsNone(emissions)
+
+    def test_try_get_nordic_region_emissions_returns_none_for_non_nordic_region(self):
+        # GIVEN
+        energy = Energy.from_energy(kWh=1.0)
+        geo = GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="XYZ")
+
+        # WHEN
+        emissions = self._emissions._try_get_nordic_region_emissions(energy, geo)
+
+        # THEN
+        self.assertIsNone(emissions)
+
+    def test_try_get_nordic_region_emissions_returns_none_if_region_data_missing(self):
+        # GIVEN
+        energy = Energy.from_energy(kWh=1.0)
+        geo = GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="SE2")
+
+        # WHEN
+        with patch.object(
+            self._data_source,
+            "get_nordic_country_energy_mix_data",
+            return_value={"data": {}},
+        ):
+            emissions = self._emissions._try_get_nordic_region_emissions(energy, geo)
+
+        # THEN
+        self.assertIsNone(emissions)
+
+    def test_try_get_nordic_region_emissions_returns_none_on_data_loading_error(self):
+        # GIVEN
+        energy = Energy.from_energy(kWh=1.0)
+        geo = GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="SE2")
+
+        # WHEN
+        with patch.object(
+            self._data_source,
+            "get_nordic_country_energy_mix_data",
+            side_effect=Exception("boom"),
+        ):
+            emissions = self._emissions._try_get_nordic_region_emissions(energy, geo)
+
+        # THEN
+        self.assertIsNone(emissions)
