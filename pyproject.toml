@@ -91,12 +91,15 @@ dev = [
     "responses",
     "pytest-cov",
     "logfire>=1.0.1",  # For testing Logfire output method
+    "mktestdocs",  # For testing documentation code blocks
+    "scikit-learn",  # For documentation examples and tests
 ]
 doc = [
   "setuptools",
   "zensical",
   "mike",
   "mkdocstrings[python]>=0.26",
+  "mkdocs-redirects",
 ]
 
 [project.optional-dependencies]
