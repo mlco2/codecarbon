@@ -143,6 +143,7 @@ nav:
       - LLMs and Agents: how-to/agents.md
   - How-to Guides:
     - Configure CodeCarbon: how-to/configuration.md
+    - Improve Measurement Accuracy with RAPL: how-to/enable-rapl.md
     - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
     - Dashboard & Visualization:
       - Use the Cloud API & Dashboard: how-to/cloud-api.md
