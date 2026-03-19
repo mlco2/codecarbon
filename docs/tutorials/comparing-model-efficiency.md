@@ -56,7 +56,6 @@ Now let's put this into practice. We'll compare three RandomForest configuration
 ### Step 1: Generate a Synthetic Dataset
 
 ```python
-# mktestdocs: skip
 # Create a classification dataset
 X, y = make_classification(
     n_samples=10000,
@@ -78,7 +77,6 @@ print(f"Features: {X_train.shape[1]}, Classes: {len(np.unique(y))}")
 ### Step 2: Define Model Configurations
 
 ```python
-# mktestdocs: skip
 models_to_test = [
     {"name": "Small RF", "n_estimators": 50, "max_depth": 10},
     {"name": "Medium RF", "n_estimators": 100, "max_depth": 15},
@@ -89,7 +87,6 @@ models_to_test = [
 ### Step 3: Train and Track Each Configuration
 
 ```python
-# mktestdocs: skip
 results = []
 
 for model_config in models_to_test:
@@ -143,7 +140,6 @@ for model_config in models_to_test:
 Now let's collect all results and analyze them:
 
 ```python
-# mktestdocs: skip
 # Create a DataFrame with results
 df_results = pd.DataFrame(results)
 print("\nModel Comparison Results:")

@@ -62,7 +62,8 @@ plugins:
         "getting-started/usage.md": "tutorials/cli.md"
         "getting-started/api.md": "how-to/cloud-api.md"
         "getting-started/parameters.md": "reference/api.md"
-        "getting-started/examples.md": "reference/examples.md"
+        "getting-started/examples.md": "how-to/scikit-learn.md"
+        "reference/examples.md": "how-to/scikit-learn.md"
         "getting-started/comet.md": "how-to/comet.md"
         "getting-started/test_on_scaleway.md": "how-to/test-on-scaleway.md"
         "advanced/linux_service.md": "how-to/linux-service.md"
@@ -135,9 +136,14 @@ nav:
     - Installation: how-to/installation.md
     - Tracking with the CLI: tutorials/cli.md
     - Tracking with Python: tutorials/python-api.md
-    - Comparing Model Efficiency: tutorials/comparing-model-efficiency.md
+    - Framework Examples:
+      - scikit-learn: how-to/scikit-learn.md
+      - HuggingFace Transformers: how-to/transformers.md
+      - HuggingFace Diffusers: how-to/diffusers.md
+      - LLMs and Agents: how-to/agents.md
   - How-to Guides:
     - Configure CodeCarbon: how-to/configuration.md
+    - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
     - Dashboard & Visualization:
       - Use the Cloud API & Dashboard: how-to/cloud-api.md
       - Visualize Emissions: how-to/visualize.md
@@ -160,6 +166,5 @@ nav:
   - Reference:
     - API Reference: reference/api.md
     - Output Formats: reference/output.md
-    - Examples: reference/examples.md
     - CLI Reference: reference/cli.md
   - Track GenAI API Calls (EcoLogits) ↗: https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs

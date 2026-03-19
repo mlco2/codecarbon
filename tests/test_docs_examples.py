@@ -19,6 +19,7 @@ from mktestdocs import check_md_file
         "docs/how-to/comet.md",
         "docs/how-to/configuration.md",
         "docs/how-to/logging.md",
+        "docs/how-to/scikit-learn.md",
         "docs/index.md",
     ],
     ids=lambda p: Path(p).name,
@@ -50,5 +51,3 @@ def test_first_tracking_tutorial(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     abs_fpath = Path(__file__).parent.parent / "docs/tutorials/first-tracking.md"
     check_md_file(str(abs_fpath), memory=True)
-
-
