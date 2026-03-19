@@ -8,9 +8,9 @@ When training machine learning models, we often focus on accuracy or performance
 
 ## Setup
 
-First, let's import everything we need:
+Before we start comparing models, let's get all the necessary imports in place. You'll need a few data science libraries (scikit-learn, pandas) and of course CodeCarbon itself:
 
-```python skip
+```python
 import time
 import numpy as np
 import pandas as pd
@@ -24,6 +24,12 @@ from codecarbon import EmissionsTracker
 from pathlib import Path
 Path("./emissions").mkdir(exist_ok=True)
 ```
+
+These are the tools we'll use:
+- **scikit-learn** – for building and training machine learning models
+- **pandas** – for organizing and analyzing results
+- **CodeCarbon** – for measuring emissions
+- **time** – to track how long training takes (for comparison)
 
 ## The Explicit Object Pattern for Long Experiments
 
