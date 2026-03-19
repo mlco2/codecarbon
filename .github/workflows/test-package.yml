@@ -6,16 +6,11 @@ on:
   pull_request:
     paths:
       - "codecarbon/**"
-      - "test/**"
+      - "tests/**"
       - "pyproject.toml"
       - "uv.lock"
   push:
     branches: [master]
-    paths:
-      - "codecarbon/**"
-      - "test/**"
-      - "pyproject.toml"
-      - "uv.lock"
 
 jobs:
   python-test:
