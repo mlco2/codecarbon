@@ -6,7 +6,7 @@ This page shows code snippets for common CodeCarbon usage patterns. For a guided
 
 Use the `@track_emissions` decorator to track an entire function with minimal code:
 
-``` python-skip
+```python skip
 import tensorflow as tf
 from codecarbon import track_emissions
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 We think this is the best way to use CodeCarbon. Still only two lines of
 code, and you can get the emissions in your code.
 
-``` python-skip
+```python skip
 import tensorflow as tf
 
 from codecarbon import EmissionsTracker
@@ -88,7 +88,7 @@ CodeCarbon scheduler is stopped. If you don't use
 background after your computation code has crashed, so your program will
 never finish.
 
-``` python-skip
+```python skip
 import tensorflow as tf
 
 from codecarbon import EmissionsTracker
@@ -127,7 +127,7 @@ finally:
 
 Here's the same model training pattern using PyTorch and HuggingFace Transformers:
 
-``` python-skip
+```python skip
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, AdamW
 from torch.utils.data import DataLoader
