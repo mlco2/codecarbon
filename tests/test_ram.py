@@ -48,8 +48,7 @@ class TestRAM(unittest.TestCase):
                     del array
 
     def test_ram_slurm(self):
-        scontrol_str = dedent(
-            """\
+        scontrol_str = dedent("""\
             scontrol show job $SLURM_JOB_ID
             JobId=XXXX JobName=gpu-jupyterhub
                UserId=XXXX GroupId=XXXX MCS_label=N/A
@@ -79,26 +78,21 @@ class TestRAM(unittest.TestCase):
                StdOut=/linkhome/rech/gendxh01/uei48xr/jupyterhub_slurm.out
                Power=
                TresPerNode=gres:gpu:4
-            """
-        )
+            """)
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "128G")
-        scontrol_str = dedent(
-            """\
+        scontrol_str = dedent("""\
             ReqTRES=cpu=32,mem=134G,node=1,billing=40,gres/gpu=4
             AllocTRES=cpu=64,mem=42K,node=1,billing=40,gres/gpu=4
-            """
-        )
+            """)
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "42K")
 
-        scontrol_str = dedent(
-            """\
+        scontrol_str = dedent("""\
             TRES=cpu=64,mem=50000M,node=1,billing=40,gres/gpu=4
-            """
-        )
+            """)
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "50000M")
