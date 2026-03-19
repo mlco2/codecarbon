@@ -143,7 +143,6 @@ nav:
       - LLMs and Agents: how-to/agents.md
   - How-to Guides:
     - Configure CodeCarbon: how-to/configuration.md
-    - Improve Measurement Accuracy with RAPL: how-to/enable-rapl.md
     - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
     - Dashboard & Visualization:
       - Use the Cloud API & Dashboard: how-to/cloud-api.md
@@ -152,6 +151,7 @@ nav:
       - Log to External Systems: how-to/logging.md
       - Integrate with Comet: how-to/comet.md
     - Deployment:
+      - Improve Measurement Accuracy with RAPL: how-to/enable-rapl.md
       - Deploy as a Linux Service: how-to/linux-service.md
       - Deploy with Ansible: how-to/ansible.md
       - Run on SLURM (ROCm/PyTorch): how-to/slurm.md
