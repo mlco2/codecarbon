@@ -141,6 +141,7 @@ nav:
     - Dashboard & Visualization:
       - Use the Cloud API & Dashboard: how-to/cloud-api.md
       - Visualize Emissions: how-to/visualize.md
+    - Logging:
       - Log to External Systems: how-to/logging.md
       - Integrate with Comet: how-to/comet.md
     - Deployment:
