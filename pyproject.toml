@@ -147,7 +147,7 @@ docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.4"
+current_version = "3.2.5"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
