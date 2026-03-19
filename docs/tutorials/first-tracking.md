@@ -20,11 +20,7 @@ pip install codecarbon
 
 ## Step 2: Track emissions from a computation
 
-With CodeCarbon installed, we're ready to write our first tracking script.
-
-### Python
-
-The simplest way to use CodeCarbon is as a **context manager**. Everything inside the `with` block is tracked.
+With CodeCarbon installed, we're ready to write our first tracking script. The simplest way to use CodeCarbon is as a **context manager**. Everything inside the `with` block is tracked.
 
 ```python
 from codecarbon import EmissionsTracker
