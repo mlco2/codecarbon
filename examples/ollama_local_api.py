@@ -41,9 +41,12 @@ url = "https://www.assemblee-nationale.fr/dyn/opendata/CRCANR5L17S2025PO59046N03
 extracted_text = extract_text_from_url(url)
 # print(extracted_text)
 
-prompt = """
+prompt = (
+    """
  Merci de me faire un compte rendu des différents points discutés lors de cette réunion.
-""" + extracted_text
+"""
+    + extracted_text
+)
 
 
 def call_ollama_api(endpoint, payload):

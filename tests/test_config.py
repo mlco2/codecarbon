@@ -81,17 +81,21 @@ class TestConfig(unittest.TestCase):
         )
 
     def test_read_confs(self):
-        global_conf = dedent("""\
+        global_conf = dedent(
+            """\
             [codecarbon]
             no_overwrite=path/to/somewhere
             local_overwrite=ERROR:not overwritten
             syntax_test_key= no/space= problem2
-            """)
-        local_conf = dedent("""\
+            """
+        )
+        local_conf = dedent(
+            """\
             [codecarbon]
             local_overwrite=SUCCESS:overwritten
             local_new_key=cool value
-            """)
+            """
+        )
 
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
@@ -116,19 +120,23 @@ class TestConfig(unittest.TestCase):
         },
     )
     def test_read_confs_and_parse_envs(self):
-        global_conf = dedent("""\
+        global_conf = dedent(
+            """\
             [codecarbon]
             no_overwrite=path/to/somewhere
             local_overwrite=ERROR:not overwritten
             syntax_test_key= no/space= problem2
             env_overwrite=ERROR:not overwritten
-            """)
-        local_conf = dedent("""\
+            """
+        )
+        local_conf = dedent(
+            """\
             [codecarbon]
             local_overwrite=SUCCESS:overwritten
             local_new_key=cool value
             env_overwrite=ERROR:not overwritten
-            """)
+            """
+        )
 
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
@@ -166,20 +174,24 @@ class TestConfig(unittest.TestCase):
         },
     )
     def test_full_hierarchy(self):
-        global_conf = dedent("""\
+        global_conf = dedent(
+            """\
             [codecarbon]
             measure_power_secs=10
             force_cpu_power=toto
             force_ram_power=50.5
             output_dir=ERROR:not overwritten
             save_to_file=ERROR:not overwritten
-            """)
-        local_conf = dedent("""\
+            """
+        )
+        local_conf = dedent(
+            """\
             [codecarbon]
             output_dir=/success/overwritten
             emissions_endpoint=http://testhost:2000
             gpu_ids=ERROR:not overwritten
-            """)
+            """
+        )
 
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)

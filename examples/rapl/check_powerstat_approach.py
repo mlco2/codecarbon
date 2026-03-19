@@ -60,7 +60,8 @@ for domain_dir in rapl_dirs:
 print("\n" + "=" * 80)
 print("Powerstat approach (from powerstat.c analysis):")
 print("=" * 80)
-print("""
+print(
+    """
 Powerstat reads ALL top-level domains and DEDUPLICATES by domain name:
   1. Scans /sys/class/powercap/intel-rapl:*
   2. Reads each domain's 'name' file
@@ -73,12 +74,14 @@ This means powerstat likely reads:
   - psys (if unique, or skipped if duplicate)
 
 Total = package-0 + dram + (other unique domains)
-""")
+"""
+)
 
 print("\n" + "=" * 80)
 print("Recommendation for CodeCarbon:")
 print("=" * 80)
-print("""
+print(
+    """
 Option 1 (Current - CPU only):
   ✓ Read only package-0 domain
   ✓ Most accurate for CPU power measurement
@@ -95,4 +98,5 @@ Option 3 (Configurable):
   ✓ Let users choose via config parameter
   ✓ Default to package-0 (CPU only) for accuracy
   ✓ Allow 'all' mode to sum package+dram like powerstat
-""")
+"""
+)
