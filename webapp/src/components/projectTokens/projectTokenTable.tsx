@@ -1,15 +1,12 @@
-"use client";
-
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
-import { IProjectToken } from "@/types/project";
+import { IProjectToken } from "@/api/schemas";
 import {
     getProjectTokens,
     createProjectToken,
-} from "@/server-functions/projectTokens";
+} from "@/api/projectTokens";
 import CustomRowToken from "@/components/projectTokens/custom-row-token";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { Loader2, ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +20,10 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     const [tokenName, setTokenName] = useState("");
     const [createdToken, setCreatedToken] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
-    const router = useRouter();
-
+    const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); };
+    }, []);
     useEffect(() => {
         const fetchTokens = async () => {
             // Fetch the updated list of tokens from the server
@@ -38,7 +37,6 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
 
     const refreshTokens = () => {
         setTokens(null); // This will trigger a refetch in the useEffect
-        router.refresh(); // Refresh the current route
     };
 
     const handleCreateToken = async () => {
@@ -74,7 +72,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             if (success) {
                 setIsCopied(true);
                 toast.success("Token copied to clipboard");
-                setTimeout(() => setIsCopied(false), 2000); // Revert back after 2 seconds
+                copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000);
             } else {
                 throw new Error("Copy operation failed");
             }
@@ -113,7 +111,8 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                             </pre>
                             <button
                                 onClick={() => handleCopy(createdToken)}
-                                className="ml-2 px-4 py-2 rounded text-gray-500 hover:text-gray-700"
+                                aria-label="Copy token to clipboard"
+                                className="ml-2 px-4 py-2 rounded text-muted-foreground hover:text-foreground"
                             >
                                 {isCopied ? (
                                     <div className="flex justify-between">
