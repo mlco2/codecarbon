@@ -131,5 +131,6 @@ You've now learned the three main patterns for tracking emissions in Python. Eac
 Explore these related guides:
 
 - [CLI tutorial](cli.md) — Track emissions from any command without writing Python code.
+- [Comparing Model Efficiency](comparing-model-efficiency.md) — Measure and compare carbon emissions across different machine learning models.
 - [How-to: Cloud API](../how-to/cloud-api.md) — Send emissions data to the CodeCarbon dashboard.
 - [API Reference](../reference/api.md) — Complete list of all parameters and configuration options.

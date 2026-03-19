@@ -160,4 +160,8 @@ with EmissionsTracker(project_name="huggingface-training") as tracker:
 
 ---
 
+## Learn More
+
+For a practical tutorial that compares multiple machine learning models and their carbon efficiency, see [Comparing Model Efficiency](../tutorials/comparing-model-efficiency.md).
+
 More examples are available in the [CodeCarbon GitHub repository](https://github.com/mlco2/codecarbon/tree/master/examples).
