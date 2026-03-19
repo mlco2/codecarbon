@@ -10,9 +10,15 @@ AI can benefit society in many ways, but given the energy needed to support the 
 
 ## Quickstart
 
+### Python
+
+Install CodeCarbon:
+
 ``` bash
 pip install codecarbon
 ```
+
+Track your code with a context manager:
 
 ```python
 from codecarbon import EmissionsTracker
@@ -68,6 +74,6 @@ A single datacenter can consume large amounts of energy to run computing code. A
 | [Python API Tutorial](tutorials/python-api.md) | Track emissions in Python code |
 | [Comparing Model Efficiency](tutorials/comparing-model-efficiency.md) | Measure carbon efficiency across ML models |
 | [API Reference](reference/api.md) | Full parameter documentation |
-| [Examples](reference/examples.md) | Example usage patterns |
+| [Framework Examples](how-to/scikit-learn.md) | Example usage patterns |
 | [Methodology](explanation/methodology.md) | How emissions are calculated |
 | [EcoLogits](https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs) | Track emissions from GenAI API calls |
