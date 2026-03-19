@@ -16,10 +16,12 @@ class TestConfigBackwardCompatibility(unittest.TestCase):
     @patch("os.path.exists", return_value=True)
     def test_old_config_parameter_name(self, mock_exists):
         """Test that co2_signal_api_token in config file still works."""
-        config_with_old_name = dedent("""\
+        config_with_old_name = dedent(
+            """\
             [codecarbon]
             co2_signal_api_token=old-config-token
-            """)
+            """
+        )
 
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(config_with_old_name, "")
@@ -39,11 +41,13 @@ class TestConfigBackwardCompatibility(unittest.TestCase):
     @patch("os.path.exists", return_value=True)
     def test_new_config_parameter_takes_precedence(self, mock_exists):
         """Test that new config parameter takes precedence over old one."""
-        config_with_both_names = dedent("""\
+        config_with_both_names = dedent(
+            """\
             [codecarbon]
             electricitymaps_api_token=new-config-token
             co2_signal_api_token=old-config-token
-            """)
+            """
+        )
 
         with patch(
             "builtins.open",
