@@ -1,4 +1,4 @@
-# Your First Emissions Tracking
+# Quickstart
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mlco2/codecarbon/blob/master/docs/tutorials/first-tracking.ipynb)
 

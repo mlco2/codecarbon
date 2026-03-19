@@ -28,6 +28,22 @@ print(f"Emissions: {emissions} kg CO₂")
 
 [**Learn more** →](tutorials/first-tracking.md)
 
+### CLI
+
+Track any command without changing your code:
+
+``` bash
+codecarbon monitor --no-api -- python train.py
+```
+
+Or detect your hardware:
+
+``` bash
+codecarbon detect
+```
+
+[**Learn more** →](tutorials/cli.md)
+
 ---
 
 ## Computer emits CO₂. We started measuring how much
@@ -46,10 +62,11 @@ A single datacenter can consume large amounts of energy to run computing code. A
 
 | Section | Description |
 |---------|-------------|
-| [Your First Tracking](tutorials/first-tracking.md) | Get started in minutes |
+| [Quickstart](tutorials/first-tracking.md) | Get started in 5 minutes |
 | [Installation](how-to/installation.md) | Install CodeCarbon |
 | [CLI Tutorial](tutorials/cli.md) | Track emissions from the command line |
 | [Python API Tutorial](tutorials/python-api.md) | Track emissions in Python code |
+| [Comparing Model Efficiency](tutorials/comparing-model-efficiency.md) | Measure carbon efficiency across ML models |
 | [API Reference](reference/api.md) | Full parameter documentation |
 | [Examples](reference/examples.md) | Example usage patterns |
 | [Methodology](explanation/methodology.md) | How emissions are calculated |
