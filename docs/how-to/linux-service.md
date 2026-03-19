@@ -1,9 +1,18 @@
-# Install CodeCarbon as a Linux service
+# Install CodeCarbon as a Linux Service
 
-To install CodeCarbon as a Linux service, follow the instructions below.
-It works on Ubuntu or other Debian-based systems using systemd.
+This guide shows how to install and run CodeCarbon as a systemd service on Linux (Ubuntu or Debian-based systems). This allows CodeCarbon to continuously monitor your system's carbon emissions in the background.
 
-Create a dedicated user:
+## Prerequisites
+
+- Ubuntu or Debian-based Linux system
+- `sudo` access
+- Python 3.8+
+
+## Installation Steps
+
+### Step 1: Create a Dedicated User
+
+Create a system user for CodeCarbon to run under:
 
 ``` bash
 sudo useradd -r -s /bin/false codecarbon
@@ -21,7 +30,9 @@ Change the ownership of the directory to the user created above:
 sudo chown codecarbon:codecarbon /opt/codecarbon
 ```
 
-Create a virtual environment for CodeCarbon :
+### Step 2: Create a Virtual Environment
+
+Create and activate a Python virtual environment for CodeCarbon:
 
 ``` bash
 sudo apt install python3-venv
@@ -34,8 +45,9 @@ Install CodeCarbon in the virtual environment:
 sudo -u codecarbon /opt/codecarbon/.venv/bin/pip install codecarbon
 ```
 
-Go to <https://dashboard.codecarbon.io/> and create an account to get
-your API key.
+### Step 3: Authenticate with CodeCarbon
+
+Go to <https://dashboard.codecarbon.io/> and create an account to get your API key. Then authenticate locally:
 
 Configure CodeCarbon:
 
@@ -43,7 +55,9 @@ Configure CodeCarbon:
 sudo -u codecarbon /opt/codecarbon/.venv/bin/codecarbon login
 ```
 
-Create a systemd service file:
+### Step 4: Create a Systemd Service File
+
+Create the service configuration file for systemd:
 
 ``` bash
 sudo tee /etc/systemd/system/codecarbon.service <<EOF
@@ -63,8 +77,9 @@ WantedBy=multi-user.target
 EOF
 ```
 
-Give permissions to the `codecarbon` group to read the RAPL (Running
-Average Power Limit) information:
+### Step 5: Configure RAPL Permissions
+
+Give the CodeCarbon user permissions to read RAPL (Running Average Power Limit) energy information for accurate CPU power tracking:
 
 ``` bash
 sudo chown -R root:codecarbon /sys/class/powercap/intel-rapl/*
@@ -75,7 +90,9 @@ echo "mode class/powercap/intel-rapl:0/energy_uj = 0440" >> /etc/sysfs.conf
 echo "owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon" >> /etc/sysfs.conf
 ```
 
-Create the configuration file for CodeCarbon:
+### Step 6: Create the CodeCarbon Configuration File
+
+Configure CodeCarbon with your dashboard credentials:
 
 ``` bash
 sudo tee /opt/codecarbon/.codecarbon.config <<EOF
@@ -94,20 +111,31 @@ api_call_interval=10
 EOF
 ```
 
-Enable and start the service:
+### Step 7: Enable and Start the Service
+
+Enable the CodeCarbon service to start on boot and start it now:
 
 ``` bash
 sudo systemctl enable codecarbon
 sudo systemctl start codecarbon
 ```
 
-Check the traces of the service:
+### Step 8: Verify the Service is Running
+
+Check the service logs to confirm CodeCarbon is running correctly:
 
 ``` bash
 journalctl -u codecarbon
 ```
 
-You are done, CodeCarbon is now running as a service on your machine.
+## Verification
 
-Wait 5 minutes for the first measure to be send to the dashboard at
-<https://dashboard.codecarbon.io/>.
+You are done! CodeCarbon is now running as a systemd service on your machine.
+
+Wait 5 minutes for the first measurements to be sent to the dashboard at <https://dashboard.codecarbon.io/>. You should then see emissions data appearing on your dashboard.
+
+## Next Steps
+
+- [View Your Results](cloud-api.md) on the CodeCarbon dashboard
+- [Configure CodeCarbon](configuration.md) to customize measurement intervals or other settings
+- [Check the Linux service logs](https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-system-logs-in-ubuntu-18-04) for troubleshooting

@@ -1,23 +1,31 @@
-# Test of CodeCarbon on Scaleway hardware {#test_on_scaleway}
+# Test CodeCarbon on Scaleway Hardware {#test_on_scaleway}
 
-We use Scaleway hardware to test CodeCarbon on a real-world scenario. We
-use the following hardware:
+This guide shows how to test CodeCarbon on real cloud hardware using Scaleway. Testing on actual hardware helps validate energy measurements and carbon tracking in production environments.
 
-- **EM-I120E-NVME**: AMD EPYC 8024P, 64 GB, 2×960 GB NVMe
-- **EM-B112X-SSD**: 2× Intel Xeon E5-2620 v3 @ 2.40GHz
+## Hardware Overview
 
-85 W TDP for the Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz
+The following Scaleway hardware configurations are available for testing:
 
-Choose Ubuntu as OS because new version of stress-ng is not available on
-Debian 12 (Bookworm).
+- **EM-I120E-NVME**: AMD EPYC 8024P, 64 GB RAM, 2×960 GB NVMe SSD
+- **EM-B112X-SSD**: 2× Intel Xeon E5-2620 v3 @ 2.40GHz (85 W TDP)
 
-Connect to the server:
+## Prerequisites
+
+- Scaleway account with hardware access
+- Ubuntu as the OS (required for latest stress-ng tools; Debian 12 packages are outdated)
+- SSH access to the server
+
+## Setup Steps
+
+### Step 1: Connect to Your Scaleway Server
 
 ``` console
-ssh ubuntu@51.159.214.207
+ssh ubuntu@<your-server-ip>
 ```
 
-Install and run the test:
+### Step 2: Install Dependencies and CodeCarbon
+
+Install the necessary tools and CodeCarbon on the server:
 
 ``` console
 sudo chmod a+r -R /sys/class/powercap/intel-rapl/subsystem/*
@@ -33,19 +41,33 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv run python examples/compare_cpu_load_and_RAPL.py
 ```
 
-To do a full code CPU load, we run the following command:
+### Step 3: Run CPU Load Test
+
+Execute a full CPU load test using stress-ng to measure power consumption:
 
 ``` console
 stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s
 ```
 
-Get back the data from the server:
+### Step 4: Retrieve Test Results
+
+Download the measurement data from the server to your local machine:
 
 ``` console
 mkdir -p codecarbon/data/hardware/cpu_load_profiling/E3-1240/
-scp ubuntu@51.159.214.207:/home/ubuntu/codecarbon/*.csv codecarbon/data/hardware/cpu_load_profiling/E5-1240/
+scp ubuntu@<your-server-ip>:/home/ubuntu/codecarbon/*.csv codecarbon/data/hardware/cpu_load_profiling/E5-1240/
 ```
 
-You can now delete the server in the Scaleway console.
+### Step 5: Clean Up
 
-For the results, see the notebook XXX.
+Delete the server in the Scaleway console to avoid ongoing charges.
+
+## Results and Analysis
+
+The CSV files contain measurement data from both CodeCarbon and the stress-ng tool. You can analyze the results using Jupyter notebooks or other data analysis tools.
+
+## Next Steps
+
+- [Configure CodeCarbon](configuration.md) for different measurement intervals or tracking modes
+- [Send emissions data to the cloud](cloud-api.md) for centralized tracking
+- Review hardware-specific RAPL configuration in [RAPL Metrics](../explanation/rapl.md)
