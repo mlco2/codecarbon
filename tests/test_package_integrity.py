@@ -3,6 +3,8 @@ Test that verifies the package includes all necessary data files.
 This test should be run against the installed package, not the source.
 """
 
+from importlib import resources as importlib_resources
+
 import pandas as pd
 import pytest
 
@@ -70,6 +72,14 @@ def test_global_energy_mix_data_included():
         global_energy_data, dict
     ), "Global energy mix data should be a dict"
     assert len(global_energy_data) > 0, "Global energy mix data should not be empty"
+
+
+def test_nordic_emissions_data_included():
+    """Test that nordic emissions data file is included in the package."""
+    nordic_file = importlib_resources.files("codecarbon").joinpath(
+        "data/private_infra/nordic_emissions.json"
+    )
+    assert nordic_file.is_file(), f"Nordic emissions file missing: {nordic_file}"
 
 
 def test_country_specific_data_access():
