@@ -1,24 +1,25 @@
-# Collecting emissions to a logger {#Collecting emissions to a logger}
+# Log to External Systems {#logging}
 
-The `LoggerOutput` class (and `GoogleCloudLoggerOutput` subclass) allows
-you to send emissions tracking to a logger. This is a specific, distinct
-logger than the one used by the CodeCarbon package for its private logs.
-It allows you to leverage powerful logging systems, to centralize
-emissions to some central or cloud-based system, and build reports,
-triggers, etc. based on these data.
+CodeCarbon provides the `LoggerOutput` class to send emissions tracking data to external logging systems. This allows you to integrate CodeCarbon emissions data with your existing monitoring and logging infrastructure, enabling centralized tracking, reporting, and alerting.
 
-This logging output can be used in parallel with other output options
-provided by CodeCarbon.
+The `LoggerOutput` class (and `GoogleCloudLoggerOutput` subclass) works independently from CodeCarbon's internal logging, allowing you to leverage powerful logging systems and build automated reports or triggers based on emissions data.
 
-## Create a logger
+## Overview
 
-In order to send emissions tracking data to the logger, first create a
-logger and then create an `EmissionsTracker`.
-`OfflineEmissionsTracker` is also supported but lack of
-network connectivity may forbid to stream tracking data to some central
-or cloud-based collector.
+This guide shows how to integrate CodeCarbon with:
 
-### Python logger
+- **Python's built-in logging system** (local file or stream)
+- **Google Cloud Logging** (cloud-based centralized logging)
+
+## Setup Steps
+
+### Step 1: Create a Logger
+
+In order to send emissions tracking data to the logger, first create a logger and then create an `EmissionsTracker`. `OfflineEmissionsTracker` is also supported but lack of network connectivity may forbid to stream tracking data to some central or cloud-based collector.
+
+#### Option 1: Python Logger (Local File)
+
+Create a logger that writes to a local file:
 
 ``` python
 import logging
@@ -38,7 +39,9 @@ _logger.setLevel(logging.INFO)
 my_logger = LoggerOutput(_logger, logging.INFO)
 ```
 
-### Google Cloud Logging
+#### Option 2: Google Cloud Logging (Cloud-Based)
+
+Send emissions data to Google Cloud Logging for centralized cloud-based tracking:
 
 ``` python
 import google.cloud.logging
@@ -51,15 +54,13 @@ client = google.cloud.logging.Client(project=google_project_name)
 my_logger = GoogleCloudLoggerOutput(client.logger(log_name))
 ```
 
-### Authentication
+#### Google Cloud Authentication
 
-Please refer to [Google Cloud
-documentation](https://cloud.google.com/logging/docs/reference/libraries#setting_up_authentication).
+For Google Cloud Logging setup, refer to [Google Cloud documentation](https://cloud.google.com/logging/docs/reference/libraries#setting_up_authentication) for authentication configuration.
 
-### Create an EmissionTracker
+### Step 2: Create an EmissionsTracker
 
-Create an EmissionTracker saving output to the logger. Other save
-options are still usable and valid.
+Create an EmissionsTracker that sends output to your logger. Other save options can be used simultaneously:
 
 ``` python
 tracker = EmissionsTracker(save_to_logger=True, logging_logger=my_logger)
@@ -68,6 +69,12 @@ tracker.start()
 emissions: float = tracker.stop()
 ```
 
-### Example
+## Complete Examples
 
-A demonstration is available in `codecarbon/examples/logging_demo.py`.
+A full working example is available in `codecarbon/examples/logging_demo.py`.
+
+## Next Steps
+
+- [Send emissions data to the cloud](cloud-api.md) for dashboard visualization
+- [Integrate with Comet](comet.md) for experiment tracking
+- [Configure CodeCarbon](configuration.md) to customize logging behavior
