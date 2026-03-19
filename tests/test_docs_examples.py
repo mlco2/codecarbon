@@ -16,6 +16,10 @@ from mktestdocs import check_md_file
         "docs/tutorials/python-api.md",
         "docs/explanation/why.md",
         "docs/how-to/cloud-api.md",
+        "docs/how-to/comet.md",
+        "docs/how-to/configuration.md",
+        "docs/how-to/logging.md",
+        "docs/index.md",
     ],
     ids=lambda p: Path(p).name,
 )
@@ -24,6 +28,9 @@ def test_doc_python_blocks(fpath, tmp_path, monkeypatch):
 
     Each block runs in isolation (memory=False).
     CWD is changed to tmp_path to isolate any file I/O.
+
+    Note: power-estimation.md contains code snippets that reference
+    variables from the codebase; these are not standalone runnable examples.
     """
     monkeypatch.chdir(tmp_path)
     abs_fpath = Path(__file__).parent.parent / fpath
