@@ -25,7 +25,7 @@ In the
 example file, replace the placeholder code with your API key:
 
 ```python
-# skip
+# skip testing this with mkdoctests - would require making comet_ml a doc dependency which is overkill.
 experiment = Experiment(api_key="YOUR API KEY")
 ```
 
