@@ -33,7 +33,6 @@ codecarbon monitor
 Or use the API in your code:
 
 ```python
-# skip
 from codecarbon import track_emissions
 
 @track_emissions(save_to_api=True)

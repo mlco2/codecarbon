@@ -4,14 +4,19 @@ Check that Python code blocks in docs are runnable.
 Blocks whose first line is '# skip' are intentionally excluded
 (e.g. examples requiring external services or heavy dependencies).
 
-Run with: pytest scripts/check-docs-drift.py -v
+Run with: pytest tests/check-docs-drift.py -v
 """
 
+import os
 import pathlib
 
 import pytest
 from mktestdocs import grab_code_blocks
 from mktestdocs.__main__ import exec_python
+
+# Suppress CSV output and log noise when tracker examples run in CI.
+os.environ["CODECARBON_SAVE_TO_FILE"] = "false"
+os.environ["CODECARBON_LOG_LEVEL"] = "error"
 
 
 @pytest.mark.parametrize("fpath", pathlib.Path("docs").glob("**/*.md"), ids=str)

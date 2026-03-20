@@ -147,7 +147,7 @@ tracking of the compute section.
 
 ```python
 from codecarbon import EmissionsTracker
-tracker = EmissionsTracker(save_to_file=False, log_level="error")
+tracker = EmissionsTracker()
 tracker.start()
 try:
      # Compute intensive code goes here
@@ -168,14 +168,15 @@ If you want to monitor small piece of code, like a model inference, you
 could use the task manager:
 
 ```python
-# skip
+from codecarbon import EmissionsTracker
+
 try:
     tracker = EmissionsTracker(project_name="bert_inference", measure_power_secs=10)
     tracker.start_task("load dataset")
-    dataset = load_dataset("imdb", split="test")
+    # do some data loading
     imdb_emissions = tracker.stop_task()
     tracker.start_task("build model")
-    model = build_model()
+    # build some model
     model_emissions = tracker.stop_task()
 finally:
     _ = tracker.stop()
@@ -197,7 +198,7 @@ The `Emissions tracker` also works as a context manager.
 ```python
 from codecarbon import EmissionsTracker
 
-with EmissionsTracker(save_to_file=False, log_level="error") as tracker:
+with EmissionsTracker() as tracker:
     _ = 1 + 1  # Compute intensive training code goes here
 ```
 
@@ -213,7 +214,7 @@ emissions of the training code.
 ```python
 from codecarbon import track_emissions
 
-@track_emissions(save_to_file=False, log_level="error")
+@track_emissions
 def training_loop():
     # Compute intensive training code goes here
     pass
@@ -243,7 +244,7 @@ emissions as follows:
 
 ```python
 from codecarbon import OfflineEmissionsTracker
-tracker = OfflineEmissionsTracker(country_iso_code="CAN", save_to_file=False, log_level="error")
+tracker = OfflineEmissionsTracker(country_iso_code="CAN")
 tracker.start()
 # GPU intensive training code
 tracker.stop()
@@ -256,7 +257,7 @@ The `OfflineEmissionsTracker` also works as a context manager
 ```python
 from codecarbon import OfflineEmissionsTracker
 
-with OfflineEmissionsTracker(country_iso_code="CAN", save_to_file=False, log_level="error") as tracker:
+with OfflineEmissionsTracker(country_iso_code="CAN") as tracker:
     # GPU intensive training code goes here
     pass
 ```
@@ -273,7 +274,7 @@ parameters:
 
 ```python
 from codecarbon import track_emissions
-@track_emissions(offline=True, country_iso_code="CAN", save_to_file=False, log_level="error")
+@track_emissions(offline=True, country_iso_code="CAN")
 def training_loop():
     # training code goes here
     pass
@@ -338,7 +339,7 @@ CodeCarbon is structured so that you can configure it in a hierarchical manner:
         parameter is set in both:
 
         ```python
-        # skip
+        # skip this block for mktestdocs testing because it tries to call APIs
         EmissionsTracker(
            api_call_interval=4,
            save_to_api=True,
