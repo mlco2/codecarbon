@@ -68,8 +68,6 @@ from codecarbon import track_emissions
     api_call_interval=4,
     experiment_id="your experiment id",
     save_to_api=True,
-    save_to_file=False,
-    log_level="error",
 )
 def train_model():
     ...
