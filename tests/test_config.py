@@ -17,6 +17,23 @@ from tests.testutils import get_custom_mock_open
 
 
 class TestConfig(unittest.TestCase):
+    def setUp(self):
+        self._original_environ = os.environ.copy()
+        for key in [
+            "CODECARBON_API_KEY",
+            "CODECARBON_EXPERIMENT_ID",
+            "CODECARBON_API_ENDPOINT",
+            "codecarbon_api_key",
+            "codecarbon_experiment_id",
+            "codecarbon_api_endpoint",
+        ]:
+            os.environ.pop(key, None)
+        os.environ.setdefault("CODECARBON_ALLOW_MULTIPLE_RUNS", "True")
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self._original_environ)
+
     def test_clean_env_key(self):
         for key in [1, None, 0.2, [], set()]:
             with self.assertRaises(AssertionError):
