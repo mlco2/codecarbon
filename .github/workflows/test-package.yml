@@ -9,6 +9,7 @@ on:
       - "tests/**"
       - "pyproject.toml"
       - "uv.lock"
+      - ".github/workflows/test-package.yml"
   push:
     branches: [master]
 
