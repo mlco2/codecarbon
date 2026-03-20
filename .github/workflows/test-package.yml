@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       CODECARBON_API_KEY: ${{ secrets.CODECARBON_API_TOKEN }}
-      CODECARBON_EXPERIMENT_ID: ${{ vars.CODECARBON_EXPERIMENT_ID_TEST_PACKAGE }}
+      CODECARBON_EXPERIMENT_ID: ${{ secrets.CODECARBON_EXPERIMENT_ID_TEST_PACKAGE }}
     strategy:
         matrix:
           python-version: ["3.12", "3.13", "3.14"]
