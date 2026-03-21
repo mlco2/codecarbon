@@ -20,7 +20,8 @@ or cloud-based collector.
 
 ### Python logger
 
-``` python
+```python
+# skip mktestdocs
 import logging
 
 # Create a dedicated logger (log name can be the CodeCarbon project name for example)
@@ -40,7 +41,8 @@ my_logger = LoggerOutput(_logger, logging.INFO)
 
 ### Google Cloud Logging
 
-``` python
+```python
+# skip mktestdocs
 import google.cloud.logging
 
 
@@ -61,7 +63,8 @@ documentation](https://cloud.google.com/logging/docs/reference/libraries#setting
 Create an EmissionTracker saving output to the logger. Other save
 options are still usable and valid.
 
-``` python
+```python
+# skip mktestdocs
 tracker = EmissionsTracker(save_to_logger=True, logging_logger=my_logger)
 tracker.start()
 # Your code here

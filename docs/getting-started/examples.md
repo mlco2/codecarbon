@@ -13,7 +13,10 @@ automatically and printed at the end of the training.
 But you can't get them in your code, see the Context Manager section
 below for that.
 
-``` python
+```python
+# skip mktestdocs
+# dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
+# would slow things down further.
 import tensorflow as tf
 from codecarbon import track_emissions
 
@@ -49,7 +52,10 @@ if __name__ == "__main__":
 We think this is the best way to use CodeCarbon. Still only two lines of
 code, and you can get the emissions in your code.
 
-``` python
+```python
+# skip mktestdocs
+# dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
+# would slow things down further.
 import tensorflow as tf
 
 from codecarbon import EmissionsTracker
@@ -95,7 +101,10 @@ CodeCarbon scheduler is stopped. If you don't use
 background after your computation code has crashed, so your program will
 never finish.
 
-``` python
+```python
+# skip mktestdocs
+# dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
+# would slow things down further.
 import tensorflow as tf
 
 from codecarbon import EmissionsTracker

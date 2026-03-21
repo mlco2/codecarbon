@@ -32,14 +32,15 @@ codecarbon monitor
 
 Or use the API in your code:
 
-``` python
+```python
 from codecarbon import track_emissions
 
 @track_emissions(save_to_api=True)
 def train_model():
-    # GPU intensive training code  goes here
+    # GPU intensive training code goes here
+    pass
 
-if __name__ =="__main__":
+if __name__ == "__main__":
     train_model()
 ```
 
@@ -59,7 +60,7 @@ You then have to set your experiment id in CodeCarbon, with two options:
 
 In the code:
 
-``` python
+```python
 from codecarbon import track_emissions
 
 @track_emissions(
