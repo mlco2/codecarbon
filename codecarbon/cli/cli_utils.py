@@ -5,6 +5,8 @@ from typing import Optional
 import typer
 from rich.prompt import Confirm
 
+from codecarbon.core.config import get_hierarchical_config
+
 
 def get_config(path: Optional[Path] = None):
     p = path or Path.cwd().resolve() / ".codecarbon.config"
@@ -37,22 +39,16 @@ def get_api_endpoint(path: Optional[Path] = None):
     return "https://api.codecarbon.io"
 
 
-def get_existing_local_exp_id(path: Optional[Path] = None):
-    p = path or Path.cwd().resolve() / ".codecarbon.config"
-    if p.exists():
-        existing_path = p
-    else:
-        existing_path = Path("~/.codecarbon.config").expanduser()
-    return _get_local_exp_id(existing_path)
-
-
-def _get_local_exp_id(p: Optional[Path] = None):
-    config = configparser.ConfigParser()
-    config.read(str(p))
-    if "codecarbon" in config.sections():
-        d = dict(config["codecarbon"])
-        if "experiment_id" in d:
-            return d["experiment_id"]
+def get_existing_exp_id() -> Optional[str]:
+    """
+    Return experiment_id resolved from the same hierarchical config strategy
+    used by EmissionsTracker (global file, local file, then CODECARBON_* env).
+    """
+    try:
+        conf = get_hierarchical_config()
+    except KeyError:
+        return None
+    return conf.get("experiment_id")
 
 
 def write_local_exp_id(exp_id, path: Optional[Path] = None):
