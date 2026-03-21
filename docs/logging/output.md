@@ -63,7 +63,7 @@ docker-compose up
 Run your EmissionsTracker as usual, with `save_to_prometheus=True`:
 
 ```python
-# skip mktestdocs testing because this would try to save to prometheus
+# skip mktestdocs
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
@@ -87,7 +87,7 @@ CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
 Run your EmissionsTracker as usual, with `save_to_logfire=True`:
 
 ```python
-# skip mktestdocs testing because this would try to save to logfire
+# skip mktestdocs
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
