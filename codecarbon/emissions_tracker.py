@@ -978,9 +978,10 @@ class BaseEmissionsTracker(ABC):
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
                 gpu_details = hardware.devices.get_gpu_details()
-                for gpu_detail in gpu_details:
+                for gpu_index, gpu_detail in enumerate(gpu_details):
+                    resolved_gpu_index = gpu_detail.get("gpu_index", gpu_index)
                     if (
-                        gpu_detail["gpu_index"] in gpu_ids_to_monitor
+                        resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
                         self._gpu_utilization_history.append(
