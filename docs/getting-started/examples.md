@@ -14,7 +14,7 @@ But you can't get them in your code, see the Context Manager section
 below for that.
 
 ```python
-# skip mktestdocs testing because a) we would need to add the large tensorflow package as a doc
+# skip mktestdocs
 # dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
 # would slow things down further.
 import tensorflow as tf
@@ -53,7 +53,7 @@ We think this is the best way to use CodeCarbon. Still only two lines of
 code, and you can get the emissions in your code.
 
 ```python
-# skip mktestdocs testing because a) we would need to add the large tensorflow package as a doc
+# skip mktestdocs
 # dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
 # would slow things down further.
 import tensorflow as tf
@@ -102,7 +102,7 @@ background after your computation code has crashed, so your program will
 never finish.
 
 ```python
-# skip mktestdocs testing because a) we would need to add the large tensorflow package as a doc
+# skip mktestdocs
 # dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
 # would slow things down further.
 import tensorflow as tf

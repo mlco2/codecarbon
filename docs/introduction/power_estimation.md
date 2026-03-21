@@ -23,7 +23,8 @@ The `Power.from_energies_and_delay` method handles this operation:
 
 ```python
 from codecarbon.core import units
-energy_now= units.Energy(kWh=1.0)
+
+energy_now = units.Energy(kWh=1.0)
 energy_previous = units.Energy(kWh=0.5)
 delay = units.Time(seconds=3600.0)
 delta_energy_kwh = float(abs(energy_now.kWh - energy_previous.kWh))
