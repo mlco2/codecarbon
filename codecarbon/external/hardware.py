@@ -330,6 +330,58 @@ class CPU(BaseHardware):
             logger.debug(
                 f"CPU load {self._tdp} W and {cpu_load:.1f}% ({cpu_load_normalized:.1f}% normalized) => estimation of {power:.2f} W for process {self._pid} and {len(current_cpu_times) - 1} children."
             )
+        elif self._tracking_mode == "process_tree":
+            # process_tree mode is an alias for process mode
+            # Both track main process and all children recursively
+            # This alias is added for consistency with RAM module naming
+            # Use CPU times for accurate process tree tracking
+            current_time = time.time()
+            current_cpu_times: Dict[int, float] = {}
+
+            # Get CPU time for main process and all children
+            try:
+                processes = [self._process] + self._process.children(recursive=True)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                processes = [self._process]
+
+            for proc in processes:
+                try:
+                    cpu_times = proc.cpu_times()
+                    total_cpu_time = cpu_times.user + cpu_times.system
+                    current_cpu_times[proc.pid] = total_cpu_time
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    logger.debug(
+                        f"Process {proc.pid} disappeared or access denied when getting CPU times."
+                    )
+
+            # Calculate CPU usage based on delta
+            if self._last_measurement_time is not None:
+                time_delta = current_time - self._last_measurement_time
+                if time_delta > 0:
+                    total_cpu_delta = 0.0
+                    for pid, cpu_time in current_cpu_times.items():
+                        last_cpu_time = self._last_cpu_times.get(pid, cpu_time)
+                        cpu_delta = cpu_time - last_cpu_time
+                        if cpu_delta > 0:
+                            total_cpu_delta += cpu_delta
+
+                    cpu_load = (total_cpu_delta / time_delta) * 100
+                else:
+                    cpu_load = 0.0
+            else:
+                cpu_load = 0.0
+                logger.debug("First measurement, no CPU delta available yet")
+
+            # Store for next measurement
+            self._last_measurement_time = current_time
+            self._last_cpu_times = current_cpu_times
+
+            # Normalize to percentage of total CPU capacity
+            cpu_load_normalized = cpu_load / self._cpu_count
+            power = self._tdp * cpu_load_normalized / 100
+            logger.debug(
+                f"CPU load {self._tdp} W and {cpu_load:.1f}% ({cpu_load_normalized:.1f}% normalized) => estimation of {power:.2f} W for process tree {self._pid}."
+            )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
         return Power.from_watts(power)
