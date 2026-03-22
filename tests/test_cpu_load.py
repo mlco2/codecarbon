@@ -121,3 +121,26 @@ class TestCPULoad(unittest.TestCase):
         for test in tests_values:
             power = cpu._calculate_power_from_cpu_load(tdp, test["cpu_load"], cpu_model)
             self.assertEqual(power, test["expected_power"])
+
+    @mock.patch(
+        "codecarbon.external.hardware.CPU._get_power_from_cpus",
+        return_value=Power.from_watts(0),
+    )
+    def test_cpu_total_power_empty_history(
+        self,
+        mocked_is_psutil_available,
+        mocked_is_powergadget_available,
+        mocked_is_rapl_available,
+        mocked_get_power_from_cpus,
+    ):
+        """Regression test for issue #832: ZeroDivisionError when no power samples collected."""
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+        )
+        # Simulate an empty power history before calling total_power
+        cpu._power_history = []
+        result = cpu.total_power()
+        # Should NOT raise ZeroDivisionError, should return a valid Power object
+        self.assertIsInstance(result, Power)
+        self.assertEqual(result.W, 0)
+
