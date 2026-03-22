@@ -1147,11 +1147,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         :param cloud_provider: The cloud provider specified for estimating emissions
                                intensity, defaults to None.
                                See https://github.com/mlco2/codecarbon/
-                                        blob/master/codecarbon/data/cloud/impact.csv
+                                        blob/main/codecarbon/data/cloud/impact.csv
                                for a list of cloud providers
         :param cloud_region: The region of the cloud data center, defaults to None.
                              See https://github.com/mlco2/codecarbon/
-                                        blob/master/codecarbon/data/cloud/impact.csv
+                                        blob/main/codecarbon/data/cloud/impact.csv
                              for a list of cloud regions.
         :param country_2letter_iso_code: For use with the Electricity Maps emissions API.
                                          See http://api.electricitymap.org/v3/zones for
@@ -1374,11 +1374,11 @@ def track_emissions(
     :param cloud_provider: The cloud provider specified for estimating emissions
                            intensity, defaults to None.
                            See https://github.com/mlco2/codecarbon/
-                                            blob/master/codecarbon/data/cloud/impact.csv
+                                            blob/main/codecarbon/data/cloud/impact.csv
                            for a list of cloud providers.
     :param cloud_region: The region of the cloud data center, defaults to None.
                          See https://github.com/mlco2/codecarbon/
-                                            blob/master/codecarbon/data/cloud/impact.csv
+                                            blob/main/codecarbon/data/cloud/impact.csv
                          for a list of cloud regions.
     :param country_2letter_iso_code: For use with the Electricity Maps emissions API.
                                      See http://api.electricitymap.org/v3/zones for

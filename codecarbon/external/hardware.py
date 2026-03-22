@@ -196,7 +196,7 @@ class CPU(BaseHardware):
         rapl_include_dram: bool = False,
         rapl_prefer_psys: bool = False,
     ):
-        assert tracking_mode in ["machine", "process"]
+        assert tracking_mode in ["machine", "process", "process_tree"]
         self._power_history: List[Power] = []
         self._output_dir = output_dir
         self._mode = mode
