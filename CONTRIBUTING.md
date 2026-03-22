@@ -39,7 +39,7 @@
 <!-- TOC --><a name="have-a-question"></a>
 ## </a> Have a Question?
 
-Please see the [FAQ](https://mlco2.github.io/codecarbon/faq.html) for questions.
+Please see the [FAQ](https://docs.codecarbon.io/faq.html) for questions.
 
 
 <!-- TOC --><a name="found-a-bug"></a>
@@ -148,7 +148,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 -   7Zip is often already installed, running it with `7z b` makes a quick CPU test.
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
--   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://mlco2.github.io/codecarbon/test_on_scaleway.html) to install it.
+-   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://docs.codecarbon.io/test_on_scaleway.html) to install it.
 -   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
 -   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and avaliable for Windows and Linux.
 
@@ -284,19 +284,19 @@ uv run --only-group doc task docs
 
 to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
 
-### Rebase your branch on master 
+### Rebase your branch on main 
 
-Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
+Before creating a PR, please make sure to rebase your branch on main to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh
 # Be careful, this command will delete every local changes you have, make sure to commit or stash them before running it
-TARGET_BRANCH=master
+TARGET_BRANCH=main
 current_branch=$(git symbolic-ref --short HEAD)
 git switch $TARGET_BRANCH && git pull
 git switch $current_branch --force && git fetch origin $TARGET_BRANCH
 git rebase $TARGET_BRANCH
 ```
 
-In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to master. This is because the commits from your branch are being applied to master, so they are incoming. In case of a merge, it's the opposite!
+In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to main. This is because the commits from your branch are being applied to main, so they are incoming. In case of a merge, it's the opposite!
 
 Check if everything is fine:
 
@@ -309,19 +309,19 @@ Push force
 git push --force-with-lease
 ```
 
-### Rebase your branch on master 
+### Rebase your branch on main 
 
-Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
+Before creating a PR, please make sure to rebase your branch on main to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh
 # Be careful, this command will delete every local changes you have, make sure to commit or stash them before running it
-TARGET_BRANCH=master
+TARGET_BRANCH=main
 current_branch=$(git symbolic-ref --short HEAD)
 git switch $TARGET_BRANCH && git pull
 git switch $current_branch --force && git fetch origin $TARGET_BRANCH
 git rebase $TARGET_BRANCH
 ```
 
-In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to master. This is because the commits from your branch are being applied to master, so they are incoming. In case of a merge, it's the opposite!
+In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to main. This is because the commits from your branch are being applied to main, so they are incoming. In case of a merge, it's the opposite!
 
 Check if everything is fine:
 

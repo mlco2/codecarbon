@@ -5,7 +5,7 @@ docs_dir: docs
 site_dir: site
 repo_url: https://github.com/mlco2/codecarbon
 repo_name: mlco2/codecarbon
-edit_uri: edit/master/docs/
+edit_uri: edit/main/docs/
 copyright: "&copy; CodeCarbon"
 
 theme:
