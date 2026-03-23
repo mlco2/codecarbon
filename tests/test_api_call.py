@@ -2,6 +2,7 @@ import dataclasses
 import unittest
 from uuid import uuid4
 
+import requests
 import requests_mock
 
 from codecarbon.core.api_client import ApiClient
@@ -106,3 +107,17 @@ class TestApi(unittest.TestCase):
                 tracking_mode="Machine",
             )
             assert api.add_emission(dataclasses.asdict(carbon_emission))
+
+    def test_call_api_error_raises(self):
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://test.com/runs",
+                status_code=500,
+            )
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api = ApiClient(
+                    experiment_id="experiment_id",
+                    endpoint_url="http://test.com",
+                    api_key="Toto",
+                    conf=conf,
+                )

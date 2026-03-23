@@ -470,14 +470,18 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(HTTPOutput(self._emissions_endpoint))
 
         if self._save_to_api:
-            cc_api__out = CodeCarbonAPIOutput(
-                endpoint_url=self._api_endpoint,
-                experiment_id=self._experiment_id,
-                api_key=api_key,
-                conf=self._conf,
-            )
-            self.run_id = cc_api__out.run_id
-            self._output_handlers.append(cc_api__out)
+            try:
+                cc_api__out = CodeCarbonAPIOutput(
+                    endpoint_url=self._api_endpoint,
+                    experiment_id=self._experiment_id,
+                    api_key=api_key,
+                    conf=self._conf,
+                )
+                self.run_id = cc_api__out.run_id
+                self._output_handlers.append(cc_api__out)
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                self.run_id = uuid.uuid4()
         else:
             self.run_id = uuid.uuid4()
 
