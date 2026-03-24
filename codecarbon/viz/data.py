@@ -23,6 +23,17 @@ class Data:
 
     @staticmethod
     def get_project_summary(project_data: List[Dict]):
+        if not project_data:
+            return {
+                "last_run": {"timestamp": None, "duration": 0, "emissions": 0, "energy_consumed": 0},
+                "total": {"duration": 0, "emissions": 0, "energy_consumed": 0},
+                "country_name": "",
+                "country_iso_code": "",
+                "region": "",
+                "on_cloud": False,
+                "cloud_provider": "",
+                "cloud_region": "",
+            }
         last_run = project_data[-1]
         project_summary = {
             "last_run": {
