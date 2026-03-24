@@ -23,6 +23,23 @@ class Data:
 
     @staticmethod
     def get_project_summary(project_data: List[Dict]):
+        if not project_data:
+            # Return empty summary if no data available (fixes IndexError on empty projects)
+            return {
+                "last_run": None,
+                "total": {
+                    "duration": 0,
+                    "emissions": 0,
+                    "energy_consumed": 0,
+                },
+                "country_name": "",
+                "country_iso_code": "",
+                "region": "",
+                "on_cloud": "",
+                "cloud_provider": "",
+                "cloud_region": "",
+            }
+        
         last_run = project_data[-1]
         project_summary = {
             "last_run": {
