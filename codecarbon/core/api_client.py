@@ -143,7 +143,7 @@ class ApiClient:  # (AsyncClient)
         r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
-            return None
+        r.raise_for_status()
         return r.json()
 
     def update_organization(self, organization: OrganizationCreate):
