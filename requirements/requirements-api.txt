@@ -4,6 +4,8 @@ alembic==1.17.2
     # via carbonserver (carbonserver/pyproject.toml)
 annotated-doc==0.0.4
     # via fastapi
+annotated-types==0.7.0
+    # via pydantic
 anyio==4.12.0
     # via
     #   httpx
@@ -123,13 +125,18 @@ pyasn1==0.6.2
     #   rsa
 pycparser==2.23
     # via cffi
-pydantic==1.10.24
+pydantic==2.12.5
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi
     #   fastapi-cloud-cli
     #   fastapi-oidc
     #   fastapi-pagination
+    #   pydantic-settings
+pydantic-core==2.41.5
+    # via pydantic
+pydantic-settings==2.13.1
+    # via carbonserver (carbonserver/pyproject.toml)
 pygments==2.19.2
     # via
     #   pytest
@@ -141,7 +148,9 @@ pytest==9.0.1
 python-dateutil==2.9.0.post0
     # via carbonserver (carbonserver/pyproject.toml)
 python-dotenv==1.2.1
-    # via uvicorn
+    # via
+    #   pydantic-settings
+    #   uvicorn
 python-jose==3.5.0
     # via fastapi-oidc
 python-multipart==0.0.22
@@ -202,9 +211,15 @@ typing-extensions==4.15.0
     #   fastapi-pagination
     #   jwcrypto
     #   pydantic
+    #   pydantic-core
     #   rich-toolkit
     #   starlette
     #   typer
+    #   typing-inspection
+typing-inspection==0.4.2
+    # via
+    #   pydantic
+    #   pydantic-settings
 urllib3==2.6.3
     # via
     #   requests

@@ -15,7 +15,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "asyncio",
     "alembic<2.0.0",
     "authlib>=1.2.1",
     "bcrypt<5.0.0",
@@ -34,6 +33,7 @@ dependencies = [
     "fastapi-pagination<1.0.0",
     "mock",
     "pytest",
+    "pytest-asyncio",
     "responses",
     "numpy",
     "psutil",
