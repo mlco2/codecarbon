@@ -32,7 +32,8 @@ async def db_exception_handler(request: Request, exc: DBException):
 
 
 async def generic_exception_handler(request: Request, exc: Exception):
-    return JSONResponse({"detail": "Generic error"}, status_code=500)
+    logger.error(f"Generic error: {str(exc)}")
+    return JSONResponse({"detail": f"Internal error: {str(exc)}"}, status_code=500)
 
 
 async def validation_exception_handler(request: Request, exc: ValidationError):
