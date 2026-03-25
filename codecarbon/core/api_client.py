@@ -247,11 +247,7 @@ class ApiClient:  # (AsyncClient)
         Create the experiment for project_id
         """
         if self.experiment_id is None:
-            # TODO : raise an Exception ?
-            logger.error(
-                "ApiClient FATAL The ApiClient._create_run() needs an experiment_id !"
-            )
-            return None
+            raise ValueError("ApiClient._create_run() requires experiment_id to be set")
         try:
             run = RunCreate(
                 timestamp=get_datetime_with_timezone(),
