@@ -18,7 +18,7 @@ from codecarbon.cli.cli_utils import (
     create_new_config_file,
     get_api_endpoint,
     get_config,
-    get_existing_local_exp_id,
+    get_existing_exp_id,
     overwrite_local_config,
 )
 from codecarbon.cli.monitor import run_and_monitor
@@ -356,10 +356,10 @@ def monitor(
             "region": region,
         }
     else:
-        experiment_id = get_existing_local_exp_id()
+        experiment_id = get_existing_exp_id()
         if api and experiment_id is None:
             print(
-                "ERROR: No experiment id, call 'codecarbon config' first. Or run in offline mode with `--offline --country-iso-code FRA` flag if you don't want to connect to the API.",
+                "ERROR: No experiment id. Set CODECARBON_EXPERIMENT_ID, call 'codecarbon config' first, or run in offline mode with `--offline --country-iso-code FRA`.",
                 file=sys.stderr,
             )
             raise typer.Exit(1)
