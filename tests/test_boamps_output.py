@@ -34,8 +34,8 @@ from codecarbon.output_methods.boamps.models import (
     BoAmpsSoftware,
     BoAmpsSystem,
     BoAmpsTask,
-    _camel_to_snake,
-    _snake_to_camel,
+    camel_to_snake,
+    snake_to_camel,
 )
 from codecarbon.output_methods.boamps.output import BoAmpsOutput
 from codecarbon.output_methods.emissions_data import EmissionsData
@@ -110,20 +110,20 @@ class TestModelSerialization(unittest.TestCase):
     """Each model serializes to correct camelCase JSON structure."""
 
     def test_snake_to_camel_conversion(self):
-        self.assertEqual(_snake_to_camel("measurement_method"), "measurementMethod")
-        self.assertEqual(_snake_to_camel("cpu_tracking_mode"), "cpuTrackingMode")
-        self.assertEqual(_snake_to_camel("os"), "os")
-        self.assertEqual(_snake_to_camel("nb_component"), "nbComponent")
+        self.assertEqual(snake_to_camel("measurement_method"), "measurementMethod")
+        self.assertEqual(snake_to_camel("cpu_tracking_mode"), "cpuTrackingMode")
+        self.assertEqual(snake_to_camel("os"), "os")
+        self.assertEqual(snake_to_camel("nb_component"), "nbComponent")
         self.assertEqual(
-            _snake_to_camel("format_version_specification_uri"),
+            snake_to_camel("format_version_specification_uri"),
             "formatVersionSpecificationUri",
         )
 
     def test_camel_to_snake_conversion(self):
-        self.assertEqual(_camel_to_snake("measurementMethod"), "measurement_method")
-        self.assertEqual(_camel_to_snake("cpuTrackingMode"), "cpu_tracking_mode")
-        self.assertEqual(_camel_to_snake("os"), "os")
-        self.assertEqual(_camel_to_snake("nbComponent"), "nb_component")
+        self.assertEqual(camel_to_snake("measurementMethod"), "measurement_method")
+        self.assertEqual(camel_to_snake("cpuTrackingMode"), "cpu_tracking_mode")
+        self.assertEqual(camel_to_snake("os"), "os")
+        self.assertEqual(camel_to_snake("nbComponent"), "nb_component")
 
     def test_publisher_serialization(self):
         pub = BoAmpsPublisher(

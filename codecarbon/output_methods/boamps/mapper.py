@@ -3,6 +3,7 @@ Maps CodeCarbon EmissionsData to BoAmps report format.
 """
 
 import warnings
+from dataclasses import fields as dataclass_fields
 from typing import Optional
 
 from codecarbon.output_methods.boamps.models import (
@@ -207,11 +208,11 @@ def _build_infrastructure(
                 if user_comp.component_type in auto_by_type:
                     auto = auto_by_type[user_comp.component_type]
                     # User values take precedence; auto-detected fill blanks
-                    for f in ("component_name", "nb_component", "memory_size",
-                              "manufacturer", "family", "series", "share"):
-                        user_val = getattr(user_comp, f)
-                        if user_val is None:
-                            setattr(user_comp, f, getattr(auto, f))
+                    for f in dataclass_fields(user_comp):
+                        if f.name == "component_type":
+                            continue
+                        if getattr(user_comp, f.name) is None:
+                            setattr(user_comp, f.name, getattr(auto, f.name))
                     used_types.add(user_comp.component_type)
                 merged.append(user_comp)
             # Keep auto-detected components that the user didn't override
@@ -229,8 +230,8 @@ def _build_environment(
     """Build environment from EmissionsData location fields."""
     env = BoAmpsEnvironment(
         country=emissions.country_name or None,
-        latitude=emissions.latitude if emissions.latitude is not None else None,
-        longitude=emissions.longitude if emissions.longitude is not None else None,
+        latitude=emissions.latitude,
+        longitude=emissions.longitude,
     )
 
     if overrides:

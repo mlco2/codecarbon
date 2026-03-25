@@ -16,14 +16,14 @@ from codecarbon.output_methods.boamps.models import (
     BoAmpsHardware,
     BoAmpsHeader,
     BoAmpsTask,
-    _camel_to_snake,
+    camel_to_snake,
 )
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 
 def _extract_overrides(data: dict, keys: tuple) -> dict:
     """Extract known camelCase keys from a dict, returning them as snake_case."""
-    return {_camel_to_snake(k): data[k] for k in keys if k in data}
+    return {camel_to_snake(k): data[k] for k in keys if k in data}
 
 
 class BoAmpsOutput(BaseOutput):
@@ -84,13 +84,13 @@ class BoAmpsOutput(BaseOutput):
             FileNotFoundError: If the context file does not exist.
             json.JSONDecodeError: If the context file contains invalid JSON.
         """
-        if not os.path.isfile(context_file_path):
+        try:
+            with open(context_file_path) as f:
+                context = json.load(f)
+        except FileNotFoundError:
             raise FileNotFoundError(
                 f"BoAmps context file not found: {context_file_path}"
             )
-
-        with open(context_file_path) as f:
-            context = json.load(f)
 
         task = None
         header = None
