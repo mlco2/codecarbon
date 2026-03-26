@@ -22,6 +22,7 @@ export async function fetchApiClient<T>(
 ): Promise<T | null> {
     const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
+        credentials: "include",
         headers: {
             "Content-Type": "application/json",
             ...(options?.headers || {}),
@@ -36,7 +37,12 @@ export async function fetchApiClient<T>(
         } catch (e) {
             // Ignore JSON parsing errors
         }
-        console.log(errorMessage);
+        console.error(errorMessage);
+        return null;
+    }
+
+    // Handle 204 No Content responses (e.g., DELETE operations)
+    if (response.status === 204) {
         return null;
     }
 

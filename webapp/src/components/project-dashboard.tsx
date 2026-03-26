@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import ProjectDashboardBase from "./project-dashboard-base";
 import ProjectSettingsModal from "./project-settings-modal";
 import ShareProjectButton from "./share-project-button";
+import { useModal } from "@/hooks/useModal";
 
 export default function ProjectDashboard({
     project,
@@ -35,7 +36,7 @@ export default function ProjectDashboard({
     onSettingsClick,
     isLoading,
 }: ProjectDashboardProps) {
-    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const settingsModal = useModal();
     const [isExporting, setIsExporting] = useState(false);
 
     const handleJsonExport = () => {
@@ -163,7 +164,7 @@ export default function ProjectDashboard({
                     className="p-1 rounded-full"
                     variant="outline"
                     size="icon"
-                    onClick={() => setIsSettingsModalOpen(true)}
+                    onClick={settingsModal.open}
                 >
                     <SettingsIcon className="h-5 w-5" />
                 </Button>
@@ -192,8 +193,8 @@ export default function ProjectDashboard({
             />
 
             <ProjectSettingsModal
-                open={isSettingsModalOpen}
-                onOpenChange={setIsSettingsModalOpen}
+                open={settingsModal.isOpen}
+                onOpenChange={settingsModal.setIsOpen}
                 project={project}
                 onProjectUpdated={() => {
                     // Call the original onSettingsClick to refresh the data
