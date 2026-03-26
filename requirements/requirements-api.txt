@@ -11,7 +11,7 @@ anyio==4.12.0
     #   httpx
     #   starlette
     #   watchfiles
-authlib==1.6.8
+authlib==1.6.9
     # via carbonserver (carbonserver/pyproject.toml)
 bcrypt==4.3.0
     # via carbonserver (carbonserver/pyproject.toml)
@@ -41,7 +41,7 @@ dependency-injector==4.48.2
     # via carbonserver (carbonserver/pyproject.toml)
 dnspython==2.8.0
     # via email-validator
-ecdsa==0.19.1
+ecdsa==0.19.2
     # via python-jose
 email-validator==2.3.0
     # via
@@ -109,7 +109,7 @@ psutil==6.1.1
     # via carbonserver (carbonserver/pyproject.toml)
 psycopg2-binary==2.9.11
     # via carbonserver (carbonserver/pyproject.toml)
-pyasn1==0.6.2
+pyasn1==0.6.3
     # via
     #   python-jose
     #   rsa
