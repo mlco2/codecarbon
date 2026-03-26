@@ -25,6 +25,7 @@ import {
 import CreateOrganizationModal from "./createOrganizationModal";
 import { getOrganizations } from "@/server-functions/organizations";
 import { Button } from "./ui/button";
+import { useModal } from "@/hooks/useModal";
 
 const USER_PROFILE_URL = process.env.NEXT_PUBLIC_FIEF_BASE_URL; // Redirect to Fief profile to handle profile updates there
 export default function NavBar({
@@ -40,7 +41,7 @@ export default function NavBar({
     const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
     const iconStyles = "h-4 w-4 flex-shrink-0 text-muted-foreground";
     const pathname = usePathname();
-    const [isNewOrgModalOpen, setNewOrgModalOpen] = useState(false);
+    const newOrgModal = useModal();
     const [organizationList, setOrganizationList] = useState<
         Organization[] | undefined
     >([]);
@@ -120,7 +121,7 @@ export default function NavBar({
     }, [pathname, organizationList, selectedOrg]);
 
     const handleNewOrgClick = async () => {
-        setNewOrgModalOpen(true);
+        newOrgModal.open();
         setDropdownOpen(false); // Close the dropdown menu
     };
 
@@ -247,8 +248,8 @@ export default function NavBar({
                             </Select>
                         )}
                         <CreateOrganizationModal
-                            isOpen={isNewOrgModalOpen}
-                            onClose={() => setNewOrgModalOpen(false)}
+                            isOpen={newOrgModal.isOpen}
+                            onClose={newOrgModal.close}
                             onOrganizationCreated={refreshOrgList}
                         />
                         {USER_PROFILE_URL && (

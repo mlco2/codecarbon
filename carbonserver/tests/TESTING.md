@@ -38,9 +38,17 @@ A Postman collection of requests is available: ```carbonserver/tests/postman/Tes
 
 ## Running the tests:
 
+Test dependencies (pytest, pytest-asyncio, etc.) are in the `dev` optional group. Install them with:
+
 ```bash
-uv run --extra api task test-api-unit # Unit tests on api
-uv run --extra api task test-api-integ # Integration tests
+uv sync --project carbonserver --extra dev
+```
+
+Then run:
+
+```bash
+uv run task test-api-unit  # Unit tests on api
+uv run task test-api-integ # Integration tests
 ```
 
 To test the HTTP layer, you can also deploy a local instance:

@@ -23,7 +23,7 @@ jobs:
     - name: Set up Python
       run: uv python install 3.12
     - name: Install dependencies
-      run: uv sync --project carbonserver
+      run: uv sync --project carbonserver --extra dev
     - name: Unit tests on api
       run: uv run task test-api-unit
   test_api_server:
@@ -60,7 +60,7 @@ jobs:
     - name: Set up Python
       run: uv python install 3.12
     - name: Install dependencies
-      run: uv sync --project carbonserver
+      run: uv sync --project carbonserver --extra dev
     - name: Setup database
       env:
         DATABASE_URL: postgresql://codecarbon-user:supersecret@localhost:5480/codecarbon_db
