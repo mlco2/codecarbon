@@ -11,8 +11,6 @@ anyio==4.12.0
     #   httpx
     #   starlette
     #   watchfiles
-asyncio==4.0.0
-    # via carbonserver (carbonserver/pyproject.toml)
 authlib==1.6.8
     # via carbonserver (carbonserver/pyproject.toml)
 bcrypt==4.3.0
@@ -87,8 +85,6 @@ idna==3.11
     #   email-validator
     #   httpx
     #   requests
-iniconfig==2.3.0
-    # via pytest
 itsdangerous==2.2.0
     # via carbonserver (carbonserver/pyproject.toml)
 jinja2==3.1.6
@@ -107,14 +103,8 @@ markupsafe==3.0.3
     #   mako
 mdurl==0.1.2
     # via markdown-it-py
-mock==5.2.0
-    # via carbonserver (carbonserver/pyproject.toml)
 numpy==2.4.2
     # via carbonserver (carbonserver/pyproject.toml)
-packaging==25.0
-    # via pytest
-pluggy==1.6.0
-    # via pytest
 psutil==6.1.1
     # via carbonserver (carbonserver/pyproject.toml)
 psycopg2-binary==2.9.11
@@ -138,12 +128,8 @@ pydantic-core==2.41.5
 pydantic-settings==2.13.1
     # via carbonserver (carbonserver/pyproject.toml)
 pygments==2.19.2
-    # via
-    #   pytest
-    #   rich
+    # via rich
 pyjwt==2.10.1
-    # via carbonserver (carbonserver/pyproject.toml)
-pytest==9.0.1
     # via carbonserver (carbonserver/pyproject.toml)
 python-dateutil==2.9.0.post0
     # via carbonserver (carbonserver/pyproject.toml)
@@ -156,21 +142,13 @@ python-jose==3.5.0
 python-multipart==0.0.22
     # via fastapi
 pyyaml==6.0.3
-    # via
-    #   responses
-    #   uvicorn
+    # via uvicorn
 rapidfuzz==3.14.3
     # via carbonserver (carbonserver/pyproject.toml)
 requests==2.32.5
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi-oidc
-    #   requests-mock
-    #   responses
-requests-mock==1.12.1
-    # via carbonserver (carbonserver/pyproject.toml)
-responses==0.25.8
-    # via carbonserver (carbonserver/pyproject.toml)
 rich==14.2.0
     # via
     #   rich-toolkit
@@ -223,7 +201,6 @@ typing-inspection==0.4.2
 urllib3==2.6.3
     # via
     #   requests
-    #   responses
     #   sentry-sdk
 uvicorn==0.38.0
     # via

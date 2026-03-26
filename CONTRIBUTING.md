@@ -467,16 +467,21 @@ python examples/api_call_debug.py
 <!-- TOC --><a name="test-the-api"></a>
 ### Test the API
 
-To test the API, you can use the following command:
+Test dependencies (pytest, pytest-asyncio, etc.) are in the `dev` optional group. Install them first:
 
 ```sh
-uv run api.test-unit
+uv sync --project carbonserver --extra dev
+```
+
+Then run:
+
+```sh
+uv run task test-api-unit
 ```
 
 ```sh
 export CODECARBON_API_URL=http://localhost:8008
-uv run api.test-integ
-
+uv run task test-api-integ
 ```
 
 <!-- TOC --><a name="restore-database-from-a-production-backup"></a>
