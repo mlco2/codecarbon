@@ -196,7 +196,7 @@ class CPU(BaseHardware):
         rapl_include_dram: bool = False,
         rapl_prefer_psys: bool = False,
     ):
-        assert tracking_mode in ["machine", "process"]
+        assert tracking_mode in ["machine", "process", "process_tree"]
         self._power_history: List[Power] = []
         self._output_dir = output_dir
         self._mode = mode
@@ -329,6 +329,19 @@ class CPU(BaseHardware):
             power = self._tdp * cpu_load_normalized / 100
             logger.debug(
                 f"CPU load {self._tdp} W and {cpu_load:.1f}% ({cpu_load_normalized:.1f}% normalized) => estimation of {power:.2f} W for process {self._pid} and {len(current_cpu_times) - 1} children."
+            )
+        elif self._tracking_mode == "process_tree":
+            # Sum CPU percent for process and its children
+            total_cpu_load = self._process.cpu_percent(interval=0.5)
+            for child in self._process.children(recursive=True):
+                try:
+                    total_cpu_load += child.cpu_percent(interval=0.0)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            cpu_load = total_cpu_load / self._cpu_count
+            power = self._tdp * cpu_load / 100
+            logger.debug(
+                f"CPU load {self._tdp} W and {cpu_load * 100:.1f}% => estimation of {power} W for process tree {self._pid}."
             )
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
