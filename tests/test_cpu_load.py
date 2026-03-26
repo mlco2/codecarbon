@@ -144,3 +144,45 @@ class TestCPULoad(unittest.TestCase):
         self.assertIsInstance(result, Power)
         self.assertEqual(result.W, 0)
 
+    @mock.patch(
+        "codecarbon.external.hardware.CPU._get_power_from_cpus",
+        return_value=Power.from_watts(42),
+    )
+    def test_cpu_total_power_fetches_sample_when_history_is_empty(
+        self,
+        mocked_get_power_from_cpus,
+        mocked_is_psutil_available,
+        mocked_is_powergadget_available,
+        mocked_is_rapl_available,
+    ):
+        """Calling total_power should always fetch the latest sample before averaging."""
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+        )
+        cpu._power_history = []
+        result = cpu.total_power()
+        self.assertEqual(result.W, 42)
+        mocked_get_power_from_cpus.assert_called_once()
+        self.assertEqual(cpu._power_history, [])
+
+    @mock.patch(
+        "codecarbon.external.hardware.CPU._get_power_from_cpus",
+        return_value=Power.from_watts(30),
+    )
+    def test_cpu_total_power_averages_buffered_and_latest_sample(
+        self,
+        mocked_get_power_from_cpus,
+        mocked_is_psutil_available,
+        mocked_is_powergadget_available,
+        mocked_is_rapl_available,
+    ):
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+        )
+        cpu._power_history = [Power.from_watts(10), Power.from_watts(20)]
+
+        result = cpu.total_power()
+
+        self.assertEqual(result.W, 20)
+        self.assertEqual(cpu._power_history, [])
+        mocked_get_power_from_cpus.assert_called_once()
