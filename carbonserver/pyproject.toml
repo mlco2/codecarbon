@@ -31,17 +31,22 @@ dependencies = [
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
     "fastapi-pagination<1.0.0",
-    "mock",
-    "pytest",
-    "responses",
     "numpy",
     "psutil",
-    "requests-mock",
     "rapidfuzz",
     "PyJWT",
     "fastapi-oidc>=0.0.9",
     "authlib>=1.6.6",
     "itsdangerous>=2.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mock",
+    "pytest",
+    "pytest-asyncio",
+    "responses",
+    "requests-mock",
 ]
 
 [project.urls]
