@@ -34,8 +34,7 @@ def _to_dict(obj) -> dict:
         key = snake_to_camel(f.name)
         if isinstance(value, list):
             result[key] = [
-                _to_dict(item) if is_dataclass(item) else item
-                for item in value
+                _to_dict(item) if is_dataclass(item) else item for item in value
             ]
         elif is_dataclass(value):
             result[key] = _to_dict(value)

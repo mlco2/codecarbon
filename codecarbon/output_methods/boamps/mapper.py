@@ -3,7 +3,8 @@ Maps CodeCarbon EmissionsData to BoAmps report format.
 """
 
 import warnings
-from dataclasses import fields as dataclass_fields, replace
+from dataclasses import fields as dataclass_fields
+from dataclasses import replace
 from typing import Optional
 
 from codecarbon.output_methods.boamps.models import (
@@ -193,7 +194,9 @@ def _build_infrastructure(
     is_cloud = emissions.on_cloud == "Y" or bool(emissions.cloud_provider)
     infra = BoAmpsInfrastructure(
         infra_type="publicCloud" if is_cloud else "onPremise",
-        cloud_provider=emissions.cloud_provider if is_cloud and emissions.cloud_provider else None,
+        cloud_provider=(
+            emissions.cloud_provider if is_cloud and emissions.cloud_provider else None
+        ),
         components=components,
     )
 
