@@ -1,7 +1,10 @@
 import io
 import json
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import requests
 
 from codecarbon.cli import auth
 from codecarbon.cli.auth import _CallbackHandler
@@ -100,6 +103,31 @@ class TestAuthMethods(unittest.TestCase):
         ):
             self.assertTrue(auth._validate_access_token("token"))
 
+    @patch("codecarbon.cli.auth._discover_endpoints", return_value={"jwks_uri": "jwks"})
+    @patch(
+        "codecarbon.cli.auth.requests.get",
+        side_effect=requests.RequestException("offline"),
+    )
+    def test_validate_access_token_network_error_returns_true(
+        self, mock_get, mock_discover
+    ):
+        self.assertTrue(auth._validate_access_token("token"))
+
+    @patch("codecarbon.cli.auth._discover_endpoints", return_value={"jwks_uri": "jwks"})
+    @patch("codecarbon.cli.auth.requests.get")
+    @patch("codecarbon.cli.auth.JsonWebKey.import_key_set")
+    @patch(
+        "codecarbon.cli.auth.jose_jwt.decode",
+        side_effect=Exception("invalid"),
+    )
+    def test_validate_access_token_invalid_returns_false(
+        self, mock_decode, mock_import_key_set, mock_get, mock_discover
+    ):
+        mock_get.return_value.json.return_value = {"keys": []}
+        mock_get.return_value.raise_for_status.return_value = None
+
+        self.assertFalse(auth._validate_access_token("token"))
+
     @patch("codecarbon.cli.auth.requests.post")
     @patch("codecarbon.cli.auth._discover_endpoints")
     def test_refresh_tokens(self, mock_discover, mock_post):
@@ -120,6 +148,18 @@ class TestAuthMethods(unittest.TestCase):
         mock_validate.return_value = True
         self.assertEqual(auth.get_access_token(), "a")
 
+    @patch("codecarbon.cli.auth._load_credentials", side_effect=OSError("missing"))
+    def test_get_access_token_raises_when_credentials_missing(self, mock_load):
+        with self.assertRaises(ValueError):
+            auth.get_access_token()
+
+    @patch("codecarbon.cli.auth._load_credentials")
+    def test_get_access_token_raises_when_access_token_missing(self, mock_load):
+        mock_load.return_value = {"refresh_token": "r"}
+
+        with self.assertRaises(ValueError):
+            auth.get_access_token()
+
     @patch("codecarbon.cli.auth._load_credentials")
     @patch("codecarbon.cli.auth._validate_access_token")
     @patch("codecarbon.cli.auth._refresh_tokens")
@@ -133,10 +173,129 @@ class TestAuthMethods(unittest.TestCase):
         self.assertEqual(auth.get_access_token(), "b")
         mock_save.assert_called()
 
+    @patch("codecarbon.cli.auth._refresh_tokens", side_effect=Exception("expired"))
+    @patch("codecarbon.cli.auth._validate_access_token", return_value=False)
+    @patch(
+        "codecarbon.cli.auth._load_credentials",
+        return_value={"access_token": "a", "refresh_token": "r"},
+    )
+    def test_get_access_token_refresh_failure_deletes_credentials(
+        self, mock_load, mock_validate, mock_refresh
+    ):
+        original_credentials_file = auth._CREDENTIALS_FILE
+        temp_credentials = Path("test_credentials.json")
+        try:
+            temp_credentials.write_text("{}")
+            auth._CREDENTIALS_FILE = temp_credentials
+            with self.assertRaises(ValueError):
+                auth.get_access_token()
+            self.assertFalse(temp_credentials.exists())
+        finally:
+            auth._CREDENTIALS_FILE = original_credentials_file
+            temp_credentials.unlink(missing_ok=True)
+
     @patch("codecarbon.cli.auth._load_credentials")
     def test_get_id_token(self, mock_load):
         mock_load.return_value = {"id_token": "i"}
         self.assertEqual(auth.get_id_token(), "i")
+
+    @patch("codecarbon.cli.auth._save_credentials")
+    @patch("codecarbon.cli.auth.webbrowser.open")
+    @patch("codecarbon.cli.auth.HTTPServer")
+    @patch("codecarbon.cli.auth.OAuth2Session")
+    @patch(
+        "codecarbon.cli.auth._discover_endpoints",
+        return_value={
+            "authorization_endpoint": "https://auth.example/authorize",
+            "token_endpoint": "https://auth.example/token",
+        },
+    )
+    def test_authorize_success(
+        self,
+        mock_discover,
+        mock_session_cls,
+        mock_server_cls,
+        mock_browser_open,
+        mock_save_credentials,
+    ):
+        mock_session = MagicMock()
+        mock_session.create_authorization_url.return_value = (
+            "https://auth.example/authorize?state=abc",
+            "abc",
+        )
+        mock_session.fetch_token.return_value = {"access_token": "token"}
+        mock_session_cls.return_value = mock_session
+
+        mock_server = MagicMock()
+        mock_server.handle_request.side_effect = lambda: setattr(
+            auth._CallbackHandler,
+            "callback_url",
+            "http://localhost:8090/callback?code=123",
+        )
+        mock_server_cls.return_value = mock_server
+
+        auth._CallbackHandler.callback_url = None
+        auth._CallbackHandler.error = None
+
+        result = auth.authorize()
+
+        self.assertEqual(result, {"access_token": "token"})
+        mock_browser_open.assert_called_once()
+        mock_server.handle_request.assert_called_once()
+        mock_server.server_close.assert_called_once()
+        mock_save_credentials.assert_called_once_with({"access_token": "token"})
+
+    @patch("codecarbon.cli.auth.HTTPServer")
+    @patch("codecarbon.cli.auth.OAuth2Session")
+    @patch(
+        "codecarbon.cli.auth._discover_endpoints",
+        return_value={
+            "authorization_endpoint": "https://auth.example/authorize",
+            "token_endpoint": "https://auth.example/token",
+        },
+    )
+    def test_authorize_raises_on_callback_error(
+        self, mock_discover, mock_session_cls, mock_server_cls
+    ):
+        mock_session = MagicMock()
+        mock_session.create_authorization_url.return_value = (
+            "https://auth.example/authorize?state=abc",
+            "abc",
+        )
+        mock_session_cls.return_value = mock_session
+        mock_server_cls.return_value = MagicMock()
+
+        auth._CallbackHandler.callback_url = None
+        auth._CallbackHandler.error = "access_denied"
+
+        with self.assertRaises(ValueError):
+            auth.authorize()
+
+    @patch("codecarbon.cli.auth.HTTPServer")
+    @patch("codecarbon.cli.auth.OAuth2Session")
+    @patch(
+        "codecarbon.cli.auth._discover_endpoints",
+        return_value={
+            "authorization_endpoint": "https://auth.example/authorize",
+            "token_endpoint": "https://auth.example/token",
+        },
+    )
+    def test_authorize_raises_when_no_callback_received(
+        self, mock_discover, mock_session_cls, mock_server_cls
+    ):
+        mock_session = MagicMock()
+        mock_session.create_authorization_url.return_value = (
+            "https://auth.example/authorize?state=abc",
+            "abc",
+        )
+        mock_session_cls.return_value = mock_session
+        mock_server_cls.return_value = MagicMock()
+
+        auth._CallbackHandler.callback_url = None
+        auth._CallbackHandler.error = None
+
+        with self.assertRaises(ValueError):
+            auth.authorize()
 
 
 if __name__ == "__main__":
