@@ -52,7 +52,9 @@ def test_api_get_uses_get_api_endpoint(monkeypatch):
 
     runner = CliRunner()
     monkeypatch.setattr(cli_main, "ApiClient", CustomApiClient)
-    monkeypatch.setattr(cli_main, "get_api_endpoint", lambda: "https://custom.codecarbon.io")
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda: "https://custom.codecarbon.io"
+    )
     monkeypatch.setattr(cli_main, "get_access_token", fake_get_access_token)
 
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
@@ -169,7 +171,9 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
         "authorize",
         lambda: calls.__setitem__("authorize", calls["authorize"] + 1),
     )
-    monkeypatch.setattr(cli_main, "get_api_endpoint", lambda: "https://custom-login.codecarbon.io")
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda: "https://custom-login.codecarbon.io"
+    )
     monkeypatch.setattr(cli_main, "get_access_token", lambda: "login-token")
 
     runner = CliRunner()
