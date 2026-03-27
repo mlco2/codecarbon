@@ -14,7 +14,8 @@ from codecarbon.emissions_tracker import EmissionsTracker
 def run_and_monitor(
     ctx: typer.Context,
     log_level: Annotated[
-        str, typer.Option(help="Log level (critical, error, warning, info, debug)")
+        str,
+        typer.Option(default="error", help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
     **tracker_args,
 ):
