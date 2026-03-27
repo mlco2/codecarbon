@@ -42,6 +42,26 @@ def test_api_get_calls_api_and_prints(monkeypatch):
     assert "fake-org" in result.output
 
 
+def test_api_get_uses_get_api_endpoint(monkeypatch):
+    call_info = {}
+
+    class CustomApiClient(FakeApiClient):
+        def __init__(self, endpoint_url=None):
+            call_info["endpoint_url"] = endpoint_url
+            super().__init__(endpoint_url=endpoint_url)
+
+    runner = CliRunner()
+    monkeypatch.setattr(cli_main, "ApiClient", CustomApiClient)
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda: "https://custom.codecarbon.io"
+    )
+    monkeypatch.setattr(cli_main, "get_access_token", fake_get_access_token)
+
+    result = runner.invoke(cli_main.codecarbon, ["test-api"])
+    assert result.exit_code == 0
+    assert call_info["endpoint_url"] == "https://custom.codecarbon.io"
+
+
 def test_monitor_offline_requires_country_iso_code():
     runner = CliRunner()
     result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
@@ -133,11 +153,11 @@ def test_main_exits_with_error_when_command_raises(monkeypatch, capsys):
 
 
 def test_login_calls_authorize_and_auth_check(monkeypatch):
-    calls = {"authorize": 0, "set_token": None, "check_auth": 0}
+    calls = {"authorize": 0, "set_token": None, "check_auth": 0, "endpoint_url": None}
 
     class FakeApiClient:
         def __init__(self, endpoint_url=None):
-            self.endpoint_url = endpoint_url
+            calls["endpoint_url"] = endpoint_url
 
         def set_access_token(self, token):
             calls["set_token"] = token
@@ -151,6 +171,9 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
         "authorize",
         lambda: calls.__setitem__("authorize", calls["authorize"] + 1),
     )
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda: "https://custom-login.codecarbon.io"
+    )
     monkeypatch.setattr(cli_main, "get_access_token", lambda: "login-token")
 
     runner = CliRunner()
@@ -159,6 +182,7 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
     assert calls["authorize"] == 1
     assert calls["set_token"] == "login-token"
     assert calls["check_auth"] == 1
+    assert calls["endpoint_url"] == "https://custom-login.codecarbon.io"
 
 
 def test_get_api_key_uses_bearer_token(monkeypatch):
