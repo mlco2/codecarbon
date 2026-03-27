@@ -1,3 +1,4 @@
+import subprocess
 import unittest
 from textwrap import dedent
 from unittest import mock
@@ -102,6 +103,142 @@ class TestRAM(unittest.TestCase):
         ram = RAM(tracking_mode="slurm")
         ram_size = ram._parse_scontrol(scontrol_str)
         self.assertEqual(ram_size, "50000M")
+
+    def test_parse_scontrol_memory_units(self):
+        ram = RAM(tracking_mode="slurm")
+
+        self.assertEqual(ram._parse_scontrol_memory_GB("2T"), 2000)
+        self.assertEqual(ram._parse_scontrol_memory_GB("128G"), 128)
+        self.assertEqual(ram._parse_scontrol_memory_GB("500M"), 0.5)
+        self.assertEqual(ram._parse_scontrol_memory_GB("42000K"), 0.042)
+
+    @mock.patch("codecarbon.external.ram.subprocess.check_output")
+    def test_read_slurm_scontrol_returns_decoded_output(self, mock_check_output):
+        mock_check_output.return_value = b"AllocTRES=cpu=1,mem=128G"
+        ram = RAM(tracking_mode="slurm")
+
+        result = ram._read_slurm_scontrol()
+
+        self.assertEqual(result, "AllocTRES=cpu=1,mem=128G")
+
+    @mock.patch(
+        "codecarbon.external.ram.subprocess.check_output",
+        side_effect=subprocess.CalledProcessError(1, "scontrol"),
+    )
+    def test_read_slurm_scontrol_returns_none_on_error(self, mock_check_output):
+        ram = RAM(tracking_mode="slurm")
+
+        self.assertIsNone(ram._read_slurm_scontrol())
+
+    @mock.patch("codecarbon.external.ram.psutil.virtual_memory")
+    def test_parse_scontrol_falls_back_to_machine_total_when_missing_mem(
+        self, mock_virtual_memory
+    ):
+        mock_virtual_memory.return_value = mock.Mock(total=64 * 1024**3)
+        ram = RAM(tracking_mode="slurm")
+
+        result = ram._parse_scontrol("JobId=1 Name=test")
+
+        self.assertEqual(result, mock_virtual_memory.return_value.total / (1024**3))
+
+    @mock.patch("codecarbon.external.ram.psutil.virtual_memory")
+    def test_parse_scontrol_falls_back_to_machine_total_when_multiple_matches(
+        self, mock_virtual_memory
+    ):
+        mock_virtual_memory.return_value = mock.Mock(total=32 * 1024**3)
+        ram = RAM(tracking_mode="slurm")
+
+        result = ram._parse_scontrol(
+            "AllocTRES=cpu=1,mem=4G AllocTRES=cpu=1,mem=8G"
+        )
+
+        self.assertEqual(result, mock_virtual_memory.return_value.total / (1024**3))
+
+    @mock.patch("codecarbon.external.ram.RAM._read_slurm_scontrol", return_value=None)
+    @mock.patch("codecarbon.external.ram.psutil.virtual_memory")
+    def test_slurm_memory_gb_falls_back_when_scontrol_fails(
+        self, mock_virtual_memory, mock_read
+    ):
+        mock_virtual_memory.return_value = mock.Mock(total=16 * 1024**3)
+        ram = RAM(tracking_mode="slurm")
+
+        result = ram.slurm_memory_GB
+
+        self.assertEqual(result, 16.0)
+
+    @mock.patch(
+        "codecarbon.external.ram.RAM._read_slurm_scontrol",
+        return_value="AllocTRES=cpu=1,mem=128G",
+    )
+    def test_slurm_memory_gb_caches_parsed_result(self, mock_read):
+        ram = RAM(tracking_mode="slurm")
+
+        first = ram.slurm_memory_GB
+        second = ram.slurm_memory_GB
+
+        self.assertEqual(first, 128)
+        self.assertEqual(second, 128)
+        mock_read.assert_called_once()
+
+    @mock.patch("codecarbon.external.ram.psutil.Process")
+    def test_get_children_memories_reads_recursive_children(self, mock_process):
+        child1 = mock.Mock()
+        child1.memory_info.return_value = mock.Mock(rss=100)
+        child2 = mock.Mock()
+        child2.memory_info.return_value = mock.Mock(rss=200)
+        mock_process.return_value.children.return_value = [child1, child2]
+        ram = RAM(pid=123, tracking_mode="process")
+
+        result = ram._get_children_memories()
+
+        self.assertEqual(result, [100, 200])
+        mock_process.assert_called_with(123)
+
+    @mock.patch("codecarbon.external.ram.psutil.Process")
+    def test_process_memory_gb_includes_children(self, mock_process):
+        process = mock.Mock()
+        process.memory_info.return_value = mock.Mock(rss=3 * 1024**3)
+        mock_process.return_value = process
+        ram = RAM(pid=123, tracking_mode="process")
+
+        with mock.patch.object(ram, "_get_children_memories", return_value=[1024**3, 0]):
+            result = ram.process_memory_GB
+
+        self.assertEqual(result, 4.0)
+
+    @mock.patch("codecarbon.external.ram.psutil.virtual_memory")
+    def test_machine_memory_gb_uses_system_total_when_not_on_slurm(
+        self, mock_virtual_memory
+    ):
+        mock_virtual_memory.return_value = mock.Mock(total=8 * 1024**3)
+        ram = RAM(tracking_mode="machine")
+
+        with mock.patch("codecarbon.external.ram.SLURM_JOB_ID", ""):
+            result = ram.machine_memory_GB
+
+        self.assertEqual(result, 8.0)
+
+    def test_total_power_uses_process_memory_in_process_mode(self):
+        ram = RAM(tracking_mode="process")
+
+        with (
+            mock.patch.object(type(ram), "process_memory_GB", new_callable=mock.PropertyMock, return_value=12.0),
+            mock.patch.object(ram, "_calculate_ram_power", return_value=18.0) as mock_calc,
+        ):
+            result = ram.total_power()
+
+        self.assertAlmostEqual(result.W, 18.0, places=6)
+        mock_calc.assert_called_once_with(12.0)
+
+    def test_total_power_returns_zero_on_exception(self):
+        ram = RAM(tracking_mode="machine")
+
+        with mock.patch.object(
+            type(ram), "machine_memory_GB", new_callable=mock.PropertyMock, side_effect=RuntimeError("boom")
+        ):
+            result = ram.total_power()
+
+        self.assertEqual(result.W, 0)
 
     def test_detect_arm_cpu(self):
         """Test ARM CPU detection logic"""

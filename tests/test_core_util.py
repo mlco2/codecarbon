@@ -41,16 +41,31 @@ def test_detect_cpu_model_caching():
 
 
 def test_backup():
-    first_file = tempfile.NamedTemporaryFile()
-    backup(first_file.name)
-    expected_backup_path = resolve_path(f"{first_file.name}.bak")
-    assert expected_backup_path.exists()
-    # re-create file and back it up again
-    second_file = tempfile.NamedTemporaryFile()
-    shutil.copyfile(second_file.name, first_file.name)
-    backup(first_file.name)
-    backup_of_backup_path = resolve_path(f"{first_file.name}_0.bak")
-    assert backup_of_backup_path.exists()
+    first_file = tempfile.NamedTemporaryFile(delete=False)
+    second_file = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        first_file.close()
+        second_file.close()
+
+        backup(first_file.name)
+        expected_backup_path = resolve_path(f"{first_file.name}.bak")
+        assert expected_backup_path.exists()
+
+        # re-create file and back it up again
+        shutil.copyfile(second_file.name, first_file.name)
+        backup(first_file.name)
+        backup_of_backup_path = resolve_path(f"{first_file.name}_0.bak")
+        assert backup_of_backup_path.exists()
+    finally:
+        for path in [
+            first_file.name,
+            second_file.name,
+            f"{first_file.name}.bak",
+            f"{first_file.name}_0.bak",
+        ]:
+            resolved = resolve_path(path)
+            if resolved.exists():
+                resolved.unlink()
 
 
 @pytest.mark.parametrize(
