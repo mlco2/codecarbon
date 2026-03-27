@@ -57,6 +57,7 @@ class BoAmpsOutput(BaseOutput):
         infra_overrides: Optional[dict] = None,
         environment_overrides: Optional[dict] = None,
     ):
+        os.makedirs(output_dir, exist_ok=True)
         self._output_dir = output_dir
         self._task = task
         self._header = header

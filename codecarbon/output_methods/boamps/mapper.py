@@ -3,7 +3,7 @@ Maps CodeCarbon EmissionsData to BoAmps report format.
 """
 
 import warnings
-from dataclasses import fields as dataclass_fields
+from dataclasses import fields as dataclass_fields, replace
 from typing import Optional
 
 from codecarbon.output_methods.boamps.models import (
@@ -21,6 +21,11 @@ from codecarbon.output_methods.emissions_data import EmissionsData
 
 BOAMPS_FORMAT_VERSION = "0.1"
 BOAMPS_FORMAT_SPEC_URI = "https://github.com/Boavizta/BoAmps/tree/main/model"
+
+
+def _to_boamps_datetime(timestamp: str) -> str:
+    """Normalize a timestamp to BoAmps format (YYYY-MM-DD HH:MM:SS)."""
+    return timestamp.replace("T", " ") if timestamp else timestamp
 
 
 def map_emissions_to_boamps(
@@ -84,7 +89,7 @@ def _build_header(
         format_version=BOAMPS_FORMAT_VERSION,
         format_version_specification_uri=BOAMPS_FORMAT_SPEC_URI,
         report_id=emissions.run_id,
-        report_datetime=emissions.timestamp,
+        report_datetime=_to_boamps_datetime(emissions.timestamp),
     )
 
     if user_header is None:
@@ -107,13 +112,16 @@ def _build_header(
 
 def _build_measure(emissions: EmissionsData) -> BoAmpsMeasure:
     """Build a BoAmps measure from EmissionsData."""
+    # Note: emissions.tracking_mode is "process"/"machine" (CodeCarbon's scope),
+    # not the CPU/GPU power tracking method (rapl, nvml, etc.) that BoAmps expects
+    # for cpuTrackingMode/gpuTrackingMode. We omit these fields since we don't
+    # have the actual tracker implementation details in EmissionsData.
     measure = BoAmpsMeasure(
         measurement_method="codecarbon",
         version=emissions.codecarbon_version,
         power_consumption=emissions.energy_consumed,
         measurement_duration=emissions.duration,
-        measurement_date_time=emissions.timestamp,
-        cpu_tracking_mode=emissions.tracking_mode,
+        measurement_date_time=_to_boamps_datetime(emissions.timestamp),
     )
 
     # CPU utilization as fraction (0-1)
@@ -124,7 +132,6 @@ def _build_measure(emissions: EmissionsData) -> BoAmpsMeasure:
 
     # GPU fields only if GPU is present
     if emissions.gpu_count and emissions.gpu_count > 0:
-        measure.gpu_tracking_mode = emissions.tracking_mode
         if emissions.gpu_utilization_percent > 0:
             measure.average_utilization_gpu = round(
                 emissions.gpu_utilization_percent / 100.0, 4
@@ -207,12 +214,15 @@ def _build_infrastructure(
             for user_comp in user_components:
                 if user_comp.component_type in auto_by_type:
                     auto = auto_by_type[user_comp.component_type]
-                    # User values take precedence; auto-detected fill blanks
-                    for f in dataclass_fields(user_comp):
-                        if f.name == "component_type":
-                            continue
-                        if getattr(user_comp, f.name) is None:
-                            setattr(user_comp, f.name, getattr(auto, f.name))
+                    # Build a merged copy: user values take precedence,
+                    # auto-detected fill blanks. Avoids mutating the originals.
+                    fill = {
+                        f.name: getattr(auto, f.name)
+                        for f in dataclass_fields(user_comp)
+                        if f.name != "component_type"
+                        and getattr(user_comp, f.name) is None
+                    }
+                    user_comp = replace(user_comp, **fill) if fill else user_comp
                     used_types.add(user_comp.component_type)
                 merged.append(user_comp)
             # Keep auto-detected components that the user didn't override
@@ -229,7 +239,7 @@ def _build_environment(
 ) -> BoAmpsEnvironment:
     """Build environment from EmissionsData location fields."""
     env = BoAmpsEnvironment(
-        country=emissions.country_name or None,
+        country=emissions.country_name,
         latitude=emissions.latitude,
         longitude=emissions.longitude,
     )

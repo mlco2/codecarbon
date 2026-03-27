@@ -305,7 +305,8 @@ class TestEmissionsMapping(unittest.TestCase):
         report = map_emissions_to_boamps(self.emissions, task=self.task)
         header = report.header.to_dict()
         self.assertEqual(header["reportId"], self.emissions.run_id)
-        self.assertEqual(header["reportDatetime"], self.emissions.timestamp)
+        # Timestamp normalized from ISO "T" separator to BoAmps space separator
+        self.assertEqual(header["reportDatetime"], "2025-01-15 10:30:00")
         self.assertEqual(header["formatVersion"], BOAMPS_FORMAT_VERSION)
 
     def test_measures_mapping(self):
@@ -316,8 +317,12 @@ class TestEmissionsMapping(unittest.TestCase):
         self.assertEqual(measure["version"], self.emissions.codecarbon_version)
         self.assertEqual(measure["powerConsumption"], self.emissions.energy_consumed)
         self.assertEqual(measure["measurementDuration"], self.emissions.duration)
-        self.assertEqual(measure["measurementDateTime"], self.emissions.timestamp)
-        self.assertEqual(measure["cpuTrackingMode"], self.emissions.tracking_mode)
+        self.assertEqual(measure["measurementDateTime"], "2025-01-15 10:30:00")
+        # cpuTrackingMode/gpuTrackingMode are omitted: emissions.tracking_mode
+        # is "process"/"machine" (CodeCarbon scope), not the BoAmps-expected
+        # power tracking method (rapl, nvml, etc.)
+        self.assertNotIn("cpuTrackingMode", measure)
+        self.assertNotIn("gpuTrackingMode", measure)
 
     def test_cpu_utilization_as_fraction(self):
         """cpu_utilization_percent is converted to 0-1 range."""
@@ -331,11 +336,12 @@ class TestEmissionsMapping(unittest.TestCase):
         measure = report.measures[0].to_dict()
         self.assertAlmostEqual(measure["averageUtilizationGpu"], 0.80, places=2)
 
-    def test_gpu_tracking_mode_set_when_gpu_present(self):
-        """gpuTrackingMode is set when gpu_count > 0."""
+    def test_tracking_modes_omitted(self):
+        """cpuTrackingMode/gpuTrackingMode are omitted (not available in EmissionsData)."""
         report = map_emissions_to_boamps(self.emissions, task=self.task)
         measure = report.measures[0].to_dict()
-        self.assertIn("gpuTrackingMode", measure)
+        self.assertNotIn("cpuTrackingMode", measure)
+        self.assertNotIn("gpuTrackingMode", measure)
 
     def test_infrastructure_decomposition(self):
         """CPU, GPU, RAM as separate components[]."""
@@ -387,14 +393,13 @@ class TestEmissionsMapping(unittest.TestCase):
         self.assertIn("cpu", component_types)
         self.assertIn("ram", component_types)
 
-    def test_gpu_tracking_mode_omitted_when_no_gpu(self):
-        """gpuTrackingMode not set when no GPU."""
+    def test_gpu_utilization_omitted_when_no_gpu(self):
+        """GPU utilization not set when no GPU."""
         emissions = _make_emissions_data(
             gpu_count=0, gpu_model="", gpu_utilization_percent=0.0
         )
         report = map_emissions_to_boamps(emissions, task=self.task)
         measure = report.measures[0].to_dict()
-        self.assertNotIn("gpuTrackingMode", measure)
         self.assertNotIn("averageUtilizationGpu", measure)
 
     def test_on_premise_detection(self):
@@ -589,7 +594,7 @@ class TestBoAmpsOutputHandler(unittest.TestCase):
 
         # Header
         self.assertEqual(report["header"]["reportId"], self.emissions.run_id)
-        self.assertEqual(report["header"]["reportDatetime"], self.emissions.timestamp)
+        self.assertEqual(report["header"]["reportDatetime"], "2025-01-15 10:30:00")
         # Measures
         self.assertEqual(report["measures"][0]["measurementMethod"], "codecarbon")
         self.assertEqual(
@@ -614,6 +619,17 @@ class TestBoAmpsOutputHandler(unittest.TestCase):
             self.assertTrue(
                 any("task" in str(warning.message).lower() for warning in w)
             )
+
+    def test_output_dir_created_if_missing(self):
+        """Output directory is created automatically if it doesn't exist."""
+        nested_dir = os.path.join(self.tmpdir, "nested", "output")
+        handler = BoAmpsOutput(output_dir=nested_dir, task=self.task)
+        handler.out(self.emissions, self.emissions)
+
+        expected_file = os.path.join(
+            nested_dir, f"boamps_report_{self.emissions.run_id}.json"
+        )
+        self.assertTrue(os.path.isfile(expected_file))
 
 
 # ===========================================================================
