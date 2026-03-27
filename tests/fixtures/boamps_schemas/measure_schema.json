@@ -1,0 +1,65 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "https://raw.githubusercontent.com/Boavizta/BoAmps/main/model/measure_schema.json",
+    "title": "measure",
+    "description": "the energy measure obtained from software and/or hardware tools, for a computing task",
+    "type": "object",
+    "properties": {
+      "measurementMethod": {
+        "type": "string",
+        "description": "the method used to perform the energy or FLOPS measure, example: codecarbon, carbonai, flops-compute, wattmeter, azure metrics, ovh metrics..."
+      },
+      "manufacturer": {
+        "type": "string",
+        "description": "the builder of the measuring tool, if the measurement method is wattmeter"
+      },
+      "version": {
+        "type": "string",
+        "description": "the version of the measuring tool, if any"
+      },
+      "cpuTrackingMode": {
+        "type": "string",
+        "description": "the method used to track the consumption of the CPU, example: constant, rapl..."
+      },
+      "gpuTrackingMode": {
+        "type": "string",
+        "description": "the method used to track the consumption of the GPU, example: constant, nvml..."
+      },
+      "averageUtilizationCpu": {
+        "type":"number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "the average percentage of use of the CPU during the task, for example: 0.5 if your CPU load was 50% on average"
+      },
+      "averageUtilizationGpu": {
+        "type":"number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "the average percentage of use of the GPU during the task, for example: 0.8 if your GPU load was 80% on average"
+      },
+      "powerCalibrationMeasurement": {
+        "type": "number",
+        "description": "the power consumed (in kWh) during the calibration measure if any (to isolate the initial consumption of the hardware)"
+      },
+      "durationCalibrationMeasurement": {
+        "type": "number",
+        "description": "the duration of the calibration if any (in seconds)"
+      },
+      "powerConsumption": {
+        "type": "number",
+        "description": "the power consumption measure of the computing task (in kWh)"
+      },
+      "measurementDuration": {
+        "type": "number",
+        "description": "the duration of the measurement (in seconds)"
+      },
+      "measurementDateTime": {
+          "type": "string",
+          "description": "the date when the measurement began, in format YYYY-MM-DD HH:MM:SS"
+      }
+    },
+    "required": [
+      "measurementMethod",
+      "powerConsumption"
+    ]
+}
