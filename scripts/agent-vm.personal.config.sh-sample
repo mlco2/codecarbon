@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+echo 'export AZURE_RESOURCE_NAME=xxxx' >> ~/.zshenv
+echo '{
+  "azure-cognitive-services": {
+    "type": "api",
+    "key": "xxxxxxxx"
+  }
+}' | (mkdir -p ~/.local/share/opencode && cat > ~/.local/share/opencode/auth.json)
