@@ -18,6 +18,15 @@ What types of changes does your code introduce? Put an `x` in all the boxes that
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to change)
 
+## AI Usage Disclosure
+
+Please refer to [AI_POLICY.md](AI_POLICY.md) for detailed guidelines on how to disclose AI usage in your PR. Accurately completing this section is mandatory.
+
+- [ ] 🟥 AI-vibecoded: You cannot explain the logic. Car analogy : the car drive by itself, your are outside it and just tell it where to go.
+- [ ] 🟠 AI-generated: Car analogy : the car drive by itself, your are inside and give instructions.
+- [ ] ⭐ AI-assisted. Car analogy : you drive the car, AI help you find your way.
+- [ ] ♻️ No AI used. Car analogy : you drive the car.
+
 ## Checklist:
 Go over all the following points, and put an `x` in all the boxes that apply.
 - [ ] My code follows the code style of this project.
