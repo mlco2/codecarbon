@@ -323,24 +323,24 @@ def monitor(
     ctx: typer.Context,
     measure_power_secs: Annotated[
         int,
-        typer.Option(default=10, help="Interval between two measures."),
+        typer.Option(help="Interval between two measures."),
     ] = 10,
     api_call_interval: Annotated[
         int,
-        typer.Option(default=30, help="Number of measures between API calls."),
+        typer.Option(help="Number of measures between API calls."),
     ] = 30,
     api: Annotated[
         bool,
-        typer.Option(default=True, help="Choose to call Code Carbon API or not"),
+        typer.Option(help="Choose to call Code Carbon API or not"),
     ] = True,
-    offline: Annotated[bool, typer.Option(default=False, help="Run in offline mode")] = False,
+    offline: Annotated[bool, typer.Option(help="Run in offline mode")] = False,
     country_iso_code: Annotated[
         str,
-        typer.Option(default=None, help="3-letter country ISO code for offline mode"),
+        typer.Option(help="3-letter country ISO code for offline mode"),
     ] = None,
     region: Annotated[
         str,
-        typer.Option(default=None, help="Region/province for offline mode"),
+        typer.Option(help="Region/province for offline mode"),
     ] = None,
 ):
     """Monitor your machine's carbon emissions."""
