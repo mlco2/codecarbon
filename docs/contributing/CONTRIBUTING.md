@@ -14,7 +14,7 @@
     - [Some UV commands](#some-uv-commands)
     - [Tests](#tests)
     - [Stress your computer](#stress-your-computer)
-    - [Update all dependancies](#update-all-dependancies)
+    - [Update all dependencies](#update-all-dependencies)
     - [Branching and Pull Requests](#branching-and-pull-requests)
     - [Debug in VS Code](#debug-in-vs-code)
     - [Coding style \&\& Linting](#coding-style--linting)
@@ -59,7 +59,7 @@ New issues can be created within the [GitHub repo](https://github.com/mlco2/code
 <!-- TOC --><a name="alternative-ways-of-contributing"></a>
 ## Alternative ways of contributing
 
-You have a cool idea, but do not know know if it fits with Code Carbon? You can create an issue to share:
+You have a cool idea, but do not know if it fits with Code Carbon? You can create an issue to share:
 
 -   the code, via the Github repo or [Binder](https://mybinder.org/), to share executable notebooks
 -   a webapp, using [Voilà](https://github.com/voila-dashboards/voila), [Dash](https://github.com/plotly/dash) or [Streamlit](https://github.com/streamlit/streamlit)
@@ -74,7 +74,7 @@ You have a cool idea, but do not know know if it fits with Code Carbon? You can 
 
 CodeCarbon is a Python package, to contribute to it, you need to have Python installed on your machine, natively or with [UV](https://github.com/astral-sh/uv).
 
-Between April 2024 and July 2025 we use Hatch for managing development environment. Since August 2025 we use UV manages the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
+Between April 2024 and July 2025 we used Hatch for managing development environment. Since August 2025 we use UV to manage the environments, Python versions, and dependencies - it's a fast, reliable way to work with Python projects.
 
 We have dropped support of Python 3.6 since version 2.0.0 of CodeCarbon.
 
@@ -150,7 +150,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
 -   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://mlco2.github.io/codecarbon/test_on_scaleway.html) to install it.
 -   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
--   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and avaliable for Windows and Linux.
+-   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and available for Windows and Linux.
 
 To monitor the power consumption of your computer while stressing it, you can use:
 
@@ -158,8 +158,8 @@ To monitor the power consumption of your computer while stressing it, you can us
 -   [powerstat](https://github.com/ColinIanKing/powerstat) can be used to see the metrics of the CPU and compare it with CodeCarbon. It's available on major distribution, like Debian-based Linux distributions with `sudo apt install powerstat`. Run it with `sudo powerstat -a -R 1 60`.
 
 
-<!-- TOC --><a name="update-all-dependancies"></a>
-### Update all dependancies
+<!-- TOC --><a name="update-all-dependencies"></a>
+### Update all dependencies
 
 For multiple requirement files:
 ```sh
@@ -283,31 +283,6 @@ uv run --only-group doc task docs
 ```
 
 to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
-
-### Rebase your branch on master
-
-Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
-```sh
-# Be careful, this command will delete every local changes you have, make sure to commit or stash them before running it
-TARGET_BRANCH=master
-current_branch=$(git symbolic-ref --short HEAD)
-git switch $TARGET_BRANCH && git pull
-git switch $current_branch --force && git fetch origin $TARGET_BRANCH
-git rebase $TARGET_BRANCH
-```
-
-In case of a conflict during a rebase, "incoming" refers to your branch, and "current" refers to master. This is because the commits from your branch are being applied to master, so they are incoming. In case of a merge, it's the opposite!
-
-Check if everything is fine:
-
-```sh
-git status
-```
-
-Push force
-```sh
-git push --force-with-lease
-```
 
 ### Rebase your branch on master
 
@@ -518,7 +493,7 @@ CALL public.spcc_purgeduplicatedata();
 <!-- TOC --><a name="api-1"></a>
 #### API
 
-The API is availiable to everyone from https://api.codecarbon.io, but if you want to deploy it for yourself, here are the instructions.
+The API is available to everyone from https://api.codecarbon.io, but if you want to deploy it for yourself, here are the instructions.
 
 To deploy the API we use [Clever Cloud](https://www.clever-cloud.com/), an IT Automation platform. They manage all the hard ops work while we focus on the Code Carbon value.
 
@@ -546,7 +521,7 @@ git push deploy master:master
 
 Yeah, not so hard, is it?
 
-See (the doc)[https://www.clever-cloud.com/doc/getting-started/quickstart/] for more informations.
+See [the doc](https://www.clever-cloud.com/doc/getting-started/quickstart/) for more informations.
 
 Please note that Clever Cloud host Code Carbon for free because they like our project.
 
@@ -554,7 +529,7 @@ Please note that Clever Cloud host Code Carbon for free because they like our pr
 <!-- TOC --><a name="dashboard"></a>
 #### Dashboard
 
-Same as for the API, for example to deploy the branh `fix-unit` to CleverCloud:
+Same as for the API, for example to deploy the branch `fix-unit` to CleverCloud:
 
 ```sh
 git push clever-dashboard fix-unit:master
