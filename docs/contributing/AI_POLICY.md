@@ -1,6 +1,6 @@
 # AI contribution policy
 
-AI contribution is ramping up. To prevent unwanted behavior by the community I open a discussion on the AI policy we want for CodeCarbon.
+AI contribution is ramping up. To prevent unwanted behavior by the community, I am opening a discussion on the AI policy we want for CodeCarbon.
 
 Not written by AI. Greatly inspired by https://github.com/kornia/kornia/blob/main/AI_POLICY.md
 
@@ -8,7 +8,7 @@ Not written by AI. Greatly inspired by https://github.com/kornia/kornia/blob/mai
 
 CodeCarbon accepts AI-assisted code (e.g., using Copilot, Cursor, etc.), but strictly rejects AI-generated contributions where the submitter acts merely as a proxy. The submitter is the **Sole Responsible Author** for every line of code, comment, and design decision.
 
-**Why having rules for Coding Agent we don’t have for Human ? Isn't it racism against AI ?**
+**Why have rules for coding agents that we do not have for humans? Isn't it discrimination against AI?**
 
 Coding agents (e.g., Copilot, Claude Code) are not conscious entities and cannot be held accountable for their outputs. They can produce code that looks correct but contains subtle bugs, security vulnerabilities, or design flaws. Unlike a human contributor, coding agents could produce large amounts of code that seems correct without understanding the project. We rely on human maintainers and reviewers to catch these issues, that's not fair for them. Therefore, we need strict rules to ensure that all contributions are carefully vetted and that there is a human submitter behind the agent, taking full responsibility for the code they submit.
 
@@ -18,7 +18,7 @@ Coding agents (e.g., Copilot, Claude Code) are not conscious entities and cannot
 
 AI tools frequently write code that looks correct but fails execution. Therefore, "vibe checks" are insufficient.
 
-**Requirement:** Every PR introducing functional changes must be carefully tested locally by the human contributor before submition. This is mandatory for all contributors and is particularly important for first-time contributors.
+**Requirement:** Every PR introducing functional changes must be carefully tested locally by the human contributor before submission. This is mandatory for all contributors and is particularly important for first-time contributors.
 
 ### Law 2: The Hallucination & Redundancy Ban
 
@@ -26,7 +26,7 @@ AI models often hallucinate comments or reinvent existing utilities.
 
 **Requirement:** You must use existing methods and libraries, and never reinvent the wheel.
 
-**Failure Condition:** Creating new helper functions when an CodeCarbon equivalent exists is grounds for immediate rejection.
+**Failure Condition:** Creating new helper functions when a CodeCarbon equivalent exists is grounds for immediate rejection.
 
 **Failure Condition:** "Ghost Comments" (comments explaining logic that was deleted or doesn't exist) will result in a request for a full manual rewrite. Unnecessary comments are not allowed. Example: "This function returns the input".
 
@@ -44,19 +44,19 @@ AI models often hallucinate comments or reinvent existing utilities.
 - An AI agent (e.g., Cursor, GitHub Copilot, ChatGPT, etc.) generated the code, PR description, or commit messages
 - You cannot explain the logic without referring to the AI's output
 - The PR was created primarily by an agent with minimal human review or modification
-- Car analogy : the car drive by itself, your are outside it and just tell it where to go.
+- Car analogy : the car drives by itself, you are outside it and just tell it where to go.
 
 **When to mark as 🟠 AI-generated:**
 - You used AI tools for coding, but you are in control
 - You understand and can explain all the code you're submitting
 - You ensure the AI is doing what you will have done by hand
-- Car analogy : the car drive by itself, your are inside and give instruction.
+- Car analogy : the car drives by itself, you are inside and give instructions.
 
 **When to mark as ⭐ AI-assisted:**
 - You used AI tools for boilerplate code, refactoring, or suggestions, but you manually reviewed and tested every line
 - You understand and can explain all the code you're submitting
 - You made significant modifications to AI-suggested code
-- Car analogy : you drive the car, AI help you find your way.
+- Car analogy : you drive the car, AI helps you find your way.
 
 **When to mark as ♻️ No AI used:**
 - You wrote all code manually without any AI assistance
@@ -82,7 +82,7 @@ This section exists to link AI reviewers to the canonical instructions and to ma
 
 In some cases, such as boilerplate code outside the logic of the product, we could accept AI-generated code reviewed by another AI agent.
 
-But for the core logic of the product, we want to ensure that Human fully understand the code and the design decisions. This is to ensure that the code is maintainable, secure, and aligned with the project's goals. 
+But for the core logic of the product, we want to ensure that humans fully understand the code and the design decisions. This is to ensure that the code is maintainable, secure, and aligned with the project's goals.
 
 ## Additional Resources
 

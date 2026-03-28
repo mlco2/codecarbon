@@ -99,7 +99,7 @@ pip install -e .
 
 #### Development workflow
 
-You can code on the login Node, but we suggest to do the development on your local machine and then push the code to a repository (e.g., GitHub) and pull it from the login node. This way you avoid loosing code and keep tracks of the changes.
+You can code on the login Node, but we suggest to do the development on your local machine and then push the code to a repository (e.g., GitHub) and pull it from the login node. This way you avoid losing code and keep tracks of the changes.
 
 After every connection to Adastra, you need to activate your Python environment:
 

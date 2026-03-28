@@ -23,7 +23,7 @@ The usage of Lima has been inspired by [agent-vm](https://github.com/sylvinus/ag
 `brew install lima` Brew works on [Linux](https://docs.brew.sh/Homebrew-on-Linux) [Mac](https://docs.brew.sh/Installation) and Windows (via WSL).
 
 You have many options for your code with Lima:
-- Mount your code into the VM and run the agent there. You use you code editor on your local machine and run the agent in the VM. This is a good option if you want to keep using your local development environment and only run the agent in the VM. this way you could delete the VM without loosing your code.
+- Mount your code into the VM and run the agent there. You use you code editor on your local machine and run the agent in the VM. This is a good option if you want to keep using your local development environment and only run the agent in the VM. this way you could delete the VM without losing your code.
 - Clone the repo inside the VM and run the agent there. Then [connect your VSCode inside the VM](https://lima-vm.io/docs/examples/vscode/). This could be nice to avoid missing to use the VM when running agent as the code will only be in the VM.
 - Use `--sync` mode to sync your local file into the VM but be prompted before syncing from the VM to your local file. 
 
