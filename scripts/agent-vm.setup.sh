@@ -87,5 +87,5 @@ echo 'export PATH=$HOME/.opencode/bin:$PATH' >> ~/.zshrc
 
 # Add PATH to .zshenv so non-interactive shells (limactl shell vmname cmd) also find the tools
 echo 'export PATH=$HOME/.local/bin:$HOME/.opencode/bin:$PATH' >> ~/.zshenv
-
+echo 'export OPENCODE_YOLO=true' >> ~/.zshenv
 echo "VM setup complete."

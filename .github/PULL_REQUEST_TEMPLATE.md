@@ -20,10 +20,10 @@ What types of changes does your code introduce? Put an `x` in all the boxes that
 
 ## AI Usage Disclosure
 
-Please refer to [AI_POLICY.md](AI_POLICY.md) for detailed guidelines on how to disclose AI usage in your PR. Accurately completing this section is mandatory.
+Please refer to [docs/contributing/AI_POLICY.md](https://github.com/mlco2/codecarbon/blob/master/docs/contributing/AI_POLICY.md) for detailed guidelines on how to disclose AI usage in your PR. Accurately completing this section is mandatory.
 
-- [ ] 🟥 AI-vibecoded: You cannot explain the logic. Car analogy : the car drive by itself, your are outside it and just tell it where to go.
-- [ ] 🟠 AI-generated: Car analogy : the car drive by itself, your are inside and give instructions.
+- [ ] 🟥 AI-vibecoded: You cannot explain the logic. Car analogy : the car drive by itself, you are outside it and just tell it where to go.
+- [ ] 🟠 AI-generated: Car analogy : the car drive by itself, you are inside and give instructions.
 - [ ] ⭐ AI-assisted. Car analogy : you drive the car, AI help you find your way.
 - [ ] ♻️ No AI used. Car analogy : you drive the car.
 
@@ -32,7 +32,7 @@ Go over all the following points, and put an `x` in all the boxes that apply.
 - [ ] My code follows the code style of this project.
 - [ ] My change requires a change to the documentation.
 - [ ] I have updated the documentation accordingly.
-- [ ] I have read the **[CONTRIBUTING.md](https://github.com/mlco2/codecarbon/blob/master/CONTRIBUTING.md)** document.
+- [ ] I have read the **[docs/contributing/CONTRIBUTING.md](https://github.com/mlco2/codecarbon/blob/master/docs/contributing/CONTRIBUTING.md)** document.
 - [ ] I have added tests to cover my changes.
 - [ ] All new and existing tests passed.
 

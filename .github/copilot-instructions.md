@@ -152,21 +152,21 @@ uv run task -l
 ## Documentation and Help
 
 ### Key Documentation Files
-- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Detailed contribution guidelines and setup
+- **[docs/contributing/CONTRIBUTING.md](docs/contributing/CONTRIBUTING.md)**: Detailed contribution guidelines and setup
 - **[README.md](README.md)**: Project overview and quickstart
 - **[carbonserver/README.md](carbonserver/README.md)**: API architecture and database schema
 - **[webapp/README.md](webapp/README.md)**: Next.js dashboard setup
 - **[carbonserver/tests/TESTING.md](carbonserver/tests/TESTING.md)**: Comprehensive testing guide
 
 ### VS Code Debugging
-The repository includes VS Code launch configurations in CONTRIBUTING.md for:
+The repository includes VS Code launch configurations in docs/contributing/CONTRIBUTING.md for:
 - Debugging current Python file
 - Running pytest with debugger
 - Testing codecarbon CLI monitor
 
 ### Getting Help
-- **FAQ**: https://mlco2.github.io/codecarbon/faq.html
-- **Documentation**: https://mlco2.github.io/codecarbon/
+- **FAQ**: https://docs.codecarbon.io/latest/introduction/faq/
+- **Documentation**: https://docs.codecarbon.io
 - **Issues**: https://github.com/mlco2/codecarbon/issues
 
 ## Architecture Overview

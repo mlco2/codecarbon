@@ -35,9 +35,8 @@ Include ~/.lima/*/ssh.config
 
 ```sh
 limactl start --yes --name=codecarbon --mount-only .:w
-# Installation des outils de base dans la VM
+# Install basic tools into VM
 limactl shell codecarbon bash -l < "scripts/agent-vm.setup.sh"
-limactl shell codecarbon bash -l < "scripts/agent-vm.personal.config.sh"
 ```
 
 ### Useful commands
@@ -59,18 +58,19 @@ Delete a VM:
 
 #### OpenCode configuration
 
+We include a sample configuration file for OpenCode with Azure Cognitive Services. You can copy it and edit it with your credentials to set up your environment variables in the VM:
+
 ```sh
-echo 'export AZURE_RESOURCE_NAME=sample-us-resource' >> ~/.zshenv
+cp scripts/agent-vm.personal.config.sh-sample scripts/agent-vm.personal.config.sh
+# Edit the file with your credentials and configuration, then run it to set up your environment variables
+limactl start codecarbon
+limactl shell codecarbon bash -l < "scripts/agent-vm.personal.config.sh"
 ```
 
-```json
-cat ~/.local/share/opencode/auth.json
-{
-  "azure-cognitive-services": {
-    "type": "api",
-    "key": "XXXXXX"
-  }
-}
+Then, to use OpenCode in the VM, you can run:
+
+```sh
+limactl shell codecarbon bash -l -c "opencode"
 ```
 
 ### Other options
