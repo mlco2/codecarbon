@@ -20,7 +20,7 @@ AI tools frequently write code that looks correct but fails execution. Therefore
 
 AI models often hallucinate comments or reinvent existing utilities.
 
-**Requirement:** You must use existing method and library and never reinvent the wheel.
+**Requirement:** You must use existing methods and libraries, and never reinvent the wheel.
 
 **Failure Condition:** Creating new helper functions when an CodeCarbon equivalent exists is grounds for immediate rejection.
 
