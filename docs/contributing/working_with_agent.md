@@ -69,6 +69,28 @@ limactl start codecarbon
 limactl shell codecarbon bash -l < "scripts/agent-vm.personal.config.sh"
 ```
 
+#### Add a read-only GitHub token for GitHub CLI
+
+If you want to use `gh` inside the VM to inspect issues, pull requests, or repository metadata without granting write access, use a fine-grained personal access token with read-only permissions.
+
+1. In GitHub, click on your avatar, go to **Settings** > **Developer settings** > **Personal access tokens** > **Fine-grained tokens**.
+2. Create a token scoped only to the repositories you need, with a short expiration date.
+3. Grant only the minimum repository permissions you need. For read-only `gh` usage on this repository, `Metadata: Read-only` is required, and `Pull requests: Read-only`, `Issues: Read-only`, and `Contents: Read-only` are usually enough.
+4. Add the token to your VM configuration script `scripts/agent-vm.personal.config.sh`, then re-run:
+
+```sh
+limactl start codecarbon
+limactl shell codecarbon bash -l < "scripts/agent-vm.personal.config.sh"
+```
+
+You can then verify that GitHub CLI sees the token:
+
+```sh
+limactl shell codecarbon bash -l -c "gh auth status"
+```
+
+Using `GH_TOKEN` keeps the setup explicit and avoids logging in interactively inside the VM. If you only need occasional anonymous access to public data, `gh` can work without a token, but GitHub rate limits are much lower.
+
 Then, to use OpenCode in the VM, you can run:
 
 ```sh

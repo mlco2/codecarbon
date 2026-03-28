@@ -1,8 +1,35 @@
 #!/usr/bin/env bash
-echo 'export AZURE_RESOURCE_NAME=xxxx' >> ~/.zshenv
-echo '{
+set -euo pipefail
+
+ZSHENV="${HOME}/.zshenv"
+OPENCODE_DIR="${HOME}/.local/share/opencode"
+AUTH_FILE="${OPENCODE_DIR}/auth.json"
+
+upsert_export() {
+  local key="$1"
+  local value="$2"
+  local file="$3"
+  local tmp_file
+
+  mkdir -p "$(dirname "$file")"
+  touch "$file"
+
+  tmp_file="$(mktemp)"
+  grep -vE "^export ${key}=" "$file" > "$tmp_file" || true
+  printf 'export %s=%q\n' "$key" "$value" >> "$tmp_file"
+  mv "$tmp_file" "$file"
+}
+
+upsert_export AZURE_RESOURCE_NAME "xxxx" "$ZSHENV"
+# Optional: fine-grained GitHub token with read-only repository permissions
+# upsert_export GH_TOKEN "github_pat_xxx" "$ZSHENV"
+
+mkdir -p "$OPENCODE_DIR"
+cat > "$AUTH_FILE" <<'EOF'
+{
   "azure-cognitive-services": {
     "type": "api",
     "key": "xxxxxxxx"
   }
-}' | (mkdir -p ~/.local/share/opencode && cat > ~/.local/share/opencode/auth.json)
+}
+EOF
