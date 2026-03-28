@@ -8,6 +8,10 @@ Not written by AI. Greatly inspired by https://github.com/kornia/kornia/blob/mai
 
 CodeCarbon accepts AI-assisted code (e.g., using Copilot, Cursor, etc.), but strictly rejects AI-generated contributions where the submitter acts merely as a proxy. The submitter is the **Sole Responsible Author** for every line of code, comment, and design decision.
 
+**Why having rules for Coding Agent we don’t have for Human ? Isn't it racism against AI ?**
+
+Coding agents (e.g., Copilot, Claude Code) are not conscious entities and cannot be held accountable for their outputs. They can produce code that looks correct but contains subtle bugs, security vulnerabilities, or design flaws. Unlike a human contributor, coding agents could produce large amounts of code that seems correct without understanding the project. We rely on human maintainers and reviewers to catch these issues, that's not fair for them. Therefore, we need strict rules to ensure that all contributions are carefully vetted and that there is a human submitter behind the agent, taking full responsibility for the code they submit.
+
 ## 2. The Laws of Contribution
 
 ### Law 1: Proof of Verification
@@ -73,6 +77,12 @@ The **canonical and up-to-date instructions for AI reviewers** are maintained in
 Any other document (including this one) should treat `copilot-instructions.md` as the single source of truth for AI reviewer behavior. When updating reviewer logic, update `copilot-instructions.md` first and, if needed, adjust references here.
 
 This section exists to link AI reviewers to the canonical instructions and to make clear that those instructions must enforce the policies defined in Sections 1 and 2 above.
+
+## 4. Cases where Human must stay in control
+
+In some cases, such as boilerplate code outside the logic of the product, we could accept AI-generated code reviewed by another AI agent.
+
+But for the core logic of the product, we want to ensure that Human fully understand the code and the design decisions. This is to ensure that the code is maintainable, secure, and aligned with the project's goals. 
 
 ## Additional Resources
 
