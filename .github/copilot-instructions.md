@@ -165,8 +165,8 @@ The repository includes VS Code launch configurations in CONTRIBUTING.md for:
 - Testing codecarbon CLI monitor
 
 ### Getting Help
-- **FAQ**: https://mlco2.github.io/codecarbon/faq.html
-- **Documentation**: https://mlco2.github.io/codecarbon/
+- **FAQ**: https://docs.codecarbon.io/faq.html
+- **Documentation**: https://docs.codecarbon.io/
 - **Issues**: https://github.com/mlco2/codecarbon/issues
 
 ## Architecture Overview
