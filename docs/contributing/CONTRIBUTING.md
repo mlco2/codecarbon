@@ -284,7 +284,7 @@ uv run --only-group doc task docs
 
 to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
 
-### Rebase your branch on master 
+### Rebase your branch on master
 
 Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh
@@ -309,7 +309,7 @@ Push force
 git push --force-with-lease
 ```
 
-### Rebase your branch on master 
+### Rebase your branch on master
 
 Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh
@@ -467,16 +467,21 @@ python examples/api_call_debug.py
 <!-- TOC --><a name="test-the-api"></a>
 ### Test the API
 
-To test the API, you can use the following command:
+Test dependencies (pytest, pytest-asyncio, etc.) are in the `dev` optional group. Install them first:
 
 ```sh
-uv run api.test-unit
+uv sync --project carbonserver --extra dev
+```
+
+Then run:
+
+```sh
+uv run task test-api-unit
 ```
 
 ```sh
 export CODECARBON_API_URL=http://localhost:8008
-uv run api.test-integ
-
+uv run task test-api-integ
 ```
 
 <!-- TOC --><a name="restore-database-from-a-production-backup"></a>
