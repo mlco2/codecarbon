@@ -41,24 +41,28 @@ AI models often hallucinate comments or reinvent existing utilities.
 **Requirement:** All PRs must accurately complete the "AI Usage Disclosure" section in the pull request template. This disclosure is mandatory and must reflect the actual use of AI tools.
 
 **When to mark as 🟥 AI-vibecoded:**
+
 - An AI agent (e.g., Cursor, GitHub Copilot, ChatGPT, etc.) generated the code, PR description, or commit messages
 - You cannot explain the logic without referring to the AI's output
 - The PR was created primarily by an agent with minimal human review or modification
 - Car analogy : the car drives by itself, you are outside it and just tell it where to go.
 
 **When to mark as 🟠 AI-generated:**
+
 - You used AI tools for coding, but you are in control
 - You understand and can explain all the code you're submitting
 - You ensure the AI is doing what you will have done by hand
 - Car analogy : the car drives by itself, you are inside and give instructions.
 
 **When to mark as ⭐ AI-assisted:**
+
 - You used AI tools for boilerplate code, refactoring, or suggestions, but you manually reviewed and tested every line
 - You understand and can explain all the code you're submitting
 - You made significant modifications to AI-suggested code
 - Car analogy : you drive the car, AI helps you find your way.
 
 **When to mark as ♻️ No AI used:**
+
 - You wrote all code manually without any AI assistance
 - Car analogy : you drive the car.
 
