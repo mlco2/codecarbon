@@ -32,7 +32,7 @@ click==8.3.1
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==46.0.5
+cryptography==46.0.6
     # via
     #   authlib
     #   jwcrypto
