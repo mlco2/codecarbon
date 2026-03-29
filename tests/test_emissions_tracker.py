@@ -798,3 +798,72 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+    @responses.activate
+    @mock.patch("codecarbon.emissions_tracker.CodeCarbonAPIOutput")
+    def test_save_to_api_fallback_on_error(
+        self,
+        mock_api_output_cls,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        """Test that when save_to_api=True and the API is unreachable,
+        the tracker falls back to a local UUID run_id without crashing."""
+        import uuid
+
+        responses.add(
+            responses.GET,
+            "https://get.geojs.io/v1/ip/geo.json",
+            json=GEO_METADATA_CANADA,
+            status=200,
+        )
+
+        # Simulate API connection failure
+        mock_api_output_cls.side_effect = Exception("API unreachable")
+
+        tracker = EmissionsTracker(
+            save_to_api=True,
+            save_to_file=False,
+            measure_power_secs=1,
+        )
+
+        # run_id should be a uuid4 fallback, not None
+        self.assertIsNotNone(tracker.run_id)
+        self.assertIsInstance(tracker.run_id, uuid.UUID)
+
+    @responses.activate
+    @mock.patch("codecarbon.emissions_tracker.CodeCarbonAPIOutput")
+    def test_save_to_api_success(
+        self,
+        mock_api_output_cls,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        """Test that when save_to_api=True and the API is reachable,
+        the tracker uses the run_id from the API output."""
+        responses.add(
+            responses.GET,
+            "https://get.geojs.io/v1/ip/geo.json",
+            json=GEO_METADATA_CANADA,
+            status=200,
+        )
+
+        mock_api_instance = mock.MagicMock()
+        mock_api_instance.run_id = "api-run-id-123"
+        mock_api_output_cls.return_value = mock_api_instance
+
+        tracker = EmissionsTracker(
+            save_to_api=True,
+            save_to_file=False,
+            measure_power_secs=1,
+        )
+
+        self.assertEqual(tracker.run_id, "api-run-id-123")

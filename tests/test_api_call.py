@@ -277,3 +277,357 @@ class TestApi(unittest.TestCase):
             m.get("http://test.com/experiments/exp-id", status_code=500)
             with self.assertRaises(requests.exceptions.HTTPError):
                 api.get_experiment("exp-id")
+
+    # ── Success-path tests (cover `return r.json()` after `r.raise_for_status()`) ──
+
+    def test_check_auth_success(self):
+        """Test check_auth returns JSON on 200."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://test.com/auth/check",
+                json={"user": "me"},
+                status_code=200,
+            )
+            result = api.check_auth()
+            self.assertEqual(result, {"user": "me"})
+
+    def test_get_list_organizations_success(self):
+        """Test get_list_organizations returns JSON on 200."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            orgs = [{"name": "Org1"}, {"name": "Org2"}]
+            m.get(
+                "http://test.com/organizations",
+                json=orgs,
+                status_code=200,
+            )
+            result = api.get_list_organizations()
+            self.assertEqual(result, orgs)
+
+    def test_get_organization_success(self):
+        """Test get_organization returns JSON on 200."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            org = {"id": "org-1", "name": "TestOrg"}
+            m.get(
+                "http://test.com/organizations/org-1",
+                json=org,
+                status_code=200,
+            )
+            result = api.get_organization("org-1")
+            self.assertEqual(result, org)
+
+    def test_list_projects_from_organization_success(self):
+        """Test list_projects_from_organization returns JSON on 200."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            projects = [{"id": "p1", "name": "Proj1"}]
+            m.get(
+                "http://test.com/organizations/org-1/projects",
+                json=projects,
+                status_code=200,
+            )
+            result = api.list_projects_from_organization("org-1")
+            self.assertEqual(result, projects)
+
+    def test_get_project_success(self):
+        """Test get_project returns JSON on 200."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            project = {"id": "p1", "name": "TestProject"}
+            m.get(
+                "http://test.com/projects/p1",
+                json=project,
+                status_code=200,
+            )
+            result = api.get_project("p1")
+            self.assertEqual(result, project)
+
+    def test_list_experiments_from_project_success(self):
+        """Test list_experiments_from_project returns JSON on 200."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            experiments = [{"id": "e1", "name": "Exp1"}]
+            m.get(
+                "http://test.com/projects/p1/experiments",
+                json=experiments,
+                status_code=200,
+            )
+            result = api.list_experiments_from_project("p1")
+            self.assertEqual(result, experiments)
+
+    def test_get_experiment_success(self):
+        """Test get_experiment returns JSON on 200."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            exp = {"id": "e1", "name": "TestExperiment"}
+            m.get(
+                "http://test.com/experiments/e1",
+                json=exp,
+                status_code=200,
+            )
+            result = api.get_experiment("e1")
+            self.assertEqual(result, exp)
+
+    # ── Tests for methods with no coverage at all ──
+
+    def test_check_organization_exists_found(self):
+        """Test check_organization_exists returns org when found."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            orgs = [{"name": "MyOrg", "id": "org-1"}]
+            m.get("http://test.com/organizations", json=orgs, status_code=200)
+            result = api.check_organization_exists("MyOrg")
+            self.assertEqual(result, {"name": "MyOrg", "id": "org-1"})
+
+    def test_check_organization_exists_not_found(self):
+        """Test check_organization_exists returns False when not found."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        with requests_mock.Mocker() as m:
+            orgs = [{"name": "OtherOrg", "id": "org-2"}]
+            m.get("http://test.com/organizations", json=orgs, status_code=200)
+            result = api.check_organization_exists("MyOrg")
+            self.assertFalse(result)
+
+    def test_create_organization_success(self):
+        """Test create_organization creates and returns JSON on 201."""
+        from codecarbon.core.schemas import OrganizationCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        org = OrganizationCreate(name="NewOrg", description="A new org")
+        with requests_mock.Mocker() as m:
+            # check_organization_exists calls get_list_organizations
+            m.get("http://test.com/organizations", json=[], status_code=200)
+            m.post(
+                "http://test.com/organizations",
+                json={"id": "org-new", "name": "NewOrg", "description": "A new org"},
+                status_code=201,
+            )
+            result = api.create_organization(org)
+            self.assertEqual(result["name"], "NewOrg")
+
+    def test_create_organization_already_exists(self):
+        """Test create_organization returns existing org without POST."""
+        from codecarbon.core.schemas import OrganizationCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        org = OrganizationCreate(name="ExistingOrg", description="Already there")
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://test.com/organizations",
+                json=[{"name": "ExistingOrg", "id": "org-existing"}],
+                status_code=200,
+            )
+            result = api.create_organization(org)
+            self.assertEqual(result["id"], "org-existing")
+
+    def test_create_organization_error_raises(self):
+        """Test create_organization raises HTTPError on server error."""
+        from codecarbon.core.schemas import OrganizationCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        org = OrganizationCreate(name="NewOrg", description="A new org")
+        with requests_mock.Mocker() as m:
+            m.get("http://test.com/organizations", json=[], status_code=200)
+            m.post("http://test.com/organizations", status_code=500)
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.create_organization(org)
+
+    def test_update_organization_success(self):
+        """Test update_organization returns JSON on 200."""
+        from codecarbon.core.schemas import OrganizationCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        org = OrganizationCreate(name="Updated", description="Updated desc")
+        org.id = "org-1"
+        with requests_mock.Mocker() as m:
+            m.patch(
+                "http://test.com/organizations/org-1",
+                json={"id": "org-1", "name": "Updated"},
+                status_code=200,
+            )
+            result = api.update_organization(org)
+            self.assertEqual(result["name"], "Updated")
+
+    def test_update_organization_error_raises(self):
+        """Test update_organization raises HTTPError on server error."""
+        from codecarbon.core.schemas import OrganizationCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        org = OrganizationCreate(name="Updated", description="desc")
+        org.id = "org-1"
+        with requests_mock.Mocker() as m:
+            m.patch("http://test.com/organizations/org-1", status_code=500)
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.update_organization(org)
+
+    def test_create_project_success(self):
+        """Test create_project returns JSON on 201."""
+        from codecarbon.core.schemas import ProjectCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        project = ProjectCreate(
+            name="NewProject", description="desc", organization_id="org-1"
+        )
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://test.com/projects",
+                json={"id": "p1", "name": "NewProject"},
+                status_code=201,
+            )
+            result = api.create_project(project)
+            self.assertEqual(result["name"], "NewProject")
+
+    def test_create_project_error_raises(self):
+        """Test create_project raises HTTPError on server error."""
+        from codecarbon.core.schemas import ProjectCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        project = ProjectCreate(
+            name="NewProject", description="desc", organization_id="org-1"
+        )
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/projects", status_code=500)
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.create_project(project)
+
+    def test_add_experiment_success(self):
+        """Test add_experiment returns JSON on 201."""
+        from codecarbon.core.schemas import ExperimentCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        experiment = ExperimentCreate(
+            timestamp="2021-04-04T08:43:00+02:00",
+            name="TestExp",
+            description="desc",
+            on_cloud=False,
+            project_id="00000000-0000-0000-0000-000000000001",
+        )
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://test.com/experiments",
+                json={"id": "e1", "name": "TestExp"},
+                status_code=201,
+            )
+            result = api.add_experiment(experiment)
+            self.assertEqual(result["name"], "TestExp")
+
+    def test_add_experiment_error_raises(self):
+        """Test add_experiment raises HTTPError on server error."""
+        from codecarbon.core.schemas import ExperimentCreate
+
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=None,
+            create_run_automatically=False,
+        )
+        experiment = ExperimentCreate(
+            timestamp="2021-04-04T08:43:00+02:00",
+            name="TestExp",
+            description="desc",
+            on_cloud=False,
+            project_id="00000000-0000-0000-0000-000000000001",
+        )
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/experiments", status_code=500)
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.add_experiment(experiment)
+
+    def test_create_run_no_experiment_id_raises(self):
+        """Test _create_run raises ValueError when experiment_id is None."""
+        api = ApiClient(
+            endpoint_url="http://test.com",
+            api_key="Toto",
+            conf=conf,
+            create_run_automatically=False,
+        )
+        api.experiment_id = None
+        with self.assertRaises(ValueError):
+            api._create_run("some-experiment-id")
