@@ -114,7 +114,8 @@ def api_get():
     """
     ex: test-api
     """
-    api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
+    api_endpoint = get_api_endpoint()
+    api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
     organizations = api.get_list_organizations()
     print(organizations)
@@ -123,15 +124,18 @@ def api_get():
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
     authorize()
-    api = ApiClient(endpoint_url=API_URL)  # TODO: get endpoint from config
+    api_endpoint = get_api_endpoint()
+    api = ApiClient(endpoint_url=api_endpoint)
     access_token = get_access_token()
     api.set_access_token(access_token)
     api.check_auth()
 
 
 def get_api_key(project_id: str):
+    api_endpoint = get_api_endpoint()
+    api_endpoint = api_endpoint.rstrip("/")
     req = requests.post(
-        f"{API_URL}/projects/{project_id}/api-tokens",
+        f"{api_endpoint}/projects/{project_id}/api-tokens",
         json={
             "project_id": project_id,
             "name": "api token",
@@ -318,20 +322,25 @@ def config():
 def monitor(
     ctx: typer.Context,
     measure_power_secs: Annotated[
-        int, typer.Option(help="Interval between two measures.")
+        int,
+        typer.Option(help="Interval between two measures."),
     ] = 10,
     api_call_interval: Annotated[
-        int, typer.Option(help="Number of measures between API calls.")
+        int,
+        typer.Option(help="Number of measures between API calls."),
     ] = 30,
     api: Annotated[
-        bool, typer.Option(help="Choose to call Code Carbon API or not")
+        bool,
+        typer.Option(help="Choose to call Code Carbon API or not"),
     ] = True,
     offline: Annotated[bool, typer.Option(help="Run in offline mode")] = False,
     country_iso_code: Annotated[
-        str, typer.Option(help="3-letter country ISO code for offline mode")
+        str,
+        typer.Option(help="3-letter country ISO code for offline mode"),
     ] = None,
     region: Annotated[
-        str, typer.Option(help="Region/province for offline mode")
+        str,
+        typer.Option(help="Region/province for offline mode"),
     ] = None,
 ):
     """Monitor your machine's carbon emissions."""
