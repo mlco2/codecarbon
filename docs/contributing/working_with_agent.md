@@ -74,7 +74,7 @@ limactl shell codecarbon bash -l < "scripts/agent-vm.personal.config.sh"
 If you want to use `gh` inside the VM to inspect issues, pull requests, or repository metadata without granting write access, use a fine-grained personal access token with read-only permissions.
 
 1. In GitHub, click on your avatar, go to **Settings** > **Developer settings** > **Personal access tokens** > **Fine-grained tokens**.
-2. Create a token scoped only to the repositories you need, with a short expiration date.
+2. Create a token scoped only to the repositories you need. For CodeCarbon's projects we allow only tokens with an expiration date.
 3. Grant only the minimum repository permissions you need. For read-only `gh` usage on this repository, `Metadata: Read-only` is required, and `Pull requests: Read-only`, `Issues: Read-only`, and `Contents: Read-only` are usually enough.
 4. Add the token to your VM configuration script `scripts/agent-vm.personal.config.sh`, then re-run:
 
