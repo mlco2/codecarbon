@@ -59,7 +59,9 @@ def test_set_ram_tracking_uses_forced_power():
     tracker = make_tracker(_force_ram_power=12.5)
     fake_ram = SimpleNamespace(machine_memory_GB=64.0)
 
-    with patch("codecarbon.core.resource_tracker.RAM", return_value=fake_ram) as mock_ram:
+    with patch(
+        "codecarbon.core.resource_tracker.RAM", return_value=fake_ram
+    ) as mock_ram:
         resource_tracker = ResourceTracker(tracker)
         resource_tracker.set_RAM_tracking()
 
@@ -76,7 +78,9 @@ def test_setup_cpu_load_mode_returns_false_without_psutil():
     resource_tracker = ResourceTracker(make_tracker())
     tdp = SimpleNamespace(model="Test CPU")
 
-    with patch("codecarbon.core.resource_tracker.cpu.is_psutil_available", return_value=False):
+    with patch(
+        "codecarbon.core.resource_tracker.cpu.is_psutil_available", return_value=False
+    ):
         assert resource_tracker._setup_cpu_load_mode(tdp, 123) is False
 
 
@@ -88,8 +92,13 @@ def test_setup_cpu_load_mode_updates_tracker_state():
     tdp = SimpleNamespace(model="Test CPU")
 
     with (
-        patch("codecarbon.core.resource_tracker.cpu.is_psutil_available", return_value=True),
-        patch("codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu) as mock_from_utils,
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
     ):
         assert resource_tracker._setup_cpu_load_mode(tdp, 123) is True
 
@@ -134,9 +143,16 @@ def test_setup_fallback_tracking_uses_cpu_load_when_tdp_matches():
     tdp = SimpleNamespace(model="Matched CPU")
 
     with (
-        patch("codecarbon.core.resource_tracker.cpu.is_psutil_available", return_value=True),
-        patch("codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu) as mock_from_utils,
-        patch.object(resource_tracker, "_get_install_instructions", return_value="instructions"),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
     ):
         resource_tracker._setup_fallback_tracking(tdp, 150)
 
@@ -164,9 +180,16 @@ def test_setup_fallback_tracking_uses_global_constant_when_no_tdp_and_no_psutil(
             return False
 
     with (
-        patch("codecarbon.core.resource_tracker.cpu.is_psutil_available", return_value=False),
-        patch("codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu) as mock_from_utils,
-        patch.object(resource_tracker, "_get_install_instructions", return_value="instructions"),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=False,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
     ):
         resource_tracker._setup_fallback_tracking(FalseyTDP(), None)
 
@@ -182,7 +205,9 @@ def test_set_cpu_tracking_force_mode_uses_cpu_load_and_returns():
 
     with (
         patch("codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp),
-        patch.object(resource_tracker, "_setup_cpu_load_mode", return_value=True) as mock_setup,
+        patch.object(
+            resource_tracker, "_setup_cpu_load_mode", return_value=True
+        ) as mock_setup,
     ):
         resource_tracker.set_CPU_tracking()
 
@@ -194,9 +219,17 @@ def test_set_cpu_tracking_prefers_power_gadget():
     resource_tracker = ResourceTracker(tracker)
 
     with (
-        patch("codecarbon.core.resource_tracker.cpu.is_powergadget_available", return_value=True),
-        patch("codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=False),
-        patch("codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available", return_value=False),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=False
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=False,
+        ),
         patch.object(resource_tracker, "_setup_power_gadget") as mock_power_gadget,
     ):
         resource_tracker.set_CPU_tracking()
@@ -209,9 +242,17 @@ def test_set_cpu_tracking_prefers_rapl_before_powermetrics():
     resource_tracker = ResourceTracker(tracker)
 
     with (
-        patch("codecarbon.core.resource_tracker.cpu.is_powergadget_available", return_value=False),
-        patch("codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=True),
-        patch("codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=False,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=True
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=True,
+        ),
         patch.object(resource_tracker, "_setup_rapl") as mock_rapl,
     ):
         resource_tracker.set_CPU_tracking()
@@ -225,9 +266,17 @@ def test_set_cpu_tracking_falls_back_when_forced_power_is_set():
     fake_tdp = SimpleNamespace(tdp=20, model="CPU")
 
     with (
-        patch("codecarbon.core.resource_tracker.cpu.is_powergadget_available", return_value=True),
-        patch("codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=True),
-        patch("codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=True
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=True,
+        ),
         patch("codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp),
         patch.object(resource_tracker, "_setup_fallback_tracking") as mock_fallback,
     ):
@@ -246,10 +295,18 @@ def test_set_gpu_tracking_nvidia_populates_conf():
     ]
 
     with (
-        patch("codecarbon.core.resource_tracker.normalize_gpu_ids", return_value=[0, 1]),
-        patch("codecarbon.core.resource_tracker.gpu.is_nvidia_system", return_value=True),
-        patch("codecarbon.core.resource_tracker.gpu.is_rocm_system", return_value=False),
-        patch("codecarbon.core.resource_tracker.GPU.from_utils", return_value=gpu_devices) as mock_from_utils,
+        patch(
+            "codecarbon.core.resource_tracker.normalize_gpu_ids", return_value=[0, 1]
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.gpu.is_nvidia_system", return_value=True
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.gpu.is_rocm_system", return_value=False
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.GPU.from_utils", return_value=gpu_devices
+        ) as mock_from_utils,
     ):
         resource_tracker.set_GPU_tracking()
 
@@ -267,8 +324,12 @@ def test_set_gpu_tracking_handles_no_gpu():
 
     with (
         patch("codecarbon.core.resource_tracker.normalize_gpu_ids", return_value=None),
-        patch("codecarbon.core.resource_tracker.gpu.is_nvidia_system", return_value=False),
-        patch("codecarbon.core.resource_tracker.gpu.is_rocm_system", return_value=False),
+        patch(
+            "codecarbon.core.resource_tracker.gpu.is_nvidia_system", return_value=False
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.gpu.is_rocm_system", return_value=False
+        ),
     ):
         resource_tracker.set_GPU_tracking()
 

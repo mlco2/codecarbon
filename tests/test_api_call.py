@@ -260,7 +260,11 @@ class TestApi(unittest.TestCase):
 
     def test_list_experiments_from_project_returns_empty_list_on_error(self):
         with requests_mock.Mocker() as m:
-            m.get("http://test.com/projects/proj-1/experiments", text="bad", status_code=500)
+            m.get(
+                "http://test.com/projects/proj-1/experiments",
+                text="bad",
+                status_code=500,
+            )
             api = ApiClient(
                 endpoint_url="http://test.com",
                 create_run_automatically=False,

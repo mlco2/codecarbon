@@ -22,9 +22,7 @@ class FakeTracker:
 
 def test_run_and_monitor_requires_command(monkeypatch):
     monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
-    monkeypatch.setattr(
-        monitor_module, "print", lambda *args, **kwargs: None
-    )
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
     with pytest.raises(typer.Exit) as exc_info:
         monitor_module.run_and_monitor(SimpleNamespace(args=[]))
@@ -39,9 +37,7 @@ def test_run_and_monitor_handles_missing_command(monkeypatch):
 
     monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
-    monkeypatch.setattr(
-        monitor_module, "print", lambda *args, **kwargs: None
-    )
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
     with pytest.raises(typer.Exit) as exc_info:
         monitor_module.run_and_monitor(SimpleNamespace(args=["missing-command"]))
@@ -56,9 +52,7 @@ def test_run_and_monitor_handles_generic_exception(monkeypatch):
 
     monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
-    monkeypatch.setattr(
-        monitor_module, "print", lambda *args, **kwargs: None
-    )
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
     with pytest.raises(typer.Exit) as exc_info:
         monitor_module.run_and_monitor(SimpleNamespace(args=["python"]))
@@ -86,9 +80,7 @@ def test_run_and_monitor_handles_keyboard_interrupt(monkeypatch):
 
     monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
-    monkeypatch.setattr(
-        monitor_module, "print", lambda *args, **kwargs: None
-    )
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
     with pytest.raises(typer.Exit) as exc_info:
         monitor_module.run_and_monitor(SimpleNamespace(args=["python"]))

@@ -10,18 +10,18 @@ import pytest
 from codecarbon.core.config import normalize_gpu_ids
 from codecarbon.core.cpu import (
     DEFAULT_POWER_PER_CORE,
+    TDP,
+    IntelPowerGadget,
+    IntelRAPL,
     _check_energy_file,
     _get_candidate_bases,
     _is_main_domain,
     _scan_base_for_rapl,
     _scan_direct_entries,
     _scan_domain_directories,
-    TDP,
-    IntelPowerGadget,
-    IntelRAPL,
     is_powergadget_available,
-    is_rapl_available,
     is_psutil_available,
+    is_rapl_available,
 )
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
@@ -32,7 +32,9 @@ from codecarbon.input import DataSource
 
 class TestCPU(unittest.TestCase):
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget", side_effect=Exception("boom"))
-    def test_is_powergadget_available_returns_false_on_exception(self, mock_powergadget):
+    def test_is_powergadget_available_returns_false_on_exception(
+        self, mock_powergadget
+    ):
         self.assertFalse(is_powergadget_available())
 
     @mock.patch("psutil.cpu_times")
@@ -141,19 +143,21 @@ class TestRAPLHelperFunctions(unittest.TestCase):
         with (
             mock.patch("codecarbon.core.cpu.os.listdir", return_value=["intel-rapl:0"]),
             mock.patch("codecarbon.core.cpu.os.path.isdir", return_value=False),
-            mock.patch("codecarbon.core.cpu._scan_domain_directories", return_value=False),
+            mock.patch(
+                "codecarbon.core.cpu._scan_domain_directories", return_value=False
+            ),
             mock.patch("codecarbon.core.cpu._scan_direct_entries", return_value=True),
         ):
             assert _scan_base_for_rapl("/tmp/base", lambda _: None) is True
 
     @mock.patch("codecarbon.core.cpu._scan_base_for_rapl", side_effect=[False, True])
     @mock.patch("codecarbon.core.cpu._get_candidate_bases", return_value=["a", "b"])
-    def test_is_rapl_available_scans_candidate_bases(
-        self, mock_candidates, mock_scan
-    ):
+    def test_is_rapl_available_scans_candidate_bases(self, mock_candidates, mock_scan):
         assert is_rapl_available("/tmp/custom") is True
 
-    @mock.patch("codecarbon.core.cpu._scan_base_for_rapl", side_effect=Exception("boom"))
+    @mock.patch(
+        "codecarbon.core.cpu._scan_base_for_rapl", side_effect=Exception("boom")
+    )
     @mock.patch("codecarbon.core.cpu._get_candidate_bases", return_value=["a"])
     def test_is_rapl_available_returns_false_on_unexpected_error(
         self, mock_candidates, mock_scan
@@ -221,9 +225,7 @@ class TestIntelPowerGadget(unittest.TestCase):
             ),
             mock.patch(
                 "codecarbon.core.cpu.shutil.which",
-                side_effect=lambda path: None
-                if path == "PowerLog3.0.exe"
-                else path,
+                side_effect=lambda path: None if path == "PowerLog3.0.exe" else path,
             ),
         ):
             gadget = IntelPowerGadget()
@@ -269,7 +271,9 @@ class TestIntelPowerGadget(unittest.TestCase):
         gadget._log_file_path = "intel.csv"
 
         with (
-            mock.patch("codecarbon.core.cpu.subprocess.call", return_value=1) as mock_call,
+            mock.patch(
+                "codecarbon.core.cpu.subprocess.call", return_value=1
+            ) as mock_call,
             mock.patch("codecarbon.core.cpu.logger.warning") as mock_warning,
         ):
             gadget._log_values()

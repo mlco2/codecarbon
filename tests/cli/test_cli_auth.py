@@ -1,5 +1,6 @@
 import io
 import json
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -183,16 +184,16 @@ class TestAuthMethods(unittest.TestCase):
         self, mock_load, mock_validate, mock_refresh
     ):
         original_credentials_file = auth._CREDENTIALS_FILE
-        temp_credentials = Path("test_credentials.json")
-        try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            temp_credentials = Path(tmp_dir) / "test_credentials.json"
             temp_credentials.write_text("{}")
-            auth._CREDENTIALS_FILE = temp_credentials
-            with self.assertRaises(ValueError):
-                auth.get_access_token()
-            self.assertFalse(temp_credentials.exists())
-        finally:
-            auth._CREDENTIALS_FILE = original_credentials_file
-            temp_credentials.unlink(missing_ok=True)
+            try:
+                auth._CREDENTIALS_FILE = temp_credentials
+                with self.assertRaises(ValueError):
+                    auth.get_access_token()
+                self.assertFalse(temp_credentials.exists())
+            finally:
+                auth._CREDENTIALS_FILE = original_credentials_file
 
     @patch("codecarbon.cli.auth._load_credentials")
     def test_get_id_token(self, mock_load):
@@ -263,13 +264,21 @@ class TestAuthMethods(unittest.TestCase):
             "abc",
         )
         mock_session_cls.return_value = mock_session
-        mock_server_cls.return_value = MagicMock()
+        mock_server = MagicMock()
+        mock_server.handle_request.side_effect = lambda: setattr(
+            auth._CallbackHandler,
+            "error",
+            "access_denied",
+        )
+        mock_server_cls.return_value = mock_server
 
         auth._CallbackHandler.callback_url = None
-        auth._CallbackHandler.error = "access_denied"
+        auth._CallbackHandler.error = None
 
         with self.assertRaises(ValueError):
             auth.authorize()
+        mock_server.handle_request.assert_called_once()
+        mock_server.server_close.assert_called_once()
 
     @patch("codecarbon.cli.auth.HTTPServer")
     @patch("codecarbon.cli.auth.OAuth2Session")

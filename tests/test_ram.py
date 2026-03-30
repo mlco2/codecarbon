@@ -148,9 +148,7 @@ class TestRAM(unittest.TestCase):
         mock_virtual_memory.return_value = mock.Mock(total=32 * 1024**3)
         ram = RAM(tracking_mode="slurm")
 
-        result = ram._parse_scontrol(
-            "AllocTRES=cpu=1,mem=4G AllocTRES=cpu=1,mem=8G"
-        )
+        result = ram._parse_scontrol("AllocTRES=cpu=1,mem=4G AllocTRES=cpu=1,mem=8G")
 
         self.assertEqual(result, mock_virtual_memory.return_value.total / (1024**3))
 
@@ -201,7 +199,9 @@ class TestRAM(unittest.TestCase):
         mock_process.return_value = process
         ram = RAM(pid=123, tracking_mode="process")
 
-        with mock.patch.object(ram, "_get_children_memories", return_value=[1024**3, 0]):
+        with mock.patch.object(
+            ram, "_get_children_memories", return_value=[1024**3, 0]
+        ):
             result = ram.process_memory_GB
 
         self.assertEqual(result, 4.0)
@@ -222,8 +222,15 @@ class TestRAM(unittest.TestCase):
         ram = RAM(tracking_mode="process")
 
         with (
-            mock.patch.object(type(ram), "process_memory_GB", new_callable=mock.PropertyMock, return_value=12.0),
-            mock.patch.object(ram, "_calculate_ram_power", return_value=18.0) as mock_calc,
+            mock.patch.object(
+                type(ram),
+                "process_memory_GB",
+                new_callable=mock.PropertyMock,
+                return_value=12.0,
+            ),
+            mock.patch.object(
+                ram, "_calculate_ram_power", return_value=18.0
+            ) as mock_calc,
         ):
             result = ram.total_power()
 
@@ -234,7 +241,10 @@ class TestRAM(unittest.TestCase):
         ram = RAM(tracking_mode="machine")
 
         with mock.patch.object(
-            type(ram), "machine_memory_GB", new_callable=mock.PropertyMock, side_effect=RuntimeError("boom")
+            type(ram),
+            "machine_memory_GB",
+            new_callable=mock.PropertyMock,
+            side_effect=RuntimeError("boom"),
         ):
             result = ram.total_power()
 

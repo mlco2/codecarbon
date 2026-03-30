@@ -73,7 +73,9 @@ class TestApplePowerMetrics:
             ),
             mock.patch(
                 "codecarbon.core.powermetrics.subprocess.Popen",
-                return_value=FakeProcess(stderr="[sudo] password for user:", returncode=0),
+                return_value=FakeProcess(
+                    stderr="[sudo] password for user:", returncode=0
+                ),
             ),
         ):
             assert powermetrics_module._has_powermetrics_sudo() is False
@@ -106,7 +108,9 @@ class TestApplePowerMetrics:
             assert powermetrics_module._has_powermetrics_sudo() is True
 
     def test_setup_cli_raises_on_unsupported_platform(self):
-        with mock.patch.object(ApplePowermetrics, "_setup_cli", ApplePowermetrics._setup_cli):
+        with mock.patch.object(
+            ApplePowermetrics, "_setup_cli", ApplePowermetrics._setup_cli
+        ):
             with mock.patch("codecarbon.core.powermetrics.sys.platform", "win32"):
                 with pytest.raises(SystemError):
                     ApplePowermetrics()
@@ -114,7 +118,9 @@ class TestApplePowerMetrics:
     def test_setup_cli_raises_when_binary_missing_on_apple_silicon(self):
         with (
             mock.patch("codecarbon.core.powermetrics.sys.platform", "darwin"),
-            mock.patch("codecarbon.core.powermetrics.detect_cpu_model", return_value="Apple M4"),
+            mock.patch(
+                "codecarbon.core.powermetrics.detect_cpu_model", return_value="Apple M4"
+            ),
             mock.patch("codecarbon.core.powermetrics.shutil.which", return_value=None),
         ):
             with pytest.raises(FileNotFoundError):
@@ -134,7 +140,9 @@ class TestApplePowerMetrics:
         powermetrics._log_file_path = "powermetrics_log.txt"
 
         with (
-            mock.patch("codecarbon.core.powermetrics.subprocess.call", return_value=1) as mock_call,
+            mock.patch(
+                "codecarbon.core.powermetrics.subprocess.call", return_value=1
+            ) as mock_call,
             mock.patch("codecarbon.core.powermetrics.logger.warning") as mock_warning,
         ):
             powermetrics._log_values()

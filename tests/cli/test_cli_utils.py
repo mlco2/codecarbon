@@ -1,5 +1,4 @@
 import configparser
-from pathlib import Path
 
 import pytest
 
@@ -80,7 +79,9 @@ def test_create_new_config_file_creates_parent_and_file(monkeypatch, tmp_path):
     target = tmp_path / "nested" / ".codecarbon.config"
     prompts = iter([str(target)])
 
-    monkeypatch.setattr(cli_utils.typer, "prompt", lambda *args, **kwargs: next(prompts))
+    monkeypatch.setattr(
+        cli_utils.typer, "prompt", lambda *args, **kwargs: next(prompts)
+    )
     monkeypatch.setattr(cli_utils.Confirm, "ask", lambda *args, **kwargs: True)
 
     created_path = cli_utils.create_new_config_file()
@@ -96,7 +97,9 @@ def test_create_new_config_file_expands_home(monkeypatch, tmp_path):
     target = home / ".codecarbon.config"
 
     monkeypatch.setattr(cli_utils.Path, "home", lambda: home)
-    monkeypatch.setattr(cli_utils.typer, "prompt", lambda *args, **kwargs: "~/.codecarbon.config")
+    monkeypatch.setattr(
+        cli_utils.typer, "prompt", lambda *args, **kwargs: "~/.codecarbon.config"
+    )
 
     created_path = cli_utils.create_new_config_file()
 
