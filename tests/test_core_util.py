@@ -1,7 +1,16 @@
 import shutil
 import tempfile
+from unittest import mock
 
-from codecarbon.core.util import backup, detect_cpu_model, resolve_path
+import pytest
+
+from codecarbon.core.util import (
+    backup,
+    count_cpus,
+    detect_cpu_model,
+    is_mac_arm,
+    resolve_path,
+)
 
 
 def test_detect_cpu_model_caching():
@@ -32,13 +41,112 @@ def test_detect_cpu_model_caching():
 
 
 def test_backup():
-    first_file = tempfile.NamedTemporaryFile()
-    backup(first_file.name)
-    expected_backup_path = resolve_path(f"{first_file.name}.bak")
-    assert expected_backup_path.exists()
-    # re-create file and back it up again
-    second_file = tempfile.NamedTemporaryFile()
-    shutil.copyfile(second_file.name, first_file.name)
-    backup(first_file.name)
-    backup_of_backup_path = resolve_path(f"{first_file.name}_0.bak")
-    assert backup_of_backup_path.exists()
+    first_file = tempfile.NamedTemporaryFile(delete=False)
+    second_file = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        first_file.close()
+        second_file.close()
+
+        backup(first_file.name)
+        expected_backup_path = resolve_path(f"{first_file.name}.bak")
+        assert expected_backup_path.exists()
+
+        # re-create file and back it up again
+        shutil.copyfile(second_file.name, first_file.name)
+        backup(first_file.name)
+        backup_of_backup_path = resolve_path(f"{first_file.name}_0.bak")
+        assert backup_of_backup_path.exists()
+    finally:
+        for path in [
+            first_file.name,
+            second_file.name,
+            f"{first_file.name}.bak",
+            f"{first_file.name}_0.bak",
+        ]:
+            resolved = resolve_path(path)
+            if resolved.exists():
+                resolved.unlink()
+
+
+@pytest.mark.parametrize(
+    "cpu_model, expected",
+    [
+        # Apple Silicon chips that should match
+        ("Apple M1", True),
+        ("Apple M2", True),
+        ("Apple M3", True),
+        ("Apple M4", True),
+        ("Apple M1 Pro", True),
+        ("Apple M2 Max", True),
+        ("Apple M3 Ultra", True),
+        ("Apple M4 Pro", True),
+        ("Apple M10", True),
+        # Non-Apple ARM or unrelated chips that should NOT match
+        ("Intel Core i7-9750H", False),
+        ("AMD Ryzen 9 5900X", False),
+        ("Qualcomm Snapdragon 8cx Gen 3", False),
+        # Partial matches that should NOT match (no word boundary)
+        ("SuperM2000 Processor", False),
+        ("M2fast chip", False),
+        # Empty string
+        ("", False),
+    ],
+)
+def test_is_mac_arm(cpu_model, expected):
+    assert is_mac_arm(cpu_model) == expected
+
+
+def test_count_cpus_no_slurm():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
+        with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+            assert count_cpus() == 4
+
+
+def test_count_cpus_slurm():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output"
+        ) as mock_subprocess_output:
+            mock_subprocess_output.return_value = b"NumCPUs=8 gres/gpu=2\n"
+            assert count_cpus() == 8
+
+
+def test_count_cpus_slurm_no_gpu():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output"
+        ) as mock_subprocess_output:
+            mock_subprocess_output.return_value = b"NumCPUs=16\n"
+            assert count_cpus() == 16
+
+
+def test_count_cpus_slurm_exception():
+    import subprocess
+
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output",
+            side_effect=subprocess.CalledProcessError(1, "cmd"),
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                assert count_cpus() == 4
+
+
+def test_count_cpus_slurm_malformed():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output",
+            return_value=b"Something Else\n",
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                assert count_cpus() == 4
+
+
+def test_count_cpus_slurm_too_many_matches():
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output",
+            return_value=b"NumCPUs=8 NumCPUs=16\n",
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                assert count_cpus() == 4

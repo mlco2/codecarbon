@@ -49,6 +49,7 @@ else:
 
 
 @mock.patch("codecarbon.core.gpu.pynvml", fake_pynvml)
+@mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=True)
 @mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
 @mock.patch(
     "codecarbon.external.hardware.AllGPUDevices.get_gpu_details",
@@ -89,6 +90,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # GIVEN
         responses.add(
@@ -107,13 +109,40 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertGreaterEqual(
             mocked_get_gpu_details.call_count, 2
         )  # at least 2 times in 5 seconds + once for init >= 3
-        self.assertEqual(3, mocked_is_gpu_details_available.call_count)
+        self.assertEqual(2, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
         )
         self.assertIsInstance(emissions, float)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
+
+    def test_monitor_power_uses_gpu_detail_position_when_gpu_index_is_missing(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        mock_gpu = mock.MagicMock()
+        from codecarbon.external.hardware import GPU
+
+        mock_gpu.__class__ = GPU
+        mock_gpu.gpu_ids = [0, 1]
+        mock_gpu.devices = mock.MagicMock()
+        mock_gpu.devices.get_gpu_details.return_value = [
+            {"gpu_utilization": 10},
+            {"gpu_index": 1, "gpu_utilization": 25},
+        ]
+        tracker._hardware = [mock_gpu]
+
+        tracker._monitor_power()
+
+        self.assertEqual([10, 25], tracker._gpu_utilization_history)
 
     @mock.patch("codecarbon.external.geography.requests.get")
     def test_carbon_tracker_timeout(
@@ -124,6 +153,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # GIVEN
 
@@ -151,6 +181,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
@@ -169,6 +200,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
@@ -188,6 +220,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # GIVEN
         responses.add(
@@ -215,6 +248,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # GIVEN
         responses.add(
@@ -241,6 +275,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # WHEN
 
@@ -257,6 +292,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # GIVEN
 
@@ -280,6 +316,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # GIVEN
 
@@ -303,6 +340,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA",
@@ -325,6 +363,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA",
@@ -357,6 +396,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         tracker = OfflineEmissionsTracker(
             country_iso_code="USA",
@@ -394,6 +434,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # GIVEN
         responses.add(
@@ -411,7 +452,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertGreaterEqual(
             mocked_get_gpu_details.call_count, 2
         )  # at least 2 times in 5 seconds + once for init >= 3
-        self.assertEqual(3, mocked_is_gpu_details_available.call_count)
+        self.assertEqual(2, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
             "https://get.geojs.io/v1/ip/geo.json", responses.calls[0].request.url
@@ -434,7 +475,8 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,  # Class decorator
         mocked_env_cloud_details,  # Class decorator
         mocked_get_gpu_details,  # Class decorator
-        mocked_is_gpu_details_available,  # Class decorator (outermost relevant one)
+        mocked_is_gpu_details_available,  # Class decorator
+        mocked_is_nvidia_system,  # Class decorator (outermost relevant one)
     ):
         # --- Test Setup ---
         # Configure mocks to return specific, non-zero energy values
@@ -538,6 +580,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         with OfflineEmissionsTracker(
             country_iso_code="USA", output_dir=self.temp_path
@@ -559,6 +602,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         """Test that scheduler warning is suppressed when scheduler is stopped."""
         with EmissionsTracker(
@@ -601,6 +645,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         """Test that scheduler warning is shown when scheduler is running but delayed."""
         with EmissionsTracker(
@@ -645,6 +690,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_gpu_details,
         mocked_env_cloud_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         tracker = EmissionsTracker(save_to_file=False)
         hardware_info = tracker.get_detected_hardware()
@@ -678,6 +724,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_get_cloud_metadata_class,
         mocked_get_gpu_details,
         mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
     ):
         # Setup mocks
         mock_geo.return_value = mock.MagicMock(

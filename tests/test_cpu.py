@@ -1,17 +1,27 @@
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
 import pytest
 
+from codecarbon.core.config import normalize_gpu_ids
 from codecarbon.core.cpu import (
+    DEFAULT_POWER_PER_CORE,
     TDP,
     IntelPowerGadget,
     IntelRAPL,
+    _check_energy_file,
+    _get_candidate_bases,
+    _is_main_domain,
+    _scan_base_for_rapl,
+    _scan_direct_entries,
+    _scan_domain_directories,
     is_powergadget_available,
     is_psutil_available,
+    is_rapl_available,
 )
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time
@@ -21,6 +31,12 @@ from codecarbon.input import DataSource
 
 
 class TestCPU(unittest.TestCase):
+    @mock.patch("codecarbon.core.cpu.IntelPowerGadget", side_effect=Exception("boom"))
+    def test_is_powergadget_available_returns_false_on_exception(
+        self, mock_powergadget
+    ):
+        self.assertFalse(is_powergadget_available())
+
     @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_with_nice(self, mock_cpu_times):
         # Create a mock with 'nice' attribute
@@ -49,6 +65,104 @@ class TestCPU(unittest.TestCase):
     @mock.patch("psutil.cpu_times", side_effect=Exception("Test error"))
     def test_is_psutil_not_available_on_exception(self, mock_cpu_times):
         self.assertFalse(is_psutil_available())
+
+
+class TestRAPLHelperFunctions(unittest.TestCase):
+    def test_get_candidate_bases_for_custom_dir(self):
+        with tempfile.TemporaryDirectory() as parent:
+            rapl_dir = os.path.join(parent, "custom", "intel-rapl")
+            os.makedirs(rapl_dir)
+
+            result = _get_candidate_bases(rapl_dir)
+
+        assert result == [rapl_dir, os.path.dirname(rapl_dir)]
+
+    def test_get_candidate_bases_for_default_dir_deduplicates_and_filters(self):
+        with mock.patch("codecarbon.core.cpu.os.path.exists") as mock_exists:
+            mock_exists.side_effect = lambda path: path in {
+                "/sys/class/powercap/intel-rapl/subsystem",
+                "/sys/class/powercap/intel-rapl",
+                "/sys/class/powercap",
+            }
+
+            result = _get_candidate_bases("/sys/class/powercap/intel-rapl/subsystem")
+
+        assert result == [
+            "/sys/class/powercap/intel-rapl/subsystem",
+            "/sys/class/powercap/intel-rapl",
+            "/sys/class/powercap",
+        ]
+
+    def test_is_main_domain_reads_package_name(self):
+        with tempfile.TemporaryDirectory() as sub_path:
+            with open(os.path.join(sub_path, "name"), "w") as f:
+                f.write("package-0")
+
+            assert _is_main_domain(sub_path, "intel-rapl:1") is True
+
+    def test_is_main_domain_falls_back_to_suffix(self):
+        with tempfile.TemporaryDirectory() as sub_path:
+            assert _is_main_domain(sub_path, "intel-rapl:0") is True
+            assert _is_main_domain(sub_path, "intel-rapl:1") is False
+
+    def test_check_energy_file_warns_on_permission_denied(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            energy_path = os.path.join(tmpdir, "energy_uj")
+            with open(energy_path, "w") as f:
+                f.write("1")
+            warned = []
+
+            with mock.patch("codecarbon.core.cpu.os.access", return_value=False):
+                result = _check_energy_file(energy_path, True, warned.append)
+
+        assert result is False
+        assert warned == [energy_path]
+
+    def test_scan_domain_directories_returns_true_for_main_domain(self):
+        entry_path = "/tmp/entry"
+        package_dir = "/tmp/entry/intel-rapl:0"
+
+        with (
+            mock.patch("codecarbon.core.cpu.os.listdir", return_value=["intel-rapl:0"]),
+            mock.patch(
+                "codecarbon.core.cpu.os.path.isdir",
+                side_effect=lambda path: path.replace("\\", "/") == package_dir,
+            ),
+            mock.patch("codecarbon.core.cpu._is_main_domain", return_value=True),
+            mock.patch("codecarbon.core.cpu._check_energy_file", return_value=True),
+        ):
+            assert _scan_domain_directories(entry_path, lambda _: None) is True
+
+    def test_scan_direct_entries_returns_false_when_no_matching_dirs(self):
+        with tempfile.TemporaryDirectory() as base:
+            os.makedirs(os.path.join(base, "not-rapl"))
+
+            assert _scan_direct_entries(base, lambda _: None) is False
+
+    def test_scan_base_for_rapl_checks_direct_entries_fallback(self):
+        with (
+            mock.patch("codecarbon.core.cpu.os.listdir", return_value=["intel-rapl:0"]),
+            mock.patch("codecarbon.core.cpu.os.path.isdir", return_value=False),
+            mock.patch(
+                "codecarbon.core.cpu._scan_domain_directories", return_value=False
+            ),
+            mock.patch("codecarbon.core.cpu._scan_direct_entries", return_value=True),
+        ):
+            assert _scan_base_for_rapl("/tmp/base", lambda _: None) is True
+
+    @mock.patch("codecarbon.core.cpu._scan_base_for_rapl", side_effect=[False, True])
+    @mock.patch("codecarbon.core.cpu._get_candidate_bases", return_value=["a", "b"])
+    def test_is_rapl_available_scans_candidate_bases(self, mock_candidates, mock_scan):
+        assert is_rapl_available("/tmp/custom") is True
+
+    @mock.patch(
+        "codecarbon.core.cpu._scan_base_for_rapl", side_effect=Exception("boom")
+    )
+    @mock.patch("codecarbon.core.cpu._get_candidate_bases", return_value=["a"])
+    def test_is_rapl_available_returns_false_on_unexpected_error(
+        self, mock_candidates, mock_scan
+    ):
+        assert is_rapl_available("/tmp/custom") is False
 
 
 class TestIntelPowerGadget(unittest.TestCase):
@@ -96,6 +210,86 @@ class TestIntelPowerGadget(unittest.TestCase):
                 cpu_details["Cumulative IA Energy_0(mWh)"], 3
             )
             self.assertDictEqual(expected_cpu_details, cpu_details)
+
+    def test_setup_cli_uses_windows_backup_when_primary_missing(self):
+        with (
+            mock.patch("codecarbon.core.cpu.sys.platform", "win32"),
+            mock.patch.object(
+                IntelPowerGadget,
+                "_get_windows_exec_backup",
+                lambda self: setattr(
+                    self,
+                    "_windows_exec_backup",
+                    "C:\\Program Files\\Intel\\Power Gadget\\PowerLog3.0.exe",
+                ),
+            ),
+            mock.patch(
+                "codecarbon.core.cpu.shutil.which",
+                side_effect=lambda path: None if path == "PowerLog3.0.exe" else path,
+            ),
+        ):
+            gadget = IntelPowerGadget()
+
+        self.assertEqual(
+            gadget._cli,
+            "C:\\Program Files\\Intel\\Power Gadget\\PowerLog3.0.exe",
+        )
+
+    def test_setup_cli_raises_on_unsupported_platform(self):
+        with mock.patch("codecarbon.core.cpu.sys.platform", "linux"):
+            with self.assertRaises(SystemError):
+                IntelPowerGadget()
+
+    def test_get_windows_exec_backup_finds_matching_folder(self):
+        entries = [
+            mock.Mock(is_dir=lambda: True, name="Other"),
+            mock.Mock(is_dir=lambda: True, name="Power Gadget 3.7"),
+        ]
+        entries[0].name = "Other"
+        entries[1].name = "Power Gadget 3.7"
+
+        gadget = IntelPowerGadget.__new__(IntelPowerGadget)
+        gadget._windows_exec = "PowerLog3.0.exe"
+
+        with mock.patch("codecarbon.core.cpu.os.scandir", return_value=entries):
+            gadget._get_windows_exec_backup()
+
+        self.assertIn("Power Gadget 3.7", gadget._windows_exec_backup)
+
+    def test_log_values_returns_none_on_unsupported_platform(self):
+        gadget = IntelPowerGadget.__new__(IntelPowerGadget)
+        gadget._system = "linux"
+
+        self.assertIsNone(gadget._log_values())
+
+    def test_log_values_warns_on_nonzero_returncode_windows(self):
+        gadget = IntelPowerGadget.__new__(IntelPowerGadget)
+        gadget._system = "win32"
+        gadget._cli = "PowerLog3.0.exe"
+        gadget._duration = 1
+        gadget._resolution = 100
+        gadget._log_file_path = "intel.csv"
+
+        with (
+            mock.patch(
+                "codecarbon.core.cpu.subprocess.call", return_value=1
+            ) as mock_call,
+            mock.patch("codecarbon.core.cpu.logger.warning") as mock_warning,
+        ):
+            gadget._log_values()
+
+        mock_call.assert_called_once()
+        mock_warning.assert_called_once()
+
+    @mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
+    @mock.patch("codecarbon.core.cpu.pd.read_csv", side_effect=Exception("bad csv"))
+    @mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
+    def test_get_cpu_details_returns_empty_dict_on_read_error(
+        self, mock_setup, mock_read_csv, mock_log_values
+    ):
+        gadget = IntelPowerGadget()
+
+        self.assertEqual(gadget.get_cpu_details(), {})
 
 
 class TestIntelRAPL(unittest.TestCase):
@@ -335,6 +529,23 @@ class TestTDP(unittest.TestCase):
             tdp._get_matching_cpu(model, cpu_data, greedy=False),
         )
 
+    def test_main_fallback_default_power_when_unknown_cpu(self):
+        with (
+            mock.patch(
+                "codecarbon.core.cpu.detect_cpu_model", return_value="Mystery CPU"
+            ),
+            mock.patch(
+                "codecarbon.core.cpu.TDP._get_cpu_power_from_registry",
+                return_value=None,
+            ),
+            mock.patch("codecarbon.core.cpu.is_psutil_available", return_value=True),
+            mock.patch("codecarbon.core.cpu.count_cpus", return_value=8),
+        ):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Mystery CPU")
+        self.assertEqual(tdp.tdp, 8 * DEFAULT_POWER_PER_CORE)
+
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):
     def test_set_cpu_tracking_skips_tdp_when_rapl_available(self):
@@ -353,24 +564,30 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         cpu_device = mock.Mock()
         cpu_device.get_model.return_value = "Mock CPU"
 
-        with mock.patch(
-            "codecarbon.core.resource_tracker.cpu.TDP",
-            side_effect=AssertionError(
-                "TDP should not be instantiated when RAPL is active"
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.TDP",
+                side_effect=AssertionError(
+                    "TDP should not be instantiated when RAPL is active"
+                ),
+            ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+                return_value=False,
             ),
-        ) as mocked_tdp, mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
-            return_value=True,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.CPU.from_utils",
-            return_value=cpu_device,
-        ) as mocked_from_utils:
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+                return_value=True,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.CPU.from_utils",
+                return_value=cpu_device,
+            ) as mocked_from_utils,
+        ):
             resource_tracker.set_CPU_tracking()
 
         mocked_tdp.assert_not_called()
@@ -400,22 +617,29 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         fake_tdp.tdp = 50
         fake_tdp.model = "Mock CPU"
 
-        with mock.patch(
-            "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
-        ) as mocked_tdp, mock.patch(
-            "codecarbon.core.resource_tracker.ResourceTracker._setup_cpu_load_mode",
-            return_value=True,
-        ) as mocked_setup_cpu_load, mock.patch(
-            "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
-        ) as mocked_fallback, mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
-            return_value=False,
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+            ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.ResourceTracker._setup_cpu_load_mode",
+                return_value=True,
+            ) as mocked_setup_cpu_load,
+            mock.patch(
+                "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
+            ) as mocked_fallback,
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+                return_value=False,
+            ),
         ):
             resource_tracker.set_CPU_tracking()
 
@@ -440,24 +664,139 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         fake_tdp.tdp = 20
         fake_tdp.model = "Mock CPU"
 
-        with mock.patch(
-            "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
-        ) as mocked_tdp, mock.patch(
-            "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
-        ) as mocked_fallback, mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.cpu.is_rapl_available",
-            return_value=False,
-        ), mock.patch(
-            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
-            return_value=False,
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+            ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
+            ) as mocked_fallback,
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.cpu.is_rapl_available",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+                return_value=False,
+            ),
         ):
             resource_tracker.set_CPU_tracking()
 
         mocked_tdp.assert_called_once_with()
         mocked_fallback.assert_called_once_with(fake_tdp, 80)
+
+
+class TestResourceTrackerGPUTracking(unittest.TestCase):
+    def test_normalize_gpu_ids_mixed_list_with_escaping(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = [0, "MIG-f1e$%^", "1, 2", "GPU-abcd!"]
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+
+        normalized_gpu_ids = normalize_gpu_ids(resource_tracker.tracker._gpu_ids)
+
+        self.assertEqual(normalized_gpu_ids, [0, "MIG-f1e", "1", "2", "GPU-abcd"])
+
+    def test_normalize_gpu_ids_mixed_list_ignores_invalid_entries(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = [0, {"invalid": "entry"}, "GPU-123"]
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+
+        normalized_gpu_ids = normalize_gpu_ids(resource_tracker.tracker._gpu_ids)
+
+        self.assertEqual(normalized_gpu_ids, [0, "GPU-123"])
+
+    def test_set_gpu_tracking_rocm_with_string_ids(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = "0,1"
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+        fake_devices = mock.Mock()
+        fake_devices.devices.get_gpu_static_info.return_value = [
+            {"name": "AMD Instinct MI300X"},
+            {"name": "AMD Instinct MI300X"},
+        ]
+
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.normalize_gpu_ids",
+                return_value=[0, 1],
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_nvidia_system",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_rocm_system",
+                return_value=True,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.GPU.from_utils",
+                return_value=fake_devices,
+            ),
+        ):
+            resource_tracker.set_GPU_tracking()
+
+        self.assertEqual(tracker._gpu_ids, [0, 1])
+        self.assertEqual(tracker._conf["gpu_ids"], [0, 1])
+        self.assertEqual(tracker._conf["gpu_count"], 2)
+        self.assertEqual(resource_tracker.gpu_tracker, "amdsmi")
+        self.assertEqual(tracker._conf["gpu_model"], "2 x AMD Instinct MI300X")
+        self.assertEqual(tracker._hardware, [fake_devices])
+
+    def test_set_gpu_tracking_rocm_with_mixed_ids(self):
+        class DummyTracker:
+            def __init__(self):
+                self._conf = {}
+                self._gpu_ids = [0, "MIG-f1e$%^", "1, 2"]
+                self._hardware = []
+
+        tracker = DummyTracker()
+        resource_tracker = ResourceTracker(tracker)
+        fake_devices = mock.Mock()
+        fake_devices.devices.get_gpu_static_info.return_value = [
+            {"name": "AMD Instinct MI300X"},
+            {"name": "AMD Instinct MI300X"},
+        ]
+
+        with (
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_nvidia_system",
+                return_value=False,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.gpu.is_rocm_system",
+                return_value=True,
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.GPU.from_utils",
+                return_value=fake_devices,
+            ) as mocked_gpu_from_utils,
+        ):
+            resource_tracker.set_GPU_tracking()
+
+        expected_gpu_ids = [0, "MIG-f1e", "1", "2"]
+        mocked_gpu_from_utils.assert_called_once_with(expected_gpu_ids)
+        self.assertEqual(tracker._gpu_ids, expected_gpu_ids)
+        self.assertEqual(tracker._conf["gpu_ids"], expected_gpu_ids)
+        self.assertEqual(tracker._conf["gpu_count"], 2)
 
 
 class TestPhysicalCPU(unittest.TestCase):

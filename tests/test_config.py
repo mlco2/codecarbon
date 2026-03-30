@@ -7,6 +7,7 @@ from unittest.mock import patch
 from codecarbon.core.config import (
     clean_env_key,
     get_hierarchical_config,
+    normalize_gpu_ids,
     parse_env_config,
     parse_gpu_ids,
 )
@@ -16,6 +17,23 @@ from tests.testutils import get_custom_mock_open
 
 
 class TestConfig(unittest.TestCase):
+    def setUp(self):
+        self._original_environ = os.environ.copy()
+        for key in [
+            "CODECARBON_API_KEY",
+            "CODECARBON_EXPERIMENT_ID",
+            "CODECARBON_API_ENDPOINT",
+            "codecarbon_api_key",
+            "codecarbon_experiment_id",
+            "codecarbon_api_endpoint",
+        ]:
+            os.environ.pop(key, None)
+        os.environ.setdefault("CODECARBON_ALLOW_MULTIPLE_RUNS", "True")
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self._original_environ)
+
     def test_clean_env_key(self):
         for key in [1, None, 0.2, [], set()]:
             with self.assertRaises(AssertionError):
@@ -44,6 +62,20 @@ class TestConfig(unittest.TestCase):
             ([1, 2, 3], ["1", "2", "3"]),
         ]:
             self.assertEqual(parse_gpu_ids(ids), target)
+
+    def test_normalize_gpu_ids(self):
+        for ids, target in [
+            (None, None),
+            ("0,1,2", ["0", "1", "2"]),
+            ("MIG-f1e$%^", ["MIG-f1e"]),
+            ([1, 2, 3], [1, 2, 3]),
+            (
+                [0, "MIG-f1e$%^", "1, 2", "GPU-abcd!"],
+                [0, "MIG-f1e", "1", "2", "GPU-abcd"],
+            ),
+            ([0, {"invalid": "entry"}, "GPU-123"], [0, "GPU-123"]),
+        ]:
+            self.assertEqual(normalize_gpu_ids(ids), target)
 
     @mock.patch.dict(
         os.environ,
@@ -228,6 +260,34 @@ class TestConfig(unittest.TestCase):
                 gpu_count += 1
         # self.assertEqual(gpu_count, 0)
         tracker.stop()
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "ROCR_VISIBLE_DEVICES": "1, 2",
+        },
+    )
+    def test_gpu_ids_from_rocr_visible_devices(self):
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["1", "2"])
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CUDA_VISIBLE_DEVICES": "0, 1",
+            "ROCR_VISIBLE_DEVICES": "1, 2",
+        },
+    )
+    def test_cuda_visible_devices_takes_precedence_over_rocr_visible_devices(self):
+        # CUDA_VISIBLE_DEVICES should take precedence as NVIDIA GPUs are checked first
+        with patch("os.path.exists", return_value=True):
+            tracker = EmissionsTracker(
+                project_name="test-project", allow_multiple_runs=True
+            )
+        self.assertEqual(tracker._gpu_ids, ["0", "1"])
 
 
 if __name__ == "__main__":

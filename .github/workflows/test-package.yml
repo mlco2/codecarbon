@@ -6,20 +6,19 @@ on:
   pull_request:
     paths:
       - "codecarbon/**"
-      - "test/**"
+      - "tests/**"
       - "pyproject.toml"
       - "uv.lock"
+      - ".github/workflows/test-package.yml"
   push:
     branches: [master]
-    paths:
-      - "codecarbon/**"
-      - "test/**"
-      - "pyproject.toml"
-      - "uv.lock"
 
 jobs:
   python-test:
     runs-on: ubuntu-24.04
+    env:
+      CODECARBON_API_KEY: ${{ secrets.CODECARBON_API_TOKEN }}
+      CODECARBON_EXPERIMENT_ID: ${{ secrets.CODECARBON_EXPERIMENT_ID_TEST_PACKAGE }}
     strategy:
         matrix:
           python-version: ["3.12", "3.13", "3.14"]
@@ -34,7 +33,7 @@ jobs:
     - name: Install dependencies
       run: uv sync --python ${{ matrix.python-version }}
     - name: Test package
-      run: uv run --python ${{ matrix.python-version }} task test-coverage
+      run: uv run --python ${{ matrix.python-version }} codecarbon monitor -- uv run --python ${{ matrix.python-version }} task test-coverage
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
       with:

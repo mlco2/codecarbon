@@ -8,19 +8,12 @@ They are loaded once at module import to avoid repeated file I/O on the hot path
 
 import atexit
 import json
-import sys
 from contextlib import ExitStack
+from importlib.resources import as_file as importlib_resources_as_file
+from importlib.resources import files as importlib_resources_files
 from typing import Any, Dict
 
 import pandas as pd
-
-if sys.version_info >= (3, 9):
-    from importlib.resources import as_file as importlib_resources_as_file
-    from importlib.resources import files as importlib_resources_files
-else:
-    from importlib_resources import as_file as importlib_resources_as_file
-    from importlib_resources import files as importlib_resources_files
-
 
 _CACHE: Dict[str, Any] = {}
 _MODULE_NAME = "codecarbon"
@@ -59,6 +52,11 @@ def _load_static_data() -> None:
     # CPU power data
     path = _get_resource_path("data/hardware/cpu_power.csv")
     _CACHE["cpu_power"] = pd.read_csv(path)
+
+    # Nordic country energy mix - used for emissions calculations
+    path = _get_resource_path("data/private_infra/nordic_emissions.json")
+    with open(path) as f:
+        _CACHE["nordic_country_energy_mix"] = json.load(f)
 
 
 # Load static data at module import
@@ -188,6 +186,13 @@ class DataSource:
         Data is pre-loaded at module import for performance.
         """
         return _CACHE["cpu_power"]
+
+    def get_nordic_country_energy_mix_data(self) -> Dict:
+        """
+        Returns Nordic Country Energy Mix Data.
+        Data is cached on first access per country.
+        """
+        return _CACHE["nordic_country_energy_mix"]
 
 
 class DataSourceException(Exception):

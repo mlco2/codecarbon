@@ -14,6 +14,7 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+      - ".github/workflows/build-docs.yml"
 
 jobs:
   build:
@@ -33,4 +34,12 @@ jobs:
         run: uv sync --group doc
 
       - name: Build docs
-        run: uv run zensical build -f mkdocs.yml --clean
+        run: |
+          set -euo pipefail
+          # Run zensical and capture output, fail if command exits non-zero
+          uv run zensical build -f mkdocs.yml --clean 2>&1 | tee docs_build.log
+          # If output contains common error indicators, fail the step.
+          if grep -Ei "\b(error|failed|traceback|exception)\b" docs_build.log >/dev/null; then
+            echo "Documentation build produced errors; failing workflow."
+            exit 1
+          fi

@@ -9,7 +9,7 @@ Parameters can be set via `EmissionsTracker()`, `OfflineEmissionsTracker()`, the
     up to 2.2, new greener ones as low as 1.1.
 
 !!! note "GPU selection"
-    If you use `CUDA_VISIBLE_DEVICES` to set GPUs, CodeCarbon will automatically
+    If you use `CUDA_VISIBLE_DEVICES` or `ROCR_VISIBLE_DEVICES` to set GPUs, CodeCarbon will automatically
     populate `gpu_ids`. Manual `gpu_ids` overrides this.
 
 ## EmissionsTracker / BaseEmissionsTracker
@@ -19,7 +19,8 @@ All parameters are documented below:
 
 ::: codecarbon.emissions_tracker.BaseEmissionsTracker
     options:
-      members: __init__
+      members: 
+        - __init__
       merge_init_into_class: true
       show_root_heading: true
       show_signature: false
@@ -30,7 +31,8 @@ All parameters are documented below:
 
 ::: codecarbon.emissions_tracker.OfflineEmissionsTracker
     options:
-      members: __init__
+      members: 
+        - __init__
       merge_init_into_class: true
       show_root_heading: true
       show_signature: false

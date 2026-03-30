@@ -120,7 +120,7 @@ root access to get the number of RAM slots used. So we use an heuristic
 based on the RAM size.
 
 For example keep a minimum of 2 modules. Except for ARM CPU like
-rapsberry pi where we will consider a 3W constant. Then consider the max
+Raspberry Pi where we will consider a 3W constant. Then consider the max
 RAM per module is 128GB and that RAM module only exist in power of 2 (2,
 4, 8, 16, 32, 64, 128). So we can estimate the power consumption of the
 RAM by the number of modules used.
@@ -186,7 +186,7 @@ Tracks Intel processors energy consumption using the
 . But has been discontinued. There is a discussion about it on [github
 issues #457](https://github.com/mlco2/codecarbon/issues/457).
 
--   **Apple Silicon Chips (M1, M2)**
+-   **Apple Silicon Chips (M1, M2, M3, ...)**
 
 Apple Silicon Chips contain both the CPU and the GPU.
 

@@ -3,10 +3,10 @@ Encapsulates external dependencies to retrieve cloud and geographical metadata
 """
 
 import re
-import urllib.parse
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional
 
+import pycountry
 import requests
 
 from codecarbon.core.cloud import get_env_cloud_details
@@ -93,10 +93,14 @@ class GeoMetadata:
         try:
             response: Dict = requests.get(url, timeout=0.5).json()
 
+            region = response.get("region", "").lower()
+            if not region:
+                raise ValueError("Region is empty")
+
             return cls(
                 country_iso_code=response["country_code3"].upper(),
                 country_name=response["country"],
-                region=response.get("region", "").lower(),
+                region=region,
                 latitude=float(response.get("latitude")),
                 longitude=float(response.get("longitude")),
                 country_2letter_iso_code=response.get("country_code"),
@@ -107,32 +111,36 @@ class GeoMetadata:
                 f"Unable to access geographical location through primary API. Will resort to using the backup API - Exception : {e} - url={url}"
             )
 
-        geo_url_backup = "https://ip-api.com/json/"
+        geo_url_backup = "https://ipinfo.io/json"
 
         try:
             geo_response: Dict = requests.get(geo_url_backup, timeout=0.5).json()
-            country_name = geo_response["country"]
 
-            # The previous request does not return the three-letter country code
-            country_code_3_url = f"https://api.first.org/data/v1/countries?q={urllib.parse.quote_plus(country_name)}&scope=iso"
-            country_code_response: Dict = requests.get(
-                country_code_3_url, timeout=0.5
-            ).json()
+            # extract latitude and longitude from loc (e.g., "loc": "37.4056,-122.0775")
+            loc = geo_response.get("loc", "").split(",")
+            latitude = float(loc[0]) if len(loc) == 2 else 0.0
+            longitude = float(loc[1]) if len(loc) == 2 else 0.0
+
+            # Retrieve the 3-letter ISO code using pycountry
+            country_2letter_iso_code = geo_response.get("country")
+            country = pycountry.countries.get(alpha_2=country_2letter_iso_code)
+
+            # Some countries might not be found or mapped perfectly
+            country_iso_code = country.alpha_3 if country else ""
+            country_name = country.name if country else ""
 
             return cls(
-                country_iso_code=next(
-                    iter(country_code_response["data"].keys())
-                ).upper(),
+                country_iso_code=country_iso_code.upper(),
                 country_name=country_name,
-                region=geo_response.get("regionName", "").lower(),
-                latitude=float(geo_response.get("lat")),
-                longitude=float(geo_response.get("lon")),
-                country_2letter_iso_code=geo_response.get("countryCode"),
+                region=geo_response.get("region", "").lower(),
+                latitude=latitude,
+                longitude=longitude,
+                country_2letter_iso_code=country_2letter_iso_code,
             )
         except Exception as e:
             # If both API calls fail, default to Canada
             logger.warning(
-                f"Unable to access geographical location. Using 'Canada' as the default value - Exception : {e} - url={url}"
+                f"Unable to access geographical location through fallback API. Using 'Canada' as the default value - Exception : {e} - url={geo_url_backup}"
             )
 
             return cls(

@@ -16,6 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "alembic<2.0.0",
+    "authlib>=1.2.1",
     "bcrypt<5.0.0",
     "python-dateutil<3.0.0",
     "dependency-injector<5.0.0",
@@ -23,18 +24,15 @@ dependencies = [
     "fief-client[fastapi]",
     "fastapi[standard]",
     "httpx",
-    "pydantic[email]<2.0.0",
+    "pydantic[email]>=2.0.0,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
     "psycopg2-binary<3.0.0",
     "requests<3.0.0",
     "sqlalchemy<2.0.0",
     "uvicorn[standard]<1.0.0",
     "fastapi-pagination<1.0.0",
-    "mock",
-    "pytest",
-    "responses",
     "numpy",
     "psutil",
-    "requests-mock",
     "rapidfuzz",
     "PyJWT",
     "fastapi-oidc>=0.0.9",
@@ -42,11 +40,20 @@ dependencies = [
     "itsdangerous>=2.2.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "mock",
+    "pytest",
+    "pytest-asyncio",
+    "responses",
+    "requests-mock",
+]
+
 [project.urls]
 Homepage = "https://codecarbon.io/"
 Repository = "https://github.com/mlco2/codecarbon"
 Dashboard = "http://dashboard.codecarbon.io/"
-Documentation = "https://mlco2.github.io/codecarbon/"
+Documentation = "https://docs.codecarbon.io/"
 Issues = "https://github.com/mlco2/codecarbon/issues"
 Changelog = "https://github.com/mlco2/codecarbon/releases"
 
