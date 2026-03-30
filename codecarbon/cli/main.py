@@ -310,7 +310,7 @@ def config():
     overwrite_local_config("api_key", api_key, path=file_path)
     show_config(file_path)
     print(
-        "Consult [link=https://mlco2.github.io/codecarbon/usage.html#configuration]configuration documentation[/link] for more configuration options"
+        "Consult [link=https://docs.codecarbon.io/latest/getting-started/usage/#configuration]configuration documentation[/link] for more configuration options"
     )
 
 

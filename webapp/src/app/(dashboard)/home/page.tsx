@@ -78,10 +78,10 @@ export default function HomePage() {
                         For more information, please refer to the documentation:
                         <br />
                         <a
-                            href="https://mlco2.github.io/codecarbon/usage.html"
+                            href="https://docs.codecarbon.io/latest/getting-started/usage/"
                             target="_blank"
                         >
-                            https://mlco2.github.io/codecarbon/usage.html
+                            https://docs.codecarbon.io/latest/getting-started/usage/
                         </a>
                     </CardDescription>
                 </CardHeader>

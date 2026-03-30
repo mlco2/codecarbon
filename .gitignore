@@ -134,3 +134,4 @@ tests/test_data/rapl/*
 # credentials
 credentials*
 .codecarbon.config*
+scripts/agent-vm.personal.config.sh
