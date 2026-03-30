@@ -123,6 +123,13 @@ nav:
     - Parameters: getting-started/parameters.md
     - Examples: getting-started/examples.md
     - Test on Scaleway: getting-started/test_on_scaleway.md
+  - Contributing:
+    - Code of Conduct: contributing/CODE_OF_CONDUCT.md
+    - Contributing to CodeCarbon: contributing/CONTRIBUTING.md
+    - AI Contribution Policy: contributing/AI_POLICY.md
+    - Working with OpenCode Agent VM: contributing/working_with_agent.md
+    - Coding Agents Instructions: contributing/agents-instructions.md
+    - Reporting security vulnerabilities: contributing/SECURITY.md
   - Advanced Usage:
     - Install CodeCarbon as a Linux service: advanced/linux_service.md
     - Deploy with Ansible: advanced/ansible.md
