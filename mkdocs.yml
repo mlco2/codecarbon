@@ -74,7 +74,7 @@ plugins:
         "logging/visualize.md": "how-to/visualize.md"
         "contributing/CODE_OF_CONDUCT/": "how-to/code-of-conduct.md"
         "contributing/CONTRIBUTING/": "how-to/contributing.md"
-        "contributing/AI_POLICY/": "how-to/ai-policy.md"
+        "contributing/AI_POLICY/": "how-to/ai_policy.md"
         "contributing/working_with_agent/": "how-to/working-with-agent.md"
         "contributing/agents-instructions/": "how-to/agent-instructions.md"
         "contributing/SECURITY/": "how-to/security.md"
@@ -165,7 +165,7 @@ nav:
     - Contributing:
       - Code of Conduct: how-to/code-of-conduct.md
       - Contribution Guidelines: how-to/contributing.md
-      - AI Policy: how-to/ai-policy.md
+      - AI Policy: how-to/ai_policy.md
       - Working with Coding Agent: how-to/working-with-agent.md
       - Agent Instructions: how-to/agent-instructions.md
       - Security Policy: how-to/security.md

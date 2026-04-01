@@ -76,7 +76,7 @@ The **canonical and up-to-date instructions for AI reviewers** are maintained in
 
 - The expected reviewer persona and responsibilities
 - The checks to perform on PR descriptions, code, tests, and comments
-- The required enforcement of the laws defined in this `AI_POLICY.md`
+- The required enforcement of the laws defined in this `docs/how-to/ai_policy.md`
 
 Any other document (including this one) should treat `copilot-instructions.md` as the single source of truth for AI reviewer behavior. When updating reviewer logic, update `copilot-instructions.md` first and, if needed, adjust references here.
 
