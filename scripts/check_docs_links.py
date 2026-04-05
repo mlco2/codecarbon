@@ -42,14 +42,20 @@ IGNORE_EXTERNAL_GLOBS: tuple[str, ...] = (
 SKIP_LOCAL_HREFS: frozenset[str] = frozenset({".", "..", "./", "../"})
 
 
+def _is_github_host(url: str) -> bool:
+    """True if URL host is github.com or a subdomain (not e.g. evilgithub.com)."""
+    host = (urllib.parse.urlparse(url).hostname or "").lower()
+    return host == "github.com" or host.endswith(".github.com")
+
+
 def _matches_glob(url: str, pattern: str) -> bool:
     from fnmatch import fnmatch
 
     return fnmatch(url, pattern)
 
 
-def _local_target_exists(site_root: Path, source_html: Path, raw_href: str) -> tuple[bool, str]:
-    """Return (ok, detail) for a same-origin path or relative URL."""
+def _local_href_skip_ok(raw_href: str) -> tuple[bool, str] | None:
+    """Return (True, reason) if href needs no filesystem check; None to resolve path."""
     if not raw_href or raw_href.startswith("#"):
         return True, "fragment-only"
     if raw_href in SKIP_LOCAL_HREFS:
@@ -61,30 +67,40 @@ def _local_target_exists(site_root: Path, source_html: Path, raw_href: str) -> t
         return True, "skipped-scheme"
     if parsed.netloc:
         return True, "other-scheme"
+    return None
 
-    path_part = parsed.path or "."
+
+def _resolved_candidate_under_site(
+    site_root: Path, source_html: Path, path_part: str
+) -> tuple[Path | None, str]:
+    """Resolve path to absolute Path under site_root, or (None, error)."""
     if path_part.startswith("/"):
         candidate = (site_root / path_part.lstrip("/")).resolve()
     else:
         candidate = (source_html.parent / path_part).resolve()
-
     try:
         candidate.relative_to(site_root.resolve())
     except ValueError:
-        return False, f"escapes site root: {candidate}"
+        return None, f"escapes site root: {candidate}"
+    return candidate, ""
 
-    fragment = parsed.fragment
 
+def _match_local_file(
+    site_root: Path, candidate: Path, fragment: str
+) -> tuple[bool, str]:
+    """Return (ok, detail) after checking candidate against built site layout."""
     if candidate.is_dir():
         index_file = candidate / "index.html"
         if index_file.is_file():
-            return _fragment_ok(index_file, fragment), str(index_file) + (f"#{fragment}" if fragment else "")
+            ok = _fragment_ok(index_file, fragment)
+            return ok, str(index_file) + (f"#{fragment}" if fragment else "")
         if candidate.name == "how-to" and candidate == site_root / "how-to":
             return True, "skip-how-to-section-root-without-index"
         return False, f"missing index in directory {candidate}"
 
     if candidate.is_file():
-        return _fragment_ok(candidate, fragment), str(candidate) + (f"#{fragment}" if fragment else "")
+        ok = _fragment_ok(candidate, fragment)
+        return ok, str(candidate) + (f"#{fragment}" if fragment else "")
 
     if candidate.suffix == ".md":
         html_dir = candidate.with_suffix("")
@@ -95,16 +111,30 @@ def _local_target_exists(site_root: Path, source_html: Path, raw_href: str) -> t
             idx2 = html_dir / "index.html"
             return _fragment_ok(idx2, fragment), str(idx2)
 
-    if (candidate.with_suffix(".html")).is_file():
-        return _fragment_ok(candidate.with_suffix(".html"), fragment), str(candidate)
+    html_path = candidate.with_suffix(".html")
+    if html_path.is_file():
+        return _fragment_ok(html_path, fragment), str(candidate)
 
-    parent = candidate.parent
-    name = candidate.name
-    if parent.is_dir() and (parent / name / "index.html").is_file():
-        idx = parent / name / "index.html"
-        return _fragment_ok(idx, fragment), str(idx)
+    nested = candidate.parent / candidate.name / "index.html"
+    if candidate.parent.is_dir() and nested.is_file():
+        return _fragment_ok(nested, fragment), str(nested)
 
     return False, f"not found: {candidate}"
+
+
+def _local_target_exists(
+    site_root: Path, source_html: Path, raw_href: str
+) -> tuple[bool, str]:
+    """Return (ok, detail) for a same-origin path or relative URL."""
+    skip = _local_href_skip_ok(raw_href)
+    if skip is not None:
+        return skip
+    parsed = urllib.parse.urlsplit(raw_href)
+    path_part = parsed.path or "."
+    candidate, err = _resolved_candidate_under_site(site_root, source_html, path_part)
+    if candidate is None:
+        return False, err
+    return _match_local_file(site_root, candidate, parsed.fragment)
 
 
 def _fragment_ok(html_file: Path, fragment: str) -> bool:
@@ -126,9 +156,11 @@ def _check_external(session: requests.Session, url: str) -> tuple[bool, str]:
     try:
         r = session.head(url, allow_redirects=True, timeout=REQUEST_TIMEOUT)
         if r.status_code in (405, 501):
-            r = session.get(url, allow_redirects=True, timeout=REQUEST_TIMEOUT, stream=True)
+            r = session.get(
+                url, allow_redirects=True, timeout=REQUEST_TIMEOUT, stream=True
+            )
             r.close()
-        if r.status_code == 403 and "github.com" in urllib.parse.urlparse(url).netloc:
+        if r.status_code == 403 and _is_github_host(url):
             return True, "skip-github-403"
         if 200 <= r.status_code < 400:
             return True, str(r.status_code)
@@ -143,12 +175,18 @@ def collect_checks(site_root: Path) -> list[tuple[Path, str, str, str]]:
     for html_path in sorted(site_root.rglob("*.html")):
         if "assets" in html_path.parts and "javascripts" in html_path.parts:
             continue
-        soup = BeautifulSoup(html_path.read_text(encoding="utf-8", errors="replace"), "html.parser")
+        soup = BeautifulSoup(
+            html_path.read_text(encoding="utf-8", errors="replace"), "html.parser"
+        )
         for tag in soup.find_all("a", href=True):
             href = tag["href"].strip()
             if href.startswith(IGNORE_EXTERNAL_PREFIXES):
                 continue
-            if href.startswith("http://") or href.startswith("https://") or href.startswith("//"):
+            if (
+                href.startswith("http://")
+                or href.startswith("https://")
+                or href.startswith("//")
+            ):
                 rows.append((html_path, "href", href, "external"))
             else:
                 rows.append((html_path, "href", href, "local"))
@@ -156,7 +194,11 @@ def collect_checks(site_root: Path) -> list[tuple[Path, str, str, str]]:
             src = tag["src"].strip()
             if src.startswith("data:"):
                 continue
-            if src.startswith("http://") or src.startswith("https://") or src.startswith("//"):
+            if (
+                src.startswith("http://")
+                or src.startswith("https://")
+                or src.startswith("//")
+            ):
                 rows.append((html_path, "src", src, "external"))
             else:
                 rows.append((html_path, "src", src, "local"))
@@ -164,7 +206,9 @@ def collect_checks(site_root: Path) -> list[tuple[Path, str, str, str]]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Check links in built docs under site/.")
+    parser = argparse.ArgumentParser(
+        description="Check links in built docs under site/."
+    )
     parser.add_argument(
         "site_dir",
         nargs="?",
