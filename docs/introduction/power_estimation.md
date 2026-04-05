@@ -53,7 +53,7 @@ For recording the power, a running sum is maintained:
 
 At the end of an execution task (or when data is exported), the true average Power is formulated:
 ```python
-# skip  mktestdocs testing - illustrative pseudocode using internal variables
+# skip  mktestdocs testing
 avg_gpu_power = _gpu_power_sum / _power_measurement_count
 ```
 This smoothing process prevents singular short measurement anomalies from skewing the final aggregated power values published in `EmissionsData`.

@@ -339,7 +339,7 @@ CodeCarbon is structured so that you can configure it in a hierarchical manner:
         parameter is set in both:
 
         ```python
-        # skip this block for mktestdocs testing because it tries to call APIs
+        # skip mktestdocs testing
         EmissionsTracker(
            api_call_interval=4,
            save_to_api=True,

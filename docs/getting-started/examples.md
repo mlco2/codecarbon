@@ -15,8 +15,6 @@ below for that.
 
 ```python
 # skip mktestdocs
-# dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
-# would slow things down further.
 import tensorflow as tf
 from codecarbon import track_emissions
 
@@ -54,8 +52,6 @@ code, and you can get the emissions in your code.
 
 ```python
 # skip mktestdocs
-# dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
-# would slow things down further.
 import tensorflow as tf
 
 from codecarbon import EmissionsTracker
@@ -103,8 +99,6 @@ never finish.
 
 ```python
 # skip mktestdocs
-# dependency, which would slow down CI setup time, b) these snippets do quiet a lot of work which 
-# would slow things down further.
 import tensorflow as tf
 
 from codecarbon import EmissionsTracker
