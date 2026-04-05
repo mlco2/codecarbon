@@ -11,6 +11,7 @@ env:
 
 jobs:
   build-package:
+    if: github.event_name == 'release' || github.ref == 'refs/heads/master' || (github.event_name == 'pull_request' && github.base_ref == 'master')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -39,6 +40,9 @@ jobs:
           sparse-checkout: |
             tests/
             pytest.ini
+            docs/
+            pyproject.toml
+            uv.lock
           sparse-checkout-cone-mode: false
       - name: Install uv
         uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
@@ -51,27 +55,17 @@ jobs:
         with:
           name: pypi_dist
           path: dist
-      - name: Create clean virtual environment
+      - name: Sync dev dependencies from lockfile and install wheel
         run: |
-          uv venv .venv --python ${{ env.MAIN_PYTHON_VERSION }}
-          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
-      - name: Install package from wheel (without source)
-        run: |
-          # Install the wheel and test dependencies without the source code
+          uv sync --python ${{ env.MAIN_PYTHON_VERSION }} --frozen --no-install-project --group dev
           uv pip install dist/*.whl
-          uv pip install pytest pytest-mock requests-mock responses pandas logfire
       - name: Test package integrity
         run: |
-          # Run against the venv on PATH (sparse checkout has no pyproject.toml for uv run).
-          python -m pytest tests/test_package_integrity.py -v
-          # test_docs_examples needs mktestdocs, scikit-learn, and docs/ — covered by uv sync CI.
-          CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest \
+          uv run --python ${{ env.MAIN_PYTHON_VERSION }} python -m pytest tests/test_package_integrity.py -v
+          CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --python ${{ env.MAIN_PYTHON_VERSION }} python -m pytest \
             --ignore=tests/test_viz_data.py \
-            --ignore=tests/test_docs_examples.py \
             -vv -m 'not integ_test' tests/
       - name: Test CLI functionality
         run: |
-          # Test that the CLI is functional
-          codecarbon --help
-          python -c "from codecarbon import EmissionsTracker; print('Package import successful')"
+          uv run --python ${{ env.MAIN_PYTHON_VERSION }} codecarbon --help
+          uv run --python ${{ env.MAIN_PYTHON_VERSION }} python -c "from codecarbon import EmissionsTracker; print('Package import successful')"
