@@ -353,6 +353,34 @@ class ApiClient:  # (AsyncClient)
         Tell the API that the experiment has ended.
         """
 
+    def add_public_emissions(self, payload: dict, project_token: str) -> bool:
+        """
+        Send public-tier emissions payload to POST /emissions (flat JSON, project token).
+
+        Args:
+            payload: JSON-serializable body (e.g. utilization and energy fields).
+            project_token: Project token sent as x-api-token.
+
+        Returns:
+            True if the server accepted the request (HTTP 200 or 201).
+        """
+        if not project_token:
+            logger.warning("add_public_emissions: missing project_token")
+            return False
+        try:
+            url = self.url + "/emissions"
+            headers = self._get_headers()
+            headers["x-api-token"] = project_token
+            r = requests.post(url=url, json=payload, timeout=5, headers=headers)
+            if r.status_code not in (200, 201):
+                self._log_error(url, payload, r)
+                return False
+            logger.debug(f"Public emissions telemetry sent successfully to {url}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send public emissions telemetry: {e}")
+            return False
+
     def add_telemetry(self, telemetry_data: dict, api_key: str = None) -> bool:
         """
         Send telemetry data to the /telemetry endpoint (Tier 1).

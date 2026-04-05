@@ -756,23 +756,73 @@ class BaseEmissionsTracker(ABC):
         for handler in self._output_handlers:
             handler.exit()
 
+        self._send_telemetry(emissions_data)
+
         # Log telemetry configuration warning
         self._log_telemetry_warning()
 
         return emissions_data.emissions
 
+    @suppress(Exception)
+    def _send_telemetry(self, emissions_data: EmissionsData) -> None:
+        """Send Tier-1 (and public Tier-2) telemetry via HTTP when enabled."""
+        from codecarbon.core.telemetry import get_telemetry_service, init_telemetry
+
+        init_telemetry()
+        svc = get_telemetry_service()
+        cfg = svc.get_config()
+        if not cfg or not cfg.is_enabled:
+            return
+
+        hi = self.get_detected_hardware()
+        cloud: CloudMetadata = self._get_cloud_metadata()
+        api_mode = "online" if self._electricitymaps_api_token else "offline"
+        output_methods = [type(h).__name__ for h in self._output_handlers]
+        rapl_available = any(
+            getattr(h, "_mode", None) == "intel_rapl" for h in self._hardware
+        )
+
+        svc.collect_and_export(
+            cpu_count=int(hi.get("cpu_count") or 0),
+            cpu_physical_count=int(hi.get("cpu_physical_count") or 0),
+            cpu_model=str(hi.get("cpu_model") or ""),
+            gpu_count=int(hi.get("gpu_count") or 0),
+            gpu_model=str(hi.get("gpu_model") or ""),
+            ram_total_gb=float(hi.get("ram_total_size") or 0.0),
+            tracking_mode=str(self._tracking_mode),
+            api_mode=api_mode,
+            output_methods=output_methods,
+            hardware_tracked=list(self._conf.get("hardware") or []),
+            measure_power_interval=float(self._measure_power_secs),
+            rapl_available=rapl_available,
+            hardware_detection_success=True,
+            errors=[],
+            cloud_provider=str(cloud.provider or ""),
+            cloud_region=str(cloud.region or ""),
+        )
+
+        if cfg.is_public and cfg.project_token:
+            svc.export_emissions(
+                total_emissions_kg=emissions_data.emissions,
+                emissions_rate_kg_per_sec=emissions_data.emissions_rate,
+                energy_consumed_kwh=emissions_data.energy_consumed,
+                cpu_energy_kwh=emissions_data.cpu_energy,
+                gpu_energy_kwh=emissions_data.gpu_energy,
+                ram_energy_kwh=emissions_data.ram_energy,
+                duration_seconds=float(emissions_data.duration),
+                cpu_utilization_avg=emissions_data.cpu_utilization_percent,
+                gpu_utilization_avg=emissions_data.gpu_utilization_percent,
+                ram_utilization_avg=emissions_data.ram_utilization_percent,
+            )
+
     def _log_telemetry_warning(self) -> None:
         """
         Log a warning about telemetry configuration at the end of each run.
         """
-        from codecarbon.core.telemetry.config import (
-            TELEMETRY_ENV_VAR,
-            TELEMETRY_PROJECT_TOKEN_ENV_VAR,
-            get_telemetry_config,
-        )
-        
+        from codecarbon.core.telemetry.config import TELEMETRY_ENV_VAR, get_telemetry_config
+
         config = get_telemetry_config()
-        
+
         if not config.is_enabled:
             logger.warning(
                 f"Telemetry is disabled. To enable, run: codecarbon telemetry setup\n"
@@ -780,9 +830,10 @@ class BaseEmissionsTracker(ABC):
             )
         elif config.is_public and not config.project_token:
             logger.warning(
-                f"Telemetry is set to 'public' but no project token is configured.\n"
-                f"To configure Tier 2 (public) telemetry, run: codecarbon telemetry setup\n"
-                f"Or set: export {TELEMETRY_PROJECT_TOKEN_ENV_VAR}=<your_project_token>"
+                "Telemetry is set to 'public' but no telemetry auth token is available for "
+                "POST /emissions.\n"
+                "Set CODECARBON_TELEMETRY_API_KEY, add telemetry_api_key in the telemetry JSON in "
+                ".codecarbon.config, or run: codecarbon telemetry setup"
             )
         elif config.is_enabled and not config.first_run:
             # Telemetry is properly configured

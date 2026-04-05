@@ -32,6 +32,7 @@ DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
 codecarbon = typer.Typer(no_args_is_help=True)
+telemetry_app = typer.Typer(no_args_is_help=True)
 
 
 def main():
@@ -436,34 +437,47 @@ def questionary_prompt(prompt, list_options, default):
     return value
 
 
-@codecarbon.command("telemetry", short_help="Configure CodeCarbon telemetry")
-def telemetry():
-    """
-    Manage CodeCarbon telemetry settings.
-    
-    Use subcommands to configure or view telemetry settings:
-    - codecarbon telemetry setup    : Interactive setup wizard
-    - codecarbon telemetry config   : Show current configuration
-    - codecarbon telemetry enable   : Enable telemetry
-    """
-    print("CodeCarbon Telemetry")
-    print("Use --help for more information on subcommands.")
+def _get_project_token() -> Optional[str]:
+    """Resolve telemetry auth token (env, JSON, preference, default constant)."""
+    from codecarbon.core.telemetry.config import get_telemetry_auth_token
+
+    return get_telemetry_auth_token()
 
 
-@telemetry.command("setup", short_help="Interactive telemetry setup wizard")
-def telemetry_setup():
+@telemetry_app.command("setup", short_help="Interactive telemetry setup wizard")
+def telemetry_setup(
+    token: Annotated[
+        Optional[str], 
+        typer.Option(
+            "--token",
+            "-t",
+            help="Telemetry API key for public tier (same as CODECARBON_TELEMETRY_API_KEY)",
+        )
+    ] = None,
+    tier: Annotated[
+        Optional[str],
+        typer.Option("--tier", help="Telemetry tier: off, internal, or public")
+    ] = None,
+):
     """
     Interactive wizard to configure CodeCarbon telemetry.
+    
+    Examples:
+        # Interactive mode
+        codecarbon telemetry setup
+        
+        # Non-interactive mode with options
+        codecarbon telemetry setup --tier public --token YOUR_TOKEN
+        
+    This command automatically saves configuration to ~/.codecarbon.config
+    and writes environment variables to your shell config.
     """
     from codecarbon.core.telemetry.config import (
+        TELEMETRY_ENV_VAR,
         TelemetryTier,
         get_telemetry_config,
+        save_telemetry_project_token,
         set_telemetry_tier,
-    )
-    from codecarbon.core.telemetry.config import (
-        TELEMETRY_PROJECT_TOKEN_ENV_VAR,
-        TELEMETRY_API_ENDPOINT_ENV_VAR,
-        TELEMETRY_ENV_VAR,
     )
     
     print("\n=== CodeCarbon Telemetry Setup ===\n")
@@ -471,49 +485,74 @@ def telemetry_setup():
     # Show current config
     config = get_telemetry_config()
     print(f"Current tier: {config.tier.value}")
-    print(f"Current project token: {'set' if config.project_token else 'not set'}")
+    print(
+        f"Current telemetry API key: {'set' if config.project_token else 'not set'}"
+    )
     print(f"Current API endpoint: {config.api_endpoint or 'default'}")
     
-    # Ask for tier
-    print("\nChoose telemetry tier:")
-    tier_choice = questionary.select(
-        "Telemetry tier:",
-        ["off", "internal", "public"],
-        default=config.tier.value,
-    ).ask()
+    # Determine tier (use provided value or prompt)
+    if tier is not None:
+        try:
+            tier_choice = TelemetryTier(tier).value
+        except ValueError:
+            print(f"[red]Invalid tier: {tier}. Valid values: off, internal, public[/red]")
+            raise typer.Exit(1)
+    else:
+        print("\nChoose telemetry tier:")
+        tier_choice = questionary.select(
+            "Telemetry tier:",
+            ["off", "internal", "public"],
+            default=config.tier.value,
+        ).ask()
     
-    # Save tier preference
+    # Save tier preference to file
     set_telemetry_tier(TelemetryTier(tier_choice), dont_ask_again=True)
     print(f"\nTelemetry tier set to: {tier_choice}")
     
-    # Ask for project token if public tier
-    if tier_choice == "public":
+    # Get project token (priority: CLI option > env var > config file)
+    project_token = token or _get_project_token()
+    if tier_choice == "public" and not project_token:
         project_token = typer.prompt(
-            f"Project token (from {TELEMETRY_PROJECT_TOKEN_ENV_VAR} env var)",
-            default=config.project_token or "",
+            "Telemetry API key (CODECARBON_TELEMETRY_API_KEY; not your dashboard api_key)",
+            default="",
         )
-        if project_token:
-            print(f"\nTo enable Tier 2 (public) telemetry, set:")
-            print(f"  export {TELEMETRY_PROJECT_TOKEN_ENV_VAR}={project_token}")
     
-    # Ask for API endpoint
-    api_endpoint = typer.prompt(
-        f"API endpoint (default: https://api.codecarbon.io)",
-        default=config.api_endpoint or "https://api.codecarbon.io",
-    )
-    if api_endpoint and api_endpoint != "https://api.codecarbon.io":
-        print(f"\nTo use custom API endpoint, set:")
-        print(f"  export {TELEMETRY_API_ENDPOINT_ENV_VAR}={api_endpoint}")
-    
-    print("\n=== Setup Complete ===")
-    print("\nEnvironment variables to configure:")
-    print(f"  export {TELEMETRY_ENV_VAR}={tier_choice}")
+    # Save project token to JSON config file (so it persists without env vars)
     if tier_choice == "public" and project_token:
-        print(f"  export {TELEMETRY_PROJECT_TOKEN_ENV_VAR}=<your_token>")
-    print(f"  export {TELEMETRY_API_ENDPOINT_ENV_VAR}={api_endpoint}")
+        save_telemetry_project_token(project_token)
+        print("[green]Telemetry API key saved to config file[/green]")
+    
+    # Write to shell rc file automatically
+    shell_rc_path = Path.home() / ".zshrc"
+    if not shell_rc_path.exists():
+        shell_rc_path = Path.home() / ".bashrc"
+    
+    # Read existing content
+    existing_content = ""
+    if shell_rc_path.exists():
+        existing_content = shell_rc_path.read_text()
+    
+    env_vars = {
+        TELEMETRY_ENV_VAR: tier_choice,
+    }
+    purge_markers = (*env_vars.keys(), "CODECARBON_TELEMETRY_PROJECT_TOKEN")
+    new_lines = []
+    for line in existing_content.split("\n"):
+        if not any(marker in line for marker in purge_markers):
+            new_lines.append(line)
+    
+    # Add new environment variables
+    for var_name, var_value in env_vars.items():
+        new_lines.append(f'export {var_name}="{var_value}"')
+    
+    # Write back
+    shell_rc_path.write_text("\n".join(new_lines) + "\n")
+    print(f"\n[green]Environment variables written to {shell_rc_path}[/green]")
+    print(f"[yellow]Run 'source {shell_rc_path}' or restart your terminal to apply[/yellow]")
+    print("\n[green]Setup complete! Configuration saved.[/green]")
 
 
-@telemetry.command("config", short_help="Show current telemetry configuration")
+@telemetry_app.command("config", short_help="Show current telemetry configuration")
 def telemetry_config():
     """
     Display current telemetry configuration.
@@ -525,10 +564,18 @@ def telemetry_config():
     print("\n=== Current Telemetry Configuration ===\n")
     print(f"Tier: {config.tier.value}")
     print(f"Enabled: {config.is_enabled}")
-    print(f"Project Token: {'configured' if config.project_token else 'not configured'}")
-    print(f"API Endpoint: {config.api_endpoint or 'default (https://api.codecarbon.io)'}")
+    print(
+        f"Telemetry API key: {'configured' if config.project_token else 'not configured'}"
+    )
+    print(
+        f"Telemetry base URL: {config.api_endpoint or 'default (https://api.codecarbon.io)'}"
+    )
     print(f"First Run: {config.first_run}")
     print(f"Has Consent: {config.has_consent}")
+
+
+# Register telemetry as a subcommand of codecarbon
+codecarbon.add_typer(telemetry_app, name="telemetry")
 
 
 if __name__ == "__main__":

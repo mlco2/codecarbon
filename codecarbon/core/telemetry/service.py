@@ -6,14 +6,19 @@ This module provides functions to initialize and use telemetry.
 
 from typing import Optional
 
-from codecarbon.core.telemetry.collector import TelemetryCollector, TelemetryData
+from codecarbon.core.api_client import ApiClient
+from codecarbon.core.telemetry.collector import TelemetryCollector
 from codecarbon.core.telemetry.config import (
     TelemetryConfig,
     TelemetryTier,
     get_telemetry_config,
+    resolve_telemetry_base_url,
     set_telemetry_tier,
 )
-from codecarbon.core.telemetry.otel_exporter import TelemetryExporter, create_exporter
+from codecarbon.core.telemetry.http_sender import (
+    public_emissions_body,
+    tier1_telemetry_body,
+)
 from codecarbon.core.telemetry.prompt import prompt_for_telemetry_consent
 from codecarbon.external.logger import logger
 
@@ -33,33 +38,39 @@ class TelemetryService:
         if self._initialized:
             return
         self._config: Optional[TelemetryConfig] = None
-        self._exporter: Optional[TelemetryExporter] = None
+        self._api_client: Optional[ApiClient] = None
         self._collector: Optional[TelemetryCollector] = None
         self._initialized = True
 
     def initialize(self, force_prompt: bool = False) -> TelemetryConfig:
         """
         Initialize telemetry service.
-        
+
         Args:
             force_prompt: Force showing the consent prompt
-            
+
         Returns:
             TelemetryConfig
         """
-        # Get configuration
         self._config = get_telemetry_config()
 
-        # If first run and not forced, try to prompt
-        if self._config.first_run and not self._config.has_consent:
-            if force_prompt:
-                # This will show prompt if needed
-                pass
+        if force_prompt and self._config.first_run:
+            prompt_for_telemetry_consent()
+            self._config = get_telemetry_config()
 
-        # Create exporter if enabled
         if self._config.is_enabled:
-            self._exporter = create_exporter(self._config)
+            base = resolve_telemetry_base_url(self._config.api_endpoint)
+            telemetry_key = self._config.project_token or None
+            self._api_client = ApiClient(
+                endpoint_url=base,
+                experiment_id=None,
+                api_key=telemetry_key,
+                create_run_automatically=False,
+            )
             self._collector = TelemetryCollector()
+        else:
+            self._api_client = None
+            self._collector = None
 
         logger.info(
             f"Telemetry initialized: tier={self._config.tier.value}, "
@@ -82,29 +93,28 @@ class TelemetryService:
         ram_total_gb: float = 0.0,
         tracking_mode: str = "machine",
         api_mode: str = "online",
-        output_methods: list = None,
-        hardware_tracked: list = None,
+        output_methods: Optional[list] = None,
+        hardware_tracked: Optional[list] = None,
         measure_power_interval: float = 15.0,
         rapl_available: bool = False,
         hardware_detection_success: bool = True,
-        errors: list = None,
+        errors: Optional[list] = None,
         cloud_provider: str = "",
         cloud_region: str = "",
     ) -> bool:
         """
-        Collect and export telemetry data.
-        
+        Collect Tier-1 telemetry and POST to /telemetry.
+
         Returns:
             True if successful, False otherwise
         """
         if not self._config or not self._config.is_enabled:
             return False
 
-        if not self._collector or not self._exporter:
+        if not self._collector or not self._api_client:
             return False
 
         try:
-            # Collect data
             data = self._collector.collect_all(
                 cpu_count=cpu_count,
                 cpu_physical_count=cpu_physical_count,
@@ -124,8 +134,8 @@ class TelemetryService:
                 cloud_region=cloud_region,
             )
 
-            # Export
-            return self._exporter.export_telemetry(data)
+            body = tier1_telemetry_body(data, self._config.tier)
+            return self._api_client.add_telemetry(body)
 
         except Exception as e:
             logger.warning(f"Failed to collect/export telemetry: {e}")
@@ -145,21 +155,25 @@ class TelemetryService:
         ram_utilization_avg: float = 0.0,
     ) -> bool:
         """
-        Export emissions data (only for public tier).
-        
+        Export emissions data via POST /emissions (public tier only).
+
         Returns:
             True if successful, False otherwise
         """
         if not self._config or not self._config.is_public:
             return False
 
-        if not self._collector or not self._exporter:
+        if not self._config.project_token or not self._api_client:
+            return False
+
+        if duration_seconds < 1:
+            logger.debug(
+                "Telemetry public emissions skipped: duration < 1 second"
+            )
             return False
 
         try:
-            # Collect emissions data
-            data = TelemetryData()
-            data.collect_emissions(
+            payload = public_emissions_body(
                 total_emissions_kg=total_emissions_kg,
                 emissions_rate_kg_per_sec=emissions_rate_kg_per_sec,
                 energy_consumed_kwh=energy_consumed_kwh,
@@ -171,16 +185,15 @@ class TelemetryService:
                 gpu_utilization_avg=gpu_utilization_avg,
                 ram_utilization_avg=ram_utilization_avg,
             )
-
-            # Export
-            return self._exporter.export_telemetry(data)
+            return self._api_client.add_public_emissions(
+                payload, self._config.project_token
+            )
 
         except Exception as e:
             logger.warning(f"Failed to export emissions telemetry: {e}")
             return False
 
 
-# Global instance
 _telemetry_service: Optional[TelemetryService] = None
 
 
@@ -195,10 +208,10 @@ def get_telemetry_service() -> TelemetryService:
 def init_telemetry(force_prompt: bool = False) -> TelemetryConfig:
     """
     Initialize telemetry.
-    
+
     Args:
         force_prompt: Force showing consent prompt
-        
+
     Returns:
         TelemetryConfig
     """
@@ -209,7 +222,7 @@ def init_telemetry(force_prompt: bool = False) -> TelemetryConfig:
 def set_telemetry(tier: str, dont_ask_again: bool = True) -> None:
     """
     Set telemetry tier programmatically.
-    
+
     Args:
         tier: "off", "internal", or "public"
         dont_ask_again: Don't ask again in future

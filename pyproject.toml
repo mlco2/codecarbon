@@ -43,13 +43,6 @@ dependencies = [
     "typer",
 ]
 
-[project.optional-dependencies]
-telemetry = [
-    "opentelemetry-api",
-    "opentelemetry-sdk",
-    "opentelemetry-exporter-otlp",
-]
-
 [tool.setuptools.dynamic]
 version = {attr = "codecarbon._version.__version__"}
 

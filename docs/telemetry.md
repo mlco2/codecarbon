@@ -1,112 +1,97 @@
 # Telemetry
 
-CodeCarbon collects anonymous usage data to help improve the library. This page explains what we collect, how we handle your data, and how you can control it.
+CodeCarbon can send **anonymous usage and diagnostics** over HTTPS to help maintainers improve the library. Optionally, you can opt in to **public** sharing of **run-level emissions summaries** (for example for leaderboards). This page explains the three tiers, **what** is collected in each case, **why**, and how to control it.
 
-## Telemetry Tiers
+Telemetry HTTP uses its own **base URL resolution**: `CODECARBON_TELEMETRY_API_ENDPOINT`, optional JSON `telemetry_api_endpoint` in the `[codecarbon]` telemetry blob, then the same hierarchical `api_endpoint` / `CODECARBON_API_ENDPOINT` as the rest of CodeCarbon (default `https://api.codecarbon.io`). **Dashboard** uploads (`save_to_api`, `CodeCarbonAPIOutput`) still use only `api_endpoint` + `api_key`; you can point telemetry at a different host in the same process.
 
-CodeCarbon supports three telemetry levels:
+## Telemetry tiers
 
-| Tier | Env Variable | Description |
-|------|-------------|-------------|
-| Off | `CODECARBON_TELEMETRY=off` | No telemetry collected |
-| Internal | `CODECARBON_TELEMETRY=internal` | Private usage data (helps us improve CodeCarbon) |
-| Public | `CODECARBON_TELEMETRY=public` | Full telemetry including emissions (shared on public leaderboard) |
+| Tier | How to choose it | What is sent | Why |
+|------|-------------------|--------------|-----|
+| **Off** | `CODECARBON_TELEMETRY=off`, CLI setup, or saved preference | **Nothing** over the network for telemetry | You do not want CodeCarbon to phone home with usage statistics or emissions summaries. |
+| **Internal** | Default when no preference exists, or `CODECARBON_TELEMETRY=internal`, or CLI | After each `EmissionsTracker.stop()`, one **`POST /telemetry`** with **environment, hardware, usage, and library diagnostics** (no per-run CO₂ totals on this request) | Helps the team understand real-world setups (OS, GPUs, frameworks, tracking modes), spot breakage patterns, and prioritise improvements—without publishing your emissions. |
+| **Public** | `CODECARBON_TELEMETRY=public`, or CLI | Same **`POST /telemetry`** as internal **plus**, when configured, a second **`POST /emissions`** with **energy, emissions, duration, and utilization averages** for that run (skipped if the run is shorter than one second) | Lets you contribute **aggregated run outcomes** for transparency and leaderboards, alongside the same diagnostic bundle as internal tier. |
 
-## What We Collect
+The client adds a field **`telemetry_tier`** (`internal` or `public`) on `/telemetry` so the server knows the user’s choice.
 
-### Internal (Private)
+## What we collect by tier
 
-When you enable Internal telemetry, we collect:
+### Off
 
-- **Environment**: Python version, OS, CodeCarbon version, installation method
-- **Hardware**: CPU model/count, GPU model/count, RAM, CUDA version
-- **Usage Patterns**: Tracking mode, output methods configured, hardware tracked
-- **ML Ecosystem**: Detected frameworks (PyTorch, TensorFlow, Transformers, etc.)
-- **Context**: Notebook environment, CI/CD detection, container runtime
-- **Performance**: Hardware detection success, RAPL availability, errors
+- **No telemetry HTTP requests.** Local tracking (CSV, logs, your own API key flows) behaves as you configure it separately.
 
-### Public (Leaderboard)
+### Internal — `POST /telemetry` only
 
-When you enable Public telemetry, everything above **plus**:
+**Goal:** Improve CodeCarbon for everyone without exposing your experiment’s carbon results.
 
-- **Emissions Data**: Total CO2 emissions, energy consumed, duration
-- **Utilization**: CPU, GPU, RAM utilization averages
+Typical categories in the payload (exact keys may evolve with the library):
 
-This data is shared publicly on the CodeCarbon leaderboard to encourage green computing practices.
+- **Environment:** Python version, OS, CodeCarbon version, how Python/CodeCarbon appear to be installed (heuristic).
+- **Hardware:** CPU/GPU model and counts, RAM size, CUDA/cuDNN when detectable—not your hostname or raw serial numbers.
+- **How you use CodeCarbon:** Tracking mode (`machine` / `process`), which output backends are enabled (file, logger, API, …), power measurement interval, which hardware types are tracked.
+- **ML stack (import-based):** Whether common frameworks (e.g. PyTorch, TensorFlow, Transformers) are present and their versions, to prioritise integrations.
+- **Context heuristics:** e.g. notebook vs script, CI hints, container hints, optional **cloud provider / region** strings when your tracker knows them (same metadata you already use for emission factors).
+- **Diagnostics:** Whether RAPL or certain GPU paths worked, whether hardware detection succeeded, optional non-sensitive error snippets to debug widespread failures.
 
-## Privacy
+**Not sent on `/telemetry`:** Per-run **kg CO₂**, **kWh**, **duration**, or **utilization averages** (those belong on the separate emissions payload for public tier only).
 
-We're committed to protecting your privacy:
+### Public — `POST /telemetry` and optionally `POST /emissions`
 
-- **No PII**: We don't collect personally identifiable information
-- **Anonymized**: Machine identifiers are hashed
-- **GPS Precision**: Geographic coordinates are rounded to ~10km
-- **GDPR Compliant**: We support opt-in consent and data deletion requests
-- **Minimal Data**: We only collect what's needed to improve the library
+- **Everything internal sends on `/telemetry`** (same reasons: product quality and compatibility).
+- **Additionally**, when you have configured a **telemetry auth token** (`CODECARBON_TELEMETRY_API_KEY`, or `telemetry_api_key` / legacy `telemetry_project_token` in the telemetry JSON, etc.), a **second request** sends a **flat summary** of that run: total emissions, energy by component where available, duration, and CPU/GPU/RAM utilization averages.
+
+**Why a second request:** Keeps **usage/diagnostics** and **publishable run metrics** separated so internal analytics can stay minimal while public/leaderboard flows can validate and store emissions-shaped records.
+
+## Privacy and data minimisation
+
+- **No deliberate collection of personal identifiers** (name, email, etc.) in the telemetry payloads described above.
+- **Some fields are pseudonymous or coarse by design** (e.g. a short hash of the Python executable path, coarse cloud region strings rather than precise GPS in telemetry).
+- **You control the tier** via environment variable, CLI, or saved preference.
+- **Public emissions** use the **telemetry** token chain, not your dashboard `api_key` / `CODECARBON_API_KEY`; treat telemetry tokens like any other secret.
+- For **retention, deletion, and legal requests**, follow the policies of the **API operator** hosting the telemetry base URL (and separately the dashboard API host if you use it).
 
 ## Configuration
 
-### Environment Variables
+### Environment variable (tier)
 
 ```bash
-# Set telemetry tier
-export CODECARBON_TELEMETRY=internal
-
-# Set custom OTEL endpoint (optional)
-export CODECARBON_OTEL_ENDPOINT=https://your-otel-endpoint.com/v1/traces
+export CODECARBON_TELEMETRY=internal   # or public, or off
 ```
 
-### In Code
+### Telemetry base URL and auth (separate from dashboard)
+
+- **`CODECARBON_TELEMETRY_API_ENDPOINT`** (optional) — overrides where `/telemetry` and `/emissions` are sent; otherwise JSON `telemetry_api_endpoint`, then **`api_endpoint` / `CODECARBON_API_ENDPOINT`**.
+- **`CODECARBON_TELEMETRY_API_KEY`** (or telemetry JSON keys) — required for **`POST /emissions`** in public tier when you want emissions uploaded. **Not** the same as **`api_key` / `CODECARBON_API_KEY`**, which are only for dashboard / `save_to_api` logging.
+
+### CLI
+
+```bash
+codecarbon telemetry setup   # interactive
+codecarbon telemetry config    # show effective tier and whether a token is available
+```
+
+### In Python (tier)
+
+Tier is **not** a constructor argument on `EmissionsTracker`. Set the environment variable before import/run, use `codecarbon telemetry setup`, or use the public helpers:
 
 ```python
-from codecarbon import EmissionsTracker
+from codecarbon import set_telemetry
 
-# Telemetry can also be set in the tracker
-tracker = EmissionsTracker(
-    project_name="my-project",
-    telemetry="internal"  # or "public" or "off"
-)
+set_telemetry("internal", dont_ask_again=True)
 ```
 
-## First-Run Prompt
+## When data is sent
 
-On first run, CodeCarbon will prompt you to choose your telemetry level if:
+Telemetry runs **once per completed tracker session**, when **`EmissionsTracker.stop()`** (or equivalent base implementation) finishes flushing outputs—not continuously while your job runs.
 
-- No `CODECARBON_TELEMETRY` environment variable is set
-- No previous preference was saved
-
-You can skip the prompt by setting the environment variable before running CodeCarbon.
-
-## Disabling Telemetry
-
-To completely disable telemetry:
+## Disabling telemetry
 
 ```bash
 export CODECARBON_TELEMETRY=off
 ```
 
-Or in your code:
+Or use `codecarbon telemetry setup` and choose **off**, or call `set_telemetry("off", dont_ask_again=True)` early in your process.
 
-```python
-tracker = EmissionsTracker(telemetry="off")
-```
+## Further reading (developers)
 
-## OTEL Integration
-
-Telemetry data is sent via OpenTelemetry (OTEL). To use your own OTEL collector:
-
-```bash
-export CODECARBON_OTEL_ENDPOINT=https://your-collector:4318/v1/traces
-```
-
-Install the OTEL extras if you want to export telemetry:
-
-```bash
-pip install codecarbon[telemetry]
-```
-
-## Data Retention
-
-- Internal telemetry: Retained for 12 months
-- Public leaderboard data: Displayed indefinitely
-- You can request data deletion by contacting the CodeCarbon team
+For the exact HTTP contract, payload exclusions, and backend implementation checklist, see **`TELEMETRY_README.md`** at the root of the CodeCarbon source repository (next to the `docs/` folder). That file is aimed at contributors and API implementers; it is not part of the built docs site.

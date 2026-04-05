@@ -5,6 +5,8 @@ from typing import Optional
 import typer
 from rich.prompt import Confirm
 
+from codecarbon.external.logger import logger
+
 
 def get_config(path: Optional[Path] = None):
     p = path or Path.cwd().resolve() / ".codecarbon.config"
@@ -113,43 +115,51 @@ def create_new_config_file():
 def save_telemetry_config_to_file(
     tier: str = None,
     project_token: str = None,
-    api_endpoint: str = None,
-    path: Path = None
+    telemetry_api_endpoint: str = None,
+    telemetry_api_key: str = None,
+    path: Path = None,
 ) -> None:
     """
     Save telemetry configuration as JSON in the existing config file.
-    
+
     Args:
         tier: Telemetry tier (off, internal, public)
-        project_token: Project token for Tier 2
-        api_endpoint: API endpoint for telemetry
+        project_token: Telemetry auth token (stored as ``telemetry_api_key`` and legacy
+            ``telemetry_project_token`` in JSON)
+        telemetry_api_endpoint: Base URL for telemetry HTTP (optional)
+        telemetry_api_key: Telemetry auth token (optional; overrides ``project_token`` if both set)
         path: Path to config file (defaults to ~/.codecarbon.config)
     """
     import json
-    
+
     p = path or Path.home() / ".codecarbon.config"
-    
-    # Read existing config or create new
+
     config = configparser.ConfigParser()
     if p.exists():
         config.read(str(p))
-    
+
     if "codecarbon" not in config.sections():
         config.add_section("codecarbon")
-    
-    # Build JSON config for telemetry
-    telemetry_config = {}
+
+    existing = load_telemetry_config_from_file(p)
+    telemetry_config = dict(existing) if existing else {}
     if tier:
         telemetry_config["telemetry_tier"] = tier
-    if project_token:
-        telemetry_config["telemetry_project_token"] = project_token
-    if api_endpoint:
-        telemetry_config["telemetry_api_endpoint"] = api_endpoint
-    
-    # Save as JSON string
+    token = telemetry_api_key or project_token
+    if token:
+        t = str(token).strip()
+        telemetry_config["telemetry_api_key"] = t
+        telemetry_config["telemetry_project_token"] = t
+    if telemetry_api_endpoint is not None:
+        te = str(telemetry_api_endpoint).strip().rstrip("/")
+        if te:
+            telemetry_config["telemetry_api_endpoint"] = te
+        else:
+            telemetry_config.pop("telemetry_api_endpoint", None)
+
     if telemetry_config:
         config["codecarbon"]["telemetry"] = json.dumps(telemetry_config)
-    
+
     with p.open("w") as f:
         config.write(f)
     logger.info(f"Telemetry config saved to {p}")
