@@ -13,7 +13,7 @@ and more.
 To get started with the Comet-CodeCarbon integration, make sure you have
 comet-ml installed:
 
-``` python
+``` console
 pip install comet_ml>=3.2.2
 ```
 
@@ -24,7 +24,8 @@ In the
 [mnist-comet.py](https://github.com/mlco2/codecarbon/blob/master/examples/mnist-comet.py)
 example file, replace the placeholder code with your API key:
 
-``` python
+```python
+# skip testing this with mkdoctests - would require making comet_ml a doc dependency which is overkill.
 experiment = Experiment(api_key="YOUR API KEY")
 ```
 

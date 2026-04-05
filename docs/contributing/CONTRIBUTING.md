@@ -284,7 +284,29 @@ uv run --only-group doc task docs
 
 to regenerate the html files. For local preview with live reload, run `uv run --only-group doc task docs-serve`.
 
-### Rebase your branch on master
+#### Testing documentation code examples
+
+Python code blocks in the docs can be checked to catch examples that have drifted out of sync with the library. Run the check with:
+
+```sh
+uv run task docs-check-drift
+```
+
+This executes every ` ```python ` fenced block found under `docs/` using [mktestdocs](https://github.com/koaning/mktestdocs). The check is driven by `scripts/check-docs-drift.py`.
+
+**Adding a new code block to the docs?** Use a ` ```python ` fence so it is picked up. If the block cannot run in CI (e.g. it requires TensorFlow, a live API, or other external dependencies), add `# skip` as the first line inside the block:
+
+````markdown
+```python
+# skip
+import tensorflow as tf
+...
+```
+````
+
+Blocks marked `# skip` are excluded from the check but still rendered normally in the documentation.
+
+### Rebase your branch on master 
 
 Before creating a PR, please make sure to rebase your branch on master to avoid merge conflicts and make the review easier. You can do it with the following command:
 ```sh

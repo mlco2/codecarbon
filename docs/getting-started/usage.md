@@ -145,7 +145,7 @@ code base, users can instantiate a `EmissionsTracker` object and pass it
 as a parameter to function calls to start and stop the emissions
 tracking of the compute section.
 
-``` python
+```python
 from codecarbon import EmissionsTracker
 tracker = EmissionsTracker()
 tracker.start()
@@ -167,14 +167,16 @@ depending on the configuration, but keep running the experiment.
 If you want to monitor small piece of code, like a model inference, you
 could use the task manager:
 
-``` python
+```python
+from codecarbon import EmissionsTracker
+
 try:
     tracker = EmissionsTracker(project_name="bert_inference", measure_power_secs=10)
     tracker.start_task("load dataset")
-    dataset = load_dataset("imdb", split="test")
+    # do some data loading
     imdb_emissions = tracker.stop_task()
     tracker.start_task("build model")
-    model = build_model()
+    # build some model
     model_emissions = tracker.stop_task()
 finally:
     _ = tracker.stop()
@@ -193,11 +195,11 @@ to interfere with the task measurement.
 
 The `Emissions tracker` also works as a context manager.
 
-``` python
+```python
 from codecarbon import EmissionsTracker
 
 with EmissionsTracker() as tracker:
-    # Compute intensive training code goes here
+    _ = 1 + 1  # Compute intensive training code goes here
 ```
 
 This mode is recommended when you want to monitor a specific block of
@@ -209,12 +211,13 @@ In case the training code base is wrapped in a function, users can use
 the decorator `@track_emissions` within the function to enable tracking
 emissions of the training code.
 
-``` python
+```python
 from codecarbon import track_emissions
 
 @track_emissions
 def training_loop():
     # Compute intensive training code goes here
+    pass
 ```
 
 This mode is recommended if you have a training function.
@@ -239,7 +242,7 @@ can be found on
 Developers can use the `OfflineEmissionsTracker` object to track
 emissions as follows:
 
-``` python
+```python
 from codecarbon import OfflineEmissionsTracker
 tracker = OfflineEmissionsTracker(country_iso_code="CAN")
 tracker.start()
@@ -251,11 +254,12 @@ tracker.stop()
 
 The `OfflineEmissionsTracker` also works as a context manager
 
-``` python
+```python
 from codecarbon import OfflineEmissionsTracker
 
-with OfflineEmissionsTracker() as tracker:
-# GPU intensive training code  goes here
+with OfflineEmissionsTracker(country_iso_code="CAN") as tracker:
+    # GPU intensive training code goes here
+    pass
 ```
 
 ### Decorator
@@ -334,7 +338,8 @@ CodeCarbon is structured so that you can configure it in a hierarchical manner:
     -   script parameters will override environment variables if the same
         parameter is set in both:
 
-        ``` python
+        ```python
+        # skip mktestdocs testing
         EmissionsTracker(
            api_call_interval=4,
            save_to_api=True,
@@ -343,7 +348,7 @@ CodeCarbon is structured so that you can configure it in a hierarchical manner:
 
 Yields attributes:
 
-``` python
+```python
 {
     "measure_power_secs": 10,  # from ~/.codecarbon.config
     "save_to_file": True,   # from ./.codecarbon.config (override ~/.codecarbon.config)
@@ -382,7 +387,7 @@ export HTTPS_PROXY="http://0.0.0.0:0000"
 
 Or in your Python code:
 
-``` python
+```python
 import os
 
 os.environ["HTTPS_PROXY"] = "http://0.0.0.0:0000"

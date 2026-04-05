@@ -9,12 +9,14 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+      - "tests/check-docs-drift.py"
   pull_request:
     branches: [master]
     paths:
       - "docs/**"
       - "mkdocs.yml"
       - ".github/workflows/build-docs.yml"
+      - "tests/check-docs-drift.py"
 
 jobs:
   build:
@@ -32,6 +34,9 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --group doc
+
+      - name: Check docs code examples
+        run: uv run task docs-check-drift
 
       - name: Build docs
         run: |

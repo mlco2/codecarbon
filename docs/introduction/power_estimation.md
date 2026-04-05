@@ -22,6 +22,11 @@ Instead of relying solely on instantaneous power sensors (which might not repres
 The `Power.from_energies_and_delay` method handles this operation:
 
 ```python
+from codecarbon.core import units
+
+energy_now = units.Energy(kWh=1.0)
+energy_previous = units.Energy(kWh=0.5)
+delay = units.Time(seconds=3600.0)
 delta_energy_kwh = float(abs(energy_now.kWh - energy_previous.kWh))
 power_kw = delta_energy_kwh / delay.hours
 ```
@@ -48,6 +53,7 @@ For recording the power, a running sum is maintained:
 
 At the end of an execution task (or when data is exported), the true average Power is formulated:
 ```python
+# skip  mktestdocs testing
 avg_gpu_power = _gpu_power_sum / _power_measurement_count
 ```
 This smoothing process prevents singular short measurement anomalies from skewing the final aggregated power values published in `EmissionsData`.
