@@ -152,11 +152,11 @@ uv run task -l
 ## Documentation and Help
 
 ### Key Documentation Files
-- **[docs/how-to/contributing.md](docs/how-to/contributing.md)**: Detailed contribution guidelines and setup
-- **[README.md](README.md)**: Project overview and quickstart
-- **[carbonserver/README.md](carbonserver/README.md)**: API architecture and database schema
-- **[webapp/README.md](webapp/README.md)**: Next.js dashboard setup
-- **[carbonserver/tests/TESTING.md](carbonserver/tests/TESTING.md)**: Comprehensive testing guide
+- **[Contributing](contributing.md)**: Detailed contribution guidelines and setup
+- **[README.md](https://github.com/mlco2/codecarbon/blob/master/README.md)**: Project overview and quickstart
+- **[carbonserver/README.md](https://github.com/mlco2/codecarbon/blob/master/carbonserver/README.md)**: API architecture and database schema
+- **[webapp/README.md](https://github.com/mlco2/codecarbon/blob/master/webapp/README.md)**: Next.js dashboard setup
+- **[carbonserver/tests/TESTING.md](https://github.com/mlco2/codecarbon/blob/master/carbonserver/tests/TESTING.md)**: Comprehensive testing guide
 
 ### VS Code Debugging
 The repository includes VS Code launch configurations in docs/how-to/contributing.md for:
@@ -165,7 +165,7 @@ The repository includes VS Code launch configurations in docs/how-to/contributin
 - Testing codecarbon CLI monitor
 
 ### Getting Help
-- **FAQ**: https://docs.codecarbon.io/latest/introduction/faq/
+- **FAQ**: https://docs.codecarbon.io/latest/explanation/faq/
 - **Documentation**: https://docs.codecarbon.io
 - **Issues**: https://github.com/mlco2/codecarbon/issues
 

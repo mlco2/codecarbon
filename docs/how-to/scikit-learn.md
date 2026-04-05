@@ -86,4 +86,4 @@ except Exception as e:
 
 - [Configure CodeCarbon](configuration.md) to customize tracking behavior
 - [Send emissions data to the cloud](cloud-api.md) to visualize across multiple runs
-- [Integrate with other frameworks](../how-to/) like Transformers or Diffusers
+- Integrate with other frameworks: [Transformers](transformers.md) and [Diffusers](diffusers.md)

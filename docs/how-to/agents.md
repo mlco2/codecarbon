@@ -100,7 +100,7 @@ Smaller models consume less energy while still providing useful inference capabi
 
 ## Comparing Model Efficiency
 
-To understand the trade-offs between different models, batch sizes, and their carbon impact, see [Comparing Model Efficiency](../how-to/comparing-model-efficiency.md). You can apply the same patterns to compare different open-source models running locally.
+To understand the trade-offs between different models, batch sizes, and their carbon impact, see [Comparing Model Efficiency](../tutorials/comparing-model-efficiency.md). You can apply the same patterns to compare different open-source models running locally.
 
 ## Next Steps
 

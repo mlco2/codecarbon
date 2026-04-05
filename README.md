@@ -94,7 +94,7 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 | [Python API Tutorial](https://docs.codecarbon.io/tutorials/python-api/) | Track emissions in Python code |
 | [Comparing Model Efficiency](https://docs.codecarbon.io/tutorials/comparing-model-efficiency/) | Measure carbon efficiency across ML models |
 | [API Reference](https://docs.codecarbon.io/reference/api/) | Full parameter documentation |
-| [Examples](https://docs.codecarbon.io/reference/examples/) | Example usage patterns |
+| [Framework examples (scikit-learn)](https://docs.codecarbon.io/how-to/scikit-learn/) | Task-oriented ML framework examples |
 | [Methodology](https://docs.codecarbon.io/explanation/methodology/) | How emissions are calculated |
 | [EcoLogits](https://ecologits.ai/) | Track emissions from GenAI API calls |
 
