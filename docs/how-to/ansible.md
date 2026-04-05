@@ -43,23 +43,35 @@ codecarbon/deploy/ansible/codecarbon_cli_as_a_service/
 
 ## Quick Start
 
-1.  Set the the target to install in `hosts`:
+### Step 1: Configure Target Hosts
 
-    ``` text
-    yourservername.yourdomain.com   hostname=yourservername ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
-    ```
+Set the target server to install on in the `hosts` file:
 
-2.  Update the variables in `vars/main.yml` with your configuration:
+``` text
+yourservername.yourdomain.com   hostname=yourservername ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
+```
 
-    ``` yaml
-    organization_id: your_org_id
-    project_id: your_project_id
-    experiment_id: your_experiment_id
-    api_key: your_api_key
-    ```
+### Step 2: Update Ansible Variables
 
-3.  Run the playbook:
+Update your CodeCarbon API credentials in `vars/main.yml`:
 
-    ``` bash
-    ansible-playbook -i hosts tasks/main.yml
-    ```
+``` yaml
+organization_id: your_org_id
+project_id: your_project_id
+experiment_id: your_experiment_id
+api_key: your_api_key
+```
+
+### Step 3: Run the Playbook
+
+Execute the Ansible playbook to deploy CodeCarbon:
+
+``` bash
+ansible-playbook -i hosts tasks/main.yml
+```
+
+## Next Steps
+
+- [Install CodeCarbon as a Linux Service](linux-service.md) for manual setup details
+- [Send emissions data to the cloud](cloud-api.md) to view results on the dashboard
+- [Configure CodeCarbon](configuration.md) for additional customization

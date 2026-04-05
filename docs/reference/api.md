@@ -2,7 +2,7 @@
 
 Parameters can be set via `EmissionsTracker()`, `OfflineEmissionsTracker()`, the
 `@track_emissions` decorator, config files, or environment variables. See
-[Configuration](usage.md#configuration) for priority order.
+[Configuration](../how-to/configuration.md) for priority order.
 
 !!! note "PUE"
     PUE is a multiplication factor provided by the user. Old datacenters have PUE

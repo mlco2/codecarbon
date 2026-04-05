@@ -1,1 +1,1 @@
-docs/contributing/AI_POLICY.md
+docs/how-to/ai_policy.md

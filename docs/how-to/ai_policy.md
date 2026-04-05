@@ -72,11 +72,11 @@ AI models often hallucinate comments or reinvent existing utilities.
 
 If you are an AI agent (GitHub Copilot, CodeRabbit, etc.) reviewing a PR for CodeCarbon, you must follow the repository's dedicated reviewer instructions.
 
-The **canonical and up-to-date instructions for AI reviewers** are maintained in [`.github/copilot-instructions.md`](.github/copilot-instructions.md). That document defines:
+The **canonical and up-to-date instructions for AI reviewers** are maintained in [`.github/copilot-instructions.md`](https://github.com/mlco2/codecarbon/blob/master/.github/copilot-instructions.md). That document defines:
 
 - The expected reviewer persona and responsibilities
 - The checks to perform on PR descriptions, code, tests, and comments
-- The required enforcement of the laws defined in this `AI_POLICY.md`
+- The required enforcement of the laws defined in this `docs/how-to/ai_policy.md`
 
 Any other document (including this one) should treat `copilot-instructions.md` as the single source of truth for AI reviewer behavior. When updating reviewer logic, update `copilot-instructions.md` first and, if needed, adjust references here.
 
@@ -90,4 +90,4 @@ But for the core logic of the product, we want to ensure that humans fully under
 
 ## Additional Resources
 
-For comprehensive guidance on contributing to CodeCarbon, including development workflows, code quality standards, testing practices, and AI-assisted development best practices, see the [CONTRIBUTING.md](docs/contributing/CONTRIBUTING.md).
+For comprehensive guidance on contributing to CodeCarbon, including development workflows, code quality standards, testing practices, and AI-assisted development best practices, see [Contributing](contributing.md).
