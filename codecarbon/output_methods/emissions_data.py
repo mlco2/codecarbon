@@ -47,6 +47,8 @@ class EmissionsData:
     on_cloud: str = "N"
     pue: float = 1
     wue: float = 0
+    cpu_temperature: float = 0.0  # ADD
+    gpu_temperature: float = 0.0  # ADD
 
     @property
     def values(self) -> OrderedDict:
@@ -110,6 +112,8 @@ class TaskEmissionsData:
     ram_utilization_percent: float = 0.0
     ram_used_gb: float = 0.0
     on_cloud: str = "N"
+    cpu_temperature: float = 0.0
+    gpu_temperature: float = 0.0
 
     @property
     def values(self) -> OrderedDict:

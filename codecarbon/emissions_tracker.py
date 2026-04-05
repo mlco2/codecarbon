@@ -368,6 +368,8 @@ class BaseEmissionsTracker(ABC):
         self._gpu_utilization_history: List[float] = []
         self._ram_utilization_history: List[float] = []
         self._ram_used_history: List[float] = []
+        self._cpu_temperature_history: List[float] = []
+        self._gpu_temperature_history: List[float] = []
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -548,6 +550,8 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.clear()
         self._ram_used_history.clear()
         self._gpu_utilization_history.clear()
+        self._cpu_temperature_history.clear()
+        self._gpu_temperature_history.clear()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -598,6 +602,8 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.clear()
         self._ram_used_history.clear()
         self._gpu_utilization_history.clear()
+        self._cpu_temperature_history.clear()
+        self._gpu_temperature_history.clear()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -922,6 +928,16 @@ class BaseEmissionsTracker(ABC):
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
             wue=self._wue,
+            cpu_temperature=(
+                sum(self._cpu_temperature_history) / len(self._cpu_temperature_history)
+                if self._cpu_temperature_history
+                else 0.0
+            ),
+            gpu_temperature=(
+                sum(self._gpu_temperature_history) / len(self._gpu_temperature_history)
+                if self._gpu_temperature_history
+                else 0.0
+            ),
         )
         logger.debug(total_emissions)
         return total_emissions
@@ -973,6 +989,10 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.append(psutil.virtual_memory().percent)
         self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
 
+        for hardware in self._hardware:
+            if isinstance(hardware, CPU):
+                self._cpu_temperature_history.append(hardware.get_cpu_temperature())
+
         # Collect GPU utilization metrics
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
@@ -980,13 +1000,18 @@ class BaseEmissionsTracker(ABC):
                 gpu_details = hardware.devices.get_gpu_details()
                 for gpu_index, gpu_detail in enumerate(gpu_details):
                     resolved_gpu_index = gpu_detail.get("gpu_index", gpu_index)
-                    if (
-                        resolved_gpu_index in gpu_ids_to_monitor
-                        and "gpu_utilization" in gpu_detail
-                    ):
-                        self._gpu_utilization_history.append(
-                            gpu_detail["gpu_utilization"]
-                        )
+                    if resolved_gpu_index in gpu_ids_to_monitor:
+
+                        if "gpu_utilization" in gpu_detail:
+                            self._gpu_utilization_history.append(
+                                gpu_detail["gpu_utilization"]
+                            )
+
+                        if "temperature" in gpu_detail:
+                            self._gpu_temperature_history.append(
+                                gpu_detail["temperature"]
+                            )
+
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
