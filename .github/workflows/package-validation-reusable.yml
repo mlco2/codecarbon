@@ -63,9 +63,13 @@ jobs:
           uv pip install pytest pytest-mock requests-mock responses pandas logfire
       - name: Test package integrity
         run: |
-          # Run the package integrity tests to verify all data files are included
-          uv run python -m pytest tests/test_package_integrity.py -v
-          CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/
+          # Run against the venv on PATH (sparse checkout has no pyproject.toml for uv run).
+          python -m pytest tests/test_package_integrity.py -v
+          # test_docs_examples needs mktestdocs, scikit-learn, and docs/ — covered by uv sync CI.
+          CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest \
+            --ignore=tests/test_viz_data.py \
+            --ignore=tests/test_docs_examples.py \
+            -vv -m 'not integ_test' tests/
       - name: Test CLI functionality
         run: |
           # Test that the CLI is functional
