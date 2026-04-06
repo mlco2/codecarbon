@@ -1,6 +1,8 @@
 # test_temp.py
 import time
+
 import pandas as pd
+
 from codecarbon import EmissionsTracker
 
 tracker = EmissionsTracker(
@@ -8,7 +10,7 @@ tracker = EmissionsTracker(
     measure_power_secs=15,
     save_to_file=True,
     output_file="emissions_temp_test.csv",
-    log_level="debug"
+    log_level="debug",
 )
 
 tracker.start()
