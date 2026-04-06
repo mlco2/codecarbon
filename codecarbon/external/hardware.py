@@ -409,7 +409,6 @@ class CPU(BaseHardware):
         cpu_power = self._get_power_from_cpus()
         self._power_history.append(cpu_power)
 
-
     def get_cpu_temperature(self) -> float:
         """
         Get average CPU temperature in Celsius.
@@ -436,18 +435,16 @@ class CPU(BaseHardware):
                     if key in temps:
                         readings = temps[key]
                         avg = sum(r.current for r in readings) / len(readings)
-                        logger.debug(
-                            f"get_cpu_temperature: {key} avg = {avg:.1f}°C"
-                        )
+                        logger.debug(f"get_cpu_temperature: {key} avg = {avg:.1f}°C")
                         return avg
                 return 0.0
 
         except Exception as e:
             logger.debug(f"get_cpu_temperature: Could not read CPU temperature: {e}")
             return 0.0
+
     def get_model(self):
         return self._model
-
 
     @classmethod
     def from_utils(

@@ -1012,7 +1012,6 @@ class BaseEmissionsTracker(ABC):
                                 gpu_detail["temperature"]
                             )
 
-
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
             h_time = time.perf_counter()
