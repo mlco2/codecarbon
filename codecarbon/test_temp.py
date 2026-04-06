@@ -24,14 +24,14 @@ time.sleep(30)  # give monitor_power time to collect samples
 emissions = tracker.stop()
 
 # check results
-print(f"\n--- Results ---")
-print(f"Emissions: {emissions:.6f} kg CO2")
-print(f"CPU temperature: {tracker.final_emissions_data.cpu_temperature:.1f}°C")
-print(f"GPU temperature: {tracker.final_emissions_data.gpu_temperature:.1f}°C")
+print("\n--- Results ---")
+print("Emissions: {emissions:.6f} kg CO2")
+print("CPU temperature: {tracker.final_emissions_data.cpu_temperature:.1f}°C")
+print("GPU temperature: {tracker.final_emissions_data.gpu_temperature:.1f}°C")
 
 # verify CSV
 df = pd.read_csv("emissions_temp_test.csv")
-print(f"\n--- CSV columns ---")
+print("\n--- CSV columns ---")
 print(df.columns.tolist())
-print(f"\n--- Temperature values in CSV ---")
+print("\n--- Temperature values in CSV ---")
 print(df[["cpu_temperature", "gpu_temperature"]])
