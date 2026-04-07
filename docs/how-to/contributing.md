@@ -39,7 +39,7 @@
 <!-- TOC --><a name="have-a-question"></a>
 ## </a> Have a Question?
 
-Please see the [FAQ](https://docs.codecarbon.io/latest/explanation/faq/) for questions.
+Please see the [FAQ](https://docs.codecarbon.io/explanation/faq/) for questions.
 
 
 <!-- TOC --><a name="found-a-bug"></a>
@@ -148,7 +148,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 -   7Zip is often already installed, running it with `7z b` makes a quick CPU test.
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
--   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://docs.codecarbon.io/latest/how-to/test-on-scaleway/) to install it.
+-   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://docs.codecarbon.io/how-to/test-on-scaleway/) to install it.
 -   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
 -   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and available for Windows and Linux.
 
