@@ -32,7 +32,7 @@ click==8.3.1
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   authlib
     #   jwcrypto
@@ -89,7 +89,7 @@ itsdangerous==2.2.0
     # via carbonserver (carbonserver/pyproject.toml)
 jinja2==3.1.6
     # via fastapi
-jwcrypto==1.5.6
+jwcrypto==1.5.7
     # via fief-client
 makefun==1.16.0
     # via fief-client
@@ -145,7 +145,7 @@ pyyaml==6.0.3
     # via uvicorn
 rapidfuzz==3.14.3
     # via carbonserver (carbonserver/pyproject.toml)
-requests==2.33.0
+requests==2.33.1
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi-oidc
