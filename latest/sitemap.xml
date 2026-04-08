@@ -4,81 +4,108 @@
         <loc>https://docs.codecarbon.io/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/introduction/when-to-use/</loc>
+        <loc>https://docs.codecarbon.io/tutorials/first-tracking/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/introduction/motivation/</loc>
+        <loc>https://docs.codecarbon.io/how-to/installation/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/introduction/methodology/</loc>
+        <loc>https://docs.codecarbon.io/tutorials/cli/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/introduction/rapl/</loc>
+        <loc>https://docs.codecarbon.io/tutorials/python-api/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/introduction/power_estimation/</loc>
+        <loc>https://docs.codecarbon.io/how-to/scikit-learn/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/introduction/model_examples/</loc>
+        <loc>https://docs.codecarbon.io/how-to/transformers/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/introduction/faq/</loc>
+        <loc>https://docs.codecarbon.io/how-to/diffusers/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/installation/</loc>
+        <loc>https://docs.codecarbon.io/how-to/agents/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/usage/</loc>
+        <loc>https://docs.codecarbon.io/how-to/configuration/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/api/</loc>
+        <loc>https://docs.codecarbon.io/tutorials/comparing-model-efficiency/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/parameters/</loc>
+        <loc>https://docs.codecarbon.io/how-to/cloud-api/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/examples/</loc>
+        <loc>https://docs.codecarbon.io/how-to/visualize/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/test_on_scaleway/</loc>
+        <loc>https://docs.codecarbon.io/how-to/logging/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/contributing/CODE_OF_CONDUCT/</loc>
+        <loc>https://docs.codecarbon.io/how-to/comet/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/contributing/CONTRIBUTING/</loc>
+        <loc>https://docs.codecarbon.io/how-to/enable-rapl/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/contributing/AI_POLICY/</loc>
+        <loc>https://docs.codecarbon.io/how-to/linux-service/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/contributing/working_with_agent/</loc>
+        <loc>https://docs.codecarbon.io/how-to/ansible/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/contributing/agents-instructions/</loc>
+        <loc>https://docs.codecarbon.io/how-to/slurm/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/contributing/SECURITY/</loc>
+        <loc>https://docs.codecarbon.io/how-to/test-on-scaleway/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/advanced/linux_service/</loc>
+        <loc>https://docs.codecarbon.io/how-to/code-of-conduct/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/advanced/ansible/</loc>
+        <loc>https://docs.codecarbon.io/how-to/contributing/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/getting-started/comet/</loc>
+        <loc>https://docs.codecarbon.io/how-to/ai_policy/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/advanced/adastra/</loc>
+        <loc>https://docs.codecarbon.io/how-to/working_with_agent/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/logging/output/</loc>
+        <loc>https://docs.codecarbon.io/how-to/agent-instructions/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/logging/to_logger/</loc>
+        <loc>https://docs.codecarbon.io/how-to/security/</loc>
       </url>
       <url>
-        <loc>https://docs.codecarbon.io/logging/visualize/</loc>
+        <loc>https://docs.codecarbon.io/explanation/why/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/explanation/when-to-use/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/explanation/methodology/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/explanation/rapl/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/explanation/power-estimation/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/explanation/model-comparisons/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/explanation/faq/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/reference/api/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/reference/output/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/reference/cli/</loc>
       </url>
 </urlset>
