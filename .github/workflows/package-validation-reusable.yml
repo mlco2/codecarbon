@@ -58,14 +58,14 @@ jobs:
       - name: Sync dev dependencies from lockfile and install wheel
         run: |
           uv sync --python ${{ env.MAIN_PYTHON_VERSION }} --frozen --no-install-project --group dev
-          uv pip install dist/*.whl
+          uv pip install --python .venv/bin/python dist/*.whl
       - name: Test package integrity
         run: |
-          uv run --python ${{ env.MAIN_PYTHON_VERSION }} python -m pytest tests/test_package_integrity.py -v
-          CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --python ${{ env.MAIN_PYTHON_VERSION }} python -m pytest \
+          .venv/bin/python -m pytest tests/test_package_integrity.py -v
+          CODECARBON_ALLOW_MULTIPLE_RUNS=True .venv/bin/python -m pytest \
             --ignore=tests/test_viz_data.py \
             -vv -m 'not integ_test' tests/
       - name: Test CLI functionality
         run: |
-          uv run --python ${{ env.MAIN_PYTHON_VERSION }} codecarbon --help
-          uv run --python ${{ env.MAIN_PYTHON_VERSION }} python -c "from codecarbon import EmissionsTracker; print('Package import successful')"
+          .venv/bin/codecarbon --help
+          .venv/bin/python -c "from codecarbon import EmissionsTracker; print('Package import successful')"
