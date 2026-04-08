@@ -18,6 +18,7 @@ from codecarbon.emissions_tracker import (
     track_emissions,
 )
 from codecarbon.external.geography import CloudMetadata
+from codecarbon.output import BoAmpsOutput
 from tests.fake_modules import pynvml as fake_pynvml
 from tests.testdata import (
     GEO_METADATA_CANADA,
@@ -212,6 +213,29 @@ class TestCarbonTracker(unittest.TestCase):
         tracker._measure_power = raise_exception
         tracker.stop()
 
+    def test_save_to_boamps_adds_boamps_output_handler(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            save_to_file=False,
+            save_to_boamps=True,
+        )
+
+        self.assertTrue(
+            any(
+                isinstance(handler, BoAmpsOutput)
+                for handler in tracker._output_handlers
+            )
+        )
+
     @responses.activate
     def test_decorator_ONLINE_NO_ARGS(
         self,
@@ -267,6 +291,32 @@ class TestCarbonTracker(unittest.TestCase):
 
         # THEN
         self.verify_output_file(self.emissions_file_path, 2)
+
+    def test_decorator_online_passes_save_to_boamps(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        mocked_tracker = mock.Mock()
+
+        with mock.patch(
+            "codecarbon.emissions_tracker.EmissionsTracker",
+            return_value=mocked_tracker,
+        ) as mocked_tracker_cls:
+
+            @track_emissions(save_to_boamps=True)
+            def dummy_train_model():
+                return 42
+
+            self.assertEqual(dummy_train_model(), 42)
+
+        self.assertTrue(mocked_tracker_cls.call_args.kwargs["save_to_boamps"])
+        mocked_tracker.start.assert_called_once()
+        mocked_tracker.stop.assert_called_once()
 
     def test_decorator_OFFLINE_NO_COUNTRY(
         self,

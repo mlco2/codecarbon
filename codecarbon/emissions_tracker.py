@@ -32,6 +32,7 @@ from codecarbon.input import DataSource
 from codecarbon.lock import Lock
 from codecarbon.output import (
     BaseOutput,
+    BoAmpsOutput,
     CodeCarbonAPIOutput,
     EmissionsData,
     FileOutput,
@@ -177,6 +178,7 @@ class BaseEmissionsTracker(ABC):
         logging_logger: Optional[LoggerOutput] = _sentinel,
         save_to_prometheus: Optional[bool] = _sentinel,
         save_to_logfire: Optional[bool] = _sentinel,
+        save_to_boamps: Optional[bool] = _sentinel,
         prometheus_url: Optional[str] = _sentinel,
         output_handlers: Optional[List[BaseOutput]] = _sentinel,
         gpu_ids: Optional[List] = _sentinel,
@@ -227,6 +229,8 @@ class BaseEmissionsTracker(ABC):
                             pushed to prometheus, defaults to False.
         :param save_to_logfire: Indicates if the emission artifacts should be written
                             to a logfire observability platform, defaults to False.
+        :param save_to_boamps: Indicates if the emission artifacts should be written
+                    to a BoAmps JSON report, defaults to False.
         :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
         :param output_handlers: List of custom output handlers to use. Defaults to [].
         :param gpu_ids: Comma-separated list of GPU ids to track, defaults to None.
@@ -337,6 +341,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logging_logger, "logging_logger")
         self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
         self._set_from_conf(save_to_logfire, "save_to_logfire", False, bool)
+        self._set_from_conf(save_to_boamps, "save_to_boamps", False, bool)
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
@@ -495,6 +500,9 @@ class BaseEmissionsTracker(ABC):
 
         if self._save_to_logfire:
             self._output_handlers.append(LogfireOutput())
+
+        if self._save_to_boamps:
+            self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """
@@ -1286,6 +1294,7 @@ def track_emissions(
     logging_logger: Optional[LoggerOutput] = _sentinel,
     save_to_prometheus: Optional[bool] = _sentinel,
     save_to_logfire: Optional[bool] = _sentinel,
+    save_to_boamps: Optional[bool] = _sentinel,
     prometheus_url: Optional[str] = _sentinel,
     output_handlers: Optional[List[BaseOutput]] = _sentinel,
     gpu_ids: Optional[List] = _sentinel,
@@ -1340,6 +1349,8 @@ def track_emissions(
                             pushed to prometheus, defaults to False.
     :param save_to_logfire: Indicates if the emission artifacts should be
                             pushed to logfire, defaults to False.
+    :param save_to_boamps: Indicates if the emission artifacts should be
+                           written to a BoAmps JSON report, defaults to False.
     :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
     :param output_handlers: List of output handlers to use.
     :param gpu_ids: User-specified known gpu ids to track.
@@ -1430,6 +1441,7 @@ def track_emissions(
                     logging_logger=logging_logger,
                     save_to_prometheus=save_to_prometheus,
                     save_to_logfire=save_to_logfire,
+                    save_to_boamps=save_to_boamps,
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
                     gpu_ids=gpu_ids,
@@ -1466,6 +1478,7 @@ def track_emissions(
                     logging_logger=logging_logger,
                     save_to_prometheus=save_to_prometheus,
                     save_to_logfire=save_to_logfire,
+                    save_to_boamps=save_to_boamps,
                     prometheus_url=prometheus_url,
                     output_handlers=output_handlers,
                     gpu_ids=gpu_ids,

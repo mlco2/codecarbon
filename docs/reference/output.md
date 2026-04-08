@@ -102,6 +102,31 @@ tracker.stop()
 
 The first time it will ask you to log in to Logfire. Once you log in and set the default Logfire project, the metrics will appear following the format `codecarbon_*`.
 
+## BoAmps
+
+[BoAmps](https://github.com/Boavizta/BoAmps) is a standardized JSON format for reporting AI and ML energy consumption.
+
+### How to use it
+
+Run your EmissionsTracker as usual, with `save_to_boamps=True`:
+
+```python-skip
+from codecarbon import OfflineEmissionsTracker
+
+tracker = OfflineEmissionsTracker(
+    project_name="my_project",
+    country_iso_code="USA",
+    save_to_boamps=True,
+)
+tracker.start()
+# Your code here
+tracker.stop()
+```
+
+CodeCarbon writes a final report named `boamps_report_<run_id>.json` in `output_dir`.
+
+If you need to enrich the report with task metadata, datasets, or publisher information, use `BoAmpsOutput` directly through `output_handlers` or start from [examples/boamps_output.py](../../examples/boamps_output.py).
+
 ## HTTP Output
 
 The HTTP Output allows calling a webhook with emission data when the tracker is stopped. Use the `emissions_endpoint` parameter to specify your endpoint.
