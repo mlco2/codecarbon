@@ -1,0 +1,1 @@
+docs/how-to/contributing.md

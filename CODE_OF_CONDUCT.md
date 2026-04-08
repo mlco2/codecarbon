@@ -1,1 +1,1 @@
-docs/contributing/CODE_OF_CONDUCT.md
+docs/how-to/code-of-conduct.md

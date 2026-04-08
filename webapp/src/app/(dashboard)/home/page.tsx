@@ -78,10 +78,10 @@ export default function HomePage() {
                         For more information, please refer to the documentation:
                         <br />
                         <a
-                            href="https://docs.codecarbon.io/latest/getting-started/usage/"
+                            href="https://docs.codecarbon.io/tutorials/cli/"
                             target="_blank"
                         >
-                            https://docs.codecarbon.io/latest/getting-started/usage/
+                            https://docs.codecarbon.io/tutorials/cli/
                         </a>
                     </CardDescription>
                 </CardHeader>

@@ -24,7 +24,7 @@ class RAM(BaseHardware):
     In V3, we need to improve the accuracy of the RAM power estimation.
     Because the power consumption of RAM is not linear with the amount of memory used,
 
-    See https://docs.codecarbon.io/latest/introduction/methodology/#ram for details on the RAM
+    See https://docs.codecarbon.io/explanation/methodology/#ram for details on the RAM
     power estimation methodology.
 
     """

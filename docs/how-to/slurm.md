@@ -1,24 +1,43 @@
-# ROCm and PyTorch on SLURM SuperComputer
+# Using CodeCarbon on SLURM (Adastra/ROCm Example)
 
-This project was provided with computing and storage resources by GENCI at CINES thanks to the grant AD010615147R1 on the [supercomputer Adastra](https://dci.dci-gitlab.cines.fr/webextranet/architecture/index.html)'s MI250x/MI300 partition.
+This guide walks through using CodeCarbon on SLURM-based HPC clusters. The examples are specific to the Adastra supercomputer with AMD ROCm GPUs, but the general approach applies to any SLURM cluster with internet-connected login nodes.
 
-Thanks to this grant we were able to develop and test the AMD ROCM support in CodeCarbon, and provide this quick start guide to help other users of Adastra HPC to easily monitor the carbon emissions of their machine learning workloads running on AMD GPUs.
+**For a general approach to running CodeCarbon on any Linux server without HPC complexity, see the [Linux Service guide](linux-service.md).**
 
-It was tested on Adastra but it will likely work on any SLURM cluster with AMD GPUs and ROCM support.
+---
 
-## Quick Start Guide
+## Overview
 
-Adastra security rules require users to connect through a fixed IP. We choose to setup a small host in the cloud to act as a bastion server, allowing us to connect to Adastra from anywhere without needing to change our IP address.
+This guide shows how to run CodeCarbon on SLURM-based HPC clusters like Adastra (powered by GENCI/CINES). The examples use AMD ROCm GPUs, but the approach applies to any SLURM cluster with internet-connected login nodes.
 
-Adastra architecture is quite standard for a HPC cluster, with a login node and compute nodes. The login node has internet access and is the only one accessible from outside, while the compute nodes are where the GPU workloads run, without internet access.
+## Prerequisites
 
-The Python environment is setup on the login node, and referenced by the compute nodes.
+- Access to a SLURM-based HPC cluster
+- Login node with internet access
+- Python 3.10+ on the cluster
+- Compute nodes (may be offline from internet)
 
-The job is submitted from the login node using `sbatch`, and the SLURM script takes care of loading the Python environment and running the code on the compute node.
+## Architecture Overview
 
-If the `--time` option of `sbatch` is less than 30 minutes, the job will be put in the `debug` partition, which has a faster scheduling but a shorter maximum runtime.
+Adastra uses a standard HPC security model:
 
-### Export your configuration
+- **Login nodes** have internet access and are accessible from outside
+- **Compute nodes** run your GPU workloads without direct internet access
+- Python environments are set up on login nodes and shared via network storage
+- Jobs are submitted from the login node using `sbatch`
+
+For sites requiring jump hosts (bastion servers), SSH jump (`-J`) can route through an intermediate server.
+
+The Python environment is set up on the login node and shared with compute nodes via network storage. Jobs are submitted from the login node using `sbatch`, and the SLURM script loads the environment and runs code on compute nodes.
+
+!!! note "Debug Partition"
+    If the `--time` option is less than 30 minutes, the job is placed in the `debug` partition, which has faster scheduling but shorter maximum runtime.
+
+## Setup Steps
+
+### Step 1: Configure Your Environment Variables
+
+Set up environment variables for your HPC configuration. Add these to your `.bashrc` or `.zshrc`:
 
 Adapt the following environment variables with your own configuration. You can add them to your `.bashrc` or `.zshrc` for convenience.
 
@@ -32,30 +51,35 @@ export USER_NAME="username_hpc"
 export HPC_PROJECT_FOLDER="/lus/home/xxx"
 ```
 
-### Connect to CINES Adastra
+### Step 2: Connect to the HPC Cluster
+
+Connect to your HPC login node:
+
+**Using sshpass (automated):**
 
 ```bash
 sshpass -p "$HPC_PASS" ssh -J $BASTION_USER@$BASTION_IP $USER_NAME@$HPC_HOST
 ```
 
-For the first time you may want to connect one-by-one to debug any SSH issue before using `sshpass`:
+**For first-time connection (debug SSH issues):**
 
 ```bash
 ssh -o ServerAliveInterval=60 $BASTION_USER@$BASTION_IP
 ssh -o ServerAliveInterval=60 $USER_NAME@$HPC_HOST
 ```
 
-### Copy your code to Adastra
+### Step 3: Copy Your Code to the HPC Cluster
 
 ```bash
 sshpass -p "$HPC_PASS" scp -r -J $BASTION_USER@$BASTION_IP /you/folder/* $USER_NAME@$HPC_HOST:$HPC_PROJECT_FOLDER
 ```
 
-### Install CodeCarbon and dependencies
+### Step 4: Install CodeCarbon and Dependencies
 
-Be careful to install the correct version of `amdsmi` that is compatible with the ROCM version on Adastra. The last available version we used is `7.0.1`.
+!!! warning "ROCM Compatibility"
+    Install the correct version of `amdsmi` that matches your ROCM version. For Adastra, use `amdsmi==7.0.1` for compatibility with ROCM 6.4.3.
 
-#### Simple installation
+#### Option A: Simple Installation (Recommended)
 
 
 ```bash
@@ -71,7 +95,7 @@ pip install amdsmi==7.0.1
 pip install codecarbon
 ```
 
-#### use a branch of CodeCarbon with PyTorch
+#### Option B: Development Installation with PyTorch
 
 ```bash
 module load python/3.12
@@ -97,11 +121,13 @@ pip install numpy
 pip install -e .
 ```
 
-#### Development workflow
+### Step 5: Development Workflow
 
 You can code on the login Node, but we suggest to do the development on your local machine and then push the code to a repository (e.g., GitHub) and pull it from the login node. This way you avoid losing code and keep tracks of the changes.
 
-After every connection to Adastra, you need to activate your Python environment:
+1. **Code locally** on your machine and push to a repository (GitHub, etc.)
+2. **Pull on the login node** to avoid losing work
+3. **Activate the environment** after each login:
 
 ```bash
 cd codecarbon
@@ -109,36 +135,63 @@ git pull
 source .venv/bin/activate
 ```
 
-### Submit a Job
+### Step 6: Submit a Job
 
-**Option A: Using sbatch (recommended)**
+Submit your CodeCarbon job to the SLURM scheduler:
+
+Use `sbatch` to submit your job script:
+
 ```bash
 sbatch examples/slurm_rocm/run_codecarbon_pytorch.slurm
 ```
 
-### 4. Monitor Job Status
+### Step 7: Monitor Job Status
+
+Monitor your job execution:
+
 ```bash
-# View running jobs
+# View all running jobs
 squeue -u $USER
 
-# View job output
+# View specific job output
 tail -f logs/<job_id>.out
+
+# View job details
+sinfo
 ```
 
 ## Troubleshooting
 
+### Error: AMD GPU detected but amdsmi is not properly configured
 
 ```
-Error :
-[codecarbon WARNING @ 10:28:46] AMD GPU detected but amdsmi is not properly configured. Please ensure amdsmi is correctly installed to get GPU metrics.Tips : check consistency between Python amdsmi package and ROCm versions, and ensure AMD drivers are up to date. Error: /opt/rocm/lib/libamd_smi.so: undefined symbol: amdsmi_get_cpu_affinity_with_scope
+[codecarbon WARNING @ 10:28:46] AMD GPU detected but amdsmi is not properly configured.
+Error: /opt/rocm/lib/libamd_smi.so: undefined symbol: amdsmi_get_cpu_affinity_with_scope
 ```
 
-This mean you have a mismatch between the `amdsmi` Python package and the ROCM version installed on Adastra. To fix this, ensure you install the correct version of `amdsmi` that matches the ROCM version (e.g., `amdsmi==7.0.1` for ROCM 7.0.1).
+**Solution:** You have a version mismatch between `amdsmi` Python package and ROCM. Install the correct version:
 
 ```bash
-KeyError: 'ROCM_PATH'
+# For ROCM 7.0.1:
+pip install amdsmi==7.0.1
+
+# Ensure Python version matches your requirements (3.12 for Adastra)
+python -V
 ```
-This means the rocm module is not loaded, load it with `module load rocm/7.0.1`.
+
+### Error: KeyError 'ROCM_PATH'
+
+This means the ROCm module is not loaded. Load it before running your job:
+
+```bash
+module load rocm/7.0.1
+```
+
+## Next Steps
+
+- [View your emissions results](cloud-api.md) on the CodeCarbon dashboard
+- [Configure CodeCarbon](configuration.md) for different measurement intervals
+- [Explore other deployment options](linux-service.md) for non-HPC systems
 
 ## Limitations and Future Work
 
