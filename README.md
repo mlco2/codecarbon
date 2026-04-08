@@ -25,7 +25,7 @@ conda activate your_env
 pip install codecarbon
 ```
 
-More installation options: [installation docs](https://docs.codecarbon.io/how-to/installation/).
+More installation options: [installation docs](https://docs.codecarbon.io/latest/how-to/installation/).
 
 ## Quickstart (Python)
 
@@ -41,7 +41,7 @@ emissions = tracker.stop()
 print(f"Emissions: {emissions} kg CO₂")
 ```
 
-[**Learn more** →](https://docs.codecarbon.io/tutorials/first-tracking/)
+[**Learn more** →](https://docs.codecarbon.io/latest/tutorials/first-tracking/)
 
 ## Quickstart (CLI)
 
@@ -57,7 +57,7 @@ Detect your hardware:
 codecarbon detect
 ```
 
-Full CLI guide: [CLI tutorial](https://docs.codecarbon.io/tutorials/cli/).
+Full CLI guide: [CLI tutorial](https://docs.codecarbon.io/latest/tutorials/cli/).
 
 ## Configuration
 
@@ -68,7 +68,7 @@ You can configure CodeCarbon using:
 - `CODECARBON_*` environment variables
 - Python arguments (`EmissionsTracker(...)`)
 
-Configuration precedence and examples: [configuration guide](https://docs.codecarbon.io/how-to/configuration/).
+Configuration precedence and examples: [configuration guide](https://docs.codecarbon.io/latest/how-to/configuration/).
 
 ## How it works
 
@@ -76,11 +76,11 @@ We created a Python package that estimates your hardware electricity power consu
 
 ![calculation Summary](docs/images/calculation.png)
 
-We explain more about this calculation in the [**Methodology**](https://docs.codecarbon.io/explanation/methodology/) section of the documentation.
+We explain more about this calculation in the [**Methodology**](https://docs.codecarbon.io/latest/explanation/methodology/) section of the documentation.
 
 ## Visualize
 
-You can visualize your experiment emissions on the [dashboard](https://dashboard.codecarbon.io/) or locally with [carbonboard](https://docs.codecarbon.io/how-to/visualize/).
+You can visualize your experiment emissions on the [dashboard](https://dashboard.codecarbon.io/) or locally with [carbonboard](https://docs.codecarbon.io/latest/how-to/visualize/).
 
 ![dashboard](docs/images/dashboard.png)
 
@@ -88,14 +88,14 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 
 | Section | Description |
 |---------|-------------|
-| [Quickstart](https://docs.codecarbon.io/tutorials/first-tracking/) | Get started in 5 minutes |
-| [Installation](https://docs.codecarbon.io/how-to/installation/) | Install CodeCarbon |
-| [CLI Tutorial](https://docs.codecarbon.io/tutorials/cli/) | Track emissions from the command line |
-| [Python API Tutorial](https://docs.codecarbon.io/tutorials/python-api/) | Track emissions in Python code |
-| [Comparing Model Efficiency](https://docs.codecarbon.io/tutorials/comparing-model-efficiency/) | Measure carbon efficiency across ML models |
-| [API Reference](https://docs.codecarbon.io/reference/api/) | Full parameter documentation |
-| [Framework examples (scikit-learn)](https://docs.codecarbon.io/how-to/scikit-learn/) | Task-oriented ML framework examples |
-| [Methodology](https://docs.codecarbon.io/explanation/methodology/) | How emissions are calculated |
+| [Quickstart](https://docs.codecarbon.io/latest/tutorials/first-tracking/) | Get started in 5 minutes |
+| [Installation](https://docs.codecarbon.io/latest/how-to/installation/) | Install CodeCarbon |
+| [CLI Tutorial](https://docs.codecarbon.io/latest/tutorials/cli/) | Track emissions from the command line |
+| [Python API Tutorial](https://docs.codecarbon.io/latest/tutorials/python-api/) | Track emissions in Python code |
+| [Comparing Model Efficiency](https://docs.codecarbon.io/latest/tutorials/comparing-model-efficiency/) | Measure carbon efficiency across ML models |
+| [API Reference](https://docs.codecarbon.io/latest/reference/api/) | Full parameter documentation |
+| [Framework examples (scikit-learn)](https://docs.codecarbon.io/latest/how-to/scikit-learn/) | Task-oriented ML framework examples |
+| [Methodology](https://docs.codecarbon.io/latest/explanation/methodology/) | How emissions are calculated |
 | [EcoLogits](https://ecologits.ai/) | Track emissions from GenAI API calls |
 
 ## Links
