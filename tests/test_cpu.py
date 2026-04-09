@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+import psutil
 import pytest
 
 from codecarbon.core.config import normalize_gpu_ids
@@ -66,6 +67,11 @@ class TestCPU(unittest.TestCase):
     def test_is_psutil_not_available_on_exception(self, mock_cpu_times):
         self.assertFalse(is_psutil_available())
 
+    @mock.patch("psutil.sensors_temperatures")
+    def psutil_returns_expected_temperature(self, mock_cpu_times):
+        mock_temp = mock.Mock()
+        mock_temp.return_value = {"coretemp" : 50, "k10temp" : 50, "cpu_thermal" : 50}
+        self.assertEqual(psutil.sensors_temperatures(), 50)
 
 class TestRAPLHelperFunctions(unittest.TestCase):
     def test_get_candidate_bases_for_custom_dir(self):
@@ -850,3 +856,4 @@ class TestPhysicalCPU(unittest.TestCase):
                 side_effect=subprocess.CalledProcessError(1, "lscpu"),
             ):
                 assert count_physical_cpus() == 1
+
