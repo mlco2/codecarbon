@@ -8,6 +8,12 @@ from .emissions_tracker import (
     OfflineEmissionsTracker,
     track_emissions,
 )
+from .output import OutputMethod
 
-__all__ = ["EmissionsTracker", "OfflineEmissionsTracker", "track_emissions"]
+__all__ = [
+    "EmissionsTracker",
+    "OfflineEmissionsTracker",
+    "OutputMethod",
+    "track_emissions",
+]
 __app_name__ = "codecarbon"

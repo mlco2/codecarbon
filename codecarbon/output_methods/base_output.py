@@ -1,6 +1,30 @@
+from enum import Enum
 from typing import List
 
 from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
+
+
+class OutputMethod(str, Enum):
+    """
+    Enum listing the available output methods.
+
+    Usage::
+
+        tracker = EmissionsTracker(
+            output_methods=[OutputMethod.CSV, OutputMethod.API]
+        )
+
+    Available values: ``CSV``, ``API``, ``LOGGER``, ``PROMETHEUS``,
+    ``LOGFIRE``, ``BOAMPS``, ``HTTP``.
+    """
+
+    CSV = "csv"
+    API = "api"
+    LOGGER = "logger"
+    PROMETHEUS = "prometheus"
+    LOGFIRE = "logfire"
+    BOAMPS = "boamps"
+    HTTP = "http"
 
 
 class BaseOutput:
