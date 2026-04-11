@@ -5,7 +5,6 @@
 Install OpenVINO and PyTorch CPU versions :
 uv pip install -U openvino
 uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-uv run examples/intel_npu.py
 
 ### Linux support for Intel® Neural Processing Unit (Intel® NPU)
 
@@ -17,7 +16,11 @@ Else, have a look to https://github.com/intel/linux-npu-driver/releases
 
 ### Windows support
 
-You just need to install the Intel drivers.
+You need to install the [Intel drivers](https://www.intel.com/content/www/us/en/download/794734/intel-npu-driver-windows.html).
+
+## Running the example
+
+`uv run examples/intel_npu.py`
 
 """
 
