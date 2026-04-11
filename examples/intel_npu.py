@@ -1,27 +1,35 @@
 """
 
-## Linux support for Intel® Neural Processing Unit (Intel® NPU)
+## Prerequisites
 
-See https://github.com/intel/linux-npu-driver/releases
-
-`sudo dmesg | grep vpu` should show something like this if the NPU is properly initialized:
-[nnnnn] [drm] Initialized intel_vpu 1.0.0 for 0000:00:0b.0 on minor 0
-
-
-
+Install OpenVINO and PyTorch CPU versions :
 uv pip install -U openvino
 uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 uv run examples/intel_npu.py
 
+### Linux support for Intel® Neural Processing Unit (Intel® NPU)
 
+Chaeck if drivers are installed and the NPU is available:
+`sudo dmesg | grep vpu` should show something like this if the NPU is properly initialized:
+[nnnnn] [drm] Initialized intel_vpu 1.0.0 for 0000:00:0b.0 on minor 0
+
+Else, have a look to https://github.com/intel/linux-npu-driver/releases
+
+### Windows support
+
+You just need to install the Intel drivers.
 
 """
+
+import os
 
 import openvino as ov
 import torch
 from torchvision.models import ShuffleNet_V2_X1_0_Weights, shufflenet_v2_x1_0
 
 from codecarbon import track_emissions
+
+NUMBER_OF_IMAGES = 30
 
 
 @track_emissions(
@@ -36,9 +44,9 @@ def openvino_npu_task():
     model.eval()
     print("training after eval", model.training)
     # Create a dummy input tensor with the appropriate shape for the model (e.g., [10, 3, 224, 224] for image classification).
-    example = torch.randn(10, 3, 224, 224)
+    example = torch.randn(NUMBER_OF_IMAGES, 3, 224, 224)
     ov_model = ov.convert_model(
-        model, example_input=(example,), input=[10, 3, 224, 224]
+        model, example_input=(example,), input=[NUMBER_OF_IMAGES, 3, 224, 224]
     )
     print("input partial shape", ov_model.input(0).partial_shape)
     for i, out in enumerate(ov_model.outputs):
@@ -75,4 +83,6 @@ def openvino_npu_task():
         print("NPU unavailable")
 
 
+# Display my process PID so you can check its power usage with `sudo dmesg | grep vpu` in another terminal.
+print(f"Process PID: {os.getpid()}")
 openvino_npu_task()
