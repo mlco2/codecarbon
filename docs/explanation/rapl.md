@@ -1,35 +1,20 @@
 # RAPL Metrics
 
-RAPL (Running Average Power Limit) is a feature of modern processors
-that provides energy consumption measurements through hardware counters.
+RAPL (Running Average Power Limit) is a feature of modern processors that provides energy consumption measurements through hardware counters. CodeCarbon uses RAPL to measure actual CPU power consumption, giving you significantly more accurate emissions calculations.
 
-See <https://blog.chih.me/read-cpu-power-with-RAPL.html> for more
-information.
+## Why RAPL Matters
 
-Despite the name "Intel RAPL", it supports AMD processors since Linux
-kernel 5.8.
+By default, CodeCarbon estimates CPU power based on hardware specifications and CPU load, which can be inaccurate. RAPL reads energy directly from the processor's counters, providing **microjoule-level precision** instead of estimates.
 
-Due to the [CVE-2020-8694 security
-issue](https://www.cve.org/CVERecord?id=CVE-2020-8694) from 2020, all
-Linux distributions have changed right permission of the RAPL file, to
-reserve it to superuser.
+!!! tip "Get Started with RAPL"
 
-There is a workaround, thanks to
-[prometheus/node_exporter#1892](https://github.com/prometheus/node_exporter/issues/1892):
+    To enable RAPL on your system and unlock more accurate measurements, see the [Improve Measurement Accuracy with RAPL](../how-to/enable-rapl.md) how-to guide. It includes step-by-step permission setup instructions for Linux systems.
 
-``` sh
-sudo apt install sysfsutils
-nano /etc/sysfs.conf
-# Add this line :
-mode class/powercap/intel-rapl:0/energy_uj = 0444
-reboot
-```
+## About RAPL
 
-Without rebooting you could do `sudo chmod -R a+r /sys/class/powercap/*`
-but it will be lost at next boot.
+Despite the name "Intel RAPL", it supports AMD processors since Linux kernel 5.8.
 
-If you want more security you could create a specific group, add your
-user to this group and set group read permission only.
+For more information on RAPL hardware, see: <https://blog.chih.me/read-cpu-power-with-RAPL.html>
 
 ## RAPL Domain Architecture
 

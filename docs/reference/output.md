@@ -62,7 +62,9 @@ docker-compose up
 
 Run your EmissionsTracker as usual, with `save_to_prometheus=True`:
 
-```python
+```python-skip
+from codecarbon import OfflineEmissionsTracker
+
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
@@ -85,7 +87,9 @@ CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
 
 Run your EmissionsTracker as usual, with `save_to_logfire=True`:
 
-```python
+```python-skip
+from codecarbon import OfflineEmissionsTracker
+
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
@@ -108,4 +112,4 @@ You can send all your data to the CodeCarbon API so you have your historical dat
 
 ## Logger Output
 
-See [Collecting emissions to a logger](to_logger.md).
+See [Collecting emissions to a logger](../how-to/logging.md).

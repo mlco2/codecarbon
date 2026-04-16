@@ -39,7 +39,7 @@
 <!-- TOC --><a name="have-a-question"></a>
 ## </a> Have a Question?
 
-Please see the [FAQ](https://docs.codecarbon.io/latest/introduction/faq/) for questions.
+Please see the [FAQ](https://docs.codecarbon.io/latest/explanation/faq/) for questions.
 
 
 <!-- TOC --><a name="found-a-bug"></a>
@@ -148,7 +148,7 @@ To test CodeCarbon, it is useful to stress your computer to make it use its full
 
 -   7Zip is often already installed, running it with `7z b` makes a quick CPU test.
 -   [GPU-burn](https://github.com/wilicc/gpu-burn) will load test the GPU for a configurable duration.
--   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://docs.codecarbon.io/latest/getting-started/test_on_scaleway/) to install it.
+-   To test the CPU : `stress-ng --cpu 0 --cpu-method matrixprod --metrics-brief --rapl --perf -t 60s` See [our documentation](https://docs.codecarbon.io/latest/how-to/test-on-scaleway/) to install it.
 -   To do useful computation while testing [Folding At Home](https://foldingathome.org/) is a good option.
 -   [OCCT](https://www.ocbase.com/download) is a proprietary tool but free for non-commercial use and available for Windows and Linux.
 
@@ -228,7 +228,7 @@ Here is the launch.json to be able to debug examples and tests:
 
 Then run opened test with this button:
 
-![vscode_debug](docs/images/vscode_debug.png)
+![vscode_debug](../images/vscode_debug.png)
 
 
 <!-- TOC --><a name="coding-style-linting"></a>
@@ -266,8 +266,8 @@ You can also run `pre-commit` with `uv run pre-commit run --all-file` to check a
 
 Dependencies are defined in different places:
 
--   In [pyproject.toml](pyproject.toml#L28), those are all the dependencies.
--   In [uv.lock](uv.lock), those are the locked dependencies managed by UV, do not edit them.
+-   In [pyproject.toml](https://github.com/mlco2/codecarbon/blob/master/pyproject.toml#L28), those are all the dependencies.
+-   In [uv.lock](https://github.com/mlco2/codecarbon/blob/master/uv.lock), those are the locked dependencies managed by UV, do not edit them.
 
 
 <!-- TOC --><a name="build-documentation"></a>
@@ -406,7 +406,7 @@ uv run api.docker
 docker-compose up -d
 ```
 
-Please see [Docker specific documentation](./docker/README.md) for more informations.
+Please see [Docker specific documentation](https://github.com/mlco2/codecarbon/blob/master/docker/README.md) for more informations.
 When up, the API documentation is available locally at the following URL: http://localhost:8008/redoc and can be used for testing.
 
 If you want to run the API without Docker, you must first set the environment variables described in the .env.example file, and run the following command:
@@ -550,6 +550,6 @@ PORT="8000"
 <!-- TOC --><a name="license"></a>
 ## License
 
-By contributing your code, you agree to license your contribution under the terms of the [MIT License](LICENSE).
+By contributing your code, you agree to license your contribution under the terms of the [MIT License](https://github.com/mlco2/codecarbon/blob/master/LICENSE).
 
 All files are released with the MIT license.

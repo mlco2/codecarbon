@@ -11,11 +11,12 @@ env:
 
 jobs:
   build-package:
+    if: github.event_name == 'release' || github.ref == 'refs/heads/master' || (github.event_name == 'pull_request' && github.base_ref == 'master')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install uv
-        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           version: "latest"
       - name: Set up Python
@@ -25,7 +26,7 @@ jobs:
       - name: Build pip package
         run: uv build
       - name: Archive Pypi artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: pypi_dist
           path: dist
@@ -34,40 +35,37 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [build-package]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           sparse-checkout: |
             tests/
             pytest.ini
+            docs/
+            pyproject.toml
+            uv.lock
           sparse-checkout-cone-mode: false
       - name: Install uv
-        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           version: "latest"
       - name: Set up Python
         run: uv python install ${{ env.MAIN_PYTHON_VERSION }}
       - name: Download built package
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pypi_dist
           path: dist
-      - name: Create clean virtual environment
+      - name: Sync dev dependencies from lockfile and install wheel
         run: |
-          uv venv .venv --python ${{ env.MAIN_PYTHON_VERSION }}
-          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
-      - name: Install package from wheel (without source)
-        run: |
-          # Install the wheel and test dependencies without the source code
-          uv pip install dist/*.whl
-          uv pip install pytest pytest-mock requests-mock responses pandas logfire
+          uv sync --python ${{ env.MAIN_PYTHON_VERSION }} --frozen --no-install-project --group dev
+          uv pip install --python .venv/bin/python dist/*.whl
       - name: Test package integrity
         run: |
-          # Run the package integrity tests to verify all data files are included
-          uv run python -m pytest tests/test_package_integrity.py -v
-          CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/
+          .venv/bin/python -m pytest tests/test_package_integrity.py -v
+          CODECARBON_ALLOW_MULTIPLE_RUNS=True .venv/bin/python -m pytest \
+            --ignore=tests/test_viz_data.py \
+            -vv -m 'not integ_test' tests/
       - name: Test CLI functionality
         run: |
-          # Test that the CLI is functional
-          codecarbon --help
-          python -c "from codecarbon import EmissionsTracker; print('Package import successful')"
+          .venv/bin/codecarbon --help
+          .venv/bin/python -c "from codecarbon import EmissionsTracker; print('Package import successful')"

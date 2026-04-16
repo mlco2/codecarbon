@@ -1,1 +1,1 @@
-docs/contributing/SECURITY.md
+docs/how-to/security.md

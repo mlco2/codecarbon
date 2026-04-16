@@ -101,22 +101,25 @@ limactl shell codecarbon bash -l -c "opencode"
 
 If you are already comfortable with other containerization or virtualization tools, here’s a quick comparison of the most popular options for securely running agentic code:
 
-| Feature | Docker | Canonical LXC/LXD | Lima |
-|------|------|------|------|
-| Isolation strength | **Medium** (namespaces, seccomp) | **High** (VM-like containers) | **High** (actual VM) |
-| Host escape risk | Medium | Low | Very low |
-| Ease of use | Excellent | Moderate | Moderate |
-| Reproducibility | Excellent | Good | Good |
-| macOS support | Via Docker Desktop | Poor | **Excellent** |
-| Windows support | Via Docker Desktop | Poor | Good |
-| Linux native | **Excellent** | **Excellent** | Good |
-| Performance | Excellent | Excellent | Slight overhead |
-| Fine-grained security controls | Limited | **Very strong** | Strong |
-| Agent autonomy safety | Medium | **High** | **Very high** |
-| Docker inside VM | No | Possible | Yes |
+| Feature | Docker | [Docker Sandbox](https://docs.docker.com/security/sandbox/) | Canonical LXC/LXD | Lima |
+|------|------|------|------|------|
+| Isolation strength | **Medium** (namespaces, seccomp) | **High** (micro-VM) | **High** (VM-like containers) | **High** (actual VM) |
+| Host escape risk | Medium | Very low | Low | Very low |
+| Ease of use | Excellent | Excellent | Moderate | Moderate |
+| Reproducibility | Excellent | Excellent | Good | Good |
+| macOS support | Via Docker Desktop | Via Docker Desktop | Poor | **Excellent** |
+| Windows support | Via Docker Desktop | Via Docker Desktop | Poor | Good |
+| Linux native | **Excellent** | Via Docker Desktop | **Excellent** | Good |
+| Performance | Excellent | Good (slight VM overhead) | Excellent | Slight overhead |
+| Fine-grained security controls | Limited | Moderate | **Very strong** | Strong |
+| Agent autonomy safety | Medium | **High** | **High** | **Very high** |
+| Docker inside VM | No | No | Possible | Yes |
 
 ✅ **Use Docker if:**  
 Your agent is *constrained*, non-root, and runs with seccomp/AppArmor profiles.
+
+✅ **Use Docker Sandbox if:**  
+You want Docker's ease of use with micro-VM isolation — no extra setup needed.
 
 ✅ **Use LXC/LXD if:**  
 You are serious about security **and** performance on Linux.
