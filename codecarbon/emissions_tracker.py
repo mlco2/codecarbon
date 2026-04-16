@@ -12,7 +12,7 @@ import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
@@ -31,13 +31,11 @@ from codecarbon.external.task import Task
 from codecarbon.input import DataSource
 from codecarbon.lock import Lock
 from codecarbon.output import (
-    BaseOutput,
     CodeCarbonAPIOutput,
     EmissionsData,
     FileOutput,
     HTTPOutput,
     LogfireOutput,
-    LoggerOutput,
     PrometheusOutput,
 )
 
@@ -162,44 +160,7 @@ class BaseEmissionsTracker(ABC):
         # return final value (why not?)
         return value
 
-    def __init__(
-        self,
-        project_name: Optional[str] = _sentinel,
-        measure_power_secs: Optional[float] = _sentinel,
-        api_call_interval: Optional[int] = _sentinel,
-        api_endpoint: Optional[str] = _sentinel,
-        api_key: Optional[str] = _sentinel,
-        output_dir: Optional[str] = _sentinel,
-        output_file: Optional[str] = _sentinel,
-        save_to_file: Optional[bool] = _sentinel,
-        save_to_api: Optional[bool] = _sentinel,
-        save_to_logger: Optional[bool] = _sentinel,
-        logging_logger: Optional[LoggerOutput] = _sentinel,
-        save_to_prometheus: Optional[bool] = _sentinel,
-        save_to_logfire: Optional[bool] = _sentinel,
-        prometheus_url: Optional[str] = _sentinel,
-        output_handlers: Optional[List[BaseOutput]] = _sentinel,
-        gpu_ids: Optional[List] = _sentinel,
-        emissions_endpoint: Optional[str] = _sentinel,
-        experiment_id: Optional[str] = _sentinel,
-        experiment_name: Optional[str] = _sentinel,
-        electricitymaps_api_token: Optional[str] = _sentinel,
-        co2_signal_api_token: Optional[
-            str
-        ] = _sentinel,  # Deprecated, use electricitymaps_api_token
-        tracking_mode: Optional[str] = _sentinel,
-        log_level: Optional[Union[int, str]] = _sentinel,
-        on_csv_write: Optional[str] = _sentinel,
-        logger_preamble: Optional[str] = _sentinel,
-        force_cpu_power: Optional[int] = _sentinel,
-        force_ram_power: Optional[int] = _sentinel,
-        pue: Optional[float] = _sentinel,
-        wue: Optional[float] = _sentinel,
-        force_mode_cpu_load: Optional[bool] = _sentinel,
-        allow_multiple_runs: Optional[bool] = _sentinel,
-        rapl_include_dram: Optional[bool] = _sentinel,
-        rapl_prefer_psys: Optional[bool] = _sentinel,
-    ):
+    def __init__(self, **kwargs):
         """
         :param project_name: Project name for current experiment run, default name
                              is "codecarbon".
@@ -273,10 +234,52 @@ class BaseEmissionsTracker(ABC):
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
         """
+        # Ensure any missing variables are added to kwargs
+        arg_names = [
+            "project_name",
+            "measure_power_secs",
+            "api_call_interval",
+            "api_endpoint",
+            "api_key",
+            "output_dir",
+            "output_file",
+            "save_to_file",
+            "save_to_api",
+            "save_to_logger",
+            "logging_logger",
+            "save_to_prometheus",
+            "save_to_logfire",
+            "prometheus_url",
+            "output_handlers",
+            "gpu_ids",
+            "emissions_endpoint",
+            "experiment_id",
+            "experiment_name",
+            "electricitymaps_api_token",
+            "co2_signal_api_token",  # Deprecated, use electricitymaps_api_token
+            "tracking_mode",
+            "log_level",
+            "on_csv_write",
+            "logger_preamble",
+            "force_cpu_power",
+            "force_ram_power",
+            "pue",
+            "wue",
+            "force_mode_cpu_load",
+            "allow_multiple_runs",
+            "rapl_include_dram",
+            "rapl_prefer_psys",
+        ]
+
+        for name in arg_names:
+            if name not in kwargs.keys():
+                kwargs[name] = _sentinel
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
-        self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
+        self._set_from_conf(
+            kwargs["allow_multiple_runs"], "allow_multiple_runs", True, bool
+        )
         if self._allow_multiple_runs:
             logger.warning(
                 "Multiple instances of codecarbon are allowed to run at the same time."
@@ -295,20 +298,24 @@ class BaseEmissionsTracker(ABC):
                 self._another_instance_already_running = True
                 return
 
-        self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
-        self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
-        self._set_from_conf(api_key, "api_key", "api_key")
+        self._set_from_conf(kwargs["api_call_interval"], "api_call_interval", 8, int)
+        self._set_from_conf(
+            kwargs["api_endpoint"], "api_endpoint", "https://api.codecarbon.io"
+        )
+        self._set_from_conf(kwargs["api_key"], "api_key", "api_key")
 
         # Handle backward compatibility for co2_signal_api_token
-        if co2_signal_api_token is not _sentinel:
+        if kwargs["co2_signal_api_token"] is not _sentinel:
             logger.warning(
                 "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
                 "Please use 'electricitymaps_api_token' instead."
             )
-            if electricitymaps_api_token is _sentinel:
-                electricitymaps_api_token = co2_signal_api_token
+            if kwargs["electricitymaps_api_token"] is _sentinel:
+                kwargs["electricitymaps_api_token"] = kwargs["co2_signal_api_token"]
 
-        self._set_from_conf(electricitymaps_api_token, "electricitymaps_api_token")
+        self._set_from_conf(
+            kwargs["electricitymaps_api_token"], "electricitymaps_api_token"
+        )
         # Also check for old config name for backward compatibility
         if (
             not hasattr(self, "_electricitymaps_api_token")
@@ -323,34 +330,46 @@ class BaseEmissionsTracker(ABC):
                 )
                 self._electricitymaps_api_token = old_token
 
-        self._set_from_conf(emissions_endpoint, "emissions_endpoint")
-        self._set_from_conf(experiment_name, "experiment_name", "base")
-        self._set_from_conf(gpu_ids, "gpu_ids")
-        self._set_from_conf(log_level, "log_level", "info")
-        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
-        self._set_from_conf(output_dir, "output_dir", ".")
-        self._set_from_conf(output_file, "output_file", "emissions.csv")
-        self._set_from_conf(project_name, "project_name", "codecarbon")
-        self._set_from_conf(save_to_api, "save_to_api", False, bool)
-        self._set_from_conf(save_to_file, "save_to_file", True, bool)
-        self._set_from_conf(save_to_logger, "save_to_logger", False, bool)
-        self._set_from_conf(logging_logger, "logging_logger")
-        self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
-        self._set_from_conf(save_to_logfire, "save_to_logfire", False, bool)
-        self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
-        self._set_from_conf(output_handlers, "output_handlers", [])
-        self._set_from_conf(tracking_mode, "tracking_mode", "machine")
-        self._set_from_conf(on_csv_write, "on_csv_write", "append")
-        self._set_from_conf(logger_preamble, "logger_preamble", "")
-        self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
-        self._set_from_conf(force_ram_power, "force_ram_power", None, float)
-        self._set_from_conf(pue, "pue", 1.0, float)
-        self._set_from_conf(wue, "wue", 0, float)
-        self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
-        self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
-        self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
+        self._set_from_conf(kwargs["emissions_endpoint"], "emissions_endpoint")
+        self._set_from_conf(kwargs["experiment_name"], "experiment_name", "base")
+        self._set_from_conf(kwargs["gpu_ids"], "gpu_ids")
+        self._set_from_conf(kwargs["log_level"], "log_level", "info")
         self._set_from_conf(
-            experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
+            kwargs["measure_power_secs"], "measure_power_secs", 15, float
+        )
+        self._set_from_conf(kwargs["output_dir"], "output_dir", ".")
+        self._set_from_conf(kwargs["output_file"], "output_file", "emissions.csv")
+        self._set_from_conf(kwargs["project_name"], "project_name", "codecarbon")
+        self._set_from_conf(kwargs["save_to_api"], "save_to_api", False, bool)
+        self._set_from_conf(kwargs["save_to_file"], "save_to_file", True, bool)
+        self._set_from_conf(kwargs["save_to_logger"], "save_to_logger", False, bool)
+        self._set_from_conf(kwargs["logging_logger"], "logging_logger")
+        self._set_from_conf(
+            kwargs["save_to_prometheus"], "save_to_prometheus", False, bool
+        )
+        self._set_from_conf(kwargs["save_to_logfire"], "save_to_logfire", False, bool)
+        self._set_from_conf(
+            kwargs["prometheus_url"], "prometheus_url", "localhost:9091"
+        )
+        self._set_from_conf(kwargs["output_handlers"], "output_handlers", [])
+        self._set_from_conf(kwargs["tracking_mode"], "tracking_mode", "machine")
+        self._set_from_conf(kwargs["on_csv_write"], "on_csv_write", "append")
+        self._set_from_conf(kwargs["logger_preamble"], "logger_preamble", "")
+        self._set_from_conf(kwargs["force_cpu_power"], "force_cpu_power", None, float)
+        self._set_from_conf(kwargs["force_ram_power"], "force_ram_power", None, float)
+        self._set_from_conf(kwargs["pue"], "pue", 1.0, float)
+        self._set_from_conf(kwargs["wue"], "wue", 0, float)
+        self._set_from_conf(
+            kwargs["force_mode_cpu_load"], "force_mode_cpu_load", False, bool
+        )
+        self._set_from_conf(
+            kwargs["rapl_include_dram"], "rapl_include_dram", False, bool
+        )
+        self._set_from_conf(kwargs["rapl_prefer_psys"], "rapl_prefer_psys", False, bool)
+        self._set_from_conf(
+            kwargs["experiment_id"],
+            "experiment_id",
+            "5b0fa12a-3dd7-45bb-9766-cc326314d9f1",
         )
 
         assert self._tracking_mode in ["machine", "process"]
@@ -1118,6 +1137,7 @@ class BaseEmissionsTracker(ABC):
         self.stop()
 
 
+# TODO: Probably need to update this, not sure how exactly
 class OfflineEmissionsTracker(BaseEmissionsTracker):
     """
     Offline implementation of the `EmissionsTracker`
@@ -1271,49 +1291,7 @@ class TaskEmissionsTracker:
             self.tracker.stop()
 
 
-def track_emissions(
-    fn: Callable = None,
-    project_name: Optional[str] = _sentinel,
-    measure_power_secs: Optional[int] = _sentinel,
-    api_call_interval: int = _sentinel,
-    api_endpoint: Optional[str] = _sentinel,
-    api_key: Optional[str] = _sentinel,
-    output_dir: Optional[str] = _sentinel,
-    output_file: Optional[str] = _sentinel,
-    save_to_file: Optional[bool] = _sentinel,
-    save_to_api: Optional[bool] = _sentinel,
-    save_to_logger: Optional[bool] = _sentinel,
-    logging_logger: Optional[LoggerOutput] = _sentinel,
-    save_to_prometheus: Optional[bool] = _sentinel,
-    save_to_logfire: Optional[bool] = _sentinel,
-    prometheus_url: Optional[str] = _sentinel,
-    output_handlers: Optional[List[BaseOutput]] = _sentinel,
-    gpu_ids: Optional[List] = _sentinel,
-    emissions_endpoint: Optional[str] = _sentinel,
-    experiment_id: Optional[str] = _sentinel,
-    experiment_name: Optional[str] = _sentinel,
-    electricitymaps_api_token: Optional[str] = _sentinel,
-    co2_signal_api_token: Optional[
-        str
-    ] = _sentinel,  # Deprecated, use electricitymaps_api_token
-    tracking_mode: Optional[str] = _sentinel,
-    log_level: Optional[Union[int, str]] = _sentinel,
-    on_csv_write: Optional[str] = _sentinel,
-    logger_preamble: Optional[str] = _sentinel,
-    offline: Optional[bool] = _sentinel,
-    country_iso_code: Optional[str] = _sentinel,
-    region: Optional[str] = _sentinel,
-    cloud_provider: Optional[str] = _sentinel,
-    cloud_region: Optional[str] = _sentinel,
-    country_2letter_iso_code: Optional[str] = _sentinel,
-    force_cpu_power: Optional[int] = _sentinel,
-    force_ram_power: Optional[int] = _sentinel,
-    pue: Optional[float] = _sentinel,
-    wue: Optional[float] = _sentinel,
-    allow_multiple_runs: Optional[bool] = _sentinel,
-    rapl_include_dram: Optional[bool] = _sentinel,
-    rapl_prefer_psys: Optional[bool] = _sentinel,
-):
+def track_emissions(fn: Callable = None, **kwargs_outer):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
     :param fn: Function to be decorated
@@ -1399,6 +1377,52 @@ def track_emissions(
 
     :return: The decorated function
     """
+    # Ensure any missing variables are added to kwargs
+    arg_names = [
+        "project_name",
+        "measure_power_secs",
+        "api_call_interval",
+        "api_endpoint",
+        "api_key",
+        "output_dir",
+        "output_file",
+        "save_to_file",
+        "save_to_api",
+        "save_to_logger",
+        "logging_logger",
+        "save_to_prometheus",
+        "save_to_logfire",
+        "prometheus_url",
+        "output_handlers",
+        "gpu_ids",
+        "emissions_endpoint",
+        "experiment_id",
+        "experiment_name",
+        "electricitymaps_api_token",
+        "co2_signal_api_token",  # Deprecated, use electricitymaps_api_token
+        "tracking_mode",
+        "log_level",
+        "on_csv_write",
+        "logger_preamble",
+        "force_cpu_power",
+        "force_ram_power",
+        "pue",
+        "wue",
+        "force_mode_cpu_load",
+        "allow_multiple_runs",
+        "rapl_include_dram",
+        "rapl_prefer_psys",
+        "offline",
+        "country_iso_code",
+        "cloud_provider",
+        "region",
+        "cloud_region",
+        "country_2letter_iso_code",
+    ]
+
+    for name in arg_names:
+        if name not in kwargs_outer:
+            kwargs_outer[name] = _sentinel
 
     def _decorate(fn: Callable):
         @wraps(fn)
@@ -1406,84 +1430,88 @@ def track_emissions(
             fn_result = None
 
             # Handle backward compatibility for co2_signal_api_token
-            _electricitymaps_token = electricitymaps_api_token
-            if co2_signal_api_token is not _sentinel:
+            _electricitymaps_token = kwargs_outer["electricitymaps_api_token"]
+            if kwargs_outer["co2_signal_api_token"] is not _sentinel:
                 logger.warning(
                     "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
                     "Please use 'electricitymaps_api_token' instead."
                 )
-                if electricitymaps_api_token is _sentinel:
-                    _electricitymaps_token = co2_signal_api_token
+                if kwargs_outer["electricitymaps_api_token"] is _sentinel:
+                    _electricitymaps_token = kwargs_outer["co2_signal_api_token"]
 
-            if offline and offline is not _sentinel:
-                if (country_iso_code is None or country_iso_code is _sentinel) and (
-                    cloud_provider is None or cloud_provider is _sentinel
+            if kwargs_outer["offline"] and kwargs_outer["offline"] is not _sentinel:
+                if (
+                    kwargs_outer["country_iso_code"] is None
+                    or kwargs_outer["country_iso_code"] is _sentinel
+                ) and (
+                    kwargs_outer["cloud_provider"] is None
+                    or kwargs_outer["cloud_provider"] is _sentinel
                 ):
                     raise Exception("Needs ISO Code of the Country for Offline mode")
                 tracker = OfflineEmissionsTracker(
-                    project_name=project_name,
-                    measure_power_secs=measure_power_secs,
-                    output_dir=output_dir,
-                    output_file=output_file,
-                    save_to_file=save_to_file,
-                    save_to_logger=save_to_logger,
-                    logging_logger=logging_logger,
-                    save_to_prometheus=save_to_prometheus,
-                    save_to_logfire=save_to_logfire,
-                    prometheus_url=prometheus_url,
-                    output_handlers=output_handlers,
-                    gpu_ids=gpu_ids,
+                    project_name=kwargs_outer["project_name"],
+                    measure_power_secs=kwargs_outer["measure_power_secs"],
+                    output_dir=kwargs_outer["output_dir"],
+                    output_file=kwargs_outer["output_file"],
+                    save_to_file=kwargs_outer["save_to_file"],
+                    save_to_logger=kwargs_outer["save_to_logger"],
+                    logging_logger=kwargs_outer["logging_logger"],
+                    save_to_prometheus=kwargs_outer["save_to_prometheus"],
+                    save_to_logfire=kwargs_outer["save_to_logfire"],
+                    prometheus_url=kwargs_outer["prometheus_url"],
+                    output_handlers=kwargs_outer["output_handlers"],
+                    gpu_ids=kwargs_outer["gpu_ids"],
                     electricitymaps_api_token=_electricitymaps_token,
-                    tracking_mode=tracking_mode,
-                    log_level=log_level,
-                    on_csv_write=on_csv_write,
-                    logger_preamble=logger_preamble,
-                    country_iso_code=country_iso_code,
-                    region=region,
-                    cloud_provider=cloud_provider,
-                    cloud_region=cloud_region,
-                    country_2letter_iso_code=country_2letter_iso_code,
-                    force_cpu_power=force_cpu_power,
-                    force_ram_power=force_ram_power,
-                    pue=pue,
-                    wue=wue,
-                    allow_multiple_runs=allow_multiple_runs,
-                    rapl_include_dram=rapl_include_dram,
-                    rapl_prefer_psys=rapl_prefer_psys,
+                    tracking_mode=kwargs_outer["tracking_mode"],
+                    log_level=kwargs_outer["log_level"],
+                    on_csv_write=kwargs_outer["on_csv_write"],
+                    logger_preamble=kwargs_outer["logger_preamble"],
+                    country_iso_code=kwargs_outer["country_iso_code"],
+                    region=kwargs_outer["region"],
+                    cloud_provider=kwargs_outer["cloud_provider"],
+                    cloud_region=kwargs_outer["cloud_region"],
+                    country_2letter_iso_code=kwargs_outer["country_2letter_iso_code"],
+                    force_cpu_power=kwargs_outer["force_cpu_power"],
+                    force_ram_power=kwargs_outer["force_ram_power"],
+                    pue=kwargs_outer["pue"],
+                    wue=kwargs_outer["wue"],
+                    allow_multiple_runs=kwargs_outer["allow_multiple_runs"],
+                    rapl_include_dram=kwargs_outer["rapl_include_dram"],
+                    rapl_prefer_psys=kwargs_outer["rapl_prefer_psys"],
                 )
             else:
                 tracker = EmissionsTracker(
-                    project_name=project_name,
-                    measure_power_secs=measure_power_secs,
-                    api_call_interval=api_call_interval,
-                    api_endpoint=api_endpoint,
-                    api_key=api_key,
-                    output_dir=output_dir,
-                    output_file=output_file,
-                    save_to_file=save_to_file,
-                    save_to_api=save_to_api,
-                    save_to_logger=save_to_logger,
-                    logging_logger=logging_logger,
-                    save_to_prometheus=save_to_prometheus,
-                    save_to_logfire=save_to_logfire,
-                    prometheus_url=prometheus_url,
-                    output_handlers=output_handlers,
-                    gpu_ids=gpu_ids,
-                    emissions_endpoint=emissions_endpoint,
-                    experiment_id=experiment_id,
-                    experiment_name=experiment_name,
+                    project_name=kwargs_outer["project_name"],
+                    measure_power_secs=kwargs_outer["measure_power_secs"],
+                    api_call_interval=kwargs_outer["api_call_interval"],
+                    api_endpoint=kwargs_outer["api_endpoint"],
+                    api_key=kwargs_outer["api_key"],
+                    output_dir=kwargs_outer["output_dir"],
+                    output_file=kwargs_outer["output_file"],
+                    save_to_file=kwargs_outer["save_to_file"],
+                    save_to_api=kwargs_outer["save_to_api"],
+                    save_to_logger=kwargs_outer["save_to_logger"],
+                    logging_logger=kwargs_outer["logging_logger"],
+                    save_to_prometheus=kwargs_outer["save_to_prometheus"],
+                    save_to_logfire=kwargs_outer["save_to_logfire"],
+                    prometheus_url=kwargs_outer["prometheus_url"],
+                    output_handlers=kwargs_outer["output_handlers"],
+                    gpu_ids=kwargs_outer["gpu_ids"],
+                    emissions_endpoint=kwargs_outer["emissions_endpoint"],
+                    experiment_id=kwargs_outer["experiment_id"],
+                    experiment_name=kwargs_outer["experiment_name"],
                     electricitymaps_api_token=_electricitymaps_token,
-                    tracking_mode=tracking_mode,
-                    log_level=log_level,
-                    on_csv_write=on_csv_write,
-                    logger_preamble=logger_preamble,
-                    force_cpu_power=force_cpu_power,
-                    force_ram_power=force_ram_power,
-                    pue=pue,
-                    wue=wue,
-                    allow_multiple_runs=allow_multiple_runs,
-                    rapl_include_dram=rapl_include_dram,
-                    rapl_prefer_psys=rapl_prefer_psys,
+                    tracking_mode=kwargs_outer["tracking_mode"],
+                    log_level=kwargs_outer["log_level"],
+                    on_csv_write=kwargs_outer["on_csv_write"],
+                    logger_preamble=kwargs_outer["logger_preamble"],
+                    force_cpu_power=kwargs_outer["force_cpu_power"],
+                    force_ram_power=kwargs_outer["force_ram_power"],
+                    pue=kwargs_outer["pue"],
+                    wue=kwargs_outer["wue"],
+                    allow_multiple_runs=kwargs_outer["allow_multiple_runs"],
+                    rapl_include_dram=kwargs_outer["rapl_include_dram"],
+                    rapl_prefer_psys=kwargs_outer["rapl_prefer_psys"],
                 )
             tracker.start()
             try:
