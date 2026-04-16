@@ -39,8 +39,69 @@ def get_cpu_temperature(self) -> float:
             logger.debug(f"get_cpu_temperature: Could not read CPU temperature: {e}")
             return 0.0
 ```
+### Added Workflow
+
+```python
+name: Test Temperature Tracking
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-temperature:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pandas
+
+      - name: Check sensors available
+        run: |
+          sudo apt-get install -y lm-sensors
+          python3 -c "import psutil; print('Sensors:', psutil.sensors_temperatures())"
+
+      - name: Run temperature test
+        run: |
+          python3 -c "
+          import time
+          from codecarbon import EmissionsTracker
+
+          tracker = EmissionsTracker(
+              project_name='temperature_test',
+              measure_power_secs=15,
+              save_to_file=True,
+              output_file='emissions_temp_test.csv',
+              log_level='debug'
+          )
+
+          tracker.start()
+          total = sum(range(10_000_000))
+          time.sleep(30)
+          emissions = tracker.stop()
+
+          print(f'Emissions: {emissions:.6f} kg CO2')
+          print(f'CPU temperature: {tracker.final_emissions_data.cpu_temperature:.1f}C')
+          print(f'GPU temperature: {tracker.final_emissions_data.gpu_temperature:.1f}C')
+
+          import pandas as pd
+          df = pd.read_csv('emissions_temp_test.csv')
+          print('CSV columns:', df.columns.tolist())
+          print('Temperature values:')
+          print(df[['cpu_temperature', 'gpu_temperature']])
+          "
+```
 
 Allowed for CodeCarbon to track it and input it in to the CSV data set, shown in terminal below
 ![](../images/CpuTemp.png){.align-center width="700px" height="400px"}
 
-Make sure to run the 'test_temp.py' file
