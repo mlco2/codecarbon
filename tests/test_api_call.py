@@ -2,6 +2,7 @@ import dataclasses
 import unittest
 from uuid import uuid4
 
+import requests
 import requests_mock
 
 from codecarbon.core.api_client import ApiClient
