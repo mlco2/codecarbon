@@ -13,6 +13,7 @@ import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
+from codecarbon.core.neuron import AllNeuronDevices
 from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
@@ -556,3 +557,47 @@ class AppleSiliconChip(BaseHardware):
                 logger.warning("Could not read AppleSiliconChip model.")
 
         return cls(output_dir=output_dir, model=model, chip_part=chip_part)
+
+
+@dataclass
+class NeuronChip(BaseHardware):
+    """
+    Tracks AWS Inferentia/Inferentia2 power consumption
+    via the Neuron sysfs interface.
+
+    Power is estimated from utilization% x TDP.
+    Utilization% is the raw measured value from sysfs.
+
+    Sampling limitation: Neuron sysfs updates every 60 seconds.
+    codecarbon reads every 15 seconds so the same value may be
+    read up to 4 times between updates. Energy estimates are most
+    accurate for steady workloads and runs longer than 60 seconds.
+
+    NOTE: Neuron sysfs reports device-level power, not per-process.
+    Accurate for exclusive instances, approximate for shared Neuron cores.
+    """
+
+    def __init__(self):
+        self._devices = AllNeuronDevices()
+        self._model = "AWS Inferentia/Inferentia2"
+        logger.warning(
+            "Neuron power sysfs updates every 60 seconds. "
+            "codecarbon reads every 15 seconds so power readings "
+            "may be stale between updates. Energy estimates are most "
+            "accurate for runs longer than 60 seconds with steady workloads."
+        )
+
+    def __repr__(self) -> str:
+        return f"NeuronChip({self._model}, " f"{self._devices.device_count} device(s))"
+
+    def total_power(self) -> Power:
+        """
+        Returns total estimated power across all Neuron devices in watts.
+        Called every 15 seconds by _do_measurements() in tracker.py.
+        Power is estimated from utilization% x TDP.
+        """
+        watts = self._devices.get_total_power_watts()
+        return Power.from_watts(watts)
+
+    def description(self) -> str:
+        return repr(self)
