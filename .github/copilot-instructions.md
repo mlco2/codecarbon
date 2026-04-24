@@ -1,1 +1,1 @@
-../docs/contributing/agents-instructions.md
+../docs/how-to/agent-instructions.md

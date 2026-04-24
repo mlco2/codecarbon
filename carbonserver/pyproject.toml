@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "alembic<2.0.0",
-    "authlib>=1.2.1",
+    "authlib>=1.6.11",
     "bcrypt<5.0.0",
     "python-dateutil<3.0.0",
     "dependency-injector<5.0.0",

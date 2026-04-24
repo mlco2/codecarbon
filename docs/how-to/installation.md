@@ -22,11 +22,9 @@ conda activate codecarbon
 pip install codecarbon
 ```
 
-!!! note "Note"
+!!! warning "Conda Support"
 
-    While CodeCarbon can be used in Conda environments, we no longer
-    maintain Conda packages. We recommend using `pip install codecarbon`
-    within your Conda environment, which works seamlessly with Conda.
+    While CodeCarbon can be used in Conda environments, we no longer maintain official Conda packages. We recommend using `pip install codecarbon` within your Conda environment, which works seamlessly. The conda package may be outdated and is not officially supported.
 
 !!! note "Note"
 
@@ -59,7 +57,7 @@ for the latest list of the packages used.
 
 ## (Non-Python users) Standalone installer
 
-If you are not using Python but would like to run CodeCarbon (for instance to use the [CodeCarbon Command line](usage.md#usage-command-line)), we
+If you are not using Python but would like to run CodeCarbon (for instance to use the [CodeCarbon Command line](../tutorials/cli.md)), we
 provide a standalone installer.
 
 Use curl to download and run the script:
