@@ -3,6 +3,7 @@ from typing import List, Union
 
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import normalize_gpu_ids
+from codecarbon.core.neuron import is_neuron_system
 from codecarbon.core.util import (
     detect_cpu_model,
     is_linux_os,
@@ -10,13 +11,19 @@ from codecarbon.core.util import (
     is_mac_os,
     is_windows_os,
 )
-from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
+from codecarbon.external.hardware import (
+    CPU,
+    GPU,
+    MODE_CPU_LOAD,
+    AppleSiliconChip,
+    NeuronChip,
+)
 from codecarbon.external.logger import logger
 from codecarbon.external.ram import RAM
 
 
 class ResourceTracker:
-    cpu_tracker = gpu_tracker = ram_tracker = "Unspecified"
+    cpu_tracker = gpu_tracker = ram_tracker = neuron_tracker = "Unspecified"
 
     def __init__(self, tracker):
         self.tracker = tracker
@@ -250,6 +257,21 @@ class ResourceTracker:
             self.tracker._conf.setdefault("gpu_count", 0)
             self.tracker._conf.setdefault("gpu_model", "")
 
+    def set_Neuron_tracking(self):
+        logger.info("[setup] Neuron Tracking...")
+        if is_neuron_system():
+            logger.info("Tracking AWS Inferentia/Inferentia2 via Neuron sysfs")
+            neuron = NeuronChip()
+            self.tracker._hardware.append(neuron)
+            self.tracker._conf["neuron_count"] = neuron._devices.device_count
+            self.tracker._conf["neuron_model"] = neuron._model
+            self.neuron_tracker = "Neuron sysfs"
+        else:
+            logger.info("No Neuron device found.")
+            self.tracker._conf.setdefault("neuron_count", 0)
+            self.tracker._conf.setdefault("neuron_model", "")
+            self.neuron_tracker = "Unspecified"
+
     def set_CPU_GPU_ram_tracking(self):
         """
         Set up CPU, GPU and RAM tracking based on the user's configuration.
@@ -258,11 +280,13 @@ class ResourceTracker:
         self.set_RAM_tracking()
         self.set_CPU_tracking()
         self.set_GPU_tracking()
+        self.set_Neuron_tracking()
 
         logger.info(
             f"""The below tracking methods have been set up:
                 RAM Tracking Method: {self.ram_tracker}
                 CPU Tracking Method: {self.cpu_tracker}
                 GPU Tracking Method: {self.gpu_tracker}
+                Neuron Tracking Method: {self.neuron_tracker}
             """
         )

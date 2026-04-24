@@ -13,6 +13,7 @@ import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
+from codecarbon.core.neuron import AllNeuronDevices
 from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
@@ -409,6 +410,40 @@ class CPU(BaseHardware):
         cpu_power = self._get_power_from_cpus()
         self._power_history.append(cpu_power)
 
+    def get_cpu_temperature(self) -> float:
+        """
+        Get average CPU temperature in Celsius.
+        Supported on Linux (Intel + AMD) and Windows Intel via Power Gadget.
+        Returns 0.0 if temperature cannot be read on the current platform.
+        """
+        try:
+            if self._mode == "intel_power_gadget":
+                all_cpu_details = self._intel_interface.get_cpu_details()
+                for metric, value in all_cpu_details.items():
+                    if re.match(r"^CPU Temperature", metric):
+                        return float(value)
+                return 0.0
+
+            elif self._mode in ["intel_rapl", MODE_CPU_LOAD, "constant"]:
+                temps = psutil.sensors_temperatures()
+                if not temps:
+                    logger.debug(
+                        "get_cpu_temperature: psutil.sensors_temperatures() "
+                        "returned no data on this platform"
+                    )
+                    return 0.0
+                for key in ["coretemp", "k10temp", "cpu_thermal"]:
+                    if key in temps:
+                        readings = temps[key]
+                        avg = sum(r.current for r in readings) / len(readings)
+                        logger.debug(f"get_cpu_temperature: {key} avg = {avg:.1f}°C")
+                        return avg
+                return 0.0
+
+        except Exception as e:
+            logger.debug(f"get_cpu_temperature: Could not read CPU temperature: {e}")
+            return 0.0
+
     def get_model(self):
         return self._model
 
@@ -522,3 +557,47 @@ class AppleSiliconChip(BaseHardware):
                 logger.warning("Could not read AppleSiliconChip model.")
 
         return cls(output_dir=output_dir, model=model, chip_part=chip_part)
+
+
+@dataclass
+class NeuronChip(BaseHardware):
+    """
+    Tracks AWS Inferentia/Inferentia2 power consumption
+    via the Neuron sysfs interface.
+
+    Power is estimated from utilization% x TDP.
+    Utilization% is the raw measured value from sysfs.
+
+    Sampling limitation: Neuron sysfs updates every 60 seconds.
+    codecarbon reads every 15 seconds so the same value may be
+    read up to 4 times between updates. Energy estimates are most
+    accurate for steady workloads and runs longer than 60 seconds.
+
+    NOTE: Neuron sysfs reports device-level power, not per-process.
+    Accurate for exclusive instances, approximate for shared Neuron cores.
+    """
+
+    def __init__(self):
+        self._devices = AllNeuronDevices()
+        self._model = "AWS Inferentia/Inferentia2"
+        logger.warning(
+            "Neuron power sysfs updates every 60 seconds. "
+            "codecarbon reads every 15 seconds so power readings "
+            "may be stale between updates. Energy estimates are most "
+            "accurate for runs longer than 60 seconds with steady workloads."
+        )
+
+    def __repr__(self) -> str:
+        return f"NeuronChip({self._model}, " f"{self._devices.device_count} device(s))"
+
+    def total_power(self) -> Power:
+        """
+        Returns total estimated power across all Neuron devices in watts.
+        Called every 15 seconds by _do_measurements() in tracker.py.
+        Power is estimated from utilization% x TDP.
+        """
+        watts = self._devices.get_total_power_watts()
+        return Power.from_watts(watts)
+
+    def description(self) -> str:
+        return repr(self)

@@ -23,7 +23,7 @@ from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
-from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip, NeuronChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
@@ -368,12 +368,18 @@ class BaseEmissionsTracker(ABC):
         self._gpu_utilization_history: List[float] = []
         self._ram_utilization_history: List[float] = []
         self._ram_used_history: List[float] = []
+        self._cpu_temperature_history: List[float] = []
+        self._gpu_temperature_history: List[float] = []
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
         self._cpu_power: Power = Power.from_watts(watts=0)
         self._gpu_power: Power = Power.from_watts(watts=0)
         self._ram_power: Power = Power.from_watts(watts=0)
+        self._total_neuron_energy: Energy = Energy.from_energy(kWh=0)
+        self._neuron_power: Power = Power.from_watts(watts=0)
+        self._neuron_power_sum: float = 0.0
+        self._neuron_utilization_history: List[float] = []
         # Running average tracking for power
         self._cpu_power_sum: float = 0.0
         self._gpu_power_sum: float = 0.0
@@ -548,6 +554,9 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.clear()
         self._ram_used_history.clear()
         self._gpu_utilization_history.clear()
+        self._cpu_temperature_history.clear()
+        self._gpu_temperature_history.clear()
+        self._neuron_utilization_history.clear()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -598,6 +607,9 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.clear()
         self._ram_used_history.clear()
         self._gpu_utilization_history.clear()
+        self._cpu_temperature_history.clear()
+        self._gpu_temperature_history.clear()
+        self._neuron_utilization_history.clear()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -922,6 +934,28 @@ class BaseEmissionsTracker(ABC):
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
             wue=self._wue,
+            cpu_temperature=(
+                sum(self._cpu_temperature_history) / len(self._cpu_temperature_history)
+                if self._cpu_temperature_history
+                else 0.0
+            ),
+            gpu_temperature=(
+                sum(self._gpu_temperature_history) / len(self._gpu_temperature_history)
+                if self._gpu_temperature_history
+                else 0.0
+            ),
+            neuron_power=(
+                self._neuron_power_sum / self._power_measurement_count
+                if self._power_measurement_count > 0
+                else self._neuron_power.W
+            ),
+            neuron_energy=self._total_neuron_energy.kWh,
+            neuron_utilization_pct=(
+                sum(self._neuron_utilization_history)
+                / len(self._neuron_utilization_history)
+                if self._neuron_utilization_history
+                else 0.0
+            ),
         )
         logger.debug(total_emissions)
         return total_emissions
@@ -973,6 +1007,10 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.append(psutil.virtual_memory().percent)
         self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
 
+        for hardware in self._hardware:
+            if isinstance(hardware, CPU):
+                self._cpu_temperature_history.append(hardware.get_cpu_temperature())
+
         # Collect GPU utilization metrics
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
@@ -980,13 +1018,23 @@ class BaseEmissionsTracker(ABC):
                 gpu_details = hardware.devices.get_gpu_details()
                 for gpu_index, gpu_detail in enumerate(gpu_details):
                     resolved_gpu_index = gpu_detail.get("gpu_index", gpu_index)
-                    if (
-                        resolved_gpu_index in gpu_ids_to_monitor
-                        and "gpu_utilization" in gpu_detail
-                    ):
-                        self._gpu_utilization_history.append(
-                            gpu_detail["gpu_utilization"]
-                        )
+                    if resolved_gpu_index in gpu_ids_to_monitor:
+
+                        if "gpu_utilization" in gpu_detail:
+                            self._gpu_utilization_history.append(
+                                gpu_detail["gpu_utilization"]
+                            )
+
+                        if "temperature" in gpu_detail:
+                            self._gpu_temperature_history.append(
+                                gpu_detail["temperature"]
+                            )
+
+        for hardware in self._hardware:
+            if isinstance(hardware, NeuronChip):
+                self._neuron_utilization_history.append(
+                    hardware._devices.get_total_utilization_pct()
+                )
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
@@ -1051,6 +1099,14 @@ class BaseEmissionsTracker(ABC):
                     logger.info(
                         f"Energy consumed for all AppleSilicon GPUs : {self._total_gpu_energy.kWh:.6f} kWh"
                         + f". Total GPU Power : {self._gpu_power.W} W"
+                    )
+                elif isinstance(hardware, NeuronChip):
+                    self._total_neuron_energy += energy
+                    self._neuron_power = power
+                    self._neuron_power_sum += power.W
+                    logger.info(
+                        f"Energy consumed for Neuron : {self._total_neuron_energy.kWh:.6f} kWh"
+                        + f". Neuron Power : {self._neuron_power.W} W"
                     )
             else:
                 logger.error(f"Unknown hardware type: {hardware} ({type(hardware)})")
