@@ -10,6 +10,7 @@ copyright: "&copy; CodeCarbon"
 
 theme:
   name: zensical
+  custom_dir: overrides
   favicon: images/favicon.ico
   logo: images/codecarbon-logo.svg
   palette:
@@ -95,6 +96,7 @@ extra_css:
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - javascripts/discord-link.js
 
 markdown_extensions:
   - abbr
@@ -182,3 +184,4 @@ nav:
     - Output Formats: reference/output.md
     - CLI Reference: reference/cli.md
   - Track GenAI API Calls (EcoLogits) ↗: https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs
+  - Join Our Discord 💬 ↗: https://discord.gg/GS9js2XkJR

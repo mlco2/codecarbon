@@ -77,3 +77,4 @@ A single datacenter can consume large amounts of energy to run computing code. A
 | [Framework Examples](how-to/scikit-learn.md) | Example usage patterns |
 | [Methodology](explanation/methodology.md) | How emissions are calculated |
 | [EcoLogits](https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs) | Track emissions from GenAI API calls |
+| [Discord Community](https://discord.gg/GS9js2XkJR) | Chat with us and the community |
