@@ -10,7 +10,6 @@ copyright: "&copy; CodeCarbon"
 
 theme:
   name: zensical
-  custom_dir: overrides
   favicon: images/favicon.ico
   logo: images/codecarbon-logo.svg
   palette:
