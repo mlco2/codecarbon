@@ -1,8 +1,27 @@
+import os
 import platform
+import shutil
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 import codecarbon.telemetry as telemetry_module
 from codecarbon.telemetry import collect_tier1_payload, send_tier1_telemetry
+from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
+from tests.testutils import get_custom_mock_open
+
+if sys.platform == "darwin":
+    mock_platform_cli_setup = patch(
+        "codecarbon.core.powermetrics.ApplePowermetrics._setup_cli"
+    )
+else:
+    mock_platform_cli_setup = patch(
+        "codecarbon.core.cpu.IntelPowerGadget._setup_cli"
+    )
+
+
+empty_conf = "[codecarbon]"
 
 
 class TestTelemetry(unittest.TestCase):
@@ -78,6 +97,75 @@ class TestTier1Send(unittest.TestCase):
                 # verify error was logged
                 mock_logger.assert_called_once()
                 assert "network error" in str(mock_logger.call_args)
+
+
+@mock_platform_cli_setup
+class TestTrackerTelemetry(unittest.TestCase):
+    """Test that trackers wire Tier 1 telemetry into initialization."""
+
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_path = Path(self.temp_dir.name)
+        self.patcher = patch(
+            "builtins.open", new_callable=get_custom_mock_open(empty_conf, empty_conf)
+        )
+        self.mock_open = self.patcher.start()
+
+    def tearDown(self) -> None:
+        self.patcher.stop()
+        self.temp_dir.cleanup()
+
+    def test_emissions_tracker_sends_tier1_telemetry_by_default(self, mock_cli_setup):
+        """Tier 1 fires on EmissionsTracker initialization when send_telemetry=True (default)."""
+        telemetry_module._TIER1_SENT = False
+        with patch("codecarbon.telemetry.requests.post") as mock_post:
+            mock_post.return_value = MagicMock(status_code=201)
+            # Block geo lookup to isolate test
+            with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
+                tracker = EmissionsTracker(
+                    send_telemetry=True, save_to_api=False, save_to_file=False
+                )
+        # Verify telemetry POST was called
+        assert mock_post.called, "Telemetry POST should have been called"
+
+    def test_emissions_tracker_skips_tier1_when_opted_out(self, mock_cli_setup):
+        """Tier 1 does NOT fire when send_telemetry=False."""
+        telemetry_module._TIER1_SENT = False
+        with patch("codecarbon.telemetry.requests.post") as mock_post:
+            # Block geo lookup
+            with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
+                tracker = EmissionsTracker(
+                    send_telemetry=False, save_to_api=False, save_to_file=False
+                )
+        # Verify telemetry POST was NOT called
+        assert not mock_post.called, "Telemetry POST should not have been called"
+
+    def test_offline_tracker_sends_tier1_telemetry_by_default(self, mock_cli_setup):
+        """Tier 1 fires on OfflineEmissionsTracker initialization when send_telemetry=True (default)."""
+        telemetry_module._TIER1_SENT = False
+        with patch("codecarbon.telemetry.requests.post") as mock_post:
+            mock_post.return_value = MagicMock(status_code=201)
+            tracker = OfflineEmissionsTracker(
+                country_iso_code="CAN",
+                send_telemetry=True,
+                save_to_api=False,
+                save_to_file=False,
+            )
+        # Verify telemetry POST was called
+        assert mock_post.called, "Telemetry POST should have been called"
+
+    def test_offline_tracker_skips_tier1_when_opted_out(self, mock_cli_setup):
+        """Tier 1 does NOT fire when send_telemetry=False on OfflineEmissionsTracker."""
+        telemetry_module._TIER1_SENT = False
+        with patch("codecarbon.telemetry.requests.post") as mock_post:
+            tracker = OfflineEmissionsTracker(
+                country_iso_code="CAN",
+                send_telemetry=False,
+                save_to_api=False,
+                save_to_file=False,
+            )
+        # Verify telemetry POST was NOT called
+        assert not mock_post.called, "Telemetry POST should not have been called"
 
 
 if __name__ == "__main__":

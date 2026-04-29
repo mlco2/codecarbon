@@ -199,6 +199,7 @@ class BaseEmissionsTracker(ABC):
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
+        send_telemetry: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -352,6 +353,8 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
+        # Tier 1 telemetry (opt-out, default enabled)
+        self._set_from_conf(send_telemetry, "send_telemetry", default=True, return_type=bool)
 
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
@@ -448,6 +451,12 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source, self._electricitymaps_api_token
         )
+
+        # Send Tier 1 telemetry if enabled
+        if self._send_telemetry:
+            from codecarbon.telemetry import send_tier1_telemetry
+            send_tier1_telemetry(self._conf)
+
         self._init_output_methods(api_key=self._api_key)
 
     def _init_output_methods(self, *, api_key: str = None):
@@ -1136,6 +1145,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         cloud_provider: Optional[str] = _sentinel,
         cloud_region: Optional[str] = _sentinel,
         country_2letter_iso_code: Optional[str] = _sentinel,
+        send_telemetry: Optional[bool] = _sentinel,
         **kwargs,
     ):
         """
@@ -1208,7 +1218,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             assert isinstance(self._country_2letter_iso_code, str)
             self._country_2letter_iso_code: str = self._country_2letter_iso_code.upper()
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, send_telemetry=send_telemetry, **kwargs)
 
     def _get_geo_metadata(self) -> GeoMetadata:
         return GeoMetadata(

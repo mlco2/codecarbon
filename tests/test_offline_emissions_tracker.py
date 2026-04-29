@@ -41,7 +41,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_offline_tracker(self):
-        tracker = OfflineEmissionsTracker(output_file=self.emissions_file_path)
+        tracker = OfflineEmissionsTracker(output_file=self.emissions_file_path, send_telemetry=False)
         tracker.start()
         heavy_computation(run_time_secs=2)
         tracker.stop()
@@ -60,7 +60,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         )
 
     def test_offline_tracker_task(self):
-        tracker = OfflineEmissionsTracker()
+        tracker = OfflineEmissionsTracker(send_telemetry=False)
         tracker.start_task()
         heavy_computation(run_time_secs=2)
         task_emission_data = tracker.stop_task()
