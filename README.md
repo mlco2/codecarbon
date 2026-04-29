@@ -4,13 +4,15 @@
 
 Estimate and track carbon emissions from your computer, quantify and analyze their impact.
 
-[![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/) [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon) [![codecov](https://codecov.io/gh/mlco2/codecarbon/graph/badge.svg)](https://codecov.io/gh/mlco2/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/) [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon) [![codecov](https://codecov.io/gh/mlco2/codecarbon/graph/badge.svg)](https://codecov.io/gh/mlco2/codecarbon) [![Discord](https://img.shields.io/badge/Discord-Join%20Community-7289da?logo=discord&logoColor=white)](https://discord.gg/GS9js2XkJR)
 
 - **A lightweight, easy to use Python library** – Simple API to track emissions
 - **Open source, free & community driven** – Built by and for the community
 - **Effective visual outputs** – Put emissions in context with real-world equivalents
 
 > **Tracking GenAI API calls?** CodeCarbon measures emissions from **local computing** (your hardware). To track emissions from remote GenAI API calls (OpenAI, Anthropic, Mistral, etc.), use [**EcoLogits**](https://ecologits.ai/). Both tools are complementary.
+
+> **Join the community!** Have questions, want to share your work, or contribute? Join us on [**Discord**](https://discord.gg/GS9js2XkJR) – we're here to help and excited to hear from you!
 
 ## Installation
 
@@ -97,6 +99,7 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 | [Framework examples (scikit-learn)](https://docs.codecarbon.io/latest/how-to/scikit-learn/) | Task-oriented ML framework examples |
 | [Methodology](https://docs.codecarbon.io/latest/explanation/methodology/) | How emissions are calculated |
 | [EcoLogits](https://ecologits.ai/) | Track emissions from GenAI API calls |
+| [Discord Community](https://discord.gg/GS9js2XkJR) | Chat with us and the community |
 
 ## Links
 

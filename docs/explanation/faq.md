@@ -39,7 +39,7 @@ Yes. CodeCarbon can be installed and used in Docker containers just like any oth
 
 ## How can I help?
 
-If you find any functionality missing in the CodeCarbon repo, please [open an issue](https://github.com/mlco2/codecarbon/issues) so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success.
+If you find any functionality missing in the CodeCarbon repo, please [open an issue](https://github.com/mlco2/codecarbon/issues) so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success. You can also discuss ideas on [Discord](https://discord.gg/GS9js2XkJR) before diving into development.
 
 ## Is my data sent anywhere?
 
@@ -55,3 +55,5 @@ Please open an issue on [GitHub](https://github.com/mlco2/codecarbon/issues) wit
 - Your environment details
 - Steps to reproduce
 - Expected vs actual behavior
+
+You can also report bugs and ask for help on [Discord](https://discord.gg/GS9js2XkJR) where we can provide quick guidance.
