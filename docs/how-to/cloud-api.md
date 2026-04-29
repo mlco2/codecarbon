@@ -62,4 +62,3 @@ save_to_api = true
 ## View Your Results
 
 Once your runs complete, visit the [CodeCarbon dashboard](https://dashboard.codecarbon.io/) to see your results. For more visualization options, see the [visualization guide](visualize.md).
-

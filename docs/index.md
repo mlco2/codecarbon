@@ -78,3 +78,11 @@ A single datacenter can consume large amounts of energy to run computing code. A
 | [Methodology](explanation/methodology.md) | How emissions are calculated |
 | [EcoLogits](https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs) | Track emissions from GenAI API calls |
 | [Discord Community](https://discord.gg/GS9js2XkJR) | Chat with us and the community |
+
+## Contributors & Acknowledgements
+
+CodeCarbon is built by a community of open-source contributors and supported by organizations committed to sustainable computing.
+
+- **[Contributors](https://github.com/mlco2/codecarbon/graphs/contributors)** - See everyone who has contributed to the project
+- **[Citation](https://zenodo.org/records/11171501)** - Cite CodeCarbon in your research
+- **[Partners](https://github.com/mlco2/codecarbon#partners)** - The organizations supporting this work
