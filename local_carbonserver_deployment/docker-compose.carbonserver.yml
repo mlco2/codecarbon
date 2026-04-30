@@ -1,0 +1,62 @@
+services:
+# BEGIN carbonserver
+  carbonserver:
+    build:
+      context: .
+      dockerfile: ./carbonserver/docker/Dockerfile
+    image: codecarbon-server:latest
+    restart: always
+    container_name: carbonserver
+    volumes:
+      - ./carbonserver:/carbonserver
+    labels:
+      # Enable Traefik for this specific service
+      - traefik.enable=true
+      # Define the port inside of the Docker service to use
+      - traefik.http.services.codecarbon-api.loadbalancer.server.port=8000
+      # Make Traefik use this domain in HTTP
+      - traefik.http.routers.codecarbon-api-http.entrypoints=http
+      - traefik.http.routers.codecarbon-api-http.rule=Host(`${api_url}`)
+      # Use the traefik-network network (declared below)
+      - traefik.docker.network=traefik-network
+      # Make Traefik use this domain in HTTPS
+      - traefik.http.routers.codecarbon-api-https.entrypoints=https
+      - traefik.http.routers.codecarbon-api-https.rule=Host(`${api_url}`)
+      - traefik.http.routers.codecarbon-api-https.tls=true
+      # Use the "le" (Let's Encrypt) resolver
+      - traefik.http.routers.codecarbon-api-https.tls.certresolver=le
+      # Middleware to redirect HTTP to HTTPS
+      - traefik.http.routers.codecarbon-api-http.middlewares=https-redirect
+      # CORS middleware configuration
+      - traefik.http.middlewares.codecarbon-api-cors.headers.accesscontrolalloworiginlist=*
+      - traefik.http.middlewares.codecarbon-api-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,PATCH,OPTIONS
+      - traefik.http.middlewares.codecarbon-api-cors.headers.accesscontrolallowheaders=Content-Type,Authorization,Accept,Origin,X-Requested-With,x-api-token
+      - traefik.http.middlewares.codecarbon-api-cors.headers.accesscontrolallowcredentials=true
+      - traefik.http.middlewares.codecarbon-api-cors.headers.accesscontrolmaxage=100
+      - traefik.http.middlewares.codecarbon-api-cors.headers.addvaryheader=true
+      # API middleware: fail2ban, security-headers (no BasicAuth — API uses x-api-token for programmatic access)
+      - traefik.http.middlewares.codecarbon-api-chain.chain.middlewares=fail2ban,security-headers
+      # Apply middleware: CORS first, then security chain
+      - traefik.http.routers.codecarbon-api-https.middlewares=codecarbon-api-cors,codecarbon-api-chain
+    env_file:
+      - ./.env
+    environment:
+      TZ: Europe/Paris
+      AUTH_PROVIDER: none
+      CODECARBON_LOG_LEVEL: ${CODECARBON_LOG_LEVEL:-INFO}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DATABASE_URL: postgresql://${db_username}:${db_password}@${db_host}:${db_port:-5432}/${db_name}
+    networks:
+      - red-base-network
+      # Use the public network created to be shared between Traefik and
+      # any other service that needs to be publicly available with HTTPS
+      - traefik-network
+# END carbonserver
+
+
+networks:
+  red-base-network:
+    name: ${app_network:-red-base-network}
+    external: true
+  traefik-network:
+    external: true

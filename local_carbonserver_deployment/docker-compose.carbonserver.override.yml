@@ -1,0 +1,16 @@
+services:
+  carbonserver:
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - ${api_port:-8000}:8000
+    environment:
+      CODECARBON_LOG_LEVEL: DEBUG
+      ENVIRONMENT: develop
+
+
+networks:
+  red-base-network:
+    name: ${app_network:-red-base-network}
+    external: true
+  traefik-network:
+    external: false
