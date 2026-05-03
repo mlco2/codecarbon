@@ -1,11 +1,30 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
-function hasSessionCookie(): boolean {
-  return document.cookie.split(";").some((c) => c.trim().startsWith("user_session="));
-}
+type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
-  if (!hasSessionCookie()) {
+  const [status, setStatus] = useState<AuthStatus>("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${import.meta.env.VITE_API_URL}/auth/check`, {
+      credentials: "include",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        setStatus(data?.user ? "authenticated" : "anonymous");
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("anonymous");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (status === "loading") return null;
+  if (status === "anonymous") {
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/login?redirect=${import.meta.env.VITE_BASE_URL}/home?auth=true`;
     return null;
   }
