@@ -12,7 +12,13 @@ import {
 } from "@/api/runs";
 import { ProjectDashboardProps } from "@/api/schemas";
 import { exportToJson } from "@/utils/export";
-import { Download, LockIcon, RefreshCw, SettingsIcon, Share2Icon } from "lucide-react";
+import {
+    Download,
+    LockIcon,
+    RefreshCw,
+    SettingsIcon,
+    Share2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import ProjectDashboardBase from "./project-dashboard-base";
@@ -156,7 +162,9 @@ export default function ProjectDashboard({
                                 onClick={handleRefresh}
                                 disabled={isRefreshing}
                             >
-                                <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
+                                <RefreshCw
+                                    className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
+                                />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>

@@ -30,7 +30,9 @@ export default function ShareProjectButton({
     const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin;
 
     useEffect(() => {
-        return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); };
+        return () => {
+            if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+        };
     }, []);
 
     useEffect(() => {

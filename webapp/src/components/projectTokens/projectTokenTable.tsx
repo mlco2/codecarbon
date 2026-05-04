@@ -1,10 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { IProjectToken } from "@/api/schemas";
-import {
-    getProjectTokens,
-    createProjectToken,
-} from "@/api/projectTokens";
+import { getProjectTokens, createProjectToken } from "@/api/projectTokens";
 import CustomRowToken from "@/components/projectTokens/custom-row-token";
 import { useState, useEffect, useRef } from "react";
 import { Loader2, ClipboardCopy, ClipboardCheck } from "lucide-react";
@@ -22,7 +19,9 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     const [isCopied, setIsCopied] = useState(false);
     const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
-        return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); };
+        return () => {
+            if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+        };
     }, []);
     useEffect(() => {
         const fetchTokens = async () => {
@@ -72,7 +71,10 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             if (success) {
                 setIsCopied(true);
                 toast.success("Token copied to clipboard");
-                copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000);
+                copyTimerRef.current = setTimeout(
+                    () => setIsCopied(false),
+                    2000,
+                );
             } else {
                 throw new Error("Copy operation failed");
             }

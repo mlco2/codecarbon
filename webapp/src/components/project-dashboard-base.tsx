@@ -1,7 +1,13 @@
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Separator } from "@/components/ui/separator";
 import { getDefaultDateRange } from "@/helpers/date-utils";
-import { ExperimentReport, Project, ConvertedValues, RadialChartData, Experiment } from "@/api/schemas";
+import {
+    ExperimentReport,
+    Project,
+    ConvertedValues,
+    RadialChartData,
+    Experiment,
+} from "@/api/schemas";
 import { lazy, ReactNode, Suspense, useState } from "react";
 import { DateRange } from "react-day-picker";
 import ChartSkeleton from "./chart-skeleton";
@@ -12,9 +18,13 @@ import { Skeleton } from "./ui/skeleton";
 import { Table, TableBody, TableHeader } from "./ui/table";
 
 const RadialChart = lazy(() => import("@/components/radial-chart"));
-const ExperimentsBarChart = lazy(() => import("@/components/experiment-bar-chart"));
+const ExperimentsBarChart = lazy(
+    () => import("@/components/experiment-bar-chart"),
+);
 const RunsScatterChart = lazy(() => import("@/components/runs-scatter-chart"));
-const EmissionsTimeSeriesChart = lazy(() => import("@/components/emissions-time-series"));
+const EmissionsTimeSeriesChart = lazy(
+    () => import("@/components/emissions-time-series"),
+);
 
 export interface ProjectDashboardBaseProps {
     isPublicView: boolean;
@@ -171,7 +181,17 @@ export default function ProjectDashboardBase({
                             </CardContent>
                         </Card>
                     ) : (
-                        <Suspense fallback={<Card className="flex flex-col h-full items-center justify-center"><CardContent className="p-0"><Skeleton className="h-44 w-44 rounded-full" /></CardContent></Card>}><RadialChart data={radialChartData.energy} /></Suspense>
+                        <Suspense
+                            fallback={
+                                <Card className="flex flex-col h-full items-center justify-center">
+                                    <CardContent className="p-0">
+                                        <Skeleton className="h-44 w-44 rounded-full" />
+                                    </CardContent>
+                                </Card>
+                            }
+                        >
+                            <RadialChart data={radialChartData.energy} />
+                        </Suspense>
                     )}
                 </div>
                 <div className="col-span-1 items-center justify-center w-full h-full">
@@ -182,7 +202,17 @@ export default function ProjectDashboardBase({
                             </CardContent>
                         </Card>
                     ) : (
-                        <Suspense fallback={<Card className="flex flex-col h-full items-center justify-center"><CardContent className="p-0"><Skeleton className="h-44 w-44 rounded-full" /></CardContent></Card>}><RadialChart data={radialChartData.emissions} /></Suspense>
+                        <Suspense
+                            fallback={
+                                <Card className="flex flex-col h-full items-center justify-center">
+                                    <CardContent className="p-0">
+                                        <Skeleton className="h-44 w-44 rounded-full" />
+                                    </CardContent>
+                                </Card>
+                            }
+                        >
+                            <RadialChart data={radialChartData.emissions} />
+                        </Suspense>
                     )}
                 </div>
                 <div className="col-span-1 items-center justify-center w-full h-full">
@@ -193,7 +223,17 @@ export default function ProjectDashboardBase({
                             </CardContent>
                         </Card>
                     ) : (
-                        <Suspense fallback={<Card className="flex flex-col h-full items-center justify-center"><CardContent className="p-0"><Skeleton className="h-44 w-44 rounded-full" /></CardContent></Card>}><RadialChart data={radialChartData.duration} /></Suspense>
+                        <Suspense
+                            fallback={
+                                <Card className="flex flex-col h-full items-center justify-center">
+                                    <CardContent className="p-0">
+                                        <Skeleton className="h-44 w-44 rounded-full" />
+                                    </CardContent>
+                                </Card>
+                            }
+                        >
+                            <RadialChart data={radialChartData.duration} />
+                        </Suspense>
                     )}
                 </div>
             </div>

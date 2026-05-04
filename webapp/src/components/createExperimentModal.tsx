@@ -49,7 +49,9 @@ export default function CreateExperimentModal({
     }, [projectId, experimentData]);
 
     useEffect(() => {
-        return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); };
+        return () => {
+            if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+        };
     }, []);
 
     const resetForm = () => {
@@ -99,7 +101,10 @@ export default function CreateExperimentModal({
             .then(() => {
                 setIsCopied(true);
                 toast.success("Experiment ID copied to clipboard");
-                copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000);
+                copyTimerRef.current = setTimeout(
+                    () => setIsCopied(false),
+                    2000,
+                );
             })
             .catch((err) => {
                 console.error("Failed to copy experiment id:", err);
@@ -118,7 +123,9 @@ export default function CreateExperimentModal({
                         <Separator className="my-4" />
                         <div className="space-y-4 py-2">
                             <div className="space-y-2">
-                                <Label htmlFor="experiment-name">Experiment Name</Label>
+                                <Label htmlFor="experiment-name">
+                                    Experiment Name
+                                </Label>
                                 <Input
                                     id="experiment-name"
                                     type="text"
@@ -133,7 +140,9 @@ export default function CreateExperimentModal({
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="experiment-description">Experiment Description</Label>
+                                <Label htmlFor="experiment-description">
+                                    Experiment Description
+                                </Label>
                                 <Input
                                     id="experiment-description"
                                     type="text"

@@ -9,7 +9,9 @@
         "preview": "vite preview",
         "lint": "eslint .",
         "test": "vitest",
-        "test:run": "vitest run"
+        "test:run": "vitest run",
+        "test:e2e": "playwright test",
+        "test:e2e:install": "playwright install --with-deps chromium"
     },
     "dependencies": {
         "@radix-ui/react-dialog": "^1.1.15",
@@ -41,6 +43,7 @@
         "zod": "^3.25.76"
     },
     "devDependencies": {
+        "@playwright/test": "^1.59.1",
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.1.0",
         "@testing-library/user-event": "^14.5.2",
