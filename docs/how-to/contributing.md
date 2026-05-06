@@ -39,7 +39,7 @@
 <!-- TOC --><a name="have-a-question"></a>
 ## </a> Have a Question?
 
-Please see the [FAQ](https://docs.codecarbon.io/latest/explanation/faq/) for questions.
+Please see the [FAQ](https://docs.codecarbon.io/latest/explanation/faq/) for questions. You can also ask on our [Discord community](https://discord.gg/GS9js2XkJR) – we're happy to help!
 
 
 <!-- TOC --><a name="found-a-bug"></a>
@@ -546,6 +546,10 @@ CODECARBON_API_URL="https://api.codecarbon.io"
 PORT="8000"
 ```
 
+
+## Questions or Need Help?
+
+Got stuck? Have an idea? Want to share your contribution? **[Join us on Discord](https://discord.gg/GS9js2XkJR)** – our community is here to help and support you!
 
 <!-- TOC --><a name="license"></a>
 ## License

@@ -87,6 +87,20 @@ emissions tracker.
 
 Currently, the package supports the following hardware infrastructure.
 
+### Tracking Modes
+
+CodeCarbon operates in two distinct modes to determine how power consumption is attributed to your work. Choosing the right mode is essential for data accuracy.
+
+The `tracking_mode` parameter (values: `"machine"` or `"process"`, default `"machine"`) controls the **scope** of power attribution:
+
+**Machine Mode** (`tracking_mode="machine"`): Measures the total energy consumed by the whole hardware stack (all CPUs, GPUs, and RAM). This is the most straightforward measurement and is ideal for dedicated machines where the tracked workload dominates resource usage.
+
+**Process Mode** (`tracking_mode="process"`): Estimates the energy attributable to your Python process (and its child processes) by sampling their CPU time relative to total CPU capacity. This is a software-based approximation — it does **not** read hardware counters directly — and is preferable on shared environments where other workloads are running in parallel.
+
+> ⚠️ **GPU limitation**: Process Mode only affects CPU and RAM attribution. GPU power is always measured at the device level, so if you share a GPU with other users or processes, CodeCarbon will still account for the **entire GPU's** power consumption, not just your share.
+
+Note: The underlying measurement method (Intel RAPL, Intel Power Gadget, TDP-based CPU-load estimation…) is chosen automatically based on hardware availability and software permissions. It applies independently of the tracking mode.
+
 ### GPU
 
 Tracks Nvidia GPUs energy consumption using `nvidia-ml-py` library
