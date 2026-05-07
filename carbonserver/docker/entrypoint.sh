@@ -4,9 +4,9 @@ echo "Starting entrypoint script..."
 echo "Waiting for database to start..."
 sleep 5
 echo "Preparing database..."
-cd /carbonserver
+cd /app/carbonserver
 echo "Current directory: $(pwd)"
-echo "Listing files in /carbonserver:"
+echo "Listing files in /app/carbonserver:"
 ls -la
 echo "Running alembic upgrade head..."
 python3 -m alembic -c carbonserver/database/alembic.ini upgrade head

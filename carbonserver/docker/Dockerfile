@@ -17,10 +17,10 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y software-properties-common curl && \
     add-apt-repository ppa:deadsnakes/ppa -y && \
     apt-get update && \
-    apt-get install -y gcc libpq-dev python3.11 python3.11-dev
+    apt-get install -y gcc libpq-dev python3.11 python3.11-dev python3.12 python3.12-dev python3.12-venv
 
-RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
-    ln -sf /usr/bin/python3.11 /usr/bin/python3
+RUN ln -sf /usr/bin/python3.12 /usr/bin/python && \
+    ln -sf /usr/bin/python3.12 /usr/bin/python3
 
 # Download the latest UV installer
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
@@ -36,8 +36,9 @@ COPY pyproject.toml /app/
 COPY codecarbon /app/codecarbon
 COPY carbonserver /app/carbonserver
 
-# Install dependencies using uv with the api dependency group
-RUN uv pip install --system -e ".[api]"
+# Install the root codecarbon package and the carbonserver package with all its dependencies
+RUN uv pip install --system -e "." && \
+    uv pip install --system -e "carbonserver/"
 
 COPY ./carbonserver/docker/entrypoint.sh /opt
 RUN chmod a+x /opt/entrypoint.sh
