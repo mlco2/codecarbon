@@ -84,6 +84,33 @@ Yields attributes:
     which relies on the [INI
     syntax](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure).
 
+## Tracking Mode
+
+The `tracking_mode` parameter controls how CodeCarbon measures power consumption. It accepts two values:
+
+- **`"machine"`** (default): Measures power for the entire machine — total RAM in use and total CPU load across all processes.
+- **`"process"`**: Isolates measurements to the tracked process — only the process's RAM usage and its share of CPU time are used to estimate power.
+
+This setting affects **RAM and CPU** measurements. GPU power is always measured at the device level regardless of tracking mode.
+
+Set it in your config file:
+
+``` ini
+[codecarbon]
+tracking_mode = process
+```
+
+Or directly in code:
+
+``` python
+EmissionsTracker(tracking_mode="process")
+```
+
+!!! note "Note"
+
+    `"process"` mode gives a lower-bound estimate of your code's footprint.
+    `"machine"` mode is more conservative and accounts for all activity on the system.
+
 ## Access internet through proxy server
 
 If you need a proxy to access internet, which is needed to call a Web
