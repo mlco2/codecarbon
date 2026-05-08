@@ -55,53 +55,69 @@ class UserWithAuthDependency:
     ):
         self.user_service = user_service
         if cookie_token is not None:
-            self.auth_user = jwt.decode(
+            self.auth_user = self._decode_cookie_token(cookie_token)
+        elif bearer_token is not None:
+            await self._validate_bearer_token(bearer_token, auth_provider)
+            self.auth_user = self._decode_bearer_token(bearer_token)
+        else:
+            self.auth_user = None
+            if self.error_if_not_found:
+                raise HTTPException(
+                    status_code=401,
+                    detail="No token provided, please log in",
+                )
+        self.db_user = self._get_db_user(user_service)
+        return self
+
+    def _decode_cookie_token(self, cookie_token: str):
+        try:
+            return jwt.decode(
                 cookie_token,
                 options={"verify_signature": False},
                 algorithms=["HS256", "RS256"],
             )
-        elif bearer_token is not None:
-            if settings.environment != "develop" and auth_provider is not None:
-                LOGGER.debug(
-                    f"Validating token with auth provider. Token: {bearer_token}"
-                )
-                try:
-                    await auth_provider.validate_access_token(bearer_token.credentials)
-                except Exception:
-                    raise HTTPException(status_code=401, detail="Invalid token")
-            # cli user using auth provider token
-            self.auth_user = jwt.decode(
+        except Exception:
+            raise HTTPException(401, "Session expired, please log in")
+
+    async def _validate_bearer_token(self, bearer_token, auth_provider):
+        if settings.environment != "develop" and auth_provider is not None:
+            try:
+                await auth_provider.validate_access_token(bearer_token.credentials)
+            except Exception:
+                raise HTTPException(status_code=401, detail="Invalid token")
+
+    def _decode_bearer_token(self, bearer_token) -> dict:
+        try:
+            auth_user = jwt.decode(
                 bearer_token.credentials,
                 options={"verify_signature": False},
-                algorithms=[
-                    "HS256",
-                    "RS256",
-                ],
+                algorithms=["HS256", "RS256"],
             )
-            if settings.environment == "develop":
-                try:
-                    # test user
-                    self.auth_user = jwt.decode(
-                        bearer_token.credentials,
-                        settings.jwt_key,
-                        algorithms=[
-                            "HS256",
-                            "RS256",
-                        ],
-                    )
-                except Exception:
-                    ...
-        else:
-            self.auth_user = None
-            if self.error_if_not_found:
-                raise HTTPException(status_code=401, detail="Unauthorized")
-
-        try:
-            self.db_user = user_service.get_user_by_id(self.auth_user["sub"])
         except Exception:
-            self.db_user = None
+            LOGGER.warning("Failed to decode bearer token")
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired token, please log in again",
+            )
+        if settings.environment == "develop":
+            try:
+                auth_user = jwt.decode(
+                    bearer_token.credentials,
+                    settings.jwt_key,
+                    algorithms=["HS256", "RS256"],
+                )
+            except Exception:
+                pass
+        return auth_user
 
-        return self
+    def _get_db_user(self, user_service) -> Optional[dict]:
+        if self.auth_user is None:
+            return None
+        try:
+            return user_service.get_user_by_id(self.auth_user["sub"])
+        except Exception:
+
+            return None
 
 
 OptionalUserWithAuthDependency = UserWithAuthDependency(error_if_not_found=False)

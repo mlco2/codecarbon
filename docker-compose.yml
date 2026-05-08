@@ -74,8 +74,8 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASS:-supersecret}
       POSTGRES_USER: ${DATABASE_USER:-codecarbon-user}
     image: postgres:13
-    # ports:
-    #     - 5480:5432
+    ports:
+      - 5480:5432
     restart: unless-stopped
     volumes:
       - postgres_codecarbon_data:/var/lib/postgresql/data:rw

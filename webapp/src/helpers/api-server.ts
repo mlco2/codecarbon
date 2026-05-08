@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { SESSION_COOKIE_NAME } from "./auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
@@ -19,7 +20,9 @@ export async function fetchApiServer<T>(
         const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
         if (!sessionCookie?.value) {
-            throw new Error("No authentication session found");
+            redirect(
+                `${process.env.NEXT_PUBLIC_API_URL}/auth/login?redirect=${process.env.NEXT_PUBLIC_BASE_URL}/home?auth=true`,
+            );
         }
 
         const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -32,6 +35,13 @@ export async function fetchApiServer<T>(
         });
 
         if (!response.ok) {
+
+            if ((response.status === 401)) {
+                redirect(
+                    `${process.env.NEXT_PUBLIC_API_URL}/auth/login?redirect=${process.env.NEXT_PUBLIC_BASE_URL}/home?auth=true`,
+                );
+            }
+
             let errorMessage = `API error: ${response.status} ${response.statusText}`;
             try {
                 const errorData = await response.json();
@@ -59,6 +69,15 @@ export async function fetchApiServer<T>(
             return null;
         }
     } catch (error) {
+
+        if(
+            error instanceof Error &&
+            (error.message == "NEXT_REDIRECT" ||
+                (error as any).digest?.startsWith("NEXT_REDIRECT"))
+        ) {
+            throw error;
+        }
+
         // Log server-side error with more details
         console.error("API server request failed:", {
             endpoint,
