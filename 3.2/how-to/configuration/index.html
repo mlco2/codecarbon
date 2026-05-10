@@ -878,6 +878,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#electricity-maps-api-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Electricity Maps API Token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#access-internet-through-proxy-server" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2095,6 +2106,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#electricity-maps-api-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Electricity Maps API Token
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#access-internet-through-proxy-server" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2261,6 +2283,33 @@ that under the hood <code>codecarbon</code> uses
 <a href="https://docs.python.org/3/library/configparser.html#module-configparser"><code>ConfigParser</code></a>
 which relies on the <a href="https://docs.python.org/3/library/configparser.html#supported-ini-file-structure">INI
 syntax</a>.</p>
+</div>
+<h2 id="electricity-maps-api-token">Electricity Maps API Token<a class="headerlink" href="#electricity-maps-api-token" title="Permanent link">&para;</a></h2>
+<p>By default, CodeCarbon estimates carbon intensity using annual country-level
+averages from Our World in Data. Providing an <code>electricitymaps_api_token</code>
+upgrades this to <strong>real-time carbon intensity</strong> data from the
+<a href="https://api.electricitymaps.com">Electricity Maps API</a>, giving more accurate
+emissions figures — especially useful if your grid's energy mix varies
+throughout the day.</p>
+<p><strong>Without a token:</strong> CodeCarbon uses a static annual average for your country.</p>
+<p><strong>With a token:</strong> CodeCarbon queries the Electricity Maps API for the current
+carbon intensity of your grid. The query runs at the end of each tracking run,
+and also periodically during long runs (every
+<code>api_call_interval × measure_power_secs</code> seconds; default: every ~2 minutes).</p>
+<p>The Electricity Maps API offers a free tier. You can sign up and get a token at
+<a href="https://app.electricitymaps.com/sign-up">electricitymaps.com</a>.</p>
+<p>Set it in your config file:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[codecarbon]</span>
+<span class="na">electricitymaps_api_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">your-token-here</span>
+</code></pre></div>
+<p>Or in code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">electricitymaps_api_token</span><span class="o">=</span><span class="s2">&quot;your-token-here&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Deprecated parameter</p>
+<p>The old parameter name <code>co2_signal_api_token</code> still works for backward
+compatibility but is deprecated and will be removed in a future version.
+Use <code>electricitymaps_api_token</code> instead.</p>
 </div>
 <h2 id="access-internet-through-proxy-server">Access internet through proxy server<a class="headerlink" href="#access-internet-through-proxy-server" title="Permanent link">&para;</a></h2>
 <p>If you need a proxy to access internet, which is needed to call a Web
