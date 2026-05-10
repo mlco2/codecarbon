@@ -1,5 +1,6 @@
 # Security Policy
-
+# Supported versions
+Only the latest version of `codecarbon` is supported. We encourage to use the latest version as you will benefit from latest features and bug fixes.
 
 ## Reporting a Vulnerability
 
