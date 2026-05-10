@@ -147,3 +147,6 @@ class FileOutput(BaseOutput):
         new_df = new_df.dropna(axis=1, how="all")
         df = new_df
         df.to_csv(save_task_file_path, index=False)
+
+    def live_out(self, total: EmissionsData, delta: EmissionsData):
+        self.out(total, delta)
