@@ -19,7 +19,8 @@ export async function getOrganizationEmissionsByProject(
 
     try {
         return await fetchApi(endpoint, OrganizationReportSchema);
-    } catch {
+    } catch (error) {
+        console.error("[getOrganizationEmissionsByProject] failed", error);
         return { name: "", emissions: 0, energy_consumed: 0, duration: 0 };
     }
 }
@@ -27,7 +28,8 @@ export async function getOrganizationEmissionsByProject(
 export async function getOrganizations(): Promise<Organization[]> {
     try {
         return await fetchApi("/organizations", OrganizationSchema.array());
-    } catch {
+    } catch (error) {
+        console.error("[getOrganizations] failed", error);
         return [];
     }
 }

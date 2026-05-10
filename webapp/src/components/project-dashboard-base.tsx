@@ -280,28 +280,29 @@ export default function ProjectDashboardBase({
                                 </tr>
                             </TableHeader>
                             <TableBody>
-                                {projectExperiments.map((experiment) => (
-                                    <tr
-                                        key={experiment.id}
-                                        className={`cursor-pointer hover:bg-muted/50 ${
-                                            experiment.id ===
-                                            selectedExperimentId
-                                                ? "bg-primary/10"
-                                                : ""
-                                        }`}
-                                        onClick={() =>
-                                            onExperimentClick(
-                                                experiment.id || "",
-                                            )
-                                        }
-                                    >
-                                        <td>{experiment.name}</td>
-                                        <td>{experiment.description}</td>
-                                        {!isPublicView && (
-                                            <td>{experiment.id}</td>
-                                        )}
-                                    </tr>
-                                ))}
+                                {projectExperiments
+                                    .filter((e) => !!e.id)
+                                    .map((experiment) => (
+                                        <tr
+                                            key={experiment.id}
+                                            data-testid={`experiment-row-${experiment.id}`}
+                                            className={`cursor-pointer hover:bg-muted/50 ${
+                                                experiment.id ===
+                                                selectedExperimentId
+                                                    ? "bg-primary/10"
+                                                    : ""
+                                            }`}
+                                            onClick={() =>
+                                                onExperimentClick(experiment.id)
+                                            }
+                                        >
+                                            <td>{experiment.name}</td>
+                                            <td>{experiment.description}</td>
+                                            {!isPublicView && (
+                                                <td>{experiment.id}</td>
+                                            )}
+                                        </tr>
+                                    ))}
                             </TableBody>
                         </Table>
                     </Card>

@@ -16,14 +16,28 @@ export const UserSchema = z.object({
 });
 export type User = z.infer<typeof UserSchema>;
 
-export const ProjectSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    description: z.string(),
-    public: z.boolean(),
-    organizationId: z.string(),
-    experiments: z.array(z.string()),
-});
+// Backend returns snake_case keys (`organization_id`); the rest of the
+// codebase consumes camelCase (`organizationId`). Zod's `.transform` lets
+// us validate the wire shape and expose the camelCase shape to the app.
+// `public` and `experiments` are nullable on the backend (`Optional[...]`),
+// so we accept undefined/null and default them.
+export const ProjectSchema = z
+    .object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+        public: z.boolean().nullish(),
+        organization_id: z.string(),
+        experiments: z.array(z.string()).nullish(),
+    })
+    .transform((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        public: p.public ?? false,
+        organizationId: p.organization_id,
+        experiments: p.experiments ?? [],
+    }));
 export type Project = z.infer<typeof ProjectSchema>;
 
 export const ProjectInputsSchema = z.object({
@@ -43,8 +57,11 @@ export const ProjectTokenSchema = z.object({
 });
 export type IProjectToken = z.infer<typeof ProjectTokenSchema>;
 
+// `id` is required when reading from the API (the backend never returns
+// experiments without one). It is allowed to be absent only on the
+// create path — see `ExperimentInputSchema` below.
 export const ExperimentSchema = z.object({
-    id: z.string().optional(),
+    id: z.string().min(1),
     timestamp: z.string().optional(),
     name: z.string(),
     description: z.string(),
@@ -57,6 +74,11 @@ export const ExperimentSchema = z.object({
     cloud_region: z.string().optional(),
 });
 export type Experiment = z.infer<typeof ExperimentSchema>;
+
+export const ExperimentInputSchema = ExperimentSchema.extend({
+    id: z.string().min(1).optional(),
+});
+export type ExperimentInput = z.infer<typeof ExperimentInputSchema>;
 
 export const ExperimentReportSchema = z.object({
     experiment_id: z.string(),

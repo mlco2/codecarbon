@@ -30,7 +30,8 @@ export async function getProjects(organizationId: string): Promise<Project[]> {
             `/projects?organization=${organizationId}`,
             ProjectSchema.array(),
         );
-    } catch {
+    } catch (error) {
+        console.error("[getProjects] failed", error);
         return [];
     }
 }
@@ -40,7 +41,8 @@ export async function getOneProject(
 ): Promise<Project | null> {
     try {
         return await fetchApi(`/projects/${projectId}`, ProjectSchema);
-    } catch {
+    } catch (error) {
+        console.error("[getOneProject] failed", error);
         return null;
     }
 }

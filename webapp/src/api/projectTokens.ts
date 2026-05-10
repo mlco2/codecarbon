@@ -9,7 +9,8 @@ export async function getProjectTokens(
             `/projects/${projectId}/api-tokens`,
             ProjectTokenSchema.array(),
         );
-    } catch {
+    } catch (error) {
+        console.error("[getProjectTokens] failed", error);
         return [];
     }
 }

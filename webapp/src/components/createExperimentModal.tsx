@@ -3,7 +3,7 @@ import { createExperiment } from "@/api/experiments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Experiment } from "@/api/schemas";
+import { Experiment, ExperimentInput } from "@/api/schemas";
 import { Separator } from "./ui/separator";
 import { ClipboardCheck, ClipboardCopy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ export default function CreateExperimentModal({
     const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isCreated, setIsCreated] = useState(false);
-    const [experimentData, setExperimentData] = useState<Experiment>({
+    const [experimentData, setExperimentData] = useState<ExperimentInput>({
         name: "",
         description: "",
         on_cloud: false,

@@ -1,6 +1,7 @@
 import { fetchApi } from "./client";
 import {
     Experiment,
+    ExperimentInput,
     ExperimentSchema,
     ExperimentReport,
     ExperimentReportSchema,
@@ -8,7 +9,7 @@ import {
 import { DateRange } from "react-day-picker";
 
 export async function createExperiment(
-    experiment: Experiment,
+    experiment: ExperimentInput,
 ): Promise<Experiment> {
     return await fetchApi("/experiments", ExperimentSchema, {
         method: "POST",
@@ -22,14 +23,15 @@ export async function getExperiments(projectId: string): Promise<Experiment[]> {
             `/projects/${projectId}/experiments`,
             ExperimentSchema.array(),
         );
-        return result.map((experiment) => ({
-            id: experiment.id,
-            name: experiment.name,
-            description: experiment.description,
-            project_id: experiment.project_id,
-            timestamp: experiment.timestamp,
-        }));
-    } catch {
+        // Drop experiments that somehow lack a usable id — they cannot be
+        // selected, fetched, or rendered downstream. Keeping them would
+        // surface as unselectable rows whose click silently clears the
+        // selection.
+        return result.filter(
+            (e) => typeof e.id === "string" && e.id.length > 0,
+        );
+    } catch (error) {
+        console.error("[getExperiments] failed", error);
         return [];
     }
 }
@@ -53,15 +55,13 @@ export async function getProjectEmissionsByExperiment(
 
     try {
         const result = await fetchApi(url, ExperimentReportSchema.array());
-        return result.map((experimentReport) => ({
-            experiment_id: experimentReport.experiment_id,
-            description: experimentReport.description,
-            name: experimentReport.name,
-            emissions: experimentReport.emissions,
-            energy_consumed: experimentReport.energy_consumed,
-            duration: experimentReport.duration,
-        }));
-    } catch {
+        return result.filter(
+            (r) =>
+                typeof r.experiment_id === "string" &&
+                r.experiment_id.length > 0,
+        );
+    } catch (error) {
+        console.error("[getProjectEmissionsByExperiment] failed", error);
         return [];
     }
 }

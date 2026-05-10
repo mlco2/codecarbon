@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { resolveMock } from "./handlers";
-import { MOCK_PROJECTS, MOCK_USER } from "./data";
+import { resolveMock } from "@/api/mock/handlers";
+import { MOCK_PROJECTS, MOCK_USER } from "@/api/mock/data";
 
 function url(path: string): URL {
     return new URL(path, "http://mock.local");
@@ -20,7 +20,7 @@ describe("resolveMock", () => {
         expect(r.status).toBe(200);
         const body = (r as { body: typeof MOCK_PROJECTS }).body;
         expect(body.length).toBe(MOCK_PROJECTS.length);
-        for (const p of body) expect(p.organizationId).toBe("mock-org-1");
+        for (const p of body) expect(p.organization_id).toBe("mock-org-1");
     });
 
     it("returns 404 with explanation for unmatched routes", () => {

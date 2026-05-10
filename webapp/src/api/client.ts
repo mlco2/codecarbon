@@ -1,13 +1,16 @@
-import { ZodSchema } from "zod";
+import { z, ZodTypeAny } from "zod";
 import { ApiError, ValidationError } from "./errors";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
-export async function fetchApi<T>(
+// Accept any zod schema, including ones produced by `.transform(...)` whose
+// input and output types differ. The function's return type is the schema's
+// *output* type.
+export async function fetchApi<S extends ZodTypeAny>(
     endpoint: string,
-    schema: ZodSchema<T>,
+    schema: S,
     options?: RequestInit,
-): Promise<T> {
+): Promise<z.infer<S>> {
     const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         credentials: "include",
@@ -28,7 +31,7 @@ export async function fetchApi<T>(
         throw new ApiError(detail, response.status, endpoint);
     }
 
-    if (response.status === 204) return undefined as T;
+    if (response.status === 204) return undefined as z.infer<S>;
 
     const data = await response.json();
     const parsed = schema.safeParse(data);

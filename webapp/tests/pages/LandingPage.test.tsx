@@ -13,7 +13,7 @@ vi.mock("@/api/auth", () => ({
     redirectToLogin: vi.fn(),
 }));
 
-import LandingPage from "./LandingPage";
+import LandingPage from "@/pages/LandingPage";
 
 beforeEach(() => {
     isMockModeMock.mockReset();

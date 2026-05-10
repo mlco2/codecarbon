@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { ApiError, ValidationError, handleError } from "./errors";
+import { ApiError, ValidationError, handleError } from "@/api/errors";
 import { ZodError } from "zod";
 
 const toastError = vi.hoisted(() => vi.fn());
@@ -8,7 +8,7 @@ vi.mock("sonner", () => ({
 }));
 
 const redirectMock = vi.hoisted(() => vi.fn());
-vi.mock("./auth", () => ({
+vi.mock("@/api/auth", () => ({
     redirectToLogin: redirectMock,
     buildLoginUrl: () => "http://api.test/api/auth/login?redirect=...",
 }));

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildLoginUrl } from "./auth";
+import { buildLoginUrl } from "@/api/auth";
 
 describe("buildLoginUrl", () => {
     it("constructs login URL with redirect using URL constructor", () => {

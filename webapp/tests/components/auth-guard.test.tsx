@@ -12,7 +12,7 @@ vi.mock("@/api/mock", () => ({
     isMockMode: isMockModeMock,
 }));
 
-import AuthGuard from "./auth-guard";
+import AuthGuard from "@/components/auth-guard";
 
 const originalFetch = globalThis.fetch;
 

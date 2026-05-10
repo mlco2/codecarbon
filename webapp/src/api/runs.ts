@@ -15,7 +15,8 @@ export async function getRunMetadata(
 ): Promise<RunMetadata | null> {
     try {
         return await fetchApi(`/runs/${runId}`, RunMetadataSchema);
-    } catch {
+    } catch (error) {
+        console.error("[getRunMetadata] failed", error);
         return null;
     }
 }
@@ -50,7 +51,8 @@ export async function getRunEmissionsByExperiment(
             energy_consumed: runReport.energy_consumed,
             duration: runReport.duration,
         }));
-    } catch {
+    } catch (error) {
+        console.error("[getRunEmissionsByExperiment] failed", error);
         return [];
     }
 }
@@ -116,7 +118,8 @@ export async function getEmissionsTimeSeries(
         }));
 
         return { runId, emissions, metadata };
-    } catch {
+    } catch (error) {
+        console.error("[getEmissionsTimeSeries] failed", error);
         return { runId, emissions: [], metadata: null };
     }
 }

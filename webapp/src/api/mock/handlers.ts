@@ -46,7 +46,7 @@ const handlers: Handler[] = [
         if (method === "GET" && pathname === "/projects") {
             const orgId = searchParams.get("organization");
             const projects = orgId
-                ? MOCK_PROJECTS.filter((p) => p.organizationId === orgId)
+                ? MOCK_PROJECTS.filter((p) => p.organization_id === orgId)
                 : MOCK_PROJECTS;
             return ok(projects);
         }

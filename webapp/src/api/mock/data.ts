@@ -4,11 +4,22 @@ import type {
     ExperimentReport,
     Organization,
     OrganizationReport,
-    Project,
     IProjectToken,
     RunMetadata,
     User,
 } from "../schemas";
+
+// Mock project payloads mirror the backend wire format (snake_case keys),
+// so they exercise the same zod validation/transformation path as real
+// responses.
+export interface MockProjectWire {
+    id: string;
+    name: string;
+    description: string;
+    public: boolean;
+    organization_id: string;
+    experiments: string[];
+}
 
 export const MOCK_USER: User = {
     id: "mock-user-1",
@@ -26,13 +37,13 @@ export const MOCK_ORGANIZATIONS: Organization[] = [
     },
 ];
 
-export const MOCK_PROJECTS: Project[] = [
+export const MOCK_PROJECTS: MockProjectWire[] = [
     {
         id: "mock-project-1",
         name: "ML Training Pipeline",
         description: "Carbon footprint of our flagship training pipeline",
         public: false,
-        organizationId: "mock-org-1",
+        organization_id: "mock-org-1",
         experiments: ["mock-experiment-1", "mock-experiment-2"],
     },
     {
@@ -40,7 +51,7 @@ export const MOCK_PROJECTS: Project[] = [
         name: "Inference Service",
         description: "Production inference emissions",
         public: true,
-        organizationId: "mock-org-1",
+        organization_id: "mock-org-1",
         experiments: ["mock-experiment-3"],
     },
 ];
