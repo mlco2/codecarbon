@@ -38,6 +38,7 @@ dependencies = [
     "fastapi-oidc>=0.0.9",
     "authlib>=1.6.6",
     "itsdangerous>=2.2.0",
+    "pytest-asyncio>=1.3.0",
 ]
 
 [project.optional-dependencies]
