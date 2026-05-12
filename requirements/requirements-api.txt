@@ -11,7 +11,7 @@ anyio==4.12.0
     #   httpx
     #   starlette
     #   watchfiles
-authlib==1.7.0
+authlib==1.6.11
     # via carbonserver (carbonserver/pyproject.toml)
 bcrypt==4.3.0
     # via carbonserver (carbonserver/pyproject.toml)
@@ -32,11 +32,7 @@ click==8.3.1
     #   rich-toolkit
     #   typer
     #   uvicorn
-colorama==0.4.6
-    # via
-    #   click
-    #   uvicorn
-cryptography==46.0.7
+cryptography==48.0.0
     # via
     #   authlib
     #   jwcrypto
@@ -145,7 +141,7 @@ python-dotenv==1.2.2
     #   uvicorn
 python-jose==3.5.0
     # via fastapi-oidc
-python-multipart==0.0.26
+python-multipart==0.0.27
     # via fastapi
 pyyaml==6.0.3
     # via uvicorn
@@ -204,7 +200,7 @@ typing-inspection==0.4.2
     # via
     #   pydantic
     #   pydantic-settings
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   requests
     #   sentry-sdk
