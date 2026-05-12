@@ -118,7 +118,8 @@ class NvidiaGPUDevice(GPUDevice):
         """Log a single warning when permanently switching to power-usage fallback.
         Includes the driver version as suggested in GitHub issue #667."""
         try:
-            driver_version = pynvml.nvmlSystemGetDriverVersion()
+            _get_driver = getattr(pynvml, "nvmlSystemGetDriverVersion", None)
+            driver_version = _get_driver() if _get_driver is not None else "unknown"
             if isinstance(driver_version, bytes):
                 driver_version = driver_version.decode("utf-8", errors="replace")
         except Exception:
