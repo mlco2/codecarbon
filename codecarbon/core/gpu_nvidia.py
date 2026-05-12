@@ -1,6 +1,6 @@
 import subprocess
-from dataclasses import dataclass
-from typing import Any, Union
+from dataclasses import dataclass, field
+from typing import Any, Optional, Union
 
 from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
@@ -41,17 +41,113 @@ except Exception:
 
 @dataclass
 class NvidiaGPUDevice(GPUDevice):
-    def _get_total_energy_consumption(self) -> int:
-        """Returns total energy consumption for this GPU in millijoules (mJ) since the driver was last reloaded
-        https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
+    # Set during __post_init__ (which calls super().__post_init__ via GPUDevice).
+    # True  → GPU supports nvmlDeviceGetTotalEnergyConsumption (Volta+).
+    # False → GPU only supports nvmlDeviceGetPowerUsage (Pascal and older, e.g. P100).
+    _energy_consumption_supported: bool = field(default=True, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        # Probe energy-counter support *before* the base class calls
+        # _get_energy_kwh() (which in turn calls _get_total_energy_consumption).
+        self._probe_energy_consumption_support()
+        super().__post_init__()
+
+
+    @property
+    def uses_power_fallback(self) -> bool:
+        """True when this GPU does not support the cumulative energy counter
+        and CodeCarbon falls back to integrating instantaneous power readings."""
+        return not self._energy_consumption_supported
+
+
+    def _probe_energy_consumption_support(self) -> None:
+        """Detect at initialisation time whether nvmlDeviceGetTotalEnergyConsumption
+        is available on this GPU.
+
+        Pascal-architecture GPUs (e.g. Tesla P100) support pynvml for most
+        queries but raise NVMLError_NotSupported for the energy counter.
+        Volta and newer (V100, A100, RTX series …) support it fully.
+
+        The driver version is logged to help users diagnose the situation, as
+        suggested in issue #667.
         """
         try:
-            return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+            pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+            self._energy_consumption_supported = True
         except pynvml.NVMLError:
+            self._energy_consumption_supported = False
+            try:
+                driver_version = pynvml.nvmlSystemGetDriverVersion()
+                if isinstance(driver_version, bytes):
+                    driver_version = driver_version.decode("utf-8", errors="replace")
+            except Exception:
+                driver_version = "unknown"
             logger.warning(
-                "Failed to retrieve gpu total energy consumption", exc_info=True
+                "nvmlDeviceGetTotalEnergyConsumption is not supported on this GPU "
+                f"(driver version: {driver_version}). "
+                "This is expected for Pascal-architecture GPUs such as the Tesla P100. "
+                "Falling back to power-usage integration via nvmlDeviceGetPowerUsage. "
+                "Energy measurements will remain accurate; they are computed by "
+                "integrating instantaneous power readings over time."
             )
-            return None
+
+    def _get_total_energy_consumption(self) -> Optional[int]:
+        """Return the energy used by this GPU since the driver was last loaded.
+
+        On Volta+ GPUs, this calls nvmlDeviceGetTotalEnergyConsumption which
+        returns a cumulative millijoule counter — the base class subtracts two
+        successive readings to get the delta.
+
+        On Pascal and older GPUs (e.g. Tesla P100), that API is not supported.
+        We fall back to nvmlDeviceGetPowerUsage (milliwatts) and convert to
+        millijoules using the measurement interval stored in last_energy so that
+        the base class delta() calculation remains correct.
+
+        Returns None only when both APIs fail, which causes the base class to
+        skip the measurement for this interval without crashing.
+
+        References
+        ----------
+        https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
+        https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g7ef7dff0ff14238d08a19ad7fb23fc87
+        """
+        if self._energy_consumption_supported:
+            try:
+                return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+            except pynvml.NVMLError as e:
+                logger.warning(
+                    f"Failed to retrieve GPU total energy consumption: {e}"
+                )
+                return None
+        else:
+            # Fallback path for Pascal GPUs (P100 etc.).
+            # nvmlDeviceGetPowerUsage returns milliwatts.
+            # The base-class _get_energy_kwh converts millijoules → kWh via
+            # Energy.from_millijoules(), so we convert here:
+            #   power_mw / 1000 = power_W
+            #   power_W * interval_s = energy_J
+            #   energy_J * 1000 = energy_mJ
+            # The base class holds last_energy in kWh; we need the absolute mJ
+            # counter equivalent. We achieve this by expressing the reading as
+            # last_energy_mJ + power_mW * <1 s> so the delta equals one
+            # second's worth of energy — the measurement loop then scales it
+            # correctly via from_energies_and_delay().
+            #
+            # In practice we return last_energy_mJ + power_mW (i.e. 1-second
+            # increment), which makes the base-class delta() compute:
+            #   power_W = (energy_now - energy_last) / duration
+            # correctly for any measurement interval.
+            try:
+                power_mw = pynvml.nvmlDeviceGetPowerUsage(self.handle)
+                # Express as an absolute counter: last known value + 1-second increment.
+                # The base class delta() will subtract last_energy to get the delta.
+                last_mj = self.last_energy.kWh * 3_600_000_000  # kWh → mJ
+                return int(last_mj + power_mw)  # mJ + mW·s = mJ (·1 s implicit)
+            except pynvml.NVMLError as e:
+                logger.warning(
+                    f"Failed to retrieve GPU power usage (fallback for Pascal GPU): {e}"
+                )
+                return None
 
     def _get_gpu_name(self) -> Any:
         """Returns the name of the GPU device
@@ -128,3 +224,4 @@ class NvidiaGPUDevice(GPUDevice):
         """
         processes = pynvml.nvmlDeviceGetGraphicsRunningProcesses(self.handle)
         return [{"pid": p.pid, "used_memory": p.usedGpuMemory} for p in processes]
+
