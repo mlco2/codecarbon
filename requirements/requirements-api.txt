@@ -11,7 +11,7 @@ anyio==4.12.0
     #   httpx
     #   starlette
     #   watchfiles
-authlib==1.6.9
+authlib==1.7.0
     # via carbonserver (carbonserver/pyproject.toml)
 bcrypt==4.3.0
     # via carbonserver (carbonserver/pyproject.toml)
@@ -32,12 +32,11 @@ click==8.3.1
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==46.0.7
 colorama==0.4.6
     # via
     #   click
     #   uvicorn
-cryptography==46.0.6
+cryptography==46.0.7
     # via
     #   authlib
     #   jwcrypto
@@ -140,7 +139,7 @@ pyjwt==2.10.1
     # via carbonserver (carbonserver/pyproject.toml)
 python-dateutil==2.9.0.post0
     # via carbonserver (carbonserver/pyproject.toml)
-python-dotenv==1.2.1
+python-dotenv==1.2.2
     # via
     #   pydantic-settings
     #   uvicorn

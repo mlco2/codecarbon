@@ -1,6 +1,6 @@
 import subprocess
-from dataclasses import dataclass
-from typing import Any, Union
+from dataclasses import dataclass, field
+from typing import Any, Optional, Union
 
 from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
@@ -41,17 +41,97 @@ except Exception:
 
 @dataclass
 class NvidiaGPUDevice(GPUDevice):
-    def _get_total_energy_consumption(self) -> int:
-        """Returns total energy consumption for this GPU in millijoules (mJ) since the driver was last reloaded
+    # Tracks whether nvmlDeviceGetTotalEnergyConsumption is supported.
+    # None  = not yet determined (set on first call)
+    # True  = works fine (Volta+ GPUs: V100, A100, RTX series, etc.)
+    # False = permanently unsupported; use power-usage fallback (Pascal/P100)
+    _energy_consumption_supported: Optional[bool] = field(
+        default=None, init=False, repr=False
+    )
+
+    @property
+    def uses_power_fallback(self) -> bool:
+        """True when this GPU does not support the cumulative energy counter
+        and CodeCarbon falls back to integrating instantaneous power readings."""
+        return self._energy_consumption_supported is False
+
+    def _get_total_energy_consumption(self) -> Optional[int]:
+        """Returns total energy consumption for this GPU in millijoules (mJ)
+        since the driver was last reloaded.
+
+        On Volta+ GPUs uses nvmlDeviceGetTotalEnergyConsumption (cumulative mJ
+        counter). On Pascal GPUs (e.g. Tesla P100) that API raises
+        NVMLError_NotSupported; we detect this on the FIRST call only, emit a
+        single clear warning with the driver version (issue #667), and
+        permanently switch to nvmlDeviceGetPowerUsage for all future calls.
+
+        Generic / transient NVMLErrors (e.g. "System is not in ready state")
+        are treated the same as before: log a warning and return None for that
+        interval. The fallback is NOT activated — these errors may be temporary.
+
+        Returns None only when the API call fails, so the base class skips the
+        interval gracefully without crashing.
+
         https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g732ab899b5bd18ac4bfb93c02de4900a
+        https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1g7ef7dff0ff14238d08a19ad7fb23fc87
         """
+        # --- Supported path (Volta+ or not yet determined) ---
+        if self._energy_consumption_supported is not False:
+            try:
+                result = pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
+                self._energy_consumption_supported = True
+                return result
+            except pynvml.NVMLError as e:
+                # NVMLError_NotSupported is a permanent hardware limitation
+                # (P100 and older Pascal GPUs). Switch to power-usage fallback.
+                # Other NVMLErrors are transient — do NOT activate the fallback.
+                # Use getattr for compatibility with fake pynvml modules in tests.
+                _not_supported_cls = getattr(pynvml, "NVMLError_NotSupported", None)
+                if _not_supported_cls is not None and isinstance(e, _not_supported_cls):
+                    self._energy_consumption_supported = False
+                    self._log_fallback_warning()
+                    # Fall through to the power-usage path below.
+                else:
+                    # Transient error (e.g. "System is not in ready state").
+                    # Do NOT activate the fallback — retry next interval.
+                    logger.warning(
+                        "Failed to retrieve gpu total energy consumption", exc_info=True
+                    )
+                    return None
+
+        # --- Fallback path (Pascal / P100 and older) ---
+        # nvmlDeviceGetPowerUsage returns instantaneous milliwatts.
+        # We return (last_energy_mJ + power_mW) so the base-class delta()
+        # subtracts two successive readings and gets exactly power_mW mJ,
+        # which from_energies_and_delay() scales to the actual interval.
         try:
-            return pynvml.nvmlDeviceGetTotalEnergyConsumption(self.handle)
-        except pynvml.NVMLError:
+            power_mw = pynvml.nvmlDeviceGetPowerUsage(self.handle)
+            last_mj = self.last_energy.kWh * 3_600_000_000  # kWh -> mJ
+            return int(last_mj + power_mw)
+        except pynvml.NVMLError as e:
             logger.warning(
-                "Failed to retrieve gpu total energy consumption", exc_info=True
+                f"Failed to retrieve GPU power usage (fallback for Pascal GPU): {e}"
             )
             return None
+
+    def _log_fallback_warning(self) -> None:
+        """Log a single warning when permanently switching to power-usage fallback.
+        Includes the driver version as suggested in GitHub issue #667."""
+        try:
+            _get_driver = getattr(pynvml, "nvmlSystemGetDriverVersion", None)
+            driver_version = _get_driver() if _get_driver is not None else "unknown"
+            if isinstance(driver_version, bytes):
+                driver_version = driver_version.decode("utf-8", errors="replace")
+        except Exception:
+            driver_version = "unknown"
+        logger.warning(
+            "nvmlDeviceGetTotalEnergyConsumption is not supported on this GPU "
+            f"(driver version: {driver_version}). "
+            "This is expected for Pascal-architecture GPUs such as the Tesla P100. "
+            "Falling back to power-usage integration via nvmlDeviceGetPowerUsage. "
+            "Energy measurements will remain accurate; they are computed by "
+            "integrating instantaneous power readings over time."
+        )
 
     def _get_gpu_name(self) -> Any:
         """Returns the name of the GPU device

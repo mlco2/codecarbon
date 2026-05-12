@@ -31,6 +31,12 @@ class NVMLError(Exception):
     pass
 
 
+class NVMLError_NotSupported(NVMLError):
+    """Raised when a pynvml API is not supported on the current GPU hardware.
+    Added for issue #667: Pascal GPUs (e.g. P100) raise this for
+    nvmlDeviceGetTotalEnergyConsumption."""
+
+
 def nvmlInit():
     return INIT_MOCK()
 
@@ -86,3 +92,8 @@ def nvmlDeviceGetGraphicsRunningProcesses(handle):
 
 def nvmlDeviceGetTotalEnergyConsumption(handle):
     return DETAILS[handle]["total_energy_consumption"]
+
+
+def nvmlSystemGetDriverVersion():
+    """Returns a fake driver version string. Added for issue #667."""
+    return b"525.85.12"

@@ -104,3 +104,4 @@ The app also provides a visualization of regional carbon intensity of electricit
 - [Set up the Cloud API](cloud-api.md) to send data to the online dashboard
 - [Configure CodeCarbon](configuration.md) for additional tracking options
 - [Integrate with experiment tracking tools](comet.md) like Comet for seamless workflow integration
+- [Join our Discord](https://discord.gg/GS9js2XkJR) to share your results and discuss emissions tracking with the community

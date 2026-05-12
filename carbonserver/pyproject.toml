@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "alembic<2.0.0",
-    "authlib>=1.2.1",
+    "authlib>=1.7.0",
     "bcrypt<5.0.0",
     "python-dateutil<3.0.0",
     "dependency-injector<5.0.0",
@@ -38,6 +38,7 @@ dependencies = [
     "fastapi-oidc>=0.0.9",
     "authlib>=1.6.6",
     "itsdangerous>=2.2.0",
+    "pytest-asyncio>=1.3.0",
 ]
 
 [project.optional-dependencies]

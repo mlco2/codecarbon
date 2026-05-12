@@ -34,9 +34,12 @@ def check_login(
     sign_up_service: SignUpService = Depends(Provide[ServerContainer.sign_up_service]),
 ):
     """
-    return user data or redirect to login screen
-    null value if not logged in
+    Return user data or null if not logged in.
+    Returns 401 if token is present but invalid/expired.
     """
+    if auth_user.auth_user is None:
+        return {"user": None}
+
     sign_up_service.check_jwt_user(auth_user.auth_user, create=True)
     return {"user": auth_user.auth_user}
 

@@ -30,6 +30,10 @@ export async function fetchApiClient<T>(
     });
 
     if (!response.ok) {
+        if (response.status == 401) {
+            window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/login?redirect=${process.env.NEXT_PUBLIC_BASE_URL}/home?auth=true`;
+            return null;
+        }
         let errorMessage = `API error: ${response.status} ${response.statusText}`;
         try {
             const errorData = await response.json();

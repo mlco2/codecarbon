@@ -69,7 +69,9 @@ def get_http_exception(exception) -> HTTPException:
     take an internal exception and return a HTTPException
     """
     if isinstance(exception, UserException):
-        if isinstance(error := exception.error, NotAllowedError):
+        if isinstance(error := exception.error, UserError):
+            return HTTPException(status_code=401, detail=error.message)
+        elif isinstance(error := exception.error, NotAllowedError):
             return HTTPException(status_code=403, detail=error.message)
         elif isinstance(error := exception.error, NotFoundError):
             return HTTPException(status_code=404, detail=error.message)

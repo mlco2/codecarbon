@@ -49,6 +49,9 @@ class EmissionsData:
     wue: float = 0
     cpu_temperature: float = 0.0  # ADD
     gpu_temperature: float = 0.0  # ADD
+    neuron_power: float = 0.0
+    neuron_energy: float = 0.0
+    neuron_utilization_pct: float = 0.0
 
     @property
     def values(self) -> OrderedDict:
@@ -114,6 +117,9 @@ class TaskEmissionsData:
     on_cloud: str = "N"
     cpu_temperature: float = 0.0
     gpu_temperature: float = 0.0
+    neuron_power: float = 0.0
+    neuron_energy: float = 0.0
+    neuron_utilization_pct: float = 0.0
 
     @property
     def values(self) -> OrderedDict:
