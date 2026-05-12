@@ -14,10 +14,6 @@ Run with:
 """
 
 import logging
-import os
-import sys
-from copy import deepcopy
-from unittest.mock import patch
 
 # Import FakeGPUEnv from test_gpu_nvidia so we reuse its setup/teardown exactly.
 # This ensures the fake pynvml module is injected correctly before each test.
@@ -29,6 +25,7 @@ class TestCapabilityDetection(FakeGPUEnv):
 
     def test_flag_true_after_successful_init(self):
         from codecarbon.core.gpu import AllGPUDevices
+
         devices = AllGPUDevices()
         # Both GPUs succeeded → flag should be True on each
         for device in devices.devices:
@@ -44,6 +41,7 @@ class TestCapabilityDetection(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -61,6 +59,7 @@ class TestCapabilityDetection(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_transient
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -78,6 +77,7 @@ class TestCapabilityDetection(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -87,6 +87,7 @@ class TestCapabilityDetection(FakeGPUEnv):
 
     def test_uses_power_fallback_false_on_modern_gpu(self):
         from codecarbon.core.gpu import AllGPUDevices
+
         devices = AllGPUDevices()
         for device in devices.devices:
             assert device.uses_power_fallback is False
@@ -101,6 +102,7 @@ class TestCapabilityDetection(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_transient
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -115,10 +117,12 @@ class TestGetTotalEnergyConsumption(FakeGPUEnv):
 
     def test_returns_energy_counter_on_supported_gpu(self):
         from codecarbon.core.gpu import AllGPUDevices
+
         devices = AllGPUDevices()
         device = devices.devices[0]
 
         import pynvml
+
         original = pynvml.nvmlDeviceGetTotalEnergyConsumption
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = lambda h: 999_000
@@ -138,6 +142,7 @@ class TestGetTotalEnergyConsumption(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -160,6 +165,7 @@ class TestGetTotalEnergyConsumption(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_transient
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -179,6 +185,7 @@ class TestGetTotalEnergyConsumption(FakeGPUEnv):
 
     def test_fallback_encodes_power_as_counter_increment(self):
         import pynvml
+
         from codecarbon.core.units import Energy
 
         def raise_not_supported(handle):
@@ -188,6 +195,7 @@ class TestGetTotalEnergyConsumption(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -216,6 +224,7 @@ class TestGetTotalEnergyConsumption(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
             device = devices.devices[0]
             pynvml.nvmlDeviceGetPowerUsage = raise_power_error
@@ -230,14 +239,16 @@ class TestGetTotalEnergyConsumption(FakeGPUEnv):
         import pynvml
 
         from codecarbon.core.gpu import AllGPUDevices
+
         devices = AllGPUDevices()
         device = devices.devices[0]
         assert device._energy_consumption_supported is True
 
         original = pynvml.nvmlDeviceGetTotalEnergyConsumption
         try:
-            pynvml.nvmlDeviceGetTotalEnergyConsumption = \
-                lambda h: (_ for _ in ()).throw(pynvml.NVMLError("transient"))
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = lambda h: (
+                _ for _ in ()
+            ).throw(pynvml.NVMLError("transient"))
             result = device._get_total_energy_consumption()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -252,6 +263,7 @@ class TestDeltaOnP100(FakeGPUEnv):
     def test_power_is_nonzero_on_p100(self):
         """Core regression: P100 must not report 0.0 W."""
         import pynvml
+
         from codecarbon.core.units import Time
 
         def raise_not_supported(handle):
@@ -261,17 +273,20 @@ class TestDeltaOnP100(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
 
         device = devices.devices[0]
         result = device.delta(Time(seconds=15))
-        assert result["power_usage"].W > 0, \
-            "GPU power was 0 W on a P100-like device — fallback not working"
+        assert (
+            result["power_usage"].W > 0
+        ), "GPU power was 0 W on a P100-like device — fallback not working"
 
     def test_energy_delta_is_nonzero_on_p100(self):
         import pynvml
+
         from codecarbon.core.units import Time
 
         def raise_not_supported(handle):
@@ -281,21 +296,24 @@ class TestDeltaOnP100(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
 
         device = devices.devices[0]
         result = device.delta(Time(seconds=10))
-        assert result["delta_energy_consumption"].kWh > 0, \
-            "GPU energy was 0 on a P100-like device — fallback not working"
+        assert (
+            result["delta_energy_consumption"].kWh > 0
+        ), "GPU energy was 0 on a P100-like device — fallback not working"
 
     def test_unchanged_counter_gives_zero_delta_on_volta(self):
         """Sanity: if counter doesn't change between two delta() calls, delta is zero."""
         import pynvml
-        from codecarbon.core.units import Energy, Time
 
         from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Energy, Time
+
         devices = AllGPUDevices()
         device = devices.devices[0]
 
@@ -318,16 +336,16 @@ class TestDeltaOnP100(FakeGPUEnv):
         import pynvml
 
         from codecarbon.core.gpu import AllGPUDevices
+
         devices = AllGPUDevices()
         device = devices.devices[0]
         assert device._energy_consumption_supported is True
 
         original = pynvml.nvmlDeviceGetTotalEnergyConsumption
         try:
-            pynvml.nvmlDeviceGetTotalEnergyConsumption = \
-                lambda h: (_ for _ in ()).throw(
-                    pynvml.NVMLError("System is not in ready state")
-                )
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = lambda h: (
+                _ for _ in ()
+            ).throw(pynvml.NVMLError("System is not in ready state"))
             result = device._get_total_energy_consumption()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -352,15 +370,17 @@ class TestLogging(FakeGPUEnv):
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             with caplog.at_level(logging.WARNING, logger="codecarbon"):
                 from codecarbon.core.gpu import AllGPUDevices
+
                 AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
             cc_logger.propagate = False
 
         warnings = [r.message for r in caplog.records if r.levelno == logging.WARNING]
-        assert any("fallback" in m.lower() or "pascal" in m.lower() or "525" in m
-                   for m in warnings), \
-            f"Expected fallback warning, got: {warnings}"
+        assert any(
+            "fallback" in m.lower() or "pascal" in m.lower() or "525" in m
+            for m in warnings
+        ), f"Expected fallback warning, got: {warnings}"
 
     def test_no_fallback_warning_on_supported_gpu(self, caplog):
         cc_logger = logging.getLogger("codecarbon")
@@ -368,13 +388,16 @@ class TestLogging(FakeGPUEnv):
         try:
             with caplog.at_level(logging.WARNING, logger="codecarbon"):
                 from codecarbon.core.gpu import AllGPUDevices
+
                 AllGPUDevices()
         finally:
             cc_logger.propagate = False
 
-        fallback_warnings = [r.message for r in caplog.records
-                             if r.levelno == logging.WARNING
-                             and "fallback" in r.message.lower()]
+        fallback_warnings = [
+            r.message
+            for r in caplog.records
+            if r.levelno == logging.WARNING and "fallback" in r.message.lower()
+        ]
         assert fallback_warnings == []
 
     def test_warning_not_repeated_on_subsequent_calls(self, caplog):
@@ -388,6 +411,7 @@ class TestLogging(FakeGPUEnv):
         try:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_not_supported
             from codecarbon.core.gpu import AllGPUDevices
+
             devices = AllGPUDevices()
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original
@@ -405,7 +429,9 @@ class TestLogging(FakeGPUEnv):
         finally:
             cc_logger.propagate = False
 
-        new_warnings = [r for r in caplog.records
-                        if r.levelno == logging.WARNING
-                        and "fallback" in r.message.lower()]
+        new_warnings = [
+            r
+            for r in caplog.records
+            if r.levelno == logging.WARNING and "fallback" in r.message.lower()
+        ]
         assert len(new_warnings) == 0

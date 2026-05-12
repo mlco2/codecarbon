@@ -35,7 +35,6 @@ class NVMLError_NotSupported(NVMLError):
     """Raised when a pynvml API is not supported on the current GPU hardware.
     Added for issue #667: Pascal GPUs (e.g. P100) raise this for
     nvmlDeviceGetTotalEnergyConsumption."""
-    pass
 
 
 def nvmlInit():
