@@ -174,6 +174,32 @@ class TestEmissions(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 0.475, places=2)
 
+    @patch("codecarbon.core.electricitymaps_api.get_emissions")
+    def test_private_infra_uses_forced_intensity_when_set(self, mocked_get_emissions):
+        emissions_calculator = Emissions(
+            self._data_source, force_carbon_intensity_g_co2e_kwh=50.0
+        )
+
+        emissions = emissions_calculator.get_private_infra_emissions(
+            Energy.from_energy(kWh=2),
+            GeoMetadata(country_iso_code="CAN", country_name="Canada"),
+        )
+
+        self.assertAlmostEqual(emissions, 0.1, places=6)
+        mocked_get_emissions.assert_not_called()
+
+    def test_cloud_uses_forced_intensity_when_set(self):
+        emissions_calculator = Emissions(
+            self._data_source, force_carbon_intensity_g_co2e_kwh=100.0
+        )
+
+        emissions = emissions_calculator.get_cloud_emissions(
+            Energy.from_energy(kWh=2),
+            CloudMetadata(provider="aws", region="us-east-1"),
+        )
+
+        self.assertAlmostEqual(emissions, 0.2, places=6)
+
     def test_get_emissions_PRIVATE_INFRA_NORDIC_REGION(self):
         # WHEN
         # Test Nordic region (Sweden SE2)
