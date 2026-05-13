@@ -147,7 +147,7 @@ class Emissions:
         :return: CO2 emissions in kg
         """
         if self._force_carbon_intensity_g_co2e_kwh is not None:
-            logger.info(
+            logger.debug(
                 f"Using forced carbon intensity for private infrastructure emissions: {self._force_carbon_intensity_g_co2e_kwh} gCO2e/kWh"
             )
             return energy.kWh * (self._force_carbon_intensity_g_co2e_kwh / 1000.0)

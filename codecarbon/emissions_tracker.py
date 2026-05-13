@@ -293,12 +293,12 @@ class BaseEmissionsTracker(ABC):
                     parsed_intensity = value
                 else:
                     logger.warning(
-                        f"CODECARBON : Invalid value for force_carbon_intensity_g_co2e_kwh: '{self._force_carbon_intensity_g_co2e_kwh}'. "
+                        f"Invalid value for force_carbon_intensity_g_co2e_kwh: '{self._force_carbon_intensity_g_co2e_kwh}'. "
                         "It must be a non-negative number. Using default calculation methods."
                     )
             except (ValueError, TypeError):
                 logger.warning(
-                    f"CODECARBON : Invalid value for force_carbon_intensity_g_co2e_kwh: '{self._force_carbon_intensity_g_co2e_kwh}'. "
+                    f"Invalid value for force_carbon_intensity_g_co2e_kwh: '{self._force_carbon_intensity_g_co2e_kwh}'. "
                     "It must be a numeric value. Using default calculation methods."
                 )
         self._force_carbon_intensity_g_co2e_kwh = parsed_intensity
@@ -383,7 +383,7 @@ class BaseEmissionsTracker(ABC):
 
         if self.force_carbon_intensity_g_co2e_kwh is not None:
             logger.info(
-                f"CODECARBON : Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
+                f"Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
             )
 
         assert self._tracking_mode in ["machine", "process"]
