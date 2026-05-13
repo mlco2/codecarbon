@@ -5,11 +5,11 @@
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
 - [Contributing to Code Carbon](#contributing-to-code-carbon)
-  - [ Have a Question?](#-have-a-question)
-  - [ Found a Bug?](#-found-a-bug)
-  - [ Have a Feature Request?](#-have-a-feature-request)
+  - [Have a Question?](#have-a-question)
+  - [Found a Bug?](#found-a-bug)
+  - [Have a Feature Request?](#have-a-feature-request)
   - [Alternative ways of contributing](#alternative-ways-of-contributing)
-  - [ Ready to Contribute!](#-ready-to-contribute)
+  - [Ready to Contribute!](#ready-to-contribute)
     - [Installation](#installation)
     - [Some UV commands](#some-uv-commands)
     - [Tests](#tests)
@@ -17,9 +17,9 @@
     - [Update all dependencies](#update-all-dependencies)
     - [Branching and Pull Requests](#branching-and-pull-requests)
     - [Debug in VS Code](#debug-in-vs-code)
-    - [Coding style \&\& Linting](#coding-style--linting)
+    - [Coding style \&\& Linting](#coding-style-linting)
     - [Dependencies management](#dependencies-management)
-    - [Build Documentation 🖨️](#build-documentation-️)
+    - [Build Documentation 🖨️](#build-documentation)
     - [Release process](#release-process)
       - [Test the build in Docker](#test-the-build-in-docker)
   - [API and Dashboard](#api-and-dashboard)
@@ -45,13 +45,13 @@ Please see the [FAQ](https://docs.codecarbon.io/latest/explanation/faq/) for que
 <!-- TOC --><a name="found-a-bug"></a>
 ## </a> Found a Bug?
 
-If you've identified a bug in `codecarbon`, please [submit an issue](#issue) to the GitHub repo: [mlco2/codecarbon](https://github.com/mlco2/codecarbon/issues/new). Please also feel free to submit a PR with a fix for the bug!
+If you've identified a bug in `codecarbon`, please [submit an issue](https://github.com/mlco2/codecarbon/issues/new) to the GitHub repo: [mlco2/codecarbon](https://github.com/mlco2/codecarbon/issues/new). Please also feel free to submit a PR with a fix for the bug!
 
 
 <!-- TOC --><a name="have-a-feature-request"></a>
 ## </a> Have a Feature Request?
 
-Feel free to describe your request by [submitting an issue](#issue) documenting the feature (with its intent) and a PR with a proposed implementation of the feature.
+Feel free to describe your request by [submitting an issue](https://github.com/mlco2/codecarbon/issues/new) documenting the feature (with its intent) and a PR with a proposed implementation of the feature.
 
 Before submitting a new issue, please search the issues to make sure there isn't a similar issue already.
 New issues can be created within the [GitHub repo](https://github.com/mlco2/codecarbon/issues/new).
@@ -136,7 +136,7 @@ For example: `uv run python -m unittest tests.test_energy.TestEnergy.test_wrapar
 
 Some tests will fail if you do not set *CODECARBON_ALLOW_MULTIPLE_RUNS* with `export CODECARBON_ALLOW_MULTIPLE_RUNS=True` before running test manually.
 
-To test the API, see [how to deploy it](#local_deployement) first.
+To test the API, see [how to run it locally](#api) first.
 
 Core and external classes are unit tested, with one test file per class. Most pull requests are expected to contain either new tests or test updates. If you are unusure what to test / how to test it, please put it in the pull request description and the maintainers will help you.
 
