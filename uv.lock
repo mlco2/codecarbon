@@ -473,7 +473,9 @@ doc = [
     { name = "mike" },
     { name = "mkdocs-redirects" },
     { name = "mkdocstrings", extra = ["python"] },
+    { name = "requests" },
     { name = "setuptools" },
+    { name = "taskipy" },
     { name = "zensical" },
 ]
 
@@ -528,7 +530,9 @@ doc = [
     { name = "mike" },
     { name = "mkdocs-redirects" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.26" },
+    { name = "requests" },
     { name = "setuptools" },
+    { name = "taskipy" },
     { name = "zensical" },
 ]
 

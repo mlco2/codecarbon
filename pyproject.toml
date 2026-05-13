@@ -97,7 +97,9 @@ dev = [
     "scikit-learn",  # For documentation examples and tests
 ]
 doc = [
+  "requests",
   "setuptools",
+  "taskipy",
   "zensical",
   "mike",
   "mkdocstrings[python]>=0.26",
