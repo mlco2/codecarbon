@@ -265,10 +265,56 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(tracker.force_carbon_intensity_g_co2e_kwh, 0.0)
 
+    def test_force_carbon_intensity_rejects_negative_parameter(self):
+        with patch("builtins.open", new_callable=get_custom_mock_open("", "")):
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    force_carbon_intensity_g_co2e_kwh=-1,
+                    save_to_file=False,
+                    allow_multiple_runs=True,
+                )
+
+        self.assertIsNone(tracker.force_carbon_intensity_g_co2e_kwh)
+        self.assertIsNone(tracker._conf["force_carbon_intensity_g_co2e_kwh"])
+
+    def test_force_carbon_intensity_rejects_non_numeric_parameter(self):
+        with patch("builtins.open", new_callable=get_custom_mock_open("", "")):
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    force_carbon_intensity_g_co2e_kwh="invalid",
+                    save_to_file=False,
+                    allow_multiple_runs=True,
+                )
+
+        self.assertIsNone(tracker.force_carbon_intensity_g_co2e_kwh)
+        self.assertIsNone(tracker._conf["force_carbon_intensity_g_co2e_kwh"])
+
     def test_track_emissions_forwards_force_carbon_intensity_parameter(self):
         with patch("codecarbon.emissions_tracker.EmissionsTracker") as tracker_class:
 
             @track_emissions(
+                force_carbon_intensity_g_co2e_kwh=321.0,
+                save_to_file=False,
+            )
+            def tracked_function():
+                return "success"
+
+            self.assertEqual(tracked_function(), "success")
+
+        tracker_class.assert_called_once()
+        self.assertEqual(
+            tracker_class.call_args.kwargs["force_carbon_intensity_g_co2e_kwh"],
+            321.0,
+        )
+
+    def test_track_emissions_forwards_force_carbon_intensity_to_offline_tracker(self):
+        with patch(
+            "codecarbon.emissions_tracker.OfflineEmissionsTracker"
+        ) as tracker_class:
+
+            @track_emissions(
+                offline=True,
+                country_iso_code="FRA",
                 force_carbon_intensity_g_co2e_kwh=321.0,
                 save_to_file=False,
             )
