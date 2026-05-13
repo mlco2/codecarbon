@@ -195,6 +195,7 @@ class BaseEmissionsTracker(ABC):
         force_ram_power: Optional[int] = _sentinel,
         pue: Optional[float] = _sentinel,
         wue: Optional[float] = _sentinel,
+        force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
@@ -259,11 +260,13 @@ class BaseEmissionsTracker(ABC):
                                 then RAM power (W) = Number of RAM Slots × 5 Watts.
         :param pue: PUE (Power Usage Effectiveness) of the data center where the
                     experiment is being run.
+        :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
+                    litres of water consumed per kilowatt-hour of electricity consumed.
+        :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
+                                                  in gCO2e/kWh for emissions calculations.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
                                     Defaults to True since v3 (was False in v2).
-        :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
-                    litres of water consumed per kilowatt-hour of electricity consumed.
         :param rapl_include_dram: Include DRAM (memory) power in RAPL measurements on Linux,
                                   defaults to False. When True, measures CPU package + DRAM.
                                   Only affects systems where RAPL exposes separate DRAM domains.
@@ -276,33 +279,31 @@ class BaseEmissionsTracker(ABC):
 
         # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
-        custom_intensity_str = self._external_conf.get(
-            "custom_carbon_intensity_g_co2e_kwh"
+        self._set_from_conf(
+            force_carbon_intensity_g_co2e_kwh,
+            "force_carbon_intensity_g_co2e_kwh",
+            None,
+            float,
         )
         parsed_intensity = None
-        if custom_intensity_str is not None:
-            custom_intensity_str_stripped = custom_intensity_str.strip()
-            if custom_intensity_str_stripped == "":
-                logger.warning(
-                    f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str}'. "
-                    "It cannot be empty or whitespace. Using default calculation methods."
-                )
-            else:
-                try:
-                    value = float(custom_intensity_str_stripped)
-                    if value > 0:
-                        parsed_intensity = value
-                    else:
-                        logger.warning(
-                            f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
-                            "It must be a positive number. Using default calculation methods."
-                        )
-                except ValueError:
+        if self._force_carbon_intensity_g_co2e_kwh is not None:
+            try:
+                value = float(self._force_carbon_intensity_g_co2e_kwh)
+                if value >= 0:
+                    parsed_intensity = value
+                else:
                     logger.warning(
-                        f"CODECARBON : Invalid value for custom_carbon_intensity_g_co2e_kwh: '{custom_intensity_str_stripped}'. "
-                        "It must be a numeric value. Using default calculation methods."
+                        f"CODECARBON : Invalid value for force_carbon_intensity_g_co2e_kwh: '{self._force_carbon_intensity_g_co2e_kwh}'. "
+                        "It must be a non-negative number. Using default calculation methods."
                     )
-        self.custom_carbon_intensity_g_co2e_kwh = parsed_intensity
+            except (ValueError, TypeError):
+                logger.warning(
+                    f"CODECARBON : Invalid value for force_carbon_intensity_g_co2e_kwh: '{self._force_carbon_intensity_g_co2e_kwh}'. "
+                    "It must be a numeric value. Using default calculation methods."
+                )
+        self._force_carbon_intensity_g_co2e_kwh = parsed_intensity
+        self._conf["force_carbon_intensity_g_co2e_kwh"] = parsed_intensity
+        self.force_carbon_intensity_g_co2e_kwh = parsed_intensity
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
         if self._allow_multiple_runs:
             logger.warning(
@@ -380,9 +381,9 @@ class BaseEmissionsTracker(ABC):
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
 
-        if self.custom_carbon_intensity_g_co2e_kwh is not None:
+        if self.force_carbon_intensity_g_co2e_kwh is not None:
             logger.info(
-                f"CODECARBON : Using custom carbon intensity: {self.custom_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
+                f"CODECARBON : Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
             )
 
         assert self._tracking_mode in ["machine", "process"]
@@ -480,7 +481,7 @@ class BaseEmissionsTracker(ABC):
         self._emissions: Emissions = Emissions(
             self._data_source,
             self._electricitymaps_api_token,
-            custom_carbon_intensity_g_co2e_kwh=self.custom_carbon_intensity_g_co2e_kwh,
+            force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
         )
         self._init_output_methods(api_key=self._api_key)
 
@@ -1344,6 +1345,7 @@ def track_emissions(
     force_ram_power: Optional[int] = _sentinel,
     pue: Optional[float] = _sentinel,
     wue: Optional[float] = _sentinel,
+    force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
     rapl_include_dram: Optional[bool] = _sentinel,
     rapl_prefer_psys: Optional[bool] = _sentinel,
@@ -1426,6 +1428,8 @@ def track_emissions(
     :param pue: PUE (Power Usage Effectiveness) of the data center.
     :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
                 litres of water consumed per kilowatt-hour of electricity consumed.
+    :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
+                         in gCO2e/kWh for emissions calculations.
     :param rapl_include_dram: Include DRAM in RAPL measurements on Linux (default: False).
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
@@ -1481,6 +1485,7 @@ def track_emissions(
                     force_ram_power=force_ram_power,
                     pue=pue,
                     wue=wue,
+                    force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
@@ -1515,6 +1520,7 @@ def track_emissions(
                     force_ram_power=force_ram_power,
                     pue=pue,
                     wue=wue,
+                    force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,

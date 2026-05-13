@@ -11,7 +11,11 @@ from codecarbon.core.config import (
     parse_env_config,
     parse_gpu_ids,
 )
-from codecarbon.emissions_tracker import EmissionsTracker
+from codecarbon.emissions_tracker import (
+    EmissionsTracker,
+    OfflineEmissionsTracker,
+    track_emissions,
+)
 from codecarbon.external.hardware import GPU
 from tests.testutils import get_custom_mock_open
 
@@ -199,7 +203,7 @@ class TestConfig(unittest.TestCase):
             force_ram_power=50.5
             output_dir=ERROR:not overwritten
             save_to_file=ERROR:not overwritten
-            custom_carbon_intensity_g_co2e_kwh=123.4
+            force_carbon_intensity_g_co2e_kwh=123.4
             """
         )
         local_conf = dedent(
@@ -226,9 +230,58 @@ class TestConfig(unittest.TestCase):
             self.assertEqual(tracker._emissions_endpoint, "http://testhost:2000")
             self.assertEqual(tracker._gpu_ids, ["0", "1"])
             self.assertEqual(tracker._electricitymaps_api_token, "signal-token")
-            self.assertEqual(tracker.custom_carbon_intensity_g_co2e_kwh, 123.4)
+            self.assertEqual(tracker.force_carbon_intensity_g_co2e_kwh, 123.4)
             self.assertEqual(tracker._project_name, "test-project")
             self.assertTrue(tracker._save_to_file)
+
+    def test_force_carbon_intensity_constructor_overrides_config(self):
+        global_conf = dedent(
+            """\
+            [codecarbon]
+            force_carbon_intensity_g_co2e_kwh=123.4
+            """
+        )
+
+        with patch("builtins.open", new_callable=get_custom_mock_open(global_conf, "")):
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    force_carbon_intensity_g_co2e_kwh=456.7,
+                    save_to_file=False,
+                    allow_multiple_runs=True,
+                )
+
+        self.assertEqual(tracker.force_carbon_intensity_g_co2e_kwh, 456.7)
+        self.assertEqual(tracker._conf["force_carbon_intensity_g_co2e_kwh"], 456.7)
+
+    def test_offline_tracker_accepts_force_carbon_intensity_parameter(self):
+        with patch("builtins.open", new_callable=get_custom_mock_open("", "")):
+            with patch("os.path.exists", return_value=True):
+                tracker = OfflineEmissionsTracker(
+                    country_iso_code="FRA",
+                    force_carbon_intensity_g_co2e_kwh=0,
+                    save_to_file=False,
+                    allow_multiple_runs=True,
+                )
+
+        self.assertEqual(tracker.force_carbon_intensity_g_co2e_kwh, 0.0)
+
+    def test_track_emissions_forwards_force_carbon_intensity_parameter(self):
+        with patch("codecarbon.emissions_tracker.EmissionsTracker") as tracker_class:
+
+            @track_emissions(
+                force_carbon_intensity_g_co2e_kwh=321.0,
+                save_to_file=False,
+            )
+            def tracked_function():
+                return "success"
+
+            self.assertEqual(tracked_function(), "success")
+
+        tracker_class.assert_called_once()
+        self.assertEqual(
+            tracker_class.call_args.kwargs["force_carbon_intensity_g_co2e_kwh"],
+            321.0,
+        )
 
     @mock.patch.dict(
         os.environ,
