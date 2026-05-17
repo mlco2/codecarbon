@@ -97,7 +97,9 @@ dev = [
     "scikit-learn",  # For documentation examples and tests
 ]
 doc = [
+  "requests",
   "setuptools",
+  "taskipy",
   "zensical",
   "mike",
   "mkdocstrings[python]>=0.26",
@@ -152,7 +154,7 @@ docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.6"
+current_version = "3.2.7"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

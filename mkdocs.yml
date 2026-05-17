@@ -9,7 +9,6 @@ edit_uri: edit/master/docs/
 copyright: "&copy; CodeCarbon"
 
 theme:
-  name: zensical
   favicon: images/favicon.ico
   logo: images/codecarbon-logo.svg
   palette:
