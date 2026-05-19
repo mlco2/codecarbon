@@ -6,6 +6,7 @@ from codecarbon.core.telemetry_collect import (
     collect_telemetry_context,
     project_tier1,
 )
+from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 
@@ -80,10 +81,9 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertEqual(payload["total_emissions_kg"], 0.5)
         self.assertEqual(payload["duration_seconds"], 10.0)
         self.assertTrue(payload["has_torch"])
-        self.assertNotIn("torch_version", payload)
         self.assertIn("file", payload["output_methods"])
 
-    def test_build_tier1_payload_excludes_framework_versions(self):
+    def test_build_tier1_payload_includes_framework_versions(self):
         tracker = MagicMock()
         tracker._conf = {"codecarbon_version": "3.0", "hardware": ["cpu"]}
         tracker._geo = None
@@ -110,4 +110,24 @@ class TestTelemetryCollect(unittest.TestCase):
 
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertTrue(payload["has_torch"])
-        self.assertNotIn("torch_version", payload)
+        self.assertEqual(payload["torch_version"], "2.0.0")
+
+    def test_build_tier1_payload_uses_resolved_level(self):
+        tracker = MagicMock()
+        tracker._conf = {"codecarbon_version": "3.0"}
+        tracker._save_to_file = False
+        tracker._save_to_api = False
+        tracker._save_to_logger = False
+        tracker._emissions_endpoint = None
+        tracker._save_to_prometheus = False
+        tracker._save_to_logfire = False
+        tracker._tasks = {}
+        tracker._measure_power_secs = 15
+        tracker._hardware = []
+        tracker._resource_tracker = None
+
+        emissions = _sample_emissions()
+        payload = build_tier1_payload(
+            tracker, emissions, level=TelemetryLevel.extensive
+        )
+        self.assertEqual(payload["telemetry_level"], "extensive")

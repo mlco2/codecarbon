@@ -93,7 +93,7 @@ class TestTelemetryClient(unittest.TestCase):
                     telemetry={
                         "timestamp": "2026-05-03T12:00:00+00:00",
                         "telemetry_level": "minimal",
-                        "torch_version": "2.2.0",
+                        "longitude": 2.35,
                     },
                 )
 

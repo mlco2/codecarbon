@@ -64,6 +64,7 @@ def send_tier1_at_stop(
     tracker: Any,
     emissions: EmissionsData,
     external_conf: dict[str, Any] | None = None,
+    level: TelemetryLevel = TelemetryLevel.minimal,
 ) -> bool:
     """Send Tier 1 telemetry: private hardware/usage/run summary via ``POST /telemetry``.
 
@@ -71,6 +72,7 @@ def send_tier1_at_stop(
         tracker: Active emissions tracker instance.
         emissions: Total emissions from ``_prepare_emissions_data()``.
         external_conf: Merged config for telemetry API URL and key resolution.
+        level: Resolved ``TelemetryLevel`` for the ``telemetry_level`` field.
 
     Returns:
         True if Tier 1 was accepted, False otherwise.
@@ -82,7 +84,7 @@ def send_tier1_at_stop(
         return False
     settings_conf = external_conf or {}
     try:
-        payload = build_tier1_payload(tracker, emissions)
+        payload = build_tier1_payload(tracker, emissions, level=level)
         client = TelemetryClient(
             endpoint_url=get_telemetry_api_url(settings_conf),
             telemetry=payload,
@@ -151,6 +153,6 @@ def send_product_telemetry_at_stop(
         return
     settings = external_conf or {}
     if level in (TelemetryLevel.minimal, TelemetryLevel.extensive):
-        send_tier1_at_stop(tracker, emissions, settings)
+        send_tier1_at_stop(tracker, emissions, settings, level=level)
     if level == TelemetryLevel.extensive:
         send_tier2_at_stop(tracker, emissions, settings)

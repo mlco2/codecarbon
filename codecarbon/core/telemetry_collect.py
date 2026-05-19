@@ -129,6 +129,67 @@ def _detect_in_container() -> bool:
     return False
 
 
+def _detect_container_runtime() -> Optional[str]:
+    if os.environ.get("KUBERNETES_SERVICE_HOST"):
+        return "kubernetes"
+    if os.path.exists("/.dockerenv"):
+        return "docker"
+    return None
+
+
+def _detect_ide() -> Optional[str]:
+    if os.environ.get("CURSOR_TRACE_ID") or os.environ.get("CURSOR_SESSION"):
+        return "cursor"
+    if os.environ.get("VSCODE_PID") or os.environ.get("TERM_PROGRAM") == "vscode":
+        return "vscode"
+    if os.environ.get("PYCHARM_HOSTED"):
+        return "pycharm"
+    return None
+
+
+def _cudnn_version() -> Optional[str]:
+    if not _package_installed("torch"):
+        return None
+    try:
+        import torch
+
+        version = torch.backends.cudnn.version()
+        return str(version) if version is not None else None
+    except Exception:
+        return None
+
+
+def _collect_hardware_diagnostics(tracker: Any) -> dict[str, Any]:
+    from codecarbon.core import cpu
+
+    hardware_tracked: list[str] = []
+    for item in getattr(tracker, "_hardware", []) or []:
+        try:
+            hardware_tracked.append(item.description())
+        except Exception:
+            pass
+
+    resource_tracker = getattr(tracker, "_resource_tracker", None)
+    gpu_detection_method: Optional[str] = None
+    if resource_tracker is not None:
+        gpu_tracker = getattr(resource_tracker, "gpu_tracker", None)
+        if gpu_tracker and gpu_tracker != "Unspecified":
+            gpu_detection_method = gpu_tracker
+
+    rapl_available: Optional[bool] = None
+    if platform.system() == "Linux":
+        rapl_available = cpu.is_rapl_available()
+
+    save_to_api = bool(getattr(tracker, "_save_to_api", False))
+    return {
+        "hardware_tracked": hardware_tracked or None,
+        "hardware_detection_success": bool(hardware_tracked),
+        "rapl_available": rapl_available,
+        "gpu_detection_method": gpu_detection_method,
+        "api_mode": "online" if save_to_api else "offline",
+    }
+
+
 def _detect_integration_surface(tracker: Any) -> str:
     from codecarbon.emissions_tracker import OfflineEmissionsTracker
 
@@ -266,8 +327,11 @@ def collect_telemetry_context(
         "task_tracking_used": bool(getattr(tracker, "_tasks", {})),
         "measure_power_interval_secs": getattr(tracker, "_measure_power_secs", None),
         "in_container": _detect_in_container(),
+        "container_runtime": _detect_container_runtime(),
         "ci_environment": _detect_ci_environment(),
         "notebook_environment": _detect_notebook_environment(),
+        "ide_used": _detect_ide(),
+        "cudnn_version": _cudnn_version(),
         "duration_seconds": float(emissions.duration) if emissions.duration else None,
         "total_emissions_kg": emissions.emissions,
         "emissions_rate_kg_per_sec": emissions.emissions_rate,
@@ -278,36 +342,45 @@ def collect_telemetry_context(
         "cpu_utilization_avg": emissions.cpu_utilization_percent,
         "gpu_utilization_avg": emissions.gpu_utilization_percent,
         "ram_utilization_avg": emissions.ram_utilization_percent,
-        **_collect_framework_fields(include_versions=False),
+        **_collect_framework_fields(include_versions=True),
+        **_collect_hardware_diagnostics(tracker),
     }
 
-    for key in ("gpu_memory_total_gb", "cuda_version"):
-        if key in gpu_fields:
-            context[key] = gpu_fields[key]
+    context.update(gpu_fields)
+    if context.get("ml_framework_primary"):
+        context["framework_detected"] = context["ml_framework_primary"]
 
     return _strip_none(context)
 
 
-def project_tier1(context: dict[str, Any]) -> dict[str, Any]:
-    """Project context to Tier 1 (``telemetry_level=minimal``) fields."""
+def project_tier1(
+    context: dict[str, Any],
+    level: TelemetryLevel = TelemetryLevel.minimal,
+) -> dict[str, Any]:
+    """Project context to private ``POST /telemetry`` fields for the resolved tier."""
     payload = {
         key: context[key]
         for key in MINIMAL_TELEMETRY_FIELDS
         if key in context
     }
-    payload["telemetry_level"] = TelemetryLevel.minimal.value
+    payload["telemetry_level"] = level.value
     return _strip_none(payload)
 
 
-def build_tier1_payload(tracker: Any, emissions: EmissionsData) -> dict[str, Any]:
-    """Build a Tier 1 payload dict for ``TelemetryCreate``.
+def build_tier1_payload(
+    tracker: Any,
+    emissions: EmissionsData,
+    level: TelemetryLevel = TelemetryLevel.minimal,
+) -> dict[str, Any]:
+    """Build a private telemetry payload dict for ``TelemetryCreate``.
 
     Args:
         tracker: Active emissions tracker.
         emissions: Run emissions data.
+        level: Resolved ``TelemetryLevel`` (``minimal`` or ``extensive``).
 
     Returns:
         Payload dict for ``POST /telemetry``.
     """
     context = collect_telemetry_context(tracker, emissions)
-    return project_tier1(context)
+    return project_tier1(context, level=level)

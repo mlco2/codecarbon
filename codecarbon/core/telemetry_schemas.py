@@ -125,60 +125,20 @@ class TelemetryBase(BaseModel):
         return self
 
 
-MINIMAL_TELEMETRY_FIELDS = {
-    "timestamp",
-    "telemetry_level",
-    "os",
-    "country_name",
-    "country_iso_code",
-    "region",
-    "cloud_provider",
-    "cloud_region",
-    "on_cloud",
-    "cpu_count",
-    "cpu_physical_count",
-    "cpu_model",
-    "cpu_architecture",
-    "gpu_count",
-    "gpu_model",
-    "gpu_memory_total_gb",
-    "ram_total_size_gb",
-    "cuda_version",
-    "python_version",
-    "python_implementation",
-    "python_env_type",
-    "python_package_manager",
-    "codecarbon_version",
-    "codecarbon_install_method",
-    "tracking_mode",
-    "integration_surface",
-    "offline_mode",
-    "output_methods",
-    "save_to_api_enabled",
-    "task_tracking_used",
-    "measure_power_interval_secs",
-    "in_container",
-    "ci_environment",
-    "notebook_environment",
-    "has_torch",
-    "has_transformers",
-    "has_tensorflow",
-    "has_keras",
-    "has_diffusers",
-    "has_pytorch_lightning",
-    "has_fastai",
-    "ml_framework_primary",
-    "total_emissions_kg",
-    "emissions_rate_kg_per_sec",
-    "energy_consumed_kwh",
-    "cpu_energy_kwh",
-    "gpu_energy_kwh",
-    "ram_energy_kwh",
-    "duration_seconds",
-    "cpu_utilization_avg",
-    "gpu_utilization_avg",
-    "ram_utilization_avg",
-}
+EXCLUDED_PRIVACY_TELEMETRY_FIELDS = frozenset(
+    {
+        "longitude",
+        "latitude",
+        "python_executable_hash",
+        "host_machine_hash",
+    }
+)
+
+MINIMAL_TELEMETRY_FIELDS = frozenset(
+    field_name
+    for field_name in TelemetryBase.model_fields
+    if field_name not in EXCLUDED_PRIVACY_TELEMETRY_FIELDS
+)
 
 
 class TelemetryCreate(TelemetryBase):
