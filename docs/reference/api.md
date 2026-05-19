@@ -19,8 +19,8 @@ Optional library telemetry is controlled by **`telemetry_level`** on the tracker
 | Value | Behavior |
 |-------|----------|
 | `disabled` | No product telemetry |
-| `minimal` (default) | Tier 1 hardware/environment metadata once per process |
-| `extensive` | Tier 1 + public emissions summary on `stop()` |
+| `minimal` (default) | Tier 1 private telemetry at each `stop()` |
+| `extensive` | Tier 1 + Tier 2 (private telemetry and public run summary) at each `stop()` |
 
 **Resolution order:** tracker argument → `.codecarbon.config` → `CODECARBON_TELEMETRY_LEVEL` → default `minimal`. The tracker argument overrides config and environment.
 

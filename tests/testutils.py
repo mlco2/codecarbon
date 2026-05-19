@@ -1,6 +1,8 @@
 import builtins
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
+from unittest.mock import patch
 
 from codecarbon.input import DataSource
 
@@ -33,3 +35,22 @@ def get_custom_mock_open(global_conf_str, local_conf_str) -> callable:
         return conditional_open_func
 
     return mocked_open
+
+
+@contextmanager
+def ensure_telemetry_run_duration(min_seconds: float = 10.0):
+    """Force tracker stop emissions duration above telemetry's 1s minimum."""
+    from codecarbon.emissions_tracker import BaseEmissionsTracker
+
+    original_prepare = BaseEmissionsTracker._prepare_emissions_data
+
+    def prepare_with_min_duration(self):
+        data = original_prepare(self)
+        if data is not None and (data.duration is None or data.duration < min_seconds):
+            data.duration = min_seconds
+        return data
+
+    with patch.object(
+        BaseEmissionsTracker, "_prepare_emissions_data", prepare_with_min_duration
+    ):
+        yield

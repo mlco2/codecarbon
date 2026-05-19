@@ -28,9 +28,9 @@ telemetry_app = typer.Typer(
 )
 
 TIER_DESCRIPTIONS = {
-    "disabled": "No telemetry.",
-    "minimal": "Send hardware/environment metadata once per session (Tier 1).",
-    "extensive": "Tier 1 plus public emissions on stop (Tier 2 leaderboard).",
+    "disabled": "No product telemetry.",
+    "minimal": "Tier 1: private telemetry per run at stop (environment, usage, frameworks, emissions).",
+    "extensive": "Tier 2: Tier 1 plus run emissions summary to the shared telemetry experiment (ApiClient).",
 }
 
 

@@ -56,7 +56,7 @@ def test_minimal_telemetry_rejects_extensive_fields(client, custom_test_server):
     repository_mock = mock.Mock(spec=TelemetryRepository)
     telemetry_with_extensive_field = {
         **MINIMAL_TELEMETRY_TO_CREATE,
-        "total_emissions_kg": 0.42,
+        "torch_version": "2.2.0",
     }
 
     with custom_test_server.container.telemetry_repository.override(repository_mock):

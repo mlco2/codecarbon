@@ -1,6 +1,6 @@
 # Product telemetry
 
-CodeCarbon can send **optional product telemetry** to help improve the library: which hardware and environments people run on, not what your code does. This is separate from sending **your** emissions to the [dashboard](cloud-api.md) with `save_to_api=True`.
+CodeCarbon can send **optional private product telemetry** to help improve the library: hardware, environment, how the package is used, and per-run carbon/energy summaries. This is separate from sending **your** emissions to the [dashboard](cloud-api.md) with `save_to_api=True`.
 
 ## Telemetry vs your dashboard data
 
@@ -8,68 +8,53 @@ CodeCarbon can send **optional product telemetry** to help improve the library: 
 |--|-------------------|--------------------------------|
 | Purpose | Improve CodeCarbon (aggregate usage) | Your projects and experiments |
 | Config | `telemetry_level`, `codecarbon telemetry` | `codecarbon config`, `experiment_id` |
-| Default experiment | Public telemetry project (built-in defaults) | Your account / experiment |
+| Default API target | Built-in telemetry project (private) | Your account / experiment |
 
 You can use one without the other.
 
 ## Tiers
 
-| `telemetry_level` | What happens |
-|-------------------|--------------|
-| `disabled` | No product telemetry |
-| `minimal` (default) | **Tier 1** once per Python process: minimal hardware/environment metadata |
-| `extensive` | Tier 1 + **Tier 2** on tracker `stop()`: one public emissions row (leaderboard-style) |
+| `telemetry_level` | Name | When | Transport |
+|-------------------|------|------|-----------|
+| `disabled` | — | — | Nothing |
+| `minimal` | **Tier 1** | Each `stop()` | `POST /telemetry` (private) |
+| `extensive` | **Tier 2** | Each `stop()` | Tier 1 (`POST /telemetry`) **and** Tier 2 (`ApiClient` → `/emissions`) |
 
 Tier is resolved in this order:
 
-1. **Tracker or CLI argument** — `EmissionsTracker(telemetry_level=...)` or `codecarbon monitor --telemetry-level ...` (highest priority)
-2. **Config + environment** — `telemetry_level` in `.codecarbon.config` (local overrides global), then `CODECARBON_TELEMETRY_LEVEL` overrides the file value when both are set (same rules as other `CODECARBON_*` settings)
-3. **Default:** `minimal`
+1. **Tracker or CLI argument** — `EmissionsTracker(telemetry_level=...)` or `codecarbon monitor --telemetry-level ...`
+2. **Config + environment** — `telemetry_level` in `.codecarbon.config`, then `CODECARBON_TELEMETRY_LEVEL` when both are set
+3. **Default:** `minimal` (Tier 1)
 
-Legacy `CODECARBON_TELEMETRY` / config key `telemetry` suppress the one-time setup warning when set, but do **not** set the tier (use `telemetry_level` or `CODECARBON_TELEMETRY_LEVEL`).
+## Lifecycle
 
-## Tier 1: what we collect (and what we do not)
+```text
+EmissionsTracker.__init__  →  collect hardware/geo (no POST)
+EmissionsTracker.stop()    →  minimal: Tier 1 only  |  extensive: Tier 1 + Tier 2
+```
 
-Tier 1 is intentionally small. The client only builds a **minimal** payload; the API schema rejects “extensive” fields when `telemetry_level` is `minimal`.
+If the run lasts less than one second, telemetry is not sent.
 
-### Sent at most once per process (if known)
+## Tier 1 (`minimal`) — per run
 
-Only non-empty values are included:
+One private row per tracker run with:
 
-| Field | Description |
-|-------|-------------|
-| `timestamp` | UTC time of the send |
-| `telemetry_level` | Always `minimal` for this tier |
-| `os` | Platform string |
-| `country_iso_code` | Country (e.g. from offline mode or geo) |
-| `region` | Region / province |
-| `cloud_provider` | Cloud provider name, if detected |
-| `cloud_region` | Cloud region, if detected |
-| `longitude`, `latitude` | Approximate location, if geo resolution ran |
-| `cpu_count`, `cpu_physical_count`, `cpu_model` | CPU metadata |
-| `gpu_count`, `gpu_model` | GPU metadata |
-| `ram_total_size_gb` | Total RAM |
-| `python_version` | Python version |
-| `codecarbon_version` | Installed CodeCarbon version |
+- **Environment:** OS, Python, CPU/GPU/RAM, country/region, cloud provider/region
+- **Usage:** tracking mode, output methods, integration surface (library / CLI / offline), task tracking, CI/notebook/container hints
+- **ML stack (presence):** `has_torch`, `has_transformers`, `has_tensorflow`, and related flags
+- **Run outcome:** duration, emissions, energy (total and per component), utilization averages
 
-### Not sent in Tier 1
+Tier 1 does **not** include project names, experiment ids, API keys, file paths, or survey demographics (role, industry, etc.).
 
-Tier 1 does **not** include:
+## Tier 2 (`extensive`) — per run
 
-- Emissions, energy, power, duration, or utilization
-- Project name, experiment id, run id, or API keys
-- Source code, file paths, hostnames, or user ids
-- ML stack versions (PyTorch, TensorFlow, etc.)
-- Output methods, tracking mode, or internal diagnostics
-- Anything else defined as “extensive” in the telemetry schema
+**Always sends Tier 1 first**, then adds a **run emissions summary** to the shared CodeCarbon telemetry experiment via `ApiClient` (`/runs` then `/emissions`). Endpoint, API key, and experiment id come from `telemetry_api_url` / `telemetry_api_key` / `telemetry_experiment_id` (or `CODECARBON_TELEMETRY_*` env vars), falling back to the built-in defaults and your `api_endpoint` / `api_key` when set.
 
-Tier 2 (`extensive`) adds a single **public** emissions summary via the same mechanism as `add_emission` to the shared telemetry experiment—not a full extensive telemetry document.
+## Never collected
 
-### Transport
-
-- HTTP `POST` to `{telemetry_api_url}/telemetry`
-- Best-effort: failures are logged and do not stop your tracker
-- If the endpoint is not deployed yet, you may see a warning (HTTP 404)
+- Project name, experiment id, run id, API keys
+- Source code, file paths, hostnames
+- Voluntary [user survey](https://docs.google.com/forms/d/e/1FAIpQLSeQ5Tu_rdrpDhBJvh5R1-_iB4Ld-kgh6iNMjgaMXa8AEVPxqA/viewform) demographics (role, industry, experience)
 
 ## Configure telemetry
 
@@ -78,27 +63,13 @@ Tier 2 (`extensive`) adds a single **public** emissions summary via the same mec
 ```ini
 [codecarbon]
 telemetry_level = minimal
-# Optional overrides (defaults point at the public telemetry API):
-# telemetry_api_url = https://api.codecarbon.io
-# telemetry_api_key = ...
-# telemetry_experiment_id = ...
 ```
 
 ### CLI
 
 ```bash
-# Interactive wizard (pick config file + tier)
-codecarbon telemetry
-
-# Set tier in config
-codecarbon telemetry set disabled
 codecarbon telemetry set minimal
-codecarbon telemetry set extensive
-
-# Show resolved tier (merged global + local config)
 codecarbon telemetry show
-
-# One-run override (does not write config)
 codecarbon monitor --telemetry-level disabled -- python train.py
 ```
 
@@ -107,32 +78,25 @@ codecarbon monitor --telemetry-level disabled -- python train.py
 ```python
 from codecarbon import EmissionsTracker
 
-tracker = EmissionsTracker(telemetry_level="disabled")
+tracker = EmissionsTracker(telemetry_level="minimal")
+tracker.start()
+# ...
+tracker.stop()
 ```
 
 ## Opt out
-
-Set any of:
 
 ```ini
 [codecarbon]
 telemetry_level = disabled
 ```
 
-```bash
-codecarbon telemetry set disabled
-```
-
-```python
-EmissionsTracker(telemetry_level="disabled")
-```
-
 ## First run without explicit configuration
 
-If you never set `telemetry_level`, CodeCarbon uses `minimal` and logs a **one-time warning** per Python session that Tier 1 will be sent. Set `telemetry_level` explicitly (config, CLI, or tracker argument) to silence it.
+If you never set `telemetry_level`, CodeCarbon uses `minimal` (Tier 1) and logs a **one-time warning** per Python session. Set `telemetry_level` explicitly to silence it.
 
 ## Related
 
-- [Configure CodeCarbon](configuration.md) — general `.codecarbon.config` hierarchy
-- [CLI reference](../reference/cli.md#codecarbon-telemetry) — command flags
-- [Cloud API & dashboard](cloud-api.md) — your own emissions data
+- [Configure CodeCarbon](configuration.md)
+- [CLI reference](../reference/cli.md#codecarbon-telemetry)
+- [Cloud API & dashboard](cloud-api.md)

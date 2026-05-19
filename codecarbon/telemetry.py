@@ -1,11 +1,11 @@
-"""Tracker-facing telemetry helpers (Tier 1 HTTP, Tier 2 public emissions)."""
+"""Product telemetry sent at tracker stop (Tier 1 private, Tier 2 public emissions)."""
 
 import dataclasses
-from datetime import datetime, timezone
 from typing import Any
 
 from codecarbon.core.api_client import ApiClient
 from codecarbon.core.telemetry_client import TelemetryClient
+from codecarbon.core.telemetry_collect import build_tier1_payload
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.core.telemetry_settings import (
     get_telemetry_api_key,
@@ -16,16 +16,13 @@ from codecarbon.core.telemetry_settings import (
 from codecarbon.external.logger import logger
 from codecarbon.output_methods.emissions_data import EmissionsData
 
-_TIER1_SENT = False
-_TIER2_SENT = False
 _TELEMETRY_CONFIGURE_WARNED = False
 
 TELEMETRY_NOT_CONFIGURED_MESSAGE = (
     "CodeCarbon telemetry_level was not set explicitly; using default %r. "
-    "Tier 1 minimal telemetry (hardware and environment metadata) will be "
-    "sent once per Python session. Set telemetry_level in .codecarbon.config, "
-    "set CODECARBON_TELEMETRY_LEVEL, pass telemetry_level=... to "
-    "EmissionsTracker / OfflineEmissionsTracker, or run "
+    "Tier 1 private telemetry (per run at stop) will be sent. Set telemetry_level "
+    "in .codecarbon.config, set CODECARBON_TELEMETRY_LEVEL, pass telemetry_level=... "
+    "to EmissionsTracker / OfflineEmissionsTracker, or run "
     "codecarbon telemetry set <level>."
 )
 
@@ -59,98 +56,66 @@ def warn_if_telemetry_not_configured(
     _TELEMETRY_CONFIGURE_WARNED = True
 
 
-def build_minimal_telemetry_dict(conf: dict[str, Any]) -> dict[str, Any]:
-    """Build a minimal telemetry payload dict from tracker configuration.
-
-    Args:
-        conf: Tracker configuration dictionary.
-
-    Returns:
-        Dictionary suitable for ``TelemetryCreate`` validation.
-    """
-    payload: dict[str, Any] = {
-        "timestamp": datetime.now(timezone.utc),
-        "telemetry_level": TelemetryLevel.minimal.value,
-        "os": conf.get("os"),
-        "country_iso_code": conf.get("country_iso_code"),
-        "region": conf.get("region"),
-        "cloud_provider": conf.get("provider"),
-        "cloud_region": conf.get("region"),
-        "longitude": conf.get("longitude"),
-        "latitude": conf.get("latitude"),
-        "cpu_count": conf.get("cpu_count"),
-        "cpu_physical_count": conf.get("cpu_physical_count"),
-        "cpu_model": conf.get("cpu_model"),
-        "gpu_count": conf.get("gpu_count"),
-        "gpu_model": conf.get("gpu_model"),
-        "ram_total_size_gb": conf.get("ram_total_size"),
-        "python_version": conf.get("python_version"),
-        "codecarbon_version": conf.get("codecarbon_version"),
-    }
-    return {key: value for key, value in payload.items() if value is not None}
+def _run_too_short_for_telemetry(emissions: EmissionsData) -> bool:
+    return emissions.duration is not None and emissions.duration < 1
 
 
-def send_tier1_telemetry(
-    conf: dict[str, Any],
+def send_tier1_at_stop(
+    tracker: Any,
+    emissions: EmissionsData,
     external_conf: dict[str, Any] | None = None,
 ) -> bool:
-    """POST minimal telemetry once per Python session via ``TelemetryClient``.
-
-    Sends ``POST {telemetry_api_url}/telemetry`` with a ``TelemetryCreate`` payload
-    built from tracker configuration. Best-effort: failures are logged and not raised.
+    """Send Tier 1 telemetry: private hardware/usage/run summary via ``POST /telemetry``.
 
     Args:
-        conf: Tracker configuration dictionary.
-        external_conf: Merged file/env config for telemetry API URL and key resolution.
+        tracker: Active emissions tracker instance.
+        emissions: Total emissions from ``_prepare_emissions_data()``.
+        external_conf: Merged config for telemetry API URL and key resolution.
 
     Returns:
-        True if telemetry was posted successfully on this call, False if already sent
-        in this session or if the request failed.
+        True if Tier 1 was accepted, False otherwise.
     """
-    global _TIER1_SENT
-    if _TIER1_SENT:
+    if _run_too_short_for_telemetry(emissions):
+        logger.debug(
+            "Tier 1 telemetry not sent because run duration is shorter than 1 second."
+        )
         return False
     settings_conf = external_conf or {}
     try:
-        payload = build_minimal_telemetry_dict(conf)
-        endpoint_url = get_telemetry_api_url(settings_conf)
+        payload = build_tier1_payload(tracker, emissions)
         client = TelemetryClient(
-            endpoint_url=endpoint_url,
+            endpoint_url=get_telemetry_api_url(settings_conf),
             telemetry=payload,
             api_key=get_telemetry_api_key(settings_conf),
         )
-        response = client.add_telemetry()
-        if response is not None:
-            _TIER1_SENT = True
-            return True
-        return False
+        return client.add_telemetry() is not None
     except Exception as error:
-        logger.error(f"Telemetry Tier 1 failed (non-critical): {error}")
+        logger.error(f"Tier 1 telemetry failed (non-critical): {error}")
         return False
 
 
-def send_tier2_public_emission(
-    conf: dict[str, Any],
-    emissions_data: EmissionsData,
+def send_tier2_at_stop(
+    tracker: Any,
+    emissions: EmissionsData,
     external_conf: dict[str, Any] | None = None,
 ) -> bool:
-    """Send run emissions to the public telemetry experiment via ApiClient.
-
-    Mirrors ``CodeCarbonAPIOutput`` / ``add_emission`` for the shared leaderboard
-    project. Best-effort: errors are logged and not raised.
+    """Send Tier 2 telemetry: run emissions to the shared experiment via ``ApiClient``.
 
     Args:
-        conf: Tracker configuration dictionary.
-        emissions_data: Delta or total emissions row for the run.
-        external_conf: Merged file/env config for API URL, key, and experiment id.
+        tracker: Active emissions tracker instance.
+        emissions: Total emissions from ``_prepare_emissions_data()``.
+        external_conf: Merged config for API URL, key, and experiment resolution.
 
     Returns:
-        True if emission was posted successfully on this call, False otherwise.
+        True if Tier 2 was posted successfully, False otherwise.
     """
-    global _TIER2_SENT
-    if _TIER2_SENT:
+    if _run_too_short_for_telemetry(emissions):
+        logger.debug(
+            "Tier 2 telemetry not sent because run duration is shorter than 1 second."
+        )
         return False
     settings_conf = external_conf or {}
+    conf = getattr(tracker, "_conf", {})
     try:
         api = ApiClient(
             endpoint_url=get_telemetry_api_url(settings_conf),
@@ -159,11 +124,33 @@ def send_tier2_public_emission(
             conf=conf,
             create_run_automatically=True,
         )
-        posted = api.add_emission(dataclasses.asdict(emissions_data))
-        if posted:
-            _TIER2_SENT = True
-            return True
-        return False
+        return bool(api.add_emission(dataclasses.asdict(emissions)))
     except Exception as error:
-        logger.error(f"Telemetry Tier 2 failed (non-critical): {error}")
+        logger.error(f"Tier 2 telemetry failed (non-critical): {error}")
         return False
+
+
+def send_product_telemetry_at_stop(
+    tracker: Any,
+    emissions: EmissionsData,
+    level: TelemetryLevel,
+    external_conf: dict[str, Any] | None = None,
+) -> None:
+    """Send product telemetry for the resolved tier at tracker ``stop()``.
+
+    Tier 1 (``minimal``): private ``POST /telemetry`` only.
+    Tier 2 (``extensive``): Tier 1 plus ``ApiClient`` run summary.
+
+    Args:
+        tracker: Active emissions tracker instance.
+        emissions: Total emissions from ``_prepare_emissions_data()``.
+        level: Resolved ``TelemetryLevel``.
+        external_conf: Merged config for API settings.
+    """
+    if level == TelemetryLevel.disabled:
+        return
+    settings = external_conf or {}
+    if level in (TelemetryLevel.minimal, TelemetryLevel.extensive):
+        send_tier1_at_stop(tracker, emissions, settings)
+    if level == TelemetryLevel.extensive:
+        send_tier2_at_stop(tracker, emissions, settings)

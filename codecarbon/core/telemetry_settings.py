@@ -44,10 +44,8 @@ def is_telemetry_level_explicit(
 ) -> bool:
     """Return whether the user explicitly chose a telemetry tier.
 
-    Explicit sources (in order): tracker ``telemetry_level`` argument, config file
-    ``telemetry_level``, environment ``CODECARBON_TELEMETRY_LEVEL`` /
-    ``telemetry_level``. Legacy ``CODECARBON_TELEMETRY`` / ``telemetry`` counts as
-    explicit for this check only.
+    Explicit sources: tracker ``telemetry_level`` argument, config file
+    ``telemetry_level``, or environment ``CODECARBON_TELEMETRY_LEVEL``.
 
     Args:
         config_file_conf: Settings from ``get_config_file_settings()`` (no env overlay).
@@ -63,9 +61,7 @@ def is_telemetry_level_explicit(
         return True
     if external_conf is None:
         return False
-    if external_conf.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None:
-        return True
-    return external_conf.get("telemetry") is not None
+    return external_conf.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None
 
 
 def resolve_telemetry_level(
@@ -78,15 +74,10 @@ def resolve_telemetry_level(
 
     Precedence:
 
-        1. ``override`` — ``EmissionsTracker(telemetry_level=...)`` or
-           ``codecarbon monitor --telemetry-level``
+        1. ``override`` — ``EmissionsTracker(telemetry_level=...)`` or CLI
         2. ``external_conf`` — merged ``.codecarbon.config`` and ``CODECARBON_*`` env
-           (environment overrides file for the same key)
         3. ``config_file_conf`` — file-only settings when ``external_conf`` is omitted
-        4. Default: ``minimal``
-
-    Legacy ``CODECARBON_TELEMETRY`` / config key ``telemetry`` only affect whether
-    the tier counts as explicitly configured, not tier resolution.
+        4. Default: ``minimal`` (Tier 1)
 
     Args:
         config_file_conf: Settings from ``get_config_file_settings()`` (optional).
@@ -130,8 +121,10 @@ def get_telemetry_api_url(
     Returns:
         API base URL without trailing slash.
     """
-    url = external_conf.get("telemetry_api_url") or os.environ.get(
-        "CODECARBON_TELEMETRY_API_URL"
+    url = (
+        external_conf.get("telemetry_api_url")
+        or external_conf.get("api_endpoint")
+        or os.environ.get("CODECARBON_TELEMETRY_API_URL")
     )
     return (url or default).rstrip("/")
 
@@ -145,8 +138,10 @@ def get_telemetry_api_key(external_conf: dict[str, Any]) -> str:
     Returns:
         API token string.
     """
-    key = external_conf.get("telemetry_api_key") or os.environ.get(
-        "CODECARBON_TELEMETRY_API_KEY"
+    key = (
+        external_conf.get("telemetry_api_key")
+        or external_conf.get("api_key")
+        or os.environ.get("CODECARBON_TELEMETRY_API_KEY")
     )
     return key or DEFAULT_TELEMETRY_API_KEY
 
@@ -158,7 +153,7 @@ def get_telemetry_experiment_id(external_conf: dict[str, Any]) -> str:
         external_conf: Merged config from file and environment.
 
     Returns:
-        Experiment UUID string for Tier 2 / leaderboard linkage.
+        Experiment UUID string (legacy leaderboard / API helpers).
     """
     experiment_id = external_conf.get("telemetry_experiment_id") or os.environ.get(
         "CODECARBON_TELEMETRY_EXPERIMENT_ID"

@@ -41,6 +41,7 @@ class TelemetryBase(BaseModel):
     region: Optional[str] = None
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
+    on_cloud: Optional[bool] = None
     longitude: Optional[float] = Field(default=None, ge=-180, le=180)
     latitude: Optional[float] = Field(default=None, ge=-90, le=90)
 
@@ -64,6 +65,7 @@ class TelemetryBase(BaseModel):
     python_env_type: Optional[str] = None
     codecarbon_version: Optional[str] = None
     codecarbon_install_method: Optional[str] = None
+    python_package_manager: Optional[str] = None
 
     total_emissions_kg: Optional[float] = Field(default=None, ge=0)
     emissions_rate_kg_per_sec: Optional[float] = Field(default=None, ge=0)
@@ -83,6 +85,9 @@ class TelemetryBase(BaseModel):
     task_tracking_used: Optional[bool] = None
     decorator_vs_context: Optional[str] = None
     measure_power_interval_secs: Optional[float] = Field(default=None, ge=0)
+    integration_surface: Optional[str] = None
+    offline_mode: Optional[bool] = None
+    save_to_api_enabled: Optional[bool] = None
 
     hardware_detection_success: Optional[bool] = None
     rapl_available: Optional[bool] = None
@@ -148,25 +153,50 @@ MINIMAL_TELEMETRY_FIELDS = {
     "region",
     "cloud_provider",
     "cloud_region",
-    "longitude",
-    "latitude",
+    "on_cloud",
     "cpu_count",
     "cpu_physical_count",
     "cpu_model",
     "cpu_architecture",
     "gpu_count",
     "gpu_model",
-    "gpu_driver_version",
     "gpu_memory_total_gb",
     "ram_total_size_gb",
     "cuda_version",
-    "cudnn_version",
     "python_version",
     "python_implementation",
-    "python_executable_hash",
     "python_env_type",
+    "python_package_manager",
     "codecarbon_version",
     "codecarbon_install_method",
+    "tracking_mode",
+    "integration_surface",
+    "offline_mode",
+    "output_methods",
+    "save_to_api_enabled",
+    "task_tracking_used",
+    "measure_power_interval_secs",
+    "in_container",
+    "ci_environment",
+    "notebook_environment",
+    "has_torch",
+    "has_transformers",
+    "has_tensorflow",
+    "has_keras",
+    "has_diffusers",
+    "has_pytorch_lightning",
+    "has_fastai",
+    "ml_framework_primary",
+    "total_emissions_kg",
+    "emissions_rate_kg_per_sec",
+    "energy_consumed_kwh",
+    "cpu_energy_kwh",
+    "gpu_energy_kwh",
+    "ram_energy_kwh",
+    "duration_seconds",
+    "cpu_utilization_avg",
+    "gpu_utilization_avg",
+    "ram_utilization_avg",
 }
 
 

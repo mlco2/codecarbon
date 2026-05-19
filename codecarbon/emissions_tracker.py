@@ -25,8 +25,7 @@ from codecarbon.core.config import (
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.core.telemetry_settings import resolve_telemetry_level
 from codecarbon.telemetry import (
-    send_tier1_telemetry,
-    send_tier2_public_emission,
+    send_product_telemetry_at_stop,
     warn_if_telemetry_not_configured,
 )
 from codecarbon.core.emissions import Emissions
@@ -415,6 +414,7 @@ class BaseEmissionsTracker(ABC):
         self._hardware = []
         resource_tracker = ResourceTracker(self)
         resource_tracker.set_CPU_GPU_ram_tracking()
+        self._resource_tracker = resource_tracker
 
         self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
 
@@ -458,7 +458,7 @@ class BaseEmissionsTracker(ABC):
         if cloud.is_on_private_infra:
             self._conf["longitude"] = self._geo.longitude
             self._conf["latitude"] = self._geo.latitude
-            self._conf["region"] = cloud.region
+            self._conf["region"] = self._geo.region
             self._conf["provider"] = cloud.provider
         else:
             self._conf["region"] = cloud.region
@@ -479,17 +479,14 @@ class BaseEmissionsTracker(ABC):
             override=telemetry_override,
             external_conf=self._external_conf,
         )
-        if self._telemetry_level in (TelemetryLevel.minimal, TelemetryLevel.extensive):
-            send_tier1_telemetry(self._conf, external_conf=self._external_conf)
-
     @suppress(Exception)
-    def _maybe_send_tier2_telemetry(self, emissions_data_delta: EmissionsData) -> None:
-        if self._telemetry_level == TelemetryLevel.extensive:
-            send_tier2_public_emission(
-                self._conf,
-                emissions_data_delta,
-                external_conf=self._external_conf,
-            )
+    def _send_product_telemetry_at_stop(self, emissions_data: EmissionsData) -> None:
+        send_product_telemetry_at_stop(
+            self,
+            emissions_data,
+            self._telemetry_level,
+            external_conf=self._external_conf,
+        )
 
     def _init_output_methods(self, *, api_key: str = None):
         """
@@ -792,7 +789,7 @@ class BaseEmissionsTracker(ABC):
 
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
-        self._maybe_send_tier2_telemetry(emissions_data_delta)
+        self._send_product_telemetry_at_stop(emissions_data)
 
         self._persist_data(
             total_emissions=emissions_data,
