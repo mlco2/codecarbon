@@ -303,6 +303,27 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
     assert calls["kwargs"]["region"] == "IDF"
 
 
+def test_monitor_delegates_offline_flag_to_run_and_monitor(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["offline"] = offline
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+
+    ctx = SimpleNamespace(args=["python", "-c", "print(1)"])
+    result = cli_main.monitor(
+        ctx=ctx,
+        offline=True,
+        country_iso_code="FRA",
+    )
+    assert result == "ok"
+    assert captured["offline"] is True
+    assert captured["kwargs"]["country_iso_code"] == "FRA"
+
+
 def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
     captured = {}
 

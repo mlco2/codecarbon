@@ -60,6 +60,37 @@ def test_run_and_monitor_handles_generic_exception(monkeypatch):
     assert exc_info.value.exit_code == 1
 
 
+def test_run_and_monitor_uses_offline_tracker_when_offline_mode(monkeypatch):
+    captured = {}
+
+    class FakeOfflineTracker(FakeTracker):
+        def __init__(self, **kwargs):
+            captured["kwargs"] = kwargs
+            super().__init__()
+
+    class FakePopen:
+        def __init__(self, command, text=True):
+            pass
+
+        def wait(self):
+            return 0
+
+    monkeypatch.setattr(monitor_module, "OfflineEmissionsTracker", FakeOfflineTracker)
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
+    monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        monitor_module.run_and_monitor(
+            SimpleNamespace(args=["echo", "hi"]),
+            offline=True,
+            country_iso_code="FRA",
+        )
+
+    assert exc_info.value.exit_code == 0
+    assert captured["kwargs"]["country_iso_code"] == "FRA"
+
+
 def test_run_and_monitor_handles_keyboard_interrupt(monkeypatch):
     process_info = {"terminated": 0, "killed": 0}
 
