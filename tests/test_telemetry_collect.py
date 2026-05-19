@@ -2,9 +2,9 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from codecarbon.core.telemetry_collect import (
-    build_tier1_payload,
+    build_telemetry_payload,
     collect_telemetry_context,
-    project_tier1,
+    project_private_telemetry,
 )
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.output_methods.emissions_data import EmissionsData
@@ -49,7 +49,7 @@ def _sample_emissions(**overrides):
 
 
 class TestTelemetryCollect(unittest.TestCase):
-    def test_project_tier1_includes_run_and_framework_flags(self):
+    def test_project_private_telemetry_includes_run_and_framework_flags(self):
         tracker = MagicMock()
         tracker._conf = {
             "os": "Linux",
@@ -75,7 +75,7 @@ class TestTelemetryCollect(unittest.TestCase):
             side_effect=lambda name: name == "torch",
         ):
             context = collect_telemetry_context(tracker, emissions)
-        payload = project_tier1(context)
+        payload = project_private_telemetry(context)
 
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertEqual(payload["total_emissions_kg"], 0.5)
@@ -83,7 +83,7 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertTrue(payload["has_torch"])
         self.assertIn("file", payload["output_methods"])
 
-    def test_build_tier1_payload_includes_framework_versions(self):
+    def test_build_telemetry_payload_includes_framework_versions(self):
         tracker = MagicMock()
         tracker._conf = {"codecarbon_version": "3.0", "hardware": ["cpu"]}
         tracker._geo = None
@@ -106,13 +106,13 @@ class TestTelemetryCollect(unittest.TestCase):
             "codecarbon.core.telemetry_collect._package_version",
             return_value="2.0.0",
         ):
-            payload = build_tier1_payload(tracker, emissions)
+            payload = build_telemetry_payload(tracker, emissions)
 
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertTrue(payload["has_torch"])
         self.assertEqual(payload["torch_version"], "2.0.0")
 
-    def test_build_tier1_payload_uses_resolved_level(self):
+    def test_build_telemetry_payload_uses_resolved_level(self):
         tracker = MagicMock()
         tracker._conf = {"codecarbon_version": "3.0"}
         tracker._save_to_file = False
@@ -127,7 +127,7 @@ class TestTelemetryCollect(unittest.TestCase):
         tracker._resource_tracker = None
 
         emissions = _sample_emissions()
-        payload = build_tier1_payload(
+        payload = build_telemetry_payload(
             tracker, emissions, level=TelemetryLevel.extensive
         )
         self.assertEqual(payload["telemetry_level"], "extensive")

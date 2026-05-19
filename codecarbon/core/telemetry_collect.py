@@ -11,10 +11,7 @@ from typing import Any, Optional
 
 from codecarbon.core.cloud import get_env_cloud_details
 from codecarbon.core.gpu import is_nvidia_system
-from codecarbon.core.telemetry_schemas import (
-    MINIMAL_TELEMETRY_FIELDS,
-    TelemetryLevel,
-)
+from codecarbon.core.telemetry_schemas import PRIVATE_TELEMETRY_FIELDS, TelemetryLevel
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 FRAMEWORK_PACKAGES = (
@@ -283,7 +280,7 @@ def collect_telemetry_context(
         emissions: Total emissions row from ``_prepare_emissions_data()``.
 
     Returns:
-        Flat dictionary for ``project_tier1``.
+        Flat dictionary for ``project_private_telemetry``.
     """
     conf = getattr(tracker, "_conf", {})
     raw_provider, raw_region = _raw_cloud_provider_and_region()
@@ -353,21 +350,21 @@ def collect_telemetry_context(
     return _strip_none(context)
 
 
-def project_tier1(
+def project_private_telemetry(
     context: dict[str, Any],
     level: TelemetryLevel = TelemetryLevel.minimal,
 ) -> dict[str, Any]:
     """Project context to private ``POST /telemetry`` fields for the resolved tier."""
     payload = {
         key: context[key]
-        for key in MINIMAL_TELEMETRY_FIELDS
+        for key in PRIVATE_TELEMETRY_FIELDS
         if key in context
     }
     payload["telemetry_level"] = level.value
     return _strip_none(payload)
 
 
-def build_tier1_payload(
+def build_telemetry_payload(
     tracker: Any,
     emissions: EmissionsData,
     level: TelemetryLevel = TelemetryLevel.minimal,
@@ -383,4 +380,4 @@ def build_tier1_payload(
         Payload dict for ``POST /telemetry``.
     """
     context = collect_telemetry_context(tracker, emissions)
-    return project_tier1(context, level=level)
+    return project_private_telemetry(context, level=level)

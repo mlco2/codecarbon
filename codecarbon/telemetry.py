@@ -1,11 +1,11 @@
-"""Product telemetry sent at tracker stop (Tier 1 private, Tier 2 public emissions)."""
+"""Product telemetry sent at tracker stop (Tier 1 / Tier 2)."""
 
 import dataclasses
 from typing import Any
 
 from codecarbon.core.api_client import ApiClient
 from codecarbon.core.telemetry_client import TelemetryClient
-from codecarbon.core.telemetry_collect import build_tier1_payload
+from codecarbon.core.telemetry_collect import build_telemetry_payload
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.core.telemetry_settings import (
     get_telemetry_api_key,
@@ -60,13 +60,13 @@ def _run_too_short_for_telemetry(emissions: EmissionsData) -> bool:
     return emissions.duration is not None and emissions.duration < 1
 
 
-def send_tier1_at_stop(
+def send_private_telemetry_at_stop(
     tracker: Any,
     emissions: EmissionsData,
     external_conf: dict[str, Any] | None = None,
     level: TelemetryLevel = TelemetryLevel.minimal,
 ) -> bool:
-    """Send Tier 1 telemetry: private hardware/usage/run summary via ``POST /telemetry``.
+    """Send Tier 1 private telemetry via ``POST /telemetry``.
 
     Args:
         tracker: Active emissions tracker instance.
@@ -75,16 +75,16 @@ def send_tier1_at_stop(
         level: Resolved ``TelemetryLevel`` for the ``telemetry_level`` field.
 
     Returns:
-        True if Tier 1 was accepted, False otherwise.
+        True if the private telemetry POST was accepted, False otherwise.
     """
     if _run_too_short_for_telemetry(emissions):
         logger.debug(
-            "Tier 1 telemetry not sent because run duration is shorter than 1 second."
+            "Private telemetry not sent because run duration is shorter than 1 second."
         )
         return False
     settings_conf = external_conf or {}
     try:
-        payload = build_tier1_payload(tracker, emissions, level=level)
+        payload = build_telemetry_payload(tracker, emissions, level=level)
         client = TelemetryClient(
             endpoint_url=get_telemetry_api_url(settings_conf),
             telemetry=payload,
@@ -92,16 +92,16 @@ def send_tier1_at_stop(
         )
         return client.add_telemetry() is not None
     except Exception as error:
-        logger.error(f"Tier 1 telemetry failed (non-critical): {error}")
+        logger.error(f"Private telemetry failed (non-critical): {error}")
         return False
 
 
-def send_tier2_at_stop(
+def send_public_run_summary_at_stop(
     tracker: Any,
     emissions: EmissionsData,
     external_conf: dict[str, Any] | None = None,
 ) -> bool:
-    """Send Tier 2 telemetry: run emissions to the shared experiment via ``ApiClient``.
+    """Send Tier 2 public run summary to the shared telemetry experiment via ``ApiClient``.
 
     Args:
         tracker: Active emissions tracker instance.
@@ -109,11 +109,11 @@ def send_tier2_at_stop(
         external_conf: Merged config for API URL, key, and experiment resolution.
 
     Returns:
-        True if Tier 2 was posted successfully, False otherwise.
+        True if the run summary was posted successfully, False otherwise.
     """
     if _run_too_short_for_telemetry(emissions):
         logger.debug(
-            "Tier 2 telemetry not sent because run duration is shorter than 1 second."
+            "Public run summary not sent because run duration is shorter than 1 second."
         )
         return False
     settings_conf = external_conf or {}
@@ -128,7 +128,7 @@ def send_tier2_at_stop(
         )
         return bool(api.add_emission(dataclasses.asdict(emissions)))
     except Exception as error:
-        logger.error(f"Tier 2 telemetry failed (non-critical): {error}")
+        logger.error(f"Public run summary failed (non-critical): {error}")
         return False
 
 
@@ -141,7 +141,7 @@ def send_product_telemetry_at_stop(
     """Send product telemetry for the resolved tier at tracker ``stop()``.
 
     Tier 1 (``minimal``): private ``POST /telemetry`` only.
-    Tier 2 (``extensive``): Tier 1 plus ``ApiClient`` run summary.
+    Tier 2 (``extensive``): same private ``POST /telemetry`` plus public run summary.
 
     Args:
         tracker: Active emissions tracker instance.
@@ -153,6 +153,6 @@ def send_product_telemetry_at_stop(
         return
     settings = external_conf or {}
     if level in (TelemetryLevel.minimal, TelemetryLevel.extensive):
-        send_tier1_at_stop(tracker, emissions, settings, level=level)
+        send_private_telemetry_at_stop(tracker, emissions, settings, level=level)
     if level == TelemetryLevel.extensive:
-        send_tier2_at_stop(tracker, emissions, settings)
+        send_public_run_summary_at_stop(tracker, emissions, settings)

@@ -56,7 +56,7 @@ Private telemetry does **not** include project names, experiment ids, API keys, 
 
 - Project name, experiment id, run id, API keys
 - Source code, file paths, hostnames
-- Exact GPS coordinates (`longitude` / `latitude`), `python_executable_hash`, `host_machine_hash`
+- Exact GPS coordinates, executable/host fingerprints (not in the telemetry schema)
 - Voluntary [user survey](https://docs.google.com/forms/d/e/1FAIpQLSeQ5Tu_rdrpDhBJvh5R1-_iB4Ld-kgh6iNMjgaMXa8AEVPxqA/viewform) demographics (role, industry, experience)
 
 ## Configure telemetry

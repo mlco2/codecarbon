@@ -24,8 +24,6 @@ class TelemetryBase(BaseModel):
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
     on_cloud: Optional[bool] = None
-    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
-    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
 
     cpu_count: Optional[int] = Field(default=None, ge=0)
     cpu_physical_count: Optional[int] = Field(default=None, ge=0)
@@ -41,9 +39,6 @@ class TelemetryBase(BaseModel):
 
     python_version: Optional[str] = None
     python_implementation: Optional[str] = None
-    python_executable_hash: Optional[str] = Field(
-        default=None, min_length=64, max_length=64
-    )
     python_env_type: Optional[str] = None
     codecarbon_version: Optional[str] = None
     codecarbon_install_method: Optional[str] = None
@@ -65,7 +60,6 @@ class TelemetryBase(BaseModel):
     output_methods: Optional[List[str]] = None
     hardware_tracked: Optional[List[str]] = None
     task_tracking_used: Optional[bool] = None
-    decorator_vs_context: Optional[str] = None
     measure_power_interval_secs: Optional[float] = Field(default=None, ge=0)
     integration_surface: Optional[str] = None
     offline_mode: Optional[bool] = None
@@ -74,10 +68,6 @@ class TelemetryBase(BaseModel):
     hardware_detection_success: Optional[bool] = None
     rapl_available: Optional[bool] = None
     gpu_detection_method: Optional[str] = None
-    first_measurement_time_ms: Optional[float] = Field(default=None, ge=0)
-    tracking_overhead_percent: Optional[float] = Field(default=None, ge=0)
-    errors_encountered: Optional[List[str]] = None
-    warning_count: Optional[int] = Field(default=None, ge=0)
 
     ide_used: Optional[str] = None
     notebook_environment: Optional[str] = None
@@ -102,43 +92,15 @@ class TelemetryBase(BaseModel):
 
     container_runtime: Optional[str] = None
     in_container: Optional[bool] = None
-    host_machine_hash: Optional[str] = None
 
     @model_validator(mode="after")
     def validate_telemetry_level(self):
         if self.telemetry_level == TelemetryLevel.disabled:
             raise ValueError("Disabled telemetry must not be submitted")
-
-        if self.telemetry_level == TelemetryLevel.minimal:
-            extensive_fields = set(type(self).model_fields) - MINIMAL_TELEMETRY_FIELDS
-            submitted_extensive_fields = [
-                field
-                for field in extensive_fields
-                if getattr(self, field) not in (None, [], {})
-            ]
-            if submitted_extensive_fields:
-                fields = ", ".join(sorted(submitted_extensive_fields))
-                raise ValueError(
-                    f"Minimal telemetry cannot include extensive fields: {fields}"
-                )
-
         return self
 
 
-EXCLUDED_PRIVACY_TELEMETRY_FIELDS = frozenset(
-    {
-        "longitude",
-        "latitude",
-        "python_executable_hash",
-        "host_machine_hash",
-    }
-)
-
-MINIMAL_TELEMETRY_FIELDS = frozenset(
-    field_name
-    for field_name in TelemetryBase.model_fields
-    if field_name not in EXCLUDED_PRIVACY_TELEMETRY_FIELDS
-)
+PRIVATE_TELEMETRY_FIELDS = frozenset(TelemetryBase.model_fields)
 
 
 class TelemetryCreate(TelemetryBase):

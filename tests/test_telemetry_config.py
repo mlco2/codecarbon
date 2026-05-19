@@ -15,7 +15,10 @@ from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.core.telemetry_settings import get_telemetry_api_url
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from codecarbon.output_methods.emissions_data import EmissionsData
-from codecarbon.telemetry import send_tier1_at_stop, warn_if_telemetry_not_configured
+from codecarbon.telemetry import (
+    send_private_telemetry_at_stop,
+    warn_if_telemetry_not_configured,
+)
 from tests.testutils import ensure_telemetry_run_duration, get_custom_mock_open
 
 if sys.platform == "darwin":
@@ -90,12 +93,12 @@ class TestTelemetryConfigContract(unittest.TestCase):
             tracking_mode="machine",
         )
         with patch(
-            "codecarbon.telemetry.build_tier1_payload", return_value=tier1_payload
+            "codecarbon.telemetry.build_telemetry_payload", return_value=tier1_payload
         ):
             with patch("codecarbon.core.telemetry_client.requests.post") as mock_post:
                 mock_post.return_value.status_code = 201
                 mock_post.return_value.json.return_value = "telemetry-id"
-                send_tier1_at_stop(
+                send_private_telemetry_at_stop(
                     tracker,
                     emissions,
                     external_conf={"telemetry_api_url": "http://tier1.example"},

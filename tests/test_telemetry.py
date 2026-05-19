@@ -7,7 +7,10 @@ from unittest.mock import ANY, MagicMock, patch
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from codecarbon.output_methods.emissions_data import EmissionsData
-from codecarbon.telemetry import send_tier1_at_stop, send_tier2_at_stop
+from codecarbon.telemetry import (
+    send_private_telemetry_at_stop,
+    send_public_run_summary_at_stop,
+)
 from tests.testutils import ensure_telemetry_run_duration, get_custom_mock_open
 
 if sys.platform == "darwin":
@@ -65,7 +68,9 @@ class TestTelemetryTiersAtStop(unittest.TestCase):
             mock_client = MagicMock()
             mock_client.add_telemetry.return_value = {"id": "ok"}
             mock_client_cls.return_value = mock_client
-            result = send_tier1_at_stop(tracker, emissions, external_conf={})
+            result = send_private_telemetry_at_stop(
+                tracker, emissions, external_conf={}
+            )
         self.assertTrue(result)
         posted = mock_client_cls.call_args.kwargs["telemetry"]
         self.assertEqual(posted["telemetry_level"], "minimal")
@@ -76,7 +81,9 @@ class TestTelemetryTiersAtStop(unittest.TestCase):
         emissions = self._emissions()
         emissions.duration = 0.5
         with patch("codecarbon.telemetry.TelemetryClient") as mock_client_cls:
-            result = send_tier1_at_stop(tracker, emissions, external_conf={})
+            result = send_private_telemetry_at_stop(
+                tracker, emissions, external_conf={}
+            )
         self.assertFalse(result)
         mock_client_cls.assert_not_called()
 
@@ -88,7 +95,9 @@ class TestTelemetryTiersAtStop(unittest.TestCase):
             mock_api = MagicMock()
             mock_api.add_emission.return_value = True
             mock_api_cls.return_value = mock_api
-            result = send_tier2_at_stop(tracker, emissions, external_conf={})
+            result = send_public_run_summary_at_stop(
+                tracker, emissions, external_conf={}
+            )
         self.assertTrue(result)
         mock_api_cls.assert_called_once()
         mock_api.add_emission.assert_called_once()
