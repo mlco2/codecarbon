@@ -28,12 +28,14 @@ except ImportError:
             "Please install amdsmi to get GPU metrics."
         )
     AMDSMI_AVAILABLE = False
-except (AttributeError, OSError, KeyError) as error:
+except (AttributeError, OSError, KeyError) as e:
     amdsmi = None
+    # In some environments, amdsmi may be present but not properly configured, leading to AttributeError when importing
     logger.warning(
-        "amdsmi is installed but could not load libamd_smi (ROCm drivers missing "
-        "or incompatible). AMD GPU metrics will be unavailable. Error: %s",
-        error,
+        "AMD GPU detected but amdsmi is not properly configured. "
+        "Please ensure amdsmi is correctly installed to get GPU metrics."
+        "Tips : check consistency between Python amdsmi package and ROCm versions, and ensure AMD drivers are up to date."
+        f" Error: {e}"
     )
     AMDSMI_AVAILABLE = False
 
