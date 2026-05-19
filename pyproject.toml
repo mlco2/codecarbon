@@ -95,6 +95,8 @@ dev = [
     "jsonschema",  # For BoAmps schema validation tests
     "mktestdocs",  # For testing documentation code blocks
     "scikit-learn",  # For documentation examples and tests
+    "fastapi>=0.100",
+    "httpx",
 ]
 doc = [
   "requests",
@@ -122,6 +124,10 @@ viz-legacy = [
 # To support AMD GPU
 amdsmi = [
     "amdsmi>=6.0.0"
+]
+fastapi = [
+    "fastapi>=0.100",
+    "httpx",
 ]
 
 [project.scripts]
