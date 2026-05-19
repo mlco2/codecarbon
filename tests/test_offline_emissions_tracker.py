@@ -18,7 +18,7 @@ def heavy_computation(run_time_secs: float = 3):
         pass
 
 
-empty_conf = "[codecarbon]"
+disabled_conf = "[codecarbon]\ntelemetry_level = disabled\n"
 
 
 class TestOfflineEmissionsTracker(unittest.TestCase):
@@ -32,7 +32,8 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         # ./.codecarbon.config so that the user's local configuration does not
         # alter tests
         patcher = mock.patch(
-            "builtins.open", new_callable=get_custom_mock_open(empty_conf, empty_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(disabled_conf, disabled_conf),
         )
         self.addCleanup(patcher.stop)
         patcher.start()
@@ -41,7 +42,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_offline_tracker(self):
-        tracker = OfflineEmissionsTracker(output_file=self.emissions_file_path, send_telemetry=False)
+        tracker = OfflineEmissionsTracker(output_file=self.emissions_file_path)
         tracker.start()
         heavy_computation(run_time_secs=2)
         tracker.stop()
@@ -60,7 +61,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         )
 
     def test_offline_tracker_task(self):
-        tracker = OfflineEmissionsTracker(send_telemetry=False)
+        tracker = OfflineEmissionsTracker()
         tracker.start_task()
         heavy_computation(run_time_secs=2)
         task_emission_data = tracker.stop_task()

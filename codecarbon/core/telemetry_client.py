@@ -14,13 +14,22 @@ class TelemetryClient:
 
     def __init__(
         self,
-        endpoint_url="https://api.codecarbon.io",
+        endpoint_url: str = "https://api.codecarbon.io",
         telemetry: Optional[Union[TelemetryCreate, dict]] = None,
+        api_key: Optional[str] = None,
     ):
         self.endpoint_url = endpoint_url.rstrip("/")
         self.telemetry_url = self.endpoint_url + "/telemetry"
-        self.headers = {"Content-Type": "application/json"}
+        self.api_key = api_key
+        self.headers = self._build_headers(api_key)
         self.telemetry = self._validate_telemetry(telemetry) if telemetry else None
+
+    @staticmethod
+    def _build_headers(api_key: Optional[str]) -> dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["x-api-token"] = api_key
+        return headers
 
     def add_telemetry(self, telemetry: Optional[Union[TelemetryCreate, dict]] = None):
         telemetry_payload = (
@@ -38,6 +47,12 @@ class TelemetryClient:
                 timeout=2,
                 headers=self.headers,
             )
+            if response.status_code == 404:
+                logger.warning(
+                    "Telemetry API not found at %s (HTTP 404); Tier 1 not recorded.",
+                    self.telemetry_url,
+                )
+                return None
             if response.status_code != 201:
                 self._log_error(payload, response)
                 return None

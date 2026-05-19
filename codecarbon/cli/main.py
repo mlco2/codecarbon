@@ -22,6 +22,7 @@ from codecarbon.cli.cli_utils import (
     overwrite_local_config,
 )
 from codecarbon.cli.monitor import run_and_monitor
+from codecarbon.cli.telemetry_cli import normalize_telemetry_level, telemetry_app
 from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
@@ -32,6 +33,7 @@ DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
 codecarbon = typer.Typer(no_args_is_help=True)
+codecarbon.add_typer(telemetry_app, name="telemetry")
 
 
 def main():
@@ -342,6 +344,15 @@ def monitor(
         str,
         typer.Option(help="Region/province for offline mode"),
     ] = None,
+    telemetry_level: Annotated[
+        Optional[str],
+        typer.Option(
+            help=(
+                "Override telemetry tier for this run only "
+                "(disabled, minimal, or extensive)."
+            ),
+        ),
+    ] = None,
 ):
     """Monitor your machine's carbon emissions."""
 
@@ -350,6 +361,8 @@ def monitor(
         "measure_power_secs": measure_power_secs,
         "api_call_interval": api_call_interval,
     }
+    if telemetry_level is not None:
+        tracker_args["telemetry_level"] = normalize_telemetry_level(telemetry_level)
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
         if not country_iso_code:

@@ -149,6 +149,7 @@ nav:
       - LLMs and Agents: how-to/agents.md
   - How-to Guides:
     - Configure CodeCarbon: how-to/configuration.md
+    - Product telemetry: how-to/telemetry.md
     - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
     - Dashboard & Visualization:
       - Use the Cloud API & Dashboard: how-to/cloud-api.md

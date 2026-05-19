@@ -153,7 +153,7 @@ class TestGpuImportWarnings:
                 sys.modules["pynvml"] = old_pynvml
 
         assert any(
-            "amdsmi is not properly configured" in str(c.args[0])
+            "could not load libamd_smi" in str(c.args[0])
             for c in warning_mock.call_args_list
         )
 

@@ -1,103 +1,106 @@
 # Product telemetry
 
-CodeCarbon can send **optional product telemetry** to help improve the library: which hardware and environments people use, and (if you opt in) anonymous run emissions on a public leaderboard.
+CodeCarbon can send **optional product telemetry** to help improve the library: which hardware and environments people run on, not what your code does. This is separate from sending **your** emissions to the [dashboard](cloud-api.md) with `save_to_api=True`.
 
-This is **separate from** your own dashboard setup (`codecarbon config`, `codecarbon login`, `save_to_api`). Those commands configure **your** project and experiments. Product telemetry uses the shared settings below.
+## Telemetry vs your dashboard data
 
-## Telemetry tiers
+| | Product telemetry | Your emissions (`save_to_api`) |
+|--|-------------------|--------------------------------|
+| Purpose | Improve CodeCarbon (aggregate usage) | Your projects and experiments |
+| Config | `telemetry_level`, `codecarbon telemetry` | `codecarbon config`, `experiment_id` |
+| Default experiment | Public telemetry project (built-in defaults) | Your account / experiment |
 
-| Tier | `telemetry_level` | When | What is sent |
-|------|-------------------|------|----------------|
-| **0** | `disabled` | — | Nothing |
-| **1** | `minimal` (default) | Once per Python process, when the tracker starts | Minimal hardware / environment metadata (see below) |
-| **2** | `extensive` | Tier 1 on start **and** Tier 2 on `stop()` | Tier 1 plus one public emissions row for the run |
+You can use one without the other.
 
-If you never set `telemetry_level`, CodeCarbon uses **`minimal`** and logs a **one-time warning** per Python session telling you that Tier 1 will be sent.
+## Tiers
 
-## Tier 1: what we collect today
+| `telemetry_level` | What happens |
+|-------------------|--------------|
+| `disabled` | No product telemetry |
+| `minimal` (default) | **Tier 1** once per Python process: minimal hardware/environment metadata |
+| `extensive` | Tier 1 + **Tier 2** on tracker `stop()`: one public emissions row (leaderboard-style) |
 
-Tier 1 sends a single `POST` to `{telemetry_api_url}/telemetry` the first time an `EmissionsTracker` or `OfflineEmissionsTracker` is created in a process (not on every run).
+Tier is resolved in this order:
 
-Only the fields below are included. Any value that is unknown is **omitted** from the payload (not sent as `null`).
+1. `EmissionsTracker(telemetry_level=...)` or `codecarbon monitor --telemetry-level ...`
+2. `telemetry_level` in `.codecarbon.config` (local overrides global)
+3. Default: `minimal`
+
+Environment variables `CODECARBON_TELEMETRY` / `CODECARBON_TELEMETRY_LEVEL` count as “explicit” configuration (they suppress the one-time setup warning) but **do not** change the tier unless you also set `telemetry_level` in a config file or pass the tracker argument.
+
+## Tier 1: what we collect (and what we do not)
+
+Tier 1 is intentionally small. The client only builds a **minimal** payload; the API schema rejects “extensive” fields when `telemetry_level` is `minimal`.
+
+### Sent at most once per process (if known)
+
+Only non-empty values are included:
 
 | Field | Description |
 |-------|-------------|
-| `timestamp` | UTC time when the tracker was initialized |
+| `timestamp` | UTC time of the send |
 | `telemetry_level` | Always `minimal` for this tier |
-| `os` | Operating system string (e.g. platform description) |
-| `country_iso_code` | ISO country code when known (e.g. offline mode or geo lookup) |
-| `region` | Region or cloud region when known |
-| `cloud_provider` | Cloud provider name when known |
-| `cloud_region` | Same as `region` when cloud metadata is available |
-| `longitude` | Approximate longitude when known (degrees) |
-| `latitude` | Approximate latitude when known (degrees) |
-| `cpu_count` | Logical CPU count |
-| `cpu_physical_count` | Physical CPU count |
-| `cpu_model` | CPU model name |
-| `gpu_count` | Number of GPUs detected |
-| `gpu_model` | GPU model name(s) |
-| `ram_total_size_gb` | Total RAM in GB |
-| `python_version` | Python version string |
+| `os` | Platform string |
+| `country_iso_code` | Country (e.g. from offline mode or geo) |
+| `region` | Region / province |
+| `cloud_provider` | Cloud provider name, if detected |
+| `cloud_region` | Cloud region, if detected |
+| `longitude`, `latitude` | Approximate location, if geo resolution ran |
+| `cpu_count`, `cpu_physical_count`, `cpu_model` | CPU metadata |
+| `gpu_count`, `gpu_model` | GPU metadata |
+| `ram_total_size_gb` | Total RAM |
+| `python_version` | Python version |
 | `codecarbon_version` | Installed CodeCarbon version |
 
-### Tier 1: what we do **not** collect yet
+### Not sent in Tier 1
 
-The API schema supports more “minimal” fields (framework versions, install method, executable hash, etc.). **The client does not send them today.** In particular, Tier 1 does **not** include:
+Tier 1 does **not** include:
 
-- Run duration, energy, or CO₂ emissions
-- CPU/GPU utilization or power samples
-- Project, experiment, or user identifiers from your dashboard config
-- Python executable hash, virtualenv type, or ML framework versions
-- IDE, CI, or notebook environment metadata
+- Emissions, energy, power, duration, or utilization
+- Project name, experiment id, run id, or API keys
+- Source code, file paths, hostnames, or user ids
+- ML stack versions (PyTorch, TensorFlow, etc.)
+- Output methods, tracking mode, or internal diagnostics
+- Anything else defined as “extensive” in the telemetry schema
 
-If we add fields later, this page will be updated; the payload will stay limited to the minimal tier rules on the server.
+Tier 2 (`extensive`) adds a single **public** emissions summary via the same mechanism as `add_emission` to the shared telemetry experiment—not a full extensive telemetry document.
 
-## Tier 2: extensive (public leaderboard)
+### Transport
 
-When `telemetry_level = extensive`, CodeCarbon still sends Tier 1 once per process, and on **`stop()`** posts **one** emissions summary to the shared telemetry experiment via the same API used for leaderboard data (`add_emission`). That is independent of `save_to_api` (your private dashboard uploads).
-
-Use this only if you are comfortable contributing anonymous run-level emissions to the public experiment.
+- HTTP `POST` to `{telemetry_api_url}/telemetry`
+- Best-effort: failures are logged and do not stop your tracker
+- If the endpoint is not deployed yet, you may see a warning (HTTP 404)
 
 ## Configure telemetry
 
 ### Config file
 
-Add to `~/.codecarbon.config` and/or `./.codecarbon.config`:
-
 ```ini
 [codecarbon]
 telemetry_level = minimal
+# Optional overrides (defaults point at the public telemetry API):
+# telemetry_api_url = https://api.codecarbon.io
+# telemetry_api_key = ...
+# telemetry_experiment_id = ...
 ```
-
-Allowed values: `disabled`, `minimal`, `extensive`.
-
-Optional API overrides (defaults point at the public telemetry project):
-
-```ini
-telemetry_api_url = https://api.codecarbon.io
-telemetry_api_key = cpt_...
-telemetry_experiment_id = aa69b440-014a-4562-ac06-ba7eecb023f9
-```
-
-Environment variables for URL, key, and experiment id: `CODECARBON_TELEMETRY_API_URL`, `CODECARBON_TELEMETRY_API_KEY`, `CODECARBON_TELEMETRY_EXPERIMENT_ID`.
-
-**Tier resolution:** `telemetry_level` in the config file, or the tracker / CLI override below. Environment variables such as `CODECARBON_TELEMETRY_LEVEL` or legacy `CODECARBON_TELEMETRY` can mark your choice as “explicit” (so the default warning is skipped) but **do not** change the tier unless the same value is also in the config file or passed to the tracker.
 
 ### CLI
 
 ```bash
-# Interactive wizard
+# Interactive wizard (pick config file + tier)
 codecarbon telemetry
 
-# Set tier in a config file
+# Set tier in config
 codecarbon telemetry set disabled
+codecarbon telemetry set minimal
+codecarbon telemetry set extensive
+
+# Show resolved tier (merged global + local config)
 codecarbon telemetry show
 
-# One-run override (does not write the config file)
-codecarbon monitor --telemetry-level minimal -- python train.py
+# One-run override (does not write config)
+codecarbon monitor --telemetry-level disabled -- python train.py
 ```
-
-See the [CLI reference](../reference/cli.md#codecarbon-telemetry) for details.
 
 ### Python
 
@@ -107,23 +110,29 @@ from codecarbon import EmissionsTracker
 tracker = EmissionsTracker(telemetry_level="disabled")
 ```
 
-`OfflineEmissionsTracker`, `@track_emissions`, and `codecarbon monitor` accept the same `telemetry_level` argument.
+## Opt out
 
-### Disable telemetry in tests
+Set any of:
 
 ```ini
 [codecarbon]
 telemetry_level = disabled
 ```
 
-## Privacy notes
+```bash
+codecarbon telemetry set disabled
+```
 
-- Tier 1 is **best-effort**: failures are logged and do not block tracking.
-- Coordinates are only sent when the tracker already resolved them; they are not precise location tracking by themselves.
-- Choose `disabled` if you do not want any product telemetry.
-- Choose `extensive` only if you accept publishing one emissions row per process to the public telemetry experiment on stop.
+```python
+EmissionsTracker(telemetry_level="disabled")
+```
+
+## First run without explicit configuration
+
+If you never set `telemetry_level`, CodeCarbon uses `minimal` and logs a **one-time warning** per Python session that Tier 1 will be sent. Set `telemetry_level` explicitly (config, CLI, or tracker argument) to silence it.
 
 ## Related
 
-- [Configure CodeCarbon](configuration.md) — general config file and environment variables
-- [Use the Cloud API & Dashboard](cloud-api.md) — your own projects and experiments
+- [Configure CodeCarbon](configuration.md) — general `.codecarbon.config` hierarchy
+- [CLI reference](../reference/cli.md#codecarbon-telemetry) — command flags
+- [Cloud API & dashboard](cloud-api.md) — your own emissions data

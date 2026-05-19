@@ -35,7 +35,7 @@ def heavy_computation(run_time_secs: float = 3):
         pass
 
 
-empty_conf = "[codecarbon]"
+disabled_conf = "[codecarbon]\ntelemetry_level = disabled\n"
 
 
 if sys.platform == "darwin":
@@ -73,7 +73,8 @@ class TestCarbonTracker(unittest.TestCase):
         # ./.codecarbon.config so that the user's local configuration does not
         # alter tests
         patcher = mock.patch(
-            "builtins.open", new_callable=get_custom_mock_open(empty_conf, empty_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(disabled_conf, disabled_conf),
         )
         self.addCleanup(patcher.stop)
         patcher.start()
@@ -99,7 +100,7 @@ class TestCarbonTracker(unittest.TestCase):
             json=GEO_METADATA_CANADA,
             status=200,
         )
-        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False, send_telemetry=False)
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
         # WHEN
         tracker.start()
         heavy_computation(run_time_secs=5)
@@ -126,7 +127,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False, send_telemetry=False)
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         mock_gpu = mock.MagicMock()
         from codecarbon.external.hardware import GPU
@@ -164,7 +165,7 @@ class TestCarbonTracker(unittest.TestCase):
 
         mocked_requests_get.side_effect = raise_timeout_exception
 
-        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False, send_telemetry=False)
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         # WHEN
         tracker.start()
@@ -183,7 +184,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False, send_telemetry=False)
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         def raise_exception(*args, **kwargs):
             raise Exception()
@@ -202,7 +203,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False, send_telemetry=False)
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
 
         def raise_exception(*args, **kwargs):
             raise Exception()
@@ -346,7 +347,6 @@ class TestCarbonTracker(unittest.TestCase):
             country_iso_code="USA",
             output_dir=self.temp_path,
             experiment_id="test",
-            send_telemetry=False,
         )
         tracker.start()
         heavy_computation(run_time_secs=2)
@@ -370,7 +370,6 @@ class TestCarbonTracker(unittest.TestCase):
             country_iso_code="USA",
             output_dir=self.temp_path,
             experiment_id="test",
-            send_telemetry=False,
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_invalid_headers.csv"
@@ -404,7 +403,6 @@ class TestCarbonTracker(unittest.TestCase):
             country_iso_code="USA",
             output_dir=self.temp_path,
             experiment_id="test",
-            send_telemetry=False,
         )
         emissions = os.path.join(
             os.path.dirname(__file__), "test_data", "emissions_valid_headers.csv"
@@ -448,7 +446,7 @@ class TestCarbonTracker(unittest.TestCase):
         )
 
         # WHEN
-        with EmissionsTracker(measure_power_secs=1, save_to_file=False, send_telemetry=False) as tracker:
+        with EmissionsTracker(measure_power_secs=1, save_to_file=False) as tracker:
             heavy_computation(run_time_secs=5)
 
         # THEN
@@ -611,7 +609,6 @@ class TestCarbonTracker(unittest.TestCase):
         with EmissionsTracker(
             output_dir=self.temp_path,
             measure_power_secs=1,  # Short interval for testing
-            send_telemetry=False,
         ) as tracker:
             # Stop the scheduler to simulate task mode or manual stopping
             tracker._scheduler.stop()
@@ -655,7 +652,6 @@ class TestCarbonTracker(unittest.TestCase):
         with EmissionsTracker(
             output_dir=self.temp_path,
             measure_power_secs=1,  # Short interval for testing
-            send_telemetry=False,
         ) as tracker:
             # Ensure scheduler is running (default state)
             self.assertFalse(tracker._scheduler._stopped)

@@ -135,3 +135,6 @@ tests/test_data/rapl/*
 credentials*
 .codecarbon.config*
 scripts/agent-vm.personal.config.sh
+
+# Added by ggshield
+.cache_ggshield
