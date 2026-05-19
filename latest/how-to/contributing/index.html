@@ -1613,6 +1613,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#test-the-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Test the release
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#test-the-build-in-docker" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2592,6 +2603,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#test-the-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Test the release
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#test-the-build-in-docker" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -3144,6 +3166,21 @@ git<span class="w"> </span>rebase<span class="w"> </span><span class="nv">$TARGE
 <li><a href="https://github.com/mlco2/codecarbon/releases/">Edit the Draft release</a> on Github and give it a tag, <code>v1.0.0</code> for the version 1.0.0. Github will automatically create a Git tag for it. Complete help <a href="https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository">here</a>.</li>
 <li>A <a href="https://github.com/mlco2/codecarbon/actions">Github Action</a> <em>Upload Python Package</em> will be run automaticaly to upload the package.</li>
 </ul>
+<h4 id="test-the-release">Test the release<a class="headerlink" href="#test-the-release" title="Permanent link">&para;</a></h4>
+<p>After the release on PyPi, please test it in a fresh environment:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>/tmp
+rm<span class="w"> </span>-rf<span class="w"> </span>cc_rel_test
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>cc_rel_test
+<span class="nb">source</span><span class="w"> </span>cc_rel_test/bin/activate
+pip<span class="w"> </span>install<span class="w"> </span>codecarbon
+<span class="c1"># Check you have the last version</span>
+codecarbon<span class="w"> </span>--version
+codecarbon<span class="w"> </span>monitor<span class="w"> </span>--offline<span class="w"> </span>--country-iso-code<span class="w"> </span>FRA
+<span class="c1"># Stop it with Ctrl+C if it works</span>
+<span class="c1"># Then clean up</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>cc_rel_test
+</code></pre></div>
+<p>And check if the doc looks good on <a href="https://docs.codecarbon.io/">docs.codecarbon.io</a>.</p>
 <!-- TOC -->
 <p><a name="test-the-build-in-docker"></a></p>
 <h4 id="test-the-build-in-docker">Test the build in Docker<a class="headerlink" href="#test-the-build-in-docker" title="Permanent link">&para;</a></h4>
