@@ -60,6 +60,29 @@ class TestResolveTelemetryLevel(unittest.TestCase):
         )
         self.assertEqual(level, TelemetryLevel.disabled)
 
+    def test_override_kwarg_takes_precedence_over_external_conf(self):
+        level = resolve_telemetry_level(
+            external_conf={"telemetry_level": "extensive"},
+            override="disabled",
+        )
+        self.assertEqual(level, TelemetryLevel.disabled)
+
+    def test_external_conf_env_overrides_file_when_merged(self):
+        level = resolve_telemetry_level(
+            {"telemetry_level": "minimal"},
+            external_conf={"telemetry_level": "disabled"},
+        )
+        self.assertEqual(level, TelemetryLevel.disabled)
+
+    def test_env_telemetry_level_via_external_conf(self):
+        with patch.dict(
+            os.environ, {"CODECARBON_TELEMETRY_LEVEL": "disabled"}, clear=False
+        ):
+            from codecarbon.core.config import get_hierarchical_config
+
+            level = resolve_telemetry_level(external_conf=get_hierarchical_config())
+        self.assertEqual(level, TelemetryLevel.disabled)
+
     def test_is_explicit_with_config_file(self):
         self.assertTrue(is_telemetry_level_explicit({"telemetry_level": "minimal"}))
 

@@ -285,14 +285,16 @@ class BaseEmissionsTracker(ABC):
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
         :param telemetry_level: Telemetry tier (``disabled``, ``minimal``, ``extensive``).
-                                Overrides ``telemetry_level`` in ``.codecarbon.config`` when set.
+                                Overrides config file and ``CODECARBON_TELEMETRY_LEVEL`` when set.
         """
 
         self._external_conf = get_hierarchical_config()
         self._config_file_conf = get_config_file_settings()
         telemetry_override = None if telemetry_level is _sentinel else telemetry_level
         self._telemetry_level = resolve_telemetry_level(
-            self._config_file_conf, override=telemetry_override
+            self._config_file_conf,
+            override=telemetry_override,
+            external_conf=self._external_conf,
         )
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
         if self._allow_multiple_runs:

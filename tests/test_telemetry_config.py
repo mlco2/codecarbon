@@ -81,7 +81,7 @@ class TestTelemetryConfigContract(unittest.TestCase):
             TelemetryLevel.minimal.value,
         )
 
-    def test_env_codecarbon_telemetry_does_not_change_tier(self):
+    def test_legacy_env_codecarbon_telemetry_does_not_change_tier(self):
         with tempfile.TemporaryDirectory() as tmp:
             local_path = Path(tmp) / ".codecarbon.config"
             local_path.write_text(_conf("minimal"))
@@ -94,9 +94,34 @@ class TestTelemetryConfigContract(unittest.TestCase):
                     {"CODECARBON_TELEMETRY": "disabled"},
                     clear=False,
                 ):
-                    file_settings = get_config_file_settings()
-                    level = resolve_telemetry_level(file_settings)
+                    from codecarbon.core.config import get_hierarchical_config
+
+                    level = resolve_telemetry_level(
+                        get_config_file_settings(),
+                        external_conf=get_hierarchical_config(),
+                    )
         self.assertEqual(level, TelemetryLevel.minimal)
+
+    def test_env_codecarbon_telemetry_level_overrides_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            local_path = Path(tmp) / ".codecarbon.config"
+            local_path.write_text(_conf("minimal"))
+            with patch(
+                "codecarbon.core.config._config_file_paths",
+                return_value=("/nonexistent/global", str(local_path)),
+            ):
+                with patch.dict(
+                    os.environ,
+                    {"CODECARBON_TELEMETRY_LEVEL": "disabled"},
+                    clear=False,
+                ):
+                    from codecarbon.core.config import get_hierarchical_config
+
+                    level = resolve_telemetry_level(
+                        get_config_file_settings(),
+                        external_conf=get_hierarchical_config(),
+                    )
+        self.assertEqual(level, TelemetryLevel.disabled)
 
     def test_telemetry_api_url_env_used_for_tier2_client(self):
         with patch.dict(

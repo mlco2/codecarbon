@@ -69,29 +69,42 @@ def is_telemetry_level_explicit(
 
 
 def resolve_telemetry_level(
-    config_file_conf: dict[str, Any],
+    config_file_conf: dict[str, Any] | None = None,
     *,
     override: str | TelemetryLevel | None = None,
+    external_conf: dict[str, Any] | None = None,
 ) -> TelemetryLevel:
     """Resolve the active telemetry tier.
 
-    Precedence: tracker ``telemetry_level`` argument, then ``telemetry_level`` in
-    ``.codecarbon.config``. Environment variables do not change the tier unless
-    passed as ``override`` from a future CLI integration.
+    Precedence:
+
+        1. ``override`` — ``EmissionsTracker(telemetry_level=...)`` or
+           ``codecarbon monitor --telemetry-level``
+        2. ``external_conf`` — merged ``.codecarbon.config`` and ``CODECARBON_*`` env
+           (environment overrides file for the same key)
+        3. ``config_file_conf`` — file-only settings when ``external_conf`` is omitted
+        4. Default: ``minimal``
+
+    Legacy ``CODECARBON_TELEMETRY`` / config key ``telemetry`` only affect whether
+    the tier counts as explicitly configured, not tier resolution.
 
     Args:
-        config_file_conf: Settings from ``get_config_file_settings()`` (no env overlay).
-        override: Optional tier from ``EmissionsTracker(telemetry_level=...)``.
+        config_file_conf: Settings from ``get_config_file_settings()`` (optional).
+        override: Optional tier from tracker or CLI.
+        external_conf: Merged settings from ``get_hierarchical_config()`` (optional).
 
     Returns:
         Resolved ``TelemetryLevel``.
     """
-    raw = (
-        override
-        if override is not None
-        else config_file_conf.get(TELEMETRY_LEVEL_CONFIG_KEY)
-    )
-    if raw is None:
+    if override is not None:
+        raw = override
+    elif external_conf is not None and external_conf.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None:
+        raw = external_conf[TELEMETRY_LEVEL_CONFIG_KEY]
+    elif config_file_conf is not None and config_file_conf.get(
+        TELEMETRY_LEVEL_CONFIG_KEY
+    ) is not None:
+        raw = config_file_conf[TELEMETRY_LEVEL_CONFIG_KEY]
+    else:
         return DEFAULT_TELEMETRY_LEVEL
     try:
         return parse_telemetry_level(raw)

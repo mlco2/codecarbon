@@ -23,11 +23,10 @@ _TELEMETRY_CONFIGURE_WARNED = False
 TELEMETRY_NOT_CONFIGURED_MESSAGE = (
     "CodeCarbon telemetry_level was not set explicitly; using default %r. "
     "Tier 1 minimal telemetry (hardware and environment metadata) will be "
-    "sent once per Python session. Set telemetry_level in .codecarbon.config "
-    "(disabled, minimal, or extensive), pass telemetry_level=... to "
-    "EmissionsTracker / OfflineEmissionsTracker, or set CODECARBON_TELEMETRY_LEVEL "
-    "to opt out (disabled), keep minimal telemetry, or enable extensive (public "
-    "emissions on stop)."
+    "sent once per Python session. Set telemetry_level in .codecarbon.config, "
+    "set CODECARBON_TELEMETRY_LEVEL, pass telemetry_level=... to "
+    "EmissionsTracker / OfflineEmissionsTracker, or run "
+    "codecarbon telemetry set <level>."
 )
 
 

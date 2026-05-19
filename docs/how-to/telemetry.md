@@ -22,11 +22,11 @@ You can use one without the other.
 
 Tier is resolved in this order:
 
-1. `EmissionsTracker(telemetry_level=...)` or `codecarbon monitor --telemetry-level ...`
-2. `telemetry_level` in `.codecarbon.config` (local overrides global)
-3. Default: `minimal`
+1. **Tracker or CLI argument** — `EmissionsTracker(telemetry_level=...)` or `codecarbon monitor --telemetry-level ...` (highest priority)
+2. **Config + environment** — `telemetry_level` in `.codecarbon.config` (local overrides global), then `CODECARBON_TELEMETRY_LEVEL` overrides the file value when both are set (same rules as other `CODECARBON_*` settings)
+3. **Default:** `minimal`
 
-Environment variables `CODECARBON_TELEMETRY` / `CODECARBON_TELEMETRY_LEVEL` count as “explicit” configuration (they suppress the one-time setup warning) but **do not** change the tier unless you also set `telemetry_level` in a config file or pass the tracker argument.
+Legacy `CODECARBON_TELEMETRY` / config key `telemetry` suppress the one-time setup warning when set, but do **not** set the tier (use `telemetry_level` or `CODECARBON_TELEMETRY_LEVEL`).
 
 ## Tier 1: what we collect (and what we do not)
 

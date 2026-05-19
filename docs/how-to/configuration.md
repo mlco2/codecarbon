@@ -110,6 +110,6 @@ documentation](https://requests.readthedocs.io/en/latest/user/advanced/#proxies)
 
 ## Product telemetry
 
-Optional library telemetry (`telemetry_level`: `disabled`, `minimal`, or `extensive`) is configured separately from dashboard API settings. Tier 1 (`minimal`) sends only hardware and environment metadata once per process—not your emissions or project ids.
+Optional library telemetry (`telemetry_level`: `disabled`, `minimal`, or `extensive`) is configured separately from dashboard API settings. Set it in `.codecarbon.config`, via `CODECARBON_TELEMETRY_LEVEL`, or with `EmissionsTracker(telemetry_level=...)` (argument wins). Tier 1 (`minimal`) sends only hardware and environment metadata once per process—not your emissions or project ids.
 
 See [Product telemetry](telemetry.md) for tiers, what is collected, and how to opt out.

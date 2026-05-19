@@ -142,7 +142,10 @@ def print_telemetry_status(config_path: Optional[Path] = None) -> None:
         external_conf = get_hierarchical_config()
         source_label = "merged ~/.codecarbon.config + ./.codecarbon.config"
 
-    level = resolve_telemetry_level(file_settings)
+    level = resolve_telemetry_level(
+        file_settings,
+        external_conf=external_conf or None,
+    )
     explicit = is_telemetry_level_explicit(file_settings, external_conf=external_conf)
     stored = file_settings.get("telemetry_level")
     print(f"Config source: {source_label}")
