@@ -8,6 +8,7 @@ from carbonserver.api.infra.repositories import (
     repository_projects,
     repository_projects_tokens,
     repository_runs,
+    repository_telemetry,
     repository_users,
 )
 from carbonserver.api.services.auth_context import AuthContext
@@ -21,6 +22,7 @@ from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.services.signup_service import SignUpService
+from carbonserver.api.services.telemetry_service import TelemetryService
 from carbonserver.api.services.user_service import UserService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
@@ -63,6 +65,11 @@ class ServerContainer(containers.DeclarativeContainer):
         session_factory=db.provided.session,
     )
 
+    telemetry_repository = providers.Factory(
+        repository_telemetry.SqlAlchemyRepository,
+        session_factory=db.provided.session,
+    )
+
     experiment_repository = providers.Factory(
         repository_experiments.SqlAlchemyRepository,
         session_factory=db.provided.session,
@@ -97,6 +104,11 @@ class ServerContainer(containers.DeclarativeContainer):
     emission_service = providers.Factory(
         EmissionService,
         emission_repository=emission_repository,
+    )
+
+    telemetry_service = providers.Factory(
+        TelemetryService,
+        telemetry_repository=telemetry_repository,
     )
 
     experiment_service = providers.Factory(
