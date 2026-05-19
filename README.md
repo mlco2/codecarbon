@@ -76,6 +76,8 @@ Configuration precedence and examples: [configuration guide](https://docs.codeca
 
 We created a Python package that estimates your hardware electricity power consumption (GPU + CPU + RAM) and we apply to it the carbon intensity of the region where the computing is done.
 
+CodeCarbon focuses on the main compute components it can measure or estimate directly. It does not separately model disk I/O, network transfers, displays, cooling, or other peripherals.
+
 ![calculation Summary](docs/images/calculation.png)
 
 We explain more about this calculation in the [**Methodology**](https://docs.codecarbon.io/latest/explanation/methodology/) section of the documentation.
