@@ -323,6 +323,26 @@ git push --force-with-lease
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
 
+#### Test the release
+
+After the release on PyPi, please test it in a fresh environment:
+
+```sh
+cd /tmp
+rm -rf cc_rel_test
+python -m venv cc_rel_test
+source cc_rel_test/bin/activate
+pip install codecarbon
+# Check you have the last version
+codecarbon --version
+codecarbon monitor --offline --country-iso-code FRA
+# Stop it with Ctrl+C if it works
+# Then clean up
+rm -rf cc_rel_test
+```
+
+And check if the doc looks good on [docs.codecarbon.io](https://docs.codecarbon.io/).
+
 <!-- TOC --><a name="test-the-build-in-docker"></a>
 #### Test the build in Docker
 
