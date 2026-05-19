@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "arrow",
     "authlib>=1.2.1",
+    "joserfc>=1.0.0",
     "click",
     "pandas>=2.3.3;python_version>='3.14'",
     "pandas;python_version<'3.14'",
