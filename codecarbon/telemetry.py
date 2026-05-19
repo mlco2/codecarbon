@@ -1,73 +1,87 @@
-"""
-Telemetry module for CodeCarbon.
-
-This module handles two tiers of telemetry:
-- Tier 1: Basic system information (always enabled) - python_version, os, cpu, gpu, ram, codecarbon_version, tracking_mode
-- Tier 2: Detailed emissions data (opt-in) - requires CODECARBON_TELEMETRY_EXPERIMENT_ID environment variable
-"""
+"""Tracker-facing telemetry helpers built on the shared TelemetryClient."""
 
 import os
+from datetime import datetime, timezone
 from typing import Any
-import requests
 
+from codecarbon.core.telemetry_client import TelemetryClient
+from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.external.logger import logger
 
-# Public telemetry API key - limited permissions for metrics only
 TELEMETRY_API_KEY = os.environ.get(
     "CODECARBON_TELEMETRY_API_KEY",
-    "cpt_sDiIpdwl5BRUM2T6vIJrt2JjL-pB3b46v8cvpLwuroU"
+    "cpt_sDiIpdwl5BRUM2T6vIJrt2JjL-pB3b46v8cvpLwuroU",
 )
-TELEMETRY_API_URL = "https://api.codecarbon.io"
-TELEMETRY_EXPERIMENT_ID = None  # Set before enabling Tier 2 (see Task 4)
+TELEMETRY_API_URL = os.environ.get(
+    "CODECARBON_TELEMETRY_API_URL", "https://api.codecarbon.io"
+)
+TELEMETRY_EXPERIMENT_ID = None
 
-_TIER1_SENT = False  # module-level dedup: send once per Python session
+_TIER1_SENT = False
 
-_TIER1_FIELDS = [
-    "python_version",
-    "os",
-    "cpu_count",
-    "cpu_model",
-    "gpu_count",
-    "gpu_model",
-    "ram_total_size",
-    "codecarbon_version",
-    "tracking_mode",
-]
-
-
-def collect_tier1_payload(conf: dict[str, Any]) -> dict[str, Any]:
-    return {k: conf.get(k) for k in _TIER1_FIELDS}
-
-
-def send_tier1_telemetry(conf: dict[str, Any]) -> bool:
-    """Send Tier 1 telemetry metadata once per session.
-
-    Posts environment metadata to the telemetry API endpoint. Uses module-level
-    deduplication flag to ensure data is sent only once per Python session.
-    Exceptions are caught and logged but not raised (silent fail).
+def build_minimal_telemetry_dict(conf: dict[str, Any]) -> dict[str, Any]:
+    """Build a minimal telemetry payload dict from tracker configuration.
 
     Args:
-        conf: Configuration dict with environment metadata (keys: python_version,
-              os, cpu_count, cpu_model, gpu_count, gpu_model, ram_total_size,
-              codecarbon_version, tracking_mode)
+        conf: Tracker configuration dictionary.
+
+    Returns:
+        Dictionary suitable for ``TelemetryCreate`` validation.
+    """
+    payload: dict[str, Any] = {
+        "timestamp": datetime.now(timezone.utc),
+        "telemetry_level": TelemetryLevel.minimal.value,
+        "os": conf.get("os"),
+        "country_iso_code": conf.get("country_iso_code"),
+        "region": conf.get("region"),
+        "cloud_provider": conf.get("provider"),
+        "cloud_region": conf.get("region"),
+        "longitude": conf.get("longitude"),
+        "latitude": conf.get("latitude"),
+        "cpu_count": conf.get("cpu_count"),
+        "cpu_physical_count": conf.get("cpu_physical_count"),
+        "cpu_model": conf.get("cpu_model"),
+        "gpu_count": conf.get("gpu_count"),
+        "gpu_model": conf.get("gpu_model"),
+        "ram_total_size_gb": conf.get("ram_total_size"),
+        "python_version": conf.get("python_version"),
+        "codecarbon_version": conf.get("codecarbon_version"),
+    }
+    return {key: value for key, value in payload.items() if value is not None}
+
+
+collect_tier1_payload = build_minimal_telemetry_dict
+
+
+def send_tier1_telemetry(
+    conf: dict[str, Any], endpoint_url: str | None = None
+) -> bool:
+    """Send minimal telemetry once per Python session.
+
+    Args:
+        conf: Tracker configuration dictionary.
+        endpoint_url: Optional API base URL override.
 
     Returns:
         True if telemetry was sent successfully on this call, False if already
-        sent in this session or if an error occurred.
+        sent in this session or if sending failed.
     """
     global _TIER1_SENT
     if _TIER1_SENT:
         return False
     try:
-        payload = collect_tier1_payload(conf)
-        requests.post(
-            f"{TELEMETRY_API_URL}/telemetry",
-            json=payload,
-            headers={"x-api-token": TELEMETRY_API_KEY},
-            timeout=2,
+        payload = build_minimal_telemetry_dict(conf)
+        client = TelemetryClient(
+            endpoint_url=endpoint_url or TELEMETRY_API_URL,
+            telemetry=payload,
         )
-        _TIER1_SENT = True
-        return True
-    except Exception as e:
-        logger.error(f"Telemetry Tier 1 failed (non-critical): {e}")
+        if TELEMETRY_API_KEY:
+            client.headers["x-api-token"] = TELEMETRY_API_KEY
+        result = client.add_telemetry()
+        if result is not None:
+            _TIER1_SENT = True
+            return True
+        return False
+    except Exception as error:
+        logger.error(f"Telemetry Tier 1 failed (non-critical): {error}")
         return False
