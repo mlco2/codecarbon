@@ -149,6 +149,8 @@ nav:
   - How-to Guides:
     - Examples: how-to/examples.md
     - Configure CodeCarbon: how-to/configuration.md
+    - Product telemetry: how-to/telemetry.md
+    - FastAPI middleware: how-to/fastapi.md
     - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
     - Dashboard & Visualization:
       - Use the Cloud API & Dashboard: how-to/cloud-api.md
