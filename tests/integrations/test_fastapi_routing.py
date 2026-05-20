@@ -17,6 +17,12 @@ def test_build_task_name_uses_route_template() -> None:
     assert build_task_name(request) == "GET /users/{user_id}"
 
 
+def test_build_task_name_custom_formatter() -> None:
+    request = MagicMock()
+    request.url.path = "/webhook"
+    assert build_task_name(request, formatter=lambda r: f"custom:{r.url.path}") == "custom:/webhook"
+
+
 def test_build_task_name_fallback_to_url_path() -> None:
     request = MagicMock()
     request.method = "POST"
