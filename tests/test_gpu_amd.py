@@ -395,6 +395,75 @@ class TestAmdGpu:
             assert device._get_graphics_processes() == []
 
 
+class TestAmdsmiImportFailures:
+    """Tests for module-level amdsmi import error handling in gpu_amd.py."""
+
+    def _import_gpu_amd_with_amdsmi_error(self, error_to_raise):
+        """
+        Simulate a fresh import of codecarbon.core.gpu_amd where importing amdsmi
+        raises *error_to_raise*.  Returns the freshly imported module object.
+        """
+        import builtins
+        import importlib
+        import sys
+
+        # Remove cached modules so the module body is re-executed
+        saved = {}
+        for name in ("amdsmi", "codecarbon.core.gpu_amd"):
+            if name in sys.modules:
+                saved[name] = sys.modules.pop(name)
+
+        _real_import = builtins.__import__
+
+        def _patched_import(name, *args, **kwargs):
+            if name == "amdsmi":
+                raise error_to_raise
+            return _real_import(name, *args, **kwargs)
+
+        try:
+            with mock.patch("builtins.__import__", side_effect=_patched_import):
+                module = importlib.import_module("codecarbon.core.gpu_amd")
+            return module
+        finally:
+            # Drop the freshly created module entries and restore original state
+            sys.modules.pop("amdsmi", None)
+            sys.modules.pop("codecarbon.core.gpu_amd", None)
+            sys.modules.update(saved)
+
+    def test_oserror_sets_amdsmi_unavailable(self):
+        """OSError during amdsmi import (e.g. missing libamd_smi.so) must disable AMD GPU support."""
+        module = self._import_gpu_amd_with_amdsmi_error(
+            OSError("libamd_smi.so: cannot open shared object file: No such file or directory")
+        )
+        assert module.amdsmi is None
+        assert module.AMDSMI_AVAILABLE is False
+
+    def test_keyerror_sets_amdsmi_unavailable(self):
+        """KeyError during amdsmi import (e.g. macOS with amdsmi installed but no ROCm) must disable AMD GPU support."""
+        module = self._import_gpu_amd_with_amdsmi_error(KeyError("missing_rocm_key"))
+        assert module.amdsmi is None
+        assert module.AMDSMI_AVAILABLE is False
+
+    def test_attributeerror_sets_amdsmi_unavailable(self):
+        """AttributeError during amdsmi import must disable AMD GPU support."""
+        module = self._import_gpu_amd_with_amdsmi_error(
+            AttributeError("module 'amdsmi' has no attribute 'amdsmi_init'")
+        )
+        assert module.amdsmi is None
+        assert module.AMDSMI_AVAILABLE is False
+
+    def test_import_failure_logs_warning(self):
+        """Each import-time failure (OSError/KeyError/AttributeError) must log a warning."""
+        for error in (
+            OSError("libamd_smi.so not found"),
+            KeyError("rocm_key"),
+            AttributeError("missing attr"),
+        ):
+            with mock.patch("codecarbon.external.logger.logger.warning") as warning_mock:
+                self._import_gpu_amd_with_amdsmi_error(error)
+            warning_mock.assert_called()
+
+
 class TestAllGPUDevicesAmd:
     def test_init_with_no_amd_handles(self):
         from codecarbon.core.gpu import AllGPUDevices
