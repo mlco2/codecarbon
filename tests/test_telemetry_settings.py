@@ -47,7 +47,9 @@ class TestTelemetrySettingsResolve(unittest.TestCase):
 
     def test_env_telemetry_key_ignored(self):
         with patch.dict(os.environ, {"CODECARBON_TELEMETRY": "disabled"}, clear=False):
-            settings = TelemetrySettings.resolve(config_file_conf={"telemetry": "extensive"})
+            settings = TelemetrySettings.resolve(
+                config_file_conf={"telemetry": "extensive"}
+            )
         self.assertEqual(settings.level, TelemetryLevel.minimal)
 
     def test_invalid_level_falls_back_to_minimal(self):
@@ -85,7 +87,9 @@ class TestTelemetrySettingsResolve(unittest.TestCase):
         ):
             from codecarbon.core.config import get_hierarchical_config
 
-            settings = TelemetrySettings.resolve(external_conf=get_hierarchical_config())
+            settings = TelemetrySettings.resolve(
+                external_conf=get_hierarchical_config()
+            )
         self.assertEqual(settings.level, TelemetryLevel.disabled)
 
     def test_is_explicit_with_config_file(self):
@@ -153,9 +157,7 @@ class TestTelemetryApiSettings(unittest.TestCase):
                 "telemetry_experiment_id": "00000000-0000-0000-0000-000000000001"
             }
         )
-        self.assertEqual(
-            settings.experiment_id, "00000000-0000-0000-0000-000000000001"
-        )
+        self.assertEqual(settings.experiment_id, "00000000-0000-0000-0000-000000000001")
 
     def test_experiment_id_uses_public_default_when_unset(self):
         env = {

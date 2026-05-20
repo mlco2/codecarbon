@@ -103,7 +103,9 @@ class TestTelemetryTiersAtStop(unittest.TestCase):
         tracker._telemetry_override = None
         emissions = self._emissions()
         telemetry = Telemetry.from_tracker(tracker)
-        with patch("codecarbon.core.telemetry.dispatcher.post_private", return_value=True):
+        with patch(
+            "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
+        ):
             with patch("codecarbon.core.telemetry.client.ApiClient") as mock_api_cls:
                 mock_api = MagicMock()
                 mock_api.add_emission.return_value = True
@@ -186,7 +188,9 @@ class TestTrackerTelemetry(unittest.TestCase):
             with patch(
                 "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
             ) as mock_post:
-                with patch("codecarbon.core.telemetry.client.ApiClient") as mock_api_cls:
+                with patch(
+                    "codecarbon.core.telemetry.client.ApiClient"
+                ) as mock_api_cls:
                     mock_api = MagicMock()
                     mock_api.add_emission.return_value = True
                     mock_api_cls.return_value = mock_api

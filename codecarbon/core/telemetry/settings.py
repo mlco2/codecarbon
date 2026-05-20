@@ -88,9 +88,10 @@ class TelemetrySettings:
         elif merged.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None:
             raw = merged[TELEMETRY_LEVEL_CONFIG_KEY]
             source = "external"
-        elif config_file_conf is not None and config_file_conf.get(
-            TELEMETRY_LEVEL_CONFIG_KEY
-        ) is not None:
+        elif (
+            config_file_conf is not None
+            and config_file_conf.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None
+        ):
             raw = config_file_conf[TELEMETRY_LEVEL_CONFIG_KEY]
             source = "file"
         else:

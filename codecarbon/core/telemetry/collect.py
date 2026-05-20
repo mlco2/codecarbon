@@ -36,9 +36,7 @@ CI_ENVIRONMENTS = (
     ("CI", "ci"),
 )
 
-CONTAINER_RUNTIME_ENV = (
-    ("KUBERNETES_SERVICE_HOST", "kubernetes"),
-)
+CONTAINER_RUNTIME_ENV = (("KUBERNETES_SERVICE_HOST", "kubernetes"),)
 
 OUTPUT_METHOD_FIELDS = (
     ("save_to_file", "file"),

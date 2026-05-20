@@ -22,9 +22,9 @@ from codecarbon.core.config import (
     get_hierarchical_config,
     normalize_gpu_ids,
 )
-from codecarbon.core.telemetry import Telemetry, TelemetrySettings
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
+from codecarbon.core.telemetry import Telemetry, TelemetrySettings
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata

@@ -9,7 +9,12 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from codecarbon.core.config import get_config_file_settings
-from codecarbon.core.telemetry import Telemetry, TelemetryLevel, TelemetrySettings, post_private
+from codecarbon.core.telemetry import (
+    Telemetry,
+    TelemetryLevel,
+    TelemetrySettings,
+    post_private,
+)
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from tests.testutils import ensure_telemetry_run_duration, get_custom_mock_open
 
@@ -35,7 +40,9 @@ class TestTelemetryConfigContract(unittest.TestCase):
     def test_warns_once_when_telemetry_not_explicit(self):
         settings = TelemetrySettings.resolve(config_file_conf={})
         telemetry = Telemetry(settings)
-        with patch("codecarbon.core.telemetry.dispatcher.logger.warning") as mock_warning:
+        with patch(
+            "codecarbon.core.telemetry.dispatcher.logger.warning"
+        ) as mock_warning:
             telemetry.warn_if_implicit()
             telemetry.warn_if_implicit()
         self.assertEqual(mock_warning.call_count, 1)
@@ -46,7 +53,9 @@ class TestTelemetryConfigContract(unittest.TestCase):
             config_file_conf={"telemetry_level": "disabled"}
         )
         telemetry = Telemetry(settings)
-        with patch("codecarbon.core.telemetry.dispatcher.logger.warning") as mock_warning:
+        with patch(
+            "codecarbon.core.telemetry.dispatcher.logger.warning"
+        ) as mock_warning:
             telemetry.warn_if_implicit()
         mock_warning.assert_not_called()
 
@@ -188,7 +197,9 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
             with patch(
                 "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
             ) as mock_post:
-                with patch("codecarbon.core.telemetry.client.ApiClient") as mock_api_cls:
+                with patch(
+                    "codecarbon.core.telemetry.client.ApiClient"
+                ) as mock_api_cls:
                     mock_api = MagicMock()
                     mock_api.add_emission.return_value = True
                     mock_api_cls.return_value = mock_api
@@ -231,9 +242,12 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
             )
         }
         with patch.dict(os.environ, env_without_telemetry, clear=True):
-            with patch("codecarbon.core.telemetry.dispatcher.logger.warning") as mock_warning:
+            with patch(
+                "codecarbon.core.telemetry.dispatcher.logger.warning"
+            ) as mock_warning:
                 with patch(
-                    "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
+                    "codecarbon.core.telemetry.dispatcher.post_private",
+                    return_value=True,
                 ):
                     with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                         EmissionsTracker(save_to_api=False, save_to_file=False)
@@ -246,7 +260,9 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
 
     def test_no_configure_warn_when_telemetry_level_kwarg_set(self, mock_cli_setup):
         self._mock_config("[codecarbon]\n")
-        with patch("codecarbon.core.telemetry.dispatcher.logger.warning") as mock_warning:
+        with patch(
+            "codecarbon.core.telemetry.dispatcher.logger.warning"
+        ) as mock_warning:
             with patch("codecarbon.core.telemetry.dispatcher.post_private"):
                 with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                     EmissionsTracker(
@@ -268,7 +284,8 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
                 os.environ, {"CODECARBON_TELEMETRY": "disabled"}, clear=False
             ):
                 with patch(
-                    "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
+                    "codecarbon.core.telemetry.dispatcher.post_private",
+                    return_value=True,
                 ) as mock_post:
                     with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                         tracker = EmissionsTracker(
