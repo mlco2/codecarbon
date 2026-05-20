@@ -2610,6 +2610,14 @@ all contributions are welcome.</p>
 intervals. This is a configurable parameter <code>measure_power_secs</code>, with
 default value 15 seconds, that can be passed when instantiating the
 emissions tracker.</p>
+<p>CodeCarbon focuses on the main compute components it can measure or
+estimate directly: CPU, GPU, and RAM. It does not separately model disk
+I/O, network transfers, displays, cooling, or other peripherals because
+those sources are usually much smaller, and often negligible, for local
+code-level experiments. They are also not exposed through the same
+low-overhead measurement interfaces as CPU, GPU, and RAM. However, they
+can matter for workloads dominated by data movement, storage, or
+distributed systems.</p>
 <p>Currently, the package supports the following hardware infrastructure.</p>
 <h3 id="tracking-modes">Tracking Modes<a class="headerlink" href="#tracking-modes" title="Permanent link">&para;</a></h3>
 <p>CodeCarbon operates in two distinct modes to determine how power consumption is attributed to your work. Choosing the right mode is essential for data accuracy.</p>
