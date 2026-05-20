@@ -83,7 +83,7 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertTrue(payload["has_torch"])
         self.assertIn("file", payload["output_methods"])
 
-    def test_build_telemetry_payload_includes_framework_versions(self):
+    def test_build_telemetry_payload_omits_framework_versions(self):
         tracker = MagicMock()
         tracker._conf = {"codecarbon_version": "3.0", "hardware": ["cpu"]}
         tracker._geo = None
@@ -102,15 +102,12 @@ class TestTelemetryCollect(unittest.TestCase):
         with patch(
             "codecarbon.core.telemetry_collect._package_installed",
             return_value=True,
-        ), patch(
-            "codecarbon.core.telemetry_collect._package_version",
-            return_value="2.0.0",
         ):
             payload = build_telemetry_payload(tracker, emissions)
 
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertTrue(payload["has_torch"])
-        self.assertEqual(payload["torch_version"], "2.0.0")
+        self.assertNotIn("torch_version", payload)
 
     def test_build_telemetry_payload_uses_resolved_level(self):
         tracker = MagicMock()

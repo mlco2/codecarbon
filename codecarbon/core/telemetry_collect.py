@@ -15,13 +15,10 @@ from codecarbon.core.telemetry_schemas import PRIVATE_TELEMETRY_FIELDS, Telemetr
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 FRAMEWORK_PACKAGES = (
-    ("torch", "has_torch", "torch_version"),
-    ("transformers", "has_transformers", "transformers_version"),
-    ("tensorflow", "has_tensorflow", "tensorflow_version"),
-    ("keras", "has_keras", "keras_version"),
-    ("diffusers", "has_diffusers", "diffusers_version"),
-    ("pytorch_lightning", "has_pytorch_lightning", "pytorch_lightning_version"),
-    ("fastai", "has_fastai", "fastai_version"),
+    ("torch", "has_torch"),
+    ("transformers", "has_transformers"),
+    ("diffusers", "has_diffusers"),
+    ("sklearn", "has_sklearn"),
 )
 
 def _non_empty(value: Any) -> bool:
@@ -40,17 +37,6 @@ def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
 
 def _package_installed(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
-
-
-def _package_version(name: str) -> Optional[str]:
-    if not _package_installed(name):
-        return None
-    try:
-        from importlib.metadata import version
-
-        return version(name)
-    except Exception:
-        return None
 
 
 def _detect_codecarbon_install_method() -> Optional[str]:
@@ -233,19 +219,11 @@ def _raw_cloud_provider_and_region() -> tuple[Optional[str], Optional[str]]:
     return provider, region
 
 
-def _collect_framework_fields(include_versions: bool) -> dict[str, Any]:
-    fields: dict[str, Any] = {}
-    primary: Optional[str] = None
-    for package, has_field, version_field in FRAMEWORK_PACKAGES:
-        installed = _package_installed(package)
-        fields[has_field] = installed
-        if include_versions and installed:
-            fields[version_field] = _package_version(package)
-        if installed and primary is None:
-            primary = package
-    if primary:
-        fields["ml_framework_primary"] = primary
-    return fields
+def _collect_framework_fields() -> dict[str, Any]:
+    return {
+        has_field: _package_installed(package)
+        for package, has_field in FRAMEWORK_PACKAGES
+    }
 
 
 def _gpu_static_fields() -> dict[str, Any]:
@@ -339,14 +317,11 @@ def collect_telemetry_context(
         "cpu_utilization_avg": emissions.cpu_utilization_percent,
         "gpu_utilization_avg": emissions.gpu_utilization_percent,
         "ram_utilization_avg": emissions.ram_utilization_percent,
-        **_collect_framework_fields(include_versions=True),
+        **_collect_framework_fields(),
         **_collect_hardware_diagnostics(tracker),
     }
 
     context.update(gpu_fields)
-    if context.get("ml_framework_primary"):
-        context["framework_detected"] = context["ml_framework_primary"]
-
     return _strip_none(context)
 
 

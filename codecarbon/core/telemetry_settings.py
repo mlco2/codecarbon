@@ -7,8 +7,8 @@ from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.external.logger import logger
 
 DEFAULT_TELEMETRY_API_URL = "https://api.codecarbon.io"
-DEFAULT_TELEMETRY_API_KEY = "cpt_JZhj-vJdEVG28qErZL5mh1ftiqbnDIBYjWSxwvX3rfI"
-DEFAULT_TELEMETRY_EXPERIMENT_ID = "aa69b440-014a-4562-ac06-ba7eecb023f9"
+DEFAULT_TELEMETRY_API_KEY = "cpt_sDiIpdwl5BRUM2T6vIJrt2JjL-pB3b46v8cvpLwuroU"
+DEFAULT_TELEMETRY_EXPERIMENT_ID = "d2d69403-1373-42b4-a2c1-09589aed4801"
 DEFAULT_TELEMETRY_LEVEL = TelemetryLevel.minimal
 
 TELEMETRY_LEVEL_CONFIG_KEY = "telemetry_level"

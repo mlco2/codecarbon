@@ -43,7 +43,7 @@ The payload includes:
 
 - **Environment:** OS, Python, CPU/GPU/RAM, country/region, cloud provider/region, GPU driver/CUDA/cuDNN when available
 - **Usage:** tracking mode, output methods, integration surface (library / CLI / offline), task tracking, CI/notebook/container/IDE hints, hardware diagnostics
-- **ML stack:** framework presence flags **and** installed versions when detected
+- **ML stack:** framework presence flags when detected (no installed package versions)
 - **Run outcome:** duration, emissions, energy (total and per component), utilization averages
 
 Private telemetry does **not** include project names, experiment ids, API keys, file paths, exact coordinates, executable/host hashes, or survey demographics (role, industry, etc.).
