@@ -68,6 +68,22 @@ def test_resolve_header_mapping_bool_true_aliases_emissions() -> None:
     assert resolve_header_mapping(True) == HEADER_PRESETS["emissions"]
 
 
+def test_resolve_header_mapping_none_or_false_returns_empty() -> None:
+    assert resolve_header_mapping(None) == {}
+    assert resolve_header_mapping(False) == {}
+
+
+def test_resolve_header_mapping_full_preset() -> None:
+    mapping = resolve_header_mapping("full")
+    assert mapping["emissions"] == "X-CodeCarbon-Emissions-kg"
+    assert mapping["cpu_utilization_percent"] == "X-CodeCarbon-Cpu-Utilization-Percent-percent"
+
+
+def test_resolve_header_mapping_unknown_preset_raises() -> None:
+    with pytest.raises(ValueError, match="Unknown response_headers preset"):
+        resolve_header_mapping("not-a-preset")
+
+
 def test_apply_response_headers_sets_values(emissions_data: EmissionsData) -> None:
     response = Response(content=b"ok")
     apply_response_headers(
