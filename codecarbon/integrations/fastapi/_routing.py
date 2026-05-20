@@ -111,7 +111,9 @@ def should_track_request(
             return False
     if include is None:
         return True
-    return any(matches_include(pattern, endpoint_key, endpoint_path) for pattern in include)
+    return any(
+        matches_include(pattern, endpoint_key, endpoint_path) for pattern in include
+    )
 
 
 def build_task_name(

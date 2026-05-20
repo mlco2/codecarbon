@@ -1,6 +1,6 @@
+import asyncio
 from unittest.mock import MagicMock, patch
 
-import asyncio
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -130,7 +130,9 @@ def test_middleware_on_request_complete_callback(MockTracker):
         return {"ok": True}
 
     def on_complete(request, response, emissions_data, task_name):
-        completed.append((request.url.path, response.status_code, emissions_data, task_name))
+        completed.append(
+            (request.url.path, response.status_code, emissions_data, task_name)
+        )
 
     add_codecarbon_middleware(
         application,

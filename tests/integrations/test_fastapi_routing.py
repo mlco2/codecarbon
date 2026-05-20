@@ -22,7 +22,10 @@ def test_build_task_name_uses_route_template() -> None:
 def test_build_task_name_custom_formatter() -> None:
     request = MagicMock()
     request.url.path = "/webhook"
-    assert build_task_name(request, formatter=lambda r: f"custom:{r.url.path}") == "custom:/webhook"
+    assert (
+        build_task_name(request, formatter=lambda r: f"custom:{r.url.path}")
+        == "custom:/webhook"
+    )
 
 
 def test_build_task_name_fallback_to_url_path() -> None:
@@ -52,7 +55,9 @@ def test_build_endpoint_key_uses_route_template() -> None:
 
 
 def test_matches_exclude_path_prefix() -> None:
-    assert matches_exclude("/docs", "/docs/oauth2-redirect", "GET /docs", "/docs") is True
+    assert (
+        matches_exclude("/docs", "/docs/oauth2-redirect", "GET /docs", "/docs") is True
+    )
     assert matches_exclude("/health", "/health", "GET /health", "/health") is True
 
 

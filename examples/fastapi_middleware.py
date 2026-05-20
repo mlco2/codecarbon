@@ -4,7 +4,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from codecarbon.integrations.fastapi import add_codecarbon_middleware, create_codecarbon_lifespan
+from codecarbon.integrations.fastapi import (
+    add_codecarbon_middleware,
+    create_codecarbon_lifespan,
+)
 
 _tracker_kwargs = {
     "save_to_file": False,

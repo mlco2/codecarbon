@@ -119,14 +119,18 @@ class CodeCarbonMiddleware(BaseHTTPMiddleware):
         apply_response_headers(response, emissions_data, self.header_mapping)
 
     def _create_and_start_tracker(self) -> EmissionsTracker:
-        tracker = EmissionsTracker(project_name=self.project_name, **self.tracker_kwargs)
+        tracker = EmissionsTracker(
+            project_name=self.project_name, **self.tracker_kwargs
+        )
         tracker.start()
         return tracker
 
     async def _start_request_tracker(self) -> EmissionsTracker:
         return await asyncio.to_thread(self._create_and_start_tracker)
 
-    async def _stop_request_tracker(self, tracker: EmissionsTracker) -> EmissionsData | None:
+    async def _stop_request_tracker(
+        self, tracker: EmissionsTracker
+    ) -> EmissionsData | None:
         await asyncio.to_thread(tracker.stop)
         return getattr(tracker, "final_emissions_data", None)
 
@@ -197,7 +201,9 @@ class CodeCarbonMiddleware(BaseHTTPMiddleware):
                 response = await call_next(request)
             finally:
                 asyncio.create_task(
-                    self._finalize_app_measurement(tracker, task_name, request, response)
+                    self._finalize_app_measurement(
+                        tracker, task_name, request, response
+                    )
                 )
             return response
         async with self._measurement_lock:
@@ -215,9 +221,7 @@ class CodeCarbonMiddleware(BaseHTTPMiddleware):
         if app_tracker is not None:
             return app_tracker
         if self._app_tracker is None:
-            self._app_tracker = await asyncio.to_thread(
-                self._create_and_start_tracker
-            )
+            self._app_tracker = await asyncio.to_thread(self._create_and_start_tracker)
         return self._app_tracker
 
 
