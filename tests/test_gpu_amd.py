@@ -433,7 +433,9 @@ class TestAmdsmiImportFailures:
     def test_oserror_sets_amdsmi_unavailable(self):
         """OSError during amdsmi import (e.g. missing libamd_smi.so) must disable AMD GPU support."""
         module = self._import_gpu_amd_with_amdsmi_error(
-            OSError("libamd_smi.so: cannot open shared object file: No such file or directory")
+            OSError(
+                "libamd_smi.so: cannot open shared object file: No such file or directory"
+            )
         )
         assert module.amdsmi is None
         assert module.AMDSMI_AVAILABLE is False
@@ -459,7 +461,9 @@ class TestAmdsmiImportFailures:
             KeyError("rocm_key"),
             AttributeError("missing attr"),
         ):
-            with mock.patch("codecarbon.external.logger.logger.warning") as warning_mock:
+            with mock.patch(
+                "codecarbon.external.logger.logger.warning"
+            ) as warning_mock:
                 self._import_gpu_amd_with_amdsmi_error(error)
             warning_mock.assert_called()
 
