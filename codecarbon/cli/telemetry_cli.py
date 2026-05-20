@@ -14,12 +14,11 @@ from codecarbon.cli.cli_utils import (
     overwrite_local_config,
 )
 from codecarbon.core.config import get_config_file_settings, get_hierarchical_config
-from codecarbon.core.telemetry_schemas import TelemetryLevel
-from codecarbon.core.telemetry_settings import (
+from codecarbon.core.telemetry import (
     DEFAULT_TELEMETRY_LEVEL,
-    is_telemetry_level_explicit,
+    TelemetryLevel,
+    TelemetrySettings,
     parse_telemetry_level,
-    resolve_telemetry_level,
 )
 
 telemetry_app = typer.Typer(
@@ -142,11 +141,12 @@ def print_telemetry_status(config_path: Optional[Path] = None) -> None:
         external_conf = get_hierarchical_config()
         source_label = "merged ~/.codecarbon.config + ./.codecarbon.config"
 
-    level = resolve_telemetry_level(
-        file_settings,
+    settings = TelemetrySettings.resolve(
+        config_file_conf=file_settings,
         external_conf=external_conf or None,
     )
-    explicit = is_telemetry_level_explicit(file_settings, external_conf=external_conf)
+    level = settings.level
+    explicit = settings.is_explicit
     stored = file_settings.get("telemetry_level")
     print(f"Config source: {source_label}")
     print(f"telemetry_level in file(s): {stored!r}")

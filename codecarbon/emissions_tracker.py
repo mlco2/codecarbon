@@ -22,12 +22,7 @@ from codecarbon.core.config import (
     get_hierarchical_config,
     normalize_gpu_ids,
 )
-from codecarbon.core.telemetry_schemas import TelemetryLevel
-from codecarbon.core.telemetry_settings import resolve_telemetry_level
-from codecarbon.telemetry import (
-    send_product_telemetry_at_stop,
-    warn_if_telemetry_not_configured,
-)
+from codecarbon.core.telemetry import Telemetry, TelemetrySettings
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
@@ -289,11 +284,15 @@ class BaseEmissionsTracker(ABC):
 
         self._external_conf = get_hierarchical_config()
         self._config_file_conf = get_config_file_settings()
-        telemetry_override = None if telemetry_level is _sentinel else telemetry_level
-        self._telemetry_level = resolve_telemetry_level(
-            self._config_file_conf,
-            override=telemetry_override,
-            external_conf=self._external_conf,
+        self._telemetry_override = (
+            None if telemetry_level is _sentinel else telemetry_level
+        )
+        self._telemetry = Telemetry(
+            TelemetrySettings.resolve(
+                config_file_conf=self._config_file_conf,
+                external_conf=self._external_conf,
+                override=self._telemetry_override,
+            )
         )
         self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
         if self._allow_multiple_runs:
@@ -468,25 +467,12 @@ class BaseEmissionsTracker(ABC):
             self._data_source, self._electricitymaps_api_token
         )
 
-        self._apply_init_telemetry(telemetry_override)
+        self._telemetry.warn_if_implicit()
         self._init_output_methods(api_key=self._api_key)
 
     @suppress(Exception)
-    def _apply_init_telemetry(self, telemetry_override: str | None) -> None:
-        warn_if_telemetry_not_configured(
-            self._config_file_conf,
-            self._telemetry_level,
-            override=telemetry_override,
-            external_conf=self._external_conf,
-        )
-    @suppress(Exception)
-    def _send_product_telemetry_at_stop(self, emissions_data: EmissionsData) -> None:
-        send_product_telemetry_at_stop(
-            self,
-            emissions_data,
-            self._telemetry_level,
-            external_conf=self._external_conf,
-        )
+    def _send_telemetry_at_stop(self, emissions_data: EmissionsData) -> None:
+        self._telemetry.send_at_stop(self, emissions_data)
 
     def _init_output_methods(self, *, api_key: str = None):
         """
@@ -789,7 +775,7 @@ class BaseEmissionsTracker(ABC):
 
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
-        self._send_product_telemetry_at_stop(emissions_data)
+        self._send_telemetry_at_stop(emissions_data)
 
         self._persist_data(
             total_emissions=emissions_data,

@@ -3,13 +3,9 @@ import tempfile
 import unittest
 from unittest.mock import ANY, MagicMock, patch
 
-from codecarbon.core.telemetry_schemas import TelemetryLevel
+from codecarbon.core.telemetry import Telemetry
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from codecarbon.output_methods.emissions_data import EmissionsData
-from codecarbon.telemetry import (
-    send_private_telemetry_at_stop,
-    send_public_run_summary_at_stop,
-)
 from tests.testutils import ensure_telemetry_run_duration, get_custom_mock_open
 
 if sys.platform == "darwin":
@@ -62,46 +58,57 @@ class TestTelemetryTiersAtStop(unittest.TestCase):
 
     def test_tier1_posts_private_telemetry(self):
         tracker = MagicMock()
+        tracker._config_file_conf = {}
+        tracker._external_conf = {}
+        tracker._telemetry_override = None
+        tracker._conf = {"os": "Linux", "tracking_mode": "machine"}
+        tracker._hardware = []
+        tracker._resource_tracker = None
+        tracker._save_to_api = False
+        tracker._save_to_file = False
+        tracker._save_to_logger = False
+        tracker._emissions_endpoint = None
+        tracker._save_to_prometheus = False
+        tracker._save_to_logfire = False
+        tracker._tasks = {}
+        tracker._measure_power_secs = 15
         emissions = self._emissions()
+        telemetry = Telemetry.from_tracker(tracker)
         with patch(
-            "codecarbon.telemetry.post_private_telemetry", return_value=True
+            "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
         ) as mock_post:
-            result = send_private_telemetry_at_stop(
-                tracker, emissions, external_conf={}
-            )
-        self.assertTrue(result)
+            telemetry.send_at_stop(tracker, emissions)
         mock_post.assert_called_once()
         payload = mock_post.call_args[0][1]
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertEqual(payload["total_emissions_kg"], 0.001)
 
     def test_tier1_skips_short_duration_at_dispatcher(self):
-        from codecarbon.telemetry import send_product_telemetry_at_stop
-
         tracker = MagicMock()
+        tracker._config_file_conf = {}
+        tracker._external_conf = {}
+        tracker._telemetry_override = None
         emissions = self._emissions()
         emissions.duration = 0.5
-        with patch("codecarbon.telemetry.post_private_telemetry") as mock_post:
-            send_product_telemetry_at_stop(
-                tracker,
-                emissions,
-                TelemetryLevel.minimal,
-                external_conf={},
-            )
+        telemetry = Telemetry.from_tracker(tracker)
+        with patch("codecarbon.core.telemetry.dispatcher.post_private") as mock_post:
+            telemetry.send_at_stop(tracker, emissions)
         mock_post.assert_not_called()
 
     def test_tier2_uses_api_client(self):
         tracker = MagicMock()
         tracker._conf = {"os": "Linux"}
+        tracker._config_file_conf = {"telemetry_level": "extensive"}
+        tracker._external_conf = {}
+        tracker._telemetry_override = None
         emissions = self._emissions()
-        with patch("codecarbon.telemetry.ApiClient") as mock_api_cls:
-            mock_api = MagicMock()
-            mock_api.add_emission.return_value = True
-            mock_api_cls.return_value = mock_api
-            result = send_public_run_summary_at_stop(
-                tracker, emissions, external_conf={}
-            )
-        self.assertTrue(result)
+        telemetry = Telemetry.from_tracker(tracker)
+        with patch("codecarbon.core.telemetry.dispatcher.post_private", return_value=True):
+            with patch("codecarbon.core.telemetry.client.ApiClient") as mock_api_cls:
+                mock_api = MagicMock()
+                mock_api.add_emission.return_value = True
+                mock_api_cls.return_value = mock_api
+                telemetry.send_at_stop(tracker, emissions)
         mock_api_cls.assert_called_once()
         mock_api.add_emission.assert_called_once()
         mock_api_cls.assert_called_with(
@@ -118,11 +125,13 @@ class TestTrackerTelemetry(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.patcher = None
+        Telemetry._default_warning_shown = False
 
     def tearDown(self) -> None:
         if self.patcher:
             self.patcher.stop()
         self.temp_dir.cleanup()
+        Telemetry._default_warning_shown = False
 
     def _start_config_mock(self, conf: str) -> None:
         self.patcher = patch(
@@ -132,7 +141,7 @@ class TestTrackerTelemetry(unittest.TestCase):
 
     def test_emissions_tracker_does_not_send_telemetry_on_init(self, mock_cli_setup):
         self._start_config_mock(minimal_conf)
-        with patch("codecarbon.telemetry.post_private_telemetry") as mock_post:
+        with patch("codecarbon.core.telemetry.dispatcher.post_private") as mock_post:
             with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                 EmissionsTracker(save_to_api=False, save_to_file=False)
         mock_post.assert_not_called()
@@ -143,7 +152,7 @@ class TestTrackerTelemetry(unittest.TestCase):
         self._start_config_mock(minimal_conf)
         with ensure_telemetry_run_duration():
             with patch(
-                "codecarbon.telemetry.post_private_telemetry", return_value=True
+                "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
             ) as mock_post:
                 with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                     tracker = EmissionsTracker(
@@ -160,7 +169,7 @@ class TestTrackerTelemetry(unittest.TestCase):
 
     def test_emissions_tracker_skips_telemetry_when_disabled(self, mock_cli_setup):
         self._start_config_mock(disabled_conf)
-        with patch("codecarbon.telemetry.post_private_telemetry") as mock_post:
+        with patch("codecarbon.core.telemetry.dispatcher.post_private") as mock_post:
             with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                 tracker = EmissionsTracker(
                     measure_power_secs=1,
@@ -175,9 +184,9 @@ class TestTrackerTelemetry(unittest.TestCase):
         self._start_config_mock(extensive_conf)
         with ensure_telemetry_run_duration():
             with patch(
-                "codecarbon.telemetry.post_private_telemetry", return_value=True
+                "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
             ) as mock_post:
-                with patch("codecarbon.telemetry.ApiClient") as mock_api_cls:
+                with patch("codecarbon.core.telemetry.client.ApiClient") as mock_api_cls:
                     mock_api = MagicMock()
                     mock_api.add_emission.return_value = True
                     mock_api_cls.return_value = mock_api
@@ -197,7 +206,7 @@ class TestTrackerTelemetry(unittest.TestCase):
         self._start_config_mock(minimal_conf)
         with ensure_telemetry_run_duration():
             with patch(
-                "codecarbon.telemetry.post_private_telemetry", return_value=True
+                "codecarbon.core.telemetry.dispatcher.post_private", return_value=True
             ) as mock_post:
                 tracker = OfflineEmissionsTracker(
                     country_iso_code="CAN",

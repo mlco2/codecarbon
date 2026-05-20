@@ -6,12 +6,13 @@ import importlib.util
 import os
 import platform
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 from codecarbon.core.cloud import get_env_cloud_details
 from codecarbon.core.gpu import is_nvidia_system
-from codecarbon.core.telemetry_schemas import PRIVATE_TELEMETRY_FIELDS, TelemetryLevel
+from codecarbon.core.telemetry.schemas import PRIVATE_TELEMETRY_FIELDS, TelemetryLevel
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 FRAMEWORK_PACKAGES = (
@@ -39,14 +40,62 @@ CONTAINER_RUNTIME_ENV = (
     ("KUBERNETES_SERVICE_HOST", "kubernetes"),
 )
 
-OUTPUT_METHOD_ATTRS = (
-    ("_save_to_file", "file"),
-    ("_save_to_api", "api"),
-    ("_save_to_logger", "logger"),
-    ("_emissions_endpoint", "http"),
-    ("_save_to_prometheus", "prometheus"),
-    ("_save_to_logfire", "logfire"),
+OUTPUT_METHOD_FIELDS = (
+    ("save_to_file", "file"),
+    ("save_to_api", "api"),
+    ("save_to_logger", "logger"),
+    ("emissions_endpoint", "http"),
+    ("save_to_prometheus", "prometheus"),
+    ("save_to_logfire", "logfire"),
 )
+
+
+@dataclass
+class TelemetryContext:
+    """Snapshot of tracker state used to build a telemetry payload."""
+
+    conf: dict[str, Any]
+    emissions: EmissionsData
+    hardware: list[Any]
+    resource_tracker: Any
+    save_to_api: bool
+    save_to_file: bool
+    save_to_logger: bool
+    save_to_prometheus: bool
+    save_to_logfire: bool
+    emissions_endpoint: str | None
+    tasks: dict[str, Any]
+    measure_power_secs: float | None
+    is_offline: bool
+
+    @classmethod
+    def from_tracker(cls, tracker: Any, emissions: EmissionsData) -> TelemetryContext:
+        """Build a context snapshot from an active emissions tracker.
+
+        Args:
+            tracker: Active emissions tracker instance.
+            emissions: Run emissions data.
+
+        Returns:
+            Context for ``build_payload``.
+        """
+        from codecarbon.emissions_tracker import OfflineEmissionsTracker
+
+        return cls(
+            conf=getattr(tracker, "_conf", {}),
+            emissions=emissions,
+            hardware=getattr(tracker, "_hardware", []) or [],
+            resource_tracker=getattr(tracker, "_resource_tracker", None),
+            save_to_api=bool(getattr(tracker, "_save_to_api", False)),
+            save_to_file=bool(getattr(tracker, "_save_to_file", False)),
+            save_to_logger=bool(getattr(tracker, "_save_to_logger", False)),
+            save_to_prometheus=bool(getattr(tracker, "_save_to_prometheus", False)),
+            save_to_logfire=bool(getattr(tracker, "_save_to_logfire", False)),
+            emissions_endpoint=getattr(tracker, "_emissions_endpoint", None),
+            tasks=getattr(tracker, "_tasks", {}) or {},
+            measure_power_secs=getattr(tracker, "_measure_power_secs", None),
+            is_offline=isinstance(tracker, OfflineEmissionsTracker),
+        )
 
 
 def _non_empty(value: Any) -> bool:
@@ -106,21 +155,12 @@ def _detect_notebook_environment() -> Optional[str]:
     return None
 
 
-def _detect_in_container() -> bool:
-    if os.path.exists("/.dockerenv"):
-        return True
+def _container_info() -> tuple[bool, Optional[str]]:
     if os.environ.get("KUBERNETES_SERVICE_HOST"):
-        return True
-    return False
-
-
-def _detect_container_runtime() -> Optional[str]:
-    runtime = _first_env_match(CONTAINER_RUNTIME_ENV)
-    if runtime:
-        return runtime
+        return True, "kubernetes"
     if os.path.exists("/.dockerenv"):
-        return "docker"
-    return None
+        return True, "docker"
+    return False, None
 
 
 def _detect_ide() -> Optional[str]:
@@ -145,20 +185,19 @@ def _cudnn_version() -> Optional[str]:
         return None
 
 
-def _collect_hardware_diagnostics(tracker: Any) -> dict[str, Any]:
+def _collect_hardware_diagnostics(ctx: TelemetryContext) -> dict[str, Any]:
     from codecarbon.core import cpu
 
     hardware_tracked: list[str] = []
-    for item in getattr(tracker, "_hardware", []) or []:
+    for item in ctx.hardware:
         try:
             hardware_tracked.append(item.description())
         except Exception:
             pass
 
-    resource_tracker = getattr(tracker, "_resource_tracker", None)
     gpu_detection_method: Optional[str] = None
-    if resource_tracker is not None:
-        gpu_tracker = getattr(resource_tracker, "gpu_tracker", None)
+    if ctx.resource_tracker is not None:
+        gpu_tracker = getattr(ctx.resource_tracker, "gpu_tracker", None)
         if gpu_tracker and gpu_tracker != "Unspecified":
             gpu_detection_method = gpu_tracker
 
@@ -166,20 +205,17 @@ def _collect_hardware_diagnostics(tracker: Any) -> dict[str, Any]:
     if platform.system() == "Linux":
         rapl_available = cpu.is_rapl_available()
 
-    save_to_api = bool(getattr(tracker, "_save_to_api", False))
     return {
         "hardware_tracked": hardware_tracked or None,
         "hardware_detection_success": bool(hardware_tracked),
         "rapl_available": rapl_available,
         "gpu_detection_method": gpu_detection_method,
-        "api_mode": "online" if save_to_api else "offline",
+        "api_mode": "online" if ctx.save_to_api else "offline",
     }
 
 
-def _detect_integration_surface(tracker: Any) -> str:
-    from codecarbon.emissions_tracker import OfflineEmissionsTracker
-
-    if isinstance(tracker, OfflineEmissionsTracker):
+def _detect_integration_surface(ctx: TelemetryContext) -> str:
+    if ctx.is_offline:
         return "offline_tracker"
     argv = " ".join(sys.argv)
     if "codecarbon" in argv and "monitor" in argv:
@@ -187,15 +223,15 @@ def _detect_integration_surface(tracker: Any) -> str:
     return "library"
 
 
-def _collect_output_methods(tracker: Any) -> list[str]:
+def _collect_output_methods(ctx: TelemetryContext) -> list[str]:
     methods: list[str] = []
-    for attr, name in OUTPUT_METHOD_ATTRS:
-        value = getattr(tracker, attr, False)
-        if attr == "_emissions_endpoint":
+    for field_name, label in OUTPUT_METHOD_FIELDS:
+        value = getattr(ctx, field_name)
+        if field_name == "emissions_endpoint":
             if value:
-                methods.append(name)
+                methods.append(label)
         elif value:
-            methods.append(name)
+            methods.append(label)
     return methods
 
 
@@ -245,22 +281,21 @@ def _gpu_static_fields() -> dict[str, Any]:
     return fields
 
 
-def build_telemetry_payload(
-    tracker: Any,
-    emissions: EmissionsData,
+def build_payload(
+    ctx: TelemetryContext,
     level: TelemetryLevel = TelemetryLevel.minimal,
 ) -> dict[str, Any]:
     """Build a private telemetry payload dict for ``POST /telemetry``.
 
     Args:
-        tracker: Active emissions tracker.
-        emissions: Run emissions data.
+        ctx: Tracker snapshot from ``TelemetryContext.from_tracker``.
         level: Resolved ``TelemetryLevel`` (``minimal`` or ``extensive``).
 
     Returns:
         Payload dict for ``TelemetryCreate``.
     """
-    conf = getattr(tracker, "_conf", {})
+    emissions = ctx.emissions
+    conf = ctx.conf
     raw_provider, raw_region = _raw_cloud_provider_and_region()
     on_cloud = emissions.on_cloud == "Y"
     cloud_provider = emissions.cloud_provider or raw_provider
@@ -269,7 +304,8 @@ def build_telemetry_payload(
     if on_cloud and cloud_region:
         region = region or cloud_region
 
-    integration_surface = _detect_integration_surface(tracker)
+    integration_surface = _detect_integration_surface(ctx)
+    in_container, container_runtime = _container_info()
     gpu_fields = _gpu_static_fields()
 
     raw: dict[str, Any] = {
@@ -297,12 +333,12 @@ def build_telemetry_payload(
         "tracking_mode": conf.get("tracking_mode"),
         "integration_surface": integration_surface,
         "offline_mode": integration_surface == "offline_tracker",
-        "output_methods": _collect_output_methods(tracker),
-        "save_to_api_enabled": bool(getattr(tracker, "_save_to_api", False)),
-        "task_tracking_used": bool(getattr(tracker, "_tasks", {})),
-        "measure_power_interval_secs": getattr(tracker, "_measure_power_secs", None),
-        "in_container": _detect_in_container(),
-        "container_runtime": _detect_container_runtime(),
+        "output_methods": _collect_output_methods(ctx),
+        "save_to_api_enabled": ctx.save_to_api,
+        "task_tracking_used": bool(ctx.tasks),
+        "measure_power_interval_secs": ctx.measure_power_secs,
+        "in_container": in_container,
+        "container_runtime": container_runtime,
         "ci_environment": _first_env_match(CI_ENVIRONMENTS),
         "notebook_environment": _detect_notebook_environment(),
         "ide_used": _detect_ide(),
@@ -319,7 +355,7 @@ def build_telemetry_payload(
         "ram_utilization_avg": emissions.ram_utilization_percent,
         "telemetry_level": level.value,
         **_collect_framework_fields(),
-        **_collect_hardware_diagnostics(tracker),
+        **_collect_hardware_diagnostics(ctx),
         **gpu_fields,
     }
 

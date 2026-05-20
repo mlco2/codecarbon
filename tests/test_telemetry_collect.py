@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from codecarbon.core.telemetry_collect import build_telemetry_payload
-from codecarbon.core.telemetry_schemas import TelemetryLevel
+from codecarbon.core.telemetry import TelemetryContext, TelemetryLevel, build_payload
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 
@@ -44,33 +43,55 @@ def _sample_emissions(**overrides):
     return EmissionsData(**base)
 
 
-class TestTelemetryCollect(unittest.TestCase):
-    def test_build_telemetry_payload_includes_run_and_framework_flags(self):
-        tracker = MagicMock()
-        tracker._conf = {
-            "os": "Linux",
-            "codecarbon_version": "3.0",
-            "cpu_count": 4,
-            "tracking_mode": "machine",
-        }
-        tracker._geo = None
-        tracker._save_to_file = True
-        tracker._save_to_api = False
-        tracker._save_to_logger = False
-        tracker._emissions_endpoint = None
-        tracker._save_to_prometheus = False
-        tracker._save_to_logfire = False
-        tracker._tasks = {}
-        tracker._measure_power_secs = 15
-        tracker._hardware = []
-        tracker._resource_tracker = None
+def _tracker_context(**overrides) -> TelemetryContext:
+    tracker = MagicMock()
+    tracker._conf = overrides.pop("conf", {"codecarbon_version": "3.0"})
+    tracker._hardware = overrides.pop("hardware", [])
+    tracker._resource_tracker = overrides.pop("resource_tracker", None)
+    tracker._save_to_file = overrides.pop("save_to_file", False)
+    tracker._save_to_api = overrides.pop("save_to_api", False)
+    tracker._save_to_logger = overrides.pop("save_to_logger", False)
+    tracker._emissions_endpoint = overrides.pop("emissions_endpoint", None)
+    tracker._save_to_prometheus = overrides.pop("save_to_prometheus", False)
+    tracker._save_to_logfire = overrides.pop("save_to_logfire", False)
+    tracker._tasks = overrides.pop("tasks", {})
+    tracker._measure_power_secs = overrides.pop("measure_power_secs", 15)
+    tracker._is_offline = overrides.pop("is_offline", False)
+    emissions = overrides.pop("emissions", _sample_emissions())
+    ctx = TelemetryContext(
+        conf=tracker._conf,
+        emissions=emissions,
+        hardware=tracker._hardware,
+        resource_tracker=tracker._resource_tracker,
+        save_to_api=tracker._save_to_api,
+        save_to_file=tracker._save_to_file,
+        save_to_logger=tracker._save_to_logger,
+        save_to_prometheus=tracker._save_to_prometheus,
+        save_to_logfire=tracker._save_to_logfire,
+        emissions_endpoint=tracker._emissions_endpoint,
+        tasks=tracker._tasks,
+        measure_power_secs=tracker._measure_power_secs,
+        is_offline=tracker._is_offline,
+    )
+    return ctx
 
-        emissions = _sample_emissions()
+
+class TestTelemetryCollect(unittest.TestCase):
+    def test_build_payload_includes_run_and_framework_flags(self):
+        ctx = _tracker_context(
+            conf={
+                "os": "Linux",
+                "codecarbon_version": "3.0",
+                "cpu_count": 4,
+                "tracking_mode": "machine",
+            },
+            save_to_file=True,
+        )
         with patch(
-            "codecarbon.core.telemetry_collect._package_installed",
+            "codecarbon.core.telemetry.collect._package_installed",
             side_effect=lambda name: name == "torch",
         ):
-            payload = build_telemetry_payload(tracker, emissions)
+            payload = build_payload(ctx)
 
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertEqual(payload["total_emissions_kg"], 0.5)
@@ -78,48 +99,23 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertTrue(payload["has_torch"])
         self.assertIn("file", payload["output_methods"])
 
-    def test_build_telemetry_payload_omits_framework_versions(self):
-        tracker = MagicMock()
-        tracker._conf = {"codecarbon_version": "3.0", "hardware": ["cpu"]}
-        tracker._geo = None
-        tracker._save_to_file = False
-        tracker._save_to_api = False
-        tracker._save_to_logger = False
-        tracker._emissions_endpoint = None
-        tracker._save_to_prometheus = False
-        tracker._save_to_logfire = False
-        tracker._tasks = {}
-        tracker._measure_power_secs = 15
-        tracker._hardware = []
-        tracker._resource_tracker = None
-
-        emissions = _sample_emissions()
+    def test_build_payload_omits_framework_versions(self):
+        ctx = _tracker_context(conf={"codecarbon_version": "3.0", "hardware": ["cpu"]})
         with patch(
-            "codecarbon.core.telemetry_collect._package_installed",
+            "codecarbon.core.telemetry.collect._package_installed",
             return_value=True,
         ):
-            payload = build_telemetry_payload(tracker, emissions)
+            payload = build_payload(ctx)
 
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertTrue(payload["has_torch"])
         self.assertNotIn("torch_version", payload)
 
-    def test_build_telemetry_payload_uses_resolved_level(self):
-        tracker = MagicMock()
-        tracker._conf = {"codecarbon_version": "3.0"}
-        tracker._save_to_file = False
-        tracker._save_to_api = False
-        tracker._save_to_logger = False
-        tracker._emissions_endpoint = None
-        tracker._save_to_prometheus = False
-        tracker._save_to_logfire = False
-        tracker._tasks = {}
-        tracker._measure_power_secs = 15
-        tracker._hardware = []
-        tracker._resource_tracker = None
-
-        emissions = _sample_emissions()
-        payload = build_telemetry_payload(
-            tracker, emissions, level=TelemetryLevel.extensive
-        )
+    def test_build_payload_uses_resolved_level(self):
+        ctx = _tracker_context(conf={"codecarbon_version": "3.0"})
+        payload = build_payload(ctx, level=TelemetryLevel.extensive)
         self.assertEqual(payload["telemetry_level"], "extensive")
+
+
+if __name__ == "__main__":
+    unittest.main()
