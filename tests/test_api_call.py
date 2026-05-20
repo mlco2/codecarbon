@@ -244,6 +244,22 @@ class TestApi(unittest.TestCase):
                 )
             )
 
+    def test_create_run_handles_none_coordinates(self):
+        conf_with_none_coords = {**conf, "longitude": None, "latitude": None}
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/runs", json={"id": "run-id"}, status_code=201)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="experiment_id",
+                api_key="Toto",
+                conf=conf_with_none_coords,
+                create_run_automatically=False,
+            )
+            run_id = api._create_run("experiment_id")
+        self.assertEqual(run_id, "run-id")
+        self.assertEqual(m.last_request.json()["longitude"], 0.0)
+        self.assertEqual(m.last_request.json()["latitude"], 0.0)
+
     def test_create_run_returns_none_on_unsuccessful_status(self):
         with requests_mock.Mocker() as m:
             m.post("http://test.com/runs", text="bad", status_code=400)

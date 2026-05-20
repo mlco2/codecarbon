@@ -14,7 +14,7 @@ from carbonserver.container import ServerContainer
 
 TELEMETRY_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
 
-MINIMAL_TELEMETRY_TO_CREATE = {
+SAMPLE_PRIVATE_TELEMETRY = {
     "timestamp": "2026-05-03T12:00:00+00:00",
     "telemetry_level": "minimal",
     "os": "Linux-5.10.0-x86_64",
@@ -46,21 +46,36 @@ def test_add_telemetry(client, custom_test_server):
     repository_mock.add_telemetry.return_value = UUID(TELEMETRY_ID)
 
     with custom_test_server.container.telemetry_repository.override(repository_mock):
-        response = client.post("/telemetry", json=MINIMAL_TELEMETRY_TO_CREATE)
+        response = client.post("/telemetry", json=SAMPLE_PRIVATE_TELEMETRY)
 
     assert response.status_code == status.HTTP_201_CREATED
     assert response.json() == TELEMETRY_ID
 
 
-def test_minimal_telemetry_rejects_extensive_fields(client, custom_test_server):
+def test_minimal_telemetry_accepts_framework_versions(client, custom_test_server):
     repository_mock = mock.Mock(spec=TelemetryRepository)
-    telemetry_with_extensive_field = {
-        **MINIMAL_TELEMETRY_TO_CREATE,
-        "total_emissions_kg": 0.42,
+    repository_mock.add_telemetry.return_value = UUID(TELEMETRY_ID)
+    telemetry_with_framework_version = {
+        **SAMPLE_PRIVATE_TELEMETRY,
+        "torch_version": "2.2.0",
     }
 
     with custom_test_server.container.telemetry_repository.override(repository_mock):
-        response = client.post("/telemetry", json=telemetry_with_extensive_field)
+        response = client.post("/telemetry", json=telemetry_with_framework_version)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    repository_mock.add_telemetry.assert_called_once()
+
+
+def test_telemetry_rejects_unknown_fields(client, custom_test_server):
+    repository_mock = mock.Mock(spec=TelemetryRepository)
+    telemetry_with_unknown_field = {
+        **SAMPLE_PRIVATE_TELEMETRY,
+        "unknown_field": "value",
+    }
+
+    with custom_test_server.container.telemetry_repository.override(repository_mock):
+        response = client.post("/telemetry", json=telemetry_with_unknown_field)
 
     assert response.status_code == 422
     repository_mock.add_telemetry.assert_not_called()
@@ -69,7 +84,7 @@ def test_minimal_telemetry_rejects_extensive_fields(client, custom_test_server):
 def test_disabled_telemetry_is_rejected(client, custom_test_server):
     repository_mock = mock.Mock(spec=TelemetryRepository)
     disabled_telemetry = {
-        **MINIMAL_TELEMETRY_TO_CREATE,
+        **SAMPLE_PRIVATE_TELEMETRY,
         "telemetry_level": "disabled",
     }
 

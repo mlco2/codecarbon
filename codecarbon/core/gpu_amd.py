@@ -28,7 +28,7 @@ except ImportError:
             "Please install amdsmi to get GPU metrics."
         )
     AMDSMI_AVAILABLE = False
-except AttributeError as e:
+except (AttributeError, OSError, KeyError) as e:
     amdsmi = None
     # In some environments, amdsmi may be present but not properly configured, leading to AttributeError when importing
     logger.warning(
