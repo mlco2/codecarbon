@@ -35,13 +35,14 @@ except ImportError:
     AMDSMI_AVAILABLE = False
 except (AttributeError, OSError, KeyError) as e:
     amdsmi = None
-    # In some environments, amdsmi may be present but not properly configured, leading to AttributeError when importing
-    logger.warning(
-        "AMD GPU detected but amdsmi is not properly configured. "
-        "Please ensure amdsmi is correctly installed to get GPU metrics."
-        "Tips : check consistency between Python amdsmi package and ROCm versions, and ensure AMD drivers are up to date."
-        f" Error: {e}"
-    )
+    if is_rocm_system():
+        logger.warning(
+            "AMD GPU detected but amdsmi is not properly configured. "
+            "Please ensure amdsmi is correctly installed to get GPU metrics. "
+            "Tips: check consistency between Python amdsmi package and ROCm "
+            "versions, and ensure AMD drivers are up to date."
+            f" Error: {e}"
+        )
     AMDSMI_AVAILABLE = False
 
 

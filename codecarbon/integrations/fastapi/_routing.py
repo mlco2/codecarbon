@@ -1,4 +1,4 @@
-"""Route naming and path exclusion helpers for FastAPI/Starlette."""
+"""Route naming and endpoint filter helpers for FastAPI/Starlette."""
 
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from starlette.requests import Request
 
-DEFAULT_EXCLUDE_PATHS: frozenset[str] = frozenset(
+DEFAULT_EXCLUDE: frozenset[str] = frozenset(
     {
         "/docs",
         "/redoc",
@@ -18,18 +18,100 @@ DEFAULT_EXCLUDE_PATHS: frozenset[str] = frozenset(
     }
 )
 
+HTTP_METHODS = frozenset(
+    {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"}
+)
 
-def should_skip_path(path: str, exclude_paths: Iterable[str]) -> bool:
-    """Return True if ``path`` matches an excluded prefix (exact or with a trailing segment).
+
+def get_endpoint_path(request: "Request") -> str:
+    """Return the mounted route template or the raw URL path.
 
     Args:
-        path: Request path such as ``/docs`` or ``/api/v1/runs``.
-        exclude_paths: Iterable of path prefixes (e.g. ``/health``, ``/docs``).
+        request: Current Starlette/FastAPI request.
 
     Returns:
-        True when this path should bypass CodeCarbon tracking.
+        Route template such as ``/items/{item_id}``, or ``request.url.path``.
     """
-    return any(path == prefix or path.startswith(f"{prefix}/") for prefix in exclude_paths)
+    route = request.scope.get("route")
+    if route is not None:
+        return route.path
+    return request.url.path
+
+
+def build_endpoint_key(request: "Request") -> str:
+    """Build a stable endpoint identifier such as ``GET /predict``.
+
+    Args:
+        request: Current Starlette/FastAPI request.
+
+    Returns:
+        HTTP method plus route template or URL path.
+    """
+    return f"{request.method} {get_endpoint_path(request)}"
+
+
+def is_method_pattern(pattern: str) -> bool:
+    """Return True when ``pattern`` is ``METHOD /path``."""
+    method, _, path = pattern.partition(" ")
+    return method in HTTP_METHODS and path.startswith("/")
+
+
+def matches_exclude(
+    pattern: str,
+    url_path: str,
+    endpoint_key: str,
+    endpoint_path: str,
+) -> bool:
+    """Return True when an exclude pattern matches the request."""
+    if is_method_pattern(pattern):
+        return endpoint_key == pattern
+    if not pattern.startswith("/"):
+        return endpoint_key == pattern
+    return (
+        url_path == pattern
+        or url_path.startswith(f"{pattern}/")
+        or endpoint_path == pattern
+    )
+
+
+def matches_include(pattern: str, endpoint_key: str, endpoint_path: str) -> bool:
+    """Return True when an include pattern matches the request."""
+    if is_method_pattern(pattern):
+        return endpoint_key == pattern
+    if pattern.startswith("/"):
+        return endpoint_path == pattern
+    return endpoint_key == pattern
+
+
+def should_track_request(
+    request: "Request",
+    include: Iterable[str] | None,
+    exclude: Iterable[str],
+) -> bool:
+    """Return True when the request should be measured.
+
+    Patterns use one of two forms:
+
+    * ``METHOD /route/template`` — one HTTP method on one route (e.g. ``GET /predict``)
+    * ``/route/template`` — any method on that route, or a URL path prefix when excluding
+
+    Args:
+        request: Current Starlette/FastAPI request.
+        include: When set, only matching endpoints are tracked.
+        exclude: Endpoints or URL prefixes to skip.
+
+    Returns:
+        True when CodeCarbon should track this request.
+    """
+    url_path = request.url.path
+    endpoint_key = build_endpoint_key(request)
+    endpoint_path = get_endpoint_path(request)
+    for pattern in exclude:
+        if matches_exclude(pattern, url_path, endpoint_key, endpoint_path):
+            return False
+    if include is None:
+        return True
+    return any(matches_include(pattern, endpoint_key, endpoint_path) for pattern in include)
 
 
 def build_task_name(
@@ -48,7 +130,4 @@ def build_task_name(
     """
     if formatter is not None:
         return formatter(request)
-    route = request.scope.get("route")
-    if route is not None:
-        return f"{request.method} {route.path}"
-    return f"{request.method} {request.url.path}"
+    return build_endpoint_key(request)
