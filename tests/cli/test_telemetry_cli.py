@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from codecarbon.cli import main as cli_main
@@ -17,7 +18,7 @@ def test_normalize_telemetry_level_accepts_valid_values():
 
 
 def test_normalize_telemetry_level_rejects_invalid():
-    with pytest.raises(Exception):
+    with pytest.raises(typer.BadParameter):
         normalize_telemetry_level("bogus")
 
 
