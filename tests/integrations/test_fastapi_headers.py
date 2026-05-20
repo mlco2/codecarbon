@@ -76,7 +76,10 @@ def test_resolve_header_mapping_none_or_false_returns_empty() -> None:
 def test_resolve_header_mapping_full_preset() -> None:
     mapping = resolve_header_mapping("full")
     assert mapping["emissions"] == "X-CodeCarbon-Emissions-kg"
-    assert mapping["cpu_utilization_percent"] == "X-CodeCarbon-Cpu-Utilization-Percent-percent"
+    assert (
+        mapping["cpu_utilization_percent"]
+        == "X-CodeCarbon-Cpu-Utilization-Percent-percent"
+    )
 
 
 def test_resolve_header_mapping_unknown_preset_raises() -> None:
@@ -89,19 +92,26 @@ def test_apply_response_headers_sets_values(emissions_data: EmissionsData) -> No
     apply_response_headers(
         response,
         emissions_data,
-        {"emissions": "X-CodeCarbon-Emissions-kg", "duration": "X-CodeCarbon-Duration-s"},
+        {
+            "emissions": "X-CodeCarbon-Emissions-kg",
+            "duration": "X-CodeCarbon-Duration-s",
+        },
     )
     assert response.headers["X-CodeCarbon-Emissions-kg"] == "0.00042"
     assert response.headers["X-CodeCarbon-Duration-s"] == "1.5"
 
 
-def test_apply_response_headers_ignores_unknown_fields(emissions_data: EmissionsData) -> None:
+def test_apply_response_headers_ignores_unknown_fields(
+    emissions_data: EmissionsData,
+) -> None:
     response = Response(content=b"ok")
     apply_response_headers(response, emissions_data, {"not_a_field": "X-Bad"})
     assert "X-Bad" not in response.headers
 
 
-def test_apply_response_headers_noop_when_mapping_empty(emissions_data: EmissionsData) -> None:
+def test_apply_response_headers_noop_when_mapping_empty(
+    emissions_data: EmissionsData,
+) -> None:
     response = Response(content=b"ok")
     before = dict(response.headers)
     apply_response_headers(response, emissions_data, {})

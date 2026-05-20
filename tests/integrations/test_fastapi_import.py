@@ -23,7 +23,9 @@ def test_fastapi_integration_importable() -> None:
 def test_missing_starlette_shows_helpful_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """Middleware import surfaces an actionable hint without Starlette/FastAPI."""
     for key in list(sys.modules):
-        if key.startswith("starlette") or key.startswith("codecarbon.integrations.fastapi"):
+        if key.startswith("starlette") or key.startswith(
+            "codecarbon.integrations.fastapi"
+        ):
             del sys.modules[key]
 
     real_import = builtins.__import__
