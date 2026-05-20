@@ -22,6 +22,10 @@ class EmissionBase:
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
+    wue: Optional[float] = 0
 
 
 class EmissionCreate(EmissionBase):
