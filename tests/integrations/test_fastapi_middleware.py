@@ -1,4 +1,5 @@
 import asyncio
+from concurrent import futures
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -315,12 +316,18 @@ def test_middleware_defer_measurement_runs_callback_via_background_task(
     emissions = MagicMock(emissions=0.001)
     tracker_instance.final_emissions_data = emissions
 
-    async def run_finalize(coro):
-        await coro
+    def run_deferred_task(coro):
+        def run_in_thread() -> None:
+            loop = asyncio.new_event_loop()
+            try:
+                loop.run_until_complete(coro)
+            finally:
+                loop.close()
 
-    mock_create_task.side_effect = lambda coro: asyncio.get_event_loop().create_task(
-        run_finalize(coro)
-    )
+        futures.ThreadPoolExecutor(max_workers=1).submit(run_in_thread).result()
+        return MagicMock()
+
+    mock_create_task.side_effect = run_deferred_task
 
     @application.get("/predict")
     def predict():
