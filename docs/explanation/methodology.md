@@ -87,10 +87,12 @@ emissions tracker.
 
 CodeCarbon focuses on the main compute components it can measure or
 estimate directly: CPU, GPU, and RAM. It does not separately model disk
-I/O, network transfers, displays, cooling, or other peripherals. For
-most local code-level experiments, those sources are usually smaller
-than CPU, GPU, and RAM consumption, but they can matter for workloads
-that are dominated by data movement, storage, or distributed systems.
+I/O, network transfers, displays, cooling, or other peripherals because
+those sources are usually much smaller, and often negligible, for local
+code-level experiments. They are also not exposed through the same
+low-overhead measurement interfaces as CPU, GPU, and RAM. However, they
+can matter for workloads dominated by data movement, storage, or
+distributed systems.
 
 Currently, the package supports the following hardware infrastructure.
 
