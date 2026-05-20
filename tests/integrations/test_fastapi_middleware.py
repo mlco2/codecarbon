@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import asyncio
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -250,3 +251,148 @@ def test_middleware_app_mode_lazy_tracker(MockTracker):
     tracker_instance.start.assert_called_once()
     tracker_instance.start_task.assert_called_once_with("GET /run")
     assert response.headers["X-CodeCarbon-Emissions-kg"] == "0.005"
+
+
+@patch.object(cc_fastapi_middleware.asyncio, "to_thread")
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_middleware_request_mode_uses_to_thread(MockTracker, mock_to_thread):
+    application = FastAPI()
+    tracker_instance = MockTracker.return_value
+    emissions = MagicMock(emissions=0.001)
+    tracker_instance.final_emissions_data = emissions
+
+    async def run_sync(func, *args, **kwargs):
+        return func(*args, **kwargs)
+
+    mock_to_thread.side_effect = run_sync
+
+    @application.get("/predict")
+    def predict():
+        return {"ok": True}
+
+    add_codecarbon_middleware(application, response_headers="emissions")
+    response = TestClient(application).get("/predict")
+
+    assert response.status_code == 200
+    assert mock_to_thread.call_count >= 2
+    tracker_instance.start.assert_called_once()
+    tracker_instance.stop.assert_called_once()
+
+
+@patch.object(cc_fastapi_middleware.asyncio, "create_task")
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_middleware_defer_measurement_skips_headers(MockTracker, mock_create_task):
+    application = FastAPI()
+    tracker_instance = MockTracker.return_value
+    tracker_instance.final_emissions_data = MagicMock(emissions=0.001)
+
+    @application.get("/predict")
+    def predict():
+        return {"ok": True}
+
+    add_codecarbon_middleware(
+        application,
+        response_headers="emissions",
+        defer_measurement=True,
+    )
+    response = TestClient(application).get("/predict")
+
+    assert response.status_code == 200
+    assert "X-CodeCarbon-Emissions-kg" not in response.headers
+    mock_create_task.assert_called_once()
+
+
+@patch.object(cc_fastapi_middleware.asyncio, "create_task")
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_middleware_defer_measurement_runs_callback_via_background_task(
+    MockTracker, mock_create_task
+):
+    application = FastAPI()
+    completed = []
+    tracker_instance = MockTracker.return_value
+    emissions = MagicMock(emissions=0.001)
+    tracker_instance.final_emissions_data = emissions
+
+    async def run_finalize(coro):
+        await coro
+
+    mock_create_task.side_effect = lambda coro: asyncio.get_event_loop().create_task(
+        run_finalize(coro)
+    )
+
+    @application.get("/predict")
+    def predict():
+        return {"ok": True}
+
+    add_codecarbon_middleware(
+        application,
+        defer_measurement=True,
+        on_request_complete=lambda request, response, data, task_name: completed.append(
+            (request.url.path, data, task_name)
+        ),
+    )
+
+    response = TestClient(application).get("/predict")
+
+    assert response.status_code == 200
+    assert completed == [("/predict", emissions, "GET /predict")]
+
+
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_middleware_include_endpoints_allowlist(MockTracker):
+    application = FastAPI()
+
+    @application.get("/predict")
+    def predict():
+        return {"ok": True}
+
+    @application.get("/metrics")
+    def metrics():
+        return {"ok": True}
+
+    add_codecarbon_middleware(
+        application,
+        include=["GET /predict"],
+        response_headers="emissions",
+    )
+    tracker_instance = MockTracker.return_value
+    tracker_instance.final_emissions_data = MagicMock(emissions=0.001)
+
+    client = TestClient(application)
+    tracked = client.get("/predict")
+    skipped = client.get("/metrics")
+
+    assert tracked.status_code == 200
+    assert "X-CodeCarbon-Emissions-kg" in tracked.headers
+    assert skipped.status_code == 200
+    assert "X-CodeCarbon-Emissions-kg" not in skipped.headers
+    MockTracker.assert_called_once()
+
+
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_middleware_exclude_endpoints(MockTracker):
+    application = FastAPI()
+
+    @application.get("/predict")
+    def predict():
+        return {"tracked": True}
+
+    @application.get("/admin")
+    def admin():
+        return {"admin": True}
+
+    add_codecarbon_middleware(
+        application,
+        exclude=["GET /admin"],
+        response_headers="emissions",
+    )
+    tracker_instance = MockTracker.return_value
+    tracker_instance.final_emissions_data = MagicMock(emissions=0.001)
+
+    client = TestClient(application)
+    tracked = client.get("/predict")
+    skipped = client.get("/admin")
+
+    assert "X-CodeCarbon-Emissions-kg" in tracked.headers
+    assert "X-CodeCarbon-Emissions-kg" not in skipped.headers
+    MockTracker.assert_called_once()

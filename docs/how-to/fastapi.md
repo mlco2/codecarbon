@@ -39,7 +39,30 @@ Then open or `curl` `http://127.0.0.1:8000/predict` and inspect response headers
 | **`request`** (default) | Creates a short-lived `EmissionsTracker` per HTTP request. Safe under concurrency; each request is isolated. |
 | **`app`** | Reuses one tracker on `app.state` and uses `start_task` / `stop_task` per request (with an asyncio lock). Lower overhead; measurements for concurrent requests are serialized. |
 
-Use **`request`** unless you have measured a need for a shared tracker.
+Use **`request`** unless you have measured a need for a shared tracker. For production APIs, prefer **`app`** mode with a lifespan handler and `save_to_file=False` to avoid per-request tracker startup cost.
+
+## Performance
+
+Per-request tracking runs hardware measurement in a thread pool so the event loop stays responsive. Response headers still require waiting for measurement to finish before the response is sent.
+
+| Option | Effect |
+|--------|--------|
+| `tracking_mode="app"` + `create_codecarbon_lifespan` | Amortizes tracker startup; best default for APIs |
+| `tracker_kwargs={"save_to_file": False, "save_to_api": False}` | Skips I/O on every request |
+| `defer_measurement=True` | Returns the HTTP response immediately; runs `stop` / `stop_task` in a background task. Skips response headers; use `on_request_complete` for logging or metrics |
+
+Example with deferred measurement:
+
+```python
+add_codecarbon_middleware(
+    app,
+    tracking_mode="app",
+    defer_measurement=True,
+    on_request_complete=lambda request, response, data, task_name: logger.info(
+        "%s emissions=%s", task_name, getattr(data, "emissions", None)
+    ),
+)
+```
 
 ## Lifespan pattern for `tracking_mode="app"`
 
@@ -99,11 +122,27 @@ add_codecarbon_middleware(
 
 For JSON, extra headers, or non-standard formatting, pass **`header_formatter`** as a callable `(EmissionsData, Request) -> dict[str, str]`. When set, it replaces preset/list/dict mapping for response headers.
 
-## `exclude_paths`, `task_name_formatter`, `on_request_complete`
+## `include` and `exclude`
 
-- **`exclude_paths`**: Iterable of path prefixes to skip (no tracker work). The default set includes common docs and health paths (for example `/docs`, `/openapi.json`, `/health`). Passing your own iterable **replaces** that default; use the defaults, extend them in code, or list only what you need.
-- **`task_name_formatter`**: Callable `(Request) -> str` to override how the task name is built (default is `METHOD` + matched route template or path).
-- **`on_request_complete`**: Optional callback after each tracked request: `(request, response, emissions_data, task_name)` for logging, metrics backends, or custom side effects.
+Two filters control which requests are measured. Both accept the same pattern forms:
+
+| Pattern | Meaning |
+|---------|---------|
+| `GET /predict` | One HTTP method on one route |
+| `/predict` | Any method on that route (`include`), or skip that route/URL prefix (`exclude`) |
+
+- **`exclude`** — skip matching requests. Defaults to docs and health paths (`/docs`, `/health`, …). Pass your own list to replace the default.
+- **`include`** — when set, only matching endpoints are tracked (allowlist).
+
+```python
+add_codecarbon_middleware(
+    app,
+    include=["GET /predict", "POST /train"],
+    exclude=["GET /admin", "/internal"],
+)
+```
+
+## `task_name_formatter`, `on_request_complete`
 
 ## CORS and `expose_headers`
 
