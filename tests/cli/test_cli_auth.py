@@ -112,7 +112,10 @@ class TestAuthMethods(unittest.TestCase):
     def test_validate_access_token_network_error_returns_true(
         self, mock_get, mock_discover
     ):
-        self.assertTrue(auth._validate_access_token("token"))
+        with self.assertLogs("codecarbon.cli.auth", level="WARNING") as logs:
+            self.assertTrue(auth._validate_access_token("token"))
+
+        self.assertIn("Skipping local access token validation", logs.output[0])
 
     @patch("codecarbon.cli.auth._discover_endpoints", return_value={"jwks_uri": "jwks"})
     @patch("codecarbon.cli.auth.requests.get")
