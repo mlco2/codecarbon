@@ -1,7 +1,7 @@
 """Resolve telemetry tier and API settings from config and environment."""
 
 import os
-from typing import Any
+from typing import Any, Literal
 
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.external.logger import logger
@@ -12,6 +12,8 @@ DEFAULT_TELEMETRY_EXPERIMENT_ID = "d2d69403-1373-42b4-a2c1-09589aed4801"
 DEFAULT_TELEMETRY_LEVEL = TelemetryLevel.minimal
 
 TELEMETRY_LEVEL_CONFIG_KEY = "telemetry_level"
+
+TelemetryLevelSource = Literal["override", "external", "file", "default"]
 
 
 def parse_telemetry_level(raw: str | TelemetryLevel) -> TelemetryLevel:
@@ -36,41 +38,13 @@ def parse_telemetry_level(raw: str | TelemetryLevel) -> TelemetryLevel:
         ) from error
 
 
-def is_telemetry_level_explicit(
-    config_file_conf: dict[str, Any],
-    *,
-    override: str | TelemetryLevel | None = None,
-    external_conf: dict[str, Any] | None = None,
-) -> bool:
-    """Return whether the user explicitly chose a telemetry tier.
-
-    Explicit sources: tracker ``telemetry_level`` argument, config file
-    ``telemetry_level``, or environment ``CODECARBON_TELEMETRY_LEVEL``.
-
-    Args:
-        config_file_conf: Settings from ``get_config_file_settings()`` (no env overlay).
-        override: Value passed to ``EmissionsTracker(telemetry_level=...)``.
-        external_conf: Merged config from file and environment.
-
-    Returns:
-        True if any explicit source is set.
-    """
-    if override is not None:
-        return True
-    if config_file_conf.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None:
-        return True
-    if external_conf is None:
-        return False
-    return external_conf.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None
-
-
-def resolve_telemetry_level(
+def resolve_telemetry_level_and_source(
     config_file_conf: dict[str, Any] | None = None,
     *,
     override: str | TelemetryLevel | None = None,
     external_conf: dict[str, Any] | None = None,
-) -> TelemetryLevel:
-    """Resolve the active telemetry tier.
+) -> tuple[TelemetryLevel, TelemetryLevelSource]:
+    """Resolve the active telemetry tier and where it came from.
 
     Precedence:
 
@@ -85,27 +59,77 @@ def resolve_telemetry_level(
         external_conf: Merged settings from ``get_hierarchical_config()`` (optional).
 
     Returns:
-        Resolved ``TelemetryLevel``.
+        Resolved tier and its source label.
     """
     if override is not None:
         raw = override
+        source: TelemetryLevelSource = "override"
     elif external_conf is not None and external_conf.get(TELEMETRY_LEVEL_CONFIG_KEY) is not None:
         raw = external_conf[TELEMETRY_LEVEL_CONFIG_KEY]
+        source = "external"
     elif config_file_conf is not None and config_file_conf.get(
         TELEMETRY_LEVEL_CONFIG_KEY
     ) is not None:
         raw = config_file_conf[TELEMETRY_LEVEL_CONFIG_KEY]
+        source = "file"
     else:
-        return DEFAULT_TELEMETRY_LEVEL
+        return DEFAULT_TELEMETRY_LEVEL, "default"
     try:
-        return parse_telemetry_level(raw)
+        return parse_telemetry_level(raw), source
     except ValueError:
         logger.error(
             "Invalid telemetry_level %r; falling back to %r",
             raw,
             DEFAULT_TELEMETRY_LEVEL.value,
         )
-        return DEFAULT_TELEMETRY_LEVEL
+        return DEFAULT_TELEMETRY_LEVEL, source
+
+
+def resolve_telemetry_level(
+    config_file_conf: dict[str, Any] | None = None,
+    *,
+    override: str | TelemetryLevel | None = None,
+    external_conf: dict[str, Any] | None = None,
+) -> TelemetryLevel:
+    """Resolve the active telemetry tier.
+
+    Args:
+        config_file_conf: Settings from ``get_config_file_settings()`` (optional).
+        override: Optional tier from tracker or CLI.
+        external_conf: Merged settings from ``get_hierarchical_config()`` (optional).
+
+    Returns:
+        Resolved ``TelemetryLevel``.
+    """
+    return resolve_telemetry_level_and_source(
+        config_file_conf,
+        override=override,
+        external_conf=external_conf,
+    )[0]
+
+
+def is_telemetry_level_explicit(
+    config_file_conf: dict[str, Any],
+    *,
+    override: str | TelemetryLevel | None = None,
+    external_conf: dict[str, Any] | None = None,
+) -> bool:
+    """Return whether the user explicitly chose a telemetry tier.
+
+    Args:
+        config_file_conf: Settings from ``get_config_file_settings()`` (no env overlay).
+        override: Value passed to ``EmissionsTracker(telemetry_level=...)``.
+        external_conf: Merged config from file and environment.
+
+    Returns:
+        True if any explicit source is set.
+    """
+    _, source = resolve_telemetry_level_and_source(
+        config_file_conf,
+        override=override,
+        external_conf=external_conf,
+    )
+    return source != "default"
 
 
 def get_telemetry_api_url(

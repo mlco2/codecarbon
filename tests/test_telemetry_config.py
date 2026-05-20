@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import codecarbon.telemetry as telemetry_module
 from codecarbon.core.config import get_config_file_settings
 from codecarbon.core.telemetry_settings import resolve_telemetry_level
 from codecarbon.core.telemetry_schemas import TelemetryLevel
@@ -16,6 +15,7 @@ from codecarbon.core.telemetry_settings import get_telemetry_api_url
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from codecarbon.output_methods.emissions_data import EmissionsData
 from codecarbon.telemetry import (
+    reset_telemetry_warning,
     send_private_telemetry_at_stop,
     warn_if_telemetry_not_configured,
 )
@@ -35,7 +35,7 @@ def _conf(level: str) -> str:
 
 class TestTelemetryConfigContract(unittest.TestCase):
     def setUp(self) -> None:
-        telemetry_module._TELEMETRY_CONFIGURE_WARNED = False
+        reset_telemetry_warning()
 
     def test_warns_once_when_telemetry_not_explicit(self):
         with patch("codecarbon.telemetry.logger.warning") as mock_warning:
@@ -174,7 +174,7 @@ class TestTelemetryConfigContract(unittest.TestCase):
 @mock_platform_cli_setup
 class TestTrackerTelemetryFromConfig(unittest.TestCase):
     def setUp(self) -> None:
-        telemetry_module._TELEMETRY_CONFIGURE_WARNED = False
+        reset_telemetry_warning()
         self._config_patcher = None
 
     def tearDown(self) -> None:
@@ -189,7 +189,7 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
 
     def test_disabled_no_telemetry_on_stop(self, mock_cli_setup):
         self._mock_config(_conf("disabled"))
-        with patch("codecarbon.telemetry.TelemetryClient") as mock_telemetry_cls:
+        with patch("codecarbon.telemetry.post_private_telemetry") as mock_post:
             with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                 tracker = EmissionsTracker(
                     measure_power_secs=1,
@@ -198,15 +198,14 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
                 )
                 tracker.start()
                 tracker.stop()
-        mock_telemetry_cls.assert_not_called()
+        mock_post.assert_not_called()
 
     def test_minimal_posts_tier1_on_stop_not_on_init(self, mock_cli_setup):
         self._mock_config(_conf("minimal"))
         with ensure_telemetry_run_duration():
-            with patch("codecarbon.telemetry.TelemetryClient") as mock_telemetry_cls:
-                mock_client = MagicMock()
-                mock_client.add_telemetry.return_value = "telemetry-id"
-                mock_telemetry_cls.return_value = mock_client
+            with patch(
+                "codecarbon.telemetry.post_private_telemetry", return_value=True
+            ) as mock_post:
                 with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                     tracker = EmissionsTracker(
                         measure_power_secs=1,
@@ -215,20 +214,18 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
                     )
                     tracker.start()
                     tracker.stop()
-        mock_telemetry_cls.assert_called_once()
-        mock_client.add_telemetry.assert_called_once()
+        mock_post.assert_called_once()
         self.assertEqual(
-            mock_telemetry_cls.call_args.kwargs["telemetry"]["telemetry_level"],
+            mock_post.call_args[0][1]["telemetry_level"],
             TelemetryLevel.minimal.value,
         )
 
     def test_tier2_posts_tier1_and_emission_on_stop_not_on_init(self, mock_cli_setup):
         self._mock_config(_conf("extensive"))
         with ensure_telemetry_run_duration():
-            with patch("codecarbon.telemetry.TelemetryClient") as mock_telemetry_cls:
-                mock_telemetry = MagicMock()
-                mock_telemetry.add_telemetry.return_value = "telemetry-id"
-                mock_telemetry_cls.return_value = mock_telemetry
+            with patch(
+                "codecarbon.telemetry.post_private_telemetry", return_value=True
+            ) as mock_post:
                 with patch("codecarbon.telemetry.ApiClient") as mock_api_cls:
                     mock_api = MagicMock()
                     mock_api.add_emission.return_value = True
@@ -241,18 +238,16 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
                         )
                         tracker.start()
                         tracker.stop()
-        mock_telemetry_cls.assert_called_once()
-        mock_telemetry.add_telemetry.assert_called_once()
+        mock_post.assert_called_once()
         mock_api_cls.assert_called_once()
         mock_api.add_emission.assert_called_once()
 
     def test_offline_minimal_posts_tier1_on_stop(self, mock_cli_setup):
         self._mock_config(_conf("minimal"))
         with ensure_telemetry_run_duration():
-            with patch("codecarbon.telemetry.TelemetryClient") as mock_telemetry_cls:
-                mock_client = MagicMock()
-                mock_client.add_telemetry.return_value = "telemetry-id"
-                mock_telemetry_cls.return_value = mock_client
+            with patch(
+                "codecarbon.telemetry.post_private_telemetry", return_value=True
+            ) as mock_post:
                 tracker = OfflineEmissionsTracker(
                     country_iso_code="CAN",
                     save_to_api=False,
@@ -260,7 +255,7 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
                 )
                 tracker.start()
                 tracker.stop()
-        mock_client.add_telemetry.assert_called_once()
+        mock_post.assert_called_once()
 
     def test_warns_when_config_has_no_explicit_telemetry_level(self, mock_cli_setup):
         self._mock_config("[codecarbon]\n")
@@ -276,11 +271,8 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
         with patch.dict(os.environ, env_without_telemetry, clear=True):
             with patch("codecarbon.telemetry.logger.warning") as mock_warning:
                 with patch(
-                    "codecarbon.telemetry.TelemetryClient"
-                ) as mock_telemetry_cls:
-                    mock_client = MagicMock()
-                    mock_client.add_telemetry.return_value = "telemetry-id"
-                    mock_telemetry_cls.return_value = mock_client
+                    "codecarbon.telemetry.post_private_telemetry", return_value=True
+                ):
                     with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                         EmissionsTracker(save_to_api=False, save_to_file=False)
         configure_warnings = [
@@ -293,7 +285,7 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
     def test_no_configure_warn_when_telemetry_level_kwarg_set(self, mock_cli_setup):
         self._mock_config("[codecarbon]\n")
         with patch("codecarbon.telemetry.logger.warning") as mock_warning:
-            with patch("codecarbon.telemetry.TelemetryClient"):
+            with patch("codecarbon.telemetry.post_private_telemetry"):
                 with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                     EmissionsTracker(
                         telemetry_level="disabled",
@@ -313,14 +305,16 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
             with patch.dict(
                 os.environ, {"CODECARBON_TELEMETRY": "disabled"}, clear=False
             ):
-                with patch("codecarbon.telemetry.TelemetryClient") as mock_telemetry_cls:
+                with patch(
+                    "codecarbon.telemetry.post_private_telemetry", return_value=True
+                ) as mock_post:
                     with patch("codecarbon.external.geography.GeoMetadata.from_geo_js"):
                         tracker = EmissionsTracker(
                             save_to_api=False, save_to_file=False
                         )
                         tracker.start()
                         tracker.stop()
-        mock_telemetry_cls.assert_called_once()
+        mock_post.assert_called_once()
 
 
 if __name__ == "__main__":

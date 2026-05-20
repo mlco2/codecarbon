@@ -1,11 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from codecarbon.core.telemetry_collect import (
-    build_telemetry_payload,
-    collect_telemetry_context,
-    project_private_telemetry,
-)
+from codecarbon.core.telemetry_collect import build_telemetry_payload
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.output_methods.emissions_data import EmissionsData
 
@@ -49,7 +45,7 @@ def _sample_emissions(**overrides):
 
 
 class TestTelemetryCollect(unittest.TestCase):
-    def test_project_private_telemetry_includes_run_and_framework_flags(self):
+    def test_build_telemetry_payload_includes_run_and_framework_flags(self):
         tracker = MagicMock()
         tracker._conf = {
             "os": "Linux",
@@ -74,8 +70,7 @@ class TestTelemetryCollect(unittest.TestCase):
             "codecarbon.core.telemetry_collect._package_installed",
             side_effect=lambda name: name == "torch",
         ):
-            context = collect_telemetry_context(tracker, emissions)
-        payload = project_private_telemetry(context)
+            payload = build_telemetry_payload(tracker, emissions)
 
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertEqual(payload["total_emissions_kg"], 0.5)

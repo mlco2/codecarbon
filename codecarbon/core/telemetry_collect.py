@@ -1,4 +1,4 @@
-"""Collect and project private product telemetry (Tier 1 / Tier 2) from tracker state."""
+"""Collect private product telemetry (Tier 1 / Tier 2) from tracker state."""
 
 from __future__ import annotations
 
@@ -21,18 +21,44 @@ FRAMEWORK_PACKAGES = (
     ("sklearn", "has_sklearn"),
 )
 
+PACKAGE_MANAGER_ENV = (
+    ("UV", "uv"),
+    ("POETRY_ACTIVE", "poetry"),
+    ("PIP_RUN", "pip"),
+)
+
+CI_ENVIRONMENTS = (
+    ("GITHUB_ACTIONS", "github_actions"),
+    ("GITLAB_CI", "gitlab_ci"),
+    ("CIRCLECI", "circleci"),
+    ("JENKINS_URL", "jenkins"),
+    ("CI", "ci"),
+)
+
+CONTAINER_RUNTIME_ENV = (
+    ("KUBERNETES_SERVICE_HOST", "kubernetes"),
+)
+
+OUTPUT_METHOD_ATTRS = (
+    ("_save_to_file", "file"),
+    ("_save_to_api", "api"),
+    ("_save_to_logger", "logger"),
+    ("_emissions_endpoint", "http"),
+    ("_save_to_prometheus", "prometheus"),
+    ("_save_to_logfire", "logfire"),
+)
+
+
 def _non_empty(value: Any) -> bool:
-    if value is None:
-        return False
-    if value == [] or value == {}:
-        return False
-    if isinstance(value, str) and value == "":
-        return False
-    return True
+    return value not in (None, "", [], {})
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in data.items() if _non_empty(value)}
+
+
+def _first_env_match(mapping: tuple[tuple[str, str], ...]) -> Optional[str]:
+    return next((label for var, label in mapping if os.environ.get(var)), None)
 
 
 def _package_installed(name: str) -> bool:
@@ -66,30 +92,6 @@ def _detect_python_env_type() -> Optional[str]:
     return "system"
 
 
-def _detect_python_package_manager() -> Optional[str]:
-    if os.environ.get("UV"):
-        return "uv"
-    if os.environ.get("POETRY_ACTIVE"):
-        return "poetry"
-    if os.environ.get("PIP_RUN"):
-        return "pip"
-    return None
-
-
-def _detect_ci_environment() -> Optional[str]:
-    if os.environ.get("GITHUB_ACTIONS"):
-        return "github_actions"
-    if os.environ.get("GITLAB_CI"):
-        return "gitlab_ci"
-    if os.environ.get("CIRCLECI"):
-        return "circleci"
-    if os.environ.get("JENKINS_URL"):
-        return "jenkins"
-    if os.environ.get("CI"):
-        return "ci"
-    return None
-
-
 def _detect_notebook_environment() -> Optional[str]:
     if os.environ.get("COLAB_GPU") is not None or "google.colab" in sys.modules:
         return "colab"
@@ -113,8 +115,9 @@ def _detect_in_container() -> bool:
 
 
 def _detect_container_runtime() -> Optional[str]:
-    if os.environ.get("KUBERNETES_SERVICE_HOST"):
-        return "kubernetes"
+    runtime = _first_env_match(CONTAINER_RUNTIME_ENV)
+    if runtime:
+        return runtime
     if os.path.exists("/.dockerenv"):
         return "docker"
     return None
@@ -186,18 +189,13 @@ def _detect_integration_surface(tracker: Any) -> str:
 
 def _collect_output_methods(tracker: Any) -> list[str]:
     methods: list[str] = []
-    if getattr(tracker, "_save_to_file", False):
-        methods.append("file")
-    if getattr(tracker, "_save_to_api", False):
-        methods.append("api")
-    if getattr(tracker, "_save_to_logger", False):
-        methods.append("logger")
-    if getattr(tracker, "_emissions_endpoint", None):
-        methods.append("http")
-    if getattr(tracker, "_save_to_prometheus", False):
-        methods.append("prometheus")
-    if getattr(tracker, "_save_to_logfire", False):
-        methods.append("logfire")
+    for attr, name in OUTPUT_METHOD_ATTRS:
+        value = getattr(tracker, attr, False)
+        if attr == "_emissions_endpoint":
+            if value:
+                methods.append(name)
+        elif value:
+            methods.append(name)
     return methods
 
 
@@ -247,18 +245,20 @@ def _gpu_static_fields() -> dict[str, Any]:
     return fields
 
 
-def collect_telemetry_context(
+def build_telemetry_payload(
     tracker: Any,
     emissions: EmissionsData,
+    level: TelemetryLevel = TelemetryLevel.minimal,
 ) -> dict[str, Any]:
-    """Build a flat telemetry context from tracker state and emissions at stop.
+    """Build a private telemetry payload dict for ``POST /telemetry``.
 
     Args:
-        tracker: Active ``BaseEmissionsTracker`` instance.
-        emissions: Total emissions row from ``_prepare_emissions_data()``.
+        tracker: Active emissions tracker.
+        emissions: Run emissions data.
+        level: Resolved ``TelemetryLevel`` (``minimal`` or ``extensive``).
 
     Returns:
-        Flat dictionary for ``project_private_telemetry``.
+        Payload dict for ``TelemetryCreate``.
     """
     conf = getattr(tracker, "_conf", {})
     raw_provider, raw_region = _raw_cloud_provider_and_region()
@@ -272,13 +272,13 @@ def collect_telemetry_context(
     integration_surface = _detect_integration_surface(tracker)
     gpu_fields = _gpu_static_fields()
 
-    context: dict[str, Any] = {
+    raw: dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc),
         "os": conf.get("os") or platform.platform(),
         "python_version": conf.get("python_version") or platform.python_version(),
         "python_implementation": platform.python_implementation(),
         "python_env_type": _detect_python_env_type(),
-        "python_package_manager": _detect_python_package_manager(),
+        "python_package_manager": _first_env_match(PACKAGE_MANAGER_ENV),
         "codecarbon_version": conf.get("codecarbon_version"),
         "codecarbon_install_method": _detect_codecarbon_install_method(),
         "country_name": emissions.country_name,
@@ -303,7 +303,7 @@ def collect_telemetry_context(
         "measure_power_interval_secs": getattr(tracker, "_measure_power_secs", None),
         "in_container": _detect_in_container(),
         "container_runtime": _detect_container_runtime(),
-        "ci_environment": _detect_ci_environment(),
+        "ci_environment": _first_env_match(CI_ENVIRONMENTS),
         "notebook_environment": _detect_notebook_environment(),
         "ide_used": _detect_ide(),
         "cudnn_version": _cudnn_version(),
@@ -317,42 +317,11 @@ def collect_telemetry_context(
         "cpu_utilization_avg": emissions.cpu_utilization_percent,
         "gpu_utilization_avg": emissions.gpu_utilization_percent,
         "ram_utilization_avg": emissions.ram_utilization_percent,
+        "telemetry_level": level.value,
         **_collect_framework_fields(),
         **_collect_hardware_diagnostics(tracker),
+        **gpu_fields,
     }
 
-    context.update(gpu_fields)
-    return _strip_none(context)
-
-
-def project_private_telemetry(
-    context: dict[str, Any],
-    level: TelemetryLevel = TelemetryLevel.minimal,
-) -> dict[str, Any]:
-    """Project context to private ``POST /telemetry`` fields for the resolved tier."""
-    payload = {
-        key: context[key]
-        for key in PRIVATE_TELEMETRY_FIELDS
-        if key in context
-    }
-    payload["telemetry_level"] = level.value
+    payload = {key: raw[key] for key in PRIVATE_TELEMETRY_FIELDS if key in raw}
     return _strip_none(payload)
-
-
-def build_telemetry_payload(
-    tracker: Any,
-    emissions: EmissionsData,
-    level: TelemetryLevel = TelemetryLevel.minimal,
-) -> dict[str, Any]:
-    """Build a private telemetry payload dict for ``TelemetryCreate``.
-
-    Args:
-        tracker: Active emissions tracker.
-        emissions: Run emissions data.
-        level: Resolved ``TelemetryLevel`` (``minimal`` or ``extensive``).
-
-    Returns:
-        Payload dict for ``POST /telemetry``.
-    """
-    context = collect_telemetry_context(tracker, emissions)
-    return project_private_telemetry(context, level=level)

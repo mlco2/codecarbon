@@ -4,7 +4,7 @@ import dataclasses
 from typing import Any
 
 from codecarbon.core.api_client import ApiClient
-from codecarbon.core.telemetry_client import TelemetryClient
+from codecarbon.core.telemetry_client import post_private_telemetry
 from codecarbon.core.telemetry_collect import build_telemetry_payload
 from codecarbon.core.telemetry_schemas import TelemetryLevel
 from codecarbon.core.telemetry_settings import (
@@ -16,8 +16,6 @@ from codecarbon.core.telemetry_settings import (
 from codecarbon.external.logger import logger
 from codecarbon.output_methods.emissions_data import EmissionsData
 
-_TELEMETRY_CONFIGURE_WARNED = False
-
 TELEMETRY_NOT_CONFIGURED_MESSAGE = (
     "CodeCarbon telemetry_level was not set explicitly; using default %r. "
     "Tier 1 private telemetry (per run at stop) will be sent. Set telemetry_level "
@@ -25,6 +23,14 @@ TELEMETRY_NOT_CONFIGURED_MESSAGE = (
     "to EmissionsTracker / OfflineEmissionsTracker, or run "
     "codecarbon telemetry set <level>."
 )
+
+_telemetry_default_warning_shown = False
+
+
+def reset_telemetry_warning() -> None:
+    """Clear the one-shot default-tier warning (for tests)."""
+    global _telemetry_default_warning_shown
+    _telemetry_default_warning_shown = False
 
 
 def warn_if_telemetry_not_configured(
@@ -42,22 +48,15 @@ def warn_if_telemetry_not_configured(
         override: Optional ``telemetry_level`` tracker argument.
         external_conf: Merged file/env settings for explicit-env detection.
     """
-    global _TELEMETRY_CONFIGURE_WARNED
-    if _TELEMETRY_CONFIGURE_WARNED:
-        return
+    global _telemetry_default_warning_shown
     if is_telemetry_level_explicit(
         config_file_conf, override=override, external_conf=external_conf
     ):
         return
-    logger.warning(
-        TELEMETRY_NOT_CONFIGURED_MESSAGE,
-        active_level.value,
-    )
-    _TELEMETRY_CONFIGURE_WARNED = True
-
-
-def _run_too_short_for_telemetry(emissions: EmissionsData) -> bool:
-    return emissions.duration is not None and emissions.duration < 1
+    if _telemetry_default_warning_shown:
+        return
+    logger.warning(TELEMETRY_NOT_CONFIGURED_MESSAGE, active_level.value)
+    _telemetry_default_warning_shown = True
 
 
 def send_private_telemetry_at_stop(
@@ -68,6 +67,9 @@ def send_private_telemetry_at_stop(
 ) -> bool:
     """Send Tier 1 private telemetry via ``POST /telemetry``.
 
+    Runs shorter than one second are skipped by ``send_product_telemetry_at_stop``,
+    not here; direct callers may still post for sub-second runs.
+
     Args:
         tracker: Active emissions tracker instance.
         emissions: Total emissions from ``_prepare_emissions_data()``.
@@ -77,20 +79,14 @@ def send_private_telemetry_at_stop(
     Returns:
         True if the private telemetry POST was accepted, False otherwise.
     """
-    if _run_too_short_for_telemetry(emissions):
-        logger.debug(
-            "Private telemetry not sent because run duration is shorter than 1 second."
-        )
-        return False
     settings_conf = external_conf or {}
     try:
         payload = build_telemetry_payload(tracker, emissions, level=level)
-        client = TelemetryClient(
-            endpoint_url=get_telemetry_api_url(settings_conf),
-            telemetry=payload,
-            api_key=get_telemetry_api_key(settings_conf),
+        return post_private_telemetry(
+            get_telemetry_api_url(settings_conf),
+            payload,
+            get_telemetry_api_key(settings_conf),
         )
-        return client.add_telemetry() is not None
     except Exception as error:
         logger.error(f"Private telemetry failed (non-critical): {error}")
         return False
@@ -111,11 +107,6 @@ def send_public_run_summary_at_stop(
     Returns:
         True if the run summary was posted successfully, False otherwise.
     """
-    if _run_too_short_for_telemetry(emissions):
-        logger.debug(
-            "Public run summary not sent because run duration is shorter than 1 second."
-        )
-        return False
     settings_conf = external_conf or {}
     conf = getattr(tracker, "_conf", {})
     try:
@@ -150,6 +141,9 @@ def send_product_telemetry_at_stop(
         external_conf: Merged config for API settings.
     """
     if level == TelemetryLevel.disabled:
+        return
+    if emissions.duration is not None and emissions.duration < 1:
+        logger.debug("Telemetry not sent: run shorter than 1 second.")
         return
     settings = external_conf or {}
     if level in (TelemetryLevel.minimal, TelemetryLevel.extensive):
