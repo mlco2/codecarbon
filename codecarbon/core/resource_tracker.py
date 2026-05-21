@@ -136,11 +136,6 @@ class ResourceTracker:
         logger.info(f"CPU Model on constant consumption mode: {model}")
         self.tracker._conf["cpu_model"] = model
 
-        if tdp:
-            max_power = self.tracker._force_cpu_power
-        else:
-            max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
-
         # Check for forced constant mode first
         if self.tracker._conf.get("force_mode_constant", False):
             logger.info(
