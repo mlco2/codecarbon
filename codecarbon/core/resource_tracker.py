@@ -214,6 +214,24 @@ class ResourceTracker:
             self.cpu_tracker = "User Input TDP constant"
             max_power = self.tracker._force_cpu_power
 
+        # Force constant mode takes precedence over every other CPU tracking backend.
+        if self.tracker._conf.get("force_mode_constant", False):
+            if tdp is None:
+                tdp = cpu.TDP()
+            if max_power is None:
+                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+
+            logger.info(
+                "Force constant mode requested - bypassing dynamic CPU power backends"
+            )
+            self.cpu_tracker = "TDP constant"
+            self.tracker._conf["cpu_model"] = tdp.model
+            hardware_cpu = CPU.from_utils(
+                self.tracker._output_dir, "constant", tdp.model, max_power
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            return
+
         # Try force CPU load mode if requested
         if self.tracker._conf.get("force_mode_cpu_load", False):
             if tdp is None:

@@ -214,6 +214,55 @@ def test_set_cpu_tracking_force_mode_uses_cpu_load_and_returns():
     mock_setup.assert_called_once_with(fake_tdp, 80)
 
 
+def test_set_cpu_tracking_force_mode_constant_takes_precedence_over_all_backends():
+    tracker = make_tracker(
+        _conf={
+            "cpu_physical_count": 4,
+            "force_mode_constant": True,
+            "force_mode_cpu_load": True,
+        }
+    )
+    resource_tracker = ResourceTracker(tracker)
+    fake_tdp = SimpleNamespace(tdp=20, model="CPU")
+    fake_cpu = MagicMock()
+
+    with (
+        patch("codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=fake_cpu
+        ) as mock_from_utils,
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=True
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=True,
+        ),
+        patch.object(resource_tracker, "_setup_cpu_load_mode") as mock_setup_cpu_load,
+        patch.object(
+            resource_tracker, "_setup_power_gadget"
+        ) as mock_setup_power_gadget,
+        patch.object(resource_tracker, "_setup_rapl") as mock_setup_rapl,
+        patch.object(
+            resource_tracker, "_setup_powermetrics"
+        ) as mock_setup_powermetrics,
+    ):
+        resource_tracker.set_CPU_tracking()
+
+    mock_from_utils.assert_called_once_with("out", "constant", "CPU", 80)
+    mock_setup_cpu_load.assert_not_called()
+    mock_setup_power_gadget.assert_not_called()
+    mock_setup_rapl.assert_not_called()
+    mock_setup_powermetrics.assert_not_called()
+    assert resource_tracker.cpu_tracker == "TDP constant"
+    assert tracker._conf["cpu_model"] == "CPU"
+    assert tracker._hardware == [fake_cpu]
+
+
 def test_set_cpu_tracking_prefers_power_gadget():
     tracker = make_tracker()
     resource_tracker = ResourceTracker(tracker)
