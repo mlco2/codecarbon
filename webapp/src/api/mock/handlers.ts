@@ -1,15 +1,4 @@
-import {
-    MOCK_EMISSIONS_BY_RUN,
-    MOCK_EXPERIMENTS,
-    MOCK_EXPERIMENT_REPORTS,
-    MOCK_ORGANIZATIONS,
-    MOCK_ORGANIZATION_REPORT,
-    MOCK_PROJECTS,
-    MOCK_PROJECT_TOKENS,
-    MOCK_RUNS,
-    MOCK_RUN_METADATA,
-    MOCK_USER,
-} from "./data";
+import { ID, MOCK, MockProjectWire } from "./data";
 
 export type MockResponse = { status: number; body?: unknown };
 
@@ -21,94 +10,155 @@ type Handler = (params: {
 }) => MockResponse | undefined;
 
 const ok = (body: unknown): MockResponse => ({ status: 200, body });
+const created = (body: unknown): MockResponse => ({ status: 201, body });
 const noContent = (): MockResponse => ({ status: 204 });
+const notFound = (msg = "Not found"): MockResponse => ({
+    status: 404,
+    body: { detail: msg },
+});
 
 const handlers: Handler[] = [
+    // ─── Auth ──────────────────────────────────────────────────────────────
     ({ pathname, method }) => {
         if (method === "GET" && pathname === "/auth/check") {
-            return ok({ user: MOCK_USER });
+            return ok({ user: MOCK.user });
         }
         return undefined;
     },
 
-    ({ pathname, method }) => {
+    // ─── Organizations ─────────────────────────────────────────────────────
+    ({ pathname, method, body }) => {
         if (method === "GET" && pathname === "/organizations") {
-            return ok(MOCK_ORGANIZATIONS);
+            return ok(MOCK.organization.list);
         }
-        const sumsMatch = pathname.match(/^\/organizations\/([^/]+)\/sums$/);
-        if (method === "GET" && sumsMatch) {
-            return ok(MOCK_ORGANIZATION_REPORT);
+        if (method === "POST" && pathname === "/organizations") {
+            const input = (body ?? {}) as {
+                name?: string;
+                description?: string;
+            };
+            return created({
+                id: `mock-org-${Date.now()}`,
+                name: input.name ?? "New org",
+                description: input.description ?? "",
+            });
+        }
+        const byId = pathname.match(/^\/organizations\/([^/]+)$/);
+        if (method === "GET" && byId) {
+            const org = MOCK.organization.byId[byId[1]];
+            return org ? ok(org) : notFound();
+        }
+        const sums = pathname.match(/^\/organizations\/([^/]+)\/sums$/);
+        if (method === "GET" && sums) {
+            return ok(MOCK.organization.report);
+        }
+        const users = pathname.match(/^\/organizations\/([^/]+)\/users$/);
+        if (method === "GET" && users) {
+            return ok(MOCK.organization.usersByOrgId[users[1]] ?? []);
+        }
+        const addUser = pathname.match(/^\/organizations\/([^/]+)\/add-user$/);
+        if (method === "POST" && addUser) {
+            const input = (body ?? {}) as { email?: string };
+            return created({
+                id: `mock-user-${Date.now()}`,
+                name: input.email?.split("@")[0] ?? "New user",
+                email: input.email ?? "new@codecarbon.io",
+                organizations: [addUser[1]],
+                is_active: true,
+            });
         }
         return undefined;
     },
 
-    ({ pathname, method, searchParams }) => {
+    // ─── Projects ──────────────────────────────────────────────────────────
+    ({ pathname, method, searchParams, body }) => {
         if (method === "GET" && pathname === "/projects") {
             const orgId = searchParams.get("organization");
             const projects = orgId
-                ? MOCK_PROJECTS.filter((p) => p.organization_id === orgId)
-                : MOCK_PROJECTS;
+                ? (MOCK.project.byOrgId[orgId] ?? [])
+                : MOCK.project.list;
             return ok(projects);
         }
-        const oneMatch = pathname.match(/^\/projects\/([^/]+)$/);
-        if (method === "GET" && oneMatch) {
-            const project = MOCK_PROJECTS.find((p) => p.id === oneMatch[1]);
-            return project
-                ? ok(project)
-                : { status: 404, body: { detail: "Not found" } };
+        if (method === "POST" && pathname === "/projects") {
+            const input = (body ?? {}) as Partial<MockProjectWire> & {
+                organization_id?: string;
+            };
+            return created({
+                id: `mock-project-${Date.now()}`,
+                name: input.name ?? "New project",
+                description: input.description ?? "",
+                public: input.public ?? false,
+                organization_id: input.organization_id ?? ID.org,
+                experiments: [],
+            });
+        }
+        const byId = pathname.match(/^\/projects\/([^/]+)$/);
+        if (byId && byId[1] !== "public") {
+            const project = MOCK.project.byId[byId[1]];
+            if (method === "GET") return project ? ok(project) : notFound();
+            if (method === "PATCH" && project) {
+                const patch = (body ?? {}) as Partial<MockProjectWire>;
+                return ok({ ...project, ...patch });
+            }
+            if (method === "DELETE") return noContent();
+        }
+        const publicMatch = pathname.match(/^\/projects\/public\/([^/]+)$/);
+        if (method === "GET" && publicMatch) {
+            // Treat the encrypted_id as the project id for mock purposes.
+            const project = MOCK.project.byId[publicMatch[1]];
+            return project ? ok(project) : notFound();
+        }
+        const shareLink = pathname.match(/^\/projects\/([^/]+)\/share-link$/);
+        if (method === "GET" && shareLink) {
+            return ok({ encrypted_id: shareLink[1] });
         }
         return undefined;
     },
 
-    ({ pathname, method }) => {
-        const expMatch = pathname.match(/^\/projects\/([^/]+)\/experiments$/);
-        if (method === "GET" && expMatch) {
-            return ok(
-                MOCK_EXPERIMENTS.filter((e) => e.project_id === expMatch[1]),
-            );
+    // ─── Experiments ───────────────────────────────────────────────────────
+    ({ pathname, method, body }) => {
+        if (method === "POST" && pathname === "/experiments") {
+            const input = (body ?? {}) as Partial<{
+                name: string;
+                description: string;
+                project_id: string;
+                on_cloud: boolean;
+            }>;
+            return created({
+                id: `mock-experiment-${Date.now()}`,
+                name: input.name ?? "New experiment",
+                description: input.description ?? "",
+                project_id: input.project_id ?? ID.projects.training,
+                on_cloud: input.on_cloud ?? false,
+                timestamp: new Date().toISOString(),
+            });
         }
-        const sumsMatch = pathname.match(
-            /^\/projects\/([^/]+)\/experiments\/sums$/,
-        );
-        if (method === "GET" && sumsMatch) {
-            const projectExpIds = MOCK_EXPERIMENTS.filter(
-                (e) => e.project_id === sumsMatch[1],
-            ).map((e) => e.id);
-            return ok(
-                MOCK_EXPERIMENT_REPORTS.filter((r) =>
-                    projectExpIds.includes(r.experiment_id),
-                ),
-            );
+        const list = pathname.match(/^\/projects\/([^/]+)\/experiments$/);
+        if (method === "GET" && list) {
+            return ok(MOCK.experiment.byProjectId[list[1]] ?? []);
         }
-        return undefined;
-    },
-
-    ({ pathname, method }) => {
-        const sumsMatch = pathname.match(
-            /^\/experiments\/([^/]+)\/runs\/sums$/,
-        );
-        if (method === "GET" && sumsMatch) {
-            return ok(
-                MOCK_RUNS.filter((r) => r.experiment_id === sumsMatch[1]),
-            );
+        const sums = pathname.match(/^\/projects\/([^/]+)\/experiments\/sums$/);
+        if (method === "GET" && sums) {
+            return ok(MOCK.experiment.reportsByProjectId[sums[1]] ?? []);
         }
         return undefined;
     },
 
+    // ─── Runs ──────────────────────────────────────────────────────────────
     ({ pathname, method }) => {
-        const runMeta = pathname.match(/^\/runs\/([^/]+)$/);
-        if (method === "GET" && runMeta) {
-            const meta = MOCK_RUN_METADATA[runMeta[1]];
-            return meta
-                ? ok(meta)
-                : { status: 404, body: { detail: "Not found" } };
+        const sums = pathname.match(/^\/experiments\/([^/]+)\/runs\/sums$/);
+        if (method === "GET" && sums) {
+            return ok(MOCK.run.byExperimentId[sums[1]] ?? []);
         }
-        const runEm = pathname.match(/^\/runs\/([^/]+)\/emissions$/);
-        if (method === "GET" && runEm) {
-            const emissions = MOCK_EMISSIONS_BY_RUN[runEm[1]] ?? [];
-            return ok({
-                items: emissions.map((e) => ({
-                    run_id: runEm[1],
+        const meta = pathname.match(/^\/runs\/([^/]+)$/);
+        if (method === "GET" && meta) {
+            const m = MOCK.run.metadataById[meta[1]];
+            return m ? ok(m) : notFound();
+        }
+        const emissions = pathname.match(/^\/runs\/([^/]+)\/emissions$/);
+        if (method === "GET" && emissions) {
+            const items = (MOCK.run.emissionsById[emissions[1]] ?? []).map(
+                (e) => ({
+                    run_id: emissions[1],
                     timestamp: e.timestamp,
                     emissions_sum: e.emissions_sum,
                     emissions_rate: e.emissions_rate,
@@ -119,31 +169,33 @@ const handlers: Handler[] = [
                     gpu_energy: e.gpu_energy,
                     ram_energy: e.ram_energy,
                     energy_consumed: e.energy_consumed,
-                })),
-            });
+                }),
+            );
+            return ok({ items });
         }
         return undefined;
     },
 
+    // ─── Project tokens ────────────────────────────────────────────────────
     ({ pathname, method }) => {
-        const tokensMatch = pathname.match(/^\/projects\/([^/]+)\/api-tokens$/);
-        if (method === "GET" && tokensMatch) {
-            return ok(MOCK_PROJECT_TOKENS[tokensMatch[1]] ?? []);
+        const list = pathname.match(/^\/projects\/([^/]+)\/api-tokens$/);
+        if (method === "GET" && list) {
+            return ok(MOCK.token.byProjectId[list[1]] ?? []);
         }
-        if (method === "POST" && tokensMatch) {
-            return ok({
+        if (method === "POST" && list) {
+            return created({
                 id: `mock-token-${Date.now()}`,
-                project_id: tokensMatch[1],
+                project_id: list[1],
                 name: "New mock token",
                 token: "mock_newxxxxxxxxxxxxxxxxxxxxxxxxx",
                 access: 2,
                 last_used: null,
             });
         }
-        const tokenItem = pathname.match(
+        const item = pathname.match(
             /^\/projects\/([^/]+)\/api-tokens\/([^/]+)$/,
         );
-        if (method === "DELETE" && tokenItem) {
+        if (method === "DELETE" && item) {
             return noContent();
         }
         return undefined;
