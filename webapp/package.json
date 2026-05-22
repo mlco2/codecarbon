@@ -66,6 +66,8 @@
         "@types/react-dom": "19.1.1"
     },
     "pnpm": {
-        "onlyBuiltDependencies": ["esbuild"]
+        "onlyBuiltDependencies": [
+            "esbuild"
+        ]
     }
 }

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Landing page (mock mode)", () => {
-    test("renders welcome heading and both sign-in buttons", async ({
+    test("renders welcome heading and the mock-only login button", async ({
         page,
     }) => {
         await page.goto("/");
@@ -10,18 +10,13 @@ test.describe("Landing page (mock mode)", () => {
             page.getByRole("heading", { name: /welcome to code carbon/i }),
         ).toBeVisible();
 
-        await expect(
-            page.getByRole("link", {
-                name: /sign in or create an account/i,
-            }),
-        ).toBeVisible();
-
+        // In mock mode the real-login button is hidden — there is no real
+        // OAuth backend in this build.
+        await expect(page.getByTestId("real-login")).toHaveCount(0);
         await expect(page.getByTestId("mock-login")).toBeVisible();
     });
 
-    test("clicking 'Login in mock mode' lands on the dashboard", async ({
-        page,
-    }) => {
+    test("clicking 'Mock Login' lands on the dashboard", async ({ page }) => {
         await page.goto("/");
         await page.getByTestId("mock-login").click();
 

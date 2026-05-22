@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { LogIn, FlaskConical } from "lucide-react";
-import { buildLoginUrl } from "@/api/auth";
+import { redirectToLogin } from "@/api/auth";
 import { isMockMode, loginMock } from "@/api/mock";
 
 export default function LandingPage() {
     const mock = isMockMode();
+    const apiConfigured = !!import.meta.env.VITE_API_URL;
     return (
         <>
             <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
@@ -13,25 +14,39 @@ export default function LandingPage() {
                         Welcome to Code Carbon!
                     </h1>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        Get started by signing in with your preferred service.
+                        {mock
+                            ? "Running in mock mode — no backend required."
+                            : "Get started by signing in with your preferred service."}
                     </p>
                     <div className="mt-6 flex flex-col items-center gap-3">
-                        <a href={buildLoginUrl()}>
-                            <Button className="w-full max-w-[300px]">
+                        {!mock && (
+                            <Button
+                                type="button"
+                                className="w-full max-w-[300px]"
+                                onClick={redirectToLogin}
+                                disabled={!apiConfigured}
+                                data-testid="real-login"
+                            >
                                 <LogIn className="mr-2 h-5 w-5" />
                                 Sign in or create an account
                             </Button>
-                        </a>
+                        )}
+                        {!mock && !apiConfigured && (
+                            <p className="text-xs text-destructive max-w-[300px]">
+                                VITE_API_URL is not set. Copy{" "}
+                                <code>webapp/.env.example</code> to{" "}
+                                <code>webapp/.env</code> and reload.
+                            </p>
+                        )}
                         {mock && (
                             <Button
                                 type="button"
-                                variant="outline"
                                 className="w-full max-w-[300px]"
                                 onClick={loginMock}
                                 data-testid="mock-login"
                             >
                                 <FlaskConical className="mr-2 h-5 w-5" />
-                                Login in mock mode
+                                Mock Login (Dev Mode)
                             </Button>
                         )}
                     </div>
