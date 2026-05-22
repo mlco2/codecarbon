@@ -78,6 +78,12 @@ class TestCPU(unittest.TestCase):
     def test_is_psutil_not_available_on_exception(self, mock_cpu_times):
         self.assertFalse(is_psutil_available())
 
+    def test_cpu_repr_includes_generic_tdp_marker(self):
+        cpu = CPU(output_dir="", mode="constant", model="My CPU", tdp=12)
+        cpu._is_generic_tdp = True
+
+        assert repr(cpu) == "CPU(My CPU > 12W [generic])"
+
 
 class TestRAPLHelperFunctions(unittest.TestCase):
     def test_get_candidate_bases_for_custom_dir(self):
