@@ -46,12 +46,24 @@ class TestCPU(unittest.TestCase):
         self.assertTrue(is_psutil_available())
 
     @mock.patch("psutil.cpu_times")
-    def test_is_psutil_available_with_small_nice(self, mock_cpu_times):
-        # Test when nice attribute is too small
+    def test_is_psutil_available_with_small_nice_uses_fallback(self, mock_cpu_times):
+        # Test when nice attribute is too small, as on macOS
         mock_times = mock.Mock()
         mock_times.nice = 0.00001
         mock_cpu_times.return_value = mock_times
-        self.assertFalse(is_psutil_available())
+        with mock.patch("psutil.cpu_percent") as mock_cpu_percent:
+            self.assertTrue(is_psutil_available())
+            mock_cpu_percent.assert_called_once_with(interval=0.0, percpu=False)
+
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_not_available_when_small_nice_fallback_fails(
+        self, mock_cpu_times
+    ):
+        mock_times = mock.Mock()
+        mock_times.nice = 0.00001
+        mock_cpu_times.return_value = mock_times
+        with mock.patch("psutil.cpu_percent", side_effect=Exception("Test error")):
+            self.assertFalse(is_psutil_available())
 
     @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_without_nice(self, mock_cpu_times):
