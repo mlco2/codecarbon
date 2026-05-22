@@ -21,7 +21,7 @@ export default defineConfig({
     webServer: {
         // Build with mock mode baked in, then preview the static bundle.
         // No backend, no auth — fully autonomous.
-        command: `VITE_USE_MOCK_DATA=true VITE_API_URL=http://api.mock/api VITE_BASE_URL=http://localhost:${PORT} pnpm build && pnpm preview --port ${PORT} --strictPort`,
+        command: `VITE_USE_MOCK_DATA=true VITE_API_URL=http://api.mock/api VITE_BASE_URL=http://localhost:${PORT} npm run build && npm run preview -- --port ${PORT} --strictPort`,
         url: `http://localhost:${PORT}`,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,

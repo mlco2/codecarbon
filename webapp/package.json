@@ -3,7 +3,6 @@
     "version": "0.1.0",
     "private": true,
     "type": "module",
-    "packageManager": "pnpm@10.33.2",
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",
@@ -64,10 +63,5 @@
     "overrides": {
         "@types/react": "19.1.0",
         "@types/react-dom": "19.1.1"
-    },
-    "pnpm": {
-        "onlyBuiltDependencies": [
-            "esbuild"
-        ]
     }
 }

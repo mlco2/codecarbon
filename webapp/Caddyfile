@@ -1,20 +1,6 @@
 :{$CC_STATIC_PORT:8080} {
 	encode gzip
 
-	handle_path /api/* {
-		reverse_proxy {$VITE_API_URL} {
-			header_up Host {upstream_hostport}
-			header_up X-Forwarded-Proto https
-		}
-	}
-
-	handle /auth/* {
-		reverse_proxy {$VITE_API_URL} {
-			header_up Host {upstream_hostport}
-			header_up X-Forwarded-Proto https
-		}
-	}
-
 	handle {
 		root * {$APP_HOME}/webapp/dist
 

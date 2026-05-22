@@ -26,22 +26,20 @@ jobs:
               uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
               with:
                   node-version: "${{ env.NODE_VERSION }}"
-            - name: Setup pnpm
-              uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
-              with:
-                  version: 8
+                  cache: "npm"
+                  cache-dependency-path: webapp/package-lock.json
             - name: Install dependencies
               working-directory: ./webapp
-              run: pnpm install
+              run: npm ci
             - name: Build
               working-directory: ./webapp
-              run: pnpm run build
+              run: npm run build
             - name: Unit tests (vitest)
               working-directory: ./webapp
-              run: pnpm test:run
+              run: npm run test:run
             - name: Check formatting with Prettier
               working-directory: ./webapp
-              run: pnpm exec prettier . --check
+              run: npx prettier . --check
 
     e2e-ui:
         runs-on: ubuntu-22.04
@@ -51,19 +49,17 @@ jobs:
               uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
               with:
                   node-version: "${{ env.NODE_VERSION }}"
-            - name: Setup pnpm
-              uses: pnpm/action-setup@eae0cfeb286e66ffb5155f1a79b90583a127a68b # v2.4.1
-              with:
-                  version: 8
+                  cache: "npm"
+                  cache-dependency-path: webapp/package-lock.json
             - name: Install dependencies
               working-directory: ./webapp
-              run: pnpm install
+              run: npm ci
             - name: Install Playwright browsers
               working-directory: ./webapp
-              run: pnpm exec playwright install --with-deps chromium
+              run: npx playwright install --with-deps chromium
             - name: Run Playwright tests (mock mode, no backend)
               working-directory: ./webapp
-              run: pnpm test:e2e
+              run: npm run test:e2e
             - name: Upload Playwright report
               if: failure()
               uses: actions/upload-artifact@v4
