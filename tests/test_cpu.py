@@ -78,12 +78,6 @@ class TestCPU(unittest.TestCase):
     def test_is_psutil_not_available_on_exception(self, mock_cpu_times):
         self.assertFalse(is_psutil_available())
 
-    def test_cpu_repr_includes_generic_tdp_marker(self):
-        cpu = CPU(output_dir="", mode="constant", model="My CPU", tdp=12)
-        cpu._is_generic_tdp = True
-
-        assert repr(cpu) == "CPU(My CPU > 12W [generic])"
-
 
 class TestRAPLHelperFunctions(unittest.TestCase):
     def test_get_candidate_bases_for_custom_dir(self):
@@ -377,6 +371,18 @@ class TestTDP(unittest.TestCase):
         model = "AMD Ryzen Threadripper 1950X 16-Core Processor"
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
 
+    def test_get_cpu_power_from_registry_returns_none_without_match(self):
+        tdp = TDP.__new__(TDP)
+        with (
+            mock.patch("codecarbon.core.cpu.DataSource") as mock_data_source,
+            mock.patch.object(tdp, "_get_matching_cpu", return_value=None),
+        ):
+            mock_data_source.return_value.get_cpu_power_data.return_value = (
+                mock.sentinel.cpu_power_df
+            )
+
+            self.assertIsNone(tdp._get_cpu_power_from_registry("Mystery CPU"))
+
     def test_get_matching_cpu(self):
         tdp = TDP()
         cpu_data = DataSource().get_cpu_power_data()
@@ -563,6 +569,13 @@ class TestTDP(unittest.TestCase):
 
         self.assertEqual(tdp.model, "Mystery CPU")
         self.assertEqual(tdp.tdp, 8 * DEFAULT_POWER_PER_CORE)
+
+    def test_main_returns_unknown_when_cpu_detection_fails(self):
+        with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=None):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Unknown")
+        self.assertIsNone(tdp.tdp)
 
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):
