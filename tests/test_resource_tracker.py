@@ -198,6 +198,31 @@ def test_setup_fallback_tracking_uses_global_constant_when_no_tdp_and_no_psutil(
     assert tracker._hardware == [hardware_cpu]
 
 
+def test_setup_fallback_tracking_uses_forced_power_without_psutil():
+    tracker = make_tracker(_force_cpu_power=42)
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    tdp = SimpleNamespace(model="Unknown CPU", tdp=None)
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=False,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
+    ):
+        resource_tracker._setup_fallback_tracking(tdp, 42)
+
+    mock_from_utils.assert_called_once_with("out", "constant", "Unknown CPU", 42)
+    assert resource_tracker.cpu_tracker == "User Input TDP constant"
+    assert tracker._hardware == [hardware_cpu]
+
+
 def test_set_cpu_tracking_force_mode_uses_cpu_load_and_returns():
     tracker = make_tracker(_conf={"cpu_physical_count": 4, "force_mode_cpu_load": True})
     resource_tracker = ResourceTracker(tracker)
