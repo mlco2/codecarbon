@@ -1,5 +1,3 @@
-"use client";
-
 import {
     Card,
     CardContent,
@@ -13,12 +11,12 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import { EmissionsTimeSeries } from "@/types/emissions-time-series";
+import { EmissionsTimeSeries } from "@/api/schemas";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import { ExportCsvButton } from "@/components/export-csv-button";
-import { getEmissionsTimeSeries } from "@/server-functions/runs";
+import { getEmissionsTimeSeries } from "@/api/runs";
 import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
 import { Cpu, HardDrive, Server } from "lucide-react";
 

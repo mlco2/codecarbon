@@ -1,7 +1,5 @@
-"use client";
-
 import { cn } from "@/helpers/utils";
-import { Organization } from "@/types/organization";
+import { Organization } from "@/api/schemas";
 import { SelectGroup } from "@radix-ui/react-select";
 import {
     AreaChart,
@@ -11,7 +9,7 @@ import {
     UserIcon,
     Users,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import NavItem from "./nav-item";
 import {
@@ -23,11 +21,11 @@ import {
     SelectValue,
 } from "./ui/select";
 import CreateOrganizationModal from "./createOrganizationModal";
-import { getOrganizations } from "@/server-functions/organizations";
+import { getOrganizations } from "@/api/organizations";
 import { Button } from "./ui/button";
 import { useModal } from "@/hooks/useModal";
 
-const USER_PROFILE_URL = process.env.NEXT_PUBLIC_FIEF_BASE_URL; // Redirect to Fief profile to handle profile updates there
+const USER_PROFILE_URL = import.meta.env.VITE_FIEF_BASE_URL;
 export default function NavBar({
     orgs,
     setSheetOpened,
@@ -36,11 +34,11 @@ export default function NavBar({
     setSheetOpened?: (value: boolean) => void;
 }>) {
     const [selected, setSelected] = useState<string | null>(null);
-    const router = useRouter();
+    const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
     const iconStyles = "h-4 w-4 flex-shrink-0 text-muted-foreground";
-    const pathname = usePathname();
+    const { pathname } = useLocation();
     const newOrgModal = useModal();
     const [organizationList, setOrganizationList] = useState<
         Organization[] | undefined
@@ -143,9 +141,9 @@ export default function NavBar({
                                 setSheetOpened?.(false);
 
                                 if (selectedOrg) {
-                                    router.push(`/${selectedOrg}`);
+                                    navigate(`/${selectedOrg}`);
                                 } else {
-                                    router.push("/home");
+                                    navigate("/home");
                                 }
                             }}
                             paddingY={1.5}
@@ -160,7 +158,7 @@ export default function NavBar({
                                 onClick={() => {
                                     setSelected("projects");
                                     setSheetOpened?.(false);
-                                    router.push(`/${selectedOrg}/projects`);
+                                    navigate(`/${selectedOrg}/projects`);
                                 }}
                                 paddingY={1.5}
                                 icon={<AreaChart className={iconStyles} />}
@@ -172,7 +170,7 @@ export default function NavBar({
                                 onClick={() => {
                                     setSelected("members");
                                     setSheetOpened?.(false);
-                                    router.push(`/${selectedOrg}/members`);
+                                    navigate(`/${selectedOrg}/members`);
                                 }}
                                 paddingY={1.5}
                                 icon={<Users className={iconStyles} />}
@@ -191,7 +189,7 @@ export default function NavBar({
                                     setSelectedOrg(value);
                                     setSelected("home");
                                     setSheetOpened?.(false);
-                                    router.push(`/${value}`);
+                                    navigate(`/${value}`);
                                 }}
                                 open={isDropdownOpen}
                                 onOpenChange={setDropdownOpen}
@@ -269,7 +267,7 @@ export default function NavBar({
                         <NavItem
                             onClick={() => {
                                 setSheetOpened?.(false);
-                                router.push("/auth/logout");
+                                window.location.href = `${import.meta.env.VITE_API_URL}/auth/logout`;
                             }}
                             isSelected={false}
                             paddingY={1.5}
