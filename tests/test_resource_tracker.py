@@ -223,6 +223,109 @@ def test_setup_fallback_tracking_uses_forced_power_without_psutil():
     assert tracker._hardware == [hardware_cpu]
 
 
+def test_setup_fallback_tracking_force_mode_constant_uses_constant_cpu_with_user_power():
+    tracker = make_tracker(
+        _conf={"cpu_physical_count": 2, "force_mode_constant": True},
+        _force_cpu_power=42,
+    )
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    tdp = SimpleNamespace(model="Forced CPU", tdp=None)
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
+    ):
+        resource_tracker._setup_fallback_tracking(tdp, None)
+
+    mock_from_utils.assert_called_once_with("out", "constant", "Forced CPU", 42)
+    assert resource_tracker.cpu_tracker == "User Input TDP constant"
+    assert tracker._conf["cpu_model"] == "Forced CPU"
+    assert tracker._hardware == [hardware_cpu]
+
+
+def test_setup_fallback_tracking_force_mode_constant_preserves_existing_max_power():
+    tracker = make_tracker(_conf={"cpu_physical_count": 2, "force_mode_constant": True})
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    tdp = SimpleNamespace(model="Forced CPU", tdp=75)
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
+    ):
+        resource_tracker._setup_fallback_tracking(tdp, 150)
+
+    mock_from_utils.assert_called_once_with("out", "constant", "Forced CPU", 150)
+    assert resource_tracker.cpu_tracker == "TDP constant"
+    assert tracker._conf["cpu_model"] == "Forced CPU"
+    assert tracker._hardware == [hardware_cpu]
+
+
+def test_setup_fallback_tracking_force_mode_cpu_load_uses_cpu_load_when_psutil_available():
+    tracker = make_tracker(_conf={"cpu_physical_count": 2, "force_mode_cpu_load": True})
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    tdp = SimpleNamespace(model="Load CPU", tdp=75)
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
+    ):
+        resource_tracker._setup_fallback_tracking(tdp, 150)
+
+    mock_from_utils.assert_called_once_with(
+        "out",
+        MODE_CPU_LOAD,
+        "Load CPU",
+        150,
+        tracking_mode="machine",
+    )
+    assert resource_tracker.cpu_tracker == MODE_CPU_LOAD
+    assert tracker._hardware == [hardware_cpu]
+
+
+def test_setup_fallback_tracking_force_mode_cpu_load_uses_constant_without_psutil():
+    tracker = make_tracker(_conf={"cpu_physical_count": 2, "force_mode_cpu_load": True})
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    tdp = SimpleNamespace(model="Load CPU", tdp=75)
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=False,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
+    ):
+        resource_tracker._setup_fallback_tracking(tdp, None)
+
+    mock_from_utils.assert_called_once_with("out", "constant", "Load CPU", None)
+    assert resource_tracker.cpu_tracker == "global constant"
+    assert tracker._hardware == [hardware_cpu]
+
+
 def test_set_cpu_tracking_force_mode_uses_cpu_load_and_returns():
     tracker = make_tracker(_conf={"cpu_physical_count": 4, "force_mode_cpu_load": True})
     resource_tracker = ResourceTracker(tracker)
@@ -288,6 +391,29 @@ def test_set_cpu_tracking_force_mode_constant_takes_precedence_over_all_backends
     assert tracker._hardware == [fake_cpu]
 
 
+def test_set_cpu_tracking_force_mode_constant_uses_user_power_without_recomputing():
+    tracker = make_tracker(
+        _conf={"cpu_physical_count": 4, "force_mode_constant": True},
+        _force_cpu_power=55,
+    )
+    resource_tracker = ResourceTracker(tracker)
+    fake_tdp = SimpleNamespace(tdp=None, model="CPU")
+    fake_cpu = MagicMock()
+
+    with (
+        patch("codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=fake_cpu
+        ) as mock_from_utils,
+    ):
+        resource_tracker.set_CPU_tracking()
+
+    mock_from_utils.assert_called_once_with("out", "constant", "CPU", 55)
+    assert resource_tracker.cpu_tracker == "User Input TDP constant"
+    assert tracker._conf["cpu_model"] == "CPU"
+    assert tracker._hardware == [fake_cpu]
+
+
 def test_set_cpu_tracking_prefers_power_gadget():
     tracker = make_tracker()
     resource_tracker = ResourceTracker(tracker)
@@ -332,6 +458,29 @@ def test_set_cpu_tracking_prefers_rapl_before_powermetrics():
         resource_tracker.set_CPU_tracking()
 
     mock_rapl.assert_called_once_with()
+
+
+def test_set_cpu_tracking_prefers_powermetrics_when_other_backends_unavailable():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=False,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=False
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=True,
+        ),
+        patch.object(resource_tracker, "_setup_powermetrics") as mock_powermetrics,
+    ):
+        resource_tracker.set_CPU_tracking()
+
+    mock_powermetrics.assert_called_once_with()
 
 
 def test_set_cpu_tracking_falls_back_when_forced_power_is_set():

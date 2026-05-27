@@ -143,9 +143,7 @@ class ResourceTracker:
                 "Force constant mode requested - bypassing psutil and using constant CPU power"
             )
             model = tdp.model
-            if max_power is None and self.tracker._force_cpu_power:
-                max_power = self.tracker._force_cpu_power
-                logger.debug(f"Using user input TDP for constant mode: {max_power} W")
+            if self.tracker._force_cpu_power is not None:
                 self.cpu_tracker = "User Input TDP constant"
             else:
                 self.cpu_tracker = "TDP constant"
@@ -211,6 +209,30 @@ class ResourceTracker:
                     )
             self.tracker._hardware.append(hardware_cpu)
 
+    def _resolve_tdp_and_max_power(self, cpu_number, tdp=None, max_power=None):
+        """Resolve CPU TDP object and max power estimate."""
+        if tdp is None:
+            tdp = cpu.TDP()
+        if max_power is None:
+            max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+        return tdp, max_power
+
+    def _setup_preferred_cpu_backend(self):
+        """Set up the best available CPU backend when not forced."""
+        if cpu.is_powergadget_available() and self.tracker._force_cpu_power is None:
+            self._setup_power_gadget()
+            return True
+        if cpu.is_rapl_available() and self.tracker._force_cpu_power is None:
+            self._setup_rapl()
+            return True
+        if (
+            powermetrics.is_powermetrics_available()
+            and self.tracker._force_cpu_power is None
+        ):
+            self._setup_powermetrics()
+            return True
+        return False
+
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
         cpu_number = self.tracker._conf.get("cpu_physical_count")
@@ -226,15 +248,15 @@ class ResourceTracker:
 
         # Force constant mode takes precedence over every other CPU tracking backend.
         if self.tracker._conf.get("force_mode_constant", False):
-            if tdp is None:
-                tdp = cpu.TDP()
-            if max_power is None:
-                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+            tdp, max_power = self._resolve_tdp_and_max_power(cpu_number, tdp, max_power)
 
             logger.info(
                 "Force constant mode requested - bypassing dynamic CPU power backends"
             )
-            self.cpu_tracker = "TDP constant"
+            if self.tracker._force_cpu_power is not None:
+                self.cpu_tracker = "User Input TDP constant"
+            else:
+                self.cpu_tracker = "TDP constant"
             self.tracker._conf["cpu_model"] = tdp.model
             hardware_cpu = CPU.from_utils(
                 self.tracker._output_dir, "constant", tdp.model, max_power
@@ -244,30 +266,17 @@ class ResourceTracker:
 
         # Try force CPU load mode if requested
         if self.tracker._conf.get("force_mode_cpu_load", False):
-            if tdp is None:
-                tdp = cpu.TDP()
-            if max_power is None:
-                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+            tdp, max_power = self._resolve_tdp_and_max_power(cpu_number, tdp, max_power)
             if tdp.tdp is not None or self.tracker._force_cpu_power is not None:
                 if self._setup_cpu_load_mode(tdp, max_power):
                     return
 
         # Try various tracking methods in order of preference
-        if cpu.is_powergadget_available() and self.tracker._force_cpu_power is None:
-            self._setup_power_gadget()
-        elif cpu.is_rapl_available() and self.tracker._force_cpu_power is None:
-            self._setup_rapl()
-        elif (
-            powermetrics.is_powermetrics_available()
-            and self.tracker._force_cpu_power is None
-        ):
-            self._setup_powermetrics()
-        else:
-            if tdp is None:
-                tdp = cpu.TDP()
-            if max_power is None:
-                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
-            self._setup_fallback_tracking(tdp, max_power)
+        if self._setup_preferred_cpu_backend():
+            return
+
+        tdp, max_power = self._resolve_tdp_and_max_power(cpu_number, tdp, max_power)
+        self._setup_fallback_tracking(tdp, max_power)
 
     def set_GPU_tracking(self):
         logger.info("[setup] GPU Tracking...")

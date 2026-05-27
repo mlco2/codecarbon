@@ -1,3 +1,5 @@
+import builtins
+import importlib.util
 import shutil
 import tempfile
 from unittest import mock
@@ -11,6 +13,21 @@ from codecarbon.core.util import (
     is_mac_arm,
     resolve_path,
 )
+
+
+def _load_module_without_psutil(module_name, file_path):
+    real_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "psutil":
+            raise ImportError("psutil unavailable for test")
+        return real_import(name, globals, locals, fromlist, level)
+
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    with mock.patch("builtins.__import__", side_effect=fake_import):
+        spec.loader.exec_module(module)
+    return module
 
 
 def test_detect_cpu_model_caching():
@@ -100,6 +117,18 @@ def test_count_cpus_no_slurm():
     with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
         with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
             assert count_cpus() == 4
+
+
+def test_util_module_import_without_psutil_uses_cpu_count_fallback():
+    util_module = _load_module_without_psutil(
+        "codecarbon.core.util_no_psutil_test",
+        resolve_path("/home/benoit/CODECARBON/codecarbon/codecarbon/core/util.py"),
+    )
+
+    assert util_module.PSUTIL_AVAILABLE is False
+    assert util_module.psutil is None
+    with mock.patch.object(util_module.os, "cpu_count", return_value=6):
+        assert util_module.count_cpus() == 6
 
 
 def test_count_cpus_slurm():
