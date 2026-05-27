@@ -122,7 +122,7 @@ def test_count_cpus_no_slurm():
 def test_util_module_import_without_psutil_uses_cpu_count_fallback():
     util_module = _load_module_without_psutil(
         "codecarbon.core.util_no_psutil_test",
-        resolve_path("/home/benoit/CODECARBON/codecarbon/codecarbon/core/util.py"),
+        __import__("codecarbon.core.util", fromlist=["util"]).__file__,
     )
 
     assert util_module.PSUTIL_AVAILABLE is False
