@@ -6,6 +6,7 @@ PKCE), credential storage, JWKS validation, and transparent refresh.
 """
 
 import json
+import logging
 import os
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -31,6 +32,7 @@ AUTH_SERVER_WELL_KNOWN = os.environ.get(
 _REDIRECT_PORT = 8090
 _REDIRECT_URI = f"http://localhost:{_REDIRECT_PORT}/callback"
 _CREDENTIALS_FILE = Path("./credentials.json")
+logger = logging.getLogger(__name__)
 
 
 # ── OAuth callback server ───────────────────────────────────────────
@@ -112,7 +114,12 @@ def _validate_access_token(access_token: str) -> bool:
         claims = jose_jwt.decode(access_token, keyset)
         claims.validate()
         return True
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        logger.warning(
+            "Skipping local access token validation because the auth server is "
+            "unreachable; the API will validate the token. Error: %s",
+            exc,
+        )
         return True  # Can't reach auth server — let the API handle it
     except Exception:
         return False
