@@ -217,19 +217,19 @@ def is_psutil_available():
                 return True
             else:
                 logger.debug(
-                    f"is_psutil_available(): psutil.cpu_times().nice is too small: {nice}"
+                    f"is_psutil_available(): psutil.cpu_times().nice is too small: {nice}; "
+                    "using fallback check."
                 )
-                return False
 
         else:
-            # Fallback: check if psutil works by calling cpu_percent
             logger.debug(
                 "is_psutil_available(): no 'nice' attribute, using fallback check."
             )
 
-            # check CPU utilization usable
-            psutil.cpu_percent(interval=0.0, percpu=False)
-            return True
+        # Fallback: check if psutil CPU utilization is usable. This covers
+        # platforms like Windows and macOS where cpu_times().nice is absent or 0.
+        psutil.cpu_percent(interval=0.0, percpu=False)
+        return True
 
     except Exception as e:
         logger.debug(
