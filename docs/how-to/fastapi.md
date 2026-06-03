@@ -51,6 +51,28 @@ Per-request tracking runs hardware measurement in a thread pool so the event loo
 | `tracker_kwargs={"save_to_file": False, "save_to_api": False}` | Skips I/O on every request |
 | `defer_measurement=True` | Returns the HTTP response immediately; runs `stop` / `stop_task` in a background task. Skips response headers; use `on_request_complete` for logging or metrics |
 
+### Benchmarks (HF embedder workload)
+
+Local HTTP load against `/predict` running [`sentence-transformers/paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2) on each request. Middleware used `tracking_mode="request"` with a mocked 20 ms `stop()` delay (isolates middleware patterns; use `--real-tracker` in the script for live hardware measurement). Platform: macOS arm64, Python 3.12, 200 timed requests, concurrency 4, after 30-request warmup.
+
+| Configuration | Mean (ms) | Median (ms) | p95 (ms) | req/s | vs baseline |
+|---|---:|---:|---:|---:|---:|
+| No middleware | 22.5 | 22.6 | 24.8 | 44.4 | — |
+| Sync (response headers, no logging) | 46.5 | 46.7 | 50.9 | 21.5 | +106% |
+| Sync + `on_request_complete` logging | 47.0 | 47.2 | 51.0 | 21.3 | +109% |
+| Deferred + logging callback | 24.2 | 24.3 | 27.7 | 41.2 | +8% |
+
+Sync modes wait for measurement before sending the response (~2× latency vs baseline). Deferred measurement keeps response time close to the inference-only baseline while still logging emissions in a background task.
+
+Reproduce:
+
+```console
+uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch \
+  python scripts/benchmark_fastapi_middleware.py --workload hf-embedder
+```
+
+Use `--workload hf-classifier` for a DistilBERT sentiment pipeline, or `--real-tracker` to benchmark with a live `EmissionsTracker`.
+
 Example with deferred measurement:
 
 ```python
