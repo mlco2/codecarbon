@@ -425,11 +425,13 @@ class BaseEmissionsTracker(ABC):
                                    EmissionsTracker(output_methods=[OutputMethod.CSV, OutputMethod.API])
 
                                Available values: ``CSV``, ``API``, ``LOGGER``,
-                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``, ``HTTP``.
+                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``.
                                When provided, the individual ``save_to_*`` flags are
                                ignored. Defaults to ``[OutputMethod.CSV]``.
                                Can also be set in config as a comma-separated string:
                                ``output_methods=csv,api``.
+                               (HTTP output is enabled separately via
+                               ``emissions_endpoint``.)
         :param save_to_file: [DEPRECATED] Use ``output_methods`` instead.
                              Indicates if the emission artifacts should be logged to a
                              file, defaults to True.

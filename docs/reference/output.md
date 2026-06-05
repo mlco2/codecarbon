@@ -1,5 +1,29 @@
 # Output
 
+## Choosing output methods
+
+Use the `output_methods` parameter to select where emissions data is sent. It takes
+a list of `OutputMethod` enum values:
+
+```python-skip
+from codecarbon import EmissionsTracker, OutputMethod
+
+tracker = EmissionsTracker(
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
+)
+```
+
+Available values: `CSV`, `API`, `LOGGER`, `PROMETHEUS`, `LOGFIRE`, `BOAMPS`.
+It can also be set in the config file as a comma-separated string, e.g.
+`output_methods=csv,api`. HTTP output is enabled separately via the
+`emissions_endpoint` parameter.
+
+!!! warning "Deprecation"
+    The individual `save_to_file`, `save_to_api`, `save_to_logger`,
+    `save_to_prometheus` and `save_to_logfire` parameters are deprecated and will be
+    removed in a future version. Use `output_methods` instead. When `output_methods`
+    is provided, the `save_to_*` flags are ignored.
+
 ## CSV
 
 The package has an in-built logger that logs data into a CSV file named `emissions.csv` in the `output_dir`, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.
@@ -108,15 +132,15 @@ The first time it will ask you to log in to Logfire. Once you log in and set the
 
 ### How to use it
 
-Run your EmissionsTracker as usual, with `save_to_boamps=True`:
+Run your EmissionsTracker as usual, adding `OutputMethod.BOAMPS` to `output_methods`:
 
 ```python-skip
-from codecarbon import OfflineEmissionsTracker
+from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
-    save_to_boamps=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.BOAMPS],
 )
 tracker.start()
 # Your code here

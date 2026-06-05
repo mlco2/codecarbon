@@ -18,7 +18,7 @@ from codecarbon.emissions_tracker import (
     track_emissions,
 )
 from codecarbon.external.geography import CloudMetadata
-from codecarbon.output import BoAmpsOutput, OutputMethod
+from codecarbon.output import BoAmpsOutput, CodeCarbonAPIOutput, OutputMethod
 from tests.fake_modules import pynvml as fake_pynvml
 from tests.testdata import (
     GEO_METADATA_CANADA,
@@ -234,6 +234,99 @@ class TestCarbonTracker(unittest.TestCase):
                 for handler in tracker._output_handlers
             )
         )
+
+    def test_default_output_methods_is_csv(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+        )
+
+        self.assertEqual(tracker._output_methods, [OutputMethod.CSV])
+
+    def test_save_to_flags_map_to_output_methods_and_warn(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with self.assertWarns(DeprecationWarning):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                save_to_file=True,
+                save_to_logger=True,
+            )
+
+        self.assertIn(OutputMethod.CSV, tracker._output_methods)
+        self.assertIn(OutputMethod.LOGGER, tracker._output_methods)
+        self.assertNotIn(OutputMethod.API, tracker._output_methods)
+        self.assertTrue(tracker._save_to_file)
+        self.assertTrue(tracker._save_to_logger)
+        self.assertFalse(tracker._save_to_api)
+
+    def test_output_methods_overrides_save_to_flags(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with self.assertWarns(DeprecationWarning):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.CSV],
+                save_to_api=True,
+            )
+
+        self.assertEqual(tracker._output_methods, [OutputMethod.CSV])
+        self.assertFalse(tracker._save_to_api)
+        self.assertFalse(
+            any(
+                isinstance(handler, CodeCarbonAPIOutput)
+                for handler in tracker._output_handlers
+            )
+        )
+
+    def test_output_methods_parsed_from_config_string(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods="csv,boamps",
+        )
+
+        self.assertEqual(
+            tracker._output_methods,
+            [OutputMethod.CSV, OutputMethod.BOAMPS],
+        )
+        boamps_handlers = [
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        ]
+        self.assertEqual(len(boamps_handlers), 1)
+        self.assertEqual(str(boamps_handlers[0]._output_dir), str(self.temp_path))
 
     @responses.activate
     def test_decorator_ONLINE_NO_ARGS(
