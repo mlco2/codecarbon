@@ -828,7 +828,8 @@ class IntelRAPL:
         """
         cpu_details = {}
         try:
-            list(map(lambda rapl_file: rapl_file.delta(duration), self._rapl_files))
+            for rapl_file in self._rapl_files:
+                rapl_file.delta(duration)
 
             for rapl_file in self._rapl_files:
                 logger.debug(rapl_file)
