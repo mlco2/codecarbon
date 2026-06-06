@@ -79,7 +79,7 @@ httpx==0.27.2
     #   fastapi
     #   fastapi-cloud-cli
     #   fief-client
-idna==3.15
+idna==3.18
     # via
     #   anyio
     #   email-validator
@@ -175,7 +175,7 @@ sqlalchemy==1.4.54
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   alembic
-starlette==0.50.0
+starlette==1.0.1
     # via fastapi
 typer==0.20.0
     # via
