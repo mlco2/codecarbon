@@ -316,6 +316,8 @@ git push --force-with-lease
 - Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
 - Run `uv run python .github/pyproject_versions.py -c` to check version consistancy.
 - Update the dependencies with `uv sync --upgrade`
+- Update the API dependencies with `cd carbonserver && uv sync --upgrade && cd ..`
+- Export API requirements with `uv run task carbonserver-api-requirements`
 - [Build Documentation](#build-documentation) with `uv run --only-group doc task docs`.
 - Push the changes.
 - Merge the PR.
