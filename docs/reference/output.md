@@ -151,6 +151,55 @@ CodeCarbon writes a final report named `boamps_report_<run_id>.json` in `output_
 
 If you need to enrich the report with task metadata, datasets, or publisher information, use `BoAmpsOutput` directly through `output_handlers` or start from [examples/boamps_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/boamps_output.py).
 
+Sample output:
+```json
+{
+  "header": {
+    "formatVersion": "0.1",
+    "formatVersionSpecificationUri": "https://github.com/Boavizta/BoAmps/tree/main/model",
+    "reportId": "79e4408f-ec31-476f-a2c5-8ca7f53e6cc7",
+    "reportDatetime": "2026-04-09 23:07:42"
+  },
+  "measures": [
+    {
+      "measurementMethod": "codecarbon",
+      "version": "3.2.6",
+      "averageUtilizationCpu": 0.6,
+      "powerConsumption": 6.515418096322266e-05,
+      "measurementDuration": 7.052794550996623,
+      "measurementDateTime": "2026-04-09 23:07:42"
+    }
+  ],
+  "system": {
+    "os": "Linux-6.17.0-19-generic-x86_64-with-glibc2.42"
+  },
+  "software": {
+    "language": "python",
+    "version": "3.12.12"
+  },
+  "infrastructure": {
+    "infraType": "onPremise",
+    "components": [
+      {
+        "componentName": "Intel(R) Core(TM) Ultra 7 265H",
+        "componentType": "cpu",
+        "nbComponent": 8
+      },
+      {
+        "componentType": "ram",
+        "nbComponent": 1,
+        "memorySize": 30.052967071533203
+      }
+    ]
+  },
+  "environment": {
+    "country": "France",
+    "latitude": 48.6,
+    "longitude": 2.3
+  }
+}
+```
+
 ## HTTP Output
 
 The HTTP Output allows calling a webhook with emission data when the tracker is stopped. Use the `emissions_endpoint` parameter to specify your endpoint.
