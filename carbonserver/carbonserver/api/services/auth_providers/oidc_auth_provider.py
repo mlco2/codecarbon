@@ -9,10 +9,10 @@ import logging
 from typing import Any, Dict, Optional, Tuple
 
 from authlib.integrations.starlette_client import OAuth
-from authlib.jose import JsonWebKey
-from authlib.jose import jwt as jose_jwt
 from fastapi import Response
 from fief_client import FiefAsync
+from joserfc import jwt as jose_jwt
+from joserfc.jwk import KeySet
 
 from carbonserver.config import settings
 
@@ -63,10 +63,10 @@ class OIDCAuthProvider:
             ...
 
         jwks_data = await self.client.fetch_jwk_set()
-        keyset = JsonWebKey.import_key_set(jwks_data)
-        claims = jose_jwt.decode(token, keyset)
-        claims.validate()
-        return dict(claims)
+        keyset = KeySet.import_key_set(jwks_data)
+        decoded = jose_jwt.decode(token, keyset)
+        jose_jwt.JWTClaimsRegistry().validate(decoded.claims)
+        return dict(decoded.claims)
 
     async def validate_access_token(self, token: str) -> bool:
         await self._decode_token(token)

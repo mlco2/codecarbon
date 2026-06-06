@@ -37,6 +37,7 @@ dependencies = [
     "PyJWT",
     "fastapi-oidc>=0.0.9",
     "authlib>=1.6.6",
+    "joserfc>=1.0.0",
     "itsdangerous>=2.2.0",
 ]
 
