@@ -320,9 +320,7 @@ class TestEmissions(unittest.TestCase):
 
     def test_nordic_region_missing_static_data_falls_back_to_country(self):
         energy = Energy.from_energy(kWh=1.0)
-        geo = GeoMetadata(
-            country_iso_code="SWE", country_name="Sweden", region="SE2"
-        )
+        geo = GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="SE2")
         expected_emissions = self._emissions.get_country_emissions(energy, geo)
 
         with (

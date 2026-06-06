@@ -179,8 +179,7 @@ class Emissions:
             geo.country_iso_code.upper() if geo.country_iso_code is not None else None
         )
         compute_with_regional_data: bool = (geo.region is not None) and (
-            country_iso_code in ["USA", "CAN"]
-            or self._is_supported_nordic_region(geo)
+            country_iso_code in ["USA", "CAN"] or self._is_supported_nordic_region(geo)
         )
 
         if compute_with_regional_data:
