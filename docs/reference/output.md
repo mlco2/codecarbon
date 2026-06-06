@@ -149,7 +149,7 @@ tracker.stop()
 
 CodeCarbon writes a final report named `boamps_report_<run_id>.json` in `output_dir`.
 
-If you need to enrich the report with task metadata, datasets, or publisher information, use `BoAmpsOutput` directly through `output_handlers` or start from [examples/boamps_output.py](../../examples/boamps_output.py).
+If you need to enrich the report with task metadata, datasets, or publisher information, use `BoAmpsOutput` directly through `output_handlers` or start from [examples/boamps_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/boamps_output.py).
 
 ## HTTP Output
 
