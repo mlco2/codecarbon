@@ -41,17 +41,9 @@ jobs:
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
         ./clever-tools-latest_linux/clever deploy -f
 
-    # The frontend used to be a Next.js Node.js app on Clever; it's now a
-    # Vite-built SPA served by Clever's static (Caddy) engine. The deploy
-    # command is identical (git push), only the target app changes —
-    # `FE_CLEVER_APP_ID_PROD` must be pointed at the new static app and
-    # `FE_CLEVER_APP_ALIAS_PROD` set to that app's alias (no underscores;
-    # see https://github.com/CleverCloud/clever-tools for the alias-escape
-    # workaround required by `clever deploy -a <alias>`).
     - name: Deploy frontend (static SPA) to Clever Cloud (PROD)
       env:
         CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_PROD }}
-        CLEVER_APP_ALIAS: ${{ secrets.FE_CLEVER_APP_ALIAS_PROD }}
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f -a $CLEVER_APP_ALIAS --quiet
+        ./clever-tools-latest_linux/clever deploy -f

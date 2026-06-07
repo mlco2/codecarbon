@@ -151,15 +151,12 @@ export default function PublicProjectPage() {
         };
     }, [projectId, project, date]);
 
-    const handleExperimentClick = useCallback(
-        (experimentId: string) => {
-            setSelectedExperimentId((current) =>
-                experimentId === current ? "" : experimentId,
-            );
-            setSelectedRunId("");
-        },
-        [],
-    );
+    const handleExperimentClick = useCallback((experimentId: string) => {
+        setSelectedExperimentId((current) =>
+            experimentId === current ? "" : experimentId,
+        );
+        setSelectedRunId("");
+    }, []);
 
     const handleRunClick = useCallback((runId: string) => {
         setSelectedRunId((current) => (runId === current ? "" : runId));

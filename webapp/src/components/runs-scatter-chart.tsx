@@ -115,9 +115,7 @@ export default function RunsScatterChart({
     );
     const tickFmt = useMemo(() => {
         if (points.length < 2) return "MMM d, HH:mm";
-        return pickTimeFormat(
-            points[points.length - 1].ts - points[0].ts,
-        );
+        return pickTimeFormat(points[points.length - 1].ts - points[0].ts);
     }, [points]);
 
     if (isLoading) {
