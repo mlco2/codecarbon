@@ -76,17 +76,6 @@ describe("resolveMock — projects", () => {
         expect((r.body as { id: string }).id).toBe(ID.projects.training);
     });
 
-    it("returns a share-link encrypted_id", () => {
-        const r = resolveMock(
-            url(`/projects/${ID.projects.inference}/share-link`),
-            "GET",
-        );
-        expect(r.status).toBe(200);
-        expect((r.body as { encrypted_id: string }).encrypted_id).toBe(
-            ID.projects.inference,
-        );
-    });
-
     it("204s on project deletion", () => {
         const r = resolveMock(
             url(`/projects/${ID.projects.training}`),

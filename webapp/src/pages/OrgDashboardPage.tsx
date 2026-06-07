@@ -155,6 +155,9 @@ export default function OrgDashboardPage() {
                             <p className="text-sm font-medium">
                                 Of watching TV
                             </p>
+                            <p className="text-sm font-medium">
+                                Of watching TV
+                            </p>
                         </div>
                     </div>
                     <div className="grid grid-cols-3 gap-4">

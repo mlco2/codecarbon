@@ -11,7 +11,7 @@ test.describe("Landing page (mock mode)", () => {
         ).toBeVisible();
 
         // In mock mode the real-login button is hidden — there is no real
-        // OAuth backend in this build.
+        // OAuth backend in this build. Only the mock button is rendered.
         await expect(page.getByTestId("real-login")).toHaveCount(0);
         await expect(page.getByTestId("mock-login")).toBeVisible();
     });

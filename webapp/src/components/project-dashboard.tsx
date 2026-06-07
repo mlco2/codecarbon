@@ -227,6 +227,7 @@ export default function ProjectDashboard({
                 selectedRunId={selectedRunId}
                 onExperimentClick={onExperimentClick}
                 onRunClick={onRunClick}
+                onExperimentCreated={onRefresh}
                 projectExperiments={projectExperiments}
                 headerContent={headerContent}
                 isLoading={isLoading}

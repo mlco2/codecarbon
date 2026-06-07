@@ -64,4 +64,25 @@ describe("ExperimentSchema", () => {
         });
         expect(r.success).toBe(true);
     });
+
+    // Pydantic serializes `Optional[str] = None` as JSON `null` (no
+    // `exclude_none`), so the wire shape commonly carries `null` on
+    // cloud/region/timestamp columns. Zod's plain `.optional()` rejects
+    // null — `.nullish()` is what matches the actual backend.
+    it("accepts null on backend-Optional fields", () => {
+        const r = ExperimentSchema.safeParse({
+            id: "e1",
+            name: "exp",
+            description: "d",
+            project_id: "p1",
+            timestamp: null,
+            on_cloud: null,
+            country_name: null,
+            country_iso_code: null,
+            region: null,
+            cloud_provider: null,
+            cloud_region: null,
+        });
+        expect(r.success).toBe(true);
+    });
 });

@@ -36,7 +36,13 @@ export default function NavBar({
     const [selected, setSelected] = useState<string | null>(null);
     const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
+    const [selectedOrg, setSelectedOrg] = useState<string | null>(() => {
+        try {
+            return localStorage.getItem("organizationId");
+        } catch {
+            return null;
+        }
+    });
     const iconStyles = "h-4 w-4 flex-shrink-0 text-muted-foreground";
     const { pathname } = useLocation();
     const newOrgModal = useModal();
@@ -156,6 +162,7 @@ export default function NavBar({
                             <NavItem
                                 isSelected={selected === "projects"}
                                 onClick={() => {
+                                    if (!selectedOrg) return;
                                     setSelected("projects");
                                     setSheetOpened?.(false);
                                     navigate(`/${selectedOrg}/projects`);
@@ -168,6 +175,7 @@ export default function NavBar({
                             <NavItem
                                 isSelected={selected === "members"}
                                 onClick={() => {
+                                    if (!selectedOrg) return;
                                     setSelected("members");
                                     setSheetOpened?.(false);
                                     navigate(`/${selectedOrg}/members`);

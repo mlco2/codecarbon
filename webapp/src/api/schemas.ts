@@ -47,31 +47,41 @@ export const ProjectInputsSchema = z.object({
 });
 export type ProjectInputs = z.infer<typeof ProjectInputsSchema>;
 
+// `token` is only populated on creation; list responses serialize it as null.
 export const ProjectTokenSchema = z.object({
     id: z.string(),
     project_id: z.string(),
-    last_used: z.string().nullable(),
-    name: z.string(),
-    token: z.string(),
+    last_used: z.string().nullish(),
+    name: z.string().nullish(),
+    token: z.string().nullish(),
     access: z.number(),
+    revoked: z.boolean().nullish(),
 });
 export type IProjectToken = z.infer<typeof ProjectTokenSchema>;
 
-// `id` is required when reading from the API (the backend never returns
-// experiments without one). It is allowed to be absent only on the
-// create path — see `ExperimentInputSchema` below.
+export const AccessLevel = {
+    READ: 1,
+    WRITE: 2,
+    READ_WRITE: 3,
+} as const;
+export type AccessLevel = (typeof AccessLevel)[keyof typeof AccessLevel];
+
+// Backend's `Optional[...]` fields are serialized as JSON `null` (Pydantic
+// default, no `exclude_none`). Zod's `.optional()` accepts `undefined`
+// only — `.nullish()` accepts `null | undefined`, which is what we need
+// for every column the backend marks as nullable.
 export const ExperimentSchema = z.object({
     id: z.string().min(1),
-    timestamp: z.string().optional(),
+    timestamp: z.string().nullish(),
     name: z.string(),
     description: z.string(),
-    on_cloud: z.boolean().optional(),
+    on_cloud: z.boolean().nullish(),
     project_id: z.string(),
-    country_name: z.string().optional(),
-    country_iso_code: z.string().optional(),
-    region: z.string().optional(),
-    cloud_provider: z.string().optional(),
-    cloud_region: z.string().optional(),
+    country_name: z.string().nullish(),
+    country_iso_code: z.string().nullish(),
+    region: z.string().nullish(),
+    cloud_provider: z.string().nullish(),
+    cloud_region: z.string().nullish(),
 });
 export type Experiment = z.infer<typeof ExperimentSchema>;
 
@@ -86,7 +96,7 @@ export const ExperimentReportSchema = z.object({
     emissions: z.number(),
     energy_consumed: z.number(),
     duration: z.number(),
-    description: z.string().optional(),
+    description: z.string().nullish(),
 });
 export type ExperimentReport = z.infer<typeof ExperimentReportSchema>;
 
@@ -117,19 +127,19 @@ export type Emission = z.infer<typeof EmissionSchema>;
 export const RunMetadataSchema = z.object({
     timestamp: z.string(),
     experiment_id: z.string(),
-    os: z.string(),
-    python_version: z.string(),
-    codecarbon_version: z.string(),
-    cpu_count: z.number(),
-    cpu_model: z.string(),
-    gpu_count: z.number(),
-    gpu_model: z.string(),
-    longitude: z.number(),
-    latitude: z.number(),
-    region: z.string(),
-    provider: z.string(),
-    ram_total_size: z.number(),
-    tracking_mode: z.string(),
+    os: z.string().nullish(),
+    python_version: z.string().nullish(),
+    codecarbon_version: z.string().nullish(),
+    cpu_count: z.number().nullish(),
+    cpu_model: z.string().nullish(),
+    gpu_count: z.number().nullish(),
+    gpu_model: z.string().nullish(),
+    longitude: z.number().nullish(),
+    latitude: z.number().nullish(),
+    region: z.string().nullish(),
+    provider: z.string().nullish(),
+    ram_total_size: z.number().nullish(),
+    tracking_mode: z.string().nullish(),
 });
 export type RunMetadata = z.infer<typeof RunMetadataSchema>;
 
