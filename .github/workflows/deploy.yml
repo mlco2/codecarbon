@@ -44,6 +44,7 @@ jobs:
     - name: Deploy frontend (static SPA) to Clever Cloud (PROD)
       env:
         CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_PROD }}
+        CLEVER_APP_ALIAS: ${{ secrets.FE_CLEVER_APP_ALIAS_PROD }}
       run: |
         ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f
+        ./clever-tools-latest_linux/clever deploy -a $CLEVER_APP_ALIAS -f
