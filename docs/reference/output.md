@@ -1,5 +1,29 @@
 # Output
 
+## Choosing output methods
+
+Use the `output_methods` parameter to select where emissions data is sent. It takes
+a list of `OutputMethod` enum values:
+
+```python-skip
+from codecarbon import EmissionsTracker, OutputMethod
+
+tracker = EmissionsTracker(
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
+)
+```
+
+Available values: `CSV`, `API`, `LOGGER`, `PROMETHEUS`, `LOGFIRE`, `BOAMPS`.
+It can also be set in the config file as a comma-separated string, e.g.
+`output_methods=csv,api`. HTTP output is enabled separately via the
+`emissions_endpoint` parameter.
+
+!!! warning "Deprecation"
+    The individual `save_to_file`, `save_to_api`, `save_to_logger`,
+    `save_to_prometheus` and `save_to_logfire` parameters are deprecated and will be
+    removed in a future version. Use `output_methods` instead. When `output_methods`
+    is provided, the `save_to_*` flags are ignored.
+
 ## CSV
 
 The package has an in-built logger that logs data into a CSV file named `emissions.csv` in the `output_dir`, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.
@@ -101,6 +125,80 @@ tracker.stop()
 ```
 
 The first time it will ask you to log in to Logfire. Once you log in and set the default Logfire project, the metrics will appear following the format `codecarbon_*`.
+
+## BoAmps
+
+[BoAmps](https://github.com/Boavizta/BoAmps) is a standardized JSON format for reporting AI and ML energy consumption.
+
+### How to use it
+
+Run your EmissionsTracker as usual, adding `OutputMethod.BOAMPS` to `output_methods`:
+
+```python-skip
+from codecarbon import OfflineEmissionsTracker, OutputMethod
+
+tracker = OfflineEmissionsTracker(
+    project_name="my_project",
+    country_iso_code="USA",
+    output_methods=[OutputMethod.CSV, OutputMethod.BOAMPS],
+)
+tracker.start()
+# Your code here
+tracker.stop()
+```
+
+CodeCarbon writes a final report named `boamps_report_<run_id>.json` in `output_dir`.
+
+If you need to enrich the report with task metadata, datasets, or publisher information, use `BoAmpsOutput` directly through `output_handlers` or start from [examples/boamps_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/boamps_output.py).
+
+Sample output:
+```json
+{
+  "header": {
+    "formatVersion": "0.1",
+    "formatVersionSpecificationUri": "https://github.com/Boavizta/BoAmps/tree/main/model",
+    "reportId": "79e4408f-ec31-476f-a2c5-8ca7f53e6cc7",
+    "reportDatetime": "2026-04-09 23:07:42"
+  },
+  "measures": [
+    {
+      "measurementMethod": "codecarbon",
+      "version": "3.2.6",
+      "averageUtilizationCpu": 0.6,
+      "powerConsumption": 6.515418096322266e-05,
+      "measurementDuration": 7.052794550996623,
+      "measurementDateTime": "2026-04-09 23:07:42"
+    }
+  ],
+  "system": {
+    "os": "Linux-6.17.0-19-generic-x86_64-with-glibc2.42"
+  },
+  "software": {
+    "language": "python",
+    "version": "3.12.12"
+  },
+  "infrastructure": {
+    "infraType": "onPremise",
+    "components": [
+      {
+        "componentName": "Intel(R) Core(TM) Ultra 7 265H",
+        "componentType": "cpu",
+        "nbComponent": 8
+      },
+      {
+        "componentType": "ram",
+        "nbComponent": 1,
+        "memorySize": 30.052967071533203
+      }
+    ]
+  },
+  "environment": {
+    "country": "France",
+    "latitude": 48.6,
+    "longitude": 2.3
+  }
+}
+```
 
 ## HTTP Output
 
