@@ -25,7 +25,7 @@ import { getOrganizations } from "@/api/organizations";
 import { Button } from "./ui/button";
 import { useModal } from "@/hooks/useModal";
 
-const USER_PROFILE_URL = import.meta.env.VITE_FIEF_BASE_URL;
+const USER_PROFILE_URL = import.meta.env.VITE_OIDC_PROFILE_URL;
 export default function NavBar({
     orgs,
     setSheetOpened,
@@ -256,7 +256,7 @@ export default function NavBar({
                                 onClick={() => {
                                     setSelected("profile");
                                     setSheetOpened?.(false);
-                                    window.location.href = USER_PROFILE_URL!; // Redirect to Fief profile to handle profile updates there
+                                    window.location.href = USER_PROFILE_URL!; // Redirect to the OIDC provider's profile page to handle profile updates there
                                 }}
                                 paddingY={1.5}
                                 icon={<UserIcon className={iconStyles} />}
