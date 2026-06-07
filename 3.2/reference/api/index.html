@@ -2435,6 +2435,33 @@ defaults to current directory.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>output_methods</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[<span title="codecarbon.output.OutputMethod">OutputMethod</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of :class:<code>OutputMethod</code> enum values specifying where
+to send emissions data. Example::</p>
+<div class="highlight"><pre><span></span><code>EmissionsTracker(output_methods=[OutputMethod.CSV, OutputMethod.API])
+</code></pre></div>
+<p>Available values: <code>CSV</code>, <code>API</code>, <code>LOGGER</code>,
+<code>PROMETHEUS</code>, <code>LOGFIRE</code>, <code>BOAMPS</code>.
+When provided, the individual <code>save_to_*</code> flags are
+ignored. Defaults to <code>[OutputMethod.CSV]</code>.
+Can also be set in config as a comma-separated string:
+<code>output_methods=csv,api</code>.
+(HTTP output is enabled separately via
+<code>emissions_endpoint</code>.)</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>save_to_file</code>
             </td>
             <td>
@@ -2442,7 +2469,8 @@ defaults to current directory.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be logged to a
+                <p>[DEPRECATED] Use <code>output_methods</code> instead.
+Indicates if the emission artifacts should be logged to a
 file, defaults to True.</p>
               </div>
             </td>
@@ -2459,7 +2487,8 @@ file, defaults to True.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be sent to the
+                <p>[DEPRECATED] Use <code>output_methods</code> instead.
+Indicates if the emission artifacts should be sent to the
 CodeCarbon API, defaults to False.</p>
               </div>
             </td>
@@ -2476,7 +2505,8 @@ CodeCarbon API, defaults to False.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be written
+                <p>[DEPRECATED] Use <code>output_methods</code> instead.
+Indicates if the emission artifacts should be written
 to a dedicated logger, defaults to False.</p>
               </div>
             </td>
@@ -2510,7 +2540,8 @@ or a Google Cloud logger.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be
+                <p>[DEPRECATED] Use <code>output_methods</code> instead.
+Indicates if the emission artifacts should be
 pushed to prometheus, defaults to False.</p>
               </div>
             </td>
@@ -2527,7 +2558,8 @@ pushed to prometheus, defaults to False.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be written
+                <p>[DEPRECATED] Use <code>output_methods</code> instead.
+Indicates if the emission artifacts should be written
 to a logfire observability platform, defaults to False.</p>
               </div>
             </td>
@@ -3251,6 +3283,22 @@ defaults to current directory.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>output_methods</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.List">List</span>[<span title="codecarbon.output.OutputMethod">OutputMethod</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of OutputMethod enum values. See BaseEmissionsTracker.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>save_to_file</code>
             </td>
             <td>
@@ -3258,8 +3306,7 @@ defaults to current directory.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be logged to a file,
-defaults to True.</p>
+                <p>[DEPRECATED] Use output_methods instead.</p>
               </div>
             </td>
             <td>
@@ -3275,8 +3322,7 @@ defaults to True.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be send to the
-CodeCarbon API, defaults to False.</p>
+                <p>[DEPRECATED] Use output_methods instead.</p>
               </div>
             </td>
             <td>
@@ -3292,8 +3338,7 @@ CodeCarbon API, defaults to False.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be written
-to a dedicated logger, defaults to False.</p>
+                <p>[DEPRECATED] Use output_methods instead.</p>
               </div>
             </td>
             <td>
@@ -3326,8 +3371,7 @@ or a Google Cloud logger.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be
-pushed to prometheus, defaults to False.</p>
+                <p>[DEPRECATED] Use output_methods instead.</p>
               </div>
             </td>
             <td>
@@ -3343,8 +3387,7 @@ pushed to prometheus, defaults to False.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Indicates if the emission artifacts should be
-pushed to logfire, defaults to False.</p>
+                <p>[DEPRECATED] Use output_methods instead.</p>
               </div>
             </td>
             <td>

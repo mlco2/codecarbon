@@ -1910,6 +1910,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#choosing-output-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Choosing output methods
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#csv" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1962,6 +1973,34 @@
         
           <li class="md-nav__item">
   <a href="#how-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to use it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        BoAmps
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BoAmps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_1" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         How to use it
@@ -2145,6 +2184,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#choosing-output-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Choosing output methods
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#csv" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2197,6 +2247,34 @@
         
           <li class="md-nav__item">
   <a href="#how-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to use it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        BoAmps
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BoAmps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_1" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
         How to use it
@@ -2329,6 +2407,26 @@
 
 
 <h1 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h1>
+<h2 id="choosing-output-methods">Choosing output methods<a class="headerlink" href="#choosing-output-methods" title="Permanent link">&para;</a></h2>
+<p>Use the <code>output_methods</code> parameter to select where emissions data is sent. It takes
+a list of <code>OutputMethod</code> enum values:</p>
+<div class="highlight"><pre><span></span><code>from codecarbon import EmissionsTracker, OutputMethod
+
+tracker = EmissionsTracker(
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
+)
+</code></pre></div>
+<p>Available values: <code>CSV</code>, <code>API</code>, <code>LOGGER</code>, <code>PROMETHEUS</code>, <code>LOGFIRE</code>, <code>BOAMPS</code>.
+It can also be set in the config file as a comma-separated string, e.g.
+<code>output_methods=csv,api</code>. HTTP output is enabled separately via the
+<code>emissions_endpoint</code> parameter.</p>
+<div class="admonition warning">
+<p class="admonition-title">Deprecation</p>
+<p>The individual <code>save_to_file</code>, <code>save_to_api</code>, <code>save_to_logger</code>,
+<code>save_to_prometheus</code> and <code>save_to_logfire</code> parameters are deprecated and will be
+removed in a future version. Use <code>output_methods</code> instead. When <code>output_methods</code>
+is provided, the <code>save_to_*</code> flags are ignored.</p>
+</div>
 <h2 id="csv">CSV<a class="headerlink" href="#csv" title="Permanent link">&para;</a></h2>
 <p>The package has an in-built logger that logs data into a CSV file named <code>emissions.csv</code> in the <code>output_dir</code>, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.</p>
 <table>
@@ -2519,6 +2617,70 @@ tracker.start()
 tracker.stop()
 </code></pre></div>
 <p>The first time it will ask you to log in to Logfire. Once you log in and set the default Logfire project, the metrics will appear following the format <code>codecarbon_*</code>.</p>
+<h2 id="boamps">BoAmps<a class="headerlink" href="#boamps" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/Boavizta/BoAmps">BoAmps</a> is a standardized JSON format for reporting AI and ML energy consumption.</p>
+<h3 id="how-to-use-it_1">How to use it<a class="headerlink" href="#how-to-use-it_1" title="Permanent link">&para;</a></h3>
+<p>Run your EmissionsTracker as usual, adding <code>OutputMethod.BOAMPS</code> to <code>output_methods</code>:</p>
+<div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker, OutputMethod
+
+tracker = OfflineEmissionsTracker(
+    project_name=&quot;my_project&quot;,
+    country_iso_code=&quot;USA&quot;,
+    output_methods=[OutputMethod.CSV, OutputMethod.BOAMPS],
+)
+tracker.start()
+# Your code here
+tracker.stop()
+</code></pre></div>
+<p>CodeCarbon writes a final report named <code>boamps_report_&lt;run_id&gt;.json</code> in <code>output_dir</code>.</p>
+<p>If you need to enrich the report with task metadata, datasets, or publisher information, use <code>BoAmpsOutput</code> directly through <code>output_handlers</code> or start from <a href="https://github.com/mlco2/codecarbon/blob/master/examples/boamps_output.py">examples/boamps_output.py</a>.</p>
+<p>Sample output:
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;header&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;formatVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;formatVersionSpecificationUri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://github.com/Boavizta/BoAmps/tree/main/model&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;reportId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;79e4408f-ec31-476f-a2c5-8ca7f53e6cc7&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;reportDatetime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-04-09 23:07:42&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;measures&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;measurementMethod&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;codecarbon&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.2.6&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;averageUtilizationCpu&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;powerConsumption&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">6.515418096322266e-05</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;measurementDuration&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">7.052794550996623</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;measurementDateTime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-04-09 23:07:42&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;system&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;os&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Linux-6.17.0-19-generic-x86_64-with-glibc2.42&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;software&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.12.12&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;infrastructure&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;infraType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;onPremise&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;components&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;componentName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Intel(R) Core(TM) Ultra 7 265H&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;componentType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;nbComponent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;componentType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ram&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;nbComponent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;memorySize&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">30.052967071533203</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;environment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;country&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;France&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;latitude&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">48.6</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;longitude&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">2.3</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
 <h2 id="http-output">HTTP Output<a class="headerlink" href="#http-output" title="Permanent link">&para;</a></h2>
 <p>The HTTP Output allows calling a webhook with emission data when the tracker is stopped. Use the <code>emissions_endpoint</code> parameter to specify your endpoint.</p>
 <h2 id="codecarbon-api">CodeCarbon API<a class="headerlink" href="#codecarbon-api" title="Permanent link">&para;</a></h2>
