@@ -48,6 +48,7 @@ export function ExportCsvButton({
                     <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Download CSV export"
                         disabled={isExporting || isDisabled}
                         onClick={handleDownload}
                     >

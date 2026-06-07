@@ -1,11 +1,8 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Organization } from "@/types/organization";
+import { Organization } from "@/api/schemas";
 import { Menu } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import NavBar from "./navbar";
 
@@ -36,16 +33,15 @@ export default function MobileHeader({
                 >
                     <div className="flex h-14 items-center px-4 lg:h-[80px] lg:px-6">
                         <Link
-                            href="/home"
+                            to="/home"
                             onClick={() => setSheetOpened(false)}
                             className="flex flex-1 justify-center items-center gap-2 pt-6 font-semibold"
                         >
-                            <Image
+                            <img
                                 src="/logo.svg"
                                 alt="Logo"
                                 width={95}
                                 height={89}
-                                priority
                             />
                         </Link>
                     </div>

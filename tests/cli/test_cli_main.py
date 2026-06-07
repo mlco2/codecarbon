@@ -303,6 +303,45 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
     assert calls["kwargs"]["region"] == "IDF"
 
 
+def test_monitor_delegates_offline_flag_to_run_and_monitor(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["offline"] = offline
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+
+    ctx = SimpleNamespace(args=["python", "-c", "print(1)"])
+    result = cli_main.monitor(
+        ctx=ctx,
+        offline=True,
+        country_iso_code="FRA",
+    )
+    assert result == "ok"
+    assert captured["offline"] is True
+    assert captured["kwargs"]["country_iso_code"] == "FRA"
+
+
+def test_monitor_delegates_online_mode_to_run_and_monitor(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["offline"] = offline
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "exp-1")
+
+    ctx = SimpleNamespace(args=["python", "train.py"])
+    result = cli_main.monitor(ctx=ctx, api=True)
+    assert result == "ok"
+    assert captured["offline"] is False
+    assert captured["kwargs"]["save_to_api"] is True
+
+
 def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
     captured = {}
 
@@ -318,4 +357,22 @@ def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
     result = cli_main.monitor(ctx=ctx, api=False)
     assert result == "ok"
     assert captured["args"] == ["python", "train.py"]
+    assert captured["kwargs"]["save_to_api"] is False
+
+
+def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["offline"] = offline
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
+
+    ctx = SimpleNamespace(args=["python", "train.py"])
+    result = cli_main.monitor(ctx=ctx, api=False)
+    assert result == "ok"
+    assert captured["offline"] is False
     assert captured["kwargs"]["save_to_api"] is False

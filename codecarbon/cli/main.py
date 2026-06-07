@@ -377,7 +377,7 @@ def monitor(
 
     # If extra args are provided (e.g. `codecarbon monitor -- my_script.py`), delegate to `run_and_monitor`
     if getattr(ctx, "args", None):
-        return run_and_monitor(ctx, **tracker_args)
+        return run_and_monitor(ctx, offline=offline, **tracker_args)
 
     # Instantiate the tracker
     if offline:

@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "arrow",
     "authlib>=1.2.1",
+    "joserfc>=1.0.0",
     "click",
     "pandas>=2.3.3;python_version>='3.14'",
     "pandas;python_version<'3.14'",
@@ -79,6 +80,34 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 
 [dependency-groups]
+api  = [
+    "alembic<2.0.0",
+    "authlib>=1.2.1",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "fief-client[fastapi]",
+    "httpx",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination<1.0.0",
+    "pytest",
+    "pytest-asyncio",
+    "mock",
+    "responses",
+    "fastapi-oidc;python_version>='3.10'",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
+    "PyJWT",
+    "logfire[fastapi]>=1.0.1",
+    "itsdangerous",
+]
 dev = [
     "taskipy",
     "bumpver",
@@ -97,7 +126,9 @@ dev = [
     "scikit-learn",  # For documentation examples and tests
 ]
 doc = [
+  "requests",
   "setuptools",
+  "taskipy",
   "zensical",
   "mike",
   "mkdocstrings[python]>=0.26",
@@ -117,9 +148,33 @@ viz-legacy = [
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
-# To support AMD GPU
-amdsmi = [
-    "amdsmi>=6.0.0"
+
+api  = [
+    "alembic<2.0.0",
+    "authlib>=1.2.1",
+    "bcrypt<5.0.0",
+    "python-dateutil<3.0.0",
+    "dependency-injector<5.0.0",
+    "fastapi<1.0.0",
+    "fief-client[fastapi]",
+    "httpx",
+    "itsdangerous",
+    "pydantic[email]<2.0.0",
+    "psycopg2-binary<3.0.0",
+    "requests<3.0.0",
+    "sqlalchemy<2.0.0",
+    "uvicorn[standard]<1.0.0",
+    "fastapi-pagination<1.0.0",
+    "pytest",
+    "pytest-asyncio",
+    "mock",
+    "responses",
+    "fastapi-oidc;python_version>='3.10'",
+    "numpy",
+    "psutil",
+    "requests-mock",
+    "rapidfuzz",
+    "PyJWT",
 ]
 
 [project.scripts]
@@ -152,7 +207,7 @@ docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.6"
+current_version = "3.2.7"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

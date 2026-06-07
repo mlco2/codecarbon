@@ -1,4 +1,4 @@
-import { RunReport } from "@/types/run-report";
+import { RunReport } from "@/api/schemas";
 import { format } from "date-fns";
 import { Label, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -9,7 +9,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { getRunEmissionsByExperiment } from "@/server-functions/runs";
+import { getRunEmissionsByExperiment } from "@/api/runs";
 import { exportRunsToCsv } from "@/utils/export";
 import { useEffect, useState } from "react";
 import { ExportCsvButton } from "./export-csv-button";

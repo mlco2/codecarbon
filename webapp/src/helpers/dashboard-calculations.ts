@@ -1,4 +1,4 @@
-import { ExperimentReport } from "@/types/experiment-report";
+import { ExperimentReport } from "@/api/schemas";
 import {
     getEquivalentCarKm,
     getEquivalentCitizenPercentage,

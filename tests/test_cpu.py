@@ -46,12 +46,24 @@ class TestCPU(unittest.TestCase):
         self.assertTrue(is_psutil_available())
 
     @mock.patch("psutil.cpu_times")
-    def test_is_psutil_available_with_small_nice(self, mock_cpu_times):
-        # Test when nice attribute is too small
+    def test_is_psutil_available_with_small_nice_uses_fallback(self, mock_cpu_times):
+        # Test when nice attribute is too small, as on macOS
         mock_times = mock.Mock()
         mock_times.nice = 0.00001
         mock_cpu_times.return_value = mock_times
-        self.assertFalse(is_psutil_available())
+        with mock.patch("psutil.cpu_percent") as mock_cpu_percent:
+            self.assertTrue(is_psutil_available())
+            mock_cpu_percent.assert_called_once_with(interval=0.0, percpu=False)
+
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_not_available_when_small_nice_fallback_fails(
+        self, mock_cpu_times
+    ):
+        mock_times = mock.Mock()
+        mock_times.nice = 0.00001
+        mock_cpu_times.return_value = mock_times
+        with mock.patch("psutil.cpu_percent", side_effect=Exception("Test error")):
+            self.assertFalse(is_psutil_available())
 
     @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_without_nice(self, mock_cpu_times):
@@ -359,6 +371,18 @@ class TestTDP(unittest.TestCase):
         model = "AMD Ryzen Threadripper 1950X 16-Core Processor"
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
 
+    def test_get_cpu_power_from_registry_returns_none_without_match(self):
+        tdp = TDP.__new__(TDP)
+        with (
+            mock.patch("codecarbon.core.cpu.DataSource") as mock_data_source,
+            mock.patch.object(tdp, "_get_matching_cpu", return_value=None),
+        ):
+            mock_data_source.return_value.get_cpu_power_data.return_value = (
+                mock.sentinel.cpu_power_df
+            )
+
+            self.assertIsNone(tdp._get_cpu_power_from_registry("Mystery CPU"))
+
     def test_get_matching_cpu(self):
         tdp = TDP()
         cpu_data = DataSource().get_cpu_power_data()
@@ -545,6 +569,13 @@ class TestTDP(unittest.TestCase):
 
         self.assertEqual(tdp.model, "Mystery CPU")
         self.assertEqual(tdp.tdp, 8 * DEFAULT_POWER_PER_CORE)
+
+    def test_main_returns_unknown_when_cpu_detection_fails(self):
+        with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=None):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Unknown")
+        self.assertIsNone(tdp.tdp)
 
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):

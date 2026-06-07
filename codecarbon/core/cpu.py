@@ -217,19 +217,19 @@ def is_psutil_available():
                 return True
             else:
                 logger.debug(
-                    f"is_psutil_available(): psutil.cpu_times().nice is too small: {nice}"
+                    f"is_psutil_available(): psutil.cpu_times().nice is too small: {nice}; "
+                    "using fallback check."
                 )
-                return False
 
         else:
-            # Fallback: check if psutil works by calling cpu_percent
             logger.debug(
                 "is_psutil_available(): no 'nice' attribute, using fallback check."
             )
 
-            # check CPU utilization usable
-            psutil.cpu_percent(interval=0.0, percpu=False)
-            return True
+        # Fallback: check if psutil CPU utilization is usable. This covers
+        # platforms like Windows and macOS where cpu_times().nice is absent or 0.
+        psutil.cpu_percent(interval=0.0, percpu=False)
+        return True
 
     except Exception as e:
         logger.debug(
@@ -828,7 +828,8 @@ class IntelRAPL:
         """
         cpu_details = {}
         try:
-            list(map(lambda rapl_file: rapl_file.delta(duration), self._rapl_files))
+            for rapl_file in self._rapl_files:
+                rapl_file.delta(duration)
 
             for rapl_file in self._rapl_files:
                 logger.debug(rapl_file)
