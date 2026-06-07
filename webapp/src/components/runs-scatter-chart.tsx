@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/card";
 import { getRunEmissionsByExperiment } from "@/api/runs";
 import { exportRunsToCsv } from "@/utils/export";
-import { useEffect, useState } from "react";
+import { pickTimeFormat } from "@/helpers/time-axis";
+import { useEffect, useMemo, useState } from "react";
+import ChartSkeleton from "./chart-skeleton";
 import { ExportCsvButton } from "./export-csv-button";
 import { ChartConfig, ChartContainer } from "./ui/chart";
 
@@ -48,22 +50,32 @@ export default function RunsScatterChart({
     const [runsReportsData, setExperimentsReportData] = useState<RunReport[]>(
         [],
     );
+    const [isLoading, setIsLoading] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     useEffect(() => {
+        if (!params.experimentId) {
+            setExperimentsReportData([]);
+            return;
+        }
         let cancelled = false;
+        setIsLoading(true);
         (async () => {
-            const data = await getRunEmissionsByExperiment(
-                params.experimentId,
-                params.startDate,
-                params.endDate,
-            );
-            if (cancelled) return;
-            const sortedData = data.sort(
-                (a, b) =>
-                    new Date(a.timestamp).getTime() -
-                    new Date(b.timestamp).getTime(),
-            );
-            setExperimentsReportData(sortedData);
+            try {
+                const data = await getRunEmissionsByExperiment(
+                    params.experimentId,
+                    params.startDate,
+                    params.endDate,
+                );
+                if (cancelled) return;
+                const sortedData = data.sort(
+                    (a, b) =>
+                        new Date(a.timestamp).getTime() -
+                        new Date(b.timestamp).getTime(),
+                );
+                setExperimentsReportData(sortedData);
+            } finally {
+                if (!cancelled) setIsLoading(false);
+            }
         })();
         return () => {
             cancelled = true;
@@ -92,6 +104,25 @@ export default function RunsScatterChart({
         }
         return null;
     };
+
+    const points = useMemo(
+        () =>
+            runsReportsData.map((r) => ({
+                ...r,
+                ts: new Date(r.timestamp).getTime(),
+            })),
+        [runsReportsData],
+    );
+    const tickFmt = useMemo(() => {
+        if (points.length < 2) return "MMM d, HH:mm";
+        return pickTimeFormat(
+            points[points.length - 1].ts - points[0].ts,
+        );
+    }, [points]);
+
+    if (isLoading) {
+        return <ChartSkeleton height={300} />;
+    }
 
     return (
         <Card>
@@ -138,12 +169,15 @@ export default function RunsScatterChart({
                             }}
                         >
                             <XAxis
-                                dataKey="timestamp"
+                                dataKey="ts"
                                 name="Timestamp"
-                                type="category"
+                                type="number"
+                                scale="time"
+                                domain={["dataMin", "dataMax"]}
                                 stroke="currentColor"
+                                minTickGap={48}
                                 tickFormatter={(value) =>
-                                    format(new Date(value), "yyyy-MM-dd HH:mm")
+                                    format(new Date(value), tickFmt)
                                 }
                             >
                                 <Label
@@ -169,7 +203,7 @@ export default function RunsScatterChart({
                             <Tooltip content={<CustomTooltip />} />
                             <Scatter
                                 name="Emissions"
-                                data={runsReportsData}
+                                data={points}
                                 fill="hsl(var(--primary))"
                                 onClick={(data) => onRunClick(data.runId)}
                                 cursor="pointer"

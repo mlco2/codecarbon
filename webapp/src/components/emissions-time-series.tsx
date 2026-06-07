@@ -16,8 +16,10 @@ import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import { ExportCsvButton } from "@/components/export-csv-button";
+import ChartSkeleton from "@/components/chart-skeleton";
 import { getEmissionsTimeSeries } from "@/api/runs";
 import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
+import { pickTimeFormat } from "@/helpers/time-axis";
 import { format } from "date-fns";
 import { Cpu, HardDrive, Server } from "lucide-react";
 
@@ -75,12 +77,25 @@ export default function EmissionsTimeSeriesChart({
     }
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <ChartSkeleton height={300} />;
     }
 
     if (!emissionTimeSeries || !emissionTimeSeries.metadata) {
         return <div>No data available</div>;
     }
+
+    // Recharts category axis distributes ticks evenly by index, so 200 samples
+    // taken in the same minute produce 200 identical-looking labels. Re-key on
+    // a numeric timestamp and a time scale so the axis spaces ticks by *when*
+    // points happened, not by how many of them there are.
+    const points = emissionTimeSeries.emissions.map((e) => ({
+        ...e,
+        ts: new Date(e.timestamp).getTime(),
+    }));
+    const spanMs = points.length
+        ? points[points.length - 1].ts - points[0].ts
+        : 0;
+    const tickFmt = pickTimeFormat(spanMs);
 
     return (
         <div className="grid gap-4 md:grid-cols-2">
@@ -189,7 +204,7 @@ export default function EmissionsTimeSeriesChart({
                         className="aspect-auto h-[250px] w-full"
                     >
                         <LineChart
-                            data={emissionTimeSeries.emissions}
+                            data={points}
                             margin={{
                                 left: 12,
                                 right: 12,
@@ -197,13 +212,16 @@ export default function EmissionsTimeSeriesChart({
                         >
                             <CartesianGrid vertical={false} />
                             <XAxis
-                                dataKey="timestamp"
+                                dataKey="ts"
+                                type="number"
+                                scale="time"
+                                domain={["dataMin", "dataMax"]}
                                 tickLine={false}
                                 axisLine={false}
                                 tickMargin={8}
-                                minTickGap={32}
+                                minTickGap={48}
                                 tickFormatter={(value) =>
-                                    format(new Date(value), "MMM d, HH:mm")
+                                    format(new Date(value), tickFmt)
                                 }
                             />
                             <YAxis
@@ -214,11 +232,11 @@ export default function EmissionsTimeSeriesChart({
                             <ChartTooltip
                                 content={
                                     <ChartTooltipContent
-                                        className="w-[150px]"
+                                        className="w-[180px]"
                                         labelFormatter={(value) =>
                                             format(
-                                                new Date(value),
-                                                "MMM d, yyyy HH:mm",
+                                                new Date(value as number),
+                                                "MMM d, yyyy HH:mm:ss",
                                             )
                                         }
                                     />
