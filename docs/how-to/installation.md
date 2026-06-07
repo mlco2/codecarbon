@@ -38,7 +38,6 @@ installed along with the package itself:
 ``` bash
 arrow
 click
-fief-client[cli]
 pandas
 prometheus_client
 psutil

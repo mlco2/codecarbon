@@ -2,7 +2,7 @@
 OIDC Authentication Provider Implementation
 
 This module provides a generic OIDC authentication provider implementation using fastapi-oidc.
-It can work with any OIDC-compliant provider (Fief, Keycloak, Auth0, etc.).
+It can work with any OIDC-compliant provider (Keycloak, Auth0, etc.).
 """
 
 import logging
@@ -10,7 +10,6 @@ from typing import Any, Dict, Optional, Tuple
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Response
-from fief_client import FiefAsync
 from joserfc import jwt as jose_jwt
 from joserfc.jwk import KeySet
 
@@ -19,10 +18,6 @@ from carbonserver.config import settings
 DEFAULT_SIGNATURE_CACHE_TTL = 3600  # seconds
 OAUTH_SCOPES = ["openid", "email", "profile"]
 LOGGER = logging.getLogger(__name__)
-
-fief = FiefAsync(
-    settings.fief_url, settings.fief_client_id, settings.fief_client_secret
-)
 
 oauth = OAuth()
 oauth.register(
@@ -55,13 +50,6 @@ class OIDCAuthProvider:
         return (self.client.client_id, self.client.client_secret)
 
     async def _decode_token(self, token: str) -> Dict[str, Any]:
-        try:
-            access_token_info = await fief.validate_access_token(token)
-            return access_token_info
-        except Exception as e:
-            LOGGER.error(f"Error validating access token: {e}")
-            ...
-
         jwks_data = await self.client.fetch_jwk_set()
         keyset = KeySet.import_key_set(jwks_data)
         decoded = jose_jwt.decode(token, keyset)

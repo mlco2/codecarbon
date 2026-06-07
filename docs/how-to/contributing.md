@@ -313,6 +313,7 @@ git push --force-with-lease
 ### Release process
 
 - Merge all PRs.
+- Open a terminal and make sure you are not in a venv with `deactivate`.
 - Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
 - Run `uv run python .github/pyproject_versions.py -c` to check version consistancy.
 - Update the dependencies with `uv sync --upgrade`

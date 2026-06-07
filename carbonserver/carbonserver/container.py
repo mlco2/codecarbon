@@ -53,7 +53,7 @@ class ServerContainer(containers.DeclarativeContainer):
                 client_id=settings.oidc_client_id,
                 client_secret=settings.oidc_client_secret,
             )
-            if settings.auth_provider.lower() in ("oidc", "fief")
+            if settings.auth_provider.lower() in ("oidc")
             else None
         )
     )

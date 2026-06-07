@@ -36,7 +36,6 @@ cryptography==48.0.0
     # via
     #   authlib
     #   joserfc
-    #   jwcrypto
     #   python-jose
 dependency-injector==4.48.2
     # via carbonserver (carbonserver/pyproject.toml)
@@ -53,7 +52,6 @@ fastapi==0.123.0
     #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi-oidc
     #   fastapi-pagination
-    #   fief-client
 fastapi-cli==0.0.24
     # via fastapi
 fastapi-cloud-cli==0.7.0
@@ -64,8 +62,6 @@ fastapi-pagination==0.15.0
     # via carbonserver (carbonserver/pyproject.toml)
 fastar==0.9.0
     # via fastapi-cloud-cli
-fief-client==0.20.0
-    # via carbonserver (carbonserver/pyproject.toml)
 greenlet==3.5.1
     # via sqlalchemy
 h11==0.16.0
@@ -81,7 +77,6 @@ httpx==0.27.2
     #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi
     #   fastapi-cloud-cli
-    #   fief-client
 idna==3.18
     # via
     #   anyio
@@ -96,10 +91,6 @@ joserfc==1.7.0
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   authlib
-jwcrypto==1.5.7
-    # via fief-client
-makefun==1.16.0
-    # via fief-client
 mako==1.3.10
     # via alembic
 markdown-it-py==4.0.0
@@ -194,7 +185,6 @@ typing-extensions==4.15.0
     #   anyio
     #   fastapi
     #   fastapi-pagination
-    #   jwcrypto
     #   pydantic
     #   pydantic-core
     #   rich-toolkit
