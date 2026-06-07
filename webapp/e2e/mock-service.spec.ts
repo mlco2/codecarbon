@@ -58,19 +58,29 @@ test.describe("Mock service end-to-end", () => {
             }),
         ).toBeVisible();
 
-        // Experiments table is populated from /projects/:id/experiments.
-        await expect(page.getByText("Baseline run")).toBeVisible();
-        await expect(page.getByText("Optimized model")).toBeVisible();
-
-        // The two charts must NOT show their "No data available" fallback —
-        // that would mean the mock fetch interceptor missed the request.
-        await expect(page.getByText(/no data available/i)).toHaveCount(0);
-
-        // Bar chart card title appears (rendered, not skeleton).
+        // Chart card titles render (skeleton would not include them).
         await expect(page.getByText(/project experiment runs/i)).toBeVisible();
         await expect(
             page.getByText(/scatter chart - emissions by run id/i),
         ).toBeVisible();
+
+        // Experiments live in a Radix Select portal — open it to assert
+        // the dropdown is populated from /projects/:id/experiments.
+        await page.getByTestId("experiment-select").click();
+        await expect(
+            page.getByRole("option", { name: "Baseline run" }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole("option", { name: "Optimized model" }),
+        ).toBeVisible();
+
+        // Pick one — that fires runs/sums and the scatter chart hydrates.
+        await page.getByRole("option", { name: "Baseline run" }).click();
+        await expect(page.getByTestId("experiment-details")).toBeVisible();
+
+        // Neither chart should be left on its "No data available" fallback —
+        // that would mean the mock fetch interceptor missed a request.
+        await expect(page.getByText(/no data available/i)).toHaveCount(0);
 
         expect(errors).toEqual([]);
     });
