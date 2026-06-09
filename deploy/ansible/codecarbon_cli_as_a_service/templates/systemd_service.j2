@@ -1,0 +1,13 @@
+[Unit]
+Description=CodeCarbon service
+After=network.target
+
+[Service]
+User={{ codecarbon_user }}
+Group={{ codecarbon_group }}
+WorkingDirectory={{ codecarbon_home }}
+ExecStart={{ codecarbon_venv }}/bin/codecarbon monitor
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

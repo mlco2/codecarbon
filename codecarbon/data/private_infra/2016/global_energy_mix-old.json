@@ -1,0 +1,1983 @@
+{
+  "KAZ": {
+    "lowCarbon": 0.12902506687864,
+    "naturalGas": 0.5360604439692,
+    "petroleum": 0.663194562,
+    "coal": 2.1434049635551,
+    "total": 3.4716850364029,
+    "isoCode": "KAZ",
+    "countryName": "Kazakhstan"
+  },
+  "HKG": {
+    "lowCarbon": 0.037092657608551,
+    "naturalGas": 0.1250353884912,
+    "petroleum": 0.876261489084,
+    "coal": 0.28729626003335,
+    "total": 1.3256857952171,
+    "isoCode": "HKG",
+    "countryName": "Hong Kong"
+  },
+  "BFA": {
+    "lowCarbon": 0.00351726367,
+    "naturalGas": 0.0,
+    "petroleum": 0.04692751167,
+    "coal": 0.0,
+    "total": 0.05044477534,
+    "isoCode": "BFA",
+    "countryName": "Burkina Faso"
+  },
+  "BOL": {
+    "lowCarbon": 0.018111822912,
+    "naturalGas": 0.117650356912,
+    "petroleum": 0.17660049,
+    "coal": 0.0,
+    "total": 0.312362669824,
+    "isoCode": "BOL",
+    "countryName": "Bolivia"
+  },
+  "GUY": {
+    "lowCarbon": 0.000460888122,
+    "naturalGas": 0.0,
+    "petroleum": 0.029367644922,
+    "coal": 0.0,
+    "total": 0.029828533044,
+    "isoCode": "GUY",
+    "countryName": "Guyana"
+  },
+  "GHA": {
+    "lowCarbon": 0.050806339922129,
+    "naturalGas": 0.027526716726966,
+    "petroleum": 0.17643945,
+    "coal": 3.6519516278844e-07,
+    "total": 0.25477287184426,
+    "isoCode": "GHA",
+    "countryName": "Ghana"
+  },
+  "ATG": {
+    "lowCarbon": 0.000474790898,
+    "naturalGas": 0.0,
+    "petroleum": 0.010419398898,
+    "coal": 0.0,
+    "total": 0.010894189796,
+    "isoCode": "ATG",
+    "countryName": "Antigua and Barbuda"
+  },
+  "RKS": {
+    "lowCarbon": 4.5200978906862e-05,
+    "naturalGas": 0.0,
+    "petroleum": 0.02889720609,
+    "coal": 0.070606806888907,
+    "total": 0.099549213957814,
+    "isoCode": "RKS",
+    "countryName": "Kosovo"
+  },
+  "GNQ": {
+    "lowCarbon": 0.000343167063,
+    "naturalGas": 0.043630273041,
+    "petroleum": 0.010512734022,
+    "coal": 0.0,
+    "total": 0.054486174126,
+    "isoCode": "GNQ",
+    "countryName": "Equatorial Guinea"
+  },
+  "GUF": {
+    "lowCarbon": 0.004191911748,
+    "naturalGas": 0.0,
+    "petroleum": 0.010631303748,
+    "coal": 0.0,
+    "total": 0.014823215496,
+    "isoCode": "GUF",
+    "countryName": "French Guiana"
+  },
+  "BRA": {
+    "lowCarbon": 4.5870987036196,
+    "naturalGas": 1.2561832538982,
+    "petroleum": 6.020299596,
+    "coal": 0.61434914752064,
+    "total": 12.477930701038,
+    "isoCode": "BRA",
+    "countryName": "Brazil"
+  },
+  "MLT": {
+    "lowCarbon": 0.0068381788,
+    "naturalGas": 0.0,
+    "petroleum": 0.10440333,
+    "coal": 0.0,
+    "total": 0.1112415088,
+    "isoCode": "MLT",
+    "countryName": "Malta"
+  },
+  "GTM": {
+    "lowCarbon": 0.06636909514639,
+    "naturalGas": 0.0,
+    "petroleum": 0.184920768,
+    "coal": 0.04203623114639,
+    "total": 0.29332609429278,
+    "isoCode": "GTM",
+    "countryName": "Guatemala"
+  },
+  "MOZ": {
+    "lowCarbon": 0.12885972301127,
+    "naturalGas": 0.069493179075601,
+    "petroleum": 0.082241298,
+    "coal": 0.00027464193566597,
+    "total": 0.28086884202253,
+    "isoCode": "MOZ",
+    "countryName": "Mozambique"
+  },
+  "SVK": {
+    "lowCarbon": 0.23879422693342,
+    "naturalGas": 0.17388543508013,
+    "petroleum": 0.169278605,
+    "coal": 0.12852927565261,
+    "total": 0.71048754266615,
+    "isoCode": "SVK",
+    "countryName": "Slovakia"
+  },
+  "FRA": {
+    "lowCarbon": 4.7973573649744,
+    "naturalGas": 1.6299605210559,
+    "petroleum": 3.406617337,
+    "coal": 0.3164766775216,
+    "total": 10.150411900552,
+    "isoCode": "FRA",
+    "countryName": "France"
+  },
+  "PAK": {
+    "lowCarbon": 0.40971904615667,
+    "naturalGas": 1.3321195270382,
+    "petroleum": 1.163000868,
+    "coal": 0.20998705879922,
+    "total": 3.1148264999941,
+    "isoCode": "PAK",
+    "countryName": "Pakistan"
+  },
+  "SHN": {
+    "lowCarbon": 0.00014609622,
+    "naturalGas": 0.0,
+    "petroleum": 0.00014609622,
+    "coal": 0.0,
+    "total": 0.00029219244,
+    "isoCode": "SHN",
+    "countryName": "Saint Helena"
+  },
+  "KEN": {
+    "lowCarbon": 0.072040619436487,
+    "naturalGas": 0.0,
+    "petroleum": 0.234003198,
+    "coal": 0.011074481635343,
+    "total": 0.31711829907183,
+    "isoCode": "KEN",
+    "countryName": "Kenya"
+  },
+  "NRU": {
+    "lowCarbon": 2.3117864e-05,
+    "naturalGas": 0.0,
+    "petroleum": 0.001023117864,
+    "coal": 0.0,
+    "total": 0.001046235728,
+    "isoCode": "NRU",
+    "countryName": "Nauru"
+  },
+  "EGY": {
+    "lowCarbon": 0.14335532005807,
+    "naturalGas": 1.8730318428471,
+    "petroleum": 1.782496128,
+    "coal": 0.016418229016207,
+    "total": 3.8153015199214,
+    "isoCode": "EGY",
+    "countryName": "Egypt"
+  },
+  "PCI": {
+    "lowCarbon": 0.000128430224,
+    "naturalGas": 0.0,
+    "petroleum": 0.004128430224,
+    "coal": 0.0,
+    "total": 0.004256860448,
+    "isoCode": "PCI",
+    "countryName": "U.S. Pacific Islands"
+  },
+  "BRN": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.1405808588844,
+    "petroleum": 0.032080998,
+    "coal": 0.0,
+    "total": 0.1726618568844,
+    "isoCode": "BRN",
+    "countryName": "Brunei"
+  },
+  "MDA": {
+    "lowCarbon": 0.0021818898678212,
+    "naturalGas": 0.0885675753567,
+    "petroleum": 0.036080954904,
+    "coal": 0.0032504237177508,
+    "total": 0.13008084384627,
+    "isoCode": "MDA",
+    "countryName": "Moldova"
+  },
+  "SVN": {
+    "lowCarbon": 0.098167893797189,
+    "naturalGas": 0.031085207007386,
+    "petroleum": 0.108242008,
+    "coal": 0.044308798552235,
+    "total": 0.28180390735681,
+    "isoCode": "SVN",
+    "countryName": "Slovenia"
+  },
+  "ECU": {
+    "lowCarbon": 0.14960959676165,
+    "naturalGas": 0.02039905824,
+    "petroleum": 0.518572224,
+    "coal": 0.00035933852165294,
+    "total": 0.68894021752331,
+    "isoCode": "ECU",
+    "countryName": "Ecuador"
+  },
+  "MKD": {
+    "lowCarbon": 0.026259262574532,
+    "naturalGas": 0.0049929521208,
+    "petroleum": 0.043131412374,
+    "coal": 0.036277297650045,
+    "total": 0.11066092471938,
+    "isoCode": "MKD",
+    "countryName": "Macedonia"
+  },
+  "DJI": {
+    "lowCarbon": 0.000282670342,
+    "naturalGas": 0.0,
+    "petroleum": 0.013278054342,
+    "coal": 0.0,
+    "total": 0.013560724684,
+    "isoCode": "DJI",
+    "countryName": "Djibouti"
+  },
+  "CZE": {
+    "lowCarbon": 0.30611857768714,
+    "naturalGas": 0.30846348890485,
+    "petroleum": 0.369628846,
+    "coal": 0.67333988957213,
+    "total": 1.6575508021641,
+    "isoCode": "CZE",
+    "countryName": "Czech Republic"
+  },
+  "KHM": {
+    "lowCarbon": 0.030294628209788,
+    "naturalGas": 0.0,
+    "petroleum": 0.096492972,
+    "coal": 0.028840570609788,
+    "total": 0.15562817081958,
+    "isoCode": "KHM",
+    "countryName": "Cambodia"
+  },
+  "ALB": {
+    "lowCarbon": 0.065292679891197,
+    "naturalGas": 0.001576448208,
+    "petroleum": 0.054625866,
+    "coal": 0.0023356536831972,
+    "total": 0.12383064778239,
+    "isoCode": "ALB",
+    "countryName": "Albania"
+  },
+  "GIN": {
+    "lowCarbon": 0.003957499202,
+    "naturalGas": 0.0,
+    "petroleum": 0.039283163202,
+    "coal": 0.0,
+    "total": 0.043240662404,
+    "isoCode": "GIN",
+    "countryName": "Guinea"
+  },
+  "LBN": {
+    "lowCarbon": 0.0038548360667966,
+    "naturalGas": 0.0,
+    "petroleum": 0.317083734,
+    "coal": 0.0029905860667966,
+    "total": 0.32392915613359,
+    "isoCode": "LBN",
+    "countryName": "Lebanon"
+  },
+  "DOM": {
+    "lowCarbon": 0.023711949633831,
+    "naturalGas": 0.0385647420315,
+    "petroleum": 0.264813444,
+    "coal": 0.028884284134208,
+    "total": 0.35597441979954,
+    "isoCode": "DOM",
+    "countryName": "Dominican Republic"
+  },
+  "GNB": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.005754190146,
+    "coal": 0.0,
+    "total": 0.005754190146,
+    "isoCode": "GNB",
+    "countryName": "Guinea-Bissau"
+  },
+  "ERI": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.006564942,
+    "coal": 0.0,
+    "total": 0.006564942,
+    "isoCode": "ERI",
+    "countryName": "Eritrea"
+  },
+  "URY": {
+    "lowCarbon": 0.1149740439823,
+    "naturalGas": 0.002354870777459,
+    "petroleum": 0.107775654,
+    "coal": 1.0734497853472e-05,
+    "total": 0.22511530325761,
+    "isoCode": "URY",
+    "countryName": "Uruguay"
+  },
+  "NOR": {
+    "lowCarbon": 1.3001905971181,
+    "naturalGas": 0.1859641996226,
+    "petroleum": 0.440283702,
+    "coal": 0.020059353824374,
+    "total": 1.9464978525651,
+    "isoCode": "NOR",
+    "countryName": "Norway"
+  },
+  "VEN": {
+    "lowCarbon": 0.61970198641222,
+    "naturalGas": 0.9463269116711,
+    "petroleum": 1.181218152,
+    "coal": 0.0049296812173809,
+    "total": 2.7521767313007,
+    "isoCode": "VEN",
+    "countryName": "Venezuela"
+  },
+  "SLB": {
+    "lowCarbon": 0.000313018872,
+    "naturalGas": 0.0,
+    "petroleum": 0.003285322872,
+    "coal": 0.0,
+    "total": 0.003598341744,
+    "isoCode": "SLB",
+    "countryName": "Solomon Islands"
+  },
+  "ATA": {
+    "lowCarbon": 0.000212285872,
+    "naturalGas": 0.0,
+    "petroleum": 0.000203053872,
+    "coal": 0.0,
+    "total": 0.000415339744,
+    "isoCode": "ATA",
+    "countryName": "Antarctica"
+  },
+  "SLA": {
+    "lowCarbon": 0.001603091162,
+    "naturalGas": 0.0,
+    "petroleum": 0.013572051162,
+    "coal": 0.0,
+    "total": 0.015175142324,
+    "isoCode": "SLA",
+    "countryName": "Sierra Leone"
+  },
+  "_define": {
+    "units": "Quad Btu",
+    "naturalGas": "NATURAL GAS",
+    "lowCarbon": "NUCLEAR, RENEWABLES + OTHERS",
+    "coal": "COAL",
+    "total": "TOTAL EMISSIONS",
+    "petroleum": "PETROLEUM + OTHER LIQUIDS",
+    "isoCode": "ALPHA-3 ISO CODE OF COUNTRY",
+    "countryName": "NAME OF THE COUNTRY"
+  },
+  "TKM": {
+    "lowCarbon": 0.0,
+    "naturalGas": 1.47388967691,
+    "petroleum": 0.292526964,
+    "coal": 0.0,
+    "total": 1.76641664091,
+    "isoCode": "TKM",
+    "countryName": "Turkmenistan"
+  },
+  "PRI": {
+    "lowCarbon": 0.0031877508515211,
+    "naturalGas": 0.064217696838,
+    "petroleum": 0.1946758220899,
+    "coal": 0.023776839923618,
+    "total": 0.28585810970304,
+    "isoCode": "PRI",
+    "countryName": "Puerto Rico"
+  },
+  "DMA": {
+    "lowCarbon": 6.4086922e-05,
+    "naturalGas": 0.0,
+    "petroleum": 0.002728042122,
+    "coal": 0.0,
+    "total": 0.002792129044,
+    "isoCode": "DMA",
+    "countryName": "Dominica"
+  },
+  "CMR": {
+    "lowCarbon": 0.042080547036,
+    "naturalGas": 0.026621847036,
+    "petroleum": 0.08098848,
+    "coal": 0.0,
+    "total": 0.149690874072,
+    "isoCode": "CMR",
+    "countryName": "Cameroon"
+  },
+  "TLS": {
+    "lowCarbon": 0.000349352102,
+    "naturalGas": 0.0,
+    "petroleum": 0.007349352102,
+    "coal": 0.0,
+    "total": 0.007698704204,
+    "isoCode": "TLS",
+    "countryName": "Timor-Leste (East Timor)"
+  },
+  "TCD": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.004800311796,
+    "coal": 0.0,
+    "total": 0.004800311796,
+    "isoCode": "TCD",
+    "countryName": "Chad"
+  },
+  "SWZ": {
+    "lowCarbon": 0.0049768948962018,
+    "naturalGas": 0.0,
+    "petroleum": 0.01070984259,
+    "coal": 0.0033829363062018,
+    "total": 0.019069673792404,
+    "isoCode": "SWZ",
+    "countryName": "Swaziland"
+  },
+  "KIR": {
+    "lowCarbon": 0.000871080446,
+    "naturalGas": 0.0,
+    "petroleum": 0.000824920446,
+    "coal": 0.0,
+    "total": 0.001696000892,
+    "isoCode": "KIR",
+    "countryName": "Kiribati"
+  },
+  "LUX": {
+    "lowCarbon": 0.027087166801927,
+    "naturalGas": 0.031325675280519,
+    "petroleum": 0.117509249,
+    "coal": 0.001995132782749,
+    "total": 0.1779172238652,
+    "isoCode": "LUX",
+    "countryName": "Luxembourg"
+  },
+  "BIH": {
+    "lowCarbon": 0.029717436537623,
+    "naturalGas": 0.0074989256168,
+    "petroleum": 0.072039414,
+    "coal": 0.14585453775867,
+    "total": 0.25511031391309,
+    "isoCode": "BIH",
+    "countryName": "Bosnia and Herzegovina"
+  },
+  "TJK": {
+    "lowCarbon": 0.1481322053523,
+    "naturalGas": 0.00070235622890625,
+    "petroleum": 0.03684339,
+    "coal": 0.031014356941,
+    "total": 0.2166923085222,
+    "isoCode": "TJK",
+    "countryName": "Tajikistan"
+  },
+  "MMR": {
+    "lowCarbon": 0.089823163668661,
+    "naturalGas": 0.1639999180408,
+    "petroleum": 0.247460638092,
+    "coal": 0.009931483125935,
+    "total": 0.5112152029274,
+    "isoCode": "MMR",
+    "countryName": "Burma (Myanmar)"
+  },
+  "TZA": {
+    "lowCarbon": 0.022370097386276,
+    "naturalGas": 0.05556429,
+    "petroleum": 0.148981493892,
+    "coal": 0.0074299587836745,
+    "total": 0.23434584006195,
+    "isoCode": "TZA",
+    "countryName": "Tanzania"
+  },
+  "ETH": {
+    "lowCarbon": 0.10224015275786,
+    "naturalGas": 0.0,
+    "petroleum": 0.155239266,
+    "coal": 0.010738535557857,
+    "total": 0.26821795431571,
+    "isoCode": "ETH",
+    "countryName": "Ethiopia"
+  },
+  "YEM": {
+    "lowCarbon": 0.0067636181302757,
+    "naturalGas": 0.018698691011,
+    "petroleum": 0.115210944,
+    "coal": 0.0031146231192757,
+    "total": 0.14378787626055,
+    "isoCode": "YEM",
+    "countryName": "Yemen"
+  },
+  "GRL": {
+    "lowCarbon": 0.004027621852,
+    "naturalGas": 0.0,
+    "petroleum": 0.008482533852,
+    "coal": 0.0,
+    "total": 0.012510155704,
+    "isoCode": "GRL",
+    "countryName": "Greenland"
+  },
+  "ANT": {
+    "lowCarbon": 0.002630712758,
+    "naturalGas": 0.0,
+    "petroleum": 0.191461192758,
+    "coal": 0.0,
+    "total": 0.194091905516,
+    "isoCode": "ANT",
+    "countryName": "Netherlands Antilles"
+  },
+  "IRL": {
+    "lowCarbon": 0.068577569849519,
+    "naturalGas": 0.19216073768984,
+    "petroleum": 0.315382923,
+    "coal": 0.056002470253822,
+    "total": 0.63212370079318,
+    "isoCode": "IRL",
+    "countryName": "Ireland"
+  },
+  "EST": {
+    "lowCarbon": 0.0087089572150986,
+    "naturalGas": 0.018933422995349,
+    "petroleum": 0.060055553,
+    "coal": 0.00040630496676357,
+    "total": 0.088104238177211,
+    "isoCode": "EST",
+    "countryName": "Estonia"
+  },
+  "HUN": {
+    "lowCarbon": 0.21652905744761,
+    "naturalGas": 0.36332176432901,
+    "petroleum": 0.316083822,
+    "coal": 0.10660119684609,
+    "total": 1.0025358406227,
+    "isoCode": "HUN",
+    "countryName": "Hungary"
+  },
+  "ARE": {
+    "lowCarbon": 0.005064465225645,
+    "naturalGas": 2.7617564792775,
+    "petroleum": 1.888920725574,
+    "coal": 0.053915584374145,
+    "total": 4.7096572544513,
+    "isoCode": "ARE",
+    "countryName": "United Arab Emirates"
+  },
+  "SWE": {
+    "lowCarbon": 1.4078388824803,
+    "naturalGas": 0.036029919961974,
+    "petroleum": 0.655395433,
+    "coal": 0.070611688348258,
+    "total": 2.1698759237906,
+    "isoCode": "SWI",
+    "countryName": "Sweden"
+  },
+  "DZA": {
+    "lowCarbon": 0.0078113245813444,
+    "naturalGas": 1.4914801022058,
+    "petroleum": 0.855327726,
+    "coal": 0.00069722384495542,
+    "total": 2.3553163766321,
+    "isoCode": "DZA",
+    "countryName": "Algeria"
+  },
+  "DEU": {
+    "lowCarbon": 2.4666606345477,
+    "naturalGas": 3.2014501646832,
+    "petroleum": 4.974866208,
+    "coal": 3.2215327072368,
+    "total": 13.864509714468,
+    "isoCode": "DEU",
+    "countryName": "Germany"
+  },
+  "BLZ": {
+    "lowCarbon": 0.003240069312,
+    "naturalGas": 0.0,
+    "petroleum": 0.007955241312,
+    "coal": 0.0,
+    "total": 0.011195310624,
+    "isoCode": "BLZ",
+    "countryName": "Belize"
+  },
+  "ZAF": {
+    "lowCarbon": 0.2259852978054,
+    "naturalGas": 0.1843193762265,
+    "petroleum": 1.317879624,
+    "coal": 4.3456317753066,
+    "total": 6.0738160733385,
+    "isoCode": "ZAF",
+    "countryName": "South Africa"
+  },
+  "ARG": {
+    "lowCarbon": 0.41590747001233,
+    "naturalGas": 1.7872318399485,
+    "petroleum": 1.455311526,
+    "coal": 0.03524529941099,
+    "total": 3.6936961353718,
+    "isoCode": "ARG",
+    "countryName": "Argentina"
+  },
+  "VGB": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.002566913916,
+    "coal": 0.0,
+    "total": 0.002566913916,
+    "isoCode": "VGB",
+    "countryName": "Virgin Islands, British"
+  },
+  "AUS": {
+    "lowCarbon": 0.32291705202615,
+    "naturalGas": 1.5615189232431,
+    "petroleum": 2.253542905,
+    "coal": 1.8505105191674,
+    "total": 5.9884893994367,
+    "isoCode": "AUS",
+    "countryName": "Australia"
+  },
+  "TGO": {
+    "lowCarbon": 0.0064179770745496,
+    "naturalGas": 0.0,
+    "petroleum": 0.031140744,
+    "coal": 0.0034396010745496,
+    "total": 0.040998322149099,
+    "isoCode": "TGO",
+    "countryName": "Togo"
+  },
+  "MEX": {
+    "lowCarbon": 0.55800377990172,
+    "naturalGas": 2.8443815921794,
+    "petroleum": 4.04942179,
+    "coal": 0.48939647268377,
+    "total": 7.9412036347649,
+    "isoCode": "MEX",
+    "countryName": "Mexico"
+  },
+  "IDN": {
+    "lowCarbon": 0.30920273261773,
+    "naturalGas": 1.6139432014149,
+    "petroleum": 3.214650468,
+    "coal": 2.1105758039038,
+    "total": 7.2483722059365,
+    "isoCode": "IDN",
+    "countryName": "Indonesia"
+  },
+  "AGO": {
+    "lowCarbon": 0.054847770992,
+    "naturalGas": 0.029690758992,
+    "petroleum": 0.276411252,
+    "coal": 0.0,
+    "total": 0.360949781984,
+    "isoCode": "AGO",
+    "countryName": "Angola"
+  },
+  "BRB": {
+    "lowCarbon": 0.001398157054,
+    "naturalGas": 0.00073923435,
+    "petroleum": 0.023381962704,
+    "coal": 0.0,
+    "total": 0.025519354108,
+    "isoCode": "BRB",
+    "countryName": "Barbados"
+  },
+  "COM": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.002694822132,
+    "coal": 0.0,
+    "total": 0.002694822132,
+    "isoCode": "COM",
+    "countryName": "Comoros"
+  },
+  "PSE": {
+    "lowCarbon": 0.023678334968,
+    "naturalGas": 0.0,
+    "petroleum": 0.046576042968,
+    "coal": 0.0,
+    "total": 0.070254377936,
+    "isoCode": "PSE",
+    "countryName": "Palestinian Territories"
+  },
+  "BDI": {
+    "lowCarbon": 0.003007693356,
+    "naturalGas": 0.0,
+    "petroleum": 0.003072301356,
+    "coal": 0.0,
+    "total": 0.006079994712,
+    "isoCode": "BDI",
+    "countryName": "Burundi"
+  },
+  "NZL": {
+    "lowCarbon": 0.33362954413384,
+    "naturalGas": 0.18221713395153,
+    "petroleum": 0.331752073,
+    "coal": 0.050018119724957,
+    "total": 0.89761687081033,
+    "isoCode": "NZL",
+    "countryName": "New Zealand"
+  },
+  "ISL": {
+    "lowCarbon": 0.1686951449064,
+    "naturalGas": 0.0,
+    "petroleum": 0.039825179,
+    "coal": 0.0034702037773154,
+    "total": 0.21199052768371,
+    "isoCode": "ISL",
+    "countryName": "Iceland"
+  },
+  "QAT": {
+    "lowCarbon": 5.52881462e-05,
+    "naturalGas": 1.5105074721462,
+    "petroleum": 0.33747396,
+    "coal": 0.0,
+    "total": 1.8480367202924,
+    "isoCode": "QAT",
+    "countryName": "Qatar"
+  },
+  "MAC": {
+    "lowCarbon": 0.015248918468075,
+    "naturalGas": 0.000370883808075,
+    "petroleum": 0.03518596266,
+    "coal": 0.0,
+    "total": 0.05080576493615,
+    "isoCode": "MAC",
+    "countryName": "Macau"
+  },
+  "HRV": {
+    "lowCarbon": 0.096829364980883,
+    "naturalGas": 0.0814184741232,
+    "petroleum": 0.141736062,
+    "coal": 0.026349495473524,
+    "total": 0.34633339657761,
+    "isoCode": "HRV",
+    "countryName": "Croatia"
+  },
+  "IND": {
+    "lowCarbon": 2.6016821274411,
+    "naturalGas": 2.0361087770686,
+    "petroleum": 8.92909155,
+    "coal": 15.471257771568,
+    "total": 29.038140226078,
+    "isoCode": "IND",
+    "countryName": "India"
+  },
+  "DNK": {
+    "lowCarbon": 0.19393181361676,
+    "naturalGas": 0.12869022026067,
+    "petroleum": 0.32958992,
+    "coal": 0.08412404514705,
+    "total": 0.73633599902448,
+    "isoCode": "DNK",
+    "countryName": "Denmark"
+  },
+  "LKA": {
+    "lowCarbon": 0.042761538468458,
+    "naturalGas": 0.0,
+    "petroleum": 0.262175682,
+    "coal": 0.056943248468458,
+    "total": 0.36188046893692,
+    "isoCode": "LKA",
+    "countryName": "Sri Lanka"
+  },
+  "GRD": {
+    "lowCarbon": 6.0703568e-05,
+    "naturalGas": 0.0,
+    "petroleum": 0.004041316368,
+    "coal": 0.0,
+    "total": 0.004102019936,
+    "isoCode": "GRD",
+    "countryName": "Grenada"
+  },
+  "ZWE": {
+    "lowCarbon": 0.033483824511727,
+    "naturalGas": 0.0,
+    "petroleum": 0.048758154,
+    "coal": 0.075846840632876,
+    "total": 0.1580888191446,
+    "isoCode": "ZWE",
+    "countryName": "Zimbabwe"
+  },
+  "BWA": {
+    "lowCarbon": 0.0052633480621975,
+    "naturalGas": 0.0,
+    "petroleum": 0.04267743,
+    "coal": 0.028859178062197,
+    "total": 0.076799956124395,
+    "isoCode": "BWA",
+    "countryName": "Botswana"
+  },
+  "JPN": {
+    "lowCarbon": 1.902469303177,
+    "naturalGas": 4.8304264708811,
+    "petroleum": 8.118245358,
+    "coal": 4.7983556213702,
+    "total": 19.649496753428,
+    "isoCode": "JPN",
+    "countryName": "Japan"
+  },
+  "ASM": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.0049863876851632,
+    "coal": 0.0,
+    "total": 0.0049863876851632,
+    "isoCode": "ASM",
+    "countryName": "American Samoa"
+  },
+  "NCL": {
+    "lowCarbon": 0.0026945022378514,
+    "naturalGas": 0.0,
+    "petroleum": 0.04320867534,
+    "coal": 0.026947026897851,
+    "total": 0.072850204475703,
+    "isoCode": "NCL",
+    "countryName": "New Caledonia"
+  },
+  "COD": {
+    "lowCarbon": 0.08251772549955,
+    "naturalGas": 0.0,
+    "petroleum": 0.043195167744,
+    "coal": 0.00029470175555021,
+    "total": 0.1260075949991,
+    "isoCode": "COD",
+    "countryName": "Congo (Kinshasa)"
+  },
+  "LBY": {
+    "lowCarbon": 0.00171624366653,
+    "naturalGas": 0.18805153766653,
+    "petroleum": 0.456307938,
+    "coal": 0.0,
+    "total": 0.64607571933306,
+    "isoCode": "LBY",
+    "countryName": "Libya"
+  },
+  "PAN": {
+    "lowCarbon": 0.064978864408526,
+    "naturalGas": 0.0,
+    "petroleum": 0.333161748,
+    "coal": 0.0077223484085265,
+    "total": 0.40586296081705,
+    "isoCode": "PAN",
+    "countryName": "Panama"
+  },
+  "NAM": {
+    "lowCarbon": 0.022373228964139,
+    "naturalGas": 0.0,
+    "petroleum": 0.053690004,
+    "coal": 0.00011797376413873,
+    "total": 0.076181206728277,
+    "isoCode": "NAM",
+    "countryName": "Namibia"
+  },
+  "HTI": {
+    "lowCarbon": 0.000191186,
+    "naturalGas": 0.0,
+    "petroleum": 0.047535714,
+    "coal": 0.0,
+    "total": 0.0477269,
+    "isoCode": "HTI",
+    "countryName": "Haiti"
+  },
+  "MDG": {
+    "lowCarbon": 0.0084280333406172,
+    "naturalGas": 0.0,
+    "petroleum": 0.037646315676,
+    "coal": 0.012094405664617,
+    "total": 0.058168754681234,
+    "isoCode": "MDG",
+    "countryName": "Madagascar"
+  },
+  "TTO": {
+    "lowCarbon": 5.7061191721963e-05,
+    "naturalGas": 0.77467574189748,
+    "petroleum": 0.11833878,
+    "coal": 5.611294241963e-06,
+    "total": 0.89307719438344,
+    "isoCode": "TTO",
+    "countryName": "Trinidad and Tobago"
+  },
+  "GLP": {
+    "lowCarbon": 0.000996211808,
+    "naturalGas": 0.0,
+    "petroleum": 0.027639107808,
+    "coal": 0.0,
+    "total": 0.028635319616,
+    "isoCode": "GLP",
+    "countryName": "Guadeloupe"
+  },
+  "WSM": {
+    "lowCarbon": 0.000230952094,
+    "naturalGas": 0.0,
+    "petroleum": 0.004843208094,
+    "coal": 0.0,
+    "total": 0.005074160188,
+    "isoCode": "WSM",
+    "countryName": "Samoa"
+  },
+  "WAK": {
+    "lowCarbon": 0.000373112,
+    "naturalGas": 0.0,
+    "petroleum": 0.019373112,
+    "coal": 0.0,
+    "total": 0.019746224,
+    "isoCode": "WAK",
+    "countryName": "Wake Island"
+  },
+  "SEN": {
+    "lowCarbon": 0.003800633539793,
+    "naturalGas": 0.0019048916394,
+    "petroleum": 0.103390242,
+    "coal": 0.009581899900393,
+    "total": 0.11867766707959,
+    "isoCode": "SEN",
+    "countryName": "Senegal"
+  },
+  "KNA": {
+    "lowCarbon": 0.00057172898,
+    "naturalGas": 0.0,
+    "petroleum": 0.00349787298,
+    "coal": 0.0,
+    "total": 0.00406960196,
+    "isoCode": "KNA",
+    "countryName": "Saint Kitts and Nevis"
+  },
+  "VUT": {
+    "lowCarbon": 0.000381623648,
+    "naturalGas": 0.0,
+    "petroleum": 0.002289303648,
+    "coal": 0.0,
+    "total": 0.002670927296,
+    "isoCode": "VUT",
+    "countryName": "Vanuatu"
+  },
+  "FLK": {
+    "lowCarbon": 0.000691450272,
+    "naturalGas": 0.0,
+    "petroleum": 0.000608362272,
+    "coal": 0.0,
+    "total": 0.001299812544,
+    "isoCode": "FLK",
+    "countryName": "Falkland Islands (Islas Malvinas)"
+  },
+  "TUN": {
+    "lowCarbon": 0.0052410590285987,
+    "naturalGas": 0.1832805644942,
+    "petroleum": 0.193889964,
+    "coal": 4.8450020224269e-05,
+    "total": 0.38246003754302,
+    "isoCode": "TUN",
+    "countryName": "Tunisia"
+  },
+  "CAN": {
+    "lowCarbon": 4.8608181881896,
+    "naturalGas": 4.0714260840747,
+    "petroleum": 5.031087482,
+    "coal": 0.7128615739967,
+    "total": 14.676193328261,
+    "isoCode": "CAN",
+    "countryName": "Canada"
+  },
+  "AZE": {
+    "lowCarbon": 0.016741332195755,
+    "naturalGas": 0.3945951842928,
+    "petroleum": 0.197450046,
+    "coal": 4.0139029550335e-06,
+    "total": 0.60879057639151,
+    "isoCode": "AZE",
+    "countryName": "Azerbaijan"
+  },
+  "TWN": {
+    "lowCarbon": 0.42239959151403,
+    "naturalGas": 0.802704372964,
+    "petroleum": 2.010851722374,
+    "coal": 1.5287134891449,
+    "total": 4.764669175997,
+    "isoCode": "TWN",
+    "countryName": "Taiwan"
+  },
+  "BEN": {
+    "lowCarbon": 0.0036560823827112,
+    "naturalGas": 0.0,
+    "petroleum": 0.072772512,
+    "coal": 0.0019857511827112,
+    "total": 0.078414345565422,
+    "isoCode": "BEN",
+    "countryName": "Benin"
+  },
+  "ESH": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.003654737652,
+    "coal": 0.0,
+    "total": 0.003654737652,
+    "isoCode": "ESH",
+    "countryName": "Western Sahara"
+  },
+  "SLV": {
+    "lowCarbon": 0.035657776237372,
+    "naturalGas": 0.0,
+    "petroleum": 0.103190772,
+    "coal": 0.0,
+    "total": 0.13884854823737,
+    "isoCode": "SLV",
+    "countryName": "El Salvador"
+  },
+  "CPV": {
+    "lowCarbon": 0.000522355578,
+    "naturalGas": 0.0,
+    "petroleum": 0.011829955578,
+    "coal": 0.0,
+    "total": 0.012352311156,
+    "isoCode": "CPV",
+    "countryName": "Cape Verde"
+  },
+  "ARM": {
+    "lowCarbon": 0.044061496845146,
+    "naturalGas": 0.0819354718344,
+    "petroleum": 0.012106914,
+    "coal": 2.7224010746056e-05,
+    "total": 0.13813110669029,
+    "isoCode": "ARM",
+    "countryName": "Armenia"
+  },
+  "REU": {
+    "lowCarbon": 0.006638425252,
+    "naturalGas": 0.0,
+    "petroleum": 0.037769817252,
+    "coal": 0.0,
+    "total": 0.044408242504,
+    "isoCode": "REU",
+    "countryName": "Reunion"
+  },
+  "TON": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.001895233278,
+    "coal": 0.0,
+    "total": 0.001895233278,
+    "isoCode": "TON",
+    "countryName": "Tonga"
+  },
+  "CIV": {
+    "lowCarbon": 0.0093279885079,
+    "naturalGas": 0.0816591534759,
+    "petroleum": 0.102387787032,
+    "coal": 0.0,
+    "total": 0.1933749290158,
+    "isoCode": "CIV",
+    "countryName": "Cote dIvoire (IvoryCoast)"
+  },
+  "CRI": {
+    "lowCarbon": 0.098516825356774,
+    "naturalGas": 0.0,
+    "petroleum": 0.110030214,
+    "coal": 2.9117811610009e-06,
+    "total": 0.20854995113793,
+    "isoCode": "CRI",
+    "countryName": "Costa Rica"
+  },
+  "GMB": {
+    "lowCarbon": 0.00016632873,
+    "naturalGas": 0.0,
+    "petroleum": 0.00812847753,
+    "coal": 0.0,
+    "total": 0.00829480626,
+    "isoCode": "GMB",
+    "countryName": "Gambia, The"
+  },
+  "ISR": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.35986488574228,
+    "petroleum": 0.448797091,
+    "coal": 0.22891978358273,
+    "total": 1.037581760325,
+    "isoCode": "ISR",
+    "countryName": "Israel"
+  },
+  "CAF": {
+    "lowCarbon": 0.001345990044,
+    "naturalGas": 0.0,
+    "petroleum": 0.005772857244,
+    "coal": 0.0,
+    "total": 0.007118847288,
+    "isoCode": "CAF",
+    "countryName": "Central African Republic"
+  },
+  "UZB": {
+    "lowCarbon": 0.10422676781543,
+    "naturalGas": 1.490848411914,
+    "petroleum": 0.100542396,
+    "coal": 0.068440359901428,
+    "total": 1.7640579356309,
+    "isoCode": "UZB",
+    "countryName": "Uzbekistan"
+  },
+  "SOM": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.011670568434,
+    "coal": 0.0,
+    "total": 0.011670568434,
+    "isoCode": "SOM",
+    "countryName": "Somalia"
+  },
+  "THA": {
+    "lowCarbon": 0.33106521599002,
+    "naturalGas": 1.7930740198668,
+    "petroleum": 2.613536094,
+    "coal": 0.68092917126946,
+    "total": 5.4186045011263,
+    "isoCode": "THA",
+    "countryName": "Thailand"
+  },
+  "AFG": {
+    "lowCarbon": 0.025484870871233,
+    "naturalGas": 0.00611188334577,
+    "petroleum": 0.070188915072,
+    "coal": 0.035376120453463,
+    "total": 0.13716178974247,
+    "isoCode": "AFG",
+    "countryName": "Afghanistan"
+  },
+  "BHS": {
+    "lowCarbon": 0.00031657526,
+    "naturalGas": 0.0,
+    "petroleum": 0.04229811126,
+    "coal": 0.0,
+    "total": 0.04261468652,
+    "isoCode": "BHS",
+    "countryName": "Bahamas, The"
+  },
+  "SYR": {
+    "lowCarbon": 0.0080251997364348,
+    "naturalGas": 0.138655691505,
+    "petroleum": 0.291880974,
+    "coal": 9.2137597955018e-05,
+    "total": 0.43865400283939,
+    "isoCode": "SYR",
+    "countryName": "Syria"
+  },
+  "SAU": {
+    "lowCarbon": 0.0,
+    "naturalGas": 3.9148542669951,
+    "petroleum": 6.917214804,
+    "coal": 0.002686375934148,
+    "total": 10.834755446929,
+    "isoCode": "SAU",
+    "countryName": "Saudi Arabia"
+  },
+  "BMU": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.010815029526,
+    "coal": 0.0,
+    "total": 0.010815029526,
+    "isoCode": "BMU",
+    "countryName": "Bermuda"
+  },
+  "JOR": {
+    "lowCarbon": 0.010953938256408,
+    "naturalGas": 0.1494490072358,
+    "petroleum": 0.230370648,
+    "coal": 0.0045060322015808,
+    "total": 0.39527962569379,
+    "isoCode": "JOR",
+    "countryName": "Jordan"
+  },
+  "TCA": {
+    "lowCarbon": 2.7369e-05,
+    "naturalGas": 0.0,
+    "petroleum": 0.003027369,
+    "coal": 0.0,
+    "total": 0.003054738,
+    "isoCode": "TCA",
+    "countryName": "Turks and Caicos Islands"
+  },
+  "SGP": {
+    "lowCarbon": 0.014594789876691,
+    "naturalGas": 0.45773754778744,
+    "petroleum": 3.024075732,
+    "coal": 0.015205050769448,
+    "total": 3.5116131204336,
+    "isoCode": "SGP",
+    "countryName": "Singapore"
+  },
+  "LSO": {
+    "lowCarbon": 0.005946911382,
+    "naturalGas": 0.0,
+    "petroleum": 0.009965915382,
+    "coal": 0.0,
+    "total": 0.015912826764,
+    "isoCode": "LSO",
+    "countryName": "Lesotho"
+  },
+  "PER": {
+    "lowCarbon": 0.23864932416147,
+    "naturalGas": 0.35395040753241,
+    "petroleum": 0.4826442,
+    "coal": 0.028332701182218,
+    "total": 1.1035766328761,
+    "isoCode": "PER",
+    "countryName": "Peru"
+  },
+  "MWI": {
+    "lowCarbon": 0.013158819322153,
+    "naturalGas": 0.0,
+    "petroleum": 0.012297099678,
+    "coal": 0.0019369196441526,
+    "total": 0.027392838644305,
+    "isoCode": "MWI",
+    "countryName": "Malawi"
+  },
+  "SRB": {
+    "lowCarbon": 0.11187460846178,
+    "naturalGas": 0.0827379774886,
+    "petroleum": 0.1513052235,
+    "coal": 0.30988297879486,
+    "total": 0.65580078824525,
+    "isoCode": "SRB",
+    "countryName": "Serbia"
+  },
+  "ESP": {
+    "lowCarbon": 1.5372108205667,
+    "naturalGas": 1.1032541246895,
+    "petroleum": 2.69505513,
+    "coal": 0.40257410245661,
+    "total": 5.7380941777128,
+    "isoCode": "ESP",
+    "countryName": "Spain"
+  },
+  "LVA": {
+    "lowCarbon": 0.036027561241689,
+    "naturalGas": 0.050158412092881,
+    "petroleum": 0.077821013,
+    "coal": 0.0014552649488079,
+    "total": 0.16546225128338,
+    "isoCode": "LVA",
+    "countryName": "Latvia"
+  },
+  "ZMB": {
+    "lowCarbon": 0.10535130360171,
+    "naturalGas": 0.0,
+    "petroleum": 0.04570059,
+    "coal": 0.004091181601714,
+    "total": 0.15514307520343,
+    "isoCode": "ZMB",
+    "countryName": "Zambia"
+  },
+  "GIB": {
+    "lowCarbon": 0.000339694,
+    "naturalGas": 0.0,
+    "petroleum": 0.170339694,
+    "coal": 0.0,
+    "total": 0.170679388,
+    "isoCode": "GIB",
+    "countryName": "Gibraltar"
+  },
+  "MNE": {
+    "lowCarbon": 0.018461183706409,
+    "naturalGas": 0.0,
+    "petroleum": 0.014084778,
+    "coal": 0.012490757706409,
+    "total": 0.045036719412818,
+    "isoCode": "MNE",
+    "countryName": "Montenegro"
+  },
+  "SYC": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.01559496354,
+    "coal": 0.0,
+    "total": 0.01559496354,
+    "isoCode": "SYC",
+    "countryName": "Seychelles"
+  },
+  "BEL": {
+    "lowCarbon": 0.59109448439486,
+    "naturalGas": 0.62288610905623,
+    "petroleum": 1.366870113,
+    "coal": 0.10175951146345,
+    "total": 2.6826102179145,
+    "isoCode": "BEL",
+    "countryName": "Belgium"
+  },
+  "MSR": {
+    "lowCarbon": 0.000813569688,
+    "naturalGas": 0.0,
+    "petroleum": 0.000813569688,
+    "coal": 0.0,
+    "total": 0.001627139376,
+    "isoCode": "MSR",
+    "countryName": "Montserrat"
+  },
+  "SSD": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.016809496476,
+    "coal": 0.0,
+    "total": 0.016809496476,
+    "isoCode": "SSD",
+    "countryName": "South Sudan"
+  },
+  "FIN": {
+    "lowCarbon": 0.58256949980587,
+    "naturalGas": 0.090526945831532,
+    "petroleum": 0.430688971,
+    "coal": 0.12716166883571,
+    "total": 1.2309470854731,
+    "isoCode": "FIN",
+    "countryName": "Finland"
+  },
+  "CUB": {
+    "lowCarbon": 0.0070884369154522,
+    "naturalGas": 0.0417237012384,
+    "petroleum": 0.330716136,
+    "coal": 4.8659346281927e-05,
+    "total": 0.37957693350013,
+    "isoCode": "CUB",
+    "countryName": "Cuba"
+  },
+  "BHR": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.566823814047,
+    "petroleum": 0.126554016,
+    "coal": 0.0,
+    "total": 0.693377830047,
+    "isoCode": "BHR",
+    "countryName": "Bahrain"
+  },
+  "MNG": {
+    "lowCarbon": 0.0063021545425656,
+    "naturalGas": 0.0,
+    "petroleum": 0.042830052,
+    "coal": 0.14363937454257,
+    "total": 0.19277158108513,
+    "isoCode": "MNG",
+    "countryName": "Mongolia"
+  },
+  "HND": {
+    "lowCarbon": 0.041462300334878,
+    "naturalGas": 0.0,
+    "petroleum": 0.121565802,
+    "coal": 0.0042214726575307,
+    "total": 0.16724957499241,
+    "isoCode": "HND",
+    "countryName": "Honduras"
+  },
+  "CYP": {
+    "lowCarbon": 0.0038687285943874,
+    "naturalGas": 0.0,
+    "petroleum": 0.110959854,
+    "coal": 3.7385943874387e-06,
+    "total": 0.11483232118877,
+    "isoCode": "CYP",
+    "countryName": "Cyprus"
+  },
+  "FJI": {
+    "lowCarbon": 0.004722150156,
+    "naturalGas": 0.0,
+    "petroleum": 0.033069222156,
+    "coal": 0.0,
+    "total": 0.037791372312,
+    "isoCode": "FJI",
+    "countryName": "Fiji"
+  },
+  "NER": {
+    "lowCarbon": 0.0031571291008242,
+    "naturalGas": 0.0,
+    "petroleum": 0.024068892,
+    "coal": 0.0053841291008242,
+    "total": 0.032610150201648,
+    "isoCode": "NER",
+    "countryName": "Niger"
+  },
+  "OMN": {
+    "lowCarbon": 0.00047138028686415,
+    "naturalGas": 0.78627582102429,
+    "petroleum": 0.376823718,
+    "coal": 0.0023718412625742,
+    "total": 1.1659427605737,
+    "isoCode": "OMN",
+    "countryName": "Oman"
+  },
+  "MYS": {
+    "lowCarbon": 0.19048420758354,
+    "naturalGas": 1.1009127704445,
+    "petroleum": 1.38236736,
+    "coal": 0.63261216113904,
+    "total": 3.3063764991671,
+    "isoCode": "MYS",
+    "countryName": "Malaysia"
+  },
+  "MTQ": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.036558882462,
+    "coal": 0.0,
+    "total": 0.036558882462,
+    "isoCode": "MTQ",
+    "countryName": "Martinique"
+  },
+  "AUT": {
+    "lowCarbon": 0.50282454788642,
+    "naturalGas": 0.31665142433356,
+    "petroleum": 0.560111435,
+    "coal": 0.09836699416625,
+    "total": 1.4779544013862,
+    "isoCode": "AUT",
+    "countryName": "Austria"
+  },
+  "CHE": {
+    "lowCarbon": 0.57971485854532,
+    "naturalGas": 0.1331689638516,
+    "petroleum": 0.46927975,
+    "coal": 0.0025175224894365,
+    "total": 1.1846810948864,
+    "isoCode": "CHE",
+    "countryName": "Switzerland"
+  },
+  "GAB": {
+    "lowCarbon": 0.0101386627809,
+    "naturalGas": 0.0140134507809,
+    "petroleum": 0.044125692,
+    "coal": 0.0,
+    "total": 0.0682778055618,
+    "isoCode": "GAB",
+    "countryName": "Gabon"
+  },
+  "RUS": {
+    "lowCarbon": 3.6099503623004,
+    "naturalGas": 15.893471808659,
+    "petroleum": 7.2304034196,
+    "coal": 4.7513061378308,
+    "total": 31.48513172839,
+    "isoCode": "RUS",
+    "countryName": "Russia"
+  },
+  "LTU": {
+    "lowCarbon": 0.049943871991733,
+    "naturalGas": 0.0803703949598,
+    "petroleum": 0.126175206,
+    "coal": 0.0064402084027089,
+    "total": 0.26292968135424,
+    "isoCode": "LTU",
+    "countryName": "Lithuania"
+  },
+  "CHN": {
+    "lowCarbon": 15.919730858417,
+    "naturalGas": 7.6424075079,
+    "petroleum": 25.693921084782,
+    "coal": 89.941695111949,
+    "total": 139.19775456305,
+    "isoCode": "CHN",
+    "countryName": "China"
+  },
+  "RWA": {
+    "lowCarbon": 0.002915854604,
+    "naturalGas": 0.0,
+    "petroleum": 0.013782386604,
+    "coal": 0.0,
+    "total": 0.016698241208,
+    "isoCode": "RWA",
+    "countryName": "Rwanda"
+  },
+  "PYF": {
+    "lowCarbon": 0.002101169406,
+    "naturalGas": 0.0,
+    "petroleum": 0.014002735806,
+    "coal": 0.0,
+    "total": 0.016103905212,
+    "isoCode": "PYF",
+    "countryName": "French Polynesia"
+  },
+  "CYM": {
+    "lowCarbon": 7.5835956e-05,
+    "naturalGas": 0.0,
+    "petroleum": 0.009075835956,
+    "coal": 0.0,
+    "total": 0.009151671912,
+    "isoCode": "CYM",
+    "countryName": "Cayman Islands"
+  },
+  "COG": {
+    "lowCarbon": 0.008692972656,
+    "naturalGas": 0.05176475841,
+    "petroleum": 0.035175155046,
+    "coal": 0.0,
+    "total": 0.095632886112,
+    "isoCode": "COG",
+    "countryName": "Congo (Brazzaville)"
+  },
+  "UGA": {
+    "lowCarbon": 0.029885055854,
+    "naturalGas": 0.0,
+    "petroleum": 0.065291899854,
+    "coal": 0.0,
+    "total": 0.095176955708,
+    "isoCode": "UGA",
+    "countryName": "Uganda"
+  },
+  "POL": {
+    "lowCarbon": 0.025431712228001,
+    "naturalGas": 0.64102548035373,
+    "petroleum": 1.173931782,
+    "coal": 2.2909029913584,
+    "total": 4.1312919659401,
+    "isoCode": "POL",
+    "countryName": "Poland"
+  },
+  "GBR": {
+    "lowCarbon": 1.4961032928814,
+    "naturalGas": 3.0476469487863,
+    "petroleum": 3.242847522,
+    "coal": 0.98289037461205,
+    "total": 8.7694881382798,
+    "isoCode": "GBR",
+    "countryName": "United Kingdom"
+  },
+  "MLI": {
+    "lowCarbon": 0.01357753924,
+    "naturalGas": 0.0,
+    "petroleum": 0.04621267524,
+    "coal": 0.0,
+    "total": 0.05979021448,
+    "isoCode": "MLI",
+    "countryName": "Mali"
+  },
+  "NPL": {
+    "lowCarbon": 0.046879916780617,
+    "naturalGas": 0.0,
+    "petroleum": 0.083214126,
+    "coal": 0.004074318780617,
+    "total": 0.13416836156123,
+    "isoCode": "NPL",
+    "countryName": "Nepal"
+  },
+  "BLR": {
+    "lowCarbon": 0.016034353012278,
+    "naturalGas": 0.6303685839137,
+    "petroleum": 0.284674068,
+    "coal": 0.014236299706254,
+    "total": 0.94531330463223,
+    "isoCode": "BLR",
+    "countryName": "Belarus"
+  },
+  "KGZ": {
+    "lowCarbon": 0.10615672640486,
+    "naturalGas": 0.0069448329391305,
+    "petroleum": 0.080379822,
+    "coal": 0.036322842278938,
+    "total": 0.22980422362293,
+    "isoCode": "KGZ",
+    "countryName": "Kyrgyzstan"
+  },
+  "PHL": {
+    "lowCarbon": 0.20195152100634,
+    "naturalGas": 0.113527326537,
+    "petroleum": 0.868557162,
+    "coal": 0.44518616174495,
+    "total": 1.6292221712883,
+    "isoCode": "PHL",
+    "countryName": "Philippines"
+  },
+  "VCT": {
+    "lowCarbon": 0.000483821574,
+    "naturalGas": 0.0,
+    "petroleum": 0.003234557574,
+    "coal": 0.0,
+    "total": 0.003718379148,
+    "isoCode": "VCT",
+    "countryName": "Saint Vincent/Grenadines"
+  },
+  "TUR": {
+    "lowCarbon": 0.85821249024803,
+    "naturalGas": 1.6841332976694,
+    "petroleum": 1.915974989,
+    "coal": 1.5107369241704,
+    "total": 5.9690577010878,
+    "isoCode": "TUR",
+    "countryName": "Turkey"
+  },
+  "MDV": {
+    "lowCarbon": 0.0,
+    "naturalGas": 0.0,
+    "petroleum": 0.022927646904,
+    "coal": 0.0,
+    "total": 0.022927646904,
+    "isoCode": "MDV",
+    "countryName": "Maldives"
+  },
+  "LAO": {
+    "lowCarbon": 0.092053346183116,
+    "naturalGas": 0.0,
+    "petroleum": 0.037500198594,
+    "coal": 0.068886435589116,
+    "total": 0.19843998036623,
+    "isoCode": "LAO",
+    "countryName": "Laos"
+  },
+  "KOR": {
+    "lowCarbon": 1.666736578782,
+    "naturalGas": 1.8146898807688,
+    "petroleum": 5.667827666,
+    "coal": 3.8119035271016,
+    "total": 12.961157652652,
+    "isoCode": "KOR",
+    "countryName": "Korea, South"
+  },
+  "STP": {
+    "lowCarbon": 0.000128930962,
+    "naturalGas": 0.0,
+    "petroleum": 0.002073538962,
+    "coal": 0.0,
+    "total": 0.002202469924,
+    "isoCode": "STP",
+    "countryName": "Sao Tome and Principe"
+  },
+  "PNG": {
+    "lowCarbon": 0.007451531078,
+    "naturalGas": 0.0036974805,
+    "petroleum": 0.079620658578,
+    "coal": 0.0,
+    "total": 0.090769670156,
+    "isoCode": "PNG",
+    "countryName": "Papua New Guinea"
+  },
+  "SPM": {
+    "lowCarbon": 0.0003861518,
+    "naturalGas": 0.0,
+    "petroleum": 0.0013861518,
+    "coal": 0.0,
+    "total": 0.0017723036,
+    "isoCode": "SPM",
+    "countryName": "Saint Pierre and Miquelon"
+  },
+  "NLD": {
+    "lowCarbon": 0.20551513591495,
+    "naturalGas": 1.3136844343206,
+    "petroleum": 2.027681102,
+    "coal": 0.42716694829576,
+    "total": 3.9740476205313,
+    "isoCode": "NLD",
+    "countryName": "Netherlands"
+  },
+  "KWT": {
+    "lowCarbon": 0.0010560998323285,
+    "naturalGas": 0.8230957094418,
+    "petroleum": 0.766062888,
+    "coal": 0.0082789583905285,
+    "total": 1.5984936556647,
+    "isoCode": "KWT",
+    "countryName": "Kuwait"
+  },
+  "BTN": {
+    "lowCarbon": 0.053983833523062,
+    "naturalGas": 0.0,
+    "petroleum": 0.006138540654,
+    "coal": 0.0014581864690615,
+    "total": 0.061580560646123,
+    "isoCode": "BTN",
+    "countryName": "Bhutan"
+  },
+  "NGA": {
+    "lowCarbon": 0.050905978689176,
+    "naturalGas": 0.6836642474748,
+    "petroleum": 0.849796734,
+    "coal": 0.0041243092143758,
+    "total": 1.5884912693784,
+    "isoCode": "NGA",
+    "countryName": "Nigeria"
+  },
+  "GRC": {
+    "lowCarbon": 0.17026112222,
+    "naturalGas": 0.15143948203345,
+    "petroleum": 0.615374764,
+    "coal": 0.18203172418655,
+    "total": 1.11910709244,
+    "isoCode": "GRC",
+    "countryName": "Greece"
+  },
+  "SDN": {
+    "lowCarbon": 0.073518354,
+    "naturalGas": 0.0,
+    "petroleum": 0.283735278,
+    "coal": 0.0,
+    "total": 0.357253632,
+    "isoCode": "SDN",
+    "countryName": "Sudan"
+  },
+  "BGD": {
+    "lowCarbon": 0.0065967135818162,
+    "naturalGas": 1.0838764966769,
+    "petroleum": 0.240821778,
+    "coal": 0.042159078904916,
+    "total": 1.3734540671636,
+    "isoCode": "BGD",
+    "countryName": "Bangladesh"
+  },
+  "UKR": {
+    "lowCarbon": 0.94113347100558,
+    "naturalGas": 1.1338369952726,
+    "petroleum": 0.48436074,
+    "coal": 1.3302019647554,
+    "total": 3.8895331710336,
+    "isoCode": "UKR",
+    "countryName": "Ukraine"
+  },
+  "SUR": {
+    "lowCarbon": 0.01047436,
+    "naturalGas": 0.0,
+    "petroleum": 0.027876024,
+    "coal": 0.0,
+    "total": 0.038350384,
+    "isoCode": "SUR",
+    "countryName": "Suriname"
+  },
+  "PRY": {
+    "lowCarbon": 0.41784586,
+    "naturalGas": 0.0,
+    "petroleum": 0.103203216,
+    "coal": 0.0,
+    "total": 0.521049076,
+    "isoCode": "PRY",
+    "countryName": "Paraguay"
+  },
+  "BGR": {
+    "lowCarbon": 0.21239037022988,
+    "naturalGas": 0.115445166888,
+    "petroleum": 0.19425999,
+    "coal": 0.23353249370026,
+    "total": 0.75562802081814,
+    "isoCode": "BGR",
+    "countryName": "Bulgaria"
+  },
+  "ROU": {
+    "lowCarbon": 0.37588991036028,
+    "naturalGas": 0.3829039908867,
+    "petroleum": 0.410182056,
+    "coal": 0.20148479638377,
+    "total": 1.3704607536307,
+    "isoCode": "ROU",
+    "countryName": "Romania"
+  },
+  "IRN": {
+    "lowCarbon": 0.20868714446599,
+    "naturalGas": 7.4073211964928,
+    "petroleum": 3.607034365998,
+    "coal": 0.037102790929265,
+    "total": 11.260145497886,
+    "isoCode": "IRN",
+    "countryName": "Iran"
+  },
+  "VIR": {
+    "lowCarbon": 0.00020840803255366,
+    "naturalGas": 0.0,
+    "petroleum": 0.033931448032554,
+    "coal": 0.0,
+    "total": 0.034139856065107,
+    "isoCode": "VIR",
+    "countryName": "Virgin Islands,  U.S."
+  },
+  "ABW": {
+    "lowCarbon": 0.001354786202,
+    "naturalGas": 0.0,
+    "petroleum": 0.017071538202,
+    "coal": 0.0,
+    "total": 0.018426324404,
+    "isoCode": "ABW",
+    "countryName": "Aruba"
+  },
+  "CHL": {
+    "lowCarbon": 0.30749577657131,
+    "naturalGas": 0.17755430714054,
+    "petroleum": 0.713098403,
+    "coal": 0.28182062499035,
+    "total": 1.4799691117022,
+    "isoCode": "CHL",
+    "countryName": "Chile"
+  },
+  "GEO": {
+    "lowCarbon": 0.10648579406484,
+    "naturalGas": 0.0827959959306,
+    "petroleum": 0.066662142,
+    "coal": 0.0072153569902166,
+    "total": 0.26315928898566,
+    "isoCode": "GEO",
+    "countryName": "Georgia"
+  },
+  "MRT": {
+    "lowCarbon": 0.002614556944,
+    "naturalGas": 0.0,
+    "petroleum": 0.035669548944,
+    "coal": 0.0,
+    "total": 0.038284105888,
+    "isoCode": "MRT",
+    "countryName": "Mauritania"
+  },
+  "GUM": {
+    "lowCarbon": 0.00078717204949526,
+    "naturalGas": 0.0,
+    "petroleum": 0.027177860049495,
+    "coal": 0.0,
+    "total": 0.027965032098991,
+    "isoCode": "GUM",
+    "countryName": "Guam"
+  },
+  "IRQ": {
+    "lowCarbon": 0.072020403988429,
+    "naturalGas": 0.040755229988429,
+    "petroleum": 1.789107186,
+    "coal": 0.0,
+    "total": 1.9018828199769,
+    "isoCode": "IRQ",
+    "countryName": "Iraq"
+  },
+  "PRT": {
+    "lowCarbon": 0.28179125768402,
+    "naturalGas": 0.19092263616233,
+    "petroleum": 0.49387699,
+    "coal": 0.11849225288294,
+    "total": 1.0850831367293,
+    "isoCode": "PRT",
+    "countryName": "Portugal"
+  },
+  "MUS": {
+    "lowCarbon": 0.0059687291968106,
+    "naturalGas": 0.0,
+    "petroleum": 0.0587979,
+    "coal": 0.018050013196811,
+    "total": 0.082816642393621,
+    "isoCode": "MUS",
+    "countryName": "Mauritius"
+  },
+  "NIC": {
+    "lowCarbon": 0.022884408,
+    "naturalGas": 0.0,
+    "petroleum": 0.076172652,
+    "coal": 0.0,
+    "total": 0.09905706,
+    "isoCode": "NIC",
+    "countryName": "Nicaragua"
+  },
+  "COK": {
+    "lowCarbon": 0.000278085972,
+    "naturalGas": 0.0,
+    "petroleum": 0.001241157972,
+    "coal": 0.0,
+    "total": 0.001519243944,
+    "isoCode": "COK",
+    "countryName": "Cook Islands"
+  },
+  "COL": {
+    "lowCarbon": 0.41349291706112,
+    "naturalGas": 0.35767945571901,
+    "petroleum": 0.721918164,
+    "coal": 0.27460704131425,
+    "total": 1.7676975780944,
+    "isoCode": "COL",
+    "countryName": "Colombia"
+  },
+  "NIU": {
+    "lowCarbon": 0.000104182998,
+    "naturalGas": 0.0,
+    "petroleum": 0.000104182998,
+    "coal": 0.0,
+    "total": 0.000208365996,
+    "isoCode": "NIU",
+    "countryName": "Niue"
+  },
+  "ITA": {
+    "lowCarbon": 1.1576028011613,
+    "naturalGas": 2.5607623942284,
+    "petroleum": 2.544079798,
+    "coal": 0.46155591077465,
+    "total": 6.7240009041643,
+    "isoCode": "ITA",
+    "countryName": "Italy"
+  },
+  "LBR": {
+    "lowCarbon": 0.000269998202,
+    "naturalGas": 0.0,
+    "petroleum": 0.016269998202,
+    "coal": 0.0,
+    "total": 0.016539996404,
+    "isoCode": "LBR",
+    "countryName": "Liberia"
+  },
+  "PRK": {
+    "lowCarbon": 0.11677559405865,
+    "naturalGas": 0.0,
+    "petroleum": 0.038814241806,
+    "coal": 0.22777398168979,
+    "total": 0.38336381755444,
+    "isoCode": "PRK",
+    "countryName": "Korea, North"
+  },
+  "USA": {
+    "lowCarbon": 17.411670558999,
+    "naturalGas": 28.400352,
+    "petroleum": 39.123619559,
+    "coal": 14.225972641795,
+    "total": 99.161614759795,
+    "isoCode": "USA",
+    "countryName": "United States"
+  },
+  "LCA": {
+    "lowCarbon": 0.000273128386,
+    "naturalGas": 0.0,
+    "petroleum": 0.006263896386,
+    "coal": 0.0,
+    "total": 0.006537024772,
+    "isoCode": "LCA",
+    "countryName": "Saint Lucia"
+  },
+  "VNM": {
+    "lowCarbon": 0.59633100494592,
+    "naturalGas": 0.3293502569224,
+    "petroleum": 0.95555463,
+    "coal": 1.317919928032,
+    "total": 3.1991558199004,
+    "isoCode": "VNM",
+    "countryName": "Vietnam"
+  },
+  "MAR": {
+    "lowCarbon": 0.059396039414313,
+    "naturalGas": 0.046524151185,
+    "petroleum": 0.537733788,
+    "coal": 0.13768847622931,
+    "total": 0.78134245482863,
+    "isoCode": "MAR",
+    "countryName": "Morocco"
+  },
+  "FRO": {
+    "lowCarbon": 0.001468471252,
+    "naturalGas": 0.0,
+    "petroleum": 0.010009815252,
+    "coal": 0.0,
+    "total": 0.011478286504,
+    "isoCode": "FRO",
+    "countryName": "Faroe Islands"
+  },
+  "JAM": {
+    "lowCarbon": 0.0052973359175368,
+    "naturalGas": 0.00063499117647058,
+    "petroleum": 0.11570175,
+    "coal": 0.0020307067410662,
+    "total": 0.12366478383507,
+    "isoCode": "JAM",
+    "countryName": "Jamaica"
+  }
+}

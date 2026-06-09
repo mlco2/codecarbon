@@ -1,0 +1,71 @@
+name: package-validation-reusable
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  MAIN_PYTHON_VERSION: 3.12
+
+jobs:
+  build-package:
+    if: github.event_name == 'release' || github.ref == 'refs/heads/master' || (github.event_name == 'pull_request' && github.base_ref == 'master')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          version: "latest"
+      - name: Set up Python
+        run: uv python install ${{ env.MAIN_PYTHON_VERSION }}
+      - name: Check versions
+        run: uv run python .github/pyproject_versions.py -c
+      - name: Build pip package
+        run: uv build
+      - name: Archive Pypi artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: pypi_dist
+          path: dist
+
+  test-package-from-wheel:
+    runs-on: ubuntu-24.04
+    needs: [build-package]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          sparse-checkout: |
+            tests/
+            pytest.ini
+            docs/
+            pyproject.toml
+            uv.lock
+          sparse-checkout-cone-mode: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          version: "latest"
+      - name: Set up Python
+        run: uv python install ${{ env.MAIN_PYTHON_VERSION }}
+      - name: Download built package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: pypi_dist
+          path: dist
+      - name: Sync dev dependencies from lockfile and install wheel
+        run: |
+          uv sync --python ${{ env.MAIN_PYTHON_VERSION }} --frozen --no-install-project --group dev
+          uv pip install --python .venv/bin/python dist/*.whl
+      - name: Test package integrity
+        run: |
+          .venv/bin/python -m pytest tests/test_package_integrity.py -v
+          CODECARBON_ALLOW_MULTIPLE_RUNS=True .venv/bin/python -m pytest \
+            --ignore=tests/test_viz_data.py \
+            -vv -m 'not integ_test' tests/
+      - name: Test CLI functionality
+        run: |
+          .venv/bin/codecarbon --help
+          .venv/bin/python -c "from codecarbon import EmissionsTracker; print('Package import successful')"

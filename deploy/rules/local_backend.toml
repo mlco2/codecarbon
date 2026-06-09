@@ -1,0 +1,16 @@
+[http]
+
+    [http.routers]
+
+      [http.routers.back-router]
+          # uncomment the next line to use local backend server
+          # rule = "(Host(`codecarbon.local`) && (PathPrefix(`/users`) || PathPrefix(`/auth`)|| PathPrefix(`/docs`)|| PathPrefix(`/organizations`) || PathPrefix(`/runs`) || PathPrefix(`/emissions`) || PathPrefix(`/projects`)|| PathPrefix(`/api`) || PathPrefix(`/auth-callback`) ))"
+
+          service = "back-service"
+          entrypoints=["web","websecure"]
+          priority = 10000
+
+    [http.services]
+      [http.services.back-service.loadbalancer]
+          [[http.services.back-service.loadbalancer.servers]]
+            url = "http://host.docker.internal:8000"

@@ -1,0 +1,17 @@
+name: package
+permissions:
+  contents: read
+on:
+  pull_request:
+    paths:
+      - "codecarbon/**"
+      - "pyproject.toml"
+    branches: [master]
+  push:
+    paths:
+      - "codecarbon/**"
+      - "pyproject.toml"
+    branches: [master]
+jobs:
+  validate-package:
+    uses: ./.github/workflows/package-validation-reusable.yml

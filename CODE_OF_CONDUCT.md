@@ -1,0 +1,1 @@
+docs/how-to/code-of-conduct.md

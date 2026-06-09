@@ -1,0 +1,824 @@
+{
+	"info": {
+		"_postman_id": "8765906a-21a1-482c-9b1f-65ca5677dfc6",
+		"name": "Test Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Add Emission",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"timestamp\": \"2021-04-04T08:43:00+02:00\",\n  \"run_id\": \"402e152a-0e89-4259-b920-41e85f6a414e\",\n  \"duration\": 98745,\n  \"emissions_sum\": 1544.54,\n  \"emissions_rate\": 1.548444,\n  \"cpu_power\": 0.3,\n  \"gpu_power\": 0,\n  \"ram_power\": 0.15,\n  \"cpu_energy\": 55.21874,\n  \"gpu_energy\": 0,\n  \"ram_energy\": 2,\n  \"energy_consumed\": 57.21874\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/emission",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"emission"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get emission by id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/emission/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"emission",
+						"1"
+					]
+				},
+				"description": "Get saved emission objects by id."
+			},
+			"response": []
+		},
+		{
+			"name": "Get emissions by run id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/emissions/run/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"emissions",
+						"run",
+						"1"
+					]
+				},
+				"description": "Get saved emission objects for example run id."
+			},
+			"response": []
+		},
+		{
+			"name": "Add Run",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"timestamp\": \"2021-04-04T08:43:00+02:00\",\n  \"experiment_id\": \"1\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/run",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Run by id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false,
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"timestamp\": \"2021-04-04T08:43:00+02:00\",\n  \"experiment_id\": \"1\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/run/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"run",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Runs",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false,
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"timestamp\": \"2021-04-04T08:43:00+02:00\",\n  \"experiment_id\": \"1\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/runs",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"runs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Runs by Experiment",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/runs/experiment/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"runs",
+						"experiment",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Experiment",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Run on AWS\",\n  \"description\": \"AWS API for Code Carbon\",\n  \"timestamp\": \"2021-04-04T08:43:00+02:00\",\n  \"country_name\": \"France\",\n  \"country_iso_code\": \"FRA\",\n  \"region\": \"france\",\n  \"on_cloud\": true,\n  \"cloud_provider\": \"aws\",\n  \"cloud_region\": \"eu-west-1a\",\n  \"project_id\": \"1\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/experiment",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"experiment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Experiment by id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/experiment/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"experiment",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Experiments by Project",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/experiments/project/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"experiments",
+						"project",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Organization",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"name\":\"Code Carbon\",\"description\":\"Save the world, one run at a time.\"}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/organization",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"organization"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Organization by Id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/organization/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"organization",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Organizations",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/organizations",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"organizations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Project",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"API Code Carbon\",\n  \"description\": \"API for Code Carbon\",\n  \"team_id\": \"1\"\n}\n"
+				},
+				"url": {
+					"raw": "http://localhost:8000/project",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"project"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Project",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/project/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"project",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Projects by Team",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token",
+						"type": "text"
+					},
+					{
+						"key": "token",
+						"value": "jessica",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/projects/team/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"projects",
+						"team",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Team",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Data For Good\",\n  \"description\": \"Data For Good France\",\n  \"organization_id\": \"1\"\n  \"api_key\": \"default\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/team",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"team"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Team",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/team/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"team",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Teams",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/teams",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"teams"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Teams by Organization",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x_token",
+						"value": "fake-super-secret-token"
+					},
+					{
+						"key": "token",
+						"value": "jessica"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/teams/organization/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"teams",
+						"organization",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add User",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\",\n  \"name\": \"string\",\n  \"password\": \"string\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/user",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get User by id",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/user/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Users",
+			"protocolProfileBehavior": {
+				"followRedirects": false,
+				"followOriginalHttpMethod": false,
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

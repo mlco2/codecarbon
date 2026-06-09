@@ -1,0 +1,467 @@
+"""
+https://fastapi.tiangolo.com/tutorial/sql-databases/
+
+To avoid confusion between the SQLAlchemy models and the Pydantic models, we will have the file models.py with the SQLAlchemy models, and the file schemas.py with the Pydantic models.
+
+These Pydantic models define more or less a "schema" (a valid data shape).
+
+So this will help us avoiding confusion while using both.
+"""
+
+from datetime import datetime
+from enum import Enum
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
+
+
+class Empty(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class UserBase(BaseModel):
+    email: str
+
+    def __repr__(self):
+        return f"User(email={self.email})"
+
+
+class UserAutoCreate(UserBase):
+    name: str
+    email: EmailStr
+    id: UUID
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id})"
+
+
+class UserAuthenticate(UserBase):
+    password: SecretStr
+
+
+class User(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    email: EmailStr
+    organizations: Optional[List[UUID]] = None
+    is_active: bool
+
+    def __repr__(self):
+        return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id}, organizations={self.organizations})"
+
+
+class EmissionBase(BaseModel):
+    timestamp: datetime
+    run_id: UUID
+    duration: int = Field(
+        ..., gt=0, description="The duration must be greater than zero"
+    )
+    emissions_sum: Optional[float] = Field(
+        ..., ge=0, description="The emissions must be greater than zero"
+    )
+    emissions_rate: Optional[float] = Field(
+        ..., ge=0, description="The emissions rate must be greater than zero"
+    )
+    energy_consumed: Optional[float] = Field(
+        ..., ge=0, description="The energy_consumed must be greater than zero"
+    )
+    cpu_power: Optional[float] = Field(
+        ..., ge=0, description="The cpu_power must be greater than zero"
+    )
+    gpu_power: Optional[float] = Field(
+        ..., ge=0, description="The gpu_power must be greater than zero"
+    )
+    ram_power: Optional[float] = Field(
+        ..., ge=0, description="The ram_power must be greater than zero"
+    )
+    cpu_energy: Optional[float] = Field(
+        ..., ge=0, description="The cpu_energy must be greater than zero"
+    )
+    gpu_energy: Optional[float] = Field(
+        ..., ge=0, description="The gpu_energy must be greater than zero"
+    )
+    ram_energy: Optional[float] = Field(
+        ..., ge=0, description="The ram_energy must be greater than zero"
+    )
+    cpu_utilization_percent: Optional[float] = Field(
+        None, ge=0, le=100, description="The CPU utilization must be between 0 and 100"
+    )
+    gpu_utilization_percent: Optional[float] = Field(
+        None, ge=0, le=100, description="The GPU utilization must be between 0 and 100"
+    )
+    ram_utilization_percent: Optional[float] = Field(
+        None, ge=0, le=100, description="The RAM utilization must be between 0 and 100"
+    )
+    wue: Optional[float] = Field(
+        default=0,
+        ge=0,
+        description="The WUE (Water Usage Effectiveness) must be greater than or equal to zero",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "timestamp": "2021-04-04T08:43:00+02:00",
+                "run_id": "40088f1a-d28e-4980-8d80-bf5600056a14",
+                "duration": 98745,
+                "emissions_sum": 1544.54,
+                "emissions_rate": 1.548444,
+                "cpu_power": 0.3,
+                "gpu_power": 0.0,
+                "ram_power": 0.15,
+                "cpu_energy": 55.21874,
+                "gpu_energy": 0.0,
+                "ram_energy": 2.0,
+                "energy_consumed": 57.21874,
+                "wue": 0,
+            }
+        }
+    )
+
+
+class EmissionCreate(EmissionBase):
+    pass
+
+
+class Emission(EmissionBase):
+    id: UUID
+
+
+class RunBase(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "timestamp": "2021-04-04T08:43:00+02:00",
+                "experiment_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "os": "macOS-10.15.7-x86_64-i386-64bit",
+                "python_version": "3.8.0",
+                "codecarbon_version": "2.1.3",
+                "cpu_count": 12,
+                "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+                "gpu_count": 4,
+                "gpu_model": "NVIDIA",
+                "longitude": -7.6174,
+                "latitude": 33.5822,
+                "region": "EUROPE",
+                "provider": "AWS",
+                "ram_total_size": 83948.22,
+                "tracking_mode": "Machine",
+            }
+        }
+    )
+
+    timestamp: datetime
+    experiment_id: UUID
+    os: Optional[str] = None
+    python_version: Optional[str] = None
+    codecarbon_version: Optional[str] = None
+    cpu_count: Optional[int] = None
+    cpu_model: Optional[str] = None
+    gpu_count: Optional[int] = None
+    gpu_model: Optional[str] = None
+    longitude: Optional[float] = None
+    latitude: Optional[float] = None
+    region: Optional[str] = None
+    provider: Optional[str] = None
+    ram_total_size: Optional[float] = None
+    tracking_mode: Optional[str] = None
+
+
+class RunCreate(RunBase):
+    pass
+
+
+class Run(RunBase):
+    id: UUID
+
+
+class RunReport(RunBase):
+    run_id: UUID
+    timestamp: datetime
+    experiment_id: Optional[UUID] = None
+    emissions: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: float
+    emissions_rate: float
+    emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
+
+
+class ExperimentBase(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "name": "Run on AWS",
+                "description": "AWS API for Code Carbon",
+                "timestamp": "2021-04-04T08:43:00+02:00",
+                "country_name": "France",
+                "country_iso_code": "FRA",
+                "region": "france",
+                "on_cloud": True,
+                "cloud_provider": "aws",
+                "cloud_region": "eu-west-1a",
+                "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+            }
+        },
+    )
+
+    name: str
+    description: str
+    country_name: Optional[str] = None
+    country_iso_code: Optional[str] = None
+    region: Optional[str] = None
+    on_cloud: Optional[bool] = None
+    cloud_provider: Optional[str] = None
+    cloud_region: Optional[str] = None
+    timestamp: Optional[datetime] = None
+    project_id: UUID
+
+
+class ExperimentCreate(ExperimentBase):
+    pass
+
+
+class Experiment(ExperimentBase):
+    id: UUID
+    timestamp: datetime
+
+
+class ExperimentReport(ExperimentBase):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "experiment_id": "943b2aa5-9e21-41a9-8a38-562505b4b2aa",
+            "timestamp": "2021-10-07T20:19:27.716693",
+            "name": "Code Carbon user test",
+            "description": "Code Carbon user test with default project",
+            "country_name": "France",
+            "country_iso_code": "FRA",
+            "region": "france",
+            "on_cloud": False,
+            "cloud_provider": None,
+            "cloud_region": None,
+            "emission": 152.28955200363455,
+            "cpu_power": 5760,
+            "gpu_power": 2983.9739999999993,
+            "ram_power": 806.0337192959997,
+            "cpu_energy": 191.8251863024175,
+            "gpu_energy": 140.01098718681496,
+            "ram_energy": 26.84332784201141,
+            "energy_consumed": 358.6795013312438,
+            "duration": 7673204,
+            "emissions_rate": 1.0984556074701752,
+            "emissions_count": 64,
+        }
+    )
+
+    experiment_id: UUID
+    timestamp: datetime
+    name: str
+    description: str
+    country_name: Optional[str] = None
+    country_iso_code: Optional[str] = None
+    region: Optional[str] = None
+    on_cloud: Optional[bool] = None
+    cloud_provider: Optional[str] = None
+    cloud_region: Optional[str] = None
+    emissions: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate: float
+    emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
+
+
+class ProjectBase(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "API Code Carbon",
+                "description": "API for Code Carbon",
+                "organization_id": "Code Carbon organization",
+            }
+        }
+    )
+
+    name: str
+    description: str
+    organization_id: UUID
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+class ProjectPatch(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "API Code Carbon",
+                "description": "API for Code Carbon",
+            }
+        }
+    )
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+    public: Optional[bool] = None
+
+    # do not allow the organization_id
+
+
+class AccessLevel(Enum):
+    READ = 1
+    WRITE = 2
+    READ_WRITE = 3
+
+
+# Used in the responses to the user
+class ProjectToken(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+                "name": "my project token",
+                "last_used": "2021-04-04T08:43:00+02:00",
+                "access": 1,
+                "revoked": False,
+            }
+        }
+    )
+
+    id: UUID
+    project_id: UUID
+    name: Optional[str] = None
+    token: Optional[str] = None
+    last_used: Optional[datetime] = None
+    access: int = AccessLevel.WRITE.value
+    revoked: bool = False
+
+
+# Used to handle responses from the database
+class ProjectTokenInternal(ProjectToken):
+    id: Optional[str] = None
+    hashed_token: str
+
+
+class ProjectTokenCreate(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "my project token",
+                "access": 1,
+            }
+        }
+    )
+
+    name: Optional[str] = None
+    access: int = AccessLevel.WRITE.value
+
+
+class Project(ProjectBase):
+    id: UUID
+    experiments: Optional[List[str]] = []
+    public: Optional[bool] = None
+
+
+class ProjectReport(ProjectBase):
+    project_id: UUID
+    name: str
+    description: str
+    emissions: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate: float
+    emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
+
+
+class OrganizationBase(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "Code Carbon",
+                "description": "Save the world, one run at a time.",
+            }
+        }
+    )
+
+    name: str
+    description: str
+
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+
+class OrganizationPatch(OrganizationBase):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class Organization(OrganizationBase):
+    id: UUID
+
+
+class OrganizationReport(OrganizationBase):
+    organization_id: UUID
+    name: str
+    description: str
+    emissions: float
+    cpu_power: float
+    gpu_power: float
+    ram_power: float
+    cpu_energy: float
+    gpu_energy: float
+    ram_energy: float
+    energy_consumed: float
+    duration: int
+    emissions_rate: float
+    emissions_count: int
+    cpu_utilization_percent: Optional[float] = None
+    gpu_utilization_percent: Optional[float] = None
+    ram_utilization_percent: Optional[float] = None
+
+
+class Membership(BaseModel):
+    user_id: UUID
+    organization_id: UUID
+    is_admin: bool
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class OrganizationUser(User):
+    organization_id: UUID
+    is_admin: bool

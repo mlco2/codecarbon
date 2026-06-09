@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "https://raw.githubusercontent.com/Boavizta/BoAmps/main/model/hardware_schema.json",
+  "title": "hardware",
+  "description": "a hardware subsystem part of the infrastructure running the computing task",
+  "type": "object",
+  "properties": {
+    "componentName": {
+      "type": "string",
+      "description": "the name of this subsystem part of your infrastructure, example returned by codecarbon: 1 x NVIDIA GeForce GTX 1080 Ti"
+    },
+    "componentType": {
+      "type": "string",
+      "description": "the type of this subsystem part of your infrastructure, example: cpu, gpu, ram, hdd, sdd..."
+    },
+    "nbComponent": {
+      "type": "integer",
+      "description": "the number of items of this component in your infrastructure, if you have 1 RAM of 32Go, fill 1 here and 32 inside memorySize"
+    },
+    "memorySize": {
+      "type": "number",
+      "description": "the size of the memory of the component in Gbytes, useful to detail the memory associated to ONE of your gpus for example (if we want the total memory, we will multiply the memorySize by nbComponent). If the component is CPU do not fill the RAM size here, create another component for RAM, this field is for the embeded memory of a component."
+    },
+    "manufacturer": {
+      "type": "string",
+      "description": "the name of the manufacturer, example: nvidia"
+    },
+    "family": {
+      "type": "string",
+      "description": "the family of this component, example: geforce"
+    },
+    "series": {
+      "type": "string",
+      "description": "the series of this component, example: gtx1080"
+    },
+    "share": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "the percentage of the physical equipment used by the task, this sharing property should be set to 1 by default (if no share) and otherwise to the correct percentage, e.g. 0.5 if you share half-time."
+    }
+  },
+  "required": ["componentType", "nbComponent"]
+}

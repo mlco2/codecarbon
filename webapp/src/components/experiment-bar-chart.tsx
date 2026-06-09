@@ -1,0 +1,153 @@
+import { ExperimentReport } from "@/api/schemas";
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import {
+    ChartConfig,
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from "@/components/ui/chart";
+import { exportExperimentsToCsv } from "@/utils/export";
+import { useMemo, useState } from "react";
+import ChartSkeleton from "./chart-skeleton";
+import { ExportCsvButton } from "./export-csv-button";
+
+interface ExperimentsBarChartProps {
+    isPublicView: boolean;
+    experimentsReportData: ExperimentReport[];
+    onExperimentClick: (experimentId: string) => void;
+    selectedExperimentId: string;
+    localLoading?: boolean;
+    projectName: string;
+}
+
+const chartConfig = {
+    desktop: {
+        label: "Emissions",
+        color: "hsl(var(--primary))",
+    },
+    mobile: {
+        label: "Energy consumed",
+        color: "hsl(var(--secondary))",
+    },
+} satisfies ChartConfig;
+
+export default function ExperimentsBarChart({
+    isPublicView,
+    experimentsReportData,
+    onExperimentClick,
+    selectedExperimentId,
+    localLoading = false,
+    projectName,
+}: ExperimentsBarChartProps) {
+    const [isExporting, setIsExporting] = useState(false);
+
+    const selectedBar = useMemo(
+        () =>
+            experimentsReportData.findIndex(
+                (experiment) =>
+                    experiment.experiment_id === selectedExperimentId,
+            ),
+        [experimentsReportData, selectedExperimentId],
+    );
+
+    const CustomBar = useMemo(
+        () => (props: any) => {
+            const { x, y, width, height, index, payload } = props;
+            const barFill =
+                selectedBar === index
+                    ? "var(--color-desktop)"
+                    : "var(--color-mobile)";
+            return (
+                <rect
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    fill={barFill}
+                    onClick={() => onExperimentClick(payload.experiment_id)}
+                    cursor="pointer"
+                />
+            );
+        },
+        [selectedBar, onExperimentClick],
+    );
+    if (localLoading) {
+        return <ChartSkeleton height={300} />;
+    }
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Project experiment runs</CardTitle>
+                    <CardDescription>
+                        Click an experiment to see the runs on the chart on the
+                        right
+                    </CardDescription>
+                </div>
+                {!isPublicView && (
+                    <ExportCsvButton
+                        isDisabled={
+                            isExporting || experimentsReportData.length === 0
+                        }
+                        onDownload={async () => {
+                            setIsExporting(true);
+                            exportExperimentsToCsv(
+                                experimentsReportData,
+                                projectName,
+                            );
+                            setIsExporting(false);
+                        }}
+                        loadingMessage="Exporting experiments..."
+                        successMessage="Experiments exported successfully"
+                        errorMessage="Failed to export experiments"
+                    />
+                )}
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig}>
+                    {experimentsReportData.length > 0 ? (
+                        <BarChart
+                            accessibilityLayer
+                            data={experimentsReportData}
+                        >
+                            <CartesianGrid vertical={false} />
+                            <XAxis
+                                dataKey="name"
+                                tickLine={false}
+                                tickMargin={10}
+                                axisLine={false}
+                                tickFormatter={(value) => value.slice(0, 3)}
+                            />
+                            <ChartTooltip
+                                cursor={false}
+                                content={
+                                    <ChartTooltipContent indicator="dashed" />
+                                }
+                            />
+                            <Bar
+                                dataKey="emissions"
+                                shape={<CustomBar />}
+                                radius={4}
+                            />
+                        </BarChart>
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-sm text-muted-foreground">
+                                No data available
+                            </p>
+                        </div>
+                    )}
+                </ChartContainer>
+            </CardContent>
+        </Card>
+    );
+}

@@ -1,0 +1,524 @@
+"""
+Encapsulates external dependencies to retrieve hardware metadata
+"""
+
+import math
+import re
+import time
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Dict, Iterable, List, Optional, Tuple
+
+import psutil
+
+from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
+from codecarbon.core.gpu import AllGPUDevices
+from codecarbon.core.powermetrics import ApplePowermetrics
+from codecarbon.core.units import Energy, Power, Time
+from codecarbon.core.util import count_cpus, detect_cpu_model
+from codecarbon.external.logger import logger
+
+# default W value for a CPU if no model is found in the ref csv
+POWER_CONSTANT = 85
+
+#  ratio of TDP estimated to be consumed on average
+CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
+
+B_TO_GB = 1024 * 1024 * 1024
+
+MODE_CPU_LOAD = "cpu_load"
+
+
+@dataclass
+class BaseHardware(ABC):
+    @abstractmethod
+    def total_power(self) -> Power:
+        pass
+
+    def description(self) -> str:
+        return repr(self)
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        """
+        Base implementation: we get the power from the
+        hardware and convert it to energy.
+        """
+        power = self.total_power()
+        energy = Energy.from_power_and_time(
+            power=power, time=Time.from_seconds(last_duration)
+        )
+        return power, energy
+
+    def start(self) -> None:  # noqa B027
+        pass
+
+
+@dataclass
+class GPU(BaseHardware):
+    gpu_ids: Optional[List]
+
+    def __repr__(self) -> str:
+        return super().__repr__() + " ({})".format(
+            ", ".join([d["name"] for d in self.devices.get_gpu_details()])
+        )
+
+    def __post_init__(self):
+        self.devices = AllGPUDevices()
+        self.num_gpus = self.devices.device_count
+        self._total_power = Power(
+            0  # It will be 0 until we call for the first time measure_power_and_energy
+        )
+        self._gpu_ids_resolved = False
+
+    def start(self) -> None:
+        if hasattr(self.devices, "start"):
+            self.devices.start()
+
+    def measure_power_and_energy(
+        self, last_duration: float, gpu_ids: Iterable[int] = None
+    ) -> Tuple[Power, Energy]:
+        if not gpu_ids:
+            gpu_ids = self._get_gpu_ids()
+        all_gpu_details: List[Dict] = self.devices.get_delta(
+            Time.from_seconds(last_duration)
+        )
+        # We get the total energy and power of only the ones in gpu_ids
+        total_energy = Energy.from_energy(
+            sum(
+                [
+                    gpu_details["delta_energy_consumption"].kWh
+                    for gpu_details in all_gpu_details
+                    if gpu_details["gpu_index"] in gpu_ids
+                ]
+            )
+        )
+        self._total_power = Power(
+            sum(
+                [
+                    gpu_details["power_usage"].kW
+                    for gpu_details in all_gpu_details
+                    if gpu_details["gpu_index"] in gpu_ids
+                ]
+            )
+        )
+        return self._total_power, total_energy
+
+    def _get_gpu_ids(self) -> Iterable[int]:
+        """
+        Get the Ids of the GPUs that we will monitor
+        :return: list of ids
+        """
+        if getattr(self, "_gpu_ids_resolved", False):
+            return (
+                self.gpu_ids if self.gpu_ids is not None else list(range(self.num_gpus))
+            )
+
+        if self.gpu_ids is not None:
+            uuids_to_ids = {
+                gpu.get("uuid"): gpu.get("gpu_index")
+                for gpu in self.devices.get_gpu_static_info()
+            }
+            monitored_gpu_ids = []
+
+            for gpu_id in self.gpu_ids:
+                logger.debug(f"Processing GPU ID: '{gpu_id}' (type: {type(gpu_id)})")
+                found_gpu_id = False
+                # Does it look like an index into the number of GPUs on the system?
+                if isinstance(gpu_id, int) or gpu_id.isdigit():
+                    gpu_id = int(gpu_id)
+                    if 0 <= gpu_id < self.num_gpus:
+                        monitored_gpu_ids.append(gpu_id)
+                        self._emit_selection_warning_for_gpu_id(gpu_id)
+                        found_gpu_id = True
+                    else:
+                        logger.warning(
+                            f"GPU ID {gpu_id} out of range [0, {self.num_gpus})"
+                        )
+                # Does it match a prefix of any UUID on the system after stripping any 'MIG-'
+                # id prefix per https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#cuda-environment-variables ?
+                else:
+                    stripped_gpu_id_str = gpu_id.lstrip("MIG-")
+                    for uuid, id in uuids_to_ids.items():
+                        if uuid.startswith(stripped_gpu_id_str):
+                            logger.debug(
+                                f"Matching GPU ID {stripped_gpu_id_str} (originally {gpu_id}) against {uuid} for GPU index {id}"
+                            )
+                            monitored_gpu_ids.append(id)
+                            self._emit_selection_warning_for_gpu_id(id)
+                            found_gpu_id = True
+                            break
+                if not found_gpu_id:
+                    logger.warning(
+                        f"GPU with ID '{gpu_id}' not found or invalid. It will be ignored."
+                    )
+
+            monitored_gpu_ids = sorted(list(set(monitored_gpu_ids)))
+            logger.info(
+                f"Monitoring GPUs with indices: {monitored_gpu_ids} out of {self.num_gpus} total GPUs"
+            )
+            self.gpu_ids = monitored_gpu_ids
+            self._gpu_ids_resolved = True
+            return monitored_gpu_ids
+        else:
+            self._gpu_ids_resolved = True
+            return list(range(self.num_gpus))
+
+    def _emit_selection_warning_for_gpu_id(self, gpu_id: int) -> None:
+        for device in self.devices.devices:
+            if device.gpu_index != gpu_id:
+                continue
+            device.emit_selection_warning()
+
+    def total_power(self) -> Power:
+        return self._total_power
+
+    @classmethod
+    def from_utils(cls, gpu_ids: Optional[List] = None) -> "GPU":
+        gpus = cls(gpu_ids=gpu_ids)
+        new_gpu_ids = gpus._get_gpu_ids()
+        if len(new_gpu_ids) < gpus.num_gpus:
+            logger.warning(
+                f"You have {gpus.num_gpus} GPUs but we will monitor only {len(new_gpu_ids)} ({new_gpu_ids}) of them."
+            )
+        return cls(gpu_ids=new_gpu_ids)
+
+
+@dataclass
+class CPU(BaseHardware):
+    def __init__(
+        self,
+        output_dir: str,
+        mode: str,
+        model: str,
+        tdp: int,
+        rapl_dir: str = "/sys/class/powercap/intel-rapl/subsystem",
+        tracking_mode: str = "machine",
+        rapl_include_dram: bool = False,
+        rapl_prefer_psys: bool = False,
+    ):
+        assert tracking_mode in ["machine", "process"]
+        self._power_history: List[Power] = []
+        self._output_dir = output_dir
+        self._mode = mode
+        self._model = model
+        self._tdp = tdp
+        self._is_generic_tdp = False
+        self._tracking_mode = tracking_mode
+        self._pid = psutil.Process().pid
+        self._cpu_count = count_cpus()
+        self._process = psutil.Process(self._pid)
+        # For process tracking: store last measurement time and CPU times
+        self._last_measurement_time: Optional[float] = None
+        self._last_cpu_times: Dict[int, float] = {}  # pid -> total cpu time
+
+        if self._mode == "intel_power_gadget":
+            self._intel_interface = IntelPowerGadget(self._output_dir)
+        elif self._mode == "intel_rapl":
+            self._intel_interface = IntelRAPL(
+                rapl_dir=rapl_dir,
+                rapl_include_dram=rapl_include_dram,
+                rapl_prefer_psys=rapl_prefer_psys,
+            )
+
+    def __repr__(self) -> str:
+        if self._mode != "constant":
+            return f"CPU({' '.join(map(str.capitalize, self._mode.split('_')))})"
+
+        s = f"CPU({self._model} > {self._tdp}W"
+
+        if self._is_generic_tdp:
+            s += " [generic]"
+
+        return s + ")"
+
+    @staticmethod
+    def _calculate_power_from_cpu_load(tdp, cpu_load, model):
+        if "AMD Ryzen Threadripper" in model:
+            return CPU._calculate_power_from_cpu_load_treadripper(tdp, cpu_load)
+        else:
+            # Minimum power consumption is 10% of TDP
+            return max(tdp * (cpu_load / 100.0), tdp * 0.1)
+
+    @staticmethod
+    def _calculate_power_from_cpu_load_treadripper(tdp, cpu_load):
+        load = cpu_load / 100.0
+
+        if load < 0.1:  # Below 10% CPU load
+            return tdp * (0.05 * load * 10)
+        elif load <= 0.3:  # 10-30% load - linear phase
+            return tdp * (0.05 + 1.8 * (load - 0.1))
+        elif load <= 0.5:  # 30-50% load - adjusted coefficients
+            # Increased base power and adjusted curve
+            base_power = 0.45  # Increased from 0.41
+            power_range = 0.50  # Increased from 0.44
+            factor = ((load - 0.3) / 0.2) ** 1.8  # Reduced power from 2.0 to 1.8
+            return tdp * (base_power + power_range * factor)
+        else:  # Above 50% - plateau phase
+            return tdp * (0.85 + 0.15 * (1 - math.exp(-(load - 0.5) * 5)))
+
+    def _get_power_from_cpu_load(self):
+        """
+        When in MODE_CPU_LOAD
+        """
+        if self._tracking_mode == "machine":
+            tdp = self._tdp
+            cpu_load = psutil.cpu_percent(
+                interval=0.5, percpu=False
+            )  # Convert to 0-1 range
+            logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
+            # Cubic relationship with minimum 10% of TDP
+            load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
+            power = tdp * load_factor
+            logger.debug(
+                f"CPU load {self._tdp} W and {cpu_load:.1f}% {load_factor=} => estimation of {power} W for whole machine."
+            )
+        elif self._tracking_mode == "process":
+            # Use CPU times for accurate process tracking
+            current_time = time.time()
+            current_cpu_times: Dict[int, float] = {}
+
+            # Get CPU time for main process and all children
+            try:
+                processes = [self._process] + self._process.children(recursive=True)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                processes = [self._process]
+
+            for proc in processes:
+                try:
+                    cpu_times = proc.cpu_times()
+                    # Total CPU time = user + system time
+                    total_cpu_time = cpu_times.user + cpu_times.system
+                    current_cpu_times[proc.pid] = total_cpu_time
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    logger.debug(
+                        f"Process {proc.pid} disappeared or access denied when getting CPU times."
+                    )
+
+            # Calculate CPU usage based on delta
+            if self._last_measurement_time is not None:
+                time_delta = current_time - self._last_measurement_time
+                if time_delta > 0:
+                    total_cpu_delta = 0.0
+                    for pid, cpu_time in current_cpu_times.items():
+                        last_cpu_time = self._last_cpu_times.get(pid, cpu_time)
+                        cpu_delta = cpu_time - last_cpu_time
+                        if cpu_delta > 0:
+                            total_cpu_delta += cpu_delta
+                            logger.debug(
+                                f"Process {pid} CPU time delta: {cpu_delta:.3f}s"
+                            )
+
+                    # CPU load as percentage (can be > 100% with multiple cores)
+                    # total_cpu_delta is the CPU time used, time_delta is wall clock time
+                    cpu_load = (total_cpu_delta / time_delta) * 100
+                    logger.debug(
+                        f"Total CPU delta: {total_cpu_delta:.3f}s over {time_delta:.3f}s = {cpu_load:.1f}% (across {self._cpu_count} cores)"
+                    )
+                else:
+                    cpu_load = 0.0
+            else:
+                cpu_load = 0.0
+                logger.debug("First measurement, no CPU delta available yet")
+
+            # Store for next measurement
+            self._last_measurement_time = current_time
+            self._last_cpu_times = current_cpu_times
+
+            # Normalize to percentage of total CPU capacity
+            cpu_load_normalized = cpu_load / self._cpu_count
+            power = self._tdp * cpu_load_normalized / 100
+            logger.debug(
+                f"CPU load {self._tdp} W and {cpu_load:.1f}% ({cpu_load_normalized:.1f}% normalized) => estimation of {power:.2f} W for process {self._pid} and {len(current_cpu_times) - 1} children."
+            )
+        else:
+            raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
+        return Power.from_watts(power)
+
+    def _get_power_from_cpus(self) -> Power:
+        """
+        Get CPU power
+        :return: power in kW
+        """
+        if self._mode == MODE_CPU_LOAD:
+            power = self._get_power_from_cpu_load()
+            return power
+        elif self._mode == "constant":
+            power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
+            return Power.from_watts(power)
+        if self._mode == "intel_rapl":
+            # Don't call get_cpu_details to avoid computing energy twice and losing data.
+            all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()
+        else:
+            all_cpu_details: Dict = self._intel_interface.get_cpu_details()
+
+        power = 0
+        for metric, value in all_cpu_details.items():
+            # "^Processor Power_\d+\(Watt\)$" for Intel Power Gadget
+            if re.match(r"^Processor Power", metric):
+                power += value
+                logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
+            else:
+                logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
+        return Power.from_watts(power)
+
+    def _get_energy_from_cpus(self, delay: Time) -> Energy:
+        """
+        Get CPU energy deltas from RAPL files
+        :return: energy in kWh
+        """
+        all_cpu_details: Dict = self._intel_interface.get_cpu_details(delay)
+
+        energy = 0
+        for metric, value in all_cpu_details.items():
+            if re.match(r"^Processor Energy Delta_\d", metric):
+                energy += value
+                # logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
+        return Energy.from_energy(energy)
+
+    def total_power(self) -> Power:
+        self._power_history.append(self._get_power_from_cpus())
+        power_history_in_W = [power.W for power in self._power_history]
+        self._power_history = []
+        if not power_history_in_W:
+            logger.warning("No power samples collected, returning 0 W")
+            return Power.from_watts(0)
+        cpu_power = sum(power_history_in_W) / len(power_history_in_W)
+        return Power.from_watts(cpu_power)
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        if self._mode == "intel_rapl":
+            energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
+            power = self.total_power()
+            return power, energy
+        # If not intel_rapl, we call the parent method from BaseHardware
+        # to compute energy from power and time
+        return super().measure_power_and_energy(last_duration=last_duration)
+
+    def start(self):
+        if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
+            self._intel_interface.start()
+        # Reset process tracking state for fresh measurements
+        self._last_measurement_time = None
+        self._last_cpu_times = {}
+        if self._mode == MODE_CPU_LOAD:
+            # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
+            _ = self._get_power_from_cpu_load()
+            _ = self._get_power_from_cpu_load()
+
+    def monitor_power(self):
+        cpu_power = self._get_power_from_cpus()
+        self._power_history.append(cpu_power)
+
+    def get_model(self):
+        return self._model
+
+    @classmethod
+    def from_utils(
+        cls,
+        output_dir: str,
+        mode: str,
+        model: Optional[str] = None,
+        tdp: Optional[int] = None,
+        tracking_mode: str = "machine",
+        rapl_include_dram: bool = False,
+        rapl_prefer_psys: bool = False,
+    ) -> "CPU":
+        if model is None:
+            model = detect_cpu_model()
+            if model is None:
+                logger.warning("Could not read CPU model.")
+
+        if tdp is None:
+            tdp = POWER_CONSTANT
+            cpu = cls(
+                output_dir=output_dir,
+                mode=mode,
+                model=model,
+                tdp=tdp,
+                rapl_include_dram=rapl_include_dram,
+                rapl_prefer_psys=rapl_prefer_psys,
+            )
+            cpu._is_generic_tdp = True
+            return cpu
+
+        return cls(
+            output_dir=output_dir,
+            mode=mode,
+            model=model,
+            tdp=tdp,
+            tracking_mode=tracking_mode,
+            rapl_include_dram=rapl_include_dram,
+            rapl_prefer_psys=rapl_prefer_psys,
+        )
+
+
+@dataclass
+class AppleSiliconChip(BaseHardware):
+    def __init__(
+        self,
+        output_dir: str,
+        model: str,
+        chip_part: str = "CPU",
+    ):
+        self._output_dir = output_dir
+        self._model = model
+        self._interface = ApplePowermetrics(self._output_dir)
+        self.chip_part = chip_part
+
+    def __repr__(self) -> str:
+        return f"AppleSiliconChip ({self._model} > {self.chip_part})"
+
+    def _get_power(self) -> Power:
+        """
+        Get Chip part power
+        Args:
+            chip_part (str): Chip part to get power from (CPU, GPU)
+        :return: power in kW
+        """
+
+        all_details: Dict = self._interface.get_details()
+
+        power = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Power", metric):
+                power += value
+                logger.debug(f"_get_power_from_cpus - MATCH {metric} : {value}")
+
+            else:
+                logger.debug(f"_get_power_from_cpus - DONT MATCH {metric} : {value}")
+        return Power.from_watts(power)
+
+    def _get_energy(self, delay: Time) -> Energy:
+        """
+        Get Chip part energy deltas
+        Args:
+            chip_part (str): Chip part to get power from (Processor, GPU, etc.)
+        :return: energy in kWh
+        """
+        all_details: Dict = self._interface.get_details(delay)
+
+        energy = 0
+        for metric, value in all_details.items():
+            if re.match(rf"^{self.chip_part} Energy Delta_\d", metric):
+                energy += value
+        return Energy.from_energy(energy)
+
+    def total_power(self) -> Power:
+        return self._get_power()
+
+    def start(self):
+        self._interface.start()
+
+    def get_model(self):
+        return self._model
+
+    @classmethod
+    def from_utils(
+        cls, output_dir: str, model: Optional[str] = None, chip_part: str = "Processor"
+    ) -> "AppleSiliconChip":
+        if model is None:
+            model = detect_cpu_model()
+            if model is None:
+                logger.warning("Could not read AppleSiliconChip model.")
+
+        return cls(output_dir=output_dir, model=model, chip_part=chip_part)

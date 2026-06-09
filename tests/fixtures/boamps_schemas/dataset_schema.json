@@ -1,0 +1,53 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "https://raw.githubusercontent.com/Boavizta/BoAmps/main/model/dataset_schema.json",
+    "title": "dataset",
+    "description": "Describe the nature, shape, number of items and other properties of the dataset involved in your task. If you are performing inferences, please indicate the average size of the data sent for a single inference and fill in the number of inferences in the propertiy: inferenceProperties",
+    "type": "object",
+    "properties": {
+      "dataUsage":{
+        "type": "string",
+        "enum": [ "input", "output"],
+        "description": "the use of the dataset: is it used as model input or output ?"
+      },
+      "dataType":{
+        "type": "string",
+        "enum": [ "tabular", "audio", "boolean", "image", "video", "object","text","token", "word", "other"],
+        "description": "the nature of the data used "
+      },
+      "dataFormat": {
+        "type": "string",
+        "enum": [ "3gp", "3gpp", "3gpp2", "8svx", "aa", "aac", "aax", "act", "afdesign", "afphoto", "ai", "aiff", "alac", "amr", "amv", "ape", "arrow", "asf", "au", "avi", "avif", "awb", "bmp", "bpg", "cd5", "cda", "cdr", "cgm", "clip", "cpt", "csv", "deep", "dirac", "divx", "drawingml", "drw", "dss", "dvf", "ecw", "eps", "fits", "flac", "flif", "flv", "flvf4v", "gem", "gerber", "gif", "gle", "gsm", "heif", "hp-gl", "html", "hvif", "ico", "iklax", "ilbm", "img", "ivs", "jpeg", "json", "kra", "lottie", "m4a", "m4b", "m4p", "m4v", "mathml", "matroska", "mdp", "mmf", "movpkg", "mp3", "mpc", "mpeg1", "mpeg2", "mpeg4", "msv", "mxf", "naplps", "netpbm", "nmf", "nrrd", "nsv", "odg", "ods", "ogg", "opus", "pam", "parquet", "pbm", "pcx", "pdf", "pdn", "pgf", "pgm", "pgml", "pict", "plbm", "png", "pnm", "postscript", "ppm", "psd", "psp", "pstricks", "qcc", "quicktime", "ra", "raw", "realmedia", "regis", "rf64", "roq", "sai", "sgi", "sid", "sql", "sln", "svg", "svi", "swf", "text", "tga", "tiff", "tinyvg", "tta", "vicar", "vivoactive", "vml", "vob", "voc", "vox", "wav", "webm", "webp", "wma", "wmf", "wmv", "wv", "xaml", "xar", "xcf", "xisf", "xls", "xlsx", "xml", "xps", "yaml", "other", null ],
+        "description": "if the data is passed in the form of a file, what format is the data in?"
+      },
+      "dataSize": {
+        "type": "number",
+        "description": "the size of the dataset (in Go), if small quantity just fill the field nbItems"
+      },
+      "dataQuantity": {
+        "type": "number",
+        "description": "the number of data in the dataset, e.g. 3 (images, audio or tokens)"
+      },
+      "shape": {
+        "type": "string",
+        "description": "the shape of your dataset, can be found with X.shape with dataframes, e.g. (12, 1000) for a 2D table with 12 columns and 1000 rows"
+      },
+      "source": {
+        "type": "string",
+        "enum": [ "public", "private", "other" ],
+        "description": "the kind of source of the dataset"
+      },
+      "sourceUri": {
+        "type": "string",
+        "description": "the URI of the dataset if available"
+      },
+      "owner": {
+        "type": "string",
+        "description": "the owner of the dataset if available"
+      }    
+    },
+    "required": [
+      "dataUsage",
+      "dataType"
+    ]
+  }
