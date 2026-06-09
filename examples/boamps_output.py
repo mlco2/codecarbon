@@ -15,6 +15,17 @@ tracker = EmissionsTracker(
     force_mode_cpu_load=False,
     log_level="debug",
     output_methods=[OutputMethod.BOAMPS],
+    metadata={
+        "boamps": {
+            "task": {
+                "taskStage": "training",
+                "taskFamily": "classification",
+                "algorithms": ["random_forest"],
+                "dataset": "synthetic_cpu_benchmark",
+            },
+            "quality": "medium",
+        }
+    },
 )
 try:
     tracker.start()
