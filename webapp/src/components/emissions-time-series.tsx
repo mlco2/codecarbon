@@ -41,6 +41,12 @@ const chartConfig = {
     },
 } satisfies ChartConfig;
 
+type TimeSeriesTooltipPayload = Array<{
+    payload: {
+        ts: number;
+    };
+}>;
+
 export default function EmissionsTimeSeriesChart({
     isPublicView,
     runId,
@@ -233,12 +239,22 @@ export default function EmissionsTimeSeriesChart({
                                 content={
                                     <ChartTooltipContent
                                         className="w-[180px]"
-                                        labelFormatter={(value) =>
-                                            format(
-                                                new Date(value as number),
+                                        labelFormatter={(_, payload) => {
+                                            const tooltipPayload = payload as
+                                                | TimeSeriesTooltipPayload
+                                                | undefined;
+                                            const point =
+                                                tooltipPayload?.[0]?.payload;
+
+                                            if (!point) {
+                                                return "";
+                                            }
+
+                                            return format(
+                                                new Date(point.ts),
                                                 "MMM d, yyyy HH:mm:ss",
-                                            )
-                                        }
+                                            );
+                                        }}
                                     />
                                 }
                             />
