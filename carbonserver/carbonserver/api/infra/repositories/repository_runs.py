@@ -164,7 +164,6 @@ class SqlAlchemyRepository(Runs):
                         SqlModelEmission.timestamp >= start_date,
                         SqlModelEmission.timestamp <= end_date,
                     ),
-                    isouter=True,
                 )
                 .filter(SqlModelRun.experiment_id == experiment_id)
                 .group_by(
