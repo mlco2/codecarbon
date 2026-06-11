@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -6,10 +5,9 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { fetchApi } from "@/api/client";
-import { z } from "zod";
+import { encryptProjectId } from "@/utils/crypto";
 import copy from "copy-to-clipboard";
-import { CheckIcon, CopyIcon, LockIcon, Share2Icon } from "lucide-react";
+import { CheckIcon, CopyIcon, Share2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -36,26 +34,26 @@ export default function ShareProjectButton({
     }, []);
 
     useEffect(() => {
-        const fetchEncryptedId = async () => {
-            if (isPublic && projectId && isOpen && !encryptedId) {
-                try {
-                    setIsLoading(true);
-                    const result = await fetchApi(
-                        `/projects/${projectId}/share-link`,
-                        z.object({ encrypted_id: z.string() }),
-                    );
-                    const encrypted = result.encrypted_id;
-                    setEncryptedId(encrypted);
-                } catch (error) {
-                    console.error("Failed to encrypt project ID:", error);
+        let cancelled = false;
+        const computeEncryptedId = async () => {
+            if (!(isPublic && projectId && isOpen && !encryptedId)) return;
+            try {
+                setIsLoading(true);
+                const encrypted = await encryptProjectId(projectId);
+                if (!cancelled) setEncryptedId(encrypted);
+            } catch (error) {
+                console.error("Failed to encrypt project ID:", error);
+                if (!cancelled) {
                     toast.error("Failed to generate secure sharing link");
-                } finally {
-                    setIsLoading(false);
                 }
+            } finally {
+                if (!cancelled) setIsLoading(false);
             }
         };
-
-        fetchEncryptedId();
+        computeEncryptedId();
+        return () => {
+            cancelled = true;
+        };
     }, [projectId, isPublic, isOpen, encryptedId]);
 
     const publicUrl = encryptedId

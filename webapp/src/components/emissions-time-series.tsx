@@ -16,8 +16,11 @@ import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import { ExportCsvButton } from "@/components/export-csv-button";
+import ChartSkeleton from "@/components/chart-skeleton";
 import { getEmissionsTimeSeries } from "@/api/runs";
 import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
+import { pickTimeFormat } from "@/helpers/time-axis";
+import { format } from "date-fns";
 import { Cpu, HardDrive, Server } from "lucide-react";
 
 interface EmissionsTimeSeriesChartProps {
@@ -38,6 +41,12 @@ const chartConfig = {
     },
 } satisfies ChartConfig;
 
+type TimeSeriesTooltipPayload = Array<{
+    payload: {
+        ts: number;
+    };
+}>;
+
 export default function EmissionsTimeSeriesChart({
     isPublicView,
     runId,
@@ -48,33 +57,51 @@ export default function EmissionsTimeSeriesChart({
         React.useState<keyof typeof chartConfig>("emissions_rate");
     const [emissionTimeSeries, setEmissionTimeSeries] =
         React.useState<EmissionsTimeSeries | null>(null);
-    const [isLoading, setIsLoading] = React.useState(true);
+    const [isLoading, setIsLoading] = React.useState(false);
 
     React.useEffect(() => {
-        async function fetchData() {
+        if (!runId) return;
+        let cancelled = false;
+        (async () => {
             setIsLoading(true);
             try {
                 const data = await getEmissionsTimeSeries(runId);
-                setEmissionTimeSeries(data);
+                if (!cancelled) setEmissionTimeSeries(data);
             } catch (error) {
                 console.error("Failed to fetch emissions time series:", error);
             } finally {
-                setIsLoading(false);
+                if (!cancelled) setIsLoading(false);
             }
-        }
-
-        if (runId) {
-            fetchData();
-        }
+        })();
+        return () => {
+            cancelled = true;
+        };
     }, [runId]);
 
+    if (!runId) {
+        return null;
+    }
+
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <ChartSkeleton height={300} />;
     }
 
     if (!emissionTimeSeries || !emissionTimeSeries.metadata) {
         return <div>No data available</div>;
     }
+
+    // Recharts category axis distributes ticks evenly by index, so 200 samples
+    // taken in the same minute produce 200 identical-looking labels. Re-key on
+    // a numeric timestamp and a time scale so the axis spaces ticks by *when*
+    // points happened, not by how many of them there are.
+    const points = emissionTimeSeries.emissions.map((e) => ({
+        ...e,
+        ts: new Date(e.timestamp).getTime(),
+    }));
+    const spanMs = points.length
+        ? points[points.length - 1].ts - points[0].ts
+        : 0;
+    const tickFmt = pickTimeFormat(spanMs);
 
     return (
         <div className="grid gap-4 md:grid-cols-2">
@@ -183,7 +210,7 @@ export default function EmissionsTimeSeriesChart({
                         className="aspect-auto h-[250px] w-full"
                     >
                         <LineChart
-                            data={emissionTimeSeries.emissions}
+                            data={points}
                             margin={{
                                 left: 12,
                                 right: 12,
@@ -191,18 +218,17 @@ export default function EmissionsTimeSeriesChart({
                         >
                             <CartesianGrid vertical={false} />
                             <XAxis
-                                dataKey="timestamp"
+                                dataKey="ts"
+                                type="number"
+                                scale="time"
+                                domain={["dataMin", "dataMax"]}
                                 tickLine={false}
                                 axisLine={false}
                                 tickMargin={8}
-                                minTickGap={32}
-                                tickFormatter={(value) => {
-                                    const date = new Date(value);
-                                    return date.toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                    });
-                                }}
+                                minTickGap={48}
+                                tickFormatter={(value) =>
+                                    format(new Date(value), tickFmt)
+                                }
                             />
                             <YAxis
                                 tickLine={false}
@@ -212,15 +238,22 @@ export default function EmissionsTimeSeriesChart({
                             <ChartTooltip
                                 content={
                                     <ChartTooltipContent
-                                        className="w-[150px]"
-                                        labelFormatter={(value) => {
-                                            return new Date(
-                                                value,
-                                            ).toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                                year: "numeric",
-                                            });
+                                        className="w-[180px]"
+                                        labelFormatter={(_, payload) => {
+                                            const tooltipPayload = payload as
+                                                | TimeSeriesTooltipPayload
+                                                | undefined;
+                                            const point =
+                                                tooltipPayload?.[0]?.payload;
+
+                                            if (!point) {
+                                                return "";
+                                            }
+
+                                            return format(
+                                                new Date(point.ts),
+                                                "MMM d, yyyy HH:mm:ss",
+                                            );
                                         }}
                                     />
                                 }

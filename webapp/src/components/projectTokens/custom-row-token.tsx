@@ -44,8 +44,8 @@ export default function CustomRowToken({
     return (
         <CustomRow
             rowKey={projectToken.id}
-            firstColumn={projectToken.name}
-            secondColumn={projectToken.token}
+            firstColumn={projectToken.name ?? "-"}
+            secondColumn={projectToken.token ?? "•••••••• (hidden)"}
             onDelete={() => handleDelete(projectToken)}
             deleteDisabled={isDeleting}
         />

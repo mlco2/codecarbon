@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     auth_provider: str = Field(
         "oidc",
         validation_alias=AliasChoices("AUTH_PROVIDER", "auth_provider"),
-    )  # Options: 'oidc', 'fief' (deprecated), 'none'
+    )  # Options: 'oidc', 'none'
 
     # OIDC settings
     oidc_client_id: str = Field(
@@ -41,20 +41,6 @@ class Settings(BaseSettings):
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
     server_host: str = Field(
         "0.0.0.0", validation_alias=AliasChoices("SERVER_HOST", "server_host")
-    )
-
-    # Fief settings (deprecated)
-    fief_client_id: str = Field(
-        "",
-        validation_alias=AliasChoices("FIEF_CLIENT_ID", "fief_client_id"),
-    )
-    fief_client_secret: str = Field(
-        "",
-        validation_alias=AliasChoices("FIEF_CLIENT_SECRET", "fief_client_secret"),
-    )
-    fief_url: str = Field(
-        "",
-        validation_alias=AliasChoices("FIEF_URL", "fief_url"),
     )
 
 

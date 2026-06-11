@@ -29,7 +29,6 @@ export async function getOrganizations(): Promise<Organization[]> {
     try {
         return await fetchApi("/organizations", OrganizationSchema.array());
     } catch (error) {
-        console.error("[getOrganizations] failed", error);
         return [];
     }
 }

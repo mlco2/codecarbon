@@ -27,13 +27,14 @@ classifiers = [
 dependencies = [
     "arrow",
     "authlib>=1.2.1",
+    "joserfc>=1.0.0",
     "click",
     "pandas>=2.3.3;python_version>='3.14'",
     "pandas;python_version<'3.14'",
     "prometheus_client",
     "psutil >= 6.0.0",
     "py-cpuinfo",
-    "pydantic",
+    "pydantic>=2.0.0,<3.0.0",
     "nvidia-ml-py",
     "rapidfuzz",
     "requests",
@@ -79,34 +80,6 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 
 [dependency-groups]
-api  = [
-    "alembic<2.0.0",
-    "authlib>=1.2.1",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "fief-client[fastapi]",
-    "httpx",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
-    "pytest",
-    "pytest-asyncio",
-    "mock",
-    "responses",
-    "fastapi-oidc;python_version>='3.10'",
-    "numpy",
-    "psutil",
-    "requests-mock",
-    "rapidfuzz",
-    "PyJWT",
-    "logfire[fastapi]>=1.0.1",
-    "itsdangerous",
-]
 dev = [
     "taskipy",
     "bumpver",
@@ -148,34 +121,6 @@ viz-legacy = [
     "fire",
 ]
 
-api  = [
-    "alembic<2.0.0",
-    "authlib>=1.2.1",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "fief-client[fastapi]",
-    "httpx",
-    "itsdangerous",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
-    "pytest",
-    "pytest-asyncio",
-    "mock",
-    "responses",
-    "fastapi-oidc;python_version>='3.10'",
-    "numpy",
-    "psutil",
-    "requests-mock",
-    "rapidfuzz",
-    "PyJWT",
-]
-
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
 codecarbon = "codecarbon.cli.main:main"
@@ -185,7 +130,7 @@ pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit ho
 dashboard = "uv run --project carbonserver uvicorn main:app --reload"
 dashboard-ci = "uv run --project carbonserver uvicorn main:app --host 0.0.0.0 --port 8008"
 docker = "docker-compose up -d"
-test-api-unit = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/routers && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/service/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/usecase/"
+test-api-unit = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/routers && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/service/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/usecase/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/repository/"
 test-api-integ = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/integration/"
 setup-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini upgrade head"
 downgrade-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini downgrade base"
@@ -206,7 +151,7 @@ docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.7"
+current_version = "3.2.8"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

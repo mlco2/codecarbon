@@ -21,7 +21,6 @@ dependencies = [
     "python-dateutil<3.0.0",
     "dependency-injector<5.0.0",
     "fastapi<1.0.0",
-    "fief-client[fastapi]",
     "fastapi[standard]",
     "httpx",
     "pydantic[email]>=2.0.0,<3.0.0",
@@ -37,6 +36,7 @@ dependencies = [
     "PyJWT",
     "fastapi-oidc>=0.0.9",
     "authlib>=1.6.6",
+    "joserfc>=1.0.0",
     "itsdangerous>=2.2.0",
 ]
 

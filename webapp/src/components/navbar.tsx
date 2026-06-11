@@ -25,7 +25,7 @@ import { getOrganizations } from "@/api/organizations";
 import { Button } from "./ui/button";
 import { useModal } from "@/hooks/useModal";
 
-const USER_PROFILE_URL = import.meta.env.VITE_FIEF_BASE_URL;
+const USER_PROFILE_URL = import.meta.env.VITE_OIDC_PROFILE_URL;
 export default function NavBar({
     orgs,
     setSheetOpened,
@@ -36,7 +36,13 @@ export default function NavBar({
     const [selected, setSelected] = useState<string | null>(null);
     const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
+    const [selectedOrg, setSelectedOrg] = useState<string | null>(() => {
+        try {
+            return localStorage.getItem("organizationId");
+        } catch {
+            return null;
+        }
+    });
     const iconStyles = "h-4 w-4 flex-shrink-0 text-muted-foreground";
     const { pathname } = useLocation();
     const newOrgModal = useModal();
@@ -156,6 +162,7 @@ export default function NavBar({
                             <NavItem
                                 isSelected={selected === "projects"}
                                 onClick={() => {
+                                    if (!selectedOrg) return;
                                     setSelected("projects");
                                     setSheetOpened?.(false);
                                     navigate(`/${selectedOrg}/projects`);
@@ -168,6 +175,7 @@ export default function NavBar({
                             <NavItem
                                 isSelected={selected === "members"}
                                 onClick={() => {
+                                    if (!selectedOrg) return;
                                     setSelected("members");
                                     setSheetOpened?.(false);
                                     navigate(`/${selectedOrg}/members`);
@@ -256,7 +264,7 @@ export default function NavBar({
                                 onClick={() => {
                                     setSelected("profile");
                                     setSheetOpened?.(false);
-                                    window.location.href = USER_PROFILE_URL!; // Redirect to Fief profile to handle profile updates there
+                                    window.location.href = USER_PROFILE_URL!; // Redirect to the OIDC provider's profile page to handle profile updates there
                                 }}
                                 paddingY={1.5}
                                 icon={<UserIcon className={iconStyles} />}

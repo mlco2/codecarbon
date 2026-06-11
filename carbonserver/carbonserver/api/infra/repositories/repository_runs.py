@@ -159,27 +159,20 @@ class SqlAlchemyRepository(Runs):
                 )
                 .join(
                     SqlModelEmission,
-                    SqlModelRun.id == SqlModelEmission.run_id,
-                    isouter=True,
+                    and_(
+                        SqlModelRun.id == SqlModelEmission.run_id,
+                        SqlModelEmission.timestamp >= start_date,
+                        SqlModelEmission.timestamp <= end_date,
+                    ),
                 )
                 .filter(SqlModelRun.experiment_id == experiment_id)
-                .filter(
-                    and_(SqlModelEmission.timestamp >= start_date),
-                    (SqlModelEmission.timestamp <= end_date),
-                )
                 .group_by(
                     SqlModelRun.id,
                     SqlModelRun.timestamp,
                 )
                 .all()
             )
-            # TODO: Remove this log XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-            logger.debug(f"get_experiment_detailed_sums_by_run {res=}")
-            if res is None:
-                return []
-            # Ca à l'air d'être le return qui n'est plus accepter car PyDantic refuse de
-            # faire rentrer res dans RunReport
-            return res
+            return res or []
 
     def get_project_last_run(self, project_id, start_date, end_date) -> Union[Run]:
         """Find the last run of a project in database between two dates and return it

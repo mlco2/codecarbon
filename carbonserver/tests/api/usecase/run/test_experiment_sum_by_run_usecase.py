@@ -31,6 +31,17 @@ EXPERIMENT_WITH_DETAILS = {
 }
 
 
+class SessionContextMock:
+    def __init__(self, session):
+        self.session = session
+
+    def __enter__(self):
+        return self.session
+
+    def __exit__(self, *args):
+        return None
+
+
 def test_detailed_sum_computes_for_experiment_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     experiment_id = EXPERIMENT_ID
@@ -46,3 +57,29 @@ def test_detailed_sum_computes_for_experiment_id():
     )
 
     assert actual_experiment_sum_by_run[0]["emissions"] == expected_emission_sum
+
+
+def test_detailed_sum_query_excludes_runs_without_emissions_in_date_range():
+    # Use the real repository with a mocked SQLAlchemy session context so this test
+    # covers the join built by get_experiment_detailed_sums_by_run. Mocking the
+    # repository itself would only test usecase pass-through and would not fail if
+    # the query switched back to an outer join that returns null aggregate rows.
+    session_mock = mock.Mock()
+    query_mock = mock.Mock()
+    session_mock.query.return_value = query_mock
+    query_mock.join.return_value = query_mock
+    query_mock.filter.return_value = query_mock
+    query_mock.group_by.return_value = query_mock
+    query_mock.all.return_value = []
+
+    session_factory_mock = mock.Mock(return_value=SessionContextMock(session_mock))
+    repository = SqlAlchemyRepository(session_factory_mock)
+    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(repository)
+
+    actual_experiment_sum_by_run = experiment_sum_by_run_usecase.compute_detailed_sum(
+        EXPERIMENT_ID, START_DATE, END_DATE
+    )
+
+    assert actual_experiment_sum_by_run == []
+    query_mock.join.assert_called_once()
+    assert query_mock.join.call_args.kwargs.get("isouter", False) is False

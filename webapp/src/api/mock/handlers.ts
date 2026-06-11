@@ -101,16 +101,6 @@ const handlers: Handler[] = [
             }
             if (method === "DELETE") return noContent();
         }
-        const publicMatch = pathname.match(/^\/projects\/public\/([^/]+)$/);
-        if (method === "GET" && publicMatch) {
-            // Treat the encrypted_id as the project id for mock purposes.
-            const project = MOCK.project.byId[publicMatch[1]];
-            return project ? ok(project) : notFound();
-        }
-        const shareLink = pathname.match(/^\/projects\/([^/]+)\/share-link$/);
-        if (method === "GET" && shareLink) {
-            return ok({ encrypted_id: shareLink[1] });
-        }
         return undefined;
     },
 
