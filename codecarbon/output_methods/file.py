@@ -74,7 +74,7 @@ class FileOutput(BaseOutput):
         Save the emissions data from a whole run to a CSV file.
 
         * If the file does not exist, then create it.
-        * If the file already exists but has invalid headers, back it up and replace with new data.
+        * If the file already exists but has invalid headers, then back it up and replace with new data.
         * If the file already exists and has valid headers:
             * In "append" mode, append the new row directly.
             * In "update" mode, deduplicate by run_id.
