@@ -12,8 +12,15 @@ import sys
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
-import psutil
 from rapidfuzz import fuzz, process, utils
+
+try:
+    import psutil
+
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    psutil = None
 
 from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
@@ -207,6 +214,9 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
 
 
 def is_psutil_available():
+    if not PSUTIL_AVAILABLE:
+        logger.debug("psutil module is not available.")
+        return False
     try:
         cpu_times = psutil.cpu_times()
 
