@@ -577,6 +577,42 @@ class TestTDP(unittest.TestCase):
         self.assertEqual(tdp.model, "Unknown")
         self.assertIsNone(tdp.tdp)
 
+    def test_apple_m2_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M2", 15),
+            ("Apple M2 Pro", 20),
+            ("Apple M2 Max", 30),
+            ("Apple M2 Ultra", 60),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_apple_m3_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M3", 15),
+            ("Apple M3 Pro", 18),
+            ("Apple M3 Max", 30),
+            ("Apple M3 Ultra", 60),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_apple_m4_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M4", 15),
+            ("Apple M4 Pro", 20),
+            ("Apple M4 Max", 35),
+            ("Apple M4 Ultra", 70),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):
     def test_set_cpu_tracking_skips_tdp_when_rapl_available(self):
