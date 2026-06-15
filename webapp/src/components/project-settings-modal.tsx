@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { Project } from "@/types/project";
+import { Project } from "@/api/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,10 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectTokensTable } from "./projectTokens/projectTokenTable";
-import { updateProject } from "@/server-functions/projects";
+import { updateProject } from "@/api/projects";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 interface ProjectSettingsModalProps {
     open: boolean;
@@ -34,7 +31,6 @@ export default function ProjectSettingsModal({
     project,
     onProjectUpdated,
 }: ProjectSettingsModalProps) {
-    const router = useRouter();
     const [name, setName] = useState(project.name || "");
     const [description, setDescription] = useState(project.description || "");
     const [isPublic, setIsPublic] = useState(project.public || false);
@@ -64,7 +60,6 @@ export default function ProjectSettingsModal({
         } finally {
             setIsSaving(false);
             onOpenChange(false);
-            router.refresh();
         }
     };
 

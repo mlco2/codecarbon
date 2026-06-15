@@ -1,8 +1,6 @@
-"use client";
-
-import { IProjectToken } from "@/types/project";
+import { IProjectToken } from "@/api/schemas";
 import CustomRow from "../custom-row";
-import { deleteProjectToken } from "@/server-functions/projectTokens";
+import { deleteProjectToken } from "@/api/projectTokens";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -46,8 +44,8 @@ export default function CustomRowToken({
     return (
         <CustomRow
             rowKey={projectToken.id}
-            firstColumn={projectToken.name}
-            secondColumn={projectToken.token}
+            firstColumn={projectToken.name ?? "-"}
+            secondColumn={projectToken.token ?? "•••••••• (hidden)"}
             onDelete={() => handleDelete(projectToken)}
             deleteDisabled={isDeleting}
         />

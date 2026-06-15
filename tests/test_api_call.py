@@ -125,8 +125,17 @@ class TestApi(unittest.TestCase):
                 latitude=33.5822,
                 ram_total_size=83948.22,
                 tracking_mode="Machine",
+                cpu_utilization_percent=12.5,
+                gpu_utilization_percent=34.5,
+                ram_utilization_percent=56.5,
+                wue=0.8,
             )
             assert api.add_emission(dataclasses.asdict(carbon_emission))
+            payload = m.last_request.json()
+            assert payload["cpu_utilization_percent"] == 12.5
+            assert payload["gpu_utilization_percent"] == 34.5
+            assert payload["ram_utilization_percent"] == 56.5
+            assert payload["wue"] == 0.8
 
     def test_check_auth_returns_none_on_error(self):
         with requests_mock.Mocker() as m:

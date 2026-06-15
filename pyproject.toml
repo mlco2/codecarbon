@@ -27,13 +27,14 @@ classifiers = [
 dependencies = [
     "arrow",
     "authlib>=1.2.1",
+    "joserfc>=1.0.0",
     "click",
     "pandas>=2.3.3;python_version>='3.14'",
     "pandas;python_version<'3.14'",
     "prometheus_client",
     "psutil >= 6.0.0",
     "py-cpuinfo",
-    "pydantic",
+    "pydantic>=2.0.0,<3.0.0",
     "nvidia-ml-py",
     "rapidfuzz",
     "requests",
@@ -97,7 +98,9 @@ dev = [
     "scikit-learn",  # For documentation examples and tests
 ]
 doc = [
+  "requests",
   "setuptools",
+  "taskipy",
   "zensical",
   "mike",
   "mkdocstrings[python]>=0.26",
@@ -117,10 +120,6 @@ viz-legacy = [
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
-# To support AMD GPU
-amdsmi = [
-    "amdsmi>=6.0.0"
-]
 
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
@@ -131,7 +130,7 @@ pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit ho
 dashboard = "uv run --project carbonserver uvicorn main:app --reload"
 dashboard-ci = "uv run --project carbonserver uvicorn main:app --host 0.0.0.0 --port 8008"
 docker = "docker-compose up -d"
-test-api-unit = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/routers && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/service/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/usecase/"
+test-api-unit = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/routers && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/service/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/usecase/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/repository/"
 test-api-integ = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/integration/"
 setup-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini upgrade head"
 downgrade-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini downgrade base"
@@ -152,7 +151,7 @@ docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.6"
+current_version = "3.2.8"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

@@ -234,6 +234,10 @@ class ApiClient:  # (AsyncClient)
             gpu_energy=carbon_emission["gpu_energy"],
             ram_energy=carbon_emission["ram_energy"],
             energy_consumed=carbon_emission["energy_consumed"],
+            cpu_utilization_percent=carbon_emission.get("cpu_utilization_percent"),
+            gpu_utilization_percent=carbon_emission.get("gpu_utilization_percent"),
+            ram_utilization_percent=carbon_emission.get("ram_utilization_percent"),
+            wue=carbon_emission.get("wue", 0),
         )
         try:
             payload = dataclasses.asdict(emission)

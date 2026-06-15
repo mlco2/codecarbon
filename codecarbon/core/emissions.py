@@ -16,6 +16,12 @@ from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource, DataSourceException
 
+_NORDIC_REGIONS_BY_COUNTRY = {
+    "SWE": {"SE1", "SE2", "SE3", "SE4"},
+    "NOR": {"NO1", "NO2", "NO3", "NO4", "NO5"},
+    "FIN": {"FI"},
+}
+
 
 class Emissions:
     def __init__(
@@ -25,6 +31,7 @@ class Emissions:
         co2_signal_api_token: Optional[
             str
         ] = None,  # Deprecated, for backward compatibility
+        force_carbon_intensity_g_co2e_kwh: Optional[float] = None,
     ):
         self._data_source = data_source
 
@@ -38,6 +45,7 @@ class Emissions:
                 electricitymaps_api_token = co2_signal_api_token
 
         self._electricitymaps_api_token = electricitymaps_api_token
+        self._force_carbon_intensity_g_co2e_kwh = force_carbon_intensity_g_co2e_kwh
 
     def get_cloud_emissions(
         self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
@@ -49,6 +57,12 @@ class Emissions:
         :param geo: Instance of GeoMetadata to fallback if we don't find cloud carbon intensity
         :return: CO2 emissions in kg
         """
+
+        if self._force_carbon_intensity_g_co2e_kwh is not None:
+            logger.info(
+                f"Using forced carbon intensity for cloud emissions: {self._force_carbon_intensity_g_co2e_kwh} gCO2e/kWh"
+            )
+            return energy.kWh * (self._force_carbon_intensity_g_co2e_kwh / 1000.0)
 
         df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         try:
@@ -138,6 +152,12 @@ class Emissions:
         :param geo: Country and region metadata
         :return: CO2 emissions in kg
         """
+        if self._force_carbon_intensity_g_co2e_kwh is not None:
+            logger.debug(
+                f"Using forced carbon intensity for private infrastructure emissions: {self._force_carbon_intensity_g_co2e_kwh} gCO2e/kWh"
+            )
+            return energy.kWh * (self._force_carbon_intensity_g_co2e_kwh / 1000.0)
+
         if self._electricitymaps_api_token:
             try:
                 emissions = electricitymaps_api.get_emissions(
@@ -155,8 +175,11 @@ class Emissions:
                     + " >>> Using CodeCarbon's data."
                 )
 
+        country_iso_code = (
+            geo.country_iso_code.upper() if geo.country_iso_code is not None else None
+        )
         compute_with_regional_data: bool = (geo.region is not None) and (
-            geo.country_iso_code.upper() in ["USA", "CAN", "SWE", "NOR", "FIN"]
+            country_iso_code in ["USA", "CAN"] or self._is_supported_nordic_region(geo)
         )
 
         if compute_with_regional_data:
@@ -173,24 +196,10 @@ class Emissions:
     def _try_get_nordic_region_emissions(
         self, energy: Energy, geo: GeoMetadata
     ) -> Optional[float]:
-        nordic_regions = {
-            "SE1",
-            "SE2",
-            "SE3",
-            "SE4",
-            "NO1",
-            "NO2",
-            "NO3",
-            "NO4",
-            "NO5",
-            "FI",
-        }
-        if geo.region is None:
+        if not self._is_supported_nordic_region(geo):
             return None
 
         region_upper = geo.region.upper()
-        if region_upper not in nordic_regions:
-            return None
 
         try:
             nordic_data = self._data_source.get_nordic_country_energy_mix_data()
@@ -210,6 +219,16 @@ class Emissions:
                 + "Falling back to default emission calculation."
             )
         return None
+
+    @staticmethod
+    def _is_supported_nordic_region(geo: GeoMetadata) -> bool:
+        if geo.country_iso_code is None or geo.region is None:
+            return False
+
+        country_regions = _NORDIC_REGIONS_BY_COUNTRY.get(
+            geo.country_iso_code.upper(), set()
+        )
+        return geo.region.upper() in country_regions
 
     def get_region_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
@@ -234,6 +253,11 @@ class Emissions:
         nordic_emissions = self._try_get_nordic_region_emissions(energy, geo)
         if nordic_emissions is not None:
             return nordic_emissions
+        if (
+            geo.country_iso_code is not None
+            and geo.country_iso_code.upper() in _NORDIC_REGIONS_BY_COUNTRY
+        ):
+            return self.get_country_emissions(energy, geo)
 
         # Handle USA and Canada regional data
         try:

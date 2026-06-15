@@ -87,7 +87,7 @@ def read_runs_from_experiment(
 
 
 @router.get(
-    "/experiments/{experiment_id}/runs/sums/",
+    "/experiments/{experiment_id}/runs/sums",
     tags=RUNS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
 )

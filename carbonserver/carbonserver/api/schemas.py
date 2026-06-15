@@ -272,7 +272,7 @@ class ExperimentReport(ExperimentBase):
     country_name: Optional[str] = None
     country_iso_code: Optional[str] = None
     region: Optional[str] = None
-    on_cloud: Optional[str] = None
+    on_cloud: Optional[bool] = None
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
     emissions: float

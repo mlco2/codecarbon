@@ -2,15 +2,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface ChartSkeletonProps {
-    title?: string;
     className?: string;
     height?: number;
+    bars?: number;
 }
 
+// Pre-computed so the bars don't rejiggle on every render.
+const BAR_HEIGHTS = Array.from(
+    { length: 24 },
+    () => Math.floor(Math.random() * 60) + 20,
+);
+
 export default function ChartSkeleton({
-    title = "Loading...",
     className = "",
     height = 250,
+    bars = 12,
 }: ChartSkeletonProps) {
     return (
         <Card className={className}>
@@ -19,7 +25,22 @@ export default function ChartSkeleton({
                 <Skeleton className="h-4 w-4/5" />
             </CardHeader>
             <CardContent>
-                <Skeleton className={`w-full h-[${height}px]`} />
+                <div
+                    className="flex items-end justify-around gap-1 px-2"
+                    style={{ height }}
+                    aria-hidden
+                >
+                    {Array.from({ length: bars }).map((_, i) => (
+                        <Skeleton
+                            key={i}
+                            className="w-full rounded-t"
+                            style={{
+                                height: `${BAR_HEIGHTS[i % BAR_HEIGHTS.length]}%`,
+                                animationDelay: `${i * 0.05}s`,
+                            }}
+                        />
+                    ))}
+                </div>
             </CardContent>
         </Card>
     );
