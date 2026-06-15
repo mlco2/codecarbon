@@ -6,9 +6,9 @@ Welcome to the Code Carbon Project! This README will guide you through the proce
 
 Before you begin, ensure you have the following installed on your system:
 
--   Node.js (version 14 or later)
--   pnpm (better alternative to npm)
--   Git
+- Node.js (version 14 or later)
+- pnpm (better alternative to npm)
+- Git
 
 ## Getting Started
 
@@ -16,41 +16,41 @@ Follow these steps to get the project up and running on your local machine:
 
 1. **Open a terminal and go to the /webapp folder**
 
-    ```bash
-    cd webapp
-    ```
+   ```bash
+   cd webapp
+   ```
 
 2. **Install dependencies**
 
-    ```bash
-    pnpm install
-    ```
+   ```bash
+   pnpm install
+   ```
 
 3. **Set up environment variables**
 
-    This project uses environment variables for configuration. You need to create a `.env` file in the root directory of the project.
+   This project uses environment variables for configuration. You need to create a `.env` file in the root directory of the project.
 
-    - Copy the `.env.example` file and rename it to `.env`:
+   - Copy the `.env.example` file and rename it to `.env`:
 
-        ```bash
-        cp .env.example .env
-        ```
+     ```bash
+     cp .env.example .env
+     ```
 
-    - Open the `.env` file and fill in the necessary values for your local environment.
+   - Open the `.env` file and fill in the necessary values for your local environment.
 
 4. **Run the development server**
 
-    ```bash
-    pnpm dev
-    ```
+   ```bash
+   pnpm dev
+   ```
 
-    The application should now be running on [http://localhost:3000](http://localhost:3000).
+   The application should now be running on [http://localhost:3000](http://localhost:3000).
 
 ## Available Scripts
 
 In the project directory, you can run:
 
--   `pnpm dev`: Runs the app in development mode
--   `pnpm build`: Builds the app for production
--   `pnpm start`: Runs the built app in production mode
--   `pnpm lint`: Runs the linter to check for code style issues
+- `pnpm dev`: Runs the app in development mode
+- `pnpm build`: Builds the app for production
+- `pnpm start`: Runs the built app in production mode
+- `pnpm lint`: Runs the linter to check for code style issues
