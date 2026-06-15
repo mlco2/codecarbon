@@ -81,7 +81,7 @@ class TestTelemetryTiersAtStop(unittest.TestCase):
         mock_post.assert_called_once()
         payload = mock_post.call_args[0][1]
         self.assertEqual(payload["telemetry_level"], "minimal")
-        self.assertEqual(payload["total_emissions_kg"], 0.001)
+        self.assertNotIn("total_emissions_kg", payload)
 
     def test_tier1_skips_short_duration_at_dispatcher(self):
         tracker = MagicMock()
@@ -167,7 +167,7 @@ class TestTrackerTelemetry(unittest.TestCase):
         mock_post.assert_called_once()
         payload = mock_post.call_args[0][1]
         self.assertEqual(payload["telemetry_level"], "minimal")
-        self.assertIn("total_emissions_kg", payload)
+        self.assertNotIn("total_emissions_kg", payload)
 
     def test_emissions_tracker_skips_telemetry_when_disabled(self, mock_cli_setup):
         self._start_config_mock(disabled_conf)

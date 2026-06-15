@@ -46,7 +46,7 @@ class TestTelemetryConfigContract(unittest.TestCase):
             telemetry.warn_if_implicit()
             telemetry.warn_if_implicit()
         self.assertEqual(mock_warning.call_count, 1)
-        self.assertIn("Tier 1", mock_warning.call_args[0][0])
+        self.assertIn("Minimal telemetry", mock_warning.call_args[0][0])
 
     def test_no_warn_when_config_explicit(self):
         settings = TelemetrySettings.resolve(
@@ -63,8 +63,8 @@ class TestTelemetryConfigContract(unittest.TestCase):
         tier1_payload = {
             "timestamp": datetime(2020, 1, 1, tzinfo=timezone.utc),
             "telemetry_level": "minimal",
-            "total_emissions_kg": 0.001,
             "os": "Linux",
+            "cpu_count": 4,
         }
         settings = TelemetrySettings.resolve(
             external_conf={"telemetry_api_url": "http://tier1.example"}
@@ -81,7 +81,7 @@ class TestTelemetryConfigContract(unittest.TestCase):
             mock_post.call_args.kwargs["json"]["telemetry_level"],
             TelemetryLevel.minimal.value,
         )
-        self.assertIn("total_emissions_kg", mock_post.call_args.kwargs["json"])
+        self.assertEqual(mock_post.call_args.kwargs["json"]["cpu_count"], 4)
 
     def test_legacy_env_codecarbon_telemetry_does_not_change_tier(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -271,7 +271,7 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
                         save_to_file=False,
                     )
         configure_warnings = [
-            c for c in mock_warning.call_args_list if c[0] and "Tier 1" in str(c[0][0])
+            c for c in mock_warning.call_args_list if c[0] and "Minimal telemetry" in str(c[0][0])
         ]
         self.assertEqual(len(configure_warnings), 0)
 

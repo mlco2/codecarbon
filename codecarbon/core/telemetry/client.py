@@ -14,15 +14,7 @@ from codecarbon.output_methods.emissions_data import EmissionsData
 
 
 def post_private(settings: TelemetrySettings, payload: dict) -> bool:
-    """POST a private telemetry payload to ``/telemetry``.
-
-    Args:
-        settings: Resolved telemetry API settings.
-        payload: Telemetry fields dict.
-
-    Returns:
-        True if the server accepted the payload (HTTP 201).
-    """
+    """POST private telemetry to ``/telemetry``; return True on HTTP 201."""
     headers = {"Content-Type": "application/json"}
     if settings.api_key:
         headers["x-api-token"] = settings.api_key
@@ -60,16 +52,7 @@ def post_public_summary(
     conf: dict,
     emissions: EmissionsData,
 ) -> bool:
-    """Send Tier 2 public run summary via ``ApiClient``.
-
-    Args:
-        settings: Resolved telemetry API settings.
-        conf: Tracker configuration dict.
-        emissions: Run emissions data.
-
-    Returns:
-        True if the run summary was posted successfully.
-    """
+    """Post public run summary via ``ApiClient`` (extensive tier only)."""
     try:
         api = ApiClient(
             endpoint_url=settings.api_url,

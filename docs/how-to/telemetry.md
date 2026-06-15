@@ -24,7 +24,7 @@ Tier is resolved in this order:
 
 1. **Tracker or CLI argument** — `EmissionsTracker(telemetry_level=...)` or `codecarbon monitor --telemetry-level ...`
 2. **Config + environment** — `telemetry_level` in `.codecarbon.config`, then `CODECARBON_TELEMETRY_LEVEL` when both are set
-3. **Default:** `minimal` (Tier 1)
+3. **Default:** `minimal`
 
 ## Lifecycle
 
@@ -35,18 +35,20 @@ EmissionsTracker.stop()    →  minimal: private POST only  |  extensive: privat
 
 If the run lasts less than one second, telemetry is not sent.
 
-## Private telemetry (`minimal` and `extensive`) — per run
+## Private telemetry — per run
 
-Both levels send the **same private payload** to `POST /telemetry` at each `stop()`. The `telemetry_level` field records which setting was used (`minimal` or `extensive`).
+Both tiers POST to `/telemetry` at each `stop()`. The server schema defines what each tier may include:
 
-The payload includes:
+| Tier | Private `POST /telemetry` payload |
+|------|-----------------------------------|
+| `minimal` | Environment and hardware only (OS, Python, CPU/GPU/RAM, geo/cloud, CodeCarbon version) |
+| `extensive` | Minimal fields **plus** run metrics, output methods, framework flags, usage diagnostics |
 
-- **Environment:** OS, Python, CPU/GPU/RAM, country/region, cloud provider/region, GPU driver/CUDA/cuDNN when available
-- **Usage:** tracking mode, output methods, integration surface (library / CLI / offline), task tracking, CI/notebook/container/IDE hints, hardware diagnostics
-- **ML stack:** framework presence flags when detected (no installed package versions)
-- **Run outcome:** duration, emissions, energy (total and per component), utilization averages
+**Minimal** includes rounded coordinates (1 decimal), cloud region, and hardware metadata. It does **not** include run emissions, energy, duration, or framework flags.
 
-Private telemetry does **not** include project names, experiment ids, API keys, file paths, exact coordinates, executable/host hashes, or survey demographics (role, industry, etc.).
+**Extensive** adds run outcome (duration, emissions, energy, utilization), output methods, ML framework presence flags (booleans only, no package versions), CI/notebook/container/IDE hints, and integration context (`decorator_vs_context`: `library`, `cli_monitor`, or `offline_tracker`).
+
+Private telemetry does **not** include project names, experiment ids, API keys, file paths, executable/host hashes, or survey demographics.
 
 ## `extensive` — additional public run summary
 
@@ -72,7 +74,7 @@ telemetry_level = minimal
 
 ```bash
 codecarbon telemetry set minimal
-codecarbon telemetry show
+codecarbon telemetry status
 codecarbon monitor --telemetry-level disabled -- python train.py
 ```
 
@@ -96,7 +98,7 @@ telemetry_level = disabled
 
 ## First run without explicit configuration
 
-If you never set `telemetry_level`, CodeCarbon uses `minimal` (Tier 1) and logs a **one-time warning** per Python session. Set `telemetry_level` explicitly to silence it.
+If you never set `telemetry_level`, CodeCarbon uses `minimal` and logs a **one-time warning** per Python session. Set `telemetry_level` explicitly to silence it.
 
 ## Related
 

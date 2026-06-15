@@ -20,17 +20,7 @@ TelemetryLevelSource = Literal["override", "external", "file", "default"]
 
 
 def parse_telemetry_level(raw: str | TelemetryLevel) -> TelemetryLevel:
-    """Parse a telemetry tier from a string or enum value.
-
-    Args:
-        raw: Tier name or ``TelemetryLevel`` member.
-
-    Returns:
-        Parsed ``TelemetryLevel``.
-
-    Raises:
-        ValueError: If ``raw`` is not a valid tier name.
-    """
+    """Parse a telemetry tier name or enum member."""
     if isinstance(raw, TelemetryLevel):
         return raw
     try:
@@ -64,24 +54,11 @@ class TelemetrySettings:
         external_conf: dict[str, Any] | None = None,
         override: str | TelemetryLevel | None = None,
     ) -> TelemetrySettings:
-        """Resolve telemetry tier and API settings.
-
-        Precedence for tier:
-
-            1. ``override`` — ``EmissionsTracker(telemetry_level=...)`` or CLI
-            2. ``external_conf`` — merged ``.codecarbon.config`` and env
-            3. ``config_file_conf`` — file-only settings
-            4. Default: ``minimal``
-
-        Args:
-            config_file_conf: Settings from ``get_config_file_settings()``.
-            external_conf: Merged settings from ``get_hierarchical_config()``.
-            override: Optional tier from tracker or CLI.
-
-        Returns:
-            Resolved settings bundle.
-        """
+        """Resolve tier (override > external > file > default minimal) and API settings."""
         merged = external_conf or {}
+        api_url = cls._resolve_api_url(merged)
+        api_key = cls._resolve_api_key(merged)
+        experiment_id = cls._resolve_experiment_id(merged)
         if override is not None:
             raw = override
             source: TelemetryLevelSource = "override"
@@ -98,9 +75,9 @@ class TelemetrySettings:
             return cls(
                 level=DEFAULT_TELEMETRY_LEVEL,
                 source="default",
-                api_url=cls._resolve_api_url(merged),
-                api_key=cls._resolve_api_key(merged),
-                experiment_id=cls._resolve_experiment_id(merged),
+                api_url=api_url,
+                api_key=api_key,
+                experiment_id=experiment_id,
             )
         try:
             level = parse_telemetry_level(raw)
@@ -114,9 +91,9 @@ class TelemetrySettings:
         return cls(
             level=level,
             source=source,
-            api_url=cls._resolve_api_url(merged),
-            api_key=cls._resolve_api_key(merged),
-            experiment_id=cls._resolve_experiment_id(merged),
+            api_url=api_url,
+            api_key=api_key,
+            experiment_id=experiment_id,
         )
 
     @staticmethod

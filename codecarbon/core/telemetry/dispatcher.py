@@ -12,11 +12,9 @@ from codecarbon.external.logger import logger
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 TELEMETRY_NOT_CONFIGURED_MESSAGE = (
-    "CodeCarbon telemetry_level was not set explicitly; using default %r. "
-    "Tier 1 private telemetry (per run at stop) will be sent. Set telemetry_level "
-    "in .codecarbon.config, set CODECARBON_TELEMETRY_LEVEL, pass telemetry_level=... "
-    "to EmissionsTracker / OfflineEmissionsTracker, or run "
-    "codecarbon telemetry set <level>."
+    "telemetry_level not set explicitly; default %r. Minimal telemetry sends on each "
+    "stop. Set telemetry_level in .codecarbon.config, CODECARBON_TELEMETRY_LEVEL, "
+    "EmissionsTracker(telemetry_level=...), or: codecarbon telemetry set <level>."
 )
 
 
@@ -30,15 +28,7 @@ class Telemetry:
 
     @classmethod
     def from_tracker(cls, tracker: Any) -> Telemetry:
-        """Build a dispatcher from tracker config state.
-
-        Args:
-            tracker: Active emissions tracker with ``_config_file_conf``,
-                ``_external_conf``, and optional ``_telemetry_override``.
-
-        Returns:
-            Configured ``Telemetry`` instance.
-        """
+        """Build a dispatcher from tracker config state."""
         return cls(
             TelemetrySettings.resolve(
                 config_file_conf=tracker._config_file_conf,
@@ -58,15 +48,7 @@ class Telemetry:
         Telemetry._default_warning_shown = True
 
     def send_at_stop(self, tracker: Any, emissions: EmissionsData) -> None:
-        """Send product telemetry for the resolved tier at tracker ``stop()``.
-
-        Tier 1 (``minimal``): private ``POST /telemetry`` only.
-        Tier 2 (``extensive``): Tier 1 plus public run summary.
-
-        Args:
-            tracker: Active emissions tracker instance.
-            emissions: Total emissions from ``_prepare_emissions_data()``.
-        """
+        """Send product telemetry at tracker ``stop()`` for the resolved tier."""
         if self.settings.level == TelemetryLevel.disabled:
             return
         if emissions.duration is not None and emissions.duration < 1:
@@ -74,16 +56,10 @@ class Telemetry:
             return
         ctx = TelemetryContext.from_tracker(tracker, emissions)
         payload = build_payload(ctx, level=self.settings.level)
-        try:
-            post_private(self.settings, payload)
-        except Exception as error:
-            logger.error(f"Private telemetry failed (non-critical): {error}")
+        post_private(self.settings, payload)
         if self.settings.level == TelemetryLevel.extensive:
-            try:
-                post_public_summary(
-                    self.settings,
-                    getattr(tracker, "_conf", {}),
-                    emissions,
-                )
-            except Exception as error:
-                logger.error(f"Public run summary failed (non-critical): {error}")
+            post_public_summary(
+                self.settings,
+                getattr(tracker, "_conf", {}),
+                emissions,
+            )

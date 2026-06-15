@@ -28,8 +28,8 @@ telemetry_app = typer.Typer(
 
 TIER_DESCRIPTIONS = {
     "disabled": "No product telemetry.",
-    "minimal": "Tier 1: private telemetry per run at stop (environment, usage, frameworks, emissions).",
-    "extensive": "Tier 2: Tier 1 plus run emissions summary to the shared telemetry experiment (ApiClient).",
+    "minimal": "Environment and hardware only (private POST /telemetry).",
+    "extensive": "Minimal fields plus run metrics and public run summary.",
 }
 
 
@@ -154,7 +154,7 @@ def print_telemetry_status(config_path: Optional[Path] = None) -> None:
     print(f"Explicitly configured: {explicit}")
     if not explicit:
         print(
-            "[yellow]Tier 1 minimal telemetry will be sent once per session "
+            "[yellow]Minimal telemetry will be sent on each tracker stop "
             "until you set telemetry_level.[/yellow]"
         )
 
@@ -217,8 +217,8 @@ def telemetry_entry(
         run_telemetry_interactive(config=config)
 
 
-@telemetry_app.command("show")
-def show(
+@telemetry_app.command("status")
+def status(
     config: Annotated[
         Optional[Path],
         typer.Option(
@@ -227,7 +227,7 @@ def show(
         ),
     ] = None,
 ) -> None:
-    """Show the resolved telemetry tier."""
+    """Print resolved telemetry tier and configuration source."""
     print_telemetry_status(config_path=config)
 
 

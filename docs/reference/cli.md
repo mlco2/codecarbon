@@ -98,7 +98,7 @@ Configure **product telemetry** (library usage metadata), separate from `codecar
 ```bash
 codecarbon telemetry              # interactive wizard
 codecarbon telemetry set <level>  # disabled | minimal | extensive
-codecarbon telemetry show         # resolved tier and whether it was set explicitly
+codecarbon telemetry status       # resolved tier and whether it was set explicitly
 ```
 
 **Options:**
@@ -107,7 +107,7 @@ codecarbon telemetry show         # resolved tier and whether it was set explici
 |--------|-------------|
 | `--config PATH` | Use a specific `.codecarbon.config` (default: local then global) |
 
-See [Product telemetry](../how-to/telemetry.md) for what Tier 1 collects and how to opt out.
+See [Product telemetry](../how-to/telemetry.md) for what `minimal` collects and how to opt out.
 
 ### `codecarbon monitor --telemetry-level`
 

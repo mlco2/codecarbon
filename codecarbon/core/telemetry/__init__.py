@@ -4,7 +4,7 @@ from codecarbon.core.telemetry.client import post_private, post_public_summary
 from codecarbon.core.telemetry.collect import TelemetryContext, build_payload
 from codecarbon.core.telemetry.dispatcher import Telemetry
 from codecarbon.core.telemetry.schemas import (
-    PRIVATE_TELEMETRY_FIELDS,
+    MINIMAL_TELEMETRY_FIELDS,
     TelemetryCreate,
     TelemetryLevel,
 )
@@ -24,7 +24,7 @@ __all__ = [
     "DEFAULT_TELEMETRY_API_URL",
     "DEFAULT_TELEMETRY_EXPERIMENT_ID",
     "DEFAULT_TELEMETRY_LEVEL",
-    "PRIVATE_TELEMETRY_FIELDS",
+    "MINIMAL_TELEMETRY_FIELDS",
     "TELEMETRY_LEVEL_CONFIG_KEY",
     "Telemetry",
     "TelemetryContext",

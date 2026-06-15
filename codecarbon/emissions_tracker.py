@@ -25,7 +25,7 @@ from codecarbon.core.config import (
 )
 from codecarbon.core.emissions import Emissions
 from codecarbon.core.resource_tracker import ResourceTracker
-from codecarbon.core.telemetry import Telemetry, TelemetrySettings
+from codecarbon.core.telemetry import Telemetry
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
@@ -511,13 +511,7 @@ class BaseEmissionsTracker(ABC):
         self._telemetry_override = (
             None if telemetry_level is _sentinel else telemetry_level
         )
-        self._telemetry = Telemetry(
-            TelemetrySettings.resolve(
-                config_file_conf=self._config_file_conf,
-                external_conf=self._external_conf,
-                override=self._telemetry_override,
-            )
-        )
+        self._telemetry = Telemetry.from_tracker(self)
         self._set_from_conf(
             force_carbon_intensity_g_co2e_kwh,
             "force_carbon_intensity_g_co2e_kwh",

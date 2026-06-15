@@ -36,21 +36,21 @@ def test_telemetry_set_writes_config():
         assert "telemetry_level = disabled" in content
 
 
-def test_telemetry_show_reports_stored_level():
+def test_telemetry_status_reports_stored_level():
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp:
         config_path = Path(tmp) / ".codecarbon.config"
         config_path.write_text("[codecarbon]\ntelemetry_level = extensive\n")
         result = runner.invoke(
             telemetry_app,
-            ["show", "--config", str(config_path)],
+            ["status", "--config", str(config_path)],
         )
         assert result.exit_code == 0
         assert "extensive" in result.output
         assert "Explicitly configured: True" in result.output
 
 
-def test_telemetry_show_merged_matches_tracker_precedence():
+def test_telemetry_status_merged_matches_tracker_precedence():
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp:
         global_path = Path(tmp) / "global.config"
@@ -61,7 +61,7 @@ def test_telemetry_show_merged_matches_tracker_precedence():
             "codecarbon.core.config._config_file_paths",
             return_value=(str(global_path), str(local_path)),
         ):
-            result = runner.invoke(telemetry_app, ["show"])
+            result = runner.invoke(telemetry_app, ["status"])
         assert result.exit_code == 0
         assert "Resolved tier: disabled" in result.output
         assert "merged" in result.output
