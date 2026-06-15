@@ -13,11 +13,15 @@ def test_fastapi_integration_importable() -> None:
         CodeCarbonMiddleware,
         add_codecarbon_middleware,
         create_codecarbon_lifespan,
+        log_request_complete,
+        shutdown_codecarbon_middleware,
     )
 
     assert CodeCarbonMiddleware is not None
     assert callable(add_codecarbon_middleware)
     assert callable(create_codecarbon_lifespan)
+    assert callable(log_request_complete)
+    assert callable(shutdown_codecarbon_middleware)
 
 
 def test_missing_starlette_shows_helpful_error(monkeypatch: pytest.MonkeyPatch) -> None:
