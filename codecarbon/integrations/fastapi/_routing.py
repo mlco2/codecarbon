@@ -1,6 +1,6 @@
 """Route naming and endpoint filter helpers for FastAPI/Starlette."""
 
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -56,31 +56,26 @@ def is_method_pattern(pattern: str) -> bool:
     return method in HTTP_METHODS and path.startswith("/")
 
 
-def matches_exclude(
+def matches_filter_pattern(
     pattern: str,
-    url_path: str,
     endpoint_key: str,
     endpoint_path: str,
+    url_path: str,
+    *,
+    exclude: bool,
 ) -> bool:
-    """Return True when an exclude pattern matches the request."""
+    """Return True when an include or exclude pattern matches the request."""
     if is_method_pattern(pattern):
         return endpoint_key == pattern
     if not pattern.startswith("/"):
         return endpoint_key == pattern
-    return (
-        url_path == pattern
-        or url_path.startswith(f"{pattern}/")
-        or endpoint_path == pattern
-    )
-
-
-def matches_include(pattern: str, endpoint_key: str, endpoint_path: str) -> bool:
-    """Return True when an include pattern matches the request."""
-    if is_method_pattern(pattern):
-        return endpoint_key == pattern
-    if pattern.startswith("/"):
-        return endpoint_path == pattern
-    return endpoint_key == pattern
+    if exclude:
+        return (
+            url_path == pattern
+            or url_path.startswith(f"{pattern}/")
+            or endpoint_path == pattern
+        )
+    return endpoint_path == pattern
 
 
 def should_track_request(
@@ -104,32 +99,33 @@ def should_track_request(
         True when CodeCarbon should track this request.
     """
     url_path = request.url.path
+    if include is None:
+        needs_full_match = any(is_method_pattern(pattern) for pattern in exclude)
+        if not needs_full_match:
+            for pattern in exclude:
+                if url_path == pattern or url_path.startswith(f"{pattern}/"):
+                    return False
+            return True
     endpoint_key = build_endpoint_key(request)
     endpoint_path = get_endpoint_path(request)
     for pattern in exclude:
-        if matches_exclude(pattern, url_path, endpoint_key, endpoint_path):
+        if matches_filter_pattern(
+            pattern,
+            endpoint_key,
+            endpoint_path,
+            url_path,
+            exclude=True,
+        ):
             return False
     if include is None:
         return True
     return any(
-        matches_include(pattern, endpoint_key, endpoint_path) for pattern in include
+        matches_filter_pattern(
+            pattern,
+            endpoint_key,
+            endpoint_path,
+            url_path,
+            exclude=False,
+        )
+        for pattern in include
     )
-
-
-def build_task_name(
-    request: "Request",
-    formatter: Callable[["Request"], str] | None = None,
-) -> str:
-    """Derive a stable label like ``GET /items/{item_id}`` for task-scoped tracking.
-
-    Args:
-        request: Current Starlette/FastAPI request.
-        formatter: Optional function that returns the task name instead of the default.
-
-    Returns:
-        Method plus route template when a route is mounted on the request scope,
-        otherwise method plus the raw URL path.
-    """
-    if formatter is not None:
-        return formatter(request)
-    return build_endpoint_key(request)

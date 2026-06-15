@@ -100,6 +100,49 @@ def resolve_header_mapping(config: HeaderConfig) -> dict[str, str]:
     return {field: _auto_header_name(field) for field in config}
 
 
+def header_name_value_pairs(
+    emissions_data: EmissionsData,
+    header_mapping: Mapping[str, str],
+    request: Request | None = None,
+    header_formatter: HeaderFormatter | None = None,
+) -> Mapping[str, str]:
+    """Resolve emission fields to HTTP header names and string values."""
+    if header_formatter is not None:
+        if request is None:
+            raise ValueError("request is required when header_formatter is set")
+        return header_formatter(emissions_data, request)
+    return {
+        header_name: str(getattr(emissions_data, field))
+        for field, header_name in header_mapping.items()
+        if hasattr(emissions_data, field)
+    }
+
+
+def emissions_header_items(
+    emissions_data: EmissionsData,
+    header_mapping: Mapping[str, str],
+    request: Request,
+    header_formatter: HeaderFormatter | None = None,
+) -> list[tuple[bytes, bytes]]:
+    """Build ASGI header pairs for emission fields.
+
+    Args:
+        emissions_data: Measured values for this request.
+        header_mapping: Field name to HTTP header name.
+        request: Current HTTP request (for custom formatters).
+        header_formatter: Optional override for header name/value pairs.
+
+    Returns:
+        List of ``(name, value)`` byte tuples for ASGI ``response.start`` messages.
+    """
+    pairs = header_name_value_pairs(
+        emissions_data, header_mapping, request, header_formatter
+    )
+    return [
+        (name.encode("latin-1"), value.encode("latin-1")) for name, value in pairs.items()
+    ]
+
+
 def apply_response_headers(
     response: Response,
     emissions_data: EmissionsData,
@@ -112,8 +155,7 @@ def apply_response_headers(
         emissions_data: Values read via ``getattr`` for each key in ``header_mapping``.
         header_mapping: Field name to HTTP header name; unknown fields are skipped.
     """
-    for field, header_name in header_mapping.items():
-        if not hasattr(emissions_data, field):
-            continue
-        value = getattr(emissions_data, field)
-        response.headers[header_name] = str(value)
+    for name, value in header_name_value_pairs(
+        emissions_data, header_mapping
+    ).items():
+        response.headers[name] = value

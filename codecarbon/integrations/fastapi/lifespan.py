@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from codecarbon import EmissionsTracker
+from codecarbon.integrations.fastapi.middleware import shutdown_codecarbon_middleware
 
 
 @asynccontextmanager
@@ -36,3 +37,4 @@ async def create_codecarbon_lifespan(
     finally:
         tracker.stop()
         app.state.codecarbon_tracker = None
+        shutdown_codecarbon_middleware(app)
