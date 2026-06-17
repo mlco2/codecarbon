@@ -16,11 +16,17 @@ class TestTelemetrySchemaValidation(unittest.TestCase):
         }
 
     def test_rejects_disabled_telemetry_level(self):
-        with pytest.raises(ValidationError, match="Disabled telemetry must not be submitted"):
-            TelemetryCreate(**{**self._minimal_payload(), "telemetry_level": "disabled"})
+        with pytest.raises(
+            ValidationError, match="Disabled telemetry must not be submitted"
+        ):
+            TelemetryCreate(
+                **{**self._minimal_payload(), "telemetry_level": "disabled"}
+            )
 
     def test_rejects_minimal_with_extensive_field(self):
-        with pytest.raises(ValidationError, match="Minimal telemetry cannot include extensive fields"):
+        with pytest.raises(
+            ValidationError, match="Minimal telemetry cannot include extensive fields"
+        ):
             TelemetryCreate(
                 **{
                     **self._minimal_payload(),
