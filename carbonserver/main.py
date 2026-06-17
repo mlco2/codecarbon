@@ -80,10 +80,21 @@ def init_container():
 
 
 def init_db(container):
+    if os.environ.get("SKIP_DB_BOOTSTRAP", "").lower() in ("1", "true", "yes"):
+        return
     db = container.db()
     db.create_database()
-    sql_models.Base.metadata.create_all(bind=engine)
-    telemetry_sql_models.Base.metadata.create_all(bind=engine)
+    if os.environ.get("SKIP_DB_CREATE_ALL", "").lower() in ("1", "true", "yes"):
+        return
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    existing = set(inspector.get_table_names())
+    if "users" not in existing:
+        sql_models.Base.metadata.create_all(bind=engine)
+    telemetry_tables = {t.name for t in telemetry_sql_models.Base.metadata.tables.values()}
+    if not telemetry_tables.intersection(existing):
+        telemetry_sql_models.Base.metadata.create_all(bind=engine)
 
 
 def init_server(container):

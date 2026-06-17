@@ -3,25 +3,31 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Dict
+import time
+from typing import Dict, Optional
 
 import numpy as np
 
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 
+_powermetrics_available: Optional[bool] = None
+
 
 def is_powermetrics_available() -> bool:
+    global _powermetrics_available
+    if _powermetrics_available is not None:
+        return _powermetrics_available
     try:
         ApplePowermetrics()
-        response = _has_powermetrics_sudo()
-        return response
+        _powermetrics_available = _has_powermetrics_sudo()
     except Exception as e:
         logger.debug(
             "Not using PowerMetrics, an exception occurred while instantiating"
             + f" Powermetrics : {e}",
         )
-        return False
+        _powermetrics_available = False
+    return _powermetrics_available
 
 
 def _has_powermetrics_sudo() -> bool:
@@ -51,6 +57,13 @@ def _has_powermetrics_sudo() -> bool:
         stderr=subprocess.PIPE,
         text=True,
     ) as process:
+        deadline = time.time() + 3
+        while process.poll() is None and time.time() < deadline:
+            time.sleep(0.05)
+        if process.poll() is None:
+            process.kill()
+            logger.debug("PowerMetrics sudo check timed out.")
+            return False
         _, stderr = process.communicate()
 
         if re.search(r"[sudo].*password", stderr):

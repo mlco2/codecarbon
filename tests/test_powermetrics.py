@@ -15,6 +15,12 @@ class FakeProcess:
     def communicate(self):
         return ("", self._stderr)
 
+    def poll(self):
+        return self.returncode
+
+    def kill(self):
+        return None
+
     def __enter__(self):
         return self
 

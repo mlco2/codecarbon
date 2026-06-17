@@ -145,13 +145,13 @@ def get_hierarchical_config():
     global_path = str((home / ".codecarbon.config").expanduser().resolve())
     local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
     if Path(global_path).exists():
-        logger.info(
+        logger.debug(
             f"Codecarbon is taking the configuration from global file: {global_path}"
         )
         if Path(local_path).exists():
-            logger.info(f"Some variables are overriden by the local file: {local_path}")
+            logger.debug(f"Some variables are overriden by the local file: {local_path}")
     elif Path(local_path).exists():
-        logger.info(
+        logger.debug(
             f"Codecarbon is taking the configuration from the local file {local_path}"
         )
 

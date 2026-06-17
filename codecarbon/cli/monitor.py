@@ -8,8 +8,6 @@ import typer
 from rich import print
 from typing_extensions import Annotated
 
-from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
-
 
 def run_and_monitor(
     ctx: typer.Context,
@@ -50,6 +48,7 @@ def run_and_monitor(
     directory. The file path is shown in the final report.
     """
     # Suppress all CodeCarbon logs during execution
+    from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
     from codecarbon.external.logger import set_logger_level
 
     set_logger_level(log_level)

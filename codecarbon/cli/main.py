@@ -5,15 +5,12 @@ import time
 from pathlib import Path
 from typing import Optional
 
-import questionary
-import requests
 import typer
 from rich import print
 from rich.prompt import Confirm
 from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
-from codecarbon.cli.auth import authorize, get_access_token
 from codecarbon.cli.cli_utils import (
     create_new_config_file,
     get_api_endpoint,
@@ -21,10 +18,6 @@ from codecarbon.cli.cli_utils import (
     get_existing_exp_id,
     overwrite_local_config,
 )
-from codecarbon.cli.monitor import run_and_monitor
-from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
-from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
-from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
@@ -68,6 +61,9 @@ def version(
 
 
 def show_config(path: Path = Path("./.codecarbon.config")) -> None:
+    from codecarbon.cli.auth import get_access_token
+    from codecarbon.core.api_client import ApiClient
+
     d = get_config(path)
     print("Current configuration : \n")
     print("Config file content : ")
@@ -114,6 +110,9 @@ def api_get():
     """
     ex: test-api
     """
+    from codecarbon.cli.auth import get_access_token
+    from codecarbon.core.api_client import ApiClient
+
     api_endpoint = get_api_endpoint()
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
@@ -123,6 +122,9 @@ def api_get():
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
+    from codecarbon.cli.auth import authorize, get_access_token
+    from codecarbon.core.api_client import ApiClient
+
     authorize()
     api_endpoint = get_api_endpoint()
     api = ApiClient(endpoint_url=api_endpoint)
@@ -132,6 +134,10 @@ def login():
 
 
 def get_api_key(project_id: str):
+    import requests
+
+    from codecarbon.cli.auth import get_access_token
+
     api_endpoint = get_api_endpoint()
     api_endpoint = api_endpoint.rstrip("/")
     req = requests.post(
@@ -161,6 +167,13 @@ def config():
     """
     Initialize CodeCarbon, this will prompt you for configuration of Organisation/Team/Project/Experiment.
     """
+    from codecarbon.cli.auth import get_access_token
+    from codecarbon.core.api_client import ApiClient
+    from codecarbon.core.schemas import (
+        ExperimentCreate,
+        OrganizationCreate,
+        ProjectCreate,
+    )
 
     print("Welcome to CodeCarbon configuration wizard")
     home = Path.home()
@@ -375,8 +388,12 @@ def monitor(
 
         tracker_args = {**tracker_args, "save_to_api": api}
 
+    from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
+
     # If extra args are provided (e.g. `codecarbon monitor -- my_script.py`), delegate to `run_and_monitor`
     if getattr(ctx, "args", None):
+        from codecarbon.cli.monitor import run_and_monitor
+
         return run_and_monitor(ctx, offline=offline, **tracker_args)
 
     # Instantiate the tracker
@@ -417,6 +434,8 @@ def detect():
     """
     Detects hardware and prints information without running any measurements.
     """
+    from codecarbon.emissions_tracker import EmissionsTracker
+
     print("Detecting hardware...")
     tracker = EmissionsTracker(save_to_file=False)
     hardware_info = tracker.get_detected_hardware()
@@ -438,6 +457,8 @@ def detect():
 
 
 def questionary_prompt(prompt, list_options, default):
+    import questionary
+
     value = questionary.select(
         prompt,
         list_options,

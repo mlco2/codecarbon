@@ -6,14 +6,27 @@ from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
 
 
+from functools import lru_cache  # noqa: F401 — kept for backward compatibility
+
+_nvidia_system_available: bool | None = None
+
+
 def is_nvidia_system():
     """Returns True if the system has an nvidia-smi interface."""
+    global _nvidia_system_available
+    if _nvidia_system_available is not None:
+        return _nvidia_system_available
     try:
-        # Check if nvidia-smi is available
         subprocess.check_output(["nvidia-smi", "--help"])
-        return True
+        _nvidia_system_available = True
     except Exception:
-        return False
+        _nvidia_system_available = False
+    return _nvidia_system_available
+
+
+def clear_nvidia_system_cache() -> None:
+    global _nvidia_system_available
+    _nvidia_system_available = None
 
 
 try:

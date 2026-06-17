@@ -851,7 +851,7 @@ class TestCarbonTracker(unittest.TestCase):
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_geo_metadata")
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_cloud_metadata")
     @mock.patch("codecarbon.core.electricitymaps_api.requests.get")
-    @mock.patch("codecarbon.emissions_tracker.ResourceTracker")
+    @mock.patch("codecarbon.core.resource_tracker.ResourceTracker")
     @mock.patch(
         "codecarbon.emissions_tracker.BaseEmissionsTracker.get_detected_hardware"
     )
@@ -919,10 +919,9 @@ class TestCarbonTracker(unittest.TestCase):
         )
         tracker._hardware = [mock_cpu]
 
-        # Start tracking
+        # Start tracking (includes an immediate first measurement)
         tracker.start()
 
-        tracker._measure_power_and_energy()
         # total_energy = 1.0, intensity = 100 => emissions = 0.1 kg
         data1 = tracker._prepare_emissions_data()
         self.assertAlmostEqual(data1.emissions, 0.1)

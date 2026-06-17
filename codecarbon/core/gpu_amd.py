@@ -6,14 +6,27 @@ from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
 
 
+from functools import lru_cache  # noqa: F401 — kept for backward compatibility
+
+_rocm_system_available: bool | None = None
+
+
 def is_rocm_system():
     """Returns True if the system has an rocm-smi interface."""
+    global _rocm_system_available
+    if _rocm_system_available is not None:
+        return _rocm_system_available
     try:
-        # Check if rocm-smi is available
         subprocess.check_output(["rocm-smi", "--help"])
-        return True
+        _rocm_system_available = True
     except (subprocess.CalledProcessError, OSError):
-        return False
+        _rocm_system_available = False
+    return _rocm_system_available
+
+
+def clear_rocm_system_cache() -> None:
+    global _rocm_system_available
+    _rocm_system_available = None
 
 
 try:

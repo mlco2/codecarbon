@@ -4,6 +4,8 @@ using Intel Power Gadget
 https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
 
+from __future__ import annotations
+
 import os
 import re
 import shutil
@@ -11,7 +13,6 @@ import subprocess
 import sys
 from typing import Dict, Optional, Tuple
 
-import pandas as pd
 import psutil
 from rapidfuzz import fuzz, process, utils
 
@@ -19,10 +20,11 @@ from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
-from codecarbon.input import DataSource
 
 # default W value per core for a CPU if no model is found in the ref csv
 DEFAULT_POWER_PER_CORE = 4
+
+_powergadget_available: Optional[bool] = None
 
 
 def is_powergadget_available() -> bool:
@@ -32,16 +34,20 @@ def is_powergadget_available() -> bool:
     Returns:
         bool: `True` if Intel Power Gadget is available, `False` otherwise.
     """
+    global _powergadget_available
+    if _powergadget_available is not None:
+        return _powergadget_available
     try:
         IntelPowerGadget()
-        return True
+        _powergadget_available = True
     except Exception as e:
         logger.debug(
             "Not using PowerGadget, an exception occurred while instantiating "
             + "IntelPowerGadget : %s",
             e,
         )
-        return False
+        _powergadget_available = False
+    return _powergadget_available
 
 
 def _get_candidate_bases(rapl_dir: str) -> list:
@@ -366,6 +372,8 @@ class IntelPowerGadget:
         self._log_values()
         cpu_details = {}
         try:
+            import pandas as pd
+
             cpu_data = pd.read_csv(self._log_file_path).dropna()
             for col_name in cpu_data.columns:
                 if col_name in ["System Time", "Elapsed Time (sec)", "RDTSC"]:
@@ -887,11 +895,13 @@ class TDP:
         self.model, self.tdp = self._main()
 
     @staticmethod
-    def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
+    def _get_cpu_constant_power(match: str, cpu_power_df) -> int:
         """Extract constant power from matched CPU"""
         return float(cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0])
 
     def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
+        from codecarbon.input import DataSource
+
         cpu_power_df = DataSource().get_cpu_power_data()
         cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
         if cpu_matching:
@@ -900,7 +910,7 @@ class TDP:
         return None
 
     def _get_matching_cpu(
-        self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
+        self, model_raw: str, cpu_df, greedy=False
     ) -> str:
         """
         Get matching cpu name
