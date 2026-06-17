@@ -168,7 +168,7 @@ def config():
     Initialize CodeCarbon, this will prompt you for configuration of Organisation/Team/Project/Experiment.
     """
     from codecarbon.cli.auth import get_access_token
-    from codecarbon.core.api_client import ApiClient
+    from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
     from codecarbon.core.schemas import (
         ExperimentCreate,
         OrganizationCreate,

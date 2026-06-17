@@ -151,6 +151,7 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         )
         tracker.start()
         tracker._measure_power_and_energy()
+        tracker._ensure_emissions_engine()
         cloud: CloudMetadata = tracker._get_cloud_metadata()
 
         try:

@@ -294,7 +294,7 @@ class TestIntelPowerGadget(unittest.TestCase):
         mock_warning.assert_called_once()
 
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
-    @mock.patch("codecarbon.core.cpu.pd.read_csv", side_effect=Exception("bad csv"))
+    @mock.patch("pandas.read_csv", side_effect=Exception("bad csv"))
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
     def test_get_cpu_details_returns_empty_dict_on_read_error(
         self, mock_setup, mock_read_csv, mock_log_values
@@ -374,7 +374,7 @@ class TestTDP(unittest.TestCase):
     def test_get_cpu_power_from_registry_returns_none_without_match(self):
         tdp = TDP.__new__(TDP)
         with (
-            mock.patch("codecarbon.core.cpu.DataSource") as mock_data_source,
+            mock.patch("codecarbon.input.DataSource") as mock_data_source,
             mock.patch.object(tdp, "_get_matching_cpu", return_value=None),
         ):
             mock_data_source.return_value.get_cpu_power_data.return_value = (
@@ -597,11 +597,18 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
         with (
             mock.patch(
-                "codecarbon.core.resource_tracker.cpu.TDP",
+                "codecarbon.core.resource_tracker.get_cached_tdp",
                 side_effect=AssertionError(
                     "TDP should not be instantiated when RAPL is active"
                 ),
             ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_linux_os", return_value=True
+            ),
+            mock.patch("codecarbon.core.resource_tracker.is_mac_os", return_value=False),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_windows_os", return_value=False
+            ),
             mock.patch(
                 "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
                 return_value=False,
@@ -650,7 +657,8 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
         with (
             mock.patch(
-                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+                "codecarbon.core.resource_tracker.get_cached_tdp",
+                return_value=fake_tdp,
             ) as mocked_tdp,
             mock.patch(
                 "codecarbon.core.resource_tracker.ResourceTracker._setup_cpu_load_mode",
@@ -674,7 +682,7 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         ):
             resource_tracker.set_CPU_tracking()
 
-        mocked_tdp.assert_called_once_with()
+        mocked_tdp.assert_called_once()
         mocked_setup_cpu_load.assert_called_once_with(fake_tdp, 100)
         mocked_fallback.assert_not_called()
 
@@ -697,11 +705,21 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
         with (
             mock.patch(
-                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+                "codecarbon.core.resource_tracker.get_cached_tdp",
+                return_value=fake_tdp,
             ) as mocked_tdp,
             mock.patch(
                 "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
             ) as mocked_fallback,
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_mac_os", return_value=False
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_linux_os", return_value=False
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_windows_os", return_value=False
+            ),
             mock.patch(
                 "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
                 return_value=False,
@@ -717,7 +735,7 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         ):
             resource_tracker.set_CPU_tracking()
 
-        mocked_tdp.assert_called_once_with()
+        mocked_tdp.assert_called_once()
         mocked_fallback.assert_called_once_with(fake_tdp, 80)
 
 

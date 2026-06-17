@@ -50,6 +50,11 @@ def is_powergadget_available() -> bool:
     return _powergadget_available
 
 
+def clear_powergadget_cache() -> None:
+    global _powergadget_available
+    _powergadget_available = None
+
+
 def _get_candidate_bases(rapl_dir: str) -> list:
     """Get list of directories to scan for RAPL files."""
     default_rapl_dir = "/sys/class/powercap/intel-rapl/subsystem"

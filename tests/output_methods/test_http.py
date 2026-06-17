@@ -44,37 +44,43 @@ class TestHTTPOutput(unittest.TestCase):
             wue=0.5,
         )
         self.url = "http://test.com/emissions"
-        self.http_output = HTTPOutput(endpoint_url=self.url)
 
-    @patch(
-        "codecarbon.output_methods.http.requests.post",
-        return_value=MagicMock(status_code=201),
-    )
-    def test_http_output_post_success(self, mock_post):
-        self.http_output.out(self.emissions_data, self.emissions_data)
+    @patch("codecarbon.output_methods.http.get_http_session")
+    def test_http_output_post_success(self, mock_get_session):
+        mock_session = MagicMock()
+        mock_session.post.return_value = MagicMock(status_code=201)
+        mock_get_session.return_value = mock_session
+        http_output = HTTPOutput(endpoint_url=self.url)
 
-        mock_post.assert_called_once()
-        self.assertEqual(mock_post.call_args[0][0], self.url)
+        http_output.out(self.emissions_data, self.emissions_data)
+
+        mock_session.post.assert_called_once()
+        self.assertEqual(mock_session.post.call_args[0][0], self.url)
 
     @patch("codecarbon.output_methods.http.logger.warning")
-    @patch(
-        "codecarbon.output_methods.http.requests.post",
-        return_value=MagicMock(status_code=418),
-    )
-    def test_http_output_post_unexpected_status(self, mock_post, mock_logger):
-        self.http_output.out(self.emissions_data, self.emissions_data)
+    @patch("codecarbon.output_methods.http.get_http_session")
+    def test_http_output_post_unexpected_status(self, mock_get_session, mock_logger):
+        mock_session = MagicMock()
+        mock_session.post.return_value = MagicMock(status_code=418)
+        mock_get_session.return_value = mock_session
+        http_output = HTTPOutput(endpoint_url=self.url)
 
-        mock_post.assert_called_once()
+        http_output.out(self.emissions_data, self.emissions_data)
+
+        mock_session.post.assert_called_once()
         mock_logger.assert_called_once()
 
     @patch("codecarbon.output_methods.http.logger.error")
-    @patch(
-        "codecarbon.output_methods.http.requests.post",
-        side_effect=Exception("Test exception"),
-    )
-    def test_http_output_post_exception(self, mock_post, mock_logger):
-        self.http_output.out(self.emissions_data, self.emissions_data)
-        mock_post.assert_called_once()
+    @patch("codecarbon.output_methods.http.get_http_session")
+    def test_http_output_post_exception(self, mock_get_session, mock_logger):
+        mock_session = MagicMock()
+        mock_session.post.side_effect = Exception("Test exception")
+        mock_get_session.return_value = mock_session
+        http_output = HTTPOutput(endpoint_url=self.url)
+
+        http_output.out(self.emissions_data, self.emissions_data)
+
+        mock_session.post.assert_called_once()
         mock_logger.assert_called_once()
 
 

@@ -204,7 +204,7 @@ def test_set_cpu_tracking_force_mode_uses_cpu_load_and_returns():
     fake_tdp = SimpleNamespace(tdp=20, model="CPU")
 
     with (
-        patch("codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp),
+        patch("codecarbon.core.resource_tracker.get_cached_tdp", return_value=fake_tdp),
         patch.object(
             resource_tracker, "_setup_cpu_load_mode", return_value=True
         ) as mock_setup,
@@ -338,7 +338,7 @@ def test_set_cpu_tracking_falls_back_when_forced_power_is_set():
             "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
             return_value=True,
         ),
-        patch("codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp),
+        patch("codecarbon.core.resource_tracker.get_cached_tdp", return_value=fake_tdp),
         patch.object(resource_tracker, "_setup_fallback_tracking") as mock_fallback,
     ):
         resource_tracker.set_CPU_tracking()

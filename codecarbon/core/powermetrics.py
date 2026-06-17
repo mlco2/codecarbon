@@ -30,6 +30,11 @@ def is_powermetrics_available() -> bool:
     return _powermetrics_available
 
 
+def clear_powermetrics_cache() -> None:
+    global _powermetrics_available
+    _powermetrics_available = None
+
+
 def _has_powermetrics_sudo() -> bool:
     if shutil.which("sudo") is None:
         logger.debug("sudo not available, we won't use Apple PowerMetrics.")

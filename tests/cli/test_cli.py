@@ -11,7 +11,7 @@ from codecarbon.cli.main import codecarbon
 # MOCK API CLIENT
 
 
-@patch("codecarbon.cli.main.ApiClient")
+@patch("codecarbon.core.api_client.ApiClient")
 class TestApp(unittest.TestCase):
     def setUp(self):
         self.runner = CliRunner()
@@ -57,7 +57,7 @@ class TestApp(unittest.TestCase):
     @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
-    @patch("codecarbon.cli.main.get_access_token")
+    @patch("codecarbon.cli.auth.get_access_token")
     @patch("typer.prompt")
     def test_config_no_local_new_all(
         self,
@@ -147,7 +147,7 @@ class TestApp(unittest.TestCase):
             except OSError:
                 pass
 
-    @patch("codecarbon.cli.main.get_access_token")
+    @patch("codecarbon.cli.auth.get_access_token")
     @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.get_config")
     @patch("codecarbon.cli.main.questionary_prompt")

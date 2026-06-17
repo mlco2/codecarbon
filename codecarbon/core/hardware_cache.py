@@ -71,17 +71,29 @@ def get_cached_tdp(cpu_module):
     return _tdp_model
 
 
-def _spec_from_hardware(hw) -> Dict[str, Any]:
-    from codecarbon.external.hardware import AppleSiliconChip, CPU, GPU
-    from codecarbon.external.ram import RAM
+def _hardware_kind(hw) -> str:
+    """Classify hardware without isinstance (safe if modules were reloaded)."""
+    name = type(hw).__name__
+    if name == "RAM":
+        return "ram"
+    if name == "CPU":
+        return "cpu"
+    if name == "AppleSiliconChip":
+        return "apple_chip"
+    if name == "GPU":
+        return "gpu"
+    raise TypeError(f"Unsupported hardware type for cache: {type(hw)}")
 
-    if isinstance(hw, RAM):
+
+def _spec_from_hardware(hw) -> Dict[str, Any]:
+    kind = _hardware_kind(hw)
+    if kind == "ram":
         return {
             "kind": "ram",
             "tracking_mode": hw._tracking_mode,
             "force_ram_power": hw._force_ram_power,
         }
-    if isinstance(hw, CPU):
+    if kind == "cpu":
         spec: Dict[str, Any] = {
             "kind": "cpu",
             "mode": hw._mode,
@@ -99,13 +111,13 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
                 hw._intel_interface, "rapl_prefer_psys", False
             )
         return spec
-    if isinstance(hw, AppleSiliconChip):
+    if kind == "apple_chip":
         return {
             "kind": "apple_chip",
             "model": hw._model,
             "chip_part": hw.chip_part,
         }
-    if isinstance(hw, GPU):
+    if kind == "gpu":
         return {"kind": "gpu", "gpu_ids": list(hw.gpu_ids) if hw.gpu_ids else None}
     raise TypeError(f"Unsupported hardware type for cache: {type(hw)}")
 
@@ -184,10 +196,24 @@ def clear_cache() -> None:
     with _cache_lock:
         _plans.clear()
     _tdp_model = None
-    from codecarbon.core import gpu_amd, gpu_nvidia
 
-    gpu_nvidia.clear_nvidia_system_cache()
-    gpu_amd.clear_rocm_system_cache()
-    from codecarbon.external.hardware import clear_cpu_load_prime_cache
+    import sys
 
-    clear_cpu_load_prime_cache()
+    gpu_nvidia = sys.modules.get("codecarbon.core.gpu_nvidia")
+    if gpu_nvidia is not None:
+        gpu_nvidia.clear_nvidia_system_cache()
+    gpu_amd = sys.modules.get("codecarbon.core.gpu_amd")
+    if gpu_amd is not None:
+        gpu_amd.clear_rocm_system_cache()
+
+    cpu = sys.modules.get("codecarbon.core.cpu")
+    if cpu is not None:
+        cpu.clear_powergadget_cache()
+    powermetrics = sys.modules.get("codecarbon.core.powermetrics")
+    if powermetrics is not None:
+        powermetrics.clear_powermetrics_cache()
+
+    if "codecarbon.external.hardware" in sys.modules:
+        from codecarbon.external.hardware import clear_cpu_load_prime_cache
+
+        clear_cpu_load_prime_cache()
