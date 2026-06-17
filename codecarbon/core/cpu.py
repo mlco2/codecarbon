@@ -914,9 +914,7 @@ class TDP:
             return power
         return None
 
-    def _get_matching_cpu(
-        self, model_raw: str, cpu_df, greedy=False
-    ) -> str:
+    def _get_matching_cpu(self, model_raw: str, cpu_df, greedy=False) -> str:
         """
         Get matching cpu name
 

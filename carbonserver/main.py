@@ -92,7 +92,9 @@ def init_db(container):
     existing = set(inspector.get_table_names())
     if "users" not in existing:
         sql_models.Base.metadata.create_all(bind=engine)
-    telemetry_tables = {t.name for t in telemetry_sql_models.Base.metadata.tables.values()}
+    telemetry_tables = {
+        t.name for t in telemetry_sql_models.Base.metadata.tables.values()
+    }
     if not telemetry_tables.intersection(existing):
         telemetry_sql_models.Base.metadata.create_all(bind=engine)
 

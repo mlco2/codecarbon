@@ -1,12 +1,10 @@
 import subprocess
 from dataclasses import dataclass
+from functools import lru_cache  # noqa: F401 — kept for backward compatibility
 from typing import Any, Union
 
 from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
-
-
-from functools import lru_cache  # noqa: F401 — kept for backward compatibility
 
 _nvidia_system_available: bool | None = None
 

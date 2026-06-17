@@ -34,12 +34,8 @@ def test_version_flag():
 
 def test_api_get_calls_api_and_prints(monkeypatch):
     runner = CliRunner()
-    monkeypatch.setattr(
-        "codecarbon.core.api_client.ApiClient", FakeApiClient
-    )
-    monkeypatch.setattr(
-        "codecarbon.cli.auth.get_access_token", fake_get_access_token
-    )
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FakeApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
 
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
     assert result.exit_code == 0
@@ -55,15 +51,11 @@ def test_api_get_uses_get_api_endpoint(monkeypatch):
             super().__init__(endpoint_url=endpoint_url)
 
     runner = CliRunner()
-    monkeypatch.setattr(
-        "codecarbon.core.api_client.ApiClient", CustomApiClient
-    )
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", CustomApiClient)
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda: "https://custom.codecarbon.io"
     )
-    monkeypatch.setattr(
-        "codecarbon.cli.auth.get_access_token", fake_get_access_token
-    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
 
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
     assert result.exit_code == 0
@@ -93,9 +85,7 @@ def test_detect_monkeypatched_tracker(monkeypatch):
                 "gpu_ids": None,
             }
 
-    monkeypatch.setattr(
-        "codecarbon.emissions_tracker.EmissionsTracker", FakeTracker
-    )
+    monkeypatch.setattr("codecarbon.emissions_tracker.EmissionsTracker", FakeTracker)
     runner = CliRunner()
     result = runner.invoke(cli_main.codecarbon, ["detect"])
     assert result.exit_code == 0
@@ -139,9 +129,7 @@ def test_show_config_handles_access_token_errors(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda path: "https://api.codecarbon.io"
     )
-    monkeypatch.setattr(
-        "codecarbon.cli.auth.get_access_token", fake_get_access_token
-    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
 
     cli_main.show_config(tmp_path / ".codecarbon.config")
     captured = capsys.readouterr()
@@ -185,9 +173,7 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda: "https://custom-login.codecarbon.io"
     )
-    monkeypatch.setattr(
-        "codecarbon.cli.auth.get_access_token", lambda: "login-token"
-    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "login-token")
 
     runner = CliRunner()
     result = runner.invoke(cli_main.codecarbon, ["login"])
@@ -211,9 +197,7 @@ def test_get_api_key_uses_bearer_token(monkeypatch):
         captured["headers"] = headers
         return FakeResponse()
 
-    monkeypatch.setattr(
-        "codecarbon.cli.auth.get_access_token", lambda: "access-token"
-    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "access-token")
     monkeypatch.setattr("requests.post", fake_post)
 
     token = cli_main.get_api_key("proj-123")
@@ -251,9 +235,7 @@ def test_show_config_prints_missing_project_and_experiment(
             return {"id": experiment_id}
 
     monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FakeApiClient)
-    monkeypatch.setattr(
-        "codecarbon.cli.auth.get_access_token", lambda: "fake-token"
-    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "fake-token")
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda path: "https://api.codecarbon.io"
     )

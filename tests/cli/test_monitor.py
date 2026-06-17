@@ -21,9 +21,7 @@ class FakeTracker:
 
 
 def _patch_trackers(monkeypatch, online_cls=FakeTracker, offline_cls=FakeTracker):
-    monkeypatch.setattr(
-        "codecarbon.emissions_tracker.EmissionsTracker", online_cls
-    )
+    monkeypatch.setattr("codecarbon.emissions_tracker.EmissionsTracker", online_cls)
     monkeypatch.setattr(
         "codecarbon.emissions_tracker.OfflineEmissionsTracker", offline_cls
     )

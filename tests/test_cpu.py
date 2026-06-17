@@ -605,7 +605,9 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
             mock.patch(
                 "codecarbon.core.resource_tracker.is_linux_os", return_value=True
             ),
-            mock.patch("codecarbon.core.resource_tracker.is_mac_os", return_value=False),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_mac_os", return_value=False
+            ),
             mock.patch(
                 "codecarbon.core.resource_tracker.is_windows_os", return_value=False
             ),

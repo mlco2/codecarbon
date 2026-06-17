@@ -60,9 +60,7 @@ def monitor(
                 err=True,
             )
             raise typer.Exit(1)
-        tracker_args.update(
-            {"country_iso_code": country_iso_code, "region": region}
-        )
+        tracker_args.update({"country_iso_code": country_iso_code, "region": region})
     else:
         from codecarbon.cli.cli_utils import get_existing_exp_id
 

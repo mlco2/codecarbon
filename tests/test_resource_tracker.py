@@ -262,7 +262,9 @@ def test_set_cpu_tracking_mac_arm_prefers_cpu_load_over_powermetrics():
         ),
         patch.object(resource_tracker, "_setup_power_gadget") as mock_power_gadget,
         patch.object(resource_tracker, "_setup_powermetrics") as mock_powermetrics,
-        patch.object(resource_tracker, "_setup_cpu_load_fast", return_value=True) as mock_cpu_load,
+        patch.object(
+            resource_tracker, "_setup_cpu_load_fast", return_value=True
+        ) as mock_cpu_load,
     ):
         resource_tracker.set_CPU_tracking()
 

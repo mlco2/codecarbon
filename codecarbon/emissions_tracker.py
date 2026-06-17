@@ -1371,8 +1371,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             ]["country_name"]
         except KeyError as e:
             logger.error(
-                "Does not support country"
-                + f" with ISO code {self._country_iso_code} "
+                "Does not support country" + f" with ISO code {self._country_iso_code} "
                 f"Exception occurred {e}"
             )
 

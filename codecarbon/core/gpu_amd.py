@@ -1,12 +1,10 @@
 import subprocess
 from collections import namedtuple
+from functools import lru_cache  # noqa: F401 — kept for backward compatibility
 from typing import Callable
 
 from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
-
-
-from functools import lru_cache  # noqa: F401 — kept for backward compatibility
 
 _rocm_system_available: bool | None = None
 

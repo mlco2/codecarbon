@@ -123,9 +123,7 @@ class ResourceTracker:
         """Set up cpu_load mode without loading the TDP registry (faster cold start)."""
         if not cpu.is_psutil_available():
             return False
-        logger.warning(
-            "No CPU tracking mode found. Falling back on CPU load mode."
-        )
+        logger.warning("No CPU tracking mode found. Falling back on CPU load mode.")
         hardware_cpu = CPU.from_utils(
             self.tracker._output_dir,
             MODE_CPU_LOAD,
@@ -200,6 +198,30 @@ class ResourceTracker:
                 hardware_cpu = CPU.from_utils(self.tracker._output_dir, "constant")
             self.tracker._hardware.append(hardware_cpu)
 
+    def _try_platform_cpu_backend(self) -> bool:
+        """Try platform-preferred CPU backends when force_cpu_power is unset."""
+        if is_linux_os() and cpu.is_rapl_available():
+            self._setup_rapl()
+            return True
+        if is_mac_os():
+            cpu_model = detect_cpu_model() or ""
+            if is_mac_arm(cpu_model):
+                if self._setup_cpu_load_fast(cpu_model):
+                    return True
+                if powermetrics.is_powermetrics_available():
+                    self._setup_powermetrics()
+                    return True
+            elif cpu.is_powergadget_available():
+                self._setup_power_gadget()
+                return True
+            elif powermetrics.is_powermetrics_available():
+                self._setup_powermetrics()
+                return True
+        elif is_windows_os() and cpu.is_powergadget_available():
+            self._setup_power_gadget()
+            return True
+        return False
+
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
         cpu_number = self.tracker._conf.get("cpu_physical_count")
@@ -223,30 +245,8 @@ class ResourceTracker:
                 if self._setup_cpu_load_mode(tdp, max_power):
                     return
 
-        force_none = self.tracker._force_cpu_power is None
-
-        # Platform-aware backend order — skip probes known to be unavailable.
-        if force_none:
-            if is_linux_os() and cpu.is_rapl_available():
-                self._setup_rapl()
-                return
-            if is_mac_os():
-                cpu_model = detect_cpu_model() or ""
-                if is_mac_arm(cpu_model):
-                    if self._setup_cpu_load_fast(cpu_model):
-                        return
-                    if powermetrics.is_powermetrics_available():
-                        self._setup_powermetrics()
-                        return
-                elif cpu.is_powergadget_available():
-                    self._setup_power_gadget()
-                    return
-                elif powermetrics.is_powermetrics_available():
-                    self._setup_powermetrics()
-                    return
-            elif is_windows_os() and cpu.is_powergadget_available():
-                self._setup_power_gadget()
-                return
+        if self.tracker._force_cpu_power is None and self._try_platform_cpu_backend():
+            return
 
         if tdp is None:
             tdp = get_cached_tdp(cpu)

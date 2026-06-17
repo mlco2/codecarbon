@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
     from codecarbon.core.resource_tracker import ResourceTracker
@@ -123,7 +123,7 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
 
 
 def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
-    from codecarbon.external.hardware import AppleSiliconChip, CPU, GPU
+    from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
     from codecarbon.external.ram import RAM
 
     kind = spec["kind"]
@@ -177,7 +177,8 @@ def apply(resource_tracker: "ResourceTracker", plan: _HardwarePlan) -> None:
 
 
 def get_or_run_setup(
-    resource_tracker: "ResourceTracker", setup_fn,
+    resource_tracker: "ResourceTracker",
+    setup_fn,
 ) -> None:
     """Apply cached hardware plan or run full setup once per cache key."""
     key = make_key(resource_tracker.tracker)
