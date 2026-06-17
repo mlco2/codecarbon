@@ -93,9 +93,7 @@ class TelemetryContext:
 
 def _strip_empty(data: dict[str, Any]) -> dict[str, Any]:
     return {
-        key: value
-        for key, value in data.items()
-        if value not in (None, "", [], {})
+        key: value for key, value in data.items() if value not in (None, "", [], {})
     }
 
 
@@ -113,7 +111,9 @@ def _round_coordinate(value: Any) -> float | None:
     return round(float(value), 1)
 
 
-def _cloud_region(emissions: EmissionsData) -> tuple[str | None, str | None, str | None]:
+def _cloud_region(
+    emissions: EmissionsData,
+) -> tuple[str | None, str | None, str | None]:
     details = get_env_cloud_details()
     raw_provider = raw_region = None
     if details and details.get("metadata"):
@@ -311,9 +311,9 @@ def _extensive_payload(ctx: TelemetryContext) -> dict[str, Any]:
             "ci_environment": _env_label(CI_ENV_VAR_LABELS),
             "notebook_environment": _detect_notebook_environment(),
             "ide_used": _detect_ide(),
-            "duration_seconds": float(emissions.duration)
-            if emissions.duration
-            else None,
+            "duration_seconds": (
+                float(emissions.duration) if emissions.duration else None
+            ),
             "total_emissions_kg": emissions.emissions,
             "emissions_rate_kg_per_sec": emissions.emissions_rate,
             "energy_consumed_kwh": emissions.energy_consumed,

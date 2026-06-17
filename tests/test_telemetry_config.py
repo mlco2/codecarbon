@@ -271,7 +271,9 @@ class TestTrackerTelemetryFromConfig(unittest.TestCase):
                         save_to_file=False,
                     )
         configure_warnings = [
-            c for c in mock_warning.call_args_list if c[0] and "Minimal telemetry" in str(c[0][0])
+            c
+            for c in mock_warning.call_args_list
+            if c[0] and "Minimal telemetry" in str(c[0][0])
         ]
         self.assertEqual(len(configure_warnings), 0)
 

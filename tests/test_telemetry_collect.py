@@ -2,7 +2,11 @@ import unittest
 from unittest.mock import patch
 
 from codecarbon.core.telemetry import TelemetryContext, TelemetryLevel, build_payload
-from codecarbon.core.telemetry.schemas import MINIMAL_TELEMETRY_FIELDS, TelemetryBase, TelemetryCreate
+from codecarbon.core.telemetry.schemas import (
+    MINIMAL_TELEMETRY_FIELDS,
+    TelemetryBase,
+    TelemetryCreate,
+)
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 
