@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import requests_mock
 
-from codecarbon.core.api_client import ApiClient
+from codecarbon.core.api_client import ApiClient, _round_coordinate
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate
 from codecarbon.output import EmissionsData
 
@@ -26,6 +26,11 @@ conf = {
 
 
 class TestApi(unittest.TestCase):
+    def test_round_coordinate_handles_none_and_values(self):
+        self.assertEqual(_round_coordinate(None), 0.0)
+        self.assertEqual(_round_coordinate(-7.61743), -7.6)
+        self.assertEqual(_round_coordinate(33.58229, decimals=2), 33.58)
+
     def test_get_headers_prefers_api_key_over_access_token(self):
         api = ApiClient(
             endpoint_url="http://test.com",

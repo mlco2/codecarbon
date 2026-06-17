@@ -255,6 +255,34 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertEqual(payload["cuda_version"], "12.4")
         self.assertEqual(payload["gpu_driver_version"], "535.0")
 
+    def test_extensive_payload_detects_docker_and_jupyter(self):
+        ctx = _tracker_context()
+        with patch("os.path.exists", return_value=True):
+            with patch(
+                "codecarbon.core.telemetry.collect._detect_notebook_environment",
+                return_value="jupyter",
+            ):
+                payload = build_payload(ctx, level=TelemetryLevel.extensive)
+        self.assertTrue(payload["in_container"])
+        self.assertEqual(payload["container_runtime"], "docker")
+        self.assertEqual(payload["notebook_environment"], "jupyter")
+
+    def test_minimal_payload_detects_virtualenv(self):
+        ctx = _tracker_context()
+        with patch.dict(os.environ, {"VIRTUAL_ENV": "/venv"}, clear=False):
+            with patch(
+                "codecarbon.core.telemetry.collect.sys.prefix",
+                "/venv",
+                create=True,
+            ):
+                with patch(
+                    "codecarbon.core.telemetry.collect.sys.base_prefix",
+                    "/usr",
+                    create=True,
+                ):
+                    payload = build_payload(ctx, level=TelemetryLevel.minimal)
+        self.assertEqual(payload["python_env_type"], "venv")
+
 
 if __name__ == "__main__":
     unittest.main()
