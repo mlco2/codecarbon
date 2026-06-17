@@ -53,8 +53,10 @@ def run_and_monitor(
 
     set_logger_level(log_level)
 
-    # Get the command from remaining args
-    command = ctx.args
+    # Get the command from remaining args (strip nested subcommand / `--` leftovers)
+    command = list(getattr(ctx, "args", None) or [])
+    while command and command[0] in ("monitor", "--"):
+        command.pop(0)
 
     if not command:
         print(

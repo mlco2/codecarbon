@@ -233,10 +233,10 @@ class ResourceTracker:
             if is_mac_os():
                 cpu_model = detect_cpu_model() or ""
                 if is_mac_arm(cpu_model):
+                    if self._setup_cpu_load_fast(cpu_model):
+                        return
                     if powermetrics.is_powermetrics_available():
                         self._setup_powermetrics()
-                        return
-                    if self._setup_cpu_load_fast(cpu_model):
                         return
                 elif cpu.is_powergadget_available():
                     self._setup_power_gadget()
