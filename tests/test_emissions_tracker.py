@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import sys
@@ -234,6 +235,150 @@ class TestCarbonTracker(unittest.TestCase):
                 for handler in tracker._output_handlers
             )
         )
+
+    def test_output_methods_boamps_uses_metadata_boamps_section(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata={
+                "boamps": {
+                    "task": {
+                        "taskStage": "training",
+                        "taskFamily": "classification",
+                        "algorithms": [{"algorithmType": "random_forest"}],
+                        "dataset": [
+                            {
+                                "dataUsage": "input",
+                                "dataType": "table",
+                                "dataQuantity": 100,
+                            }
+                        ],
+                    },
+                    "quality": "high",
+                },
+                "other": {"owner": "ml-team"},
+            },
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertEqual(boamps_handler._quality, "high")
+        self.assertIsNotNone(boamps_handler._task)
+        self.assertEqual(boamps_handler._task.task_stage, "training")
+        self.assertEqual(boamps_handler._task.task_family, "classification")
+        self.assertEqual(
+            boamps_handler._task.algorithms[0].algorithm_type,
+            "random_forest",
+        )
+
+    def test_output_methods_boamps_metadata_back_compat_without_boamps_key(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata={
+                "task": {
+                    "taskStage": "inference",
+                    "taskFamily": "chatbot",
+                },
+                "quality": "medium",
+            },
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertEqual(boamps_handler._quality, "medium")
+        self.assertEqual(boamps_handler._task.task_stage, "inference")
+        self.assertEqual(boamps_handler._task.task_family, "chatbot")
+
+    def test_output_methods_boamps_reads_metadata_from_json_file(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        metadata_path = self.temp_path / "metadata.json"
+        metadata_path.write_text(
+            json.dumps(
+                {
+                    "boamps": {
+                        "task": {
+                            "taskStage": "training",
+                            "taskFamily": "classification",
+                        },
+                        "quality": "high",
+                    }
+                }
+            )
+        )
+
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata=str(metadata_path),
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertEqual(boamps_handler._quality, "high")
+        self.assertEqual(boamps_handler._task.task_stage, "training")
+
+    def test_output_methods_boamps_falls_back_on_invalid_metadata_file(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        metadata_path = self.temp_path / "bad_metadata.json"
+        metadata_path.write_text("{ invalid json")
+
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata=str(metadata_path),
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertIsNone(boamps_handler._task)
+        self.assertIsNone(boamps_handler._quality)
 
     def test_default_output_methods_is_csv(
         self,

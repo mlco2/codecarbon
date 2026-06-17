@@ -149,7 +149,37 @@ tracker.stop()
 
 CodeCarbon writes a final report named `boamps_report_<run_id>.json` in `output_dir`.
 
-If you need to enrich the report with task metadata, datasets, or publisher information, use `BoAmpsOutput` directly through `output_handlers` or start from [examples/boamps_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/boamps_output.py).
+If you need to enrich the report with task metadata, datasets, or publisher information,
+use the generic `metadata` parameter and put the BoAmps context under the `boamps` key:
+
+```python-skip
+from codecarbon import OfflineEmissionsTracker, OutputMethoddocs/reference/output.md
+
+tracker = OfflineEmissionsTracker(
+  project_name="my_project",
+  country_iso_code="USA",
+  output_methods=[OutputMethod.BOAMPS],
+  metadata={
+    "boamps": {
+      "task": {
+        "taskStage": "training",
+        "taskFamily": "classification",
+        "algorithms": ["random_forest"],
+        "dataset": "my_dataset",
+      },
+      "quality": "medium",
+    },
+    "my_other_metadata": {"owner": "ml-team"},
+  },
+)
+tracker.start()
+# Your code here
+tracker.stop()
+```
+
+`metadata` can also be a path to a JSON file (`metadata="metadata.json"`).
+For backward compatibility, if `metadata` is a dict without a `boamps` key,
+the full dict is interpreted as BoAmps metadata.
 
 Sample output:
 ```json
