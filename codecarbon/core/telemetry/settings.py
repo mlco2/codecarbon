@@ -89,8 +89,7 @@ class TelemetrySettings:
             level = parse_telemetry_level(raw)
         except ValueError:
             logger.error(
-                "Invalid telemetry_level %r; falling back to %r",
-                raw,
+                "Invalid telemetry_level provided; falling back to %r",
                 DEFAULT_TELEMETRY_LEVEL.value,
             )
             level = DEFAULT_TELEMETRY_LEVEL
