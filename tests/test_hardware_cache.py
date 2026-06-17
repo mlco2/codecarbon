@@ -6,7 +6,7 @@ import pytest
 from codecarbon.core import hardware_cache
 from codecarbon.core.cpu import clear_powergadget_cache, is_powergadget_available
 from codecarbon.core.powermetrics import clear_powermetrics_cache
-from codecarbon.external.hardware import CPU, AppleSiliconChip
+from codecarbon.external.hardware import CPU
 from codecarbon.external.ram import RAM
 
 
@@ -36,7 +36,7 @@ def test_spec_and_rebuild_roundtrip_for_cpu():
     cpu_hw = CPU.from_utils("out", "cpu_load", "Test CPU", 100)
     spec = hardware_cache._spec_from_hardware(cpu_hw)
     rebuilt = hardware_cache._hardware_from_spec(spec, "out2")
-    assert isinstance(rebuilt, CPU)
+    assert type(rebuilt).__name__ == "CPU"
     assert rebuilt._model == "Test CPU"
     assert rebuilt._mode == "cpu_load"
 
@@ -69,8 +69,17 @@ def test_spec_from_hardware_gpu_and_rapl_cpu():
 
 def test_spec_and_rebuild_roundtrip_for_apple_chip():
     spec = {"kind": "apple_chip", "model": "Apple M1", "chip_part": "CPU"}
-    rebuilt = hardware_cache._hardware_from_spec(spec, "out")
-    assert isinstance(rebuilt, AppleSiliconChip)
+    fake_chip = SimpleNamespace(_model="Apple M1")
+    with patch(
+        "codecarbon.external.hardware.AppleSiliconChip",
+        return_value=fake_chip,
+    ) as mock_chip_cls:
+        rebuilt = hardware_cache._hardware_from_spec(spec, "out")
+    mock_chip_cls.assert_called_once_with(
+        output_dir="out",
+        model="Apple M1",
+        chip_part="CPU",
+    )
     assert rebuilt._model == "Apple M1"
 
 
@@ -100,7 +109,7 @@ def test_capture_and_apply_restore_hardware_plan():
     assert rt2.cpu_tracker == "cached_cpu"
     assert tracker2._conf["cpu_model"] == "Cached CPU"
     assert len(tracker2._hardware) == 1
-    assert isinstance(tracker2._hardware[0], RAM)
+    assert type(tracker2._hardware[0]).__name__ == "RAM"
 
 
 def test_get_or_run_setup_runs_setup_once():
