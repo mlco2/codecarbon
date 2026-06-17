@@ -43,7 +43,6 @@ def post_private(settings: TelemetrySettings, payload: dict) -> bool:
             response.status_code,
             response.text,
         )
-        logger.debug("Telemetry request body: %s", body)
     return False
 
 

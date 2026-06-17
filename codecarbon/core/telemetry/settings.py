@@ -47,6 +47,21 @@ class TelemetrySettings:
         return self.source != "default"
 
     @classmethod
+    def _with_connection(
+        cls,
+        merged: dict[str, Any],
+        level: TelemetryLevel,
+        source: TelemetryLevelSource,
+    ) -> TelemetrySettings:
+        return cls(
+            level=level,
+            source=source,
+            api_url=cls._resolve_api_url(merged),
+            api_key=cls._resolve_api_key(merged),
+            experiment_id=cls._resolve_experiment_id(merged),
+        )
+
+    @classmethod
     def resolve(
         cls,
         *,
@@ -56,9 +71,6 @@ class TelemetrySettings:
     ) -> TelemetrySettings:
         """Resolve tier (override > external > file > default minimal) and API settings."""
         merged = external_conf or {}
-        api_url = cls._resolve_api_url(merged)
-        api_key = cls._resolve_api_key(merged)
-        experiment_id = cls._resolve_experiment_id(merged)
         if override is not None:
             raw = override
             source: TelemetryLevelSource = "override"
@@ -72,13 +84,7 @@ class TelemetrySettings:
             raw = config_file_conf[TELEMETRY_LEVEL_CONFIG_KEY]
             source = "file"
         else:
-            return cls(
-                level=DEFAULT_TELEMETRY_LEVEL,
-                source="default",
-                api_url=api_url,
-                api_key=api_key,
-                experiment_id=experiment_id,
-            )
+            return cls._with_connection(merged, DEFAULT_TELEMETRY_LEVEL, "default")
         try:
             level = parse_telemetry_level(raw)
         except ValueError:
@@ -88,13 +94,7 @@ class TelemetrySettings:
                 DEFAULT_TELEMETRY_LEVEL.value,
             )
             level = DEFAULT_TELEMETRY_LEVEL
-        return cls(
-            level=level,
-            source=source,
-            api_url=api_url,
-            api_key=api_key,
-            experiment_id=experiment_id,
-        )
+        return cls._with_connection(merged, level, source)
 
     @staticmethod
     def _resolve_api_url(external_conf: dict[str, Any]) -> str:

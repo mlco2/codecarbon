@@ -1,5 +1,7 @@
+import os
+import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from codecarbon.core.telemetry import TelemetryContext, TelemetryLevel, build_payload
 from codecarbon.core.telemetry.schemas import (
@@ -143,6 +145,115 @@ class TestTelemetryCollect(unittest.TestCase):
 
     def test_minimal_fields_are_schema_subset(self):
         self.assertTrue(MINIMAL_TELEMETRY_FIELDS.issubset(TelemetryBase.model_fields))
+
+    def test_cloud_region_from_aws_metadata(self):
+        emissions = _sample_emissions(on_cloud="Y", cloud_region="", region="")
+        ctx = _tracker_context(emissions=emissions)
+        with patch(
+            "codecarbon.core.telemetry.collect.get_env_cloud_details",
+            return_value={"provider": "aws", "metadata": {"region": "eu-west-1"}},
+        ):
+            payload = build_payload(ctx, level=TelemetryLevel.minimal)
+        self.assertEqual(payload["cloud_provider"], "aws")
+        self.assertEqual(payload["cloud_region"], "eu-west-1")
+
+    def test_cloud_region_from_azure_metadata(self):
+        emissions = _sample_emissions(on_cloud="Y", cloud_region="", region="")
+        ctx = _tracker_context(emissions=emissions)
+        with patch(
+            "codecarbon.core.telemetry.collect.get_env_cloud_details",
+            return_value={
+                "provider": "azure",
+                "metadata": {"compute": {"location": "westeurope"}},
+            },
+        ):
+            payload = build_payload(ctx, level=TelemetryLevel.minimal)
+        self.assertEqual(payload["cloud_provider"], "azure")
+        self.assertEqual(payload["cloud_region"], "westeurope")
+
+    def test_cloud_region_from_gcp_metadata(self):
+        emissions = _sample_emissions(on_cloud="Y", cloud_region="", region="")
+        ctx = _tracker_context(emissions=emissions)
+        with patch(
+            "codecarbon.core.telemetry.collect.get_env_cloud_details",
+            return_value={
+                "provider": "gcp",
+                "metadata": {"zone": "projects/p/zones/europe-west1-b"},
+            },
+        ):
+            payload = build_payload(ctx, level=TelemetryLevel.minimal)
+        self.assertEqual(payload["cloud_provider"], "gcp")
+        self.assertEqual(payload["cloud_region"], "europe-west1")
+
+    def test_extensive_payload_includes_environment_hints(self):
+        ctx = _tracker_context(output_methods=["api"])
+        with patch.dict(
+            os.environ,
+            {
+                "CONDA_DEFAULT_ENV": "base",
+                "KUBERNETES_SERVICE_HOST": "10.0.0.1",
+                "CURSOR_TRACE_ID": "trace-1",
+                "COLAB_GPU": "0",
+            },
+            clear=False,
+        ):
+            payload = build_payload(ctx, level=TelemetryLevel.extensive)
+        self.assertEqual(payload["python_env_type"], "conda")
+        self.assertEqual(payload["api_mode"], "online")
+        self.assertTrue(payload["in_container"])
+        self.assertEqual(payload["container_runtime"], "kubernetes")
+        self.assertEqual(payload["ide_used"], "cursor")
+        self.assertEqual(payload["notebook_environment"], "colab")
+
+    def test_from_tracker_detects_cli_monitor(self):
+        tracker = MagicMock()
+        tracker._conf = {"codecarbon_version": "3.0"}
+        tracker._hardware = []
+        tracker._resource_tracker = None
+        tracker._output_methods = []
+        tracker._emissions_endpoint = None
+        tracker._tasks = {}
+        tracker._measure_power_secs = 15
+        with patch.object(sys, "argv", ["codecarbon", "monitor", "train.py"]):
+            ctx = TelemetryContext.from_tracker(tracker, _sample_emissions())
+        self.assertEqual(ctx.integration, "cli_monitor")
+
+    def test_hardware_diagnostics_lists_tracked_hardware(self):
+        hardware = MagicMock()
+        hardware.description.return_value = "CPU: test"
+        ctx = _tracker_context(
+            hardware=[hardware],
+            resource_tracker=MagicMock(gpu_tracker="pynvml"),
+        )
+        with patch(
+            "codecarbon.core.telemetry.collect.platform.system", return_value="Linux"
+        ):
+            with patch(
+                "codecarbon.core.cpu.is_rapl_available",
+                return_value=True,
+            ):
+                payload = build_payload(ctx, level=TelemetryLevel.extensive)
+        self.assertIn("CPU: test", payload["hardware_tracked"])
+        self.assertTrue(payload["hardware_detection_success"])
+        self.assertTrue(payload["rapl_available"])
+        self.assertEqual(payload["gpu_detection_method"], "pynvml")
+
+    def test_gpu_static_fields_when_nvidia_available(self):
+        ctx = _tracker_context()
+        mock_mem = MagicMock(total=8 * 1024**3)
+        mock_pynvml = MagicMock()
+        mock_pynvml.nvmlDeviceGetMemoryInfo.return_value = mock_mem
+        mock_pynvml.nvmlSystemGetCudaDriverVersion_v2.return_value = 12040
+        mock_pynvml.nvmlSystemGetDriverVersion.return_value = "535.0"
+        with patch(
+            "codecarbon.core.telemetry.collect.is_nvidia_system",
+            return_value=True,
+        ):
+            with patch.dict(sys.modules, {"pynvml": mock_pynvml}):
+                payload = build_payload(ctx, level=TelemetryLevel.minimal)
+        self.assertEqual(payload["gpu_memory_total_gb"], 8.0)
+        self.assertEqual(payload["cuda_version"], "12.4")
+        self.assertEqual(payload["gpu_driver_version"], "535.0")
 
 
 if __name__ == "__main__":
