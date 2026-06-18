@@ -34,7 +34,6 @@ from codecarbon.core.config import clear_config_cache  # noqa: E402
 from codecarbon.core.hardware_cache import (  # noqa: E402
     clear_cache as clear_hardware_cache,
 )
-from codecarbon.core.output_cache import clear_cache as clear_output_cache  # noqa: E402
 from codecarbon.emissions_tracker import OfflineEmissionsTracker  # noqa: E402
 from codecarbon.output_methods.base_output import OutputMethod  # noqa: E402
 
@@ -173,7 +172,6 @@ def benchmark_scenario(
     measure_power_secs: float,
 ) -> ScenarioReport:
     clear_hardware_cache()
-    clear_output_cache()
     clear_config_cache()
 
     with tempfile.TemporaryDirectory() as tmp_dir:
