@@ -194,14 +194,23 @@ def get_or_run_setup(
 def clear_cache() -> None:
     """Clear cached plans (for tests)."""
     global _tdp
-    from codecarbon.core import cpu, gpu_amd, gpu_nvidia, powermetrics
-    from codecarbon.external.hardware import clear_cpu_load_prime_cache
+    import sys
 
     with _cache_lock:
         _plans.clear()
     _tdp = None
-    gpu_nvidia.clear_nvidia_system_cache()
-    gpu_amd.clear_rocm_system_cache()
-    cpu.clear_powergadget_cache()
-    powermetrics.clear_powermetrics_cache()
-    clear_cpu_load_prime_cache()
+
+    for mod_name, clear_fn in (
+        ("codecarbon.core.gpu_nvidia", "clear_nvidia_system_cache"),
+        ("codecarbon.core.gpu_amd", "clear_rocm_system_cache"),
+        ("codecarbon.core.cpu", "clear_powergadget_cache"),
+        ("codecarbon.core.powermetrics", "clear_powermetrics_cache"),
+    ):
+        mod = sys.modules.get(mod_name)
+        if mod is not None:
+            getattr(mod, clear_fn)()
+
+    if "codecarbon.external.hardware" in sys.modules:
+        from codecarbon.external.hardware import clear_cpu_load_prime_cache
+
+        clear_cpu_load_prime_cache()
