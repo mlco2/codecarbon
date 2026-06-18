@@ -651,6 +651,7 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         mocked_from_utils.assert_called_once_with(
             output_dir=tracker._output_dir,
             mode="intel_rapl",
+            tracking_mode=tracker._tracking_mode,
             rapl_include_dram=tracker._rapl_include_dram,
             rapl_prefer_psys=tracker._rapl_prefer_psys,
         )
