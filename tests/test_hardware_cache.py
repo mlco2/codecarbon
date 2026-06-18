@@ -4,8 +4,6 @@ from unittest.mock import patch
 import pytest
 
 from codecarbon.core import hardware_cache
-from codecarbon.core.cpu import clear_powergadget_cache, is_powergadget_available
-from codecarbon.core.powermetrics import clear_powermetrics_cache
 from codecarbon.external.hardware import CPU
 from codecarbon.external.ram import RAM
 
@@ -206,17 +204,25 @@ def test_hardware_kind_rejects_unknown_type():
 
 
 def test_clear_cache_resets_probe_caches():
-    from codecarbon.core import cpu, powermetrics
+    from codecarbon.core.cpu import clear_powergadget_cache, is_powergadget_available
+    from codecarbon.core.powermetrics import (
+        clear_powermetrics_cache,
+        is_powermetrics_available,
+    )
 
+    clear_powergadget_cache()
+    clear_powermetrics_cache()
     with patch("codecarbon.core.cpu.IntelPowerGadget", side_effect=Exception("nope")):
-        is_powergadget_available()
-    cpu._powergadget_available = False
-    powermetrics._powermetrics_available = False
+        assert is_powergadget_available() is False
+    with patch(
+        "codecarbon.core.powermetrics.ApplePowermetrics", side_effect=Exception("nope")
+    ):
+        assert is_powermetrics_available() is False
 
     hardware_cache.clear_cache()
 
-    assert cpu._powergadget_available is None
-    assert powermetrics._powermetrics_available is None
+    assert is_powergadget_available.cache_info().currsize == 0
+    assert is_powermetrics_available.cache_info().currsize == 0
 
 
 def test_get_cached_tdp_reuses_instance():
@@ -225,14 +231,3 @@ def test_get_cached_tdp_reuses_instance():
     first = hardware_cache.get_cached_tdp(fake_cpu)
     second = hardware_cache.get_cached_tdp(fake_cpu)
     assert first is second
-
-
-def test_clear_powergadget_and_powermetrics_helpers():
-    from codecarbon.core import cpu, powermetrics
-
-    cpu._powergadget_available = False
-    powermetrics._powermetrics_available = False
-    clear_powergadget_cache()
-    clear_powermetrics_cache()
-    assert cpu._powergadget_available is None
-    assert powermetrics._powermetrics_available is None

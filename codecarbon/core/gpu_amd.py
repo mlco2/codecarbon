@@ -1,30 +1,24 @@
 import subprocess
 from collections import namedtuple
-from functools import lru_cache  # noqa: F401 — kept for backward compatibility
+from functools import lru_cache
 from typing import Callable
 
 from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
 
-_rocm_system_available: bool | None = None
 
-
+@lru_cache(maxsize=1)
 def is_rocm_system():
     """Returns True if the system has an rocm-smi interface."""
-    global _rocm_system_available
-    if _rocm_system_available is not None:
-        return _rocm_system_available
     try:
         subprocess.check_output(["rocm-smi", "--help"])
-        _rocm_system_available = True
+        return True
     except (subprocess.CalledProcessError, OSError):
-        _rocm_system_available = False
-    return _rocm_system_available
+        return False
 
 
 def clear_rocm_system_cache() -> None:
-    global _rocm_system_available
-    _rocm_system_available = None
+    is_rocm_system.cache_clear()
 
 
 try:

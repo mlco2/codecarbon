@@ -1,30 +1,24 @@
 import subprocess
 from dataclasses import dataclass
-from functools import lru_cache  # noqa: F401 — kept for backward compatibility
+from functools import lru_cache
 from typing import Any, Union
 
 from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
 
-_nvidia_system_available: bool | None = None
 
-
+@lru_cache(maxsize=1)
 def is_nvidia_system():
     """Returns True if the system has an nvidia-smi interface."""
-    global _nvidia_system_available
-    if _nvidia_system_available is not None:
-        return _nvidia_system_available
     try:
         subprocess.check_output(["nvidia-smi", "--help"])
-        _nvidia_system_available = True
+        return True
     except Exception:
-        _nvidia_system_available = False
-    return _nvidia_system_available
+        return False
 
 
 def clear_nvidia_system_cache() -> None:
-    global _nvidia_system_available
-    _nvidia_system_available = None
+    is_nvidia_system.cache_clear()
 
 
 try:

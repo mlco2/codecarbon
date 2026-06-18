@@ -21,8 +21,6 @@ from codecarbon.core.schemas import (
 )
 from codecarbon.external.logger import logger
 
-# from codecarbon.output import EmissionsData
-
 
 def get_datetime_with_timezone():
     import arrow

@@ -74,23 +74,39 @@ class TestApplePowerMetrics:
         assert cpu_details == expected_details
 
     def test_is_powermetrics_available_returns_false_on_instantiation_error(self):
+        from codecarbon.core.powermetrics import clear_powermetrics_cache
+
+        clear_powermetrics_cache()
         with mock.patch(
             "codecarbon.core.powermetrics.ApplePowermetrics",
             side_effect=Exception("boom"),
         ):
             assert is_powermetrics_available() is False
+        clear_powermetrics_cache()
 
     def test_is_powermetrics_available_returns_cached_value(self):
-        powermetrics_module._powermetrics_available = True
+        from codecarbon.core.powermetrics import clear_powermetrics_cache
+
+        clear_powermetrics_cache()
+        with (
+            mock.patch("codecarbon.core.powermetrics.ApplePowermetrics"),
+            mock.patch(
+                "codecarbon.core.powermetrics._has_powermetrics_sudo",
+                return_value=True,
+            ),
+        ):
+            assert is_powermetrics_available() is True
         with mock.patch(
             "codecarbon.core.powermetrics.ApplePowermetrics",
             side_effect=Exception("should not instantiate"),
         ):
             assert is_powermetrics_available() is True
-        powermetrics_module._powermetrics_available = None
+        clear_powermetrics_cache()
 
     def test_is_powermetrics_available_probes_sudo_when_uncached(self):
-        powermetrics_module._powermetrics_available = None
+        from codecarbon.core.powermetrics import clear_powermetrics_cache
+
+        clear_powermetrics_cache()
         with (
             mock.patch("codecarbon.core.powermetrics.ApplePowermetrics"),
             mock.patch(
@@ -100,7 +116,7 @@ class TestApplePowerMetrics:
         ):
             assert is_powermetrics_available() is True
         mock_sudo.assert_called_once()
-        powermetrics_module._powermetrics_available = None
+        clear_powermetrics_cache()
 
     def test_has_powermetrics_sudo_kills_process_on_timeout(self):
         hanging = HangingProcess()

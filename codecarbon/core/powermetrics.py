@@ -4,35 +4,30 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Dict, Optional
+from functools import lru_cache
+from typing import Dict
 
 import numpy as np
 
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
 
-_powermetrics_available: Optional[bool] = None
 
-
+@lru_cache(maxsize=1)
 def is_powermetrics_available() -> bool:
-    global _powermetrics_available
-    if _powermetrics_available is not None:
-        return _powermetrics_available
     try:
         ApplePowermetrics()
-        _powermetrics_available = _has_powermetrics_sudo()
+        return _has_powermetrics_sudo()
     except Exception as e:
         logger.debug(
             "Not using PowerMetrics, an exception occurred while instantiating"
             + f" Powermetrics : {e}",
         )
-        _powermetrics_available = False
-    return _powermetrics_available
+        return False
 
 
 def clear_powermetrics_cache() -> None:
-    global _powermetrics_available
-    _powermetrics_available = None
+    is_powermetrics_available.cache_clear()
 
 
 def _has_powermetrics_sudo() -> bool:

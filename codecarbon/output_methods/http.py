@@ -62,18 +62,15 @@ class CodeCarbonAPIOutput(BaseOutput):
             self.api._create_run(self.api.experiment_id)
             self.run_id = self.api.run_id
 
-    def live_out(self, _, delta: EmissionsData):
-        # Called at regular intervals
+    def _emit(self, delta: EmissionsData) -> None:
         try:
             self._ensure_api_run()
             self.api.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)
 
+    def live_out(self, _, delta: EmissionsData):
+        self._emit(delta)
+
     def out(self, _, delta: EmissionsData):
-        # Called on exit
-        try:
-            self._ensure_api_run()
-            self.api.add_emission(dataclasses.asdict(delta))
-        except Exception as e:
-            logger.error(e, exc_info=True)
+        self._emit(delta)

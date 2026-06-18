@@ -25,7 +25,7 @@ CONF_KEYS = (
 
 _cache_lock = threading.Lock()
 _plans: Dict["_HardwareCacheKey", "_HardwarePlan"] = {}
-_tdp_model: Any = None
+_tdp = None
 
 
 @dataclass(frozen=True)
@@ -65,10 +65,10 @@ def make_key(tracker) -> _HardwareCacheKey:
 
 def get_cached_tdp(cpu_module):
     """Return a shared cpu.TDP() instance for this process."""
-    global _tdp_model
-    if _tdp_model is None:
-        _tdp_model = cpu_module.TDP()
-    return _tdp_model
+    global _tdp
+    if _tdp is None:
+        _tdp = cpu_module.TDP()
+    return _tdp
 
 
 def _hardware_kind(hw) -> str:
@@ -193,28 +193,15 @@ def get_or_run_setup(
 
 def clear_cache() -> None:
     """Clear cached plans (for tests)."""
-    global _tdp_model
+    global _tdp
+    from codecarbon.core import cpu, gpu_amd, gpu_nvidia, powermetrics
+    from codecarbon.external.hardware import clear_cpu_load_prime_cache
+
     with _cache_lock:
         _plans.clear()
-    _tdp_model = None
-
-    import sys
-
-    gpu_nvidia = sys.modules.get("codecarbon.core.gpu_nvidia")
-    if gpu_nvidia is not None:
-        gpu_nvidia.clear_nvidia_system_cache()
-    gpu_amd = sys.modules.get("codecarbon.core.gpu_amd")
-    if gpu_amd is not None:
-        gpu_amd.clear_rocm_system_cache()
-
-    cpu = sys.modules.get("codecarbon.core.cpu")
-    if cpu is not None:
-        cpu.clear_powergadget_cache()
-    powermetrics = sys.modules.get("codecarbon.core.powermetrics")
-    if powermetrics is not None:
-        powermetrics.clear_powermetrics_cache()
-
-    if "codecarbon.external.hardware" in sys.modules:
-        from codecarbon.external.hardware import clear_cpu_load_prime_cache
-
-        clear_cpu_load_prime_cache()
+    _tdp = None
+    gpu_nvidia.clear_nvidia_system_cache()
+    gpu_amd.clear_rocm_system_cache()
+    cpu.clear_powergadget_cache()
+    powermetrics.clear_powermetrics_cache()
+    clear_cpu_load_prime_cache()

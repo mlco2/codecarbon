@@ -35,18 +35,24 @@ class TestCPU(unittest.TestCase):
     def test_is_powergadget_available_returns_false_on_exception(
         self, mock_powergadget
     ):
+        from codecarbon.core.cpu import clear_powergadget_cache
+
+        clear_powergadget_cache()
         self.assertFalse(is_powergadget_available())
+        clear_powergadget_cache()
 
     def test_is_powergadget_available_returns_cached_value(self):
-        from codecarbon.core import cpu as cpu_module
+        from codecarbon.core.cpu import clear_powergadget_cache
 
-        cpu_module._powergadget_available = True
+        clear_powergadget_cache()
+        with mock.patch("codecarbon.core.cpu.IntelPowerGadget"):
+            self.assertTrue(is_powergadget_available())
         with mock.patch(
             "codecarbon.core.cpu.IntelPowerGadget",
             side_effect=Exception("should not instantiate"),
         ):
             self.assertTrue(is_powergadget_available())
-        cpu_module._powergadget_available = None
+        clear_powergadget_cache()
 
     @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_with_nice(self, mock_cpu_times):

@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+from functools import lru_cache
 from typing import Dict, Optional, Tuple
 
 import psutil
@@ -24,9 +25,8 @@ from codecarbon.external.logger import logger
 # default W value per core for a CPU if no model is found in the ref csv
 DEFAULT_POWER_PER_CORE = 4
 
-_powergadget_available: Optional[bool] = None
 
-
+@lru_cache(maxsize=1)
 def is_powergadget_available() -> bool:
     """
     Checks if Intel Power Gadget is available on the system.
@@ -34,25 +34,20 @@ def is_powergadget_available() -> bool:
     Returns:
         bool: `True` if Intel Power Gadget is available, `False` otherwise.
     """
-    global _powergadget_available
-    if _powergadget_available is not None:
-        return _powergadget_available
     try:
         IntelPowerGadget()
-        _powergadget_available = True
+        return True
     except Exception as e:
         logger.debug(
             "Not using PowerGadget, an exception occurred while instantiating "
             + "IntelPowerGadget : %s",
             e,
         )
-        _powergadget_available = False
-    return _powergadget_available
+        return False
 
 
 def clear_powergadget_cache() -> None:
-    global _powergadget_available
-    _powergadget_available = None
+    is_powergadget_available.cache_clear()
 
 
 def _get_candidate_bases(rapl_dir: str) -> list:
