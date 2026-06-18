@@ -8,7 +8,6 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-import threading
 from datetime import timedelta, tzinfo
 
 import requests
@@ -22,59 +21,7 @@ from codecarbon.core.schemas import (
 )
 from codecarbon.external.logger import logger
 
-_sessions: dict[str, requests.Session] = {}
-_session_lock = threading.Lock()
-_api_clients: dict[tuple, "ApiClient"] = {}
-_api_client_lock = threading.Lock()
-
-
-def get_http_session(base_url: str) -> requests.Session:
-    """Reuse HTTP connections per API base URL within a process."""
-    with _session_lock:
-        session = _sessions.get(base_url)
-        if session is None:
-            session = requests.Session()
-            _sessions[base_url] = session
-        return session
-
-
-def clear_http_sessions() -> None:
-    with _session_lock:
-        for session in _sessions.values():
-            session.close()
-        _sessions.clear()
-
-
-def clear_api_clients() -> None:
-    with _api_client_lock:
-        _api_clients.clear()
-
-
-def get_or_create_api_client(
-    endpoint_url: str,
-    experiment_id=None,
-    api_key=None,
-    access_token=None,
-    conf=None,
-) -> "ApiClient":
-    """Reuse ApiClient instances per endpoint credentials within a process."""
-    key = (endpoint_url, experiment_id, api_key, access_token)
-    with _api_client_lock:
-        client = _api_clients.get(key)
-        if client is None:
-            client = ApiClient(
-                endpoint_url=endpoint_url,
-                experiment_id=experiment_id,
-                api_key=api_key,
-                access_token=access_token,
-                conf=conf,
-                create_run_automatically=False,
-            )
-            _api_clients[key] = client
-        else:
-            client.conf = conf
-            client.run_id = None
-        return client
+# from codecarbon.output import EmissionsData
 
 
 def get_datetime_with_timezone():
@@ -113,7 +60,6 @@ class ApiClient:  # (AsyncClient)
         self.api_key = api_key
         self.conf = conf
         self.access_token = access_token
-        self._session = get_http_session(self.url)
         if self.experiment_id is not None and create_run_automatically:
             self._create_run(self.experiment_id)
 
@@ -139,7 +85,7 @@ class ApiClient:  # (AsyncClient)
         """
         url = self.url + "/auth/check"
         headers = self._get_headers()
-        r = self._session.get(url=url, timeout=2, headers=headers)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -151,7 +97,7 @@ class ApiClient:  # (AsyncClient)
         """
         url = self.url + "/organizations"
         headers = self._get_headers()
-        r = self._session.get(url=url, timeout=2, headers=headers)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -182,7 +128,7 @@ class ApiClient:  # (AsyncClient)
             return organization
         else:
             headers = self._get_headers()
-            r = self._session.post(url=url, json=payload, timeout=2, headers=headers)
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return None
@@ -194,7 +140,7 @@ class ApiClient:  # (AsyncClient)
         """
         headers = self._get_headers()
         url = self.url + "/organizations/" + organization_id
-        r = self._session.get(url=url, timeout=2, headers=headers)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -207,7 +153,7 @@ class ApiClient:  # (AsyncClient)
         payload = dataclasses.asdict(organization)
         headers = self._get_headers()
         url = self.url + "/organizations/" + organization.id
-        r = self._session.patch(url=url, json=payload, timeout=2, headers=headers)
+        r = requests.patch(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, payload, r)
             return None
@@ -219,7 +165,7 @@ class ApiClient:  # (AsyncClient)
         """
         url = self.url + "/organizations/" + organization_id + "/projects"
         headers = self._get_headers()
-        r = self._session.get(url=url, timeout=2, headers=headers)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -232,7 +178,7 @@ class ApiClient:  # (AsyncClient)
         payload = dataclasses.asdict(project)
         url = self.url + "/projects"
         headers = self._get_headers()
-        r = self._session.post(url=url, json=payload, timeout=2, headers=headers)
+        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
@@ -244,7 +190,7 @@ class ApiClient:  # (AsyncClient)
         """
         url = self.url + "/projects/" + project_id
         headers = self._get_headers()
-        r = self._session.get(url=url, timeout=2, headers=headers)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None
@@ -290,7 +236,7 @@ class ApiClient:  # (AsyncClient)
             payload = dataclasses.asdict(emission)
             url = self.url + "/emissions"
             headers = self._get_headers()
-            r = self._session.post(url=url, json=payload, timeout=2, headers=headers)
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return False
@@ -332,7 +278,7 @@ class ApiClient:  # (AsyncClient)
             payload = dataclasses.asdict(run)
             url = self.url + "/runs"
             headers = self._get_headers()
-            r = self._session.post(url=url, json=payload, timeout=2, headers=headers)
+            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
             if r.status_code != 201:
                 self._log_error(url, payload, r)
                 return None
@@ -357,7 +303,7 @@ class ApiClient:  # (AsyncClient)
         """
         url = self.url + "/projects/" + project_id + "/experiments"
         headers = self._get_headers()
-        r = self._session.get(url=url, timeout=2, headers=headers)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return []
@@ -377,7 +323,7 @@ class ApiClient:  # (AsyncClient)
         payload = dataclasses.asdict(experiment)
         url = self.url + "/experiments"
         headers = self._get_headers()
-        r = self._session.post(url=url, json=payload, timeout=2, headers=headers)
+        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
         if r.status_code != 201:
             self._log_error(url, payload, r)
             return None
@@ -389,7 +335,7 @@ class ApiClient:  # (AsyncClient)
         """
         url = self.url + "/experiments/" + experiment_id
         headers = self._get_headers()
-        r = self._session.get(url=url, timeout=2, headers=headers)
+        r = requests.get(url=url, timeout=2, headers=headers)
         if r.status_code != 200:
             self._log_error(url, {}, r)
             return None

@@ -1,7 +1,5 @@
 import os
-import tempfile
 import unittest
-from pathlib import Path
 from textwrap import dedent
 from unittest import mock
 from unittest.mock import patch
@@ -136,45 +134,6 @@ class TestConfig(unittest.TestCase):
                 "local_new_key": "cool value",
             }
             self.assertDictEqual(conf, target)
-
-    def test_get_hierarchical_config_logs_debug_for_global_and_local_files(self):
-        with (
-            tempfile.TemporaryDirectory() as home_dir,
-            tempfile.TemporaryDirectory() as cwd_dir,
-        ):
-            home_cfg = Path(home_dir) / ".codecarbon.config"
-            local_cfg = Path(cwd_dir) / ".codecarbon.config"
-            home_cfg.write_text("[codecarbon]\nglobal_key=1\n", encoding="utf-8")
-            local_cfg.write_text("[codecarbon]\nlocal_key=2\n", encoding="utf-8")
-
-            with (
-                patch("codecarbon.core.config.Path.home", return_value=Path(home_dir)),
-                patch("codecarbon.core.config.Path.cwd", return_value=Path(cwd_dir)),
-                self.assertLogs("codecarbon", level="DEBUG") as logs,
-            ):
-                get_hierarchical_config()
-
-            messages = "\n".join(logs.output)
-            self.assertIn("global file", messages)
-            self.assertIn("local file", messages)
-
-    def test_get_hierarchical_config_logs_debug_for_local_file_only(self):
-        with tempfile.TemporaryDirectory() as cwd_dir:
-            local_cfg = Path(cwd_dir) / ".codecarbon.config"
-            local_cfg.write_text("[codecarbon]\nlocal_key=2\n", encoding="utf-8")
-
-            with (
-                patch(
-                    "codecarbon.core.config.Path.home",
-                    return_value=Path("/nonexistent-home"),
-                ),
-                patch("codecarbon.core.config.Path.cwd", return_value=Path(cwd_dir)),
-                self.assertLogs("codecarbon", level="DEBUG") as logs,
-            ):
-                get_hierarchical_config()
-
-            messages = "\n".join(logs.output)
-            self.assertIn("local file", messages)
 
     @mock.patch.dict(
         os.environ,

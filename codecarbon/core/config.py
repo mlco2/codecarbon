@@ -110,31 +110,6 @@ def normalize_gpu_ids(
     return None
 
 
-_config_cache_key: tuple | None = None
-_config_cache_value: dict | None = None
-
-
-def clear_config_cache() -> None:
-    global _config_cache_key, _config_cache_value
-    _config_cache_key = None
-    _config_cache_value = None
-
-
-def _config_cache_fingerprint(global_path: Path, local_path: Path) -> tuple:
-    env_items = tuple(
-        sorted(
-            (key, value)
-            for key, value in os.environ.items()
-            if key.lower().startswith("codecarbon_")
-        )
-    )
-    return (
-        global_path.stat().st_mtime if global_path.exists() else None,
-        local_path.stat().st_mtime if local_path.exists() else None,
-        env_items,
-    )
-
-
 def get_hierarchical_config():
     """
     Get the user-defined codecarbon configuration ConfigParser dictionnary
@@ -163,37 +138,24 @@ def get_hierarchical_config():
         local and environment configurations. **All values are strings**.
     """
 
-    global _config_cache_key, _config_cache_value
-
     config = configparser.ConfigParser()
 
     cwd = Path.cwd()
     home = Path.home()
-    global_path = (home / ".codecarbon.config").expanduser().resolve()
-    local_path = (cwd / ".codecarbon.config").expanduser().resolve()
-    cache_key = _config_cache_fingerprint(global_path, local_path)
-    if _config_cache_key == cache_key and _config_cache_value is not None:
-        return dict(_config_cache_value)
-
-    global_path_str = str(global_path)
-    local_path_str = str(local_path)
-    if global_path.exists():
-        logger.debug(
-            f"Codecarbon is taking the configuration from global file: {global_path_str}"
+    global_path = str((home / ".codecarbon.config").expanduser().resolve())
+    local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
+    if Path(global_path).exists():
+        logger.info(
+            f"Codecarbon is taking the configuration from global file: {global_path}"
         )
-        if local_path.exists():
-            logger.debug(
-                f"Some variables are overriden by the local file: {local_path_str}"
-            )
-    elif local_path.exists():
-        logger.debug(
-            f"Codecarbon is taking the configuration from the local file {local_path_str}"
+        if Path(local_path).exists():
+            logger.info(f"Some variables are overriden by the local file: {local_path}")
+    elif Path(local_path).exists():
+        logger.info(
+            f"Codecarbon is taking the configuration from the local file {local_path}"
         )
 
-    config.read([global_path_str, local_path_str])
+    config.read([global_path, local_path])
     config.read_dict(parse_env_config())
 
-    result = dict(config["codecarbon"])
-    _config_cache_key = cache_key
-    _config_cache_value = result
-    return dict(result)
+    return dict(config["codecarbon"])

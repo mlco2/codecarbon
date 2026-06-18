@@ -1,6 +1,6 @@
 import csv
 import os
-from typing import List, Optional
+from typing import List
 
 import pandas as pd
 
@@ -47,8 +47,6 @@ class FileOutput(BaseOutput):
         self.output_dir: str = output_dir
         self.on_csv_write: str = on_csv_write
         self.save_file_path = os.path.join(self.output_dir, self.output_file_name)
-        self._headers_valid: Optional[bool] = None
-        self._headers_valid_mtime: Optional[float] = None
         logger.info(
             f"Emissions data (if any) will be saved to file {os.path.abspath(self.save_file_path)}"
         )
@@ -63,31 +61,13 @@ class FileOutput(BaseOutput):
         Returns:
             True if the file has valid headers, False otherwise.
         """
-        if os.path.isfile(self.save_file_path):
-            file_mtime = os.path.getmtime(self.save_file_path)
-            if (
-                self._headers_valid is not None
-                and self._headers_valid_mtime == file_mtime
-            ):
-                return self._headers_valid
-        else:
-            file_mtime = None
-
         with open(self.save_file_path) as csv_file:
             reader = csv.reader(csv_file)
             try:
                 headers = next(reader)
             except StopIteration:
-                self._headers_valid = True
-                self._headers_valid_mtime = file_mtime
                 return True
-            self._headers_valid = sorted(headers) == sorted(data.values.keys())
-            self._headers_valid_mtime = file_mtime
-            return self._headers_valid
-
-    def _invalidate_header_cache(self) -> None:
-        self._headers_valid = None
-        self._headers_valid_mtime = None
+            return sorted(headers) == sorted(data.values.keys())
 
     def out(self, total: EmissionsData, _):
         """
@@ -116,17 +96,11 @@ class FileOutput(BaseOutput):
             logger.warning("The CSV format has changed, backing up old emission file.")
             backup(self.save_file_path)
             file_exists = False
-            self._invalidate_header_cache()
 
         new_df = pd.DataFrame.from_records([dict(total.values)])
 
         if not file_exists:
             new_df.to_csv(self.save_file_path, index=False)
-            self._headers_valid = True
-            self._headers_valid_mtime = os.path.getmtime(self.save_file_path)
-        elif self.on_csv_write == "append" and headers_match:
-            new_df = new_df.dropna(axis=1, how="all")
-            new_df.to_csv(self.save_file_path, mode="a", header=False, index=False)
         elif self.on_csv_write == "append":
             new_df = new_df.dropna(axis=1, how="all")
             new_df.to_csv(self.save_file_path, mode="a", header=False, index=False)

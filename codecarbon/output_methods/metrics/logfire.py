@@ -2,73 +2,6 @@ from codecarbon.external.logger import logger
 from codecarbon.output_methods.base_output import BaseOutput
 from codecarbon.output_methods.emissions_data import EmissionsData
 
-_logfire_configured = False
-_logfire_metrics: dict | None = None
-
-
-def clear_logfire_cache() -> None:
-    global _logfire_configured, _logfire_metrics
-    _logfire_configured = False
-    _logfire_metrics = None
-
-
-def _ensure_logfire_metrics() -> dict:
-    global _logfire_configured, _logfire_metrics
-    if _logfire_metrics is not None:
-        return _logfire_metrics
-
-    try:
-        from logfire import configure, metric_counter, metric_gauge
-    except ImportError:
-        logger.error(
-            "Logfire is not installed. Please install it using `pip install logfire`"
-        )
-        raise
-
-    if not _logfire_configured:
-        configure()
-        _logfire_configured = True
-
-    _logfire_metrics = {
-        "duration": metric_counter(
-            "codecarbon_duration", unit="(s)", description="Duration from last measure"
-        ),
-        "emissions": metric_counter(
-            "codecarbon_emissions",
-            unit="(kg)",
-            description="Emissions as CO₂-equivalents CO₂eq",
-        ),
-        "energy_consumed": metric_counter(
-            "codecarbon_energy_consumed",
-            unit="(kW)",
-            description="Sum of cpu_energy, gpu_energy and ram_energy",
-        ),
-        "emissions_rate": metric_gauge(
-            "codecarbon_emissions_rate",
-            unit="(Kg/s)",
-            description="Emissions divided per duration",
-        ),
-        "cpu_power": metric_gauge(
-            "codecarbon_cpu_power", unit="(W)", description="CPU power"
-        ),
-        "gpu_power": metric_gauge(
-            "codecarbon_gpu_power", unit="(W)", description="GPU power"
-        ),
-        "ram_power": metric_gauge(
-            "codecarbon_ram_power", unit="(W)", description="RAM power"
-        ),
-        "cpu_energy": metric_gauge(
-            "codecarbon_cpu_energy", unit="(kWh)", description="Energy used per CPU"
-        ),
-        "gpu_energy": metric_gauge(
-            "codecarbon_gpu_energy", unit="(kWh)", description="Energy used per GPU"
-        ),
-        "ram_energy": metric_gauge(
-            "codecarbon_ram_energy", unit="(kWh)", description="Energy used per RAM"
-        ),
-    }
-    return _logfire_metrics
-
 
 class LogfireOutput(BaseOutput):
     """
@@ -76,17 +9,55 @@ class LogfireOutput(BaseOutput):
     """
 
     def __init__(self):
-        metrics = _ensure_logfire_metrics()
-        self.duration = metrics["duration"]
-        self.emissions = metrics["emissions"]
-        self.energy_consumed = metrics["energy_consumed"]
-        self.emissions_rate = metrics["emissions_rate"]
-        self.cpu_power = metrics["cpu_power"]
-        self.gpu_power = metrics["gpu_power"]
-        self.ram_power = metrics["ram_power"]
-        self.cpu_energy = metrics["cpu_energy"]
-        self.gpu_energy = metrics["gpu_energy"]
-        self.ram_energy = metrics["ram_energy"]
+        try:
+            from logfire import configure, metric_counter, metric_gauge
+
+            configure()
+        except ImportError:
+            logger.error(
+                "Logfire is not installed. Please install it using `pip install logfire`"
+            )
+            raise
+
+        # Counters
+        self.duration = metric_counter(
+            "codecarbon_duration", unit="(s)", description="Duration from last measure"
+        )
+        self.emissions = metric_counter(
+            "codecarbon_emissions",
+            unit="(kg)",
+            description="Emissions as CO₂-equivalents CO₂eq",
+        )
+        self.energy_consumed = metric_counter(
+            "codecarbon_energy_consumed",
+            unit="(kW)",
+            description="Sum of cpu_energy, gpu_energy and ram_energy",
+        )
+
+        # Gauges
+        self.emissions_rate = metric_gauge(
+            "codecarbon_emissions_rate",
+            unit="(Kg/s)",
+            description="Emissions divided per duration",
+        )
+        self.cpu_power = metric_gauge(
+            "codecarbon_cpu_power", unit="(W)", description="CPU power"
+        )
+        self.gpu_power = metric_gauge(
+            "codecarbon_gpu_power", unit="(W)", description="GPU power"
+        )
+        self.ram_power = metric_gauge(
+            "codecarbon_ram_power", unit="(W)", description="RAM power"
+        )
+        self.cpu_energy = metric_gauge(
+            "codecarbon_cpu_energy", unit="(kWh)", description="Energy used per CPU"
+        )
+        self.gpu_energy = metric_gauge(
+            "codecarbon_gpu_energy", unit="(kWh)", description="Energy used per GPU"
+        )
+        self.ram_energy = metric_gauge(
+            "codecarbon_ram_energy", unit="(kWh)", description="Energy used per RAM"
+        )
 
     def out(self, _, delta: EmissionsData):
         try:

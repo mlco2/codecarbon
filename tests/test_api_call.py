@@ -1,18 +1,11 @@
 import dataclasses
 import unittest
-from dataclasses import dataclass
-from unittest import mock
 from uuid import uuid4
 
 import requests_mock
 
-from codecarbon.core.api_client import (
-    ApiClient,
-    clear_api_clients,
-    clear_http_sessions,
-    get_http_session,
-)
-from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
+from codecarbon.core.api_client import ApiClient
+from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate
 from codecarbon.output import EmissionsData
 
 conf = {
@@ -32,29 +25,7 @@ conf = {
 }
 
 
-@dataclass
-class OrganizationWithId(OrganizationCreate):
-    id: str
-
-
 class TestApi(unittest.TestCase):
-    def tearDown(self):
-        clear_http_sessions()
-        clear_api_clients()
-
-    def test_get_http_session_reuses_same_instance(self):
-        clear_http_sessions()
-        first = get_http_session("http://test.com")
-        second = get_http_session("http://test.com")
-        self.assertIs(first, second)
-
-    def test_clear_http_sessions_closes_and_resets(self):
-        session = get_http_session("http://test.com")
-        with mock.patch.object(session, "close") as mock_close:
-            clear_http_sessions()
-            mock_close.assert_called_once()
-        self.assertIsNot(get_http_session("http://test.com"), session)
-
     def test_get_headers_prefers_api_key_over_access_token(self):
         api = ApiClient(
             endpoint_url="http://test.com",
@@ -200,95 +171,6 @@ class TestApi(unittest.TestCase):
 
             self.assertEqual(api.create_organization(organization), existing_org)
             self.assertEqual(m.call_count, 1)
-
-    def test_create_organization_posts_when_name_missing(self):
-        organization = OrganizationCreate(name="new-org", description="desc")
-        created_org = {"id": "org-2", "name": "new-org"}
-
-        with requests_mock.Mocker() as m:
-            m.get("http://test.com/organizations", json=[], status_code=200)
-            m.post("http://test.com/organizations", json=created_org, status_code=201)
-            api = ApiClient(
-                endpoint_url="http://test.com",
-                create_run_automatically=False,
-            )
-
-            self.assertEqual(api.create_organization(organization), created_org)
-            self.assertEqual(m.call_count, 2)
-
-    def test_get_organization_returns_json_on_success(self):
-        organization = {"id": "org-1", "name": "org"}
-
-        with requests_mock.Mocker() as m:
-            m.get(
-                "http://test.com/organizations/org-1",
-                json=organization,
-                status_code=200,
-            )
-            api = ApiClient(
-                endpoint_url="http://test.com",
-                create_run_automatically=False,
-            )
-
-            self.assertEqual(api.get_organization("org-1"), organization)
-
-    def test_update_organization_returns_json_on_success(self):
-        organization = OrganizationWithId(id="org-1", name="org", description="updated")
-        updated = {"id": "org-1", "name": "org", "description": "updated"}
-
-        with requests_mock.Mocker() as m:
-            m.patch(
-                "http://test.com/organizations/org-1", json=updated, status_code=200
-            )
-            api = ApiClient(
-                endpoint_url="http://test.com",
-                create_run_automatically=False,
-            )
-
-            self.assertEqual(api.update_organization(organization), updated)
-
-    def test_list_projects_from_organization_returns_json_on_success(self):
-        projects = [{"id": "proj-1", "name": "project"}]
-
-        with requests_mock.Mocker() as m:
-            m.get(
-                "http://test.com/organizations/org-1/projects",
-                json=projects,
-                status_code=200,
-            )
-            api = ApiClient(
-                endpoint_url="http://test.com",
-                create_run_automatically=False,
-            )
-
-            self.assertEqual(api.list_projects_from_organization("org-1"), projects)
-
-    def test_create_project_returns_json_on_success(self):
-        project = ProjectCreate(
-            name="project", description="desc", organization_id="org-1"
-        )
-        created = {"id": "proj-1", "name": "project"}
-
-        with requests_mock.Mocker() as m:
-            m.post("http://test.com/projects", json=created, status_code=201)
-            api = ApiClient(
-                endpoint_url="http://test.com",
-                create_run_automatically=False,
-            )
-
-            self.assertEqual(api.create_project(project), created)
-
-    def test_get_project_returns_json_on_success(self):
-        project = {"id": "proj-1", "name": "project"}
-
-        with requests_mock.Mocker() as m:
-            m.get("http://test.com/projects/proj-1", json=project, status_code=200)
-            api = ApiClient(
-                endpoint_url="http://test.com",
-                create_run_automatically=False,
-            )
-
-            self.assertEqual(api.get_project("proj-1"), project)
 
     def test_add_emission_returns_false_when_run_creation_fails(self):
         api = ApiClient(
