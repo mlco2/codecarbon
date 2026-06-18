@@ -74,3 +74,15 @@ def test_monitor_main_entrypoint():
     with patch.object(monitor_main, "app") as mock_app:
         monitor_main.main()
     mock_app.assert_called_once_with(prog_name="codecarbon-monitor")
+
+
+def test_monitor_main_module_runs_main_when_executed():
+    filename = monitor_main.__file__
+    with open(filename, encoding="utf-8") as module_file:
+        lines = module_file.readlines()
+    entrypoint = compile("".join(lines[87:89]), filename, "exec")
+    namespace = dict(monitor_main.__dict__)
+    namespace["__name__"] = "__main__"
+    with patch.object(monitor_main, "app") as mock_app:
+        exec(entrypoint, namespace)
+    mock_app.assert_called_once_with(prog_name="codecarbon-monitor")

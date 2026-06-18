@@ -28,6 +28,26 @@ class FakeProcess:
         return False
 
 
+class HangingProcess:
+    def __init__(self):
+        self.killed = False
+
+    def poll(self):
+        return None
+
+    def kill(self):
+        self.killed = True
+
+    def communicate(self):
+        return ("", "")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+
 class TestApplePowerMetrics:
     @pytest.mark.integ_test
     def test_apple_powermetrics(self):
@@ -59,6 +79,47 @@ class TestApplePowerMetrics:
             side_effect=Exception("boom"),
         ):
             assert is_powermetrics_available() is False
+
+    def test_is_powermetrics_available_returns_cached_value(self):
+        powermetrics_module._powermetrics_available = True
+        with mock.patch(
+            "codecarbon.core.powermetrics.ApplePowermetrics",
+            side_effect=Exception("should not instantiate"),
+        ):
+            assert is_powermetrics_available() is True
+        powermetrics_module._powermetrics_available = None
+
+    def test_is_powermetrics_available_probes_sudo_when_uncached(self):
+        powermetrics_module._powermetrics_available = None
+        with (
+            mock.patch("codecarbon.core.powermetrics.ApplePowermetrics"),
+            mock.patch(
+                "codecarbon.core.powermetrics._has_powermetrics_sudo",
+                return_value=True,
+            ) as mock_sudo,
+        ):
+            assert is_powermetrics_available() is True
+        mock_sudo.assert_called_once()
+        powermetrics_module._powermetrics_available = None
+
+    def test_has_powermetrics_sudo_kills_process_on_timeout(self):
+        hanging = HangingProcess()
+        with (
+            mock.patch(
+                "codecarbon.core.powermetrics.shutil.which",
+                side_effect=["sudo-path", "powermetrics-path"],
+            ),
+            mock.patch(
+                "codecarbon.core.powermetrics.subprocess.Popen",
+                return_value=hanging,
+            ),
+            mock.patch(
+                "codecarbon.core.powermetrics.time.time", side_effect=[0, 0, 10]
+            ),
+            mock.patch("codecarbon.core.powermetrics.time.sleep"),
+        ):
+            assert powermetrics_module._has_powermetrics_sudo() is False
+        assert hanging.killed is True
 
     def test_has_powermetrics_sudo_returns_false_when_sudo_missing(self):
         with mock.patch("codecarbon.core.powermetrics.shutil.which", return_value=None):

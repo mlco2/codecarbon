@@ -48,6 +48,72 @@ def test_spec_from_hardware_gpu_and_rapl_cpu():
         "gpu_ids": [0, 1],
     }
 
+    gpu_hw_no_ids = type("GPU", (), {"gpu_ids": None})()
+    assert hardware_cache._spec_from_hardware(gpu_hw_no_ids) == {
+        "kind": "gpu",
+        "gpu_ids": None,
+    }
+
+    gpu_hw_empty_ids = type("GPU", (), {"gpu_ids": []})()
+    assert hardware_cache._spec_from_hardware(gpu_hw_empty_ids) == {
+        "kind": "gpu",
+        "gpu_ids": None,
+    }
+
+
+def test_capture_serializes_gpu_hardware():
+    gpu_hw = type("GPU", (), {"gpu_ids": (0, 1)})()
+    tracker = make_tracker(_hardware=[gpu_hw])
+    resource_tracker = SimpleNamespace(
+        tracker=tracker,
+        ram_tracker="ram",
+        cpu_tracker="cpu",
+        gpu_tracker="gpu",
+    )
+
+    plan = hardware_cache.capture(resource_tracker)
+
+    assert plan.hardware_specs == [{"kind": "gpu", "gpu_ids": [0, 1]}]
+
+
+def test_hardware_kind_apple_chip():
+    apple_hw = type("AppleSiliconChip", (), {})()
+    assert hardware_cache._hardware_kind(apple_hw) == "apple_chip"
+
+
+def test_spec_from_hardware_apple_chip():
+    apple_hw = type(
+        "AppleSiliconChip",
+        (),
+        {"_model": "Apple M1", "chip_part": "CPU"},
+    )()
+    assert hardware_cache._spec_from_hardware(apple_hw) == {
+        "kind": "apple_chip",
+        "model": "Apple M1",
+        "chip_part": "CPU",
+    }
+
+
+def test_hardware_from_spec_rebuilds_gpu():
+    fake_gpu = SimpleNamespace(gpu_ids=[0])
+    with patch(
+        "codecarbon.external.hardware.GPU.from_utils",
+        return_value=fake_gpu,
+    ) as mock_from_utils:
+        rebuilt = hardware_cache._hardware_from_spec(
+            {"kind": "gpu", "gpu_ids": [0]},
+            "out",
+        )
+    mock_from_utils.assert_called_once_with(gpu_ids=[0])
+    assert rebuilt is fake_gpu
+
+
+def test_hardware_from_spec_rejects_unknown_kind():
+    with pytest.raises(ValueError, match="Unknown hardware spec kind"):
+        hardware_cache._hardware_from_spec({"kind": "unknown"}, "out")
+
+
+def test_spec_from_hardware_intel_rapl_cpu():
     cpu_hw = type(
         "CPU",
         (),

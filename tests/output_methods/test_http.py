@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+import requests_mock
+
 from codecarbon.output_methods.emissions_data import EmissionsData
 from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
 
@@ -152,6 +154,42 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
 
         api_output.live_out(None, self.emissions_data)
         self.mock_add_emission.assert_called_once()
+
+    def test_codecarbon_api_live_out_creates_run_when_missing(self):
+        conf = {
+            "os": "linux",
+            "python_version": "3.12",
+            "codecarbon_version": "2.0",
+            "cpu_count": 4,
+            "cpu_model": "CPU",
+            "gpu_count": 0,
+            "gpu_model": "",
+            "longitude": 0.0,
+            "latitude": 0.0,
+            "region": "EU",
+            "provider": "AWS",
+            "ram_total_size": 16.0,
+            "tracking_mode": "machine",
+        }
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://test.com/runs",
+                json={"id": "run-created"},
+                status_code=201,
+            )
+            m.post("http://test.com/emissions", status_code=201)
+            api_output = CodeCarbonAPIOutput(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                api_key=self.api_key,
+                conf=conf,
+            )
+            api_output.api.run_id = None
+
+            api_output.live_out(None, self.emissions_data)
+
+        self.assertEqual(api_output.api.run_id, "run-created")
+        self.assertEqual(api_output.run_id, "run-created")
 
     @patch("codecarbon.output_methods.http.logger.error")
     def test_codecarbon_live_out_api_call_failure(self, mock_logger):

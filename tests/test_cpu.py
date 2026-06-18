@@ -37,6 +37,17 @@ class TestCPU(unittest.TestCase):
     ):
         self.assertFalse(is_powergadget_available())
 
+    def test_is_powergadget_available_returns_cached_value(self):
+        from codecarbon.core import cpu as cpu_module
+
+        cpu_module._powergadget_available = True
+        with mock.patch(
+            "codecarbon.core.cpu.IntelPowerGadget",
+            side_effect=Exception("should not instantiate"),
+        ):
+            self.assertTrue(is_powergadget_available())
+        cpu_module._powergadget_available = None
+
     @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_with_nice(self, mock_cpu_times):
         # Create a mock with 'nice' attribute

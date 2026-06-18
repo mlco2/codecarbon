@@ -186,5 +186,16 @@ class TestApp(unittest.TestCase):
         return MagicMock(return_value=default_value)
 
 
+class TestQuestionaryPrompt(unittest.TestCase):
+    @patch("questionary.select")
+    def test_questionary_prompt_returns_selected_value(self, mock_select):
+        from codecarbon.cli.main import questionary_prompt
+
+        mock_select.return_value.ask.return_value = "selected"
+        result = questionary_prompt("Pick one", ["a", "b"], "a")
+        self.assertEqual(result, "selected")
+        mock_select.assert_called_once_with("Pick one", ["a", "b"], "a")
+
+
 if __name__ == "__main__":
     unittest.main()

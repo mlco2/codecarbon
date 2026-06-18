@@ -605,6 +605,30 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIsInstance(tracker.final_emissions, float)
         self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
 
+    def test_start_task_returns_when_engine_initialization_fails(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(save_to_file=False)
+        with (
+            mock.patch.object(
+                tracker,
+                "_ensure_emissions_engine",
+                side_effect=Exception("init failed"),
+            ),
+            self.assertLogs("codecarbon", level="ERROR") as logs,
+        ):
+            tracker.start_task("failed-task")
+
+        self.assertTrue(
+            any("Tracker not initialized" in message for message in logs.output)
+        )
+
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
     @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
     @mock.patch(

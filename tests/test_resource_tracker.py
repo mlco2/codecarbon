@@ -273,6 +273,69 @@ def test_set_cpu_tracking_mac_arm_prefers_cpu_load_over_powermetrics():
     mock_cpu_load.assert_called_once_with("Apple M1 Max")
 
 
+def test_setup_cpu_load_fast_returns_false_without_psutil():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+
+    with patch(
+        "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+        return_value=False,
+    ):
+        assert resource_tracker._setup_cpu_load_fast("Intel CPU") is False
+
+
+def test_try_platform_cpu_backend_mac_intel_uses_power_gadget():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+
+    with (
+        patch("codecarbon.core.resource_tracker.is_mac_os", return_value=True),
+        patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
+        patch("codecarbon.core.resource_tracker.is_windows_os", return_value=False),
+        patch(
+            "codecarbon.core.resource_tracker.detect_cpu_model",
+            return_value="Intel(R) Core(TM) i7",
+        ),
+        patch("codecarbon.core.resource_tracker.is_mac_arm", return_value=False),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=True,
+        ),
+        patch.object(resource_tracker, "_setup_power_gadget") as mock_power_gadget,
+    ):
+        assert resource_tracker._try_platform_cpu_backend() is True
+
+    mock_power_gadget.assert_called_once_with()
+
+
+def test_try_platform_cpu_backend_mac_intel_falls_back_to_powermetrics():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+
+    with (
+        patch("codecarbon.core.resource_tracker.is_mac_os", return_value=True),
+        patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
+        patch("codecarbon.core.resource_tracker.is_windows_os", return_value=False),
+        patch(
+            "codecarbon.core.resource_tracker.detect_cpu_model",
+            return_value="Intel(R) Core(TM) i7",
+        ),
+        patch("codecarbon.core.resource_tracker.is_mac_arm", return_value=False),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=False,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=True,
+        ),
+        patch.object(resource_tracker, "_setup_powermetrics") as mock_powermetrics,
+    ):
+        assert resource_tracker._try_platform_cpu_backend() is True
+
+    mock_powermetrics.assert_called_once_with()
+
+
 def test_set_cpu_tracking_mac_arm_falls_back_to_powermetrics_when_cpu_load_unavailable():
     tracker = make_tracker()
     resource_tracker = ResourceTracker(tracker)
