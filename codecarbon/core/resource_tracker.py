@@ -64,7 +64,11 @@ class ResourceTracker:
         """Set up CPU tracking using Intel Power Gadget."""
         logger.info("Tracking Intel CPU via Power Gadget")
         self.cpu_tracker = "Power Gadget"
-        hardware_cpu = CPU.from_utils(self.tracker._output_dir, "intel_power_gadget")
+        hardware_cpu = CPU.from_utils(
+            self.tracker._output_dir,
+            "intel_power_gadget",
+            tracking_mode=self.tracker._tracking_mode,
+        )
         self.tracker._hardware.append(hardware_cpu)
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
         return True
@@ -76,6 +80,7 @@ class ResourceTracker:
         hardware_cpu = CPU.from_utils(
             output_dir=self.tracker._output_dir,
             mode="intel_rapl",
+            tracking_mode=self.tracker._tracking_mode,
             rapl_include_dram=self.tracker._rapl_include_dram,
             rapl_prefer_psys=self.tracker._rapl_prefer_psys,
         )

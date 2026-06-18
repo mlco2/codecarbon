@@ -450,6 +450,7 @@ class CPU(BaseHardware):
                 mode=mode,
                 model=model,
                 tdp=tdp,
+                tracking_mode=tracking_mode,
                 rapl_include_dram=rapl_include_dram,
                 rapl_prefer_psys=rapl_prefer_psys,
             )

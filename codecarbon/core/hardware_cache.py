@@ -10,13 +10,19 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+from codecarbon.core.config import normalize_gpu_ids
 
 if TYPE_CHECKING:
     from codecarbon.core.resource_tracker import ResourceTracker
 
+DEFAULT_RAPL_DIR = "/sys/class/powercap/intel-rapl/subsystem"
+
 CONF_KEYS = (
     "ram_total_size",
+    "cpu_count",
+    "cpu_physical_count",
     "cpu_model",
     "gpu_count",
     "gpu_model",
@@ -48,16 +54,27 @@ class _HardwarePlan:
     hardware_specs: List[Dict[str, Any]] = field(default_factory=list)
 
 
+def _canonical_gpu_ids(
+    gpu_ids: Optional[List],
+) -> Optional[Tuple[str, ...]]:
+    """Normalize GPU ids to a stable cache-key form (tuple of strings)."""
+    if gpu_ids is None:
+        return None
+    if not isinstance(gpu_ids, (list, tuple)):
+        gpu_ids = [gpu_ids]
+    normalized = normalize_gpu_ids(list(gpu_ids))
+    if not normalized:
+        return None
+    return tuple(str(gpu_id) for gpu_id in normalized)
+
+
 def make_key(tracker) -> _HardwareCacheKey:
-    gpu_ids = tracker._gpu_ids
-    if gpu_ids is not None:
-        gpu_ids = tuple(gpu_ids)
     return _HardwareCacheKey(
         tracking_mode=tracker._tracking_mode,
         force_cpu_power=tracker._force_cpu_power,
         force_ram_power=tracker._force_ram_power,
         force_mode_cpu_load=bool(tracker._conf.get("force_mode_cpu_load", False)),
-        gpu_ids=gpu_ids,
+        gpu_ids=_canonical_gpu_ids(tracker._gpu_ids),
         rapl_include_dram=bool(tracker._rapl_include_dram),
         rapl_prefer_psys=bool(tracker._rapl_prefer_psys),
     )
@@ -104,12 +121,10 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
             "rapl_prefer_psys": False,
         }
         if hw._mode == "intel_rapl" and hasattr(hw, "_intel_interface"):
-            spec["rapl_include_dram"] = getattr(
-                hw._intel_interface, "rapl_include_dram", False
-            )
-            spec["rapl_prefer_psys"] = getattr(
-                hw._intel_interface, "rapl_prefer_psys", False
-            )
+            intel = hw._intel_interface
+            spec["rapl_include_dram"] = getattr(intel, "rapl_include_dram", False)
+            spec["rapl_prefer_psys"] = getattr(intel, "rapl_prefer_psys", False)
+            spec["rapl_dir"] = getattr(intel, "_lin_rapl_dir", DEFAULT_RAPL_DIR)
         return spec
     if kind == "apple_chip":
         return {
@@ -118,7 +133,8 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
             "chip_part": hw.chip_part,
         }
     if kind == "gpu":
-        return {"kind": "gpu", "gpu_ids": list(hw.gpu_ids) if hw.gpu_ids else None}
+        gpu_ids = _canonical_gpu_ids(hw.gpu_ids)
+        return {"kind": "gpu", "gpu_ids": list(gpu_ids) if gpu_ids else None}
     raise TypeError(f"Unsupported hardware type for cache: {type(hw)}")
 
 
@@ -139,6 +155,7 @@ def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
             model=spec["model"],
             tdp=spec["tdp"],
             tracking_mode=spec["tracking_mode"],
+            rapl_dir=spec.get("rapl_dir", DEFAULT_RAPL_DIR),
             rapl_include_dram=spec.get("rapl_include_dram", False),
             rapl_prefer_psys=spec.get("rapl_prefer_psys", False),
         )
@@ -149,7 +166,8 @@ def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
             chip_part=spec["chip_part"],
         )
     if kind == "gpu":
-        return GPU.from_utils(gpu_ids=spec.get("gpu_ids"))
+        gpu_ids = _canonical_gpu_ids(spec.get("gpu_ids"))
+        return GPU.from_utils(gpu_ids=list(gpu_ids) if gpu_ids else None)
     raise ValueError(f"Unknown hardware spec kind: {kind}")
 
 
@@ -171,6 +189,8 @@ def apply(resource_tracker: "ResourceTracker", plan: _HardwarePlan) -> None:
     resource_tracker.cpu_tracker = plan.cpu_tracker
     resource_tracker.gpu_tracker = plan.gpu_tracker
     tracker._conf.update(plan.conf)
+    if "gpu_ids" in plan.conf:
+        tracker._gpu_ids = plan.conf["gpu_ids"]
     tracker._hardware = [
         _hardware_from_spec(spec, tracker._output_dir) for spec in plan.hardware_specs
     ]
