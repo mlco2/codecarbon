@@ -86,7 +86,9 @@ def test_get_hierarchical_config_uses_cache(tmp_path, monkeypatch):
 
     with (
         patch("codecarbon.core.config.Path.home", return_value=tmp_path),
-        patch("codecarbon.core.config.parse_env_config", return_value={"codecarbon": {}}),
+        patch(
+            "codecarbon.core.config.parse_env_config", return_value={"codecarbon": {}}
+        ),
         patch.object(configparser.ConfigParser, "read", counted_read),
     ):
         first = get_hierarchical_config()
@@ -97,7 +99,10 @@ def test_get_hierarchical_config_uses_cache(tmp_path, monkeypatch):
 
 
 def test_logfire_configure_runs_once():
-    from codecarbon.output_methods.metrics.logfire import LogfireOutput, clear_logfire_cache
+    from codecarbon.output_methods.metrics.logfire import (
+        LogfireOutput,
+        clear_logfire_cache,
+    )
 
     clear_logfire_cache()
     with (

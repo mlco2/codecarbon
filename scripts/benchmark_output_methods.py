@@ -24,18 +24,19 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from codecarbon.core.hardware_cache import clear_cache as clear_hardware_cache
-from codecarbon.core.output_cache import clear_cache as clear_output_cache
-from codecarbon.core.config import clear_config_cache
-from codecarbon.emissions_tracker import OfflineEmissionsTracker
-from codecarbon.output_methods.base_output import OutputMethod
+from codecarbon.core.config import clear_config_cache  # noqa: E402
+from codecarbon.core.hardware_cache import (  # noqa: E402
+    clear_cache as clear_hardware_cache,
+)
+from codecarbon.core.output_cache import clear_cache as clear_output_cache  # noqa: E402
+from codecarbon.emissions_tracker import OfflineEmissionsTracker  # noqa: E402
+from codecarbon.output_methods.base_output import OutputMethod  # noqa: E402
 
 
 @dataclass
@@ -93,18 +94,21 @@ def _mocks_for_output_methods(methods: list[OutputMethod], tmp_dir: str):
             )
         )
     if OutputMethod.LOGFIRE in methods:
-        mock_metrics = {name: MagicMock() for name in (
-            "duration",
-            "emissions",
-            "energy_consumed",
-            "emissions_rate",
-            "cpu_power",
-            "gpu_power",
-            "ram_power",
-            "cpu_energy",
-            "gpu_energy",
-            "ram_energy",
-        )}
+        mock_metrics = {
+            name: MagicMock()
+            for name in (
+                "duration",
+                "emissions",
+                "energy_consumed",
+                "emissions_rate",
+                "cpu_power",
+                "gpu_power",
+                "ram_power",
+                "cpu_energy",
+                "gpu_energy",
+                "ram_energy",
+            )
+        }
         patches.append(
             patch(
                 "codecarbon.output_methods.metrics.logfire._ensure_logfire_metrics",

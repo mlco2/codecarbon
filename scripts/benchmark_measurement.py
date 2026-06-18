@@ -197,7 +197,9 @@ def _make_tracker(
     if save_to_api:
         kwargs["output_methods"] = ["api"]
         kwargs["save_to_api"] = True
-        kwargs["api_endpoint"] = os.getenv("CODECARBON_API_ENDPOINT", "https://api.codecarbon.io")
+        kwargs["api_endpoint"] = os.getenv(
+            "CODECARBON_API_ENDPOINT", "https://api.codecarbon.io"
+        )
         kwargs["api_key"] = os.getenv("CODECARBON_API_KEY", "")
         kwargs["experiment_id"] = os.getenv(
             "CODECARBON_EXPERIMENT_ID", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
@@ -271,7 +273,10 @@ def benchmark_cycles(
 
     # Wait for first cycle
     deadline = time.perf_counter() + measure_power_secs * 3
-    while getattr(tracker, "_measure_occurrence", 0) < 1 and time.perf_counter() < deadline:
+    while (
+        getattr(tracker, "_measure_occurrence", 0) < 1
+        and time.perf_counter() < deadline
+    ):
         time.sleep(0.02)
 
     intervals_ms: list[float] = []
@@ -287,7 +292,9 @@ def benchmark_cycles(
 
     tracker.stop()
     stats = compute_stats(intervals_ms)
-    overhead = stats.mean_ms / (measure_power_secs * 1000) if measure_power_secs else 0.0
+    overhead = (
+        stats.mean_ms / (measure_power_secs * 1000) if measure_power_secs else 0.0
+    )
     return CycleReport(
         measure_power_secs=measure_power_secs,
         cycles_observed=len(intervals_ms),
@@ -443,7 +450,9 @@ print(time.perf_counter() - t0)
         timeout=workload_duration + 60,
         env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
     )
-    total_s = float(proc.stdout.strip().splitlines()[-1]) if proc.returncode == 0 else -1.0
+    total_s = (
+        float(proc.stdout.strip().splitlines()[-1]) if proc.returncode == 0 else -1.0
+    )
     return {
         "total_workload_s": round(total_s, 3),
         "returncode": proc.returncode,
@@ -476,7 +485,7 @@ def benchmark_cli_monitor(
     cmd.extend(["--", sys.executable, "-c", workload])
 
     t0 = time.perf_counter()
-    proc = subprocess.run(
+    subprocess.run(
         cmd,
         cwd=str(REPO_ROOT),
         capture_output=True,
@@ -675,7 +684,9 @@ def run_benchmarks(args: argparse.Namespace) -> BenchmarkReport:
             print_startup("process tracker", proc_startup)
 
     if mode in ("cycles", "all"):
-        print(f"\n[cycles] {args.cycles} intervals @ measure_power_secs={args.measure_power_secs}")
+        print(
+            f"\n[cycles] {args.cycles} intervals @ measure_power_secs={args.measure_power_secs}"
+        )
         cycles = benchmark_cycles(
             measure_power_secs=args.measure_power_secs,
             cycles_to_wait=args.cycles,
@@ -724,7 +735,9 @@ def run_benchmarks(args: argparse.Namespace) -> BenchmarkReport:
         )
 
     if mode in ("multi_run", "all"):
-        print(f"\n[multi_run] {args.multi_run_count} sequential lifecycles (same process)")
+        print(
+            f"\n[multi_run] {args.multi_run_count} sequential lifecycles (same process)"
+        )
         multi = benchmark_multi_run_same_process(
             runs=args.multi_run_count,
             offline=args.offline,
@@ -807,10 +820,14 @@ def build_parser() -> argparse.ArgumentParser:
         ],
     )
     p.add_argument("--offline", action=argparse.BooleanOptionalAction, default=True)
-    p.add_argument("--with-api", action="store_true", help="Include API output (online only)")
+    p.add_argument(
+        "--with-api", action="store_true", help="Include API output (online only)"
+    )
     p.add_argument("--measure-power-secs", type=float, default=1.0)
     p.add_argument("--tracking-mode", choices=["machine", "process"], default="machine")
-    p.add_argument("--cycles", type=int, default=5, help="Measurement cycles to observe")
+    p.add_argument(
+        "--cycles", type=int, default=5, help="Measurement cycles to observe"
+    )
     p.add_argument("--workload-duration", type=float, default=3.0)
     p.add_argument(
         "--multi-run-count",
@@ -848,10 +865,14 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = build_parser().parse_args()
     if args.mode == "continuous":
-        print(f"Continuous measurement benchmark every {args.interval}s → {args.results_file}")
+        print(
+            f"Continuous measurement benchmark every {args.interval}s → {args.results_file}"
+        )
         try:
             while True:
-                report = run_benchmarks(argparse.Namespace(**{**vars(args), "mode": "all"}))
+                report = run_benchmarks(
+                    argparse.Namespace(**{**vars(args), "mode": "all"})
+                )
                 append_report(report, args.results_file)
                 print(f"\n→ appended to {args.results_file}\n")
                 time.sleep(args.interval)
