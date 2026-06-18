@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from codecarbon.cli import main as cli_main
@@ -377,3 +378,31 @@ def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
     assert result == "ok"
     assert captured["offline"] is False
     assert captured["kwargs"]["save_to_api"] is False
+
+
+def test_monitor_passes_log_level_to_run_and_monitor(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+
+    ctx = SimpleNamespace(args=["echo", "hello"])
+    cli_main.monitor(
+        ctx=ctx,
+        offline=True,
+        country_iso_code="FRA",
+        log_level="debug",
+    )
+
+    assert captured["kwargs"]["log_level"] == "debug"
+
+
+def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
+
+    ctx = SimpleNamespace(args=["echo", "hi"])
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.monitor(ctx=ctx, offline=False, api=True)
+    assert exc_info.value.exit_code == 1

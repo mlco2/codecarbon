@@ -355,6 +355,10 @@ def monitor(
         str,
         typer.Option(help="Region/province for offline mode"),
     ] = None,
+    log_level: Annotated[
+        str,
+        typer.Option(help="Log level (critical, error, warning, info, debug)"),
+    ] = "error",
 ):
     """Monitor your machine's carbon emissions."""
 
@@ -362,6 +366,7 @@ def monitor(
     tracker_args = {
         "measure_power_secs": measure_power_secs,
         "api_call_interval": api_call_interval,
+        "log_level": log_level,
     }
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
