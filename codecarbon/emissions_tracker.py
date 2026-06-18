@@ -613,17 +613,13 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
             return
 
-        from codecarbon.output_methods.boamps import BoAmpsOutput
-        from codecarbon.output_methods.file import FileOutput
-        from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
-        from codecarbon.output_methods.metrics.logfire import LogfireOutput
-        from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
+        from codecarbon.core import output_cache
 
         methods = set(self._output_methods) if self._output_methods else set()
 
         if OutputMethod.CSV in methods:
             self._output_handlers.append(
-                FileOutput(
+                output_cache.get_file_output(
                     self._output_file,
                     self._output_dir,
                     self._on_csv_write,
@@ -634,10 +630,12 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(self._logging_logger)
 
         if self._emissions_endpoint:
-            self._output_handlers.append(HTTPOutput(self._emissions_endpoint))
+            self._output_handlers.append(
+                output_cache.get_http_output(self._emissions_endpoint)
+            )
 
         if OutputMethod.API in methods:
-            cc_api__out = CodeCarbonAPIOutput(
+            cc_api__out = output_cache.create_api_output(
                 endpoint_url=self._api_endpoint,
                 experiment_id=self._experiment_id,
                 api_key=api_key,
@@ -650,7 +648,7 @@ class BaseEmissionsTracker(ABC):
 
         if OutputMethod.PROMETHEUS in methods:
             self._output_handlers.append(
-                PrometheusOutput(
+                output_cache.get_prometheus_output(
                     self._prometheus_url,
                     job_name=re.sub(
                         r"[^a-zA-Z0-9_-]",
@@ -661,10 +659,12 @@ class BaseEmissionsTracker(ABC):
             )
 
         if OutputMethod.LOGFIRE in methods:
-            self._output_handlers.append(LogfireOutput())
+            self._output_handlers.append(output_cache.get_logfire_output())
 
         if OutputMethod.BOAMPS in methods:
-            self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
+            self._output_handlers.append(
+                output_cache.get_boamps_output(output_dir=self._output_dir)
+            )
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """

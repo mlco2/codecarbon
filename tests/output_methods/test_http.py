@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-import requests_mock
-
 from codecarbon.output_methods.emissions_data import EmissionsData
 from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
 
@@ -129,12 +127,17 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
             None  # Set to None so that ApiClient won't attempt a run on initialisation
         )
         self.api_key = "test_key"
+        self.mock_api = MagicMock()
+        self.mock_api.run_id = None
+        self.mock_api.experiment_id = self.experiment_id
 
-        self.add_emission_patcher = patch(
-            "codecarbon.output_methods.http.ApiClient.add_emission"
+        self.api_client_patcher = patch(
+            "codecarbon.output_methods.http.get_or_create_api_client",
+            return_value=self.mock_api,
         )
-        self.mock_add_emission = self.add_emission_patcher.start()
-        self.addCleanup(self.add_emission_patcher.stop)
+        self.mock_get_api_client = self.api_client_patcher.start()
+        self.addCleanup(self.api_client_patcher.stop)
+        self.mock_add_emission = self.mock_api.add_emission
 
     def test_codecarbon_api_output_initialization(self):
         CodeCarbonAPIOutput(
@@ -171,23 +174,25 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
             "ram_total_size": 16.0,
             "tracking_mode": "machine",
         }
-        with requests_mock.Mocker() as m:
-            m.post(
-                "http://test.com/runs",
-                json={"id": "run-created"},
-                status_code=201,
-            )
-            m.post("http://test.com/emissions", status_code=201)
-            api_output = CodeCarbonAPIOutput(
-                endpoint_url="http://test.com",
-                experiment_id="exp-1",
-                api_key=self.api_key,
-                conf=conf,
-            )
-            api_output.api.run_id = None
+        self.mock_api.experiment_id = "exp-1"
 
-            api_output.live_out(None, self.emissions_data)
+        def create_run(experiment_id):
+            self.mock_api.run_id = "run-created"
+            return "run-created"
 
+        self.mock_api._create_run.side_effect = create_run
+
+        api_output = CodeCarbonAPIOutput(
+            endpoint_url="http://test.com",
+            experiment_id="exp-1",
+            api_key=self.api_key,
+            conf=conf,
+        )
+        api_output.api.run_id = None
+
+        api_output.live_out(None, self.emissions_data)
+
+        self.mock_api._create_run.assert_called_once_with("exp-1")
         self.assertEqual(api_output.api.run_id, "run-created")
         self.assertEqual(api_output.run_id, "run-created")
 

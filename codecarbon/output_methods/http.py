@@ -1,10 +1,19 @@
 import dataclasses
 import getpass
 
-from codecarbon.core.api_client import ApiClient, get_http_session
+from codecarbon.core.api_client import get_http_session, get_or_create_api_client
 from codecarbon.external.logger import logger
 from codecarbon.output_methods.base_output import BaseOutput
 from codecarbon.output_methods.emissions_data import EmissionsData
+
+_cached_username: str | None = None
+
+
+def _get_username() -> str:
+    global _cached_username
+    if _cached_username is None:
+        _cached_username = getpass.getuser()
+    return _cached_username
 
 
 class HTTPOutput(BaseOutput):
@@ -21,7 +30,7 @@ class HTTPOutput(BaseOutput):
     def out(self, total: EmissionsData, _: EmissionsData):
         try:
             payload = dataclasses.asdict(total)
-            payload["user"] = getpass.getuser()
+            payload["user"] = _get_username()
             resp = self._session.post(self.endpoint_url, json=payload, timeout=10)
             if resp.status_code != 201:
                 logger.warning(
@@ -47,12 +56,11 @@ class CodeCarbonAPIOutput(BaseOutput):
         conf,
     ):
         self.endpoint_url: str = endpoint_url
-        self.api = ApiClient(
-            experiment_id=experiment_id,
+        self.api = get_or_create_api_client(
             endpoint_url=endpoint_url,
+            experiment_id=experiment_id,
             api_key=api_key,
             conf=conf,
-            create_run_automatically=False,
         )
         self.run_id = self.api.run_id
 

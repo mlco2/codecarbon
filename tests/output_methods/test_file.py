@@ -87,6 +87,14 @@ class TestFileOutput(unittest.TestCase):
 
         self.assertTrue(file_output.has_valid_headers(self.emissions_data))
 
+    def test_has_valid_headers_uses_cache_without_rereading_file(self):
+        file_output = FileOutput("test.csv", self.temp_dir)
+        file_output.out(self.emissions_data, None)
+
+        with patch("builtins.open", side_effect=AssertionError("should not reopen")):
+            self.assertTrue(file_output.has_valid_headers(self.emissions_data))
+            self.assertTrue(file_output.has_valid_headers(self.emissions_data))
+
     def test_has_valid_headers_failure(self):
         file_output = FileOutput("test.csv", self.temp_dir)
         file_output.out(self.emissions_data, None)

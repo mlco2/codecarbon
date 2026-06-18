@@ -24,6 +24,8 @@ from codecarbon.external.logger import logger
 
 _sessions: dict[str, requests.Session] = {}
 _session_lock = threading.Lock()
+_api_clients: dict[tuple, "ApiClient"] = {}
+_api_client_lock = threading.Lock()
 
 
 def get_http_session(base_url: str) -> requests.Session:
@@ -41,6 +43,38 @@ def clear_http_sessions() -> None:
         for session in _sessions.values():
             session.close()
         _sessions.clear()
+
+
+def clear_api_clients() -> None:
+    with _api_client_lock:
+        _api_clients.clear()
+
+
+def get_or_create_api_client(
+    endpoint_url: str,
+    experiment_id=None,
+    api_key=None,
+    access_token=None,
+    conf=None,
+) -> "ApiClient":
+    """Reuse ApiClient instances per endpoint credentials within a process."""
+    key = (endpoint_url, experiment_id, api_key, access_token)
+    with _api_client_lock:
+        client = _api_clients.get(key)
+        if client is None:
+            client = ApiClient(
+                endpoint_url=endpoint_url,
+                experiment_id=experiment_id,
+                api_key=api_key,
+                access_token=access_token,
+                conf=conf,
+                create_run_automatically=False,
+            )
+            _api_clients[key] = client
+        else:
+            client.conf = conf
+            client.run_id = None
+        return client
 
 
 def get_datetime_with_timezone():

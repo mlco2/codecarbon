@@ -6,7 +6,12 @@ from uuid import uuid4
 
 import requests_mock
 
-from codecarbon.core.api_client import ApiClient, clear_http_sessions, get_http_session
+from codecarbon.core.api_client import (
+    ApiClient,
+    clear_api_clients,
+    clear_http_sessions,
+    get_http_session,
+)
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.output import EmissionsData
 
@@ -35,6 +40,7 @@ class OrganizationWithId(OrganizationCreate):
 class TestApi(unittest.TestCase):
     def tearDown(self):
         clear_http_sessions()
+        clear_api_clients()
 
     def test_get_http_session_reuses_same_instance(self):
         clear_http_sessions()
