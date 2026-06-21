@@ -30,6 +30,13 @@ def get_datetime_with_timezone():
     return timestamp
 
 
+def _round_coordinate(value, decimals: int = 1) -> float:
+    """Round a geographic coordinate for API payloads, treating None as zero."""
+    if value is None:
+        return round(0.0, decimals)
+    return round(float(value), decimals)
+
+
 class ApiClient:  # (AsyncClient)
     """
     This class call the Code Carbon API
@@ -267,9 +274,8 @@ class ApiClient:  # (AsyncClient)
                 cpu_model=self.conf.get("cpu_model"),
                 gpu_count=self.conf.get("gpu_count"),
                 gpu_model=self.conf.get("gpu_model"),
-                # Reduce precision for Privacy
-                longitude=round(self.conf.get("longitude", 0), 1),
-                latitude=round(self.conf.get("latitude", 0), 1),
+                longitude=_round_coordinate(self.conf.get("longitude")),
+                latitude=_round_coordinate(self.conf.get("latitude")),
                 region=self.conf.get("region"),
                 provider=self.conf.get("provider"),
                 ram_total_size=self.conf.get("ram_total_size"),

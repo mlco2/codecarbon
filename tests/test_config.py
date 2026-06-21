@@ -1,3 +1,4 @@
+import configparser
 import os
 import unittest
 from textwrap import dedent
@@ -20,6 +21,19 @@ from codecarbon.external.hardware import GPU
 from tests.testutils import get_custom_mock_open
 
 
+def _file_settings_from_ini(global_conf: str, local_conf: str) -> dict[str, str]:
+    """Merge mocked global and local ``[codecarbon]`` sections like config files do."""
+    merged: dict[str, str] = {}
+    for text in (global_conf, local_conf):
+        if not text.strip():
+            continue
+        parser = configparser.ConfigParser()
+        parser.read_string(text)
+        if "codecarbon" in parser:
+            merged.update(dict(parser["codecarbon"]))
+    return merged
+
+
 class TestConfig(unittest.TestCase):
     def setUp(self):
         self._original_environ = os.environ.copy()
@@ -27,6 +41,12 @@ class TestConfig(unittest.TestCase):
             "CODECARBON_API_KEY",
             "CODECARBON_EXPERIMENT_ID",
             "CODECARBON_API_ENDPOINT",
+            "CODECARBON_TELEMETRY",
+            "CODECARBON_TELEMETRY_LEVEL",
+            "CODECARBON_TELEMETRY_PROJECT_TOKEN",
+            "CODECARBON_TELEMETRY_API_URL",
+            "CODECARBON_TELEMETRY_API_KEY",
+            "CODECARBON_TELEMETRY_EXPERIMENT_ID",
             "codecarbon_api_key",
             "codecarbon_experiment_id",
             "codecarbon_api_endpoint",
@@ -119,7 +139,8 @@ class TestConfig(unittest.TestCase):
         )
 
         with patch(
-            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+            "codecarbon.core.config.get_config_file_settings",
+            return_value=_file_settings_from_ini(global_conf, local_conf),
         ):
             conf = dict(get_hierarchical_config())
             target = {
@@ -160,7 +181,8 @@ class TestConfig(unittest.TestCase):
         )
 
         with patch(
-            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+            "codecarbon.core.config.get_config_file_settings",
+            return_value=_file_settings_from_ini(global_conf, local_conf),
         ):
             conf = dict(get_hierarchical_config())
             target = {
@@ -175,12 +197,7 @@ class TestConfig(unittest.TestCase):
             self.assertDictEqual(conf, target)
 
     def test_empty_conf(self):
-        global_conf = ""
-        local_conf = ""
-
-        with patch(
-            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
-        ):
+        with patch("codecarbon.core.config.get_config_file_settings", return_value={}):
             conf = dict(get_hierarchical_config())
             # allow_multiple_runs is set in pytest.ini and not mocked, so it's visible here.
             target = {"allow_multiple_runs": "True"}

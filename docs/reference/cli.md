@@ -45,6 +45,7 @@ Displays real-time emissions data for all processes on your machine. Press `Ctrl
 | `--offline` | flag | false | Run without internet access |
 | `--country-iso-code` | string | - | ISO 3166-1 alpha-3 country code (required in offline mode) |
 | `--log-level` | choice | INFO | Log level: DEBUG, INFO, WARNING, ERROR |
+| `--telemetry-level` | string | - | One-run tier: `disabled`, `minimal`, or `extensive` |
 
 **Examples:**
 ```bash
@@ -87,6 +88,34 @@ codecarbon monitor -- node app.js --port 8080
 **Options:**
 
 Same options as `codecarbon monitor` apply (see above).
+
+### `codecarbon telemetry`
+
+Configure **product telemetry** (library usage metadata), separate from `codecarbon config` (dashboard org/project/experiment).
+
+**Usage:**
+
+```bash
+codecarbon telemetry              # interactive wizard
+codecarbon telemetry set <level>  # disabled | minimal | extensive
+codecarbon telemetry status       # resolved tier and whether it was set explicitly
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--config PATH` | Use a specific `.codecarbon.config` (default: local then global) |
+
+See [Product telemetry](../how-to/telemetry.md) for what `minimal` collects and how to opt out.
+
+### `codecarbon monitor --telemetry-level`
+
+Override the telemetry tier for a single monitor run (does not update config).
+
+```bash
+codecarbon monitor --telemetry-level disabled -- python train.py
+```
 
 ### `codecarbon detect`
 

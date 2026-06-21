@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import requests_mock
 
-from codecarbon.core.api_client import ApiClient
+from codecarbon.core.api_client import ApiClient, _round_coordinate
 from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate
 from codecarbon.output import EmissionsData
 
@@ -26,6 +26,11 @@ conf = {
 
 
 class TestApi(unittest.TestCase):
+    def test_round_coordinate_handles_none_and_values(self):
+        self.assertEqual(_round_coordinate(None), 0.0)
+        self.assertEqual(_round_coordinate(-7.61743), -7.6)
+        self.assertEqual(_round_coordinate(33.58229, decimals=2), 33.58)
+
     def test_get_headers_prefers_api_key_over_access_token(self):
         api = ApiClient(
             endpoint_url="http://test.com",
@@ -252,6 +257,22 @@ class TestApi(unittest.TestCase):
                     }
                 )
             )
+
+    def test_create_run_handles_none_coordinates(self):
+        conf_with_none_coords = {**conf, "longitude": None, "latitude": None}
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/runs", json={"id": "run-id"}, status_code=201)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="experiment_id",
+                api_key="Toto",
+                conf=conf_with_none_coords,
+                create_run_automatically=False,
+            )
+            run_id = api._create_run("experiment_id")
+        self.assertEqual(run_id, "run-id")
+        self.assertEqual(m.last_request.json()["longitude"], 0.0)
+        self.assertEqual(m.last_request.json()["latitude"], 0.0)
 
     def test_create_run_returns_none_on_unsuccessful_status(self):
         with requests_mock.Mocker() as m:

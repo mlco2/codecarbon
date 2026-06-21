@@ -145,3 +145,9 @@ os.environ["HTTPS_PROXY"] = "http://0.0.0.0:0000"
 
 For more information, please read the [requests library proxy
 documentation](https://requests.readthedocs.io/en/latest/user/advanced/#proxies)
+
+## Product telemetry
+
+Optional library telemetry (`telemetry_level`: `disabled`, `minimal`, or `extensive`) is configured separately from dashboard API settings. Set it in `.codecarbon.config`, via `CODECARBON_TELEMETRY_LEVEL`, or with `EmissionsTracker(telemetry_level=...)` (argument wins). `minimal` sends private product telemetry at each `stop()`—see [Product telemetry](telemetry.md).
+
+See [Product telemetry](telemetry.md) for tiers, what is collected, and how to opt out.

@@ -1,3 +1,8 @@
+"""Telemetry payload schemas aligned with carbonserver ``telemetry_sql_models.Telemetry``.
+
+ponytail: mirrored in ``carbonserver/api/schemas_telemetry.py`` for drift tests only.
+"""
+
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
