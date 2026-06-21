@@ -1,3 +1,5 @@
+import builtins
+import importlib.util
 import os
 import subprocess
 import sys
@@ -30,7 +32,32 @@ from codecarbon.external.hardware import CPU
 from codecarbon.input import DataSource
 
 
+def _load_module_without_psutil(module_name, file_path):
+    real_import = builtins.__import__
+
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "psutil":
+            raise ImportError("psutil unavailable for test")
+        return real_import(name, globals, locals, fromlist, level)
+
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    with mock.patch("builtins.__import__", side_effect=fake_import):
+        spec.loader.exec_module(module)
+    return module
+
+
 class TestCPU(unittest.TestCase):
+    def test_cpu_module_import_without_psutil_sets_fallback_flag(self):
+        cpu_module = _load_module_without_psutil(
+            "codecarbon.core.cpu_no_psutil_test",
+            sys.modules["codecarbon.core.cpu"].__file__,
+        )
+
+        self.assertFalse(cpu_module.PSUTIL_AVAILABLE)
+        self.assertIsNone(cpu_module.psutil)
+        self.assertFalse(cpu_module.is_psutil_available())
+
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget", side_effect=Exception("boom"))
     def test_is_powergadget_available_returns_false_on_exception(
         self, mock_powergadget
