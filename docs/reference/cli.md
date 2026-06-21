@@ -44,7 +44,7 @@ Displays real-time emissions data for all processes on your machine. Press `Ctrl
 | `--no-api` | flag | false | Do not send data to the API (local-only measurement) |
 | `--offline` | flag | false | Run without internet access |
 | `--country-iso-code` | string | - | ISO 3166-1 alpha-3 country code (required in offline mode) |
-| `--log-level` | choice | INFO | Log level: DEBUG, INFO, WARNING, ERROR |
+| `--log-level` | choice | ERROR | Log level: DEBUG, INFO, WARNING, ERROR |
 
 **Examples:**
 ```bash
