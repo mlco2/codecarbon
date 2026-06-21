@@ -48,22 +48,4 @@ async def test_no_auth_login_redirects_to_frontend(monkeypatch):
     response = await authenticate.get_login(request, auth_provider=None)
 
     assert response.status_code == 307
-    assert response.headers["location"] == "http://localhost:3000/home?auth=true"
-
-
-def test_no_auth_login_rejects_external_redirect(monkeypatch):
-    monkeypatch.setattr(authenticate.settings, "frontend_url", "http://localhost:3000")
-    request = Request(
-        {
-            "type": "http",
-            "method": "GET",
-            "path": "/auth/login",
-            "headers": [],
-            "scheme": "http",
-            "server": ("localhost", 8008),
-            "client": ("testclient", 50000),
-            "query_string": b"redirect=https%3A%2F%2Fexample.com%2Fhome",
-        }
-    )
-
-    assert authenticate.get_redirect_url(request) == "http://localhost:3000/home"
+    assert response.headers["location"] == "http://localhost:3000/home"

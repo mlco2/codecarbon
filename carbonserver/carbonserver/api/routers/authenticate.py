@@ -2,7 +2,6 @@ import base64
 import json
 import logging
 from typing import Optional
-from urllib.parse import urlparse
 
 from authlib.integrations.starlette_client import OAuthError
 from dependency_injector.wiring import Provide, inject
@@ -24,21 +23,11 @@ AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
 LOGGER = logging.getLogger(__name__)
 OAUTH_SCOPES = ["openid", "email", "profile"]
 SESSION_COOKIE_NAME = "user_session"
+DEFAULT_REDIRECT_URL = (
+    f"{(settings.frontend_url or 'http://localhost:3000').rstrip('/')}/home"
+)
 
 router = APIRouter()
-
-
-def get_redirect_url(request: Request) -> str:
-    base_url = settings.frontend_url or "http://localhost:3000"
-    redirect = request.query_params.get("redirect")
-    if redirect:
-        parsed = urlparse(redirect)
-        if parsed.scheme in ("http", "https") and parsed.netloc in (
-            "localhost:3000",
-            "127.0.0.1:3000",
-        ):
-            return redirect
-    return f"{base_url.rstrip('/')}/home"
 
 
 @router.get("/auth/check", name="auth-check")
@@ -95,7 +84,7 @@ async def get_login(
     login and redirect to frontend app with token
     """
     if auth_provider is None:
-        return RedirectResponse(get_redirect_url(request))
+        return RedirectResponse(DEFAULT_REDIRECT_URL)
     login_url = request.url_for("login")
     if code:
         try:
@@ -147,7 +136,7 @@ async def logout(
     Logout user by clearing session and removing cookie
     """
     if auth_provider is None:
-        return RedirectResponse(get_redirect_url(request))
+        return RedirectResponse(DEFAULT_REDIRECT_URL)
 
     # Revoke the access token at the OIDC provider before clearing it locally
     access_token = request.cookies.get(SESSION_COOKIE_NAME)

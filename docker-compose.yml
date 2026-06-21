@@ -31,6 +31,7 @@ services:
     build:
       context: ./webapp
       dockerfile: Dockerfile
+      target: build
     restart: always
     depends_on:
       - carbonserver
@@ -41,8 +42,7 @@ services:
       VITE_PROJECT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
     volumes:
       - ./webapp:/app
-      - webapp_node_modules:/app/node_modules
-    command: sh -c "corepack enable pnpm && pnpm dev --host 0.0.0.0 --port 5173"
+    command: sh -c "pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
     ports:
       - "3000:5173"
 
