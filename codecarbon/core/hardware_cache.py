@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from codecarbon.core.config import normalize_gpu_ids
@@ -28,6 +29,14 @@ CONF_KEYS = (
     "gpu_model",
     "gpu_ids",
 )
+
+
+class HardwareKind(str, Enum):
+    RAM = "ram"
+    CPU = "cpu"
+    APPLE_CHIP = "apple_chip"
+    GPU = "gpu"
+
 
 _cache_lock = threading.Lock()
 _plans: Dict["_HardwareCacheKey", "_HardwarePlan"] = {}
@@ -88,31 +97,31 @@ def get_cached_tdp(cpu_module):
     return _tdp
 
 
-def _hardware_kind(hw) -> str:
+def _hardware_kind(hw) -> HardwareKind:
     """Classify hardware without isinstance (safe if modules were reloaded)."""
     name = type(hw).__name__
     if name == "RAM":
-        return "ram"
+        return HardwareKind.RAM
     if name == "CPU":
-        return "cpu"
+        return HardwareKind.CPU
     if name == "AppleSiliconChip":
-        return "apple_chip"
+        return HardwareKind.APPLE_CHIP
     if name == "GPU":
-        return "gpu"
+        return HardwareKind.GPU
     raise TypeError(f"Unsupported hardware type for cache: {type(hw)}")
 
 
 def _spec_from_hardware(hw) -> Dict[str, Any]:
     kind = _hardware_kind(hw)
-    if kind == "ram":
+    if kind == HardwareKind.RAM:
         return {
-            "kind": "ram",
+            "kind": kind.value,
             "tracking_mode": hw._tracking_mode,
             "force_ram_power": hw._force_ram_power,
         }
-    if kind == "cpu":
+    if kind == HardwareKind.CPU:
         spec: Dict[str, Any] = {
-            "kind": "cpu",
+            "kind": kind.value,
             "mode": hw._mode,
             "model": hw._model,
             "tdp": hw._tdp,
@@ -126,15 +135,15 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
             spec["rapl_prefer_psys"] = getattr(intel, "rapl_prefer_psys", False)
             spec["rapl_dir"] = getattr(intel, "_lin_rapl_dir", DEFAULT_RAPL_DIR)
         return spec
-    if kind == "apple_chip":
+    if kind == HardwareKind.APPLE_CHIP:
         return {
-            "kind": "apple_chip",
+            "kind": kind.value,
             "model": hw._model,
             "chip_part": hw.chip_part,
         }
-    if kind == "gpu":
+    if kind == HardwareKind.GPU:
         gpu_ids = _canonical_gpu_ids(hw.gpu_ids)
-        return {"kind": "gpu", "gpu_ids": list(gpu_ids) if gpu_ids else None}
+        return {"kind": kind.value, "gpu_ids": list(gpu_ids) if gpu_ids else None}
     raise TypeError(f"Unsupported hardware type for cache: {type(hw)}")
 
 
@@ -142,13 +151,17 @@ def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
     from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
     from codecarbon.external.ram import RAM
 
-    kind = spec["kind"]
-    if kind == "ram":
+    try:
+        kind = HardwareKind(spec["kind"])
+    except ValueError as exc:
+        raise ValueError(f"Unknown hardware spec kind: {spec['kind']}") from exc
+
+    if kind == HardwareKind.RAM:
         return RAM(
             tracking_mode=spec["tracking_mode"],
             force_ram_power=spec.get("force_ram_power"),
         )
-    if kind == "cpu":
+    if kind == HardwareKind.CPU:
         return CPU(
             output_dir=output_dir,
             mode=spec["mode"],
@@ -159,13 +172,13 @@ def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
             rapl_include_dram=spec.get("rapl_include_dram", False),
             rapl_prefer_psys=spec.get("rapl_prefer_psys", False),
         )
-    if kind == "apple_chip":
+    if kind == HardwareKind.APPLE_CHIP:
         return AppleSiliconChip(
             output_dir=output_dir,
             model=spec["model"],
             chip_part=spec["chip_part"],
         )
-    if kind == "gpu":
+    if kind == HardwareKind.GPU:
         gpu_ids = _canonical_gpu_ids(spec.get("gpu_ids"))
         return GPU.from_utils(gpu_ids=list(gpu_ids) if gpu_ids else None)
     raise ValueError(f"Unknown hardware spec kind: {kind}")

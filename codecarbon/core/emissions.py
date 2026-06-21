@@ -6,13 +6,16 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 from codecarbon.core import electricitymaps_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource, DataSourceException
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 _NORDIC_REGIONS_BY_COUNTRY = {
     "SWE": {"SE1", "SE2", "SE3", "SE4"},
@@ -62,7 +65,7 @@ class Emissions:
             )
             return energy.kWh * (self._force_carbon_intensity_g_co2e_kwh / 1000.0)
 
-        df = self._data_source.get_cloud_emissions_data()
+        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         try:
             emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
                 df.loc[
@@ -97,7 +100,7 @@ class Emissions:
         """
         Returns the Country Name where the cloud region is located
         """
-        df = self._data_source.get_cloud_emissions_data()
+        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
         selected = df.loc[flags]
         if not len(selected):
@@ -112,7 +115,7 @@ class Emissions:
         """
         Returns the Country ISO Code where the cloud region is located
         """
-        df = self._data_source.get_cloud_emissions_data()
+        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
         selected = df.loc[flags]
         if not len(selected):
@@ -127,7 +130,7 @@ class Emissions:
         """
         Returns the State/City where the cloud region is located
         """
-        df = self._data_source.get_cloud_emissions_data()
+        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
         selected = df.loc[flags]
         if not len(selected):

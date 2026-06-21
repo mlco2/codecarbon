@@ -12,7 +12,7 @@ import shutil
 import subprocess
 import sys
 from functools import lru_cache
-from typing import Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
 import psutil
 from rapidfuzz import fuzz, process, utils
@@ -21,6 +21,9 @@ from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 # default W value per core for a CPU if no model is found in the ref csv
 DEFAULT_POWER_PER_CORE = 4
@@ -895,7 +898,7 @@ class TDP:
         self.model, self.tdp = self._main()
 
     @staticmethod
-    def _get_cpu_constant_power(match: str, cpu_power_df) -> int:
+    def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
         """Extract constant power from matched CPU"""
         return float(cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0])
 
@@ -909,7 +912,9 @@ class TDP:
             return power
         return None
 
-    def _get_matching_cpu(self, model_raw: str, cpu_df, greedy=False) -> str:
+    def _get_matching_cpu(
+        self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
+    ) -> str:
         """
         Get matching cpu name
 
