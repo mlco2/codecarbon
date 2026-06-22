@@ -613,6 +613,20 @@ class TestTDP(unittest.TestCase):
                 self.assertEqual(tdp.model, chip)
                 self.assertEqual(tdp.tdp, expected_tdp)
 
+    def test_unknown_apple_chip_falls_back_gracefully(self):
+        with (
+            mock.patch(
+                "codecarbon.core.cpu.detect_cpu_model",
+                return_value="Apple M5 Pro",
+            ),
+            mock.patch("codecarbon.core.cpu.is_psutil_available", return_value=True),
+            mock.patch("codecarbon.core.cpu.count_cpus", return_value=10),
+        ):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Apple M5 Pro")
+        self.assertEqual(tdp.tdp, 10 * DEFAULT_POWER_PER_CORE)
+
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):
     def test_set_cpu_tracking_skips_tdp_when_rapl_available(self):
