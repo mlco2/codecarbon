@@ -10,7 +10,7 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from codecarbon.core import electricitymaps_api
+from codecarbon.core import electricitymaps_api, national_grid_eso_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
@@ -171,6 +171,21 @@ class Emissions:
             except Exception as e:
                 logger.error(
                     "electricitymaps_api.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
+
+        if national_grid_eso_api.is_supported(geo):
+            try:
+                emissions = national_grid_eso_api.get_emissions(energy, geo)
+                logger.debug(
+                    "national_grid_eso_api.get_emissions: "
+                    + f"Retrieved emissions for {geo.country_name} using National Grid ESO API: {emissions * 1000} g CO2eq"
+                )
+                return emissions
+            except Exception as e:
+                logger.error(
+                    "national_grid_eso_api.get_emissions: "
                     + str(e)
                     + " >>> Using CodeCarbon's data."
                 )
