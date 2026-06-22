@@ -12,7 +12,10 @@ import json
 from contextlib import ExitStack
 from importlib.resources import as_file as importlib_resources_as_file
 from importlib.resources import files as importlib_resources_files
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 _CACHE: Dict[str, Any] = {}
 _MODULE_NAME = "codecarbon"
@@ -144,7 +147,7 @@ class DataSource:
         _ensure_static_data_loaded()
         return _CACHE["global_energy_mix"]
 
-    def get_cloud_emissions_data(self):
+    def get_cloud_emissions_data(self) -> pd.DataFrame:
         """
         Returns Cloud Regions Impact Data.
         Data is loaded on first access and cached for all tracker instances.
@@ -192,7 +195,7 @@ class DataSource:
         _ensure_static_data_loaded()
         return _CACHE["carbon_intensity_per_source"]
 
-    def get_cpu_power_data(self):
+    def get_cpu_power_data(self) -> pd.DataFrame:
         """
         Returns CPU power Data.
         Data is loaded on first access and cached for all tracker instances.
