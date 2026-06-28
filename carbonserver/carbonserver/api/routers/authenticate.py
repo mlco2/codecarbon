@@ -23,9 +23,7 @@ AUTHENTICATE_ROUTER_TAGS = ["Authenticate"]
 LOGGER = logging.getLogger(__name__)
 OAUTH_SCOPES = ["openid", "email", "profile"]
 SESSION_COOKIE_NAME = "user_session"
-DEFAULT_REDIRECT_URL = (
-    f"{(settings.frontend_url or 'http://localhost:3000').rstrip('/')}/home"
-)
+
 
 router = APIRouter()
 
@@ -84,7 +82,7 @@ async def get_login(
     login and redirect to frontend app with token
     """
     if auth_provider is None:
-        return RedirectResponse(DEFAULT_REDIRECT_URL)
+        return RedirectResponse(settings.default_redirect_url)
     login_url = request.url_for("login")
     if code:
         try:
@@ -136,7 +134,7 @@ async def logout(
     Logout user by clearing session and removing cookie
     """
     if auth_provider is None:
-        return RedirectResponse(DEFAULT_REDIRECT_URL)
+        return RedirectResponse(settings.default_redirect_url)
 
     # Revoke the access token at the OIDC provider before clearing it locally
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
