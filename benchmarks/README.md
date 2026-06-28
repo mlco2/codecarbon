@@ -22,7 +22,7 @@ Then when you see a big jump between releases, go and run the intermediate commi
 
 ```bash
 # Imagine the jump is between 3.2.1 and 3.2.2
-uvx asv --config benchmarks/asv.conf.json run v3.2.1..3.2.2 --show-stderr
+uvx asv --config benchmarks/asv.conf.json run v3.2.1..v3.2.2 --show-stderr
 ```
 
 Build and preview the report:
