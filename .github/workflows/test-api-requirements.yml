@@ -6,9 +6,6 @@ permissions:
 name: test-api-requirements
 
 on:
-  pull_request:
-    paths:
-      - "requirements/requirements-api.txt"
   push:
     paths:
       - "requirements/requirements-api.txt"
