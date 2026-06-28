@@ -24,6 +24,7 @@ LOGGER = logging.getLogger(__name__)
 OAUTH_SCOPES = ["openid", "email", "profile"]
 SESSION_COOKIE_NAME = "user_session"
 
+
 router = APIRouter()
 
 
@@ -81,7 +82,7 @@ async def get_login(
     login and redirect to frontend app with token
     """
     if auth_provider is None:
-        raise HTTPException(status_code=501, detail="Authentication not configured")
+        return RedirectResponse(settings.default_redirect_url)
     login_url = request.url_for("login")
     if code:
         try:
@@ -133,7 +134,7 @@ async def logout(
     Logout user by clearing session and removing cookie
     """
     if auth_provider is None:
-        raise HTTPException(status_code=501, detail="Authentication not configured")
+        return RedirectResponse(settings.default_redirect_url)
 
     # Revoke the access token at the OIDC provider before clearing it locally
     access_token = request.cookies.get(SESSION_COOKIE_NAME)
