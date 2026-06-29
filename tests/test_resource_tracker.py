@@ -506,3 +506,91 @@ def test_hardware_cache_reuses_setup():
     assert rt2.cpu_tracker == "cached_cpu"
     assert tracker2._conf.get("cpu_model") == "Cached CPU"
     hardware_cache.clear_cache()
+
+
+def test_setup_power_gadget_configures_tracker():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    hardware_cpu.get_model.return_value = "Intel CPU"
+
+    with patch(
+        "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+    ) as mock_from_utils:
+        assert resource_tracker._setup_power_gadget() is True
+
+    mock_from_utils.assert_called_once_with(
+        "out",
+        "intel_power_gadget",
+        tracking_mode="machine",
+    )
+    assert resource_tracker.cpu_tracker == "Power Gadget"
+    assert tracker._conf["cpu_model"] == "Intel CPU"
+    assert tracker._hardware == [hardware_cpu]
+
+
+def test_setup_fallback_tracking_uses_forced_cpu_power():
+    tracker = make_tracker(_force_cpu_power=99)
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    tdp = SimpleNamespace(model="Matched CPU")
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
+    ):
+        resource_tracker._setup_fallback_tracking(tdp, None)
+
+    mock_from_utils.assert_called_once_with(
+        "out",
+        MODE_CPU_LOAD,
+        "Matched CPU",
+        99,
+        tracking_mode="machine",
+    )
+    assert resource_tracker.cpu_tracker == MODE_CPU_LOAD
+    assert tracker._conf["cpu_model"] == "Matched CPU"
+
+
+def test_setup_fallback_tracking_cpu_load_when_tdp_falsy():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+
+    class FalseyTDP:
+        model = "Unknown CPU"
+
+        def __bool__(self):
+            return False
+
+    with (
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_psutil_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+        ) as mock_from_utils,
+        patch.object(
+            resource_tracker, "_get_install_instructions", return_value="instructions"
+        ),
+    ):
+        resource_tracker._setup_fallback_tracking(FalseyTDP(), None)
+
+    mock_from_utils.assert_called_once_with(
+        "out",
+        MODE_CPU_LOAD,
+        "Unknown CPU",
+        None,
+        tracking_mode="machine",
+    )
+    assert resource_tracker.cpu_tracker == MODE_CPU_LOAD
+    assert tracker._hardware == [hardware_cpu]

@@ -249,3 +249,40 @@ def test_get_cached_tdp_reuses_instance():
     first = hardware_cache.get_cached_tdp(fake_cpu)
     second = hardware_cache.get_cached_tdp(fake_cpu)
     assert first is second
+
+
+def test_canonical_gpu_ids_accepts_scalar():
+    assert hardware_cache._canonical_gpu_ids(0) == ("0",)
+
+
+def test_spec_from_hardware_raises_for_unhandled_kind():
+    class UnhandledKind:
+        value = "unhandled"
+
+    with patch.object(hardware_cache, "_hardware_kind", return_value=UnhandledKind()):
+        with pytest.raises(TypeError, match="Unsupported hardware type"):
+            hardware_cache._spec_from_hardware(object())
+
+
+def test_hardware_from_spec_raises_when_kind_not_handled():
+    sentinel = object()
+    real = hardware_cache.HardwareKind
+
+    with patch("codecarbon.core.hardware_cache.HardwareKind") as mock_cls:
+        mock_cls.side_effect = lambda value: sentinel
+        mock_cls.RAM = real.RAM
+        mock_cls.CPU = real.CPU
+        mock_cls.APPLE_CHIP = real.APPLE_CHIP
+        mock_cls.GPU = real.GPU
+
+        with pytest.raises(ValueError, match="Unknown hardware spec kind"):
+            hardware_cache._hardware_from_spec({"kind": "ram"}, "out")
+
+
+def test_spec_and_rebuild_roundtrip_for_ram():
+    ram_hw = RAM(tracking_mode="machine", force_ram_power=12.5)
+    spec = hardware_cache._spec_from_hardware(ram_hw)
+    rebuilt = hardware_cache._hardware_from_spec(spec, "out2")
+    assert type(rebuilt).__name__ == "RAM"
+    assert rebuilt._tracking_mode == "machine"
+    assert rebuilt._force_ram_power == 12.5
