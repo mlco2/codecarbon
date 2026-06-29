@@ -25,34 +25,49 @@
       "year": 2024
     },
     "NO1": {
-      "emission_factor": 18.0,
+      "emission_factor": 23.3,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 1 (Oslo)",
-      "year": 2024
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Stable year-over-year (<5% drift 2021-2025); annual update sufficient."
     },
     "NO2": {
-      "emission_factor": 18.0,
+      "emission_factor": 23.9,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 2 (Southern Norway)",
-      "year": 2024
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Stable year-over-year (<5% drift 2021-2025); annual update sufficient."
     },
     "NO3": {
-      "emission_factor": 18.0,
+      "emission_factor": 21.5,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 3 (Central Norway)",
-      "year": 2024
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Stable year-over-year (<5% drift 2021-2025); annual update sufficient."
     },
     "NO4": {
-      "emission_factor": 18.0,
+      "emission_factor": 39.6,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 4 (Northern Norway)",
-      "year": 2024
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Event-driven variability: Hammerfest LNG gas turbines (offline after Sept-2020 fire, restart Jun-2022). Period-dependent, not a stable constant; CI ranged 23-51 gCO2eq/kWh 2021-2024."
     },
     "NO5": {
-      "emission_factor": 18.0,
+      "emission_factor": 24.5,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 5 (Western Norway)",
-      "year": 2024
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Production-based CI near the hydro lifecycle floor (~24) in pure-hydropower periods; small residual gas phasing out 2022-2025."
     },
     "FI": {
       "emission_factor": 72.0,
@@ -62,8 +77,9 @@
     }
   },
   "metadata": {
-    "source": "Based on historical averages from ENTSO-E data",
-    "last_updated": "2026-01-24",
-    "notes": "Static emission factors for Nordic regions. Sweden and Norway have very low carbon intensity due to high renewable energy (primarily hydro and nuclear). Finland has higher emissions due to greater fossil fuel dependency."
+    "source": "NO1-NO5: ENTSO-E Transparency actual generation per production type, weighted by IPCC AR5 Annex III lifecycle emission factors (production-based generation-mix), derived reproducibly by Khepri (avalyset/khepri). SE1-SE4 and FI: prior values, unchanged.",
+    "method": "production-based: weighted average of generation-mix per source x lifecycle factor (same approach as CodeCarbon's static fallback methodology). NOT consumption-based; the Electricity Maps API path remains the consumption-based source.",
+    "last_updated": "2026-06-29",
+    "notes": "NO1-NO5 replace the prior uniform 18.0 placeholder with per-zone derived values. Drift characterization: NO1/NO2/NO3 stable year-over-year (<5%); NO4 event-driven (Hammerfest LNG outage 2020-2022), period-dependent; NO5 near hydro floor. Production-based NO CI is low and not very distinct between zones except where fossil gas occurs (NO4). SE1-SE4 and FI retained from prior data pending equivalent per-zone derivation."
   }
 }
