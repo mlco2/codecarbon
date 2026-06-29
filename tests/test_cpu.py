@@ -579,10 +579,10 @@ class TestTDP(unittest.TestCase):
 
     def test_apple_m2_chips_have_correct_tdp(self):
         for chip, expected_tdp in [
-            ("Apple M2", 15),
-            ("Apple M2 Pro", 20),
-            ("Apple M2 Max", 30),
-            ("Apple M2 Ultra", 60),
+            ("Apple M2", 22),
+            ("Apple M2 Pro", 35),
+            ("Apple M2 Max", 50),
+            ("Apple M2 Ultra", 105),
         ]:
             with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
                 tdp = TDP()
@@ -591,10 +591,10 @@ class TestTDP(unittest.TestCase):
 
     def test_apple_m3_chips_have_correct_tdp(self):
         for chip, expected_tdp in [
-            ("Apple M3", 15),
-            ("Apple M3 Pro", 18),
-            ("Apple M3 Max", 30),
-            ("Apple M3 Ultra", 60),
+            ("Apple M3", 22),
+            ("Apple M3 Pro", 35),
+            ("Apple M3 Max", 50),
+            ("Apple M3 Ultra", 100),
         ]:
             with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
                 tdp = TDP()
@@ -603,10 +603,10 @@ class TestTDP(unittest.TestCase):
 
     def test_apple_m4_chips_have_correct_tdp(self):
         for chip, expected_tdp in [
-            ("Apple M4", 15),
-            ("Apple M4 Pro", 20),
-            ("Apple M4 Max", 35),
-            ("Apple M4 Ultra", 70),
+            ("Apple M4", 20),
+            ("Apple M4 Pro", 35),
+            ("Apple M4 Max", 55),
+            ("Apple M4 Ultra", 110),
         ]:
             with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
                 tdp = TDP()
