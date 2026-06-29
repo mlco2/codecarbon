@@ -1,28 +1,40 @@
 {
   "data": {
     "SE1": {
-      "emission_factor": 18.0,
+      "emission_factor": 20.6,
       "unit": "gCO2eq/kWh",
       "description": "Sweden Bidding Zone 1 (Northern Sweden)",
-      "year": 2024
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Mix drifting (hydro-to-wind shift, 2022-2025: hydro -6.2pp, wind +6.4pp); CI stable (-3.8% 2022-2025) because hydro and wind share similar lifecycle factors. More frequent than annual updates recommended."
     },
     "SE2": {
-      "emission_factor": 18.0,
+      "emission_factor": 20.1,
       "unit": "gCO2eq/kWh",
-      "description": "Sweden Bidding Zone 2 (Central Sweden)",
-      "year": 2024
+      "description": "Sweden Bidding Zone 2 (North-central Sweden)",
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Stable: CI -2.4% and mix shifts <5pp 2022-2025. Annual update sufficient. Only SE zone below both materiality thresholds."
     },
     "SE3": {
-      "emission_factor": 18.0,
+      "emission_factor": 14.5,
       "unit": "gCO2eq/kWh",
-      "description": "Sweden Bidding Zone 3 (Southern Sweden)",
-      "year": 2024
+      "description": "Sweden Bidding Zone 3 (South-central Sweden, includes Stockholm)",
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Nuclear-dominant zone (SE3 only; IPCC AR5 factor 12 gCO2eq/kWh). Nuclear share eroding (-6.4pp 2022-2025); CI +7.8% but below 15% threshold. Mix-drift warrants more frequent than annual updates."
     },
     "SE4": {
-      "emission_factor": 18.0,
+      "emission_factor": 17.4,
       "unit": "gCO2eq/kWh",
-      "description": "Sweden Bidding Zone 4 (Stockholm region)",
-      "year": 2024
+      "description": "Sweden Bidding Zone 4 (Southern Sweden)",
+      "year": 2025,
+      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
+      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
+      "note": "Material drift: CI +15.2% 2022-2025 (solar growth, Solar=48 gCO2eq/kWh vs wind=11). Monotonically rising. More frequent than annual updates required."
     },
     "NO1": {
       "emission_factor": 18.0,
@@ -62,8 +74,9 @@
     }
   },
   "metadata": {
-    "source": "Based on historical averages from ENTSO-E data",
-    "last_updated": "2026-01-24",
-    "notes": "Static emission factors for Nordic regions. Sweden and Norway have very low carbon intensity due to high renewable energy (primarily hydro and nuclear). Finland has higher emissions due to greater fossil fuel dependency."
+    "source": "SE1-SE4: ENTSO-E Transparency actual generation per production type, weighted by IPCC AR5 Annex III lifecycle emission factors (production-based generation-mix), derived reproducibly by Khepri (avalyset/khepri). NO1-NO5 and FI: prior values, unchanged.",
+    "method": "production-based: weighted average of generation-mix per source x lifecycle factor (same approach as CodeCarbon's static fallback methodology). NOT consumption-based; the Electricity Maps API path remains the consumption-based source.",
+    "last_updated": "2026-06-29",
+    "notes": "SE1-SE4 replace the prior uniform 18.0 placeholder with per-zone derived values (2025 annual means). The 18.0 placeholder is systematically wrong in both directions: it undervalues SE1/SE2 (true CI ~20 gCO2eq/kWh, ~+12-15% error) and overvalues SE3 (true CI ~14.5, ~-19% error) and SE4 (true CI ~17.4, ~-3% error). A single uniform constant cannot represent structurally different zones. Drift characterization: SE2 stable (annual update sufficient); SE1/SE3/SE4 show mix or CI drift (more frequent updates recommended, especially SE4). NO1-NO5 and FI retained from prior data pending equivalent per-zone derivation (see companion PR for Norwegian zones)."
   }
 }
