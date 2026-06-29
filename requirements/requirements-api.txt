@@ -47,7 +47,7 @@ email-validator==2.3.0
     # via
     #   fastapi
     #   pydantic
-fastapi==0.123.0
+fastapi==0.138.1
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi-oidc
@@ -61,7 +61,9 @@ fastapi-oidc==0.0.9
 fastapi-pagination==0.15.0
     # via carbonserver (carbonserver/pyproject.toml)
 fastar==0.9.0
-    # via fastapi-cloud-cli
+    # via
+    #   fastapi
+    #   fastapi-cloud-cli
 greenlet==3.5.1
     # via sqlalchemy
 h11==0.16.0
@@ -120,11 +122,16 @@ pydantic==2.12.5
     #   fastapi-cloud-cli
     #   fastapi-oidc
     #   fastapi-pagination
+    #   pydantic-extra-types
     #   pydantic-settings
 pydantic-core==2.41.5
     # via pydantic
+pydantic-extra-types==2.11.1
+    # via fastapi
 pydantic-settings==2.14.2
-    # via carbonserver (carbonserver/pyproject.toml)
+    # via
+    #   carbonserver (carbonserver/pyproject.toml)
+    #   fastapi
 pygments==2.19.2
     # via rich
 pyjwt==2.13.0
@@ -187,12 +194,14 @@ typing-extensions==4.15.0
     #   fastapi-pagination
     #   pydantic
     #   pydantic-core
+    #   pydantic-extra-types
     #   rich-toolkit
     #   starlette
     #   typer
     #   typing-inspection
 typing-inspection==0.4.2
     # via
+    #   fastapi
     #   pydantic
     #   pydantic-settings
 urllib3==2.7.0

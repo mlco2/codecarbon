@@ -49,23 +49,28 @@ class CodeCarbonAPIOutput(BaseOutput):
     ):
         self.endpoint_url: str = endpoint_url
         self.api = ApiClient(
-            experiment_id=experiment_id,
             endpoint_url=endpoint_url,
+            experiment_id=experiment_id,
             api_key=api_key,
             conf=conf,
+            create_run_automatically=False,
         )
         self.run_id = self.api.run_id
 
-    def live_out(self, _, delta: EmissionsData):
-        # Called at regular intervals
+    def _ensure_api_run(self) -> None:
+        if self.api.run_id is None and self.api.experiment_id is not None:
+            self.api._create_run(self.api.experiment_id)
+            self.run_id = self.api.run_id
+
+    def _emit(self, delta: EmissionsData) -> None:
         try:
+            self._ensure_api_run()
             self.api.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)
 
+    def live_out(self, _, delta: EmissionsData):
+        self._emit(delta)
+
     def out(self, _, delta: EmissionsData):
-        # Called on exit
-        try:
-            self.api.add_emission(dataclasses.asdict(delta))
-        except Exception as e:
-            logger.error(e, exc_info=True)
+        self._emit(delta)
