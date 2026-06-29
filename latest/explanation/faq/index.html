@@ -1915,6 +1915,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-is-my-second-tracker-faster-than-the-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why is my second tracker faster than the first?
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-hardware-does-codecarbon-support" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2299,6 +2310,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-is-my-second-tracker-faster-than-the-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why is my second tracker faster than the first?
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-hardware-does-codecarbon-support" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2435,6 +2457,8 @@
 <p>If you find any functionality missing in the CodeCarbon repo, please <a href="https://github.com/mlco2/codecarbon/issues">open an issue</a> so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success. You can also discuss ideas on <a href="https://discord.gg/GS9js2XkJR">Discord</a> before diving into development.</p>
 <h2 id="is-my-data-sent-anywhere">Is my data sent anywhere?<a class="headerlink" href="#is-my-data-sent-anywhere" title="Permanent link">&para;</a></h2>
 <p>By default, CodeCarbon saves emissions data locally. You can configure HTTP output to send data to your own endpoints. We do send data to our API when the user allows it and logs in. No data is sent to third parties without explicit configuration.</p>
+<h2 id="why-is-my-second-tracker-faster-than-the-first">Why is my second tracker faster than the first?<a class="headerlink" href="#why-is-my-second-tracker-faster-than-the-first" title="Permanent link">&para;</a></h2>
+<p>In a single Python process, the first tracker pays a one-time cost to detect hardware (CPU model, GPU devices, RAM, power backends, and related setup). Later trackers in the same process reuse that cached setup, so <code>start()</code> and <code>stop()</code> are much faster on warm runs. This is expected: each new process still performs a full cold setup once.</p>
 <h2 id="what-hardware-does-codecarbon-support">What hardware does CodeCarbon support?<a class="headerlink" href="#what-hardware-does-codecarbon-support" title="Permanent link">&para;</a></h2>
 <p>CodeCarbon supports various CPU architectures, GPUs, and cloud providers. For details on measurement priority and supported hardware, see the <a href="../methodology/#cpu-metrics-priority">Methodology</a> page.</p>
 <h2 id="how-do-i-report-a-bug">How do I report a bug?<a class="headerlink" href="#how-do-i-report-a-bug" title="Permanent link">&para;</a></h2>
