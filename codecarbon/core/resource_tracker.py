@@ -1,8 +1,10 @@
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union
 
 from codecarbon.core import cpu, gpu, powermetrics
 from codecarbon.core.config import normalize_gpu_ids
+from codecarbon.core.hardware_cache import get_cached_tdp, get_or_run_setup
 from codecarbon.core.util import (
     detect_cpu_model,
     is_linux_os,
@@ -62,7 +64,11 @@ class ResourceTracker:
         """Set up CPU tracking using Intel Power Gadget."""
         logger.info("Tracking Intel CPU via Power Gadget")
         self.cpu_tracker = "Power Gadget"
-        hardware_cpu = CPU.from_utils(self.tracker._output_dir, "intel_power_gadget")
+        hardware_cpu = CPU.from_utils(
+            self.tracker._output_dir,
+            "intel_power_gadget",
+            tracking_mode=self.tracker._tracking_mode,
+        )
         self.tracker._hardware.append(hardware_cpu)
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
         return True
@@ -74,6 +80,7 @@ class ResourceTracker:
         hardware_cpu = CPU.from_utils(
             output_dir=self.tracker._output_dir,
             mode="intel_rapl",
+            tracking_mode=self.tracker._tracking_mode,
             rapl_include_dram=self.tracker._rapl_include_dram,
             rapl_prefer_psys=self.tracker._rapl_prefer_psys,
         )
@@ -116,6 +123,23 @@ class ResourceTracker:
         elif is_linux_os():
             return "Linux OS detected: Please ensure RAPL files exist, and are readable, at /sys/class/powercap/intel-rapl/subsystem to measure CPU"
         return ""
+
+    def _setup_cpu_load_fast(self, model: str) -> bool:
+        """Set up cpu_load mode without loading the TDP registry (faster cold start)."""
+        if not cpu.is_psutil_available():
+            return False
+        logger.warning("No CPU tracking mode found. Falling back on CPU load mode.")
+        hardware_cpu = CPU.from_utils(
+            self.tracker._output_dir,
+            MODE_CPU_LOAD,
+            model or "Unknown CPU",
+            None,
+            tracking_mode=self.tracker._tracking_mode,
+        )
+        self.cpu_tracker = MODE_CPU_LOAD
+        self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+        self.tracker._hardware.append(hardware_cpu)
+        return True
 
     def _setup_fallback_tracking(self, tdp, max_power):
         """Set up fallback CPU tracking using TDP estimation."""
@@ -179,6 +203,30 @@ class ResourceTracker:
                 hardware_cpu = CPU.from_utils(self.tracker._output_dir, "constant")
             self.tracker._hardware.append(hardware_cpu)
 
+    def _try_platform_cpu_backend(self) -> bool:
+        """Try platform-preferred CPU backends when force_cpu_power is unset."""
+        if is_linux_os() and cpu.is_rapl_available():
+            self._setup_rapl()
+            return True
+        if is_mac_os():
+            cpu_model = detect_cpu_model() or ""
+            if is_mac_arm(cpu_model):
+                if self._setup_cpu_load_fast(cpu_model):
+                    return True
+                if powermetrics.is_powermetrics_available():
+                    self._setup_powermetrics()
+                    return True
+            elif cpu.is_powergadget_available():
+                self._setup_power_gadget()
+                return True
+            elif powermetrics.is_powermetrics_available():
+                self._setup_powermetrics()
+                return True
+        elif is_windows_os() and cpu.is_powergadget_available():
+            self._setup_power_gadget()
+            return True
+        return False
+
     def set_CPU_tracking(self):
         logger.info("[setup] CPU Tracking...")
         cpu_number = self.tracker._conf.get("cpu_physical_count")
@@ -195,29 +243,21 @@ class ResourceTracker:
         # Try force CPU load mode if requested
         if self.tracker._conf.get("force_mode_cpu_load", False):
             if tdp is None:
-                tdp = cpu.TDP()
+                tdp = get_cached_tdp(cpu)
             if max_power is None:
                 max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
             if tdp.tdp is not None or self.tracker._force_cpu_power is not None:
                 if self._setup_cpu_load_mode(tdp, max_power):
                     return
 
-        # Try various tracking methods in order of preference
-        if cpu.is_powergadget_available() and self.tracker._force_cpu_power is None:
-            self._setup_power_gadget()
-        elif cpu.is_rapl_available() and self.tracker._force_cpu_power is None:
-            self._setup_rapl()
-        elif (
-            powermetrics.is_powermetrics_available()
-            and self.tracker._force_cpu_power is None
-        ):
-            self._setup_powermetrics()
-        else:
-            if tdp is None:
-                tdp = cpu.TDP()
-            if max_power is None:
-                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
-            self._setup_fallback_tracking(tdp, max_power)
+        if self.tracker._force_cpu_power is None and self._try_platform_cpu_backend():
+            return
+
+        if tdp is None:
+            tdp = get_cached_tdp(cpu)
+        if max_power is None:
+            max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+        self._setup_fallback_tracking(tdp, max_power)
 
     def set_GPU_tracking(self):
         logger.info("[setup] GPU Tracking...")
@@ -250,14 +290,13 @@ class ResourceTracker:
             self.tracker._conf.setdefault("gpu_count", 0)
             self.tracker._conf.setdefault("gpu_model", "")
 
-    def set_CPU_GPU_ram_tracking(self):
-        """
-        Set up CPU, GPU and RAM tracking based on the user's configuration.
-        param tracker: BaseEmissionsTracker object
-        """
+    def _run_full_hardware_setup(self) -> None:
         self.set_RAM_tracking()
-        self.set_CPU_tracking()
-        self.set_GPU_tracking()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            cpu_future = pool.submit(self.set_CPU_tracking)
+            gpu_future = pool.submit(self.set_GPU_tracking)
+            cpu_future.result()
+            gpu_future.result()
 
         logger.info(
             f"""The below tracking methods have been set up:
@@ -266,3 +305,10 @@ class ResourceTracker:
                 GPU Tracking Method: {self.gpu_tracker}
             """
         )
+
+    def set_CPU_GPU_ram_tracking(self):
+        """
+        Set up CPU, GPU and RAM tracking based on the user's configuration.
+        param tracker: BaseEmissionsTracker object
+        """
+        get_or_run_setup(self, self._run_full_hardware_setup)
