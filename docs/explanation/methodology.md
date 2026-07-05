@@ -108,7 +108,7 @@ The `tracking_mode` parameter (values: `"machine"` or `"process"`, default `"mac
 
 > ⚠️ **GPU limitation**: Process Mode only affects CPU and RAM attribution. GPU power is always measured at the device level, so if you share a GPU with other users or processes, CodeCarbon will still account for the **entire GPU's** power consumption, not just your share.
 
-Note: The underlying measurement method (Intel RAPL, Intel Power Gadget, TDP-based CPU-load estimation…) is chosen automatically based on hardware availability and software permissions. It applies independently of the tracking mode.
+Note: The underlying measurement method (Intel RAPL, Windows Energy Meter Interface, Intel Power Gadget, TDP-based CPU-load estimation…) is chosen automatically based on hardware availability and software permissions. It applies independently of the tracking mode.
 
 ### GPU
 
@@ -201,7 +201,26 @@ CodeCarbon.
 
 ### CPU
 
--   **On Windows or Mac (Intel)**
+-   **On Windows**
+
+Tracks Intel and AMD processor energy consumption using the [Energy
+Meter Interface
+(EMI)](https://learn.microsoft.com/en-us/windows-hardware/drivers/powermeter/energy-meter-interface),
+through which Windows 11 exposes the CPU RAPL energy counters (the same
+hardware counters CodeCarbon reads on Linux). It is built into the OS:
+no third-party driver, no administrator rights and no extra dependency
+are needed.
+
+*Note*: EMI reports CPU power only on Windows 11 running on bare metal
+(on Windows 10, only on devices with dedicated metering hardware, such
+as the Surface Book). On virtual machines or older Windows versions,
+CodeCarbon falls back to the CPU-load estimation mode described below.
+
+Legacy support for `Intel Power Gadget` is kept for machines where it is
+still installed, but the tool [has been discontinued by
+Intel](https://github.com/mlco2/codecarbon/issues/457).
+
+-   **On Mac (Intel)**
 
 Tracks Intel processors energy consumption using the
 `Intel Power Gadget`. You need to install it yourself from this
@@ -284,7 +303,8 @@ Read more about how we use it in [RAPL Metrics](rapl.md).
 ## CPU metrics priority
 
 CodeCarbon will first try to read the energy consumption of the CPU from
-low level interface like RAPL or `powermetrics`. If none of the tracking
+a low level interface like RAPL (on Linux), the Energy Meter Interface
+(on Windows 11) or `powermetrics` (on macOS). If none of the tracking
 tools are available, CodeCarbon will be switched to a fallback mode:
 
 -   It will first detect which CPU hardware is currently in use, and
