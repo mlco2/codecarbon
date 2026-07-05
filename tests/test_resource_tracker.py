@@ -29,7 +29,7 @@ def make_tracker(**overrides):
         (True, False, False, "Apple M4", "PowerMetrics sudo"),
         (True, False, False, "Intel Core i7", "Intel Power Gadget"),
         (True, False, False, None, "Intel Power Gadget"),
-        (False, True, False, "Intel Core i7", "Intel Power Gadget"),
+        (False, True, False, "Intel Core i7", "Energy Meter Interface"),
         (False, False, True, "Intel Core i7", "RAPL"),
         (False, False, False, "Intel Core i7", ""),
     ],
@@ -214,7 +214,7 @@ def test_set_cpu_tracking_force_mode_uses_cpu_load_and_returns():
     mock_setup.assert_called_once_with(fake_tdp, 80)
 
 
-def test_set_cpu_tracking_prefers_power_gadget():
+def test_set_cpu_tracking_windows_prefers_emi():
     tracker = make_tracker()
     resource_tracker = ResourceTracker(tracker)
 
@@ -222,6 +222,35 @@ def test_set_cpu_tracking_prefers_power_gadget():
         patch("codecarbon.core.resource_tracker.is_mac_os", return_value=False),
         patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
         patch("codecarbon.core.resource_tracker.is_windows_os", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.windows_emi.is_emi_available",
+            return_value=True,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
+            return_value=True,
+        ),
+        patch.object(resource_tracker, "_setup_windows_emi") as mock_emi,
+        patch.object(resource_tracker, "_setup_power_gadget") as mock_power_gadget,
+    ):
+        resource_tracker.set_CPU_tracking()
+
+    mock_emi.assert_called_once_with()
+    mock_power_gadget.assert_not_called()
+
+
+def test_set_cpu_tracking_windows_falls_back_to_power_gadget():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+
+    with (
+        patch("codecarbon.core.resource_tracker.is_mac_os", return_value=False),
+        patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
+        patch("codecarbon.core.resource_tracker.is_windows_os", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.windows_emi.is_emi_available",
+            return_value=False,
+        ),
         patch(
             "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
             return_value=True,
@@ -525,6 +554,28 @@ def test_setup_power_gadget_configures_tracker():
         tracking_mode="machine",
     )
     assert resource_tracker.cpu_tracker == "Power Gadget"
+    assert tracker._conf["cpu_model"] == "Intel CPU"
+    assert tracker._hardware == [hardware_cpu]
+
+
+def test_setup_windows_emi_configures_tracker():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+    hardware_cpu = MagicMock()
+    hardware_cpu.get_model.return_value = "Intel CPU"
+
+    with patch(
+        "codecarbon.core.resource_tracker.CPU.from_utils", return_value=hardware_cpu
+    ) as mock_from_utils:
+        assert resource_tracker._setup_windows_emi() is True
+
+    mock_from_utils.assert_called_once_with(
+        output_dir="out",
+        mode="windows_emi",
+        tracking_mode="machine",
+        rapl_include_dram=False,
+    )
+    assert resource_tracker.cpu_tracker == "Windows EMI"
     assert tracker._conf["cpu_model"] == "Intel CPU"
     assert tracker._hardware == [hardware_cpu]
 
