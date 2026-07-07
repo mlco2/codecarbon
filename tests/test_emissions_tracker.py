@@ -152,6 +152,116 @@ class TestCarbonTracker(unittest.TestCase):
 
         self.assertEqual([10, 25], tracker._gpu_utilization_history)
 
+    def test_monitor_power_skips_gpu_when_index_is_none(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        mock_gpu = mock.MagicMock()
+        from codecarbon.external.hardware import GPU
+
+        mock_gpu.__class__ = GPU
+        mock_gpu.gpu_ids = [0, 1]
+        mock_gpu.devices = mock.MagicMock()
+        mock_gpu.devices.get_gpu_utilization_list.return_value = [
+            {"gpu_index": None, "gpu_utilization": 10},
+            {"gpu_index": 1, "gpu_utilization": 25},
+        ]
+        tracker._hardware = [mock_gpu]
+
+        tracker._monitor_power()
+
+        self.assertEqual([25], tracker._gpu_utilization_history)
+
+    def test_monitor_power_skips_gpu_not_in_monitored_ids(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        mock_gpu = mock.MagicMock()
+        from codecarbon.external.hardware import GPU
+
+        mock_gpu.__class__ = GPU
+        mock_gpu.gpu_ids = [0]
+        mock_gpu.devices = mock.MagicMock()
+        mock_gpu.devices.get_gpu_utilization_list.return_value = [
+            {"gpu_index": 0, "gpu_utilization": 10},
+            {"gpu_index": 1, "gpu_utilization": 25},
+            {"gpu_index": 2, "gpu_utilization": 50},
+        ]
+        tracker._hardware = [mock_gpu]
+
+        tracker._monitor_power()
+
+        self.assertEqual([10], tracker._gpu_utilization_history)
+
+    def test_monitor_power_skips_gpu_when_utilization_key_missing(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        mock_gpu = mock.MagicMock()
+        from codecarbon.external.hardware import GPU
+
+        mock_gpu.__class__ = GPU
+        mock_gpu.gpu_ids = [0, 1]
+        mock_gpu.devices = mock.MagicMock()
+        mock_gpu.devices.get_gpu_utilization_list.return_value = [
+            {"gpu_index": 0, "gpu_utilization": 10},
+            {"gpu_index": 1},
+        ]
+        tracker._hardware = [mock_gpu]
+
+        tracker._monitor_power()
+
+        self.assertEqual([10], tracker._gpu_utilization_history)
+
+    def test_monitor_power_handles_empty_gpu_utilization_list(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+
+        mock_gpu = mock.MagicMock()
+        from codecarbon.external.hardware import GPU
+
+        mock_gpu.__class__ = GPU
+        mock_gpu.gpu_ids = [0, 1]
+        mock_gpu.devices = mock.MagicMock()
+        mock_gpu.devices.get_gpu_utilization_list.return_value = []
+        tracker._hardware = [mock_gpu]
+
+        tracker._monitor_power()
+
+        self.assertEqual([], tracker._gpu_utilization_history)
+
     @mock.patch("codecarbon.external.geography.requests.get")
     def test_carbon_tracker_timeout(
         self,
