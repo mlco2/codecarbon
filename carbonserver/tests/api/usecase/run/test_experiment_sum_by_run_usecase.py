@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import mock
 
 import dateutil.relativedelta
@@ -57,6 +57,40 @@ def test_detailed_sum_computes_for_experiment_id():
     )
 
     assert actual_experiment_sum_by_run[0]["emissions"] == expected_emission_sum
+
+
+def test_detailed_sum_with_max_points_buckets_result():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock.get_experiment_bucketed_sums_by_run.return_value = [
+        {"timestamp": START_DATE, "run_count": 1000}
+    ]
+    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(repository_mock)
+
+    actual = experiment_sum_by_run_usecase.compute_detailed_sum(
+        EXPERIMENT_ID, START_DATE, END_DATE, max_points=300
+    )
+
+    assert actual == [{"timestamp": START_DATE, "run_count": 1000}]
+    repository_mock.get_experiment_detailed_sums_by_run.assert_not_called()
+
+
+def test_detailed_sum_uses_max_points_as_bucket_measure():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(repository_mock)
+
+    experiment_sum_by_run_usecase.compute_detailed_sum(
+        EXPERIMENT_ID,
+        datetime(2026, 1, 1),
+        datetime(2026, 1, 1) + timedelta(seconds=1000),
+        max_points=300,
+    )
+
+    repository_mock.get_experiment_bucketed_sums_by_run.assert_called_once_with(
+        EXPERIMENT_ID,
+        datetime(2026, 1, 1),
+        datetime(2026, 1, 1) + timedelta(seconds=1000),
+        300,
+    )
 
 
 def test_detailed_sum_query_excludes_runs_without_emissions_in_date_range():
