@@ -117,7 +117,9 @@ def test_sign_up_service_creates_user_with_default_project_and_organisation():
     org_repository_mock.add_organization.assert_called_once()
     # Check that the mocks have been called with the correct arguments
     user_repository_mock.create_user.assert_called_with(user_to_create)
-    user_repository_mock.subscribe_user_to_org.assert_called_with(USER_1, ORG_ID)
+    user_repository_mock.subscribe_user_to_org.assert_called_with(
+        USER_1, ORG_ID, is_admin=True
+    )
     project_repository_mock.add_project.assert_called_with(ProjectCreate(**PROJECT_1))
     org_repository_mock.add_organization.assert_called_with(DEFAULT_ORG)
 

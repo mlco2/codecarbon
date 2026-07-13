@@ -7,6 +7,7 @@ from dependency_injector.wiring import Provide
 from fastapi import Depends, HTTPException
 from fastapi.security import APIKeyCookie, HTTPBearer
 
+from carbonserver.api.errors import AuthenticationError
 from carbonserver.api.services.auth_providers.oidc_auth_provider import (
     OIDCAuthProvider,
 )
@@ -69,47 +70,22 @@ class UserWithAuthDependency:
             self.db_user = user_service.get_user_by_id(self.auth_user["sub"])
             return self
 
+        # The session cookie carries the OIDC provider's access token, so it is
+        # treated exactly like a bearer token: both must be signature-verified.
+        token = None
         if cookie_token is not None:
-            self.auth_user = jwt.decode(
-                cookie_token,
-                options={"verify_signature": False},
-                algorithms=["HS256", "RS256"],
-            )
+            token = cookie_token
         elif bearer_token is not None:
-            if settings.environment != "develop" and auth_provider is not None:
-                LOGGER.debug(
-                    f"Validating token with auth provider. Token: {bearer_token}"
-                )
-                try:
-                    await auth_provider.validate_access_token(bearer_token.credentials)
-                except Exception:
-                    raise HTTPException(status_code=401, detail="Invalid token")
-            # cli user using auth provider token
-            self.auth_user = jwt.decode(
-                bearer_token.credentials,
-                options={"verify_signature": False},
-                algorithms=[
-                    "HS256",
-                    "RS256",
-                ],
-            )
-            if settings.environment == "develop":
-                try:
-                    # test user
-                    self.auth_user = jwt.decode(
-                        bearer_token.credentials,
-                        settings.jwt_key,
-                        algorithms=[
-                            "HS256",
-                            "RS256",
-                        ],
-                    )
-                except Exception:
-                    ...
-        else:
+            token = bearer_token.credentials
+
+        if token is None:
             self.auth_user = None
+            self.db_user = None
             if self.error_if_not_found:
                 raise HTTPException(status_code=401, detail="Unauthorized")
+            return self
+
+        self.auth_user = await self._verify_token(token, auth_provider)
 
         try:
             self.db_user = user_service.get_user_by_id(self.auth_user["sub"])
@@ -117,6 +93,35 @@ class UserWithAuthDependency:
             self.db_user = None
 
         return self
+
+    async def _verify_token(
+        self, token: str, auth_provider: Optional[OIDCAuthProvider]
+    ) -> dict:
+        """
+        Verify a session-cookie / bearer JWT and return its claims.
+
+        The token is validated against the OIDC provider's JWKS (signature,
+        expiry and standard claims). In the ``develop`` environment a locally
+        minted token signed with the shared ``jwt_key`` (HS256) is accepted as a
+        fallback so integration/black-box tests can authenticate without a live
+        provider. Unsigned claims are never trusted.
+
+        Raises:
+            AuthenticationError: if the token cannot be verified.
+        """
+        if auth_provider is not None:
+            try:
+                return await auth_provider.get_user_info(token)
+            except Exception:
+                LOGGER.debug("JWKS validation of the token failed", exc_info=True)
+
+        if settings.environment == "develop" and settings.jwt_key:
+            try:
+                return jwt.decode(token, settings.jwt_key, algorithms=["HS256"])
+            except Exception:
+                LOGGER.debug("develop jwt_key validation failed", exc_info=True)
+
+        raise AuthenticationError()
 
 
 OptionalUserWithAuthDependency = UserWithAuthDependency(error_if_not_found=False)

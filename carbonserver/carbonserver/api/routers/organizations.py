@@ -159,9 +159,9 @@ def organization_add_user(
         Provide[ServerContainer.organization_service]
     ),
 ):
-    # TODO: check permissions
     organization_service.add_user_by_mail(
         organization_id=organization_id,
         email=input.email,
+        user=auth_user.db_user,
     )
     return {"status": "ok"}

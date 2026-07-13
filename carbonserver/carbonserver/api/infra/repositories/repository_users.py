@@ -74,6 +74,7 @@ class SqlAlchemyRepository(Users):
         self,
         user: User,
         organization_id: UUID,
+        is_admin: bool = False,
     ) -> None:
         with self.session_factory() as session:
             e = (
@@ -88,7 +89,7 @@ class SqlAlchemyRepository(Users):
             db_membership = SqlModelMembership(
                 user_id=user.id,
                 organization_id=organization_id,
-                is_admin=True,
+                is_admin=is_admin,
             )
             session.add(db_membership)
             session.commit()

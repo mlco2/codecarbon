@@ -47,8 +47,11 @@ class SignUpService:
         self,
         user: User,
         organization_id: UUID,
+        is_admin: bool = False,
     ):
-        return self._user_repository.subscribe_user_to_org(user, organization_id)
+        return self._user_repository.subscribe_user_to_org(
+            user, organization_id, is_admin=is_admin
+        )
 
     def new_user_setup(self, user: User) -> User:
         """
@@ -71,7 +74,9 @@ class SignUpService:
         )
         self._project_repository.add_project(project)
         # TODO: Add default flag to the generated project and organization and do not allow to delete them
-        subscribed_user = self.subscribe_user_to_org(user, organization_created.id)
+        subscribed_user = self.subscribe_user_to_org(
+            user, organization_created.id, is_admin=True
+        )
         return subscribed_user
 
     def check_jwt_user(self, token: str | dict, create: bool):

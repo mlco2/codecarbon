@@ -43,7 +43,7 @@ class OrganizationService:
             organization
         )
         self._user_repository.subscribe_user_to_org(
-            user=user, organization_id=created_organization.id
+            user=user, organization_id=created_organization.id, is_admin=True
         )
         return created_organization
 
@@ -93,8 +93,14 @@ class OrganizationService:
             return updated_organization
 
     def add_user_by_mail(self, *, organization_id: str, email: str, user: User = None):
-        # TODO: check permissions ; user must be admin on organization
+        if not self._auth_context.can_write_organization(organization_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+                    message="Operation not authorized on organization",
+                )
+            )
         user_to_add = self._user_repository.get_user_by_email(email=email)
         return self._user_repository.subscribe_user_to_org(
-            user=user_to_add, organization_id=organization_id
+            user=user_to_add, organization_id=organization_id, is_admin=False
         )
