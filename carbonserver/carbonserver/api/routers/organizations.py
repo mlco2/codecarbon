@@ -108,6 +108,7 @@ def read_organization_detailed_sums(
     organization_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_global_sum_usecase: OrganizationSumsUsecase = Depends(
         Provide[ServerContainer.organization_sums_usecase]
     ),
@@ -119,7 +120,7 @@ def read_organization_detailed_sums(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return organization_global_sum_usecase.compute_detailed_sum(
-        organization_id, start_date, end_date
+        organization_id, start_date, end_date, user=auth_user.db_user
     )
 
 

@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 import dateutil.relativedelta
+from api.mocks import FakeAuthContext
 
 from carbonserver.api.infra.repositories.repository_projects import SqlAlchemyRepository
 from carbonserver.api.usecases.project.project_sum import ProjectSumsUsecase
@@ -34,7 +35,9 @@ PROJECT_WITH_DETAILS = {
 def test_sum_computes_for_project_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     project_id = PROJECT_ID
-    project_global_sum_usecase = ProjectSumsUsecase(repository_mock)
+    project_global_sum_usecase = ProjectSumsUsecase(
+        repository_mock, auth_context=FakeAuthContext()
+    )
 
     expected_emission_sum = EMISSIONS_SUM
     repository_mock.get_project_detailed_sums.return_value = [PROJECT_WITH_DETAILS]

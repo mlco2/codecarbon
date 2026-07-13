@@ -3,11 +3,25 @@ from unittest import mock
 from uuid import UUID
 
 import dateutil.relativedelta
-from api.mocks import FakeAuthContext
+import pytest
+from api.mocks import DUMMY_USER, FakeAuthContext
 
+from carbonserver.api.errors import UserException
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.schemas import Run, RunCreate
 from carbonserver.api.services.run_service import RunService
+
+
+class DenyingAuthContext(FakeAuthContext):
+    """AuthContext stub that refuses every read, to test the denial path."""
+
+    @staticmethod
+    def can_read_experiment(*args, **kwargs):
+        return False
+
+    @staticmethod
+    def can_read_project(*args, **kwargs):
+        return False
 
 API_KEY = "9INn3JsdhCGzLAuOUC6rAw"
 
@@ -58,14 +72,40 @@ def test_run_service_retrieves_all_existing_runs():
     run_service: RunService = RunService(
         repository_mock, auth_context=FakeAuthContext()
     )
-    repository_mock.list_runs.return_value = [RUN_1, RUN_2]
+    repository_mock.list_runs_for_user.return_value = [RUN_1, RUN_2]
 
-    run_list = run_service.list_runs()
+    run_list = run_service.list_runs(user=DUMMY_USER)
+
+    # Only the membership-scoped query is used — never the unfiltered list_runs.
+    repository_mock.list_runs_for_user.assert_called_once_with(DUMMY_USER.id)
+    repository_mock.list_runs.assert_not_called()
     actual_run_ids_list = map(lambda x: x.id, iter(run_list))
     diff = set(actual_run_ids_list) ^ set(expected_run_ids_list)
 
     assert not diff
     assert len(run_list) == len(expected_run_ids_list)
+
+
+def test_run_service_denies_read_run_when_not_authorized():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    run_service: RunService = RunService(
+        repository_mock, auth_context=DenyingAuthContext()
+    )
+    repository_mock.get_one_run.return_value = RUN_1
+
+    with pytest.raises(UserException):
+        run_service.read_run(RUN_ID, user=None)
+
+
+def test_run_service_denies_runs_from_experiment_when_not_authorized():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    run_service: RunService = RunService(
+        repository_mock, auth_context=DenyingAuthContext()
+    )
+
+    with pytest.raises(UserException):
+        run_service.list_runs_from_experiment(EXPERIMENT_ID, user=None)
+    repository_mock.get_runs_from_experiment.assert_not_called()
 
 
 def test_run_service_retrieves_correct_run_by_id():

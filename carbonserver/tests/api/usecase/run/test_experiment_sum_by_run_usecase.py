@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 import dateutil.relativedelta
+from api.mocks import FakeAuthContext
 
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
@@ -45,7 +46,9 @@ class SessionContextMock:
 def test_detailed_sum_computes_for_experiment_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     experiment_id = EXPERIMENT_ID
-    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(repository_mock)
+    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(
+        repository_mock, auth_context=FakeAuthContext()
+    )
 
     expected_emission_sum = EMISSIONS_SUM
     repository_mock.get_experiment_detailed_sums_by_run.return_value = [
@@ -74,7 +77,9 @@ def test_detailed_sum_query_excludes_runs_without_emissions_in_date_range():
 
     session_factory_mock = mock.Mock(return_value=SessionContextMock(session_mock))
     repository = SqlAlchemyRepository(session_factory_mock)
-    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(repository)
+    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(
+        repository, auth_context=FakeAuthContext()
+    )
 
     actual_experiment_sum_by_run = experiment_sum_by_run_usecase.compute_detailed_sum(
         EXPERIMENT_ID, START_DATE, END_DATE

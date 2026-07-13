@@ -3,6 +3,7 @@ from unittest import mock
 from uuid import UUID
 
 import dateutil.relativedelta
+from api.mocks import FakeAuthContext
 
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
@@ -40,7 +41,9 @@ ORG_WITH_DETAILS = {
 def test_sum_computes_for_organization_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     organization_id = ORG_ID
-    organization_global_sum_usecase = OrganizationSumsUsecase(repository_mock)
+    organization_global_sum_usecase = OrganizationSumsUsecase(
+        repository_mock, auth_context=FakeAuthContext()
+    )
 
     expected_emission_sum = EMISSIONS_SUM
     repository_mock.get_organization_detailed_sums.return_value = [ORG_WITH_DETAILS]
@@ -69,7 +72,9 @@ def test_sum_returns_zero_report_when_organization_has_no_emissions():
         name="Quiet Org",
         description="An organization that has not logged anything yet.",
     )
-    usecase = OrganizationSumsUsecase(repository_mock)
+    usecase = OrganizationSumsUsecase(
+        repository_mock, auth_context=FakeAuthContext()
+    )
 
     report = usecase.compute_detailed_sum(ORG_ID, START_DATE, END_DATE)
 

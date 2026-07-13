@@ -93,8 +93,7 @@ class SignUpService:
                 if not create:
                     LOGGER.error("Authenticated user not found")
                     raise
-                LOGGER.error("Authenticated user not found. Creating.")
-                LOGGER.error(f"Id token : {id_token}.")
+                LOGGER.info("Authenticated user not found. Creating.")
                 name = id_token.get("fields", {}).get("name")
 
                 new_user = UserAutoCreate(

@@ -9,6 +9,10 @@ from fastapi_pagination.default import Params as BaseParams
 from starlette import status
 
 from carbonserver.api.schemas import AccessLevel, Emission, EmissionCreate
+from carbonserver.api.services.auth_service import (
+    OptionalUserWithAuthDependency,
+    UserWithAuthDependency,
+)
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.container import ServerContainer
@@ -65,11 +69,12 @@ def add_emission(
 @inject
 def read_emission(
     emission_id: str,
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     emission_service: EmissionService = Depends(
         Provide[ServerContainer.emission_service]
     ),
 ) -> Emission:
-    return emission_service.get_one_emission(emission_id)
+    return emission_service.get_one_emission(emission_id, user=auth_user.db_user)
 
 
 @router.get(
@@ -80,21 +85,12 @@ def read_emission(
 @inject
 def get_emissions_from_run(
     run_id: str,
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     emission_service: EmissionService = Depends(
         Provide[ServerContainer.emission_service]
     ),
     params: Params = Depends(),
 ) -> Page[Emission]:
-    return paginate(emission_service.get_emissions_from_run(run_id), params)
-
-
-@router.get("/emissions", tags=EMISSIONS_ROUTER_TAGS, response_model=Page[Emission])
-@inject
-def get_emissions(
-    run_id: str,
-    emission_service: EmissionService = Depends(
-        Provide[ServerContainer.emission_service]
-    ),
-    params: Params = Depends(),
-) -> Page[Emission]:
-    return paginate(emission_service.get_emissions_from_run(run_id), params)
+    return paginate(
+        emission_service.get_emissions_from_run(run_id, user=auth_user.db_user), params
+    )

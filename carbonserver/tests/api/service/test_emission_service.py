@@ -1,10 +1,22 @@
 from unittest import mock
 
+import pytest
+from api.mocks import FakeAuthContext
+
+from carbonserver.api.errors import UserException
 from carbonserver.api.infra.repositories.repository_emissions import (
     SqlAlchemyRepository,
 )
 from carbonserver.api.schemas import Emission, EmissionCreate
 from carbonserver.api.services.emissions_service import EmissionService
+
+
+class DenyingAuthContext(FakeAuthContext):
+    """AuthContext stub that refuses every read, to test the denial path."""
+
+    @staticmethod
+    def can_read_run(*args, **kwargs):
+        return False
 
 RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
 RUN_2_ID = "07614c15-c5b0-4c9a-8101-6b6ad3733543"
@@ -66,7 +78,9 @@ EMISSION_3 = Emission(
 def test_emission_service_creates_correct_emission(_):
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_id = EMISSION_ID
-    emission_service: EmissionService = EmissionService(repository_mock)
+    emission_service: EmissionService = EmissionService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.add_emission.return_value = EMISSION_ID
 
     emission_to_create = EmissionCreate(
@@ -92,7 +106,9 @@ def test_emission_service_creates_correct_emission(_):
 def test_emission_service_retrieves_all_existing_emissions_for_one_run():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_emissions_ids = [EMISSION_1.id, EMISSION_2.id]
-    emission_service: EmissionService = EmissionService(repository_mock)
+    emission_service: EmissionService = EmissionService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.get_emissions_from_run.return_value = [EMISSION_1, EMISSION_2]
 
     emissions_list = emission_service.get_emissions_from_run(RUN_1_ID)
@@ -106,9 +122,33 @@ def test_emission_service_retrieves_all_existing_emissions_for_one_run():
 def test_emission_service_retrives_correct_emission_by_id():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
     expected_emission_id = EMISSION_1.id
-    emission_service: EmissionService = EmissionService(repository_mock)
+    emission_service: EmissionService = EmissionService(
+        repository_mock, auth_context=FakeAuthContext()
+    )
     repository_mock.get_one_emission.return_value = EMISSION_1
 
     actual_emission = emission_service.get_one_emission(EMISSION_ID)
 
     assert actual_emission.id == expected_emission_id
+
+
+def test_emission_service_denies_get_one_emission_when_not_authorized():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    emission_service: EmissionService = EmissionService(
+        repository_mock, auth_context=DenyingAuthContext()
+    )
+    repository_mock.get_one_emission.return_value = EMISSION_1
+
+    with pytest.raises(UserException):
+        emission_service.get_one_emission(EMISSION_ID, user=None)
+
+
+def test_emission_service_denies_get_emissions_from_run_when_not_authorized():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    emission_service: EmissionService = EmissionService(
+        repository_mock, auth_context=DenyingAuthContext()
+    )
+
+    with pytest.raises(UserException):
+        emission_service.get_emissions_from_run(RUN_1_ID, user=None)
+    repository_mock.get_emissions_from_run.assert_not_called()
