@@ -109,6 +109,28 @@ def test_count_cpus_slurm():
         ) as mock_subprocess_output:
             mock_subprocess_output.return_value = b"NumCPUs=8 gres/gpu=2\n"
             assert count_cpus() == 8
+            # scontrol must be invoked as an argument list without a shell, so a
+            # crafted SLURM_JOB_ID can never be interpreted as a shell command.
+            mock_subprocess_output.assert_called_once_with(
+                ["scontrol", "show", "job", "12345"]
+            )
+            assert mock_subprocess_output.call_args.kwargs.get("shell") is None
+
+
+def test_count_cpus_slurm_job_id_is_not_shell_interpreted():
+    """A SLURM_JOB_ID with shell metacharacters is passed as a single argv item,
+    never expanded by a shell."""
+    injection = "1; touch /tmp/pwned"
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", injection):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output"
+        ) as mock_subprocess_output:
+            mock_subprocess_output.return_value = b"NumCPUs=8\n"
+            count_cpus()
+            mock_subprocess_output.assert_called_once_with(
+                ["scontrol", "show", "job", injection]
+            )
+            assert mock_subprocess_output.call_args.kwargs.get("shell") is None
 
 
 def test_count_cpus_slurm_no_gpu():
