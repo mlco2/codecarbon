@@ -48,6 +48,7 @@ from codecarbon.output import (
     OutputMethod,
     PrometheusOutput,
 )
+from codecarbon.core.telemetry.settings import DEFAULT_TELEMETRY_LEVEL, DEFAULT_TELEMETRY_EXPERIMENT_ID
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -508,9 +509,6 @@ class BaseEmissionsTracker(ABC):
 
         self._external_conf = get_hierarchical_config()
         self._config_file_conf = get_config_file_settings()
-        self._telemetry_override = (
-            None if telemetry_level is _sentinel else telemetry_level
-        )
         self._telemetry = Telemetry.from_tracker(self)
         self._set_from_conf(
             force_carbon_intensity_g_co2e_kwh,
@@ -578,8 +576,9 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
         self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
         self._set_from_conf(
-            experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
+            experiment_id, "experiment_id", DEFAULT_TELEMETRY_EXPERIMENT_ID
         )
+        self._set_from_conf(telemetry_level, "telemetry_level", DEFAULT_TELEMETRY_LEVEL)
         if self.force_carbon_intensity_g_co2e_kwh is not None:
             logger.info(
                 f"Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
