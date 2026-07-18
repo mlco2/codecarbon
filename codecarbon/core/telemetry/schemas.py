@@ -1,7 +1,4 @@
-"""Telemetry payload schemas aligned with carbonserver ``telemetry_sql_models.Telemetry``.
-
-ponytail: mirrored in ``carbonserver/api/schemas_telemetry.py`` for drift tests only.
-"""
+"""Telemetry payload schemas aligned with carbonserver ``telemetry_sql_models.Telemetry``."""
 
 from datetime import datetime
 from enum import Enum
