@@ -17,7 +17,7 @@ You can use one without the other.
 | `telemetry_level` | Name | When | Transport |
 |-------------------|------|------|-----------|
 | `disabled` | — | — | Nothing |
-| `minimal` | Private product telemetry | Each `stop()` | `POST /telemetry` (private) |
+| `minimal` (default) | Private product telemetry | Each `stop()` | `POST /telemetry` (private) |
 | `extensive` | Private telemetry + shared run summary | Each `stop()` | Same private `POST /telemetry` **and** `ApiClient` → `/emissions` |
 
 Tier is resolved in this order:
@@ -52,7 +52,7 @@ Private telemetry does **not** include project names, experiment ids, API keys, 
 
 ## `extensive` — additional public run summary
 
-**Also** posts a **run emissions summary** to the shared CodeCarbon telemetry experiment via `ApiClient` (`/runs` then `/emissions`). Endpoint, API key, and experiment id come from `telemetry_api_url` / `telemetry_api_key` / `telemetry_experiment_id` (or `CODECARBON_TELEMETRY_*` env vars), falling back to the built-in defaults and your `api_endpoint` / `api_key` when set.
+**Also** posts a **run emissions summary** to the shared CodeCarbon telemetry experiment via `ApiClient` (`/runs` then `/emissions`). Endpoint, API key, and experiment id come from `telemetry_api_url` / `telemetry_api_key` / `telemetry_experiment_id` (or `CODECARBON_TELEMETRY_*` env vars), then the built-in defaults. Dashboard `api_key` / `experiment_id` are **not** used for telemetry.
 
 ## Never collected
 

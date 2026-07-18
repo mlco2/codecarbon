@@ -1,0 +1,1 @@
+../../../shared/telemetry_defaults.py

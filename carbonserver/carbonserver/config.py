@@ -1,6 +1,8 @@
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from carbonserver.telemetry_defaults import DEFAULT_TELEMETRY_EXPERIMENT_ID
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="", extra="ignore")
@@ -41,6 +43,12 @@ class Settings(BaseSettings):
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
     server_host: str = Field(
         "0.0.0.0", validation_alias=AliasChoices("SERVER_HOST", "server_host")
+    )
+    telemetry_experiment_id: str = Field(
+        DEFAULT_TELEMETRY_EXPERIMENT_ID,
+        validation_alias=AliasChoices(
+            "TELEMETRY_EXPERIMENT_ID", "telemetry_experiment_id"
+        ),
     )
 
 

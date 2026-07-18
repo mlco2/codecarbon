@@ -169,6 +169,36 @@ class TestTelemetryApiSettings(unittest.TestCase):
             settings = TelemetrySettings.resolve()
         self.assertEqual(settings.experiment_id, DEFAULT_TELEMETRY_EXPERIMENT_ID)
 
+    def test_api_key_from_env(self):
+        with patch.dict(
+            os.environ,
+            {"CODECARBON_TELEMETRY_API_KEY": "cpt_env"},
+            clear=False,
+        ):
+            settings = TelemetrySettings.resolve()
+        self.assertEqual(settings.api_key, "cpt_env")
+
+    def test_experiment_id_from_env(self):
+        with patch.dict(
+            os.environ,
+            {"CODECARBON_TELEMETRY_EXPERIMENT_ID": "00000000-0000-0000-0000-000000000003"},
+            clear=False,
+        ):
+            settings = TelemetrySettings.resolve()
+        self.assertEqual(
+            settings.experiment_id, "00000000-0000-0000-0000-000000000003"
+        )
+
+    def test_dashboard_api_credentials_are_not_used_for_telemetry(self):
+        settings = TelemetrySettings.resolve(
+            external_conf={
+                "api_key": "cpt_user",
+                "experiment_id": "00000000-0000-0000-0000-000000000002",
+            }
+        )
+        self.assertEqual(settings.api_key, DEFAULT_TELEMETRY_API_KEY)
+        self.assertEqual(settings.experiment_id, DEFAULT_TELEMETRY_EXPERIMENT_ID)
+
 
 if __name__ == "__main__":
     unittest.main()

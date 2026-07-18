@@ -2,7 +2,9 @@ from types import SimpleNamespace
 
 import pytest
 import typer
+from typer.testing import CliRunner
 
+from codecarbon.cli import main as cli_main
 from codecarbon.cli import monitor as monitor_module
 
 
@@ -150,3 +152,40 @@ def test_run_and_monitor_handles_keyboard_interrupt(monkeypatch):
     assert exc_info.value.exit_code == 130
     assert process_info["terminated"] == 1
     assert process_info["killed"] == 1
+
+
+def test_run_and_monitor_passes_telemetry_level_override(monkeypatch):
+    captured = {}
+
+    class CapturingTracker(FakeTracker):
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+            super().__init__()
+
+    class FakePopen:
+        def __init__(self, command, text=True):
+            pass
+
+        def wait(self):
+            return 0
+
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", CapturingTracker)
+    monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        monitor_module.run_and_monitor(
+            SimpleNamespace(args=["echo", "ok"]),
+            telemetry_level="disabled",
+        )
+
+    assert exc_info.value.exit_code == 0
+    assert captured.get("telemetry_level") == "disabled"
+
+
+def test_monitor_cli_rejects_invalid_telemetry_level():
+    result = CliRunner().invoke(
+        cli_main.codecarbon,
+        ["monitor", "--telemetry-level", "invalid"],
+    )
+    assert result.exit_code != 0

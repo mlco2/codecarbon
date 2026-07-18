@@ -505,6 +505,7 @@ class BaseEmissionsTracker(ABC):
                                  CPU TDP and may be unreliable on older systems.
         :param telemetry_level: Telemetry tier (``disabled``, ``minimal``, ``extensive``).
                                 Overrides config file and ``CODECARBON_TELEMETRY_LEVEL`` when set.
+                                Defaults to ``minimal``.
         """
 
         self._external_conf = get_hierarchical_config()

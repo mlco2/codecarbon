@@ -6,13 +6,26 @@ import os
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from codecarbon.core.telemetry.defaults import (
+    DEFAULT_TELEMETRY_API_KEY,
+    DEFAULT_TELEMETRY_API_URL,
+    DEFAULT_TELEMETRY_EXPERIMENT_ID,
+)
 from codecarbon.core.telemetry.schemas import TelemetryLevel
 from codecarbon.external.logger import logger
 
-DEFAULT_TELEMETRY_API_URL = "https://api.codecarbon.io"
-DEFAULT_TELEMETRY_API_KEY = "cpt_sDiIpdwl5BRUM2T6vIJrt2JjL-pB3b46v8cvpLwuroU"
-DEFAULT_TELEMETRY_EXPERIMENT_ID = "d2d69403-1373-42b4-a2c1-09589aed4801"
 DEFAULT_TELEMETRY_LEVEL = TelemetryLevel.minimal
+
+__all__ = [
+    "DEFAULT_TELEMETRY_API_KEY",
+    "DEFAULT_TELEMETRY_API_URL",
+    "DEFAULT_TELEMETRY_EXPERIMENT_ID",
+    "DEFAULT_TELEMETRY_LEVEL",
+    "TELEMETRY_LEVEL_CONFIG_KEY",
+    "TelemetryLevelSource",
+    "TelemetrySettings",
+    "parse_telemetry_level",
+]
 
 TELEMETRY_LEVEL_CONFIG_KEY = "telemetry_level"
 
@@ -106,10 +119,8 @@ class TelemetrySettings:
 
     @staticmethod
     def _resolve_api_key(external_conf: dict[str, Any]) -> str:
-        key = (
-            external_conf.get("telemetry_api_key")
-            or external_conf.get("api_key")
-            or os.environ.get("CODECARBON_TELEMETRY_API_KEY")
+        key = external_conf.get("telemetry_api_key") or os.environ.get(
+            "CODECARBON_TELEMETRY_API_KEY"
         )
         return key or DEFAULT_TELEMETRY_API_KEY
 
