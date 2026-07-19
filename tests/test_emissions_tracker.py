@@ -746,6 +746,7 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
