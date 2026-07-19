@@ -3187,8 +3187,6 @@ git<span class="w"> </span>rebase<span class="w"> </span><span class="nv">$TARGE
 <li>Create a PR bumping the version with <code>uv run bumpver update --patch</code>. For a release candidate, use <code>uv run bumpver update --set-version 3.0.0_rc1</code>.</li>
 <li>Run <code>uv run python .github/pyproject_versions.py -c</code> to check version consistancy.</li>
 <li>Update the dependencies with <code>uv sync --upgrade</code></li>
-<li>Update the API dependencies with <code>cd carbonserver &amp;&amp; uv sync --upgrade &amp;&amp; cd ..</code></li>
-<li>Export API requirements with <code>uv run task carbonserver-api-requirements</code></li>
 <li><a href="#build-documentation">Build Documentation</a> with <code>uv run --only-group doc task docs</code>.</li>
 <li>Push the changes.</li>
 <li>Merge the PR.</li>
