@@ -8,7 +8,7 @@ from .emissions_tracker import (
     OfflineEmissionsTracker,
     track_emissions,
 )
-from .output_methods.base_output import OutputMethod
+from .output import OutputMethod
 
 __all__ = [
     "EmissionsTracker",

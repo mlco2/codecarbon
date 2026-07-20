@@ -1,7 +1,7 @@
 import time
 from uuid import uuid4
 
-from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
+from codecarbon.output import EmissionsData, TaskEmissionsData
 
 
 class Task:
@@ -17,6 +17,7 @@ class Task:
         self.task_name: str = task_name
         self.start_time = time.perf_counter()
         self.is_active = True
+        self.uploaded_to_api = False
 
     def out(self):
         return TaskEmissionsData(

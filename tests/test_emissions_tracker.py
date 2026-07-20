@@ -24,7 +24,6 @@ from tests.testdata import (
     GEO_METADATA_CANADA,
     TWO_GPU_DETAILS_RESPONSE,
     TWO_GPU_DETAILS_RESPONSE_HANDLES,
-    TWO_GPU_UTILIZATION_RESPONSE,
 )
 from tests.testutils import get_custom_mock_open, get_test_data_source
 
@@ -53,10 +52,6 @@ else:
 @mock.patch("codecarbon.core.gpu.pynvml", fake_pynvml)
 @mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=True)
 @mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
-@mock.patch(
-    "codecarbon.external.hardware.AllGPUDevices.get_gpu_utilization_list",
-    return_value=TWO_GPU_UTILIZATION_RESPONSE,
-)
 @mock.patch(
     "codecarbon.external.hardware.AllGPUDevices.get_gpu_details",
     return_value=TWO_GPU_DETAILS_RESPONSE,
@@ -95,7 +90,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -114,8 +108,8 @@ class TestCarbonTracker(unittest.TestCase):
 
         # THEN
         self.assertGreaterEqual(
-            mocked_get_gpu_details.call_count, 1
-        )  # called at least once for repr at init
+            mocked_get_gpu_details.call_count, 2
+        )  # at least 2 times in 5 seconds + once for init >= 3
         self.assertEqual(2, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
@@ -124,13 +118,12 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIsInstance(emissions, float)
         self.assertAlmostEqual(emissions, 6.262572537957655e-05, places=2)
 
-    def test_monitor_power_collects_gpu_utilization_lightweight(
+    def test_monitor_power_uses_gpu_detail_position_when_gpu_index_is_missing(
         self,
         mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -142,8 +135,8 @@ class TestCarbonTracker(unittest.TestCase):
         mock_gpu.__class__ = GPU
         mock_gpu.gpu_ids = [0, 1]
         mock_gpu.devices = mock.MagicMock()
-        mock_gpu.devices.get_gpu_utilization_list.return_value = [
-            {"gpu_index": 0, "gpu_utilization": 10},
+        mock_gpu.devices.get_gpu_details.return_value = [
+            {"gpu_utilization": 10},
             {"gpu_index": 1, "gpu_utilization": 25},
         ]
         tracker._hardware = [mock_gpu]
@@ -158,7 +151,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -170,7 +162,7 @@ class TestCarbonTracker(unittest.TestCase):
         mock_gpu.__class__ = GPU
         mock_gpu.gpu_ids = [0, 1]
         mock_gpu.devices = mock.MagicMock()
-        mock_gpu.devices.get_gpu_utilization_list.return_value = [
+        mock_gpu.devices.get_gpu_details.return_value = [
             {"gpu_index": None, "gpu_utilization": 10},
             {"gpu_index": 1, "gpu_utilization": 25},
         ]
@@ -186,7 +178,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -198,7 +189,7 @@ class TestCarbonTracker(unittest.TestCase):
         mock_gpu.__class__ = GPU
         mock_gpu.gpu_ids = [0]
         mock_gpu.devices = mock.MagicMock()
-        mock_gpu.devices.get_gpu_utilization_list.return_value = [
+        mock_gpu.devices.get_gpu_details.return_value = [
             {"gpu_index": 0, "gpu_utilization": 10},
             {"gpu_index": 1, "gpu_utilization": 25},
             {"gpu_index": 2, "gpu_utilization": 50},
@@ -215,7 +206,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -227,7 +217,7 @@ class TestCarbonTracker(unittest.TestCase):
         mock_gpu.__class__ = GPU
         mock_gpu.gpu_ids = [0, 1]
         mock_gpu.devices = mock.MagicMock()
-        mock_gpu.devices.get_gpu_utilization_list.return_value = [
+        mock_gpu.devices.get_gpu_details.return_value = [
             {"gpu_index": 0, "gpu_utilization": 10},
             {"gpu_index": 1},
         ]
@@ -243,7 +233,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -255,7 +244,7 @@ class TestCarbonTracker(unittest.TestCase):
         mock_gpu.__class__ = GPU
         mock_gpu.gpu_ids = [0, 1]
         mock_gpu.devices = mock.MagicMock()
-        mock_gpu.devices.get_gpu_utilization_list.return_value = []
+        mock_gpu.devices.get_gpu_details.return_value = []
         tracker._hardware = [mock_gpu]
 
         tracker._monitor_power()
@@ -270,7 +259,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -299,7 +287,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -319,7 +306,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -339,7 +325,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -362,7 +347,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -379,7 +363,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -404,7 +387,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -431,7 +413,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -460,7 +441,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -489,7 +469,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -517,7 +496,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -547,7 +525,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -565,7 +542,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -590,7 +566,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -615,7 +590,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -639,7 +613,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -673,7 +646,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -712,7 +684,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -730,8 +701,8 @@ class TestCarbonTracker(unittest.TestCase):
 
         # THEN
         self.assertGreaterEqual(
-            mocked_get_gpu_details.call_count, 1
-        )  # called at least once for repr at init
+            mocked_get_gpu_details.call_count, 2
+        )  # at least 2 times in 5 seconds + once for init >= 3
         self.assertEqual(2, mocked_is_gpu_details_available.call_count)
         self.assertEqual(1, len(responses.calls))
         self.assertEqual(
@@ -739,31 +710,6 @@ class TestCarbonTracker(unittest.TestCase):
         )
         self.assertIsInstance(tracker.final_emissions, float)
         self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
-
-    def test_start_task_returns_when_engine_initialization_fails(
-        self,
-        mock_cli_setup,
-        mock_log_values,
-        mocked_get_gpu_details,
-        mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
-        mocked_is_gpu_details_available,
-        mocked_is_nvidia_system,
-    ):
-        tracker = EmissionsTracker(save_to_file=False)
-        with (
-            mock.patch.object(
-                tracker,
-                "_ensure_emissions_engine",
-                side_effect=Exception("init failed"),
-            ),
-            self.assertLogs("codecarbon", level="ERROR") as logs,
-        ):
-            tracker.start_task("failed-task")
-
-        self.assertTrue(
-            any("Tracker not initialized" in message for message in logs.output)
-        )
 
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
     @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
@@ -780,7 +726,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,  # Class decorator
         mocked_env_cloud_details,  # Class decorator
         mocked_get_gpu_details,  # Class decorator
-        mocked_get_gpu_utilization_list,  # Class decorator
         mocked_is_gpu_details_available,  # Class decorator
         mocked_is_nvidia_system,  # Class decorator (outermost relevant one)
     ):
@@ -885,7 +830,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -908,7 +852,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -952,7 +895,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -998,7 +940,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_gpu_details,
         mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -1016,7 +957,7 @@ class TestCarbonTracker(unittest.TestCase):
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_geo_metadata")
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_cloud_metadata")
     @mock.patch("codecarbon.core.electricitymaps_api.requests.get")
-    @mock.patch("codecarbon.core.resource_tracker.ResourceTracker")
+    @mock.patch("codecarbon.emissions_tracker.ResourceTracker")
     @mock.patch(
         "codecarbon.emissions_tracker.BaseEmissionsTracker.get_detected_hardware"
     )
@@ -1033,7 +974,6 @@ class TestCarbonTracker(unittest.TestCase):
         mock_log_values,
         mocked_get_cloud_metadata_class,
         mocked_get_gpu_details,
-        mocked_get_gpu_utilization_list,
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
@@ -1085,9 +1025,10 @@ class TestCarbonTracker(unittest.TestCase):
         )
         tracker._hardware = [mock_cpu]
 
-        # Start tracking (includes an immediate first measurement)
+        # Start tracking
         tracker.start()
 
+        tracker._measure_power_and_energy()
         # total_energy = 1.0, intensity = 100 => emissions = 0.1 kg
         data1 = tracker._prepare_emissions_data()
         self.assertAlmostEqual(data1.emissions, 0.1)

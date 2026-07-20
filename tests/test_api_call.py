@@ -199,31 +199,34 @@ class TestApi(unittest.TestCase):
             )
         )
 
-    def test_add_emission_skips_short_duration(self):
-        api = ApiClient(
-            endpoint_url="http://test.com",
-            experiment_id="exp-1",
-            conf=conf,
-            create_run_automatically=False,
-        )
-        api.run_id = "run-1"
-
-        self.assertFalse(
-            api.add_emission(
-                {
-                    "duration": 0.5,
-                    "emissions": 1.0,
-                    "emissions_rate": 1.0,
-                    "cpu_power": 1.0,
-                    "gpu_power": 0.0,
-                    "ram_power": 0.5,
-                    "cpu_energy": 0.1,
-                    "gpu_energy": 0.0,
-                    "ram_energy": 0.1,
-                    "energy_consumed": 0.2,
-                }
+    def test_add_emission_rounds_subsecond_duration_to_one_second(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/emissions", json={"id": "em-1"}, status_code=201)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                conf=conf,
+                create_run_automatically=False,
             )
-        )
+            api.run_id = "run-1"
+
+            self.assertTrue(
+                api.add_emission(
+                    {
+                        "duration": 0.5,
+                        "emissions": 1.0,
+                        "emissions_rate": 1.0,
+                        "cpu_power": 1.0,
+                        "gpu_power": 0.0,
+                        "ram_power": 0.5,
+                        "cpu_energy": 0.1,
+                        "gpu_energy": 0.0,
+                        "ram_energy": 0.1,
+                        "energy_consumed": 0.2,
+                    }
+                )
+            )
+            self.assertEqual(m.last_request.json()["duration"], 1)
 
     def test_add_emission_returns_false_on_unsuccessful_post(self):
         with requests_mock.Mocker() as m:

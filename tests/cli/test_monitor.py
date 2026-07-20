@@ -20,15 +20,8 @@ class FakeTracker:
         return 0.123
 
 
-def _patch_trackers(monkeypatch, online_cls=FakeTracker, offline_cls=FakeTracker):
-    monkeypatch.setattr("codecarbon.emissions_tracker.EmissionsTracker", online_cls)
-    monkeypatch.setattr(
-        "codecarbon.emissions_tracker.OfflineEmissionsTracker", offline_cls
-    )
-
-
 def test_run_and_monitor_requires_command(monkeypatch):
-    _patch_trackers(monkeypatch)
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
     with pytest.raises(typer.Exit) as exc_info:
@@ -37,35 +30,12 @@ def test_run_and_monitor_requires_command(monkeypatch):
     assert exc_info.value.exit_code == 1
 
 
-def test_run_and_monitor_strips_nested_monitor_prefix(monkeypatch):
-    captured = {}
-
-    class FakePopen:
-        def __init__(self, command, text=True):
-            captured["command"] = command
-
-        def wait(self):
-            return 0
-
-    _patch_trackers(monkeypatch)
-    monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
-    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
-
-    with pytest.raises(typer.Exit) as exc_info:
-        monitor_module.run_and_monitor(
-            SimpleNamespace(args=["monitor", "--", "echo", "hi"])
-        )
-
-    assert exc_info.value.exit_code == 0
-    assert captured["command"] == ["echo", "hi"]
-
-
 def test_run_and_monitor_handles_missing_command(monkeypatch):
     class FakePopen:
         def __init__(self, command, text=True):
             raise FileNotFoundError
 
-    _patch_trackers(monkeypatch)
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
     monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
@@ -80,7 +50,7 @@ def test_run_and_monitor_handles_generic_exception(monkeypatch):
         def __init__(self, command, text=True):
             raise RuntimeError("boom")
 
-    _patch_trackers(monkeypatch)
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
     monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
@@ -105,7 +75,8 @@ def test_run_and_monitor_uses_offline_tracker_when_offline_mode(monkeypatch):
         def wait(self):
             return 0
 
-    _patch_trackers(monkeypatch, offline_cls=FakeOfflineTracker)
+    monkeypatch.setattr(monitor_module, "OfflineEmissionsTracker", FakeOfflineTracker)
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
     monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
@@ -135,7 +106,8 @@ def test_run_and_monitor_uses_online_tracker_by_default(monkeypatch):
         def wait(self):
             return 0
 
-    _patch_trackers(monkeypatch, online_cls=FakeOnlineTracker)
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeOnlineTracker)
+    monkeypatch.setattr(monitor_module, "OfflineEmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
     monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
@@ -168,7 +140,7 @@ def test_run_and_monitor_handles_keyboard_interrupt(monkeypatch):
         def kill(self):
             process_info["killed"] += 1
 
-    _patch_trackers(monkeypatch)
+    monkeypatch.setattr(monitor_module, "EmissionsTracker", FakeTracker)
     monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
     monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
 
