@@ -103,11 +103,11 @@ Use **global config only** (`~/.codecarbon.config`). Do not add a repo-local `./
 ```ini
 [codecarbon]
 api_endpoint = https://api.codecarbon.io
-project_id = 833d292f-4460-43bd-a2f5-497bcff6dc95
-experiment_id = aa69b440-014a-4562-ac06-ba7eecb023f9
+project_id = 00000000-0000-0000-0000-000000000001
+experiment_id = 00000000-0000-0000-0000-000000000002
 ```
 
-Run `codecarbon login` to store your `api_key` in the same file.
+Run `codecarbon login` to store your `api_key` in the same file (never commit it).
 
 To upload emissions to the dashboard, enable `save_to_api` (IDs are read from global config unless overridden in code):
 
@@ -140,17 +140,19 @@ Emissions are measured **after** the response is sent by default, so API clients
 
 ### How much does it cost?
 
-We benchmarked a small sentence embedder ([`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2)) serving 50 requests at concurrency 4 over uvicorn:
+We benchmarked a small sentence embedder ([`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2)) serving 50 requests at concurrency 4 over uvicorn (deferred modes), and the same script with a mocked ~20 ms measure delay for sync headers:
 
 | Setup | Avg. response time | Notes |
 |--------|-------------------:|-------|
-| No middleware | 24 ms | baseline |
+| No middleware | 24 ms | baseline (embedder) |
 | Empty ASGI middleware | ~24 ms | stack cost only |
 | Logfire instrumentation | ~26 ms | local only (`send_to_logfire=False`) |
-| CodeCarbon (logging off) | 24 ms | |
-| CodeCarbon (default) | 27 ms | ~3 ms overhead |
+| CodeCarbon (logging off) | 24 ms | deferred |
+| CodeCarbon (default) | 27 ms | deferred, ~3 ms overhead |
+| CodeCarbon (`response_headers=True`) | ~55 ms | sync measure on path (c=1, ~20 ms sample) |
+| … same, concurrency 4 | ~95 ms | sync measures serialize on the tracker worker |
 
-On that workload, default CodeCarbon middleware adds about **~3 ms** per request — similar in scale to a typical observability middleware such as Logfire. Enabling `response_headers` moves sampling onto the request path and will add more. Your numbers will vary with model size, hardware, and concurrency.
+**Takeaway:** deferred mode stays cheap (~3 ms). Sync headers put sampling on the client path, so you roughly pay the measure time per request — and under concurrency that work queues on one tracker thread, so latency grows further. Prefer deferred + logging/API unless clients need `X-CodeCarbon-*` headers.
 
 With `save_to_api=True`, each request also uploads to the CodeCarbon API after the response, which adds network time on top of the above.
 
@@ -162,13 +164,19 @@ uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch 
   --workload hf-embedder --network --requests 50 --warmup 5 --concurrency 4
 ```
 
-Compare against Logfire (requires `logfire[fastapi]`):
+Include sync headers (and optionally Logfire):
+
+```console
+uv run --extra fastapi --with uvicorn \
+  python scripts/benchmark_fastapi_middleware.py \
+  --quick --with-headers --no-verify-logging
+```
 
 ```console
 uv run --extra fastapi --with 'logfire[fastapi]' --with uvicorn \
   --with sentence-transformers --with torch \
   python scripts/benchmark_fastapi_middleware.py \
-  --workload hf-embedder --network --with-logfire \
+  --workload hf-embedder --network --with-logfire --with-headers \
   --requests 50 --warmup 5 --concurrency 4
 ```
 

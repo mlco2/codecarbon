@@ -302,6 +302,7 @@ def build_app(  # noqa: C901
         "deferred_no_logging",
         "deferred_logging",
         "deferred_save_to_api",
+        "sync_headers",
     }
     if real_tracker and mode in codecarbon_modes:
         from codecarbon.integrations.fastapi import create_codecarbon_lifespan
@@ -385,6 +386,9 @@ def build_app(  # noqa: C901
             **TRACKER_KWARGS_SAVE_TO_API,
             "experiment_id": experiment_id,
         }
+        kwargs["on_request_complete"] = None
+    elif mode == "sync_headers":
+        kwargs["response_headers"] = True
         kwargs["on_request_complete"] = None
     else:
         raise ValueError(f"Unknown mode: {mode}")
@@ -745,6 +749,7 @@ SCENARIO_KEYS = {
     "no_logging": ("deferred_no_logging", "Deferred, no logging"),
     "logging": ("deferred_logging", "Deferred + logging (default)"),
     "save_to_api": ("deferred_save_to_api", "Deferred + save_to_api (no logging)"),
+    "headers": ("sync_headers", "Sync response_headers=True"),
     "noop_middleware": ("noop_middleware", "Empty ASGI middleware (stack cost)"),
     "logfire": ("logfire_instrumented", "Logfire instrumentation only"),
 }
@@ -1028,6 +1033,11 @@ def main() -> None:  # noqa: C901
         help="Add noop middleware and Logfire instrumentation comparison scenarios",
     )
     parser.add_argument(
+        "--with-headers",
+        action="store_true",
+        help="Add sync response_headers=True scenario (measure on request path)",
+    )
+    parser.add_argument(
         "--project-id",
         default=FASTAPI_BENCHMARK_PROJECT_ID,
         help="CodeCarbon project UUID (middleware project_name for tracked scenarios)",
@@ -1085,7 +1095,7 @@ def main() -> None:  # noqa: C901
         "--scenarios",
         default=None,
         help="Comma-separated middleware scenarios: no_logging, logging, save_to_api, "
-        "noop_middleware, logfire",
+        "headers, noop_middleware, logfire",
     )
     args = parser.parse_args()
     if args.realistic:
@@ -1118,6 +1128,11 @@ def main() -> None:  # noqa: C901
             for key in extras:
                 if key not in scenario_keys:
                     scenario_keys.append(key)
+    if args.with_headers:
+        if scenario_keys is None:
+            scenario_keys = ["no_logging", "logging", "headers"]
+        elif "headers" not in scenario_keys:
+            scenario_keys.append("headers")
     use_normal_ci = False
     secondary_warmup = 0
     logging_sample = args.logging_sample
