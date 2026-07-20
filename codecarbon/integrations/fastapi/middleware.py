@@ -9,20 +9,13 @@ from collections.abc import Awaitable, Callable, Iterable
 from concurrent import futures
 from typing import Any
 
-from codecarbon.external.logger import logger
-
-try:
-    from starlette.requests import Request
-    from starlette.responses import Response
-    from starlette.types import ASGIApp, Message, Receive, Scope, Send
-except ImportError as exc:
-    raise ImportError(
-        "CodeCarbon FastAPI integration requires Starlette (installed with FastAPI). "
-        "Install optional dependencies with: pip install 'codecarbon[fastapi]'"
-    ) from exc
+from starlette.requests import Request
+from starlette.responses import Response
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from codecarbon import EmissionsTracker
 from codecarbon.emissions_tracker import HttpRequestBaseline
+from codecarbon.external.logger import logger
 from codecarbon.integrations.fastapi._routing import (
     DEFAULT_EXCLUDE,
     build_endpoint_key,
@@ -50,7 +43,9 @@ class _TrackerRunner:
         self._finalize_jobs: collections.deque[_Job] = collections.deque()
         self._cond = threading.Condition()
         self._closed = False
-        self._thread = threading.Thread(target=self._worker, name=thread_name, daemon=True)
+        self._thread = threading.Thread(
+            target=self._worker, name=thread_name, daemon=True
+        )
         self._thread.start()
 
     def _run_job(self, job: _Job) -> None:
@@ -71,11 +66,7 @@ class _TrackerRunner:
                     and not self._finalize_jobs
                 ):
                     self._cond.wait()
-                if (
-                    self._closed
-                    and not self._request_jobs
-                    and not self._finalize_jobs
-                ):
+                if self._closed and not self._request_jobs and not self._finalize_jobs:
                     return
                 if self._request_jobs:
                     job = self._request_jobs.popleft()
@@ -114,9 +105,7 @@ class _TrackerRunner:
     ) -> futures.Future[Any]:
         return self.submit(self.REQUEST, func, *args)
 
-    async def run_async(
-        self, lane: int, func: Callable[..., Any], *args: Any
-    ) -> Any:
+    async def run_async(self, lane: int, func: Callable[..., Any], *args: Any) -> Any:
         return await asyncio.wrap_future(self.submit(lane, func, *args))
 
     def shutdown(self, *, wait: bool = True) -> None:
@@ -220,15 +209,13 @@ class CodeCarbonMiddleware:
             return self.task_name_formatter(request)
         return build_endpoint_key(request)
 
-    async def _run_request_tracker(
-        self, func: Callable[..., Any], *args: Any
-    ) -> Any:
+    async def _run_request_tracker(self, func: Callable[..., Any], *args: Any) -> Any:
         return await self._tracker_runner.run_async(_TrackerRunner.REQUEST, func, *args)
 
-    async def _run_finalize_tracker(
-        self, func: Callable[..., Any], *args: Any
-    ) -> Any:
-        return await self._tracker_runner.run_async(_TrackerRunner.FINALIZE, func, *args)
+    async def _run_finalize_tracker(self, func: Callable[..., Any], *args: Any) -> Any:
+        return await self._tracker_runner.run_async(
+            _TrackerRunner.FINALIZE, func, *args
+        )
 
     def _create_and_start_tracker(self) -> EmissionsTracker:
         tracker = EmissionsTracker(
@@ -252,9 +239,8 @@ class CodeCarbonMiddleware:
                 if self._app_tracker is None:
                     self._app_tracker = self._create_and_start_tracker()
                 tracker = self._app_tracker
-        if (
-            self._lifespan_tracker(request) is not None
-            and self._tracker_running(tracker)
+        if self._lifespan_tracker(request) is not None and self._tracker_running(
+            tracker
         ):
             baseline = tracker.mark_http_request_start(task_name)
             return tracker, baseline
@@ -275,15 +261,11 @@ class CodeCarbonMiddleware:
             resolved_task = baseline.task_name
         else:
             active_task = getattr(tracker, "_active_task", None)
-            resolved_task = (
-                active_task if isinstance(active_task, str) else task_name
-            )
+            resolved_task = active_task if isinstance(active_task, str) else task_name
             emissions_data = tracker.stop_task(resolved_task)
         tracker.persist_completed_task(resolved_task)
         if run_callback:
-            self._run_request_complete(
-                request, response, emissions_data, resolved_task
-            )
+            self._run_request_complete(request, response, emissions_data, resolved_task)
 
     def _run_request_complete(
         self,

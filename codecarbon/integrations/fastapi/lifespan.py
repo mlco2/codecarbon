@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Callable
+from contextlib import AbstractAsyncContextManager, AsyncExitStack, asynccontextmanager
 from typing import Any
 
 from codecarbon import EmissionsTracker
@@ -38,3 +38,35 @@ async def create_codecarbon_lifespan(
         tracker.stop()
         app.state.codecarbon_tracker = None
         shutdown_codecarbon_middleware(app)
+
+
+def compose_lifespans(
+    *factories: Callable[[Any], AbstractAsyncContextManager[Any]],
+) -> Callable[[Any], AbstractAsyncContextManager[None]]:
+    """Nest multiple lifespan context managers into one FastAPI lifespan.
+
+    FastAPI accepts a single ``lifespan`` handler. Use this helper to stack
+    CodeCarbon with database, cache, or other startup/shutdown contexts::
+
+        app = FastAPI(
+            lifespan=compose_lifespans(
+                lambda a: create_codecarbon_lifespan(a, project_name="my-api"),
+                lambda a: db_lifespan(a),
+            )
+        )
+
+    Args:
+        *factories: Callables that take the app and return an async context manager.
+
+    Returns:
+        A lifespan callable suitable for ``FastAPI(lifespan=...)``.
+    """
+
+    @asynccontextmanager
+    async def lifespan(app: Any) -> AsyncIterator[None]:
+        async with AsyncExitStack() as stack:
+            for factory in factories:
+                await stack.enter_async_context(factory(app))
+            yield
+
+    return lifespan

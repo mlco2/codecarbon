@@ -57,6 +57,57 @@ add_codecarbon_middleware(app)
 
 `create_codecarbon_lifespan` puts a shared tracker on `app.state` for the middleware to reuse and stops it cleanly on shutdown. If you skip lifespan, call `shutdown_codecarbon_middleware(app)` before exit.
 
+### Combining with other lifespans
+
+FastAPI accepts only one `lifespan` handler. Nest CodeCarbon with your own startup/shutdown using `compose_lifespans`, or nest manually:
+
+```python
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from codecarbon.integrations.fastapi import (
+    add_codecarbon_middleware,
+    compose_lifespans,
+    create_codecarbon_lifespan,
+)
+
+
+@asynccontextmanager
+async def db_lifespan(app: FastAPI):
+    app.state.db = "connected"
+    try:
+        yield
+    finally:
+        app.state.db = None
+
+
+app = FastAPI(
+    lifespan=compose_lifespans(
+        lambda a: create_codecarbon_lifespan(a, project_name="my-api"),
+        db_lifespan,
+    )
+)
+add_codecarbon_middleware(app)
+```
+
+Or nest by hand:
+
+```python
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with create_codecarbon_lifespan(app, project_name="my-api"):
+        async with db_lifespan(app):
+            yield
+```
+
+## Measurement model
+
+1. The response is sent to the client first (clients are not blocked on sampling).
+2. Finalization runs on a dedicated tracker worker thread (not on the event-loop path).
+3. Hardware sampling (`_measure_power_and_energy`) runs **synchronously** on that worker before `EmissionsData` is built and before `on_request_complete` runs.
+
+With `create_codecarbon_lifespan`, concurrent requests use `HttpRequestBaseline` snapshots so parallel work on the same route does not clobber task state.
+
 ## Cloud API
 
 Use **global config only** (`~/.codecarbon.config`). Do not add a repo-local `./.codecarbon.config`, or it will override these values when you run from the project directory.
@@ -102,13 +153,15 @@ Emissions are measured **after** the response is sent, so your API clients are n
 
 We benchmarked a small sentence embedder ([`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2)) serving 50 requests at concurrency 4 over uvicorn:
 
-| Setup | Avg. response time |
-|--------|-------------------:|
-| No middleware | 24 ms |
-| With middleware, logging off | 24 ms |
-| With middleware (default) | 27 ms |
+| Setup | Avg. response time | Notes |
+|--------|-------------------:|-------|
+| No middleware | 24 ms | baseline |
+| Empty ASGI middleware | ~24 ms | stack cost only |
+| Logfire instrumentation | ~26 ms | local only (`send_to_logfire=False`) |
+| CodeCarbon (logging off) | 24 ms | |
+| CodeCarbon (default) | 27 ms | ~3 ms overhead |
 
-On that workload, default middleware adds about **~3 ms** per request. Your numbers will vary with model size, hardware, and concurrency.
+On that workload, default CodeCarbon middleware adds about **~3 ms** per request — similar in scale to a typical observability middleware such as Logfire. Your numbers will vary with model size, hardware, and concurrency.
 
 With `save_to_api=True`, each request also uploads to the CodeCarbon API after the response, which adds network time on top of the above.
 
@@ -118,6 +171,16 @@ To run the same benchmark locally:
 uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch \
   python scripts/benchmark_fastapi_middleware.py \
   --workload hf-embedder --network --requests 50 --warmup 5 --concurrency 4
+```
+
+Compare against Logfire (requires `logfire[fastapi]`):
+
+```console
+uv run --extra fastapi --with 'logfire[fastapi]' --with uvicorn \
+  --with sentence-transformers --with torch \
+  python scripts/benchmark_fastapi_middleware.py \
+  --workload hf-embedder --network --with-logfire \
+  --requests 50 --warmup 5 --concurrency 4
 ```
 
 For a quick smoke test (no ML model):
@@ -161,7 +224,7 @@ add_codecarbon_middleware(
 
 ## `task_name_formatter`, `on_request_complete`
 
-- **`task_name_formatter`** — optional `(Request) -> str` override; default is `METHOD /route/template`.
+- **`task_name_formatter`** — optional `(Request) -> str` override; default is `METHOD /route/template` (stable route label for logs). Concurrent requests on the same route still get unique internal task IDs when using `create_codecarbon_lifespan` (UUID suffix only if the name is already active).
 - **`on_request_complete`** — optional `(request, response, emissions_data | None, task_name) -> None`; default logs via `log_request_complete`; `None` disables the callback.
 
 ## Middleware order

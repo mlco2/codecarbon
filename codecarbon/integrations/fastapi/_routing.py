@@ -3,6 +3,8 @@
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+from codecarbon.core.emission_fields import HttpMethod
+
 if TYPE_CHECKING:
     from starlette.requests import Request
 
@@ -18,9 +20,7 @@ DEFAULT_EXCLUDE: frozenset[str] = frozenset(
     }
 )
 
-HTTP_METHODS = frozenset(
-    {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "TRACE", "CONNECT"}
-)
+HTTP_METHODS = frozenset(method.value for method in HttpMethod)
 
 
 def get_endpoint_path(request: "Request") -> str:
@@ -53,7 +53,7 @@ def build_endpoint_key(request: "Request") -> str:
 def is_method_pattern(pattern: str) -> bool:
     """Return True when ``pattern`` is ``METHOD /path``."""
     method, _, path = pattern.partition(" ")
-    return method in HTTP_METHODS and path.startswith("/")
+    return method in HttpMethod.__members__ and path.startswith("/")
 
 
 def matches_filter_pattern(

@@ -2,7 +2,10 @@
 
 from unittest.mock import MagicMock
 
-from codecarbon.integrations.fastapi._routing import build_endpoint_key, should_track_request
+from codecarbon.integrations.fastapi._routing import (
+    build_endpoint_key,
+    should_track_request,
+)
 
 
 def _mock_request(method: str, route_path: str | None, url_path: str) -> MagicMock:
@@ -53,3 +56,12 @@ def test_should_track_request_include_path_only() -> None:
     include = ["/predict"]
     assert should_track_request(get_request, include, []) is True
     assert should_track_request(post_request, include, []) is True
+
+
+def test_is_method_pattern_rejects_invalid_methods() -> None:
+    from codecarbon.integrations.fastapi._routing import is_method_pattern
+
+    assert is_method_pattern("GET /predict") is True
+    assert is_method_pattern("FOO /predict") is False
+    assert is_method_pattern("/predict") is False
+    assert is_method_pattern("GET") is False

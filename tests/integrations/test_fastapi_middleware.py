@@ -419,3 +419,150 @@ def test_middleware_real_tracker_calls_api_per_request(
         assert client.get("/predict").status_code == 200
 
     assert mock_api.add_emission.call_count >= 2
+
+
+def test_finalize_measures_before_on_request_complete() -> None:
+    order: list[str] = []
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        async with create_codecarbon_lifespan(
+            application,
+            project_name="measure-order",
+            save_to_file=False,
+            save_to_api=False,
+            allow_multiple_runs=True,
+            measure_power_secs=10,
+        ):
+            yield
+
+    application = FastAPI(lifespan=lifespan)
+
+    @application.get("/predict")
+    def predict() -> dict[str, bool]:
+        return {"ok": True}
+
+    def on_complete(request, response, emissions_data, task_name) -> None:
+        order.append("callback")
+
+    add_codecarbon_middleware(
+        application,
+        project_name="measure-order",
+        on_request_complete=on_complete,
+        tracker_kwargs={
+            "save_to_file": False,
+            "save_to_api": False,
+            "allow_multiple_runs": True,
+            "measure_power_secs": 10,
+        },
+    )
+
+    with TestClient(application) as client:
+        tracker = application.state.codecarbon_tracker
+        original = tracker._measure_power_and_energy
+
+        def wrapped() -> None:
+            order.append("measure")
+            return original()
+
+        with patch.object(tracker, "_measure_power_and_energy", side_effect=wrapped):
+            assert client.get("/predict").status_code == 200
+
+    assert order == ["measure", "callback"]
+
+
+def test_concurrent_same_route_gets_distinct_task_names() -> None:
+    task_names: list[str] = []
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        async with create_codecarbon_lifespan(
+            application,
+            project_name="concurrent-test",
+            save_to_file=False,
+            save_to_api=False,
+            allow_multiple_runs=True,
+            measure_power_secs=10,
+        ):
+            yield
+
+    application = FastAPI(lifespan=lifespan)
+
+    @application.get("/predict")
+    def predict() -> dict[str, bool]:
+        return {"ok": True}
+
+    def on_complete(request, response, emissions_data, task_name) -> None:
+        task_names.append(task_name)
+
+    add_codecarbon_middleware(
+        application,
+        project_name="concurrent-test",
+        on_request_complete=on_complete,
+        tracker_kwargs={
+            "save_to_file": False,
+            "save_to_api": False,
+            "allow_multiple_runs": True,
+            "measure_power_secs": 10,
+        },
+    )
+
+    with TestClient(application) as client:
+        tracker = application.state.codecarbon_tracker
+        baselines = [
+            tracker.mark_http_request_start("GET /predict"),
+            tracker.mark_http_request_start("GET /predict"),
+        ]
+        assert baselines[0].task_name != baselines[1].task_name
+        assert baselines[0].task_name.startswith("GET /predict")
+        assert "GET /predict" in baselines[1].task_name
+        for baseline in baselines:
+            tracker.finish_http_request(baseline)
+
+        assert client.get("/predict").status_code == 200
+        assert client.get("/predict").status_code == 200
+
+    assert len(task_names) == 2
+    assert all(name.startswith("GET /predict") for name in task_names)
+
+
+def test_compose_lifespans_stacks_contexts() -> None:
+    from codecarbon.integrations.fastapi import compose_lifespans
+
+    events: list[str] = []
+
+    @asynccontextmanager
+    async def other(app: FastAPI):
+        events.append("other-enter")
+        app.state.other = True
+        try:
+            yield
+        finally:
+            events.append("other-exit")
+
+    application = FastAPI(
+        lifespan=compose_lifespans(
+            lambda a: create_codecarbon_lifespan(
+                a,
+                project_name="compose-test",
+                save_to_file=False,
+                save_to_api=False,
+                allow_multiple_runs=True,
+            ),
+            other,
+        )
+    )
+    add_codecarbon_middleware(
+        application,
+        project_name="compose-test",
+        on_request_complete=None,
+        tracker_kwargs={"save_to_file": False, "save_to_api": False},
+    )
+
+    with TestClient(application) as client:
+        assert application.state.other is True
+        assert application.state.codecarbon_tracker is not None
+        assert client.get("/docs").status_code == 200
+
+    assert events == ["other-enter", "other-exit"]
+    assert application.state.codecarbon_tracker is None

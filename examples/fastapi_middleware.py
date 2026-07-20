@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from codecarbon.integrations.fastapi import (
+from codecarbon.integrations.fastapi import (  # compose_lifespans,  # use when stacking with other startup contexts
     add_codecarbon_middleware,
     create_codecarbon_lifespan,
 )
@@ -33,6 +33,23 @@ async def lifespan(app: FastAPI):
     ):
         yield
 
+
+# Stacked lifespan alternative (keep ownership of your own startup/shutdown):
+#
+# @asynccontextmanager
+# async def db_lifespan(app: FastAPI):
+#     app.state.db = "connected"
+#     try:
+#         yield
+#     finally:
+#         app.state.db = None
+#
+# app = FastAPI(
+#     lifespan=compose_lifespans(
+#         lambda a: create_codecarbon_lifespan(a, project_name="fastapi-demo", **_tracker_kwargs),
+#         db_lifespan,
+#     )
+# )
 
 app = FastAPI(title="CodeCarbon FastAPI demo", lifespan=lifespan)
 add_codecarbon_middleware(

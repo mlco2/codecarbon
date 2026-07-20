@@ -8,64 +8,29 @@ from typing import Union
 from starlette.requests import Request
 from starlette.responses import Response
 
+from codecarbon.core.emission_fields import (
+    HeaderPreset,
+    auto_header_name,
+    field_units_dict,
+    header_presets_dict,
+    preset_header_mapping,
+)
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 HeaderConfig = Union[bool, str, Sequence[str], Mapping[str, str], None]
 HeaderFormatter = Callable[[EmissionsData, Request], Mapping[str, str]]
 
-FIELD_UNITS: dict[str, str] = {
-    "emissions": "kg",
-    "emissions_rate": "kg-per-s",
-    "duration": "s",
-    "energy_consumed": "kwh",
-    "cpu_energy": "kwh",
-    "gpu_energy": "kwh",
-    "ram_energy": "kwh",
-    "water_consumed": "l",
-    "cpu_power": "w",
-    "gpu_power": "w",
-    "ram_power": "w",
-    "cpu_utilization_percent": "percent",
-    "gpu_utilization_percent": "percent",
-    "ram_utilization_percent": "percent",
-    "ram_used_gb": "gb",
-    "pue": "ratio",
-    "wue": "l-per-kwh",
-}
-
-HEADER_PRESETS: dict[str, dict[str, str]] = {
-    "emissions": {"emissions": "X-CodeCarbon-Emissions-kg"},
-    "default": {
-        "emissions": "X-CodeCarbon-Emissions-kg",
-        "energy_consumed": "X-CodeCarbon-Energy-Consumed-kwh",
-        "duration": "X-CodeCarbon-Duration-s",
-        "emissions_rate": "X-CodeCarbon-Emissions-Rate-kg-per-s",
-    },
-    "energy": {
-        "emissions": "X-CodeCarbon-Emissions-kg",
-        "energy_consumed": "X-CodeCarbon-Energy-Consumed-kwh",
-        "cpu_energy": "X-CodeCarbon-Cpu-Energy-kwh",
-        "gpu_energy": "X-CodeCarbon-Gpu-Energy-kwh",
-        "ram_energy": "X-CodeCarbon-Ram-Energy-kwh",
-        "duration": "X-CodeCarbon-Duration-s",
-    },
-    "power": {
-        "emissions": "X-CodeCarbon-Emissions-kg",
-        "cpu_power": "X-CodeCarbon-Cpu-Power-w",
-        "gpu_power": "X-CodeCarbon-Gpu-Power-w",
-        "ram_power": "X-CodeCarbon-Ram-Power-w",
-        "duration": "X-CodeCarbon-Duration-s",
-    },
-}
-
+FIELD_UNITS: dict[str, str] = field_units_dict()
+HEADER_PRESETS: dict[str, dict[str, str]] = header_presets_dict()
 FULL_HEADER_FIELDS: tuple[str, ...] = tuple(FIELD_UNITS.keys())
 
 
 def _auto_header_name(field: str) -> str:
-    unit = FIELD_UNITS.get(field, "")
-    title = "-".join(part.capitalize() for part in field.split("_"))
-    suffix = f"-{unit}" if unit else ""
-    return f"X-CodeCarbon-{title}{suffix}"
+    return auto_header_name(field)
+
+
+def _preset_mapping(preset: HeaderPreset) -> dict[str, str]:
+    return preset_header_mapping(preset)
 
 
 def resolve_header_mapping(config: HeaderConfig) -> dict[str, str]:
@@ -81,23 +46,25 @@ def resolve_header_mapping(config: HeaderConfig) -> dict[str, str]:
         attribute names to HTTP header names.
 
     Raises:
-        ValueError: If ``config`` is a string that is not a known preset (other than
-            ``full``).
+        ValueError: If ``config`` is a string that is not a known preset.
     """
-    if config is None or config is False:
+    if not config:
         return {}
-    if config is True:
-        return dict(HEADER_PRESETS["emissions"])
-    if isinstance(config, str):
-        preset = HEADER_PRESETS.get(config)
-        if preset is None:
-            if config == "full":
-                return {field: _auto_header_name(field) for field in FULL_HEADER_FIELDS}
-            raise ValueError(f"Unknown response_headers preset: {config!r}")
-        return dict(preset)
-    if isinstance(config, Mapping):
-        return dict(config)
-    return {field: _auto_header_name(field) for field in config}
+
+    match config:
+        case True:
+            return _preset_mapping(HeaderPreset.EMISSIONS)
+        case str() as name:
+            try:
+                return _preset_mapping(HeaderPreset(name))
+            except ValueError as exc:
+                raise ValueError(f"Unknown response_headers preset: {name!r}") from exc
+        case Mapping() as mapping:
+            return dict(mapping)
+        case Sequence() as fields:
+            return {field: _auto_header_name(field) for field in fields}
+        case _:
+            return {}
 
 
 def header_name_value_pairs(
@@ -139,7 +106,8 @@ def emissions_header_items(
         emissions_data, header_mapping, request, header_formatter
     )
     return [
-        (name.encode("latin-1"), value.encode("latin-1")) for name, value in pairs.items()
+        (name.encode("latin-1"), value.encode("latin-1"))
+        for name, value in pairs.items()
     ]
 
 
@@ -155,7 +123,5 @@ def apply_response_headers(
         emissions_data: Values read via ``getattr`` for each key in ``header_mapping``.
         header_mapping: Field name to HTTP header name; unknown fields are skipped.
     """
-    for name, value in header_name_value_pairs(
-        emissions_data, header_mapping
-    ).items():
+    for name, value in header_name_value_pairs(emissions_data, header_mapping).items():
         response.headers[name] = value

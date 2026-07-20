@@ -23,26 +23,26 @@ import os
 
 os.environ.setdefault("CODECARBON_LOG_LEVEL", "ERROR")
 
-import argparse
-import asyncio
-import logging
-import platform
-import random
-import statistics
-import sys
-import threading
-import time
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from typing import Any
-from unittest.mock import MagicMock, patch
+import argparse  # noqa: E402
+import asyncio  # noqa: E402
+import logging  # noqa: E402
+import platform  # noqa: E402
+import random  # noqa: E402
+import statistics  # noqa: E402
+import sys  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+from contextlib import asynccontextmanager  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
+from typing import Any  # noqa: E402
+from unittest.mock import MagicMock, patch  # noqa: E402
 
-import httpx
-from fastapi import FastAPI
+import httpx  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
 
-import codecarbon.integrations.fastapi.middleware as cc_fastapi_middleware
-from codecarbon.external.logger import logger as codecarbon_logger
-from codecarbon.integrations.fastapi import (
+import codecarbon.integrations.fastapi.middleware as cc_fastapi_middleware  # noqa: E402
+from codecarbon.external.logger import logger as codecarbon_logger  # noqa: E402
+from codecarbon.integrations.fastapi import (  # noqa: E402
     add_codecarbon_middleware,
     shutdown_codecarbon_middleware,
 )
@@ -289,7 +289,7 @@ class InferenceWorkload:
         raise ValueError(f"Unknown workload: {self.workload}")
 
 
-def build_app(
+def build_app(  # noqa: C901
     mode: str,
     workload: InferenceWorkload,
     *,
@@ -298,7 +298,12 @@ def build_app(
     real_tracker: bool = False,
 ) -> FastAPI:
     """Build a FastAPI app for the given benchmark mode."""
-    if real_tracker and mode != "baseline":
+    codecarbon_modes = {
+        "deferred_no_logging",
+        "deferred_logging",
+        "deferred_save_to_api",
+    }
+    if real_tracker and mode in codecarbon_modes:
         from codecarbon.integrations.fastapi import create_codecarbon_lifespan
 
         tracker_kwargs = (
@@ -334,6 +339,37 @@ def build_app(
         return workload.run(text)
 
     if mode == "baseline":
+        return application
+
+    if mode == "noop_middleware":
+
+        class _NoopMiddleware:
+            def __init__(self, app: Any) -> None:
+                self.app = app
+
+            async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+                await self.app(scope, receive, send)
+
+        application.add_middleware(_NoopMiddleware)
+        return application
+
+    if mode == "logfire_instrumented":
+        try:
+            import logfire
+        except ImportError as exc:
+            raise ImportError(
+                "Logfire scenario requires logfire. Install with: "
+                "uv run --with 'logfire[fastapi]' ..."
+            ) from exc
+        try:
+            logfire.configure(send_to_logfire=False)
+            logfire.instrument_fastapi(application)
+        except RuntimeError as exc:
+            raise RuntimeError(
+                "Logfire FastAPI instrumentation requires "
+                "`opentelemetry-instrumentation-fastapi`. Install with: "
+                "uv run --with 'logfire[fastapi]' ..."
+            ) from exc
         return application
 
     kwargs: dict[str, Any] = {
@@ -502,9 +538,7 @@ async def _run_scenario_in_process(
             logging_level_restore = codecarbon_logger.level
             codecarbon_logger.setLevel(logging.INFO)
             codecarbon_logger.addHandler(log_counter)
-        latencies = await _run_load_async(
-            client, predict_url, requests, concurrency
-        )
+        latencies = await _run_load_async(client, predict_url, requests, concurrency)
         if mode != "baseline":
             drain_s = 0.5 if real_tracker else measurement_delay_s
             await _wait_for_deferred_finalize(
@@ -660,7 +694,7 @@ def _format_results(
         f"Python: {sys.version.split()[0]}",
         f"Workload: {workload} ({model_id})",
         f"Transport: {transport}",
-        f"HTTP client: async (httpx.AsyncClient)",
+        "HTTP client: async (httpx.AsyncClient)",
         f"EmissionsTracker: {'live' if real_tracker else f'mocked ({measurement_delay_ms:.0f} ms stop delay)'}",
         f"save_to_api scenario: {'yes (api_call_interval=1)' if with_save_to_api else 'no'}",
         f"project_id: {project_id}",
@@ -674,7 +708,7 @@ def _format_results(
             if with_save_to_api and api_delay_ms is not None
             else "Mocked API upload delay: n/a"
         ),
-        f"Middleware: default deferred measurement",
+        "Middleware: default deferred measurement",
         f"Logger namespace: {codecarbon_logger.name}",
         f"Requests per scenario: {results[0].requests} (warmup excluded), "
         f"concurrency: {results[0].concurrency}",
@@ -711,6 +745,8 @@ SCENARIO_KEYS = {
     "no_logging": ("deferred_no_logging", "Deferred, no logging"),
     "logging": ("deferred_logging", "Deferred + logging (default)"),
     "save_to_api": ("deferred_save_to_api", "Deferred + save_to_api (no logging)"),
+    "noop_middleware": ("noop_middleware", "Empty ASGI middleware (stack cost)"),
+    "logfire": ("logfire_instrumented", "Logfire instrumentation only"),
 }
 
 
@@ -825,9 +861,7 @@ async def _run_benchmarks_async(
             middleware_warmup = (
                 secondary_warmup
                 if secondary_warmup > 0
-                else min(10, warmup)
-                if in_process
-                else warmup
+                else min(10, warmup) if in_process else warmup
             )
             result = await _run_one(
                 mode,
@@ -941,7 +975,7 @@ def _resolve_model_id(workload: str, model_id: str | None) -> str:
     return "n/a"
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901
     """CLI entrypoint."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--requests", type=int, default=BENCHMARK_REQUESTS)
@@ -987,6 +1021,11 @@ def main() -> None:
         "--with-save-to-api",
         action="store_true",
         help="Add a scenario with save_to_api=True and api_call_interval=1",
+    )
+    parser.add_argument(
+        "--with-logfire",
+        action="store_true",
+        help="Add noop middleware and Logfire instrumentation comparison scenarios",
     )
     parser.add_argument(
         "--project-id",
@@ -1045,7 +1084,8 @@ def main() -> None:
     parser.add_argument(
         "--scenarios",
         default=None,
-        help="Comma-separated middleware scenarios: no_logging, logging, save_to_api",
+        help="Comma-separated middleware scenarios: no_logging, logging, save_to_api, "
+        "noop_middleware, logfire",
     )
     args = parser.parse_args()
     if args.realistic:
@@ -1070,6 +1110,14 @@ def main() -> None:
         if args.scenarios
         else None
     )
+    if args.with_logfire:
+        extras = ["noop_middleware", "logfire"]
+        if scenario_keys is None:
+            scenario_keys = ["no_logging", "logging", *extras]
+        else:
+            for key in extras:
+                if key not in scenario_keys:
+                    scenario_keys.append(key)
     use_normal_ci = False
     secondary_warmup = 0
     logging_sample = args.logging_sample
