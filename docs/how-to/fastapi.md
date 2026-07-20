@@ -127,63 +127,63 @@ CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --extra fastapi \
   python scripts/verify_fastapi_middleware_outputs.py --save-to-api
 ```
 
-## Performance
+## Performance overview
 
-Emissions are measured **after** the response is sent by default, so API clients are not waiting on hardware sampling.
+By default, CodeCarbon measures **after** the response is sent. Clients see only a small amount of middleware bookkeeping; hardware sampling and logging run on a background tracker worker.
 
-| Setup | What it does |
-|--------|--------|
-| Default | Log emissions after each request |
-| `on_request_complete=None` | Track emissions without logging |
-| `create_codecarbon_lifespan` | Start the tracker once at boot (recommended) |
-| `response_headers=True` | Sync measure + `X-CodeCarbon-*` headers (higher client latency) |
+| Mode | Client path | When to use |
+|------|-------------|-------------|
+| Deferred + logging (default) | Response first, then measure | Most APIs |
+| Deferred, `on_request_complete=None` | Response first, measure without log | Lowest overhead while still tracking |
+| `response_headers=True` | Measure **before** `http.response.start` | Clients need `X-CodeCarbon-*` headers |
+| `create_codecarbon_lifespan` | Same as above + one shared tracker | Production (recommended) |
 
-### How much does it cost?
+### Benchmark results (HF embedder)
 
-We benchmarked a small sentence embedder ([`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2)) serving 50 requests at concurrency 4 over uvicorn (deferred modes), and the same script with a mocked ~20 ms measure delay for sync headers:
+Measured on **Darwin arm64**, Python 3.12 (**2026-07-20**), serving [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2) over uvicorn: 50 timed requests after 5 warmup. Tracker `stop()` is mocked at ~20 ms so the table isolates middleware path cost (not Apple Silicon live-sampler lock time).
 
-| Setup | Avg. response time | Notes |
-|--------|-------------------:|-------|
-| No middleware | 24 ms | baseline (embedder) |
-| Empty ASGI middleware | ~24 ms | stack cost only |
-| Logfire instrumentation | ~26 ms | local only (`send_to_logfire=False`) |
-| CodeCarbon (logging off) | 24 ms | deferred |
-| CodeCarbon (default) | 27 ms | deferred, ~3 ms overhead |
-| CodeCarbon (`response_headers=True`) | ~55 ms | sync measure on path (c=1, ~20 ms sample) |
-| … same, concurrency 4 | ~95 ms | sync measures serialize on the tracker worker |
+| Setup | Avg. response time | vs baseline |
+|--------|-------------------:|------------:|
+| No middleware | 25 ms | — |
+| Deferred, logging off | 25 ms | ~0% |
+| Deferred + logging (default) | 29 ms | **~+4 ms** |
+| Sync headers (`response_headers=True`, c=1) | 67 ms | ~+39 ms |
+| Sync headers, concurrency 4 | 94 ms | measures serialize on one worker |
 
-**Takeaway:** deferred mode stays cheap (~3 ms). Sync headers put sampling on the client path, so you roughly pay the measure time per request — and under concurrency that work queues on one tracker thread, so latency grows further. Prefer deferred + logging/API unless clients need `X-CodeCarbon-*` headers.
+**What this means**
 
-With `save_to_api=True`, each request also uploads to the CodeCarbon API after the response, which adds network time on top of the above.
+- **Deferred (default):** cheap on a real inference path — about **4 ms** per request on this ~25 ms embedder baseline.
+- **Sync headers:** you roughly pay the sample time on the client path. Under concurrency, measures queue on a single tracker worker, so latency grows further.
+- **`save_to_api=True`:** uploads after the response; adds network time on top of deferred cost, not on the HTTP critical path for deferred mode.
 
-To run the same benchmark locally:
+Prefer deferred + logging/API unless clients need response headers.
+
+### Reproduce locally
+
+HF embedder (same setup as the table):
 
 ```console
 uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch \
   python scripts/benchmark_fastapi_middleware.py \
-  --workload hf-embedder --network --requests 50 --warmup 5 --concurrency 4
+  --workload hf-embedder --network --with-headers \
+  --requests 50 --warmup 5 --concurrency 4 --no-verify-logging
 ```
 
-Include sync headers (and optionally Logfire):
+Quick smoke (noop handler, no ML model):
 
 ```console
-uv run --extra fastapi --with uvicorn \
-  python scripts/benchmark_fastapi_middleware.py \
+uv run --extra fastapi python scripts/benchmark_fastapi_middleware.py \
   --quick --with-headers --no-verify-logging
 ```
+
+Optional Logfire comparison on the embedder workload:
 
 ```console
 uv run --extra fastapi --with 'logfire[fastapi]' --with uvicorn \
   --with sentence-transformers --with torch \
   python scripts/benchmark_fastapi_middleware.py \
   --workload hf-embedder --network --with-logfire --with-headers \
-  --requests 50 --warmup 5 --concurrency 4
-```
-
-For a quick smoke test (no ML model):
-
-```console
-uv run --extra fastapi python scripts/benchmark_fastapi_middleware.py --quick
+  --requests 50 --warmup 5 --concurrency 4 --no-verify-logging
 ```
 
 ## `include` and `exclude`

@@ -101,9 +101,17 @@ class _TrackerRunner:
         if future.cancelled():
             return
         try:
-            future.set_result(func(*args))
+            result = func(*args)
         except Exception as exc:
-            future.set_exception(exc)
+            try:
+                future.set_exception(exc)
+            except futures.InvalidStateError:
+                pass
+            return
+        try:
+            future.set_result(result)
+        except futures.InvalidStateError:
+            pass
 
     def _worker(self) -> None:
         while True:
