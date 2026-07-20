@@ -6,16 +6,15 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import Dict, Optional
+
+import pandas as pd
 
 from codecarbon.core import electricitymaps_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource, DataSourceException
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 _NORDIC_REGIONS_BY_COUNTRY = {
     "SWE": {"SE1", "SE2", "SE3", "SE4"},
