@@ -12,12 +12,12 @@ from fastapi.testclient import TestClient
 
 import codecarbon.integrations.fastapi.lifespan as cc_fastapi_lifespan
 import codecarbon.integrations.fastapi.middleware as cc_fastapi_middleware
+from codecarbon.external.logger import logger as codecarbon_logger
 from codecarbon.integrations.fastapi import (
     add_codecarbon_middleware,
     create_codecarbon_lifespan,
     shutdown_codecarbon_middleware,
 )
-from codecarbon.external.logger import logger as codecarbon_logger
 from codecarbon.integrations.fastapi.middleware import log_request_complete
 
 
@@ -244,12 +244,15 @@ def test_log_request_complete_uses_codecarbon_logger() -> None:
     response = MagicMock(status_code=200)
     emissions = MagicMock(emissions=0.0012)
     counter = _CodeCarbonLogCapture()
+    previous_level = codecarbon_logger.level
 
+    codecarbon_logger.setLevel(logging.INFO)
     cc_fastapi_middleware.logger.addHandler(counter)
     try:
         log_request_complete(request, response, emissions, "GET /predict")
     finally:
         cc_fastapi_middleware.logger.removeHandler(counter)
+        codecarbon_logger.setLevel(previous_level)
 
     assert codecarbon_logger.name == "codecarbon"
     assert counter.emissions_lines == 1
@@ -311,7 +314,9 @@ def test_create_codecarbon_lifespan_shuts_down_middleware_executor(
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        async with create_codecarbon_lifespan(application, project_name="lifespan-test"):
+        async with create_codecarbon_lifespan(
+            application, project_name="lifespan-test"
+        ):
             yield
 
     application = FastAPI(lifespan=lifespan)

@@ -20,12 +20,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
+import requests
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import codecarbon.integrations.fastapi.middleware as cc_fastapi_middleware
-import requests
-
 from codecarbon.core.api_client import ApiClient
 from codecarbon.core.config import get_hierarchical_config
 from codecarbon.integrations.fastapi import (
@@ -117,7 +116,7 @@ def _get_api_client_from_config() -> ApiClient | None:
     )
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--save-to-api",
@@ -194,7 +193,9 @@ def main(argv: list[str] | None = None) -> int:
                 )
             else:
                 line_count = len(emissions_csv.read_text().splitlines())
-                print(f"OK: CSV {emissions_csv} ({line_count} line(s) including header)")
+                print(
+                    f"OK: CSV {emissions_csv} ({line_count} line(s) including header)"
+                )
 
             task_csvs = list(output_dir.glob("emissions_*.csv"))
             if task_csvs:
@@ -217,9 +218,7 @@ def main(argv: list[str] | None = None) -> int:
                             f"{api.url}/runs/.../emissions"
                         )
                     else:
-                        print(
-                            f"OK: API run {run_id} has {count} emission record(s)"
-                        )
+                        print(f"OK: API run {run_id} has {count} emission record(s)")
     finally:
         cc_fastapi_middleware.logger.removeHandler(log_counter)
 
