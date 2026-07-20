@@ -1,21 +1,19 @@
 """
 App configuration and static reference data loading.
 
-Static CSV/JSON reference data is loaded lazily on first DataSource access
-to keep `import codecarbon` fast for measurement startup.
+Data files are static reference data that never change during runtime.
+They are loaded once at module import to avoid repeated file I/O on the hot path
+(start_task/stop_task calls for instance).
 """
-
-from __future__ import annotations
 
 import atexit
 import json
 from contextlib import ExitStack
 from importlib.resources import as_file as importlib_resources_as_file
 from importlib.resources import files as importlib_resources_files
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Dict
 
-if TYPE_CHECKING:
-    import pandas as pd
+import pandas as pd
 
 _CACHE: Dict[str, Any] = {}
 _MODULE_NAME = "codecarbon"
@@ -37,8 +35,6 @@ def _load_static_data() -> None:
     Called once when codecarbon is imported. All data loaded here
     is immutable and shared across all tracker instances.
     """
-    import pandas as pd
-
     # Global energy mix - used for emissions calculations
     path = _get_resource_path("data/private_infra/global_energy_mix.json")
     with open(path) as f:
@@ -63,16 +59,8 @@ def _load_static_data() -> None:
         _CACHE["nordic_country_energy_mix"] = json.load(f)
 
 
-_STATIC_DATA_LOADED = False
-
-
-def _ensure_static_data_loaded() -> None:
-    """Load immutable reference data on first use instead of at import."""
-    global _STATIC_DATA_LOADED
-    if _STATIC_DATA_LOADED:
-        return
-    _load_static_data()
-    _STATIC_DATA_LOADED = True
+# Load static data at module import
+_load_static_data()
 
 
 class DataSource:
@@ -142,17 +130,15 @@ class DataSource:
     def get_global_energy_mix_data(self) -> Dict:
         """
         Returns Global Energy Mix Data.
-        Data is loaded on first access and cached for all tracker instances.
+        Data is pre-loaded at module import for performance.
         """
-        _ensure_static_data_loaded()
         return _CACHE["global_energy_mix"]
 
     def get_cloud_emissions_data(self) -> pd.DataFrame:
         """
         Returns Cloud Regions Impact Data.
-        Data is loaded on first access and cached for all tracker instances.
+        Data is pre-loaded at module import for performance.
         """
-        _ensure_static_data_loaded()
         return _CACHE["cloud_emissions"]
 
     def get_country_emissions_data(self, country_iso_code: str) -> Dict:
@@ -190,25 +176,22 @@ class DataSource:
     def get_carbon_intensity_per_source_data(self) -> Dict:
         """
         Returns Carbon intensity per source. In gCO2.eq/kWh.
-        Data is loaded on first access and cached for all tracker instances.
+        Data is pre-loaded at module import for performance.
         """
-        _ensure_static_data_loaded()
         return _CACHE["carbon_intensity_per_source"]
 
     def get_cpu_power_data(self) -> pd.DataFrame:
         """
         Returns CPU power Data.
-        Data is loaded on first access and cached for all tracker instances.
+        Data is pre-loaded at module import for performance.
         """
-        _ensure_static_data_loaded()
         return _CACHE["cpu_power"]
 
     def get_nordic_country_energy_mix_data(self) -> Dict:
         """
         Returns Nordic Country Energy Mix Data.
-        Data is loaded on first access and cached for all tracker instances.
+        Data is cached on first access per country.
         """
-        _ensure_static_data_loaded()
         return _CACHE["nordic_country_energy_mix"]
 
 

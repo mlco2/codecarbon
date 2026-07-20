@@ -10,6 +10,7 @@ import dataclasses
 import json
 from datetime import timedelta, tzinfo
 
+import arrow
 import requests
 
 from codecarbon.core.schemas import (
@@ -21,11 +22,12 @@ from codecarbon.core.schemas import (
 )
 from codecarbon.external.logger import logger
 
+# from codecarbon.output import EmissionsData
+
 
 def get_datetime_with_timezone():
-    import arrow
-
-    return str(arrow.now().isoformat())
+    timestamp = str(arrow.now().isoformat())
+    return timestamp
 
 
 class ApiClient:  # (AsyncClient)

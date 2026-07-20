@@ -740,31 +740,6 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertIsInstance(tracker.final_emissions, float)
         self.assertAlmostEqual(tracker.final_emissions, 6.262572537957655e-05, places=2)
 
-    def test_start_task_returns_when_engine_initialization_fails(
-        self,
-        mock_cli_setup,
-        mock_log_values,
-        mocked_get_gpu_details,
-        mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
-        mocked_is_gpu_details_available,
-        mocked_is_nvidia_system,
-    ):
-        tracker = EmissionsTracker(save_to_file=False)
-        with (
-            mock.patch.object(
-                tracker,
-                "_ensure_emissions_engine",
-                side_effect=Exception("init failed"),
-            ),
-            self.assertLogs("codecarbon", level="ERROR") as logs,
-        ):
-            tracker.start_task("failed-task")
-
-        self.assertTrue(
-            any("Tracker not initialized" in message for message in logs.output)
-        )
-
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
     @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
     @mock.patch(
@@ -1016,7 +991,7 @@ class TestCarbonTracker(unittest.TestCase):
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_geo_metadata")
     @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_cloud_metadata")
     @mock.patch("codecarbon.core.electricitymaps_api.requests.get")
-    @mock.patch("codecarbon.core.resource_tracker.ResourceTracker")
+    @mock.patch("codecarbon.emissions_tracker.ResourceTracker")
     @mock.patch(
         "codecarbon.emissions_tracker.BaseEmissionsTracker.get_detected_hardware"
     )
@@ -1085,9 +1060,10 @@ class TestCarbonTracker(unittest.TestCase):
         )
         tracker._hardware = [mock_cpu]
 
-        # Start tracking (includes an immediate first measurement)
+        # Start tracking
         tracker.start()
 
+        tracker._measure_power_and_energy()
         # total_energy = 1.0, intensity = 100 => emissions = 0.1 kg
         data1 = tracker._prepare_emissions_data()
         self.assertAlmostEqual(data1.emissions, 0.1)

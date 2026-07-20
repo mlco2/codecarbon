@@ -12,13 +12,10 @@ class TestDataSourceCaching(unittest.TestCase):
     """Test that DataSource uses module-level cache for static data."""
 
     def test_cache_populated_at_import(self):
-        """Verify that _CACHE is populated on first data access."""
-        from codecarbon.input import _CACHE, DataSource
+        """Verify that _CACHE is populated when module is imported."""
+        from codecarbon.input import _CACHE
 
-        ds = DataSource()
-        ds.get_global_energy_mix_data()
-
-        # Static data should be loaded after first access
+        # All static data should be pre-loaded
         self.assertIn("global_energy_mix", _CACHE)
         self.assertIn("cloud_emissions", _CACHE)
         self.assertIn("carbon_intensity_per_source", _CACHE)
