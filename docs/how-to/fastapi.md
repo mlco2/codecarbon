@@ -24,7 +24,7 @@ app = FastAPI()
 add_codecarbon_middleware(app, project_name="my-api")
 ```
 
-Measurement runs **after** the HTTP response is sent (deferred `stop_task`), so clients are not blocked on hardware sampling. By default, emissions are logged on the **`codecarbon`** logger via `log_request_complete`. Pass `on_request_complete=None` to disable logging, or supply your own callback.
+Measurement runs after the response is sent, so clients are not blocked on hardware sampling. By default, emissions are logged on the `codecarbon` logger. Pass `on_request_complete=None` to turn logging off, or supply your own callback.
 
 A minimal runnable app lives at [`examples/fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/examples/fastapi_middleware.py). Run it with:
 
@@ -55,7 +55,7 @@ app = FastAPI(lifespan=lifespan)
 add_codecarbon_middleware(app)
 ```
 
-`create_codecarbon_lifespan` stores the tracker on `app.state.codecarbon_tracker` for the middleware to reuse, and shuts down the middleware’s tracker background thread on exit. Without lifespan, call `shutdown_codecarbon_middleware(app)` before the process exits.
+`create_codecarbon_lifespan` puts a shared tracker on `app.state` for the middleware to reuse and stops it cleanly on shutdown. If you skip lifespan, call `shutdown_codecarbon_middleware(app)` before exit.
 
 ## Cloud API
 
@@ -90,57 +90,41 @@ CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --extra fastapi \
 
 ## Performance
 
-Per-request tracking uses one shared `EmissionsTracker` with `start_task` / `stop_task` on a single background thread. Request-path work is scheduled ahead of deferred `stop_task` so new requests are not queued behind post-response measurement.
+Emissions are measured **after** the response is sent, so your API clients are not waiting on hardware sampling. One shared tracker runs in the background.
 
-| Option | Effect |
+| Setup | What it does |
 |--------|--------|
-| Default (deferred + `log_request_complete`) | Shared tracker; log after each request |
-| `on_request_complete=None` | Same timing, no post-request logging |
-| `create_codecarbon_lifespan` | Starts hardware monitoring once at boot (recommended) |
+| Default | Log emissions after each request |
+| `on_request_complete=None` | Track emissions without logging |
+| `create_codecarbon_lifespan` | Start the tracker once at boot (recommended) |
 
-### Benchmarks (HF embedder workload)
+### How much does it cost?
 
-Live `EmissionsTracker`, uvicorn HTTP, [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2), 50 timed requests, concurrency 4, `save_to_api=False`. With **`create_codecarbon_lifespan`**, the middleware uses a lightweight per-request snapshot (`mark_http_request_start` / `finish_http_request`) instead of stopping and restarting the tracker scheduler on every request. Measurement still runs **after** the response.
+We benchmarked a small sentence embedder ([`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2)) serving 50 requests at concurrency 4 over uvicorn:
 
-| Configuration | Mean (ms) | vs baseline |
-|---|---:|---:|
-| No middleware (baseline) | ~26 | — |
-| Deferred, no logging | ~30 | ~+6–17% |
-| Deferred + logging (default) | ~27 | ~+6% |
+| Setup | Avg. response time |
+|--------|-------------------:|
+| No middleware | 24 ms |
+| With middleware, logging off | 24 ms |
+| With middleware (default) | 27 ms |
 
-Absolute overhead is about **+1–4 ms** per request on a fast embedder baseline when the lifespan tracker is used. Older tables near **~15%** used `start_task` / `stop_task` per request (scheduler stop/start on every call). A global lock that held the whole request until `stop_task` finished inflated overhead to **~40%** — that lock is removed.
+On that workload, default middleware adds about **~3 ms** per request. Your numbers will vary with model size, hardware, and concurrency.
 
-With **`save_to_api=True`**, each request also waits on a real HTTPS `add_emission`; mean latency becomes seconds under concurrency (network + serialization), not milliseconds.
+With `save_to_api=True`, each request also uploads to the CodeCarbon API after the response, which adds network time on top of the above.
 
-Run-to-run variance is high on a single machine; treat as indicative, not a SLA. Reproduce:
+To run the same benchmark locally:
 
 ```console
-# Live EmissionsTracker + real HF embedder + uvicorn HTTP (recommended):
 uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch \
-  python scripts/benchmark_fastapi_middleware.py --realistic
-
-# Same, explicit flags:
-uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch \
-  python scripts/benchmark_fastapi_middleware.py --workload hf-embedder --network --real-tracker
-
-# Mocked tracker for fast CI (~10s; high % overhead with concurrency 8 + noop workload):
-uv run --extra fastapi --with uvicorn python scripts/benchmark_fastapi_middleware.py --quick
-
-# Include save_to_api (mocked upload latency, api_call_interval=1):
-uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch \
-  python scripts/benchmark_fastapi_middleware.py --workload hf-embedder --with-save-to-api
+  python scripts/benchmark_fastapi_middleware.py \
+  --workload hf-embedder --network --requests 50 --warmup 5 --concurrency 4
 ```
 
-The script preloads the ML model once when using `hf-embedder` or `hf-classifier`, so each scenario reuses the same weights instead of reloading.
+For a quick smoke test (no ML model):
 
-With ``save_to_api=True`` and ``create_codecarbon_lifespan``, each finalized
-request uploads one emission via ``persist_completed_task`` (after ``stop_task``).
-Sub-second requests are sent with API duration rounded up to 1 second. A final
-``tracker.stop()`` still flushes run-level totals and any tasks not yet uploaded.
-
-Requires a valid ``api_key`` and ``experiment_id`` in ``~/.codecarbon.config``
-(``codecarbon login``). The repo ``.codecarbon.config`` must not override those
-with empty values.
+```console
+uv run --extra fastapi python scripts/benchmark_fastapi_middleware.py --quick
+```
 
 Custom logging callback (replaces the default):
 
