@@ -24,7 +24,7 @@ app = FastAPI()
 add_codecarbon_middleware(app, project_name="my-api")
 ```
 
-Measurement runs after the response is sent, so clients are not blocked on hardware sampling. By default, emissions are logged on the `codecarbon` logger. Pass `on_request_complete=None` to turn logging off, or supply your own callback.
+By default, measurement runs after the response is sent (clients are not blocked on hardware sampling), and emissions are logged on the `codecarbon` logger. Pass `on_request_complete=None` to turn logging off, or supply your own callback.
 
 A minimal runnable app lives at [`examples/fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/examples/fastapi_middleware.py). Run it with:
 
@@ -59,7 +59,7 @@ add_codecarbon_middleware(app)
 
 ### Combining with other lifespans
 
-FastAPI accepts only one `lifespan` handler. Nest CodeCarbon with your own startup/shutdown using `compose_lifespans`, or nest manually:
+FastAPI accepts only one `lifespan` handler. Nest CodeCarbon with your own startup/shutdown using `compose_lifespans`:
 
 ```python
 from contextlib import asynccontextmanager
@@ -90,23 +90,11 @@ app = FastAPI(
 add_codecarbon_middleware(app)
 ```
 
-Or nest by hand:
-
-```python
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    async with create_codecarbon_lifespan(app, project_name="my-api"):
-        async with db_lifespan(app):
-            yield
-```
-
 ## Measurement model
 
-1. The response is sent to the client first (clients are not blocked on sampling).
-2. Finalization runs on a dedicated tracker worker thread (not on the event-loop path).
-3. Hardware sampling (`_measure_power_and_energy`) runs **synchronously** on that worker before `EmissionsData` is built and before `on_request_complete` runs.
-
-With `create_codecarbon_lifespan`, concurrent requests use `HttpRequestBaseline` snapshots so parallel work on the same route does not clobber task state.
+- **Default (deferred):** response is sent first; finalize runs on a dedicated tracker worker thread; sampling is synchronous on that worker before `on_request_complete`.
+- **`response_headers=...`:** measure before `http.response.start` and inject `X-CodeCarbon-*` headers (adds sampling latency on the client path). Header values cover work up to response start, not post-body background tasks.
+- With `create_codecarbon_lifespan`, concurrent requests on the same route get unique internal task IDs via `HttpRequestBaseline`.
 
 ## Cloud API
 
@@ -141,13 +129,14 @@ CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --extra fastapi \
 
 ## Performance
 
-Emissions are measured **after** the response is sent, so your API clients are not waiting on hardware sampling. One shared tracker runs in the background.
+Emissions are measured **after** the response is sent by default, so API clients are not waiting on hardware sampling.
 
 | Setup | What it does |
 |--------|--------|
 | Default | Log emissions after each request |
 | `on_request_complete=None` | Track emissions without logging |
 | `create_codecarbon_lifespan` | Start the tracker once at boot (recommended) |
+| `response_headers=True` | Sync measure + `X-CodeCarbon-*` headers (higher client latency) |
 
 ### How much does it cost?
 
@@ -161,7 +150,7 @@ We benchmarked a small sentence embedder ([`paraphrase-MiniLM-L3-v2`](https://hu
 | CodeCarbon (logging off) | 24 ms | |
 | CodeCarbon (default) | 27 ms | ~3 ms overhead |
 
-On that workload, default CodeCarbon middleware adds about **~3 ms** per request — similar in scale to a typical observability middleware such as Logfire. Your numbers will vary with model size, hardware, and concurrency.
+On that workload, default CodeCarbon middleware adds about **~3 ms** per request — similar in scale to a typical observability middleware such as Logfire. Enabling `response_headers` moves sampling onto the request path and will add more. Your numbers will vary with model size, hardware, and concurrency.
 
 With `save_to_api=True`, each request also uploads to the CodeCarbon API after the response, which adds network time on top of the above.
 
@@ -189,19 +178,6 @@ For a quick smoke test (no ML model):
 uv run --extra fastapi python scripts/benchmark_fastapi_middleware.py --quick
 ```
 
-Custom logging callback (replaces the default):
-
-```python
-from codecarbon.integrations.fastapi import add_codecarbon_middleware
-
-add_codecarbon_middleware(
-    app,
-    on_request_complete=lambda request, response, data, task_name: logger.info(
-        "%s emissions=%s", task_name, getattr(data, "emissions", None)
-    ),
-)
-```
-
 ## `include` and `exclude`
 
 Two filters control which requests are measured. Both accept the same pattern forms:
@@ -222,10 +198,20 @@ add_codecarbon_middleware(
 )
 ```
 
-## `task_name_formatter`, `on_request_complete`
+## `response_headers`, `include_background_tasks`, `task_name_formatter`, `on_request_complete`
 
-- **`task_name_formatter`** — optional `(Request) -> str` override; default is `METHOD /route/template` (stable route label for logs). Concurrent requests on the same route still get unique internal task IDs when using `create_codecarbon_lifespan` (UUID suffix only if the name is already active).
-- **`on_request_complete`** — optional `(request, response, emissions_data | None, task_name) -> None`; default logs via `log_request_complete`; `None` disables the callback.
+- **`response_headers`** — `True` (emissions only) or a list of field names (`emissions`, `duration`, `energy_consumed`, …). Measures before the response starts and sets `X-CodeCarbon-*` headers. Default `None` / off (deferred, no headers).
+- **`include_background_tasks`** — default `True`: FastAPI/Starlette `BackgroundTasks` on the response are included. Set `False` to finalize at end of body and exclude post-body background work.
+- **`task_name_formatter`** — optional `(Request) -> str`; default is `METHOD /route/template`. Concurrent requests on the same route still get unique internal task IDs with `create_codecarbon_lifespan`.
+- **`on_request_complete`** — optional callback; default logs via `log_request_complete`; `None` disables it.
+
+```python
+add_codecarbon_middleware(
+    app,
+    response_headers=["emissions", "energy_consumed", "duration"],
+    include_background_tasks=False,
+)
+```
 
 ## Middleware order
 
@@ -240,9 +226,9 @@ add_codecarbon_middleware(app)  # outermost on request → measures the full sta
 
 ## Limitations (v1)
 
-- **WebSockets** are not instrumented by this middleware.
-- **Background tasks** (`BackgroundTasks` and similar) run **after** the middleware has finished the request path; their CPU/GPU use may **not** be fully attributed to that request’s measurement window.
-- **Response headers** for emissions are not supported by this middleware (measurement is deferred after the response). Use logging, a custom `on_request_complete` handler, or the [`@track_emissions` decorator](../reference/api.md#track_emissions-decorator) for per-route control.
+- **WebSockets** are not supported. The middleware ignores non-`http` scopes and does not wrap connect/disconnect or messages.
+- **Background tasks:** by default, FastAPI/Starlette `BackgroundTasks` / `Response.background` **are included** (they finish before deferred finalize). Use `include_background_tasks=False` to measure only through the response body. Fire-and-forget `asyncio.create_task`, unjoined threads, and external queues (Celery, RQ, …) are **not** tracked.
+- **Response headers** require `response_headers=...` (sync measure). Deferred mode cannot attach real emissions to headers because values are computed after the response is sent.
 
 ## Per-endpoint tracking
 

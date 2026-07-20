@@ -566,3 +566,109 @@ def test_compose_lifespans_stacks_contexts() -> None:
 
     assert events == ["other-enter", "other-exit"]
     assert application.state.codecarbon_tracker is None
+
+
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_response_headers_sync_mode_injects_emissions_header(MockTracker) -> None:
+    MockTracker.return_value.stop_task.return_value = MagicMock(emissions=0.0012)
+    application = FastAPI()
+
+    @application.get("/predict")
+    def predict() -> dict[str, bool]:
+        return {"ok": True}
+
+    add_codecarbon_middleware(
+        application,
+        project_name="headers-test",
+        response_headers=True,
+        on_request_complete=None,
+    )
+    response = TestClient(application).get("/predict")
+    assert response.status_code == 200
+    assert response.headers.get("X-CodeCarbon-Emissions-kg") == "0.0012"
+
+
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_default_mode_has_no_emission_headers(MockTracker) -> None:
+    MockTracker.return_value.stop_task.return_value = MagicMock(emissions=0.0012)
+    application = FastAPI()
+
+    @application.get("/predict")
+    def predict() -> dict[str, bool]:
+        return {"ok": True}
+
+    add_codecarbon_middleware(
+        application, project_name="no-headers", on_request_complete=None
+    )
+    response = TestClient(application).get("/predict")
+    assert "X-CodeCarbon-Emissions-kg" not in response.headers
+
+
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_include_background_tasks_false_finalizes_before_background(
+    MockTracker,
+) -> None:
+    from fastapi import BackgroundTasks
+
+    order: list[str] = []
+    mock_tracker = MockTracker.return_value
+
+    def stop_task(*args: Any, **kwargs: Any) -> MagicMock:
+        order.append("finalize")
+        return MagicMock(emissions=0.001)
+
+    mock_tracker.stop_task.side_effect = stop_task
+    application = FastAPI()
+
+    @application.get("/predict")
+    def predict_with_bg(background_tasks: BackgroundTasks) -> dict[str, bool]:
+        def work() -> None:
+            order.append("background")
+
+        background_tasks.add_task(work)
+        return {"ok": True}
+
+    add_codecarbon_middleware(
+        application,
+        project_name="bg-false",
+        include_background_tasks=False,
+        on_request_complete=None,
+    )
+    assert TestClient(application).get("/predict").status_code == 200
+    assert "finalize" in order
+    assert "background" in order
+    assert order.index("finalize") < order.index("background")
+
+
+@patch.object(cc_fastapi_middleware, "EmissionsTracker")
+def test_include_background_tasks_true_finalizes_after_background(MockTracker) -> None:
+    from fastapi import BackgroundTasks
+
+    order: list[str] = []
+    mock_tracker = MockTracker.return_value
+
+    def stop_task(*args: Any, **kwargs: Any) -> MagicMock:
+        order.append("finalize")
+        return MagicMock(emissions=0.001)
+
+    mock_tracker.stop_task.side_effect = stop_task
+    application = FastAPI()
+
+    @application.get("/predict")
+    def predict_with_bg(background_tasks: BackgroundTasks) -> dict[str, bool]:
+        def work() -> None:
+            order.append("background")
+
+        background_tasks.add_task(work)
+        return {"ok": True}
+
+    add_codecarbon_middleware(
+        application,
+        project_name="bg-true",
+        include_background_tasks=True,
+        on_request_complete=None,
+    )
+    assert TestClient(application).get("/predict").status_code == 200
+    assert "background" in order
+    assert "finalize" in order
+    assert order.index("background") < order.index("finalize")

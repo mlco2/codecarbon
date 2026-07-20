@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from codecarbon.integrations.fastapi import (  # compose_lifespans,  # use when stacking with other startup contexts
+from codecarbon.integrations.fastapi import (
     add_codecarbon_middleware,
     create_codecarbon_lifespan,
 )
@@ -34,23 +34,6 @@ async def lifespan(app: FastAPI):
         yield
 
 
-# Stacked lifespan alternative (keep ownership of your own startup/shutdown):
-#
-# @asynccontextmanager
-# async def db_lifespan(app: FastAPI):
-#     app.state.db = "connected"
-#     try:
-#         yield
-#     finally:
-#         app.state.db = None
-#
-# app = FastAPI(
-#     lifespan=compose_lifespans(
-#         lambda a: create_codecarbon_lifespan(a, project_name="fastapi-demo", **_tracker_kwargs),
-#         db_lifespan,
-#     )
-# )
-
 app = FastAPI(title="CodeCarbon FastAPI demo", lifespan=lifespan)
 add_codecarbon_middleware(
     app,
@@ -64,11 +47,10 @@ def predict(text: str = "hello"):
     return {"text": text, "label": "demo"}
 
 
+# Stack other startup with compose_lifespans — see docs/how-to/fastapi.md
 # Per-request: codecarbon logger (INFO) after each response.
-# CSV: examples/output/emissions.csv on shutdown; per-task CSV on stop.
-# API: one emission per request on dashboard experiment from ~/.codecarbon.config.
+# CSV: examples/output/emissions.csv on shutdown.
 # Run:
 #   CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --extra fastapi --with uvicorn \
 #     uvicorn examples.fastapi_middleware:app --reload
 #   curl 'http://127.0.0.1:8000/predict?text=hello'
-# Stop the server (Ctrl+C) so lifespan flushes the run-level CSV.
