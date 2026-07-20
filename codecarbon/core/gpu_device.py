@@ -101,20 +101,6 @@ class GPUDevice:
         }
         return device_details
 
-    def get_gpu_utilization_lightweight(self) -> Dict[str, Any]:
-        """
-        Lightweight alternative to :meth:`get_gpu_details` for the hot path
-        (``_monitor_power`` which runs every 1s).
-
-        Only queries the GPU utilization — avoids heavyweight calls like
-        memory info, temperature, compute mode, and process lists which are
-        not consumed by the tracker's monitoring loop.
-        """
-        return {
-            "gpu_index": self.gpu_index,
-            "gpu_utilization": self._get_gpu_utilization(),
-        }
-
     def _to_utf8(self, str_or_bytes) -> Any:
         if hasattr(str_or_bytes, "decode"):
             return str_or_bytes.decode("utf-8", errors="replace")

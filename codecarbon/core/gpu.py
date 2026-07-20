@@ -137,23 +137,6 @@ class AllGPUDevices:
             logger.warning("Failed to retrieve gpu information", exc_info=True)
             return []
 
-    def get_gpu_utilization_list(self) -> List:
-        """Lightweight alternative to :meth:`get_gpu_details` for the 1s
-        monitoring hot path. Returns only ``gpu_index`` and
-        ``gpu_utilization`` per device, skipping heavyweight queries
-        (memory, temperature, compute mode, process lists).
-
-        >>> get_gpu_utilization_list()
-        [
-            {"gpu_index": 0, "gpu_utilization": 0},
-        ]
-        """
-        try:
-            return [d.get_gpu_utilization_lightweight() for d in self.devices]
-        except Exception:
-            logger.warning("Failed to retrieve gpu utilization", exc_info=True)
-            return []
-
     def get_delta(self, last_duration: Time) -> List:
         """Get difference since last time this function was called
         >>> get_delta()

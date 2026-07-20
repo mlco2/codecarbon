@@ -1245,16 +1245,15 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.append(psutil.virtual_memory().percent)
         self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
 
-        # Collect GPU utilization metrics (lightweight path — skips
-        # heavyweight calls like process lists, memory, temperature).
+        # Collect GPU utilization metrics
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
-                for gpu_detail in hardware.devices.get_gpu_utilization_list():
-                    resolved_gpu_index = gpu_detail.get("gpu_index")
+                gpu_details = hardware.devices.get_gpu_details()
+                for gpu_index, gpu_detail in enumerate(gpu_details):
+                    resolved_gpu_index = gpu_detail.get("gpu_index", gpu_index)
                     if (
-                        resolved_gpu_index is not None
-                        and resolved_gpu_index in gpu_ids_to_monitor
+                        resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
                         self._gpu_utilization_history.append(

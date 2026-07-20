@@ -189,41 +189,6 @@ class TestGpu(FakeGPUEnv):
 
         assert alldevices.get_gpu_details() == self.expected
 
-    def test_gpu_utilization_list(self):
-        from codecarbon.core.gpu import AllGPUDevices
-
-        alldevices = AllGPUDevices()
-        result = alldevices.get_gpu_utilization_list()
-
-        assert len(result) == 2
-        assert result[0] == {"gpu_index": 0, "gpu_utilization": 96}
-        assert result[1] == {"gpu_index": 1, "gpu_utilization": 0}
-
-    def test_gpu_utilization_lightweight(self):
-        from codecarbon.core.gpu_device import GPUDevice
-        from codecarbon.core.gpu_nvidia import NvidiaGPUDevice
-
-        device: GPUDevice = NvidiaGPUDevice(handle="handle_0", gpu_index=0)
-        result = device.get_gpu_utilization_lightweight()
-
-        assert result == {"gpu_index": 0, "gpu_utilization": 96}
-
-    def test_gpu_utilization_list_empty_on_exception(self):
-        import pynvml
-
-        from codecarbon.core.gpu import AllGPUDevices
-
-        def raise_exception(handle):
-            raise pynvml.NVMLError("Simulated NVML error")
-
-        original = pynvml.nvmlDeviceGetUtilizationRates
-        try:
-            pynvml.nvmlDeviceGetUtilizationRates = raise_exception
-            alldevices = AllGPUDevices()
-            assert alldevices.get_gpu_utilization_list() == []
-        finally:
-            pynvml.nvmlDeviceGetUtilizationRates = original
-
     def test_gpu_no_power_limit(self):
         import pynvml
 

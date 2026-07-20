@@ -253,11 +253,6 @@ TWO_GPU_DETAILS_RESPONSE = [
     },
 ]
 
-TWO_GPU_UTILIZATION_RESPONSE = [
-    {"gpu_index": 0, "gpu_utilization": 0},
-    {"gpu_index": 1, "gpu_utilization": 0},
-]
-
 TWO_GPU_DETAILS_RESPONSE_HANDLES = {
     "handle_0": {
         "name": "Tesla V100-SXM2-16GB",
@@ -268,7 +263,6 @@ TWO_GPU_DETAILS_RESPONSE_HANDLES = {
         "power_limit": 300000,
         "total_energy_consumption": 149709,
         "gpu_utilization": 0,
-        "utilization_rate": real_pynvml.c_nvmlUtilization_t(0, 100),
         "compute_mode": 0,
         "compute_processes": [],
         "graphics_processes": [],
@@ -282,7 +276,6 @@ TWO_GPU_DETAILS_RESPONSE_HANDLES = {
         "power_limit": 300000,
         "total_energy_consumption": 149709,
         "gpu_utilization": 0,
-        "utilization_rate": real_pynvml.c_nvmlUtilization_t(0, 100),
         "compute_mode": 0,
         "compute_processes": [],
         "graphics_processes": [],
