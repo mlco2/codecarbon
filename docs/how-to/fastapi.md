@@ -138,7 +138,7 @@ By default, CodeCarbon measures **after** the response is sent. Clients see only
 | `response_headers=True` | Measure **before** `http.response.start` | Clients need `X-CodeCarbon-*` headers |
 | `create_codecarbon_lifespan` | Same as above + one shared tracker | Production (recommended) |
 
-### Benchmark results (HF embedder)
+### Measured overhead (HF embedder)
 
 Measured on **Darwin arm64**, Python 3.12 (**2026-07-20**), serving [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2) over uvicorn: 50 timed requests after 5 warmup. Tracker `stop()` is mocked at ~20 ms so the table isolates middleware path cost (not Apple Silicon live-sampler lock time).
 
@@ -157,34 +157,6 @@ Measured on **Darwin arm64**, Python 3.12 (**2026-07-20**), serving [`paraphrase
 - **`save_to_api=True`:** uploads after the response; adds network time on top of deferred cost, not on the HTTP critical path for deferred mode.
 
 Prefer deferred + logging/API unless clients need response headers.
-
-### Reproduce locally
-
-HF embedder (same setup as the table):
-
-```console
-uv run --extra fastapi --with uvicorn --with sentence-transformers --with torch \
-  python scripts/benchmark_fastapi_middleware.py \
-  --workload hf-embedder --network --with-headers \
-  --requests 50 --warmup 5 --concurrency 4 --no-verify-logging
-```
-
-Quick smoke (noop handler, no ML model):
-
-```console
-uv run --extra fastapi python scripts/benchmark_fastapi_middleware.py \
-  --quick --with-headers --no-verify-logging
-```
-
-Optional Logfire comparison on the embedder workload:
-
-```console
-uv run --extra fastapi --with 'logfire[fastapi]' --with uvicorn \
-  --with sentence-transformers --with torch \
-  python scripts/benchmark_fastapi_middleware.py \
-  --workload hf-embedder --network --with-logfire --with-headers \
-  --requests 50 --warmup 5 --concurrency 4 --no-verify-logging
-```
 
 ## `include` and `exclude`
 
