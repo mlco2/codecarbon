@@ -220,9 +220,10 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         # Nordic regions use static emission factors from the JSON file
-        # SE2 has an emission factor specified in nordic_country_energy_mix.json
+        # SE2 has an emission factor specified in nordic_emissions.json
+        # Updated to 20.1 gCO2eq/kWh (2025 per-zone derived value, Khepri)
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.018, places=6)
+        self.assertAlmostEqual(emissions, 0.0201, places=6)
 
     def test_get_emissions_PRIVATE_INFRA_NORDIC_FINLAND(self):
         # WHEN
