@@ -911,6 +911,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tracking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Tracking Mode
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#access-internet-through-proxy-server" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2112,6 +2123,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tracking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Tracking Mode
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#access-internet-through-proxy-server" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2310,6 +2332,25 @@ and also periodically during long runs (every
 <p>The old parameter name <code>co2_signal_api_token</code> still works for backward
 compatibility but is deprecated and will be removed in a future version.
 Use <code>electricitymaps_api_token</code> instead.</p>
+</div>
+<h2 id="tracking-mode">Tracking Mode<a class="headerlink" href="#tracking-mode" title="Permanent link">&para;</a></h2>
+<p>The <code>tracking_mode</code> parameter controls how CodeCarbon measures power consumption. It accepts two values:</p>
+<ul>
+<li><strong><code>"machine"</code></strong> (default): Measures power for the entire machine — total RAM in use and total CPU load across all processes.</li>
+<li><strong><code>"process"</code></strong>: Isolates measurements to the tracked process — only the process's RAM usage and its share of CPU time are used to estimate power.</li>
+</ul>
+<p>This setting affects <strong>RAM and CPU</strong> measurements. GPU power is always measured at the device level regardless of tracking mode.</p>
+<p>Set it in your config file:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[codecarbon]</span>
+<span class="na">tracking_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">process</span>
+</code></pre></div>
+<p>Or in code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">tracking_mode</span><span class="o">=</span><span class="s2">&quot;process&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>"process"</code> mode gives a lower-bound estimate of your code's footprint.
+<code>"machine"</code> mode is more conservative and accounts for all activity on the system.</p>
 </div>
 <h2 id="access-internet-through-proxy-server">Access internet through proxy server<a class="headerlink" href="#access-internet-through-proxy-server" title="Permanent link">&para;</a></h2>
 <p>If you need a proxy to access internet, which is needed to call a Web
