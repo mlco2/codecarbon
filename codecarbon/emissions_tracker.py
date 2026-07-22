@@ -414,6 +414,7 @@ class BaseEmissionsTracker(ABC):
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
+        csv_run_name: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
         force_cpu_power: Optional[int] = _sentinel,
         force_ram_power: Optional[int] = _sentinel,
@@ -492,6 +493,11 @@ class BaseEmissionsTracker(ABC):
         :param on_csv_write: When calling tracker.flush() manually: "update" to overwrite
                              the existing run_id row, or "append" to add a new row to the
                              CSV file. Defaults to "append".
+        :param csv_run_name: Optional CSV filename for interval measurement export.
+                             When set, CodeCarbon appends a row on the same cadence as
+                             API/Prometheus (``api_call_interval * measure_power_secs``).
+                             Use ``"auto"`` (or an empty string) to name the file
+                             ``emissions_<run_id>.csv``. Defaults to None (disabled).
         :param logger_preamble: String to systematically include in the logger.
                                 messages. Defaults to "".
         :param force_cpu_power: Force the CPU max power consumption in watts. Use this if you
@@ -578,6 +584,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
+        self._set_from_conf(csv_run_name, "csv_run_name", None)
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
@@ -609,7 +616,7 @@ class BaseEmissionsTracker(ABC):
         """
         methods = set(self._output_methods) if self._output_methods else set()
 
-        if not methods and not self._emissions_endpoint:
+        if not methods and not self._emissions_endpoint and self._csv_run_name is None:
             self.run_id = uuid.uuid4()
             return
 
@@ -620,15 +627,15 @@ class BaseEmissionsTracker(ABC):
         from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
 
         methods = set(self._output_methods) if self._output_methods else set()
+        csv_file_handler = None
 
         if OutputMethod.CSV in methods:
-            self._output_handlers.append(
-                FileOutput(
-                    self._output_file,
-                    self._output_dir,
-                    self._on_csv_write,
-                )
+            csv_file_handler = FileOutput(
+                self._output_file,
+                self._output_dir,
+                self._on_csv_write,
             )
+            self._output_handlers.append(csv_file_handler)
 
         if OutputMethod.LOGGER in methods:
             self._output_handlers.append(self._logging_logger)
@@ -665,6 +672,54 @@ class BaseEmissionsTracker(ABC):
 
         if OutputMethod.BOAMPS in methods:
             self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
+
+        self._init_interval_csv_output(csv_file_handler)
+
+    def _resolve_csv_run_filename(self) -> Optional[str]:
+        """Return the interval CSV filename, or None when interval export is disabled."""
+        if self._csv_run_name is None:
+            return None
+        name = self._csv_run_name.strip() if isinstance(self._csv_run_name, str) else ""
+        if name in ("", "auto"):
+            return f"emissions_{self.run_id}.csv"
+        return name
+
+    def _init_interval_csv_output(self, csv_file_handler) -> None:
+        """
+        Opt-in interval CSV export (#467): write measurement rows on the same
+        cadence as API/Prometheus live outputs.
+        """
+        from codecarbon.output_methods.file import FileOutput
+
+        interval_file_name = self._resolve_csv_run_filename()
+        if interval_file_name is None:
+            return
+
+        if (
+            csv_file_handler is not None
+            and csv_file_handler.output_file_name == interval_file_name
+        ):
+            csv_file_handler.enable_live_out = True
+            logger.info(
+                "Interval CSV export enabled on %s "
+                "(every api_call_interval * measure_power_secs)",
+                interval_file_name,
+            )
+            return
+
+        self._output_handlers.append(
+            FileOutput(
+                interval_file_name,
+                self._output_dir,
+                on_csv_write="append",
+                enable_live_out=True,
+            )
+        )
+        logger.info(
+            "Interval CSV export enabled: %s "
+            "(every api_call_interval * measure_power_secs)",
+            interval_file_name,
+        )
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """
@@ -1495,6 +1550,7 @@ def track_emissions(
     tracking_mode: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
+    csv_run_name: Optional[str] = _sentinel,
     logger_preamble: Optional[str] = _sentinel,
     offline: Optional[bool] = _sentinel,
     country_iso_code: Optional[str] = _sentinel,
@@ -1555,6 +1611,8 @@ def track_emissions(
                       Defaults to "info".
     :param on_csv_write: When calling tracker.flush() manually: "update" to overwrite the
                          existing run_id row, or "append" to add a new row. Defaults to "append".
+    :param csv_run_name: Optional CSV filename for interval measurement export. See
+                         EmissionsTracker. Defaults to None (disabled).
     :param logger_preamble: String to systematically include in the logger.
                             messages. Defaults to "".
     :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
@@ -1633,6 +1691,7 @@ def track_emissions(
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
+                    csv_run_name=csv_run_name,
                     logger_preamble=logger_preamble,
                     country_iso_code=country_iso_code,
                     region=region,
@@ -1674,6 +1733,7 @@ def track_emissions(
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
+                    csv_run_name=csv_run_name,
                     logger_preamble=logger_preamble,
                     force_cpu_power=force_cpu_power,
                     force_ram_power=force_ram_power,
