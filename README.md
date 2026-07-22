@@ -184,3 +184,11 @@ Now CodeCarbon is supported by [**Code Carbon**](https://www.helloasso.com/assoc
 ### Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=mlco2/codecarbon,lfwa/carbontracker,sb-ai-lab/Eco2AI,fvaleye/tracarbon,Breakend/experiment-impact-tracker&type=Date)](https://star-history.com/#mlco2/codecarbon&lfwa/carbontracker&sb-ai-lab/Eco2AI&fvaleye/tracarbon&Breakend/experiment-impact-tracker&Date)
+
+## Setup
+
+Copy the example environment file and adjust values:
+
+```bash
+cp .env.example .env
+```
