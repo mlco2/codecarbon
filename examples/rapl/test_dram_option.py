@@ -82,8 +82,7 @@ print(
 print("\n" + "=" * 80)
 print("💡 Analysis")
 print("=" * 80)
-print(
-    f"""
+print(f"""
 ✓ CPU-only (default): Most accurate for CPU power tracking
   - Matches CPU TDP specs (15W for i7-7600U)
   - Best for comparing CPU performance/efficiency
@@ -102,5 +101,4 @@ print(
   - Other platform components
 
   RAPL can only measure CPU + DRAM on your system.
-"""
-)
+""")
