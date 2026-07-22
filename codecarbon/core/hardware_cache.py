@@ -238,6 +238,7 @@ def clear_cache() -> None:
         ("codecarbon.core.gpu_amd", "clear_rocm_system_cache"),
         ("codecarbon.core.cpu", "clear_powergadget_cache"),
         ("codecarbon.core.powermetrics", "clear_powermetrics_cache"),
+        ("codecarbon.core.windows_emi", "clear_emi_cache"),
     ):
         mod = sys.modules.get(mod_name)
         if mod is not None:

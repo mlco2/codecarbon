@@ -114,8 +114,7 @@ def _setup(settings: Settings):
         },
     )
 
-    print(
-        f"""
+    print(f"""
 You might need to add the following entries to your /etc/hosts:
 local_ip  {settings.hostname} {settings.fief_hostname} webapp.local
 
@@ -126,8 +125,7 @@ You might be able to get it with `ip a | grep 192.168 | grep -v br-`
 Useful informations:
 Fief admin username: admin@mydomain.com
 Fief admin password: {settings.fief_admin_password}
-    """
-    )
+    """)
 
     print("To start:")
     print(
@@ -252,13 +250,11 @@ def configure_fief():
         },
     ).json()
     cli_client_id = cli_client["id"]
-    print(
-        f"""Run the following setup to use the cli:
+    print(f"""Run the following setup to use the cli:
     export AUTH_SERVER_URL=http://{fief_settings.fief_domain}
     export API_URL=http://{carbonserver_settings.app_hostname}/api
     export AUTH_CLIENT_ID={cli_client_id}
-    """
-    )
+    """)
 
 
 @app.command()
@@ -325,30 +321,24 @@ def start(
             cwd="./",
         )
 
-    print(
-        """
+    print("""
 =========================================
 Your codecarbon server is now running !
 You can access it:
 http://codecarbon.local
-"""
-    )
+""")
     if fief:
-        print(
-            """
+        print("""
 The fief server is running:
 http://fief.localhost
-"""
-        )
-    print(
-        """
+""")
+    print("""
 You can run the webapp locally for local development on the port 3000 and access it:
 http://webapp.local
 
 The registration code for new users can be found by running:
 docker logs fief_fief-worker_1
-          """
-    )
+          """)
 
 
 @app.command()
