@@ -560,6 +560,60 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(file_handlers), 1)
         self.assertTrue(file_handlers[0].enable_live_out)
 
+    def test_csv_run_name_empty_string_uses_run_id(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        from codecarbon.output_methods.file import FileOutput
+
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.CSV],
+            csv_run_name="",
+            allow_multiple_runs=True,
+        )
+
+        expected = f"emissions_{tracker.run_id}.csv"
+        live_handlers = [
+            h
+            for h in tracker._output_handlers
+            if isinstance(h, FileOutput) and h.enable_live_out
+        ]
+        self.assertEqual(len(live_handlers), 1)
+        self.assertEqual(live_handlers[0].output_file_name, expected)
+
+    def test_csv_run_name_default_keeps_csv_final_only(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        from codecarbon.output_methods.file import FileOutput
+
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.CSV],
+            allow_multiple_runs=True,
+        )
+
+        file_handlers = [
+            h for h in tracker._output_handlers if isinstance(h, FileOutput)
+        ]
+        self.assertEqual(len(file_handlers), 1)
+        self.assertFalse(file_handlers[0].enable_live_out)
+
     def test_output_methods_parsed_from_config_string(
         self,
         mock_cli_setup,

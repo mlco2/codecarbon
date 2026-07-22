@@ -616,11 +616,7 @@ class BaseEmissionsTracker(ABC):
         """
         methods = set(self._output_methods) if self._output_methods else set()
 
-        if (
-            not methods
-            and not self._emissions_endpoint
-            and self._csv_run_name is None
-        ):
+        if not methods and not self._emissions_endpoint and self._csv_run_name is None:
             self.run_id = uuid.uuid4()
             return
 
@@ -683,11 +679,7 @@ class BaseEmissionsTracker(ABC):
         """Return the interval CSV filename, or None when interval export is disabled."""
         if self._csv_run_name is None:
             return None
-        name = (
-            self._csv_run_name.strip()
-            if isinstance(self._csv_run_name, str)
-            else ""
-        )
+        name = self._csv_run_name.strip() if isinstance(self._csv_run_name, str) else ""
         if name in ("", "auto"):
             return f"emissions_{self.run_id}.csv"
         return name
@@ -728,6 +720,7 @@ class BaseEmissionsTracker(ABC):
             "(every api_call_interval * measure_power_secs)",
             interval_file_name,
         )
+
     def get_detected_hardware(self) -> Dict[str, Any]:
         """
         Get the detected hardware.
