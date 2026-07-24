@@ -32,7 +32,7 @@ click==8.3.1
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==48.0.1
+cryptography==49.0.0
     # via
     #   authlib
     #   joserfc
@@ -109,7 +109,7 @@ psutil==6.1.1
     # via carbonserver (carbonserver/pyproject.toml)
 psycopg2-binary==2.9.11
     # via carbonserver (carbonserver/pyproject.toml)
-pyasn1==0.6.3
+pyasn1==0.6.4
     # via
     #   python-jose
     #   rsa
