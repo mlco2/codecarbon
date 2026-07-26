@@ -216,12 +216,15 @@ are needed.
 as the Surface Book). On virtual machines or older Windows versions,
 CodeCarbon falls back to the CPU-load estimation mode described below.
 
-*Note*: as on Linux, only package channels are measured (the `PP0`/`PP1`
-subdomains are subsets of the package and would be counted twice). On
-multi-die CPUs (e.g. AMD Ryzen Threadripper) every die mirrors the same
-socket-wide package counter, so CodeCarbon keeps only one of them:
-summing them would multiply the reported CPU power by the number of
-dies. The `DRAM` channels are excluded as well, unless the
+*Note*: as on Linux, only package channels are measured. Windows exposes
+one EMI device per metered component, so a CPU shows up as one device per
+core (`RAPL_Package0_Core3_CORE`) next to the device holding the package
+channel (`RAPL_Package0_PKG`). Those per-core channels, like `PP0`/`PP1`,
+are subdomains of the package: measuring both would count the same energy
+twice, so CodeCarbon keeps the package channels only. On multi-die CPUs
+where every die mirrors the same socket-wide counter, the duplicates are
+detected and dropped as well. The `DRAM` channels are excluded too, unless
+the
 [`rapl_include_dram`](../how-to/configuration.md#including-dram-in-the-cpu-measurement)
 option is enabled.
 

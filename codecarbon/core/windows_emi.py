@@ -250,32 +250,56 @@ def _read_device_measurements(
     return parse_measurements(raw)
 
 
-def select_channel_indices(
-    channel_names: List[str], include_dram: bool = False
-) -> List[int]:
-    """
-    Select the channels to monitor among the ones exposed by a device.
+def _is_package_channel(name: str) -> bool:
+    return "pkg" in name.lower()
 
-    Package channels (e.g. ``RAPL_Package0_PKG``) are preferred: they measure
-    the whole CPU package, while PP0/PP1 are subdomains of the package and
-    would double-count. If no package channel is identified, all channels are
-    used, as with unknown RAPL domains on Linux.
+
+def _is_dram_channel(name: str) -> bool:
+    return "dram" in name.lower()
+
+
+def select_channels(
+    device_channels: List[Tuple[str, List[str]]], include_dram: bool = False
+) -> Dict[str, List[int]]:
     """
-    selected = [i for i, name in enumerate(channel_names) if "pkg" in name.lower()]
-    if not selected:
-        if len(channel_names) == 1:
-            selected = [0]
-        else:
-            logger.warning(
-                "\tEMI - No package channel identified among %s, using all channels",
-                channel_names,
-            )
-            return list(range(len(channel_names)))
-    if include_dram:
-        selected += [
-            i for i, name in enumerate(channel_names) if "dram" in name.lower()
-        ]
-    return selected
+    Select the channels to monitor among all the ones exposed by the machine.
+
+    The selection has to be made globally, over every device at once: Windows
+    exposes one EMI device per metered component, so a CPU typically appears as
+    one device per core (``RAPL_Package0_Core3_CORE``) alongside the device
+    holding the package channel (``RAPL_Package0_PKG``). Package channels
+    measure the whole CPU package, while the CORE/PP0/PP1 channels are
+    subdomains of that package: measuring both would count the same energy
+    twice.
+
+    When no package channel is exposed at all, every channel is kept, as with
+    unknown RAPL domains on Linux.
+
+    Returns a mapping of device path to the indices of its selected channels.
+    """
+    has_package = any(
+        _is_package_channel(name) for _, names in device_channels for name in names
+    )
+    if not has_package:
+        logger.warning(
+            "\tEMI - No package channel identified among %s, using all channels",
+            [name for _, names in device_channels for name in names],
+        )
+    selection: Dict[str, List[int]] = {}
+    for device_path, channel_names in device_channels:
+        selected = []
+        for index, name in enumerate(channel_names):
+            if _is_dram_channel(name):
+                keep = include_dram
+            elif has_package:
+                keep = _is_package_channel(name)
+            else:
+                keep = True
+            if keep:
+                selected.append(index)
+        if selected:
+            selection[device_path] = selected
+    return selection
 
 
 def _counters_match(first: int, second: int) -> bool:
@@ -364,6 +388,7 @@ class WindowsEMI:
                 "running on bare metal (or a Windows 10 device with metering hardware)."
             )
         logger.debug("\tEMI - Found %d energy meter device(s)", len(device_paths))
+        device_channels: List[Tuple[str, List[str]]] = []
         for device_path in device_paths:
             try:
                 channel_names = _read_device_channels(device_path)
@@ -377,11 +402,14 @@ class WindowsEMI:
                 device_path,
                 channel_names,
             )
-            selected = select_channel_indices(channel_names, self.emi_include_dram)
+            device_channels.append((device_path, channel_names))
+        selection = select_channels(device_channels, self.emi_include_dram)
+        for device_path, channel_names in device_channels:
+            selected = selection.get(device_path)
             if not selected:
                 continue
             for index in selected:
-                logger.info(
+                logger.debug(
                     "\tEMI - Monitoring channel '%s' of device %s",
                     channel_names[index],
                     device_path,
@@ -417,7 +445,7 @@ class WindowsEMI:
         for device_path, channel_names, selected in self._devices:
             for index in selected:
                 # DRAM channels are a different measurement, never a duplicate
-                if "dram" in channel_names[index].lower():
+                if _is_dram_channel(channel_names[index]):
                     continue
                 measurement = snapshot.get((device_path, index))
                 if measurement is not None:

@@ -15,7 +15,7 @@ from codecarbon.core.windows_emi import (
     is_emi_available,
     parse_channel_names,
     parse_measurements,
-    select_channel_indices,
+    select_channels,
 )
 from codecarbon.external.hardware import CPU
 
@@ -72,20 +72,53 @@ class TestEmiParsing(unittest.TestCase):
 
 class TestEmiChannelSelection(unittest.TestCase):
     def test_selects_package_channel_only(self):
-        self.assertEqual(select_channel_indices(CHANNELS), [0])
+        self.assertEqual(select_channels([("dev0", CHANNELS)]), {"dev0": [0]})
 
     def test_selects_dram_when_requested(self):
-        self.assertEqual(select_channel_indices(CHANNELS, include_dram=True), [0, 1])
+        self.assertEqual(
+            select_channels([("dev0", CHANNELS)], include_dram=True),
+            {"dev0": [0, 1]},
+        )
 
     def test_single_unknown_channel_is_used(self):
-        self.assertEqual(select_channel_indices(["CPU Meter"]), [0])
+        self.assertEqual(select_channels([("dev0", ["CPU Meter"])]), {"dev0": [0]})
 
     def test_no_package_channel_uses_all(self):
-        self.assertEqual(select_channel_indices(["a", "b"]), [0, 1])
+        self.assertEqual(select_channels([("dev0", ["a", "b"])]), {"dev0": [0, 1]})
 
     def test_multiple_packages(self):
         names = ["RAPL_Package0_PKG", "RAPL_Package1_PKG", "RAPL_Package0_PP0"]
-        self.assertEqual(select_channel_indices(names), [0, 1])
+        self.assertEqual(select_channels([("dev0", names)]), {"dev0": [0, 1]})
+
+    def test_per_core_devices_are_ignored_when_a_package_exists(self):
+        """
+        Windows exposes one device per core: those CORE channels are subdomains
+        of the package and must not be added to it.
+        """
+        device_channels = [
+            ("core6", ["RAPL_Package0_Core6_CORE"]),
+            ("package", ["RAPL_Package0_PKG", "RAPL_Package0_Core0_CORE"]),
+            ("core1", ["RAPL_Package0_Core1_CORE"]),
+        ]
+        self.assertEqual(select_channels(device_channels), {"package": [0]})
+
+    def test_per_core_devices_are_used_without_a_package(self):
+        device_channels = [
+            ("core0", ["RAPL_Package0_Core0_CORE"]),
+            ("core1", ["RAPL_Package0_Core1_CORE"]),
+        ]
+        self.assertEqual(select_channels(device_channels), {"core0": [0], "core1": [0]})
+
+    def test_dram_only_device_is_dropped(self):
+        device_channels = [
+            ("package", ["RAPL_Package0_PKG"]),
+            ("dram", ["RAPL_Package0_DRAM"]),
+        ]
+        self.assertEqual(select_channels(device_channels), {"package": [0]})
+        self.assertEqual(
+            select_channels(device_channels, include_dram=True),
+            {"package": [0], "dram": [0]},
+        )
 
 
 class TestFindMirroredChannels(unittest.TestCase):
