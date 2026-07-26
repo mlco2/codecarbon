@@ -138,6 +138,24 @@ def test_spec_from_hardware_intel_rapl_cpu():
     assert spec["rapl_dir"] == "/sys/class/powercap/intel-rapl/subsystem"
 
 
+def test_spec_from_hardware_windows_emi_cpu():
+    cpu_hw = type(
+        "CPU",
+        (),
+        {
+            "_mode": "windows_emi",
+            "_model": "Intel CPU",
+            "_tdp": 65,
+            "_tracking_mode": "machine",
+            "_intel_interface": SimpleNamespace(emi_include_dram=True),
+        },
+    )()
+    spec = hardware_cache._spec_from_hardware(cpu_hw)
+    assert spec["rapl_include_dram"] is True
+    assert spec["rapl_prefer_psys"] is False
+    assert "rapl_dir" not in spec
+
+
 def test_spec_and_rebuild_roundtrip_for_apple_chip():
     spec = {"kind": "apple_chip", "model": "Apple M1", "chip_part": "CPU"}
     fake_chip = SimpleNamespace(_model="Apple M1")

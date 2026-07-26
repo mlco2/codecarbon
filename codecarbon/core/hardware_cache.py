@@ -134,6 +134,10 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
             spec["rapl_include_dram"] = getattr(intel, "rapl_include_dram", False)
             spec["rapl_prefer_psys"] = getattr(intel, "rapl_prefer_psys", False)
             spec["rapl_dir"] = getattr(intel, "_lin_rapl_dir", DEFAULT_RAPL_DIR)
+        elif hw._mode == "windows_emi" and hasattr(hw, "_intel_interface"):
+            spec["rapl_include_dram"] = getattr(
+                hw._intel_interface, "emi_include_dram", False
+            )
         return spec
     if kind == HardwareKind.APPLE_CHIP:
         return {
