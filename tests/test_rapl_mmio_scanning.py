@@ -13,6 +13,46 @@ import pytest
 from codecarbon.core.cpu import IntelRAPL, is_rapl_available
 
 
+@pytest.mark.parametrize(
+    ("energies", "expected_count"),
+    [((1000000, 1000000), 1), ((1000000, 2000000), 2), ((0, 0), 2)],
+)
+def test_rapl_start_deduplicates_only_nonzero_mirrored_package_counters(
+    tmp_path, monkeypatch, energies, expected_count
+):
+    monkeypatch.setattr(sys, "platform", "linux")
+    provider = tmp_path / "intel-rapl"
+    provider.mkdir()
+    for index, energy in enumerate(energies):
+        domain = provider / f"intel-rapl:{index}"
+        domain.mkdir()
+        (domain / "name").write_text(f"package-{index}-die-0")
+        (domain / "energy_uj").write_text(str(energy))
+        (domain / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+
+    assert len(rapl._rapl_files) == expected_count
+
+
+def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+    provider = tmp_path / "intel-rapl"
+    provider.mkdir()
+    for index, name in enumerate(("package-0-die-0", "package-0-die-1", "dram")):
+        domain = provider / f"intel-rapl:{index}"
+        domain.mkdir()
+        (domain / "name").write_text(name)
+        (domain / "energy_uj").write_text("1000000")
+        (domain / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path), rapl_include_dram=True)
+    rapl.start()
+
+    assert len(rapl._rapl_files) == 2
+
+
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_multiple_rapl_providers_with_mixed_permissions(tmp_path):
     """
@@ -188,14 +228,14 @@ def test_rapl_deduplication_prefers_mmio(tmp_path):
 
     # Verify package-0 is from MMIO (newer interface)
     package_files = [f for f in rapl._rapl_files if "Processor Energy" in f.name]
-    assert (
-        len(package_files) == 1
-    ), "Should have exactly one package domain after deduplication"
+    assert len(package_files) == 1, (
+        "Should have exactly one package domain after deduplication"
+    )
 
     # The package file should be from intel-rapl-mmio
-    assert (
-        "intel-rapl-mmio" in package_files[0].path
-    ), f"Expected MMIO path, got: {package_files[0].path}"
+    assert "intel-rapl-mmio" in package_files[0].path, (
+        f"Expected MMIO path, got: {package_files[0].path}"
+    )
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
@@ -247,17 +287,19 @@ def test_psys_not_preferred_when_package_available(tmp_path):
 
     # Should have 1 RAPL file: package-0 (not psys)
     # Package domains are preferred over psys for reliability
-    assert (
-        len(rapl._rapl_files) == 1
-    ), f"Expected 1 file (package), got {len(rapl._rapl_files)}"
+    assert len(rapl._rapl_files) == 1, (
+        f"Expected 1 file (package), got {len(rapl._rapl_files)}"
+    )
 
     # Verify it's the package domain (not psys)
     assert (
         "Processor Energy" in rapl._rapl_files[0].name
         and "intel-rapl:0" in rapl._rapl_files[0].path
-    ), f"Expected package-0 domain, got: {rapl._rapl_files[0].name} at {rapl._rapl_files[0].path}"
+    ), (
+        f"Expected package-0 domain, got: {rapl._rapl_files[0].name} at {rapl._rapl_files[0].path}"
+    )
 
     # Verify psys is NOT used (should be logged as detected but not used)
-    assert (
-        "intel-rapl:1" not in rapl._rapl_files[0].path
-    ), "psys should not be used when package domains are available"
+    assert "intel-rapl:1" not in rapl._rapl_files[0].path, (
+        "psys should not be used when package domains are available"
+    )

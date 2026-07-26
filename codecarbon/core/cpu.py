@@ -6,6 +6,7 @@ https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget
 
 from __future__ import annotations
 
+import math
 import os
 import re
 import shutil
@@ -872,8 +873,30 @@ class IntelRAPL:
         """
         Starts monitoring CPU energy consumption.
         """
+        retained_rapl_files = []
+        observed_energies = []
         for rapl_file in self._rapl_files:
             rapl_file.start()
+            energy = float(rapl_file.last_energy)
+            is_dram = "dram" in rapl_file.name.lower()
+            is_mirrored = (
+                energy
+                and not is_dram
+                and any(
+                    math.isclose(energy, observed_energy, rel_tol=1e-6)
+                    for observed_energy in observed_energies
+                )
+            )
+            if is_mirrored:
+                logger.warning(
+                    "\tRAPL - Ignoring mirrored energy counter at %s to avoid double-counting",
+                    rapl_file.path,
+                )
+                continue
+            retained_rapl_files.append(rapl_file)
+            if energy and not is_dram:
+                observed_energies.append(energy)
+        self._rapl_files = retained_rapl_files
 
 
 class TDP:

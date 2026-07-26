@@ -124,7 +124,7 @@ and consistent measurements:
 -   `core` reports very low energy values
 -   Unclear if `core` is included in `package` (vendor documentation is
     sparse)
--   Multiple dies may report as separate packages (e.g., Threadripper)
+-   On some multi-die CPUs (e.g., Threadripper), separate package domains mirror the same socket-wide counter. CodeCarbon keeps one mirrored counter so CPU energy is not multiplied by the number of dies.
 
 **What RAPL Does NOT Measure**:
 
