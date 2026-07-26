@@ -91,15 +91,15 @@ class TestEmiChannelSelection(unittest.TestCase):
 class TestFindMirroredChannels(unittest.TestCase):
     def test_identical_counters_are_mirrored(self):
         channels = [(("dev0", 0), 5_000_000_000), (("dev1", 0), 5_000_000_000)]
-        self.assertEqual(find_mirrored_channels(channels), [("dev1", 0)])
+        self.assertEqual(find_mirrored_channels(channels), {("dev1", 0): ("dev0", 0)})
 
     def test_negligible_difference_is_mirrored(self):
         channels = [(("dev0", 0), 1_000_000_000_000), (("dev1", 0), 1_000_000_100_000)]
-        self.assertEqual(find_mirrored_channels(channels), [("dev1", 0)])
+        self.assertEqual(find_mirrored_channels(channels), {("dev1", 0): ("dev0", 0)})
 
     def test_distinct_counters_are_kept(self):
         channels = [(("dev0", 0), 5_000_000_000), (("dev1", 0), 4_000_000_000)]
-        self.assertEqual(find_mirrored_channels(channels), [])
+        self.assertEqual(find_mirrored_channels(channels), {})
 
     def test_only_the_first_channel_is_kept(self):
         channels = [
@@ -107,11 +107,14 @@ class TestFindMirroredChannels(unittest.TestCase):
             (("dev0", 1), 7_000_000_000),
             (("dev0", 2), 7_000_000_000),
         ]
-        self.assertEqual(find_mirrored_channels(channels), [("dev0", 1), ("dev0", 2)])
+        self.assertEqual(
+            find_mirrored_channels(channels),
+            {("dev0", 1): ("dev0", 0), ("dev0", 2): ("dev0", 0)},
+        )
 
     def test_empty_counters_are_ignored(self):
         channels = [(("dev0", 0), 0), (("dev1", 0), 0)]
-        self.assertEqual(find_mirrored_channels(channels), [])
+        self.assertEqual(find_mirrored_channels(channels), {})
 
 
 @mock.patch("codecarbon.core.windows_emi.list_emi_device_paths", return_value=["dev0"])
@@ -219,7 +222,7 @@ class TestMultiDieDeduplication(unittest.TestCase):
     package counter on every die: summing them would multiply the CPU power.
     """
 
-    def test_mirrored_channels_are_dropped_at_start(self, mock_channels, mock_paths):
+    def test_mirrored_channels_are_flagged_at_start(self, mock_channels, mock_paths):
         emi = WindowsEMI()
         self.assertEqual(len(emi._devices), 2)
         with mock.patch(
@@ -228,7 +231,69 @@ class TestMultiDieDeduplication(unittest.TestCase):
         ):
             emi.start()
 
+        # Flagged, hence left out of the measurement, but not dropped until an
+        # interval has confirmed that both counters accumulate identically
+        self.assertEqual(emi._mirrored_candidates, {("die1", 0): ("die0", 0)})
+        self.assertEqual(len(emi._devices), 2)
+
+    def test_mirrored_channels_are_dropped_once_confirmed(
+        self, mock_channels, mock_paths
+    ):
+        emi = WindowsEMI()
+        with mock.patch(
+            "codecarbon.core.windows_emi._read_device_measurements",
+            side_effect=[
+                [(5_000_000_000, 0)],
+                [(5_000_000_000, 0)],
+                [(6_000_000_000, 10_000_000)],
+                [(6_000_000_000, 10_000_000)],
+            ],
+        ):
+            emi.start()
+            emi.get_cpu_details(Time(seconds=1))
+
+        self.assertEqual(emi._mirrored_candidates, {})
         self.assertEqual(emi._devices, [("die0", PACKAGE_CHANNEL, [0])])
+
+    def test_flagged_channel_stays_pending_until_conclusive(
+        self, mock_channels, mock_paths
+    ):
+        emi = WindowsEMI()
+        with mock.patch(
+            "codecarbon.core.windows_emi._read_device_measurements",
+            side_effect=[
+                [(5_000_000_000, 0)],
+                [(5_000_000_000, 0)],
+                # Neither counter moved: nothing can be concluded yet
+                [(5_000_000_000, 10_000_000)],
+                [(5_000_000_000, 10_000_000)],
+            ],
+        ):
+            emi.start()
+            emi.get_cpu_details(Time(seconds=1))
+
+        self.assertEqual(emi._mirrored_candidates, {("die1", 0): ("die0", 0)})
+        self.assertEqual(len(emi._devices), 2)
+
+    def test_independent_meter_is_restored(self, mock_channels, mock_paths):
+        emi = WindowsEMI()
+        with mock.patch(
+            "codecarbon.core.windows_emi._read_device_measurements",
+            side_effect=[
+                # Both counters happen to be equal at the initial snapshot...
+                [(5_000_000_000, 0)],
+                [(5_000_000_000, 0)],
+                # ...but they accumulate energy independently
+                [(6_000_000_000, 10_000_000)],
+                [(5_500_000_000, 10_000_000)],
+            ],
+        ):
+            emi.start()
+            details = emi.get_cpu_details(Time(seconds=1))
+
+        self.assertEqual(emi._mirrored_candidates, {})
+        self.assertEqual(len(emi._devices), 2)
+        self.assertIn("Processor Power Delta_1(kWh)", details)
 
     def test_power_is_not_doubled(self, mock_channels, mock_paths):
         emi = WindowsEMI()
@@ -256,6 +321,7 @@ class TestMultiDieDeduplication(unittest.TestCase):
         ):
             emi.start()
 
+        self.assertEqual(emi._mirrored_candidates, {})
         self.assertEqual(
             emi._devices,
             [("die0", PACKAGE_CHANNEL, [0]), ("die1", PACKAGE_CHANNEL, [0])],

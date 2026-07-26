@@ -221,7 +221,9 @@ subdomains are subsets of the package and would be counted twice). On
 multi-die CPUs (e.g. AMD Ryzen Threadripper) every die mirrors the same
 socket-wide package counter, so CodeCarbon keeps only one of them:
 summing them would multiply the reported CPU power by the number of
-dies.
+dies. The `DRAM` channels are excluded as well, unless the
+[`rapl_include_dram`](../how-to/configuration.md#including-dram-in-the-cpu-measurement)
+option is enabled.
 
 Legacy support for `Intel Power Gadget` is kept for machines where it is
 still installed, but the tool [has been discontinued by

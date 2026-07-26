@@ -278,9 +278,14 @@ def select_channel_indices(
     return selected
 
 
+def _counters_match(first: int, second: int) -> bool:
+    """Tell whether two counter values are indistinguishable."""
+    return abs(first - second) <= MIRRORED_CHANNEL_TOLERANCE * max(first, second)
+
+
 def find_mirrored_channels(
     channels: List[Tuple[Tuple[str, int], int]],
-) -> List[Tuple[str, int]]:
+) -> Dict[Tuple[str, int], Tuple[str, int]]:
     """
     Identify the channels that report the same underlying energy counter.
 
@@ -290,25 +295,24 @@ def find_mirrored_channels(
     channel per die, but every die mirrors the same socket-wide RAPL counter.
     Summing those channels multiplies the reported CPU power by the number of
     dies, exactly like the ``package-0-die-0`` / ``package-0-die-1`` duplicates
-    seen through the Linux powercap interface. Two independent meters never
-    accumulate the very same picowatt-hour count, so equal counters mean
-    duplicated ones.
+    seen through the Linux powercap interface. Two independent meters are
+    extremely unlikely to hold the very same picowatt-hour count, so equal
+    counters point at duplicated ones.
 
-    Returns the keys of the channels duplicating an earlier one.
+    Returns a mapping of each duplicating channel to the earlier channel it
+    mirrors.
     """
-    references: List[int] = []
-    mirrored: List[Tuple[str, int]] = []
+    references: List[Tuple[Tuple[str, int], int]] = []
+    mirrored: Dict[Tuple[str, int], Tuple[str, int]] = {}
     for key, energy in channels:
         if energy <= 0:
             continue
-        for reference in references:
-            if abs(energy - reference) <= MIRRORED_CHANNEL_TOLERANCE * max(
-                energy, reference
-            ):
-                mirrored.append(key)
+        for reference_key, reference in references:
+            if _counters_match(energy, reference):
+                mirrored[key] = reference_key
                 break
         else:
-            references.append(energy)
+            references.append((key, energy))
     return mirrored
 
 
@@ -343,6 +347,10 @@ class WindowsEMI:
         self._devices: List[Tuple[str, List[str], List[int]]] = []
         # (device_path, channel_index) -> (absolute_energy_pwh, absolute_time_100ns)
         self._last_measurements: Dict[Tuple[str, int], Tuple[int, int]] = {}
+        # Channels that look like a duplicate of another one, but whose energy
+        # deltas have not confirmed it yet. They are left out of the
+        # measurement while pending.
+        self._mirrored_candidates: Dict[Tuple[str, int], Tuple[str, int]] = {}
         self._cpu_details: Dict = {}
         self._setup_emi()
 
@@ -398,11 +406,11 @@ class WindowsEMI:
                     snapshot[(device_path, index)] = measurements[index]
         return snapshot
 
-    def _drop_mirrored_channels(
+    def _find_mirrored_candidates(
         self, snapshot: Dict[Tuple[str, int], Tuple[int, int]]
-    ) -> None:
+    ) -> Dict[Tuple[str, int], Tuple[str, int]]:
         """
-        Stop monitoring the channels that duplicate the counter of another one,
+        Flag the channels whose counter is indistinguishable from another one's,
         as summing them would over-count the CPU power.
         """
         channels = []
@@ -415,15 +423,72 @@ class WindowsEMI:
                 if measurement is not None:
                     channels.append(((device_path, index), measurement[0]))
         if len(channels) < 2:
+            return {}
+        return find_mirrored_channels(channels)
+
+    def _channel_name(self, key: Tuple[str, int]) -> str:
+        for device_path, channel_names, _ in self._devices:
+            if device_path == key[0]:
+                return channel_names[key[1]]
+        return str(key)
+
+    def _energy_delta(
+        self,
+        key: Tuple[str, int],
+        snapshot: Dict[Tuple[str, int], Tuple[int, int]],
+    ):
+        """Energy accumulated by a channel since the previous snapshot."""
+        current = snapshot.get(key)
+        previous = self._last_measurements.get(key)
+        if current is None or previous is None:
+            return None
+        return current[0] - previous[0]
+
+    def _confirm_mirrored_channels(
+        self, snapshot: Dict[Tuple[str, int], Tuple[int, int]]
+    ) -> None:
+        """
+        Decide the fate of the channels flagged as duplicates at ``start()``.
+
+        Two independent meters could hold indistinguishable counters at the
+        single instant of the initial snapshot, so a candidate is only dropped
+        for good once it has also accumulated the very same energy over a
+        measurement interval. A candidate whose energy delta differs is a real
+        meter and is restored, and a candidate that has not accumulated
+        anything yet stays pending until an interval is conclusive.
+        """
+        if not self._mirrored_candidates:
             return
-        mirrored = set(find_mirrored_channels(channels))
-        if not mirrored:
-            return
+        pending: Dict[Tuple[str, int], Tuple[str, int]] = {}
+        confirmed: List[Tuple[str, int]] = []
+        for key, reference_key in self._mirrored_candidates.items():
+            delta = self._energy_delta(key, snapshot)
+            reference_delta = self._energy_delta(reference_key, snapshot)
+            if delta is None or reference_delta is None:
+                pending[key] = reference_key
+            elif delta <= 0 and reference_delta <= 0:
+                # Nothing was accumulated: the interval is not conclusive
+                pending[key] = reference_key
+            elif _counters_match(delta, reference_delta):
+                confirmed.append(key)
+            else:
+                logger.info(
+                    "\tEMI - Channel '%s' accumulates energy on its own, it is "
+                    "an independent meter and is measured again.",
+                    self._channel_name(key),
+                )
+        self._mirrored_candidates = pending
+        if confirmed:
+            self._drop_channels(confirmed)
+
+    def _drop_channels(self, keys: List[Tuple[str, int]]) -> None:
+        """Stop monitoring the given channels."""
+        dropped = set(keys)
         devices = []
         for device_path, channel_names, selected in self._devices:
             kept = []
             for index in selected:
-                if (device_path, index) in mirrored:
+                if (device_path, index) in dropped:
                     logger.warning(
                         "\tEMI - Channel '%s' of device %s reports the same energy "
                         "counter as another channel, it is ignored to avoid "
@@ -444,7 +509,7 @@ class WindowsEMI:
         counter snapshot.
         """
         snapshot = self._snapshot()
-        self._drop_mirrored_channels(snapshot)
+        self._mirrored_candidates = self._find_mirrored_candidates(snapshot)
         self._last_measurements = snapshot
 
     def get_cpu_details(self, duration: Time) -> Dict:
@@ -454,10 +519,14 @@ class WindowsEMI:
         """
         cpu_details: Dict = {}
         snapshot = self._snapshot()
+        self._confirm_mirrored_channels(snapshot)
         channel_index = 0
         for device_path, channel_names, selected in self._devices:
             for index in selected:
                 key = (device_path, index)
+                if key in self._mirrored_candidates:
+                    # Still suspected of duplicating another channel
+                    continue
                 current = snapshot.get(key)
                 previous = self._last_measurements.get(key)
                 energy_kwh = 0.0
