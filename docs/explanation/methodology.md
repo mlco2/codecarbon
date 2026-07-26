@@ -216,6 +216,13 @@ are needed.
 as the Surface Book). On virtual machines or older Windows versions,
 CodeCarbon falls back to the CPU-load estimation mode described below.
 
+*Note*: as on Linux, only package channels are measured (the `PP0`/`PP1`
+subdomains are subsets of the package and would be counted twice). On
+multi-die CPUs (e.g. AMD Ryzen Threadripper) every die mirrors the same
+socket-wide package counter, so CodeCarbon keeps only one of them:
+summing them would multiply the reported CPU power by the number of
+dies.
+
 Legacy support for `Intel Power Gadget` is kept for machines where it is
 still installed, but the tool [has been discontinued by
 Intel](https://github.com/mlco2/codecarbon/issues/457).

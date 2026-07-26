@@ -42,6 +42,10 @@ PWH_TO_KWH = 1e-15
 PWH_TO_WH = 1e-12
 HNS_TO_S = 1e-7
 
+# Maximum relative difference between two absolute energy counters for them to
+# be considered two views of the same hardware counter.
+MIRRORED_CHANNEL_TOLERANCE = 1e-6
+
 _GENERIC_READ = 0x80000000
 _FILE_SHARE_READ = 0x1
 _FILE_SHARE_WRITE = 0x2
@@ -274,6 +278,40 @@ def select_channel_indices(
     return selected
 
 
+def find_mirrored_channels(
+    channels: List[Tuple[Tuple[str, int], int]],
+) -> List[Tuple[str, int]]:
+    """
+    Identify the channels that report the same underlying energy counter.
+
+    ``channels`` is an ordered list of ``(key, absolute_energy_pwh)``.
+
+    Multi-die CPUs (e.g. AMD Ryzen Threadripper / EPYC) expose one package
+    channel per die, but every die mirrors the same socket-wide RAPL counter.
+    Summing those channels multiplies the reported CPU power by the number of
+    dies, exactly like the ``package-0-die-0`` / ``package-0-die-1`` duplicates
+    seen through the Linux powercap interface. Two independent meters never
+    accumulate the very same picowatt-hour count, so equal counters mean
+    duplicated ones.
+
+    Returns the keys of the channels duplicating an earlier one.
+    """
+    references: List[int] = []
+    mirrored: List[Tuple[str, int]] = []
+    for key, energy in channels:
+        if energy <= 0:
+            continue
+        for reference in references:
+            if abs(energy - reference) <= MIRRORED_CHANNEL_TOLERANCE * max(
+                energy, reference
+            ):
+                mirrored.append(key)
+                break
+        else:
+            references.append(energy)
+    return mirrored
+
+
 class WindowsEMI:
     """
     A class to interface the Windows Energy Meter Interface (EMI) for
@@ -317,6 +355,7 @@ class WindowsEMI:
                 "No Energy Meter Interface device found. EMI requires Windows 11 "
                 "running on bare metal (or a Windows 10 device with metering hardware)."
             )
+        logger.debug("\tEMI - Found %d energy meter device(s)", len(device_paths))
         for device_path in device_paths:
             try:
                 channel_names = _read_device_channels(device_path)
@@ -325,6 +364,11 @@ class WindowsEMI:
                     "\tEMI - Unable to read metadata of %s: %s", device_path, e
                 )
                 continue
+            logger.debug(
+                "\tEMI - Device %s exposes the channel(s) %s",
+                device_path,
+                channel_names,
+            )
             selected = select_channel_indices(channel_names, self.emi_include_dram)
             if not selected:
                 continue
@@ -354,12 +398,54 @@ class WindowsEMI:
                     snapshot[(device_path, index)] = measurements[index]
         return snapshot
 
+    def _drop_mirrored_channels(
+        self, snapshot: Dict[Tuple[str, int], Tuple[int, int]]
+    ) -> None:
+        """
+        Stop monitoring the channels that duplicate the counter of another one,
+        as summing them would over-count the CPU power.
+        """
+        channels = []
+        for device_path, channel_names, selected in self._devices:
+            for index in selected:
+                # DRAM channels are a different measurement, never a duplicate
+                if "dram" in channel_names[index].lower():
+                    continue
+                measurement = snapshot.get((device_path, index))
+                if measurement is not None:
+                    channels.append(((device_path, index), measurement[0]))
+        if len(channels) < 2:
+            return
+        mirrored = set(find_mirrored_channels(channels))
+        if not mirrored:
+            return
+        devices = []
+        for device_path, channel_names, selected in self._devices:
+            kept = []
+            for index in selected:
+                if (device_path, index) in mirrored:
+                    logger.warning(
+                        "\tEMI - Channel '%s' of device %s reports the same energy "
+                        "counter as another channel, it is ignored to avoid "
+                        "double-counting the CPU power (multi-die CPUs mirror the "
+                        "package counter on each die).",
+                        channel_names[index],
+                        device_path,
+                    )
+                else:
+                    kept.append(index)
+            if kept:
+                devices.append((device_path, channel_names, kept))
+        self._devices = devices
+
     def start(self) -> None:
         """
         Starts monitoring CPU energy consumption by taking the initial
         counter snapshot.
         """
-        self._last_measurements = self._snapshot()
+        snapshot = self._snapshot()
+        self._drop_mirrored_channels(snapshot)
+        self._last_measurements = snapshot
 
     def get_cpu_details(self, duration: Time) -> Dict:
         """
@@ -389,6 +475,12 @@ class WindowsEMI:
                             "\tEMI - Skipping negative delta on channel '%s'",
                             channel_names[index],
                         )
+                logger.debug(
+                    "\tEMI - Channel '%s' of device %s: %.2f W",
+                    channel_names[index],
+                    device_path,
+                    power_w,
+                )
                 name = f"Processor Energy Delta_{channel_index}(kWh)"
                 cpu_details[name] = energy_kwh
                 # We fake the names used by Power Gadget, as IntelRAPL does

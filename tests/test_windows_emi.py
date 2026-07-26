@@ -11,6 +11,7 @@ from codecarbon.core.windows_emi import (
     EMI_VERSION_V2,
     WindowsEMI,
     clear_emi_cache,
+    find_mirrored_channels,
     is_emi_available,
     parse_channel_names,
     parse_measurements,
@@ -85,6 +86,32 @@ class TestEmiChannelSelection(unittest.TestCase):
     def test_multiple_packages(self):
         names = ["RAPL_Package0_PKG", "RAPL_Package1_PKG", "RAPL_Package0_PP0"]
         self.assertEqual(select_channel_indices(names), [0, 1])
+
+
+class TestFindMirroredChannels(unittest.TestCase):
+    def test_identical_counters_are_mirrored(self):
+        channels = [(("dev0", 0), 5_000_000_000), (("dev1", 0), 5_000_000_000)]
+        self.assertEqual(find_mirrored_channels(channels), [("dev1", 0)])
+
+    def test_negligible_difference_is_mirrored(self):
+        channels = [(("dev0", 0), 1_000_000_000_000), (("dev1", 0), 1_000_000_100_000)]
+        self.assertEqual(find_mirrored_channels(channels), [("dev1", 0)])
+
+    def test_distinct_counters_are_kept(self):
+        channels = [(("dev0", 0), 5_000_000_000), (("dev1", 0), 4_000_000_000)]
+        self.assertEqual(find_mirrored_channels(channels), [])
+
+    def test_only_the_first_channel_is_kept(self):
+        channels = [
+            (("dev0", 0), 7_000_000_000),
+            (("dev0", 1), 7_000_000_000),
+            (("dev0", 2), 7_000_000_000),
+        ]
+        self.assertEqual(find_mirrored_channels(channels), [("dev0", 1), ("dev0", 2)])
+
+    def test_empty_counters_are_ignored(self):
+        channels = [(("dev0", 0), 0), (("dev1", 0), 0)]
+        self.assertEqual(find_mirrored_channels(channels), [])
 
 
 @mock.patch("codecarbon.core.windows_emi.list_emi_device_paths", return_value=["dev0"])
@@ -172,6 +199,67 @@ class TestWindowsEMI(unittest.TestCase):
 
         self.assertIn("Processor Energy Delta_0(kWh)", details)
         self.assertIn("Processor Energy Delta_1(kWh)", details)
+
+
+PACKAGE_CHANNEL = ["RAPL_Package0_PKG"]
+
+
+@mock.patch(
+    "codecarbon.core.windows_emi.list_emi_device_paths",
+    return_value=["die0", "die1"],
+)
+@mock.patch(
+    "codecarbon.core.windows_emi._read_device_channels",
+    return_value=PACKAGE_CHANNEL,
+)
+@mock.patch.object(sys, "platform", "win32")
+class TestMultiDieDeduplication(unittest.TestCase):
+    """
+    Multi-die CPUs (e.g. AMD Ryzen Threadripper) mirror the same socket-wide
+    package counter on every die: summing them would multiply the CPU power.
+    """
+
+    def test_mirrored_channels_are_dropped_at_start(self, mock_channels, mock_paths):
+        emi = WindowsEMI()
+        self.assertEqual(len(emi._devices), 2)
+        with mock.patch(
+            "codecarbon.core.windows_emi._read_device_measurements",
+            side_effect=[[(5_000_000_000, 0)], [(5_000_000_000, 0)]],
+        ):
+            emi.start()
+
+        self.assertEqual(emi._devices, [("die0", PACKAGE_CHANNEL, [0])])
+
+    def test_power_is_not_doubled(self, mock_channels, mock_paths):
+        emi = WindowsEMI()
+        # Both dies report the very same counter, before and after the delta
+        with mock.patch(
+            "codecarbon.core.windows_emi._read_device_measurements",
+            side_effect=[
+                [(5_000_000_000, 0)],
+                [(5_000_000_000, 0)],
+                [(6_000_000_000, 10_000_000)],
+                [(6_000_000_000, 10_000_000)],
+            ],
+        ):
+            emi.start()
+            details = emi.get_cpu_details(Time(seconds=1))
+
+        self.assertNotIn("Processor Power Delta_1(kWh)", details)
+        self.assertAlmostEqual(details["Processor Power Delta_0(kWh)"], 3.6)
+
+    def test_distinct_counters_are_all_monitored(self, mock_channels, mock_paths):
+        emi = WindowsEMI()
+        with mock.patch(
+            "codecarbon.core.windows_emi._read_device_measurements",
+            side_effect=[[(5_000_000_000, 0)], [(4_000_000_000, 0)]],
+        ):
+            emi.start()
+
+        self.assertEqual(
+            emi._devices,
+            [("die0", PACKAGE_CHANNEL, [0]), ("die1", PACKAGE_CHANNEL, [0])],
+        )
 
 
 class _ValueRef:
