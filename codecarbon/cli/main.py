@@ -230,9 +230,6 @@ def config():
             description=org_description,
         )
         organization = api.create_organization(organization=organization_create)
-        if organization is None:
-            print("Error creating organization")
-            return
         print(f"Created organization : {organization}")
     else:
         organization = [orga for orga in organizations if orga["name"] == org][0]
