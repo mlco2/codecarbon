@@ -270,6 +270,50 @@ class TestApi(unittest.TestCase):
                 api._create_run("experiment_id")
             self.assertIsNone(api.run_id)
 
+    def test_create_run_raises_on_unexpected_2xx_status(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/runs", json={}, status_code=200)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="experiment_id",
+                api_key="Toto",
+                conf=conf,
+                create_run_automatically=False,
+            )
+
+            with self.assertRaises(requests.exceptions.HTTPError) as ctx:
+                api._create_run("experiment_id")
+            self.assertIn("Unexpected status 200", str(ctx.exception))
+            self.assertIsNone(api.run_id)
+
+    def test_add_emission_raises_on_unexpected_2xx_status(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/emissions", json={}, status_code=200)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                conf=conf,
+                create_run_automatically=False,
+            )
+            api.run_id = "run-1"
+
+            with self.assertRaises(requests.exceptions.HTTPError) as ctx:
+                api.add_emission(
+                    {
+                        "duration": 2,
+                        "emissions": 1.0,
+                        "emissions_rate": 1.0,
+                        "cpu_power": 1.0,
+                        "gpu_power": 0.0,
+                        "ram_power": 0.5,
+                        "cpu_energy": 0.1,
+                        "gpu_energy": 0.0,
+                        "ram_energy": 0.1,
+                        "energy_consumed": 0.2,
+                    }
+                )
+            self.assertIn("Unexpected status 200", str(ctx.exception))
+
     def test_list_experiments_from_project_raises_on_error(self):
         with requests_mock.Mocker() as m:
             m.get(

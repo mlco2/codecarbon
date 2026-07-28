@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
+import requests
 import typer
 from typer.testing import CliRunner
 
@@ -41,6 +42,21 @@ def test_api_get_calls_api_and_prints(monkeypatch):
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
     assert result.exit_code == 0
     assert "fake-org" in result.output
+
+
+def test_api_get_prints_friendly_error_on_api_failure(monkeypatch):
+    class FailingApiClient(FakeApiClient):
+        def get_list_organizations(self):
+            raise requests.exceptions.HTTPError("401 Unauthorized")
+
+    runner = CliRunner()
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FailingApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
+
+    result = runner.invoke(cli_main.codecarbon, ["test-api"])
+    assert result.exit_code == 1
+    assert "API request failed" in result.output
+    assert "401 Unauthorized" in result.output
 
 
 def test_api_get_uses_get_api_endpoint(monkeypatch):
@@ -183,6 +199,31 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
     assert calls["set_token"] == "login-token"
     assert calls["check_auth"] == 1
     assert calls["endpoint_url"] == "https://custom-login.codecarbon.io"
+
+
+def test_login_prints_friendly_error_on_auth_failure(monkeypatch):
+    class FailingApiClient:
+        def __init__(self, endpoint_url=None):
+            pass
+
+        def set_access_token(self, token):
+            pass
+
+        def check_auth(self):
+            raise requests.exceptions.HTTPError("403 Forbidden")
+
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FailingApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.authorize", lambda: None)
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda: "https://api.codecarbon.io"
+    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "bad-token")
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["login"])
+    assert result.exit_code == 1
+    assert "Authentication check failed" in result.output
+    assert "403 Forbidden" in result.output
 
 
 def test_get_api_key_uses_bearer_token(monkeypatch):

@@ -116,7 +116,11 @@ def api_get():
     api_endpoint = get_api_endpoint()
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
-    organizations = api.get_list_organizations()
+    try:
+        organizations = api.get_list_organizations()
+    except Exception as e:
+        print(f"[yellow]API request failed[/yellow]. (error: {e})")
+        raise typer.Exit(1)
     print(organizations)
 
 
@@ -130,7 +134,11 @@ def login():
     api = ApiClient(endpoint_url=api_endpoint)
     access_token = get_access_token()
     api.set_access_token(access_token)
-    api.check_auth()
+    try:
+        api.check_auth()
+    except Exception as e:
+        print(f"[yellow]Authentication check failed[/yellow]. (error: {e})")
+        raise typer.Exit(1)
 
 
 def get_api_key(project_id: str):
@@ -212,7 +220,14 @@ def config():
     overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
-    organizations = api.get_list_organizations()
+    try:
+        organizations = api.get_list_organizations()
+    except Exception as e:
+        print(
+            f"[yellow]Could not list organizations from API[/yellow]. "
+            f"Please check your login and API endpoint. (error: {e})"
+        )
+        return
     org = questionary_prompt(
         "Pick existing organization from list or Create new organization ?",
         [org["name"] for org in organizations] + ["Create New Organization"],
@@ -237,7 +252,7 @@ def config():
     overwrite_local_config("organization_id", org_id, path=file_path)
 
     projects = api.list_projects_from_organization(org_id)
-    project_names = [project["name"] for project in projects] if projects else []
+    project_names = [project["name"] for project in projects]
     project = questionary_prompt(
         "Pick existing project from list or Create new project ?",
         project_names + ["Create New Project"],
@@ -261,9 +276,7 @@ def config():
     overwrite_local_config("project_id", project_id, path=file_path)
 
     experiments = api.list_experiments_from_project(project_id)
-    experiments_names = (
-        [experiment["name"] for experiment in experiments] if experiments else []
-    )
+    experiments_names = [experiment["name"] for experiment in experiments]
 
     experiment = questionary_prompt(
         "Pick existing experiment from list or Create new experiment ?",

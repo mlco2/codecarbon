@@ -438,7 +438,7 @@ class TestCarbonTracker(unittest.TestCase):
         with mock.patch(
             "codecarbon.output_methods.http.CodeCarbonAPIOutput",
             side_effect=requests.exceptions.HTTPError("API unavailable"),
-        ):
+        ) as mock_api_output:
             tracker = EmissionsTracker(
                 output_dir=self.temp_path,
                 output_handlers=[],
@@ -447,6 +447,7 @@ class TestCarbonTracker(unittest.TestCase):
                 experiment_id="exp-1",
             )
 
+        mock_api_output.assert_called_once()
         self.assertIsNotNone(tracker.run_id)
         self.assertFalse(
             any(
