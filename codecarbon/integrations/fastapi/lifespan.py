@@ -35,9 +35,9 @@ async def create_codecarbon_lifespan(
     try:
         yield
     finally:
+        shutdown_codecarbon_middleware(app, wait=True)
         tracker.stop()
         app.state.codecarbon_tracker = None
-        shutdown_codecarbon_middleware(app)
 
 
 def compose_lifespans(

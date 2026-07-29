@@ -167,6 +167,9 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.pytest.ini_options]
 pythonpath = "."
+markers = [
+    "no_immediate_finalize: disable deferred-finalize autouse fixture for a test",
+]
 
 [tool.coverage.run]
 source = [

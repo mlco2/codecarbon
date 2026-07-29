@@ -302,9 +302,7 @@ class CodeCarbonMiddleware:
                 if self._app_tracker is None:
                     self._app_tracker = self._create_and_start_tracker()
                 tracker = self._app_tracker
-        if self._lifespan_tracker(request) is not None and self._tracker_running(
-            tracker
-        ):
+        if self._tracker_running(tracker):
             baseline = tracker.mark_http_request_start(task_name)
             return tracker, baseline
         tracker.start_task(task_name)

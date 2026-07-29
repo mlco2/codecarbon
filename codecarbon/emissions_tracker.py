@@ -319,7 +319,8 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
-        self._http_measure_lock = threading.Lock()
+        self._http_task_lock = threading.Lock()
+        self._measure_lock = threading.Lock()
         self._hardware = []
 
     def _populate_system_metadata(self) -> None:
@@ -786,9 +787,12 @@ class BaseEmissionsTracker(ABC):
             self._scheduler_monitor_power.stop()
 
         task_name = task_name if task_name else self._active_task
-        if self._tasks.get(task_name) is None:
+        task = self._tasks.get(task_name)
+        if task is None:
             logger.warning("stop_task : No active task to stop.")
             return None
+        if not task.is_active and task.emissions_data is not None:
+            return task.emissions_data
         self._measure_power_and_energy()
         emissions_data = (
             self._prepare_emissions_data()
@@ -864,7 +868,7 @@ class BaseEmissionsTracker(ABC):
         """
         if self._start_time is None:
             raise RuntimeError("EmissionsTracker.start() must run before HTTP requests")
-        with self._http_measure_lock:
+        with self._http_task_lock:
             resolved = self._resolve_http_task_name(task_name)
             self._tasks[resolved] = Task(task_name=resolved)
             duration_at_start = time.perf_counter() - self._start_time
@@ -880,6 +884,18 @@ class BaseEmissionsTracker(ABC):
                 water_consumed=self._total_water.litres,
             )
 
+    def _http_finalize_measure_threshold(self) -> float:
+        return min(1.0, self._measure_power_secs / 4)
+
+    def _maybe_measure_power_and_energy(self) -> None:
+        """Sample hardware only when totals may be stale (HTTP finalize path)."""
+        with self._measure_lock:
+            if (
+                time.perf_counter() - self._last_measured_time
+                >= self._http_finalize_measure_threshold()
+            ):
+                self._run_power_measurement()
+
     def finish_http_request(
         self, baseline: HttpRequestBaseline
     ) -> Optional[EmissionsData]:
@@ -892,14 +908,14 @@ class BaseEmissionsTracker(ABC):
             Request-scoped :class:`~codecarbon.output.EmissionsData`, or ``None`` if
             the task record is missing.
         """
-        with self._http_measure_lock:
+        self._maybe_measure_power_and_energy()
+        with self._http_task_lock:
             task = self._tasks.get(baseline.task_name)
             if task is None:
                 logger.warning(
                     "finish_http_request: unknown task %s", baseline.task_name
                 )
                 return None
-            self._measure_power_and_energy()
             emissions_at_stop = self._prepare_emissions_data()
             previous = dataclasses.replace(emissions_at_stop)
             previous.emissions = baseline.emissions
@@ -1002,9 +1018,17 @@ class BaseEmissionsTracker(ABC):
             self._scheduler_monitor_power = None
         else:
             logger.warning("Tracker already stopped !")
-        for task_name in self._tasks:
-            if self._tasks[task_name].is_active:
+        for task_name in list(self._tasks):
+            task = self._tasks[task_name]
+            if not task.is_active:
+                continue
+            if (
+                self._active_task == task_name
+                and self._active_task_emissions_at_start is not None
+            ):
                 self.stop_task(task_name=task_name)
+            else:
+                task.is_active = False
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
         # or if scheduler interval was longer than the run
@@ -1245,15 +1269,15 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.append(psutil.virtual_memory().percent)
         self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
 
-        # Collect GPU utilization metrics
+        # Collect GPU utilization metrics (lightweight path — skips heavyweight calls).
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
-                gpu_details = hardware.devices.get_gpu_details()
-                for gpu_index, gpu_detail in enumerate(gpu_details):
-                    resolved_gpu_index = gpu_detail.get("gpu_index", gpu_index)
+                for gpu_detail in hardware.devices.get_gpu_utilization_list():
+                    resolved_gpu_index = gpu_detail.get("gpu_index")
                     if (
-                        resolved_gpu_index in gpu_ids_to_monitor
+                        resolved_gpu_index is not None
+                        and resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
                         self._gpu_utilization_history.append(
@@ -1342,6 +1366,10 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
+        with self._measure_lock:
+            self._run_power_measurement()
+
+    def _run_power_measurement(self) -> None:
         try:
             last_duration = time.perf_counter() - self._last_measured_time
         except AttributeError as e:
@@ -1365,7 +1393,6 @@ class BaseEmissionsTracker(ABC):
         self._do_measurements()
         self._last_measured_time = time.perf_counter()
         self._measure_occurrence += 1
-        # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
             self._api_call_interval != -1
             and len(self._output_handlers) > 0

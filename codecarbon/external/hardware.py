@@ -28,6 +28,14 @@ B_TO_GB = 1024 * 1024 * 1024
 
 MODE_CPU_LOAD = "cpu_load"
 
+# psutil.cpu_percent blocks on first sample; prime once per process for cpu_load mode.
+_cpu_load_percent_primed = False
+
+
+def clear_cpu_load_prime_cache() -> None:
+    global _cpu_load_percent_primed
+    _cpu_load_percent_primed = False
+
 
 @dataclass
 class BaseHardware(ABC):
@@ -210,6 +218,8 @@ class CPU(BaseHardware):
         # For process tracking: store last measurement time and CPU times
         self._last_measurement_time: Optional[float] = None
         self._last_cpu_times: Dict[int, float] = {}  # pid -> total cpu time
+        # First cpu_percent sample blocks briefly; later calls use interval=None.
+        self._cpu_percent_interval: Optional[float] = 0.05
 
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
@@ -263,8 +273,10 @@ class CPU(BaseHardware):
         if self._tracking_mode == "machine":
             tdp = self._tdp
             cpu_load = psutil.cpu_percent(
-                interval=0.5, percpu=False
-            )  # Convert to 0-1 range
+                interval=self._cpu_percent_interval, percpu=False
+            )
+            if self._cpu_percent_interval is not None:
+                self._cpu_percent_interval = None
             logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
             # Cubic relationship with minimum 10% of TDP
             load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
@@ -395,15 +407,18 @@ class CPU(BaseHardware):
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
+        global _cpu_load_percent_primed
         if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
             self._intel_interface.start()
         # Reset process tracking state for fresh measurements
         self._last_measurement_time = None
         self._last_cpu_times = {}
         if self._mode == MODE_CPU_LOAD:
-            # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
-            _ = self._get_power_from_cpu_load()
-            _ = self._get_power_from_cpu_load()
+            if not _cpu_load_percent_primed:
+                _ = self._get_power_from_cpu_load()
+                _cpu_load_percent_primed = True
+            else:
+                self._cpu_percent_interval = None
 
     def monitor_power(self):
         cpu_power = self._get_power_from_cpus()
@@ -435,6 +450,7 @@ class CPU(BaseHardware):
                 mode=mode,
                 model=model,
                 tdp=tdp,
+                tracking_mode=tracking_mode,
                 rapl_include_dram=rapl_include_dram,
                 rapl_prefer_psys=rapl_prefer_psys,
             )

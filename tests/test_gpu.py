@@ -159,6 +159,13 @@ class TestGpuImportWarnings:
 
 
 class TestGpuMethods:
+    def setup_method(self):
+        from codecarbon.core.gpu_amd import clear_rocm_system_cache
+        from codecarbon.core.gpu_nvidia import clear_nvidia_system_cache
+
+        clear_rocm_system_cache()
+        clear_nvidia_system_cache()
+
     @mock.patch("codecarbon.core.gpu_amd.subprocess.check_output")
     def test_is_rocm_system(self, mock_subprocess):
         from codecarbon.core.gpu import is_rocm_system

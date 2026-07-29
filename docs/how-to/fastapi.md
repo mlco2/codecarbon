@@ -26,7 +26,7 @@ add_codecarbon_middleware(app, project_name="my-api")
 
 By default, measurement runs after the response is sent (clients are not blocked on hardware sampling), and emissions are logged on the `codecarbon` logger. Pass `on_request_complete=None` to turn logging off, or supply your own callback.
 
-A minimal runnable app lives at [`examples/fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/examples/fastapi_middleware.py). Run it with:
+A minimal runnable app lives at [`examples/fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/examples/fastapi_middleware.py). For a production-style setup with a Hugging Face embedder and safe concurrent requests, see [`examples/fastapi_embedder.py`](https://github.com/mlco2/codecarbon/blob/master/examples/fastapi_embedder.py). Run it with:
 
 ```console
 uv run --extra fastapi uvicorn examples.fastapi_middleware:app --reload
@@ -140,20 +140,39 @@ By default, CodeCarbon measures **after** the response is sent. Clients see only
 
 ### Measured overhead (HF embedder)
 
-Measured on **Darwin arm64**, Python 3.12 (**2026-07-20**), serving [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2) over uvicorn: 50 timed requests after 5 warmup. Tracker `stop()` is mocked at ~20 ms so the table isolates middleware path cost (not Apple Silicon live-sampler lock time).
+Benchmarks use [`scripts/benchmark_fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/scripts/benchmark_fastapi_middleware.py) with [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2) over uvicorn: 50 timed requests after 5 warmup, concurrency 4, `create_codecarbon_lifespan` + middleware.
+
+#### Middleware path only (mocked 20 ms sample)
+
+Tracker `stop()` is mocked at ~20 ms so the table isolates middleware bookkeeping (not live hardware sampling).
+
+Measured on **Darwin arm64**, Python 3.12 (**2026-07-29**):
 
 | Setup | Avg. response time | vs baseline |
 |--------|-------------------:|------------:|
-| No middleware | 25 ms | — |
-| Deferred, logging off | 25 ms | ~0% |
-| Deferred + logging (default) | 29 ms | **~+4 ms** |
-| Sync headers (`response_headers=True`, c=1) | 67 ms | ~+39 ms |
-| Sync headers, concurrency 4 | 94 ms | measures serialize on one worker |
+| No middleware | 66 ms | — |
+| Deferred, logging off | 63 ms | ~0% |
+| Deferred + logging (default) | 58 ms | ~0% |
+| Sync headers (`response_headers=True`) | 97 ms | ~+47% |
+
+#### Live tracker (concurrent production path)
+
+Same workload with a **live** `EmissionsTracker` and `create_codecarbon_lifespan`. HTTP request snapshots no longer block on another request’s background sample (separate task and measure locks; stale samples reused when the scheduler already updated totals).
+
+Measured on **Darwin arm64**, Python 3.12 (**2026-07-29**):
+
+| Setup | Avg. response time | vs baseline |
+|--------|-------------------:|------------:|
+| No middleware | 32 ms | — |
+| Deferred, logging off | 49 ms | **~+53%** |
+| Deferred + logging (default) | 69 ms | **~+114%** |
+| Sync headers (`response_headers=True`) | 52 ms | **~+62%** |
 
 **What this means**
 
-- **Deferred (default):** cheap on a real inference path — about **4 ms** per request on this ~25 ms embedder baseline.
-- **Sync headers:** you roughly pay the sample time on the client path. Under concurrency, measures queue on a single tracker worker, so latency grows further.
+- **Deferred (default):** response is sent before finalize; client latency stays close to inference time under concurrency (tens of ms, not seconds).
+- **Mocked vs live:** mocked runs isolate middleware cost (~0 ms); live runs add modest overhead from brief baseline snapshots and logging, not from queueing behind full hardware samples.
+- **Sync headers:** measure before `http.response.start`; latency includes sample time on the client path. With the lock fix, live sync headers can be closer to deferred than before, but still measure on the critical path when samples run.
 - **`save_to_api=True`:** uploads after the response; adds network time on top of deferred cost, not on the HTTP critical path for deferred mode.
 
 Prefer deferred + logging/API unless clients need response headers.

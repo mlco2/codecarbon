@@ -65,3 +65,48 @@ def test_is_method_pattern_rejects_invalid_methods() -> None:
     assert is_method_pattern("FOO /predict") is False
     assert is_method_pattern("/predict") is False
     assert is_method_pattern("GET") is False
+
+
+def test_matches_filter_pattern_non_path_literal() -> None:
+    from codecarbon.integrations.fastapi._routing import matches_filter_pattern
+
+    assert (
+        matches_filter_pattern(
+            "GET /predict",
+            "GET /predict",
+            "/predict",
+            "/predict",
+            exclude=False,
+        )
+        is True
+    )
+    assert (
+        matches_filter_pattern(
+            "GET /predict",
+            "GET /items/1",
+            "/items/{item_id}",
+            "/items/1",
+            exclude=False,
+        )
+        is False
+    )
+    assert (
+        matches_filter_pattern(
+            "GET /predict",
+            "GET /predict",
+            "/predict",
+            "/predict",
+            exclude=False,
+        )
+        is True
+    )
+    assert (
+        matches_filter_pattern(
+            "predict",
+            "predict",
+            "/predict",
+            "/predict",
+            exclude=False,
+        )
+        is True
+    )

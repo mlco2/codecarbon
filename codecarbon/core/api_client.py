@@ -10,7 +10,6 @@ import dataclasses
 import json
 from datetime import timedelta, tzinfo
 
-import arrow
 import requests
 
 from codecarbon.core.schemas import (
@@ -22,12 +21,11 @@ from codecarbon.core.schemas import (
 )
 from codecarbon.external.logger import logger
 
-# from codecarbon.output import EmissionsData
-
 
 def get_datetime_with_timezone():
-    timestamp = str(arrow.now().isoformat())
-    return timestamp
+    import arrow
+
+    return str(arrow.now().isoformat())
 
 
 class ApiClient:  # (AsyncClient)
@@ -209,17 +207,15 @@ class ApiClient:  # (AsyncClient)
                     "ApiClient.add_emission still no run_id, aborting for this time !"
                 )
             return False
-        duration = float(carbon_emission["duration"])
-        if duration <= 0:
+        if carbon_emission["duration"] < 1:
             logger.warning(
-                "ApiClient : emissions not sent because duration is zero or negative."
+                "ApiClient : emissions not sent because of a duration smaller than 1."
             )
             return False
-        duration_for_api = max(1, int(round(duration)))
         emission = EmissionCreate(
             timestamp=get_datetime_with_timezone(),
             run_id=self.run_id,
-            duration=duration_for_api,
+            duration=int(carbon_emission["duration"]),
             emissions_sum=carbon_emission["emissions"],
             emissions_rate=carbon_emission["emissions_rate"],
             cpu_power=carbon_emission["cpu_power"],
