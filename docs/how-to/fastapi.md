@@ -138,42 +138,33 @@ By default, CodeCarbon measures **after** the response is sent. Clients see only
 | `response_headers=True` | Measure **before** `http.response.start` | Clients need `X-CodeCarbon-*` headers |
 | `create_codecarbon_lifespan` | Same as above + one shared tracker | Production (recommended) |
 
-### Measured overhead (HF embedder)
+### Measured overhead (HF embedder, live tracker)
 
-Benchmarks use [`scripts/benchmark_fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/scripts/benchmark_fastapi_middleware.py) with [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2) over uvicorn: 50 timed requests after 5 warmup, concurrency 4, `create_codecarbon_lifespan` + middleware.
+Benchmarks use [`scripts/benchmark_fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/scripts/benchmark_fastapi_middleware.py) with a **live** `EmissionsTracker`, [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2), uvicorn, `create_codecarbon_lifespan`, 50 timed requests after 5 warmup, concurrency 4.
 
-#### Middleware path only (mocked 20 ms sample)
+Run:
 
-Tracker `stop()` is mocked at ~20 ms so the table isolates middleware bookkeeping (not live hardware sampling).
-
-Measured on **Darwin arm64**, Python 3.12 (**2026-07-29**):
-
-| Setup | Avg. response time | vs baseline |
-|--------|-------------------:|------------:|
-| No middleware | 66 ms | — |
-| Deferred, logging off | 63 ms | ~0% |
-| Deferred + logging (default) | 58 ms | ~0% |
-| Sync headers (`response_headers=True`) | 97 ms | ~+47% |
-
-#### Live tracker (concurrent production path)
-
-Same workload with a **live** `EmissionsTracker` and `create_codecarbon_lifespan`. HTTP request snapshots no longer block on another request’s background sample (separate task and measure locks; stale samples reused when the scheduler already updated totals).
+```console
+CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --extra fastapi --with uvicorn \
+  --with sentence-transformers --with torch \
+  python scripts/benchmark_fastapi_middleware.py --realistic --with-headers
+```
 
 Measured on **Darwin arm64**, Python 3.12 (**2026-07-29**):
 
-| Setup | Avg. response time | vs baseline |
+| Setup | Mean response time | vs baseline |
 |--------|-------------------:|------------:|
-| No middleware | 32 ms | — |
-| Deferred, logging off | 49 ms | **~+53%** |
-| Deferred + logging (default) | 69 ms | **~+114%** |
-| Sync headers (`response_headers=True`) | 52 ms | **~+62%** |
+| No middleware | 42 ms | — |
+| Deferred, logging off | 30 ms | ~same order as baseline |
+| Deferred + logging (default) | 32 ms | ~same order as baseline |
+| Sync headers (`response_headers=True`) | 52 ms | **~+24%** |
 
 **What this means**
 
-- **Deferred (default):** response is sent before finalize; client latency stays close to inference time under concurrency (tens of ms, not seconds).
-- **Mocked vs live:** mocked runs isolate middleware cost (~0 ms); live runs add modest overhead from brief baseline snapshots and logging, not from queueing behind full hardware samples.
-- **Sync headers:** measure before `http.response.start`; latency includes sample time on the client path. With the lock fix, live sync headers can be closer to deferred than before, but still measure on the critical path when samples run.
-- **`save_to_api=True`:** uploads after the response; adds network time on top of deferred cost, not on the HTTP critical path for deferred mode.
+- **Deferred (default):** response is sent before finalize; client latency stays in the same ballpark as inference under concurrency (not hundreds of ms).
+- **Request path:** mark runs on the tracker REQUEST lane; finalize reuses cached metadata and skips redundant power samples when the scheduler is fresh.
+- **Sync headers:** measure before `http.response.start`; latency includes sample time on the client path when a fresh hardware read is needed.
+- **`save_to_api=True`:** uploads after the response; network time is not on the HTTP critical path in deferred mode.
 
 Prefer deferred + logging/API unless clients need response headers.
 

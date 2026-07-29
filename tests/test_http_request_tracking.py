@@ -238,6 +238,25 @@ class TestHttpRequestTracking(unittest.TestCase):
         tracker.stop()
         mock_task_out.assert_called_once()
 
+    def test_finish_http_request_reuses_cached_cloud_metadata(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mock_cloud,
+        mock_gpu_details,
+        mock_gpu_available,
+        mock_nvidia,
+    ) -> None:
+        tracker = _build_tracker()
+        tracker.start()
+        first = tracker.mark_http_request_start("GET /predict")
+        tracker.finish_http_request(first)
+        cloud_calls_after_first_finish = mock_cloud.call_count
+        second = tracker.mark_http_request_start("GET /predict")
+        tracker.finish_http_request(second)
+        tracker.stop()
+        self.assertEqual(mock_cloud.call_count, cloud_calls_after_first_finish)
+
     def test_mark_does_not_block_on_slow_finish(
         self,
         mock_cli_setup,

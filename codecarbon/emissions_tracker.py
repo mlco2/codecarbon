@@ -321,6 +321,8 @@ class BaseEmissionsTracker(ABC):
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
         self._http_task_lock = threading.Lock()
         self._measure_lock = threading.Lock()
+        self._cached_cloud_metadata: Optional[CloudMetadata] = None
+        self._http_emissions_template: Optional[EmissionsData] = None
         self._hardware = []
 
     def _populate_system_metadata(self) -> None:
@@ -916,7 +918,7 @@ class BaseEmissionsTracker(ABC):
                     "finish_http_request: unknown task %s", baseline.task_name
                 )
                 return None
-            emissions_at_stop = self._prepare_emissions_data()
+            emissions_at_stop = self._prepare_http_request_emissions_data()
             previous = dataclasses.replace(emissions_at_stop)
             previous.emissions = baseline.emissions
             previous.cpu_energy = baseline.cpu_energy
@@ -1077,6 +1079,75 @@ class BaseEmissionsTracker(ABC):
                 else:
                     handler.task_out(task_emissions_data, experiment_name)
 
+    def _cached_cloud(self) -> CloudMetadata:
+        if self._cached_cloud_metadata is None:
+            self._cached_cloud_metadata = self._get_cloud_metadata()
+        return self._cached_cloud_metadata
+
+    def _average_power_values(self) -> tuple[float, float, float]:
+        if self._power_measurement_count > 0:
+            return (
+                self._cpu_power_sum / self._power_measurement_count,
+                self._gpu_power_sum / self._power_measurement_count,
+                self._ram_power_sum / self._power_measurement_count,
+            )
+        return self._cpu_power.W, self._gpu_power.W, self._ram_power.W
+
+    def _utilization_averages(self) -> tuple[float, float, float, float]:
+        cpu_util = (
+            sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
+            if self._cpu_utilization_history
+            else 0
+        )
+        gpu_util = (
+            sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
+            if self._gpu_utilization_history
+            else 0
+        )
+        ram_util = (
+            sum(self._ram_utilization_history) / len(self._ram_utilization_history)
+            if self._ram_utilization_history
+            else 0
+        )
+        ram_used = (
+            sum(self._ram_used_history) / len(self._ram_used_history)
+            if self._ram_used_history
+            else 0
+        )
+        return cpu_util, gpu_util, ram_util, ram_used
+
+    def _prepare_http_request_emissions_data(self) -> EmissionsData:
+        """Build emissions snapshot for HTTP finalize with cached static metadata."""
+        if self._http_emissions_template is None:
+            snapshot = self._prepare_emissions_data()
+            self._http_emissions_template = dataclasses.replace(snapshot)
+            return dataclasses.replace(snapshot)
+
+        self._update_emissions()
+        duration = Time.from_seconds(time.perf_counter() - self._start_time)
+        emissions = self._total_emissions
+        avg_cpu_power, avg_gpu_power, avg_ram_power = self._average_power_values()
+        cpu_util, gpu_util, ram_util, ram_used = self._utilization_averages()
+        return dataclasses.replace(
+            self._http_emissions_template,
+            timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            duration=duration.seconds,
+            emissions=emissions,
+            emissions_rate=emissions / duration.seconds if duration.seconds else 0,
+            cpu_utilization_percent=cpu_util,
+            gpu_utilization_percent=gpu_util,
+            ram_utilization_percent=ram_util,
+            ram_used_gb=ram_used,
+            cpu_power=avg_cpu_power,
+            gpu_power=avg_gpu_power,
+            ram_power=avg_ram_power,
+            cpu_energy=self._total_cpu_energy.kWh,
+            gpu_energy=self._total_gpu_energy.kWh,
+            ram_energy=self._total_ram_energy.kWh,
+            energy_consumed=self._total_energy.kWh,
+            water_consumed=self._total_water.litres,
+        )
+
     def _update_emissions(self) -> None:
         """
         Compute emissions for the energy consumed since the last update
@@ -1084,7 +1155,7 @@ class BaseEmissionsTracker(ABC):
         """
         delta_energy = self._total_energy - self._last_energy_covered
         if delta_energy.kWh > 0:
-            cloud: CloudMetadata = self._get_cloud_metadata()
+            cloud: CloudMetadata = self._cached_cloud()
             if cloud.is_on_private_infra:
                 delta_emissions = self._emissions.get_private_infra_emissions(
                     delta_energy, self._geo
@@ -1102,7 +1173,7 @@ class BaseEmissionsTracker(ABC):
         :return: EmissionsData object with the total emissions data.
         """
         self._update_emissions()
-        cloud: CloudMetadata = self._get_cloud_metadata()
+        cloud: CloudMetadata = self._cached_cloud()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
 
         emissions = self._total_emissions
@@ -1146,22 +1217,8 @@ class BaseEmissionsTracker(ABC):
             cloud_provider = cloud.provider
             cloud_region = cloud.region
 
-        # Calculate average power values across all measurements
-        avg_cpu_power = (
-            self._cpu_power_sum / self._power_measurement_count
-            if self._power_measurement_count > 0
-            else self._cpu_power.W
-        )
-        avg_gpu_power = (
-            self._gpu_power_sum / self._power_measurement_count
-            if self._power_measurement_count > 0
-            else self._gpu_power.W
-        )
-        avg_ram_power = (
-            self._ram_power_sum / self._power_measurement_count
-            if self._power_measurement_count > 0
-            else self._ram_power.W
-        )
+        avg_cpu_power, avg_gpu_power, avg_ram_power = self._average_power_values()
+        cpu_util, gpu_util, ram_util, ram_used = self._utilization_averages()
 
         total_emissions = EmissionsData(
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
@@ -1171,26 +1228,10 @@ class BaseEmissionsTracker(ABC):
             duration=duration.seconds,
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
-            cpu_utilization_percent=(
-                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
-                if self._cpu_utilization_history
-                else 0
-            ),
-            gpu_utilization_percent=(
-                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
-                if self._gpu_utilization_history
-                else 0
-            ),
-            ram_utilization_percent=(
-                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
-                if self._ram_utilization_history
-                else 0
-            ),
-            ram_used_gb=(
-                sum(self._ram_used_history) / len(self._ram_used_history)
-                if self._ram_used_history
-                else 0
-            ),
+            cpu_utilization_percent=cpu_util,
+            gpu_utilization_percent=gpu_util,
+            ram_utilization_percent=ram_util,
+            ram_used_gb=ram_used,
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,

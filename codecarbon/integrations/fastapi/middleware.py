@@ -263,9 +263,7 @@ class CodeCarbonMiddleware:
             return
 
         task_name = self._task_name(request)
-        tracker, baseline = await asyncio.to_thread(
-            self._begin_request, request, task_name
-        )
+        tracker, baseline = await self._run_begin_request(request, task_name)
         await self._handle_tracked(
             scope, receive, send, request, tracker, task_name, baseline
         )
@@ -274,6 +272,13 @@ class CodeCarbonMiddleware:
         if self.task_name_formatter is not None:
             return self.task_name_formatter(request)
         return build_endpoint_key(request)
+
+    async def _run_begin_request(
+        self, request: Request, task_name: str
+    ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
+        return await self._tracker_runner.run_async(
+            _TrackerRunner.REQUEST, self._begin_request, request, task_name
+        )
 
     async def _run_finalize_tracker(self, func: Callable[..., Any], *args: Any) -> Any:
         return await self._tracker_runner.run_async(
