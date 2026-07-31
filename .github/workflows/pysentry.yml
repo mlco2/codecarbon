@@ -1,0 +1,23 @@
+# PySentry audits uv.lock natively and uploads findings to the Security tab.
+# continue-on-error keeps it advisory: it never blocks a PR.
+name: pysentry
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: PySentry audit
+      uses: nyudenkov/pysentry@cb212712ecbca50d7b873d52a87412e234d76123 # v0.4.9
+      with:
+        sources: pypa pypi osv
