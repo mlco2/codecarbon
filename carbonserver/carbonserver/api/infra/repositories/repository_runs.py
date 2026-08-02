@@ -1,10 +1,11 @@
 import uuid
 from contextlib import AbstractContextManager
+from math import ceil
 from typing import List, Union
 
 from dependency_injector.providers import Callable
 from fastapi import HTTPException
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, literal
 
 from carbonserver.api.domain.runs import Runs
 from carbonserver.api.errors import EmptyResultException
@@ -12,7 +13,7 @@ from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmiss
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
-from carbonserver.api.schemas import Run, RunCreate, RunReport
+from carbonserver.api.schemas import Run, RunBucketReport, RunCreate, RunReport
 from carbonserver.logger import logger
 
 """
@@ -170,6 +171,47 @@ class SqlAlchemyRepository(Runs):
                     SqlModelRun.id,
                     SqlModelRun.timestamp,
                 )
+                .all()
+            )
+            return res or []
+
+    def get_experiment_bucketed_sums_by_run(
+        self, experiment_id, start_date, end_date, max_points
+    ) -> List[RunBucketReport]:
+        """Find the runs of an experiment in database between two dates and return
+        a report containing the sum of their emissions bucketed by time"""
+
+        # Calculate the bucket size in seconds based on the time range and max_points
+        bucket_seconds = max(
+            1, ceil((end_date - start_date).total_seconds() / max_points)
+        )
+        epoch = func.extract("epoch", SqlModelRun.timestamp)
+        # Create a timestamp for the start of each bucket by flooring the epoch time to the nearest bucket size
+        bucket_timestamp = func.to_timestamp(
+            func.floor(epoch / bucket_seconds) * bucket_seconds
+        ).label("timestamp")
+
+        with self.session_factory() as session:
+            res = (
+                session.query(
+                    bucket_timestamp,
+                    literal(bucket_seconds).label("bucket_seconds"),
+                    func.count(func.distinct(SqlModelRun.id)).label("run_count"),
+                    func.sum(SqlModelEmission.emissions_sum).label("emissions"),
+                    func.sum(SqlModelEmission.energy_consumed).label("energy_consumed"),
+                    func.sum(SqlModelEmission.duration).label("duration"),
+                )
+                .join(
+                    SqlModelEmission,
+                    and_(
+                        SqlModelRun.id == SqlModelEmission.run_id,
+                        SqlModelEmission.timestamp >= start_date,
+                        SqlModelEmission.timestamp <= end_date,
+                    ),
+                )
+                .filter(SqlModelRun.experiment_id == experiment_id)
+                .group_by(bucket_timestamp)
+                .order_by(bucket_timestamp)
                 .all()
             )
             return res or []
