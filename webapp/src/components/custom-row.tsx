@@ -1,7 +1,5 @@
-"use client";
-
 import { Settings } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import {
     DropdownMenu,
@@ -31,19 +29,32 @@ export default function CustomRow({
     deleteDisabled?: boolean;
     settingsDisabled?: boolean;
 }) {
-    const router = useRouter();
-    const cellClassName = `font-medium ${href && "hover:cursor-pointer"} `;
+    const navigate = useNavigate();
+    const cellClassName = `font-medium ${href ? "hover:cursor-pointer" : ""} `;
+
+    const handleCellKeyDown = (e: React.KeyboardEvent) => {
+        if (href && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            navigate(href);
+        }
+    };
 
     return (
         <TableRow key={rowKey}>
             <TableCell
-                onClick={() => href && router.push(href)}
+                onClick={() => href && navigate(href)}
+                onKeyDown={handleCellKeyDown}
+                tabIndex={href ? 0 : undefined}
+                role={href ? "link" : undefined}
                 className={`text-left ${cellClassName}`}
             >
                 {firstColumn}
             </TableCell>
             <TableCell
-                onClick={() => href && router.push(href)}
+                onClick={() => href && navigate(href)}
+                onKeyDown={handleCellKeyDown}
+                tabIndex={href ? 0 : undefined}
+                role={href ? "link" : undefined}
                 className={`text-left ${cellClassName}`}
             >
                 {secondColumn}
@@ -68,7 +79,7 @@ export default function CustomRow({
                             onClick={() =>
                                 hrefSettings &&
                                 !settingsDisabled &&
-                                router.push(hrefSettings)
+                                navigate(hrefSettings)
                             }
                         >
                             Settings

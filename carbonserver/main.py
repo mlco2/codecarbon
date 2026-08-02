@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from carbonserver.api.errors import DBException, UserException, get_http_exception
-from carbonserver.api.infra.database import sql_models
+from carbonserver.api.infra.database import sql_models, telemetry_sql_models
 from carbonserver.api.routers import (
     authenticate,
     emissions,
@@ -18,6 +18,7 @@ from carbonserver.api.routers import (
     project_api_tokens,
     projects,
     runs,
+    telemetry,
     users,
 )
 from carbonserver.api.services import auth_service
@@ -70,6 +71,7 @@ def init_container():
             project_api_tokens,
             organizations,
             users,
+            telemetry,
             authenticate,
             auth_service,
         ]
@@ -81,6 +83,7 @@ def init_db(container):
     db = container.db()
     db.create_database()
     sql_models.Base.metadata.create_all(bind=engine)
+    telemetry_sql_models.Base.metadata.create_all(bind=engine)
 
 
 def init_server(container):
@@ -102,6 +105,7 @@ def init_server(container):
     server.include_router(experiments.router)
     server.include_router(runs.router)
     server.include_router(emissions.router)
+    server.include_router(telemetry.router)
     add_pagination(server)
 
     # Add CORS from env variable

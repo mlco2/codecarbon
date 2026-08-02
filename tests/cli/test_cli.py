@@ -11,7 +11,7 @@ from codecarbon.cli.main import codecarbon
 # MOCK API CLIENT
 
 
-@patch("codecarbon.cli.main.ApiClient")
+@patch("codecarbon.core.api_client.ApiClient")
 class TestApp(unittest.TestCase):
     def setUp(self):
         self.runner = CliRunner()
@@ -57,7 +57,7 @@ class TestApp(unittest.TestCase):
     @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.Confirm.ask")
     @patch("codecarbon.cli.main.questionary_prompt")
-    @patch("codecarbon.cli.main.get_access_token")
+    @patch("codecarbon.cli.auth.get_access_token")
     @patch("typer.prompt")
     def test_config_no_local_new_all(
         self,
@@ -147,7 +147,7 @@ class TestApp(unittest.TestCase):
             except OSError:
                 pass
 
-    @patch("codecarbon.cli.main.get_access_token")
+    @patch("codecarbon.cli.auth.get_access_token")
     @patch("codecarbon.cli.main.Path.exists")
     @patch("codecarbon.cli.main.get_config")
     @patch("codecarbon.cli.main.questionary_prompt")
@@ -184,6 +184,17 @@ class TestApp(unittest.TestCase):
     def custom_questionary_side_effect(*args, **kwargs):
         default_value = kwargs.get("default")
         return MagicMock(return_value=default_value)
+
+
+class TestQuestionaryPrompt(unittest.TestCase):
+    @patch("questionary.select")
+    def test_questionary_prompt_returns_selected_value(self, mock_select):
+        from codecarbon.cli.main import questionary_prompt
+
+        mock_select.return_value.ask.return_value = "selected"
+        result = questionary_prompt("Pick one", ["a", "b"], "a")
+        self.assertEqual(result, "selected")
+        mock_select.assert_called_once_with("Pick one", ["a", "b"], "a")
 
 
 if __name__ == "__main__":

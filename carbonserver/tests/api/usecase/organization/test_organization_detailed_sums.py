@@ -1,11 +1,13 @@
 from datetime import datetime
 from unittest import mock
+from uuid import UUID
 
 import dateutil.relativedelta
 
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository,
 )
+from carbonserver.api.schemas import Organization
 from carbonserver.api.usecases.organization.organization_sum import (
     OrganizationSumsUsecase,
 )
@@ -53,3 +55,27 @@ def test_sum_computes_for_organization_id():
         actual_organization_global_sum_by_experiment[0]["emissions"]
         == expected_emission_sum
     )
+
+
+def test_sum_returns_zero_report_when_organization_has_no_emissions():
+    """Issue #693: an organization with no emissions in the requested period
+    should get back a zero-valued report instead of triggering the global
+    "Generic error" handler.
+    """
+    repository_mock = mock.Mock(spec=SqlAlchemyRepository)
+    repository_mock.get_organization_detailed_sums.return_value = None
+    repository_mock.get_one_organization.return_value = Organization(
+        id=UUID(ORG_ID),
+        name="Quiet Org",
+        description="An organization that has not logged anything yet.",
+    )
+    usecase = OrganizationSumsUsecase(repository_mock)
+
+    report = usecase.compute_detailed_sum(ORG_ID, START_DATE, END_DATE)
+
+    assert report.organization_id == UUID(ORG_ID)
+    assert report.name == "Quiet Org"
+    assert report.emissions == 0.0
+    assert report.energy_consumed == 0.0
+    assert report.duration == 0
+    assert report.emissions_count == 0

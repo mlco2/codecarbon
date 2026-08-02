@@ -1,19 +1,24 @@
 import subprocess
 from collections import namedtuple
+from functools import lru_cache
 from typing import Callable
 
 from codecarbon.core.gpu_device import GPUDevice
 from codecarbon.external.logger import logger
 
 
+@lru_cache(maxsize=1)
 def is_rocm_system():
     """Returns True if the system has an rocm-smi interface."""
     try:
-        # Check if rocm-smi is available
         subprocess.check_output(["rocm-smi", "--help"])
         return True
     except (subprocess.CalledProcessError, OSError):
         return False
+
+
+def clear_rocm_system_cache() -> None:
+    is_rocm_system.cache_clear()
 
 
 try:
@@ -28,7 +33,7 @@ except ImportError:
             "Please install amdsmi to get GPU metrics."
         )
     AMDSMI_AVAILABLE = False
-except AttributeError as e:
+except (AttributeError, OSError, KeyError) as e:
     amdsmi = None
     # In some environments, amdsmi may be present but not properly configured, leading to AttributeError when importing
     logger.warning(

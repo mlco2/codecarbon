@@ -84,6 +84,71 @@ Yields attributes:
     which relies on the [INI
     syntax](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure).
 
+## Electricity Maps API Token
+
+By default, CodeCarbon estimates carbon intensity using annual country-level
+averages from Our World in Data. Providing an `electricitymaps_api_token`
+upgrades this to **real-time carbon intensity** data from the
+[Electricity Maps API](https://api.electricitymaps.com), giving more accurate
+emissions figures — especially useful if your grid's energy mix varies
+throughout the day.
+
+**Without a token:** CodeCarbon uses a static annual average for your country.
+
+**With a token:** CodeCarbon queries the Electricity Maps API for the current
+carbon intensity of your grid. The query runs at the end of each tracking run,
+and also periodically during long runs (every
+`api_call_interval × measure_power_secs` seconds; default: every ~2 minutes).
+
+The Electricity Maps API offers a free tier. You can sign up and get a token at
+[electricitymaps.com](https://app.electricitymaps.com/sign-up).
+
+Set it in your config file:
+
+``` ini
+[codecarbon]
+electricitymaps_api_token = your-token-here
+```
+
+Or in code:
+
+``` python
+EmissionsTracker(electricitymaps_api_token="your-token-here")
+```
+
+!!! note "Deprecated parameter"
+
+    The old parameter name `co2_signal_api_token` still works for backward
+    compatibility but is deprecated and will be removed in a future version.
+    Use `electricitymaps_api_token` instead.
+
+## Tracking Mode
+
+The `tracking_mode` parameter controls how CodeCarbon measures power consumption. It accepts two values:
+
+- **`"machine"`** (default): Measures power for the entire machine — total RAM in use and total CPU load across all processes.
+- **`"process"`**: Isolates measurements to the tracked process — only the process's RAM usage and its share of CPU time are used to estimate power.
+
+This setting affects **RAM and CPU** measurements. GPU power is always measured at the device level regardless of tracking mode.
+
+Set it in your config file:
+
+``` ini
+[codecarbon]
+tracking_mode = process
+```
+
+Or in code:
+
+``` python
+EmissionsTracker(tracking_mode="process")
+```
+
+!!! note "Note"
+
+    `"process"` mode gives a lower-bound estimate of your code's footprint.
+    `"machine"` mode is more conservative and accounts for all activity on the system.
+
 ## Access internet through proxy server
 
 If you need a proxy to access internet, which is needed to call a Web

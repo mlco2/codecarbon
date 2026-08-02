@@ -375,3 +375,41 @@ class TestFileOutput(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_file))
         df = pd.read_csv(expected_file)
         self.assertEqual(len(df), 1)
+
+    def test_fast_append_with_matching_headers(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(self.emissions_data, None)
+        file_output.out(self.emissions_data, None)
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 3)
+
+    def test_schema_migration_creates_backup(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(self.emissions_data, None)
+
+        path = os.path.join(self.temp_dir, "test.csv")
+        df_old = pd.read_csv(path)
+        df_old.rename(columns={"cpu_model": "old_cpu_model"}, inplace=True)
+        df_old.to_csv(path, index=False)
+
+        self.assertFalse(file_output.has_valid_headers(self.emissions_data))
+
+        file_output.out(self.emissions_data, None)
+
+        df_bak = pd.read_csv(path + ".bak")
+        self.assertEqual(len(df_bak), 1)
+        self.assertIn("old_cpu_model", df_bak.columns)
+
+        df = pd.read_csv(path)
+        self.assertEqual(len(df), 1)
+        self.assertIn("cpu_model", df.columns)
+
+    def test_out_append_large_file_fast_path(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(self.emissions_data, None)
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 2)

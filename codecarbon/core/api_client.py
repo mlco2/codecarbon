@@ -10,7 +10,6 @@ import dataclasses
 import json
 from datetime import timedelta, tzinfo
 
-import arrow
 import requests
 
 from codecarbon.core.schemas import (
@@ -22,12 +21,11 @@ from codecarbon.core.schemas import (
 )
 from codecarbon.external.logger import logger
 
-# from codecarbon.output import EmissionsData
-
 
 def get_datetime_with_timezone():
-    timestamp = str(arrow.now().isoformat())
-    return timestamp
+    import arrow
+
+    return str(arrow.now().isoformat())
 
 
 class ApiClient:  # (AsyncClient)
@@ -227,6 +225,10 @@ class ApiClient:  # (AsyncClient)
             gpu_energy=carbon_emission["gpu_energy"],
             ram_energy=carbon_emission["ram_energy"],
             energy_consumed=carbon_emission["energy_consumed"],
+            cpu_utilization_percent=carbon_emission.get("cpu_utilization_percent"),
+            gpu_utilization_percent=carbon_emission.get("gpu_utilization_percent"),
+            ram_utilization_percent=carbon_emission.get("ram_utilization_percent"),
+            wue=carbon_emission.get("wue", 0),
         )
         try:
             payload = dataclasses.asdict(emission)

@@ -1,15 +1,9 @@
-"use client";
-
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
-import { IProjectToken } from "@/types/project";
-import {
-    getProjectTokens,
-    createProjectToken,
-} from "@/server-functions/projectTokens";
+import { AccessLevel, IProjectToken } from "@/api/schemas";
+import { getProjectTokens, createProjectToken } from "@/api/projectTokens";
 import CustomRowToken from "@/components/projectTokens/custom-row-token";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Loader2, ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +17,12 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
     const [tokenName, setTokenName] = useState("");
     const [createdToken, setCreatedToken] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
-    const router = useRouter();
-
+    const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        return () => {
+            if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+        };
+    }, []);
     useEffect(() => {
         const fetchTokens = async () => {
             // Fetch the updated list of tokens from the server
@@ -38,7 +36,6 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
 
     const refreshTokens = () => {
         setTokens(null); // This will trigger a refetch in the useEffect
-        router.refresh(); // Refresh the current route
     };
 
     const handleCreateToken = async () => {
@@ -46,23 +43,21 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         if (isSubmitting) return;
 
         setIsSubmitting(true);
-
         try {
-            const access = 2;
-            const newToken = await toast
-                .promise(createProjectToken(projectId, tokenName, access), {
-                    loading: `Creating token ${tokenName}...`,
-                    success: `Token ${tokenName} created successfully`,
-                    error: (error) =>
-                        `Failed to create token: ${error instanceof Error ? error.message : "Unknown error"}`,
-                })
-                .unwrap();
-
-            setCreatedToken(newToken.token);
+            const newToken = await createProjectToken(
+                projectId,
+                tokenName,
+                AccessLevel.WRITE,
+            );
+            toast.success(`Token ${tokenName} created successfully`);
+            setCreatedToken(newToken.token ?? null);
             setTokenName("");
             refreshTokens();
         } catch (error) {
             console.error("Failed to create token:", error);
+            toast.error(
+                `Failed to create token: ${error instanceof Error ? error.message : "Unknown error"}`,
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -74,7 +69,10 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             if (success) {
                 setIsCopied(true);
                 toast.success("Token copied to clipboard");
-                setTimeout(() => setIsCopied(false), 2000); // Revert back after 2 seconds
+                copyTimerRef.current = setTimeout(
+                    () => setIsCopied(false),
+                    2000,
+                );
             } else {
                 throw new Error("Copy operation failed");
             }
@@ -88,6 +86,20 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         setCreatedToken(null);
         setIsCreatingToken(false);
     };
+
+    const sortedTokens = useMemo(
+        () =>
+            tokens
+                ? tokens
+                      .slice()
+                      .sort((a, b) =>
+                          (a.name ?? "")
+                              .toLowerCase()
+                              .localeCompare((b.name ?? "").toLowerCase()),
+                      )
+                : null,
+        [tokens],
+    );
 
     return (
         <div className="flex-col p-4 md:gap-8 md:p-4 justify-between">
@@ -113,7 +125,8 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                             </pre>
                             <button
                                 onClick={() => handleCopy(createdToken)}
-                                className="ml-2 px-4 py-2 rounded text-gray-500 hover:text-gray-700"
+                                aria-label="Copy token to clipboard"
+                                className="ml-2 px-4 py-2 rounded text-muted-foreground hover:text-foreground"
                             >
                                 {isCopied ? (
                                     <div className="flex justify-between">
@@ -175,7 +188,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             <Card>
                 <Table>
                     <TableBody>
-                        {tokens === null ? (
+                        {sortedTokens === null ? (
                             <tr>
                                 <td colSpan={3} className="text-center py-6">
                                     <div className="flex justify-center">
@@ -183,7 +196,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                                     </div>
                                 </td>
                             </tr>
-                        ) : tokens.length === 0 ? (
+                        ) : sortedTokens.length === 0 ? (
                             <tr>
                                 <td colSpan={3} className="text-center py-6">
                                     <p className="text-muted-foreground">
@@ -196,19 +209,13 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                                 </td>
                             </tr>
                         ) : (
-                            tokens
-                                .sort((a, b) =>
-                                    a.name
-                                        .toLowerCase()
-                                        .localeCompare(b.name.toLowerCase()),
-                                )
-                                .map((projectToken, index) => (
-                                    <CustomRowToken
-                                        key={index}
-                                        projectToken={projectToken}
-                                        onTokenDeleted={refreshTokens}
-                                    />
-                                ))
+                            sortedTokens.map((projectToken) => (
+                                <CustomRowToken
+                                    key={projectToken.id}
+                                    projectToken={projectToken}
+                                    onTokenDeleted={refreshTokens}
+                                />
+                            ))
                         )}
                     </TableBody>
                 </Table>

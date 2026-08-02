@@ -16,4 +16,27 @@ class OrganizationSumsUsecase:
             start_date,
             end_date,
         )
-        return sums
+        if sums is not None:
+            return sums
+
+        # No emissions in the requested period. Return zeros so the dashboard
+        # still gets a valid report rather than a 500.
+        organization = self._organization_repository.get_one_organization(
+            organization_id
+        )
+        return OrganizationReport(
+            organization_id=organization.id,
+            name=organization.name,
+            description=organization.description,
+            emissions=0.0,
+            cpu_power=0.0,
+            gpu_power=0.0,
+            ram_power=0.0,
+            cpu_energy=0.0,
+            gpu_energy=0.0,
+            ram_energy=0.0,
+            energy_consumed=0.0,
+            duration=0,
+            emissions_rate=0.0,
+            emissions_count=0,
+        )

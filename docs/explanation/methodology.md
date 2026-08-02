@@ -85,7 +85,30 @@ intervals. This is a configurable parameter `measure_power_secs`, with
 default value 15 seconds, that can be passed when instantiating the
 emissions tracker.
 
+CodeCarbon focuses on the main compute components it can measure or
+estimate directly: CPU, GPU, and RAM. It does not separately model disk
+I/O, network transfers, displays, cooling, or other peripherals because
+those sources are usually much smaller, and often negligible, for local
+code-level experiments. They are also not exposed through the same
+low-overhead measurement interfaces as CPU, GPU, and RAM. However, they
+can matter for workloads dominated by data movement, storage, or
+distributed systems.
+
 Currently, the package supports the following hardware infrastructure.
+
+### Tracking Modes
+
+CodeCarbon operates in two distinct modes to determine how power consumption is attributed to your work. Choosing the right mode is essential for data accuracy.
+
+The `tracking_mode` parameter (values: `"machine"` or `"process"`, default `"machine"`) controls the **scope** of power attribution:
+
+**Machine Mode** (`tracking_mode="machine"`): Measures the total energy consumed by the whole hardware stack (all CPUs, GPUs, and RAM). This is the most straightforward measurement and is ideal for dedicated machines where the tracked workload dominates resource usage.
+
+**Process Mode** (`tracking_mode="process"`): Estimates the energy attributable to your Python process (and its child processes) by sampling their CPU time relative to total CPU capacity. This is a software-based approximation — it does **not** read hardware counters directly — and is preferable on shared environments where other workloads are running in parallel.
+
+> ⚠️ **GPU limitation**: Process Mode only affects CPU and RAM attribution. GPU power is always measured at the device level, so if you share a GPU with other users or processes, CodeCarbon will still account for the **entire GPU's** power consumption, not just your share.
+
+Note: The underlying measurement method (Intel RAPL, Intel Power Gadget, TDP-based CPU-load estimation…) is chosen automatically based on hardware availability and software permissions. It applies independently of the tracking mode.
 
 ### GPU
 

@@ -9,9 +9,10 @@ annotated-types==0.7.0
 anyio==4.12.0
     # via
     #   httpx
+    #   httpx2
     #   starlette
     #   watchfiles
-authlib==1.7.0
+authlib==1.7.2
     # via carbonserver (carbonserver/pyproject.toml)
 bcrypt==4.3.0
     # via carbonserver (carbonserver/pyproject.toml)
@@ -32,10 +33,10 @@ click==8.3.1
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==46.0.7
+cryptography==48.0.1
     # via
     #   authlib
-    #   jwcrypto
+    #   joserfc
     #   python-jose
 dependency-injector==4.48.2
     # via carbonserver (carbonserver/pyproject.toml)
@@ -47,12 +48,11 @@ email-validator==2.3.0
     # via
     #   fastapi
     #   pydantic
-fastapi==0.123.0
+fastapi==0.138.1
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi-oidc
     #   fastapi-pagination
-    #   fief-client
 fastapi-cli==0.0.24
     # via fastapi
 fastapi-cloud-cli==0.7.0
@@ -62,37 +62,43 @@ fastapi-oidc==0.0.9
 fastapi-pagination==0.15.0
     # via carbonserver (carbonserver/pyproject.toml)
 fastar==0.9.0
-    # via fastapi-cloud-cli
-fief-client==0.20.0
-    # via carbonserver (carbonserver/pyproject.toml)
+    # via
+    #   fastapi
+    #   fastapi-cloud-cli
+greenlet==3.5.1
+    # via sqlalchemy
 h11==0.16.0
     # via
     #   httpcore
+    #   httpcore2
     #   uvicorn
 httpcore==1.0.9
     # via httpx
+httpcore2==2.9.1
+    # via httpx2
 httptools==0.7.1
     # via uvicorn
 httpx==0.27.2
     # via
-    #   carbonserver (carbonserver/pyproject.toml)
     #   fastapi
     #   fastapi-cloud-cli
-    #   fief-client
-idna==3.11
+httpx2==2.9.1
+    # via carbonserver (carbonserver/pyproject.toml)
+idna==3.18
     # via
     #   anyio
     #   email-validator
     #   httpx
+    #   httpx2
     #   requests
 itsdangerous==2.2.0
     # via carbonserver (carbonserver/pyproject.toml)
 jinja2==3.1.6
     # via fastapi
-jwcrypto==1.5.7
-    # via fief-client
-makefun==1.16.0
-    # via fief-client
+joserfc==1.7.0
+    # via
+    #   carbonserver (carbonserver/pyproject.toml)
+    #   authlib
 mako==1.3.10
     # via alembic
 markdown-it-py==4.0.0
@@ -122,14 +128,19 @@ pydantic==2.12.5
     #   fastapi-cloud-cli
     #   fastapi-oidc
     #   fastapi-pagination
+    #   pydantic-extra-types
     #   pydantic-settings
 pydantic-core==2.41.5
     # via pydantic
-pydantic-settings==2.13.1
-    # via carbonserver (carbonserver/pyproject.toml)
+pydantic-extra-types==2.11.1
+    # via fastapi
+pydantic-settings==2.14.2
+    # via
+    #   carbonserver (carbonserver/pyproject.toml)
+    #   fastapi
 pygments==2.19.2
     # via rich
-pyjwt==2.10.1
+pyjwt==2.13.0
     # via carbonserver (carbonserver/pyproject.toml)
 python-dateutil==2.9.0.post0
     # via carbonserver (carbonserver/pyproject.toml)
@@ -139,7 +150,7 @@ python-dotenv==1.2.2
     #   uvicorn
 python-jose==3.5.0
     # via fastapi-oidc
-python-multipart==0.0.26
+python-multipart==0.0.31
     # via fastapi
 pyyaml==6.0.3
     # via uvicorn
@@ -175,8 +186,12 @@ sqlalchemy==1.4.54
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   alembic
-starlette==0.50.0
+starlette==1.3.1
     # via fastapi
+truststore==0.10.4
+    # via
+    #   httpcore2
+    #   httpx2
 typer==0.20.0
     # via
     #   fastapi-cli
@@ -187,18 +202,20 @@ typing-extensions==4.15.0
     #   anyio
     #   fastapi
     #   fastapi-pagination
-    #   jwcrypto
+    #   httpx2
     #   pydantic
     #   pydantic-core
+    #   pydantic-extra-types
     #   rich-toolkit
     #   starlette
     #   typer
     #   typing-inspection
 typing-inspection==0.4.2
     # via
+    #   fastapi
     #   pydantic
     #   pydantic-settings
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   requests
     #   sentry-sdk

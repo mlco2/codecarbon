@@ -6,6 +6,7 @@ PKCE), credential storage, JWKS validation, and transparent refresh.
 """
 
 import json
+import logging
 import os
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -15,9 +16,9 @@ from urllib.parse import parse_qs, urlparse
 import requests
 from authlib.common.security import generate_token
 from authlib.integrations.requests_client import OAuth2Session
-from authlib.jose import JsonWebKey
-from authlib.jose import jwt as jose_jwt
 from authlib.oauth2.rfc7636 import create_s256_code_challenge
+from joserfc import jwt as jose_jwt
+from joserfc.jwk import KeySet
 
 AUTH_CLIENT_ID = os.environ.get(
     "AUTH_CLIENT_ID",
@@ -31,6 +32,7 @@ AUTH_SERVER_WELL_KNOWN = os.environ.get(
 _REDIRECT_PORT = 8090
 _REDIRECT_URI = f"http://localhost:{_REDIRECT_PORT}/callback"
 _CREDENTIALS_FILE = Path("./credentials.json")
+logger = logging.getLogger(__name__)
 
 
 # ── OAuth callback server ───────────────────────────────────────────
@@ -108,11 +110,16 @@ def _validate_access_token(access_token: str) -> bool:
         discovery = _discover_endpoints()
         jwks_resp = requests.get(discovery["jwks_uri"])
         jwks_resp.raise_for_status()
-        keyset = JsonWebKey.import_key_set(jwks_resp.json())
-        claims = jose_jwt.decode(access_token, keyset)
-        claims.validate()
+        keyset = KeySet.import_key_set(jwks_resp.json())
+        token = jose_jwt.decode(access_token, keyset)
+        jose_jwt.JWTClaimsRegistry().validate(token.claims)
         return True
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        logger.warning(
+            "Skipping local access token validation because the auth server is "
+            "unreachable; the API will validate the token. Error: %s",
+            exc,
+        )
         return True  # Can't reach auth server — let the API handle it
     except Exception:
         return False

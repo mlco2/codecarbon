@@ -4,13 +4,15 @@
 
 Estimate and track carbon emissions from your computer, quantify and analyze their impact.
 
-[![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/) [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon) [![codecov](https://codecov.io/gh/mlco2/codecarbon/graph/badge.svg)](https://codecov.io/gh/mlco2/codecarbon)
+[![](https://img.shields.io/pypi/v/codecarbon?color=024758)](https://pypi.org/project/codecarbon/) [![DOI](https://zenodo.org/badge/263364731.svg)](https://zenodo.org/badge/latestdoi/263364731) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/mlco2/codecarbon/badge)](https://scorecard.dev/viewer/?uri=github.com/mlco2/codecarbon) [![codecov](https://codecov.io/gh/mlco2/codecarbon/graph/badge.svg)](https://codecov.io/gh/mlco2/codecarbon) [![Discord](https://img.shields.io/badge/Discord-Join%20Community-7289da?logo=discord&logoColor=white)](https://discord.gg/GS9js2XkJR)
 
 - **A lightweight, easy to use Python library** – Simple API to track emissions
 - **Open source, free & community driven** – Built by and for the community
 - **Effective visual outputs** – Put emissions in context with real-world equivalents
 
 > **Tracking GenAI API calls?** CodeCarbon measures emissions from **local computing** (your hardware). To track emissions from remote GenAI API calls (OpenAI, Anthropic, Mistral, etc.), use [**EcoLogits**](https://ecologits.ai/). Both tools are complementary.
+
+> **Join the community!** Have questions, want to share your work, or contribute? Join us on [**Discord**](https://discord.gg/GS9js2XkJR) – we're here to help and excited to hear from you!
 
 ## Installation
 
@@ -74,6 +76,8 @@ Configuration precedence and examples: [configuration guide](https://docs.codeca
 
 We created a Python package that estimates your hardware electricity power consumption (GPU + CPU + RAM) and we apply to it the carbon intensity of the region where the computing is done.
 
+CodeCarbon focuses on the main compute components it can measure or estimate directly: CPU, GPU, and RAM. It does not separately model disk I/O, network transfers, displays, cooling, or other peripherals because those sources are usually much smaller for local code-level experiments and are not exposed through the same low-overhead measurement interfaces.
+
 ![calculation Summary](docs/images/calculation.png)
 
 We explain more about this calculation in the [**Methodology**](https://docs.codecarbon.io/latest/explanation/methodology/) section of the documentation.
@@ -96,7 +100,9 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 | [API Reference](https://docs.codecarbon.io/latest/reference/api/) | Full parameter documentation |
 | [Framework examples (scikit-learn)](https://docs.codecarbon.io/latest/how-to/scikit-learn/) | Task-oriented ML framework examples |
 | [Methodology](https://docs.codecarbon.io/latest/explanation/methodology/) | How emissions are calculated |
+| [When to use CodeCarbon vs EcoLogits](https://docs.codecarbon.io/latest/explanation/when-to-use/) | Choose the right tool |
 | [EcoLogits](https://ecologits.ai/) | Track emissions from GenAI API calls |
+| [Discord Community](https://discord.gg/GS9js2XkJR) | Chat with us and the community |
 
 ## Links
 
@@ -104,6 +110,7 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 - [Dashboard](https://dashboard.codecarbon.io/) to see your emissions.
 - [Documentation](https://docs.codecarbon.io/) to learn how to use the package and our methodology.
 - [EcoLogits](https://ecologits.ai/) to track emissions from GenAI API calls (OpenAI, Anthropic, etc.).
+- [mlco2 on GitHub](https://github.com/mlco2) for our other open-source projects.
 - [GitHub](https://github.com/mlco2/codecarbon) to look at the source code and contribute.
 - [Discord](https://discord.gg/GS9js2XkJR) to chat with us.
 
@@ -158,7 +165,7 @@ If you find CodeCarbon useful for your research, you can find a citation under a
                   MinervaBooks},
   title        = {mlco2/codecarbon: v2.4.1},
   month        = may,
-  year         = 2024,
+  year         = {2024},
   publisher    = {Zenodo},
   version      = {v2.4.1},
   doi          = {10.5281/zenodo.11171501},
@@ -176,6 +183,34 @@ Codecarbon was formerly developed by volunteers from [**Mila**](http://mila.queb
 
 Now CodeCarbon is supported by [**Code Carbon**](https://www.helloasso.com/associations/code-carbon), a French non-profit organization whose mission is to accelerate the development and adoption of CodeCarbon.
 
-### Star History
+## Sponsors
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mlco2/codecarbon,lfwa/carbontracker,sb-ai-lab/Eco2AI,fvaleye/tracarbon,Breakend/experiment-impact-tracker&type=Date)](https://star-history.com/#mlco2/codecarbon&lfwa/carbontracker&sb-ai-lab/Eco2AI&fvaleye/tracarbon&Breakend/experiment-impact-tracker&Date)
+<div align="center">
+  <a href="https://www.clever-cloud.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mlco2/codecarbon-landing-page/main/public/assets/partners/clever_cloud.png">
+      <img src="https://cdn.clever-cloud.com/uploads/2023/03/logoonwhite.svg" alt="Clever Cloud" height="48">
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://dataforgood.fr/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mlco2/codecarbon-landing-page/main/public/assets/partners/dataforgood.png">
+      <img src="https://dataforgood.fr/images/dataforgood.svg" alt="Data For Good" height="48">
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mlco2/codecarbon-landing-page/main/public/assets/partners/GitHub.png">
+      <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png" alt="GitHub" height="48">
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://www.mozilla.org/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/mlco2/codecarbon-landing-page/main/public/assets/partners/mozilla.svg">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Mozilla_2024_logo.svg" alt="Mozilla" height="48">
+    </picture>
+  </a>
+</div>

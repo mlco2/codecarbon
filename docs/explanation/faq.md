@@ -39,11 +39,15 @@ Yes. CodeCarbon can be installed and used in Docker containers just like any oth
 
 ## How can I help?
 
-If you find any functionality missing in the CodeCarbon repo, please [open an issue](https://github.com/mlco2/codecarbon/issues) so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success.
+If you find any functionality missing in the CodeCarbon repo, please [open an issue](https://github.com/mlco2/codecarbon/issues) so that you (and others!) can help add it. We did our best to cover all use cases and options, but we count on the open source community to help make the package an even greater success. You can also discuss ideas on [Discord](https://discord.gg/GS9js2XkJR) before diving into development.
 
 ## Is my data sent anywhere?
 
 By default, CodeCarbon saves emissions data locally. You can configure HTTP output to send data to your own endpoints. We do send data to our API when the user allows it and logs in. No data is sent to third parties without explicit configuration.
+
+## Why is my second tracker faster than the first?
+
+In a single Python process, the first tracker pays a one-time cost to detect hardware (CPU model, GPU devices, RAM, power backends, and related setup). Later trackers in the same process reuse that cached setup, so `start()` and `stop()` are much faster on warm runs. This is expected: each new process still performs a full cold setup once.
 
 ## What hardware does CodeCarbon support?
 
@@ -55,3 +59,5 @@ Please open an issue on [GitHub](https://github.com/mlco2/codecarbon/issues) wit
 - Your environment details
 - Steps to reproduce
 - Expected vs actual behavior
+
+You can also report bugs and ask for help on [Discord](https://discord.gg/GS9js2XkJR) where we can provide quick guidance.

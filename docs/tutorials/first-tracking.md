@@ -62,3 +62,7 @@ print(f"Energy consumed: {tracker.final_emissions_data.energy_consumed:.6f} kWh"
 - Explore all [Python API options](python-api.md) (decorators, explicit objects, offline mode)
 - See the full [API Reference](../reference/api.md) for all configuration parameters
 - Try the [CodeCarbon Workshop notebook](https://github.com/mlco2/codecarbon/blob/master/examples/notebooks/codecarbon_workshop.ipynb) for a comprehensive hands-on experience
+
+## Need help?
+
+Have questions about tracking, want to share your results, or contribute to CodeCarbon? **[Join our Discord community](https://discord.gg/GS9js2XkJR)** – we're here to help!

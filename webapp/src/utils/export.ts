@@ -1,9 +1,11 @@
-import { getRunMetadata } from "@/server-functions/runs";
-import { Emission } from "@/types/emission";
-import { EmissionsTimeSeries } from "@/types/emissions-time-series";
-import { ExperimentReport } from "@/types/experiment-report";
-import { RunMetadata } from "@/types/run-metadata";
-import { RunReport } from "@/types/run-report";
+import { getRunMetadata } from "@/api/runs";
+import {
+    Emission,
+    EmissionsTimeSeries,
+    ExperimentReport,
+    RunMetadata,
+    RunReport,
+} from "@/api/schemas";
 
 // Enhanced run report with metadata and emissions
 interface EnhancedRunReport extends Omit<RunReport, "emissions"> {

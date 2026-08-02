@@ -1,6 +1,4 @@
-"use client";
-
-import { ExperimentReport } from "@/types/experiment-report";
+import { ExperimentReport } from "@/api/schemas";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
 import {
@@ -17,8 +15,8 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart";
 import { exportExperimentsToCsv } from "@/utils/export";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import ChartSkeleton from "./chart-skeleton";
 import { ExportCsvButton } from "./export-csv-button";
 
 interface ExperimentsBarChartProps {
@@ -49,37 +47,42 @@ export default function ExperimentsBarChart({
     localLoading = false,
     projectName,
 }: ExperimentsBarChartProps) {
-    const [selectedBar, setSelectedBar] = useState(0);
     const [isExporting, setIsExporting] = useState(false);
 
-    const handleBarClick = (data: ExperimentReport, index: number) => {
-        onExperimentClick(data.experiment_id);
-    };
-    useEffect(() => {
-        const highlightedBar = experimentsReportData.findIndex(
-            (experiment) => experiment.experiment_id === selectedExperimentId,
-        );
-        setSelectedBar(highlightedBar);
-    }, [selectedExperimentId, experimentsReportData]);
+    const selectedBar = useMemo(
+        () =>
+            experimentsReportData.findIndex(
+                (experiment) =>
+                    experiment.experiment_id === selectedExperimentId,
+            ),
+        [experimentsReportData, selectedExperimentId],
+    );
 
-    const CustomBar = (props: any) => {
-        const { fill, x, y, width, height, index } = props;
-        const barFill =
-            selectedBar === index
-                ? "var(--color-desktop)"
-                : "var(--color-mobile)";
-        return (
-            <rect
-                x={x}
-                y={y}
-                width={width}
-                height={height}
-                fill={barFill}
-                onClick={() => handleBarClick(props.payload, index)}
-                cursor="pointer"
-            />
-        );
-    };
+    const CustomBar = useMemo(
+        () => (props: any) => {
+            const { x, y, width, height, index, payload } = props;
+            const barFill =
+                selectedBar === index
+                    ? "var(--color-desktop)"
+                    : "var(--color-mobile)";
+            return (
+                <rect
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    fill={barFill}
+                    onClick={() => onExperimentClick(payload.experiment_id)}
+                    cursor="pointer"
+                />
+            );
+        },
+        [selectedBar, onExperimentClick],
+    );
+    if (localLoading) {
+        return <ChartSkeleton height={300} />;
+    }
+
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -110,46 +113,40 @@ export default function ExperimentsBarChart({
                 )}
             </CardHeader>
             <CardContent>
-                {localLoading ? (
-                    <div className="flex items-center justify-center h-[300px]">
-                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                    </div>
-                ) : (
-                    <ChartContainer config={chartConfig}>
-                        {experimentsReportData.length > 0 ? (
-                            <BarChart
-                                accessibilityLayer
-                                data={experimentsReportData}
-                            >
-                                <CartesianGrid vertical={false} />
-                                <XAxis
-                                    dataKey="name"
-                                    tickLine={false}
-                                    tickMargin={10}
-                                    axisLine={false}
-                                    tickFormatter={(value) => value.slice(0, 3)}
-                                />
-                                <ChartTooltip
-                                    cursor={false}
-                                    content={
-                                        <ChartTooltipContent indicator="dashed" />
-                                    }
-                                />
-                                <Bar
-                                    dataKey="emissions"
-                                    shape={<CustomBar />}
-                                    radius={4}
-                                />
-                            </BarChart>
-                        ) : (
-                            <div className="flex items-center justify-center h-full">
-                                <p className="text-sm text-muted-foreground">
-                                    No data available
-                                </p>
-                            </div>
-                        )}
-                    </ChartContainer>
-                )}
+                <ChartContainer config={chartConfig}>
+                    {experimentsReportData.length > 0 ? (
+                        <BarChart
+                            accessibilityLayer
+                            data={experimentsReportData}
+                        >
+                            <CartesianGrid vertical={false} />
+                            <XAxis
+                                dataKey="name"
+                                tickLine={false}
+                                tickMargin={10}
+                                axisLine={false}
+                                tickFormatter={(value) => value.slice(0, 3)}
+                            />
+                            <ChartTooltip
+                                cursor={false}
+                                content={
+                                    <ChartTooltipContent indicator="dashed" />
+                                }
+                            />
+                            <Bar
+                                dataKey="emissions"
+                                shape={<CustomBar />}
+                                radius={4}
+                            />
+                        </BarChart>
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <p className="text-sm text-muted-foreground">
+                                No data available
+                            </p>
+                        </div>
+                    )}
+                </ChartContainer>
             </CardContent>
         </Card>
     );

@@ -10,6 +10,7 @@ from fastapi.security import APIKeyCookie, HTTPBearer
 from carbonserver.api.services.auth_providers.oidc_auth_provider import (
     OIDCAuthProvider,
 )
+from carbonserver.api.services.signup_service import SignUpService
 from carbonserver.api.services.user_service import UserService
 from carbonserver.config import settings
 from carbonserver.container import ServerContainer
@@ -25,6 +26,11 @@ class FullUser:
 
 
 SESSION_COOKIE_NAME = "user_session"
+LOCAL_DEV_AUTH_USER = {
+    "sub": "d1b9d5e0-58e8-45f0-9ef5-4549b3d6f3f0",
+    "email": "local.user@example.com",
+    "fields": {"name": "Local user"},
+}
 
 
 web_scheme = APIKeyCookie(name=SESSION_COOKIE_NAME, auto_error=False)
@@ -49,11 +55,20 @@ class UserWithAuthDependency:
         user_service: Optional[UserService] = Depends(
             Provide[ServerContainer.user_service]
         ),
+        sign_up_service: Optional[SignUpService] = Depends(
+            Provide[ServerContainer.sign_up_service]
+        ),
         auth_provider: Optional[OIDCAuthProvider] = Depends(
             Provide[ServerContainer.auth_provider]
         ),
     ):
         self.user_service = user_service
+        if settings.auth_provider.lower() == "none":
+            self.auth_user = LOCAL_DEV_AUTH_USER
+            sign_up_service.check_jwt_user(self.auth_user, create=True)
+            self.db_user = user_service.get_user_by_id(self.auth_user["sub"])
+            return self
+
         if cookie_token is not None:
             self.auth_user = jwt.decode(
                 cookie_token,

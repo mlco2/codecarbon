@@ -8,8 +8,6 @@ import typer
 from rich import print
 from typing_extensions import Annotated
 
-from codecarbon.emissions_tracker import EmissionsTracker
-
 
 def run_and_monitor(
     ctx: typer.Context,
@@ -17,6 +15,7 @@ def run_and_monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
+    offline: bool = False,
     **tracker_args,
 ):
     """
@@ -49,12 +48,15 @@ def run_and_monitor(
     directory. The file path is shown in the final report.
     """
     # Suppress all CodeCarbon logs during execution
+    from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
     from codecarbon.external.logger import set_logger_level
 
     set_logger_level(log_level)
 
-    # Get the command from remaining args
-    command = ctx.args
+    # Get the command from remaining args (strip nested subcommand / `--` leftovers)
+    command = list(getattr(ctx, "args", None) or [])
+    while command and command[0] in ("monitor", "--"):
+        command.pop(0)
 
     if not command:
         print(
@@ -63,8 +65,8 @@ def run_and_monitor(
         )
         raise typer.Exit(1)
 
-    # Initialize tracker with specified logging level and shared args
-    tracker = EmissionsTracker(
+    tracker_cls = OfflineEmissionsTracker if offline else EmissionsTracker
+    tracker = tracker_cls(
         log_level=log_level,
         save_to_logger=False,
         tracking_mode="process",

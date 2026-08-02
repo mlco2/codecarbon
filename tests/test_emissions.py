@@ -174,6 +174,41 @@ class TestEmissions(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 0.475, places=2)
 
+    def test_get_emissions_PRIVATE_INFRA_without_country_metadata(self):
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kWh=1),
+            GeoMetadata(country_iso_code=None, country_name=None, region=None),
+        )
+
+        assert isinstance(emissions, float)
+        self.assertAlmostEqual(emissions, 0.475, places=2)
+
+    @patch("codecarbon.core.electricitymaps_api.get_emissions")
+    def test_private_infra_uses_forced_intensity_when_set(self, mocked_get_emissions):
+        emissions_calculator = Emissions(
+            self._data_source, force_carbon_intensity_g_co2e_kwh=50.0
+        )
+
+        emissions = emissions_calculator.get_private_infra_emissions(
+            Energy.from_energy(kWh=2),
+            GeoMetadata(country_iso_code="CAN", country_name="Canada"),
+        )
+
+        self.assertAlmostEqual(emissions, 0.1, places=6)
+        mocked_get_emissions.assert_not_called()
+
+    def test_cloud_uses_forced_intensity_when_set(self):
+        emissions_calculator = Emissions(
+            self._data_source, force_carbon_intensity_g_co2e_kwh=100.0
+        )
+
+        emissions = emissions_calculator.get_cloud_emissions(
+            Energy.from_energy(kWh=2),
+            CloudMetadata(provider="aws", region="us-east-1"),
+        )
+
+        self.assertAlmostEqual(emissions, 0.2, places=6)
+
     def test_get_emissions_PRIVATE_INFRA_NORDIC_REGION(self):
         # WHEN
         # Test Nordic region (Sweden SE2)
@@ -243,6 +278,69 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         self.assertIsNone(emissions)
+
+    def test_nordic_admin_regions_fall_back_to_country_without_regional_lookup(self):
+        energy = Energy.from_energy(kWh=1.0)
+        admin_regions = [
+            ("SWE", "Sweden", "Stockholm County"),
+            ("NOR", "Norway", "Oslo"),
+            ("FIN", "Finland", "Uusimaa"),
+        ]
+
+        for country_iso_code, country_name, region in admin_regions:
+            with self.subTest(country_iso_code=country_iso_code, region=region):
+                geo = GeoMetadata(
+                    country_iso_code=country_iso_code,
+                    country_name=country_name,
+                    region=region,
+                )
+                expected_emissions = self._emissions.get_country_emissions(energy, geo)
+
+                with (
+                    patch.object(
+                        self._data_source, "get_nordic_country_energy_mix_data"
+                    ) as get_nordic_data,
+                    patch.object(
+                        self._data_source, "get_country_emissions_data"
+                    ) as get_regional_emissions_data,
+                    patch.object(
+                        self._data_source, "get_country_energy_mix_data"
+                    ) as get_regional_energy_mix_data,
+                    patch("codecarbon.core.emissions.logger.error") as log_error,
+                    patch("codecarbon.core.emissions.logger.warning") as log_warning,
+                ):
+                    emissions = self._emissions.get_private_infra_emissions(energy, geo)
+
+                self.assertAlmostEqual(emissions, expected_emissions, places=6)
+                get_nordic_data.assert_not_called()
+                get_regional_emissions_data.assert_not_called()
+                get_regional_energy_mix_data.assert_not_called()
+                log_error.assert_not_called()
+                log_warning.assert_not_called()
+
+    def test_nordic_region_missing_static_data_falls_back_to_country(self):
+        energy = Energy.from_energy(kWh=1.0)
+        geo = GeoMetadata(country_iso_code="SWE", country_name="Sweden", region="SE2")
+        expected_emissions = self._emissions.get_country_emissions(energy, geo)
+
+        with (
+            patch.object(
+                self._data_source,
+                "get_nordic_country_energy_mix_data",
+                return_value={"data": {}},
+            ),
+            patch.object(
+                self._data_source, "get_country_emissions_data"
+            ) as get_regional_emissions_data,
+            patch.object(
+                self._data_source, "get_country_energy_mix_data"
+            ) as get_regional_energy_mix_data,
+        ):
+            emissions = self._emissions.get_private_infra_emissions(energy, geo)
+
+        self.assertAlmostEqual(emissions, expected_emissions, places=6)
+        get_regional_emissions_data.assert_not_called()
+        get_regional_energy_mix_data.assert_not_called()
 
     def test_try_get_nordic_region_emissions_returns_none_if_region_data_missing(self):
         # GIVEN
