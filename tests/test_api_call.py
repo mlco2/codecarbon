@@ -2,6 +2,7 @@ import dataclasses
 import unittest
 from uuid import uuid4
 
+import requests
 import requests_mock
 
 from codecarbon.core.api_client import ApiClient
@@ -146,7 +147,8 @@ class TestApi(unittest.TestCase):
                 create_run_automatically=False,
             )
 
-            self.assertIsNone(api.check_auth())
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.check_auth()
 
     def test_check_organization_exists_returns_false_when_list_fails(self):
         with requests_mock.Mocker() as m:
@@ -156,7 +158,8 @@ class TestApi(unittest.TestCase):
                 create_run_automatically=False,
             )
 
-            self.assertFalse(api.check_organization_exists("missing"))
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.check_organization_exists("missing")
 
     def test_create_organization_skips_when_name_exists(self):
         organization = OrganizationCreate(name="existing", description="desc")
@@ -236,7 +239,7 @@ class TestApi(unittest.TestCase):
             )
             api.run_id = "run-1"
 
-            self.assertFalse(
+            with self.assertRaises(requests.exceptions.HTTPError):
                 api.add_emission(
                     {
                         "duration": 2,
@@ -251,7 +254,6 @@ class TestApi(unittest.TestCase):
                         "energy_consumed": 0.2,
                     }
                 )
-            )
 
     def test_create_run_returns_none_on_unsuccessful_status(self):
         with requests_mock.Mocker() as m:
@@ -264,7 +266,8 @@ class TestApi(unittest.TestCase):
                 create_run_automatically=False,
             )
 
-            self.assertIsNone(api._create_run("experiment_id"))
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api._create_run("experiment_id")
             self.assertIsNone(api.run_id)
 
     def test_list_experiments_from_project_returns_empty_list_on_error(self):
@@ -279,7 +282,8 @@ class TestApi(unittest.TestCase):
                 create_run_automatically=False,
             )
 
-            self.assertEqual(api.list_experiments_from_project("proj-1"), [])
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.list_experiments_from_project("proj-1")
 
     def test_set_experiment_updates_value(self):
         api = ApiClient(endpoint_url="http://test.com", create_run_automatically=False)
@@ -303,7 +307,8 @@ class TestApi(unittest.TestCase):
                 create_run_automatically=False,
             )
 
-            self.assertIsNone(api.add_experiment(experiment))
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.add_experiment(experiment)
 
     def test_get_experiment_returns_none_on_error(self):
         with requests_mock.Mocker() as m:
@@ -313,4 +318,5 @@ class TestApi(unittest.TestCase):
                 create_run_automatically=False,
             )
 
-            self.assertIsNone(api.get_experiment("exp-1"))
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.get_experiment("exp-1")
