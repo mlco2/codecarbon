@@ -2775,9 +2775,9 @@
 <p>Run with: <code>uv run task carbonboard</code></p>
 </li>
 <li>
-<p><strong>🌐 webapp/</strong> - Next.js Web Dashboard</p>
+<p><strong>🌐 webapp/</strong> -  Web Dashboard</p>
 </li>
-<li>Modern React/Next.js web application</li>
+<li>Modern React web application</li>
 <li>Connects to the API backend</li>
 <li>Run with: <code>cd webapp &amp;&amp; pnpm dev</code></li>
 </ol>
@@ -2829,7 +2829,7 @@ uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span
    <div class="highlight"><pre><span></span><code><span class="c1"># Python dashboard</span>
 uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span>carbonboard
 
-<span class="c1"># Next.js webapp</span>
+<span class="c1"># Js webapp</span>
 <span class="nb">cd</span><span class="w"> </span>webapp
 pnpm<span class="w"> </span>install
 pnpm<span class="w"> </span>dev
@@ -2873,7 +2873,7 @@ pnpm<span class="w"> </span>dev
 <h3 id="dashboard-development">Dashboard Development<a class="headerlink" href="#dashboard-development" title="Permanent link">&para;</a></h3>
 <ol>
 <li><strong>Python Dashboard</strong>: Uses Dash + Plotly, see <code>codecarbon/viz</code></li>
-<li><strong>Next.js Dashboard</strong>: Modern React components in <code>webapp/src/</code></li>
+<li><strong>React Dashboard</strong>: Modern React components in <code>webapp/src/</code></li>
 <li><strong>Connect to API</strong>: Set <code>CODECARBON_API_URL=http://localhost:8008</code> for local development</li>
 </ol>
 <h2 id="environment-management">Environment Management<a class="headerlink" href="#environment-management" title="Permanent link">&para;</a></h2>
@@ -2904,7 +2904,7 @@ uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span
 <li><strong><a href="https://docs.codecarbon.io/latest/how-to/contributing/">CONTRIBUTING.md</a></strong>: Detailed contribution guidelines and setup</li>
 <li><strong><a href="https://github.com/mlco2/codecarbon/blob/master/README.md">README.md</a></strong>: Project overview and quickstart</li>
 <li><strong><a href="https://github.com/mlco2/codecarbon/blob/master/carbonserver/README.md">carbonserver/README.md</a></strong>: API architecture and database schema</li>
-<li><strong><a href="https://github.com/mlco2/codecarbon/blob/master/webapp/README.md">webapp/README.md</a></strong>: Next.js dashboard setup</li>
+<li><strong><a href="https://github.com/mlco2/codecarbon/blob/master/webapp/README.md">webapp/README.md</a></strong>: React dashboard setup</li>
 <li><strong><a href="https://github.com/mlco2/codecarbon/blob/master/carbonserver/tests/TESTING.md">carbonserver/tests/TESTING.md</a></strong>: Comprehensive testing guide</li>
 </ul>
 <h3 id="vs-code-debugging">VS Code Debugging<a class="headerlink" href="#vs-code-debugging" title="Permanent link">&para;</a></h3>
@@ -2924,7 +2924,7 @@ uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span
 │   (package)     │───▶│     (API)       │◀───│  (2 versions)   │
 │                 │    │                 │    │                 │
 │ • CLI tools     │    │ • FastAPI       │    │ • Dash (Python) │
-│ • Tracking core │    │ • PostgreSQL    │    │ • Next.js (Web) │
+│ • Tracking core │    │ • PostgreSQL    │    │ • React   (Web) │
 │ • Data output   │    │ • Authentication│    │ • Visualization │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 </code></pre></div>
