@@ -39,7 +39,7 @@ jobs:
               run: npm run test:run
             - name: Check formatting with Prettier
               working-directory: ./webapp
-              run: npx prettier . --check
+              run: npm run format:check
 
     e2e-ui:
         runs-on: ubuntu-22.04
