@@ -8,6 +8,11 @@ from starlette import status
 
 from carbonserver.api.errors import EmptyResultException
 from carbonserver.api.schemas import AccessLevel, Empty, Run, RunCreate, RunReport
+from carbonserver.api.services.auth_service import (
+    MandatoryUserWithAuthDependency,
+    OptionalUserWithAuthDependency,
+    UserWithAuthDependency,
+)
 from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.usecases.run.experiment_sum_by_run import (
@@ -55,9 +60,10 @@ def add_run(
 @inject
 def read_run(
     run_id: str,
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> Run:
-    return run_service.read_run(run_id)
+    return run_service.read_run(run_id, user=auth_user.db_user)
 
 
 @router.get(
@@ -68,9 +74,10 @@ def read_run(
 )
 @inject
 def list_runs(
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> List[Run]:
-    return run_service.list_runs()
+    return run_service.list_runs(user=auth_user.db_user)
 
 
 @router.get(
@@ -81,9 +88,10 @@ def list_runs(
 @inject
 def read_runs_from_experiment(
     experiment_id: str,
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ):
-    return run_service.list_runs_from_experiment(experiment_id)
+    return run_service.list_runs_from_experiment(experiment_id, user=auth_user.db_user)
 
 
 @router.get(
@@ -96,6 +104,7 @@ def read_experiment_detailed_sums_by_run(
     experiment_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     experiment_global_sum_by_run_usecase: ExperimentSumsByRunUsecase = Depends(
         Provide[ServerContainer.experiment_sums_by_run_usecase]
     ),
@@ -107,7 +116,7 @@ def read_experiment_detailed_sums_by_run(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return experiment_global_sum_by_run_usecase.compute_detailed_sum(
-        experiment_id, start_date, end_date
+        experiment_id, start_date, end_date, user=auth_user.db_user
     )
 
 
@@ -122,6 +131,7 @@ def read_project_last_run(
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     run_service: RunService = Depends(Provide[ServerContainer.run_service]),
 ) -> Union[Run, Empty]:
     start_date = (
@@ -131,7 +141,9 @@ def read_project_last_run(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     try:
-        return run_service.read_project_last_run(project_id, start_date, end_date)
+        return run_service.read_project_last_run(
+            project_id, start_date, end_date, user=auth_user.db_user
+        )
     except EmptyResultException as e:
         logger.warning(f"read_project_last_run : {e}")
         return Empty()

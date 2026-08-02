@@ -39,10 +39,8 @@ class SqlAlchemyRepository(ProjectTokens):
         with self.session_factory() as session:
             db_project_token = (
                 session.query(SqlModelProjectToken)
-                .filter(
-                    SqlModelProjectToken.id == token_id
-                    and SqlModelProjectToken.project_id == project_id
-                )
+                .filter(SqlModelProjectToken.id == token_id)
+                .filter(SqlModelProjectToken.project_id == project_id)
                 .first()
             )
             if db_project_token is None:

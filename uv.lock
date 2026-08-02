@@ -407,6 +407,7 @@ wheels = [
 
 [[package]]
 name = "codecarbon"
+version = "3.2.8"
 source = { editable = "." }
 dependencies = [
     { name = "arrow" },

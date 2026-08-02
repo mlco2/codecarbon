@@ -121,6 +121,21 @@ class TestRAM(unittest.TestCase):
 
         self.assertEqual(result, "AllocTRES=cpu=1,mem=128G")
 
+    @mock.patch("codecarbon.external.ram.SLURM_JOB_ID", "1; touch /tmp/pwned")
+    @mock.patch("codecarbon.external.ram.subprocess.check_output")
+    def test_read_slurm_scontrol_runs_without_shell(self, mock_check_output):
+        # A crafted SLURM_JOB_ID must be passed as a single argv item and never
+        # interpreted by a shell (no shell=True).
+        mock_check_output.return_value = b"AllocTRES=cpu=1,mem=128G"
+        ram = RAM(tracking_mode="slurm")
+
+        ram._read_slurm_scontrol()
+
+        mock_check_output.assert_called_once_with(
+            ["scontrol", "show", "job", "1; touch /tmp/pwned"]
+        )
+        self.assertIsNone(mock_check_output.call_args.kwargs.get("shell"))
+
     @mock.patch(
         "codecarbon.external.ram.subprocess.check_output",
         side_effect=subprocess.CalledProcessError(1, "scontrol"),
