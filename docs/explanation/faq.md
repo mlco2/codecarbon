@@ -45,6 +45,10 @@ If you find any functionality missing in the CodeCarbon repo, please [open an is
 
 By default, CodeCarbon saves emissions data locally. You can configure HTTP output to send data to your own endpoints. We do send data to our API when the user allows it and logs in. No data is sent to third parties without explicit configuration.
 
+## Why is my second tracker faster than the first?
+
+In a single Python process, the first tracker pays a one-time cost to detect hardware (CPU model, GPU devices, RAM, power backends, and related setup). Later trackers in the same process reuse that cached setup, so `start()` and `stop()` are much faster on warm runs. This is expected: each new process still performs a full cold setup once.
+
 ## What hardware does CodeCarbon support?
 
 CodeCarbon supports various CPU architectures, GPUs, and cloud providers. For details on measurement priority and supported hardware, see the [Methodology](methodology.md#cpu-metrics-priority) page.
