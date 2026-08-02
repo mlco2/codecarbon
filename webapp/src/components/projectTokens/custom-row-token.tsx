@@ -5,49 +5,43 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export default function CustomRowToken({
-    projectToken,
-    onTokenDeleted,
+  projectToken,
+  onTokenDeleted,
 }: {
-    projectToken: IProjectToken;
-    onTokenDeleted: () => void;
+  projectToken: IProjectToken;
+  onTokenDeleted: () => void;
 }) {
-    const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleDelete = async (projectToken: IProjectToken) => {
-        if (isDeleting) return;
+  const handleDelete = async (projectToken: IProjectToken) => {
+    if (isDeleting) return;
 
-        setIsDeleting(true);
+    setIsDeleting(true);
 
-        try {
-            await toast
-                .promise(
-                    deleteProjectToken(
-                        projectToken.project_id,
-                        projectToken.id,
-                    ),
-                    {
-                        loading: `Deleting token ${projectToken.name}...`,
-                        success: `Token ${projectToken.name} deleted successfully`,
-                        error: (error) =>
-                            `Failed to delete token: ${error instanceof Error ? error.message : "Unknown error"}`,
-                    },
-                )
-                .unwrap();
-            onTokenDeleted();
-        } catch (error) {
-            console.error("Error deleting token:", error);
-        } finally {
-            setIsDeleting(false);
-        }
-    };
+    try {
+      await toast
+        .promise(deleteProjectToken(projectToken.project_id, projectToken.id), {
+          loading: `Deleting token ${projectToken.name}...`,
+          success: `Token ${projectToken.name} deleted successfully`,
+          error: (error) =>
+            `Failed to delete token: ${error instanceof Error ? error.message : "Unknown error"}`,
+        })
+        .unwrap();
+      onTokenDeleted();
+    } catch (error) {
+      console.error("Error deleting token:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
-    return (
-        <CustomRow
-            rowKey={projectToken.id}
-            firstColumn={projectToken.name ?? "-"}
-            secondColumn={projectToken.token ?? "•••••••• (hidden)"}
-            onDelete={() => handleDelete(projectToken)}
-            deleteDisabled={isDeleting}
-        />
-    );
+  return (
+    <CustomRow
+      rowKey={projectToken.id}
+      firstColumn={projectToken.name ?? "-"}
+      secondColumn={projectToken.token ?? "•••••••• (hidden)"}
+      onDelete={() => handleDelete(projectToken)}
+      deleteDisabled={isDeleting}
+    />
+  );
 }

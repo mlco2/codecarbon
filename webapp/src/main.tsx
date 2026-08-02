@@ -11,10 +11,10 @@ import "./globals.css";
 installMockFetch();
 
 createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <SWRConfig value={swrConfig}>
-            <RouterProvider router={router} />
-            <Toaster />
-        </SWRConfig>
-    </StrictMode>,
+  <StrictMode>
+    <SWRConfig value={swrConfig}>
+      <RouterProvider router={router} />
+      <Toaster />
+    </SWRConfig>
+  </StrictMode>,
 );

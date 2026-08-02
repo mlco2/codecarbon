@@ -15,89 +15,89 @@ const ProjectSettingsPage = lazy(() => import("./pages/ProjectSettingsPage"));
 const MembersPage = lazy(() => import("./pages/MembersPage"));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-    return <Suspense fallback={<Loader />}>{children}</Suspense>;
+  return <Suspense fallback={<Loader />}>{children}</Suspense>;
 }
 
 export const router = createBrowserRouter([
-    {
-        path: "/",
+  {
+    path: "/",
+    element: (
+      <SuspenseWrapper>
+        <LandingPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: "/privacy",
+    element: (
+      <SuspenseWrapper>
+        <PrivacyPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    path: "/public/projects/:projectId",
+    element: (
+      <SuspenseWrapper>
+        <PublicProjectPage />
+      </SuspenseWrapper>
+    ),
+  },
+  {
+    element: (
+      <AuthGuard>
+        <DashboardLayout />
+      </AuthGuard>
+    ),
+    children: [
+      {
+        path: "/home",
         element: (
-            <SuspenseWrapper>
-                <LandingPage />
-            </SuspenseWrapper>
+          <SuspenseWrapper>
+            <HomePage />
+          </SuspenseWrapper>
         ),
-    },
-    {
-        path: "/privacy",
+      },
+      {
+        path: "/:organizationId",
         element: (
-            <SuspenseWrapper>
-                <PrivacyPage />
-            </SuspenseWrapper>
+          <SuspenseWrapper>
+            <OrgDashboardPage />
+          </SuspenseWrapper>
         ),
-    },
-    {
-        path: "/public/projects/:projectId",
+      },
+      {
+        path: "/:organizationId/projects",
         element: (
-            <SuspenseWrapper>
-                <PublicProjectPage />
-            </SuspenseWrapper>
+          <SuspenseWrapper>
+            <ProjectsPage />
+          </SuspenseWrapper>
         ),
-    },
-    {
+      },
+      {
+        path: "/:organizationId/projects/:projectId",
         element: (
-            <AuthGuard>
-                <DashboardLayout />
-            </AuthGuard>
+          <SuspenseWrapper>
+            <ProjectDashboardPage />
+          </SuspenseWrapper>
         ),
-        children: [
-            {
-                path: "/home",
-                element: (
-                    <SuspenseWrapper>
-                        <HomePage />
-                    </SuspenseWrapper>
-                ),
-            },
-            {
-                path: "/:organizationId",
-                element: (
-                    <SuspenseWrapper>
-                        <OrgDashboardPage />
-                    </SuspenseWrapper>
-                ),
-            },
-            {
-                path: "/:organizationId/projects",
-                element: (
-                    <SuspenseWrapper>
-                        <ProjectsPage />
-                    </SuspenseWrapper>
-                ),
-            },
-            {
-                path: "/:organizationId/projects/:projectId",
-                element: (
-                    <SuspenseWrapper>
-                        <ProjectDashboardPage />
-                    </SuspenseWrapper>
-                ),
-            },
-            {
-                path: "/:organizationId/projects/:projectId/settings",
-                element: (
-                    <SuspenseWrapper>
-                        <ProjectSettingsPage />
-                    </SuspenseWrapper>
-                ),
-            },
-            {
-                path: "/:organizationId/members",
-                element: (
-                    <SuspenseWrapper>
-                        <MembersPage />
-                    </SuspenseWrapper>
-                ),
-            },
-        ],
-    },
+      },
+      {
+        path: "/:organizationId/projects/:projectId/settings",
+        element: (
+          <SuspenseWrapper>
+            <ProjectSettingsPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: "/:organizationId/members",
+        element: (
+          <SuspenseWrapper>
+            <MembersPage />
+          </SuspenseWrapper>
+        ),
+      },
+    ],
+  },
 ]);

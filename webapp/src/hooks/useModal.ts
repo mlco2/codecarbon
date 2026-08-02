@@ -8,11 +8,11 @@ import { useCallback, useState } from "react";
  * @returns Object with isOpen state and open/close/toggle functions
  */
 export function useModal(defaultOpen = false) {
-    const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
-    const open = useCallback(() => setIsOpen(true), []);
-    const close = useCallback(() => setIsOpen(false), []);
-    const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
+  const open = useCallback(() => setIsOpen(true), []);
+  const close = useCallback(() => setIsOpen(false), []);
+  const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
-    return { isOpen, open, close, toggle, setIsOpen };
+  return { isOpen, open, close, toggle, setIsOpen };
 }

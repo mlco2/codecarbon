@@ -3,19 +3,17 @@ import { render, RenderOptions } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 interface RouterRenderOptions extends Omit<RenderOptions, "wrapper"> {
-    initialEntries?: string[];
+  initialEntries?: string[];
 }
 
 export function renderWithRouter(
-    ui: ReactElement,
-    { initialEntries = ["/"], ...options }: RouterRenderOptions = {},
+  ui: ReactElement,
+  { initialEntries = ["/"], ...options }: RouterRenderOptions = {},
 ) {
-    return render(ui, {
-        ...options,
-        wrapper: ({ children }) => (
-            <MemoryRouter initialEntries={initialEntries}>
-                {children}
-            </MemoryRouter>
-        ),
-    });
+  return render(ui, {
+    ...options,
+    wrapper: ({ children }) => (
+      <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
+    ),
+  });
 }

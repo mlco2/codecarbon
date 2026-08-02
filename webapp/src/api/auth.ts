@@ -1,5 +1,5 @@
 function trimTrailingSlash(value: string): string {
-    return value.endsWith("/") ? value.slice(0, -1) : value;
+  return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
 /**
@@ -8,18 +8,18 @@ function trimTrailingSlash(value: string): string {
  * so callers can render a disabled button instead of crashing the page.
  */
 export function buildLoginUrl(): string | null {
-    const apiBase = trimTrailingSlash(import.meta.env.VITE_API_URL ?? "");
-    const appBase = trimTrailingSlash(import.meta.env.VITE_BASE_URL ?? "");
-    if (!apiBase) {
-        console.warn(
-            "[auth] VITE_API_URL is not set — login is disabled. " +
-                "Configure it in webapp/.env (see .env.example).",
-        );
-        return null;
-    }
-    const url = new URL(`${apiBase}/auth/login`);
-    url.searchParams.set("redirect", `${appBase}/home?auth=true`);
-    return url.toString();
+  const apiBase = trimTrailingSlash(import.meta.env.VITE_API_URL ?? "");
+  const appBase = trimTrailingSlash(import.meta.env.VITE_BASE_URL ?? "");
+  if (!apiBase) {
+    console.warn(
+      "[auth] VITE_API_URL is not set — login is disabled. " +
+        "Configure it in webapp/.env (see .env.example).",
+    );
+    return null;
+  }
+  const url = new URL(`${apiBase}/auth/login`);
+  url.searchParams.set("redirect", `${appBase}/home?auth=true`);
+  return url.toString();
 }
 
 /**
@@ -28,7 +28,7 @@ export function buildLoginUrl(): string | null {
  * helpful message instead.
  */
 export function redirectToLogin(): void {
-    const url = buildLoginUrl();
-    if (!url) return;
-    window.location.assign(url);
+  const url = buildLoginUrl();
+  if (!url) return;
+  window.location.assign(url);
 }

@@ -6,11 +6,11 @@ import { addMonths, startOfDay, endOfDay } from "date-fns";
  * @returns DateRange object with from and to dates
  */
 export const getDefaultDateRange = (
-    months: number = 2,
+  months: number = 2,
 ): { from: Date; to: Date } => {
-    const today = new Date();
-    return {
-        from: startOfDay(addMonths(today, -months)),
-        to: endOfDay(today),
-    };
+  const today = new Date();
+  return {
+    from: startOfDay(addMonths(today, -months)),
+    to: endOfDay(today),
+  };
 };

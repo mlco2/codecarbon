@@ -12,10 +12,9 @@ const US_CITIZEN_WEEKLY_EMISSIONS = US_CITIZEN_YEARLY_EMISSIONS / 52; // KgCO2.e
  * @returns Equivalent percentage of an american citizen weekly energy consumption
  */
 export const getEquivalentCitizenPercentage = (emissionKg: number) => {
-    return (
-        Math.round(((100 * emissionKg) / US_CITIZEN_WEEKLY_EMISSIONS) * 100) /
-        100
-    );
+  return (
+    Math.round(((100 * emissionKg) / US_CITIZEN_WEEKLY_EMISSIONS) * 100) / 100
+  );
 };
 
 // Average emissions of a european car : 133 gCO2.eq / km for a new car using gasoline in Europe in 2023.
@@ -27,7 +26,7 @@ const CAR_EMISSIONS_KGCO2_PER_KM = 133 / 1000;
  * @returns Equivalent Km ridden by a car
  */
 export const getEquivalentCarKm = (emissionKg: number) => {
-    return Math.round((emissionKg / CAR_EMISSIONS_KGCO2_PER_KM) * 100) / 100;
+  return Math.round((emissionKg / CAR_EMISSIONS_KGCO2_PER_KM) * 100) / 100;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -43,5 +42,5 @@ const TV_ENERGY_PER_DAY_KWH = (138 / 1000) * 24;
  * @returns TV time equivalent in days
  */
 export const getEquivalentTvTime = (energyKwh: number): number => {
-    return Math.round((energyKwh / TV_ENERGY_PER_DAY_KWH) * 100) / 100;
+  return Math.round((energyKwh / TV_ENERGY_PER_DAY_KWH) * 100) / 100;
 };
