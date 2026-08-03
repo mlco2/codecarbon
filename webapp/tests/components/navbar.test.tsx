@@ -24,7 +24,6 @@ import { renderWithRouter } from "../test-utils";
 
 beforeEach(() => {
     navigateMock.mockReset();
-    localStorage.clear();
 });
 
 const orgs = [

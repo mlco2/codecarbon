@@ -79,9 +79,7 @@ export default function ProjectsPage() {
             <BreadcrumbHeader
                 pathSegments={[
                     {
-                        title:
-                            localStorage.getItem("organizationName") ||
-                            organizationId!,
+                        title: organizationId!,
                         href: `/${organizationId}`,
                     },
                     { title: "Projects", href: null },

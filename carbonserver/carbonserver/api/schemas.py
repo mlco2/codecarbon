@@ -13,7 +13,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class Empty(BaseModel):
@@ -34,10 +34,6 @@ class UserAutoCreate(UserBase):
 
     def __repr__(self):
         return f"UserAutoCreate(name={self.name}, email={self.email}, id={self.id})"
-
-
-class UserAuthenticate(UserBase):
-    password: SecretStr
 
 
 class User(UserBase):

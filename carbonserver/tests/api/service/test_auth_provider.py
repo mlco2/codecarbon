@@ -3,7 +3,6 @@ Unit tests for OIDC authentication provider.
 """
 
 from carbonserver.api.services.auth_providers.oidc_auth_provider import OIDCAuthProvider
-from carbonserver.config import settings
 
 
 class TestOIDCAuthProvider:
@@ -17,12 +16,5 @@ class TestOIDCAuthProvider:
             client_secret="test_secret",
         )
 
-        # Check all required methods exist
         assert hasattr(provider, "get_authorize_url")
-        assert hasattr(provider, "get_client_credentials")
-
-        # Test endpoint methods
-        assert provider.get_client_credentials() == (
-            settings.oidc_client_id,
-            settings.oidc_client_secret,
-        )
+        assert hasattr(provider, "get_user_info")

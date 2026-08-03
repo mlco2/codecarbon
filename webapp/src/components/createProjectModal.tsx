@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Project } from "@/api/schemas";
 import { createProject } from "@/api/projects";
 import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";

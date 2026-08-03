@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
+from fastapi import Response
 from fastapi.testclient import TestClient
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -60,6 +61,36 @@ def test_logout_clears_cookie_and_session(client, monkeypatch):
         )
         # We cannot directly check session cleared, but can check that logout returns redirect
         assert "window.location.href" in response.text
+
+
+@pytest.mark.asyncio
+async def test_login_redirect_does_not_expose_tokens(monkeypatch):
+    monkeypatch.setattr(authenticate.settings, "frontend_url", "https://dashboard.test")
+    token = {
+        "access_token": "access-secret",
+        "id_token": {"sub": "user-id", "email": "user@example.com"},
+        "refresh_token": "refresh-secret",
+    }
+    request = MagicMock()
+    request.url_for.return_value = "https://api.test/auth/login"
+    request.base_url = "https://api.test/"
+    request.session = {}
+    auth_provider = MagicMock()
+    auth_provider.client.authorize_access_token = AsyncMock(return_value=token)
+    auth_provider.create_redirect_response.side_effect = lambda url: Response(url)
+    sign_up_service = MagicMock()
+
+    response = await authenticate.get_login(
+        request=request,
+        code="authorization-code",
+        sign_up_service=sign_up_service,
+        auth_provider=auth_provider,
+    )
+
+    assert response.body == b"https://dashboard.test/home"
+    assert b"access-secret" not in response.body
+    assert b"refresh-secret" not in response.body
+    assert response.headers["set-cookie"].startswith("user_session=access-secret;")
 
 
 # --- Token revocation tests ---

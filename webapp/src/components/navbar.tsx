@@ -1,4 +1,3 @@
-import { cn } from "@/helpers/utils";
 import { Organization } from "@/api/schemas";
 import { SelectGroup } from "@radix-ui/react-select";
 import {
@@ -35,14 +34,7 @@ export default function NavBar({
 }>) {
     const [selected, setSelected] = useState<string | null>(null);
     const navigate = useNavigate();
-    const [isCollapsed, setIsCollapsed] = useState(false);
-    const [selectedOrg, setSelectedOrg] = useState<string | null>(() => {
-        try {
-            return localStorage.getItem("organizationId");
-        } catch {
-            return null;
-        }
-    });
+    const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
     const iconStyles = "h-4 w-4 flex-shrink-0 text-muted-foreground";
     const { pathname } = useLocation();
     const newOrgModal = useModal();
@@ -71,56 +63,15 @@ export default function NavBar({
     }, [orgs]);
 
     useEffect(() => {
-        if (!selectedOrg) {
-            try {
-                const localOrg = localStorage.getItem("organizationId");
-                const foundOrg = organizationList?.find(
-                    (org) => org.id === localOrg,
-                );
-                if (localOrg && foundOrg) {
-                    setSelectedOrg(localOrg);
-                } else if (organizationList && organizationList.length > 0) {
-                    // Set the first organization as the default
-                    setSelectedOrg(organizationList[0].id);
-                }
-            } catch (error) {
-                console.error("Error reading from localStorage:", error);
-            }
+        if (!organizationList?.length) {
+            setSelectedOrg(null);
+            return;
         }
-    }, [selectedOrg, organizationList]);
-
-    // Effect for updating localStorage when selectedOrg changes
-    useEffect(() => {
-        if (selectedOrg) {
-            try {
-                const localOrg = localStorage.getItem("organizationId");
-                if (localOrg !== selectedOrg) {
-                    localStorage.setItem("organizationId", selectedOrg);
-                    const orgName = organizationList?.find(
-                        (org) => org.id === selectedOrg,
-                    )?.name;
-                    if (orgName) {
-                        localStorage.setItem("organizationName", orgName);
-                    }
-                }
-            } catch (error) {
-                console.error("Error writing to localStorage:", error);
-            }
-        }
-    }, [selectedOrg, organizationList]);
-
-    // Extract the organization ID from the current path if it exists
-    useEffect(() => {
-        if (pathname && pathname !== "/home" && pathname !== "/profile") {
-            // Extract the org ID from the path (format: /{orgId} or /{orgId}/...)
-            const pathParts = pathname.split("/");
-            if (pathParts.length >= 2 && pathParts[1]) {
-                // Check if this ID is a valid organization
-                const orgId = pathParts[1];
-                if (organizationList?.some((org) => org.id === orgId)) {
-                    setSelectedOrg(orgId);
-                }
-            }
+        const routeOrgId = pathname.split("/")[1];
+        if (organizationList.some((org) => org.id === routeOrgId)) {
+            setSelectedOrg(routeOrgId);
+        } else if (!organizationList.some((org) => org.id === selectedOrg)) {
+            setSelectedOrg(organizationList[0].id);
         }
     }, [pathname, organizationList, selectedOrg]);
 
@@ -203,21 +154,12 @@ export default function NavBar({
                                 onOpenChange={setDropdownOpen}
                             >
                                 <SelectTrigger
-                                    className={cn(
-                                        "flex items-center gap-2 [&>span]:line-clamp-1 [&>span]:flex [&>span]:w-full [&>span]:items-center [&>span]:gap-1 [&>span]:truncate [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
-                                        isCollapsed &&
-                                            "flex h-9 w-9 shrink-0 items-center justify-center p-0 [&>span]:w-auto [&>svg]:hidden",
-                                    )}
+                                    className="flex items-center gap-2 [&>span]:line-clamp-1 [&>span]:flex [&>span]:w-full [&>span]:items-center [&>span]:gap-1 [&>span]:truncate [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0"
                                     aria-label="Select account"
                                 >
                                     <SelectValue placeholder="Select an organization">
                                         <Building className={iconStyles} />
-                                        <span
-                                            className={cn(
-                                                "ml-2 truncate",
-                                                isCollapsed && "hidden",
-                                            )}
-                                        >
+                                        <span className="ml-2 truncate">
                                             {(organizationList &&
                                                 organizationList.find(
                                                     (org) =>

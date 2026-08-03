@@ -1,5 +1,4 @@
 import logging
-from dataclasses import dataclass
 from typing import Optional
 
 import jwt
@@ -18,12 +17,6 @@ from carbonserver.container import ServerContainer
 
 OAUTH_SCOPES = ["openid", "email", "profile"]
 LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-class FullUser:
-    db_user: dict
-    auth_user: dict
 
 
 SESSION_COOKIE_NAME = "user_session"
@@ -114,9 +107,10 @@ class UserWithAuthDependency:
                 return await auth_provider.get_user_info(token)
             except Exception as e:
                 LOGGER.debug("JWKS validation of the token failed", exc_info=True)
-                raise AuthenticationError(
-                    detail="JWKS validation of the token failed"
-                ) from e
+                if settings.environment != "develop" or not settings.jwt_key:
+                    raise AuthenticationError(
+                        detail="JWKS validation of the token failed"
+                    ) from e
 
         if settings.environment == "develop" and settings.jwt_key:
             try:

@@ -20,8 +20,6 @@ PROJECTS_ROUTER_TAGS = ["Projects"]
 
 router = APIRouter()
 
-projects_temp_db = []
-
 
 @router.post(
     "/projects",

@@ -24,7 +24,6 @@ from carbonserver.logger import logger
 RUNS_ROUTER_TAGS = ["Runs"]
 
 router = APIRouter()
-runs_temp_db = []
 
 
 @router.post(
