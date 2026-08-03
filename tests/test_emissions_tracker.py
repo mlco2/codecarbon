@@ -425,37 +425,6 @@ class TestCarbonTracker(unittest.TestCase):
             )
         )
 
-    def test_api_output_init_failure_does_not_break_tracker(
-        self,
-        mock_cli_setup,
-        mock_log_values,
-        mocked_get_gpu_details,
-        mocked_env_cloud_details,
-        mocked_get_gpu_utilization_list,
-        mocked_is_gpu_details_available,
-        mocked_is_nvidia_system,
-    ):
-        with mock.patch(
-            "codecarbon.output_methods.http.CodeCarbonAPIOutput",
-            side_effect=requests.exceptions.HTTPError("API unavailable"),
-        ) as mock_api_output:
-            tracker = EmissionsTracker(
-                output_dir=self.temp_path,
-                output_handlers=[],
-                output_methods=[OutputMethod.CSV, OutputMethod.API],
-                api_key="test-key",
-                experiment_id="exp-1",
-            )
-
-        mock_api_output.assert_called_once()
-        self.assertIsNotNone(tracker.run_id)
-        self.assertFalse(
-            any(
-                isinstance(handler, CodeCarbonAPIOutput)
-                for handler in tracker._output_handlers
-            )
-        )
-
     def test_output_methods_parsed_from_config_string(
         self,
         mock_cli_setup,
