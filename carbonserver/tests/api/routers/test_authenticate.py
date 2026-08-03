@@ -1,8 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import FastAPI
-from fastapi import Response
+from fastapi import FastAPI, Response
 from fastapi.testclient import TestClient
 from starlette.middleware.sessions import SessionMiddleware
 
