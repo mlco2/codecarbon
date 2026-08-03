@@ -1,7 +1,7 @@
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from carbonserver.api.dependencies import MandatoryUserWithAuthDependency
+from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
 from carbonserver.api.schemas import User
 from carbonserver.api.services.user_service import UserService
 from carbonserver.container import ServerContainer
