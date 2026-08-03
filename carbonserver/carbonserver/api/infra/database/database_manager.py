@@ -27,8 +27,10 @@ class Database:
     @contextmanager
     def session(self) -> Callable[..., AbstractContextManager]:
         session: Session = self._session_factory()
+        logger.debug("Opening database session")
         try:
             yield session
+            logger.debug("Database session completed successfully")
 
         except exc.IntegrityError as e:
             session.rollback()
@@ -59,3 +61,4 @@ class Database:
             raise
         finally:
             session.close()
+            logger.debug("Database session closed")
