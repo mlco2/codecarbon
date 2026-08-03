@@ -6,7 +6,7 @@ It can work with any OIDC-compliant provider (Keycloak, Auth0, etc.).
 """
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Response
@@ -45,9 +45,6 @@ class OIDCAuthProvider:
         return await self.client.authorize_redirect(
             request, str(login_url), scope=" ".join(OAUTH_SCOPES)
         )
-
-    def get_client_credentials(self) -> Tuple[str, str]:
-        return (self.client.client_id, self.client.client_secret)
 
     async def _decode_token(self, token: str) -> Dict[str, Any]:
         jwks_data = await self.client.fetch_jwk_set()

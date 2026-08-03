@@ -114,9 +114,10 @@ class UserWithAuthDependency:
                 return await auth_provider.get_user_info(token)
             except Exception as e:
                 LOGGER.debug("JWKS validation of the token failed", exc_info=True)
-                raise AuthenticationError(
-                    detail="JWKS validation of the token failed"
-                ) from e
+                if settings.environment != "develop" or not settings.jwt_key:
+                    raise AuthenticationError(
+                        detail="JWKS validation of the token failed"
+                    ) from e
 
         if settings.environment == "develop" and settings.jwt_key:
             try:
