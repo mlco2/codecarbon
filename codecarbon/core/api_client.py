@@ -229,6 +229,7 @@ class ApiClient:  # (AsyncClient)
                 self._raise_api_error(url, payload, r)
             logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
         except requests.exceptions.HTTPError:
+            # Already logged by _raise_api_error, do not log it twice.
             raise
         except Exception as e:
             logger.error(e, exc_info=True)
@@ -284,6 +285,7 @@ class ApiClient:  # (AsyncClient)
             )
             raise
         except requests.exceptions.HTTPError:
+            # Already logged by _raise_api_error, do not log it twice.
             raise
         except Exception as e:
             logger.error(e, exc_info=True)
@@ -331,6 +333,9 @@ class ApiClient:  # (AsyncClient)
         return r.json()
 
     def _raise_api_error(self, url, payload, response):
+        """
+        Log the failed call then always raise a requests.exceptions.HTTPError.
+        """
         if len(payload) > 0:
             logger.error(
                 f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
