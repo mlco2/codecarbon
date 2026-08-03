@@ -6,7 +6,7 @@ import requests
 import requests_mock
 
 from codecarbon.core.api_client import ApiClient
-from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate
+from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
 from codecarbon.output import EmissionsData
 
 conf = {
@@ -378,3 +378,126 @@ class TestApi(unittest.TestCase):
                     api_key="Toto",
                     conf=conf,
                 )
+
+    def test_create_run_raises_on_unexpected_error(self):
+        """A non HTTP, non connection error is logged then re-raised as is."""
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/runs", exc=requests.exceptions.Timeout("too slow"))
+            with self.assertRaises(requests.exceptions.Timeout):
+                ApiClient(
+                    experiment_id="experiment_id",
+                    endpoint_url="http://test.com",
+                    api_key="Toto",
+                    conf=conf,
+                )
+
+    def test_add_emission_raises_on_unexpected_error(self):
+        """A non HTTP error raised while posting an emission is re-raised as is."""
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://test.com/emissions", exc=requests.exceptions.Timeout("too slow")
+            )
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                conf=conf,
+                create_run_automatically=False,
+            )
+            api.run_id = "run-1"
+
+            with self.assertRaises(requests.exceptions.Timeout):
+                api.add_emission(
+                    {
+                        "duration": 2,
+                        "emissions": 1.0,
+                        "emissions_rate": 1.0,
+                        "cpu_power": 1.0,
+                        "gpu_power": 0.0,
+                        "ram_power": 0.5,
+                        "cpu_energy": 0.1,
+                        "gpu_energy": 0.0,
+                        "ram_energy": 0.1,
+                        "energy_consumed": 0.2,
+                    }
+                )
+
+    def test_create_organization_raises_on_error(self):
+        organization = OrganizationCreate(name="new-org", description="desc")
+
+        with requests_mock.Mocker() as m:
+            # No organization with that name yet, so the creation is attempted.
+            m.get("http://test.com/organizations", json=[], status_code=200)
+            m.post("http://test.com/organizations", text="bad", status_code=500)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                create_run_automatically=False,
+            )
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.create_organization(organization)
+
+    def test_get_organization_raises_on_error(self):
+        with requests_mock.Mocker() as m:
+            m.get("http://test.com/organizations/org-1", text="bad", status_code=404)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                create_run_automatically=False,
+            )
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.get_organization("org-1")
+
+    def test_update_organization_raises_on_error(self):
+        organization = OrganizationCreate(name="org", description="desc")
+        organization.id = "org-1"
+
+        with requests_mock.Mocker() as m:
+            m.patch("http://test.com/organizations/org-1", text="bad", status_code=500)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                create_run_automatically=False,
+            )
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.update_organization(organization)
+
+    def test_list_projects_from_organization_raises_on_error(self):
+        with requests_mock.Mocker() as m:
+            m.get(
+                "http://test.com/organizations/org-1/projects",
+                text="bad",
+                status_code=500,
+            )
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                create_run_automatically=False,
+            )
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.list_projects_from_organization("org-1")
+
+    def test_create_project_raises_on_error(self):
+        project = ProjectCreate(
+            name="project", description="desc", organization_id="org-1"
+        )
+
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/projects", text="bad", status_code=500)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                create_run_automatically=False,
+            )
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.create_project(project)
+
+    def test_get_project_raises_on_error(self):
+        with requests_mock.Mocker() as m:
+            m.get("http://test.com/projects/proj-1", text="bad", status_code=404)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                create_run_automatically=False,
+            )
+
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api.get_project("proj-1")
