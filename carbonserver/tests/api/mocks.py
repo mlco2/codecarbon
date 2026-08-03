@@ -46,3 +46,11 @@ class FakeAuthContext:
     @staticmethod
     def can_read_run(*args, **kwargs):
         return True
+
+    @staticmethod
+    def can_read_emission(*args, **kwargs):
+        return True
+
+    @staticmethod
+    def can_create_run(*args, **kwargs):
+        return True

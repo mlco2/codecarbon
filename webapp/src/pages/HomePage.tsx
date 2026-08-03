@@ -24,6 +24,15 @@ export default function HomePage() {
     useEffect(() => {
         if (organizations && organizations.length > 0) {
             const defaultOrgId = organizations[0].id;
+            try {
+                localStorage.setItem("organizationId", defaultOrgId);
+                localStorage.setItem(
+                    "organizationName",
+                    organizations[0].name || "",
+                );
+            } catch (error) {
+                console.error("Error writing to localStorage:", error);
+            }
             navigate(`/${defaultOrgId}`);
         } else if ((organizations && organizations.length === 0) || error) {
             setRedirecting(false);

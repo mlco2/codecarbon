@@ -18,6 +18,12 @@ import { toast } from "sonner";
 
 export default function ProjectsPage() {
     const { organizationId } = useParams<{ organizationId: string }>();
+    let organizationName: string | null = null;
+    try {
+        organizationName = localStorage.getItem("organizationName");
+    } catch {
+        organizationName = null;
+    }
     const createModal = useModal();
     const deleteModal = useModal();
     const [projectList, setProjectList] = useState<Project[]>([]);
@@ -79,7 +85,7 @@ export default function ProjectsPage() {
             <BreadcrumbHeader
                 pathSegments={[
                     {
-                        title: organizationId!,
+                        title: organizationName || organizationId!,
                         href: `/${organizationId}`,
                     },
                     { title: "Projects", href: null },

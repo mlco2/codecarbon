@@ -1,5 +1,5 @@
 from contextlib import AbstractContextManager
-from typing import Callable
+from typing import Callable, List
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -59,6 +59,12 @@ class SqlAlchemyRepository(Users):
             if e is None:
                 raise HTTPException(status_code=404, detail=f"User {email} not found")
             return self.map_sql_to_schema(e)
+
+    def list_users(self) -> List[User]:
+        with self.session_factory() as session:
+            return [
+                self.map_sql_to_schema(user) for user in session.query(SqlModelUser)
+            ]
 
     def subscribe_user_to_org(
         self,

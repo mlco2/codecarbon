@@ -34,7 +34,13 @@ export default function NavBar({
 }>) {
     const [selected, setSelected] = useState<string | null>(null);
     const navigate = useNavigate();
-    const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
+    const [selectedOrg, setSelectedOrg] = useState<string | null>(() => {
+        try {
+            return localStorage.getItem("organizationId");
+        } catch {
+            return null;
+        }
+    });
     const iconStyles = "h-4 w-4 flex-shrink-0 text-muted-foreground";
     const { pathname } = useLocation();
     const newOrgModal = useModal();
@@ -74,6 +80,21 @@ export default function NavBar({
             setSelectedOrg(organizationList[0].id);
         }
     }, [pathname, organizationList, selectedOrg]);
+
+    useEffect(() => {
+        if (!selectedOrg) return;
+        try {
+            localStorage.setItem("organizationId", selectedOrg);
+            const organizationName = organizationList?.find(
+                (organization) => organization.id === selectedOrg,
+            )?.name;
+            if (organizationName) {
+                localStorage.setItem("organizationName", organizationName);
+            }
+        } catch (error) {
+            console.error("Error writing to localStorage:", error);
+        }
+    }, [selectedOrg, organizationList]);
 
     const handleNewOrgClick = async () => {
         newOrgModal.open();

@@ -22,6 +22,12 @@ export default function ProjectDashboardPage() {
         projectId: string;
         organizationId: string;
     }>();
+    let organizationName: string | null = null;
+    try {
+        organizationName = localStorage.getItem("organizationName");
+    } catch {
+        organizationName = null;
+    }
 
     const [project, setProject] = useState({
         name: "",
@@ -131,7 +137,7 @@ export default function ProjectDashboardPage() {
             <BreadcrumbHeader
                 pathSegments={[
                     {
-                        title: organizationId!,
+                        title: organizationName || organizationId!,
                         href: `/${organizationId}`,
                     },
                     {

@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from typing import Optional
 
 import jwt
@@ -17,6 +18,12 @@ from carbonserver.container import ServerContainer
 
 OAUTH_SCOPES = ["openid", "email", "profile"]
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class FullUser:
+    db_user: dict
+    auth_user: dict
 
 
 SESSION_COOKIE_NAME = "user_session"
