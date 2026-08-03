@@ -32,8 +32,7 @@ class TestCarbonCustomHandler(unittest.TestCase):
         tracker = EmissionsTracker(
             project_name=self.project_name,
             output_handlers=[handler_0, handler_1],
-            api_call_interval=2,
-            measure_power_secs=999,
+            api_call_interval=1,
         )
         tracker.start()
         heavy_computation(run_time_secs=1)
@@ -53,8 +52,7 @@ class TestCarbonCustomHandler(unittest.TestCase):
             project_name=self.project_name,
             save_to_logger=True,
             output_handlers=[handler_0, handler_1],
-            api_call_interval=2,
-            measure_power_secs=999,
+            api_call_interval=1,
         )
         def dummy_train_model():
             heavy_computation(run_time_secs=1)

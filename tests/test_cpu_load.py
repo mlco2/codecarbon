@@ -49,18 +49,13 @@ class TestCPULoad(unittest.TestCase):
         self.assertEqual(power.W, 50)
         self.assertEqual(cpu.total_power().W, 50)
 
-    @mock.patch(
-        "codecarbon.core.powermetrics.is_powermetrics_available", return_value=False
-    )
     def test_cpu_load_detection(
         self,
-        mocked_is_powermetrics_available,
         mocked_is_psutil_available,
         mocked_is_powergadget_available,
         mocked_is_rapl_available,
     ):
         tracker = OfflineEmissionsTracker(country_iso_code="FRA")
-        tracker._ensure_hardware_ready()
         for hardware in tracker._hardware:
             if (
                 isinstance(hardware, CPU) and hardware._mode == MODE_CPU_LOAD

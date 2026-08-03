@@ -6,7 +6,7 @@ import requests
 from codecarbon.core.api_client import ApiClient
 from codecarbon.external.logger import logger
 from codecarbon.output_methods.base_output import BaseOutput
-from codecarbon.output_methods.emissions_data import EmissionsData
+from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
 
 
 class HTTPOutput(BaseOutput):
@@ -74,3 +74,7 @@ class CodeCarbonAPIOutput(BaseOutput):
 
     def out(self, _, delta: EmissionsData):
         self._emit(delta)
+
+    def task_out(self, data: list[TaskEmissionsData], experiment_name: str) -> None:
+        for task_data in data:
+            self._emit(task_data)

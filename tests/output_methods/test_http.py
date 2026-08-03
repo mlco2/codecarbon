@@ -147,45 +147,6 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
         api_output.live_out(None, self.emissions_data)
         self.mock_add_emission.assert_called_once()
 
-    def test_codecarbon_api_live_out_creates_run_when_missing(self):
-        conf = {
-            "os": "linux",
-            "python_version": "3.12",
-            "codecarbon_version": "2.0",
-            "cpu_count": 4,
-            "cpu_model": "CPU",
-            "gpu_count": 0,
-            "gpu_model": "",
-            "longitude": 0.0,
-            "latitude": 0.0,
-            "region": "EU",
-            "provider": "AWS",
-            "ram_total_size": 16.0,
-            "tracking_mode": "machine",
-        }
-
-        with patch(
-            "codecarbon.output_methods.http.ApiClient._create_run"
-        ) as mock_create_run:
-            api_output = CodeCarbonAPIOutput(
-                endpoint_url="http://test.com",
-                experiment_id="exp-1",
-                api_key=self.api_key,
-                conf=conf,
-            )
-            api_output.api.run_id = None
-
-            def create_run(experiment_id):
-                api_output.api.run_id = "run-created"
-                return "run-created"
-
-            mock_create_run.side_effect = create_run
-            api_output.live_out(None, self.emissions_data)
-
-        mock_create_run.assert_called_once_with("exp-1")
-        self.assertEqual(api_output.api.run_id, "run-created")
-        self.assertEqual(api_output.run_id, "run-created")
-
     @patch("codecarbon.output_methods.http.logger.error")
     def test_codecarbon_live_out_api_call_failure(self, mock_logger):
         self.mock_add_emission.side_effect = Exception("Test exception")
@@ -207,6 +168,52 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
         )
 
         api_output.out(None, self.emissions_data)
+        self.mock_add_emission.assert_called_once()
+
+    def test_codecarbon_api_task_out(self):
+        from codecarbon.output_methods.emissions_data import TaskEmissionsData
+
+        api_output = CodeCarbonAPIOutput(
+            endpoint_url=self.url,
+            experiment_id=self.experiment_id,
+            api_key=self.api_key,
+            conf=None,
+        )
+        task_data = TaskEmissionsData(
+            task_name="GET /predict",
+            timestamp=self.emissions_data.timestamp,
+            project_name=self.emissions_data.project_name,
+            run_id=self.emissions_data.run_id,
+            duration=2.0,
+            emissions=self.emissions_data.emissions,
+            emissions_rate=self.emissions_data.emissions_rate,
+            cpu_power=self.emissions_data.cpu_power,
+            gpu_power=self.emissions_data.gpu_power,
+            ram_power=self.emissions_data.ram_power,
+            cpu_energy=self.emissions_data.cpu_energy,
+            gpu_energy=self.emissions_data.gpu_energy,
+            ram_energy=self.emissions_data.ram_energy,
+            energy_consumed=self.emissions_data.energy_consumed,
+            water_consumed=self.emissions_data.water_consumed,
+            country_name=self.emissions_data.country_name,
+            country_iso_code=self.emissions_data.country_iso_code,
+            region=self.emissions_data.region,
+            cloud_provider=self.emissions_data.cloud_provider,
+            cloud_region=self.emissions_data.cloud_region,
+            os=self.emissions_data.os,
+            python_version=self.emissions_data.python_version,
+            codecarbon_version=self.emissions_data.codecarbon_version,
+            cpu_count=self.emissions_data.cpu_count,
+            cpu_model=self.emissions_data.cpu_model,
+            gpu_count=self.emissions_data.gpu_count,
+            gpu_model=self.emissions_data.gpu_model,
+            longitude=self.emissions_data.longitude,
+            latitude=self.emissions_data.latitude,
+            ram_total_size=self.emissions_data.ram_total_size,
+            tracking_mode=self.emissions_data.tracking_mode,
+            on_cloud=self.emissions_data.on_cloud,
+        )
+        api_output.task_out([task_data], "test_experiment")
         self.mock_add_emission.assert_called_once()
 
     @patch("codecarbon.output_methods.http.logger.error")

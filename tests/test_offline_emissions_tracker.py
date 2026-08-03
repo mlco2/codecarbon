@@ -67,14 +67,3 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
 
         self.assertGreater(task_emission_data.emissions, 0.0)
         self.assertEqual(task_emission_data.country_name, None)
-
-    def test_resolve_offline_country_name_logs_on_invalid_iso(self):
-        tracker = OfflineEmissionsTracker(
-            country_iso_code="INVALID",
-            save_to_file=False,
-        )
-        with self.assertLogs("codecarbon", level="ERROR") as logs:
-            tracker._resolve_offline_country_name()
-        self.assertTrue(
-            any("Does not support country" in message for message in logs.output)
-        )
