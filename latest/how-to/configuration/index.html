@@ -922,6 +922,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#including-dram-in-the-cpu-measurement" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Including DRAM in the CPU Measurement
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#access-internet-through-proxy-server" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2134,6 +2145,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#including-dram-in-the-cpu-measurement" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Including DRAM in the CPU Measurement
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#access-internet-through-proxy-server" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2352,6 +2374,26 @@ Use <code>electricitymaps_api_token</code> instead.</p>
 <p><code>"process"</code> mode gives a lower-bound estimate of your code's footprint.
 <code>"machine"</code> mode is more conservative and accounts for all activity on the system.</p>
 </div>
+<h2 id="including-dram-in-the-cpu-measurement">Including DRAM in the CPU Measurement<a class="headerlink" href="#including-dram-in-the-cpu-measurement" title="Permanent link">&para;</a></h2>
+<p>When CodeCarbon reads the CPU energy counters, the hardware also exposes a
+<code>DRAM</code> domain measuring the memory controller. It is <strong>excluded by default</strong>, so
+that memory power is reported by the RAM tracker only and is not counted twice.</p>
+<p>Set <code>rapl_include_dram</code> to add it to the CPU measurement:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[codecarbon]</span>
+<span class="na">rapl_include_dram</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span>
+</code></pre></div>
+<p>Or in code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">rapl_include_dram</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>Despite its name, this option applies to every counter-based CPU interface:</p>
+<ul>
+<li><strong>Linux</strong>: the <code>dram</code> domains of the <a href="../../explanation/rapl/">RAPL</a> powercap
+  interface.</li>
+<li><strong>Windows 11</strong>: the <code>DRAM</code> channels of the Energy Meter Interface, which
+  exposes the very same RAPL counters.</li>
+</ul>
+<p>It has no effect when CodeCarbon falls back to TDP/CPU-load estimation, since
+that mode models the CPU package only.</p>
 <h2 id="access-internet-through-proxy-server">Access internet through proxy server<a class="headerlink" href="#access-internet-through-proxy-server" title="Permanent link">&para;</a></h2>
 <p>If you need a proxy to access internet, which is needed to call a Web
 API, like <a href="https://api.codecarbon.io/docs">Codecarbon API</a>, you have to
