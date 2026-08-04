@@ -32,6 +32,7 @@ class Database:
         logger.debug("Opening database session")
         try:
             yield session
+            session.commit()
             logger.debug("Database session completed successfully")
         except exc.IntegrityError as e:
             session.rollback()
