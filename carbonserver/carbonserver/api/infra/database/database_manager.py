@@ -12,7 +12,7 @@ Base = declarative_base()
 
 class Database:
     def __init__(self, db_url: str) -> None:
-        logger.info("Initializing database connection")
+        logger.info("Initializing database connection", extra={"db_url": db_url})
         self._engine = create_engine(db_url, echo=False, pool_pre_ping=True)
         self._session_factory = orm.scoped_session(
             orm.sessionmaker(
@@ -33,10 +33,13 @@ class Database:
         try:
             yield session
             logger.debug("Database session completed successfully")
-
         except exc.IntegrityError as e:
             session.rollback()
-            logger.error(e.orig.args[0], exc_info=True)
+            logger.error(
+                "Integrity error - rolling back session",
+                extra={"error": str(e.orig.args[0])},
+                exc_info=True,
+            )
             raise DBException(
                 error=DBError(
                     code=DBErrorEnum.INTEGRITY_ERROR,
@@ -45,13 +48,21 @@ class Database:
             )
         except exc.DataError as e:
             session.rollback()
-            logger.error(e.orig.args[0], exc_info=True)
+            logger.error(
+                "Data error - rolling back session",
+                extra={"error": str(e.orig.args[0])},
+                exc_info=True,
+            )
             raise DBException(
                 error=DBError(code=DBErrorEnum.DATA_ERROR, message="Invalid data")
             )
         except exc.ProgrammingError as e:
             session.rollback()
-            logger.error(e.orig.args[0], exc_info=True)
+            logger.error(
+                "Programming error - rolling back session",
+                extra={"error": str(e.orig.args[0])},
+                exc_info=True,
+            )
             raise DBException(
                 error=DBError(
                     code=DBErrorEnum.PROGRAMMING_ERROR, message="Wrong schema"
