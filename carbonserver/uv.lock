@@ -335,19 +335,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/65/77/2915c0cc8b602f3d611294920171c67ce396b43cda5fa63f3e4b465d635e/fastapi-0.140.4-py3-none-any.whl", hash = "sha256:6a1f8ec2f01ae47c96dc991d49660ce4f31f50ed0d7c9df80c5e57037bfe1240", size = 130958, upload-time = "2026-07-27T15:46:49.175Z" },
 ]
 
-[package.optional-dependencies]
-standard = [
-    { name = "email-validator" },
-    { name = "fastapi-cli", extra = ["standard"] },
-    { name = "fastar" },
-    { name = "httpx" },
-    { name = "jinja2" },
-    { name = "pydantic-extra-types" },
-    { name = "pydantic-settings" },
-    { name = "python-multipart" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
 [[package]]
 name = "fastapi-pagination"
 version = "0.15.14"
