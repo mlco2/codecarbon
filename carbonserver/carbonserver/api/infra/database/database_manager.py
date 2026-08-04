@@ -12,6 +12,7 @@ Base = declarative_base()
 
 class Database:
     def __init__(self, db_url: str) -> None:
+        logger.info("Initializing database connection")
         self._engine = create_engine(db_url, echo=False, pool_pre_ping=True)
         self._session_factory = orm.scoped_session(
             orm.sessionmaker(
@@ -22,6 +23,7 @@ class Database:
         )
 
     def create_database(self) -> None:
+        logger.info("Creating database tables")
         Base.metadata.create_all(self._engine)
 
     @contextmanager
