@@ -33,7 +33,7 @@ click==8.3.1
     #   rich-toolkit
     #   typer
     #   uvicorn
-cryptography==49.0.0
+cryptography==50.0.0
     # via
     #   authlib
     #   joserfc
