@@ -1,6 +1,6 @@
 repos:
     -   repo: https://github.com/PyCQA/autoflake
-        rev: v2.3.3
+        rev: 2d3853a9f31d97783fb2e181d41cd82a6babd666  # v2.3.3
         hooks:
         -   id: autoflake
             args:
@@ -11,17 +11,17 @@ repos:
                 --expand-star-imports,
               ]
     - repo: https://github.com/pycqa/isort
-      rev: 8.0.1
+      rev: a333737ed43df02b18e6c95477ea1b285b3de15a  # 8.0.1
       hooks:
           - id: isort
             args: ["--filter-files"]
     - repo: https://github.com/psf/black
-      rev: 26.5.1
+      rev: 87928e6d6761a4a6d22250e1fee5601b3998086e  # 26.5.1
       hooks:
           - id: black
             args: [--safe]
     - repo: https://github.com/PyCQA/flake8
-      rev: 7.3.0
+      rev: d93590f5be797aabb60e3b09f2f52dddb02f349f  # 7.3.0
       hooks:
           - id: flake8
             args: ["--config=.flake8"]

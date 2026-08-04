@@ -32,12 +32,12 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
 # Copy project files
-COPY pyproject.toml /app/
+COPY requirements/requirements-api.txt /app/requirements/requirements-api.txt
 COPY codecarbon /app/codecarbon
 COPY carbonserver /app/carbonserver
 
 # Install carbonserver dependencies.
-RUN uv pip install --system -e ./carbonserver
+RUN uv pip install --system --require-hashes -r requirements/requirements-api.txt
 
 COPY ./carbonserver/docker/entrypoint.sh /opt
 RUN chmod a+x /opt/entrypoint.sh
