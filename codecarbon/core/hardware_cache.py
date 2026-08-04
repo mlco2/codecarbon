@@ -134,6 +134,10 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
             spec["rapl_include_dram"] = getattr(intel, "rapl_include_dram", False)
             spec["rapl_prefer_psys"] = getattr(intel, "rapl_prefer_psys", False)
             spec["rapl_dir"] = getattr(intel, "_lin_rapl_dir", DEFAULT_RAPL_DIR)
+        elif hw._mode == "windows_emi" and hasattr(hw, "_intel_interface"):
+            spec["rapl_include_dram"] = getattr(
+                hw._intel_interface, "emi_include_dram", False
+            )
         return spec
     if kind == HardwareKind.APPLE_CHIP:
         return {
@@ -238,6 +242,7 @@ def clear_cache() -> None:
         ("codecarbon.core.gpu_amd", "clear_rocm_system_cache"),
         ("codecarbon.core.cpu", "clear_powergadget_cache"),
         ("codecarbon.core.powermetrics", "clear_powermetrics_cache"),
+        ("codecarbon.core.windows_emi", "clear_emi_cache"),
     ):
         mod = sys.modules.get(mod_name)
         if mod is not None:

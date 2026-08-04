@@ -149,6 +149,35 @@ EmissionsTracker(tracking_mode="process")
     `"process"` mode gives a lower-bound estimate of your code's footprint.
     `"machine"` mode is more conservative and accounts for all activity on the system.
 
+## Including DRAM in the CPU Measurement
+
+When CodeCarbon reads the CPU energy counters, the hardware also exposes a
+`DRAM` domain measuring the memory controller. It is **excluded by default**, so
+that memory power is reported by the RAM tracker only and is not counted twice.
+
+Set `rapl_include_dram` to add it to the CPU measurement:
+
+``` ini
+[codecarbon]
+rapl_include_dram = true
+```
+
+Or in code:
+
+``` python
+EmissionsTracker(rapl_include_dram=True)
+```
+
+Despite its name, this option applies to every counter-based CPU interface:
+
+- **Linux**: the `dram` domains of the [RAPL](../explanation/rapl.md) powercap
+  interface.
+- **Windows 11**: the `DRAM` channels of the Energy Meter Interface, which
+  exposes the very same RAPL counters.
+
+It has no effect when CodeCarbon falls back to TDP/CPU-load estimation, since
+that mode models the CPU package only.
+
 ## Access internet through proxy server
 
 If you need a proxy to access internet, which is needed to call a Web
