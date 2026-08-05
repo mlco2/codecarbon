@@ -13,6 +13,46 @@ import pytest
 from codecarbon.core.cpu import IntelRAPL, is_rapl_available
 
 
+@pytest.mark.parametrize(
+    ("energies", "expected_count"),
+    [((1000000, 1000000), 1), ((1000000, 2000000), 2), ((0, 0), 2)],
+)
+def test_rapl_start_deduplicates_only_nonzero_mirrored_package_counters(
+    tmp_path, monkeypatch, energies, expected_count
+):
+    monkeypatch.setattr(sys, "platform", "linux")
+    provider = tmp_path / "intel-rapl"
+    provider.mkdir()
+    for index, energy in enumerate(energies):
+        domain = provider / f"intel-rapl:{index}"
+        domain.mkdir()
+        (domain / "name").write_text(f"package-{index}-die-0")
+        (domain / "energy_uj").write_text(str(energy))
+        (domain / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+
+    assert len(rapl._rapl_files) == expected_count
+
+
+def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+    provider = tmp_path / "intel-rapl"
+    provider.mkdir()
+    for index, name in enumerate(("package-0-die-0", "package-0-die-1", "dram")):
+        domain = provider / f"intel-rapl:{index}"
+        domain.mkdir()
+        (domain / "name").write_text(name)
+        (domain / "energy_uj").write_text("1000000")
+        (domain / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path), rapl_include_dram=True)
+    rapl.start()
+
+    assert len(rapl._rapl_files) == 2
+
+
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_multiple_rapl_providers_with_mixed_permissions(tmp_path):
     """
