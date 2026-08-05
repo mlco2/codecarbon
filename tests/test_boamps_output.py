@@ -877,6 +877,11 @@ class TestContextFileLoading(unittest.TestCase):
         with self.assertRaises(json.JSONDecodeError):
             BoAmpsOutput.from_file(path)
 
+    def test_from_dict_rejects_non_dict_input(self):
+        """from_dict should fail fast when context is not a dictionary."""
+        with self.assertRaises(TypeError):
+            BoAmpsOutput.from_dict("not-a-dict")
+
     def test_context_with_infrastructure_overrides(self):
         """Infrastructure fields from context file are applied as overrides."""
         context = {
