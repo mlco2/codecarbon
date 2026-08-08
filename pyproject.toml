@@ -65,6 +65,8 @@ codecarbon = [
     "data/private_infra/nordic_emissions.json",
     "data/private_infra/2016/usa_emissions.json",
     "data/private_infra/2023/canada_energy_mix.json",
+    "data/benchmark/prompts_v1.jsonl",
+    "data/benchmark/context_v1.txt",
     "viz/assets/car_icon.png",
     "viz/assets/house_icon.png",
     "viz/assets/tv_icon.png"

@@ -1,7 +1,16 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from carbonserver.database.database import Base
@@ -215,4 +224,75 @@ class ProjectToken(Base):
             f'revoked="{self.revoked}", '
             f'last_used="{self.last_used}", '
             f'access="{self.access}", '
+        )
+
+
+class ModelBenchmark(Base):
+    """
+    A published measurement of an LLM's energy cost per output token.
+
+    Deliberately standalone: it has no foreign key to ``runs``. The
+    organization -> project -> experiment -> run -> emission chain answers
+    "whose compute was this, and what did it cost them" — private telemetry
+    scoped to an org. A benchmark answers a different question, "what does this
+    model cost per token on stated hardware", and is meant to be read publicly
+    once approved. Hanging it off a run would force a throwaway
+    project/experiment/run per submission and require cross-org public reads on
+    a schema built to prevent them.
+
+    The authoritative payload is ``record``, a full BoAmps report. The scalar
+    columns are extracted copies kept for querying and indexing only; anything
+    that disagrees with ``record`` is a bug in extraction, and ``record`` wins.
+
+    There is no review state: a record that passes the spec's validity rules is
+    stored and readable. ``submitted_by`` records who supplied it.
+    """
+
+    __tablename__ = "model_benchmarks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    submitted_at = Column(DateTime, nullable=False)
+    submitted_by = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    spec_version = Column(String, nullable=False)
+
+    # --- identity, extracted for querying -----------------------------
+    model_name = Column(String, nullable=False, index=True)
+    model_revision = Column(String, nullable=True)
+    quantization = Column(String, nullable=False)
+    engine = Column(String, nullable=False)
+    engine_version = Column(String, nullable=True)
+
+    # --- deployment identity, submitter-chosen ------------------------
+    # Optional. Records of the same hardware class are expected to agree, so
+    # these exist only for a submitter who knows their boxes genuinely differ.
+    deployment_id = Column(String, nullable=True, index=True)
+    deployment_label = Column(String, nullable=True)
+
+    # --- the variables that make results incomparable -----------------
+    concurrency = Column(Integer, nullable=False, index=True)
+    input_token_bucket = Column(Integer, nullable=True)
+    gpu_model = Column(String, nullable=True, index=True)
+    gpu_count = Column(Integer, nullable=True)
+    infra_type = Column(String, nullable=True)
+
+    # --- raw measurement ----------------------------------------------
+    duration = Column(Float, nullable=False)
+    it_energy_kwh = Column(Float, nullable=False)
+    input_tokens = Column(BigInteger, nullable=True)
+    output_tokens = Column(BigInteger, nullable=False)
+
+    # --- derived server-side, never accepted from clients --------------
+    it_energy_per_token = Column(Float, nullable=False)
+    latency_per_token_s = Column(Float, nullable=True)
+
+    record = Column(JSONB, nullable=False)
+
+    def __repr__(self):
+        return (
+            f'<ModelBenchmark(id="{self.id}", '
+            f'model_name="{self.model_name}", '
+            f'concurrency="{self.concurrency}", '
+            f'deployment_id="{self.deployment_id}")>'
         )

@@ -1,0 +1,64 @@
+{"id": 0, "text": "Explain how a heat pump moves thermal energy against a temperature gradient."}
+{"id": 1, "text": "Describe the trade-offs between batch processing and stream processing."}
+{"id": 2, "text": "Summarise the role of a compiler's intermediate representation."}
+{"id": 3, "text": "Explain why floating point addition is not associative."}
+{"id": 4, "text": "Describe how a distributed consensus protocol tolerates node failure."}
+{"id": 5, "text": "Explain the difference between latency and throughput in a network."}
+{"id": 6, "text": "Describe how a relational database plans a join between two large tables."}
+{"id": 7, "text": "Explain what happens when a page fault occurs in a virtual memory system."}
+{"id": 8, "text": "Summarise how public key cryptography establishes a shared secret."}
+{"id": 9, "text": "Describe the purpose of a write-ahead log in a storage engine."}
+{"id": 10, "text": "Explain how garbage collection identifies unreachable objects."}
+{"id": 11, "text": "Describe the difference between horizontal and vertical scaling."}
+{"id": 12, "text": "Explain why cache locality affects the speed of matrix multiplication."}
+{"id": 13, "text": "Describe how a load balancer distributes incoming connections."}
+{"id": 14, "text": "Explain the role of backpressure in a streaming data pipeline."}
+{"id": 15, "text": "Summarise how a version control system stores file history efficiently."}
+{"id": 16, "text": "Describe what makes a hash function suitable for a hash table."}
+{"id": 17, "text": "Explain how a just-in-time compiler decides what to optimise."}
+{"id": 18, "text": "Describe the difference between a process and a thread."}
+{"id": 19, "text": "Explain how TCP recovers from a lost packet."}
+{"id": 20, "text": "Summarise the design goals of a columnar storage format."}
+{"id": 21, "text": "Describe how an operating system scheduler prioritises runnable tasks."}
+{"id": 22, "text": "Explain why measuring energy consumption of software is difficult."}
+{"id": 23, "text": "Describe the relationship between clock speed and power draw in a processor."}
+{"id": 24, "text": "Explain how a content delivery network reduces perceived latency."}
+{"id": 25, "text": "Summarise the purpose of a foreign key constraint."}
+{"id": 26, "text": "Describe how a bloom filter trades accuracy for space."}
+{"id": 27, "text": "Explain what a race condition is and how locks prevent one."}
+{"id": 28, "text": "Describe how a search engine builds an inverted index."}
+{"id": 29, "text": "Explain the difference between symmetric and asymmetric encryption."}
+{"id": 30, "text": "Summarise how container isolation differs from virtual machine isolation."}
+{"id": 31, "text": "Describe how a profiler attributes runtime to individual functions."}
+{"id": 32, "text": "Explain why sorting is often the bottleneck in query execution."}
+{"id": 33, "text": "Describe the purpose of a circuit breaker in a service architecture."}
+{"id": 34, "text": "Explain how a graphics pipeline turns geometry into pixels."}
+{"id": 35, "text": "Summarise the difference between eventual and strong consistency."}
+{"id": 36, "text": "Describe how a rate limiter using a token bucket behaves under bursts."}
+{"id": 37, "text": "Explain why deep call stacks can exhaust memory."}
+{"id": 38, "text": "Describe how a build system decides which targets to rebuild."}
+{"id": 39, "text": "Explain the role of an index in speeding up range queries."}
+{"id": 40, "text": "Summarise how error correcting codes recover corrupted data."}
+{"id": 41, "text": "Describe how a message queue guarantees at-least-once delivery."}
+{"id": 42, "text": "Explain what causes thermal throttling in a computer."}
+{"id": 43, "text": "Describe the difference between static and dynamic linking."}
+{"id": 44, "text": "Explain how a regular expression engine matches a pattern."}
+{"id": 45, "text": "Summarise the trade-offs of denormalising a database schema."}
+{"id": 46, "text": "Describe how a debugger sets and triggers a breakpoint."}
+{"id": 47, "text": "Explain why random memory access is slower than sequential access."}
+{"id": 48, "text": "Describe how a certificate authority establishes trust in a chain."}
+{"id": 49, "text": "Explain the purpose of a read replica in a database deployment."}
+{"id": 50, "text": "Summarise how a garbage-first collector partitions the heap."}
+{"id": 51, "text": "Describe how a filesystem journals metadata changes."}
+{"id": 52, "text": "Explain why cold starts affect serverless function latency."}
+{"id": 53, "text": "Describe how branch prediction improves instruction throughput."}
+{"id": 54, "text": "Explain the difference between a mock and a stub in testing."}
+{"id": 55, "text": "Summarise how a key-value store handles compaction."}
+{"id": 56, "text": "Describe what a memory barrier does on a multicore processor."}
+{"id": 57, "text": "Explain how sampling profilers estimate where time is spent."}
+{"id": 58, "text": "Describe the purpose of connection pooling in a web application."}
+{"id": 59, "text": "Explain why idempotency matters when retrying a request."}
+{"id": 60, "text": "Summarise how a tracing system correlates spans across services."}
+{"id": 61, "text": "Describe how copy-on-write reduces the cost of forking a process."}
+{"id": 62, "text": "Explain the role of a scheduler in a batch computing cluster."}
+{"id": 63, "text": "Describe how compression trades processor time for storage space."}

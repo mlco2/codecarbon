@@ -14,6 +14,7 @@ from carbonserver.api.routers import (
     authenticate,
     emissions,
     experiments,
+    model_benchmarks,
     organizations,
     project_api_tokens,
     projects,
@@ -69,6 +70,7 @@ def init_container():
             projects,
             project_api_tokens,
             organizations,
+            model_benchmarks,
             telemetry,
             authenticate,
             auth_service,
@@ -101,6 +103,7 @@ def init_server(container):
     server.include_router(experiments.router)
     server.include_router(runs.router)
     server.include_router(emissions.router)
+    server.include_router(model_benchmarks.router)
     server.include_router(telemetry.router)
     add_pagination(server)
 

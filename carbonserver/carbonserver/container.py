@@ -4,6 +4,7 @@ from carbonserver.api.infra.database.database_manager import Database
 from carbonserver.api.infra.repositories import (
     repository_emissions,
     repository_experiments,
+    repository_model_benchmarks,
     repository_organizations,
     repository_projects,
     repository_projects_tokens,
@@ -17,6 +18,7 @@ from carbonserver.api.services.auth_providers.oidc_auth_provider import (
 )
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
+from carbonserver.api.services.model_benchmark_service import ModelBenchmarkService
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.services.project_token_service import ProjectTokenService
@@ -68,6 +70,16 @@ class ServerContainer(containers.DeclarativeContainer):
     telemetry_repository = providers.Factory(
         repository_telemetry.SqlAlchemyRepository,
         session_factory=db.provided.session,
+    )
+
+    model_benchmark_repository = providers.Factory(
+        repository_model_benchmarks.SqlAlchemyRepository,
+        session_factory=db.provided.session,
+    )
+
+    model_benchmark_service = providers.Factory(
+        ModelBenchmarkService,
+        model_benchmark_repository=model_benchmark_repository,
     )
 
     experiment_repository = providers.Factory(

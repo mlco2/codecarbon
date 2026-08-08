@@ -465,6 +465,230 @@ def monitor(
         raise e
 
 
+@codecarbon.command(
+    "benchmark",
+    short_help="Measure LLM inference energy per output token for reference data.",
+)
+def benchmark(
+    model: Annotated[
+        str, typer.Option(help="Model name as the serving engine exposes it.")
+    ],
+    parameters: Annotated[
+        float, typer.Option(help="Total parameter count, in billions.")
+    ],
+    quantization: Annotated[
+        str, typer.Option(help="One of fp32, fp16, bf16, int8, int4.")
+    ],
+    publisher: Annotated[str, typer.Option(help="Organisation publishing the record.")],
+    backend: Annotated[
+        str, typer.Option(help="Serving engine: vllm, ollama, openai-compatible.")
+    ] = "vllm",
+    base_url: Annotated[Optional[str], typer.Option(help="Engine base URL.")] = None,
+    api_key: Annotated[
+        Optional[str], typer.Option(help="API key, if the engine requires one.")
+    ] = None,
+    concurrency: Annotated[
+        str, typer.Option(help="Comma-separated concurrency levels, e.g. 1,8,32,64.")
+    ] = "1",
+    input_bucket: Annotated[
+        str, typer.Option(help="Comma-separated input length buckets, e.g. 128,1024.")
+    ] = "128",
+    output_tokens: Annotated[
+        int, typer.Option(help="Output tokens per request.")
+    ] = 256,
+    windows: Annotated[int, typer.Option(help="Measurement windows per config.")] = 3,
+    warmup: Annotated[int, typer.Option(help="Warmup requests, discarded.")] = 8,
+    model_uri: Annotated[
+        Optional[str], typer.Option(help="Public URI of the model, e.g. its HF page.")
+    ] = None,
+    revision: Annotated[
+        Optional[str], typer.Option(help="Model revision or commit hash.")
+    ] = None,
+    active_parameters: Annotated[
+        Optional[float], typer.Option(help="Active parameters (billions), for MoE.")
+    ] = None,
+    tensor_parallel_size: Annotated[
+        Optional[int], typer.Option(help="Tensor parallel degree.")
+    ] = None,
+    facility_pue: Annotated[
+        Optional[float],
+        typer.Option(help="Real PUE of the facility, if known. Never applied here."),
+    ] = None,
+    deployment_id: Annotated[
+        Optional[str],
+        typer.Option(
+            help="Stable identifier for this deployment (machine + serving config). "
+            "Lets a consumer select this box specifically."
+        ),
+    ] = None,
+    deployment_label: Annotated[
+        Optional[str], typer.Option(help="Human-readable name for this deployment.")
+    ] = None,
+    country_iso_code: Annotated[
+        Optional[str], typer.Option(help="3-letter ISO code; runs the tracker offline.")
+    ] = None,
+    out: Annotated[
+        Path, typer.Option(help="Output path for the BoAmps record.")
+    ] = Path("benchmark.boamps.json"),
+    upload: Annotated[
+        Optional[str],
+        typer.Option(
+            help="Submit each record to a CodeCarbon API, e.g. "
+            "http://localhost:8008. Records are always written locally too."
+        ),
+    ] = None,
+    api_token: Annotated[
+        Optional[str], typer.Option(help="Bearer token for --upload, if required.")
+    ] = None,
+    strict: Annotated[
+        bool,
+        typer.Option(help="Exit non-zero if a config fails its gates or validation."),
+    ] = True,
+):
+    """
+    Measure the energy cost of one output token for a locally served LLM.
+
+    Follows specs/llm-energy-benchmark-v1.md and writes a BoAmps report per
+    configuration. The engine must already be serving the model; this command
+    drives generation against it, it does not start it.
+    """
+    import json
+
+    from codecarbon.benchmark import (
+        BenchmarkConfig,
+        UploadError,
+        build_boamps_record,
+        get_backend,
+        run_benchmark,
+        upload_record,
+        validate_record,
+    )
+    from codecarbon.benchmark.record import ModelMetadata
+
+    try:
+        metadata = ModelMetadata(
+            name=model,
+            parameters_number=parameters,
+            quantization=quantization,
+            uri=model_uri,
+            revision=revision,
+            active_parameters_number=active_parameters,
+            tensor_parallel_size=tensor_parallel_size,
+        )
+    except ValueError as exc:
+        print(f"[bold red]Error:[/bold red] {exc}")
+        raise typer.Exit(1)
+
+    backend_kwargs = {"model": model}
+    if base_url:
+        backend_kwargs["base_url"] = base_url
+    if api_key:
+        backend_kwargs["api_key"] = api_key
+
+    try:
+        engine = get_backend(backend, **backend_kwargs)
+    except Exception as exc:
+        print(f"[bold red]Could not reach the {backend} backend:[/bold red] {exc}")
+        raise typer.Exit(1)
+
+    concurrencies = [int(c) for c in concurrency.split(",") if c.strip()]
+    buckets = [int(b) for b in input_bucket.split(",") if b.strip()]
+    configs = [
+        BenchmarkConfig(
+            model=model,
+            concurrency=c,
+            input_bucket=b,
+            output_tokens=output_tokens,
+            n_windows=windows,
+            warmup_requests=warmup,
+        )
+        for b in buckets
+        for c in concurrencies
+    ]
+
+    multiple = len(configs) > 1
+    # Tracked apart: a record can be perfectly valid and still fail to upload,
+    # and telling the operator their measurement is bad when the real problem
+    # is the network or a server version sends them debugging the wrong thing.
+    any_invalid = False
+    any_upload_failed = False
+
+    for config in configs:
+        print(
+            f"\n[bold]Benchmarking[/bold] {model} — concurrency "
+            f"{config.concurrency}, input bucket {config.input_bucket}"
+        )
+        result = run_benchmark(engine, config, country_iso_code=country_iso_code)
+        record = build_boamps_record(
+            result,
+            metadata,
+            publisher_name=publisher,
+            facility_pue=facility_pue,
+            deployment_id=deployment_id,
+            deployment_label=deployment_label,
+        )
+        failures = validate_record(record)
+
+        window = result.median_window
+        print(
+            f"  {window.output_tokens} output tokens in {window.duration_s:.0f}s, "
+            f"{window.energy_kwh:.6f} kWh"
+        )
+        print(
+            f"  [bold]{window.energy_per_token_kwh:.3e} kWh/token[/bold] "
+            f"(spread {result.relative_spread:.1%} across {len(result.windows)} windows)"
+        )
+
+        for failure in result.gate_failures:
+            print(f"  [yellow]gate:[/yellow] {failure}")
+        for failure in failures:
+            print(f"  [red]invalid:[/red] {failure}")
+        if result.gate_failures or failures:
+            any_invalid = True
+
+        if multiple:
+            path = out.with_name(
+                f"{out.stem}.c{config.concurrency}.i{config.input_bucket}{out.suffix}"
+            )
+        else:
+            path = out
+        path.write_text(json.dumps(record, indent=2), encoding="utf-8")
+        print(f"  written to [cyan]{path}[/cyan]")
+
+        if upload:
+            # Only submit records the local rules accept. Sending one that
+            # already failed would just move the rejection to the server and
+            # lose the local context that explains it.
+            if failures:
+                print("  [yellow]not uploaded:[/yellow] record is invalid")
+            else:
+                try:
+                    benchmark_id = upload_record(record, upload, api_token=api_token)
+                    print(f"  uploaded as [green]{benchmark_id}[/green]")
+                except UploadError as exc:
+                    any_upload_failed = True
+                    print(f"  [red]upload failed:[/red] {exc}")
+                    for failure in exc.failures:
+                        print(f"    - {failure}")
+
+    engine.close()
+
+    if any_invalid:
+        print(
+            "\n[yellow]Some configurations did not meet the spec.[/yellow] "
+            "Records were still written so the numbers can be inspected, but "
+            "they would be rejected at ingestion."
+        )
+    if any_upload_failed:
+        print(
+            "\n[yellow]Some records could not be uploaded.[/yellow] They are "
+            "valid and written locally, so they can be submitted again without "
+            "re-running the benchmark."
+        )
+    if (any_invalid or any_upload_failed) and strict:
+        raise typer.Exit(1)
+
+
 @codecarbon.command("detect", short_help="Detect hardware and print information.")
 def detect():
     """
