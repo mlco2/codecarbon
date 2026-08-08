@@ -25,7 +25,6 @@ dependencies = [
     # See https://github.com/uriyyo/fastapi-pagination/issues/1990
     "fastapi<0.140.5,>=0.138.1",
     "httpx<1.0.0",
-    "httpx2>=2.0.0",
     "pydantic[email]>=2.0.0,<3.0.0",
     "pydantic-settings>=2.14.2,<3.0.0",
     "psycopg2-binary<3.0.0",
