@@ -487,3 +487,124 @@ def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
     with pytest.raises(typer.Exit) as exc_info:
         cli_main.monitor(ctx=ctx, offline=False, api=True)
     assert exc_info.value.exit_code == 1
+
+
+def test_monitor_help_lists_new_tracker_options():
+    """`codecarbon monitor --help` should expose the previously-missing
+    EmissionsTracker options (see #1273)."""
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--help"], env={"COLUMNS": "200"}
+    )
+    assert result.exit_code == 0
+    for flag in (
+        "--project-name",
+        "--output-dir",
+        "--pue",
+        "--wue",
+        "--gpu-ids",
+        "--force-cpu-power",
+        "--force-ram-power",
+        "--allow-multiple-runs",
+    ):
+        assert flag in result.output
+
+
+def test_monitor_offline_forwards_new_options_to_tracker(monkeypatch):
+    """Explicitly-provided options should reach OfflineEmissionsTracker's kwargs,
+    with gpu-ids parsed from a comma-separated string into a list."""
+    calls = {"kwargs": None}
+
+    class FakeOfflineTracker:
+        def __init__(self, **kwargs):
+            calls["kwargs"] = kwargs
+            self._another_instance_already_running = True
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
+    )
+    monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--offline",
+            "--country-iso-code",
+            "FRA",
+            "--project-name",
+            "my-project",
+            "--output-dir",
+            "/tmp/emissions",
+            "--pue",
+            "1.2",
+            "--wue",
+            "0.8",
+            "--gpu-ids",
+            "0,1",
+            "--force-cpu-power",
+            "45",
+            "--force-ram-power",
+            "5",
+            "--allow-multiple-runs",
+        ],
+    )
+    assert result.exit_code == 0
+    kwargs = calls["kwargs"]
+    assert kwargs["project_name"] == "my-project"
+    assert kwargs["output_dir"] == "/tmp/emissions"
+    assert kwargs["pue"] == 1.2
+    assert kwargs["wue"] == 0.8
+    assert kwargs["gpu_ids"] == ["0", "1"]
+    assert kwargs["force_cpu_power"] == 45
+    assert kwargs["force_ram_power"] == 5
+    assert kwargs["allow_multiple_runs"] is True
+
+
+def test_monitor_offline_omits_unset_optional_tracker_args(monkeypatch):
+    """Options left at their CLI default (None) must be omitted from tracker_args
+    entirely, so EmissionsTracker still falls back to its own config/env
+    defaults instead of having them overridden with None."""
+    calls = {"kwargs": None}
+
+    class FakeOfflineTracker:
+        def __init__(self, **kwargs):
+            calls["kwargs"] = kwargs
+            self._another_instance_already_running = True
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
+    )
+    monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        ["monitor", "--offline", "--country-iso-code", "FRA"],
+    )
+    assert result.exit_code == 0
+    kwargs = calls["kwargs"]
+    for unset_option in (
+        "project_name",
+        "output_dir",
+        "pue",
+        "wue",
+        "gpu_ids",
+        "force_cpu_power",
+        "force_ram_power",
+        "allow_multiple_runs",
+    ):
+        assert unset_option not in kwargs

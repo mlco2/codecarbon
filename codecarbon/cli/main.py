@@ -390,15 +390,63 @@ def monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
+    project_name: Annotated[
+        str,
+        typer.Option(help="Project name for the current experiment run."),
+    ] = None,
+    output_dir: Annotated[
+        str,
+        typer.Option(help="Directory to write emissions.csv to."),
+    ] = None,
+    pue: Annotated[
+        float,
+        typer.Option(help="Power Usage Effectiveness of the datacenter."),
+    ] = None,
+    wue: Annotated[
+        float,
+        typer.Option(help="Water Usage Effectiveness of the datacenter."),
+    ] = None,
+    gpu_ids: Annotated[
+        str,
+        typer.Option(help="Comma-separated list of GPU ids to track, e.g. '0,1'."),
+    ] = None,
+    force_cpu_power: Annotated[
+        int,
+        typer.Option(help="Force CPU power draw in Watts instead of estimating it."),
+    ] = None,
+    force_ram_power: Annotated[
+        int,
+        typer.Option(help="Force RAM power draw in Watts instead of estimating it."),
+    ] = None,
+    allow_multiple_runs: Annotated[
+        bool,
+        typer.Option(
+            help="Allow multiple codecarbon trackers to run at the same time on this machine."
+        ),
+    ] = None,
 ):
     """Monitor your machine's carbon emissions."""
 
-    # Shared tracker args so monitor and run_and_monitor behave the same
+    # Shared tracker args so monitor and run_and_monitor behave the same.
+    # Options left at their default (None) are omitted so EmissionsTracker
+    # can still fall back to its own config-file / environment-variable
+    # defaults instead of having them silently overridden by None here.
     tracker_args = {
         "measure_power_secs": measure_power_secs,
         "api_call_interval": api_call_interval,
         "log_level": log_level,
     }
+    optional_args = {
+        "project_name": project_name,
+        "output_dir": output_dir,
+        "pue": pue,
+        "wue": wue,
+        "gpu_ids": [g.strip() for g in gpu_ids.split(",")] if gpu_ids else None,
+        "force_cpu_power": force_cpu_power,
+        "force_ram_power": force_ram_power,
+        "allow_multiple_runs": allow_multiple_runs,
+    }
+    tracker_args.update({k: v for k, v in optional_args.items() if v is not None})
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
         if not country_iso_code:
