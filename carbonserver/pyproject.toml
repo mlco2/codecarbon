@@ -16,6 +16,11 @@ classifiers = [
 ]
 dependencies = [
     "alembic<2.0.0",
+    # The benchmark ingestion gate imports codecarbon.benchmark.validation.
+    # The validity rules are a shared contract between the harness that
+    # produces records and the endpoint that accepts them; two copies of a
+    # gate drift apart, so there is one implementation and both sides use it.
+    "codecarbon",
     "authlib>=1.7.2",
     "bcrypt<5.0.0",
     "python-dateutil<3.0.0",
@@ -59,6 +64,12 @@ Dashboard = "http://dashboard.codecarbon.io/"
 Documentation = "https://docs.codecarbon.io/"
 Issues = "https://github.com/mlco2/codecarbon/issues"
 Changelog = "https://github.com/mlco2/codecarbon/releases"
+
+[tool.uv.sources]
+# Resolve codecarbon from the sibling checkout rather than PyPI: the harness
+# and the ingestion gate must agree on the validity rules, and that only holds
+# if they are the same working copy.
+codecarbon = { path = "..", editable = true }
 
 [tool.hatch.build]
 exclude = ["*"]

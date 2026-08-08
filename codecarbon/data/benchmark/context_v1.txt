@@ -1,0 +1,28 @@
+A computing facility converts electrical energy into heat, and everything else it produces is a by-product of that conversion.
+The processors, memory modules and storage devices draw current continuously, and the fraction of that current which performs useful work varies enormously with the shape of the workload.
+An idle server still consumes a substantial share of its peak power, because voltage regulators, fans, network interfaces and memory refresh cycles do not stop when the workload does.
+Measuring the energy attributable to a single piece of software therefore requires care about what is included in the boundary and what is left outside it.
+Hardware counters report energy for a package or a device, not for a process, so attribution across concurrent tenants is always an estimate rather than a reading.
+Sampling intervals introduce a second source of imprecision, since a counter read every few seconds cannot resolve a burst that lasts a few milliseconds.
+Longer measurement windows average these effects away, which is why short benchmarks are unreliable even when the underlying counters are accurate.
+Temperature affects the result as well, because leakage current rises with junction temperature and cooling systems respond with a lag.
+A machine measured immediately after boot will report different figures from the same machine measured after an hour of sustained load.
+The surrounding facility contributes further overhead through cooling, power conversion and distribution losses, conventionally summarised as a single effectiveness ratio.
+That ratio describes the building rather than the computation, so folding it into a per-workload figure destroys information that a later consumer may need.
+Water consumption follows a similar pattern, depending on the cooling technology and the local climate rather than on the software being measured.
+Carbon intensity is different again: it depends entirely on where and when the electricity was generated, and varies hour by hour on most grids.
+For this reason a measurement is most useful when it reports energy alone, leaving conversions to whoever knows the relevant local conditions.
+Reproducibility demands that every variable which materially changes the result is recorded alongside the number itself.
+For inference workloads the dominant variables are the model, the quantisation, the serving engine, the hardware and the number of requests in flight.
+Concurrency deserves particular attention, because processors and accelerators are far more efficient per unit of work when they are kept busy.
+A single request in isolation leaves most of the device idle while still paying its full static power cost, which inflates the apparent cost of the work.
+The same model serving many simultaneous requests amortises that static cost across all of them, sometimes reducing per-unit energy by an order of magnitude.
+Any comparison that ignores this variable is comparing deployment strategies rather than models.
+Prompt length matters too, since processing an input and generating an output stress different parts of the device in different proportions.
+Generation is typically bound by memory bandwidth, while input processing is bound by arithmetic throughput, and the two have different power profiles.
+Caching complicates matters further, because an engine that recognises a repeated prefix may skip work entirely and report an implausibly low figure.
+A benchmark that reuses identical inputs will therefore measure the cache rather than the model, unless the reuse is deliberate and documented.
+Warm-up is equally important, as the first requests after a model loads pay for allocation, compilation and cache population that later requests do not.
+Discarding those early requests is standard practice, and the number discarded should be recorded so that a reader can judge whether it was sufficient.
+Finally, repetition provides the only real evidence that a measurement is stable rather than a single fortunate sample.
+Three or more independent windows, reported with their spread, tell a reader far more than a single figure quoted to six significant digits.

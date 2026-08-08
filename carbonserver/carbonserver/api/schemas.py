@@ -465,3 +465,63 @@ class Token(BaseModel):
 class OrganizationUser(User):
     organization_id: UUID
     is_admin: bool
+
+
+class ModelBenchmarkBase(BaseModel):
+    """Fields extracted from a submitted BoAmps record, for querying."""
+
+    spec_version: str
+    model_name: str
+    model_revision: Optional[str] = None
+    quantization: str
+    engine: str
+    engine_version: Optional[str] = None
+    deployment_id: Optional[str] = None
+    deployment_label: Optional[str] = None
+    concurrency: int
+    input_token_bucket: Optional[int] = None
+    gpu_model: Optional[str] = None
+    gpu_count: Optional[int] = None
+    infra_type: Optional[str] = None
+    duration: float
+    it_energy_kwh: float
+    input_tokens: Optional[int] = None
+    output_tokens: int
+    it_energy_per_token: float
+    latency_per_token_s: Optional[float] = None
+
+
+class ModelBenchmark(ModelBenchmarkBase):
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
+    id: UUID
+    submitted_at: datetime
+    submitted_by: Optional[UUID] = None
+    record: dict
+
+
+class ModelBenchmarkReference(BaseModel):
+    """
+    One row of the reference snapshot consumed by EcoLogits.
+
+    Intentionally narrow: it carries the reference quantity plus exactly the
+    context needed to decide whether the measurement applies. Consumers that
+    need the full provenance fetch the record by id.
+    """
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    id: UUID
+    model_name: str
+    model_revision: Optional[str] = None
+    quantization: str
+    engine: str
+    engine_version: Optional[str] = None
+    deployment_id: Optional[str] = None
+    deployment_label: Optional[str] = None
+    concurrency: int
+    gpu_model: Optional[str] = None
+    gpu_count: Optional[int] = None
+    it_energy_per_token: float
+    latency_per_token_s: Optional[float] = None
+    spec_version: str
