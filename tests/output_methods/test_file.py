@@ -413,3 +413,22 @@ class TestFileOutput(unittest.TestCase):
 
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(len(df), 2)
+
+    def test_live_out_noop_when_disabled(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.live_out(self.emissions_data, self.emissions_data)
+        self.assertFalse(os.path.isfile(file_output.save_file_path))
+
+    def test_live_out_appends_when_enabled(self):
+        file_output = FileOutput(
+            "interval.csv",
+            self.temp_dir,
+            on_csv_write="append",
+            enable_live_out=True,
+        )
+        file_output.live_out(self.emissions_data, self.emissions_data)
+        file_output.live_out(self.emissions_data, self.emissions_data)
+
+        df = pd.read_csv(file_output.save_file_path)
+        self.assertEqual(len(df), 2)
+        self.assertEqual(df.iloc[0]["run_id"], "test_run_id")
