@@ -390,6 +390,90 @@ def monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
+    project_name: Annotated[
+        str | None, typer.Option(help="Project name for the monitored run")
+    ] = None,
+    api_endpoint: Annotated[
+        str | None, typer.Option(help="CodeCarbon API endpoint")
+    ] = None,
+    api_key: Annotated[str | None, typer.Option(help="CodeCarbon API key")] = None,
+    output_dir: Annotated[
+        str | None, typer.Option(help="Directory for output files")
+    ] = None,
+    output_file: Annotated[str | None, typer.Option(help="Output CSV filename")] = None,
+    output_methods: Annotated[
+        str | None,
+        typer.Option(help="Comma-separated output methods (csv, api, logger, ...)"),
+    ] = None,
+    save_to_file: Annotated[
+        bool | None,
+        typer.Option(help="Deprecated: save emissions to a CSV file"),
+    ] = None,
+    save_to_logger: Annotated[
+        bool | None,
+        typer.Option(help="Deprecated: write emissions to a logger"),
+    ] = None,
+    save_to_prometheus: Annotated[
+        bool | None,
+        typer.Option(help="Deprecated: push emissions to Prometheus"),
+    ] = None,
+    save_to_logfire: Annotated[
+        bool | None,
+        typer.Option(help="Deprecated: write emissions to Logfire"),
+    ] = None,
+    prometheus_url: Annotated[
+        str | None, typer.Option(help="Prometheus server URL")
+    ] = None,
+    gpu_ids: Annotated[
+        str | None, typer.Option(help="Comma-separated GPU IDs to track")
+    ] = None,
+    emissions_endpoint: Annotated[
+        str | None, typer.Option(help="HTTP endpoint for emissions data")
+    ] = None,
+    experiment_id: Annotated[str | None, typer.Option(help="Experiment ID")] = None,
+    experiment_name: Annotated[str | None, typer.Option(help="Experiment name")] = None,
+    electricitymaps_api_token: Annotated[
+        str | None, typer.Option(help="Electricity Maps API token")
+    ] = None,
+    co2_signal_api_token: Annotated[
+        str | None,
+        typer.Option(help="Deprecated: use --electricitymaps-api-token"),
+    ] = None,
+    tracking_mode: Annotated[
+        str | None, typer.Option(help="Tracking mode: process or machine")
+    ] = None,
+    on_csv_write: Annotated[
+        str | None, typer.Option(help="CSV write mode: append or update")
+    ] = None,
+    logger_preamble: Annotated[
+        str | None, typer.Option(help="Text prefixed to tracker log messages")
+    ] = None,
+    force_cpu_power: Annotated[
+        int | None, typer.Option(help="Override CPU power in watts")
+    ] = None,
+    force_ram_power: Annotated[
+        int | None, typer.Option(help="Override RAM power in watts")
+    ] = None,
+    pue: Annotated[float | None, typer.Option(help="Power Usage Effectiveness")] = None,
+    wue: Annotated[
+        float | None, typer.Option(help="Water Usage Effectiveness in L/kWh")
+    ] = None,
+    force_carbon_intensity_g_co2e_kwh: Annotated[
+        float | None,
+        typer.Option(help="Override carbon intensity in gCO2e/kWh"),
+    ] = None,
+    force_mode_cpu_load: Annotated[
+        bool | None, typer.Option(help="Force CPU load estimation mode")
+    ] = None,
+    allow_multiple_runs: Annotated[
+        bool | None, typer.Option(help="Allow concurrent CodeCarbon instances")
+    ] = None,
+    rapl_include_dram: Annotated[
+        bool | None, typer.Option(help="Include DRAM power in RAPL measurements")
+    ] = None,
+    rapl_prefer_psys: Annotated[
+        bool | None, typer.Option(help="Prefer the RAPL platform power domain")
+    ] = None,
 ):
     """Monitor your machine's carbon emissions."""
 
@@ -399,6 +483,44 @@ def monitor(
         "api_call_interval": api_call_interval,
         "log_level": log_level,
     }
+    optional_tracker_args = {
+        "project_name": project_name,
+        "api_endpoint": api_endpoint,
+        "api_key": api_key,
+        "output_dir": output_dir,
+        "output_file": output_file,
+        "output_methods": output_methods,
+        "save_to_file": save_to_file,
+        "save_to_logger": save_to_logger,
+        "save_to_prometheus": save_to_prometheus,
+        "save_to_logfire": save_to_logfire,
+        "prometheus_url": prometheus_url,
+        "gpu_ids": gpu_ids,
+        "emissions_endpoint": emissions_endpoint,
+        "experiment_id": experiment_id,
+        "experiment_name": experiment_name,
+        "electricitymaps_api_token": electricitymaps_api_token,
+        "co2_signal_api_token": co2_signal_api_token,
+        "tracking_mode": tracking_mode,
+        "on_csv_write": on_csv_write,
+        "logger_preamble": logger_preamble,
+        "force_cpu_power": force_cpu_power,
+        "force_ram_power": force_ram_power,
+        "pue": pue,
+        "wue": wue,
+        "force_carbon_intensity_g_co2e_kwh": force_carbon_intensity_g_co2e_kwh,
+        "force_mode_cpu_load": force_mode_cpu_load,
+        "allow_multiple_runs": allow_multiple_runs,
+        "rapl_include_dram": rapl_include_dram,
+        "rapl_prefer_psys": rapl_prefer_psys,
+    }
+    tracker_args.update(
+        {
+            name: value
+            for name, value in optional_tracker_args.items()
+            if value is not None
+        }
+    )
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
         if not country_iso_code:
@@ -414,8 +536,8 @@ def monitor(
             "region": region,
         }
     else:
-        experiment_id = get_existing_exp_id()
-        if api and experiment_id is None:
+        configured_experiment_id = experiment_id or get_existing_exp_id()
+        if api and configured_experiment_id is None:
             print(
                 "ERROR: No experiment id. Set CODECARBON_EXPERIMENT_ID, call 'codecarbon config' first, or run in offline mode with `--offline --country-iso-code FRA`.",
                 file=sys.stderr,

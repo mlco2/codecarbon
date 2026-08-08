@@ -386,6 +386,177 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
     assert calls["kwargs"]["region"] == "IDF"
 
 
+def test_monitor_forwards_explicit_tracker_options(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["args"] = list(ctx.args)
+        captured["offline"] = offline
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--offline",
+            "--country-iso-code",
+            "FRA",
+            "--project-name",
+            "cli-project",
+            "--api-endpoint",
+            "https://api.example.com",
+            "--api-key",
+            "secret",
+            "--output-dir",
+            "/tmp/emissions",
+            "--output-file",
+            "custom.csv",
+            "--output-methods",
+            "csv,logger",
+            "--no-save-to-file",
+            "--save-to-logger",
+            "--save-to-prometheus",
+            "--no-save-to-logfire",
+            "--prometheus-url",
+            "http://localhost:9091",
+            "--gpu-ids",
+            "0,2",
+            "--emissions-endpoint",
+            "https://emissions.example.com",
+            "--experiment-id",
+            "exp-123",
+            "--experiment-name",
+            "cli-experiment",
+            "--electricitymaps-api-token",
+            "electricity-token",
+            "--co2-signal-api-token",
+            "legacy-token",
+            "--tracking-mode",
+            "process",
+            "--on-csv-write",
+            "update",
+            "--logger-preamble",
+            "monitor:",
+            "--force-cpu-power",
+            "75",
+            "--force-ram-power",
+            "20",
+            "--pue",
+            "1.25",
+            "--wue",
+            "0.4",
+            "--force-carbon-intensity-g-co2e-kwh",
+            "42.5",
+            "--force-mode-cpu-load",
+            "--no-allow-multiple-runs",
+            "--rapl-include-dram",
+            "--no-rapl-prefer-psys",
+            "--",
+            "python",
+            "train.py",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["args"] == ["python", "train.py"]
+    assert captured["offline"] is True
+    assert captured["kwargs"] == {
+        "measure_power_secs": 10,
+        "api_call_interval": 30,
+        "log_level": "error",
+        "project_name": "cli-project",
+        "api_endpoint": "https://api.example.com",
+        "api_key": "secret",
+        "output_dir": "/tmp/emissions",
+        "output_file": "custom.csv",
+        "output_methods": "csv,logger",
+        "save_to_file": False,
+        "save_to_logger": True,
+        "save_to_prometheus": True,
+        "save_to_logfire": False,
+        "prometheus_url": "http://localhost:9091",
+        "gpu_ids": "0,2",
+        "emissions_endpoint": "https://emissions.example.com",
+        "experiment_id": "exp-123",
+        "experiment_name": "cli-experiment",
+        "electricitymaps_api_token": "electricity-token",
+        "co2_signal_api_token": "legacy-token",
+        "tracking_mode": "process",
+        "on_csv_write": "update",
+        "logger_preamble": "monitor:",
+        "force_cpu_power": 75,
+        "force_ram_power": 20,
+        "pue": 1.25,
+        "wue": 0.4,
+        "force_carbon_intensity_g_co2e_kwh": 42.5,
+        "force_mode_cpu_load": True,
+        "allow_multiple_runs": False,
+        "rapl_include_dram": True,
+        "rapl_prefer_psys": False,
+        "country_iso_code": "FRA",
+        "region": None,
+    }
+
+
+def test_monitor_omits_unspecified_optional_tracker_options(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+
+    ctx = SimpleNamespace(args=["python", "train.py"])
+    cli_main.monitor(ctx=ctx, offline=True, country_iso_code="FRA")
+
+    assert "pue" not in captured["kwargs"]
+    assert "allow_multiple_runs" not in captured["kwargs"]
+    assert "output_methods" not in captured["kwargs"]
+
+
+def test_monitor_explicit_experiment_id_satisfies_online_validation(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--experiment-id",
+            "exp-from-cli",
+            "--",
+            "python",
+            "train.py",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["kwargs"]["experiment_id"] == "exp-from-cli"
+
+
+def test_monitor_help_lists_explicit_tracker_options():
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--help"], terminal_width=200
+    )
+
+    assert result.exit_code == 0
+    assert "--output-methods" in result.output
+    assert "--pue" in result.output
+    assert "--wue" in result.output
+    assert "--force-cpu-power" in result.output
+    assert "--rapl-include-dram" in result.output
+
+
 def test_monitor_delegates_offline_flag_to_run_and_monitor(monkeypatch):
     captured = {}
 
