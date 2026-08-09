@@ -70,6 +70,21 @@ class ApiClient:  # (AsyncClient)
             headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
 
+    def _request(self, method, url, payload=None, expected_status=200):
+        """
+        Call the API and return the response, raising on anything that is not
+        the status code the API answers on success.
+
+        :method: the requests function to call, for example requests.get
+        :payload: the JSON body to send, if any
+        :expected_status: the http code the API returns when the call succeeds
+        """
+        headers = self._get_headers()
+        response = method(url=url, json=payload, timeout=2, headers=headers)
+        if response.status_code != expected_status:
+            self._raise_api_error(url, payload or {}, response)
+        return response
+
     def set_access_token(self, token: str):
         """This method sets the access token to be used for the API.
         Args:
@@ -82,32 +97,20 @@ class ApiClient:  # (AsyncClient)
         Check API access to user account
         """
         url = self.url + "/auth/check"
-        headers = self._get_headers()
-        r = requests.get(url=url, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
+        return self._request(requests.get, url).json()
 
     def get_list_organizations(self):
         """
         List all organizations
         """
         url = self.url + "/organizations"
-        headers = self._get_headers()
-        r = requests.get(url=url, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
+        return self._request(requests.get, url).json()
 
     def check_organization_exists(self, organization_name: str):
         """
         Check if an organization exists
         """
         organizations = self.get_list_organizations()
-        if organizations is None:
-            return False
         for organization in organizations:
             if organization["name"] == organization_name:
                 return organization
@@ -125,49 +128,31 @@ class ApiClient:  # (AsyncClient)
             )
             return organization
         else:
-            headers = self._get_headers()
-            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
-            if r.status_code != 201:
-                self._log_error(url, payload, r)
-                return None
-            return r.json()
+            return self._request(
+                requests.post, url, payload=payload, expected_status=201
+            ).json()
 
     def get_organization(self, organization_id):
         """
         Get an organization
         """
-        headers = self._get_headers()
         url = self.url + "/organizations/" + organization_id
-        r = requests.get(url=url, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
+        return self._request(requests.get, url).json()
 
     def update_organization(self, organization: OrganizationCreate):
         """
         Update an organization
         """
         payload = dataclasses.asdict(organization)
-        headers = self._get_headers()
         url = self.url + "/organizations/" + organization.id
-        r = requests.patch(url=url, json=payload, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, payload, r)
-            return None
-        return r.json()
+        return self._request(requests.patch, url, payload=payload).json()
 
     def list_projects_from_organization(self, organization_id):
         """
         List all projects
         """
         url = self.url + "/organizations/" + organization_id + "/projects"
-        headers = self._get_headers()
-        r = requests.get(url=url, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
+        return self._request(requests.get, url).json()
 
     def create_project(self, project: ProjectCreate):
         """
@@ -175,24 +160,16 @@ class ApiClient:  # (AsyncClient)
         """
         payload = dataclasses.asdict(project)
         url = self.url + "/projects"
-        headers = self._get_headers()
-        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
-        if r.status_code != 201:
-            self._log_error(url, payload, r)
-            return None
-        return r.json()
+        return self._request(
+            requests.post, url, payload=payload, expected_status=201
+        ).json()
 
     def get_project(self, project_id):
         """
         Get a project
         """
         url = self.url + "/projects/" + project_id
-        headers = self._get_headers()
-        r = requests.get(url=url, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
+        return self._request(requests.get, url).json()
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
@@ -233,15 +210,14 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             url = self.url + "/emissions"
-            headers = self._get_headers()
-            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
-            if r.status_code != 201:
-                self._log_error(url, payload, r)
-                return False
+            self._request(requests.post, url, payload=payload, expected_status=201)
             logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
+        except requests.exceptions.HTTPError:
+            # Already logged by _raise_api_error, do not log it twice.
+            raise
         except Exception as e:
             logger.error(e, exc_info=True)
-            return False
+            raise
         return True
 
     def _create_run(self, experiment_id: str):
@@ -275,11 +251,7 @@ class ApiClient:  # (AsyncClient)
             )
             payload = dataclasses.asdict(run)
             url = self.url + "/runs"
-            headers = self._get_headers()
-            r = requests.post(url=url, json=payload, timeout=2, headers=headers)
-            if r.status_code != 201:
-                self._log_error(url, payload, r)
-                return None
+            r = self._request(requests.post, url, payload=payload, expected_status=201)
             self.run_id = r.json()["id"]
             logger.info(
                 "ApiClient Successfully registered your run on the API.\n\n"
@@ -292,20 +264,20 @@ class ApiClient:  # (AsyncClient)
                 f"Failed to connect to API, please check the configuration. {e}",
                 exc_info=False,
             )
+            raise
+        except requests.exceptions.HTTPError:
+            # Already logged by _raise_api_error, do not log it twice.
+            raise
         except Exception as e:
             logger.error(e, exc_info=True)
+            raise
 
     def list_experiments_from_project(self, project_id: str):
         """
         List all experiments for a project
         """
         url = self.url + "/projects/" + project_id + "/experiments"
-        headers = self._get_headers()
-        r = requests.get(url=url, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return []
-        return r.json()
+        return self._request(requests.get, url).json()
 
     def set_experiment(self, experiment_id: str):
         """
@@ -320,26 +292,21 @@ class ApiClient:  # (AsyncClient)
         """
         payload = dataclasses.asdict(experiment)
         url = self.url + "/experiments"
-        headers = self._get_headers()
-        r = requests.post(url=url, json=payload, timeout=2, headers=headers)
-        if r.status_code != 201:
-            self._log_error(url, payload, r)
-            return None
-        return r.json()
+        return self._request(
+            requests.post, url, payload=payload, expected_status=201
+        ).json()
 
     def get_experiment(self, experiment_id):
         """
         Get an experiment by id
         """
         url = self.url + "/experiments/" + experiment_id
-        headers = self._get_headers()
-        r = requests.get(url=url, timeout=2, headers=headers)
-        if r.status_code != 200:
-            self._log_error(url, {}, r)
-            return None
-        return r.json()
+        return self._request(requests.get, url).json()
 
-    def _log_error(self, url, payload, response):
+    def _raise_api_error(self, url, payload, response):
+        """
+        Log the failed call then always raise a requests.exceptions.HTTPError.
+        """
         if len(payload) > 0:
             logger.error(
                 f"ApiClient Error when calling the API on {url} with : {json.dumps(payload)}"
@@ -348,6 +315,11 @@ class ApiClient:  # (AsyncClient)
             logger.error(f"ApiClient Error when calling the API on {url}")
         logger.error(
             f"ApiClient API return http code {response.status_code} and answer : {response.text}"
+        )
+        response.raise_for_status()
+        # 2xx/3xx that still isn't what the caller expected
+        raise requests.exceptions.HTTPError(
+            f"Unexpected status {response.status_code} from {url}", response=response
         )
 
     def close_experiment(self):

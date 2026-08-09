@@ -67,6 +67,7 @@ export default function HomePage() {
                         <a
                             href="https://mlco2.github.io/codecarbon/usage.html"
                             target="_blank"
+                            rel="noopener noreferrer"
                         >
                             https://mlco2.github.io/codecarbon/usage.html
                         </a>

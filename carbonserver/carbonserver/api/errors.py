@@ -10,6 +10,23 @@ class EmptyResultException(Exception):
     """
 
 
+class AuthenticationError(HTTPException):
+    """
+    Raised when a session cookie or bearer token cannot be verified
+    (bad/absent signature, expired, or otherwise untrusted).
+
+    Subclasses HTTPException so Starlette's built-in handler turns it into a
+    real 401 response instead of the catch-all 500 handler in main.py.
+    """
+
+    def __init__(self, detail: str = "Could not validate credentials"):
+        super().__init__(
+            status_code=401,
+            detail=detail,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 @dataclass
 class ErrorBase:
     code: str

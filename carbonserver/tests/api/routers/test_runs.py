@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
+from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
@@ -13,6 +14,10 @@ from carbonserver.api.infra.repositories.repository_runs import (
 )
 from carbonserver.api.routers import runs
 from carbonserver.api.schemas import AccessLevel, ProjectToken, Run
+from carbonserver.api.services.auth_service import (
+    MandatoryUserWithAuthDependency,
+    OptionalUserWithAuthDependency,
+)
 from carbonserver.container import ServerContainer
 
 EXPE_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -83,9 +88,18 @@ RUN_2 = {
 def custom_test_server():
     container = ServerContainer()
     container.wire(modules=[runs])
+    # Authorization is unit-tested in test_run_service; here we stub it out so
+    # the router tests exercise request wiring with an authenticated caller.
+    container.auth_context.override(FakeAuthContext())
     app = FastAPI()
     app.container = container
     app.include_router(runs.router)
+    app.dependency_overrides[OptionalUserWithAuthDependency] = (
+        lambda: FakeUserWithAuthDependency()
+    )
+    app.dependency_overrides[MandatoryUserWithAuthDependency] = (
+        lambda: FakeUserWithAuthDependency()
+    )
     yield app
 
 
@@ -171,7 +185,7 @@ def test_list_runs_returns_all_runs(client, custom_test_server):
     expected_run_1 = RUN_1
     expected_run_2 = RUN_2
     expected_org_list = [expected_run_1, expected_run_2]
-    repository_mock.list_runs.return_value = [
+    repository_mock.list_runs_for_user.return_value = [
         Run(**expected_run_1),
         Run(**expected_run_2),
     ]

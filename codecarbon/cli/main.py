@@ -40,6 +40,20 @@ def main():
         raise sys.exit(1)
 
 
+def _api_call(action: str, func, *args, **kwargs):
+    """
+    Run a call to the Code Carbon API, turning the errors it now raises into a
+    readable message and a clean exit instead of a traceback.
+
+    :action: what was being attempted, used as the first part of the message.
+    """
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        print(f"[yellow]{action}[/yellow]. (error: {e})")
+        raise typer.Exit(1)
+
+
 def _version_callback(value: bool) -> None:
     if value:
         print(f"{__app_name__} v{__version__}")
@@ -116,7 +130,7 @@ def api_get():
     api_endpoint = get_api_endpoint()
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
-    organizations = api.get_list_organizations()
+    organizations = _api_call("API request failed", api.get_list_organizations)
     print(organizations)
 
 
@@ -130,7 +144,7 @@ def login():
     api = ApiClient(endpoint_url=api_endpoint)
     access_token = get_access_token()
     api.set_access_token(access_token)
-    api.check_auth()
+    _api_call("Authentication check failed", api.check_auth)
 
 
 def get_api_key(project_id: str):
@@ -149,6 +163,7 @@ def get_api_key(project_id: str):
         },
         headers={"Authorization": f"Bearer {get_access_token()}"},
     )
+    req.raise_for_status()
     api_key = req.json()["token"]
     return api_key
 
@@ -212,7 +227,10 @@ def config():
     overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
-    organizations = api.get_list_organizations()
+    organizations = _api_call(
+        "Could not list organizations from API. Please check your login and API endpoint",
+        api.get_list_organizations,
+    )
     org = questionary_prompt(
         "Pick existing organization from list or Create new organization ?",
         [org["name"] for org in organizations] + ["Create New Organization"],
@@ -229,18 +247,23 @@ def config():
             name=org_name,
             description=org_description,
         )
-        organization = api.create_organization(organization=organization_create)
-        if organization is None:
-            print("Error creating organization")
-            return
+        organization = _api_call(
+            "Could not create the organization",
+            api.create_organization,
+            organization=organization_create,
+        )
         print(f"Created organization : {organization}")
     else:
         organization = [orga for orga in organizations if orga["name"] == org][0]
     org_id = organization["id"]
     overwrite_local_config("organization_id", org_id, path=file_path)
 
-    projects = api.list_projects_from_organization(org_id)
-    project_names = [project["name"] for project in projects] if projects else []
+    projects = _api_call(
+        "Could not list projects from API",
+        api.list_projects_from_organization,
+        org_id,
+    )
+    project_names = [project["name"] for project in projects]
     project = questionary_prompt(
         "Pick existing project from list or Create new project ?",
         project_names + ["Create New Project"],
@@ -256,17 +279,21 @@ def config():
             description=project_description,
             organization_id=org_id,
         )
-        project = api.create_project(project=project_create)
+        project = _api_call(
+            "Could not create the project", api.create_project, project=project_create
+        )
         print(f"Created project : {project}")
     else:
         project = [p for p in projects if p["name"] == project][0]
     project_id = project["id"]
     overwrite_local_config("project_id", project_id, path=file_path)
 
-    experiments = api.list_experiments_from_project(project_id)
-    experiments_names = (
-        [experiment["name"] for experiment in experiments] if experiments else []
+    experiments = _api_call(
+        "Could not list experiments from API",
+        api.list_experiments_from_project,
+        project_id,
     )
+    experiments_names = [experiment["name"] for experiment in experiments]
 
     experiment = questionary_prompt(
         "Pick existing experiment from list or Create new experiment ?",
@@ -313,13 +340,17 @@ def config():
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
-        experiment = api.add_experiment(experiment=experiment_create)
+        experiment = _api_call(
+            "Could not create the experiment",
+            api.add_experiment,
+            experiment=experiment_create,
+        )
 
     else:
         experiment = [e for e in experiments if e["name"] == experiment][0]
 
     overwrite_local_config("experiment_id", experiment["id"], path=file_path)
-    api_key = get_api_key(project_id)
+    api_key = _api_call("Could not get the project API key", get_api_key, project_id)
     overwrite_local_config("api_key", api_key, path=file_path)
     show_config(file_path)
     print(

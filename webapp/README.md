@@ -1,6 +1,6 @@
-# Next.js Code Carbon Web Application Project
+# Code Carbon Web Application Project
 
-Welcome to the Code Carbon Next.js Project! This README will guide you through the process of setting up and running the project on your local machine.
+Welcome to the Code Carbon Project! This README will guide you through the process of setting up and running the project on your local machine.
 
 ## Prerequisites
 
@@ -54,10 +54,3 @@ In the project directory, you can run:
 -   `pnpm build`: Builds the app for production
 -   `pnpm start`: Runs the built app in production mode
 -   `pnpm lint`: Runs the linter to check for code style issues
-
-## Learn More
-
-To learn more about Next.js, check out the following resources:
-
--   [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
--   [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.

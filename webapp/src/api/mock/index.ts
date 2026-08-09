@@ -65,7 +65,6 @@ export function installMockFetch(): void {
         });
     };
 
-    // eslint-disable-next-line no-console
     console.info(
         "[mock] fetch interceptor installed (VITE_USE_MOCK_DATA=true)",
     );
@@ -95,5 +94,5 @@ function wait(ms = 50): Promise<void> {
 export function loginMock(): void {
     if (typeof window === "undefined") return;
     const baseUrl = (import.meta.env.VITE_BASE_URL ?? "").replace(/\/$/, "");
-    window.location.assign(`${baseUrl}/home?auth=true`);
+    window.location.assign(`${baseUrl}/home`);
 }

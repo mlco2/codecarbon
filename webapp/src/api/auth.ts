@@ -9,7 +9,6 @@ function trimTrailingSlash(value: string): string {
  */
 export function buildLoginUrl(): string | null {
     const apiBase = trimTrailingSlash(import.meta.env.VITE_API_URL ?? "");
-    const appBase = trimTrailingSlash(import.meta.env.VITE_BASE_URL ?? "");
     if (!apiBase) {
         console.warn(
             "[auth] VITE_API_URL is not set — login is disabled. " +
@@ -17,9 +16,7 @@ export function buildLoginUrl(): string | null {
         );
         return null;
     }
-    const url = new URL(`${apiBase}/auth/login`);
-    url.searchParams.set("redirect", `${appBase}/home?auth=true`);
-    return url.toString();
+    return new URL(`${apiBase}/auth/login`).toString();
 }
 
 /**

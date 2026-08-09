@@ -209,9 +209,7 @@ class RAM(BaseHardware):
                 "SLURM environment detected, running `scontrol show job $SLURM_JOB_ID`..."
             )
             return (
-                subprocess.check_output(
-                    [f"scontrol show job {SLURM_JOB_ID}"], shell=True
-                )
+                subprocess.check_output(["scontrol", "show", "job", SLURM_JOB_ID])
                 .decode()
                 .strip()
             )
