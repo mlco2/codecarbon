@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
+import requests
 import typer
 from typer.testing import CliRunner
 
@@ -41,6 +42,21 @@ def test_api_get_calls_api_and_prints(monkeypatch):
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
     assert result.exit_code == 0
     assert "fake-org" in result.output
+
+
+def test_api_get_prints_friendly_error_on_api_failure(monkeypatch):
+    class FailingApiClient(FakeApiClient):
+        def get_list_organizations(self):
+            raise requests.exceptions.HTTPError("401 Unauthorized")
+
+    runner = CliRunner()
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FailingApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
+
+    result = runner.invoke(cli_main.codecarbon, ["test-api"])
+    assert result.exit_code == 1
+    assert "API request failed" in result.output
+    assert "401 Unauthorized" in result.output
 
 
 def test_api_get_uses_get_api_endpoint(monkeypatch):
@@ -185,10 +201,38 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
     assert calls["endpoint_url"] == "https://custom-login.codecarbon.io"
 
 
+def test_login_prints_friendly_error_on_auth_failure(monkeypatch):
+    class FailingApiClient:
+        def __init__(self, endpoint_url=None):
+            pass
+
+        def set_access_token(self, token):
+            pass
+
+        def check_auth(self):
+            raise requests.exceptions.HTTPError("403 Forbidden")
+
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FailingApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.authorize", lambda: None)
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda: "https://api.codecarbon.io"
+    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "bad-token")
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["login"])
+    assert result.exit_code == 1
+    assert "Authentication check failed" in result.output
+    assert "403 Forbidden" in result.output
+
+
 def test_get_api_key_uses_bearer_token(monkeypatch):
     captured = {}
 
     class FakeResponse:
+        def raise_for_status(self):
+            return None
+
         def json(self):
             return {"token": "project-api-token"}
 
@@ -206,6 +250,43 @@ def test_get_api_key_uses_bearer_token(monkeypatch):
     assert captured["url"].endswith("/projects/proj-123/api-tokens")
     assert captured["json"]["project_id"] == "proj-123"
     assert captured["headers"]["Authorization"] == "Bearer access-token"
+
+
+def test_get_api_key_raises_on_http_error(monkeypatch):
+    class FailingResponse:
+        def raise_for_status(self):
+            raise requests.exceptions.HTTPError("403 Forbidden")
+
+        def json(self):  # pragma: no cover - must not be reached
+            raise AssertionError("json() should not be called on a failed response")
+
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "access-token")
+    monkeypatch.setattr("requests.post", lambda url, json, headers: FailingResponse())
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        cli_main.get_api_key("proj-123")
+
+
+def test_api_call_prints_friendly_error_and_exits():
+    def failing():
+        raise requests.exceptions.HTTPError("500 Server Error")
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main._api_call("Could not do the thing", failing)
+    assert exc_info.value.exit_code == 1
+
+
+def test_api_call_returns_result_and_forwards_arguments():
+    captured = {}
+
+    def succeeding(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    assert cli_main._api_call("unused", succeeding, "org-1", name="test") == "ok"
+    assert captured["args"] == ("org-1",)
+    assert captured["kwargs"] == {"name": "test"}
 
 
 def test_get_token_command_prints_token(monkeypatch):

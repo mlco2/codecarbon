@@ -19,7 +19,6 @@ from carbonserver.api.routers import (
     projects,
     runs,
     telemetry,
-    users,
 )
 from carbonserver.api.services import auth_service
 from carbonserver.config import settings
@@ -70,7 +69,6 @@ def init_container():
             projects,
             project_api_tokens,
             organizations,
-            users,
             telemetry,
             authenticate,
             auth_service,
@@ -96,12 +94,10 @@ def init_server(container):
     )
 
     server.container = container
-    server.include_router(users.router)
     server.include_router(authenticate.router)
     server.include_router(organizations.router)
     server.include_router(projects.router)
     server.include_router(project_api_tokens.router)
-    server.include_router(experiments.router)
     server.include_router(experiments.router)
     server.include_router(runs.router)
     server.include_router(emissions.router)

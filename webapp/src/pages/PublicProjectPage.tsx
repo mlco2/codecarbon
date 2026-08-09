@@ -20,7 +20,7 @@ import { getDefaultDateRange } from "@/helpers/date-utils";
 import { decryptProjectId } from "@/utils/crypto";
 
 export default function PublicProjectPage() {
-    const { projectId: encryptedId } = useParams<{ projectId: string }>();
+    const { projectId: sharedProjectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -76,14 +76,21 @@ export default function PublicProjectPage() {
         }
     }, [projectId]);
 
-    // Decrypt the project ID client-side. The encrypted token is computed
-    // with the same key in `ShareProjectButton`, so decryption is purely
-    // local — no backend round-trip required.
+    // New public links contain the project UUID directly. Keep support for
+    // legacy encrypted links until they have naturally aged out.
     useEffect(() => {
-        const decrypt = async () => {
-            if (!encryptedId) return;
+        const resolveProjectId = async () => {
+            if (!sharedProjectId) return;
+            const isProjectUuid =
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+                    sharedProjectId,
+                );
+            if (isProjectUuid) {
+                setProjectId(sharedProjectId);
+                return;
+            }
             try {
-                const decryptedId = await decryptProjectId(encryptedId);
+                const decryptedId = await decryptProjectId(sharedProjectId);
                 setProjectId(decryptedId);
             } catch (err) {
                 console.error("Failed to decrypt project ID:", err);
@@ -93,8 +100,8 @@ export default function PublicProjectPage() {
                 setIsLoading(false);
             }
         };
-        decrypt();
-    }, [encryptedId]);
+        resolveProjectId();
+    }, [sharedProjectId]);
 
     // Once we have the real project id, fetch the project. The backend
     // already serves public projects through the regular endpoint without

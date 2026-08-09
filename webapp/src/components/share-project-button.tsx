@@ -5,7 +5,6 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { encryptProjectId } from "@/utils/crypto";
 import copy from "copy-to-clipboard";
 import { CheckIcon, CopyIcon, Share2Icon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -22,9 +21,6 @@ export default function ShareProjectButton({
 }: ShareProjectButtonProps) {
     const [copied, setCopied] = useState(false);
     const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [encryptedId, setEncryptedId] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
     const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin;
 
     useEffect(() => {
@@ -33,40 +29,13 @@ export default function ShareProjectButton({
         };
     }, []);
 
-    useEffect(() => {
-        let cancelled = false;
-        const computeEncryptedId = async () => {
-            if (!(isPublic && projectId && isOpen && !encryptedId)) return;
-            try {
-                setIsLoading(true);
-                const encrypted = await encryptProjectId(projectId);
-                if (!cancelled) setEncryptedId(encrypted);
-            } catch (error) {
-                console.error("Failed to encrypt project ID:", error);
-                if (!cancelled) {
-                    toast.error("Failed to generate secure sharing link");
-                }
-            } finally {
-                if (!cancelled) setIsLoading(false);
-            }
-        };
-        computeEncryptedId();
-        return () => {
-            cancelled = true;
-        };
-    }, [projectId, isPublic, isOpen, encryptedId]);
-
-    const publicUrl = encryptedId
-        ? `${baseUrl}/public/projects/${encryptedId}`
-        : "";
+    const publicUrl = `${baseUrl}/public/projects/${projectId}`;
 
     const copyToClipboard = () => {
-        if (isLoading || !publicUrl) return;
-
         try {
             copy(publicUrl);
             setCopied(true);
-            toast.success("Secure link copied to clipboard");
+            toast.success("Public link copied to clipboard");
             copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
         } catch (error) {
             console.error("Failed to copy to clipboard:", error);
@@ -80,7 +49,7 @@ export default function ShareProjectButton({
 
     return (
         <div className="flex items-center gap-2">
-            <Popover onOpenChange={setIsOpen} open={isOpen}>
+            <Popover>
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
@@ -103,14 +72,13 @@ export default function ShareProjectButton({
                         <div className="flex space-x-2">
                             <Input
                                 readOnly
-                                value={isLoading ? "..." : publicUrl}
+                                value={publicUrl}
                                 className="flex-1"
                             />
                             <Button
                                 size="icon"
                                 aria-label="Copy share link"
                                 onClick={copyToClipboard}
-                                disabled={isLoading || !publicUrl}
                             >
                                 {copied ? (
                                     <CheckIcon className="h-4 w-4" />

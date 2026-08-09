@@ -62,18 +62,15 @@ class SqlAlchemyRepository(Users):
 
     def list_users(self) -> List[User]:
         with self.session_factory() as session:
-            e = session.query(SqlModelUser)
-            if e is None:
-                return None
-            users: List[User] = []
-            for user in e:
-                users.append(self.map_sql_to_schema(user))
-            return users
+            return [
+                self.map_sql_to_schema(user) for user in session.query(SqlModelUser)
+            ]
 
     def subscribe_user_to_org(
         self,
         user: User,
         organization_id: UUID,
+        is_admin: bool = False,
     ) -> None:
         with self.session_factory() as session:
             e = (
@@ -88,7 +85,7 @@ class SqlAlchemyRepository(Users):
             db_membership = SqlModelMembership(
                 user_id=user.id,
                 organization_id=organization_id,
-                is_admin=True,
+                is_admin=is_admin,
             )
             session.add(db_membership)
             session.commit()
