@@ -2492,13 +2492,23 @@ sudo<span class="w"> </span>-u<span class="w"> </span>codecarbon<span class="w">
 </code></pre></div>
 <h3 id="step-5-configure-rapl-permissions">Step 5: Configure RAPL Permissions<a class="headerlink" href="#step-5-configure-rapl-permissions" title="Permanent link">&para;</a></h3>
 <p>Give the CodeCarbon user permissions to read RAPL (Running Average Power Limit) energy information for accurate CPU power tracking:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span>root:codecarbon<span class="w"> </span>/sys/class/powercap/intel-rapl/*
-sudo<span class="w"> </span>chmod<span class="w"> </span>g+r<span class="w"> </span>-R<span class="w"> </span>/sys/class/powercap/intel-rapl/*
+<p>A <code>udev</code> rule restores those permissions on every boot, for all RAPL domains. Only the
+<code>energy_uj</code> counters are touched, and only the <code>codecarbon</code> group gains read access:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/udev/rules.d/99-codecarbon-rapl.rules<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">SUBSYSTEM==&quot;powercap&quot;, ACTION==&quot;add&quot;, TEST==&quot;energy_uj&quot;, \</span>
+<span class="s">  RUN+=&quot;/bin/chgrp codecarbon /sys%p/energy_uj&quot;, \</span>
+<span class="s">  RUN+=&quot;/bin/chmod 0440 /sys%p/energy_uj&quot;</span>
+<span class="s">EOF</span>
 
-sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>sysfsutils
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;mode class/powercap/intel-rapl:0/energy_uj = 0440&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/etc/sysfs.conf
-<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/etc/sysfs.conf
+sudo<span class="w"> </span>udevadm<span class="w"> </span>control<span class="w"> </span>--reload-rules
+sudo<span class="w"> </span>udevadm<span class="w"> </span>trigger<span class="w"> </span>--subsystem-match<span class="o">=</span>powercap<span class="w"> </span>--action<span class="o">=</span>add
 </code></pre></div>
+<p>Check that the counters are now readable by the <code>codecarbon</code> group:</p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-l<span class="w"> </span>/sys/class/powercap/*/energy_uj
+</code></pre></div>
+<p>Energy counters are a side channel (see <a href="../enable-rapl/">Enable RAPL</a> for the security
+rationale and for the <code>sysfsutils</code> alternative). Keeping them restricted to the service
+group means no other local account gains anything from this change.</p>
 <h3 id="step-6-create-the-codecarbon-configuration-file">Step 6: Create the CodeCarbon Configuration File<a class="headerlink" href="#step-6-create-the-codecarbon-configuration-file" title="Permanent link">&para;</a></h3>
 <p>Configure CodeCarbon with your dashboard credentials:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/opt/codecarbon/.codecarbon.config<span class="w"> </span><span class="s">&lt;&lt;EOF</span>

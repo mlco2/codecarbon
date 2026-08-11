@@ -1306,10 +1306,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-4-optional-more-restrictive-permissions" class="md-nav__link">
+  <a href="#step-4-optional-single-user-workstation" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Step 4: (Optional) More Restrictive Permissions
+        Step 4: (Optional) Single-User Workstation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-sysfsutils-debian-and-ubuntu-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Alternative: sysfsutils (Debian and Ubuntu Only)
       </span>
     </span>
   </a>
@@ -2275,10 +2286,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-4-optional-more-restrictive-permissions" class="md-nav__link">
+  <a href="#step-4-optional-single-user-workstation" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Step 4: (Optional) More Restrictive Permissions
+        Step 4: (Optional) Single-User Workstation
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alternative-sysfsutils-debian-and-ubuntu-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Alternative: sysfsutils (Debian and Ubuntu Only)
       </span>
     </span>
   </a>
@@ -2464,47 +2486,118 @@
 <p>If the command returns directories (e.g., <code>intel-rapl:0</code>, <code>intel-rapl:1</code>), your system has RAPL support.</p>
 <h2 id="setup-steps">Setup Steps<a class="headerlink" href="#setup-steps" title="Permanent link">&para;</a></h2>
 <h3 id="step-1-understand-the-security-issue">Step 1: Understand the Security Issue<a class="headerlink" href="#step-1-understand-the-security-issue" title="Permanent link">&para;</a></h3>
-<p>Due to <a href="https://www.cve.org/CVERecord?id=CVE-2020-8694">CVE-2020-8694</a>, Linux distributions restrict RAPL file permissions to root-only for security. This prevents unprivileged users from reading fine-grained power data.</p>
+<p>Since <a href="https://www.cve.org/CVERecord?id=CVE-2020-8694">CVE-2020-8694</a>, the Linux kernel
+restricts RAPL counters to root. The reason is the
+<a href="https://platypusattack.com/">PLATYPUS attack</a>: power consumption is a side channel, and
+<code>energy_uj</code> exposes it to software without needing an oscilloscope.</p>
+<p><strong>What an attacker actually needs.</strong> The threat is a process running <em>on the same machine</em>
+as the victim, under an account allowed to read the counters. Remote attackers, and local
+accounts outside the group you grant, gain nothing. What such a process can do, in
+increasing order of difficulty:</p>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Infer coarse activity: when a workload starts, roughly how busy it is, a covert channel between processes</td>
+<td>Sampling the counter. Immediate.</td>
+</tr>
+<tr>
+<td>Break KASLR (defeats a kernel exploit mitigation, does not by itself leak data)</td>
+<td>~20 seconds of sampling.</td>
+</tr>
+<tr>
+<td>Recover a cryptographic key (AES-NI, RSA)</td>
+<td>The victim must repeat the <em>same</em> operation with the <em>same</em> key tens of thousands of times while the attacker averages traces — 26 to 277 hours in the published results. The SGX variants also required privileged single-stepping (SGX-Step), not just counter access.</td>
+</tr>
+</tbody>
+</table>
+<p>So the intuition that key recovery needs a victim doing the same encryption with the same
+key, over and over, for a very long time is correct: it is not a realistic threat against a
+general-purpose workload. The cheap and realistic gains are <strong>activity inference</strong> and
+<strong>KASLR defeat as one link in an exploit chain</strong>.</p>
+<p><strong>How this guide limits the exposure:</strong></p>
+<ul>
+<li><strong>Access goes to a dedicated group</strong>, not to all users, so an untrusted local account
+  gains nothing.</li>
+<li><strong>Only <code>energy_uj</code> is exposed.</strong> Power limits and other powercap attributes stay
+  root-only, and nothing becomes writable — no risk of an attacker throttling or
+  overheating the machine through this interface.</li>
+</ul>
+<p>Judge it accordingly: on a single-tenant server or a personal workstation, granting a
+service account read access to an energy counter is a minor change. On a machine where
+untrusted code runs under other local accounts — shared build servers, multi-tenant hosts,
+CI runners executing third-party jobs — keep the group tight, and prefer running CodeCarbon
+under its own service user rather than making the counters world-readable.</p>
 <h3 id="step-2-temporary-access-testing">Step 2: Temporary Access (Testing)<a class="headerlink" href="#step-2-temporary-access-testing" title="Permanent link">&para;</a></h3>
-<p>To quickly test RAPL without permanent changes:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>chmod<span class="w"> </span>-R<span class="w"> </span>a+r<span class="w"> </span>/sys/class/powercap/*
+<p>To quickly check that RAPL works at all, without permanent changes:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>chmod<span class="w"> </span>a+r<span class="w"> </span>/sys/class/powercap/*/energy_uj
 </code></pre></div>
-<p>This grants read access to all users. However, <strong>permissions are lost at next reboot</strong>, so this is only for testing.</p>
+<p><strong>Permissions are lost at next reboot</strong>, so this is only a throwaway test — and it grants
+access to every local user. Move on to step 3 for a real setup.</p>
 <h3 id="step-3-permanent-access-recommended">Step 3: Permanent Access (Recommended)<a class="headerlink" href="#step-3-permanent-access-recommended" title="Permanent link">&para;</a></h3>
-<p>For permanent access that survives reboots, use <code>sysfsutils</code>:</p>
-<p><strong>Step 3a: Install sysfsutils</strong></p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>sysfsutils
-</code></pre></div>
-<p><strong>Step 3b: Configure RAPL Permissions</strong></p>
-<p>Edit the sysfsutils configuration:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>nano<span class="w"> </span>/etc/sysfs.conf
-</code></pre></div>
-<p>Add this line at the end:</p>
-<div class="highlight"><pre><span></span><code>mode class/powercap/intel-rapl:0/energy_uj = 0444
-</code></pre></div>
-<p>Save and exit (<code>Ctrl+X</code>, then <code>Y</code>, then <code>Enter</code>).</p>
-<p><strong>Step 3c: Reboot to Apply Changes</strong></p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>reboot
-</code></pre></div>
-<h3 id="step-4-optional-more-restrictive-permissions">Step 4: (Optional) More Restrictive Permissions<a class="headerlink" href="#step-4-optional-more-restrictive-permissions" title="Permanent link">&para;</a></h3>
-<p>For better security, you can create a dedicated group instead of allowing all users:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Create a codecarbon group</span>
-sudo<span class="w"> </span>groupadd<span class="w"> </span>codecarbon
-
-<span class="c1"># Add your user to the group</span>
+<p>For permanent access that survives reboots, add a <code>udev</code> rule. The rule fires every time a
+powercap device appears, so it covers all RAPL domains (<code>package</code>, <code>core</code>, <code>dram</code>, <code>psys</code>,
+MMIO) without listing them one by one, and it works on any distribution using <code>systemd</code>.</p>
+<p><strong>Step 3a: Create a Dedicated Group</strong></p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>groupadd<span class="w"> </span>codecarbon
 sudo<span class="w"> </span>usermod<span class="w"> </span>-a<span class="w"> </span>-G<span class="w"> </span>codecarbon<span class="w"> </span><span class="nv">$USER</span>
-
-<span class="c1"># Update sysfs.conf with group permissions</span>
-sudo<span class="w"> </span>nano<span class="w"> </span>/etc/sysfs.conf
 </code></pre></div>
-<p>Update the line to:</p>
-<div class="highlight"><pre><span></span><code>mode class/powercap/intel-rapl:0/energy_uj = 0440
-owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon
+<p>Use the account that will run CodeCarbon — if it runs as a service, add that service user
+instead of <code>$USER</code>.</p>
+<p><strong>Step 3b: Create the Rule</strong></p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/udev/rules.d/99-codecarbon-rapl.rules<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">SUBSYSTEM==&quot;powercap&quot;, ACTION==&quot;add&quot;, TEST==&quot;energy_uj&quot;, \</span>
+<span class="s">  RUN+=&quot;/bin/chgrp codecarbon /sys%p/energy_uj&quot;, \</span>
+<span class="s">  RUN+=&quot;/bin/chmod 0440 /sys%p/energy_uj&quot;</span>
+<span class="s">EOF</span>
 </code></pre></div>
-<p>Log out and back in for group membership to take effect:</p>
+<p><code>%p</code> expands to the device path, so each RAPL domain is handled by its own event.
+<code>TEST=="energy_uj"</code> skips devices that do not expose the counter. Only that one file
+changes: mode <code>0440</code> means root and the <code>codecarbon</code> group can read it, nobody else, and
+it stays read-only.</p>
+<p><strong>Step 3c: Apply It Without Rebooting</strong></p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>udevadm<span class="w"> </span>control<span class="w"> </span>--reload-rules
+sudo<span class="w"> </span>udevadm<span class="w"> </span>trigger<span class="w"> </span>--subsystem-match<span class="o">=</span>powercap<span class="w"> </span>--action<span class="o">=</span>add
+</code></pre></div>
+<p><strong>Step 3d: Check the Result</strong></p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-l<span class="w"> </span>/sys/class/powercap/*/energy_uj
+</code></pre></div>
+<p>Each file should show <code>-r--r----- root codecarbon</code>. Log out and back in for your group
+membership to take effect:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">logout</span>
 <span class="c1"># Then log back in</span>
 </code></pre></div>
+<h3 id="step-4-optional-single-user-workstation">Step 4: (Optional) Single-User Workstation<a class="headerlink" href="#step-4-optional-single-user-workstation" title="Permanent link">&para;</a></h3>
+<p>On a personal machine where every account is yours, you may prefer to skip the group and
+make the counters world-readable. Per step 1, this mainly means any local process can
+observe your machine's activity and defeat KASLR:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/udev/rules.d/99-codecarbon-rapl.rules<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">SUBSYSTEM==&quot;powercap&quot;, ACTION==&quot;add&quot;, TEST==&quot;energy_uj&quot;, RUN+=&quot;/bin/chmod 0444 /sys%p/energy_uj&quot;</span>
+<span class="s">EOF</span>
+
+sudo<span class="w"> </span>udevadm<span class="w"> </span>control<span class="w"> </span>--reload-rules
+sudo<span class="w"> </span>udevadm<span class="w"> </span>trigger<span class="w"> </span>--subsystem-match<span class="o">=</span>powercap<span class="w"> </span>--action<span class="o">=</span>add
+</code></pre></div>
+<h3 id="alternative-sysfsutils-debian-and-ubuntu-only">Alternative: sysfsutils (Debian and Ubuntu Only)<a class="headerlink" href="#alternative-sysfsutils-debian-and-ubuntu-only" title="Permanent link">&para;</a></h3>
+<p>If you prefer a declarative configuration file, <code>sysfsutils</code> applies sysfs permissions at
+boot through its own <code>systemd</code> unit. It is only packaged for Debian-based distributions,
+and each RAPL domain must be listed explicitly:</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>sysfsutils
+sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span>/etc/sysfs.conf<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">mode class/powercap/intel-rapl:0/energy_uj = 0440</span>
+<span class="s">owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon</span>
+<span class="s">mode class/powercap/intel-rapl:0:0/energy_uj = 0440</span>
+<span class="s">owner class/powercap/intel-rapl:0:0/energy_uj = root:codecarbon</span>
+<span class="s">EOF</span>
+sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>sysfsutils
+</code></pre></div>
+<p>Add one <code>mode</code> and one <code>owner</code> line per domain reported by <code>ls /sys/class/powercap/</code>.
+Missing a domain is easy here, which is why the <code>udev</code> rule is preferred.</p>
 <h3 id="step-5-verify-rapl-access">Step 5: Verify RAPL Access<a class="headerlink" href="#step-5-verify-rapl-access" title="Permanent link">&para;</a></h3>
 <p>Test that CodeCarbon can now read RAPL data:</p>
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from codecarbon import EmissionsTracker; t = EmissionsTracker(); t.start(); import time; time.sleep(5); print(t.stop())&quot;</span>

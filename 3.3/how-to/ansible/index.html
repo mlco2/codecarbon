@@ -1349,10 +1349,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-3-run-the-playbook" class="md-nav__link">
+  <a href="#step-3-give-each-machine-its-own-experiment" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Step 3: Run the Playbook
+        Step 3: Give Each Machine Its Own Experiment
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-run-the-playbook" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 4: Run the Playbook
       </span>
     </span>
   </a>
@@ -2220,10 +2231,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-3-run-the-playbook" class="md-nav__link">
+  <a href="#step-3-give-each-machine-its-own-experiment" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Step 3: Run the Playbook
+        Step 3: Give Each Machine Its Own Experiment
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-run-the-playbook" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Step 4: Run the Playbook
       </span>
     </span>
   </a>
@@ -2377,6 +2399,8 @@ using Ansible automation.</p>
 <h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>codecarbon/deploy/ansible/codecarbon_cli_as_a_service/
 ├── hosts
+├── host_vars
+│   └── yourservername.yourdomain.com.yml
 ├── tasks
 │   ├── install_codecarbon.yml
 │   ├── main.yml
@@ -2394,16 +2418,44 @@ using Ansible automation.</p>
 <div class="highlight"><pre><span></span><code>yourservername.yourdomain.com   hostname=yourservername ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519
 </code></pre></div>
 <h3 id="step-2-update-ansible-variables">Step 2: Update Ansible Variables<a class="headerlink" href="#step-2-update-ansible-variables" title="Permanent link">&para;</a></h3>
-<p>Update your CodeCarbon API credentials in <code>vars/main.yml</code>:</p>
+<p>Update your CodeCarbon API credentials in <code>vars/main.yml</code>. These are shared by
+every machine the playbook installs:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">organization_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_org_id</span>
 <span class="nt">project_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_project_id</span>
-<span class="nt">experiment_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_experiment_id</span>
 <span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_api_key</span>
 </code></pre></div>
-<h3 id="step-3-run-the-playbook">Step 3: Run the Playbook<a class="headerlink" href="#step-3-run-the-playbook" title="Permanent link">&para;</a></h3>
+<h3 id="step-3-give-each-machine-its-own-experiment">Step 3: Give Each Machine Its Own Experiment<a class="headerlink" href="#step-3-give-each-machine-its-own-experiment" title="Permanent link">&para;</a></h3>
+<p>An experiment identifies a single monitored machine on the dashboard. If several
+servers report under the same <code>experiment_id</code>, their measurements are mixed into
+one series and you can no longer tell them apart, so create one experiment per
+machine on the dashboard.</p>
+<p>Declare it in <code>host_vars/</code>, next to the <code>hosts</code> inventory. The file name must
+match the host exactly as written in the inventory:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># host_vars/yourservername.yourdomain.com.yml</span>
+<span class="nt">experiment_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">your_experiment_id_for_this_server</span>
+</code></pre></div>
+<p>Add one such file per machine. Ansible loads it automatically, no change to the
+playbook is needed:</p>
+<div class="highlight"><pre><span></span><code>host_vars
+├── firstserver.yourdomain.com.yml
+└── secondserver.yourdomain.com.yml
+</code></pre></div>
+<p>Do not put <code>experiment_id</code> back into <code>vars/main.yml</code>. That file is loaded with
+<code>vars_files</code>, which takes precedence over <code>host_vars</code>, so a value left there
+overrides every per-host file and silently sends all your machines to the same
+experiment. The playbook stops with an explicit error if a host has no
+<code>experiment_id</code> at all.</p>
+<p>You can check what each host resolves to before deploying:</p>
+<div class="highlight"><pre><span></span><code>ansible<span class="w"> </span>all<span class="w"> </span>-i<span class="w"> </span>hosts<span class="w"> </span>-m<span class="w"> </span>debug<span class="w"> </span>-a<span class="w"> </span><span class="s1">&#39;msg=&quot;{{ inventory_hostname }} -&gt; {{ experiment_id }}&quot;&#39;</span>
+</code></pre></div>
+<h3 id="step-4-run-the-playbook">Step 4: Run the Playbook<a class="headerlink" href="#step-4-run-the-playbook" title="Permanent link">&para;</a></h3>
 <p>Execute the Ansible playbook to deploy CodeCarbon:</p>
 <div class="highlight"><pre><span></span><code>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>hosts<span class="w"> </span>tasks/main.yml
 </code></pre></div>
+<p>The playbook is idempotent, so you can run it again to add a machine or to
+update the configuration of the existing ones. Changing the configuration
+restarts the service, because CodeCarbon only reads <code>.codecarbon.config</code> at
+startup.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../linux-service/">Install CodeCarbon as a Linux Service</a> for manual setup details</li>
