@@ -32,78 +32,138 @@ If the command returns directories (e.g., `intel-rapl:0`, `intel-rapl:1`), your 
 
 ### Step 1: Understand the Security Issue
 
-Due to [CVE-2020-8694](https://www.cve.org/CVERecord?id=CVE-2020-8694), Linux distributions restrict RAPL file permissions to root-only for security. This prevents unprivileged users from reading fine-grained power data.
+Since [CVE-2020-8694](https://www.cve.org/CVERecord?id=CVE-2020-8694), the Linux kernel
+restricts RAPL counters to root. The reason is the
+[PLATYPUS attack](https://platypusattack.com/): power consumption is a side channel, and
+`energy_uj` exposes it to software without needing an oscilloscope.
+
+**What an attacker actually needs.** The threat is a process running *on the same machine*
+as the victim, under an account allowed to read the counters. Remote attackers, and local
+accounts outside the group you grant, gain nothing. What such a process can do, in
+increasing order of difficulty:
+
+| Capability | Requirements |
+|---|---|
+| Infer coarse activity: when a workload starts, roughly how busy it is, a covert channel between processes | Sampling the counter. Immediate. |
+| Break KASLR (defeats a kernel exploit mitigation, does not by itself leak data) | ~20 seconds of sampling. |
+| Recover a cryptographic key (AES-NI, RSA) | The victim must repeat the *same* operation with the *same* key tens of thousands of times while the attacker averages traces — 26 to 277 hours in the published results. The SGX variants also required privileged single-stepping (SGX-Step), not just counter access. |
+
+So the intuition that key recovery needs a victim doing the same encryption with the same
+key, over and over, for a very long time is correct: it is not a realistic threat against a
+general-purpose workload. The cheap and realistic gains are **activity inference** and
+**KASLR defeat as one link in an exploit chain**.
+
+**How this guide limits the exposure:**
+
+- **Access goes to a dedicated group**, not to all users, so an untrusted local account
+  gains nothing.
+- **Only `energy_uj` is exposed.** Power limits and other powercap attributes stay
+  root-only, and nothing becomes writable — no risk of an attacker throttling or
+  overheating the machine through this interface.
+
+Judge it accordingly: on a single-tenant server or a personal workstation, granting a
+service account read access to an energy counter is a minor change. On a machine where
+untrusted code runs under other local accounts — shared build servers, multi-tenant hosts,
+CI runners executing third-party jobs — keep the group tight, and prefer running CodeCarbon
+under its own service user rather than making the counters world-readable.
 
 ### Step 2: Temporary Access (Testing)
 
-To quickly test RAPL without permanent changes:
+To quickly check that RAPL works at all, without permanent changes:
 
 ```bash
-sudo chmod -R a+r /sys/class/powercap/*
+sudo chmod a+r /sys/class/powercap/*/energy_uj
 ```
 
-This grants read access to all users. However, **permissions are lost at next reboot**, so this is only for testing.
+**Permissions are lost at next reboot**, so this is only a throwaway test — and it grants
+access to every local user. Move on to step 3 for a real setup.
 
 ### Step 3: Permanent Access (Recommended)
 
-For permanent access that survives reboots, use `sysfsutils`:
+For permanent access that survives reboots, add a `udev` rule. The rule fires every time a
+powercap device appears, so it covers all RAPL domains (`package`, `core`, `dram`, `psys`,
+MMIO) without listing them one by one, and it works on any distribution using `systemd`.
 
-**Step 3a: Install sysfsutils**
-
-```bash
-sudo apt install sysfsutils
-```
-
-**Step 3b: Configure RAPL Permissions**
-
-Edit the sysfsutils configuration:
+**Step 3a: Create a Dedicated Group**
 
 ```bash
-sudo nano /etc/sysfs.conf
-```
-
-Add this line at the end:
-
-```text
-mode class/powercap/intel-rapl:0/energy_uj = 0444
-```
-
-Save and exit (`Ctrl+X`, then `Y`, then `Enter`).
-
-**Step 3c: Reboot to Apply Changes**
-
-```bash
-sudo reboot
-```
-
-### Step 4: (Optional) More Restrictive Permissions
-
-For better security, you can create a dedicated group instead of allowing all users:
-
-```bash
-# Create a codecarbon group
 sudo groupadd codecarbon
-
-# Add your user to the group
 sudo usermod -a -G codecarbon $USER
-
-# Update sysfs.conf with group permissions
-sudo nano /etc/sysfs.conf
 ```
 
-Update the line to:
+Use the account that will run CodeCarbon — if it runs as a service, add that service user
+instead of `$USER`.
 
-```text
-mode class/powercap/intel-rapl:0/energy_uj = 0440
-owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon
+**Step 3b: Create the Rule**
+
+```bash
+sudo tee /etc/udev/rules.d/99-codecarbon-rapl.rules <<'EOF'
+SUBSYSTEM=="powercap", ACTION=="add", TEST=="energy_uj", \
+  RUN+="/bin/chgrp codecarbon /sys%p/energy_uj", \
+  RUN+="/bin/chmod 0440 /sys%p/energy_uj"
+EOF
 ```
 
-Log out and back in for group membership to take effect:
+`%p` expands to the device path, so each RAPL domain is handled by its own event.
+`TEST=="energy_uj"` skips devices that do not expose the counter. Only that one file
+changes: mode `0440` means root and the `codecarbon` group can read it, nobody else, and
+it stays read-only.
+
+**Step 3c: Apply It Without Rebooting**
+
+```bash
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=powercap --action=add
+```
+
+**Step 3d: Check the Result**
+
+```bash
+ls -l /sys/class/powercap/*/energy_uj
+```
+
+Each file should show `-r--r----- root codecarbon`. Log out and back in for your group
+membership to take effect:
 
 ```bash
 logout
 # Then log back in
 ```
+
+### Step 4: (Optional) Single-User Workstation
+
+On a personal machine where every account is yours, you may prefer to skip the group and
+make the counters world-readable. Per step 1, this mainly means any local process can
+observe your machine's activity and defeat KASLR:
+
+```bash
+sudo tee /etc/udev/rules.d/99-codecarbon-rapl.rules <<'EOF'
+SUBSYSTEM=="powercap", ACTION=="add", TEST=="energy_uj", RUN+="/bin/chmod 0444 /sys%p/energy_uj"
+EOF
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=powercap --action=add
+```
+
+### Alternative: sysfsutils (Debian and Ubuntu Only)
+
+If you prefer a declarative configuration file, `sysfsutils` applies sysfs permissions at
+boot through its own `systemd` unit. It is only packaged for Debian-based distributions,
+and each RAPL domain must be listed explicitly:
+
+```bash
+sudo apt install sysfsutils
+sudo tee -a /etc/sysfs.conf <<'EOF'
+mode class/powercap/intel-rapl:0/energy_uj = 0440
+owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon
+mode class/powercap/intel-rapl:0:0/energy_uj = 0440
+owner class/powercap/intel-rapl:0:0/energy_uj = root:codecarbon
+EOF
+sudo systemctl restart sysfsutils
+```
+
+Add one `mode` and one `owner` line per domain reported by `ls /sys/class/powercap/`.
+Missing a domain is easy here, which is why the `udev` rule is preferred.
 
 ### Step 5: Verify RAPL Access
 
