@@ -69,8 +69,6 @@ class LiveDashboardOutput(BaseOutput):
     error and stays inert: a busy port must never take down a measurement run.
     """
 
-    live_out_every_measure = True
-
     def __init__(self, port: int = 8050, host: str = "127.0.0.1", history: int = 720):
         self.port = port
         self.host = host
@@ -146,7 +144,16 @@ class LiveDashboardOutput(BaseOutput):
                 }
             )
 
-    def live_out(self, total: EmissionsData, delta: EmissionsData):
+    def on_measure(self, total: EmissionsData):
+        """
+        Record one sample. Called by the tracker after every measurement, with
+        the power fields holding the last measured power rather than the
+        average since ``start()``.
+
+        Defining this method is what opts the handler into the per-measurement
+        cadence; `live_out` and `out` are deliberately left as no-ops so the
+        chart has a single feed of comparable samples.
+        """
         values = total.values
         sample = {k: values[k] for k in SAMPLE_FIELDS}
         # Grams are what a human reads; kg is what the dataclass carries.
@@ -154,9 +161,6 @@ class LiveDashboardOutput(BaseOutput):
         with self._lock:
             self._history.append(sample)
             self._metadata = {k: values[k] for k in METADATA_FIELDS}
-
-    def out(self, total: EmissionsData, delta: EmissionsData):
-        self.live_out(total, delta)
 
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
         tasks = [dataclasses.asdict(task) for task in data]

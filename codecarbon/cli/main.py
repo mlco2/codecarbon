@@ -437,7 +437,7 @@ def monitor(
         from codecarbon.viz.live import LiveDashboardOutput
 
         live_output = LiveDashboardOutput(port=ui_port, host=ui_host)
-        tracker_args["output_handlers"] = [live_output]
+        tracker_args.setdefault("output_handlers", []).append(live_output)
         if live_output.is_serving:
             print(f"Live dashboard: {live_output.url}")
         else:

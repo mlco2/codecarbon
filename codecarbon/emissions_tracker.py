@@ -1276,18 +1276,25 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time = time.perf_counter()
         self._measure_occurrence += 1
 
-        # Handlers displaying data locally want every measure, not one every
-        # `api_call_interval`. They get the total only: computing the delta here
-        # would consume it for the periodic call below.
-        every_measure_handlers = [
-            handler
+        # Handlers displaying data locally opt in to every measure by defining
+        # `on_measure`. They get the total only: computing the delta here would
+        # consume it for the periodic call below. The power fields of
+        # EmissionsData are averages since `start()`, which is not what a live
+        # view wants, so they are replaced by the last measured power.
+        on_measure_handlers = [
+            handler.on_measure
             for handler in self._output_handlers
-            if getattr(handler, "live_out_every_measure", False)
+            if hasattr(handler, "on_measure")
         ]
-        if every_measure_handlers:
-            total = self._prepare_emissions_data()
-            for handler in every_measure_handlers:
-                handler.live_out(total, None)
+        if on_measure_handlers:
+            live = dataclasses.replace(
+                self._prepare_emissions_data(),
+                cpu_power=self._cpu_power.W,
+                gpu_power=self._gpu_power.W,
+                ram_power=self._ram_power.W,
+            )
+            for on_measure in on_measure_handlers:
+                on_measure(live)
 
         # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
@@ -1302,8 +1309,7 @@ class BaseEmissionsTracker(ABC):
                 + f"{emissions_delta.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
             )
             for handler in self._output_handlers:
-                if not getattr(handler, "live_out_every_measure", False):
-                    handler.live_out(emissions, emissions_delta)
+                handler.live_out(emissions, emissions_delta)
             self._measure_occurrence = 0
         logger.debug(f"last_duration={last_duration}\n------------------------")
 

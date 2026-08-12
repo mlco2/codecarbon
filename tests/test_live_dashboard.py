@@ -72,9 +72,9 @@ class TestLiveDashboardOutput(unittest.TestCase):
         self.output = LiveDashboardOutput(port=0, history=5)
         self.addCleanup(self.output.exit)
 
-    def test_live_out_appends_and_respects_maxlen(self):
+    def test_on_measure_appends_and_respects_maxlen(self):
         for i in range(15):
-            self.output.live_out(_make_emissions_data(duration=float(i)), None)
+            self.output.on_measure(_make_emissions_data(duration=float(i)))
 
         samples = json.loads(self.output._snapshot())["samples"]
         self.assertEqual(5, len(samples))
@@ -83,7 +83,7 @@ class TestLiveDashboardOutput(unittest.TestCase):
         )
 
     def test_data_endpoint_returns_expected_payload(self):
-        self.output.live_out(_make_emissions_data(), None)
+        self.output.on_measure(_make_emissions_data())
 
         status, body = _get(f"{self.output.url}/data")
         payload = json.loads(body)
@@ -117,7 +117,7 @@ class TestLiveDashboardOutput(unittest.TestCase):
 
         def write():
             while not stop.is_set():
-                self.output.live_out(_make_emissions_data(), None)
+                self.output.on_measure(_make_emissions_data())
 
         def read():
             try:
@@ -160,7 +160,7 @@ class TestLiveDashboardOutput(unittest.TestCase):
         tracker.start()
         try:
             # Two measures, well below api_call_interval: without the
-            # `live_out_every_measure` opt-in nothing would arrive for minutes.
+            # `on_measure` opt-in nothing would arrive for minutes.
             tracker._measure_power_and_energy()
             tracker._measure_power_and_energy()
             samples = json.loads(self.output._snapshot())["samples"]
@@ -180,14 +180,17 @@ class TestLiveDashboardOutput(unittest.TestCase):
 
             self.assertFalse(output.is_serving)
             # Still usable as an output handler, it just serves nothing.
-            output.live_out(_make_emissions_data(), None)
+            output.on_measure(_make_emissions_data())
             self.assertEqual(1, len(json.loads(output._snapshot())["samples"]))
 
-    def test_out_feeds_the_same_history_as_live_out(self):
+    def test_only_on_measure_feeds_the_history(self):
+        # `out` and `live_out` carry power averaged since start(); mixing them
+        # into the chart would put incomparable points on the same line.
         self.output.out(_make_emissions_data(duration=7.0), None)
+        self.output.live_out(_make_emissions_data(duration=8.0), None)
 
         samples = json.loads(_get(f"{self.output.url}/data")[1])["samples"]
-        self.assertEqual([7.0], [s["duration"] for s in samples])
+        self.assertEqual([], samples)
 
     def test_task_out_is_served_on_the_data_endpoint(self):
         self.output.task_out(
@@ -241,9 +244,14 @@ class _RecordingOutput(BaseOutput):
 
 
 class _RecordingLiveOutput(_RecordingOutput):
-    """Opt-in handler: fed on every measure, with no delta."""
+    """Opt-in handler: defining `on_measure` gets it fed on every measure."""
 
-    live_out_every_measure = True
+    def __init__(self):
+        super().__init__()
+        self.measures = []
+
+    def on_measure(self, total):
+        self.measures.append(total)
 
 
 class TestLiveOutEveryMeasure(unittest.TestCase):
@@ -266,29 +274,49 @@ class TestLiveOutEveryMeasure(unittest.TestCase):
         tracker._measure_occurrence = 0
         for handler in handlers:
             handler.calls.clear()
+            getattr(handler, "measures", []).clear()
         return tracker
 
-    def test_every_measure_handler_is_not_called_again_on_the_api_tick(self):
-        live, plain = _RecordingLiveOutput(), _RecordingOutput()
-        tracker = self._tracker([live, plain], api_call_interval=1)
-
-        tracker._measure_power_and_energy()
-        tracker._measure_power_and_energy()
-
-        # api_call_interval=1 makes every measure an API tick: the plain handler
-        # gets both, the live one still gets exactly one call per measure.
-        self.assertEqual(2, len(live.calls))
-        self.assertEqual(2, len(plain.calls))
-        # The every-measure path passes no delta, the periodic one does.
-        self.assertEqual([None, None], [delta for _, delta in live.calls])
-        self.assertTrue(all(delta is not None for _, delta in plain.calls))
-
-    def test_plain_handler_waits_for_the_api_interval(self):
+    def test_on_measure_is_called_every_measure_and_live_out_stays_periodic(self):
         live, plain = _RecordingLiveOutput(), _RecordingOutput()
         tracker = self._tracker([live, plain], api_call_interval=3)
 
         tracker._measure_power_and_energy()
         tracker._measure_power_and_energy()
 
-        self.assertEqual(2, len(live.calls))
+        # Below api_call_interval: only the `on_measure` opt-in has been fed.
+        self.assertEqual(2, len(live.measures))
+        self.assertEqual([], live.calls)
         self.assertEqual([], plain.calls)
+
+        tracker._measure_power_and_energy()
+
+        # The API tick feeds `live_out` on every handler, with a delta.
+        self.assertEqual(3, len(live.measures))
+        self.assertEqual(1, len(live.calls))
+        self.assertEqual(1, len(plain.calls))
+        self.assertIsNotNone(plain.calls[0][1])
+
+    def test_on_measure_receives_instantaneous_power_not_the_average(self):
+        live = _RecordingLiveOutput()
+        tracker = self._tracker([live], api_call_interval=-1)
+
+        # The tracker keeps running sums to compute the averages that
+        # EmissionsData carries. Poison them so an average is unmistakably
+        # different from the last measured power.
+        tracker._cpu_power_sum = 10_000.0
+        tracker._gpu_power_sum = 20_000.0
+        tracker._ram_power_sum = 30_000.0
+        tracker._power_measurement_count = 100
+
+        tracker._measure_power_and_energy()
+
+        sample = live.measures[-1]
+        self.assertEqual(tracker._cpu_power.W, sample.cpu_power)
+        self.assertEqual(tracker._gpu_power.W, sample.gpu_power)
+        self.assertEqual(tracker._ram_power.W, sample.ram_power)
+        # ... and the averages the periodic path would have reported are the
+        # poisoned ones, so the two are genuinely distinguishable here.
+        averaged = tracker._prepare_emissions_data()
+        self.assertGreater(averaged.cpu_power, 90.0)
+        self.assertLess(sample.cpu_power, 90.0)
