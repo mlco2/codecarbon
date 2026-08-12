@@ -1275,6 +1275,20 @@ class BaseEmissionsTracker(ABC):
         self._do_measurements()
         self._last_measured_time = time.perf_counter()
         self._measure_occurrence += 1
+
+        # Handlers displaying data locally want every measure, not one every
+        # `api_call_interval`. They get the total only: computing the delta here
+        # would consume it for the periodic call below.
+        every_measure_handlers = [
+            handler
+            for handler in self._output_handlers
+            if getattr(handler, "live_out_every_measure", False)
+        ]
+        if every_measure_handlers:
+            total = self._prepare_emissions_data()
+            for handler in every_measure_handlers:
+                handler.live_out(total, None)
+
         # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
             self._api_call_interval != -1
@@ -1288,7 +1302,8 @@ class BaseEmissionsTracker(ABC):
                 + f"{emissions_delta.emissions_rate * 3600 * 24 * 365:,} kg.CO2eq/year"
             )
             for handler in self._output_handlers:
-                handler.live_out(emissions, emissions_delta)
+                if not getattr(handler, "live_out_every_measure", False):
+                    handler.live_out(emissions, emissions_delta)
             self._measure_occurrence = 0
         logger.debug(f"last_duration={last_duration}\n------------------------")
 

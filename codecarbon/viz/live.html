@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CodeCarbon live</title>
+<style>
+  :root { color-scheme: light dark; --fg: #1b1b1b; --bg: #fbfbfa; --muted: #6b6b6b; --line: #dcdcdc; --cpu: #3d7ea6; --gpu: #c05746; --ram: #6a9955; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #ededed; --bg: #16181a; --muted: #9a9a9a; --line: #33373b; } }
+  body { margin: 0; padding: 1.5rem; background: var(--bg); color: var(--fg);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 1.2rem; }
+  h1 small { color: var(--muted); font-weight: 400; }
+  .cards { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+  .card { flex: 1 1 10rem; border: 1px solid var(--line); border-radius: 6px; padding: .8rem 1rem; }
+  .card .label { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+  .card .unit { font-size: .9rem; color: var(--muted); }
+  svg { width: 100%; height: 220px; border: 1px solid var(--line); border-radius: 6px; }
+  .legend { display: flex; gap: 1rem; font-size: .85rem; color: var(--muted); margin: .5rem 0 1.5rem; }
+  .swatch { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .3rem; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; font-size: .9rem; }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  #stale { color: #b45309; font-size: .85rem; }
+</style>
+</head>
+<body>
+<h1>CodeCarbon <small id="subtitle">waiting for the first measurement…</small></h1>
+
+<div class="cards">
+  <div class="card"><div class="label">Power</div><div class="value"><span id="power">–</span> <span class="unit">W</span></div></div>
+  <div class="card"><div class="label">Emissions</div><div class="value"><span id="emissions">–</span> <span class="unit">gCO₂eq</span></div></div>
+  <div class="card"><div class="label">Energy</div><div class="value"><span id="energy">–</span> <span class="unit">kWh</span></div></div>
+  <div class="card"><div class="label">Elapsed</div><div class="value" id="duration">–</div></div>
+</div>
+
+<svg id="chart" viewBox="0 0 600 200" preserveAspectRatio="none"></svg>
+<div class="legend">
+  <span><span class="swatch" style="background: var(--cpu)"></span>CPU</span>
+  <span><span class="swatch" style="background: var(--gpu)"></span>GPU</span>
+  <span><span class="swatch" style="background: var(--ram)"></span>RAM</span>
+  <span id="stale"></span>
+</div>
+
+<table id="components"><thead><tr><th>Component</th><th>Model</th><th class="num">Power (W)</th><th class="num">Load</th></tr></thead><tbody></tbody></table>
+<table id="tasks" hidden><thead><tr><th>Task</th><th class="num">Energy (kWh)</th><th class="num">Emissions (g)</th><th class="num">Duration (s)</th></tr></thead><tbody></tbody></table>
+<p id="meta" style="color: var(--muted); font-size: .85rem"></p>
+
+<script>
+"use strict";
+var W = 600, H = 200;
+
+function num(v, digits) {
+  return (typeof v === "number" && isFinite(v)) ? v.toFixed(digits) : "–";
+}
+
+function hms(seconds) {
+  var s = Math.max(0, Math.round(seconds || 0));
+  return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60]
+    .map(function (n) { return String(n).padStart(2, "0"); }).join(":");
+}
+
+function line(samples, key, max, color) {
+  // A polyline over the sample window; the y axis is shared by all three series.
+  var step = samples.length > 1 ? W / (samples.length - 1) : W;
+  var points = samples.map(function (s, i) {
+    var v = s[key] || 0;
+    return (i * step).toFixed(1) + "," + (H - (v / max) * (H - 10)).toFixed(1);
+  }).join(" ");
+  return '<polyline fill="none" stroke="' + color + '" stroke-width="2" points="' + points + '"/>';
+}
+
+function draw(samples) {
+  var chart = document.getElementById("chart");
+  if (!samples.length) { chart.innerHTML = ""; return; }
+  var max = 1;
+  samples.forEach(function (s) {
+    max = Math.max(max, s.cpu_power || 0, s.gpu_power || 0, s.ram_power || 0);
+  });
+  chart.innerHTML =
+    line(samples, "cpu_power", max, "var(--cpu)") +
+    line(samples, "gpu_power", max, "var(--gpu)") +
+    line(samples, "ram_power", max, "var(--ram)");
+}
+
+function rows(tbody, data) {
+  tbody.innerHTML = data.map(function (cells) {
+    return "<tr>" + cells.map(function (c, i) {
+      return "<td" + (i ? ' class="num"' : "") + ">" + c + "</td>";
+    }).join("") + "</tr>";
+  }).join("");
+}
+
+function render(payload) {
+  var samples = payload.samples || [];
+  var meta = payload.metadata || {};
+  var last = samples[samples.length - 1];
+  draw(samples);
+  if (!last) { return; }
+
+  var power = (last.cpu_power || 0) + (last.gpu_power || 0) + (last.ram_power || 0);
+  document.getElementById("power").textContent = num(power, 1);
+  document.getElementById("emissions").textContent = num(last.emissions_g, 3);
+  document.getElementById("energy").textContent = num(last.energy_consumed, 5);
+  document.getElementById("duration").textContent = hms(last.duration);
+  document.getElementById("subtitle").textContent =
+    (meta.project_name || "") + " · last sample " + last.timestamp;
+
+  rows(document.querySelector("#components tbody"), [
+    ["CPU", meta.cpu_model || "–", num(last.cpu_power, 1), num(last.cpu_utilization_percent, 0) + " %"],
+    ["GPU", meta.gpu_model || "not detected", num(last.gpu_power, 1), num(last.gpu_utilization_percent, 0) + " %"],
+    ["RAM", num(meta.ram_total_size, 1) + " GB", num(last.ram_power, 1), num(last.ram_utilization_percent, 0) + " %"]
+  ]);
+
+  var tasks = payload.tasks || [];
+  document.getElementById("tasks").hidden = tasks.length === 0;
+  rows(document.querySelector("#tasks tbody"), tasks.map(function (t) {
+    return [t.task_name, num(t.energy_consumed, 5), num(t.emissions * 1000, 3), num(t.duration, 0)];
+  }));
+
+  document.getElementById("meta").textContent =
+    [meta.country_name, meta.region, meta.tracking_mode && "mode: " + meta.tracking_mode,
+     meta.codecarbon_version && "codecarbon " + meta.codecarbon_version]
+    .filter(Boolean).join(" · ");
+}
+
+function poll() {
+  fetch("data").then(function (r) { return r.json(); }).then(function (payload) {
+    document.getElementById("stale").textContent = "";
+    render(payload);
+  }).catch(function () {
+    document.getElementById("stale").textContent = "disconnected";
+  });
+}
+
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>

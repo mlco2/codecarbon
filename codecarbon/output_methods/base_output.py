@@ -41,6 +41,11 @@ class BaseOutput:
           emissions segregated by task
     """
 
+    #: When True, `live_out` is called on every measurement instead of every
+    #: `api_call_interval` measurements, and `delta` is passed as None.
+    #: Only useful for handlers that display data locally.
+    live_out_every_measure = False
+
     def out(self, total: EmissionsData, delta: EmissionsData):
         pass
 

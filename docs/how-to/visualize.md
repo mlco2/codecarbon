@@ -1,6 +1,42 @@
 # Visualize
 
-CodeCarbon provides two ways to visualize your emissions data: a local Python dashboard for offline analysis, and an online web dashboard for cloud-based tracking and team collaboration.
+CodeCarbon provides three ways to visualize your emissions data: a live local dashboard for watching a run in progress, a local Python dashboard for offline analysis of finished runs, and an online web dashboard for cloud-based tracking and team collaboration.
+
+## Live Local Dashboard
+
+To watch power and emissions while a run is in progress, add `--ui` to the `monitor` command:
+
+``` bash
+codecarbon monitor --ui
+```
+
+CodeCarbon then serves a page on `http://127.0.0.1:8050` showing current power draw, cumulative emissions, energy, elapsed time, a chart of CPU / GPU / RAM power over the last couple of hours, and the hardware it detected. It is also a quick way to check that your GPU is being read.
+
+The dashboard uses only the Python standard library: no extra dependency, no database and no internet access are required.
+
+**Options:**
+
+- `--ui-port`: port to serve on (default `8050`)
+- `--ui-host`: interface to bind to (default `127.0.0.1`)
+
+The server is unauthenticated by design, so it listens on localhost only. To view it from another machine, use SSH port forwarding (`ssh -L 8050:127.0.0.1:8050 user@host`) rather than binding to a public interface.
+
+It also works with a wrapped command:
+
+``` bash
+codecarbon monitor --ui -- python train.py
+```
+
+From Python, the same view is available as an output handler:
+
+``` python
+from codecarbon import EmissionsTracker
+from codecarbon.viz.live import LiveDashboardOutput
+
+tracker = EmissionsTracker(output_handlers=[LiveDashboardOutput(port=8050)])
+```
+
+The live dashboard only shows the current run; for historical analysis across runs, use carbonboard below.
 
 ## Offline Visualization (carbonboard)
 
