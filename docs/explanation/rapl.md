@@ -183,7 +183,8 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 8.  **Limitations**: RAPL does NOT measure:
     -   Discrete GPUs (use nvidia-smi/rocm-smi)
     -   SSDs, peripherals, fans
-    -   Actual DRAM chips, we still have to investigate on this point
+    -   Actual DRAM chips — the `dram` domain reports memory-controller
+        power, and CodeCarbon excludes it by default (`rapl_include_dram=False`)
     -   Complete system power (use wall meter for accuracy)
 
 ## Appendix: raw measurements from three machines
@@ -197,6 +198,15 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 Choosing the right metric to track CPU power consumption depends on CPU
 hardware and available domains. Below are measurements from different
 systems showing the importance of avoiding double-counting.
+
+!!! warning "The two Intel walkthroughs were collected with `rapl_prefer_psys=True`"
+
+    Their `psys` readings and the "use psys only" annotations inside the code
+    blocks describe that non-default configuration. With the default
+    `rapl_prefer_psys=False`, CodeCarbon uses the **package** domain(s) instead:
+    psys is detected and explicitly skipped (`codecarbon/core/cpu.py:694-731`).
+    The package figure is given alongside psys in each block, so you can read
+    the default behaviour off the same numbers.
 
 We investigate RAPL on various architectures :
 
@@ -227,8 +237,9 @@ RAPL domains (individual readings):
 ✅  CORRECT: Use psys only = 6.66W (matches battery discharge)
 ```
 
-**CodeCarbon behavior**: Uses **psys only** (6.66W) to avoid
-double-counting.
+**CodeCarbon behavior**: by default uses **package-0 only** (3.85W) — never a
+sum of overlapping domains. With `rapl_prefer_psys=True` it uses **psys only**
+(6.66W), which is what matches the battery discharge rate here.
 
 **Under Load (stress-ng)**:
 
@@ -244,8 +255,9 @@ RAPL domains:
 ✅  CORRECT: Use psys only = 24.69W (close to battery discharge)
 ```
 
-**CodeCarbon measurement**: 22W using psys (accurate, within expected
-range)
+**CodeCarbon measurement**: 22W using psys, with `rapl_prefer_psys=True`
+(accurate, within expected range). The default configuration would have
+reported the package-0 figure (21.35W) instead.
 
 **Note**: The package-0 measurement (21.35W) excludes some platform
 components like chipset and PCIe that are included in psys (24.69W).
@@ -289,11 +301,10 @@ Analysis:
 - Core power (14.00W) matches the CPU TDP spec (15W)
 ```
 
-**CodeCarbon behavior**: Uses **psys only** (29.97W) for accurate total
-platform measurement.
-
-**Legacy behavior (before v2.x)**: Would have measured only package-0
-(15.73W), missing ~14W of platform power!
+**CodeCarbon behavior**: by default uses **package-0 only** (15.73W). With
+`rapl_prefer_psys=True` it uses **psys only** (29.97W), the total platform
+figure — roughly 14W more, because psys also covers chipset, PCIe and other
+platform components that are not CPU power.
 
 ### Desktop: AMD Ryzen Threadripper 1950X (16-Core, 32 threads, Multi-die)
 
