@@ -1044,6 +1044,9 @@ class BaseEmissionsTracker(ABC):
         )
 
         total_emissions = EmissionsData(
+            # Naive local time. Consumers that need an offset-aware value
+            # (the API client) may assume the local zone -- `.astimezone()` --
+            # precisely because this is `datetime.now()`.
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             project_name=self._project_name,
             run_id=str(self.run_id),
