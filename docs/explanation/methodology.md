@@ -28,6 +28,12 @@ and integrating over time, and resolves `C` from the machine's location or
 cloud region. Both halves have fallbacks, and which fallback ran is what
 determines how much you should trust the result.
 
+`E` here is the **PUE-inflated** energy: if you set a `pue`, it is already
+folded into every energy figure CodeCarbon reports, per component, so expanding
+the formula gives `Emissions = Σ_intervals (power × Δt × PUE) × C`. This
+matters when you do arithmetic with the CSV columns — see
+[Power Usage Effectiveness](#power-usage-effectiveness-pue).
+
 | Half of the formula | Best case | Worst case |
 |---|---|---|
 | `E` — energy | Hardware energy counters (RAPL, EMI, NVML) | A CPU model's catalogue TDP scaled by CPU load |
@@ -104,6 +110,11 @@ consumption is derived from the post-PUE energy in the same loop.
 This is the part of CodeCarbon most often misread. The selection logic is in
 [`resource_tracker.py:249-279`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L249),
 and it is evaluated strictly in this order — the first row that applies wins.
+
+Rows 1–9 are decided in that selector. If none of them matches, it delegates to
+the `_setup_fallback_tracking` helper (`resource_tracker.py:159-219`), which is
+where rows 10 and 11 are decided — hence the different line citations on the
+last two rows.
 
 | # | Condition | Result | Source |
 |---|---|---|---|
