@@ -98,3 +98,50 @@ codecarbon detect
 ```
 
 Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon uses to estimate energy consumption. Useful for verifying that CodeCarbon can see all your hardware.
+
+### `codecarbon ci-report`
+
+Summarise an `emissions.csv` for a CI pipeline, optionally against a baseline run.
+
+**Usage:**
+```bash
+codecarbon ci-report [OPTIONS]
+```
+
+Reads the rows of the most recent run in the CSV (CodeCarbon appends one row per flush, all sharing the same `run_id`), sums them, and prints markdown or JSON. Nothing in the command is specific to a CI provider, so it works the same on GitHub Actions, GitLab CI, Jenkins or Buildkite.
+
+**Options:**
+
+| Option | Default | Description |
+|---|---|---|
+| `--csv PATH` | `emissions.csv` | Emissions CSV to summarise. |
+| `--baseline PATH` | none | Emissions CSV to compare against, typically the target branch. A missing file is ignored and the comparison is simply omitted. |
+| `--format [markdown\|json]` | `markdown` | Output format. |
+| `--label TEXT` | project name | Label for the measured workload, shown in the report header. |
+| `--threshold-kg FLOAT` | none | Exit with code 1 when total emissions exceed this many kgCO2eq. |
+
+**Examples:**
+```bash
+# Measure a test suite, then report on it
+codecarbon monitor -- pytest -q
+codecarbon ci-report --label "pytest -q"
+
+# Compare with a baseline downloaded from the target branch
+codecarbon ci-report --baseline base/emissions.csv --label "pytest -q"
+
+# Fail the pipeline above a budget
+codecarbon ci-report --threshold-kg 0.05
+
+# Machine-readable output for further processing
+codecarbon ci-report --format json
+```
+
+Writing the markdown to a GitHub Actions job summary needs no token and no extra permissions:
+
+```yaml
+- run: codecarbon monitor -- pytest -q
+- run: codecarbon ci-report --label "pytest -q" >> "$GITHUB_STEP_SUMMARY"
+```
+
+!!! warning "Accuracy on hosted CI runners"
+    Hosted runners are virtualised, so RAPL is unavailable and CPU energy falls back to an estimate based on the CPU model TDP. Numbers are meaningful when comparing runs on identical runner types, not as absolute figures. For accurate measurements use a self-hosted runner with [RAPL enabled](../how-to/enable-rapl.md).

@@ -465,6 +465,69 @@ def monitor(
         raise e
 
 
+@codecarbon.command(
+    "ci-report", short_help="Summarise an emissions.csv, for CI pipelines."
+)
+def ci_report(
+    csv: Annotated[
+        Path,
+        typer.Option(help="Emissions CSV to summarise."),
+    ] = Path("emissions.csv"),
+    baseline: Annotated[
+        Optional[Path],
+        typer.Option(help="Emissions CSV to compare against, e.g. the target branch."),
+    ] = None,
+    output_format: Annotated[
+        str,
+        typer.Option("--format", help="Output format: markdown or json."),
+    ] = "markdown",
+    label: Annotated[
+        str,
+        typer.Option(help="Label for the measured workload, shown in the report."),
+    ] = "",
+    threshold_kg: Annotated[
+        Optional[float],
+        typer.Option(help="Exit with code 1 above this many kgCO2eq."),
+    ] = None,
+):
+    """
+    Summarise a CodeCarbon run for a CI job summary or a pull request comment.
+
+    Reads the rows of the most recent run in the CSV, optionally compares them
+    with a baseline run, and prints markdown or JSON. Nothing here is specific
+    to a CI provider.
+
+    Examples:
+
+    codecarbon ci-report --csv emissions.csv
+
+    codecarbon ci-report --baseline base/emissions.csv --label "pytest -q"
+
+    codecarbon ci-report --format json --threshold-kg 0.05
+    """
+    from codecarbon.cli.ci_report import CIReportError, render, summarise
+
+    try:
+        summary = summarise(csv)
+        baseline_summary = (
+            summarise(baseline) if baseline is not None and baseline.is_file() else None
+        )
+        report = render(summary, baseline_summary, label, output_format)
+    except CIReportError as e:
+        print(f"[bold red]Error:[/bold red] {e}")
+        raise typer.Exit(1)
+
+    # print() is Rich's, which would reflow and style the markdown
+    sys.stdout.write(report + "\n")
+
+    if threshold_kg is not None and summary.emissions > threshold_kg:
+        print(
+            f"[bold red]Emissions above threshold:[/bold red]"
+            f" {summary.emissions:.6f} kgCO2eq > {threshold_kg} kgCO2eq"
+        )
+        raise typer.Exit(1)
+
+
 @codecarbon.command("detect", short_help="Detect hardware and print information.")
 def detect():
     """
