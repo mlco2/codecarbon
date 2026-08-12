@@ -1,5 +1,7 @@
 """Shared pytest fixtures for the CodeCarbon test suite."""
 
+import threading
+
 import pytest
 
 from codecarbon.core.hardware_cache import clear_cache as clear_hardware_cache
@@ -20,3 +22,17 @@ def _reset_process_hardware_cache():
     yield
     clear_hardware_cache()
     detect_cpu_model.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def _cancel_leaked_scheduler_timers():
+    """Stop scheduler threads a test left running.
+
+    PeriodicScheduler re-arms a threading.Timer, so a tracker that is never
+    stopped keeps measuring after its test ends. The late measurement lands in
+    whatever test is running at the time and corrupts its hardware mocks.
+    """
+    yield
+    for thread in threading.enumerate():
+        if isinstance(thread, threading.Timer):
+            thread.cancel()
