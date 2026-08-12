@@ -1,0 +1,148 @@
+"""Carbon intensity forecasts and greenest-window selection.
+
+The only provider able to serve a forecast today is Electricity Maps, and only
+for users holding a token for it. When no provider can answer, `get_forecast`
+returns ``None`` and every caller must degrade to "run now" -- a job is never
+blocked on a missing credential.
+
+Once pluggable intensity providers land (see issue #1356), `get_forecast`
+should become an optional `forecast()` method on the provider protocol rather
+than a second HTTP client.
+"""
+
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
+
+import requests
+
+from codecarbon.core.electricitymaps_api import ELECTRICITYMAPS_API_TIMEOUT
+from codecarbon.external.geography import GeoMetadata
+from codecarbon.external.logger import logger
+
+FORECAST_URL: str = "https://api.electricitymaps.com/v3/carbon-intensity/forecast"
+
+
+@dataclass(frozen=True)
+class IntensityPoint:
+    at: datetime  # timezone-aware, UTC
+    g_co2e_per_kwh: float
+
+
+@dataclass(frozen=True)
+class Forecast:
+    zone: str
+    points: List[IntensityPoint]  # ordered, typically hourly
+    source: str
+    fetched_at: datetime
+
+
+def _location_params(geo: GeoMetadata) -> Dict[str, Any]:
+    """Build the Electricity Maps location query, as `get_emissions` does."""
+    if geo.latitude:
+        return {"lat": geo.latitude, "lon": geo.longitude}
+    return {"countryCode": geo.country_2letter_iso_code}
+
+
+def _parse_datetime(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def get_forecast(
+    geo: GeoMetadata,
+    *,
+    token: Optional[str] = None,
+    horizon_hours: int = 48,
+) -> Optional[Forecast]:
+    """Return an intensity forecast, or None when no provider can supply one.
+
+    Never raises: a forecast is an optimisation, not a requirement.
+    """
+    if not token:
+        logger.warning(
+            "No Electricity Maps API token configured, cannot fetch a carbon "
+            "intensity forecast."
+        )
+        return None
+
+    try:
+        resp = requests.get(
+            FORECAST_URL,
+            params=_location_params(geo),
+            headers={"auth-token": token},
+            timeout=ELECTRICITYMAPS_API_TIMEOUT,
+        )
+        if resp.status_code != 200:
+            body = resp.json()
+            raise ValueError(body.get("error") or body.get("message") or resp.text)
+
+        data = resp.json()
+        horizon_end = datetime.now(timezone.utc) + timedelta(hours=horizon_hours)
+        points = [
+            IntensityPoint(
+                at=_parse_datetime(entry["datetime"]),
+                g_co2e_per_kwh=float(entry["carbonIntensity"]),
+            )
+            for entry in data["forecast"]
+            if entry.get("carbonIntensity") is not None
+        ]
+        points = sorted(
+            (point for point in points if point.at <= horizon_end),
+            key=lambda point: point.at,
+        )
+        if not points:
+            raise ValueError("No usable forecast points in response")
+
+        return Forecast(
+            zone=data.get("zone", ""),
+            points=points,
+            source="electricitymaps",
+            fetched_at=datetime.now(timezone.utc),
+        )
+    except Exception as e:
+        logger.error(
+            f"intensity_forecast.get_forecast: {e} >>> Falling back to running now."
+        )
+        return None
+
+
+def best_window(
+    forecast: Forecast,
+    duration: timedelta,
+    deadline: Optional[datetime] = None,
+) -> Tuple[datetime, float]:
+    """Start time minimising mean intensity over `duration`, and that mean.
+
+    Only windows that both start at or after the first forecast point and
+    finish before `deadline` are considered. Returns the earliest point and its
+    intensity when no complete window fits, so "just run it" is the default.
+    """
+    points = forecast.points
+    fallback = (points[0].at, points[0].g_co2e_per_kwh)
+
+    # The forecast covers up to one step past its last point.
+    step = points[1].at - points[0].at if len(points) > 1 else duration
+    covered_until = points[-1].at + step
+
+    best: Optional[Tuple[datetime, float]] = None
+    for start_index, start in enumerate(points):
+        window_end = start.at + duration
+        if window_end > covered_until:
+            break
+        if deadline is not None and window_end > deadline:
+            break
+        # ponytail: linear rescan per start, fine for hourly points over a few
+        # days; use a running sum if horizons ever grow by orders of magnitude.
+        covered = [
+            point.g_co2e_per_kwh
+            for point in points[start_index:]
+            if point.at < window_end
+        ]
+        mean = sum(covered) / len(covered)
+        if best is None or mean < best[1]:
+            best = (start.at, mean)
+
+    return best or fallback

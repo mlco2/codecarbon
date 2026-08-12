@@ -465,6 +465,57 @@ def monitor(
         raise e
 
 
+@codecarbon.command(
+    "wait",
+    short_help="Wait for a low-carbon window, then run a command.",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def wait(
+    ctx: typer.Context,
+    duration: Annotated[
+        str,
+        typer.Option(help="Expected job length, e.g. '90m', '2h', '1h30m'."),
+    ] = "1h",
+    deadline: Annotated[
+        str,
+        typer.Option(help="Maximum delay before the job must start."),
+    ] = "12h",
+    threshold: Annotated[
+        Optional[float],
+        typer.Option(help="gCO2e/kWh at or below which we start immediately."),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="Print the recommendation and exit without waiting."),
+    ] = False,
+    measure_power_secs: Annotated[
+        int,
+        typer.Option(help="Interval between two measures."),
+    ] = 10,
+    log_level: Annotated[
+        str,
+        typer.Option(help="Log level (critical, error, warning, info, debug)"),
+    ] = "error",
+):
+    """Wait for the greenest window in the carbon intensity forecast, then run
+    a command under measurement.
+
+    Requires an Electricity Maps API token; without one, the command runs
+    immediately rather than blocking.
+    """
+    from codecarbon.cli.wait import wait_for_green_window
+
+    return wait_for_green_window(
+        ctx,
+        duration=duration,
+        deadline=deadline,
+        threshold=threshold,
+        dry_run=dry_run,
+        log_level=log_level,
+        measure_power_secs=measure_power_secs,
+    )
+
+
 @codecarbon.command("detect", short_help="Detect hardware and print information.")
 def detect():
     """
