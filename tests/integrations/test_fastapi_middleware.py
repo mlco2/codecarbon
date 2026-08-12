@@ -5,6 +5,7 @@ import time
 from concurrent import futures
 from contextlib import asynccontextmanager
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -21,6 +22,12 @@ from codecarbon.integrations.fastapi import (
     shutdown_codecarbon_middleware,
 )
 from codecarbon.integrations.fastapi.middleware import log_request_complete
+from codecarbon.integrations.fastapi.tiers import MeasurementTier, RequestMeasurement
+
+
+def measured_hardware() -> list[Any]:
+    """Injected hardware so tier detection never depends on the test machine."""
+    return [SimpleNamespace(_mode="intel_rapl")]
 
 
 def _configure_mock_running_tracker(
@@ -39,6 +46,7 @@ def _configure_mock_running_tracker(
     tracker_instance._start_time = None
     tracker_instance.mark_http_request_start.return_value = baseline
     tracker_instance.finish_http_request.return_value = MagicMock(emissions=emissions)
+    tracker_instance._hardware = measured_hardware()
     return baseline
 
 
@@ -140,6 +148,7 @@ def test_middleware_uses_lifespan_tracker(MockTracker) -> None:
     application = FastAPI()
     tracker_instance = MagicMock()
     tracker_instance._start_time = 1.0
+    tracker_instance._hardware = measured_hardware()
     baseline = MagicMock(task_name="GET /predict")
     emissions = MagicMock(emissions=0.003)
     tracker_instance.mark_http_request_start.return_value = baseline
@@ -174,6 +183,7 @@ def test_middleware_skips_callback_when_handler_raises(MockTracker) -> None:
     application = FastAPI()
     tracker_instance = MagicMock()
     tracker_instance._start_time = 1.0
+    tracker_instance._hardware = measured_hardware()
     baseline = MagicMock(task_name="GET /fail")
     tracker_instance.mark_http_request_start.return_value = baseline
     tracker_instance.finish_http_request.return_value = MagicMock(emissions=0.001)
@@ -811,11 +821,19 @@ def test_resolve_header_fields_and_header_names() -> None:
     emissions = MagicMock(spec=["emissions", "duration"])
     emissions.emissions = 0.0012
     emissions.duration = 1.5
+    measurement = RequestMeasurement(
+        tier=MeasurementTier.MEASURED,
+        task_name="GET /predict",
+        endpoint="GET /predict",
+        duration=1.5,
+        emissions_data=emissions,
+    )
     injected = _inject_emission_headers(
-        message, emissions, ["emissions", "unknown_field", "duration"]
+        message, measurement, ["emissions", "unknown_field", "duration"]
     )
     header_names = {name.decode() for name, _ in injected["headers"]}
     assert header_names == {
+        "X-CodeCarbon-Tier",
         "X-CodeCarbon-Emissions-kg",
         "X-CodeCarbon-Duration-s",
     }

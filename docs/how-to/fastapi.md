@@ -142,7 +142,7 @@ add_codecarbon_middleware(
 
 ## `response_headers`, `include_background_tasks`, `task_name_formatter`, `on_request_complete`
 
-- **`response_headers`** — `True` (emissions only) or a list of field names (`emissions`, `duration`, `energy_consumed`, …). Measures before the response starts and sets `X-CodeCarbon-*` headers. Default `None` / off (deferred, no headers).
+- **`response_headers`** — off by default (`None`); opt-in with `True` (emissions only) or a list of field names (`emissions`, `duration`, `energy_consumed`, …). Measures before the response starts and sets `X-CodeCarbon-*` headers, always including `X-CodeCarbon-Tier`. Values read `unavailable` when the tier cannot resolve the request.
 - **`include_background_tasks`** — default `True`: FastAPI/Starlette `BackgroundTasks` on the response are included. Set `False` to finalize at end of body and exclude post-body background work.
 - **`task_name_formatter`** — optional `(Request) -> str`; default is `METHOD /route/template`. Concurrent requests on the same route still get unique internal task IDs with `create_codecarbon_lifespan`.
 - **`on_request_complete`** — optional callback `(request, status_code, emissions_data, task_name)`; default logs via `log_request_complete`; `None` disables it.
@@ -154,6 +154,60 @@ add_codecarbon_middleware(
     include_background_tasks=False,
 )
 ```
+
+## Measurement tiers
+
+A per-request energy figure is only honest if the backend actually resolves a
+request. The middleware resolves a **tier** at startup from the hardware the
+tracker detected, exposes it on `middleware.measurement_tier`, and puts it in
+every result (`request.state.codecarbon`, and `X-CodeCarbon-Tier` when response
+headers are enabled).
+
+| Tier | Backends | Per-request energy |
+|---|---|---|
+| `measured` | Linux RAPL (`intel_rapl`); NVML only when aggregating over >= 1 s | Reported |
+| `estimated` | `constant` / TDP (`power = tdp * 0.5`), RAM | Reported, but analytic in duration: it restates wall time |
+| `aggregate_only` | `cpu_load`, macOS `powermetrics`, `amdsmi`, Windows EMI, `intel_power_gadget` | **Not reported at all** — use `middleware.endpoint_totals()` |
+
+Why:
+
+- **Linux RAPL** — counter updates ~1 ms, quantum 15.3 uJ, read cost 10.4 us. A 30 ms request is genuinely resolved.
+- **NVML** — sensor period 20 ms (V100) to ~100 ms with a 25 ms averaging window (A100/H100); 75-80% of elapsed time is unsampled. Sub-100 ms GPU energy is not obtainable.
+- **macOS powermetrics** — `get_details()` spawns `sudo powermetrics -n 10 -i 100` and blocks ~1 s per read; it cannot sit in a request path.
+- **`cpu_load`** — `psutil.cpu_percent(interval=None)` is tick-quantized: 98% of 5 ms reads return zero load, and the `0.1 + 0.9*(load/100)**3` factor turns that into a 10%-of-TDP floor. Measured: 30 requests on a core pegged at 100% all reported exactly 0.0900 J.
+- **`amdsmi`, Windows EMI** — update rate undocumented; treated as unprobed.
+
+The overall tier is the weakest contributing component (RAM is analytic and
+never limits resolution, so it does not vote).
+
+### Unavailable is not zero
+
+A request that spans no completed sampling window reports **unavailable**, never
+`0.0`: zero is a factual claim that the request was free. In that case
+`emissions_data` is `None`, the callback receives `None`, and headers read
+`unavailable`.
+
+```python
+def on_complete(request, response, emissions_data, task_name):
+    m = request.state.codecarbon          # RequestMeasurement
+    if m.available:
+        print(m.tier.value, m.emissions, "kg")
+    else:
+        print(m.tier.value, "unavailable:", m.unavailable_reason)
+```
+
+### Per-endpoint totals
+
+Valid in every tier, and the only energy output in `aggregate_only`:
+
+```python
+for endpoint, totals in app.state.codecarbon_middleware.endpoint_totals().items():
+    print(endpoint, totals.count, totals.energy_consumed, totals.emissions)
+```
+
+Idle/baseline power is **charged to requests, not subtracted**. That keeps the
+per-endpoint totals summing to the run total; it also means an idle server
+attributes its floor to whatever traffic it did serve.
 
 ## Middleware order
 

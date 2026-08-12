@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import threading
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from concurrent import futures
@@ -18,6 +19,13 @@ from codecarbon.integrations.fastapi._routing import (
     DEFAULT_EXCLUDE,
     build_endpoint_key,
     should_track_request,
+)
+from codecarbon.integrations.fastapi.tiers import (
+    EndpointTotals,
+    MeasurementTier,
+    RequestMeasurement,
+    TierDetection,
+    detect_measurement_tier,
 )
 from codecarbon.output_methods.emissions_data import EmissionsData
 
@@ -61,19 +69,73 @@ def _resolve_header_fields(
 
 def _inject_emission_headers(
     message: Message,
-    emissions_data: EmissionsData | None,
+    measurement: RequestMeasurement | None,
     fields: Sequence[str],
 ) -> Message:
-    if not fields or emissions_data is None:
+    """Add ``X-CodeCarbon-*`` headers.
+
+    Headers are opt-in (``response_headers``); when enabled they always carry
+    ``X-CodeCarbon-Tier`` next to the numbers, and report ``unavailable``
+    rather than ``0`` when the backend cannot resolve the request.
+    """
+    if not fields or measurement is None:
         return message
     headers = list(message.get("headers", []))
+    headers.append((b"X-CodeCarbon-Tier", measurement.tier.value.encode("latin-1")))
+    emissions_data = measurement.emissions_data
     for field in fields:
-        if not hasattr(emissions_data, field):
-            continue
         name = _codecarbon_header_name(field)
-        value = str(getattr(emissions_data, field))
+        if emissions_data is None:
+            value = "unavailable"
+        elif hasattr(emissions_data, field):
+            value = str(getattr(emissions_data, field))
+        else:
+            continue
         headers.append((name.encode("latin-1"), value.encode("latin-1")))
     return {**message, "headers": headers}
+
+
+def _carbon_intensity(tracker: EmissionsTracker | None) -> float:
+    """Effective kg CO2 per kWh implied by the tracker's running totals."""
+    total_energy = getattr(getattr(tracker, "_total_energy", None), "kWh", 0.0)
+    total_emissions = getattr(tracker, "_total_emissions", 0.0)
+    try:
+        if total_energy and total_energy > 0:
+            return float(total_emissions) / float(total_energy)
+    except (TypeError, ValueError):
+        pass
+    return 0.0
+
+
+def _estimate_from_duration(
+    emissions_data: EmissionsData, intensity: float
+) -> EmissionsData | None:
+    """ESTIMATED tier: energy is analytic (``P x elapsed``) at any resolution.
+
+    The sampled delta can still be 0 when the request fell between scheduler
+    ticks; with a constant power model the honest figure is power x duration
+    rather than 0. Returns ``None`` when carbon intensity is not yet known,
+    so the caller reports unavailable instead of a zero.
+    """
+    duration = emissions_data.duration or 0.0
+    if duration <= 0 or intensity <= 0:
+        return None
+    hours = duration / 3600.0
+    cpu = (emissions_data.cpu_power or 0.0) / 1000.0 * hours
+    gpu = (emissions_data.gpu_power or 0.0) / 1000.0 * hours
+    ram = (emissions_data.ram_power or 0.0) / 1000.0 * hours
+    energy = cpu + gpu + ram
+    if energy <= 0:
+        return None
+    return dataclasses.replace(
+        emissions_data,
+        cpu_energy=cpu,
+        gpu_energy=gpu,
+        ram_energy=ram,
+        energy_consumed=energy,
+        emissions=energy * intensity,
+        emissions_rate=energy * intensity / duration,
+    )
 
 
 def log_request_complete(
@@ -150,6 +212,90 @@ class CodeCarbonMiddleware:
         )
         # asyncio only keeps a weak reference to a running task.
         self._pending_finalizes: set[asyncio.Task[None]] = set()
+        self._tier_detection: TierDetection | None = None
+        self._totals: dict[str, EndpointTotals] = {}
+        self._totals_lock = threading.Lock()
+
+    @property
+    def measurement_tier(self) -> MeasurementTier | None:
+        """Tier resolved from the tracker's hardware, or ``None`` before first use."""
+        return None if self._tier_detection is None else self._tier_detection.tier
+
+    @property
+    def tier_detection(self) -> TierDetection | None:
+        """Full detection result (overall tier plus per-component tiers)."""
+        return self._tier_detection
+
+    def endpoint_totals(self) -> dict[str, EndpointTotals]:
+        """Per-endpoint aggregates. The only energy output in AGGREGATE_ONLY.
+
+        Idle/baseline power is charged to requests, not subtracted, so these
+        totals sum to the tracker total.
+        """
+        with self._totals_lock:
+            return {
+                key: dataclasses.replace(value) for key, value in self._totals.items()
+            }
+
+    def _resolve_tier(self, tracker: EmissionsTracker) -> TierDetection:
+        """Resolve the tier once, from the hardware the tracker actually detected."""
+        detection = self._tier_detection
+        if detection is None:
+            detection = detect_measurement_tier(getattr(tracker, "_hardware", None))
+            self._tier_detection = detection
+            logger.debug("CodeCarbon measurement tier: %s", detection.describe())
+        return detection
+
+    def _build_measurement(
+        self,
+        detection: TierDetection,
+        endpoint: str,
+        task_name: str,
+        emissions_data: EmissionsData | None,
+        tracker: EmissionsTracker | None = None,
+    ) -> RequestMeasurement:
+        tier = detection.tier
+        duration = float(getattr(emissions_data, "duration", 0.0) or 0.0)
+        if emissions_data is None:
+            return RequestMeasurement(
+                tier, task_name, endpoint, duration, None, "no measurement returned"
+            )
+        if tier is MeasurementTier.AGGREGATE_ONLY:
+            return RequestMeasurement(
+                tier,
+                task_name,
+                endpoint,
+                duration,
+                None,
+                "backend resolution is coarser than a request; use endpoint_totals()",
+            )
+        if tier is MeasurementTier.ESTIMATED and not emissions_data.energy_consumed:
+            emissions_data = _estimate_from_duration(
+                emissions_data, _carbon_intensity(tracker)
+            )
+        if emissions_data is None or not emissions_data.energy_consumed:
+            return RequestMeasurement(
+                tier,
+                task_name,
+                endpoint,
+                duration,
+                None,
+                "request spanned no completed sampling window",
+            )
+        return RequestMeasurement(tier, task_name, endpoint, duration, emissions_data)
+
+    def _record_totals(
+        self,
+        detection: TierDetection,
+        endpoint: str,
+        emissions_data: EmissionsData | None,
+    ) -> None:
+        with self._totals_lock:
+            totals = self._totals.get(endpoint)
+            if totals is None:
+                totals = EndpointTotals(endpoint=endpoint, tier=detection.tier)
+                self._totals[endpoint] = totals
+            totals.add(emissions_data)
 
     def shutdown_tracker_executor(self, *, wait: bool = True) -> None:
         """Shut down the tracker background thread (idempotent).
@@ -224,16 +370,25 @@ class CodeCarbonMiddleware:
         status_code: int,
         run_callback: bool,
         baseline: HttpRequestBaseline,
-    ) -> EmissionsData | None:
+    ) -> RequestMeasurement:
+        detection = self._resolve_tier(tracker)
         # The route template only lands in request.scope once Starlette's router
         # has run, so the task can only be named here, not at request start.
         task_name = self._task_name(request)
         emissions_data = tracker.finish_http_request(baseline, task_name)
         tracker.persist_completed_task(baseline.task_name)
         tracker.discard_task(baseline.task_name)
+        self._record_totals(detection, task_name, emissions_data)
+        measurement = self._build_measurement(
+            detection, task_name, baseline.task_name, emissions_data, tracker
+        )
+        try:
+            request.state.codecarbon = measurement
+        except Exception:  # pragma: no cover - exotic scopes without state
+            logger.debug("CodeCarbon: could not attach measurement to request.state")
         if run_callback:
             self._run_request_complete(request, status_code, emissions_data, task_name)
-        return emissions_data
+        return measurement
 
     def _run_request_complete(
         self,
@@ -265,7 +420,7 @@ class CodeCarbonMiddleware:
         baseline: HttpRequestBaseline,
         *,
         run_callback: bool,
-    ) -> EmissionsData | None:
+    ) -> RequestMeasurement:
         return await self._run_on_tracker(
             self._finalize_on_worker,
             tracker,
@@ -398,7 +553,7 @@ class CodeCarbonMiddleware:
                 await send(message)
                 return
             status_code = message["status"]
-            emissions_data = await self._finalize_after_response(
+            measurement = await self._finalize_after_response(
                 tracker,
                 request,
                 status_code,
@@ -407,7 +562,7 @@ class CodeCarbonMiddleware:
             )
             finalized = True
             await send(
-                _inject_emission_headers(message, emissions_data, self.header_fields)
+                _inject_emission_headers(message, measurement, self.header_fields)
             )
 
         error: BaseException | None = None

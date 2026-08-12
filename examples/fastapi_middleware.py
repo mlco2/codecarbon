@@ -34,17 +34,47 @@ async def lifespan(app: FastAPI):
         yield
 
 
+def report(request, response, emissions_data, task_name):
+    """Report per request, honestly: never a zero standing in for unknown."""
+    measurement = request.state.codecarbon
+    if measurement.available:
+        print(
+            f"{task_name}: tier={measurement.tier.value} "
+            f"emissions={measurement.emissions} kg "
+            f"energy={measurement.energy_consumed} kWh"
+        )
+    else:
+        print(
+            f"{task_name}: tier={measurement.tier.value} "
+            f"emissions=unavailable ({measurement.unavailable_reason})"
+        )
+
+
 app = FastAPI(title="CodeCarbon FastAPI demo", lifespan=lifespan)
 add_codecarbon_middleware(
     app,
     project_name="fastapi-demo",
     tracker_kwargs=_tracker_kwargs,
+    on_request_complete=report,
+    response_headers=True,  # opt-in; adds X-CodeCarbon-Tier
 )
 
 
 @app.get("/predict")
 def predict(text: str = "hello"):
     return {"text": text, "label": "demo"}
+
+
+@app.get("/totals")
+def totals():
+    """Per-endpoint aggregates: the only energy output in the aggregate_only tier."""
+    middleware = app.state.codecarbon_middleware
+    return {
+        "tier": middleware.measurement_tier,
+        "endpoints": {
+            key: vars(value) for key, value in middleware.endpoint_totals().items()
+        },
+    }
 
 
 # Per-request: codecarbon logger (INFO) after each response.
