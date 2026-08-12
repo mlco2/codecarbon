@@ -57,7 +57,10 @@ class TestCarbonInferenceTracker(unittest.TestCase):
         tracker.stop()
 
         # Then
-        assert actual_cpu_energy < tracker.final_emissions_data.cpu_energy
+        # <= because counter-based backends (RAPL, Windows EMI) may report a
+        # zero energy delta between stop_task() and stop() when both happen
+        # within the hardware counter refresh granularity.
+        assert actual_cpu_energy <= tracker.final_emissions_data.cpu_energy
         assert actual_gpu_energy <= tracker.final_emissions_data.gpu_energy
         assert actual_ram_energy < tracker.final_emissions_data.ram_energy
 

@@ -8,7 +8,6 @@ from os.path import expandvars
 from pathlib import Path
 from typing import Optional, Union
 
-import cpuinfo
 import psutil
 
 from codecarbon.external.logger import logger
@@ -76,6 +75,8 @@ def backup(file_path: Union[str, Path], ext: Optional[str] = ".bak") -> None:
 
 @lru_cache(maxsize=1)
 def detect_cpu_model() -> Optional[str]:
+    import cpuinfo
+
     cpu_info = cpuinfo.get_cpu_info()
     if cpu_info:
         cpu_model_detected = cpu_info.get("brand_raw", "")
@@ -155,7 +156,7 @@ def count_cpus() -> int:
             + f" `scontrol show job {SLURM_JOB_ID}` to count SLURM-available cpus."
         )
         scontrol = subprocess.check_output(
-            [f"scontrol show job {SLURM_JOB_ID}"], shell=True
+            ["scontrol", "show", "job", SLURM_JOB_ID]
         ).decode()
     except subprocess.CalledProcessError:
         logger.warning(

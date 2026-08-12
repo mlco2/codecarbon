@@ -94,16 +94,25 @@ class ServerContainer(containers.DeclarativeContainer):
         session_factory=db.provided.session,
     )
 
+    run_repository = providers.Factory(
+        repository_runs.SqlAlchemyRepository,
+        session_factory=db.provided.session,
+    )
+
     auth_context = providers.Factory(
         AuthContext,
         user_repository=user_repository,
         token_repository=project_token_repository,
         project_repository=project_repository,
+        experiment_repository=experiment_repository,
+        run_repository=run_repository,
+        emission_repository=emission_repository,
     )
 
     emission_service = providers.Factory(
         EmissionService,
         emission_repository=emission_repository,
+        auth_context=auth_context,
     )
 
     telemetry_service = providers.Factory(
@@ -120,10 +129,13 @@ class ServerContainer(containers.DeclarativeContainer):
     project_sums_by_experiment_usecase = providers.Factory(
         ProjectSumsByExperimentUsecase,
         experiment_repository=experiment_repository,
+        auth_context=auth_context,
     )
 
     project_sums_usecase = providers.Factory(
-        ProjectSumsUsecase, project_repository=project_repository
+        ProjectSumsUsecase,
+        project_repository=project_repository,
+        auth_context=auth_context,
     )
 
     project_service = providers.Factory(
@@ -138,14 +150,10 @@ class ServerContainer(containers.DeclarativeContainer):
         auth_context=auth_context,
     )
 
-    run_repository = providers.Factory(
-        repository_runs.SqlAlchemyRepository,
-        session_factory=db.provided.session,
-    )
-
     experiment_sums_by_run_usecase = providers.Factory(
         ExperimentSumsByRunUsecase,
         run_repository=run_repository,
+        auth_context=auth_context,
     )
 
     user_service = providers.Factory(
@@ -163,6 +171,7 @@ class ServerContainer(containers.DeclarativeContainer):
     organization_sums_usecase = providers.Factory(
         OrganizationSumsUsecase,
         organization_repository=organization_repository,
+        auth_context=auth_context,
     )
 
     run_service = providers.Factory(

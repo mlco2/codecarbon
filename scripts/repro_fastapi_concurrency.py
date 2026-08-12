@@ -23,7 +23,11 @@ import uvicorn
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from examples.fastapi_concurrency import SAMPLE_TEXT, app_lazy, app_lifespan
+from examples.fastapi_concurrency import (  # noqa: E402  (needs sys.path above)
+    SAMPLE_TEXT,
+    app_lazy,
+    app_lifespan,
+)
 
 logging.basicConfig(level=logging.ERROR)
 codecarbon_logger = logging.getLogger("codecarbon")
@@ -32,7 +36,10 @@ errors: list[str] = []
 
 class _ErrorCapture(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
-        if record.levelno >= logging.ERROR and "_active_task_emissions_at_start" in record.getMessage():
+        if (
+            record.levelno >= logging.ERROR
+            and "_active_task_emissions_at_start" in record.getMessage()
+        ):
             errors.append(record.getMessage())
 
 
@@ -94,7 +101,9 @@ def main() -> int:
         for msg in errors[:5]:
             print(f"  {msg}", file=sys.stderr)
         return 1
-    print(f"OK [{mode}]: no concurrency errors ({args.requests} req, c={args.concurrency})")
+    print(
+        f"OK [{mode}]: no concurrency errors ({args.requests} req, c={args.concurrency})"
+    )
     return 0
 
 

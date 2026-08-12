@@ -181,3 +181,24 @@ def test_fetch_org_users(client, custom_test_server):
 
     assert response.status_code == status.HTTP_200_OK
     assert actual_user_list == expected_user_list
+
+
+def test_add_user_passes_authenticated_user(client, custom_test_server):
+    organization_service_mock = mock.Mock()
+    email = "new.user@local.com"
+
+    with custom_test_server.container.organization_service.override(
+        organization_service_mock
+    ):
+        response = client.post(
+            f"/organizations/{ORG_ID_1}/add-user",
+            json={"email": email},
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"status": "ok"}
+    organization_service_mock.add_user_by_mail.assert_called_once_with(
+        organization_id=ORG_ID_1,
+        email=email,
+        user=FakeUserWithAuthDependency.db_user,
+    )

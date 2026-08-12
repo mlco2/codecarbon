@@ -51,7 +51,10 @@ import httpx
 from fastapi import FastAPI
 from sentence_transformers import SentenceTransformer
 
-from codecarbon.integrations.fastapi import add_codecarbon_middleware, create_codecarbon_lifespan
+from codecarbon.integrations.fastapi import (
+    add_codecarbon_middleware,
+    create_codecarbon_lifespan,
+)
 
 MODEL_ID = "sentence-transformers/paraphrase-MiniLM-L3-v2"
 SAMPLE_TEXT = "CodeCarbon measures the carbon footprint of machine learning workloads."

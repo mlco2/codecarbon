@@ -122,6 +122,62 @@ EmissionsTracker(electricitymaps_api_token="your-token-here")
     compatibility but is deprecated and will be removed in a future version.
     Use `electricitymaps_api_token` instead.
 
+## Tracking Mode
+
+The `tracking_mode` parameter controls how CodeCarbon measures power consumption. It accepts two values:
+
+- **`"machine"`** (default): Measures power for the entire machine — total RAM in use and total CPU load across all processes.
+- **`"process"`**: Isolates measurements to the tracked process — only the process's RAM usage and its share of CPU time are used to estimate power.
+
+This setting affects **RAM and CPU** measurements. GPU power is always measured at the device level regardless of tracking mode.
+
+Set it in your config file:
+
+``` ini
+[codecarbon]
+tracking_mode = process
+```
+
+Or in code:
+
+``` python
+EmissionsTracker(tracking_mode="process")
+```
+
+!!! note "Note"
+
+    `"process"` mode gives a lower-bound estimate of your code's footprint.
+    `"machine"` mode is more conservative and accounts for all activity on the system.
+
+## Including DRAM in the CPU Measurement
+
+When CodeCarbon reads the CPU energy counters, the hardware also exposes a
+`DRAM` domain measuring the memory controller. It is **excluded by default**, so
+that memory power is reported by the RAM tracker only and is not counted twice.
+
+Set `rapl_include_dram` to add it to the CPU measurement:
+
+``` ini
+[codecarbon]
+rapl_include_dram = true
+```
+
+Or in code:
+
+``` python
+EmissionsTracker(rapl_include_dram=True)
+```
+
+Despite its name, this option applies to every counter-based CPU interface:
+
+- **Linux**: the `dram` domains of the [RAPL](../explanation/rapl.md) powercap
+  interface.
+- **Windows 11**: the `DRAM` channels of the Energy Meter Interface, which
+  exposes the very same RAPL counters.
+
+It has no effect when CodeCarbon falls back to TDP/CPU-load estimation, since
+that mode models the CPU package only.
+
 ## Access internet through proxy server
 
 If you need a proxy to access internet, which is needed to call a Web

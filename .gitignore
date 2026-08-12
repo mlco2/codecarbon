@@ -104,7 +104,6 @@ venv.bak/
 
 # mkdocs documentation
 /site
-/deploy
 .deploy-docs-workdir/
 
 # mypy
@@ -136,12 +135,3 @@ tests/test_data/rapl/*
 credentials*
 .codecarbon.config*
 scripts/agent-vm.personal.config.sh
-
-# Added by ggshield
-.cache_ggshield
-
-# Added by ggshield
-.cache_ggshield
-
-# Added by ggshield
-.cache_ggshield

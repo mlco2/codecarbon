@@ -707,9 +707,7 @@ def test_compose_lifespans_stacks_contexts() -> None:
 
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
 def test_response_headers_sync_mode_injects_emissions_header(MockTracker) -> None:
-    _configure_mock_running_tracker(
-        MockTracker.return_value, emissions=0.0012
-    )
+    _configure_mock_running_tracker(MockTracker.return_value, emissions=0.0012)
     MockTracker.return_value.finish_http_request.return_value = MagicMock(
         emissions=0.0012
     )
@@ -935,7 +933,9 @@ def test_tracker_runner_prioritizes_new_requests_over_finalize_drain() -> None:
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
 def test_task_name_formatter(MockTracker) -> None:
     application = FastAPI()
-    _configure_mock_running_tracker(MockTracker.return_value, task_name="custom-/predict")
+    _configure_mock_running_tracker(
+        MockTracker.return_value, task_name="custom-/predict"
+    )
 
     @application.get("/predict")
     def predict() -> dict[str, bool]:
