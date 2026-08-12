@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or help getting started
+    url: https://discord.gg/GS9js2XkJR
+    about: Ask on Discord — usually the fastest way to get an answer.
+  - name: Troubleshooting guide
+    url: https://docs.codecarbon.io/latest/how-to/troubleshooting/
+    about: Common problems, error messages, and how to fix them.
+  - name: FAQ
+    url: https://docs.codecarbon.io/latest/explanation/faq/
+    about: Accuracy, data sources, platform support, and more.
+  - name: Documentation
+    url: https://docs.codecarbon.io/
+    about: Full documentation.

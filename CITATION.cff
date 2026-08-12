@@ -1,0 +1,62 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "CodeCarbon: Estimate and track carbon emissions from computing"
+abstract: >-
+  CodeCarbon estimates the electricity consumed by the hardware running your
+  code and converts it to CO2 emissions using the carbon intensity of the
+  local electricity grid.
+type: software
+authors:
+  - given-names: Benoit
+    family-names: Courty
+  - given-names: Victor
+    family-names: Schmidt
+  - given-names: Sasha
+    family-names: Luccioni
+  - given-names: Boris
+    family-names: Feld
+  - given-names: Jérémy
+    family-names: Lecourt
+  - given-names: Mathilde
+    family-names: Léval
+  - given-names: Luis
+    family-names: Blanche
+  - given-names: Alexis
+    family-names: Cruveiller
+  - given-names: Aditya
+    family-names: Joshi
+  - given-names: Alexis
+    family-names: Bogroff
+  - given-names: Hugues
+    family-names: de Lavoreille
+  - given-names: Niko
+    family-names: Laskaris
+  - given-names: Edoardo
+    family-names: Abati
+  - given-names: Douglas
+    family-names: Blank
+  - given-names: Ziyao
+    family-names: Wang
+  - given-names: Armin
+    family-names: Catovic
+  - given-names: Marc
+    family-names: Alencon
+  - given-names: Michał
+    family-names: Stęchły
+  - given-names: Christian
+    family-names: Bauer
+  - given-names: Lucas Otávio N.
+    family-names: de Araújo
+  - name: "The CodeCarbon contributors"
+repository-code: "https://github.com/mlco2/codecarbon"
+url: "https://codecarbon.io"
+license: MIT
+version: 3.3.0
+doi: 10.5281/zenodo.4658424
+date-released: 2026-08-04
+keywords:
+  - carbon emissions
+  - green AI
+  - sustainable computing
+  - energy consumption
+  - machine learning
