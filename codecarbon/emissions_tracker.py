@@ -312,6 +312,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._scheduler_paused_by_task = False
         self._http_task_lock = threading.Lock()
         self._measure_lock = threading.Lock()
         self._cached_cloud_metadata: Optional[CloudMetadata] = None
@@ -379,7 +380,7 @@ class BaseEmissionsTracker(ABC):
     def _ensure_cloud_conf(self) -> None:
         if self._conf.get("_cloud_conf_initialized"):
             return
-        cloud = self._get_cloud_metadata()
+        cloud = self._cached_cloud()
         self._conf["region"] = cloud.region
         self._conf["provider"] = cloud.provider
         self._conf["_cloud_conf_initialized"] = True
@@ -400,7 +401,7 @@ class BaseEmissionsTracker(ABC):
         if self._geo is not None:
             return
         self._geo = self._get_geo_metadata()
-        cloud: CloudMetadata = self._get_cloud_metadata()
+        cloud: CloudMetadata = self._cached_cloud()
         if cloud.is_on_private_infra:
             self._conf["longitude"] = self._geo.longitude
             self._conf["latitude"] = self._geo.latitude
@@ -772,6 +773,10 @@ class BaseEmissionsTracker(ABC):
 
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
+            # Only resume it in stop_task if it was actually running, i.e. the tracker
+            # was started with start(). Pure start_task/stop_task usage must not leave
+            # a periodic measurement running behind.
+            self._scheduler_paused_by_task = not self._scheduler._stopped
             self._scheduler.stop()
 
         # Task background thread for measuring power
@@ -871,9 +876,9 @@ class BaseEmissionsTracker(ABC):
         self._active_task = None
         self._active_task_emissions_at_start = None  # Clear task-specific start data
 
-        if self._scheduler is not None and self._scheduler._stopped:
-            if self._start_time is not None:
-                self._scheduler.start()
+        if self._scheduler is not None and self._scheduler_paused_by_task:
+            self._scheduler_paused_by_task = False
+            self._scheduler.start()
 
         return task_emission_data
 
@@ -1194,7 +1199,7 @@ class BaseEmissionsTracker(ABC):
         self._ensure_emissions_engine()
         delta_energy = self._total_energy - self._last_energy_covered
         if delta_energy.kWh > 0:
-            cloud: CloudMetadata = self._get_cloud_metadata()
+            cloud: CloudMetadata = self._cached_cloud()
             if cloud.is_on_private_infra:
                 delta_emissions = self._emissions.get_private_infra_emissions(
                     delta_energy, self._geo
