@@ -65,6 +65,17 @@ The package has an in-built logger that logs data into a CSV file named `emissio
 | ram_utilization_percent | Average RAM utilization during tracking period (%) |
 | ram_used_gb | Average RAM used during tracking period (GB) |
 
+Task rows, written to `emissions_<experiment_name>_<run_id>.csv`, carry three extra
+columns, filled in by `record_tokens()` (see
+[LLM inference](../tutorials/python-api.md#llm-inference-energy-per-token)) and
+left at `0` otherwise:
+
+| Field | Description |
+|-------|-------------|
+| input_tokens | Total prompt tokens recorded on the task |
+| output_tokens | Total generated tokens recorded on the task |
+| n_requests | Number of requests recorded on the task |
+
 !!! note
     Developers can enhance the Output interface by implementing a custom class that extends `BaseOutput` at `codecarbon/output.py`. For example, to log into a database.
 

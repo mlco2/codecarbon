@@ -27,7 +27,7 @@ from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
-from codecarbon.external.task import Task
+from codecarbon.external.task import Task, extract_token_counts
 from codecarbon.input import DataSource
 from codecarbon.lock import Lock
 from codecarbon.output_methods.base_output import BaseOutput, OutputMethod
@@ -792,6 +792,41 @@ class BaseEmissionsTracker(ABC):
         )
         self._active_task = task_name
 
+    def record_tokens(
+        self,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        n_requests: int = 1,
+        response=None,
+        task_name: str = None,
+    ) -> None:
+        """
+        Record the token counts of one LLM request on a task, so that the task row
+        carries energy and emissions per token and per request.
+
+        :param input_tokens: Number of prompt tokens of the request.
+        :param output_tokens: Number of generated tokens of the request.
+        :param n_requests: Number of requests these counts stand for, default 1.
+        :param response: Optional response object of an OpenAI compatible client,
+                         Ollama or vLLM, from which the token counts are read.
+        :param task_name: Task to record on, default the currently active task.
+        :return: None
+        """
+        task_name = task_name if task_name else self._active_task
+        task = self._tasks.get(task_name)
+        if task is None:
+            logger.warning("record_tokens : No active task to record tokens on.")
+            return
+        if response is not None:
+            extracted_input, extracted_output = extract_token_counts(response)
+            input_tokens += extracted_input
+            output_tokens += extracted_output
+        task.record_tokens(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            n_requests=n_requests,
+        )
+
     def stop_task(self, task_name: str = None) -> EmissionsData:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
@@ -1447,6 +1482,14 @@ class TaskEmissionsTracker:
     with TaskEmissionsTracker(task_name="Grid search", tracker=tracker):
         grid = GridSearchCV(estimator=model, param_grid=param_grid)
     ```
+
+    For LLM inference, token counts of each request can be recorded on the task:
+    ```py
+    with TaskEmissionsTracker(task_name="llama3.1:8b", tracker=tracker) as task:
+        for prompt in prompts:
+            response = client.chat.completions.create(...)
+            task.record_tokens(response=response)
+    ```
     """
 
     def __init__(self, task_name, tracker: EmissionsTracker = None):
@@ -1461,6 +1504,24 @@ class TaskEmissionsTracker:
     def __enter__(self):
         self.tracker.start_task(self.task_name)
         return self
+
+    def record_tokens(
+        self,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        n_requests: int = 1,
+        response=None,
+    ) -> None:
+        """
+        Record the token counts of one LLM request on the task under measure.
+        See `BaseEmissionsTracker.record_tokens`.
+        """
+        self.tracker.record_tokens(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            n_requests=n_requests,
+            response=response,
+        )
 
     def __exit__(self, exc_type, exc_value, tb) -> None:
         self.tracker.stop_task()

@@ -44,6 +44,49 @@ finally:
 
 The task manager tracks each sub-task independently. Tasks are not written to disk by default (to reduce overhead), so retrieve results from the `stop_task()` return value.
 
+**Advanced: LLM inference, energy per token**
+
+Energy per run is not comparable between models, because it depends on how many
+prompts you happened to send. Energy per output token is. If the task you are
+measuring is LLM inference, record the token counts of each request with
+`record_tokens()` and CodeCarbon will report them alongside the energy:
+
+``` python-skip
+from codecarbon import EmissionsTracker
+from codecarbon.emissions_tracker import TaskEmissionsTracker
+
+tracker = EmissionsTracker(project_name="llama3.1-8b-bench")
+
+with TaskEmissionsTracker(task_name="llama3.1:8b", tracker=tracker) as task:
+    for prompt in prompts:
+        response = client.chat.completions.create(model="llama3.1:8b", messages=prompt)
+        task.record_tokens(response=response)
+
+tracker.stop()
+```
+
+`record_tokens(response=...)` reads the counts the serving stack already returns.
+It understands OpenAI-compatible `usage` payloads, Ollama's `prompt_eval_count` /
+`eval_count`, and vLLM `RequestOutput` objects. Everything is read by duck typing,
+so CodeCarbon does not import any inference library. If your client is not one of
+these, pass the numbers yourself:
+
+``` python-skip
+task.record_tokens(input_tokens=128, output_tokens=256)
+```
+
+Counts accumulate over the life of the task, and the resulting `TaskEmissionsData`
+exposes `input_tokens`, `output_tokens` and `n_requests`, plus two derived values:
+`energy_per_output_token` (kWh per output token) and `emissions_per_request`
+(kgCO₂eq per request).
+
+!!! warning
+    Measure enough requests for the task to last several `measure_power_secs`
+    windows. A per-token figure derived from a task shorter than one measurement
+    window is mostly noise. Under continuous batching, requests overlap and
+    per-request attribution is not physically meaningful, although the aggregate
+    per-token figure remains valid.
+
 ### Context Manager
 
 Now that you've seen the explicit object approach, let's look at the more idiomatic **context manager** pattern. This is the recommended way for most use cases.
