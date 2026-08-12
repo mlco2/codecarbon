@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import socket
 import threading
@@ -5,7 +6,8 @@ import unittest
 import urllib.error
 import urllib.request
 
-from codecarbon.output_methods.emissions_data import EmissionsData
+from codecarbon.output_methods.base_output import BaseOutput
+from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
 from codecarbon.viz.live import LiveDashboardOutput
 
 
@@ -45,6 +47,18 @@ def _make_emissions_data(**overrides) -> EmissionsData:
     )
     defaults.update(overrides)
     return EmissionsData(**defaults)
+
+
+def _make_task_emissions_data(**overrides) -> TaskEmissionsData:
+    fields = {f.name for f in dataclasses.fields(TaskEmissionsData)}
+    defaults = {
+        k: v
+        for k, v in dataclasses.asdict(_make_emissions_data()).items()
+        if k in fields
+    }
+    defaults["task_name"] = "a_task"
+    defaults.update(overrides)
+    return TaskEmissionsData(**defaults)
 
 
 def _get(url):
@@ -168,3 +182,113 @@ class TestLiveDashboardOutput(unittest.TestCase):
             # Still usable as an output handler, it just serves nothing.
             output.live_out(_make_emissions_data(), None)
             self.assertEqual(1, len(json.loads(output._snapshot())["samples"]))
+
+    def test_out_feeds_the_same_history_as_live_out(self):
+        self.output.out(_make_emissions_data(duration=7.0), None)
+
+        samples = json.loads(_get(f"{self.output.url}/data")[1])["samples"]
+        self.assertEqual([7.0], [s["duration"] for s in samples])
+
+    def test_task_out_is_served_on_the_data_endpoint(self):
+        self.output.task_out(
+            [_make_task_emissions_data(task_name="train", emissions=0.5)],
+            "experiment",
+        )
+
+        tasks = json.loads(_get(f"{self.output.url}/data")[1])["tasks"]
+        self.assertEqual(1, len(tasks))
+        self.assertEqual("train", tasks[0]["task_name"])
+        self.assertEqual(0.5, tasks[0]["emissions"])
+
+        # A second call replaces the previous list rather than appending to it.
+        self.output.task_out(
+            [_make_task_emissions_data(task_name="eval")], "experiment"
+        )
+        tasks = json.loads(_get(f"{self.output.url}/data")[1])["tasks"]
+        self.assertEqual(["eval"], [t["task_name"] for t in tasks])
+
+    def test_binding_outside_loopback_warns_about_the_open_port(self):
+        with self.assertLogs("codecarbon", level="WARNING") as logs:
+            output = LiveDashboardOutput(port=0, host="0.0.0.0")
+            self.addCleanup(output.exit)
+
+        self.assertTrue(output.is_serving)
+        self.assertTrue(
+            any("not authenticated" in message for message in logs.output),
+            logs.output,
+        )
+
+    def test_exit_is_idempotent(self):
+        self.output.exit()
+        self.output.exit()
+        self.assertFalse(self.output.is_serving)
+
+    def test_data_is_served_after_the_os_assigned_the_port(self):
+        # port=0 means the OS picks: the handler must report the real port, not 0.
+        self.assertNotEqual(0, self.output.port)
+        self.assertEqual(f"http://127.0.0.1:{self.output.port}", self.output.url)
+        self.assertEqual(200, _get(f"{self.output.url}/health")[0])
+
+
+class _RecordingOutput(BaseOutput):
+    """Plain handler: fed only every `api_call_interval` measures."""
+
+    def __init__(self):
+        self.calls = []
+
+    def live_out(self, total, delta):
+        self.calls.append((total, delta))
+
+
+class _RecordingLiveOutput(_RecordingOutput):
+    """Opt-in handler: fed on every measure, with no delta."""
+
+    live_out_every_measure = True
+
+
+class TestLiveOutEveryMeasure(unittest.TestCase):
+    """The tracker must not feed an every-measure handler twice on an API tick."""
+
+    def _tracker(self, handlers, api_call_interval):
+        from codecarbon.emissions_tracker import OfflineEmissionsTracker
+
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA",
+            measure_power_secs=1,
+            api_call_interval=api_call_interval,
+            save_to_file=False,
+            output_handlers=handlers,
+            allow_multiple_runs=True,
+        )
+        tracker.start()
+        self.addCleanup(tracker.stop)
+        # `start()` takes a first measure: ignore it so the counts below are exact.
+        tracker._measure_occurrence = 0
+        for handler in handlers:
+            handler.calls.clear()
+        return tracker
+
+    def test_every_measure_handler_is_not_called_again_on_the_api_tick(self):
+        live, plain = _RecordingLiveOutput(), _RecordingOutput()
+        tracker = self._tracker([live, plain], api_call_interval=1)
+
+        tracker._measure_power_and_energy()
+        tracker._measure_power_and_energy()
+
+        # api_call_interval=1 makes every measure an API tick: the plain handler
+        # gets both, the live one still gets exactly one call per measure.
+        self.assertEqual(2, len(live.calls))
+        self.assertEqual(2, len(plain.calls))
+        # The every-measure path passes no delta, the periodic one does.
+        self.assertEqual([None, None], [delta for _, delta in live.calls])
+        self.assertTrue(all(delta is not None for _, delta in plain.calls))
+
+    def test_plain_handler_waits_for_the_api_interval(self):
+        live, plain = _RecordingLiveOutput(), _RecordingOutput()
+        tracker = self._tracker([live, plain], api_call_interval=3)
+
+        tracker._measure_power_and_energy()
+        tracker._measure_power_and_energy()
+
+        self.assertEqual(2, len(live.calls))
+        self.assertEqual([], plain.calls)

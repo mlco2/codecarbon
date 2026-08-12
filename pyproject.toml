@@ -167,5 +167,10 @@ source = [
     "codecarbon",
 ]
 omit = [
-    "codecarbon/viz/*",
+    # The legacy Dash dashboard is not unit tested. `live.py` is, so it stays in.
+    "codecarbon/viz/carbonboard.py",
+    "codecarbon/viz/carbonboard_on_api.py",
+    "codecarbon/viz/components.py",
+    "codecarbon/viz/data.py",
+    "codecarbon/viz/units.py",
 ]
