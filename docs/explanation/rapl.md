@@ -148,7 +148,51 @@ Measurements," (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z.
 Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 1--26, Apr. 2018, doi: 10.1145/3177754.)
 
-## RAPL Measurements: Real-World Examples
+## Key Takeaways for RAPL Measurements
+
+1.  **CodeCarbon defaults to package domains**: This provides the most
+    reliable and consistent measurements that match CPU TDP
+    specifications. Package domains update correctly under load across
+    all Intel generations.
+2.  **psys can be unreliable**: While `psys` provides total platform
+    power, it:
+    -   Can report higher values than expected (includes chipset, PCIe,
+        etc.)
+    -   May not include all CPU components on older Intel systems : on
+        some computers, `psys` is lower than `package`.
+    -   So it is disabled by default, you can enable it with
+        `prefer_psys=True` if desired
+3.  **Avoid summing overlapping domains**: Never sum psys + package +
+    core + uncore. They are hierarchical and overlapping. This causes
+    2-3x over-counting!
+4.  **Domain hierarchy**:
+    -   psys ⊃ package ⊃ {core, uncore}
+    -   Correct: Use package alone (CodeCarbon default) OR psys alone
+        (with prefer_psys=True)
+    -   Wrong: Sum multiple levels
+5.  **Interface deduplication**: The same domain may appear in both
+    `intel-rapl` (MSR) and `intel-rapl-mmio` interfaces. CodeCarbon
+    automatically deduplicates, preferring MMIO.
+6.  **DRAM measurement**: CodeCarbon does not include DRAM domains by
+    default (`include_dram=False`) for CPU hardware measurement. Set
+    `include_dram=True` to measure CPU package + DRAM domains.
+7.  **Platform-specific behavior**:
+    -   Intel modern: package or psys (with prefer_psys=True)
+    -   Intel older: package-0 for CPU only
+    -   AMD: Sum all package-X-die-Y for multi-die CPUs
+8.  **Limitations**: RAPL does NOT measure:
+    -   Discrete GPUs (use nvidia-smi/rocm-smi)
+    -   SSDs, peripherals, fans
+    -   Actual DRAM chips, we still have to investigate on this point
+    -   Complete system power (use wall meter for accuracy)
+
+## Appendix: raw measurements from three machines
+
+!!! note
+
+    Everything below is raw annotated output collected from three real machines.
+    It is kept as evidence for the domain-selection rules above; you do not need
+    to read it to understand how CodeCarbon picks RAPL domains.
 
 Choosing the right metric to track CPU power consumption depends on CPU
 hardware and available domains. Below are measurements from different
@@ -314,41 +358,3 @@ Analysis:
 -   `core` domain reports very low values (unclear if included in
     package)
 -   Package measurements are generally reliable for total CPU power
-
-## Key Takeaways for RAPL Measurements
-
-1.  **CodeCarbon defaults to package domains**: This provides the most
-    reliable and consistent measurements that match CPU TDP
-    specifications. Package domains update correctly under load across
-    all Intel generations.
-2.  **psys can be unreliable**: While `psys` provides total platform
-    power, it:
-    -   Can report higher values than expected (includes chipset, PCIe,
-        etc.)
-    -   May not include all CPU components on older Intel systems : on
-        some computers, `psys` is lower than `package`.
-    -   So it is disabled by default, you can enable it with
-        `prefer_psys=True` if desired
-3.  **Avoid summing overlapping domains**: Never sum psys + package +
-    core + uncore. They are hierarchical and overlapping. This causes
-    2-3x over-counting!
-4.  **Domain hierarchy**:
-    -   psys ⊃ package ⊃ {core, uncore}
-    -   Correct: Use package alone (CodeCarbon default) OR psys alone
-        (with prefer_psys=True)
-    -   Wrong: Sum multiple levels
-5.  **Interface deduplication**: The same domain may appear in both
-    `intel-rapl` (MSR) and `intel-rapl-mmio` interfaces. CodeCarbon
-    automatically deduplicates, preferring MMIO.
-6.  **DRAM measurement**: CodeCarbon does not include DRAM domains by
-    default (`include_dram=False`) for CPU hardware measurement. Set
-    `include_dram=True` to measure CPU package + DRAM domains.
-7.  **Platform-specific behavior**:
-    -   Intel modern: package or psys (with prefer_psys=True)
-    -   Intel older: package-0 for CPU only
-    -   AMD: Sum all package-X-die-Y for multi-die CPUs
-8.  **Limitations**: RAPL does NOT measure:
-    -   Discrete GPUs (use nvidia-smi/rocm-smi)
-    -   SSDs, peripherals, fans
-    -   Actual DRAM chips, we still have to investigate on this point
-    -   Complete system power (use wall meter for accuracy)
