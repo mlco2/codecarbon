@@ -8,7 +8,7 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-from datetime import timedelta, tzinfo
+from datetime import datetime, timedelta, tzinfo
 
 import requests
 
@@ -31,6 +31,22 @@ def get_datetime_with_timezone():
     import arrow
 
     return str(arrow.now().isoformat())
+
+
+def _measurement_timestamp(carbon_emission: dict) -> str:
+    """
+    Offset-aware ISO timestamp of *when the measurement was taken*, taken from
+    EmissionsData.timestamp. Falls back to now for hand-built payloads that
+    carry no usable timestamp.
+    """
+    try:
+        return (
+            datetime.fromisoformat(carbon_emission["timestamp"])
+            .astimezone()
+            .isoformat()
+        )
+    except (KeyError, TypeError, ValueError):
+        return get_datetime_with_timezone()
 
 
 class ApiClient:  # (AsyncClient)
@@ -195,7 +211,7 @@ class ApiClient:  # (AsyncClient)
             )
             return False
         emission = EmissionCreate(
-            timestamp=get_datetime_with_timezone(),
+            timestamp=_measurement_timestamp(carbon_emission),
             run_id=self.run_id,
             duration=int(carbon_emission["duration"]),
             emissions_sum=carbon_emission["emissions"],
@@ -237,6 +253,8 @@ class ApiClient:  # (AsyncClient)
             return None
         try:
             run = RunCreate(
+                # "now" is correct here: a run's timestamp is its creation time,
+                # unlike an emission's, which is its measurement time.
                 timestamp=get_datetime_with_timezone(),
                 experiment_id=experiment_id,
                 os=self.conf.get("os"),
