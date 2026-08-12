@@ -44,7 +44,7 @@ finally:
 
 The task manager tracks each sub-task independently. Tasks are not written to disk by default (to reduce overhead), so retrieve results from the `stop_task()` return value.
 
-**Advanced: LLM inference, energy per token**
+#### LLM inference: energy per token
 
 Energy per run is not comparable between models, because it depends on how many
 prompts you happened to send. Energy per output token is. If the task you are
