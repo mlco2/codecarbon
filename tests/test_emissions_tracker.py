@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 import responses
 
+from codecarbon.core import electricitymaps_api
 from codecarbon.core.units import Energy, Power
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
@@ -1021,6 +1022,9 @@ class TestCarbonTracker(unittest.TestCase):
         "codecarbon.emissions_tracker.BaseEmissionsTracker.get_detected_hardware"
     )
     @mock.patch("codecarbon.emissions_tracker.PeriodicScheduler")
+    # A negative TTL expires every entry immediately, so each measurement sees a
+    # fresh intensity: this test is about cumulating deltas, not about caching.
+    @mock.patch("codecarbon.core.electricitymaps_api.ELECTRICITYMAPS_CACHE_TTL", -1)
     def test_cumulative_emissions_with_varying_intensity(
         self,
         mock_scheduler,
@@ -1038,6 +1042,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_nvidia_system,
     ):
         # Setup mocks
+        electricitymaps_api.reset_cache()
+        self.addCleanup(electricitymaps_api.reset_cache)
         mock_geo.return_value = mock.MagicMock(
             latitude=1.0,
             longitude=1.0,
