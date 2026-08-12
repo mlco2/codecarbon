@@ -24,7 +24,7 @@ is not a whole-facility footprint, and it is not meant to be one.
 
 CodeCarbon prefers hardware energy counters and falls back to estimation when no
 counter is readable. The fallback order is documented in
-[Methodology → CPU metrics priority](methodology.md#cpu-metrics-priority).
+[Methodology → CPU metrics priority](methodology.md#which-backend-gets-chosen).
 
 | Backend | How it works | Agreement with a reference | When it is used |
 |---|---|---|---|

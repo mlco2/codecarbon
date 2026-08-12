@@ -194,6 +194,8 @@ nav:
     - RAPL Metrics: explanation/rapl.md
     - Power Estimation: explanation/power-estimation.md
     - Model Comparisons: explanation/model-comparisons.md
+    - Equivalences: explanation/equivalences.md
+    - References: explanation/references.md
     - FAQ: explanation/faq.md
   - Reference:
     - API Reference: reference/api.md

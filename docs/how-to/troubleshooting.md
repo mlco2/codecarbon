@@ -252,7 +252,7 @@ there is no way to answer an interactive prompt from inside a library.
 
 To get measured values, grant passwordless `sudo` for `powermetrics` alone by
 editing your sudoers file, as described under
-[Power usage](../explanation/methodology.md#power-usage). Run with
+[Power usage](../explanation/methodology.md#energy-what-is-measured-what-is-modelled). Run with
 `log_level="debug"` to confirm the check now passes.
 
 ### "Returncode while logging power values using Powermetrics"

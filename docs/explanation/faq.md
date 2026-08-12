@@ -69,7 +69,7 @@ In a single Python process, the first tracker pays a one-time cost to detect har
 
 ## What hardware does CodeCarbon support?
 
-CodeCarbon supports various CPU architectures, GPUs, and cloud providers. For details on measurement priority and supported hardware, see the [Methodology](methodology.md#cpu-metrics-priority) page.
+CodeCarbon supports various CPU architectures, GPUs, and cloud providers. For details on measurement priority and supported hardware, see the [Methodology](methodology.md#which-backend-gets-chosen) page.
 
 ## How do I report a bug?
 

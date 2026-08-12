@@ -126,7 +126,7 @@ Summarised, since the sections above are organised around other tools:
 
 - **Breadth of measurement backends** with a documented fallback order — RAPL,
   NVML, amdsmi, `powermetrics`, Windows EMI, then TDP-based estimation. See
-  [CPU metrics priority](methodology.md#cpu-metrics-priority).
+  [CPU metrics priority](methodology.md#which-backend-gets-chosen).
 - **Task-level attribution** within a single process.
 - **Offline mode** (`OfflineEmissionsTracker`) for air-gapped machines, with no
   no calls to the CodeCarbon API.
