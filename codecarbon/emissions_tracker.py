@@ -21,7 +21,10 @@ import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
-from codecarbon.core.schedulers import detect_job_metadata
+from codecarbon.core.schedulers import (
+    detect_job_metadata,
+    warn_on_multi_rank_double_counting,
+)
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
@@ -599,6 +602,7 @@ class BaseEmissionsTracker(ABC):
             )
 
         assert self._tracking_mode in ["machine", "process"]
+        warn_on_multi_rank_double_counting(self._tracking_mode)
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
         self._initialize_runtime_state()
