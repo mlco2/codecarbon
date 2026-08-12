@@ -317,6 +317,7 @@ class BaseEmissionsTracker(ABC):
         self._measure_lock = threading.Lock()
         self._cached_cloud_metadata: Optional[CloudMetadata] = None
         self._http_emissions_template: Optional[EmissionsData] = None
+        self._window_observers: List[Callable[[float], None]] = []
         self._hardware = []
         self._hardware_initialized = False
 
@@ -924,11 +925,47 @@ class BaseEmissionsTracker(ABC):
                 water_consumed=self._total_water.litres,
             )
 
+    def add_energy_window_observer(self, callback: Callable[[float], None]) -> None:
+        """Call ``callback(total_energy_kwh)`` after every completed sampling window.
+
+        The callback runs on whichever thread took the sample (normally the
+        scheduler thread), so it must be cheap and must not raise. Used by the
+        FastAPI per-request energy attribution to split each window's energy
+        across the requests that were in flight during it.
+
+        Args:
+            callback: Receives the tracker's cumulative energy in kWh.
+        """
+        self._window_observers.append(callback)
+
+    def remove_energy_window_observer(self, callback: Callable[[float], None]) -> None:
+        """Remove a callback registered with :meth:`add_energy_window_observer`."""
+        if callback in self._window_observers:
+            self._window_observers.remove(callback)
+
+    def _notify_energy_window_observers(self) -> None:
+        for callback in self._window_observers:
+            try:
+                callback(self._total_energy.kWh)
+            except Exception:
+                logger.exception("CodeCarbon energy window observer failed")
+
     def _http_finalize_measure_threshold(self) -> float:
         return min(1.0, self._measure_power_secs / 4)
 
     def _maybe_measure_power_and_energy(self) -> None:
-        """Sample hardware only when totals may be stale (HTTP finalize path)."""
+        """Sample hardware only when totals may be stale (HTTP finalize path).
+
+        Only used by :meth:`finish_http_request`, i.e. the start/stop-snapshot
+        path. That path reads a delta of cumulative counters, so without a
+        fresh sample every request shorter than the sampling interval reports
+        exactly zero - which is why this forced out-of-band sample exists, and
+        why it cannot simply be deleted. Under load it does collapse the
+        effective sampling interval to the request rate and serialises RAPL and
+        NVML reads through one thread. The window-based attribution path
+        (:mod:`codecarbon.integrations.fastapi.attribution`) never calls this:
+        it only ever consumes windows the scheduler already closed.
+        """
         with self._measure_lock:
             if (
                 time.perf_counter() - self._last_measured_time
@@ -1484,6 +1521,7 @@ class BaseEmissionsTracker(ABC):
 
         self._do_measurements()
         self._last_measured_time = time.perf_counter()
+        self._notify_energy_window_observers()
         self._measure_occurrence += 1
         # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (

@@ -21,6 +21,10 @@ from codecarbon.integrations.fastapi._routing import (
     build_endpoint_key,
     should_track_request,
 )
+from codecarbon.integrations.fastapi.attribution import (
+    EnergyAttributor,
+    install_cpu_accounting,
+)
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 DEFAULT_TRACKER_KWARGS: dict[str, Any] = {
@@ -204,6 +208,7 @@ class CodeCarbonMiddleware:
         on_request_complete: Callable[..., Any] | None = log_request_complete,
         response_headers: bool | Sequence[str] | None = None,
         include_background_tasks: bool = True,
+        attribution: bool | EnergyAttributor = False,
         tracker_kwargs: dict[str, Any] | None = None,
         **emissions_tracker_kwargs: Any,
     ) -> None:
@@ -219,7 +224,19 @@ class CodeCarbonMiddleware:
                 Defaults to :func:`log_request_complete`; pass ``None`` to disable logging.
             response_headers: When set, measure before ``http.response.start`` and inject
                 ``X-CodeCarbon-*`` headers (``True`` → ``emissions`` only, or a field list).
-                Adds sampling latency to the client response path.
+                Adds sampling latency to the client response path. These values are
+                **sampled-at-response, not window-resolved**: they are read from a forced
+                hardware sample taken while the request is still in flight, so they
+                double-count under concurrency. Incompatible with ``attribution``.
+            attribution: Enable fair-share per-request energy attribution. ``True`` uses
+                a default :class:`~codecarbon.integrations.fastapi.attribution.EnergyAttributor`
+                (``wall`` weighting, no baseline subtraction); pass an instance to
+                configure weighting, cores, baseline subtraction or an ``on_request``
+                callback. This replaces the start/stop-snapshot path, whose per-request
+                numbers overcount by the concurrency. Results resolve one or more
+                sampling windows *after* the response, so ``on_request_complete`` is not
+                called with energy data in this mode - use the attributor's
+                ``on_request`` callback or :meth:`attribution_report`.
             include_background_tasks: When ``True`` (default), finalize after the ASGI call
                 returns so FastAPI/Starlette ``BackgroundTasks`` are included. When ``False``,
                 finalize at end of response body (excludes post-body background work).
@@ -234,6 +251,17 @@ class CodeCarbonMiddleware:
         self.on_request_complete = on_request_complete
         self.header_fields = _resolve_header_fields(response_headers)
         self.include_background_tasks = include_background_tasks
+        if attribution and self.header_fields:
+            raise ValueError(
+                "response_headers cannot be combined with attribution: an attributed "
+                "share is only known once the next sampling window closes, which is "
+                "after the response has been sent"
+            )
+        self.attributor: EnergyAttributor | None = (
+            EnergyAttributor() if attribution is True else (attribution or None)
+        )
+        self._attribution_tracker: EmissionsTracker | None = None
+        self._cpu_accounting_installed = False
         merged: dict[str, Any] = dict(DEFAULT_TRACKER_KWARGS)
         merged.update(tracker_kwargs or {})
         merged.update(emissions_tracker_kwargs)
@@ -257,6 +285,15 @@ class CodeCarbonMiddleware:
         tracker, self._app_tracker = self._app_tracker, None
         if tracker is not None:
             tracker.stop()
+        # After stop(): the tracker's final measurement closes one last window,
+        # so requests still in flight get their last share before we emit them.
+        attribution_tracker, self._attribution_tracker = self._attribution_tracker, None
+        if self.attributor is not None:
+            if attribution_tracker is not None:
+                attribution_tracker.remove_energy_window_observer(
+                    self.attributor.on_window
+                )
+            self.attributor.close()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """ASGI entrypoint."""
@@ -270,6 +307,9 @@ class CodeCarbonMiddleware:
             return
 
         task_name = self._task_name(request)
+        if self.attributor is not None:
+            await self._handle_attributed(scope, receive, send, request, task_name)
+            return
         tracker, baseline = await self._run_begin_request(request, task_name)
         await self._handle_tracked(
             scope, receive, send, request, tracker, task_name, baseline
@@ -305,20 +345,67 @@ class CodeCarbonMiddleware:
     def _tracker_running(self, tracker: EmissionsTracker) -> bool:
         return getattr(tracker, "_start_time", None) is not None
 
-    def _begin_request(
-        self, request: Request, task_name: str
-    ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
+    def _resolve_tracker(self, request: Request) -> EmissionsTracker:
         tracker = self._lifespan_tracker(request)
         if tracker is None:
             with self._tracker_init_lock:
                 if self._app_tracker is None:
                     self._app_tracker = self._create_and_start_tracker()
                 tracker = self._app_tracker
+        return tracker
+
+    def _begin_request(
+        self, request: Request, task_name: str
+    ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
+        tracker = self._resolve_tracker(request)
         if self._tracker_running(tracker):
             baseline = tracker.mark_http_request_start(task_name)
             return tracker, baseline
         tracker.start_task(task_name)
         return tracker, None
+
+    def _bind_attributor(self, request: Request) -> None:
+        """Attach the attributor to the tracker's sampling windows, once."""
+        attributor = self.attributor
+        assert attributor is not None
+        with self._tracker_init_lock:
+            if self._attribution_tracker is not None:
+                return
+            tracker = self._resolve_tracker(request)
+            attributor.reset_window(tracker._total_energy.kWh)
+            tracker.add_energy_window_observer(attributor.on_window)
+            self._attribution_tracker = tracker
+        if attributor.weighting == "cpu" and not self._cpu_accounting_installed:
+            install_cpu_accounting(asyncio.get_running_loop())
+            self._cpu_accounting_installed = True
+
+    async def _handle_attributed(
+        self,
+        scope: Scope,
+        receive: Receive,
+        send: Send,
+        request: Request,
+        task_name: str,
+    ) -> None:
+        attributor = self.attributor
+        assert attributor is not None
+        if self._attribution_tracker is None:
+            self._bind_attributor(request)
+        state = attributor.begin(task_name)
+        try:
+            if attributor.weighting == "cpu":
+                # The CPU accounting hook wraps tasks at creation time, so the
+                # app has to run in a task created after begin() set the
+                # context. Costs one extra task per request; wall mode skips it.
+                await asyncio.create_task(self.app(scope, receive, send))
+            else:
+                await self.app(scope, receive, send)
+        finally:
+            attributor.end(state)
+
+    def attribution_report(self) -> dict[str, Any] | None:
+        """Per-endpoint energy aggregates, or ``None`` if attribution is off."""
+        return self.attributor.report() if self.attributor is not None else None
 
     def _finalize_on_worker(
         self,

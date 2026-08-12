@@ -1,6 +1,12 @@
 """FastAPI integration: middleware and lifespan helpers."""
 
 try:
+    from codecarbon.integrations.fastapi.attribution import (
+        EndpointEnergy,
+        EnergyAttributor,
+        RequestEnergy,
+        install_cpu_accounting,
+    )
     from codecarbon.integrations.fastapi.lifespan import (
         compose_lifespans,
         create_codecarbon_lifespan,
@@ -19,9 +25,13 @@ except ImportError as exc:
 
 __all__ = [
     "CodeCarbonMiddleware",
+    "EndpointEnergy",
+    "EnergyAttributor",
+    "RequestEnergy",
     "add_codecarbon_middleware",
     "compose_lifespans",
     "create_codecarbon_lifespan",
+    "install_cpu_accounting",
     "log_request_complete",
     "shutdown_codecarbon_middleware",
 ]

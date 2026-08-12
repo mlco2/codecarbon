@@ -96,6 +96,111 @@ add_codecarbon_middleware(app)
 - **`response_headers=...`:** measure before `http.response.start` and inject `X-CodeCarbon-*` headers (adds sampling latency on the client path). Header values cover work up to response start, not post-body background tasks.
 - With `create_codecarbon_lifespan`, concurrent requests on the same route get unique internal task IDs via `HttpRequestBaseline`.
 
+!!! warning "The default model double-counts under concurrency"
+    It snapshots the tracker's cumulative counters at request start and again at
+    request end, so every request in flight is charged the *whole* machine for the
+    time it was open. Summed over requests, the result exceeds the run total by
+    roughly the concurrency. Use `attribution=True` when the numbers have to add up.
+
+## Per-request attribution (`attribution=True`)
+
+```python
+from codecarbon.integrations.fastapi import EnergyAttributor, add_codecarbon_middleware
+
+add_codecarbon_middleware(app, attribution=EnergyAttributor(on_request=print))
+...
+report = app.state.codecarbon_middleware.attribution_report()
+```
+
+Each completed sampling window `(t_prev, t_now, ΔE)` is split across the requests
+that were in flight during it, weighted by their overlap and normalised **by the
+sum of the weights**. Windows with nothing in flight go entirely to
+`unattributed_kwh`. The invariant, enforced by
+`tests/integrations/test_fastapi_attribution.py`, is
+
+```
+sum(per-request energy) + unattributed == settled energy
+```
+
+exactly, after every window.
+
+Measured `sum(per-request) / run total`, forced 100 W CPU + 10 W RAM,
+`measure_power_secs=0.25`, 2 s requests:
+
+| concurrency | default (snapshot) | `attribution=True` |
+| ---: | ---: | ---: |
+| 1 | 0.81x | 0.855x |
+| 4 | 3.33x | 0.854x |
+| 8 | 6.66x | 0.852x |
+| 32 | 26.67x | 0.843x |
+| 100 | 83.27x | 0.842x |
+
+The residual ~0.15 is idle time before and after the burst: real energy nobody
+requested, parked in `unattributed_kwh` rather than smeared across requests.
+
+### Weighting modes
+
+- **`wall` (default)** — overlap by wall clock. **This is cost allocation, not
+  measurement.** Four CPU-burning and four sleeping requests running concurrently
+  all receive an identical share, because they occupied the same seconds of the
+  same machine. When nothing tells you which request caused which watt, that is
+  the honest answer.
+- **`cpu` (opt-in)** — charges each request the on-thread CPU time its asyncio
+  task actually burned, via a task factory installed on the event loop. On the
+  same eight requests it separates the CPU-bound from the sleeping ones by four
+  orders of magnitude. It replaces the loop's task factory (incompatible with
+  another library that sets one) and costs ~1 µs per `create_task`, so it is off
+  by default. Weights are normalised by the window's **CPU capacity**
+  (`width × cores`), not by observed CPU — otherwise a window where everyone used
+  1 ms of CPU would hand that 1 ms the entire window's energy. `cores=1` encodes
+  "one event-loop thread"; raise it if your handlers use `run_in_executor` or a
+  thread pool.
+
+### Quality tiers
+
+Every result carries one:
+
+- `unresolved` — never covered a completed sampling window. **No energy number is
+  emitted** (`energy_kwh is None`); zero would be a lie.
+- `interpolated` — covered exactly one window boundary and is shorter than a
+  window. A number is present and explicitly flagged.
+- `measured` — covered two or more boundaries.
+
+**Prefer the per-endpoint aggregate.** 400 sequential 5 ms requests against a 1 s
+sampling interval produced per-request shares spanning 0.028–0.812 µWh (236%
+relative stdev), every one `interpolated`, while the endpoint aggregate was a
+stable 0.043 µWh/call. The individual figure is available; the aggregate is what
+you should report.
+
+### Idle baseline
+
+With `EnergyAttributor(subtract_baseline=True)`, `P_idle` is the median power over
+windows with nothing in flight. Each window is split into `P_idle × width`
+(→ `unattributed`, plus a per-capita `baseline_share_kwh` recorded on each request)
+and a dynamic remainder that is shared. Two numbers are reported: `energy_kwh` is
+marginal (stable against traffic volume) and `baseline_share_kwh` is allocated.
+If the server never idles there is no sample: `baseline_watts()` returns `None`,
+nothing is subtracted, and every result carries `baseline_subtracted=False`.
+Nameplate TDP is deliberately not used as a fallback — a wrong baseline subtracts
+a fixed amount from every request and can drive short requests negative.
+
+### Caveats
+
+- Results resolve **one or more sampling windows after the response**, via the
+  attributor's `on_request` callback. `on_request_complete` is not called with
+  energy data in this mode, and `response_headers` is rejected outright: an
+  attributed share cannot exist before the response is sent. The existing
+  `X-CodeCarbon-*` headers are sampled-at-response, not window-resolved.
+- Overhead: 0.4 µs per request for `begin`+`end`, and ~190 ns per in-flight
+  request per sampling window (0.7 µs/window at 1 in flight, 19 µs at 100,
+  193 µs at 1000). In-flight state is 277 B/request and is dropped as soon as the
+  request resolves.
+- Attribution is allocation. The dominant error is the assumption that overlap
+  tracks causation, which has no distribution to quote — so no ± error bar is
+  synthesised. The uncertainty payload (windows covered, mean concurrency, request
+  CPU-seconds, weighting mode, whether a baseline was subtracted, quality tier)
+  ships with every number instead.
+
 ## Cloud API
 
 Use **global config only** (`~/.codecarbon.config`). Do not add a repo-local `./.codecarbon.config`, or it will override these values when you run from the project directory.
