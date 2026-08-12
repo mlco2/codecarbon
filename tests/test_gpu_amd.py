@@ -429,6 +429,15 @@ class TestAmdsmiImportFailures:
             sys.modules.pop("amdsmi", None)
             sys.modules.pop("codecarbon.core.gpu_amd", None)
             sys.modules.update(saved)
+            # importlib also rebinds the submodule attribute on the parent
+            # package, and restoring sys.modules alone does not undo that.
+            # On Python < 3.12 mock.patch resolves "codecarbon.core.gpu_amd.x"
+            # through that attribute, so a stale binding would send later
+            # patches to the throwaway module. Put the real one back.
+            if "codecarbon.core.gpu_amd" in saved:
+                import codecarbon.core
+
+                codecarbon.core.gpu_amd = saved["codecarbon.core.gpu_amd"]
 
     def test_oserror_sets_amdsmi_unavailable(self):
         """OSError during amdsmi import (e.g. missing libamd_smi.so) must disable AMD GPU support."""
