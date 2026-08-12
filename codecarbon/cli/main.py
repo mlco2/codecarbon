@@ -501,7 +501,8 @@ def doctor(
     strict: Annotated[
         bool,
         typer.Option(
-            "--strict", help="Exit with code 1 if any component is estimated."
+            "--strict",
+            help="Exit with code 1 if a component that could be measured is estimated.",
         ),
     ] = False,
 ):
@@ -511,11 +512,24 @@ def doctor(
     """
     import json
 
-    from codecarbon.diagnostics import ESTIMATED, diagnose, render_text, summary
+    from codecarbon.diagnostics import diagnose, render_text, strict_failures, summary
     from codecarbon.emissions_tracker import EmissionsTracker
+    from codecarbon.external.logger import logger, set_logger_level
 
-    tracker = EmissionsTracker(save_to_file=False)
-    tracker._ensure_hardware_ready()
+    # The report is the output; the tracker's own start-up logs are noise here.
+    # The level has to be lowered before __init__, which logs before applying
+    # its own log_level, and restored so we do not reconfigure a caller's logger.
+    previous_level = logger.level
+    try:
+        set_logger_level("error")
+        # allow_multiple_runs: without it, a live run makes __init__ return early
+        # and leave the tracker half-built - exactly when someone runs `doctor`.
+        tracker = EmissionsTracker(
+            save_to_file=False, allow_multiple_runs=True, log_level="error"
+        )
+        tracker._ensure_hardware_ready()
+    finally:
+        logger.setLevel(previous_level)
     diagnostics = diagnose(tracker._hardware)
 
     if json_output:
@@ -533,7 +547,7 @@ def doctor(
         print(f"CodeCarbon {__version__} - measurement quality report\n")
         print(render_text(diagnostics))
 
-    if strict and any(d.status == ESTIMATED for d in diagnostics):
+    if strict and strict_failures(diagnostics):
         raise typer.Exit(1)
 
 

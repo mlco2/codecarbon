@@ -15,35 +15,47 @@ from codecarbon.diagnostics import (
     ComponentDiagnostic,
     diagnose,
     render_text,
+    strict_failures,
     summary,
 )
+from codecarbon.external import hardware, ram
+
+# diagnose() dispatches with isinstance, so the fixtures must be real hardware
+# instances. Their __init__ probes the machine, so build them bare and set only
+# the attributes the diagnostics read.
 
 
-class CPU:  # named to match the dispatch in diagnose()
-    def __init__(self, mode, model="Fake CPU", tdp=65, is_generic_tdp=False):
-        self._mode = mode
-        self._model = model
-        self._tdp = tdp
-        self._is_generic_tdp = is_generic_tdp
+def _bare(cls, **attributes):
+    instance = object.__new__(cls)
+    instance.__dict__.update(attributes)
+    return instance
 
 
-class AppleSiliconChip:
-    def __init__(self, chip_part="CPU", model="Apple M2"):
-        self.chip_part = chip_part
-        self._model = model
+def CPU(mode, model="Fake CPU", tdp=65, is_generic_tdp=False):
+    return _bare(
+        hardware.CPU,
+        _mode=mode,
+        _model=model,
+        _tdp=tdp,
+        _is_generic_tdp=is_generic_tdp,
+    )
 
 
-class RAM:
-    def __init__(self, force_ram_power=None):
-        self._force_ram_power = force_ram_power
-        self.machine_memory_GB = 32.0
+def AppleSiliconChip(chip_part="CPU", model="Apple M2"):
+    return _bare(hardware.AppleSiliconChip, chip_part=chip_part, _model=model)
 
 
-class GPU:
-    def __init__(self, names):
-        self.devices = SimpleNamespace(
+def RAM(force_ram_power=None):
+    return _bare(ram.RAM, _force_ram_power=force_ram_power, machine_memory_GB=32.0)
+
+
+def GPU(names):
+    return _bare(
+        hardware.GPU,
+        devices=SimpleNamespace(
             get_gpu_static_info=lambda: [{"name": name} for name in names]
-        )
+        ),
+    )
 
 
 def _make_rapl_tree(tmp_path, readable):
@@ -269,15 +281,27 @@ def test_summary_is_silent_when_everything_is_measured():
     assert summary(report) == "1 of 1 power components are measured directly."
 
 
-def _patch_doctor_hardware(monkeypatch, hardware):
+def _patch_doctor_hardware(monkeypatch, hardware_list):
+    kwargs_seen = {}
+
     class FakeTracker:
         def __init__(self, *args, **kwargs):
-            self._hardware = hardware
+            kwargs_seen.update(kwargs)
+            self._hardware = hardware_list
 
         def _ensure_hardware_ready(self):
             pass
 
     monkeypatch.setattr("codecarbon.emissions_tracker.EmissionsTracker", FakeTracker)
+    return kwargs_seen
+
+
+def test_doctor_allows_multiple_runs(monkeypatch):
+    # without it, a live run makes __init__ return early and _ensure_hardware_ready
+    # raises AttributeError on a half-built tracker.
+    kwargs_seen = _patch_doctor_hardware(monkeypatch, [CPU("intel_rapl")])
+    assert CliRunner().invoke(cli_main.codecarbon, ["doctor"]).exit_code == 0
+    assert kwargs_seen["allow_multiple_runs"] is True
 
 
 def test_doctor_json_output(monkeypatch):
@@ -321,12 +345,18 @@ def test_doctor_strict_exit_code(monkeypatch):
     )
 
 
-def test_doctor_strict_passes_when_all_measured(monkeypatch):
-    _patch_doctor_hardware(monkeypatch, [CPU("intel_rapl"), GPU(["A100"])])
-    monkeypatch.setattr(
-        diagnostics,
-        "_ram_diagnostic",
-        lambda hw: ComponentDiagnostic("RAM", "32 GB", MEASURED, "fake"),
-    )
+def test_doctor_strict_passes_on_a_machine_with_measured_cpu_and_gpu(monkeypatch):
+    # RAM is estimated here, as it is on every machine: --strict must still pass,
+    # otherwise it is a gate no machine can clear.
+    _patch_doctor_hardware(monkeypatch, [CPU("intel_rapl"), RAM(), GPU(["A100"])])
     result = CliRunner().invoke(cli_main.codecarbon, ["doctor", "--strict"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
+    assert "ESTIMATED" in result.output  # the RAM row is still reported
+
+
+def test_strict_failures_ignores_ram_but_not_the_cpu():
+    report = diagnose([CPU("intel_rapl"), RAM(), GPU(["A100"])])
+    assert strict_failures(report) == []
+
+    (failure,) = strict_failures(diagnose([CPU("cpu_load"), RAM(), GPU(["A100"])]))
+    assert failure.component == "CPU"

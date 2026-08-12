@@ -120,7 +120,7 @@ concrete fix.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--json` | flag | false | Print the report as JSON, for CI checks and bug reports |
-| `--strict` | flag | false | Exit with code 1 if any component is estimated |
+| `--strict` | flag | false | Exit with code 1 if a component that could be measured is estimated |
 
 **Example output:**
 ```text
@@ -152,3 +152,9 @@ Statuses are:
 
 Use `--strict` in CI to fail a job when a machine silently falls back to
 estimation, and paste `codecarbon doctor --json` into bug reports.
+
+`--strict` only fails on components that *could* have been measured. RAM is
+exempt: no platform exposes a DRAM energy counter to CodeCarbon, so RAM is
+`ESTIMATED` on every machine and failing on it would make `--strict` a gate
+nothing can pass. An absent GPU is exempt for the same reason, being
+`UNAVAILABLE` rather than a failure.

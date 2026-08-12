@@ -19,6 +19,8 @@ from rich.markup import escape
 
 from codecarbon.core import powermetrics, windows_emi
 from codecarbon.core.util import is_linux_os, is_mac_os, is_windows_os
+from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
+from codecarbon.external.ram import RAM
 
 MEASURED = "measured"
 ESTIMATED = "estimated"
@@ -31,6 +33,11 @@ DEFAULT_RAPL_ROOT = "/sys/class/powercap/intel-rapl"
 
 # CPU modes that read a hardware energy counter.
 MEASURED_CPU_MODES = {"intel_rapl", "intel_power_gadget", "windows_emi"}
+
+# Components no platform exposes an energy counter for. They are ESTIMATED on
+# every machine, so `--strict` must not fail on them, for the same reason an
+# absent GPU is UNAVAILABLE rather than a failure: the user has nothing to fix.
+ALWAYS_ESTIMATED_COMPONENTS = {"RAM"}
 
 
 @dataclass
@@ -196,18 +203,33 @@ def diagnose(hardware) -> List[ComponentDiagnostic]:
     """
     diagnostics = []
     for hw in hardware:
-        name = type(hw).__name__
-        if name == "CPU":
+        if isinstance(hw, CPU):
             diagnostics.append(_cpu_diagnostic(hw))
-        elif name == "AppleSiliconChip":
+        elif isinstance(hw, AppleSiliconChip):
             diagnostics.append(_apple_diagnostic(hw))
-        elif name == "RAM":
+        elif isinstance(hw, RAM):
             diagnostics.append(_ram_diagnostic(hw))
-        elif name == "GPU":
+        elif isinstance(hw, GPU):
             diagnostics.append(_gpu_diagnostic(hw))
     if not any(d.component == "GPU" for d in diagnostics):
         diagnostics.append(_no_gpu_diagnostic())
     return diagnostics
+
+
+def strict_failures(
+    diagnostics: List[ComponentDiagnostic],
+) -> List[ComponentDiagnostic]:
+    """
+    Components whose ESTIMATED status is actionable, i.e. what ``--strict`` fails on.
+
+    RAM is excluded: it is modelled on every platform, so failing on it would make
+    ``--strict`` a gate no machine can pass.
+    """
+    return [
+        d
+        for d in diagnostics
+        if d.status == ESTIMATED and d.component not in ALWAYS_ESTIMATED_COMPONENTS
+    ]
 
 
 def summary(diagnostics: List[ComponentDiagnostic]) -> str:
