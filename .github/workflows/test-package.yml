@@ -20,8 +20,11 @@ jobs:
       CODECARBON_API_KEY: ${{ secrets.CODECARBON_API_TOKEN }}
       CODECARBON_EXPERIMENT_ID: ${{ secrets.CODECARBON_EXPERIMENT_ID_TEST_PACKAGE }}
     strategy:
+        fail-fast: false
         matrix:
-          python-version: ["3.12", "3.13", "3.14"]
+          # Must cover every version allowed by requires-python / classifiers
+          # in pyproject.toml.
+          python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     - name: Install uv

@@ -8,6 +8,8 @@ permissions:
 
 env:
   MAIN_PYTHON_VERSION: 3.12
+  # Lowest interpreter allowed by requires-python in pyproject.toml.
+  MIN_PYTHON_VERSION: "3.10"
 
 jobs:
   build-package:
@@ -69,3 +71,39 @@ jobs:
         run: |
           .venv/bin/codecarbon --help
           .venv/bin/python -c "from codecarbon import EmissionsTracker; print('Package import successful')"
+
+  # Proves `pip install codecarbon` works with only the declared runtime
+  # dependencies (no dev group, no extras), on the oldest supported
+  # interpreter. The job above installs the dev group first, so it cannot
+  # catch a runtime dependency that is declared nowhere but the lockfile.
+  bare-install-smoke:
+    runs-on: ubuntu-24.04
+    needs: [build-package]
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          version: "latest"
+      - name: Download built package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: pypi_dist
+          path: dist
+      - name: Install wheel into a bare virtualenv
+        run: |
+          uv venv --python ${{ env.MIN_PYTHON_VERSION }} .venv
+          uv pip install --python .venv/bin/python dist/*.whl
+      - name: Smoke test
+        env:
+          CODECARBON_ALLOW_MULTIPLE_RUNS: "True"
+        run: |
+          .venv/bin/python -c "import codecarbon; print(codecarbon.__version__)"
+          .venv/bin/codecarbon --help
+          .venv/bin/python -c "
+          import time
+          from codecarbon import OfflineEmissionsTracker
+          tracker = OfflineEmissionsTracker(country_iso_code='FRA', measure_power_secs=1)
+          tracker.start()
+          time.sleep(2)
+          print('emissions:', tracker.stop())
+          "
