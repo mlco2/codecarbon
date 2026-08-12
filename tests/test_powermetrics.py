@@ -209,6 +209,40 @@ class TestApplePowerMetrics:
             with pytest.raises(FileNotFoundError):
                 ApplePowermetrics()
 
+    def test_setup_cli_raises_on_intel_mac(self):
+        with (
+            mock.patch("codecarbon.core.powermetrics.sys.platform", "darwin"),
+            mock.patch(
+                "codecarbon.core.powermetrics.detect_cpu_model",
+                return_value="Intel(R) Core(TM) i7-9750H",
+            ),
+        ):
+            with pytest.raises(SystemError):
+                ApplePowermetrics()
+
+    def test_setup_cli_raises_when_cpu_model_unknown(self):
+        with (
+            mock.patch("codecarbon.core.powermetrics.sys.platform", "darwin"),
+            mock.patch(
+                "codecarbon.core.powermetrics.detect_cpu_model", return_value=None
+            ),
+        ):
+            with pytest.raises(SystemError):
+                ApplePowermetrics()
+
+    def test_setup_cli_sets_cli_on_apple_silicon(self):
+        with (
+            mock.patch("codecarbon.core.powermetrics.sys.platform", "darwin"),
+            mock.patch(
+                "codecarbon.core.powermetrics.detect_cpu_model", return_value="Apple M2"
+            ),
+            mock.patch(
+                "codecarbon.core.powermetrics.shutil.which",
+                return_value="/usr/bin/powermetrics",
+            ),
+        ):
+            assert ApplePowermetrics()._cli == "powermetrics"
+
     def test_log_values_returns_none_on_non_darwin(self):
         powermetrics = ApplePowermetrics.__new__(ApplePowermetrics)
         powermetrics._system = "linux"
@@ -221,6 +255,7 @@ class TestApplePowerMetrics:
         powermetrics._n_points = 3
         powermetrics._interval = 100
         powermetrics._log_file_path = "powermetrics_log.txt"
+        powermetrics._cli = "powermetrics"
 
         with (
             mock.patch(
@@ -232,6 +267,23 @@ class TestApplePowerMetrics:
 
         mock_call.assert_called_once()
         mock_warning.assert_called_once()
+
+    def test_log_values_builds_clean_command(self):
+        powermetrics = ApplePowermetrics.__new__(ApplePowermetrics)
+        powermetrics._system = "darwin"
+        powermetrics._n_points = 3
+        powermetrics._interval = 100
+        powermetrics._log_file_path = "powermetrics_log.txt"
+        powermetrics._cli = "powermetrics"
+
+        with mock.patch(
+            "codecarbon.core.powermetrics.subprocess.call", return_value=0
+        ) as mock_call:
+            powermetrics._log_values()
+
+        cmd = mock_call.call_args.args[0]
+        assert "" not in cmd
+        assert cmd[1] == powermetrics._cli
 
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
     @mock.patch("builtins.open", side_effect=OSError("missing"))

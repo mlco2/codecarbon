@@ -118,17 +118,19 @@ class ApplePowermetrics:
         """
         Setup cli command to run Powermetrics
         """
-        if self._system.startswith("darwin"):
-            cpu_model = detect_cpu_model()
-            if cpu_model.startswith("Apple"):
-                if shutil.which(self._osx_silicon_exec):
-                    self._cli = self._osx_silicon_exec
-                else:
-                    raise FileNotFoundError(
-                        f"Powermetrics executable not found on {self._system}"
-                    )
-        else:
+        if not self._system.startswith("darwin"):
             raise SystemError("Platform not supported by Powermetrics")
+        cpu_model = detect_cpu_model() or ""
+        if not cpu_model.startswith("Apple"):
+            raise SystemError(
+                "Powermetrics is only supported on Apple Silicon, "
+                f"detected CPU: {cpu_model!r}"
+            )
+        if not shutil.which(self._osx_silicon_exec):
+            raise FileNotFoundError(
+                f"Powermetrics executable not found on {self._system}"
+            )
+        self._cli = self._osx_silicon_exec
 
     def _log_values(self) -> None:
         """
@@ -140,10 +142,9 @@ class ApplePowermetrics:
             # Run the powermetrics command with sudo and capture its output
             cmd = [
                 "sudo",
-                "powermetrics",
+                self._cli,
                 "-n",
                 str(self._n_points),
-                "",
                 "--samplers",
                 "cpu_power",
                 "--format",
