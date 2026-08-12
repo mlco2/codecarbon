@@ -140,15 +140,7 @@ By default, CodeCarbon measures **after** the response is sent. Clients see only
 
 ### Measured overhead (HF embedder, live tracker)
 
-Benchmarks use [`scripts/benchmark_fastapi_middleware.py`](https://github.com/mlco2/codecarbon/blob/master/scripts/benchmark_fastapi_middleware.py) with a **live** `EmissionsTracker`, [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2), uvicorn, `create_codecarbon_lifespan`, 50 timed requests after 5 warmup, concurrency 4.
-
-Run:
-
-```console
-CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --extra fastapi --with uvicorn \
-  --with sentence-transformers --with torch \
-  python scripts/benchmark_fastapi_middleware.py --realistic --with-headers
-```
+Benchmarked with a **live** `EmissionsTracker`, [`paraphrase-MiniLM-L3-v2`](https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2), uvicorn and `create_codecarbon_lifespan`, over 50 timed requests after 5 warmup requests, at concurrency 4.
 
 Measured on **Darwin arm64**, Python 3.12 (**2026-07-29**):
 

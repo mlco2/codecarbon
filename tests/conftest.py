@@ -26,11 +26,14 @@ def _reset_process_hardware_cache():
 
 @pytest.fixture(autouse=True)
 def _cancel_leaked_scheduler_timers():
-    """Stop scheduler threads a test left running.
+    """Safety net for scheduler threads a test left running.
 
     PeriodicScheduler re-arms a threading.Timer, so a tracker that is never
     stopped keeps measuring after its test ends. The late measurement lands in
     whatever test is running at the time and corrupts its hardware mocks.
+
+    Tests are expected to stop their own trackers; this only catches the ones
+    that fail part way through.
     """
     yield
     for thread in threading.enumerate():

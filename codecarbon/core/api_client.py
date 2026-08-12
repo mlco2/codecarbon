@@ -187,9 +187,7 @@ class ApiClient:  # (AsyncClient)
         emission = EmissionCreate(
             timestamp=get_datetime_with_timezone(),
             run_id=self.run_id,
-            # The API stores duration as whole seconds. Sub-second runs (e.g. a single
-            # FastAPI request) are reported as 1s rather than dropped.
-            duration=max(1, int(carbon_emission["duration"])),
+            duration=carbon_emission["duration"],
             emissions_sum=carbon_emission["emissions"],
             emissions_rate=carbon_emission["emissions_rate"],
             cpu_power=carbon_emission["cpu_power"],

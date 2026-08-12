@@ -660,6 +660,8 @@ def test_concurrent_lazy_tracker_without_lifespan() -> None:
 
         assert error_messages == []
     finally:
+        # No lifespan here, so nothing else stops the lazily created tracker.
+        cc_fastapi_middleware.shutdown_codecarbon_middleware(application)
         cc_fastapi_middleware.logger.removeHandler(handler)
 
 

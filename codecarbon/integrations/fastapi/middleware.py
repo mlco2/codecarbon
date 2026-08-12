@@ -246,10 +246,17 @@ class CodeCarbonMiddleware:
     def shutdown_tracker_executor(self, *, wait: bool = True) -> None:
         """Shut down the tracker background thread (idempotent).
 
+        Also stops the tracker this middleware created itself (the lazy path,
+        used when there is no ``create_codecarbon_lifespan``). A lifespan
+        tracker is owned by the lifespan and is left alone.
+
         Args:
             wait: When ``True``, block until queued tracker work finishes.
         """
         self._tracker_runner.shutdown(wait=wait)
+        tracker, self._app_tracker = self._app_tracker, None
+        if tracker is not None:
+            tracker.stop()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """ASGI entrypoint."""
@@ -564,15 +571,15 @@ def add_codecarbon_middleware(app: Any, **kwargs: Any) -> None:
         app: Application instance with ``add_middleware``.
         **kwargs: Forwarded to :class:`CodeCarbonMiddleware`.
     """
-    registered: list[CodeCarbonMiddleware] = []
 
     class _RegisteredCodeCarbonMiddleware(CodeCarbonMiddleware):
         def __init__(self, asgi_app: ASGIApp, **kw: Any) -> None:
             super().__init__(asgi_app, **kw)
-            registered.clear()
-            registered.append(self)
+            # Starlette rebuilds the middleware stack on startup, so point
+            # app.state at whichever instance actually serves requests.
+            # Otherwise shutdown targets a stale instance and never stops the
+            # lazily created tracker.
+            app.state.codecarbon_middleware = self
 
     app.add_middleware(_RegisteredCodeCarbonMiddleware, **kwargs)
     app.build_middleware_stack()
-    if registered:
-        app.state.codecarbon_middleware = registered[0]

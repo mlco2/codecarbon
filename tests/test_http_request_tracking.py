@@ -24,6 +24,9 @@ else:
     )
 
 
+_built_trackers: list[EmissionsTracker] = []
+
+
 def _build_tracker(**kwargs: object) -> EmissionsTracker:
     defaults: dict[str, object] = {
         "project_name": "http-request-test",
@@ -34,7 +37,9 @@ def _build_tracker(**kwargs: object) -> EmissionsTracker:
         "measure_power_secs": 10,
     }
     defaults.update(kwargs)
-    return EmissionsTracker(**defaults)
+    tracker = EmissionsTracker(**defaults)
+    _built_trackers.append(tracker)
+    return tracker
 
 
 @mock.patch("codecarbon.core.gpu.pynvml", fake_pynvml)
@@ -58,6 +63,15 @@ class TestHttpRequestTracking(unittest.TestCase):
         )
         self.addCleanup(patcher.stop)
         patcher.start()
+        self.addCleanup(self._stop_built_trackers)
+
+    @staticmethod
+    def _stop_built_trackers() -> None:
+        """Stop trackers a test started, including when it failed part way."""
+        while _built_trackers:
+            tracker = _built_trackers.pop()
+            if tracker._scheduler is not None:
+                tracker.stop()
 
     def test_mark_http_request_start_requires_started_tracker(
         self,

@@ -202,7 +202,8 @@ class TestApi(unittest.TestCase):
             )
         )
 
-    def test_add_emission_rounds_subsecond_duration_to_one_second(self):
+    def test_add_emission_sends_millisecond_duration_unchanged(self):
+        """A single FastAPI request lasts milliseconds: send it, do not round it."""
         with requests_mock.Mocker() as m:
             m.post("http://test.com/emissions", json={"id": "em-1"}, status_code=201)
             api = ApiClient(
@@ -216,7 +217,7 @@ class TestApi(unittest.TestCase):
             self.assertTrue(
                 api.add_emission(
                     {
-                        "duration": 0.5,
+                        "duration": 0.0042,
                         "emissions": 1.0,
                         "emissions_rate": 1.0,
                         "cpu_power": 1.0,
@@ -229,7 +230,7 @@ class TestApi(unittest.TestCase):
                     }
                 )
             )
-            self.assertEqual(m.last_request.json()["duration"], 1)
+            self.assertEqual(m.last_request.json()["duration"], 0.0042)
 
     def test_add_emission_raises_on_unsuccessful_post(self):
         with requests_mock.Mocker() as m:
