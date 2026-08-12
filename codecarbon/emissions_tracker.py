@@ -296,6 +296,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._scheduler_paused_by_task = False
         self._hardware = []
         self._hardware_initialized = False
 
@@ -754,6 +755,10 @@ class BaseEmissionsTracker(ABC):
 
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
+            # Only resume it in stop_task if it was actually running, i.e. the tracker
+            # was started with start(). Pure start_task/stop_task usage must not leave
+            # a periodic measurement running behind.
+            self._scheduler_paused_by_task = not self._scheduler._stopped
             self._scheduler.stop()
 
         # Task background thread for measuring power
@@ -849,6 +854,10 @@ class BaseEmissionsTracker(ABC):
         self._tasks[task_name].is_active = False
         self._active_task = None
         self._active_task_emissions_at_start = None  # Clear task-specific start data
+
+        if self._scheduler is not None and self._scheduler_paused_by_task:
+            self._scheduler_paused_by_task = False
+            self._scheduler.start()
 
         return task_emission_data
 
