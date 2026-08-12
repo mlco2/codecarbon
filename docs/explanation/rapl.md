@@ -179,7 +179,10 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 7.  **Platform-specific behavior**:
     -   Intel modern: package or psys (with prefer_psys=True)
     -   Intel older: package-0 for CPU only
-    -   AMD: Sum all package-X-die-Y for multi-die CPUs
+    -   AMD: Sum all package-X-die-Y for multi-die CPUs — this describes what
+        the code currently does; whether summing per-die domains is correct is
+        under review in
+        [issue #1379](https://github.com/mlco2/codecarbon/issues/1379)
 8.  **Limitations**: RAPL does NOT measure:
     -   Discrete GPUs (use nvidia-smi/rocm-smi)
     -   SSDs, peripherals, fans
@@ -219,6 +222,15 @@ Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads)
 Power plug measure when idle (10% CPU): 125 W
 package-0-die-0: 68 W | package-0-die-1: 68 W | CodeCarbon: 137 W
 ```
+
+!!! warning "Multi-die summing is under review"
+
+    On Linux, CodeCarbon sums every domain whose name contains `package`, so the
+    two per-die domains above are added together. Whether those domains report
+    independent power or mirror the same counter is unresolved, and it decides
+    whether 137 W is right or double the real figure. Tracked in
+    [issue #1379](https://github.com/mlco2/codecarbon/issues/1379). The numbers
+    here are left exactly as observed — they are the evidence behind that issue.
 
 ### Laptop: Intel(R) Core(TM) Ultra 7 265H (TDP 28W)
 
