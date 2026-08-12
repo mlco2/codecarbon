@@ -74,6 +74,14 @@ and is preferable on shared machines.
     the device level, so on a shared GPU CodeCarbon still attributes the
     **entire GPU's** consumption to your run.
 
+!!! warning "On the estimation path, `tracking_mode` also changes the power model"
+
+    When CodeCarbon falls back to `cpu_load` mode, `tracking_mode` selects not
+    just the attribution scope but a **different power curve** — cubic with a
+    10% floor for machine mode, linear with no floor for process mode. See
+    [The two cpu_load models](#the-two-cpu_load-models). On the hardware-counter
+    paths (RAPL, EMI, NVML) this does not apply.
+
 ### Power Usage Effectiveness (PUE)
 
 If you set `pue`, it is applied inside the measurement loop to **each
@@ -139,16 +147,8 @@ Whatever TDP results is multiplied by the physical CPU package count
 That ceiling is then turned into an instantaneous power reading in one of two
 ways, and **the two ways are not the same**:
 
-- **`cpu_load` mode** applies a cubic load curve with a 10% floor
-  ([`hardware.py:287-288`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py#L287)):
-
-    ```text
-    load_factor = 0.1 + 0.9 × (cpu_load_percent / 100)³
-    power       = TDP × load_factor
-    ```
-
-    An idle machine therefore reports 10% of TDP, and a fully loaded one
-    reports 100%. There is no 50% anywhere in this path.
+- **`cpu_load` mode** — see the next section. **It uses two different power
+  models depending on `tracking_mode`.**
 
 - **`constant` mode** — reached only when `psutil` is unavailable — applies a
   flat half of TDP
@@ -161,10 +161,54 @@ ways, and **the two ways are not the same**:
     `CONSUMPTION_PERCENTAGE_CONSTANT = 0.5` is defined at
     [`hardware.py:26`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py#L26).
 
-The cubic curve is an asserted shape, not a fitted one; the code cites no
-source for the exponent or the 10% floor.
+### The two cpu_load models
+
+`cpu_load` mode does not have one power model. It has two, selected by
+`tracking_mode` inside
+[`_get_power_from_cpu_load`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py#L274)
+(`hardware.py:274-352`). They differ in shape, not only in scope, and the
+difference is large at low load.
+
+| | `tracking_mode="machine"` | `tracking_mode="process"` |
+|---|---|---|
+| Load source | `psutil.cpu_percent()`, system-wide (`hardware.py:280-282`) | per-process CPU-time deltas over wall clock, summed across the process and its children (`hardware.py:294-330`) |
+| Normalisation | none — already a 0–100% figure | divided by core count (`hardware.py:345`) |
+| Curve | **cubic** (`hardware.py:287-288`) | **linear** (`hardware.py:346`) |
+| Idle floor | **10% of TDP** | **none** — 0% load gives 0 W |
+
+```python
+# machine mode — hardware.py:287-288
+load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
+power = tdp * load_factor
+```
+
+```python
+# process mode — hardware.py:345-346
+cpu_load_normalized = cpu_load / self._cpu_count
+power = self._tdp * cpu_load_normalized / 100
+```
+
+!!! warning "The same workload measured both ways will not differ only by scope"
+
+    Switching `tracking_mode` silently swaps the power model. At low
+    utilisation the two diverge sharply: machine mode never reports below 10%
+    of TDP, while process mode reports proportionally to load and reaches zero.
+    At 50% load, machine mode gives `0.1 + 0.9 × 0.125 = 21%` of TDP, while a
+    process saturating half the cores gives 50% of TDP — more than double,
+    from the same underlying utilisation.
+
+    If you compare a machine-mode run against a process-mode run and the
+    numbers disagree by more than the attribution scope explains, this is why.
+    It is not evidence that either number is wrong; it is two different models.
+
+**None of these shape choices is sourced in the code.** The cubic exponent, the
+0.1 floor in machine mode, and the absence of any floor in process mode are all
+asserted, with no comment, citation or fitting procedure anywhere in the
+module. They are plausible defaults, not measurements.
+
 [Accuracy and validation](accuracy.md#the-cpu-load-tdp-fallback-measured)
-reports how far this fallback lands from measured RAPL energy.
+reports how far this fallback lands from measured RAPL energy — **in machine
+mode only**; those figures do not transfer to process mode.
 
 ### Per-platform notes
 

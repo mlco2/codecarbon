@@ -34,7 +34,7 @@ counter is readable. The fallback order is documented in
 | macOS `powermetrics` | System power reporting | Not yet measured against an external reference | macOS, Intel and Apple Silicon |
 | Windows EMI | Energy Meter Interface | Not yet measured against an external reference | Windows 11, where the platform exposes it |
 | Intel Power Gadget | Vendor tool, deprecated upstream | Not yet measured | Legacy path |
-| CPU load × TDP | Estimates power from CPU utilisation against the TDP listed in `cpu_power.csv` | See the profiling results below: on the machines profiled, the estimate deviated from RAPL by roughly −60% to +90% depending on CPU and load point | Fallback when no CPU counter is available |
+| CPU load × TDP | Estimates power from CPU utilisation against the TDP listed in `cpu_power.csv`. Two different curves, [selected by `tracking_mode`](methodology.md#the-two-cpu_load-models) | See the profiling results below: in **machine mode**, on the machines profiled, the estimate deviated from RAPL by roughly −60% to +90% depending on CPU and load point. Process mode is uncharacterised | Fallback when no CPU counter is available |
 | Default watts per thread | Estimates from thread count alone | Not characterised; this is the least accurate path | Last resort, when the CPU model is absent from `cpu_power.csv` |
 
 ### The CPU load × TDP fallback, measured
@@ -44,6 +44,20 @@ records, at each load point, both the RAPL reading and the TDP-based estimate
 CodeCarbon would have produced. The raw sweeps live in
 `codecarbon/data/hardware/cpu_load_profiling/` and are plotted in
 `examples/compare_cpu_load_and_RAPL.ipynb`. Runs are dated January 2025.
+
+!!! warning "These figures are machine mode only"
+
+    The profiling script constructs its tracker with `force_mode_cpu_load=True`
+    and no `tracking_mode` argument (`compare_cpu_load_and_RAPL.py:289-292`), so
+    every number below was gathered under the default
+    `tracking_mode="machine"`.
+
+    That matters because `cpu_load` mode uses a **different power model** in
+    process mode — linear with no idle floor, rather than cubic with a 10%-of-TDP
+    floor. See
+    [Methodology → The two cpu_load models](methodology.md#the-two-cpu_load-models).
+    **The deviations below do not transfer to `tracking_mode="process"`.** No
+    equivalent profiling has been done for process mode.
 
 Deviation of the estimate from the RAPL reading, over load points above 5%
 (negative means the estimate is lower than RAPL):
@@ -63,8 +77,11 @@ for the pair, while RAPL reported about 117 W at full load — the chips are hel
 near their base frequency and never reach the rated figure. On the EPYC 8024P
 the gap is larger still.
 
-**The relationship between load and power is not linear.** CodeCarbon
-interpolates linearly between idle and TDP. Real curves are convex on some parts
+**The assumed load-to-power curve does not match the real one.** In machine
+mode CodeCarbon applies a cubic curve with a 10%-of-TDP floor
+(`hardware.py:287-288`); in process mode it interpolates linearly from zero
+(`hardware.py:346`). Neither shape is fitted to hardware. Real curves are convex
+on some parts
 (the E3-1240 v2 stays under 10 W up to 40% load, so the linear estimate
 overshoots it by well over 100%) and saturate early on others (the Threadripper
 reaches its power ceiling around 65% load, so the estimate *undershoots* at mid
