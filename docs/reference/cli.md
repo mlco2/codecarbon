@@ -108,7 +108,7 @@ Summarise an `emissions.csv` for a CI pipeline, optionally against a baseline ru
 codecarbon ci-report [OPTIONS]
 ```
 
-Reads the rows of the most recent run in the CSV (CodeCarbon appends one row per flush, all sharing the same `run_id`), sums them, and prints markdown or JSON. Nothing in the command is specific to a CI provider, so it works the same on GitHub Actions, GitLab CI, Jenkins or Buildkite.
+Reads the totals of the most recent run in the CSV and prints markdown or JSON. CodeCarbon appends one row per flush, all sharing the same `run_id`, and each row holds the cumulative totals since the start of the run, so the last row of the last `run_id` is used. Nothing in the command is specific to a CI provider, so it works the same on GitHub Actions, GitLab CI, Jenkins or Buildkite.
 
 **Options:**
 

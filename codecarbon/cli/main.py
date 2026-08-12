@@ -493,9 +493,9 @@ def ci_report(
     """
     Summarise a CodeCarbon run for a CI job summary or a pull request comment.
 
-    Reads the rows of the most recent run in the CSV, optionally compares them
-    with a baseline run, and prints markdown or JSON. Nothing here is specific
-    to a CI provider.
+    Reads the totals of the most recent run in the CSV, optionally compares
+    them with a baseline run, and prints markdown or JSON. Nothing here is
+    specific to a CI provider.
 
     Examples:
 

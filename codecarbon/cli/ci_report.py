@@ -19,7 +19,7 @@ class CIReportError(Exception):
 
 @dataclass
 class RunSummary:
-    """Totals for a single CodeCarbon run, aggregated from its CSV rows."""
+    """Totals for a single CodeCarbon run, read from its last CSV row."""
 
     emissions: float
     energy_consumed: float
@@ -39,12 +39,14 @@ def _to_float(value: Optional[str]) -> float:
 
 def summarise(csv_path: Path) -> RunSummary:
     """
-    Aggregate the rows of the most recent run in ``csv_path``.
+    Read the totals of the most recent run in ``csv_path``.
 
-    During a run CodeCarbon appends one row per flush, each holding the delta
-    since the previous one, all sharing the same ``run_id``. Summing the rows of
-    the last ``run_id`` therefore gives the totals of that run, and degrades to
-    the single row when the run was written only once.
+    During a run CodeCarbon appends one row per flush, all sharing the same
+    ``run_id``, and every row holds the *cumulative* totals since the start of
+    the run -- ``FileOutput.out()`` discards the delta it is handed and writes
+    the running total. The last row of the last ``run_id`` is therefore the
+    total of that run, and degrades to the single row when the run was written
+    only once.
     """
     if not csv_path.is_file():
         raise CIReportError(f"No emissions file found at {csv_path}")
@@ -63,14 +65,15 @@ def summarise(csv_path: Path) -> RunSummary:
     last_run_id = rows[-1].get("run_id")
     run_rows = [row for row in rows if row.get("run_id") == last_run_id]
 
+    last = run_rows[-1]
     return RunSummary(
-        emissions=sum(_to_float(row.get("emissions")) for row in run_rows),
-        energy_consumed=sum(_to_float(row.get("energy_consumed")) for row in run_rows),
-        duration=sum(_to_float(row.get("duration")) for row in run_rows),
+        emissions=_to_float(last.get("emissions")),
+        energy_consumed=_to_float(last.get("energy_consumed")),
+        duration=_to_float(last.get("duration")),
         rows=len(run_rows),
-        project_name=run_rows[-1].get("project_name") or "",
-        country_iso_code=run_rows[-1].get("country_iso_code") or "",
-        region=run_rows[-1].get("region") or "",
+        project_name=last.get("project_name") or "",
+        country_iso_code=last.get("country_iso_code") or "",
+        region=last.get("region") or "",
     )
 
 
