@@ -169,6 +169,14 @@ class Emissions:
                     + f"Retrieved emissions for {geo.country_name} using Electricity Maps API :{emissions * 1000} g CO2eq"
                 )
                 return emissions
+            except electricitymaps_api.ElectricityMapsAPICooldownError as e:
+                # The failure that started the cooldown was already logged as an
+                # error: skipped requests must not log one line per tick.
+                logger.debug(
+                    "electricitymaps_api.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
             except Exception as e:
                 logger.error(
                     "electricitymaps_api.get_emissions: "

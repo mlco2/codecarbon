@@ -4,7 +4,10 @@ from unittest import mock
 import responses
 
 from codecarbon.core import electricitymaps_api
+from codecarbon.core.emissions import Emissions
+from codecarbon.core.units import Energy
 from codecarbon.external.geography import GeoMetadata
+from codecarbon.input import DataSource
 
 
 class TestElectricityMapsCache(unittest.TestCase):
@@ -128,3 +131,33 @@ class TestElectricityMapsCache(unittest.TestCase):
         electricitymaps_api.get_carbon_intensity(self._geo)
 
         assert electricitymaps_api._cooldown_duration == 0.0
+
+    @responses.activate
+    def test_cache_is_not_shared_between_tokens(self):
+        self._add_success_response(carbon_intensity=58.7)
+        assert electricitymaps_api.get_carbon_intensity(self._geo, "token-a") == 58.7
+
+        responses.reset()
+        self._add_success_response(carbon_intensity=412.0)
+        # WHEN another tracker in the same process uses a different token, it
+        # must not be served the value cached for the first one.
+        assert electricitymaps_api.get_carbon_intensity(self._geo, "token-b") == 412.0
+
+    @responses.activate
+    def test_cooldown_does_not_log_one_error_per_call(self):
+        responses.add(
+            responses.GET,
+            electricitymaps_api.URL,
+            json={"error": "invalid token"},
+            status=401,
+        )
+        emissions = Emissions(DataSource(), electricitymaps_api_token="bad-token")
+        energy = Energy.from_energy(kWh=1.0)
+
+        with mock.patch("codecarbon.core.emissions.logger") as mock_logger:
+            for _ in range(3):
+                emissions.get_private_infra_emissions(energy, self._geo)
+
+        # THEN only the first, real failure is an error; the calls skipped
+        # during the cooldown stay at debug level.
+        assert mock_logger.error.call_count == 1

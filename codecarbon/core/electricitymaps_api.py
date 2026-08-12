@@ -32,8 +32,11 @@ def reset_cache() -> None:
     _cooldown_duration = 0.0
 
 
-def _cache_key(params: Dict[str, Any]) -> str:
-    return ",".join(f"{key}={params[key]}" for key in sorted(params))
+def _cache_key(params: Dict[str, Any], electricitymaps_api_token: str) -> str:
+    # The token is part of the key: two trackers in one process may use
+    # different tokens, and must not share a cached value.
+    joined = ",".join(f"{key}={params[key]}" for key in sorted(params))
+    return f"{joined},token={electricitymaps_api_token}"
 
 
 def _get_cached_carbon_intensity(key: str) -> Optional[float]:
@@ -89,7 +92,7 @@ def get_carbon_intensity(
     else:
         params = {"countryCode": geo.country_2letter_iso_code}
 
-    key = _cache_key(params)
+    key = _cache_key(params, electricitymaps_api_token)
     cached_carbon_intensity = _get_cached_carbon_intensity(key)
     if cached_carbon_intensity is not None:
         logger.debug(
@@ -99,7 +102,7 @@ def get_carbon_intensity(
         return cached_carbon_intensity
 
     if time.monotonic() < _cooldown_until:
-        raise ElectricityMapsAPIError(
+        raise ElectricityMapsAPICooldownError(
             "Electricity Maps API is in cooldown after a previous failure, "
             f"retrying in {_cooldown_until - time.monotonic():.0f} seconds"
         )
@@ -167,3 +170,7 @@ def get_emissions(
 
 class ElectricityMapsAPIError(Exception):
     pass
+
+
+class ElectricityMapsAPICooldownError(ElectricityMapsAPIError):
+    """Raised when a request is skipped because a previous one failed."""
