@@ -8,7 +8,7 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-from datetime import timedelta, tzinfo
+from datetime import datetime, timedelta, tzinfo
 
 import requests
 
@@ -26,6 +26,24 @@ def get_datetime_with_timezone():
     import arrow
 
     return str(arrow.now().isoformat())
+
+
+def get_measurement_timestamp(timestamp=None):
+    """
+    Return the time the measurement was taken, as an offset-aware ISO string.
+
+    EmissionsData.timestamp is naive local time, so it is localised here.
+    Falls back to now for hand-built payloads without a timestamp.
+    """
+    if timestamp:
+        try:
+            return datetime.fromisoformat(timestamp).astimezone().isoformat()
+        except (TypeError, ValueError):
+            logger.warning(
+                f"ApiClient : could not parse emission timestamp {timestamp!r}, "
+                + "using current time."
+            )
+    return get_datetime_with_timezone()
 
 
 class ApiClient:  # (AsyncClient)
@@ -190,7 +208,7 @@ class ApiClient:  # (AsyncClient)
             )
             return False
         emission = EmissionCreate(
-            timestamp=get_datetime_with_timezone(),
+            timestamp=get_measurement_timestamp(carbon_emission.get("timestamp")),
             run_id=self.run_id,
             duration=int(carbon_emission["duration"]),
             emissions_sum=carbon_emission["emissions"],

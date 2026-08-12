@@ -1,5 +1,6 @@
 import dataclasses
 import unittest
+from datetime import datetime
 from uuid import uuid4
 
 import requests
@@ -227,6 +228,40 @@ class TestApi(unittest.TestCase):
                 }
             )
         )
+
+    def test_add_emission_keeps_measurement_timestamp(self):
+        payload = {
+            "duration": 2,
+            "emissions": 1.0,
+            "emissions_rate": 1.0,
+            "cpu_power": 1.0,
+            "gpu_power": 0.0,
+            "ram_power": 0.5,
+            "cpu_energy": 0.1,
+            "gpu_energy": 0.0,
+            "ram_energy": 0.1,
+            "energy_consumed": 0.2,
+        }
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/emissions", text="ok", status_code=201)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                conf=conf,
+                create_run_automatically=False,
+            )
+            api.run_id = "run-1"
+
+            # The measurement timestamp is kept, not the time of the POST.
+            api.add_emission({**payload, "timestamp": "2020-01-01T00:00:00"})
+            sent = m.last_request.json()["timestamp"]
+            self.assertTrue(sent.startswith("2020-01-01T00:00:00"))
+            self.assertIsNotNone(datetime.fromisoformat(sent).tzinfo)
+
+            # No timestamp in the payload : fall back to now.
+            api.add_emission(payload)
+            sent = m.last_request.json()["timestamp"]
+            self.assertIsNotNone(datetime.fromisoformat(sent).tzinfo)
 
     def test_add_emission_raises_on_unsuccessful_post(self):
         with requests_mock.Mocker() as m:
