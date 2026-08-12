@@ -21,6 +21,7 @@ import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
+from codecarbon.core.schedulers import detect_job_metadata
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
@@ -1098,6 +1099,7 @@ class BaseEmissionsTracker(ABC):
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
             wue=self._wue,
+            **detect_job_metadata(),
         )
         logger.debug(total_emissions)
         return total_emissions

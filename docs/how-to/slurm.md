@@ -160,6 +160,57 @@ tail -f logs/<job_id>.out
 sinfo
 ```
 
+## Job metadata in the output
+
+When CodeCarbon runs inside a SLURM job step it reads the job's identity from the
+environment SLURM already provides and stores it on every emissions record. There is
+nothing to enable and no code to change.
+
+| Output field | SLURM environment variable |
+|--------------|----------------------------|
+| `scheduler` | set to `slurm` when `SLURM_JOB_ID` is present |
+| `job_id` | `SLURM_JOB_ID` |
+| `job_name` | `SLURM_JOB_NAME` |
+| `job_user` | `SLURM_JOB_USER` |
+| `job_account` | `SLURM_JOB_ACCOUNT` |
+| `job_partition` | `SLURM_JOB_PARTITION` |
+| `node_name` | `SLURMD_NODENAME` |
+
+Outside of a job all of these are empty, so nothing changes for non-HPC users.
+
+This makes `emissions.csv` directly joinable against SLURM accounting:
+
+```bash
+sacct -j 1234567 --format=JobID,JobName,Account,Partition,Elapsed,AllocTRES --parsable2
+```
+
+!!! tip "You no longer need `CODECARBON_PROJECT_NAME=$SLURM_JOB_ID`"
+    Overloading the project name with the job ID used to be the only way to tell runs
+    apart. Keep `project_name` for your project and use `job_id` for the job.
+
+### Other schedulers
+
+Any field can be set, or overridden, with an environment variable named after it. This
+is how PBS, LSF or OAR sites get the same columns without CodeCarbon needing to know
+about their scheduler — map their variables onto ours in your job script:
+
+```bash
+export CODECARBON_SCHEDULER=pbs
+export CODECARBON_JOB_ID=$PBS_JOBID
+export CODECARBON_JOB_NAME=$PBS_JOBNAME
+export CODECARBON_NODE_NAME=$(hostname)
+```
+
+These variables take precedence over the auto-detected SLURM values, so they also work
+for correcting a field on a site whose SLURM configuration is unusual.
+
+!!! warning "One tracker per node"
+    Power is a property of the node, not of a rank. If you launch CodeCarbon on every
+    rank of a multi-node job in `machine` tracking mode, each one measures the whole
+    node and your total is multiplied by the number of ranks. Start the tracker on one
+    rank per node (for example when `SLURM_LOCALID` is `0`), or use `process` tracking
+    mode.
+
 ## Troubleshooting
 
 ### Error: AMD GPU detected but amdsmi is not properly configured

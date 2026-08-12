@@ -47,6 +47,14 @@ class EmissionsData:
     on_cloud: str = "N"
     pue: float = 1
     wue: float = 0
+    # Batch scheduler job metadata, empty outside of an HPC job.
+    scheduler: str = ""
+    job_id: str = ""
+    job_name: str = ""
+    job_user: str = ""
+    job_account: str = ""
+    job_partition: str = ""
+    node_name: str = ""
 
     @property
     def values(self) -> OrderedDict:
