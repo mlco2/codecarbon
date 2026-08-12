@@ -105,5 +105,13 @@ jobs:
           tracker = OfflineEmissionsTracker(country_iso_code='FRA', measure_power_secs=1)
           tracker.start()
           time.sleep(2)
-          print('emissions:', tracker.stop())
+          emissions = tracker.stop()
+          print('emissions:', emissions)
+          # stop() returns None on every internal give-up path (tracker never
+          # started, another instance holding the lock, engine init failed), so
+          # a bare call would print None and still exit 0. Assert the shape, not
+          # the magnitude: a runner with no RAPL falls back to constant CPU
+          # power and 0.0 over 2s is a legitimate result.
+          assert isinstance(emissions, float), f'tracker.stop() returned {emissions!r}'
+          assert emissions >= 0.0, emissions
           "
