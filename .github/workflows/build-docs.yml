@@ -12,6 +12,7 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - "scripts/check_docs_links.py"
+      - "scripts/check_docs_drift.py"
       - ".github/workflows/build-docs.yml"
   pull_request:
     branches: [master]
@@ -44,3 +45,6 @@ jobs:
 
       - name: Check documentation links (site/)
         run: uv run python scripts/check_docs_links.py site
+
+      - name: Check documentation constant drift
+        run: uv run python scripts/check_docs_drift.py
