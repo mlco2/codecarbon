@@ -298,12 +298,20 @@ class TestLiveOutEveryMeasure(unittest.TestCase):
         self.assertIsNotNone(plain.calls[0][1])
 
     def test_on_measure_receives_instantaneous_power_not_the_average(self):
+        from codecarbon.core.units import Power
+
         live = _RecordingLiveOutput()
         tracker = self._tracker([live], api_call_interval=-1)
 
-        # The tracker keeps running sums to compute the averages that
-        # EmissionsData carries. Poison them so an average is unmistakably
-        # different from the last measured power.
+        # No real hardware in the loop: the measurement writes known values,
+        # and the running sums (the averages EmissionsData carries) are
+        # poisoned to unmistakably different ones.
+        def fake_measurements():
+            tracker._cpu_power = Power.from_watts(42.0)
+            tracker._gpu_power = Power.from_watts(7.0)
+            tracker._ram_power = Power.from_watts(3.0)
+
+        tracker._do_measurements = fake_measurements
         tracker._cpu_power_sum = 10_000.0
         tracker._gpu_power_sum = 20_000.0
         tracker._ram_power_sum = 30_000.0
@@ -312,11 +320,11 @@ class TestLiveOutEveryMeasure(unittest.TestCase):
         tracker._measure_power_and_energy()
 
         sample = live.measures[-1]
-        self.assertEqual(tracker._cpu_power.W, sample.cpu_power)
-        self.assertEqual(tracker._gpu_power.W, sample.gpu_power)
-        self.assertEqual(tracker._ram_power.W, sample.ram_power)
-        # ... and the averages the periodic path would have reported are the
-        # poisoned ones, so the two are genuinely distinguishable here.
+        self.assertEqual(42.0, sample.cpu_power)
+        self.assertEqual(7.0, sample.gpu_power)
+        self.assertEqual(3.0, sample.ram_power)
+        # ... while the periodic path still reports the averages (sum / count).
         averaged = tracker._prepare_emissions_data()
-        self.assertGreater(averaged.cpu_power, 90.0)
-        self.assertLess(sample.cpu_power, 90.0)
+        self.assertEqual(100.0, averaged.cpu_power)
+        self.assertEqual(200.0, averaged.gpu_power)
+        self.assertEqual(300.0, averaged.ram_power)
