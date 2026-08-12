@@ -29,24 +29,32 @@ class PeriodicScheduler:
         ::from_run:: For internal purposes to allow re-scheduling
         Please do not use from_run=True until you know what you do !
         """
-        self._lock.acquire()
-        if from_run or self._stopped:
+        with self._lock:
+            if from_run:
+                if self._stopped:
+                    # stop() ran while the timer was firing: do not re-arm.
+                    return
+            elif not self._stopped:
+                # Already running, do not arm a second timer.
+                return
             self._stopped = False
             self._timer = Timer(self.interval, self._run)
             self._timer.daemon = True
             self._timer.start()
-        self._lock.release()
 
     def _run(self):
         self.start(from_run=True)
+        if self._stopped:
+            return
         self.function(*self.args, **self.kwargs)
 
     def stop(self):
         """
         Stop the scheduler.
         """
-        if not self._stopped:
-            self._lock.acquire()
+        with self._lock:
+            if self._stopped:
+                return
             self._stopped = True
-            self._timer.cancel()
-            self._lock.release()
+            if self._timer is not None:
+                self._timer.cancel()
