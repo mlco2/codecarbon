@@ -120,7 +120,8 @@ EmissionsTracker(electricitymaps_api_token="your-token-here")
 
     The old parameter name `co2_signal_api_token` still works for backward
     compatibility but is deprecated and will be removed in a future version.
-    Use `electricitymaps_api_token` instead.
+    Use `electricitymaps_api_token` instead. See the
+    [deprecations list](https://github.com/mlco2/codecarbon/blob/master/CHANGELOG.md#deprecations-and-migrations).
 
 ## Tracking Mode
 

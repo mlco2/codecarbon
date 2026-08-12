@@ -5,10 +5,28 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "codecarbon"
 dynamic = ["version"]
+description = "Track and reduce the CO2 emissions of your computing"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
+keywords = [
+    "carbon",
+    "co2",
+    "emissions",
+    "carbon-footprint",
+    "sustainability",
+    "green-ai",
+    "green-computing",
+    "energy",
+    "energy-consumption",
+    "power-consumption",
+    "rapl",
+    "gpu",
+    "machine-learning",
+    "mlops",
+    "monitoring",
+]
 authors = [
     { name = "Mila" },
     { name = "DataForGood" },
@@ -17,12 +35,24 @@ authors = [
     { name = "Haverford College" },
 ]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
     "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Benchmark",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
     "arrow",
@@ -157,6 +187,9 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 [tool.bumpver.file_patterns]
 "codecarbon/_version.py" = [
     '^__version__ = "{version}"$',
+]
+"CITATION.cff" = [
+    '^version: {version}$',
 ]
 
 [tool.pytest.ini_options]

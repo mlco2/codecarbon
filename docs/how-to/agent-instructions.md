@@ -159,7 +159,7 @@ uv run task -l
 - **[carbonserver/tests/TESTING.md](https://github.com/mlco2/codecarbon/blob/master/carbonserver/tests/TESTING.md)**: Comprehensive testing guide
 
 ### VS Code Debugging
-The repository includes VS Code launch configurations in `docs/how-to/contributing.md` for:
+The repository includes VS Code launch configurations in `docs/how-to/development.md` for:
 - Debugging current Python file
 - Running pytest with debugger
 - Testing codecarbon CLI monitor

@@ -8,6 +8,8 @@ Without RAPL, CodeCarbon estimates CPU power based on hardware specifications an
 
 - ✅ **Direct hardware measurements** — Read CPU energy directly from RAPL counters
 - ✅ **Higher precision** — Microjoule-level accuracy instead of estimates
+
+On the CPUs we profiled, the load-and-TDP estimate deviated from RAPL by up to roughly a factor of two in either direction. See [Accuracy and validation](../explanation/accuracy.md) for the measured figures.
 - ✅ **Multi-domain support** — Measure package, core, uncore, DRAM, and GPU separately
 - ✅ **Real-time data** — No delay or aggregation artifacts
 

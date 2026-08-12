@@ -229,16 +229,18 @@ the
 option is enabled.
 
 Legacy support for `Intel Power Gadget` is kept for machines where it is
-still installed, but the tool [has been discontinued by
-Intel](https://github.com/mlco2/codecarbon/issues/457).
+still installed, but the tool has been
+[discontinued by Intel](https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html)
+(known limitation, tracked in
+[issue #457](https://github.com/mlco2/codecarbon/issues/457)).
 
 -   **On Mac (Intel)**
 
 Tracks Intel processors energy consumption using the
 `Intel Power Gadget`. You need to install it yourself from this
 [source](https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html)
-. But has been discontinued. There is a discussion about it on [github
-issues #457](https://github.com/mlco2/codecarbon/issues/457).
+. Intel has since discontinued the tool; this is a known limitation,
+tracked in [issue #457](https://github.com/mlco2/codecarbon/issues/457).
 
 -   **Apple Silicon Chips (M1, M2, M3, ...)**
 
@@ -248,9 +250,10 @@ Codecarbon tracks Apple Silicon Chip energy consumption using
 `powermetrics`. It should be available natively on any mac. However,
 this tool is only usable with `sudo` rights and to our current
 knowledge, there are no other options to track the energy consumption of
-the Apple Silicon Chip without administrative rights (if you know of any
-solution for this do not hesitate and [open an issue with your proposed
-solution](https://github.com/mlco2/codecarbon/issues/)).
+the Apple Silicon Chip without administrative rights. This is a known
+limitation; if you know of any solution, please
+[open an issue](https://github.com/mlco2/codecarbon/issues) with your
+proposed approach.
 
 To give sudo rights without having to enter a password each time, you
 can modify the sudoers file with the following command:
@@ -304,8 +307,12 @@ will read two files :
 RAPL (Running Average Power Limit) is a feature of modern processors
 that provides energy consumption measurements through hardware counters.
 
-See <https://blog.chih.me/read-cpu-power-with-RAPL.html> for more
-information.
+For the primary sources, see Khan et al., *RAPL in Action: Experiences in
+Using RAPL for Power Measurements*, and Weaver's
+[Reading RAPL energy measurements from Linux](https://web.eece.maine.edu/~vweaver/projects/rapl/)
+(both listed under [References](#references)). This
+[blog post](https://blog.chih.me/read-cpu-power-with-RAPL.html) is a useful
+informal walkthrough.
 
 Despite the name "Intel RAPL", it supports AMD processors since Linux
 kernel 5.8.
@@ -343,12 +350,7 @@ We compute energy consumption as the product of the power consumed and
 the time the power was consumed for. The formula is:
 `Energy = Power * Time`
 
-## References
-
-[Energy Usage Reports: Environmental awareness as part of algorithmic
-accountability](https://arxiv.org/pdf/1911.08354.pdf)
-
-### How CodeCarbon Works
+## How CodeCarbon Works
 
 CodeCarbon uses a scheduler that, by default, calls for a measure every
 15 seconds, so it has no significant overhead.
@@ -433,3 +435,64 @@ These estimates are approximate and subject to regional variations in:
 The emission factors used are defined in the [CodeCarbon source
 code](https://github.com/mlco2/codecarbon/blob/master/webapp/src/helpers/constants.ts).
 They are based on publicly available data and general assumptions.
+
+## References
+
+### Foundational work
+
+Strubell, E., Ganesh, A., & McCallum, A. (2019). *Energy and Policy
+Considerations for Deep Learning in NLP*. Proceedings of ACL 2019.
+<https://arxiv.org/abs/1906.02243>
+
+Lacoste, A., Luccioni, A., Schmidt, V., & Dandres, T. (2019). *Quantifying
+the Carbon Emissions of Machine Learning*. NeurIPS Workshop on Tackling
+Climate Change with Machine Learning.
+<https://arxiv.org/abs/1910.09700>
+
+Lottick, K., Susai, S., Friedler, S. A., & Wilson, J. P. (2019). *Energy
+Usage Reports: Environmental awareness as part of algorithmic
+accountability*. NeurIPS Workshop on Tackling Climate Change with Machine
+Learning. <https://arxiv.org/abs/1911.08354>
+
+Henderson, P., Hu, J., Romoff, J., Brunskill, E., Jurafsky, D., & Pineau, J.
+(2020). *Towards the Systematic Reporting of the Energy and Carbon Footprints
+of Machine Learning*. Journal of Machine Learning Research, 21(248).
+<https://arxiv.org/abs/2002.05651>
+
+Patterson, D., Gonzalez, J., Le, Q., Liang, C., Munguia, L.-M.,
+Rothchild, D., So, D., Texier, M., & Dean, J. (2021). *Carbon Emissions and
+Large Neural Network Training*. <https://arxiv.org/abs/2104.10350>
+
+Luccioni, A. S., Viguier, S., & Ligozat, A.-L. (2022). *Estimating the Carbon
+Footprint of BLOOM, a 176B Parameter Language Model*.
+<https://arxiv.org/abs/2211.02001>
+
+### Hardware measurement
+
+Khan, K. N., Hirki, M., Niemi, T., Nurminen, J. K., & Ou, Z. (2018).
+*RAPL in Action: Experiences in Using RAPL for Power Measurements*.
+ACM Transactions on Modeling and Performance Evaluation of Computing Systems.
+
+Weaver, V. M. *Reading RAPL energy measurements from Linux*.
+<https://web.eece.maine.edu/~vweaver/projects/rapl/>
+
+Microsoft. *Energy Meter Interface (EMI) driver documentation*.
+<https://learn.microsoft.com/en-us/windows-hardware/drivers/powermeter/>
+
+### Carbon intensity data sources
+
+Our World in Data. *Carbon intensity of electricity generation*.
+<https://ourworldindata.org/grapher/carbon-intensity-electricity>
+
+International Energy Agency (2019). *Global Energy & CO2 Status Report*.
+<https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions>
+
+Google Cloud. *Carbon free energy for Google Cloud regions*.
+<https://cloud.google.com/sustainability/region-carbon>
+
+### Citing CodeCarbon
+
+See [CITATION.cff](https://github.com/mlco2/codecarbon/blob/master/CITATION.cff)
+or the "Cite this repository" button on GitHub. The
+[README](https://github.com/mlco2/codecarbon#citation) also carries a ready-made
+BibTeX entry.

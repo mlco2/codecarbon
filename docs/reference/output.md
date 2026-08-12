@@ -22,7 +22,8 @@ It can also be set in the config file as a comma-separated string, e.g.
     The individual `save_to_file`, `save_to_api`, `save_to_logger`,
     `save_to_prometheus` and `save_to_logfire` parameters are deprecated and will be
     removed in a future version. Use `output_methods` instead. When `output_methods`
-    is provided, the `save_to_*` flags are ignored.
+    is provided, the `save_to_*` flags are ignored. See the
+    [deprecations list](https://github.com/mlco2/codecarbon/blob/master/CHANGELOG.md#deprecations-and-migrations).
 
 ## CSV
 
