@@ -77,6 +77,7 @@ A single datacenter can consume large amounts of energy to run computing code. A
 | [Troubleshooting](how-to/troubleshooting.md) | Fix warnings and numbers that look wrong |
 | [API Reference](reference/api.md) | Full parameter documentation |
 | [Framework Examples](how-to/scikit-learn.md) | Example usage patterns |
+| [How CodeCarbon works](explanation/how-it-works.md) | The mental model in one page |
 | [Methodology](explanation/methodology.md) | How emissions are calculated |
 | [Accuracy and validation](explanation/accuracy.md) | How accurate the numbers are, and why |
 | [Alternatives comparison](explanation/alternatives.md) | CodeCarbon vs other carbon tracking tools |
