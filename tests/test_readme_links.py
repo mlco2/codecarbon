@@ -14,6 +14,9 @@ LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 
 @pytest.mark.parametrize("md_file", CHECKED_FILES, ids=lambda p: str(p.name))
 def test_relative_links_exist(md_file):
+    if not md_file.exists():
+        # The wheel-validation job runs the tests without the rest of the repository.
+        pytest.skip(f"{md_file} is not present in this checkout")
     missing = [
         target
         for target in LINK_RE.findall(md_file.read_text())
