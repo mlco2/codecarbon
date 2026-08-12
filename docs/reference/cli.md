@@ -98,3 +98,55 @@ codecarbon detect
 ```
 
 Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon uses to estimate energy consumption. Useful for verifying that CodeCarbon can see all your hardware.
+
+### `codecarbon badge`
+
+Generate a README badge from an existing `emissions.csv`.
+
+**Usage:**
+```bash
+codecarbon badge [OPTIONS]
+```
+
+Reads the emissions file, writes `codecarbon-badge.svg` and `codecarbon-badge.json`
+(a [shields.io endpoint](https://shields.io/badges/endpoint-badge) file), and prints
+a markdown snippet to paste into your README. Everything happens locally: no network
+call, no account, no data leaves your machine.
+
+**Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--file` | path | ./emissions.csv | Emissions file to read |
+| `--project` | string | - | Only use rows of this project |
+| `--select` | choice | last | Which run(s) to report: `last`, `mean` or `total` |
+| `--metric` | choice | emissions | What to show: `emissions`, `energy` or `both` |
+| `--output-dir` | path | . | Where to write the badge files |
+| `--label` | string | carbon | Left-hand badge text |
+| `--color` | string | grey | Badge colour |
+| `--format` | choice | all | Files to write: `svg`, `json` or `all` |
+
+**Examples:**
+```bash
+# Badge for the last run
+codecarbon badge
+
+# Average over every run of one project, showing energy too
+codecarbon badge --project my-training --select mean --metric both
+
+# Write into the docs assets folder
+codecarbon badge --output-dir docs/assets
+```
+
+The badge is colour-neutral by default, and reports exactly what the CSV contains.
+Keep in mind that CodeCarbon values are estimates: CPU power may come from a TDP
+model and carbon intensity is often a country average, so a badge is a useful
+order-of-magnitude signal rather than an audited figure. If you want a colour, pass
+`--color` explicitly.
+
+You can regenerate the badge in CI after a benchmark job and commit the SVG, or
+publish `codecarbon-badge.json` at a public URL and point shields.io at it:
+
+```markdown
+![carbon](https://img.shields.io/endpoint?url=https://example.org/codecarbon-badge.json)
+```

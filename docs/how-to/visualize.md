@@ -105,3 +105,8 @@ The app also provides a visualization of regional carbon intensity of electricit
 - [Configure CodeCarbon](configuration.md) for additional tracking options
 - [Integrate with experiment tracking tools](comet.md) like Comet for seamless workflow integration
 - [Join our Discord](https://discord.gg/GS9js2XkJR) to share your results and discuss emissions tracking with the community
+
+## Generate a README badge
+
+To turn a run into a badge you can commit next to your CI badges, see
+[`codecarbon badge`](../reference/cli.md#codecarbon-badge).
