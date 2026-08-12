@@ -98,3 +98,57 @@ codecarbon detect
 ```
 
 Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon uses to estimate energy consumption. Useful for verifying that CodeCarbon can see all your hardware.
+
+### `codecarbon doctor`
+
+Report, for each power component, whether CodeCarbon measures it or estimates it.
+
+**Usage:**
+```bash
+codecarbon doctor [OPTIONS]
+```
+
+CodeCarbon always produces a number, but on many machines part of it comes from a
+model rather than from a hardware energy counter: the CPU falls back to a load
+model when RAPL is not readable, RAM is always modelled, and a GPU that no driver
+exposes contributes nothing. `doctor` runs the normal hardware detection and
+prints the status of each component, why a better method was not used, and the
+concrete fix.
+
+**Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `--json` | flag | false | Print the report as JSON, for CI checks and bug reports |
+| `--strict` | flag | false | Exit with code 1 if any component is estimated |
+
+**Example output:**
+```text
+CodeCarbon 3.3.0 - measurement quality report
+
+RAM  31.1 GB
+    ESTIMATED - RAM power estimation model
+    Why: no platform exposes a DRAM energy counter to CodeCarbon
+    Fix: none; see https://docs.codecarbon.io/explanation/methodology/#ram
+
+CPU  12th Gen Intel(R) Core(TM) i7-1260P
+    ESTIMATED - CPU load model over a 28 W TDP
+    Why: /sys/class/powercap/intel-rapl exists but its energy counter is not
+         readable by this user (permission denied)
+    Fix: sudo chmod -R a+r /sys/class/powercap/intel-rapl
+
+GPU  1 x NVIDIA A100-SXM4-40GB
+    MEASURED - NVML/AMDSMI
+
+1 of 3 power components are measured directly.
+```
+
+Statuses are:
+
+- `MEASURED` — read from a hardware energy counter (RAPL, PowerMetrics, the
+  Windows Energy Meter Interface, NVML or AMDSMI).
+- `ESTIMATED` — derived from a model, typically CPU load over a TDP value.
+- `UNAVAILABLE` — the component was not found and contributes nothing.
+
+Use `--strict` in CI to fail a job when a machine silently falls back to
+estimation, and paste `codecarbon doctor --json` into bug reports.

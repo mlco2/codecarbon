@@ -490,6 +490,51 @@ def detect():
             f" BUT only tracking these GPU ids : {hardware_info['gpu_ids']}"
         )
     print(f"- GPU model: {gpu_model_str}")
+    print("\nRun `codecarbon doctor` to see what is measured and what is estimated.")
+
+
+@codecarbon.command("doctor", short_help="Report measurement quality per component.")
+def doctor(
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print the report as JSON.")
+    ] = False,
+    strict: Annotated[
+        bool,
+        typer.Option(
+            "--strict", help="Exit with code 1 if any component is estimated."
+        ),
+    ] = False,
+):
+    """
+    Tell you, for each power component, whether CodeCarbon measures it or
+    estimates it, why, and how to improve it.
+    """
+    import json
+
+    from codecarbon.diagnostics import ESTIMATED, diagnose, render_text, summary
+    from codecarbon.emissions_tracker import EmissionsTracker
+
+    tracker = EmissionsTracker(save_to_file=False)
+    tracker._ensure_hardware_ready()
+    diagnostics = diagnose(tracker._hardware)
+
+    if json_output:
+        typer.echo(
+            json.dumps(
+                {
+                    "codecarbon_version": __version__,
+                    "components": [d.as_dict() for d in diagnostics],
+                    "summary": summary(diagnostics),
+                },
+                indent=2,
+            )
+        )
+    else:
+        print(f"CodeCarbon {__version__} - measurement quality report\n")
+        print(render_text(diagnostics))
+
+    if strict and any(d.status == ESTIMATED for d in diagnostics):
+        raise typer.Exit(1)
 
 
 def questionary_prompt(prompt, list_options, default):

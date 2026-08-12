@@ -1,5 +1,8 @@
 # Improve Measurement Accuracy with RAPL
 
+Run `codecarbon doctor` first: it tells you whether RAPL is already used on this
+machine, and if not, whether the interface is missing or only unreadable.
+
 RAPL (Running Average Power Limit) is a hardware feature on modern Intel and AMD processors that provides direct energy measurements through CPU counters. Enabling RAPL access gives CodeCarbon significantly more accurate CPU power measurements compared to software-based estimation.
 
 ## How RAPL Improves Accuracy
