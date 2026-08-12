@@ -114,19 +114,9 @@ class TaskEmissionsData:
     output_tokens: int = 0
     n_requests: int = 0
 
-    @property
-    def energy_per_output_token(self) -> float:
-        """Energy in kWh per output token, 0.0 if no output token was recorded."""
-        if not self.output_tokens:
-            return 0.0
-        return self.energy_consumed / self.output_tokens
-
-    @property
-    def emissions_per_request(self) -> float:
-        """Emissions in kgCO2eq per request, 0.0 if no request was recorded."""
-        if not self.n_requests:
-            return 0.0
-        return self.emissions / self.n_requests
+    # Energy per token and emissions per request are deliberately not exposed:
+    # `values` is built from `__dict__`, so a property reaches no output, and
+    # both are one division away from the columns above.
 
     @property
     def values(self) -> OrderedDict:

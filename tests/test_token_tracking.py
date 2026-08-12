@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+from unittest import mock
 
 from pandas import read_csv
 
@@ -50,27 +51,6 @@ class TestExtractTokenCounts(unittest.TestCase):
         self.assertEqual((0, 0), extract_token_counts({"text": "hello"}))
 
 
-class TestTaskEmissionsDataProperties(unittest.TestCase):
-    def _task_data(self, **kwargs):
-        tracker = EmissionsTracker(save_to_file=False, allow_multiple_runs=True)
-        tracker.start_task("properties")
-        tracker.record_tokens(**kwargs)
-        tracker.stop_task()
-        task = tracker._tasks["properties"].out()
-        tracker.stop()
-        return task
-
-    def test_zero_counters_do_not_raise(self):
-        task = self._task_data(n_requests=0)
-        self.assertEqual(0.0, task.energy_per_output_token)
-        self.assertEqual(0.0, task.emissions_per_request)
-
-    def test_derived_values(self):
-        task = self._task_data(output_tokens=100, n_requests=4)
-        self.assertAlmostEqual(task.energy_consumed / 100, task.energy_per_output_token)
-        self.assertAlmostEqual(task.emissions / 4, task.emissions_per_request)
-
-
 class TestTokenTracking(unittest.TestCase):
     def setUp(self) -> None:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -90,11 +70,32 @@ class TestTokenTracking(unittest.TestCase):
         self.assertEqual(52, data.output_tokens)
         self.assertEqual(3, data.n_requests)
 
-    def test_record_tokens_without_active_task_is_ignored(self):
+    def test_record_tokens_without_active_task_warns_and_records_nothing(self):
         tracker = EmissionsTracker(save_to_file=False, allow_multiple_runs=True)
         tracker.start()
-        tracker.record_tokens(output_tokens=10)
+        with mock.patch("codecarbon.emissions_tracker.logger") as mock_logger:
+            tracker.record_tokens(output_tokens=10)
         tracker.stop()
+
+        self.assertEqual({}, tracker._tasks)
+        mock_logger.warning.assert_called_once()
+        self.assertIn("No active task", mock_logger.warning.call_args[0][0])
+
+    def test_response_without_usage_logs_a_debug_hint(self):
+        tracker = EmissionsTracker(save_to_file=False, allow_multiple_runs=True)
+        with TaskEmissionsTracker("inference", tracker=tracker) as task:
+            # A streamed OpenAI chunk carries no usage unless the caller asked
+            # for stream_options={"include_usage": True}.
+            with mock.patch("codecarbon.emissions_tracker.logger") as mock_logger:
+                task.record_tokens(response={"choices": [], "usage": None})
+        data = tracker._tasks["inference"].out()
+        tracker.stop()
+
+        self.assertEqual(
+            (0, 0, 1), (data.input_tokens, data.output_tokens, data.n_requests)
+        )
+        mock_logger.debug.assert_called_once()
+        self.assertIn("include_usage", mock_logger.debug.call_args[0][0])
 
     def test_token_counts_are_written_to_the_task_csv(self):
         tracker = EmissionsTracker(

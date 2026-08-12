@@ -76,9 +76,9 @@ task.record_tokens(input_tokens=128, output_tokens=256)
 ```
 
 Counts accumulate over the life of the task, and the resulting `TaskEmissionsData`
-exposes `input_tokens`, `output_tokens` and `n_requests`, plus two derived values:
-`energy_per_output_token` (kWh per output token) and `emissions_per_request`
-(kgCO₂eq per request).
+exposes `input_tokens`, `output_tokens` and `n_requests` — written to the task CSV
+alongside `energy_consumed` and `emissions`, so energy per output token and
+emissions per request are one division away.
 
 !!! warning
     Measure enough requests for the task to last several `measure_power_secs`

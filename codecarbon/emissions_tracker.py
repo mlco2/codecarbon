@@ -819,6 +819,15 @@ class BaseEmissionsTracker(ABC):
             return
         if response is not None:
             extracted_input, extracted_output = extract_token_counts(response)
+            if not extracted_input and not extracted_output:
+                # Most common cause: a streamed OpenAI chunk, whose `usage` is
+                # None unless the request passed
+                # stream_options={"include_usage": True}.
+                logger.debug(
+                    "record_tokens : No token count found on the given response, "
+                    "recording 0 tokens. For a streamed response, ask your client "
+                    'for usage data (OpenAI: stream_options={"include_usage": True}).'
+                )
             input_tokens += extracted_input
             output_tokens += extracted_output
         task.record_tokens(
