@@ -73,6 +73,41 @@ class TestApplePowerMetrics:
 
         assert cpu_details == expected_details
 
+    @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
+    @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._setup_cli")
+    def test_get_details_without_samples(self, mock_setup, mock_log_values, tmp_path):
+        """An empty log must report 0 W, not NaN, which would poison all totals."""
+        (tmp_path / "empty_powermetrics_log.txt").write_text("")
+        powermetrics = ApplePowermetrics(
+            output_dir=str(tmp_path),
+            log_file_name="empty_powermetrics_log.txt",
+        )
+
+        assert powermetrics.get_details() == {
+            "CPU Power": 0.0,
+            "CPU Energy Delta": 0.0,
+            "GPU Power": 0.0,
+            "GPU Energy Delta": 0.0,
+        }
+
+    @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
+    @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._setup_cli")
+    def test_get_details_without_gpu_samples(
+        self, mock_setup, mock_log_values, tmp_path
+    ):
+        """A log with no GPU line must report 0 W for the GPU, not NaN."""
+        (tmp_path / "cpu_only_log.txt").write_text("CPU Power: 500 mW\n")
+        powermetrics = ApplePowermetrics(
+            output_dir=str(tmp_path),
+            log_file_name="cpu_only_log.txt",
+        )
+
+        details = powermetrics.get_details()
+
+        assert details["CPU Power"] == 0.5
+        assert details["GPU Power"] == 0.0
+        assert details["GPU Energy Delta"] == 0.0
+
     def test_is_powermetrics_available_returns_false_on_instantiation_error(self):
         from codecarbon.core.powermetrics import clear_powermetrics_cache
 

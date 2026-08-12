@@ -175,29 +175,23 @@ class ApplePowermetrics:
         try:
             with open(self._log_file_path) as f:
                 logfile = f.read()
-            cpu_pattern = r"CPU Power: (\d+) mW"
-            cpu_power_list = re.findall(cpu_pattern, logfile)
-
-            details["CPU Power"] = np.mean(
-                [float(power) / 1000 for power in cpu_power_list]
-            )
-            details["CPU Energy Delta"] = np.sum(
-                [
-                    (self._interval / 1000) * (float(power) / 1000)
-                    for power in cpu_power_list
-                ]
-            )
-            gpu_pattern = r"GPU Power: (\d+) mW"
-            gpu_power_list = re.findall(gpu_pattern, logfile)
-            details["GPU Power"] = np.mean(
-                [float(power) / 1000 for power in gpu_power_list]
-            )
-            details["GPU Energy Delta"] = np.sum(
-                [
-                    (self._interval / 1000) * (float(power) / 1000)
-                    for power in gpu_power_list
-                ]
-            )
+            for chip_part in ("CPU", "GPU"):
+                power_list = re.findall(rf"{chip_part} Power: (\d+) mW", logfile)
+                if not power_list:
+                    # np.mean([]) is NaN, and NaN poisons every downstream total,
+                    # so report 0 W instead and make the situation visible.
+                    logger.warning(
+                        f"Powermetrics returned no '{chip_part} Power' sample in "
+                        + f"{self._log_file_path}, reporting 0 W."
+                    )
+                    details[f"{chip_part} Power"] = 0.0
+                    details[f"{chip_part} Energy Delta"] = 0.0
+                    continue
+                watts = [float(power) / 1000 for power in power_list]
+                details[f"{chip_part} Power"] = np.mean(watts)
+                details[f"{chip_part} Energy Delta"] = np.sum(
+                    [(self._interval / 1000) * watt for watt in watts]
+                )
         except Exception as e:
             logger.info(
                 f"Unable to read Powermetrics logged file at {self._log_file_path}\n \
