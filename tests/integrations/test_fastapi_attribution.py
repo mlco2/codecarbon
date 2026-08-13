@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import math
+import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -17,6 +19,8 @@ from codecarbon.integrations.fastapi.attribution import (
     MEASURED,
     UNRESOLVED,
     EnergyAttributor,
+    _TimedCoro,
+    install_cpu_accounting,
 )
 
 WATTS = 100.0
@@ -117,6 +121,18 @@ def test_equal_overlap_splits_evenly_and_idle_stays_unattributed(clock):
     assert r1.energy == pytest.approx(one_second)
     assert r2.energy == pytest.approx(one_second)
     assert a.unattributed_kwh == pytest.approx(WATTS * 0.5 / 3.6e6)
+
+
+def test_zero_width_window_is_ignored(clock):
+    """Two samples at the same instant must not divide by a zero-width window."""
+    a = make(clock)
+    a.begin("GET /a")
+    clock.advance(1.0)
+    a.on_window(clock.energy_kwh)
+    settled = a.settled_kwh
+    a.on_window(clock.energy_kwh + 1.0)  # same timestamp, energy jumped
+    assert a.windows_settled == 1
+    assert a.settled_kwh == settled  # the jump is not banked, nothing shared
 
 
 def test_window_with_nothing_in_flight_is_unattributed(clock):
@@ -319,6 +335,51 @@ def test_cpu_window_with_no_one_on_cpu_is_idle_energy(clock):
     assert a.baseline_watts() == pytest.approx(WATTS)
 
 
+def test_cpu_accounting_charges_real_cpu_time_to_the_owning_request():
+    """The task factory must bill a task's resumptions to the request in context."""
+    a = EnergyAttributor(weighting="cpu")
+
+    async def drive():
+        install_cpu_accounting(asyncio.get_running_loop())
+        busy = a.begin("GET /busy")
+        await asyncio.create_task(_burn(0.02))
+        sleeper = a.begin("GET /sleep")
+        await asyncio.create_task(asyncio.sleep(0.01))
+        cancelled = asyncio.create_task(asyncio.sleep(10))
+        await asyncio.sleep(0)
+        cancelled.cancel()  # drives _TimedCoro.throw
+        with pytest.raises(asyncio.CancelledError):
+            await cancelled
+        return busy, sleeper
+
+    busy, sleeper = asyncio.run(drive())
+    assert busy.cpu_acc[0] > 0
+    # the sleeper's own task burned near-zero CPU compared with the burner
+    assert sleeper.cpu_acc[0] < busy.cpu_acc[0]
+    a.close()  # weighting == "cpu": also clears the context var
+
+
+def _burn(seconds: float):
+    async def inner():
+        deadline = time.thread_time() + seconds
+        while time.thread_time() < deadline:
+            pass
+
+    return inner()
+
+
+def test_timed_coro_delegates_close_await_and_attributes():
+    acc = [0.0]
+
+    async def coro():
+        return 42
+
+    wrapped = _TimedCoro(coro(), acc)
+    assert wrapped.cr_await is None  # __getattr__ delegates
+    assert wrapped.__await__() is not None
+    wrapped.close()
+
+
 def test_rejects_bad_configuration():
     with pytest.raises(ValueError):
         EnergyAttributor(weighting="vibes")
@@ -500,3 +561,125 @@ def test_attribution_path_takes_no_out_of_band_hardware_samples():
         tracker.stop()
         middleware.attributor.close()
     assert calls == []
+
+
+def test_tracker_observer_is_removable_and_survives_a_raising_callback():
+    """The tracker must not let one bad observer break a sampling window."""
+    from codecarbon import OfflineEmissionsTracker
+
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA",
+        save_to_file=False,
+        allow_multiple_runs=True,
+        log_level="error",
+    )
+    seen = []
+
+    def boom(_kwh):
+        raise RuntimeError("bad observer")
+
+    tracker.add_energy_window_observer(boom)
+    tracker.add_energy_window_observer(seen.append)
+    tracker._notify_energy_window_observers()  # must not raise
+    assert len(seen) == 1
+
+    tracker.remove_energy_window_observer(boom)
+    tracker.remove_energy_window_observer(boom)  # idempotent
+    tracker._notify_energy_window_observers()
+    assert len(seen) == 2
+    assert tracker._window_observers == [seen.append]
+
+
+def test_shutdown_unhooks_the_observer_and_flushes_in_flight_requests():
+    """shutdown_codecarbon_middleware must detach from the tracker and emit."""
+    from fastapi import FastAPI
+
+    from codecarbon import OfflineEmissionsTracker
+    from codecarbon.integrations.fastapi.middleware import (
+        add_codecarbon_middleware,
+        shutdown_codecarbon_middleware,
+    )
+
+    app = FastAPI()
+    emitted = []
+    attributor = EnergyAttributor(on_request=emitted.append)
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA",
+        measure_power_secs=0.1,
+        force_cpu_power=100,
+        force_ram_power=10,
+        save_to_file=False,
+        allow_multiple_runs=True,
+        log_level="error",
+    )
+    app.state.codecarbon_tracker = tracker
+    add_codecarbon_middleware(app, attribution=attributor)
+    middleware = app.state.codecarbon_middleware
+
+    tracker.start()
+    try:
+
+        middleware._bind_attributor(SimpleNamespace(app=app))
+        assert attributor.on_window in tracker._window_observers
+        attributor.begin("GET /hanging")
+    finally:
+        tracker.stop()
+        shutdown_codecarbon_middleware(app)
+
+    assert attributor.on_window not in tracker._window_observers
+    assert middleware._attribution_tracker is None
+    assert len(emitted) == 1  # the in-flight request was flushed by close()
+
+
+def test_cpu_weighting_end_to_end_installs_the_task_factory():
+    """weighting="cpu" through the middleware: factory installed, CPU billed."""
+    import httpx
+    from fastapi import FastAPI
+
+    from codecarbon import OfflineEmissionsTracker
+    from codecarbon.integrations.fastapi.middleware import add_codecarbon_middleware
+
+    app = FastAPI()
+
+    @app.get("/burn")
+    async def burn():
+        deadline = time.thread_time() + 0.05
+        while time.thread_time() < deadline:
+            pass
+        return {}
+
+    emitted = []
+    attributor = EnergyAttributor(weighting="cpu", on_request=emitted.append)
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA",
+        measure_power_secs=0.1,
+        force_cpu_power=100,
+        force_ram_power=10,
+        save_to_file=False,
+        allow_multiple_runs=True,
+        log_level="error",
+    )
+    app.state.codecarbon_tracker = tracker
+    add_codecarbon_middleware(app, attribution=attributor)
+    middleware = app.state.codecarbon_middleware
+
+    async def drive():
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://t"
+        ) as client:
+            assert (await client.get("/burn")).status_code == 200
+        assert asyncio.get_running_loop().get_task_factory() is not None
+        await asyncio.sleep(0.3)
+
+    tracker.start()
+    try:
+        asyncio.run(drive())
+    finally:
+        tracker.stop()
+        middleware.attributor.close()
+
+    # exactly one observer: a rebuilt middleware stack must not double-count
+    assert tracker._window_observers.count(attributor.on_window) == 1
+    assert len(emitted) == 1
+    assert emitted[0].weighting == "cpu"
+    assert emitted[0].cpu_seconds > 0  # real on-thread CPU was billed
