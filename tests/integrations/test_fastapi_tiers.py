@@ -30,7 +30,6 @@ from codecarbon.integrations.fastapi.tiers import (
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 
-
 def _run_finalize_immediately(coro: Any) -> None:
     import asyncio
     from concurrent import futures
@@ -214,7 +213,9 @@ def test_estimated_tier_derives_energy_from_duration() -> None:
 
 def test_estimated_tier_without_known_intensity_is_unavailable() -> None:
     middleware = CodeCarbonMiddleware(MagicMock())
-    tracker = SimpleNamespace(_total_energy=SimpleNamespace(kWh=0.0), _total_emissions=0.0)
+    tracker = SimpleNamespace(
+        _total_energy=SimpleNamespace(kWh=0.0), _total_emissions=0.0
+    )
     data = _emissions_data(duration=3600.0, cpu_power=100.0)
     measurement = _build(middleware, [_cpu("constant")], data, tracker)
     assert not measurement.available
@@ -244,9 +245,7 @@ def test_endpoint_totals_accumulate_in_aggregate_only_tier(
     finalize_deferred_immediately,
 ) -> None:
     data = _emissions_data(duration=0.03, energy_consumed=1e-6, emissions=5e-7)
-    application, _ = _app_with_tier(
-        [_cpu("cpu_load")], data, on_request_complete=None
-    )
+    application, _ = _app_with_tier([_cpu("cpu_load")], data, on_request_complete=None)
     seen = []
     client = TestClient(application)
     for _ in range(3):
