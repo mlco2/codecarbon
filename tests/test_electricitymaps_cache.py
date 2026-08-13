@@ -144,6 +144,17 @@ class TestElectricityMapsCache(unittest.TestCase):
         assert electricitymaps_api.get_carbon_intensity(self._geo, "token-b") == 412.0
 
     @responses.activate
+    def test_cache_key_never_holds_the_raw_token(self):
+        self._add_success_response()
+        electricitymaps_api.get_carbon_intensity(self._geo, "super-secret-token")
+
+        # THEN the secret is only present as a hash, so it cannot leak through
+        # the cache nor the debug log that renders the key.
+        keys = list(electricitymaps_api._cache)
+        assert len(keys) == 1
+        assert "super-secret-token" not in keys[0]
+
+    @responses.activate
     def test_cooldown_does_not_log_one_error_per_call(self):
         responses.add(
             responses.GET,

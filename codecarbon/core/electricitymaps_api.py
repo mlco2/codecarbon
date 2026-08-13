@@ -1,3 +1,5 @@
+import hashlib
+import threading
 import time
 from typing import Any, Dict, Optional, Tuple
 
@@ -22,25 +24,33 @@ ELECTRICITYMAPS_COOLDOWN_MAX: int = 3600
 _cache: Dict[str, Tuple[float, float]] = {}
 _cooldown_until: float = 0.0
 _cooldown_duration: float = 0.0
+# Emissions are computed from a background measurement thread, so every
+# read-modify-write of the state above is serialised. The lock is never held
+# across the HTTP request.
+_lock = threading.Lock()
 
 
 def reset_cache() -> None:
     """Drop the cached carbon intensities and any pending failure cooldown."""
     global _cooldown_until, _cooldown_duration
-    _cache.clear()
-    _cooldown_until = 0.0
-    _cooldown_duration = 0.0
+    with _lock:
+        _cache.clear()
+        _cooldown_until = 0.0
+        _cooldown_duration = 0.0
 
 
 def _cache_key(params: Dict[str, Any], electricitymaps_api_token: str) -> str:
     # The token is part of the key: two trackers in one process may use
-    # different tokens, and must not share a cached value.
+    # different tokens, and must not share a cached value. It is hashed so the
+    # raw secret is never held in the cache nor rendered in logs.
     joined = ",".join(f"{key}={params[key]}" for key in sorted(params))
-    return f"{joined},token={electricitymaps_api_token}"
+    token_digest = hashlib.sha256(electricitymaps_api_token.encode()).hexdigest()[:16]
+    return f"{joined},token={token_digest}"
 
 
 def _get_cached_carbon_intensity(key: str) -> Optional[float]:
-    cached = _cache.get(key)
+    with _lock:
+        cached = _cache.get(key)
     if cached is None:
         return None
     fetched_at, carbon_intensity_g_per_kWh = cached
@@ -51,11 +61,12 @@ def _get_cached_carbon_intensity(key: str) -> Optional[float]:
 
 def _start_cooldown() -> None:
     global _cooldown_until, _cooldown_duration
-    _cooldown_duration = min(
-        ELECTRICITYMAPS_COOLDOWN_MAX,
-        max(ELECTRICITYMAPS_COOLDOWN_MIN, _cooldown_duration * 2),
-    )
-    _cooldown_until = time.monotonic() + _cooldown_duration
+    with _lock:
+        _cooldown_duration = min(
+            ELECTRICITYMAPS_COOLDOWN_MAX,
+            max(ELECTRICITYMAPS_COOLDOWN_MIN, _cooldown_duration * 2),
+        )
+        _cooldown_until = time.monotonic() + _cooldown_duration
 
 
 def get_carbon_intensity(
@@ -101,10 +112,12 @@ def get_carbon_intensity(
         )
         return cached_carbon_intensity
 
-    if time.monotonic() < _cooldown_until:
+    with _lock:
+        cooldown_until = _cooldown_until
+    if time.monotonic() < cooldown_until:
         raise ElectricityMapsAPICooldownError(
             "Electricity Maps API is in cooldown after a previous failure, "
-            f"retrying in {_cooldown_until - time.monotonic():.0f} seconds"
+            f"retrying in {cooldown_until - time.monotonic():.0f} seconds"
         )
 
     try:
@@ -128,8 +141,9 @@ def get_carbon_intensity(
         _start_cooldown()
         raise
 
-    _cooldown_duration = 0.0
-    _cache[key] = (time.monotonic(), carbon_intensity_g_per_kWh)
+    with _lock:
+        _cooldown_duration = 0.0
+        _cache[key] = (time.monotonic(), carbon_intensity_g_per_kWh)
     return carbon_intensity_g_per_kWh
 
 
