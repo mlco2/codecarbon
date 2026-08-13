@@ -252,7 +252,9 @@ class EnergyAttributor:
         track_endpoints: bool = True,
     ) -> None:
         if weighting not in WEIGHTINGS:
-            raise ValueError(f"weighting must be one of {WEIGHTINGS}, got {weighting!r}")
+            raise ValueError(
+                f"weighting must be one of {WEIGHTINGS}, got {weighting!r}"
+            )
         if cores <= 0:
             raise ValueError(f"cores must be > 0, got {cores!r}")
         self.weighting = weighting
