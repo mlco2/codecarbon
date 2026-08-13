@@ -112,6 +112,7 @@ class ApplePowermetrics:
         self._system = sys.platform.lower()
         self._n_points = n_points
         self._interval = interval
+        self._warned_missing_samples = set()
         self._setup_cli()
 
     def _setup_cli(self) -> None:
@@ -180,10 +181,14 @@ class ApplePowermetrics:
                 if not power_list:
                     # np.mean([]) is NaN, and NaN poisons every downstream total,
                     # so report 0 W instead and make the situation visible.
-                    logger.warning(
-                        f"Powermetrics returned no '{chip_part} Power' sample in "
-                        + f"{self._log_file_path}, reporting 0 W."
-                    )
+                    # get_details() runs every measurement cycle, so warn only
+                    # once per chip part to avoid flooding the log.
+                    if chip_part not in self._warned_missing_samples:
+                        self._warned_missing_samples.add(chip_part)
+                        logger.warning(
+                            f"Powermetrics returned no '{chip_part} Power' sample in "
+                            + f"{self._log_file_path}, reporting 0 W (warned once)."
+                        )
                     details[f"{chip_part} Power"] = 0.0
                     details[f"{chip_part} Energy Delta"] = 0.0
                     continue

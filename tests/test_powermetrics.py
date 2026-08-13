@@ -108,6 +108,24 @@ class TestApplePowerMetrics:
         assert details["GPU Power"] == 0.0
         assert details["GPU Energy Delta"] == 0.0
 
+    @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
+    @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._setup_cli")
+    def test_missing_samples_warns_only_once(
+        self, mock_setup, mock_log_values, tmp_path
+    ):
+        """get_details() runs every cycle, so the warning must not flood the log."""
+        (tmp_path / "cpu_only_log.txt").write_text("CPU Power: 500 mW\n")
+        powermetrics = ApplePowermetrics(
+            output_dir=str(tmp_path),
+            log_file_name="cpu_only_log.txt",
+        )
+
+        with mock.patch("codecarbon.core.powermetrics.logger.warning") as mock_warning:
+            for _ in range(3):
+                assert powermetrics.get_details()["GPU Power"] == 0.0
+
+        mock_warning.assert_called_once()
+
     def test_is_powermetrics_available_returns_false_on_instantiation_error(self):
         from codecarbon.core.powermetrics import clear_powermetrics_cache
 
