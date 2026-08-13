@@ -57,7 +57,6 @@ machine, and nothing else in the CSV tells you which one you got.
 | country_name | Name of the country where the infrastructure is hosted | IP geolocation (geojs, ipinfo.io fallback), or config in offline mode |
 | country_iso_code | 3-letter alphabet ISO Code of the respective country | As `country_name` |
 | region | Province/State/City where the compute infrastructure is hosted | As `country_name`; on cloud, from the cloud region lookup |
-| on_cloud | `Y` if on cloud, `N` for private infrastructure | Cloud instance metadata probe (`core/cloud.py`) |
 | cloud_provider | One of aws/azure/gcp | Cloud instance metadata probe |
 | cloud_region | Geographical region (e.g., us-east-2 for aws, brazilsouth for azure, asia-east1 for gcp) | Cloud instance metadata probe |
 | os | Operating system (e.g., Windows-10-10.0.19044-SP0) | `platform` module |
@@ -75,6 +74,7 @@ machine, and nothing else in the CSV tells you which one you got.
 | gpu_utilization_percent | Average GPU utilization during tracking period (%) | Mean of NVML / AMDSMI utilization samples, taken every second |
 | ram_utilization_percent | Average RAM utilization during tracking period (%) | Mean of `psutil.virtual_memory().percent` samples |
 | ram_used_gb | Average RAM used during tracking period (GB) | Mean of `psutil.virtual_memory().used` samples |
+| on_cloud | `Y` if on cloud, `N` for private infrastructure | Cloud instance metadata probe (`core/cloud.py`) |
 | pue | Power Usage Effectiveness applied to this run (default `1.0`) | Config — see note 4 |
 | wue | Water Usage Effectiveness in L/kWh (default `0`) | Config |
 
@@ -89,7 +89,7 @@ decreasing order of trustworthiness:
 | Intel RAPL (Linux) | Measured — hardware energy counter | `core/rapl.py` |
 | Windows EMI | Measured — hardware energy counter | `core/windows_emi.py` |
 | `powermetrics` (macOS, needs sudo) | Measured — OS-reported power | `core/powermetrics.py` |
-| `cpu_load` mode | **Modelled**: `TDP × normalised CPU load` | `external/hardware.py:330-352` |
+| `cpu_load` mode | **Modelled**: cubic in load with a 10 % TDP floor in `machine` mode, linear `TDP × load/cpu_count` in `process` mode | `external/hardware.py:287-288`, `:345-346` |
 | `constant` mode | **Modelled**: `TDP × 0.5`, a flat 50 % of TDP | `external/hardware.py:362-364` |
 
 The last two are estimates, and on a lightly loaded or unusual machine they can be far
@@ -122,7 +122,7 @@ already-inflated energy.
 
 **5. `latitude` and `longitude` are written at full precision in the CSV.** Rounding to
 one decimal (~11 km) is applied only when data is sent to the CodeCarbon API
-(`core/api_client.py:246`). If the CSV leaves your machine, treat the coordinates as
+(`core/api_client.py:245-246`). If the CSV leaves your machine, treat the coordinates as
 precise.
 
 !!! note
