@@ -114,8 +114,8 @@ dev = [
     "taskipy",
     "bumpver",
     "pre-commit",
-    "ruff==0.16.1",
-    "black==26.5.1",  # keep in sync with the black rev in .pre-commit-config.yaml
+    "ruff",
+    "black",
     "mypy",
     "pytest",
     "requests",
