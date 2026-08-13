@@ -5,18 +5,25 @@ for users holding a token for it. When no provider can answer, `get_forecast`
 returns ``None`` and every caller must degrade to "run now" -- a job is never
 blocked on a missing credential.
 
+HTTP goes through `codecarbon.core.electricitymaps_api.request`, so a failing
+API backs off once for the whole process instead of once per caller. The
+forecast response itself is not cached: it is fetched once per `codecarbon
+wait` invocation, and its useful lifetime is nothing like the current
+intensity's five-minute TTL.
+
 Once pluggable intensity providers land (see issue #1356), `get_forecast`
-should become an optional `forecast()` method on the provider protocol rather
-than a second HTTP client.
+should become an optional `forecast()` method on the provider protocol.
 """
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-import requests
-
-from codecarbon.core.electricitymaps_api import ELECTRICITYMAPS_API_TIMEOUT
+from codecarbon.core.electricitymaps_api import (
+    clear_cooldown,
+    location_params,
+    request,
+)
 from codecarbon.external.geography import GeoMetadata
 from codecarbon.external.logger import logger
 
@@ -35,13 +42,6 @@ class Forecast:
     points: List[IntensityPoint]  # ordered, typically hourly
     source: str
     fetched_at: datetime
-
-
-def _location_params(geo: GeoMetadata) -> Dict[str, Any]:
-    """Build the Electricity Maps location query, as `get_emissions` does."""
-    if geo.latitude:
-        return {"lat": geo.latitude, "lon": geo.longitude}
-    return {"countryCode": geo.country_2letter_iso_code}
 
 
 def _parse_datetime(value: str) -> datetime:
@@ -69,17 +69,7 @@ def get_forecast(
         return None
 
     try:
-        resp = requests.get(
-            FORECAST_URL,
-            params=_location_params(geo),
-            headers={"auth-token": token},
-            timeout=ELECTRICITYMAPS_API_TIMEOUT,
-        )
-        if resp.status_code != 200:
-            body = resp.json()
-            raise ValueError(body.get("error") or body.get("message") or resp.text)
-
-        data = resp.json()
+        data = request(FORECAST_URL, location_params(geo), token)
         horizon_end = datetime.now(timezone.utc) + timedelta(hours=horizon_hours)
         points = [
             IntensityPoint(
@@ -96,6 +86,7 @@ def get_forecast(
         if not points:
             raise ValueError("No usable forecast points in response")
 
+        clear_cooldown()
         return Forecast(
             zone=data.get("zone", ""),
             points=points,

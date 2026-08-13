@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import responses
 
-from codecarbon.core import intensity_forecast
+from codecarbon.core import electricitymaps_api, intensity_forecast
 from codecarbon.core.intensity_forecast import (
     Forecast,
     IntensityPoint,
@@ -45,6 +45,10 @@ def _payload(values, start=None):
 
 class TestGetForecast(unittest.TestCase):
     def setUp(self) -> None:
+        # The forecast shares the Electricity Maps failure cooldown with the
+        # current-intensity path, so a failing test must not starve the next.
+        electricitymaps_api.reset_cache()
+        self.addCleanup(electricitymaps_api.reset_cache)
         self._geo = GeoMetadata(
             country_iso_code="FRA",
             country_name="France",
@@ -62,6 +66,20 @@ class TestGetForecast(unittest.TestCase):
 
     def test_no_token_returns_none_without_calling_api(self):
         assert get_forecast(self._geo, token=None) is None
+
+    @responses.activate
+    def test_shared_cooldown_skips_the_request(self):
+        # A failure on the current-intensity path must back the forecast off
+        # too: no HTTP request, and still a None instead of a raise.
+        electricitymaps_api._start_cooldown()
+        responses.add(
+            responses.GET,
+            intensity_forecast.FORECAST_URL,
+            json=_payload([100]),
+            status=200,
+        )
+        assert get_forecast(self._geo, token="tok") is None
+        assert len(responses.calls) == 0
 
     @responses.activate
     def test_parses_forecast(self):

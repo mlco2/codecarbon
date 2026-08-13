@@ -71,7 +71,7 @@ def wait_for_green_window(
         codecarbon wait --deadline 12h --duration 2h -- python train.py
     """
     from codecarbon.cli.monitor import run_and_monitor
-    from codecarbon.core.config import get_hierarchical_config
+    from codecarbon.core.electricitymaps_api import resolve_token
     from codecarbon.external.logger import set_logger_level
 
     set_logger_level(log_level)
@@ -83,10 +83,7 @@ def wait_for_green_window(
         print(f"ERROR: {e}", file=sys.stderr)
         raise typer.Exit(1)
 
-    config = get_hierarchical_config()
-    token = config.get("electricitymaps_api_token") or config.get(
-        "co2_signal_api_token"
-    )
+    token = resolve_token()
 
     window = find_green_window(job_duration, max_delay, token)
     delay_seconds = 0.0
