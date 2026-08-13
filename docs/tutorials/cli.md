@@ -134,6 +134,7 @@ You've now learned how to track emissions from the command line. Next steps:
 - **Track in Python**: Use the [Python API tutorial](python-api.md) for fine-grained tracking within your code.
 - **Send to Dashboard**: Learn how to [send data to the CodeCarbon dashboard](../how-to/cloud-api.md).
 - **Configure Details**: See the [configuration guide](../how-to/configuration.md) for advanced options like proxy setup.
+- **Run When the Grid Is Green**: Defer a job to the cleanest hours with [`codecarbon wait`](../reference/cli.md#codecarbon-wait-command).
 
 ## See Also
 
