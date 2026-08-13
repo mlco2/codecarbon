@@ -1,4 +1,3 @@
-import hashlib
 import threading
 import time
 from typing import Any, Dict, Optional, Tuple
@@ -41,11 +40,13 @@ def reset_cache() -> None:
 
 def _cache_key(params: Dict[str, Any], electricitymaps_api_token: str) -> str:
     # The token is part of the key: two trackers in one process may use
-    # different tokens, and must not share a cached value. It is hashed so the
-    # raw secret is never held in the cache nor rendered in logs.
+    # different tokens, and must not share a cached value. Only an opaque,
+    # process-local marker is kept, so the raw secret is never held in the
+    # cache nor rendered in logs. builtin hash() is randomly seeded per
+    # process and is not a password digest: it is used to tell tokens apart,
+    # never to protect one.
     joined = ",".join(f"{key}={params[key]}" for key in sorted(params))
-    token_digest = hashlib.sha256(electricitymaps_api_token.encode()).hexdigest()[:16]
-    return f"{joined},token={token_digest}"
+    return f"{joined},token={hash(electricitymaps_api_token):x}"
 
 
 def _get_cached_carbon_intensity(key: str) -> Optional[float]:
