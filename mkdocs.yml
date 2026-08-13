@@ -198,6 +198,7 @@ nav:
   - Reference:
     - API Reference: reference/api.md
     - Output Formats: reference/output.md
+    - Deprecations and Migrations: reference/deprecations.md
     - CLI Reference: reference/cli.md
   - Track GenAI API Calls (EcoLogits) ↗: https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs
   - Join Our Discord 💬 ↗: https://discord.gg/GS9js2XkJR

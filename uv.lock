@@ -514,7 +514,7 @@ provides-extras = ["carbonboard", "viz-legacy"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "black" },
+    { name = "black", specifier = "==26.5.1" },
     { name = "bumpver" },
     { name = "jsonschema" },
     { name = "logfire", specifier = ">=1.0.1" },
@@ -526,7 +526,7 @@ dev = [
     { name = "requests" },
     { name = "requests-mock" },
     { name = "responses" },
-    { name = "ruff" },
+    { name = "ruff", specifier = "==0.16.1" },
     { name = "scikit-learn" },
     { name = "taskipy" },
 ]

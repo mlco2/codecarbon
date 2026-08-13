@@ -114,8 +114,8 @@ dev = [
     "taskipy",
     "bumpver",
     "pre-commit",
-    "ruff",
-    "black",
+    "ruff==0.16.1",
+    "black==26.5.1",  # keep in sync with the black rev in .pre-commit-config.yaml
     "mypy",
     "pytest",
     "requests",
@@ -191,6 +191,12 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 "CITATION.cff" = [
     '^version: {version}$',
 ]
+
+[tool.black]
+# Pin the target rather than letting black infer it from requires-python: the
+# inferred upper bound outran the interpreter, and black then skips its AST
+# safety check. Keep this at the oldest supported Python.
+target-version = ["py310"]
 
 [tool.pytest.ini_options]
 pythonpath = "."
