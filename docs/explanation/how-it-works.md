@@ -35,7 +35,7 @@ number, and the thing most likely to be assumed rather than checked.
 |---|---|---|
 | **CPU** | Measured. Hardware energy counters via RAPL on Linux, the Energy Meter Interface on Windows 11, or `powermetrics` on macOS. | **Modelled** from CPU load and a table lookup of your processor's TDP — or, if the model is unrecognised, a flat guess. |
 | **RAM** | **Always modelled.** There is no RAM power counter on any supported platform. CodeCarbon guesses your DIMM count from total memory and assigns watts per DIMM. | — |
-| **GPU** | Measured. NVML counters read directly from the Nvidia device. | Not counted. Without NVML there is no GPU estimate — the figure is simply absent. |
+| **GPU** | Measured. Energy counters read directly from the device — NVML on Nvidia, AMDSMI on AMD. | Not counted. Without a supported GPU library there is no GPU estimate — the figure is simply absent. |
 
 The consequence is worth stating outright: **the same column in the same CSV can
 be a hardware reading on one machine and an educated guess on another.** A run
