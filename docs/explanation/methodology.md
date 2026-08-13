@@ -51,7 +51,7 @@ instantiating the tracker. Energy is the integral of power over time:
 | Component | Best available source | Modelled fallback |
 |---|---|---|
 | CPU | Intel RAPL (Linux), Energy Meter Interface (Windows 11), `powermetrics` (macOS), Intel Power Gadget (legacy) | TDP × CPU load, or a flat constant |
-| GPU | NVML via `nvidia-ml-py` — a direct device reading | none; without NVML, GPU is not counted |
+| GPU | NVML via `nvidia-ml-py` (Nvidia) or AMDSMI (AMD) — a direct device reading | none; without a supported GPU library, GPU is not counted |
 | RAM | none — there is no RAM power counter | always modelled from an estimated DIMM count |
 
 CodeCarbon does not separately model disk I/O, network transfer, displays,
