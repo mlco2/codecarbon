@@ -317,6 +317,10 @@ class ResourceTracker:
             cpu_future.result()
             gpu_future.result()
 
+        self.tracker._conf["ram_tracking_method"] = self.ram_tracker
+        self.tracker._conf["cpu_tracking_method"] = self.cpu_tracker
+        self.tracker._conf["gpu_tracking_method"] = self.gpu_tracker
+
         logger.info(f"""The below tracking methods have been set up:
                 RAM Tracking Method: {self.ram_tracker}
                 CPU Tracking Method: {self.cpu_tracker}

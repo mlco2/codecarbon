@@ -113,13 +113,11 @@ def _build_header(
 
 def _build_measure(emissions: EmissionsData) -> BoAmpsMeasure:
     """Build a BoAmps measure from EmissionsData."""
-    # Note: emissions.tracking_mode is "process"/"machine" (CodeCarbon's scope),
-    # not the CPU/GPU power tracking method (rapl, nvml, etc.) that BoAmps expects
-    # for cpuTrackingMode/gpuTrackingMode. We omit these fields since we don't
-    # have the actual tracker implementation details in EmissionsData.
     measure = BoAmpsMeasure(
         measurement_method="codecarbon",
         version=emissions.codecarbon_version,
+        cpu_tracking_mode=emissions.cpu_tracking_method or None,
+        gpu_tracking_mode=emissions.gpu_tracking_method or None,
         power_consumption=emissions.energy_consumed,
         measurement_duration=emissions.duration,
         measurement_date_time=_to_boamps_datetime(emissions.timestamp),

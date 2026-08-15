@@ -47,6 +47,9 @@ class EmissionsData:
     on_cloud: str = "N"
     pue: float = 1
     wue: float = 0
+    ram_tracking_method: str = ""
+    cpu_tracking_method: str = ""
+    gpu_tracking_method: str = ""
 
     @property
     def values(self) -> OrderedDict:
