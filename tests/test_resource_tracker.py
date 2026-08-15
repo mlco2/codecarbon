@@ -507,6 +507,31 @@ def test_set_cpu_gpu_ram_tracking_calls_all_setup_steps():
     mock_gpu.assert_called_once_with()
 
 
+def test_run_full_hardware_setup_stores_tracking_methods_in_conf():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+
+    def set_ram():
+        resource_tracker.ram_tracker = "RAM power estimation model"
+
+    def set_cpu():
+        resource_tracker.cpu_tracker = MODE_CPU_LOAD
+
+    def set_gpu():
+        resource_tracker.gpu_tracker = "pynvml"
+
+    with (
+        patch.object(resource_tracker, "set_RAM_tracking", side_effect=set_ram),
+        patch.object(resource_tracker, "set_CPU_tracking", side_effect=set_cpu),
+        patch.object(resource_tracker, "set_GPU_tracking", side_effect=set_gpu),
+    ):
+        resource_tracker._run_full_hardware_setup()
+
+    assert tracker._conf["ram_tracking_method"] == "RAM power estimation model"
+    assert tracker._conf["cpu_tracking_method"] == MODE_CPU_LOAD
+    assert tracker._conf["gpu_tracking_method"] == "pynvml"
+
+
 def test_hardware_cache_reuses_setup():
     from codecarbon.core import hardware_cache
 

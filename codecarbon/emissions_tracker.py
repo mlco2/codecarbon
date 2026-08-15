@@ -1096,6 +1096,9 @@ class BaseEmissionsTracker(ABC):
             latitude=self._conf.get("latitude"),
             ram_total_size=self._conf.get("ram_total_size"),
             tracking_mode=self._conf.get("tracking_mode"),
+            ram_tracking_method=self._conf.get("ram_tracking_method", ""),
+            cpu_tracking_method=self._conf.get("cpu_tracking_method", ""),
+            gpu_tracking_method=self._conf.get("gpu_tracking_method", ""),
             pue=self._pue,
             wue=self._wue,
         )

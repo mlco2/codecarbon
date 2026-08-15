@@ -48,6 +48,9 @@ class TestFileOutput(unittest.TestCase):
             on_cloud="true",
             pue=1.5,
             wue=0.5,
+            ram_tracking_method="RAM power estimation model",
+            cpu_tracking_method="RAPL",
+            gpu_tracking_method="pynvml",
         )
 
     def tearDown(self):

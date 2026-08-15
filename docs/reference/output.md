@@ -64,6 +64,9 @@ The package has an in-built logger that logs data into a CSV file named `emissio
 | gpu_utilization_percent | Average GPU utilization during tracking period (%) |
 | ram_utilization_percent | Average RAM utilization during tracking period (%) |
 | ram_used_gb | Average RAM used during tracking period (GB) |
+| ram_tracking_method | How RAM power was obtained (e.g., `RAM power estimation model`) |
+| cpu_tracking_method | How CPU power was obtained (e.g., `RAPL`, `cpu_load`, `TDP constant`) |
+| gpu_tracking_method | How GPU power was obtained (e.g., `pynvml`, `amdsmi`, `Unspecified`) |
 
 !!! note
     Developers can enhance the Output interface by implementing a custom class that extends `BaseOutput` at `codecarbon/output.py`. For example, to log into a database.
