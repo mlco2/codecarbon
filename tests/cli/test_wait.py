@@ -33,11 +33,15 @@ def no_network(monkeypatch):
     )
 
 
-def _patch_forecast(monkeypatch, values):
+def _patch_forecast(monkeypatch, values, now_intensity=None):
     now = datetime.now(timezone.utc)
     monkeypatch.setattr(
         "codecarbon.core.intensity_forecast.get_forecast",
         lambda geo, **kwargs: _forecast(values, now),
+    )
+    monkeypatch.setattr(
+        "codecarbon.core.electricitymaps_api.get_carbon_intensity",
+        lambda geo, token="": values[0] if now_intensity is None else now_intensity,
     )
 
 
@@ -124,6 +128,38 @@ def test_threshold_short_circuits_the_wait(monkeypatch, capsys, no_network):
 
     assert slept == []
     assert "running now" in capsys.readouterr().out
+
+
+def test_threshold_uses_the_live_intensity_not_the_forecast(
+    monkeypatch, capsys, no_network
+):
+    # The first forecast point is above the threshold, the live grid is below.
+    _patch_forecast(monkeypatch, [300, 300, 100, 100], now_intensity=120)
+    monkeypatch.setattr(wait_module.time, "sleep", lambda s: pytest.fail("slept"))
+    monkeypatch.setattr(
+        "codecarbon.cli.monitor.run_and_monitor", lambda ctx, **kwargs: None
+    )
+
+    wait_module.wait_for_green_window(
+        SimpleNamespace(args=[]), duration="1h", deadline="6h", threshold=150
+    )
+
+    assert "running now" in capsys.readouterr().out
+
+
+def test_only_the_leading_subcommand_name_is_stripped(monkeypatch, no_network):
+    _patch_forecast(monkeypatch, [100, 300, 300])
+    called = {}
+    monkeypatch.setattr(
+        "codecarbon.cli.monitor.run_and_monitor",
+        lambda ctx, **kwargs: called.setdefault("args", list(ctx.args)),
+    )
+
+    wait_module.wait_for_green_window(
+        SimpleNamespace(args=["wait", "--", "make", "wait"]), duration="1h"
+    )
+
+    assert called["args"] == ["--", "make", "wait"]
 
 
 def test_sleeps_until_the_green_window_then_delegates(monkeypatch, no_network):

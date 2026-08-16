@@ -112,7 +112,7 @@ tracker only starts after the sleep, so a waiting process holds no lock.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--duration` | string | 1h | Expected job length, e.g. `90m`, `2h`, `1h30m`, or a plain number of seconds |
-| `--deadline` | string | 12h | Maximum delay before the job must start |
+| `--deadline` | string | 12h | Maximum delay before the job must start; the job itself may finish after it |
 | `--threshold` | float | - | gCO2e/kWh at or below which the job starts immediately, without waiting |
 | `--dry-run` | flag | false | Print the recommendation and exit without waiting or running |
 | `--measure-power-secs` | int | 10 | Interval between two measures |
@@ -149,8 +149,11 @@ The location is detected automatically from your IP address; there is no offline
 A forecast is an optimisation, never a requirement — the job is never blocked on a missing
 credential. If no token is configured, or the API returns an error, a malformed payload or an
 empty forecast, CodeCarbon prints `no forecast available, running now.` and starts the command
-straight away. The same applies when no complete window fits before the deadline, or when the
-forecast says now is already the greenest moment.
+straight away. The same applies when the forecast covers no complete window, or when it says now is already
+the greenest moment.
+
+`--deadline` bounds the *start* time, not the end: `--deadline 12h --duration 2h` considers every
+start in the next 12 hours, so the job may still be running 14 hours from now.
 
 ### `codecarbon detect`
 

@@ -107,9 +107,11 @@ def best_window(
 ) -> Tuple[datetime, float]:
     """Start time minimising mean intensity over `duration`, and that mean.
 
-    Only windows that both start at or after the first forecast point and
-    finish before `deadline` are considered. Returns the earliest point and its
-    intensity when no complete window fits, so "just run it" is the default.
+    `deadline` is the latest acceptable *start* time -- the job may run past
+    it. Only windows starting at or after the first forecast point, at or
+    before `deadline`, and fully covered by the forecast are considered.
+    Returns the earliest point and its intensity when no complete window fits,
+    so "just run it" is the default.
     """
     points = forecast.points
     fallback = (points[0].at, points[0].g_co2e_per_kwh)
@@ -123,7 +125,7 @@ def best_window(
         window_end = start.at + duration
         if window_end > covered_until:
             break
-        if deadline is not None and window_end > deadline:
+        if deadline is not None and start.at > deadline:
             break
         # ponytail: linear rescan per start, fine for hourly points over a few
         # days; use a running sum if horizons ever grow by orders of magnitude.

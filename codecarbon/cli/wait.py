@@ -4,10 +4,11 @@ import re
 import sys
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 import typer
 from rich import print
+
+from codecarbon.external.logger import logger
 
 _DURATION_RE = re.compile(r"^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$")
 
@@ -27,21 +28,33 @@ def parse_duration(value: str) -> timedelta:
 def find_green_window(
     duration: timedelta,
     deadline: timedelta,
-    token: Optional[str],
+    token: str | None,
 ):
     """Return (start, intensity, now_intensity) or None when we should run now."""
+    from codecarbon.core import electricitymaps_api
     from codecarbon.core.intensity_forecast import best_window, get_forecast
     from codecarbon.external.geography import GeoMetadata
     from codecarbon.input import DataSource
 
     geo = GeoMetadata.from_geo_js(DataSource().geo_js_url)
-    forecast = get_forecast(geo, token=token, horizon_hours=_ceil_hours(deadline))
+    # A window may start as late as the deadline, so the forecast must cover
+    # the deadline plus one job length.
+    forecast = get_forecast(
+        geo, token=token, horizon_hours=_ceil_hours(deadline + duration)
+    )
     if forecast is None:
         return None
 
+    try:
+        now_intensity = electricitymaps_api.get_carbon_intensity(geo, token or "")
+    except Exception as e:
+        # The forecast's first point is a stand-in, not the live value.
+        logger.debug(f"wait: current intensity unavailable ({e}), using the forecast.")
+        now_intensity = forecast.points[0].g_co2e_per_kwh
+
     now = datetime.now(timezone.utc)
     start, intensity = best_window(forecast, duration, deadline=now + deadline)
-    return start, intensity, forecast.points[0].g_co2e_per_kwh
+    return start, intensity, now_intensity
 
 
 def _ceil_hours(delta: timedelta) -> int:
@@ -52,7 +65,7 @@ def wait_for_green_window(
     ctx: typer.Context,
     duration: str = "1h",
     deadline: str = "12h",
-    threshold: Optional[float] = None,
+    threshold: float | None = None,
     dry_run: bool = False,
     log_level: str = "error",
     **tracker_args,
@@ -127,6 +140,10 @@ def wait_for_green_window(
         except KeyboardInterrupt:
             print("\n⚠️  Wait interrupted, starting now.", file=sys.stderr)
 
-    # Strip our own subcommand name so `run_and_monitor` sees only the command.
-    ctx.args = [arg for arg in getattr(ctx, "args", []) if arg != "wait"]
+    # Strip our own subcommand name -- only in first position, so a user
+    # command that legitimately contains the word "wait" survives intact.
+    args = list(getattr(ctx, "args", []))
+    if args and args[0] == "wait":
+        args = args[1:]
+    ctx.args = args
     run_and_monitor(ctx, log_level=log_level, **tracker_args)

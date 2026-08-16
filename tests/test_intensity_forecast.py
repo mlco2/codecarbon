@@ -183,18 +183,28 @@ class TestBestWindow(unittest.TestCase):
         start, _ = best_window(forecast, timedelta(hours=2))
         assert start == BASE + timedelta(hours=3)
 
-    def test_deadline_shorter_than_duration_falls_back_to_now(self):
+    def test_deadline_before_the_next_point_leaves_only_now(self):
         forecast = _forecast([300, 100, 100])
         start, mean = best_window(
             forecast, timedelta(hours=2), deadline=BASE + timedelta(minutes=30)
         )
         assert start == BASE
-        assert mean == 300
+        assert mean == 200
+
+    def test_deadline_caps_the_start_time_not_the_end(self):
+        # The deadline is the latest acceptable start: a window starting at it
+        # is allowed even though it finishes afterwards.
+        forecast = _forecast([300, 200, 50, 50])
+        start, mean = best_window(
+            forecast, timedelta(hours=2), deadline=BASE + timedelta(hours=2)
+        )
+        assert start == BASE + timedelta(hours=2)
+        assert mean == 50
 
     def test_deadline_restricts_the_search(self):
         forecast = _forecast([300, 200, 50, 50])
         start, _ = best_window(
-            forecast, timedelta(hours=1), deadline=BASE + timedelta(hours=2)
+            forecast, timedelta(hours=1), deadline=BASE + timedelta(hours=1)
         )
         assert start == BASE + timedelta(hours=1)
 
