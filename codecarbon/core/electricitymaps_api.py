@@ -13,7 +13,7 @@ ELECTRICITYMAPS_API_TIMEOUT: int = 30
 
 # Grid carbon intensity is published hourly at best, while emissions are computed
 # on every measurement tick, so the value is cached instead of refetched.
-ELECTRICITYMAPS_CACHE_TTL: int = 300
+ELECTRICITYMAPS_CACHE_TTL: int = 60
 # After a failure (bad token, network down), retry with an exponential cooldown
 # instead of issuing one doomed request per measurement tick.
 ELECTRICITYMAPS_COOLDOWN_MIN: int = 30
@@ -21,8 +21,9 @@ ELECTRICITYMAPS_COOLDOWN_MAX: int = 3600
 
 # {cache key: (monotonic fetch time, carbon intensity in gCO2e/kWh)}
 _cache: Dict[str, Tuple[float, float]] = {}
-_cooldown_until: float = 0.0
-_cooldown_duration: float = 0.0
+# {cache key: (monotonic time until which requests are skipped, cooldown length)}
+# Keyed like the cache: one tracker's bad token must not block another's good one.
+_cooldown: Dict[str, Tuple[float, float]] = {}
 # Emissions are computed from a background measurement thread, so every
 # read-modify-write of the state above is serialised. The lock is never held
 # across the HTTP request.
@@ -31,11 +32,9 @@ _lock = threading.Lock()
 
 def reset_cache() -> None:
     """Drop the cached carbon intensities and any pending failure cooldown."""
-    global _cooldown_until, _cooldown_duration
     with _lock:
         _cache.clear()
-        _cooldown_until = 0.0
-        _cooldown_duration = 0.0
+        _cooldown.clear()
 
 
 def _cache_key(params: Dict[str, Any], electricitymaps_api_token: str) -> str:
@@ -60,14 +59,14 @@ def _get_cached_carbon_intensity(key: str) -> Optional[float]:
     return carbon_intensity_g_per_kWh
 
 
-def _start_cooldown() -> None:
-    global _cooldown_until, _cooldown_duration
+def _start_cooldown(key: str) -> None:
     with _lock:
-        _cooldown_duration = min(
+        previous = _cooldown.get(key, (0.0, 0.0))[1]
+        duration = min(
             ELECTRICITYMAPS_COOLDOWN_MAX,
-            max(ELECTRICITYMAPS_COOLDOWN_MIN, _cooldown_duration * 2),
+            max(ELECTRICITYMAPS_COOLDOWN_MIN, previous * 2),
         )
-        _cooldown_until = time.monotonic() + _cooldown_duration
+        _cooldown[key] = (time.monotonic() + duration, duration)
 
 
 def get_carbon_intensity(
@@ -97,7 +96,6 @@ def get_carbon_intensity(
             If the Electricity Maps API request fails, returns an error, or is
             currently in a failure cooldown.
     """
-    global _cooldown_duration
     params: Dict[str, Any]
     if geo.latitude:
         params = {"lat": geo.latitude, "lon": geo.longitude}
@@ -114,7 +112,7 @@ def get_carbon_intensity(
         return cached_carbon_intensity
 
     with _lock:
-        cooldown_until = _cooldown_until
+        cooldown_until = _cooldown.get(key, (0.0, 0.0))[0]
     if time.monotonic() < cooldown_until:
         raise ElectricityMapsAPICooldownError(
             "Electricity Maps API is in cooldown after a previous failure, "
@@ -139,11 +137,11 @@ def get_carbon_intensity(
         if carbon_intensity_g_per_kWh is None:
             raise ElectricityMapsAPIError("No carbonIntensity data in response")
     except Exception:
-        _start_cooldown()
+        _start_cooldown(key)
         raise
 
     with _lock:
-        _cooldown_duration = 0.0
+        _cooldown.pop(key, None)
         _cache[key] = (time.monotonic(), carbon_intensity_g_per_kWh)
     return carbon_intensity_g_per_kWh
 

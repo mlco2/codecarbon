@@ -100,15 +100,16 @@ carbon intensity of your grid. The query runs at the end of each tracking run,
 and also periodically during long runs (every
 `api_call_interval × measure_power_secs` seconds; default: every ~2 minutes).
 
-!!! warning "Carbon intensity is cached for 5 minutes"
+!!! warning "Carbon intensity is cached for 60 seconds"
 
-    A fetched carbon intensity is reused for 5 minutes before the API is
+    A fetched carbon intensity is reused for 60 seconds before the API is
     queried again, so measurements taken within that window share the same
-    intensity value. Electricity Maps publishes hourly at best, but this does
-    mean a run shorter than 5 minutes converts all of its energy with a single
-    intensity reading rather than one per tick. After a failure (invalid token,
+    intensity value. The TTL is shorter than the default ~2 minute
+    `api_call_interval`, so the periodic queries keep their cadence.
+    Electricity Maps publishes hourly at best. After a failure (invalid token,
     network down), requests are skipped for an exponentially growing cooldown
-    (30 s up to 1 hour) and CodeCarbon falls back to its own country data.
+    (30 s up to 1 hour), per location and token, and CodeCarbon falls back to
+    its own country data.
 
 The Electricity Maps API offers a free tier. You can sign up and get a token at
 [electricitymaps.com](https://app.electricitymaps.com/sign-up).

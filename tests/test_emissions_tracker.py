@@ -1022,9 +1022,6 @@ class TestCarbonTracker(unittest.TestCase):
         "codecarbon.emissions_tracker.BaseEmissionsTracker.get_detected_hardware"
     )
     @mock.patch("codecarbon.emissions_tracker.PeriodicScheduler")
-    # A negative TTL expires every entry immediately, so each measurement sees a
-    # fresh intensity: this test is about cumulating deltas, not about caching.
-    @mock.patch("codecarbon.core.electricitymaps_api.ELECTRICITYMAPS_CACHE_TTL", -1)
     def test_cumulative_emissions_with_varying_intensity(
         self,
         mock_scheduler,
@@ -1098,7 +1095,9 @@ class TestCarbonTracker(unittest.TestCase):
         data1 = tracker._prepare_emissions_data()
         self.assertAlmostEqual(data1.emissions, 0.1)
 
-        # Step 2
+        # Step 2: drop the cache so this tick sees a fresh intensity, as it
+        # would once the TTL expires. This test is about cumulating deltas.
+        electricitymaps_api.reset_cache()
         tracker._measure_power_and_energy()
         # total_energy = 2.0, delta_energy = 1.0, intensity = 200 => delta_emissions = 0.2 kg
         # total_emissions = 0.3 kg
@@ -1106,6 +1105,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertAlmostEqual(data2.emissions, 0.3)
 
         # Step 3
+        electricitymaps_api.reset_cache()
         tracker._measure_power_and_energy()
         # total_energy = 3.0, delta_energy = 1.0, intensity = 300 => delta_emissions = 0.3 kg
         # total_emissions = 0.6 kg

@@ -106,9 +106,10 @@ class TestElectricityMapsCache(unittest.TestCase):
         for _ in range(10):
             with self.assertRaises(electricitymaps_api.ElectricityMapsAPIError):
                 electricitymaps_api.get_carbon_intensity(self._geo)
-            durations.append(electricitymaps_api._cooldown_duration)
+            key = next(iter(electricitymaps_api._cooldown))
+            durations.append(electricitymaps_api._cooldown[key][1])
             # Let the cooldown expire so the next call reaches the API again.
-            electricitymaps_api._cooldown_until = 0.0
+            electricitymaps_api._cooldown[key] = (0.0, durations[-1])
 
         assert durations[0] == electricitymaps_api.ELECTRICITYMAPS_COOLDOWN_MIN
         assert durations[1] == electricitymaps_api.ELECTRICITYMAPS_COOLDOWN_MIN * 2
@@ -127,10 +128,28 @@ class TestElectricityMapsCache(unittest.TestCase):
 
         responses.reset()
         self._add_success_response()
-        electricitymaps_api._cooldown_until = 0.0
+        key, (_, duration) = next(iter(electricitymaps_api._cooldown.items()))
+        electricitymaps_api._cooldown[key] = (0.0, duration)
         electricitymaps_api.get_carbon_intensity(self._geo)
 
-        assert electricitymaps_api._cooldown_duration == 0.0
+        assert electricitymaps_api._cooldown == {}
+
+    @responses.activate
+    def test_cooldown_is_not_shared_between_tokens(self):
+        responses.add(
+            responses.GET,
+            electricitymaps_api.URL,
+            json={"error": "invalid token"},
+            status=401,
+        )
+        with self.assertRaises(electricitymaps_api.ElectricityMapsAPIError):
+            electricitymaps_api.get_carbon_intensity(self._geo, "bad-token")
+
+        responses.reset()
+        self._add_success_response()
+        # THEN a tracker with a working token is not blocked by the other's
+        # failure cooldown.
+        assert electricitymaps_api.get_carbon_intensity(self._geo, "good") == 58.7
 
     @responses.activate
     def test_cache_is_not_shared_between_tokens(self):
