@@ -146,7 +146,8 @@ Statuses are:
 - `MEASURED` — read from a hardware energy counter (RAPL, PowerMetrics, the
   Windows Energy Meter Interface, NVML or AMDSMI).
 - `ESTIMATED` — derived from a model, typically CPU load over a TDP value.
-- `UNAVAILABLE` — the component was not found, or its power cannot be read, so
-  it contributes nothing.
+- `UNAVAILABLE` — the component exists but its power cannot be read, so it
+  contributes nothing. Hardware you do not have (no GPU, for instance) is not
+  listed and is not counted in the summary.
 
 Paste `codecarbon detect --json` into bug reports.

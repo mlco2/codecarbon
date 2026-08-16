@@ -188,7 +188,7 @@ def _gpu_diagnostic(hw) -> ComponentDiagnostic:
     details = hw.devices.get_gpu_details()
     names = ", ".join(sorted({device["name"] for device in details or []})) or "unknown"
     detail = f"{hw.devices.device_count} x {names}"
-    if any(device.get("power_usage") for device in details or []):
+    if any(device.get("power_usage") is not None for device in details or []):
         return ComponentDiagnostic(
             component="GPU",
             detail=detail,
@@ -208,17 +208,6 @@ def _gpu_diagnostic(hw) -> ComponentDiagnostic:
     )
 
 
-def _no_gpu_diagnostic() -> ComponentDiagnostic:
-    return ComponentDiagnostic(
-        component="GPU",
-        detail="none detected",
-        status=UNAVAILABLE,
-        method="none",
-        reason="no NVIDIA GPU (nvidia-ml-py) and no AMD GPU (amdsmi) found",
-        fix="if you have a GPU, install the matching extra: pip install codecarbon[gpu]",
-    )
-
-
 def diagnose(hardware) -> list[ComponentDiagnostic]:
     """
     Build a measurement quality report from the hardware objects a tracker set up.
@@ -235,8 +224,6 @@ def diagnose(hardware) -> list[ComponentDiagnostic]:
             diagnostics.append(_ram_diagnostic(hw))
         elif isinstance(hw, GPU):
             diagnostics.append(_gpu_diagnostic(hw))
-    if not any(d.component == "GPU" for d in diagnostics):
-        diagnostics.append(_no_gpu_diagnostic())
     return diagnostics
 
 

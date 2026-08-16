@@ -3,11 +3,12 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Annotated
+from typing import Optional
 
 import typer
 from rich import print
 from rich.prompt import Confirm
+from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
 from codecarbon.cli.cli_utils import (
@@ -61,7 +62,7 @@ def _version_callback(value: bool) -> None:
 
 @codecarbon.callback()
 def version(
-    version: bool | None = typer.Option(
+    version: Optional[bool] = typer.Option(
         None,
         "--version",
         "-v",
@@ -487,8 +488,9 @@ def detect(
     previous_level = logger.level
     try:
         set_logger_level("error")
-        # allow_multiple_runs: without it, a live run makes __init__ return early
-        # and leave the tracker half-built - exactly when someone runs `detect`.
+        # allow_multiple_runs is already the default; it is passed explicitly so
+        # a config file setting it to false cannot make __init__ return early and
+        # leave the tracker half-built - exactly when someone runs `detect`.
         tracker = EmissionsTracker(
             save_to_file=False, allow_multiple_runs=True, log_level="error"
         )

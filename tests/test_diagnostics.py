@@ -241,13 +241,23 @@ def test_ram_is_always_estimated():
     assert "user-provided constant" in forced.method
 
 
-def test_gpu_measured_and_missing_gpu_reported():
+def test_gpu_measured_and_absent_gpu_is_not_reported():
     (found,) = [d for d in diagnose([GPU(["A100", "A100"])]) if d.component == "GPU"]
     assert found.status == MEASURED
     assert found.detail == "2 x A100"
 
-    (missing,) = [d for d in diagnose([RAM()]) if d.component == "GPU"]
-    assert missing.status == UNAVAILABLE
+    # no GPU on the machine: nothing to report, and nothing to count against the
+    # summary or suggest a fix for.
+    assert [d for d in diagnose([RAM()]) if d.component == "GPU"] == []
+    assert summary(diagnose([RAM()])).startswith("0 of 1")
+
+
+def test_gpu_reporting_zero_watts_is_still_measured():
+    # an idle GPU, or a driver returning 0 mW, is a real reading
+    (found,) = [
+        d for d in diagnose([GPU(["A100"], power_usage=0)]) if d.component == "GPU"
+    ]
+    assert found.status == MEASURED
 
 
 def test_gpu_without_a_power_reading_is_not_measured():
@@ -274,7 +284,7 @@ def test_report_shape_and_summary():
             "fix",
         }
         assert component.status in {MEASURED, ESTIMATED, UNAVAILABLE}
-    assert summary(report).startswith("1 of 3")
+    assert summary(report).startswith("1 of 2")
     assert "RAM" in render_text(report)
 
 
@@ -336,8 +346,8 @@ def _patch_detect_hardware(monkeypatch, hardware_list):
 
 
 def test_detect_allows_multiple_runs(monkeypatch):
-    # without it, a live run makes __init__ return early and the hardware setup
-    # raises AttributeError on a half-built tracker.
+    # passed explicitly so a config file setting it to false cannot make
+    # __init__ return early and leave a half-built tracker.
     kwargs_seen = _patch_detect_hardware(monkeypatch, [CPU("intel_rapl")])
     assert CliRunner().invoke(cli_main.codecarbon, ["detect"]).exit_code == 0
     assert kwargs_seen["allow_multiple_runs"] is True
@@ -351,9 +361,9 @@ def test_detect_json_output(monkeypatch):
     assert set(payload) == {"codecarbon_version", "hardware", "components", "summary"}
     assert payload["hardware"] == HARDWARE_INFO
     assert payload["codecarbon_version"] == cli_main.__version__
-    assert {c["component"] for c in payload["components"]} == {"RAM", "CPU", "GPU"}
+    assert {c["component"] for c in payload["components"]} == {"RAM", "CPU"}
     assert payload["summary"].startswith(
-        "1 of 3 power components are measured directly."
+        "1 of 2 power components are measured directly."
     )
     cpu = next(c for c in payload["components"] if c["component"] == "CPU")
     assert cpu == {
@@ -374,6 +384,6 @@ def test_detect_text_output(monkeypatch):
     assert "- CPU model: Fake CPU" in result.output
     assert f"CodeCarbon {cli_main.__version__}" in result.output
     assert "RAM" in result.output and "MEASURED" in result.output
-    assert "1 of 3 power components are measured directly." in result.output
+    assert "1 of 2 power components are measured directly." in result.output
     # the human report is not JSON
     assert not result.output.lstrip().startswith("{")
