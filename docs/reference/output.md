@@ -64,20 +64,14 @@ The package has an in-built logger that logs data into a CSV file named `emissio
 | gpu_utilization_percent | Average GPU utilization during tracking period (%) |
 | ram_utilization_percent | Average RAM utilization during tracking period (%) |
 | ram_used_gb | Average RAM used during tracking period (GB) |
-| scheduler | Batch scheduler that started the job, e.g. `slurm`. Empty outside of an HPC job |
-| job_id | Scheduler job ID, e.g. the value of `SLURM_JOB_ID` |
-| job_name | Scheduler job name |
-| job_user | User the job runs as |
-| job_account | Account/project the job is charged to |
-| job_partition | Partition/queue the job runs in |
-| node_name | Name of the compute node, as the scheduler knows it |
+| scheduler_job_id | Batch scheduler job ID, e.g. the value of `SLURM_JOB_ID`. Empty outside of an HPC job |
 
-The last seven fields are filled in automatically, see
-[Using CodeCarbon on SLURM](../how-to/slurm.md#job-metadata-in-the-output).
+`scheduler_job_id` is filled in automatically, see
+[Using CodeCarbon on SLURM](../how-to/slurm.md#the-job-id-in-the-output).
 
 !!! warning "Existing `emissions.csv` files are rotated once"
 
-    These seven columns change the CSV header. On the first run after upgrading,
+    This column changes the CSV header. On the first run after upgrading,
     CodeCarbon backs up an existing `emissions.csv` next to it and starts a new
     file with the new header. Nothing is lost, but a pipeline reading a fixed
     path will see a file with only the new rows in it.

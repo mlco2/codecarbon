@@ -21,10 +21,7 @@ import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
-from codecarbon.core.schedulers import (
-    detect_job_metadata,
-    warn_on_multi_rank_double_counting,
-)
+from codecarbon.core.schedulers import detect_scheduler_job_id
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
@@ -602,9 +599,11 @@ class BaseEmissionsTracker(ABC):
             )
 
         assert self._tracking_mode in ["machine", "process"]
-        warn_on_multi_rank_double_counting(self._tracking_mode)
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
+        # The job identity cannot change during the process' life, so it is read
+        # once here rather than on every flush.
+        self._scheduler_job_id = detect_scheduler_job_id()
         self._initialize_runtime_state()
         self._initialize_scheduler_state()
         self._initialize_emissions_context()
@@ -1103,7 +1102,7 @@ class BaseEmissionsTracker(ABC):
             tracking_mode=self._conf.get("tracking_mode"),
             pue=self._pue,
             wue=self._wue,
-            **detect_job_metadata(),
+            scheduler_job_id=self._scheduler_job_id,
         )
         logger.debug(total_emissions)
         return total_emissions

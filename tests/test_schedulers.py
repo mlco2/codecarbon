@@ -1,93 +1,36 @@
 import unittest
 from unittest import mock
 
-from codecarbon.core.schedulers import (
-    JOB_METADATA_FIELDS,
-    detect_job_metadata,
-    warn_on_multi_rank_double_counting,
-)
-
-SLURM_ENV = {
-    "SLURM_JOB_ID": "1234567",
-    "SLURM_JOB_NAME": "train",
-    "SLURM_JOB_USER": "researcher",
-    "SLURM_JOB_ACCOUNT": "proj42",
-    "SLURM_JOB_PARTITION": "gpu",
-    "SLURMD_NODENAME": "nid001",
-}
+from codecarbon.core.schedulers import detect_scheduler_job_id
 
 
 class TestSchedulers(unittest.TestCase):
-    @mock.patch.dict("os.environ", SLURM_ENV, clear=True)
-    def test_detect_slurm_env_parses_variables(self):
-        self.assertEqual(
-            detect_job_metadata(),
-            {
-                "scheduler": "slurm",
-                "job_id": "1234567",
-                "job_name": "train",
-                "job_user": "researcher",
-                "job_account": "proj42",
-                "job_partition": "gpu",
-                "node_name": "nid001",
-            },
-        )
+    @mock.patch.dict("os.environ", {"SLURM_JOB_ID": "1234567"}, clear=True)
+    def test_slurm_job_id_is_detected(self):
+        self.assertEqual("1234567", detect_scheduler_job_id())
 
     @mock.patch.dict("os.environ", {}, clear=True)
     def test_no_scheduler_env_is_inert(self):
-        metadata = detect_job_metadata()
-        self.assertEqual(set(metadata), set(JOB_METADATA_FIELDS))
-        self.assertEqual(set(metadata.values()), {""})
+        self.assertEqual("", detect_scheduler_job_id())
 
-    @mock.patch.dict("os.environ", {"SLURM_JOB_ID": "42"}, clear=True)
-    def test_partial_slurm_env_leaves_others_empty(self):
-        metadata = detect_job_metadata()
-        self.assertEqual(metadata["scheduler"], "slurm")
-        self.assertEqual(metadata["job_id"], "42")
-        self.assertEqual(metadata["job_name"], "")
+    @mock.patch.dict(
+        "os.environ", {"CODECARBON_SCHEDULER_JOB_ID": "99.pbsserver"}, clear=True
+    )
+    def test_generic_env_contract_without_slurm(self):
+        self.assertEqual("99.pbsserver", detect_scheduler_job_id())
 
     @mock.patch.dict(
         "os.environ",
-        {"CODECARBON_SCHEDULER": "pbs", "CODECARBON_JOB_ID": "99.pbsserver"},
+        {"SLURM_JOB_ID": "1234567", "CODECARBON_SCHEDULER_JOB_ID": "override"},
         clear=True,
     )
-    def test_generic_env_contract_without_slurm(self):
-        metadata = detect_job_metadata()
-        self.assertEqual(metadata["scheduler"], "pbs")
-        self.assertEqual(metadata["job_id"], "99.pbsserver")
-
-    @mock.patch.dict(
-        "os.environ", dict(SLURM_ENV, CODECARBON_JOB_ACCOUNT="billed-to"), clear=True
-    )
     def test_generic_env_contract_overrides_slurm(self):
-        metadata = detect_job_metadata()
-        self.assertEqual(metadata["job_account"], "billed-to")
-        self.assertEqual(metadata["job_id"], "1234567")
+        self.assertEqual("override", detect_scheduler_job_id())
 
 
-class TestMultiRankWarning(unittest.TestCase):
-    def _warnings(self, tracking_mode="machine", **env):
-        with mock.patch.dict("os.environ", env, clear=True):
-            with mock.patch("codecarbon.core.schedulers.logger") as mocked_logger:
-                warn_on_multi_rank_double_counting(tracking_mode)
-        return mocked_logger.warning.call_count
-
-    def test_several_ranks_per_node_in_machine_mode_warns(self):
-        self.assertEqual(1, self._warnings(SLURM_NTASKS_PER_NODE="4"))
-        # Heterogeneous allocations are written "4(x2)".
-        self.assertEqual(1, self._warnings(SLURM_NTASKS_PER_NODE="4(x2)"))
-
-    def test_no_warning_without_double_counting(self):
-        self.assertEqual(0, self._warnings(SLURM_NTASKS_PER_NODE="1"))
-        self.assertEqual(0, self._warnings())
-        self.assertEqual(
-            0, self._warnings(tracking_mode="process", SLURM_NTASKS_PER_NODE="4")
-        )
-
-
-class TestSchedulerMetadataOnEmissionsData(unittest.TestCase):
-    @mock.patch.dict("os.environ", SLURM_ENV, clear=True)
-    def test_job_fields_reach_the_emissions_data(self):
+class TestSchedulerJobIdOnEmissionsData(unittest.TestCase):
+    @mock.patch.dict("os.environ", {"SLURM_JOB_ID": "1234567"}, clear=True)
+    def test_job_id_reaches_the_emissions_data(self):
         from codecarbon.emissions_tracker import OfflineEmissionsTracker
 
         tracker = OfflineEmissionsTracker(
@@ -99,9 +42,6 @@ class TestSchedulerMetadataOnEmissionsData(unittest.TestCase):
         finally:
             tracker.stop()
 
-        self.assertEqual(data.scheduler, "slurm")
-        self.assertEqual(data.job_id, "1234567")
-        self.assertEqual(data.job_account, "proj42")
-        self.assertEqual(data.node_name, "nid001")
-        # The new fields must be part of the CSV columns.
-        self.assertIn("job_partition", data.values)
+        self.assertEqual("1234567", data.scheduler_job_id)
+        # The new field must be part of the CSV columns.
+        self.assertIn("scheduler_job_id", data.values)

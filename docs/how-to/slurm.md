@@ -160,25 +160,15 @@ tail -f logs/<job_id>.out
 sinfo
 ```
 
-## Job metadata in the output
+## The job ID in the output
 
-When CodeCarbon runs inside a SLURM job step it reads the job's identity from the
-environment SLURM already provides and stores it on every emissions record. There is
-nothing to enable and no code to change.
+When CodeCarbon runs inside a SLURM job step it reads `SLURM_JOB_ID` from the
+environment SLURM already provides and stores it on every emissions record, in the
+`scheduler_job_id` column. There is nothing to enable and no code to change. Outside
+of a job the column is empty, so nothing changes for non-HPC users.
 
-| Output field | SLURM environment variable |
-|--------------|----------------------------|
-| `scheduler` | set to `slurm` when `SLURM_JOB_ID` is present |
-| `job_id` | `SLURM_JOB_ID` |
-| `job_name` | `SLURM_JOB_NAME` |
-| `job_user` | `SLURM_JOB_USER` |
-| `job_account` | `SLURM_JOB_ACCOUNT` |
-| `job_partition` | `SLURM_JOB_PARTITION` |
-| `node_name` | `SLURMD_NODENAME` |
-
-Outside of a job all of these are empty, so nothing changes for non-HPC users.
-
-This makes `emissions.csv` directly joinable against SLURM accounting:
+This makes `emissions.csv` directly joinable against SLURM accounting, which knows
+everything else about the job already:
 
 ```bash
 sacct -j 1234567 --format=JobID,JobName,Account,Partition,Elapsed,AllocTRES --parsable2
@@ -186,23 +176,19 @@ sacct -j 1234567 --format=JobID,JobName,Account,Partition,Elapsed,AllocTRES --pa
 
 !!! tip "You no longer need `CODECARBON_PROJECT_NAME=$SLURM_JOB_ID`"
     Overloading the project name with the job ID used to be the only way to tell runs
-    apart. Keep `project_name` for your project and use `job_id` for the job.
+    apart. Keep `project_name` for your project and use `scheduler_job_id` for the job.
 
 ### Other schedulers
 
-Any field can be set, or overridden, with an environment variable named after it. This
-is how PBS, LSF or OAR sites get the same columns without CodeCarbon needing to know
-about their scheduler — map their variables onto ours in your job script:
+Set `CODECARBON_SCHEDULER_JOB_ID` and the column is filled the same way. This is how
+PBS, LSF or OAR sites get it without CodeCarbon needing to know about their scheduler:
 
 ```bash
-export CODECARBON_SCHEDULER=pbs
-export CODECARBON_JOB_ID=$PBS_JOBID
-export CODECARBON_JOB_NAME=$PBS_JOBNAME
-export CODECARBON_NODE_NAME=$(hostname)
+export CODECARBON_SCHEDULER_JOB_ID=$PBS_JOBID
 ```
 
-These variables take precedence over the auto-detected SLURM values, so they also work
-for correcting a field on a site whose SLURM configuration is unusual.
+It takes precedence over the auto-detected SLURM value, so it also works for
+correcting the field on a site whose SLURM configuration is unusual.
 
 !!! warning "One tracker per node"
     Power is a property of the node, not of a rank. If you launch CodeCarbon on every
