@@ -137,7 +137,6 @@ carbonserver-api-requirements = "uv pip compile carbonserver/pyproject.toml --ge
 build-doc = "uv run --only-group doc zensical build -f mkdocs.yml && uv run --only-group doc python scripts/check_docs_links.py site"
 precommit-install = "pre-commit install"
 precommit-update = "pre-commit autoupdate"
-precommit = "pre-commit run --all-files"
 mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
 # No `lint` task: the pre-commit hooks fix what they can, so this rewrites
 # files rather than only reporting. Use `mypy-check` for a read-only check.
