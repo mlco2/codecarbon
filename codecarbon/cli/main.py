@@ -508,7 +508,7 @@ def badge_command(
         "emissions", "--metric", help="What to show: emissions, energy or both."
     ),
     output_dir: Path = typer.Option(
-        Path("."), "--output-dir", help="Where to write the badge files."
+        Path("."), "--output-dir", help="Where to write the badge file."
     ),
     label: str = typer.Option(
         badge.DEFAULT_LABEL, "--label", help="Left-hand badge text."
@@ -516,20 +516,16 @@ def badge_command(
     color: str = typer.Option(
         badge.DEFAULT_COLOR, "--color", help="Badge colour, neutral grey by default."
     ),
-    output_format: str = typer.Option(
-        "all", "--format", help="Files to write: svg, json or all."
-    ),
 ):
     """
     Generate a badge for your README from an existing emissions file.
 
-    Nothing leaves your machine : the badge is rendered locally from the CSV.
+    Nothing leaves your machine : the shields.io endpoint JSON is written
+    locally from the CSV.
     """
-    formats = ("svg", "json") if output_format == "all" else (output_format,)
     try:
-        rows = badge.load_runs(file, project)
-        summary = badge.summarise(rows, select)
-        paths = badge.write(
+        summary = badge.summarise(badge.load_runs(file, project), select)
+        path = badge.write(
             emissions_file=file,
             project=project,
             select=select,
@@ -537,24 +533,22 @@ def badge_command(
             label=label,
             color=color,
             output_dir=output_dir,
-            formats=formats,
         )
     except (FileNotFoundError, ValueError, KeyError) as error:
         print(f"[bold red]{escape(str(error))}[/]")
         raise typer.Exit(1)
 
     print(
-        f"Read {summary['runs']} row(s) from {file}"
+        f"Read {summary['runs']} run(s) from {file}"
         + (f" (project={project})" if project else "")
     )
     print(
         f"{select}: {badge.format_value(summary['emissions'], 'gCO2eq')}, "
         f"{badge.format_value(summary['energy_consumed'], 'Wh')}"
     )
-    for path in paths:
-        print(f"Wrote {path}")
-    print("\nPaste into your README:\n")
-    print(escape(badge.render_markdown(label, output_dir)))
+    print(f"Wrote {path}")
+    print("\nPublish that file at a public URL and paste into your README:\n")
+    print(escape(badge.render_markdown(label)))
 
 
 def questionary_prompt(prompt, list_options, default):

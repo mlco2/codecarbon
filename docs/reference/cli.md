@@ -108,10 +108,14 @@ Generate a README badge from an existing `emissions.csv`.
 codecarbon badge [OPTIONS]
 ```
 
-Reads the emissions file, writes `codecarbon-badge.svg` and `codecarbon-badge.json`
-(a [shields.io endpoint](https://shields.io/badges/endpoint-badge) file), and prints
-a markdown snippet to paste into your README. Everything happens locally: no network
+Reads the emissions file, writes `codecarbon-badge.json` (a
+[shields.io endpoint](https://shields.io/badges/endpoint-badge) file) and prints a
+markdown snippet to paste into your README. Everything happens locally: no network
 call, no account, no data leaves your machine.
+
+CodeCarbon writes one CSV row per flush, each holding the cumulative total of its
+run, so the badge uses the last row of each `run_id`: `last` is the latest run,
+`total` the sum over runs, `mean` the average per run.
 
 **Options:**
 
@@ -121,10 +125,9 @@ call, no account, no data leaves your machine.
 | `--project` | string | - | Only use rows of this project |
 | `--select` | choice | last | Which run(s) to report: `last`, `mean` or `total` |
 | `--metric` | choice | emissions | What to show: `emissions`, `energy` or `both` |
-| `--output-dir` | path | . | Where to write the badge files |
+| `--output-dir` | path | . | Where to write the badge file |
 | `--label` | string | carbon | Left-hand badge text |
 | `--color` | string | grey | Badge colour |
-| `--format` | choice | all | Files to write: `svg`, `json` or `all` |
 
 **Examples:**
 ```bash
@@ -144,8 +147,8 @@ model and carbon intensity is often a country average, so a badge is a useful
 order-of-magnitude signal rather than an audited figure. If you want a colour, pass
 `--color` explicitly.
 
-You can regenerate the badge in CI after a benchmark job and commit the SVG, or
-publish `codecarbon-badge.json` at a public URL and point shields.io at it:
+Regenerate the badge in CI after a benchmark job, publish `codecarbon-badge.json`
+at a public URL and point shields.io at it:
 
 ```markdown
 ![carbon](https://img.shields.io/endpoint?url=https://example.org/codecarbon-badge.json)

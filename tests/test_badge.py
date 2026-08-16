@@ -1,5 +1,4 @@
 import json
-import xml.etree.ElementTree as ET
 
 import pytest
 from typer.testing import CliRunner
@@ -7,10 +6,20 @@ from typer.testing import CliRunner
 from codecarbon import badge
 from codecarbon.cli.main import codecarbon as cli_app
 
-CSV_CONTENT = """timestamp,project_name,emissions,energy_consumed
-2024-01-01T00:00:00,alpha,0.001,0.010
-2024-01-02T00:00:00,beta,0.500,1.000
-2024-01-03T00:00:00,alpha,0.003,0.020
+CSV_CONTENT = """timestamp,project_name,run_id,emissions,energy_consumed
+2024-01-01T00:00:00,alpha,run-1,0.001,0.010
+2024-01-02T00:00:00,beta,run-2,0.500,1.000
+2024-01-03T00:00:00,alpha,run-3,0.003,0.020
+"""
+
+# Two runs, flushed several times each. Every row holds the cumulative total of
+# its run, so only the last row of each run counts.
+MULTI_FLUSH_CSV = """timestamp,project_name,run_id,emissions,energy_consumed
+2024-01-01T00:00:00,alpha,run-1,0.001,0.010
+2024-01-01T00:01:00,alpha,run-1,0.002,0.020
+2024-01-01T00:02:00,alpha,run-1,0.004,0.040
+2024-01-02T00:00:00,alpha,run-2,0.005,0.050
+2024-01-02T00:01:00,alpha,run-2,0.006,0.060
 """
 
 
@@ -64,16 +73,20 @@ def test_message_for_metrics():
     assert badge.message_for(summary, "total", "both") == "12.4 gCO2eq | 31 Wh total"
 
 
-def test_render_svg_is_wellformed():
-    svg = badge.render_svg("carbon", "12.4 gCO2eq/run")
-    root = ET.fromstring(svg)
-    texts = [element.text for element in root.iter("{http://www.w3.org/2000/svg}text")]
-    assert "12.4 gCO2eq/run" in texts
-    assert "carbon" in texts
+def test_cumulative_rows_are_not_double_counted(tmp_path):
+    path = tmp_path / "emissions.csv"
+    path.write_text(MULTI_FLUSH_CSV, encoding="utf-8")
+    rows = badge.load_runs(path)
+    assert badge.summarise(rows, "last")["emissions"] == pytest.approx(0.006)
+    assert badge.summarise(rows, "total")["emissions"] == pytest.approx(0.010)
+    assert badge.summarise(rows, "mean")["emissions"] == pytest.approx(0.005)
+    assert badge.summarise(rows, "total")["energy_consumed"] == pytest.approx(0.100)
+    assert badge.summarise(rows, "last")["runs"] == 2
 
 
-def test_render_svg_escapes():
-    assert "<script>" not in badge.render_svg("a<script>", "b & c")
+def test_endpoint_json_quotes_are_escaped():
+    payload = json.loads(badge.render_endpoint_json('a "quoted" label', "b & c"))
+    assert payload["label"] == 'a "quoted" label'
 
 
 def test_endpoint_json_schema():
@@ -86,13 +99,10 @@ def test_endpoint_json_schema():
     }
 
 
-def test_write_creates_both_files(emissions_file, tmp_path):
-    paths = badge.write(emissions_file, output_dir=tmp_path / "assets")
-    assert [path.name for path in paths] == [
-        "codecarbon-badge.svg",
-        "codecarbon-badge.json",
-    ]
-    assert all(path.is_file() for path in paths)
+def test_write_creates_endpoint_file(emissions_file, tmp_path):
+    path = badge.write(emissions_file, output_dir=tmp_path / "assets")
+    assert path.name == "codecarbon-badge.json"
+    assert json.loads(path.read_text())["schemaVersion"] == 1
 
 
 def test_cli_badge_writes_files(emissions_file, tmp_path):
@@ -111,7 +121,6 @@ def test_cli_badge_writes_files(emissions_file, tmp_path):
         ],
     )
     assert result.exit_code == 0, result.output
-    assert (tmp_path / "codecarbon-badge.svg").is_file()
     assert (tmp_path / "codecarbon-badge.json").is_file()
 
 
