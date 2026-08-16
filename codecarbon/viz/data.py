@@ -7,6 +7,11 @@ from dash import dash_table as dt
 from codecarbon.core.emissions import Emissions
 from codecarbon.input import DataSource, DataSourceException
 
+# Equivalence factors, documented in docs/explanation/equivalences.md.
+KG_CO2E_PER_MILE = 0.409
+KG_CO2_PER_TV_HOUR = 0.097
+KG_CO2_PER_HOUSEHOLD_WEEK = 160.58
+
 
 class Data:
     def __init__(self):
@@ -62,7 +67,7 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: number of miles driven by avg car
         """
-        return f"{project_carbon_equivalent / 0.409:.0f}"
+        return f"{project_carbon_equivalent / KG_CO2E_PER_MILE:.0f}"
 
     def get_tv_time(self, project_carbon_equivalent: float):
         """
@@ -73,7 +78,7 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: equivalent TV time
         """
-        time_in_minutes = project_carbon_equivalent * (1 / 0.097) * 60
+        time_in_minutes = project_carbon_equivalent / KG_CO2_PER_TV_HOUR * 60
         formated_value = f"{time_in_minutes:.0f} minutes"
         if time_in_minutes >= 60:
             time_in_hours = time_in_minutes / 60
@@ -93,7 +98,7 @@ class Data:
         :param project_carbon_equivalent: total project emissions in kg CO2E
         :return: % of weekly emissions re: an average American household
         """
-        return f"{project_carbon_equivalent / 160.58 * 100:.2f}"
+        return f"{project_carbon_equivalent / KG_CO2_PER_HOUSEHOLD_WEEK * 100:.2f}"
 
     def get_global_emissions_choropleth_data(
         self, net_energy_consumed: float

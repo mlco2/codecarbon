@@ -11,16 +11,16 @@ and are used by `viz/carbonboard.py` and `viz/carbonboard_on_api.py`.
 
 | Comparison | Factor | Applied as | Source |
 |---|---|---|---|
-| Car travel | **0.409 kg CO₂e per mile** | `emissions_kg / 0.409` → miles driven (`data.py:65`) | US EPA |
-| Television | **0.097 kg CO₂ per hour** | `emissions_kg / 0.097` → hours of TV (`data.py:76`) | unsourced in code |
-| US household | **160.58 kg CO₂ per week** | `emissions_kg / 160.58 × 100` → % of a household-week (`data.py:96`) | US EPA |
+| Car travel | **0.409 kg CO₂e per mile** | `emissions_kg / 0.409` → miles driven (`Data.get_car_miles`) | US EPA |
+| Television | **0.097 kg CO₂ per hour** | `emissions_kg / 0.097` → hours of TV (`Data.get_tv_time`) | unsourced in code |
+| US household | **160.58 kg CO₂ per week** | `emissions_kg / 160.58 × 100` → % of a household-week (`Data.get_household_fraction`) | US EPA |
 
 ## How each factor is derived
 
 The derivations below are reproduced from the docstrings in `viz/data.py`; they
 are the only justification the code carries.
 
-**Car — 0.409 kg CO₂e/mile** (`data.py:54-65`)
+**Car — 0.409 kg CO₂e/mile** (`KG_CO2E_PER_MILE`)
 
 ```text
 8.89 × 10⁻³ metric tons CO₂ per gallon of gasoline
@@ -34,14 +34,14 @@ This is the US EPA passenger-vehicle figure, so it reflects the US vehicle
 fleet and US fuel. It is not a European or global average, and the unit is
 **miles**, not kilometres.
 
-**Television — 0.097 kg CO₂/hour** (`data.py:67-76`)
+**Television — 0.097 kg CO₂/hour** (`KG_CO2_PER_TV_HOUR`)
 
 Described in the code only as the ratio for "a 32-inch LCD flat screen TV".
 **No source, screen power, or grid intensity is given in the code**, so the
 figure cannot be reproduced from what ships in the repository. Treat it as an
 illustrative round number rather than a defensible factor.
 
-**US household — 160.58 kg CO₂/week** (`data.py:86-96`)
+**US household — 160.58 kg CO₂/week** (`KG_CO2_PER_HOUSEHOLD_WEEK`)
 
 ```text
 5.734 t CO₂  electricity

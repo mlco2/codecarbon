@@ -49,45 +49,26 @@ from codecarbon.external.hardware import (  # noqa: E402
 from codecarbon.external.ram import RAM_SLOT_POWER_X86  # noqa: E402
 
 
-def _viz_data():
-    """Import ``codecarbon.viz.data`` without requiring the dash extra.
+def _equivalence_divisors():
+    """Import the equivalence factors from ``codecarbon.viz.data``.
 
     ``dash`` is only used there for a return annotation and a DataTable this
-    script never calls, so a stub module is enough to reach the equivalence
-    helpers.
+    script never touches, so a stub module is enough to import the constants.
     """
     if "dash" not in sys.modules:
         dash = types.ModuleType("dash")
         dash.dash_table = types.SimpleNamespace(DataTable=object)
         sys.modules["dash"] = dash
-    from codecarbon.viz.data import Data
+    from codecarbon.viz import data
 
-    # __init__ builds a DataSource we do not need; the helpers are pure.
-    return Data.__new__(Data)
-
-
-def _equivalence_divisors():
-    """Recover the equivalence divisors by round-tripping the helpers.
-
-    ``viz/data.py`` hardcodes these inline, so probe the functions instead of
-    reading the source: if the divisor is ``d``, feeding ``d`` in must yield
-    exactly one unit out.
-    """
-    data = _viz_data()
     return {
         "car, kg CO2e/mile": (
-            0.409,
-            lambda v: data.get_car_miles(v) == "1",
+            data.KG_CO2E_PER_MILE,
             "{} kg CO₂e per mile",
         ),
-        "tv, kg CO2/hour": (
-            0.097,
-            lambda v: data.get_tv_time(v) == "60 minutes",
-            "{} kg CO₂ per hour",
-        ),
+        "tv, kg CO2/hour": (data.KG_CO2_PER_TV_HOUR, "{} kg CO₂ per hour"),
         "household, kg CO2/week": (
-            160.58,
-            lambda v: data.get_household_fraction(v) == "100.00",
+            data.KG_CO2_PER_HOUSEHOLD_WEEK,
             "{} kg CO₂ per week",
         ),
     }
@@ -148,14 +129,7 @@ def _checks(docs: Path = DOCS):
         ),
     ]
 
-    for name, (value, round_trips, phrase) in _equivalence_divisors().items():
-        if not round_trips(value):
-            raise SystemExit(
-                f"drift: the equivalence divisor for {name} in "
-                f"codecarbon/viz/data.py is no longer {value}.\n"
-                f"  fix: update this script's expected value and "
-                f"{equivalences} to match the code."
-            )
+    for name, (value, phrase) in _equivalence_divisors().items():
         checks.append(
             (f"equivalence, {name}", value, phrase.format(value), equivalences)
         )
