@@ -1,4 +1,4 @@
-"""Tests for the measurement quality diagnostics and the `codecarbon doctor` CLI."""
+"""Tests for the measurement quality diagnostics and the `codecarbon detect` CLI."""
 
 import json
 import os
@@ -15,7 +15,6 @@ from codecarbon.diagnostics import (
     ComponentDiagnostic,
     diagnose,
     render_text,
-    strict_failures,
     summary,
 )
 from codecarbon.external import hardware, ram
@@ -49,11 +48,12 @@ def RAM(force_ram_power=None):
     return _bare(ram.RAM, _force_ram_power=force_ram_power, machine_memory_GB=32.0)
 
 
-def GPU(names):
+def GPU(names, power_usage=42159):
+    details = [{"name": name, "power_usage": power_usage} for name in names]
     return _bare(
         hardware.GPU,
         devices=SimpleNamespace(
-            get_gpu_static_info=lambda: [{"name": name} for name in names]
+            device_count=len(details), get_gpu_details=lambda: details
         ),
     )
 
@@ -198,7 +198,10 @@ def test_cpu_load_mode_reports_the_tdp(monkeypatch):
     assert found.method == "CPU load model over a 95 W TDP"
 
 
-def test_apple_silicon_is_measured_by_powermetrics():
+def test_apple_silicon_is_measured_by_powermetrics(monkeypatch):
+    monkeypatch.setattr(
+        diagnostics.powermetrics, "is_powermetrics_available", lambda: True
+    )
     diagnostics_list = diagnose([AppleSiliconChip(chip_part="GPU")])
     (found,) = [d for d in diagnostics_list if d.component == "GPU"]
     assert found.status == MEASURED
@@ -206,6 +209,19 @@ def test_apple_silicon_is_measured_by_powermetrics():
     assert found.detail == "Apple M2"
     # the Apple GPU counts as a GPU, so no "none detected" entry is appended
     assert len(diagnostics_list) == 1
+
+
+def test_apple_silicon_without_powermetrics_is_not_reported_as_measured(monkeypatch):
+    # a Mac missing the sudoers rule reads nothing; saying MEASURED would be a lie
+    monkeypatch.setattr(
+        diagnostics.powermetrics, "is_powermetrics_available", lambda: False
+    )
+    (found,) = [
+        d for d in diagnose([AppleSiliconChip(chip_part="CPU")]) if d.component == "CPU"
+    ]
+    assert found.status == UNAVAILABLE
+    assert "passwordless sudo rule" in found.reason
+    assert "powermetrics" in found.fix
 
 
 def test_generic_tdp_is_flagged():
@@ -232,6 +248,18 @@ def test_gpu_measured_and_missing_gpu_reported():
 
     (missing,) = [d for d in diagnose([RAM()]) if d.component == "GPU"]
     assert missing.status == UNAVAILABLE
+
+
+def test_gpu_without_a_power_reading_is_not_measured():
+    # the driver lists the device but answers "not supported" to the power query
+    (found,) = [
+        d
+        for d in diagnose([GPU(["GTX 1080"], power_usage=None)])
+        if d.component == "GPU"
+    ]
+    assert found.status == UNAVAILABLE
+    assert "no power reading" in found.reason
+    assert found.detail == "1 x GTX 1080"
 
 
 def test_report_shape_and_summary():
@@ -281,7 +309,18 @@ def test_summary_is_silent_when_everything_is_measured():
     assert summary(report) == "1 of 1 power components are measured directly."
 
 
-def _patch_doctor_hardware(monkeypatch, hardware_list):
+HARDWARE_INFO = {
+    "ram_total_size": 32.0,
+    "cpu_count": 16,
+    "cpu_physical_count": 8,
+    "cpu_model": "Fake CPU",
+    "gpu_count": 0,
+    "gpu_model": "",
+    "gpu_ids": None,
+}
+
+
+def _patch_detect_hardware(monkeypatch, hardware_list):
     kwargs_seen = {}
 
     class FakeTracker:
@@ -289,27 +328,28 @@ def _patch_doctor_hardware(monkeypatch, hardware_list):
             kwargs_seen.update(kwargs)
             self._hardware = hardware_list
 
-        def _ensure_hardware_ready(self):
-            pass
+        def get_detected_hardware(self):
+            return HARDWARE_INFO
 
     monkeypatch.setattr("codecarbon.emissions_tracker.EmissionsTracker", FakeTracker)
     return kwargs_seen
 
 
-def test_doctor_allows_multiple_runs(monkeypatch):
-    # without it, a live run makes __init__ return early and _ensure_hardware_ready
+def test_detect_allows_multiple_runs(monkeypatch):
+    # without it, a live run makes __init__ return early and the hardware setup
     # raises AttributeError on a half-built tracker.
-    kwargs_seen = _patch_doctor_hardware(monkeypatch, [CPU("intel_rapl")])
-    assert CliRunner().invoke(cli_main.codecarbon, ["doctor"]).exit_code == 0
+    kwargs_seen = _patch_detect_hardware(monkeypatch, [CPU("intel_rapl")])
+    assert CliRunner().invoke(cli_main.codecarbon, ["detect"]).exit_code == 0
     assert kwargs_seen["allow_multiple_runs"] is True
 
 
-def test_doctor_json_output(monkeypatch):
-    _patch_doctor_hardware(monkeypatch, [RAM(), CPU("intel_rapl")])
-    result = CliRunner().invoke(cli_main.codecarbon, ["doctor", "--json"])
+def test_detect_json_output(monkeypatch):
+    _patch_detect_hardware(monkeypatch, [RAM(), CPU("intel_rapl")])
+    result = CliRunner().invoke(cli_main.codecarbon, ["detect", "--json"])
     assert result.exit_code == 0
     payload = json.loads(result.output)
-    assert set(payload) == {"codecarbon_version", "components", "summary"}
+    assert set(payload) == {"codecarbon_version", "hardware", "components", "summary"}
+    assert payload["hardware"] == HARDWARE_INFO
     assert payload["codecarbon_version"] == cli_main.__version__
     assert {c["component"] for c in payload["components"]} == {"RAM", "CPU", "GPU"}
     assert payload["summary"].startswith(
@@ -326,37 +366,14 @@ def test_doctor_json_output(monkeypatch):
     }
 
 
-def test_doctor_text_output(monkeypatch):
-    _patch_doctor_hardware(monkeypatch, [RAM(), CPU("intel_rapl")])
-    result = CliRunner().invoke(cli_main.codecarbon, ["doctor"])
+def test_detect_text_output(monkeypatch):
+    _patch_detect_hardware(monkeypatch, [RAM(), CPU("intel_rapl")])
+    result = CliRunner().invoke(cli_main.codecarbon, ["detect"])
     assert result.exit_code == 0
+    assert "Detected Hardware and System Information:" in result.output
+    assert "- CPU model: Fake CPU" in result.output
     assert f"CodeCarbon {cli_main.__version__}" in result.output
     assert "RAM" in result.output and "MEASURED" in result.output
     assert "1 of 3 power components are measured directly." in result.output
     # the human report is not JSON
     assert not result.output.lstrip().startswith("{")
-
-
-def test_doctor_strict_exit_code(monkeypatch):
-    _patch_doctor_hardware(monkeypatch, [RAM(), CPU("cpu_load")])
-    assert CliRunner().invoke(cli_main.codecarbon, ["doctor"]).exit_code == 0
-    assert (
-        CliRunner().invoke(cli_main.codecarbon, ["doctor", "--strict"]).exit_code == 1
-    )
-
-
-def test_doctor_strict_passes_on_a_machine_with_measured_cpu_and_gpu(monkeypatch):
-    # RAM is estimated here, as it is on every machine: --strict must still pass,
-    # otherwise it is a gate no machine can clear.
-    _patch_doctor_hardware(monkeypatch, [CPU("intel_rapl"), RAM(), GPU(["A100"])])
-    result = CliRunner().invoke(cli_main.codecarbon, ["doctor", "--strict"])
-    assert result.exit_code == 0, result.output
-    assert "ESTIMATED" in result.output  # the RAM row is still reported
-
-
-def test_strict_failures_ignores_ram_but_not_the_cpu():
-    report = diagnose([CPU("intel_rapl"), RAM(), GPU(["A100"])])
-    assert strict_failures(report) == []
-
-    (failure,) = strict_failures(diagnose([CPU("cpu_load"), RAM(), GPU(["A100"])]))
-    assert failure.component == "CPU"

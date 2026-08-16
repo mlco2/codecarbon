@@ -13,7 +13,7 @@ in and the availability checks the setup already runs.
 
 import os
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rich.markup import escape
 
@@ -34,11 +34,6 @@ DEFAULT_RAPL_ROOT = "/sys/class/powercap/intel-rapl"
 # CPU modes that read a hardware energy counter.
 MEASURED_CPU_MODES = {"intel_rapl", "intel_power_gadget", "windows_emi"}
 
-# Components no platform exposes an energy counter for. They are ESTIMATED on
-# every machine, so `--strict` must not fail on them, for the same reason an
-# absent GPU is UNAVAILABLE rather than a failure: the user has nothing to fix.
-ALWAYS_ESTIMATED_COMPONENTS = {"RAM"}
-
 
 @dataclass
 class ComponentDiagnostic:
@@ -48,10 +43,10 @@ class ComponentDiagnostic:
     detail: str  # model name / device list
     status: str  # MEASURED | ESTIMATED | UNAVAILABLE
     method: str  # "RAPL", "PowerMetrics", "CPU load model", ...
-    reason: Optional[str] = None  # why a better method was not used
-    fix: Optional[str] = None  # concrete command or doc link
+    reason: str | None = None  # why a better method was not used
+    fix: str | None = None  # concrete command or doc link
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -104,7 +99,7 @@ def _cpu_estimation_reason() -> str:
     return "no hardware energy counter is supported on this platform"
 
 
-def _cpu_estimation_fix() -> Optional[str]:
+def _cpu_estimation_fix() -> str | None:
     if is_linux_os():
         return _rapl_fix()
     if is_mac_os():
@@ -146,9 +141,22 @@ def _cpu_diagnostic(hw) -> ComponentDiagnostic:
 
 
 def _apple_diagnostic(hw) -> ComponentDiagnostic:
+    detail = hw._model or "Apple Silicon"
+    if not powermetrics.is_powermetrics_available():
+        return ComponentDiagnostic(
+            component=hw.chip_part,
+            detail=detail,
+            status=UNAVAILABLE,
+            method="none",
+            reason=(
+                "powermetrics is not usable without a password, so no power is "
+                "read from this chip: it needs a passwordless sudo rule"
+            ),
+            fix=f"allow passwordless sudo for powermetrics, see {METHODOLOGY_DOC}#cpu",
+        )
     return ComponentDiagnostic(
         component=hw.chip_part,
-        detail=hw._model or "Apple Silicon",
+        detail=detail,
         status=MEASURED,
         method="PowerMetrics",
     )
@@ -174,13 +182,29 @@ def _ram_diagnostic(hw) -> ComponentDiagnostic:
 
 
 def _gpu_diagnostic(hw) -> ComponentDiagnostic:
-    devices = hw.devices.get_gpu_static_info()
-    names = ", ".join(sorted({device["name"] for device in devices})) or "unknown"
+    # A driver that lists a device does not always report its power: consumer
+    # cards and virtualised GPUs often answer "not supported" to the power
+    # query, and the reading is then silently zero. Probe it.
+    details = hw.devices.get_gpu_details()
+    names = ", ".join(sorted({device["name"] for device in details or []})) or "unknown"
+    detail = f"{hw.devices.device_count} x {names}"
+    if any(device.get("power_usage") for device in details or []):
+        return ComponentDiagnostic(
+            component="GPU",
+            detail=detail,
+            status=MEASURED,
+            method="NVML/AMDSMI",
+        )
     return ComponentDiagnostic(
         component="GPU",
-        detail=f"{len(devices)} x {names}",
-        status=MEASURED,
-        method="NVML/AMDSMI",
+        detail=detail,
+        status=UNAVAILABLE,
+        method="none",
+        reason=(
+            "the driver lists the GPU but reports no power reading for it, so "
+            "it contributes 0 W (common on consumer cards and virtualised GPUs)"
+        ),
+        fix=f"none available for this device; see {METHODOLOGY_DOC}#gpu",
     )
 
 
@@ -195,7 +219,7 @@ def _no_gpu_diagnostic() -> ComponentDiagnostic:
     )
 
 
-def diagnose(hardware) -> List[ComponentDiagnostic]:
+def diagnose(hardware) -> list[ComponentDiagnostic]:
     """
     Build a measurement quality report from the hardware objects a tracker set up.
 
@@ -216,23 +240,7 @@ def diagnose(hardware) -> List[ComponentDiagnostic]:
     return diagnostics
 
 
-def strict_failures(
-    diagnostics: List[ComponentDiagnostic],
-) -> List[ComponentDiagnostic]:
-    """
-    Components whose ESTIMATED status is actionable, i.e. what ``--strict`` fails on.
-
-    RAM is excluded: it is modelled on every platform, so failing on it would make
-    ``--strict`` a gate no machine can pass.
-    """
-    return [
-        d
-        for d in diagnostics
-        if d.status == ESTIMATED and d.component not in ALWAYS_ESTIMATED_COMPONENTS
-    ]
-
-
-def summary(diagnostics: List[ComponentDiagnostic]) -> str:
+def summary(diagnostics: list[ComponentDiagnostic]) -> str:
     measured = sum(1 for d in diagnostics if d.status == MEASURED)
     total = len(diagnostics)
     line = f"{measured} of {total} power components are measured directly."
@@ -241,7 +249,7 @@ def summary(diagnostics: List[ComponentDiagnostic]) -> str:
     return line
 
 
-def render_text(diagnostics: List[ComponentDiagnostic]) -> str:
+def render_text(diagnostics: list[ComponentDiagnostic]) -> str:
     """Human readable report, one block per component, with rich markup."""
     lines = []
     for diagnostic in diagnostics:

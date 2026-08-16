@@ -89,7 +89,7 @@ def test_monitor_offline_requires_country_iso_code():
 def test_detect_monkeypatched_tracker(monkeypatch):
     class FakeTracker:
         def __init__(self, save_to_file=False, **kwargs):
-            pass
+            self._hardware = []
 
         def get_detected_hardware(self):
             return {

@@ -90,40 +90,38 @@ Same options as `codecarbon monitor` apply (see above).
 
 ### `codecarbon detect`
 
-Detect and print hardware information.
+Detect and print hardware information, with a measurement quality report.
 
 **Usage:**
 ```bash
-codecarbon detect
+codecarbon detect [OPTIONS]
 ```
 
-Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon uses to estimate energy consumption. Useful for verifying that CodeCarbon can see all your hardware.
-
-### `codecarbon doctor`
-
-Report, for each power component, whether CodeCarbon measures it or estimates it.
-
-**Usage:**
-```bash
-codecarbon doctor [OPTIONS]
-```
+Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon
+uses to estimate energy consumption. Useful for verifying that CodeCarbon can
+see all your hardware.
 
 CodeCarbon always produces a number, but on many machines part of it comes from a
 model rather than from a hardware energy counter: the CPU falls back to a load
 model when RAPL is not readable, RAM is always modelled, and a GPU that no driver
-exposes contributes nothing. `doctor` runs the normal hardware detection and
-prints the status of each component, why a better method was not used, and the
-concrete fix.
+exposes contributes nothing. `detect` therefore also prints the status of each
+power component, why a better method was not used, and the concrete fix.
 
 **Options:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--json` | flag | false | Print the report as JSON, for CI checks and bug reports |
-| `--strict` | flag | false | Exit with code 1 if a component that could be measured is estimated |
+| `--json` | flag | false | Print the hardware information and the report as JSON, for bug reports |
 
 **Example output:**
 ```text
+Detected Hardware and System Information:
+- Available RAM: 31.084 GB
+- CPU count: 16 thread(s) in 8 physical CPU(s)
+- CPU model: 12th Gen Intel(R) Core(TM) i7-1260P
+- GPU count: 1
+- GPU model: 1 x NVIDIA A100-SXM4-40GB
+
 CodeCarbon 3.3.0 - measurement quality report
 
 RAM  31.1 GB
@@ -148,13 +146,7 @@ Statuses are:
 - `MEASURED` — read from a hardware energy counter (RAPL, PowerMetrics, the
   Windows Energy Meter Interface, NVML or AMDSMI).
 - `ESTIMATED` — derived from a model, typically CPU load over a TDP value.
-- `UNAVAILABLE` — the component was not found and contributes nothing.
+- `UNAVAILABLE` — the component was not found, or its power cannot be read, so
+  it contributes nothing.
 
-Use `--strict` in CI to fail a job when a machine silently falls back to
-estimation, and paste `codecarbon doctor --json` into bug reports.
-
-`--strict` only fails on components that *could* have been measured. RAM is
-exempt: no platform exposes a DRAM energy counter to CodeCarbon, so RAM is
-`ESTIMATED` on every machine and failing on it would make `--strict` a gate
-nothing can pass. An absent GPU is exempt for the same reason, being
-`UNAVAILABLE` rather than a failure.
+Paste `codecarbon detect --json` into bug reports.

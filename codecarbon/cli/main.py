@@ -3,12 +3,11 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import typer
 from rich import print
 from rich.prompt import Confirm
-from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
 from codecarbon.cli.cli_utils import (
@@ -62,7 +61,7 @@ def _version_callback(value: bool) -> None:
 
 @codecarbon.callback()
 def version(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -466,15 +465,51 @@ def monitor(
 
 
 @codecarbon.command("detect", short_help="Detect hardware and print information.")
-def detect():
+def detect(
+    json_output: Annotated[
+        bool, typer.Option("--json", help="Print the report as JSON.")
+    ] = False,
+):
     """
-    Detects hardware and prints information without running any measurements.
+    Detects hardware without running any measurements, and reports for each
+    power component whether CodeCarbon measures it or estimates it, why, and
+    how to improve it.
     """
-    from codecarbon.emissions_tracker import EmissionsTracker
+    import json
 
-    print("Detecting hardware...")
-    tracker = EmissionsTracker(save_to_file=False)
-    hardware_info = tracker.get_detected_hardware()
+    from codecarbon.diagnostics import diagnose, render_text, summary
+    from codecarbon.emissions_tracker import EmissionsTracker
+    from codecarbon.external.logger import logger, set_logger_level
+
+    # The report is the output; the tracker's own start-up logs are noise here.
+    # The level has to be lowered before __init__, which logs before applying
+    # its own log_level, and restored so we do not reconfigure a caller's logger.
+    previous_level = logger.level
+    try:
+        set_logger_level("error")
+        # allow_multiple_runs: without it, a live run makes __init__ return early
+        # and leave the tracker half-built - exactly when someone runs `detect`.
+        tracker = EmissionsTracker(
+            save_to_file=False, allow_multiple_runs=True, log_level="error"
+        )
+        hardware_info = tracker.get_detected_hardware()
+    finally:
+        logger.setLevel(previous_level)
+    diagnostics = diagnose(tracker._hardware)
+
+    if json_output:
+        typer.echo(
+            json.dumps(
+                {
+                    "codecarbon_version": __version__,
+                    "hardware": hardware_info,
+                    "components": [d.as_dict() for d in diagnostics],
+                    "summary": summary(diagnostics),
+                },
+                indent=2,
+            )
+        )
+        return
 
     print("\nDetected Hardware and System Information:")
     print(f"- Available RAM: {hardware_info['ram_total_size']:.3f} GB")
@@ -490,65 +525,8 @@ def detect():
             f" BUT only tracking these GPU ids : {hardware_info['gpu_ids']}"
         )
     print(f"- GPU model: {gpu_model_str}")
-    print("\nRun `codecarbon doctor` to see what is measured and what is estimated.")
-
-
-@codecarbon.command("doctor", short_help="Report measurement quality per component.")
-def doctor(
-    json_output: Annotated[
-        bool, typer.Option("--json", help="Print the report as JSON.")
-    ] = False,
-    strict: Annotated[
-        bool,
-        typer.Option(
-            "--strict",
-            help="Exit with code 1 if a component that could be measured is estimated.",
-        ),
-    ] = False,
-):
-    """
-    Tell you, for each power component, whether CodeCarbon measures it or
-    estimates it, why, and how to improve it.
-    """
-    import json
-
-    from codecarbon.diagnostics import diagnose, render_text, strict_failures, summary
-    from codecarbon.emissions_tracker import EmissionsTracker
-    from codecarbon.external.logger import logger, set_logger_level
-
-    # The report is the output; the tracker's own start-up logs are noise here.
-    # The level has to be lowered before __init__, which logs before applying
-    # its own log_level, and restored so we do not reconfigure a caller's logger.
-    previous_level = logger.level
-    try:
-        set_logger_level("error")
-        # allow_multiple_runs: without it, a live run makes __init__ return early
-        # and leave the tracker half-built - exactly when someone runs `doctor`.
-        tracker = EmissionsTracker(
-            save_to_file=False, allow_multiple_runs=True, log_level="error"
-        )
-        tracker._ensure_hardware_ready()
-    finally:
-        logger.setLevel(previous_level)
-    diagnostics = diagnose(tracker._hardware)
-
-    if json_output:
-        typer.echo(
-            json.dumps(
-                {
-                    "codecarbon_version": __version__,
-                    "components": [d.as_dict() for d in diagnostics],
-                    "summary": summary(diagnostics),
-                },
-                indent=2,
-            )
-        )
-    else:
-        print(f"CodeCarbon {__version__} - measurement quality report\n")
-        print(render_text(diagnostics))
-
-    if strict and strict_failures(diagnostics):
-        raise typer.Exit(1)
+    print(f"\nCodeCarbon {__version__} - measurement quality report\n")
+    print(render_text(diagnostics))
 
 
 def questionary_prompt(prompt, list_options, default):
