@@ -80,6 +80,7 @@ A single datacenter can consume large amounts of energy to run computing code. A
 | [Methodology](explanation/methodology.md) | How emissions are calculated |
 | [Accuracy and validation](explanation/accuracy.md) | How accurate the numbers are, and why |
 | [Alternatives comparison](explanation/alternatives.md) | CodeCarbon vs other carbon tracking tools |
+| [References](explanation/references.md) | Papers and data sources behind the numbers |
 | [EcoLogits](https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs) | Track emissions from GenAI API calls |
 | [Discord Community](https://discord.gg/GS9js2XkJR) | Chat with us and the community |
 

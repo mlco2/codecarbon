@@ -34,10 +34,6 @@ Luccioni, A. S., Viguier, S., & Ligozat, A.-L. (2022). *Estimating the Carbon
 Footprint of BLOOM, a 176B Parameter Language Model*. arXiv preprint
 arXiv:2211.02001. <https://arxiv.org/abs/2211.02001>
 
-Lacoste et al. is the closest methodological ancestor of CodeCarbon: it comes
-from the same `mlco2` GitHub organization, and two of its authors are listed
-as CodeCarbon authors.
-
 ## Hardware measurement
 
 Khan, K. N., Hirki, M., Niemi, T., Nurminen, J. K., & Ou, Z. (2018). *RAPL in
@@ -52,8 +48,7 @@ Microsoft. *Energy Meter Interface (EMI) driver documentation*.
 <https://learn.microsoft.com/en-us/windows-hardware/drivers/powermeter/energy-meter-interface>
 
 Chih, M. *Read CPU power with RAPL*.
-<https://blog.chih.me/read-cpu-power-with-RAPL.html> — an informal walkthrough,
-useful as an introduction but secondary to Khan et al. and Weaver above.
+<https://blog.chih.me/read-cpu-power-with-RAPL.html>
 
 ## Carbon intensity data sources
 

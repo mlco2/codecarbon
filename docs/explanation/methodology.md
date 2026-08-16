@@ -1,14 +1,5 @@
 # Methodology
 
-This page is the reference for how CodeCarbon turns a running process into a
-number of kilograms of CO₂. It is deliberately detailed: every constant is
-named with its value, and every fallback is stated with the condition under
-which it applies, so that you can check a figure against the source.
-
-If you want the deviation figures rather than the mechanism, see
-[Accuracy and validation](accuracy.md). The bibliography lives on
-[References](references.md).
-
 ## The shape of the calculation
 
 Emissions, expressed in kilograms of CO₂-equivalent (CO₂eq), are the product of
@@ -28,10 +19,23 @@ and integrating over time, and resolves `C` from the machine's location or
 cloud region. Both halves have fallbacks, and which fallback ran is what
 determines how much you should trust the result.
 
-`E` here is the **PUE-inflated** energy: if you set a `pue`, it is already
-folded into every energy figure CodeCarbon reports, per component, so expanding
-the formula gives `Emissions = Σ_intervals (power × Δt × PUE) × C`. This
-matters when you do arithmetic with the CSV columns — see
+Expanded, that is four terms:
+
+```text
+emissions = Σ_intervals (power × Δt × PUE) × carbon_intensity
+```
+
+- `power` — watts drawn by the CPU, GPU and RAM at the moment of sampling.
+- `Δt` — the sampling interval, `measure_power_secs`, 15 seconds by default.
+  Power × Δt is energy; summing over every interval gives the energy of the run.
+- `PUE` — power usage effectiveness, an optional multiplier for datacentre
+  overhead such as cooling. It defaults to 1.0, meaning no overhead assumed.
+- `carbon_intensity` — grams of CO₂-equivalent emitted per kilowatt-hour on the
+  grid the machine draws from.
+
+`E` above is therefore the **PUE-inflated** energy: a `pue` you set is already
+folded into every energy figure CodeCarbon reports, per component. This matters
+when you do arithmetic with the CSV columns — see
 [Power Usage Effectiveness](#power-usage-effectiveness-pue).
 
 | Half of the formula | Best case | Worst case |
@@ -118,7 +122,7 @@ last two rows.
 
 | # | Condition | Result | Source |
 |---|---|---|---|
-| 1 | `force_cpu_power` is set | Fixed constant power. **Every platform backend is skipped** — RAPL is not consulted even if it is available. | `resource_tracker.py:255-260`, guard at `:272` |
+| 1 | `force_cpu_power` is set | **Every platform backend is skipped** — RAPL is not consulted even if it is available — and your value becomes the TDP handed to row 10 or row 11 below. It is not the reported power. | `resource_tracker.py:255-260`, guard at `:272`, `:169-174` |
 | 2 | `force_mode_cpu_load` is set, `psutil` present, and a TDP is known | `cpu_load` mode | `resource_tracker.py:263-270` |
 | 3 | Linux **and** RAPL files readable | `intel_rapl` — hardware energy counters | `resource_tracker.py:223-225` |
 | 4 | macOS **and** Apple Silicon **and** `psutil` present | `cpu_load` mode | `resource_tracker.py:228-230` |
@@ -132,9 +136,15 @@ last two rows.
 
 Two consequences worth stating plainly, because they surprise people:
 
-- **`force_cpu_power` disables hardware measurement.** It is not a hint or a
-  ceiling. Setting it on a machine with working RAPL replaces a real counter
-  with your constant.
+- **`force_cpu_power` disables hardware measurement, and it is not the reported
+  power.** Setting it on a machine with working RAPL replaces a real counter
+  with an estimate. Because `psutil` is a hard dependency, the estimate is
+  normally `cpu_load` mode with your value as the TDP, so in machine mode
+  `force_cpu_power=65` reports `65 × (0.1 + 0.9 × load³)` watts, between 6.5 W
+  and 65 W, not a flat 65 W. Only on an installation without `psutil` does it
+  become a flat figure, and then it is half your value, not your value
+  (row 11 and `constant` mode below). Unlike a registry TDP, it is used as
+  given: it is not multiplied by the CPU package count.
 - **On Apple Silicon, `powermetrics` is effectively unreachable.**
   `psutil` is a hard dependency of CodeCarbon, so row 4 fires before row 5 in
   every normal installation. The `sudo`-granting instructions that used to
@@ -210,7 +220,6 @@ power = self._tdp * cpu_load_normalized / 100
 
     If you compare a machine-mode run against a process-mode run and the
     numbers disagree by more than the attribution scope explains, this is why.
-    It is not evidence that either number is wrong; it is two different models.
 
 **None of these shape choices is sourced in the code.** The cubic exponent, the
 0.1 floor in machine mode, and the absence of any floor in process mode are all
@@ -231,34 +240,36 @@ on many distributions they are root-only by default. Despite the "Intel RAPL"
 name, AMD processors are supported since Linux kernel 5.8. See
 [RAPL Metrics](rapl.md) for the details.
 
-**Windows.** Intel and AMD CPU energy is read through the
-[Energy Meter Interface (EMI)](https://learn.microsoft.com/en-us/windows-hardware/drivers/powermeter/energy-meter-interface),
-through which Windows 11 exposes the same RAPL hardware counters CodeCarbon
-reads on Linux. EMI is built into the OS: no third-party driver, no
-administrator rights, no extra dependency.
+**Windows.** Tracks Intel and AMD processor energy consumption using the [Energy
+Meter Interface
+(EMI)](https://learn.microsoft.com/en-us/windows-hardware/drivers/powermeter/energy-meter-interface),
+through which Windows 11 exposes the CPU RAPL energy counters (the same
+hardware counters CodeCarbon reads on Linux). It is built into the OS:
+no third-party driver, no administrator rights and no extra dependency
+are needed.
 
-EMI reports CPU power only on Windows 11 running on bare metal (on Windows 10,
-only on devices with dedicated metering hardware such as the Surface Book). On
-virtual machines or older Windows, CodeCarbon falls back to the CPU-load
-estimation above.
+*Note*: EMI reports CPU power only on Windows 11 running on bare metal
+(on Windows 10, only on devices with dedicated metering hardware, such
+as the Surface Book). On virtual machines or older Windows versions,
+CodeCarbon falls back to the CPU-load estimation mode described above.
 
-As on Linux, only package channels are measured. Windows exposes one EMI device
-per metered component, so a CPU shows up as one device per core
-(`RAPL_Package0_Core3_CORE`) next to the device holding the package channel
-(`RAPL_Package0_PKG`). Those per-core channels, like `PP0`/`PP1`, are
-subdomains of the package: measuring both would count the same energy twice, so
-CodeCarbon keeps the package channels only. On multi-die CPUs where every die
-mirrors the same socket-wide counter, duplicates are detected and dropped.
-`DRAM` channels are excluded too, unless
+*Note*: as on Linux, only package channels are measured. Windows exposes
+one EMI device per metered component, so a CPU shows up as one device per
+core (`RAPL_Package0_Core3_CORE`) next to the device holding the package
+channel (`RAPL_Package0_PKG`). Those per-core channels, like `PP0`/`PP1`,
+are subdomains of the package: measuring both would count the same energy
+twice, so CodeCarbon keeps the package channels only. On multi-die CPUs
+where every die mirrors the same socket-wide counter, the duplicates are
+detected and dropped as well. The `DRAM` channels are excluded too, unless
+the
 [`rapl_include_dram`](../how-to/configuration.md#including-dram-in-the-cpu-measurement)
-is enabled.
+option is enabled.
 
-**macOS, Intel.** Uses `Intel Power Gadget`, which you must install yourself.
-Intel has
-[discontinued the tool](https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html);
-this is a known limitation, tracked in
-[issue #457](https://github.com/mlco2/codecarbon/issues/457) — the issue is the
-tracking record, not a source.
+**macOS, Intel.** Tracks Intel processors energy consumption using the
+`Intel Power Gadget`. You need to install it yourself from this
+[source](https://www.intel.com/content/www/us/en/developer/articles/tool/power-gadget.html).
+Intel has since discontinued the tool; this is a known limitation,
+tracked in [issue #457](https://github.com/mlco2/codecarbon/issues/457).
 
 **macOS, Apple Silicon.** The Apple Silicon chip contains both CPU and GPU, and
 `powermetrics` can read both, but it requires `sudo` and — as row 4 of the table
@@ -272,23 +283,30 @@ it is still installed, but it should not be relied on for new setups.
 
 ### CPU hardware background
 
-The CPU die is the processing unit itself: a piece of semiconductor etched into
-logic blocks. The processor *package* is what you buy — one or more dies, their
-housing, and the contacts that match your motherboard. RAPL and EMI report at
-the package level, which is why CodeCarbon deduplicates subdomain channels.
+The CPU die is the processing unit itself. It's a piece of
+semiconductor that has been sculpted/etched/deposited by various
+manufacturing processes into a net of logic blocks that do stuff that
+makes computing possible. The processor package is what you get when you
+buy a single processor. It contains one or more dies, plastic/ceramic
+housing for dies and gold-plated contacts that match those on your
+motherboard. RAPL and EMI report at the package level, which is why
+CodeCarbon deduplicates subdomain channels.
 
-On Linux, `energy_uj` is a running energy counter in microjoules. CodeCarbon
-converts it to kWh with `kWh = energy × 10⁻⁶ × 2.77778e-7`. On a laptop with an
-Intel Core i7-7600U, for example, CodeCarbon reads
-`/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj` and
-`.../intel-rapl:1/energy_uj`.
+In Linux kernel, energy_uj is a current energy counter in micro joules.
+It is used to measure CPU core's energy consumption.
+
+Micro joules is then converted in kWh, with formula `kWh=energy * 10** (-6) * 2.77778e-7`.
+
+For example, on a laptop with Intel(R) Core(TM) i7-7600U, Code Carbon
+will read two files :
+/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj and
+/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj
 
 For how a rolling energy counter becomes a power figure, see
-[Power Estimation](power-estimation.md). For the primary literature on RAPL's
-accuracy, see Khan et al. and Weaver on the [References](references.md) page;
-this
+[Power Estimation](power-estimation.md). For the primary sources on RAPL, see
+Khan et al. and Weaver on the [References](references.md) page; this
 [blog post](https://blog.chih.me/read-cpu-power-with-RAPL.html) is a useful
-informal walkthrough but is secondary to both.
+informal walkthrough.
 
 ## GPU
 
@@ -299,10 +317,6 @@ On Apple Silicon under `powermetrics`, the integrated GPU is reported as a
 separate `AppleSiliconChip` device.
 
 ## RAM
-
-**The RAM model is a heuristic, and the code cites no source for its central
-constant.** This section says so explicitly because the figure it produces is
-often a large share of a low-power machine's total.
 
 There is no hardware counter for RAM power on the platforms CodeCarbon
 supports, and reading the actual DIMM configuration needs root. So CodeCarbon
@@ -325,8 +339,8 @@ function (`ram.py:82-139`):
 
 | Parameter | Value | Source |
 |---|---|---|
-| Base power per DIMM, x86 | `RAM_SLOT_POWER_X86 = 5` W | [`ram.py:14`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py#L14) — **unsourced** |
-| Base power per DIMM, ARM | 1.5 W | `ram.py:158` — **unsourced** |
+| Base power per DIMM, x86 | `RAM_SLOT_POWER_X86 = 5` W | [`ram.py:14`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py#L14) |
+| Base power per DIMM, ARM | 1.5 W | `ram.py:158` |
 | DIMMs 1–4 | 100% of base each | `ram.py:168-170` |
 | DIMMs 5–8 | 90% of base each | `ram.py:171-175` |
 | DIMMs 9–16 | 80% of base each | `ram.py:176-182` |
@@ -427,14 +441,18 @@ mix rather than as an intensity.
 | Solar | 48 |
 | Wind | 26 |
 
-Sources: [fossil fuels](https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2),
-[renewables](http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf).
+*Carbon Intensity Across Energy Sources*
 
-For a mix of 25% coal, 35% petroleum, 26% natural gas and 14% nuclear:
+Sources:
 
-```text
-Net Carbon Intensity = 0.25 × 995 + 0.35 × 816 + 0.26 × 743 + 0.14 × 29
-                     = 731.59 kgCO₂/MWh
+- [for fossil energies](https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2)
+- [for renewables energies](http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf)
+
+Then, for example, if the Energy Mix of the Grid Electricity is 25%
+Coal, 35% Petroleum, 26% Natural Gas and 14% Nuclear:
+
+``` text
+Net Carbon Intensity = 0.25 * 995 + 0.35 * 816 + 0.26 * 743 + 0.14 * 29 = 731.59 kgCO₂/MWh
 ```
 
 ## Measurement cadence
@@ -455,21 +473,6 @@ The dashboard's "equivalent to *n* miles driven" comparisons are documented
 separately, with their factors and derivations, on
 [Equivalences](equivalences.md). They are presentation aids and play no part in
 the calculation above.
-
-## Checking this page
-
-Every constant above is stated with the file and line it comes from. If a
-number here disagrees with the source, the source wins and the page is a bug —
-please [open an issue](https://github.com/mlco2/codecarbon/issues).
-
-The selection logic lives in
-[`codecarbon/core/resource_tracker.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py),
-the power models in
-[`codecarbon/external/hardware.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py)
-and
-[`codecarbon/external/ram.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py),
-and the carbon intensity resolution in
-[`codecarbon/core/emissions.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/emissions.py).
 
 ## Further reading
 

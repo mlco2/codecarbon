@@ -241,19 +241,28 @@ different question being answered.
 
 ## macOS
 
-On Apple Silicon, CodeCarbon reads power through Apple's `powermetrics`. On
-Intel Macs it can also use Intel Power Gadget, if it is installed.
+On Apple Silicon, CodeCarbon does not use `powermetrics`. `psutil` is a hard
+dependency of the package, and the backend selector picks CPU-load estimation
+as soon as `psutil` is importable, before `powermetrics` is ever tried
+([`resource_tracker.py:228-233`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L228)).
+Granting passwordless `sudo` for `powermetrics` will not change which backend is
+used. See
+[Which backend gets chosen](../explanation/methodology.md#which-backend-gets-chosen).
 
-`powermetrics` requires root. CodeCarbon runs it through `sudo` and, before
-using it, checks whether that `sudo` call would prompt for a password. If a
-password prompt is detected, CodeCarbon logs at debug level *"Not using
-PowerMetrics, sudo password prompt detected"* and falls back to estimation —
-there is no way to answer an interactive prompt from inside a library.
+On Intel Macs, CodeCarbon uses Intel Power Gadget when it is installed, and
+`powermetrics` when it is not. `powermetrics` requires root: CodeCarbon runs it
+through `sudo` and first checks whether that `sudo` call would prompt for a
+password. If a prompt is detected, CodeCarbon logs at debug level *"Not using
+PowerMetrics, sudo password prompt detected"* and falls back to estimation,
+since a library cannot answer an interactive prompt. To get measured values
+there, grant passwordless `sudo` for `powermetrics` alone by adding a line like
+this with `sudo visudo`:
 
-To get measured values, grant passwordless `sudo` for `powermetrics` alone by
-editing your sudoers file, as described under
-[Power usage](../explanation/methodology.md#energy-what-is-measured-what-is-modelled). Run with
-`log_level="debug"` to confirm the check now passes.
+```bash
+username ALL = (root) NOPASSWD: /usr/bin/powermetrics
+```
+
+Run with `log_level="debug"` to confirm the check now passes.
 
 ### "Returncode while logging power values using Powermetrics"
 
