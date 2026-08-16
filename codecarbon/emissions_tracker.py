@@ -619,7 +619,6 @@ class BaseEmissionsTracker(ABC):
         from codecarbon.output_methods.file import FileOutput
         from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
         from codecarbon.output_methods.metrics.logfire import LogfireOutput
-        from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
 
         methods = set(self._output_methods) if self._output_methods else set()
 
@@ -651,6 +650,8 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
 
         if OutputMethod.PROMETHEUS in methods:
+            from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
+
             self._output_handlers.append(
                 PrometheusOutput(
                     self._prometheus_url,
@@ -1381,15 +1382,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     def _validate_offline_cloud_provider(self) -> None:
         if not self._cloud_provider:
             return
-        df = DataSource().get_cloud_emissions_data()
         if (
-            len(
-                df.loc[
-                    (df["provider"] == self._cloud_provider)
-                    & (df["region"] == self._cloud_region)
-                ]
-            )
-            == 0
+            DataSource().find_cloud_region(self._cloud_provider, self._cloud_region)
+            is None
         ):
             logger.error(
                 "Cloud Provider/Region "

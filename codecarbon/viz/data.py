@@ -211,7 +211,9 @@ class Data:
                 "",
                 pd.DataFrame(data={"region": [], "emissions": [], "country_name": []}),
             )
-        cloud_emissions = self._data_source.get_cloud_emissions_data()
+        # DataSource returns plain row dicts; the dashboard is the only consumer
+        # that still wants a DataFrame, so build one here.
+        cloud_emissions = pd.DataFrame(self._data_source.get_cloud_emissions_rows())
         cloud_emissions = cloud_emissions[
             ["provider", "providerName", "region", "impact", "country_name"]
         ]
