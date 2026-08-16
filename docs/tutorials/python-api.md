@@ -46,10 +46,7 @@ The task manager tracks each sub-task independently. Tasks are not written to di
 
 #### LLM inference: energy per token
 
-Energy per run is not comparable between models, because it depends on how many
-prompts you happened to send. Energy per output token is. If the task you are
-measuring is LLM inference, record the token counts of each request with
-`record_tokens()` and CodeCarbon will report them alongside the energy:
+Record the token counts of each request with `record_tokens()`:
 
 ``` python-skip
 from codecarbon import EmissionsTracker
@@ -68,10 +65,9 @@ with TaskEmissionsTracker(task_name="llama3.1:8b", tracker=tracker) as task:
 tracker.stop()
 ```
 
-The counts come from wherever your serving stack reports them — `usage` for
+The counts come from wherever your serving stack reports them: `usage` for
 OpenAI-compatible clients, `prompt_eval_count` / `eval_count` for Ollama, and so
-on. CodeCarbon does not inspect the response object, so it imports no inference
-library and nothing breaks when a vendor changes its payload.
+on.
 
 Counts accumulate over the life of the task, and the resulting `TaskEmissionsData`
 exposes `input_tokens`, `output_tokens` and `n_requests` — written to the task CSV
