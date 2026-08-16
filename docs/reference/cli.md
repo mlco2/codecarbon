@@ -100,12 +100,11 @@ codecarbon wait [OPTIONS] -- <your_command>
 CodeCarbon fetches an hourly carbon intensity forecast for your location from
 [Electricity Maps](https://api.electricitymaps.com), picks the start time that minimises the
 average intensity over the expected job length, sleeps until then, and finally hands the command
-to `codecarbon monitor` — so measurement, CSV output and exit-code propagation are identical.
+to `codecarbon monitor`, so measurement, CSV output and exit-code propagation are identical.
 
-This is a sleep, not a scheduler: the process stays in the foreground and does not fork, daemonise
-or persist across a reboot. For deferral that must survive a reboot, use cron, systemd or Airflow.
-Pressing `Ctrl+C` during the wait does not abort — it starts the job immediately. The emissions
-tracker only starts after the sleep, so a waiting process holds no lock.
+The process stays in the foreground for the whole wait. Pressing `Ctrl+C` during the wait does not
+abort: it starts the job immediately. The emissions tracker only starts after the sleep, so a
+waiting process holds no lock.
 
 **Options:**
 
@@ -144,14 +143,11 @@ $ codecarbon wait --dry-run --deadline 24h --duration 90m
 **Requirements:**
 
 A forecast is only available with an `electricitymaps_api_token` (the `co2_signal_api_token` key
-is also accepted) — see [Electricity Maps API Token](../how-to/configuration.md#electricity-maps-api-token).
+is also accepted), see [Electricity Maps API Token](../how-to/configuration.md#electricity-maps-api-token).
 The location is detected automatically from your IP address; there is no offline or
 `--country-iso-code` option for this command.
 
-**When no forecast is available:**
-
-A forecast is an optimisation, never a requirement — the job is never blocked on a missing
-credential. If no token is configured, or the API returns an error, a malformed payload or an
+If no token is configured, or the API returns an error, a malformed payload or an
 empty forecast, CodeCarbon prints `no forecast available, running now.` and starts the command
 straight away. The same applies when the forecast covers no complete window, or when it says now is already
 the greenest moment.
@@ -162,7 +158,7 @@ must be **done** by then", use `--finish-by` instead: `--finish-by 12h --duratio
 starts in the next 10 hours. Passing a `--finish-by` shorter than `--duration` is an error.
 
 The `now:` figure in the output is the first point of the forecast, i.e. the current period as the
-forecast sees it, not a separate reading of the live grid — `wait` makes exactly one API call.
+forecast sees it, not a separate reading of the live grid: `wait` makes exactly one API call.
 
 ### `codecarbon detect`
 
