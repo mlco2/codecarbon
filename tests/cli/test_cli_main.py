@@ -414,64 +414,23 @@ def _invoke_offline_monitor(monkeypatch, extra_args):
     return result, calls["kwargs"]
 
 
-def test_monitor_without_ui_registers_no_output_handler(monkeypatch):
+def test_monitor_without_live_registers_no_output_handler(monkeypatch):
     result, kwargs = _invoke_offline_monitor(monkeypatch, [])
 
     assert result.exit_code == 0
     assert "output_handlers" not in kwargs
 
 
-def test_monitor_ui_registers_a_serving_live_dashboard(monkeypatch):
-    from codecarbon.viz.live import LiveDashboardOutput
+def test_monitor_live_registers_a_live_table_handler(monkeypatch):
+    from codecarbon.output_methods.live import LiveTableOutput
 
-    # Port 0 lets the OS pick a free port, so the test never collides on CI.
-    result, kwargs = _invoke_offline_monitor(monkeypatch, ["--ui", "--ui-port", "0"])
+    result, kwargs = _invoke_offline_monitor(monkeypatch, ["--live"])
 
     (handler,) = kwargs["output_handlers"]
     try:
-        assert isinstance(handler, LiveDashboardOutput)
-        assert handler.is_serving
-        assert handler.host == "127.0.0.1"
-        assert handler.port != 0
+        assert isinstance(handler, LiveTableOutput)
+        assert handler.live_out_every_measure is True
         assert result.exit_code == 0
-        assert f"Live dashboard: http://127.0.0.1:{handler.port}" in result.output
-    finally:
-        handler.exit()
-
-
-def test_monitor_ui_host_is_passed_to_the_dashboard(monkeypatch):
-    _, kwargs = _invoke_offline_monitor(
-        monkeypatch, ["--ui", "--ui-port", "0", "--ui-host", "localhost"]
-    )
-
-    (handler,) = kwargs["output_handlers"]
-    try:
-        assert handler.host == "localhost"
-        assert handler.url == f"http://localhost:{handler.port}"
-    finally:
-        handler.exit()
-
-
-def test_monitor_ui_on_a_busy_port_warns_but_keeps_monitoring(monkeypatch):
-    import socket
-
-    with socket.socket() as sock:
-        sock.bind(("127.0.0.1", 0))
-        sock.listen(1)
-        busy_port = sock.getsockname()[1]
-
-        result, kwargs = _invoke_offline_monitor(
-            monkeypatch, ["--ui", "--ui-port", str(busy_port)]
-        )
-
-    (handler,) = kwargs["output_handlers"]
-    try:
-        # A busy port must never take the run down: the tracker still starts.
-        assert result.exit_code == 0
-        assert not handler.is_serving
-        assert f"could not start the live dashboard on 127.0.0.1:{busy_port}" in (
-            result.output
-        )
     finally:
         handler.exit()
 

@@ -975,12 +975,20 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
-    def _prepare_emissions_data(self) -> EmissionsData:
+    def _prepare_emissions_data(self, update: bool = True) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
+
+        :param update: when False, report the emissions computed so far instead
+            of converting the energy measured since the last update. Read-only:
+            it does not advance `_last_energy_covered` nor fetch carbon
+            intensity. Used by live views that must not perturb the totals.
         :return: EmissionsData object with the total emissions data.
         """
-        self._update_emissions()
+        if update:
+            self._update_emissions()
+        else:
+            self._ensure_geo_metadata()
         self._ensure_cloud_conf()
         cloud = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
@@ -1276,25 +1284,26 @@ class BaseEmissionsTracker(ABC):
         self._last_measured_time = time.perf_counter()
         self._measure_occurrence += 1
 
-        # Handlers displaying data locally opt in to every measure by defining
-        # `on_measure`. They get the total only: computing the delta here would
-        # consume it for the periodic call below. The power fields of
-        # EmissionsData are averages since `start()`, which is not what a live
-        # view wants, so they are replaced by the last measured power.
-        on_measure_handlers = [
-            handler.on_measure
+        # Handlers opting in with `live_out_every_measure = True` are called on
+        # every measure with a read-only snapshot (no `_update_emissions()`, so
+        # no state advance and no carbon intensity lookup) and `delta=None`:
+        # computing the delta here would consume it for the periodic call below.
+        # The power fields of EmissionsData are averages since `start()`, which
+        # is not what a live view wants, so they carry the last measured power.
+        live_handlers = [
+            handler
             for handler in self._output_handlers
-            if hasattr(handler, "on_measure")
+            if getattr(handler, "live_out_every_measure", False)
         ]
-        if on_measure_handlers:
+        if live_handlers:
             live = dataclasses.replace(
-                self._prepare_emissions_data(),
+                self._prepare_emissions_data(update=False),
                 cpu_power=self._cpu_power.W,
                 gpu_power=self._gpu_power.W,
                 ram_power=self._ram_power.W,
             )
-            for on_measure in on_measure_handlers:
-                on_measure(live)
+            for handler in live_handlers:
+                handler.live_out(live, None)
 
         # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (

@@ -65,7 +65,6 @@ codecarbon = [
     "data/private_infra/nordic_emissions.json",
     "data/private_infra/2016/usa_emissions.json",
     "data/private_infra/2023/canada_energy_mix.json",
-    "viz/live.html",
     "viz/assets/car_icon.png",
     "viz/assets/house_icon.png",
     "viz/assets/tv_icon.png"
@@ -167,10 +166,5 @@ source = [
     "codecarbon",
 ]
 omit = [
-    # The legacy Dash dashboard is not unit tested. `live.py` is, so it stays in.
-    "codecarbon/viz/carbonboard.py",
-    "codecarbon/viz/carbonboard_on_api.py",
-    "codecarbon/viz/components.py",
-    "codecarbon/viz/data.py",
-    "codecarbon/viz/units.py",
+    "codecarbon/viz/*",
 ]

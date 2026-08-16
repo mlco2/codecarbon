@@ -45,9 +45,7 @@ Displays real-time emissions data for all processes on your machine. Press `Ctrl
 | `--offline` | flag | false | Run without internet access |
 | `--country-iso-code` | string | - | ISO 3166-1 alpha-3 country code (required in offline mode) |
 | `--log-level` | choice | ERROR | Log level: DEBUG, INFO, WARNING, ERROR |
-| `--ui` | flag | false | Serve a live dashboard in your browser |
-| `--ui-port` | int | 8050 | Port of the live dashboard |
-| `--ui-host` | string | 127.0.0.1 | Host to bind the live dashboard to |
+| `--live` | flag | false | Show a live table of the current run in the terminal |
 
 **Examples:**
 ```bash
@@ -63,8 +61,8 @@ codecarbon monitor --offline --country-iso-code FRA
 # Monitor with debug logging
 codecarbon monitor --log-level DEBUG
 
-# Monitor with the live dashboard on http://127.0.0.1:8050
-codecarbon monitor --ui
+# Monitor with a live table in the terminal
+codecarbon monitor --live
 ```
 
 ### `codecarbon monitor -- <command>`

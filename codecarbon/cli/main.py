@@ -390,15 +390,10 @@ def monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
-    ui: Annotated[
+    live: Annotated[
         bool,
-        typer.Option(help="Serve a live dashboard in your browser"),
+        typer.Option(help="Show a live table of the current run in the terminal"),
     ] = False,
-    ui_port: Annotated[int, typer.Option(help="Port of the live dashboard")] = 8050,
-    ui_host: Annotated[
-        str,
-        typer.Option(help="Host to bind the live dashboard to"),
-    ] = "127.0.0.1",
 ):
     """Monitor your machine's carbon emissions."""
 
@@ -433,19 +428,10 @@ def monitor(
 
         tracker_args = {**tracker_args, "save_to_api": api}
 
-    if ui:
-        from codecarbon.viz.live import LiveDashboardOutput
+    if live:
+        from codecarbon.output_methods.live import LiveTableOutput
 
-        live_output = LiveDashboardOutput(port=ui_port, host=ui_host)
-        tracker_args.setdefault("output_handlers", []).append(live_output)
-        if live_output.is_serving:
-            print(f"Live dashboard: {live_output.url}")
-        else:
-            print(
-                f"WARNING: could not start the live dashboard on {ui_host}:{ui_port}, "
-                "monitoring continues without it.",
-                file=sys.stderr,
-            )
+        tracker_args.setdefault("output_handlers", []).append(LiveTableOutput())
 
     from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 
