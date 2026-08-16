@@ -101,11 +101,8 @@ Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon
 uses to estimate energy consumption. Useful for verifying that CodeCarbon can
 see all your hardware.
 
-CodeCarbon always produces a number, but on many machines part of it comes from a
-model rather than from a hardware energy counter: the CPU falls back to a load
-model when RAPL is not readable, RAM is always modelled, and a GPU that no driver
-exposes contributes nothing. `detect` therefore also prints the status of each
-power component, why a better method was not used, and the concrete fix.
+Runs the normal hardware detection and reports, per component, whether it is
+measured or estimated, and how to fix it.
 
 **Options:**
 
@@ -143,10 +140,10 @@ GPU  1 x NVIDIA A100-SXM4-40GB
 
 Statuses are:
 
-- `MEASURED` — read from a hardware energy counter (RAPL, PowerMetrics, the
+- `MEASURED`: read from a hardware energy counter (RAPL, PowerMetrics, the
   Windows Energy Meter Interface, NVML or AMDSMI).
-- `ESTIMATED` — derived from a model, typically CPU load over a TDP value.
-- `UNAVAILABLE` — the component exists but its power cannot be read, so it
+- `ESTIMATED`: derived from a model, typically CPU load over a TDP value.
+- `UNAVAILABLE`: the component exists but its power cannot be read, so it
   contributes nothing. Hardware you do not have (no GPU, for instance) is not
   listed and is not counted in the summary.
 
