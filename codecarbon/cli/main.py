@@ -501,20 +501,11 @@ def badge_command(
     project: Optional[str] = typer.Option(
         None, "--project", help="Only use rows of this project."
     ),
-    select: str = typer.Option(
-        "last", "--select", help="Which run(s) to report: last, mean or total."
-    ),
-    metric: str = typer.Option(
-        "emissions", "--metric", help="What to show: emissions, energy or both."
+    select: badge.Select = typer.Option(
+        badge.Select.last, "--select", help="Which run(s) to report."
     ),
     output_dir: Path = typer.Option(
         Path("."), "--output-dir", help="Where to write the badge file."
-    ),
-    label: str = typer.Option(
-        badge.DEFAULT_LABEL, "--label", help="Left-hand badge text."
-    ),
-    color: str = typer.Option(
-        badge.DEFAULT_COLOR, "--color", help="Badge colour, neutral grey by default."
     ),
 ):
     """
@@ -525,15 +516,7 @@ def badge_command(
     """
     try:
         summary = badge.summarise(badge.load_runs(file, project), select)
-        path = badge.write(
-            emissions_file=file,
-            project=project,
-            select=select,
-            metric=metric,
-            label=label,
-            color=color,
-            output_dir=output_dir,
-        )
+        path = badge.write(summary, select, output_dir)
     except (FileNotFoundError, ValueError, KeyError) as error:
         print(f"[bold red]{escape(str(error))}[/]")
         raise typer.Exit(1)
@@ -543,12 +526,17 @@ def badge_command(
         + (f" (project={project})" if project else "")
     )
     print(
-        f"{select}: {badge.format_value(summary['emissions'], 'gCO2eq')}, "
+        f"{select.value}: {badge.format_value(summary['emissions'], 'gCO2eq')}, "
         f"{badge.format_value(summary['energy_consumed'], 'Wh')}"
     )
     print(f"Wrote {path}")
     print("\nPublish that file at a public URL and paste into your README:\n")
-    print(escape(badge.render_markdown(label)))
+    print(
+        escape(
+            f"![{badge.LABEL}](https://img.shields.io/endpoint"
+            f"?url=<public-url-of>/{badge.BADGE_STEM}.json)"
+        )
+    )
 
 
 def questionary_prompt(prompt, list_options, default):

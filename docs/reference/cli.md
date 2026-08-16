@@ -124,32 +124,18 @@ run, so the badge uses the last row of each `run_id`: `last` is the latest run,
 | `--file` | path | ./emissions.csv | Emissions file to read |
 | `--project` | string | - | Only use rows of this project |
 | `--select` | choice | last | Which run(s) to report: `last`, `mean` or `total` |
-| `--metric` | choice | emissions | What to show: `emissions`, `energy` or `both` |
 | `--output-dir` | path | . | Where to write the badge file |
-| `--label` | string | carbon | Left-hand badge text |
-| `--color` | string | grey | Badge colour |
 
 **Examples:**
 ```bash
 # Badge for the last run
 codecarbon badge
 
-# Average over every run of one project, showing energy too
-codecarbon badge --project my-training --select mean --metric both
+# Average over every run of one project
+codecarbon badge --project my-training --select mean
 
 # Write into the docs assets folder
 codecarbon badge --output-dir docs/assets
 ```
 
-The badge is colour-neutral by default, and reports exactly what the CSV contains.
-Keep in mind that CodeCarbon values are estimates: CPU power may come from a TDP
-model and carbon intensity is often a country average, so a badge is a useful
-order-of-magnitude signal rather than an audited figure. If you want a colour, pass
-`--color` explicitly.
-
-Regenerate the badge in CI after a benchmark job, publish `codecarbon-badge.json`
-at a public URL and point shields.io at it:
-
-```markdown
-![carbon](https://img.shields.io/endpoint?url=https://example.org/codecarbon-badge.json)
-```
+Values are estimates — see [methodology](../explanation/methodology.md).

@@ -67,10 +67,10 @@ def test_format_value_units(value, expected):
     assert badge.format_value(value) == expected
 
 
-def test_message_for_metrics():
+def test_message_for_select_suffix():
     summary = {"emissions": 0.0124, "energy_consumed": 0.031}
     assert badge.message_for(summary, "mean") == "12.4 gCO2eq/run"
-    assert badge.message_for(summary, "total", "both") == "12.4 gCO2eq | 31 Wh total"
+    assert badge.message_for(summary, "total") == "12.4 gCO2eq total"
 
 
 def test_cumulative_rows_are_not_double_counted(tmp_path):
@@ -84,23 +84,19 @@ def test_cumulative_rows_are_not_double_counted(tmp_path):
     assert badge.summarise(rows, "last")["runs"] == 2
 
 
-def test_endpoint_json_quotes_are_escaped():
-    payload = json.loads(badge.render_endpoint_json('a "quoted" label', "b & c"))
-    assert payload["label"] == 'a "quoted" label'
-
-
 def test_endpoint_json_schema():
-    payload = json.loads(badge.render_endpoint_json("carbon", "12.4 gCO2eq"))
+    payload = json.loads(badge.render({"emissions": 0.0124, "energy_consumed": 0.031}))
     assert payload == {
         "schemaVersion": 1,
-        "label": "carbon",
+        "label": badge.LABEL,
         "message": "12.4 gCO2eq",
-        "color": badge.DEFAULT_COLOR,
+        "color": badge.COLOR,
     }
 
 
 def test_write_creates_endpoint_file(emissions_file, tmp_path):
-    path = badge.write(emissions_file, output_dir=tmp_path / "assets")
+    summary = badge.summarise(badge.load_runs(emissions_file))
+    path = badge.write(summary, output_dir=tmp_path / "assets")
     assert path.name == "codecarbon-badge.json"
     assert json.loads(path.read_text())["schemaVersion"] == 1
 
@@ -129,3 +125,46 @@ def test_cli_badge_missing_file(tmp_path):
         cli_app, ["badge", "--file", str(tmp_path / "nope.csv")]
     )
     assert result.exit_code == 1
+
+
+# Two trackers with allow_multiple_runs flushing into the same file: run-b is
+# seen first but run-a is the one that finished last.
+INTERLEAVED_CSV = """timestamp,project_name,run_id,emissions,energy_consumed
+2024-01-01T00:00:00,alpha,run-b,0.001,0.010
+2024-01-01T00:00:30,alpha,run-a,0.002,0.020
+2024-01-01T00:01:00,alpha,run-b,0.003,0.030
+2024-01-01T00:01:30,alpha,run-a,0.004,0.040
+"""
+
+BLANK_RUN_ID_CSV = """timestamp,project_name,run_id,emissions,energy_consumed
+2024-01-01T00:00:00,alpha,,0.001,0.010
+2024-01-02T00:00:00,alpha,,0.002,0.020
+"""
+
+
+def test_interleaved_runs_pick_the_latest_by_timestamp(tmp_path):
+    path = tmp_path / "emissions.csv"
+    path.write_text(INTERLEAVED_CSV, encoding="utf-8")
+    rows = badge.load_runs(path)
+    assert badge.summarise(rows, "last")["emissions"] == pytest.approx(0.004)
+    assert badge.summarise(rows, "last")["runs"] == 2
+    assert badge.summarise(rows, "total")["emissions"] == pytest.approx(0.007)
+
+
+def test_blank_run_ids_are_separate_runs(tmp_path):
+    path = tmp_path / "emissions.csv"
+    path.write_text(BLANK_RUN_ID_CSV, encoding="utf-8")
+    rows = badge.load_runs(path)
+    assert badge.summarise(rows, "total")["emissions"] == pytest.approx(0.003)
+    assert badge.summarise(rows, "last")["runs"] == 2
+
+
+def test_format_value_keeps_the_sign():
+    assert badge.format_value(-0.004) == "-4 gCO2eq"
+
+
+def test_cli_rejects_unknown_select(emissions_file):
+    result = CliRunner().invoke(
+        cli_app, ["badge", "--file", str(emissions_file), "--select", "median"]
+    )
+    assert result.exit_code != 0
