@@ -192,12 +192,12 @@ nav:
     - Methodology: explanation/methodology.md
     - Accuracy and Validation: explanation/accuracy.md
     - RAPL Metrics: explanation/rapl.md
-    - From Energy Counters to Power: explanation/power-estimation.md
+    - Power Estimation: explanation/power-estimation.md
+    - Model Comparisons (Third-Party Data): explanation/model-comparisons.md
     - FAQ: explanation/faq.md
   - Reference:
     - API Reference: reference/api.md
     - Output Formats: reference/output.md
     - CLI Reference: reference/cli.md
-    - Model Comparisons (Third-Party Data): explanation/model-comparisons.md
   - Track GenAI API Calls (EcoLogits) ↗: https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs
   - Join Our Discord 💬 ↗: https://discord.gg/GS9js2XkJR

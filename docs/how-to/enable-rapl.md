@@ -197,7 +197,7 @@ volumes:
 To understand RAPL in detail, including domain hierarchy, double-counting issues, and CodeCarbon's domain selection strategy, see:
 
 - [RAPL Metrics Explanation](../explanation/rapl.md) — Technical details on how RAPL works
-- [From Energy Counters to Power](../explanation/power-estimation.md) — How CodeCarbon turns RAPL energy counters into power
+- [CodeCarbon Power Estimation](../explanation/power-estimation.md) — How CodeCarbon uses RAPL data
 
 ## Next Steps
 

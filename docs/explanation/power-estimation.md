@@ -1,4 +1,4 @@
-# From Energy Counters to Power
+# How Power Estimation Works in CodeCarbon
 
 !!! info
 

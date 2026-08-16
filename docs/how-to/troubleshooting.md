@@ -115,7 +115,7 @@ and treat comparisons across different machines with caution. Comparisons
 between two runs on the *same* machine remain meaningful, because the same
 approximation applies to both.
 
-See [From Energy Counters to Power](../explanation/power-estimation.md) for what the
+See [Power Estimation](../explanation/power-estimation.md) for what the
 estimation model does, and [Accuracy and
 validation](../explanation/accuracy.md) for how the backends compare.
 
