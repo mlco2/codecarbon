@@ -113,6 +113,7 @@ tracker only starts after the sleep, so a waiting process holds no lock.
 |--------|------|---------|-------------|
 | `--duration` | string | 1h | Expected job length, e.g. `90m`, `2h`, `1h30m`, or a plain number of seconds |
 | `--deadline` | string | 12h | Maximum delay before the job must start; the job itself may finish after it |
+| `--finish-by` | string | - | Latest acceptable *finish* time. Overrides `--deadline` with `--finish-by` minus `--duration` |
 | `--threshold` | float | - | gCO2e/kWh at or below which the job starts immediately, without waiting |
 | `--dry-run` | flag | false | Print the recommendation and exit without waiting or running |
 | `--measure-power-secs` | int | 10 | Interval between two measures |
@@ -128,6 +129,9 @@ codecarbon wait --deadline 12h --duration 2h -- python train.py
 
 # Start straight away if the grid is already below 100 gCO2e/kWh
 codecarbon wait --threshold 100 --deadline 6h -- bash benchmark.sh
+
+# The job must be finished within 8 hours, and takes about 2
+codecarbon wait --finish-by 8h --duration 2h -- python train.py
 ```
 
 The dry run prints the chosen window, for example:
@@ -153,7 +157,12 @@ straight away. The same applies when the forecast covers no complete window, or 
 the greenest moment.
 
 `--deadline` bounds the *start* time, not the end: `--deadline 12h --duration 2h` considers every
-start in the next 12 hours, so the job may still be running 14 hours from now.
+start in the next 12 hours, so the job may still be running 14 hours from now. When you mean "this
+must be **done** by then", use `--finish-by` instead: `--finish-by 12h --duration 2h` searches
+starts in the next 10 hours. Passing a `--finish-by` shorter than `--duration` is an error.
+
+The `now:` figure in the output is the first point of the forecast, i.e. the current period as the
+forecast sees it, not a separate reading of the live grid — `wait` makes exactly one API call.
 
 ### `codecarbon detect`
 

@@ -8,8 +8,6 @@ from datetime import datetime, timedelta, timezone
 import typer
 from rich import print
 
-from codecarbon.external.logger import logger
-
 _DURATION_RE = re.compile(r"^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$")
 
 
@@ -30,8 +28,12 @@ def find_green_window(
     deadline: timedelta,
     token: str | None,
 ):
-    """Return (start, intensity, now_intensity) or None when we should run now."""
-    from codecarbon.core import electricitymaps_api
+    """Return (start, intensity, now_intensity) or None when we should run now.
+
+    `now_intensity` is the first forecast point, i.e. the current period as the
+    forecast sees it. Asking the /latest endpoint for a live value instead
+    would be a second HTTP call for a number only used to print a percentage.
+    """
     from codecarbon.core.intensity_forecast import best_window, get_forecast
     from codecarbon.external.geography import GeoMetadata
     from codecarbon.input import DataSource
@@ -45,13 +47,7 @@ def find_green_window(
     if forecast is None:
         return None
 
-    try:
-        now_intensity = electricitymaps_api.get_carbon_intensity(geo, token or "")
-    except Exception as e:
-        # The forecast's first point is a stand-in, not the live value.
-        logger.debug(f"wait: current intensity unavailable ({e}), using the forecast.")
-        now_intensity = forecast.points[0].g_co2e_per_kwh
-
+    now_intensity = forecast.points[0].g_co2e_per_kwh
     now = datetime.now(timezone.utc)
     start, intensity = best_window(forecast, duration, deadline=now + deadline)
     return start, intensity, now_intensity
@@ -65,6 +61,7 @@ def wait_for_green_window(
     ctx: typer.Context,
     duration: str = "1h",
     deadline: str = "12h",
+    finish_by: str | None = None,
     threshold: float | None = None,
     dry_run: bool = False,
     log_level: str = "error",
@@ -82,6 +79,9 @@ def wait_for_green_window(
 
         # Block until the greenest window, then run under measurement
         codecarbon wait --deadline 12h --duration 2h -- python train.py
+
+        # Bound the finish time instead of the start
+        codecarbon wait --finish-by 8h --duration 2h -- python train.py
     """
     from codecarbon.cli.monitor import run_and_monitor
     from codecarbon.core.electricitymaps_api import resolve_token
@@ -91,7 +91,16 @@ def wait_for_green_window(
 
     try:
         job_duration = parse_duration(duration)
-        max_delay = parse_duration(deadline)
+        # --deadline bounds the start, --finish-by bounds the end; the search
+        # only ever needs the latest acceptable start.
+        if finish_by is not None:
+            max_delay = parse_duration(finish_by) - job_duration
+            if max_delay < timedelta(0):
+                raise ValueError(
+                    f"--finish-by {finish_by} is sooner than --duration {duration}."
+                )
+        else:
+            max_delay = parse_duration(deadline)
     except ValueError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         raise typer.Exit(1)

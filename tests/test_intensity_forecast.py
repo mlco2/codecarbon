@@ -71,7 +71,11 @@ class TestGetForecast(unittest.TestCase):
     def test_shared_cooldown_skips_the_request(self):
         # A failure on the current-intensity path must back the forecast off
         # too: no HTTP request, and still a None instead of a raise.
-        electricitymaps_api._start_cooldown()
+        electricitymaps_api._start_cooldown(
+            electricitymaps_api._cache_key(
+                electricitymaps_api.location_params(self._geo), "tok"
+            )
+        )
         responses.add(
             responses.GET,
             intensity_forecast.FORECAST_URL,

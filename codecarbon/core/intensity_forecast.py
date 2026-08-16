@@ -9,7 +9,7 @@ HTTP goes through `codecarbon.core.electricitymaps_api.request`, so a failing
 API backs off once for the whole process instead of once per caller. The
 forecast response itself is not cached: it is fetched once per `codecarbon
 wait` invocation, and its useful lifetime is nothing like the current
-intensity's five-minute TTL.
+intensity's short TTL.
 
 Once pluggable intensity providers land (see issue #1356), `get_forecast`
 should become an optional `forecast()` method on the provider protocol.
@@ -19,11 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple
 
-from codecarbon.core.electricitymaps_api import (
-    clear_cooldown,
-    location_params,
-    request,
-)
+from codecarbon.core.electricitymaps_api import location_params, request
 from codecarbon.external.geography import GeoMetadata
 from codecarbon.external.logger import logger
 
@@ -86,7 +82,6 @@ def get_forecast(
         if not points:
             raise ValueError("No usable forecast points in response")
 
-        clear_cooldown()
         return Forecast(
             zone=data.get("zone", ""),
             points=points,

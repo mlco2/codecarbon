@@ -480,6 +480,12 @@ def wait(
         str,
         typer.Option(help="Maximum delay before the job must start."),
     ] = "12h",
+    finish_by: Annotated[
+        Optional[str],
+        typer.Option(
+            help="Latest acceptable finish time, e.g. '8h'. Overrides --deadline."
+        ),
+    ] = None,
     threshold: Annotated[
         Optional[float],
         typer.Option(help="gCO2e/kWh at or below which we start immediately."),
@@ -509,6 +515,7 @@ def wait(
         ctx,
         duration=duration,
         deadline=deadline,
+        finish_by=finish_by,
         threshold=threshold,
         dry_run=dry_run,
         log_level=log_level,

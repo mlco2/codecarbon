@@ -33,15 +33,11 @@ def no_network(monkeypatch):
     )
 
 
-def _patch_forecast(monkeypatch, values, now_intensity=None):
+def _patch_forecast(monkeypatch, values):
     now = datetime.now(timezone.utc)
     monkeypatch.setattr(
         "codecarbon.core.intensity_forecast.get_forecast",
         lambda geo, **kwargs: _forecast(values, now),
-    )
-    monkeypatch.setattr(
-        "codecarbon.core.electricitymaps_api.get_carbon_intensity",
-        lambda geo, token="": values[0] if now_intensity is None else now_intensity,
     )
 
 
@@ -130,11 +126,14 @@ def test_threshold_short_circuits_the_wait(monkeypatch, capsys, no_network):
     assert "running now" in capsys.readouterr().out
 
 
-def test_threshold_uses_the_live_intensity_not_the_forecast(
-    monkeypatch, capsys, no_network
-):
-    # The first forecast point is above the threshold, the live grid is below.
-    _patch_forecast(monkeypatch, [300, 300, 100, 100], now_intensity=120)
+def test_no_second_call_for_the_current_intensity(monkeypatch, capsys, no_network):
+    # The first forecast point is the "now" value: fetching /latest as well
+    # would be a second HTTP call just to print a percentage.
+    _patch_forecast(monkeypatch, [120, 300, 50, 50])
+    monkeypatch.setattr(
+        "codecarbon.core.electricitymaps_api.get_carbon_intensity",
+        lambda *a, **k: pytest.fail("second live call"),
+    )
     monkeypatch.setattr(wait_module.time, "sleep", lambda s: pytest.fail("slept"))
     monkeypatch.setattr(
         "codecarbon.cli.monitor.run_and_monitor", lambda ctx, **kwargs: None
@@ -145,6 +144,31 @@ def test_threshold_uses_the_live_intensity_not_the_forecast(
     )
 
     assert "running now" in capsys.readouterr().out
+
+
+def test_finish_by_bounds_the_end_not_the_start(monkeypatch, no_network):
+    # Trough at +4h, but the job must be done by +3h, so only a start at or
+    # before +2h is acceptable: the cheapest of those is +1h.
+    _patch_forecast(monkeypatch, [300, 100, 200, 200, 10, 10])
+    slept = []
+    monkeypatch.setattr(wait_module.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(
+        "codecarbon.cli.monitor.run_and_monitor", lambda ctx, **kwargs: None
+    )
+
+    wait_module.wait_for_green_window(
+        SimpleNamespace(args=[]), duration="1h", finish_by="3h"
+    )
+
+    assert len(slept) == 1
+    assert 3600 - 60 < slept[0] <= 3600
+
+
+def test_finish_by_shorter_than_duration_is_rejected(monkeypatch, capsys, no_network):
+    with pytest.raises(typer.Exit):
+        wait_module.wait_for_green_window(
+            SimpleNamespace(args=[]), duration="4h", finish_by="1h"
+        )
 
 
 def test_only_the_leading_subcommand_name_is_stripped(monkeypatch, no_network):
