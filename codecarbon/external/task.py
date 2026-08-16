@@ -4,55 +4,6 @@ from uuid import uuid4
 from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
 
 
-def _get(response, *names):
-    """
-    Read the first available attribute or mapping key from ``response``.
-    Returns None if none of ``names`` is present.
-    """
-    for name in names:
-        if isinstance(response, dict):
-            value = response.get(name)
-        else:
-            value = getattr(response, name, None)
-        if value is not None:
-            return value
-    return None
-
-
-def extract_token_counts(response):
-    """
-    Best effort extraction of (input_tokens, output_tokens) from the response of
-    an LLM serving stack. Everything is duck-typed, so codecarbon does not import
-    any inference library:
-
-    - OpenAI compatible clients : ``usage.prompt_tokens`` / ``usage.completion_tokens``
-    - Ollama : ``prompt_eval_count`` / ``eval_count``
-    - vLLM ``RequestOutput`` : ``prompt_token_ids`` / ``outputs[].token_ids``
-
-    Counts that cannot be found are reported as 0.
-    """
-    usage = _get(response, "usage")
-    if usage is not None:
-        return (
-            _get(usage, "prompt_tokens", "input_tokens") or 0,
-            _get(usage, "completion_tokens", "output_tokens") or 0,
-        )
-
-    eval_count = _get(response, "eval_count")
-    if eval_count is not None:
-        return _get(response, "prompt_eval_count") or 0, eval_count
-
-    prompt_token_ids = _get(response, "prompt_token_ids")
-    if prompt_token_ids is not None:
-        outputs = _get(response, "outputs") or []
-        return (
-            len(prompt_token_ids),
-            sum(len(getattr(completion, "token_ids", ())) for completion in outputs),
-        )
-
-    return 0, 0
-
-
 class Task:
     """
     A task, used to segregate electrical consumption when executing a treatment.

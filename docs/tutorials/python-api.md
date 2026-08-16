@@ -60,20 +60,18 @@ tracker = EmissionsTracker(project_name="llama3.1-8b-bench")
 with TaskEmissionsTracker(task_name="llama3.1:8b", tracker=tracker) as task:
     for prompt in prompts:
         response = client.chat.completions.create(model="llama3.1:8b", messages=prompt)
-        task.record_tokens(response=response)
+        task.record_tokens(
+            input_tokens=response.usage.prompt_tokens,
+            output_tokens=response.usage.completion_tokens,
+        )
 
 tracker.stop()
 ```
 
-`record_tokens(response=...)` reads the counts the serving stack already returns.
-It understands OpenAI-compatible `usage` payloads, Ollama's `prompt_eval_count` /
-`eval_count`, and vLLM `RequestOutput` objects. Everything is read by duck typing,
-so CodeCarbon does not import any inference library. If your client is not one of
-these, pass the numbers yourself:
-
-``` python-skip
-task.record_tokens(input_tokens=128, output_tokens=256)
-```
+The counts come from wherever your serving stack reports them — `usage` for
+OpenAI-compatible clients, `prompt_eval_count` / `eval_count` for Ollama, and so
+on. CodeCarbon does not inspect the response object, so it imports no inference
+library and nothing breaks when a vendor changes its payload.
 
 Counts accumulate over the life of the task, and the resulting `TaskEmissionsData`
 exposes `input_tokens`, `output_tokens` and `n_requests` — written to the task CSV

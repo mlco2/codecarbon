@@ -27,7 +27,7 @@ from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
-from codecarbon.external.task import Task, extract_token_counts
+from codecarbon.external.task import Task
 from codecarbon.input import DataSource
 from codecarbon.lock import Lock
 from codecarbon.output_methods.base_output import BaseOutput, OutputMethod
@@ -797,7 +797,6 @@ class BaseEmissionsTracker(ABC):
         input_tokens: int = 0,
         output_tokens: int = 0,
         n_requests: int = 1,
-        response=None,
         task_name: str = None,
     ) -> None:
         """
@@ -807,8 +806,6 @@ class BaseEmissionsTracker(ABC):
         :param input_tokens: Number of prompt tokens of the request.
         :param output_tokens: Number of generated tokens of the request.
         :param n_requests: Number of requests these counts stand for, default 1.
-        :param response: Optional response object of an OpenAI compatible client,
-                         Ollama or vLLM, from which the token counts are read.
         :param task_name: Task to record on, default the currently active task.
         :return: None
         """
@@ -817,19 +814,6 @@ class BaseEmissionsTracker(ABC):
         if task is None:
             logger.warning("record_tokens : No active task to record tokens on.")
             return
-        if response is not None:
-            extracted_input, extracted_output = extract_token_counts(response)
-            if not extracted_input and not extracted_output:
-                # Most common cause: a streamed OpenAI chunk, whose `usage` is
-                # None unless the request passed
-                # stream_options={"include_usage": True}.
-                logger.debug(
-                    "record_tokens : No token count found on the given response, "
-                    "recording 0 tokens. For a streamed response, ask your client "
-                    'for usage data (OpenAI: stream_options={"include_usage": True}).'
-                )
-            input_tokens += extracted_input
-            output_tokens += extracted_output
         task.record_tokens(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
@@ -1497,7 +1481,10 @@ class TaskEmissionsTracker:
     with TaskEmissionsTracker(task_name="llama3.1:8b", tracker=tracker) as task:
         for prompt in prompts:
             response = client.chat.completions.create(...)
-            task.record_tokens(response=response)
+            task.record_tokens(
+                input_tokens=response.usage.prompt_tokens,
+                output_tokens=response.usage.completion_tokens,
+            )
     ```
     """
 
@@ -1519,7 +1506,6 @@ class TaskEmissionsTracker:
         input_tokens: int = 0,
         output_tokens: int = 0,
         n_requests: int = 1,
-        response=None,
     ) -> None:
         """
         Record the token counts of one LLM request on the task under measure.
@@ -1529,7 +1515,6 @@ class TaskEmissionsTracker:
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             n_requests=n_requests,
-            response=response,
         )
 
     def __exit__(self, exc_type, exc_value, tb) -> None:
