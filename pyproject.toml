@@ -147,6 +147,7 @@ test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov --cov-report=x
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
 docs = "uv run --only-group doc zensical build -f mkdocs.yml && uv run --only-group doc python scripts/check_docs_links.py site"
 docs-serve = "zensical serve -f mkdocs.yml"
+docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
