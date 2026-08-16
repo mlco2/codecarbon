@@ -1,13 +1,12 @@
+import math
 import os
 import re
 import shutil
+import statistics
 import subprocess
 import sys
 import time
 from functools import lru_cache
-from typing import Dict
-
-import numpy as np
 
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
@@ -166,7 +165,7 @@ class ApplePowermetrics:
             )
         return
 
-    def get_details(self) -> Dict:
+    def get_details(self) -> dict:
         """
         Fetches the CPU Power Details by fetching values from a logged csv file
         in _log_values function
@@ -179,8 +178,8 @@ class ApplePowermetrics:
             for chip_part in ("CPU", "GPU"):
                 power_list = re.findall(rf"{chip_part} Power: (\d+) mW", logfile)
                 if not power_list:
-                    # np.mean([]) is NaN, and NaN poisons every downstream total,
-                    # so report 0 W instead and make the situation visible.
+                    # An empty mean is NaN, and NaN poisons every downstream
+                    # total, so report 0 W instead and make the situation visible.
                     # get_details() runs every measurement cycle, so warn only
                     # once per chip part to avoid flooding the log.
                     if chip_part not in self._warned_missing_samples:
@@ -193,9 +192,9 @@ class ApplePowermetrics:
                     details[f"{chip_part} Energy Delta"] = 0.0
                     continue
                 watts = [float(power) / 1000 for power in power_list]
-                details[f"{chip_part} Power"] = np.mean(watts)
-                details[f"{chip_part} Energy Delta"] = np.sum(
-                    [(self._interval / 1000) * watt for watt in watts]
+                details[f"{chip_part} Power"] = statistics.fmean(watts)
+                details[f"{chip_part} Energy Delta"] = math.fsum(
+                    (self._interval / 1000) * watt for watt in watts
                 )
         except Exception as e:
             logger.info(

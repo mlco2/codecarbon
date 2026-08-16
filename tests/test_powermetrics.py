@@ -71,7 +71,11 @@ class TestApplePowerMetrics:
         )
         cpu_details = powermetrics.get_details()
 
-        assert cpu_details == expected_details
+        # Tolerance rather than equality: these are float sums/means, and the
+        # exact last ulp depends on summation order, not on correctness.
+        assert sorted(cpu_details) == sorted(expected_details)
+        for key, expected in expected_details.items():
+            assert cpu_details[key] == pytest.approx(expected)
 
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._setup_cli")
