@@ -75,11 +75,20 @@ def _equivalence_divisors():
     """
     data = _viz_data()
     return {
-        "car, kg CO2e/mile": (0.409, lambda v: data.get_car_miles(v) == "1"),
-        "tv, kg CO2/hour": (0.097, lambda v: data.get_tv_time(v) == "60 minutes"),
+        "car, kg CO2e/mile": (
+            0.409,
+            lambda v: data.get_car_miles(v) == "1",
+            "{} kg CO₂e per mile",
+        ),
+        "tv, kg CO2/hour": (
+            0.097,
+            lambda v: data.get_tv_time(v) == "60 minutes",
+            "{} kg CO₂ per hour",
+        ),
         "household, kg CO2/week": (
             160.58,
             lambda v: data.get_household_fraction(v) == "100.00",
+            "{} kg CO₂ per week",
         ),
     }
 
@@ -128,18 +137,18 @@ def _checks(docs: Path = DOCS):
         (
             "RAM x86 power floor (2 x RAM_SLOT_POWER_X86)",
             RAM_SLOT_POWER_X86 * 2,
-            f"{RAM_SLOT_POWER_X86 * 2} W",
+            f"{RAM_SLOT_POWER_X86 * 2} W (2 DIMMs × {RAM_SLOT_POWER_X86} W)",
             methodology,
         ),
         (
             "carbon_intensity_per_source.json: world_average",
             world_average,
-            f"{world_average} g",
+            f"{world_average} gCO₂eq/kWh",
             methodology,
         ),
     ]
 
-    for name, (value, round_trips) in _equivalence_divisors().items():
+    for name, (value, round_trips, phrase) in _equivalence_divisors().items():
         if not round_trips(value):
             raise SystemExit(
                 f"drift: the equivalence divisor for {name} in "
@@ -147,7 +156,9 @@ def _checks(docs: Path = DOCS):
                 f"  fix: update this script's expected value and "
                 f"{equivalences} to match the code."
             )
-        checks.append((f"equivalence, {name}", value, str(value), equivalences))
+        checks.append(
+            (f"equivalence, {name}", value, phrase.format(value), equivalences)
+        )
 
     return checks
 
