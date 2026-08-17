@@ -266,6 +266,41 @@ class TestFileOutput(unittest.TestCase):
         self.assertIn("gpu_count", df.columns)
         self.assertIn("gpu_model", df.columns)
 
+    def test_file_output_out_append_keeps_none_columns_aligned(self):
+        """Regression test: appended rows must have the same number of fields as the
+        header, even when some values are None.
+
+        The bug: dropna(axis=1, how="all") on the single-row new_df dropped every
+        None column.  The append is headerless, so the surviving values shifted left
+        and were read back under the wrong column names.
+        """
+        none_data = EmissionsData(
+            **{
+                **self.emissions_data.values,
+                "gpu_count": None,
+                "gpu_model": None,
+                "longitude": None,
+                "latitude": None,
+                "region": None,
+            }
+        )
+
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(none_data, None)
+        file_output.out(none_data, None)
+
+        with open(file_output.save_file_path) as csv_file:
+            field_counts = {len(line.split(",")) for line in csv_file}
+        self.assertEqual(
+            len(field_counts),
+            1,
+            f"Rows have inconsistent field counts: {field_counts}",
+        )
+
+        df = pd.read_csv(file_output.save_file_path)
+        self.assertEqual(df["ram_total_size"].tolist(), [16.0, 16.0])
+        self.assertEqual(df["tracking_mode"].tolist(), ["machine", "machine"])
+
     def test_file_output_out_append_no_gpu_zero_defaults(self):
         """Test that gpu_count=0 and gpu_model="" (the new tracker defaults for
         CPU-only machines) produce consistent CSV columns across successive writes.

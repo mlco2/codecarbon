@@ -1,0 +1,4 @@
+---
+# One experiment per machine, so each one gets its own series on the dashboard.
+# The file name must match the host exactly as written in the `hosts` inventory.
+experiment_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
