@@ -81,14 +81,29 @@ EOF
 
 Give the CodeCarbon user permissions to read RAPL (Running Average Power Limit) energy information for accurate CPU power tracking:
 
-``` bash
-sudo chown -R root:codecarbon /sys/class/powercap/intel-rapl/*
-sudo chmod g+r -R /sys/class/powercap/intel-rapl/*
+A `udev` rule restores those permissions on every boot, for all RAPL domains. Only the
+`energy_uj` counters are touched, and only the `codecarbon` group gains read access:
 
-sudo apt install sysfsutils
-echo "mode class/powercap/intel-rapl:0/energy_uj = 0440" >> /etc/sysfs.conf
-echo "owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon" >> /etc/sysfs.conf
+``` bash
+sudo tee /etc/udev/rules.d/99-codecarbon-rapl.rules <<'EOF'
+SUBSYSTEM=="powercap", ACTION=="add", TEST=="energy_uj", \
+  RUN+="/bin/chgrp codecarbon /sys%p/energy_uj", \
+  RUN+="/bin/chmod 0440 /sys%p/energy_uj"
+EOF
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=powercap --action=add
 ```
+
+Check that the counters are now readable by the `codecarbon` group:
+
+``` bash
+ls -l /sys/class/powercap/*/energy_uj
+```
+
+Energy counters are a side channel (see [Enable RAPL](enable-rapl.md) for the security
+rationale and for the `sysfsutils` alternative). Keeping them restricted to the service
+group means no other local account gains anything from this change.
 
 ### Step 6: Create the CodeCarbon Configuration File
 

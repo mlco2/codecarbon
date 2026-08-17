@@ -7,6 +7,14 @@
   become_method: sudo
 
   tasks:
+  - name: Check this host has its own dashboard experiment
+    assert:
+      that: experiment_id is defined
+      fail_msg: >-
+        No experiment_id for {{ inventory_hostname }}. Create the experiment on
+        the dashboard, then declare it in host_vars/{{ inventory_hostname }}.yml
+        rather than in vars/main.yml.
+      quiet: yes
   - name: Create CodeCarbon group
     group:
       name: "{{ codecarbon_group }}"
@@ -31,17 +39,34 @@
     apt:
        name: python3-venv
        state: present
+  # A venv hardcodes the Python minor version in lib/pythonX.Y/site-packages,
+  # but bin/python3 is only a symlink to /usr/bin/python3. After a distribution
+  # upgrade the interpreter no longer finds its own site-packages and even pip
+  # disappears. `creates:` would then skip the rebuild forever, so probe the
+  # venv instead of merely testing its presence.
+  - name: Check whether the existing virtual environment is still usable
+    command: "{{ codecarbon_venv }}/bin/python -c 'import pip'"
+    register: codecarbon_venv_check
+    changed_when: false
+    failed_when: false
+  - name: Remove the stale virtual environment
+    file:
+       path: "{{ codecarbon_venv }}"
+       state: absent
+    when: codecarbon_venv_check.rc != 0
+  # The venv is built and owned by root: the service account only needs to read
+  # it, and it has no home directory for Ansible to write its temporary files.
   - name: Create Python virtual environment
     command:
        cmd: "python3 -m venv {{ codecarbon_venv }}"
-       creates: "{{ codecarbon_venv }}"
-    become_user: "{{ codecarbon_user }}"
+       creates: "{{ codecarbon_venv }}/bin/python"
   - name: Install CodeCarbon package
     pip:
        name: codecarbon
+       state: latest
        virtualenv: "{{ codecarbon_venv }}"
-    become_user: "{{ codecarbon_user }}"
   - name: Create CodeCarbon configuration file
+    register: codecarbon_config
     template:
        src: ../templates/codecarbon.config.j2
        dest: "{{ codecarbon_home }}/.codecarbon.config"
