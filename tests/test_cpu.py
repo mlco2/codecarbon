@@ -594,6 +594,56 @@ class TestTDP(unittest.TestCase):
         self.assertEqual(tdp.model, "Unknown")
         self.assertIsNone(tdp.tdp)
 
+    def test_apple_m2_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M2", 22),
+            ("Apple M2 Pro", 35),
+            ("Apple M2 Max", 50),
+            ("Apple M2 Ultra", 105),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_apple_m3_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M3", 22),
+            ("Apple M3 Pro", 35),
+            ("Apple M3 Max", 50),
+            ("Apple M3 Ultra", 100),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_apple_m4_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M4", 20),
+            ("Apple M4 Pro", 35),
+            ("Apple M4 Max", 55),
+            ("Apple M4 Ultra", 110),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_unknown_apple_chip_falls_back_gracefully(self):
+        with (
+            mock.patch(
+                "codecarbon.core.cpu.detect_cpu_model",
+                return_value="Apple M5 Pro",
+            ),
+            mock.patch("codecarbon.core.cpu.is_psutil_available", return_value=True),
+            mock.patch("codecarbon.core.cpu.count_cpus", return_value=10),
+        ):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Apple M5 Pro")
+        self.assertEqual(tdp.tdp, 10 * DEFAULT_POWER_PER_CORE)
+
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):
     def test_set_cpu_tracking_skips_tdp_when_rapl_available(self):
