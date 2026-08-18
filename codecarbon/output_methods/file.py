@@ -102,7 +102,8 @@ class FileOutput(BaseOutput):
         if not file_exists:
             new_df.to_csv(self.save_file_path, index=False)
         elif self.on_csv_write == "append":
-            new_df = new_df.dropna(axis=1, how="all")
+            # Never drop all-NA columns here: the append is headerless, so column
+            # identity is positional and a missing column shifts every value after it.
             new_df.to_csv(self.save_file_path, mode="a", header=False, index=False)
         else:
             df = pd.read_csv(self.save_file_path)

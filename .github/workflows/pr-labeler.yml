@@ -1,0 +1,36 @@
+name: PR Size Labeler
+
+# Automatically labels pull requests based on the number of lines changed
+# (additions + deletions), making it easier to prioritize reviews when
+# there are many open PRs.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+  issues: write
+
+jobs:
+  size-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label PR by size
+        uses: codelytv/pr-size-labeler@095a41fca88b8764fd9e008ad269bcdb82bb38b9 # v1.10.4
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: "size/XS"
+          xs_max_size: "10"
+          s_label: "size/S"
+          s_max_size: "50"
+          m_label: "size/M"
+          m_max_size: "200"
+          l_label: "size/L"
+          l_max_size: "500"
+          xl_label: "size/XL"
+          fail_if_xl: "false"
+          message_if_xl: >
+            This PR exceeds the recommended size of 500 lines changed. Consider
+            splitting it into smaller PRs to ease the review process.
