@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from carbonserver.api.infra.repositories.repository_users import SqlAlchemyRepository
 from carbonserver.api.schemas import User, UserAutoCreate
@@ -9,24 +10,23 @@ class UserService:
         self._repository: SqlAlchemyRepository = user_repository
 
     def create_user(self, user: UserAutoCreate) -> User:
-        created_user: User = self._repository.create_user(user)
-        return created_user
+        return self._repository.create_user(user)
 
     def create_user_by_id(self, user: UserAutoCreate) -> User:
-        created_user: User = self._repository.create_user(user)
-        return created_user
+        return self.create_user(user)
 
     def get_user_by_id(self, user_id: str) -> User:
-        user: User = self._repository.get_user_by_id(user_id)
-        return user
+        return self._repository.get_user_by_id(user_id)
 
     def get_user_by_email(self, email: str) -> User:
-        user: User = self._repository.get_user_by_email(email)
-        return user
+        return self._repository.get_user_by_email(email)
 
     def list_users(self) -> List[User]:
-        users_list = self._repository.list_users()
-        return users_list
+        return self._repository.list_users()
 
-    def add_organization(self, user: User, organisation_id: str):
-        return self._repository.add_organisation(user, organisation_id)
+    def add_organization(self, user: User, organization_id: UUID) -> None:
+        return self._repository.subscribe_user_to_org(
+            user=user,
+            organization_id=organization_id,
+            is_admin=False,
+        )

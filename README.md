@@ -90,19 +90,19 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 
 ## Quick links
 
-| Section | Description |
-|---------|-------------|
-| [Quickstart](https://docs.codecarbon.io/latest/tutorials/first-tracking/) | Get started in 5 minutes |
-| [Installation](https://docs.codecarbon.io/latest/how-to/installation/) | Install CodeCarbon |
-| [CLI Tutorial](https://docs.codecarbon.io/latest/tutorials/cli/) | Track emissions from the command line |
-| [Python API Tutorial](https://docs.codecarbon.io/latest/tutorials/python-api/) | Track emissions in Python code |
+| Section                                                                                               | Description                                |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [Quickstart](https://docs.codecarbon.io/latest/tutorials/first-tracking/)                             | Get started in 5 minutes                   |
+| [Installation](https://docs.codecarbon.io/latest/how-to/installation/)                                | Install CodeCarbon                         |
+| [CLI Tutorial](https://docs.codecarbon.io/latest/tutorials/cli/)                                      | Track emissions from the command line      |
+| [Python API Tutorial](https://docs.codecarbon.io/latest/tutorials/python-api/)                        | Track emissions in Python code             |
 | [Comparing Model Efficiency](https://docs.codecarbon.io/latest/tutorials/comparing-model-efficiency/) | Measure carbon efficiency across ML models |
-| [API Reference](https://docs.codecarbon.io/latest/reference/api/) | Full parameter documentation |
-| [Framework examples (scikit-learn)](https://docs.codecarbon.io/latest/how-to/scikit-learn/) | Task-oriented ML framework examples |
-| [Methodology](https://docs.codecarbon.io/latest/explanation/methodology/) | How emissions are calculated |
-| [When to use CodeCarbon vs EcoLogits](https://docs.codecarbon.io/latest/explanation/when-to-use/) | Choose the right tool |
-| [EcoLogits](https://ecologits.ai/) | Track emissions from GenAI API calls |
-| [Discord Community](https://discord.gg/GS9js2XkJR) | Chat with us and the community |
+| [API Reference](https://docs.codecarbon.io/latest/reference/api/)                                     | Full parameter documentation               |
+| [Framework examples (scikit-learn)](https://docs.codecarbon.io/latest/how-to/scikit-learn/)           | Task-oriented ML framework examples        |
+| [Methodology](https://docs.codecarbon.io/latest/explanation/methodology/)                             | How emissions are calculated               |
+| [When to use CodeCarbon vs EcoLogits](https://docs.codecarbon.io/latest/explanation/when-to-use/)     | Choose the right tool                      |
+| [EcoLogits](https://ecologits.ai/)                                                                    | Track emissions from GenAI API calls       |
+| [Discord Community](https://discord.gg/GS9js2XkJR)                                                    | Chat with us and the community             |
 
 ## Links
 

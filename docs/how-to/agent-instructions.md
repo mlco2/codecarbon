@@ -30,8 +30,8 @@ Here's what you need to know to navigate and contribute effectively.
    - Visualizes emission data from CSV files
    - Run with: `uv run task carbonboard`
 
-4. **🌐 webapp/** - Next.js Web Dashboard
-   - Modern React/Next.js web application
+4. **🌐 webapp/** -  Web Dashboard
+   - Modern React web application
    - Connects to the API backend
    - Run with: `cd webapp && pnpm dev`
 
@@ -60,8 +60,7 @@ Here's what you need to know to navigate and contribute effectively.
    # Run specific test
    uv run pytest tests/test_emissions_tracker.py
 
-   # Lint and format
-   uv run task lint
+   # Lint and format (runs the pre-commit hooks, which rewrite files in place)
    uv run task format
    ```
 
@@ -83,7 +82,7 @@ Here's what you need to know to navigate and contribute effectively.
    # Python dashboard
    uv run task carbonboard
 
-   # Next.js webapp
+   # Js webapp
    cd webapp
    pnpm install
    pnpm dev
@@ -112,7 +111,7 @@ Here's what you need to know to navigate and contribute effectively.
 1. **Check existing tests** in `tests/` for similar functionality
 2. **Add unit tests** first (test-driven development)
 3. **Update documentation** if public interface changes
-4. **Follow coding style**: Use `uv run task format` and `uv run task lint`
+4. **Follow coding style**: Use `uv run task format`
 
 ### API Development
 1. **Follow FastAPI patterns** - see routers in `carbonserver/carbonserver/api/routers/`
@@ -122,7 +121,7 @@ Here's what you need to know to navigate and contribute effectively.
 
 ### Dashboard Development
 1. **Python Dashboard**: Uses Dash + Plotly, see `codecarbon/viz`
-2. **Next.js Dashboard**: Modern React components in `webapp/src/`
+2. **React Dashboard**: Modern React components in `webapp/src/`
 3. **Connect to API**: Set `CODECARBON_API_URL=http://localhost:8008` for local development
 
 ## Environment Management
@@ -134,8 +133,7 @@ uv run task -l
 
 # Main tasks:
 # - test-package: Core package testing
-# - lint: Code linting and style checks
-# - format: Code formatting
+# - format: Lint and format, by running the pre-commit hooks
 # - test-api-unit: API unit tests
 # - test-api-integ: API integration tests
 # - dashboard: Run API locally
@@ -155,7 +153,7 @@ uv run task -l
 - **[CONTRIBUTING.md](https://docs.codecarbon.io/latest/how-to/contributing/)**: Detailed contribution guidelines and setup
 - **[README.md](https://github.com/mlco2/codecarbon/blob/master/README.md)**: Project overview and quickstart
 - **[carbonserver/README.md](https://github.com/mlco2/codecarbon/blob/master/carbonserver/README.md)**: API architecture and database schema
-- **[webapp/README.md](https://github.com/mlco2/codecarbon/blob/master/webapp/README.md)**: Next.js dashboard setup
+- **[webapp/README.md](https://github.com/mlco2/codecarbon/blob/master/webapp/README.md)**: React dashboard setup
 - **[carbonserver/tests/TESTING.md](https://github.com/mlco2/codecarbon/blob/master/carbonserver/tests/TESTING.md)**: Comprehensive testing guide
 
 ### VS Code Debugging
@@ -177,7 +175,7 @@ The repository includes VS Code launch configurations in `docs/how-to/contributi
 │   (package)     │───▶│     (API)       │◀───│  (2 versions)   │
 │                 │    │                 │    │                 │
 │ • CLI tools     │    │ • FastAPI       │    │ • Dash (Python) │
-│ • Tracking core │    │ • PostgreSQL    │    │ • Next.js (Web) │
+│ • Tracking core │    │ • PostgreSQL    │    │ • React   (Web) │
 │ • Data output   │    │ • Authentication│    │ • Visualization │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```

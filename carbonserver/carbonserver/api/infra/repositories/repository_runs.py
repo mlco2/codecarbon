@@ -10,6 +10,7 @@ from carbonserver.api.domain.runs import Runs
 from carbonserver.api.errors import EmptyResultException
 from carbonserver.api.infra.database.sql_models import Emission as SqlModelEmission
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
+from carbonserver.api.infra.database.sql_models import Membership as SqlModelMembership
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import Run as SqlModelRun
 from carbonserver.api.schemas import Run, RunCreate, RunReport
@@ -72,6 +73,33 @@ class SqlAlchemyRepository(Runs):
             res = session.query(SqlModelRun)
             if res is None:
                 return []
+            return [self.map_sql_to_schema(run) for run in res]
+
+    def list_runs_for_user(self, user_id) -> List[Run]:
+        """List every run the user can access through an organization membership.
+
+        Runs are joined up to their owning project's organization and filtered
+        to the organizations the user belongs to, so a caller never sees runs
+        from tenants they are not a member of.
+        """
+        with self.session_factory() as session:
+            res = (
+                session.query(SqlModelRun)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelExperiment.id == SqlModelRun.experiment_id,
+                )
+                .join(
+                    SqlModelProject,
+                    SqlModelProject.id == SqlModelExperiment.project_id,
+                )
+                .join(
+                    SqlModelMembership,
+                    SqlModelMembership.organization_id
+                    == SqlModelProject.organization_id,
+                )
+                .filter(SqlModelMembership.user_id == user_id)
+            )
             return [self.map_sql_to_schema(run) for run in res]
 
     def get_runs_from_experiment(self, experiment_id) -> List[Run]:

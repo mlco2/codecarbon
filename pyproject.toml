@@ -84,7 +84,6 @@ dev = [
     "taskipy",
     "bumpver",
     "pre-commit",
-    "ruff",
     "black",
     "mypy",
     "pytest",
@@ -134,14 +133,14 @@ test-api-unit = "uv run --project carbonserver --extra dev python -m pytest -vv 
 test-api-integ = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/integration/"
 setup-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini upgrade head"
 downgrade-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini downgrade base"
-carbonserver-api-requirements = "uv pip compile carbonserver/pyproject.toml --output-file requirements/requirements-api.txt"
+carbonserver-api-requirements = "uv pip compile carbonserver/pyproject.toml --generate-hashes --output-file requirements/requirements-api.txt"
 build-doc = "uv run --only-group doc zensical build -f mkdocs.yml && uv run --only-group doc python scripts/check_docs_links.py site"
 precommit-install = "pre-commit install"
 precommit-update = "pre-commit autoupdate"
-precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
 mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
-lint = "black --check --diff . && ruff check . && mypy ."
-format = "black . && ruff check --fix --exit-non-zero-on-fix ."
+# No `lint` task: the pre-commit hooks fix what they can, so this rewrites
+# files rather than only reporting. Use `mypy-check` for a read-only check.
+format = "pre-commit run --all-files"
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov --cov-report=xml --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
@@ -151,7 +150,7 @@ docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.9"
+current_version = "3.3.0"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

@@ -2,7 +2,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union
 
-from codecarbon.core import cpu, gpu, powermetrics
+from codecarbon.core import cpu, gpu, powermetrics, windows_emi
 from codecarbon.core.config import normalize_gpu_ids
 from codecarbon.core.hardware_cache import get_cached_tdp, get_or_run_setup
 from codecarbon.core.util import (
@@ -73,6 +73,20 @@ class ResourceTracker:
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
         return True
 
+    def _setup_windows_emi(self):
+        """Set up CPU tracking using the Windows Energy Meter Interface (RAPL)."""
+        logger.info("Tracking CPU via the Windows Energy Meter Interface (RAPL)")
+        self.cpu_tracker = "Windows EMI"
+        hardware_cpu = CPU.from_utils(
+            output_dir=self.tracker._output_dir,
+            mode="windows_emi",
+            tracking_mode=self.tracker._tracking_mode,
+            rapl_include_dram=self.tracker._rapl_include_dram,
+        )
+        self.tracker._hardware.append(hardware_cpu)
+        self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+        return True
+
     def _setup_rapl(self):
         """Set up CPU tracking using RAPL interface."""
         logger.info("Tracking Intel CPU via RAPL interface")
@@ -118,7 +132,8 @@ class ResourceTracker:
                 return "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
         elif is_windows_os():
             return (
-                "Windows OS detected: Please install Intel Power Gadget to measure CPU"
+                "Windows OS detected: CPU power reading via the Energy Meter "
+                "Interface requires Windows 11 on bare metal (not a VM)"
             )
         elif is_linux_os():
             return "Linux OS detected: Please ensure RAPL files exist, and are readable, at /sys/class/powercap/intel-rapl/subsystem to measure CPU"
@@ -222,9 +237,13 @@ class ResourceTracker:
             elif powermetrics.is_powermetrics_available():
                 self._setup_powermetrics()
                 return True
-        elif is_windows_os() and cpu.is_powergadget_available():
-            self._setup_power_gadget()
-            return True
+        elif is_windows_os():
+            if windows_emi.is_emi_available():
+                self._setup_windows_emi()
+                return True
+            if cpu.is_powergadget_available():
+                self._setup_power_gadget()
+                return True
         return False
 
     def set_CPU_tracking(self):
@@ -298,13 +317,11 @@ class ResourceTracker:
             cpu_future.result()
             gpu_future.result()
 
-        logger.info(
-            f"""The below tracking methods have been set up:
+        logger.info(f"""The below tracking methods have been set up:
                 RAM Tracking Method: {self.ram_tracker}
                 CPU Tracking Method: {self.cpu_tracker}
                 GPU Tracking Method: {self.gpu_tracker}
-            """
-        )
+            """)
 
     def set_CPU_GPU_ram_tracking(self):
         """
