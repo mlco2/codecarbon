@@ -78,7 +78,8 @@
   },
   "metadata": {
     "source": "NO1-NO5: ENTSO-E Transparency actual generation per production type, weighted by IPCC AR5 Annex III lifecycle emission factors (production-based generation-mix), derived reproducibly by Khepri (avalyset/khepri). SE1-SE4 and FI: prior values, unchanged.",
-    "method": "production-based: weighted average of generation-mix per source x lifecycle factor (same approach as CodeCarbon's static fallback methodology). NOT consumption-based; the Electricity Maps API path remains the consumption-based source.",
+    "method": "production-based: weighted average of generation-mix per source x lifecycle emission factor. The emission factors are IPCC AR5 Annex III lifecycle medians. This is a different factor basis from CodeCarbon's static carbon_intensity_per_source.json, which carries different values for some sources (natural gas: 743 there, 490 in AR5). NOT consumption-based; the Electricity Maps API path remains the consumption-based source.",
+    "provenance": "NO1-NO5 values are taken from Khepri v1.2, archived at https://doi.org/10.5281/zenodo.21097430 (versioned record).",
     "last_updated": "2026-06-29",
     "notes": "NO1-NO5 replace the prior uniform 18.0 placeholder with per-zone derived values. Drift characterization: NO1/NO2/NO3 stable year-over-year (<5%); NO4 event-driven (Hammerfest LNG outage 2020-2022), period-dependent; NO5 near hydro floor. Production-based NO CI is low and not very distinct between zones except where fossil gas occurs (NO4). SE1-SE4 and FI retained from prior data pending equivalent per-zone derivation."
   }
