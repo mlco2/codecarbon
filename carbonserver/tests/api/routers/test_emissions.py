@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
+from api.mocks import FakeAuthContext, FakeUserWithAuthDependency
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from fastapi_pagination import add_pagination
@@ -15,6 +16,7 @@ from carbonserver.api.infra.repositories.repository_projects_tokens import (
 )
 from carbonserver.api.routers import emissions
 from carbonserver.api.schemas import AccessLevel, Emission, ProjectToken
+from carbonserver.api.services.auth_service import OptionalUserWithAuthDependency
 from carbonserver.container import ServerContainer
 
 RUN_1_ID = "40088f1a-d28e-4980-8d80-bf5600056a14"
@@ -100,9 +102,15 @@ EMISSION_3 = {
 def custom_test_server():
     container = ServerContainer()
     container.wire(modules=[emissions])
+    # Authorization is unit-tested in test_emission_service; here we stub it out
+    # so the router tests exercise request wiring with an authenticated caller.
+    container.auth_context.override(FakeAuthContext())
     app = FastAPI()
     app.container = container
     app.include_router(emissions.router)
+    app.dependency_overrides[OptionalUserWithAuthDependency] = (
+        lambda: FakeUserWithAuthDependency()
+    )
     add_pagination(app)
     yield app
 

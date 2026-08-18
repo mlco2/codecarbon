@@ -509,9 +509,11 @@ class BaseEmissionsTracker(ABC):
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
                                     Defaults to True since v3 (was False in v2).
-        :param rapl_include_dram: Include DRAM (memory) power in RAPL measurements on Linux,
-                                  defaults to False. When True, measures CPU package + DRAM.
-                                  Only affects systems where RAPL exposes separate DRAM domains.
+        :param rapl_include_dram: Include DRAM (memory) power in the counter-based CPU
+                                  measurements, defaults to False. When True, measures
+                                  CPU package + DRAM. Applies to the Linux RAPL interface
+                                  and to the Windows Energy Meter Interface, on systems
+                                  exposing separate DRAM domains/channels.
         :param rapl_prefer_psys: Prefer psys (platform) RAPL domain over package domains on
                                  Linux, defaults to False. When True, uses total platform power
                                  (CPU + chipset + PCIe). When False, uses package domains which
@@ -1147,15 +1149,16 @@ class BaseEmissionsTracker(ABC):
         self._ram_utilization_history.append(psutil.virtual_memory().percent)
         self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
 
-        # Collect GPU utilization metrics
+        # Collect GPU utilization metrics (lightweight path — skips
+        # heavyweight calls like process lists, memory, temperature).
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
-                gpu_details = hardware.devices.get_gpu_details()
-                for gpu_index, gpu_detail in enumerate(gpu_details):
-                    resolved_gpu_index = gpu_detail.get("gpu_index", gpu_index)
+                for gpu_detail in hardware.devices.get_gpu_utilization_list():
+                    resolved_gpu_index = gpu_detail.get("gpu_index")
                     if (
-                        resolved_gpu_index in gpu_ids_to_monitor
+                        resolved_gpu_index is not None
+                        and resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
                         self._gpu_utilization_history.append(
@@ -1586,7 +1589,8 @@ def track_emissions(
                 litres of water consumed per kilowatt-hour of electricity consumed.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                          in gCO2e/kWh for emissions calculations.
-    :param rapl_include_dram: Include DRAM in RAPL measurements on Linux (default: False).
+    :param rapl_include_dram: Include DRAM in the counter-based CPU measurements
+                              (Linux RAPL and Windows EMI, default: False).
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.

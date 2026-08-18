@@ -4,14 +4,16 @@ using Intel Power Gadget
 https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget.html
 """
 
+from __future__ import annotations
+
 import os
 import re
 import shutil
 import subprocess
 import sys
-from typing import Dict, Optional, Tuple
+from functools import lru_cache
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
-import pandas as pd
 import psutil
 from rapidfuzz import fuzz, process, utils
 
@@ -19,12 +21,15 @@ from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
-from codecarbon.input import DataSource
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 # default W value per core for a CPU if no model is found in the ref csv
 DEFAULT_POWER_PER_CORE = 4
 
 
+@lru_cache(maxsize=1)
 def is_powergadget_available() -> bool:
     """
     Checks if Intel Power Gadget is available on the system.
@@ -42,6 +47,10 @@ def is_powergadget_available() -> bool:
             e,
         )
         return False
+
+
+def clear_powergadget_cache() -> None:
+    is_powergadget_available.cache_clear()
 
 
 def _get_candidate_bases(rapl_dir: str) -> list:
@@ -366,6 +375,8 @@ class IntelPowerGadget:
         self._log_values()
         cpu_details = {}
         try:
+            import pandas as pd
+
             cpu_data = pd.read_csv(self._log_file_path).dropna()
             for col_name in cpu_data.columns:
                 if col_name in ["System Time", "Elapsed Time (sec)", "RDTSC"]:
@@ -892,6 +903,8 @@ class TDP:
         return float(cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0])
 
     def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
+        from codecarbon.input import DataSource
+
         cpu_power_df = DataSource().get_cpu_power_data()
         cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
         if cpu_matching:

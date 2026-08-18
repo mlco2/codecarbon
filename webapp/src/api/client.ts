@@ -3,6 +3,20 @@ import { ApiError, ValidationError } from "./errors";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
+async function throwApiError(
+    response: Response,
+    endpoint: string,
+): Promise<never> {
+    let detail = `${response.status} ${response.statusText}`;
+    try {
+        const body = await response.json();
+        detail = body.detail || detail;
+    } catch {
+        // Keep the HTTP status text when the response is not JSON.
+    }
+    throw new ApiError(detail, response.status, endpoint);
+}
+
 // Accept any zod schema, including ones produced by `.transform(...)` whose
 // input and output types differ. The function's return type is the schema's
 // *output* type.
@@ -21,14 +35,7 @@ export async function fetchApi<S extends ZodTypeAny>(
     });
 
     if (!response.ok) {
-        let detail = `${response.status} ${response.statusText}`;
-        try {
-            const body = await response.json();
-            detail = body.detail || detail;
-        } catch {
-            // ignore JSON parse errors
-        }
-        throw new ApiError(detail, response.status, endpoint);
+        return throwApiError(response, endpoint);
     }
 
     if (response.status === 204) return undefined as z.infer<S>;
@@ -59,13 +66,16 @@ export async function fetchApiVoid(
     });
 
     if (!response.ok) {
-        let detail = `${response.status} ${response.statusText}`;
-        try {
-            const body = await response.json();
-            detail = body.detail || detail;
-        } catch {
-            // ignore JSON parse errors
-        }
-        throw new ApiError(detail, response.status, endpoint);
+        await throwApiError(response, endpoint);
     }
+}
+
+export async function fetchApiJson<T>(endpoint: string): Promise<T> {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+        credentials: "include",
+    });
+    if (!response.ok) {
+        return throwApiError(response, endpoint);
+    }
+    return response.json() as Promise<T>;
 }

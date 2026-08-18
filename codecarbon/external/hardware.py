@@ -16,6 +16,7 @@ from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
+from codecarbon.core.windows_emi import WindowsEMI
 from codecarbon.external.logger import logger
 
 # default W value for a CPU if no model is found in the ref csv
@@ -27,6 +28,14 @@ CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 B_TO_GB = 1024 * 1024 * 1024
 
 MODE_CPU_LOAD = "cpu_load"
+
+# psutil.cpu_percent blocks on first sample; prime once per process for cpu_load mode.
+_cpu_load_percent_primed = False
+
+
+def clear_cpu_load_prime_cache() -> None:
+    global _cpu_load_percent_primed
+    _cpu_load_percent_primed = False
 
 
 @dataclass
@@ -210,6 +219,8 @@ class CPU(BaseHardware):
         # For process tracking: store last measurement time and CPU times
         self._last_measurement_time: Optional[float] = None
         self._last_cpu_times: Dict[int, float] = {}  # pid -> total cpu time
+        # First cpu_percent sample blocks briefly; later calls use interval=None.
+        self._cpu_percent_interval: Optional[float] = 0.05
 
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
@@ -218,6 +229,10 @@ class CPU(BaseHardware):
                 rapl_dir=rapl_dir,
                 rapl_include_dram=rapl_include_dram,
                 rapl_prefer_psys=rapl_prefer_psys,
+            )
+        elif self._mode == "windows_emi":
+            self._intel_interface = WindowsEMI(
+                emi_include_dram=rapl_include_dram,
             )
 
     def __repr__(self) -> str:
@@ -263,8 +278,10 @@ class CPU(BaseHardware):
         if self._tracking_mode == "machine":
             tdp = self._tdp
             cpu_load = psutil.cpu_percent(
-                interval=0.5, percpu=False
-            )  # Convert to 0-1 range
+                interval=self._cpu_percent_interval, percpu=False
+            )
+            if self._cpu_percent_interval is not None:
+                self._cpu_percent_interval = None
             logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
             # Cubic relationship with minimum 10% of TDP
             load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
@@ -345,7 +362,7 @@ class CPU(BaseHardware):
         elif self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
-        if self._mode == "intel_rapl":
+        if self._mode in ("intel_rapl", "windows_emi"):
             # Don't call get_cpu_details to avoid computing energy twice and losing data.
             all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()
         else:
@@ -386,7 +403,7 @@ class CPU(BaseHardware):
         return Power.from_watts(cpu_power)
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
-        if self._mode == "intel_rapl":
+        if self._mode in ("intel_rapl", "windows_emi"):
             energy = self._get_energy_from_cpus(delay=Time(seconds=last_duration))
             power = self.total_power()
             return power, energy
@@ -395,15 +412,23 @@ class CPU(BaseHardware):
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
-        if self._mode in ["intel_power_gadget", "intel_rapl", "apple_powermetrics"]:
+        global _cpu_load_percent_primed
+        if self._mode in [
+            "intel_power_gadget",
+            "intel_rapl",
+            "windows_emi",
+            "apple_powermetrics",
+        ]:
             self._intel_interface.start()
         # Reset process tracking state for fresh measurements
         self._last_measurement_time = None
         self._last_cpu_times = {}
         if self._mode == MODE_CPU_LOAD:
-            # The first time this is called it will return a meaningless 0.0 value which you are supposed to ignore.
-            _ = self._get_power_from_cpu_load()
-            _ = self._get_power_from_cpu_load()
+            if not _cpu_load_percent_primed:
+                _ = self._get_power_from_cpu_load()
+                _cpu_load_percent_primed = True
+            else:
+                self._cpu_percent_interval = None
 
     def monitor_power(self):
         cpu_power = self._get_power_from_cpus()
@@ -435,6 +460,7 @@ class CPU(BaseHardware):
                 mode=mode,
                 model=model,
                 tdp=tdp,
+                tracking_mode=tracking_mode,
                 rapl_include_dram=rapl_include_dram,
                 rapl_prefer_psys=rapl_prefer_psys,
             )

@@ -1,7 +1,7 @@
 # Dockerfile
 
 # Use Ubuntu to install Python and uv
-# For production, you could use python:3.11-slim
+# For production, you could use python:3.12-slim
 
 FROM ubuntu:22.04@sha256:3c61d3759c2639d4b836d32a2d3c83fa0214e36f195a3421018dbaaf79cbe37f
 
@@ -17,10 +17,10 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y software-properties-common curl && \
     add-apt-repository ppa:deadsnakes/ppa -y && \
     apt-get update && \
-    apt-get install -y gcc libpq-dev python3.11 python3.11-dev
+    apt-get install -y gcc libpq-dev python3.12 python3.12-dev
 
-RUN ln -sf /usr/bin/python3.11 /usr/bin/python && \
-    ln -sf /usr/bin/python3.11 /usr/bin/python3
+RUN ln -sf /usr/bin/python3.12 /usr/bin/python && \
+    ln -sf /usr/bin/python3.12 /usr/bin/python3
 
 # Download the latest UV installer
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
@@ -32,12 +32,12 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
 # Copy project files
-COPY pyproject.toml /app/
+COPY requirements/requirements-api.txt /app/requirements/requirements-api.txt
 COPY codecarbon /app/codecarbon
 COPY carbonserver /app/carbonserver
 
-# Install dependencies using uv with the api dependency group
-RUN uv pip install --system -e ".[api]"
+# Install carbonserver dependencies.
+RUN uv pip install --system --require-hashes -r requirements/requirements-api.txt
 
 COPY ./carbonserver/docker/entrypoint.sh /opt
 RUN chmod a+x /opt/entrypoint.sh
