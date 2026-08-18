@@ -2806,8 +2806,7 @@ uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span
 <span class="c1"># Run specific test</span>
 uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_emissions_tracker.py
 
-<span class="c1"># Lint and format</span>
-uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span>lint
+<span class="c1"># Lint and format (runs the pre-commit hooks, which rewrite files in place)</span>
 uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span>format
 </code></pre></div></p>
 </li>
@@ -2861,7 +2860,7 @@ pnpm<span class="w"> </span>dev
 <li><strong>Check existing tests</strong> in <code>tests/</code> for similar functionality</li>
 <li><strong>Add unit tests</strong> first (test-driven development)</li>
 <li><strong>Update documentation</strong> if public interface changes</li>
-<li><strong>Follow coding style</strong>: Use <code>uv run task format</code> and <code>uv run task lint</code></li>
+<li><strong>Follow coding style</strong>: Use <code>uv run task format</code></li>
 </ol>
 <h3 id="api-development">API Development<a class="headerlink" href="#api-development" title="Permanent link">&para;</a></h3>
 <ol>
@@ -2883,8 +2882,7 @@ uv<span class="w"> </span>run<span class="w"> </span>task<span class="w"> </span
 
 <span class="c1"># Main tasks:</span>
 <span class="c1"># - test-package: Core package testing</span>
-<span class="c1"># - lint: Code linting and style checks</span>
-<span class="c1"># - format: Code formatting</span>
+<span class="c1"># - format: Lint and format, by running the pre-commit hooks</span>
 <span class="c1"># - test-api-unit: API unit tests</span>
 <span class="c1"># - test-api-integ: API integration tests</span>
 <span class="c1"># - dashboard: Run API locally</span>
