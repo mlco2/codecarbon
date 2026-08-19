@@ -1,7 +1,7 @@
 """
 OIDC Authentication Provider Implementation
 
-This module provides a generic OIDC authentication provider implementation using fastapi-oidc.
+This module provides a generic OIDC authentication provider implementation.
 It can work with any OIDC-compliant provider (Keycloak, Auth0, etc.).
 """
 

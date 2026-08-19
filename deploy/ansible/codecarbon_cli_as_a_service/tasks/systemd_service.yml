@@ -19,3 +19,12 @@
        enabled: yes
        state: started
        daemon_reload: yes
+
+  # CodeCarbon only reads .codecarbon.config at startup, so a configuration
+  # change is a no-op until the service is restarted. The variable comes from
+  # the previous play, registered variables are kept per host across plays.
+  - name: Restart CodeCarbon to pick up the new configuration
+    systemd:
+       name: codecarbon
+       state: restarted
+    when: codecarbon_config.changed | default(false)
