@@ -1128,10 +1128,12 @@ class BaseEmissionsTracker(ABC):
 
         task_emissions_data = []
         api_task_emissions_data = []
-        for task in self._tasks:
-            task_entry = self._tasks[task].out()
+        with self._http_task_lock:
+            tasks = list(self._tasks.values())
+        for task in tasks:
+            task_entry = task.out()
             task_emissions_data.append(task_entry)
-            if not self._tasks[task].uploaded_to_api:
+            if not task.uploaded_to_api:
                 api_task_emissions_data.append(task_entry)
 
         for handler in self._output_handlers:
@@ -1140,7 +1142,7 @@ class BaseEmissionsTracker(ABC):
                 if isinstance(handler, CodeCarbonAPIOutput):
                     if api_task_emissions_data:
                         handler.task_out(api_task_emissions_data, experiment_name)
-                        for task_obj in self._tasks.values():
+                        for task_obj in tasks:
                             if not task_obj.is_active and task_obj.emissions_data:
                                 task_obj.uploaded_to_api = True
                 else:
