@@ -296,6 +296,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._window_observers: List[Callable[[float], None]] = []
         self._hardware = []
         self._hardware_initialized = False
 
@@ -975,6 +976,66 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
+    def add_energy_window_observer(self, callback: Callable[[float], None]) -> None:
+        """Call ``callback(total_energy_kwh)`` after every completed sampling window.
+
+        The callback runs on whichever thread took the sample (normally the
+        scheduler thread), so it must be cheap. Used by the FastAPI per-request
+        energy attribution to split each window's energy across the requests
+        that were in flight during it.
+
+        Args:
+            callback: Receives the tracker's cumulative energy in kWh.
+        """
+        self._window_observers.append(callback)
+
+    def remove_energy_window_observer(self, callback: Callable[[float], None]) -> None:
+        """Remove a callback registered with :meth:`add_energy_window_observer`."""
+        if callback in self._window_observers:
+            self._window_observers.remove(callback)
+
+    def _notify_energy_window_observers(self) -> None:
+        for callback in self._window_observers:
+            try:
+                callback(self._total_energy.kWh)
+            except Exception:
+                logger.exception("CodeCarbon energy window observer failed")
+
+    def http_request_emissions(
+        self, energy_kwh: float, duration_s: float
+    ) -> EmissionsData:
+        """Scale the run's emissions data down to one attributed energy share.
+
+        The share is split into cpu/gpu/ram in the same proportions the run has
+        accumulated so far, and converted with the run's effective carbon
+        intensity, so per-request numbers stay consistent with the run total.
+        Over a single request the per-component split is not separately known,
+        and the run ratio is the best estimate available.
+
+        Args:
+            energy_kwh: Energy attributed to the request, from
+                :class:`~codecarbon.integrations.fastapi.EnergyAttributor`.
+            duration_s: Wall-clock duration of the request.
+        """
+        snapshot = self._prepare_emissions_data()
+        total = snapshot.energy_consumed or 0.0
+
+        def _share(component: float) -> float:
+            return energy_kwh * (component / total) if total else 0.0
+
+        emissions = energy_kwh * (self._total_emissions / total if total else 0.0)
+        return dataclasses.replace(
+            snapshot,
+            duration=duration_s,
+            emissions=emissions,
+            emissions_rate=emissions / duration_s if duration_s else 0.0,
+            cpu_energy=_share(snapshot.cpu_energy),
+            gpu_energy=_share(snapshot.gpu_energy),
+            ram_energy=_share(snapshot.ram_energy),
+            energy_consumed=energy_kwh,
+            water_consumed=_share(snapshot.water_consumed),
+        )
+
     def _prepare_emissions_data(self) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
@@ -1274,6 +1335,7 @@ class BaseEmissionsTracker(ABC):
 
         self._do_measurements()
         self._last_measured_time = time.perf_counter()
+        self._notify_energy_window_observers()
         self._measure_occurrence += 1
         # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (
