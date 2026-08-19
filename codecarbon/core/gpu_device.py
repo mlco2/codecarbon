@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from codecarbon.core.units import Energy, Power, Time
+from codecarbon.external.logger import logger
 
 
 @dataclass
@@ -28,8 +29,9 @@ class GPUDevice:
     power: Power = field(default_factory=lambda: Power(0))
     # Energy consumed in kWh
     energy_delta: Energy = field(default_factory=lambda: Energy(0))
-    # Last energy reading in kWh
-    last_energy: Energy = field(default_factory=lambda: Energy(0))
+    # Last energy reading in kWh, None if the device has no energy counter
+    last_energy: Optional[Energy] = field(default_factory=lambda: Energy(0))
+    _warned_no_counter: bool = field(default=False, init=False)
 
     def start(self) -> None:
         self.last_energy = self._get_energy_kwh()
@@ -38,22 +40,45 @@ class GPUDevice:
         self.last_energy = self._get_energy_kwh()
         self._init_static_details()
 
-    def _get_energy_kwh(self) -> Energy:
+    def _get_energy_kwh(self) -> Optional[Energy]:
         total_energy_consumption = self._get_total_energy_consumption()
         if total_energy_consumption is None:
-            return self.last_energy
+            return None
         return Energy.from_millijoules(total_energy_consumption)
+
+    def _delta_from_power(self, duration: Time) -> None:
+        try:
+            self.power = Power.from_watts(self._get_power_usage())
+        except Exception:
+            logger.warning(
+                f"Failed to retrieve power usage of GPU {self.gpu_index}, "
+                "reporting 0 W for this measurement.",
+                exc_info=True,
+            )
+            self.power = Power.from_watts(0.0)
+        self.energy_delta = Energy.from_power_and_time(power=self.power, time=duration)
 
     def delta(self, duration: Time) -> dict:
         """
         Compute the energy/power used since last call.
         """
-        new_last_energy = energy = self._get_energy_kwh()
-        self.power = self.power.from_energies_and_delay(
-            energy, self.last_energy, duration
-        )
-        self.energy_delta = energy - self.last_energy
-        self.last_energy = new_last_energy
+        energy = self._get_energy_kwh()
+        if energy is None or self.last_energy is None:
+            # counter unsupported: integrate instantaneous power instead
+            if not self._warned_no_counter:
+                self._warned_no_counter = True
+                logger.warning(
+                    f"GPU {self.gpu_index} does not provide a total energy consumption counter, "
+                    "falling back to integrating instantaneous power usage. "
+                    "Measurements will be less accurate."
+                )
+            self._delta_from_power(duration)
+        else:
+            self.power = Power.from_energies_and_delay(
+                energy, self.last_energy, duration
+            )
+            self.energy_delta = energy - self.last_energy
+        self.last_energy = energy
         return {
             "name": self._gpu_name,
             "uuid": self._uuid,
