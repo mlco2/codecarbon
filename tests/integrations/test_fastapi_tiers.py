@@ -65,7 +65,7 @@ class GPU:  # stand-in for codecarbon.external.hardware.GPU
 
 
 class RAM:  # stand-in for codecarbon.external.ram.RAM
-    pass
+    analytic_power_model = True
 
 
 def _gpu(device_class_name: str, count: int = 1) -> Any:

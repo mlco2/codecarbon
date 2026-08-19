@@ -72,8 +72,7 @@ def hardware_tier(hardware: Any, window_seconds: float = 0.0) -> MeasurementTier
     name = type(hardware).__name__
     if name == "GPU" or hasattr(hardware, "devices"):
         return _gpu_tier(hardware, window_seconds)
-    if name == "RAM":
-        # RAM power is a constant model, so energy is analytic in duration.
+    if getattr(hardware, "analytic_power_model", False):
         return MeasurementTier.ESTIMATED
     if name == "AppleSiliconChip":
         return MeasurementTier.AGGREGATE_ONLY
@@ -112,17 +111,22 @@ def detect_measurement_tier(
     every energy contributor resolves the window.
     """
     try:
-        components = tuple(
-            (repr_hardware(hw), hardware_tier(hw, window_seconds))
+        detected = tuple(
+            (hw, repr_hardware(hw), hardware_tier(hw, window_seconds))
             for hw in (hardware or ())
         )
     except TypeError:  # not iterable (e.g. a bare mock)
-        components = ()
-    if not components:
+        detected = ()
+    if not detected:
         return TierDetection(MeasurementTier.AGGREGATE_ONLY)
-    # RAM is analytic in duration, so it never limits resolution: it is
-    # reported but does not vote.
-    voting = [tier for name, tier in components if not name.startswith("RAM")]
+    components = tuple((name, tier) for _, name, tier in detected)
+    # An analytic (constant-power) component is exact at any resolution, so it
+    # never limits resolution: it is reported but does not vote.
+    voting = [
+        tier
+        for hw, _, tier in detected
+        if not getattr(hw, "analytic_power_model", False)
+    ]
     if not voting:
         voting = [tier for _, tier in components]
     tier = min(voting, key=_RANK.__getitem__)

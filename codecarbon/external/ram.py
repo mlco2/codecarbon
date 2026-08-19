@@ -31,6 +31,8 @@ class RAM(BaseHardware):
 
     memory_size = None
     is_arm_cpu = False
+    #: Power is a constant model, so energy is analytic in duration.
+    analytic_power_model = True
 
     def __init__(
         self,
