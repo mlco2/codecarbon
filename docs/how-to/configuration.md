@@ -178,6 +178,25 @@ Despite its name, this option applies to every counter-based CPU interface:
 It has no effect when CodeCarbon falls back to TDP/CPU-load estimation, since
 that mode models the CPU package only.
 
+## Cloud Detection
+
+At startup, `EmissionsTracker` queries the cloud instance metadata service on the
+link-local address `169.254.169.254` to find out whether it runs on AWS, Azure or
+GCP.
+
+On a machine that is not on a cloud the probe always fails, and in air-gapped or
+egress-filtered environments it is unwanted network noise. Set `cloud_detection`
+to `false` to skip it entirely:
+
+``` ini
+[codecarbon]
+cloud_detection = false
+```
+
+With detection disabled, CodeCarbon reports no cloud provider or region and uses
+the usual geolocation path to pick a carbon intensity. `OfflineEmissionsTracker`
+never probes the metadata service, so the option has no effect there.
+
 ## Access internet through proxy server
 
 If you need a proxy to access internet, which is needed to call a Web

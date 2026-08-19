@@ -424,6 +424,7 @@ class BaseEmissionsTracker(ABC):
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
+        cloud_detection: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -519,6 +520,10 @@ class BaseEmissionsTracker(ABC):
                                  (CPU + chipset + PCIe). When False, uses package domains which
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
+        :param cloud_detection: Query the cloud provider metadata service at startup to
+                                detect AWS/Azure/GCP, defaults to True. Set to False on
+                                machines that are not on a cloud, or in air-gapped and
+                                egress-filtered environments, to skip the network probe.
         """
 
         # logger.info("base tracker init")
@@ -588,6 +593,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
         self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
         self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
+        self._set_from_conf(cloud_detection, "cloud_detection", True, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -1434,7 +1440,11 @@ class EmissionsTracker(BaseEmissionsTracker):
         from codecarbon.external.geography import CloudMetadata
 
         if self._cloud is None:
-            self._cloud = CloudMetadata.from_utils()
+            if self._cloud_detection:
+                self._cloud = CloudMetadata.from_utils()
+            else:
+                logger.debug("Cloud detection is disabled, skipping metadata probe.")
+                self._cloud = CloudMetadata(provider=None, region=None)
         return self._cloud
 
 

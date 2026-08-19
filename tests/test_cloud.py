@@ -19,9 +19,12 @@
 # OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+from unittest import mock
+
 import responses
 
 from codecarbon.core.cloud import CLOUD_METADATA_MAPPING, get_env_cloud_details
+from codecarbon.emissions_tracker import EmissionsTracker
 
 
 def setup_cloud_details_responses(tested_provider, provider_metadata):
@@ -79,3 +82,14 @@ def test_get_env_cloud_details_mapping_nothing():
     setup_cloud_details_responses("localhost", metadata)
 
     assert get_env_cloud_details() is None
+
+
+def test_cloud_detection_disabled_makes_no_request():
+    with mock.patch(
+        "codecarbon.external.geography.get_env_cloud_details"
+    ) as mocked_get_env_cloud_details:
+        tracker = EmissionsTracker(cloud_detection=False, allow_multiple_runs=True)
+        cloud = tracker._get_cloud_metadata()
+
+    mocked_get_env_cloud_details.assert_not_called()
+    assert cloud.is_on_private_infra
