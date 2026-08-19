@@ -937,12 +937,14 @@ class BaseEmissionsTracker(ABC):
                 self._run_power_measurement()
 
     def finish_http_request(
-        self, baseline: HttpRequestBaseline
+        self, baseline: HttpRequestBaseline, task_name: Optional[str] = None
     ) -> Optional[EmissionsData]:
         """Compute per-request emissions from a :meth:`mark_http_request_start` baseline.
 
         Args:
             baseline: Value returned by :meth:`mark_http_request_start`.
+            task_name: Final label for the task, when it is only known once the
+                request has been routed (e.g. an endpoint template).
 
         Returns:
             Request-scoped :class:`~codecarbon.output.EmissionsData`, or ``None`` if
@@ -956,6 +958,8 @@ class BaseEmissionsTracker(ABC):
                     "finish_http_request: unknown task %s", baseline.task_name
                 )
                 return None
+            if task_name:
+                task.task_name = task_name
             emissions_at_stop = self._prepare_http_request_emissions_data()
             previous = dataclasses.replace(emissions_at_stop)
             previous.emissions = baseline.emissions

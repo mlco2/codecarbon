@@ -83,7 +83,7 @@ def app():
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
 def test_middleware_tracks_routed_request(MockTracker, app) -> None:
     tracker_instance = MockTracker.return_value
-    _configure_mock_running_tracker(tracker_instance, task_name="GET /items/7")
+    _configure_mock_running_tracker(tracker_instance, task_name="GET /items/{item_id}")
 
     response = TestClient(app).get("/items/7")
 
@@ -92,6 +92,10 @@ def test_middleware_tracks_routed_request(MockTracker, app) -> None:
     tracker_instance.start.assert_called_once()
     tracker_instance.mark_http_request_start.assert_called_once()
     tracker_instance.finish_http_request.assert_called_once()
+    # The route template is only known after Starlette routes the request.
+    assert (
+        tracker_instance.finish_http_request.call_args[0][1] == "GET /items/{item_id}"
+    )
     tracker_instance.persist_completed_task.assert_called_once()
 
 
@@ -155,8 +159,12 @@ def test_middleware_uses_lifespan_tracker(MockTracker) -> None:
     response = TestClient(application).get("/predict")
     assert response.status_code == 200
     MockTracker.assert_not_called()
-    tracker_instance.mark_http_request_start.assert_called_once_with("GET /predict")
-    tracker_instance.finish_http_request.assert_called_once_with(baseline)
+    tracker_instance.mark_http_request_start.assert_called_once_with("")
+    tracker_instance.finish_http_request.assert_called_once()
+    assert tracker_instance.finish_http_request.call_args[0][1] == "GET /predict"
+    tracker_instance.finish_http_request.assert_called_once_with(
+        baseline, "GET /predict"
+    )
     tracker_instance.persist_completed_task.assert_called_once_with("GET /predict")
     assert completed == [("/predict", emissions, "GET /predict")]
 
@@ -206,7 +214,8 @@ def test_middleware_lazy_tracker(MockTracker) -> None:
     assert response.status_code == 200
     MockTracker.assert_called_once()
     tracker_instance.start.assert_called_once()
-    tracker_instance.mark_http_request_start.assert_called_once_with("GET /run")
+    tracker_instance.mark_http_request_start.assert_called_once_with("")
+    assert tracker_instance.finish_http_request.call_args[0][1] == "GET /run"
 
 
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
@@ -949,8 +958,9 @@ def test_task_name_formatter(MockTracker) -> None:
         on_request_complete=None,
     )
     assert TestClient(application).get("/predict").status_code == 200
-    MockTracker.return_value.mark_http_request_start.assert_called_once_with(
-        "custom-/predict"
+    assert (
+        MockTracker.return_value.finish_http_request.call_args[0][1]
+        == "custom-/predict"
     )
 
 
