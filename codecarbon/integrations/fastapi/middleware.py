@@ -149,6 +149,8 @@ class CodeCarbonMiddleware:
         self._tracker_runner = futures.ThreadPoolExecutor(
             max_workers=1, thread_name_prefix="codecarbon-tracker"
         )
+        # asyncio only keeps a weak reference to a running task.
+        self._pending_finalizes: set[asyncio.Task[None]] = set()
 
     def shutdown_tracker_executor(self, *, wait: bool = True) -> None:
         """Shut down the tracker background thread (idempotent).
@@ -262,7 +264,9 @@ class CodeCarbonMiddleware:
             except Exception:
                 logger.exception("CodeCarbon deferred measurement failed")
 
-        asyncio.create_task(_run())
+        task = asyncio.create_task(_run())
+        self._pending_finalizes.add(task)
+        task.add_done_callback(self._pending_finalizes.discard)
 
     async def _finalize_after_response(
         self,
