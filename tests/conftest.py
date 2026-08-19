@@ -34,7 +34,13 @@ def _no_leaked_scheduler_timers():
     timers silently would hide exactly the leak we want reported.
     """
     yield
-    leaked = [t for t in threading.enumerate() if isinstance(t, threading.Timer)]
+    # A cancelled timer stays enumerated until its thread wakes up and exits, so
+    # look at the cancellation flag rather than at liveness.
+    leaked = [
+        t
+        for t in threading.enumerate()
+        if isinstance(t, threading.Timer) and not t.finished.is_set()
+    ]
     for timer in leaked:
         timer.cancel()
     assert not leaked, f"test left scheduler timers running: {leaked}"

@@ -114,7 +114,7 @@ Measured on **Darwin arm64**, Python 3.12 (**2026-07-29**):
 **What this means**
 
 - **Deferred (default):** response is sent before finalize; client latency stays in the same ballpark as inference under concurrency (not hundreds of ms).
-- **Request path:** mark runs on the tracker REQUEST lane; finalize reuses cached metadata and skips redundant power samples when the scheduler is fresh.
+- **Request path:** mark runs on the single tracker worker thread; finalize reuses cached metadata and skips redundant power samples when the scheduler is fresh.
 - **Sync headers:** measure before `http.response.start`; latency includes sample time on the client path when a fresh hardware read is needed.
 - **`save_to_api=True`:** uploads after the response; network time is not on the HTTP critical path in deferred mode.
 

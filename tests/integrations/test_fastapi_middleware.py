@@ -162,8 +162,6 @@ def test_middleware_uses_lifespan_tracker(MockTracker) -> None:
     assert response.status_code == 200
     MockTracker.assert_not_called()
     tracker_instance.mark_http_request_start.assert_called_once_with("")
-    tracker_instance.finish_http_request.assert_called_once()
-    assert tracker_instance.finish_http_request.call_args[0][1] == "GET /predict"
     tracker_instance.finish_http_request.assert_called_once_with(
         baseline, "GET /predict"
     )

@@ -1198,13 +1198,11 @@ class BaseEmissionsTracker(ABC):
             emissions = self._total_emissions
             avg_cpu_power, avg_gpu_power, avg_ram_power = self._average_power_values()
             cpu_util, gpu_util, ram_util, ram_used = self._utilization_averages()
-            totals = (
-                self._total_cpu_energy.kWh,
-                self._total_gpu_energy.kWh,
-                self._total_ram_energy.kWh,
-                self._total_energy.kWh,
-                self._total_water.litres,
-            )
+            cpu_energy = self._total_cpu_energy.kWh
+            gpu_energy = self._total_gpu_energy.kWh
+            ram_energy = self._total_ram_energy.kWh
+            energy_consumed = self._total_energy.kWh
+            water_consumed = self._total_water.litres
         return dataclasses.replace(
             self._http_emissions_template,
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
@@ -1218,11 +1216,11 @@ class BaseEmissionsTracker(ABC):
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
-            cpu_energy=totals[0],
-            gpu_energy=totals[1],
-            ram_energy=totals[2],
-            energy_consumed=totals[3],
-            water_consumed=totals[4],
+            cpu_energy=cpu_energy,
+            gpu_energy=gpu_energy,
+            ram_energy=ram_energy,
+            energy_consumed=energy_consumed,
+            water_consumed=water_consumed,
         )
 
     def _update_emissions(self) -> None:
