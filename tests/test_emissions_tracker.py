@@ -633,6 +633,62 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
 
+    def test_offline_tracker_stop_is_idempotent(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
+        )
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        first_emissions = tracker.stop()
+        second_emissions = tracker.stop()
+
+        self.assertEqual(first_emissions, second_emissions)
+        self.verify_output_file(self.emissions_file_path, 2)
+
+    def test_stop_releases_the_lock_only_once(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with mock.patch("codecarbon.emissions_tracker.Lock") as mock_lock_class:
+            tracker = OfflineEmissionsTracker(
+                country_iso_code="USA",
+                output_dir=self.temp_path,
+                experiment_id="test",
+                allow_multiple_runs=False,
+            )
+            lock = mock_lock_class.return_value
+            lock.acquire.assert_called_once()
+
+            tracker.start()
+            heavy_computation(run_time_secs=1)
+            first_emissions = tracker.stop()
+            lock.release.assert_called_once()
+
+            # A second stop() is a no-op: it must not touch the lock again, which
+            # by then may belong to another tracker.
+            second_emissions = tracker.stop()
+            lock.release.assert_called_once()
+
+        self.assertEqual(first_emissions, second_emissions)
+        self.verify_output_file(self.emissions_file_path, 2)
+
     def test_offline_tracker_invalid_headers(
         self,
         mock_cli_setup,
@@ -1108,3 +1164,20 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+
+class TestRestartAfterStop(unittest.TestCase):
+    def test_start_after_stop_is_refused(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA",
+            save_to_file=False,
+            allow_multiple_runs=True,
+            measure_power_secs=10,
+        )
+        tracker.start()
+        tracker.stop()
+        with self.assertLogs("codecarbon", level="ERROR") as logs:
+            tracker.start()
+        self.assertIn("cannot be restarted", "".join(logs.output))
+        # Refused, not half-restarted: nothing was rebuilt.
+        self.assertIsNone(tracker._scheduler)

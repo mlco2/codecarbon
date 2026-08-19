@@ -268,6 +268,10 @@ class BaseEmissionsTracker(ABC):
 
     def _initialize_runtime_state(self) -> None:
         self._start_time: Optional[float] = None
+        # None while the tracker is running.
+        self._stopped_at: Optional[float] = None
+        self.final_emissions: Optional[float] = None
+        self.final_emissions_data: Optional[EmissionsData] = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_emissions: float = 0.0
@@ -706,6 +710,14 @@ class BaseEmissionsTracker(ABC):
             )
             return
         if self._start_time is not None:
+            if self._stopped_at is not None:
+                # `start()` is wrapped in @suppress(Exception), so raising here
+                # would be swallowed: log instead of pretending it worked.
+                logger.error(
+                    "This tracker was already stopped and cannot be restarted. "
+                    "Create a new tracker instead."
+                )
+                return
             logger.warning("Already started tracking")
             return
 
@@ -899,12 +911,17 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
-        if not self._allow_multiple_runs:
-            # Release the lock
-            self._lock.release()
         if self._start_time is None:
             logger.error("You first need to start the tracker.")
             return None
+        if self._stopped_at is not None:
+            logger.warning("Tracker already stopped !")
+            return self.final_emissions
+        self._stopped_at = time.perf_counter()
+
+        if not self._allow_multiple_runs:
+            # Release the lock
+            self._lock.release()
 
         if self._scheduler:
             self._scheduler.stop()
@@ -912,8 +929,6 @@ class BaseEmissionsTracker(ABC):
         if self._scheduler_monitor_power:
             self._scheduler_monitor_power.stop()
             self._scheduler_monitor_power = None
-        else:
-            logger.warning("Tracker already stopped !")
         for task_name in self._tasks:
             if self._tasks[task_name].is_active:
                 self.stop_task(task_name=task_name)
