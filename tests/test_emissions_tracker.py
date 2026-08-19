@@ -1108,3 +1108,20 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+
+class TestRestartAfterStop(unittest.TestCase):
+    def test_start_after_stop_is_refused(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA",
+            save_to_file=False,
+            allow_multiple_runs=True,
+            measure_power_secs=10,
+        )
+        tracker.start()
+        tracker.stop()
+        with self.assertLogs("codecarbon", level="ERROR") as logs:
+            tracker.start()
+        self.assertIn("cannot be restarted", "".join(logs.output))
+        # Refused, not half-restarted: nothing was rebuilt.
+        self.assertIsNone(tracker._scheduler)

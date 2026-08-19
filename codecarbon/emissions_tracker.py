@@ -706,6 +706,16 @@ class BaseEmissionsTracker(ABC):
             )
             return
         if self._start_time is not None:
+            if self._scheduler is None:
+                # stop() drops the schedulers, releases the lock and exits the
+                # output handlers, so a stopped tracker cannot be restarted.
+                # `start()` is wrapped in @suppress(Exception), so raising here
+                # would be swallowed: log instead of pretending it worked.
+                logger.error(
+                    "This tracker was already stopped and cannot be restarted. "
+                    "Create a new tracker instead."
+                )
+                return
             logger.warning("Already started tracking")
             return
 
