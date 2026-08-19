@@ -428,8 +428,6 @@ dependencies = [
     { name = "click" },
     { name = "joserfc" },
     { name = "nvidia-ml-py" },
-    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "pandas", version = "3.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "prometheus-client" },
     { name = "psutil" },
     { name = "py-cpuinfo" },
@@ -443,15 +441,35 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+all = [
+    { name = "dash" },
+    { name = "dash-bootstrap-components" },
+    { name = "fire" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
 carbonboard = [
     { name = "dash" },
     { name = "dash-bootstrap-components" },
     { name = "fire" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 viz-legacy = [
     { name = "dash" },
     { name = "dash-bootstrap-components" },
     { name = "fire" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 
 [package.dev-dependencies]
@@ -462,6 +480,8 @@ dev = [
     { name = "logfire" },
     { name = "mktestdocs" },
     { name = "mypy" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -488,6 +508,7 @@ requires-dist = [
     { name = "arrow" },
     { name = "authlib", specifier = ">=1.2.1" },
     { name = "click" },
+    { name = "codecarbon", extras = ["carbonboard"], marker = "extra == 'all'" },
     { name = "dash", marker = "extra == 'carbonboard'" },
     { name = "dash", marker = "extra == 'viz-legacy'" },
     { name = "dash-bootstrap-components", marker = "extra == 'carbonboard'", specifier = ">1.0.0" },
@@ -495,9 +516,13 @@ requires-dist = [
     { name = "fire", marker = "extra == 'carbonboard'" },
     { name = "fire", marker = "extra == 'viz-legacy'" },
     { name = "joserfc", specifier = ">=1.0.0" },
+    { name = "numpy", marker = "extra == 'carbonboard'" },
+    { name = "numpy", marker = "extra == 'viz-legacy'" },
     { name = "nvidia-ml-py" },
-    { name = "pandas", marker = "python_full_version < '3.14'" },
-    { name = "pandas", marker = "python_full_version >= '3.14'", specifier = ">=2.3.3" },
+    { name = "pandas", marker = "python_full_version >= '3.14' and extra == 'carbonboard'", specifier = ">=2.3.3" },
+    { name = "pandas", marker = "python_full_version >= '3.14' and extra == 'viz-legacy'", specifier = ">=2.3.3" },
+    { name = "pandas", marker = "python_full_version < '3.14' and extra == 'carbonboard'" },
+    { name = "pandas", marker = "python_full_version < '3.14' and extra == 'viz-legacy'" },
     { name = "prometheus-client" },
     { name = "psutil", specifier = ">=6.0.0" },
     { name = "py-cpuinfo" },
@@ -509,7 +534,7 @@ requires-dist = [
     { name = "rich" },
     { name = "typer" },
 ]
-provides-extras = ["carbonboard", "viz-legacy"]
+provides-extras = ["carbonboard", "viz-legacy", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -519,6 +544,7 @@ dev = [
     { name = "logfire", specifier = ">=1.0.1" },
     { name = "mktestdocs" },
     { name = "mypy" },
+    { name = "pandas" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },

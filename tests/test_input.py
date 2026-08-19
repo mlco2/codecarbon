@@ -41,11 +41,11 @@ class TestDataSourceCaching(unittest.TestCase):
         self.assertIs(data, _CACHE["global_energy_mix"])
 
     def test_get_cloud_emissions_returns_cached_data(self):
-        """Verify get_cloud_emissions_data() returns cached object."""
+        """Verify get_cloud_emissions_rows() returns cached object."""
         from codecarbon.input import _CACHE, DataSource
 
         ds = DataSource()
-        data = ds.get_cloud_emissions_data()
+        data = ds.get_cloud_emissions_rows()
 
         # Should return the exact same object from cache
         self.assertIs(data, _CACHE["cloud_emissions"])
@@ -61,11 +61,11 @@ class TestDataSourceCaching(unittest.TestCase):
         self.assertIs(data, _CACHE["carbon_intensity_per_source"])
 
     def test_get_cpu_power_returns_cached_data(self):
-        """Verify get_cpu_power_data() returns cached object."""
+        """Verify get_cpu_power_rows() returns cached object."""
         from codecarbon.input import _CACHE, DataSource
 
         ds = DataSource()
-        data = ds.get_cpu_power_data()
+        data = ds.get_cpu_power_rows()
 
         # Should return the exact same object from cache
         self.assertIs(data, _CACHE["cpu_power"])
@@ -95,6 +95,24 @@ class TestDataSourceCaching(unittest.TestCase):
         data2 = ds2.get_global_energy_mix_data()
 
         self.assertIs(data1, data2)
+
+
+class TestDeprecatedDataFrameAccessors(unittest.TestCase):
+    """The old accessors always return rows now, whether or not pandas is around."""
+
+    def test_deprecated_accessors_return_rows_and_warn(self):
+        from codecarbon.input import DataSource
+
+        ds = DataSource()
+        for deprecated, current in (
+            (ds.get_cloud_emissions_data, ds.get_cloud_emissions_rows),
+            (ds.get_cpu_power_data, ds.get_cpu_power_rows),
+        ):
+            with self.assertWarns(DeprecationWarning):
+                rows = deprecated()
+            self.assertIs(rows, current())
+            self.assertIsInstance(rows, list)
+            self.assertIsInstance(rows[0], dict)
 
 
 if __name__ == "__main__":

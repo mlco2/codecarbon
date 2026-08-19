@@ -1,13 +1,41 @@
 import csv
+import math
 import os
 from typing import List
-
-import pandas as pd
 
 from codecarbon.core.util import backup
 from codecarbon.external.logger import logger
 from codecarbon.output_methods.base_output import BaseOutput
 from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
+
+
+def _as_csv_row(values: dict) -> dict:
+    """Render a data row as strings, with missing values as empty cells.
+
+    Any non-finite float (NaN, +inf, -inf) is written as an empty cell. NaN
+    matches what pandas' ``to_csv`` did; infinities are a deliberate
+    divergence (``to_csv`` wrote the literal "inf") because an infinite
+    energy or emissions value is not a real measurement, and an empty cell
+    reads back as missing instead of poisoning downstream arithmetic.
+    """
+    return {
+        k: (
+            ""
+            if v is None or (isinstance(v, float) and not math.isfinite(v))
+            else str(v)
+        )
+        for k, v in values.items()
+    }
+
+
+def _write_rows(path: str, fieldnames: list[str], rows: list[dict]) -> None:
+    with open(path, "w", newline="") as csv_file:
+        # extrasaction="ignore" is defensive only: a row can never carry a key
+        # outside `fieldnames`, because `out()` backs the file up and rewrites it
+        # from scratch whenever `has_valid_headers()` reports a mismatch.
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 class FileOutput(BaseOutput):
@@ -97,34 +125,40 @@ class FileOutput(BaseOutput):
             backup(self.save_file_path)
             file_exists = False
 
-        new_df = pd.DataFrame.from_records([dict(total.values)])
+        new_row = _as_csv_row(dict(total.values))
 
         if not file_exists:
-            new_df.to_csv(self.save_file_path, index=False)
+            _write_rows(self.save_file_path, list(new_row), [new_row])
         elif self.on_csv_write == "append":
-            # Never drop all-NA columns here: the append is headerless, so column
-            # identity is positional and a missing column shifts every value after it.
-            new_df.to_csv(self.save_file_path, mode="a", header=False, index=False)
+            # Use the header already on disk as the column order: the row dict's
+            # key order is not guaranteed to match it (has_valid_headers()
+            # compares the two sorted), and trusting it would misalign columns.
+            with open(self.save_file_path, newline="") as csv_file:
+                fieldnames = next(csv.reader(csv_file), None)
+            if not fieldnames:
+                _write_rows(self.save_file_path, list(new_row), [new_row])
+            else:
+                with open(self.save_file_path, "a", newline="") as csv_file:
+                    csv.DictWriter(
+                        csv_file, fieldnames=fieldnames, extrasaction="ignore"
+                    ).writerow(new_row)
         else:
-            df = pd.read_csv(self.save_file_path)
-            df_run = df.loc[df.run_id == total.run_id]
-            if len(df_run) < 1:
-                df = pd.concat([df, new_df])
-            elif len(df_run) > 1:
+            with open(self.save_file_path, newline="") as csv_file:
+                reader = csv.DictReader(csv_file)
+                fieldnames = reader.fieldnames or list(new_row)
+                rows = list(reader)
+            matching = [r for r in rows if r.get("run_id") == str(total.run_id)]
+            if len(matching) > 1:
                 logger.warning(
-                    f"CSV contains more than 1 ({len(df_run)})"
+                    f"CSV contains more than 1 ({len(matching)})"
                     + f" rows with current run ID ({total.run_id})."
                     + "Appending instead of updating."
                 )
-                df = pd.concat([df, new_df])
+            if len(matching) == 1:
+                matching[0].update(new_row)
             else:
-                update_values = {}
-                for col, val in dict(total.values).items():
-                    update_values[col] = df[col].dtype.type(val)
-                df.loc[df.run_id == total.run_id, update_values.keys()] = (
-                    update_values.values()
-                )
-            df.to_csv(self.save_file_path, index=False)
+                rows.append(new_row)
+            _write_rows(self.save_file_path, fieldnames, rows)
 
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
         """
@@ -136,11 +170,10 @@ class FileOutput(BaseOutput):
         save_task_file_path = os.path.join(
             self.output_dir, "emissions_" + experiment_name + "_" + run_id + ".csv"
         )
-        new_df = pd.DataFrame.from_records(
-            [dict(data_point.values) for data_point in data]
-        )
-        # Filter out empty or all-NA columns only from new_df, to avoid warnings from Pandas
-        # see https://github.com/pandas-dev/pandas/issues/55928
-        new_df = new_df.dropna(axis=1, how="all")
-        df = new_df
-        df.to_csv(save_task_file_path, index=False)
+        rows = [_as_csv_row(dict(data_point.values)) for data_point in data]
+        # Drop columns that are empty in every row, matching the previous
+        # dropna(axis=1, how="all").
+        fieldnames = [
+            column for column in rows[0] if any(row.get(column) != "" for row in rows)
+        ]
+        _write_rows(save_task_file_path, fieldnames, rows)

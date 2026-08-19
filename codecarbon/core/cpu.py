@@ -6,13 +6,15 @@ https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget
 
 from __future__ import annotations
 
+import csv
 import os
 import re
 import shutil
+import statistics
 import subprocess
 import sys
 from functools import lru_cache
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import psutil
 from rapidfuzz import fuzz, process, utils
@@ -21,9 +23,6 @@ from codecarbon.core.rapl import RAPLFile
 from codecarbon.core.units import Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 # default W value per core for a CPU if no model is found in the ref csv
 DEFAULT_POWER_PER_CORE = 4
@@ -375,16 +374,36 @@ class IntelPowerGadget:
         self._log_values()
         cpu_details = {}
         try:
-            import pandas as pd
+            with open(self._log_file_path, newline="", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                columns = reader.fieldnames or []
+                # pandas named blank headers "Unnamed: <i>"; keep those keys
+                # stable for anyone consuming the returned details dict.
+                renames = {c: f"Unnamed: {i}" for i, c in enumerate(columns) if not c}
+                # Intel Power Gadget appends a ragged summary block after the
+                # samples; ``.dropna()`` used to discard those rows, and dropping
+                # rows with any missing/blank field does the same thing.
+                rows = [
+                    row
+                    for row in reader
+                    if all(v not in (None, "") for v in row.values())
+                    and None not in row
+                ]
 
-            cpu_data = pd.read_csv(self._log_file_path).dropna()
-            for col_name in cpu_data.columns:
+            for col_name in columns:
                 if col_name in ["System Time", "Elapsed Time (sec)", "RDTSC"]:
                     continue
+                try:
+                    values = [float(row[col_name]) for row in rows]
+                except (TypeError, ValueError):
+                    continue  # non-numeric column, nothing to average
+                if not values:
+                    continue
+                key = renames.get(col_name, col_name)
                 if "Cumulative" in col_name:
-                    cpu_details[col_name] = cpu_data[col_name].iloc[-1]
+                    cpu_details[key] = values[-1]
                 else:
-                    cpu_details[col_name] = cpu_data[col_name].mean()
+                    cpu_details[key] = statistics.fmean(values)
         except Exception as e:
             logger.info(
                 f"Unable to read Intel Power Gadget logged file at {self._log_file_path}\n \
@@ -898,14 +917,14 @@ class TDP:
         self.model, self.tdp = self._main()
 
     @staticmethod
-    def _get_cpu_constant_power(match: str, cpu_power_df: pd.DataFrame) -> int:
+    def _get_cpu_constant_power(match: str, cpu_power_rows: list[dict]) -> int:
         """Extract constant power from matched CPU"""
-        return float(cpu_power_df[cpu_power_df["Name"] == match]["TDP"].values[0])
+        return float(next(r for r in cpu_power_rows if r["Name"] == match)["TDP"])
 
     def _get_cpu_power_from_registry(self, cpu_model_raw: str) -> Optional[int]:
         from codecarbon.input import DataSource
 
-        cpu_power_df = DataSource().get_cpu_power_data()
+        cpu_power_df = DataSource().get_cpu_power_rows()
         cpu_matching = self._get_matching_cpu(cpu_model_raw, cpu_power_df)
         if cpu_matching:
             power = self._get_cpu_constant_power(cpu_matching, cpu_power_df)
@@ -913,7 +932,7 @@ class TDP:
         return None
 
     def _get_matching_cpu(
-        self, model_raw: str, cpu_df: pd.DataFrame, greedy=False
+        self, model_raw: str, cpu_df: list[dict], greedy=False
     ) -> str:
         """
         Get matching cpu name
@@ -921,7 +940,7 @@ class TDP:
         :args:
             model_raw (str): raw name of the cpu model detected on the machine
 
-            cpu_df (DataFrame): table containing cpu models along their tdp
+            cpu_df (list[dict]): rows of cpu models along their tdp
 
             greedy (default False): if multiple cpu models match with an equal
             ratio of similarity, greedy (True) selects the first model,
@@ -945,9 +964,11 @@ class TDP:
         THRESHOLD_DIRECT: int = 100
         THRESHOLD_TOKEN_SET: int = 100
 
+        names = [row["Name"] for row in cpu_df]
+
         direct_match = process.extractOne(
             model_raw,
-            cpu_df["Name"],
+            names,
             processor=lambda s: s.lower(),
             scorer=fuzz.ratio,
             score_cutoff=THRESHOLD_DIRECT,
@@ -964,7 +985,7 @@ class TDP:
         model_raw = re.sub(r" @\s*\d+\.\d+GHz", "", model_raw)
         direct_match = process.extractOne(
             model_raw,
-            cpu_df["Name"],
+            names,
             processor=lambda s: s.lower(),
             scorer=fuzz.ratio,
             score_cutoff=THRESHOLD_DIRECT,
@@ -974,7 +995,7 @@ class TDP:
             return direct_match[0]
         indirect_matches = process.extract(
             model_raw,
-            cpu_df["Name"],
+            names,
             processor=utils.default_process,
             scorer=fuzz.token_set_ratio,
             score_cutoff=THRESHOLD_TOKEN_SET,
