@@ -13,9 +13,10 @@ import time
 import uuid
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import psutil
 
@@ -64,8 +65,8 @@ class BaseEmissionsTracker(ABC):
     and `CarbonTracker.`
     """
 
-    _scheduler: Optional[PeriodicScheduler] = None
-    _scheduler_monitor_power: Optional[PeriodicScheduler] = None
+    _scheduler: PeriodicScheduler | None = None
+    _scheduler_monitor_power: PeriodicScheduler | None = None
 
     def _set_from_conf(
         self, var, name, default=None, return_type=None, prevent_setter=False
@@ -135,9 +136,8 @@ class BaseEmissionsTracker(ABC):
                         )
                         value = None
         # Check conf
-        if name == "output_dir":
-            if not os.path.exists(value):
-                raise OSError(f"Folder '{value}' doesn't exist !")
+        if name == "output_dir" and not os.path.exists(value):
+            raise OSError(f"Folder '{value}' doesn't exist !")
         if name == "gpu_ids":
             logger.debug(
                 f"CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES')}"
@@ -267,16 +267,16 @@ class BaseEmissionsTracker(ABC):
             self._output_methods.append(OutputMethod.LOGFIRE)
 
     def _initialize_runtime_state(self) -> None:
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_emissions: float = 0.0
         self._last_energy_covered: Energy = Energy.from_energy(kWh=0)
         self._total_water: Water = Water.from_litres(litres=0)
-        self._cpu_utilization_history: List[float] = []
-        self._gpu_utilization_history: List[float] = []
-        self._ram_utilization_history: List[float] = []
-        self._ram_used_history: List[float] = []
+        self._cpu_utilization_history: list[float] = []
+        self._gpu_utilization_history: list[float] = []
+        self._ram_utilization_history: list[float] = []
+        self._ram_used_history: list[float] = []
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -293,9 +293,9 @@ class BaseEmissionsTracker(ABC):
         self._geo = None
         self._task_start_measurement_values = {}
         self._task_stop_measurement_values = {}
-        self._tasks: Dict[str, Task] = {}
-        self._active_task: Optional[str] = None
-        self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._tasks: dict[str, Task] = {}
+        self._active_task: str | None = None
+        self._active_task_emissions_at_start: EmissionsData | None = None
         self._hardware = []
         self._hardware_initialized = False
 
@@ -387,44 +387,44 @@ class BaseEmissionsTracker(ABC):
 
     def __init__(
         self,
-        project_name: Optional[str] = _sentinel,
-        measure_power_secs: Optional[float] = _sentinel,
-        api_call_interval: Optional[int] = _sentinel,
-        api_endpoint: Optional[str] = _sentinel,
-        api_key: Optional[str] = _sentinel,
-        output_dir: Optional[str] = _sentinel,
-        output_file: Optional[str] = _sentinel,
-        output_methods: Optional[List[OutputMethod]] = _sentinel,
-        save_to_file: Optional[bool] = _sentinel,
-        save_to_api: Optional[bool] = _sentinel,
-        save_to_logger: Optional[bool] = _sentinel,
-        logging_logger: Optional[LoggerOutput] = _sentinel,
-        save_to_prometheus: Optional[bool] = _sentinel,
-        save_to_logfire: Optional[bool] = _sentinel,
-        prometheus_url: Optional[str] = _sentinel,
-        output_handlers: Optional[List[BaseOutput]] = _sentinel,
-        gpu_ids: Optional[List] = _sentinel,
-        emissions_endpoint: Optional[str] = _sentinel,
-        experiment_id: Optional[str] = _sentinel,
-        experiment_name: Optional[str] = _sentinel,
-        electricitymaps_api_token: Optional[str] = _sentinel,
-        co2_signal_api_token: Optional[
-            str
-        ] = _sentinel,  # Deprecated, use electricitymaps_api_token
-        tracking_mode: Optional[str] = _sentinel,
-        log_level: Optional[Union[int, str]] = _sentinel,
-        on_csv_write: Optional[str] = _sentinel,
-        output_json_file: Optional[str] = _sentinel,
-        logger_preamble: Optional[str] = _sentinel,
-        force_cpu_power: Optional[int] = _sentinel,
-        force_ram_power: Optional[int] = _sentinel,
-        pue: Optional[float] = _sentinel,
-        wue: Optional[float] = _sentinel,
-        force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
-        force_mode_cpu_load: Optional[bool] = _sentinel,
-        allow_multiple_runs: Optional[bool] = _sentinel,
-        rapl_include_dram: Optional[bool] = _sentinel,
-        rapl_prefer_psys: Optional[bool] = _sentinel,
+        project_name: str | None = _sentinel,
+        measure_power_secs: float | None = _sentinel,
+        api_call_interval: int | None = _sentinel,
+        api_endpoint: str | None = _sentinel,
+        api_key: str | None = _sentinel,
+        output_dir: str | None = _sentinel,
+        output_file: str | None = _sentinel,
+        output_methods: list[OutputMethod] | None = _sentinel,
+        save_to_file: bool | None = _sentinel,
+        save_to_api: bool | None = _sentinel,
+        save_to_logger: bool | None = _sentinel,
+        logging_logger: LoggerOutput | None = _sentinel,
+        save_to_prometheus: bool | None = _sentinel,
+        save_to_logfire: bool | None = _sentinel,
+        prometheus_url: str | None = _sentinel,
+        output_handlers: list[BaseOutput] | None = _sentinel,
+        gpu_ids: list | None = _sentinel,
+        emissions_endpoint: str | None = _sentinel,
+        experiment_id: str | None = _sentinel,
+        experiment_name: str | None = _sentinel,
+        electricitymaps_api_token: str | None = _sentinel,
+        co2_signal_api_token: (
+            str | None
+        ) = _sentinel,  # Deprecated, use electricitymaps_api_token
+        tracking_mode: str | None = _sentinel,
+        log_level: int | str | None = _sentinel,
+        on_csv_write: str | None = _sentinel,
+        output_json_file: str | None = _sentinel,
+        logger_preamble: str | None = _sentinel,
+        force_cpu_power: int | None = _sentinel,
+        force_ram_power: int | None = _sentinel,
+        pue: float | None = _sentinel,
+        wue: float | None = _sentinel,
+        force_carbon_intensity_g_co2e_kwh: float | None = _sentinel,
+        force_mode_cpu_load: bool | None = _sentinel,
+        allow_multiple_runs: bool | None = _sentinel,
+        rapl_include_dram: bool | None = _sentinel,
+        rapl_prefer_psys: bool | None = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -607,7 +607,7 @@ class BaseEmissionsTracker(ABC):
         self._initialize_emissions_context()
         self._init_output_methods(api_key=self._api_key)
 
-    def _init_output_methods(self, *, api_key: str = None):
+    def _init_output_methods(self, *, api_key: str | None = None):
         """
         Prepare the different output methods based on ``self._output_methods``.
         """
@@ -681,7 +681,7 @@ class BaseEmissionsTracker(ABC):
                 )
             )
 
-    def get_detected_hardware(self) -> Dict[str, Any]:
+    def get_detected_hardware(self) -> dict[str, Any]:
         """
         Get the detected hardware.
         :return: A dictionary containing hardware data.
@@ -775,7 +775,7 @@ class BaseEmissionsTracker(ABC):
             return
         if not task_name:
             task_name = uuid.uuid4().__str__()
-        if task_name in self._tasks.keys():
+        if task_name in self._tasks:
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
 
@@ -805,7 +805,7 @@ class BaseEmissionsTracker(ABC):
         )
         self._active_task = task_name
 
-    def stop_task(self, task_name: str = None) -> EmissionsData:
+    def stop_task(self, task_name: str | None = None) -> EmissionsData:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
         emissions.
@@ -864,7 +864,7 @@ class BaseEmissionsTracker(ABC):
         return task_emission_data
 
     @suppress(Exception)
-    def flush(self) -> Optional[float]:
+    def flush(self) -> float | None:
         """
         Write the emissions to disk or call the API depending on the configuration,
         but keep running the experiment.
@@ -897,7 +897,7 @@ class BaseEmissionsTracker(ABC):
         return emissions_data.emissions
 
     @suppress(Exception)
-    def stop(self) -> Optional[float]:
+    def stop(self) -> float | None:
         """
         Stops tracking the experiment
         :return: CO2 emissions in kgs
@@ -1271,7 +1271,7 @@ class BaseEmissionsTracker(ABC):
             logger.debug(
                 f"You need to start the tracker first before measuring. Or maybe you do multiple run at the same time ? Error: {e}"
             )
-            raise e
+            raise
 
         warning_duration = self._measure_power_secs * 3
         if (
@@ -1326,11 +1326,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     def __init__(
         self,
         *args,
-        country_iso_code: Optional[str] = _sentinel,
-        region: Optional[str] = _sentinel,
-        cloud_provider: Optional[str] = _sentinel,
-        cloud_region: Optional[str] = _sentinel,
-        country_2letter_iso_code: Optional[str] = _sentinel,
+        country_iso_code: str | None = _sentinel,
+        region: str | None = _sentinel,
+        cloud_provider: str | None = _sentinel,
+        cloud_region: str | None = _sentinel,
+        country_2letter_iso_code: str | None = _sentinel,
         **kwargs,
     ):
         """
@@ -1366,11 +1366,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
             assert isinstance(self._region, str)
             self._region: str = self._region.lower()
 
-        if self._cloud_provider:
-            if self._cloud_region is None:
-                logger.error(
-                    "Cloud Region must be provided " + " if cloud provider is set"
-                )
+        if self._cloud_provider and self._cloud_region is None:
+            logger.error("Cloud Region must be provided " + " if cloud provider is set")
 
         if self._country_2letter_iso_code:
             assert isinstance(self._country_2letter_iso_code, str)
@@ -1482,49 +1479,49 @@ class TaskEmissionsTracker:
 
 
 def track_emissions(
-    fn: Callable = None,
-    project_name: Optional[str] = _sentinel,
-    measure_power_secs: Optional[int] = _sentinel,
+    fn: Callable | None = None,
+    project_name: str | None = _sentinel,
+    measure_power_secs: int | None = _sentinel,
     api_call_interval: int = _sentinel,
-    api_endpoint: Optional[str] = _sentinel,
-    api_key: Optional[str] = _sentinel,
-    output_dir: Optional[str] = _sentinel,
-    output_file: Optional[str] = _sentinel,
-    output_methods: Optional[List[OutputMethod]] = _sentinel,
-    save_to_file: Optional[bool] = _sentinel,
-    save_to_api: Optional[bool] = _sentinel,
-    save_to_logger: Optional[bool] = _sentinel,
-    logging_logger: Optional[LoggerOutput] = _sentinel,
-    save_to_prometheus: Optional[bool] = _sentinel,
-    save_to_logfire: Optional[bool] = _sentinel,
-    prometheus_url: Optional[str] = _sentinel,
-    output_handlers: Optional[List[BaseOutput]] = _sentinel,
-    gpu_ids: Optional[List] = _sentinel,
-    emissions_endpoint: Optional[str] = _sentinel,
-    experiment_id: Optional[str] = _sentinel,
-    experiment_name: Optional[str] = _sentinel,
-    electricitymaps_api_token: Optional[str] = _sentinel,
-    co2_signal_api_token: Optional[
-        str
-    ] = _sentinel,  # Deprecated, use electricitymaps_api_token
-    tracking_mode: Optional[str] = _sentinel,
-    log_level: Optional[Union[int, str]] = _sentinel,
-    on_csv_write: Optional[str] = _sentinel,
-    logger_preamble: Optional[str] = _sentinel,
-    offline: Optional[bool] = _sentinel,
-    country_iso_code: Optional[str] = _sentinel,
-    region: Optional[str] = _sentinel,
-    cloud_provider: Optional[str] = _sentinel,
-    cloud_region: Optional[str] = _sentinel,
-    country_2letter_iso_code: Optional[str] = _sentinel,
-    force_cpu_power: Optional[int] = _sentinel,
-    force_ram_power: Optional[int] = _sentinel,
-    pue: Optional[float] = _sentinel,
-    wue: Optional[float] = _sentinel,
-    force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
-    allow_multiple_runs: Optional[bool] = _sentinel,
-    rapl_include_dram: Optional[bool] = _sentinel,
-    rapl_prefer_psys: Optional[bool] = _sentinel,
+    api_endpoint: str | None = _sentinel,
+    api_key: str | None = _sentinel,
+    output_dir: str | None = _sentinel,
+    output_file: str | None = _sentinel,
+    output_methods: list[OutputMethod] | None = _sentinel,
+    save_to_file: bool | None = _sentinel,
+    save_to_api: bool | None = _sentinel,
+    save_to_logger: bool | None = _sentinel,
+    logging_logger: LoggerOutput | None = _sentinel,
+    save_to_prometheus: bool | None = _sentinel,
+    save_to_logfire: bool | None = _sentinel,
+    prometheus_url: str | None = _sentinel,
+    output_handlers: list[BaseOutput] | None = _sentinel,
+    gpu_ids: list | None = _sentinel,
+    emissions_endpoint: str | None = _sentinel,
+    experiment_id: str | None = _sentinel,
+    experiment_name: str | None = _sentinel,
+    electricitymaps_api_token: str | None = _sentinel,
+    co2_signal_api_token: (
+        str | None
+    ) = _sentinel,  # Deprecated, use electricitymaps_api_token
+    tracking_mode: str | None = _sentinel,
+    log_level: int | str | None = _sentinel,
+    on_csv_write: str | None = _sentinel,
+    logger_preamble: str | None = _sentinel,
+    offline: bool | None = _sentinel,
+    country_iso_code: str | None = _sentinel,
+    region: str | None = _sentinel,
+    cloud_provider: str | None = _sentinel,
+    cloud_region: str | None = _sentinel,
+    country_2letter_iso_code: str | None = _sentinel,
+    force_cpu_power: int | None = _sentinel,
+    force_ram_power: int | None = _sentinel,
+    pue: float | None = _sentinel,
+    wue: float | None = _sentinel,
+    force_carbon_intensity_g_co2e_kwh: float | None = _sentinel,
+    allow_multiple_runs: bool | None = _sentinel,
+    rapl_include_dram: bool | None = _sentinel,
+    rapl_prefer_psys: bool | None = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1720,7 +1717,9 @@ def track_emissions(
 
 
 def track_task_emissions(
-    fn: Callable = None, tracker: BaseEmissionsTracker = None, task_name: str = ""
+    fn: Callable | None = None,
+    tracker: BaseEmissionsTracker = None,
+    task_name: str = "",
 ):
     """
     Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.

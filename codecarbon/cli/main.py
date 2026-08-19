@@ -3,12 +3,11 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Annotated
 
 import typer
 from rich import print
 from rich.prompt import Confirm
-from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
 from codecarbon.cli.cli_utils import (
@@ -62,7 +61,7 @@ def _version_callback(value: bool) -> None:
 
 @codecarbon.callback()
 def version(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -254,7 +253,7 @@ def config():
         )
         print(f"Created organization : {organization}")
     else:
-        organization = [orga for orga in organizations if orga["name"] == org][0]
+        organization = next(orga for orga in organizations if orga["name"] == org)
     org_id = organization["id"]
     overwrite_local_config("organization_id", org_id, path=file_path)
 
@@ -284,7 +283,7 @@ def config():
         )
         print(f"Created project : {project}")
     else:
-        project = [p for p in projects if p["name"] == project][0]
+        project = next(p for p in projects if p["name"] == project)
     project_id = project["id"]
     overwrite_local_config("project_id", project_id, path=file_path)
 
@@ -347,7 +346,7 @@ def config():
         )
 
     else:
-        experiment = [e for e in experiments if e["name"] == experiment][0]
+        experiment = next(e for e in experiments if e["name"] == experiment)
 
     overwrite_local_config("experiment_id", experiment["id"], path=file_path)
     api_key = _api_call("Could not get the project API key", get_api_key, project_id)
@@ -379,11 +378,11 @@ def monitor(
     ] = True,
     offline: Annotated[bool, typer.Option(help="Run in offline mode")] = False,
     country_iso_code: Annotated[
-        str,
+        str | None,
         typer.Option(help="3-letter country ISO code for offline mode"),
     ] = None,
     region: Annotated[
-        str,
+        str | None,
         typer.Option(help="Region/province for offline mode"),
     ] = None,
     log_level: Annotated[
@@ -391,35 +390,35 @@ def monitor(
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
     project_name: Annotated[
-        str,
+        str | None,
         typer.Option(help="Project name for the current experiment run."),
     ] = None,
     output_dir: Annotated[
-        str,
+        str | None,
         typer.Option(help="Directory to write emissions.csv to."),
     ] = None,
     pue: Annotated[
-        float,
+        float | None,
         typer.Option(help="Power Usage Effectiveness of the datacenter."),
     ] = None,
     wue: Annotated[
-        float,
+        float | None,
         typer.Option(help="Water Usage Effectiveness of the datacenter."),
     ] = None,
     gpu_ids: Annotated[
-        str,
+        str | None,
         typer.Option(help="Comma-separated list of GPU ids to track, e.g. '0,1'."),
     ] = None,
     force_cpu_power: Annotated[
-        int,
+        int | None,
         typer.Option(help="Force CPU power draw in Watts instead of estimating it."),
     ] = None,
     force_ram_power: Annotated[
-        int,
+        int | None,
         typer.Option(help="Force RAM power draw in Watts instead of estimating it."),
     ] = None,
     allow_multiple_runs: Annotated[
-        bool,
+        bool | None,
         typer.Option(
             help="Allow multiple codecarbon trackers to run at the same time on this machine."
         ),
@@ -510,7 +509,7 @@ def monitor(
     except Exception as e:
         print(f"\nError occurred: {e}")
         tracker.stop()
-        raise e
+        raise
 
 
 @codecarbon.command("detect", short_help="Detect hardware and print information.")
@@ -554,7 +553,7 @@ def report(
         ),
     ] = "emissions.csv",
     project: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--project",
             "-p",
@@ -603,7 +602,7 @@ def report(
 
     try:
         df = pd.read_csv(file)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         console.print(f"[bold red]Error:[/bold red] Could not read '{file}': {e}")
         raise typer.Exit(1)
 
@@ -687,8 +686,14 @@ def report(
         project_table.add_column("Energy (kWh)", style="yellow", justify="right")
 
         for proj_name, proj_df in df.groupby("project_name"):
-            proj_emissions = proj_df["emissions"].sum() if "emissions" in proj_df.columns else 0
-            proj_energy = proj_df["energy_consumed"].sum() if "energy_consumed" in proj_df.columns else 0
+            proj_emissions = (
+                proj_df["emissions"].sum() if "emissions" in proj_df.columns else 0
+            )
+            proj_energy = (
+                proj_df["energy_consumed"].sum()
+                if "energy_consumed" in proj_df.columns
+                else 0
+            )
             project_table.add_row(
                 str(proj_name),
                 str(len(proj_df)),
@@ -704,14 +709,24 @@ def report(
     eq_table.add_column("Value", style="green", justify="right")
 
     eq_table.add_row("🚗 Car travel", f"{equivalences.car_km:.1f} km")
-    eq_table.add_row("✈️  Flights (CDG→JFK)", f"{equivalences.flights_paris_nyc:.4f} one-way")
+    eq_table.add_row(
+        "✈️  Flights (CDG→JFK)", f"{equivalences.flights_paris_nyc:.4f} one-way"
+    )
     eq_table.add_row("📺 TV watching", f"{equivalences.tv_hours:.1f} hours")
-    eq_table.add_row("📱 Smartphone charges", f"{equivalences.smartphone_charges:.0f} charges")
+    eq_table.add_row(
+        "📱 Smartphone charges", f"{equivalences.smartphone_charges:.0f} charges"
+    )
     if equivalences.tree_months >= 12:
-        eq_table.add_row("🌳 Tree offset", f"{equivalences.tree_months / 12:.2f} tree-years")
+        eq_table.add_row(
+            "🌳 Tree offset", f"{equivalences.tree_months / 12:.2f} tree-years"
+        )
     else:
-        eq_table.add_row("🌳 Tree offset", f"{equivalences.tree_months:.2f} tree-months")
-    eq_table.add_row("🏠 US household weekly", f"{equivalences.household_percentage:.4f}%")
+        eq_table.add_row(
+            "🌳 Tree offset", f"{equivalences.tree_months:.2f} tree-months"
+        )
+    eq_table.add_row(
+        "🏠 US household weekly", f"{equivalences.household_percentage:.4f}%"
+    )
     eq_table.add_row("💡 LED bulb (10W)", f"{equivalences.led_bulb_hours:.1f} hours")
     eq_table.add_row("🎬 HD streaming", f"{equivalences.streaming_hours:.1f} hours")
 
@@ -723,11 +738,17 @@ def _compute_summary(df) -> dict:
     """Compute aggregate summary statistics from an emissions DataFrame."""
     summary = {
         "num_runs": len(df),
-        "num_projects": df["project_name"].nunique() if "project_name" in df.columns else 1,
+        "num_projects": (
+            df["project_name"].nunique() if "project_name" in df.columns else 1
+        ),
         "total_emissions_kg": df["emissions"].sum() if "emissions" in df.columns else 0,
-        "total_energy_kwh": df["energy_consumed"].sum() if "energy_consumed" in df.columns else 0,
+        "total_energy_kwh": (
+            df["energy_consumed"].sum() if "energy_consumed" in df.columns else 0
+        ),
         "total_duration_s": df["duration"].sum() if "duration" in df.columns else 0,
-        "total_water_l": df["water_consumed"].sum() if "water_consumed" in df.columns else 0,
+        "total_water_l": (
+            df["water_consumed"].sum() if "water_consumed" in df.columns else 0
+        ),
     }
 
     # Average power values

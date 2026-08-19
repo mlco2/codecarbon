@@ -12,7 +12,6 @@ Writes emissions data as JSON to a file. Supports two modes:
 import dataclasses
 import json
 import os
-from typing import List
 
 from codecarbon.external.logger import logger
 from codecarbon.output_methods.base_output import BaseOutput
@@ -92,7 +91,7 @@ class JSONOutput(BaseOutput):
                     existing.append(payload)
                 with open(self.save_file_path, "w", encoding="utf-8") as f:
                     json.dump(existing, f, indent=2)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to write JSON emissions data: {e}", exc_info=True)
 
     def live_out(self, total: EmissionsData, delta: EmissionsData):
@@ -103,7 +102,7 @@ class JSONOutput(BaseOutput):
         """
         self.out(total, delta)
 
-    def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
+    def task_out(self, data: list[TaskEmissionsData], experiment_name: str):
         """
         Write task-level emissions data to a separate JSON file.
 
@@ -124,7 +123,7 @@ class JSONOutput(BaseOutput):
             payload = [dataclasses.asdict(entry) for entry in data]
             with open(task_file_path, "w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=2)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(
                 f"Failed to write JSON task emissions data: {e}", exc_info=True
             )

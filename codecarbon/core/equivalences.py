@@ -11,7 +11,6 @@ All emissions inputs are in **kilograms of CO₂ equivalent (kg CO₂eq)**.
 """
 
 from dataclasses import asdict, dataclass
-from typing import Optional
 
 
 @dataclass
@@ -182,7 +181,7 @@ class EmissionsEquivalences:
     KG_CO2_PER_STREAMING_HOUR: float = 0.036
 
     def compute(
-        self, emissions_kg: float, round_digits: Optional[int] = None
+        self, emissions_kg: float, round_digits: int | None = None
     ) -> EquivalenceResult:
         """
         Compute real-world equivalences for the given CO₂ emissions.
@@ -199,9 +198,7 @@ class EmissionsEquivalences:
             ValueError: If *emissions_kg* is negative.
         """
         if emissions_kg < 0:
-            raise ValueError(
-                f"emissions_kg must be non-negative, got {emissions_kg}"
-            )
+            raise ValueError(f"emissions_kg must be non-negative, got {emissions_kg}")
 
         car_km = emissions_kg / self.KG_CO2_PER_KM
         flights = emissions_kg / self.KG_CO2_PER_FLIGHT_CDG_JFK

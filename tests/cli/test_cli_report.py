@@ -2,13 +2,10 @@
 
 import csv
 import json
-import os
 
-import pytest
 from typer.testing import CliRunner
 
 from codecarbon.cli.main import codecarbon
-
 
 runner = CliRunner()
 

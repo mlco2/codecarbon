@@ -1,9 +1,6 @@
 """Tests for the JSONOutput handler."""
 
 import json
-import os
-import tempfile
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -13,78 +10,78 @@ from codecarbon.output_methods.json_output import JSONOutput
 
 def _make_emissions_data(**overrides) -> EmissionsData:
     """Create a minimal EmissionsData for testing."""
-    defaults = dict(
-        timestamp="2024-01-01T00:00:00",
-        project_name="test_project",
-        run_id="test-run-id-001",
-        experiment_id="test-exp-id",
-        duration=60.0,
-        emissions=0.001,
-        emissions_rate=0.00001,
-        cpu_power=50.0,
-        gpu_power=100.0,
-        ram_power=10.0,
-        cpu_energy=0.0005,
-        gpu_energy=0.001,
-        ram_energy=0.0001,
-        energy_consumed=0.0016,
-        water_consumed=0.01,
-        country_name="France",
-        country_iso_code="FRA",
-        region="ile-de-france",
-        cloud_provider="",
-        cloud_region="",
-        os="Linux",
-        python_version="3.11.0",
-        codecarbon_version="3.3.0",
-        cpu_count=8,
-        cpu_model="Intel i7",
-        gpu_count=1,
-        gpu_model="NVIDIA RTX 4090",
-        longitude=2.3522,
-        latitude=48.8566,
-        ram_total_size=32.0,
-        tracking_mode="machine",
-    )
+    defaults = {
+        "timestamp": "2024-01-01T00:00:00",
+        "project_name": "test_project",
+        "run_id": "test-run-id-001",
+        "experiment_id": "test-exp-id",
+        "duration": 60.0,
+        "emissions": 0.001,
+        "emissions_rate": 0.00001,
+        "cpu_power": 50.0,
+        "gpu_power": 100.0,
+        "ram_power": 10.0,
+        "cpu_energy": 0.0005,
+        "gpu_energy": 0.001,
+        "ram_energy": 0.0001,
+        "energy_consumed": 0.0016,
+        "water_consumed": 0.01,
+        "country_name": "France",
+        "country_iso_code": "FRA",
+        "region": "ile-de-france",
+        "cloud_provider": "",
+        "cloud_region": "",
+        "os": "Linux",
+        "python_version": "3.11.0",
+        "codecarbon_version": "3.3.0",
+        "cpu_count": 8,
+        "cpu_model": "Intel i7",
+        "gpu_count": 1,
+        "gpu_model": "NVIDIA RTX 4090",
+        "longitude": 2.3522,
+        "latitude": 48.8566,
+        "ram_total_size": 32.0,
+        "tracking_mode": "machine",
+    }
     defaults.update(overrides)
     return EmissionsData(**defaults)
 
 
 def _make_task_emissions_data(**overrides) -> TaskEmissionsData:
     """Create a minimal TaskEmissionsData for testing."""
-    defaults = dict(
-        task_name="training",
-        timestamp="2024-01-01T00:00:00",
-        project_name="test_project",
-        run_id="test-run-id-001",
-        duration=30.0,
-        emissions=0.0005,
-        emissions_rate=0.00001,
-        cpu_power=50.0,
-        gpu_power=100.0,
-        ram_power=10.0,
-        cpu_energy=0.00025,
-        gpu_energy=0.0005,
-        ram_energy=0.00005,
-        energy_consumed=0.0008,
-        water_consumed=0.005,
-        country_name="France",
-        country_iso_code="FRA",
-        region="ile-de-france",
-        cloud_provider="",
-        cloud_region="",
-        os="Linux",
-        python_version="3.11.0",
-        codecarbon_version="3.3.0",
-        cpu_count=8,
-        cpu_model="Intel i7",
-        gpu_count=1,
-        gpu_model="NVIDIA RTX 4090",
-        longitude=2.3522,
-        latitude=48.8566,
-        ram_total_size=32.0,
-        tracking_mode="machine",
-    )
+    defaults = {
+        "task_name": "training",
+        "timestamp": "2024-01-01T00:00:00",
+        "project_name": "test_project",
+        "run_id": "test-run-id-001",
+        "duration": 30.0,
+        "emissions": 0.0005,
+        "emissions_rate": 0.00001,
+        "cpu_power": 50.0,
+        "gpu_power": 100.0,
+        "ram_power": 10.0,
+        "cpu_energy": 0.00025,
+        "gpu_energy": 0.0005,
+        "ram_energy": 0.00005,
+        "energy_consumed": 0.0008,
+        "water_consumed": 0.005,
+        "country_name": "France",
+        "country_iso_code": "FRA",
+        "region": "ile-de-france",
+        "cloud_provider": "",
+        "cloud_region": "",
+        "os": "Linux",
+        "python_version": "3.11.0",
+        "codecarbon_version": "3.3.0",
+        "cpu_count": 8,
+        "cpu_model": "Intel i7",
+        "gpu_count": 1,
+        "gpu_model": "NVIDIA RTX 4090",
+        "longitude": 2.3522,
+        "latitude": 48.8566,
+        "ram_total_size": 32.0,
+        "tracking_mode": "machine",
+    }
     defaults.update(overrides)
     return TaskEmissionsData(**defaults)
 

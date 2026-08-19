@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import List
 
 from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
 
@@ -48,7 +47,7 @@ class BaseOutput:
     def live_out(self, total: EmissionsData, delta: EmissionsData):
         pass
 
-    def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
+    def task_out(self, data: list[TaskEmissionsData], experiment_name: str):
         pass
 
     def exit(self):
