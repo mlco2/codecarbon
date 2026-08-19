@@ -489,7 +489,6 @@ def test_middleware_end_to_end_against_a_fake_tracker():
     )
     app.state.codecarbon_tracker = tracker
     add_codecarbon_middleware(app, attribution=attributor)
-    middleware = app.state.codecarbon_middleware
 
     async def drive():
         async with httpx.AsyncClient(
@@ -504,8 +503,10 @@ def test_middleware_end_to_end_against_a_fake_tracker():
         asyncio.run(drive())
     finally:
         tracker.stop()
-        middleware.attributor.close()
+        attributor.close()
 
+    # app.state only names the middleware once Starlette has built the stack.
+    middleware = app.state.codecarbon_middleware
     total = tracker.final_emissions_data.energy_consumed
     assert len(emitted) == 4
     per_request = sum(r.energy_kwh or 0.0 for r in emitted)
@@ -545,7 +546,6 @@ def test_attribution_path_takes_no_out_of_band_hardware_samples():
     tracker._maybe_measure_power_and_energy = lambda: calls.append(1)
     app.state.codecarbon_tracker = tracker
     add_codecarbon_middleware(app, attribution=True)
-    middleware = app.state.codecarbon_middleware
 
     async def drive():
         async with httpx.AsyncClient(
@@ -559,7 +559,7 @@ def test_attribution_path_takes_no_out_of_band_hardware_samples():
         asyncio.run(drive())
     finally:
         tracker.stop()
-        middleware.attributor.close()
+        app.state.codecarbon_middleware.attributor.close()
     assert calls == []
 
 
@@ -596,7 +596,7 @@ def test_shutdown_unhooks_the_observer_and_flushes_in_flight_requests():
 
     from codecarbon import OfflineEmissionsTracker
     from codecarbon.integrations.fastapi.middleware import (
-        add_codecarbon_middleware,
+        CodeCarbonMiddleware,
         shutdown_codecarbon_middleware,
     )
 
@@ -613,8 +613,10 @@ def test_shutdown_unhooks_the_observer_and_flushes_in_flight_requests():
         log_level="error",
     )
     app.state.codecarbon_tracker = tracker
-    add_codecarbon_middleware(app, attribution=attributor)
-    middleware = app.state.codecarbon_middleware
+    # No request is served here, so build the middleware and register it the way
+    # add_codecarbon_middleware would once Starlette builds the stack.
+    middleware = CodeCarbonMiddleware(app, attribution=attributor)
+    app.state.codecarbon_middleware = middleware
 
     tracker.start()
     try:
