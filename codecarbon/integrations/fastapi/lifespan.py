@@ -35,6 +35,9 @@ async def create_codecarbon_lifespan(
     try:
         yield
     finally:
-        shutdown_codecarbon_middleware(app, wait=True)
+        # stop() first: its final measurement closes one last sampling window,
+        # so requests still in flight get their last share before the middleware
+        # detaches the attributor and flushes them.
         tracker.stop()
+        shutdown_codecarbon_middleware(app, wait=True)
         app.state.codecarbon_tracker = None

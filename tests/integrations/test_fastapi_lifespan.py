@@ -27,3 +27,24 @@ def test_lifespan_stops_tracker_on_shutdown(MockTracker, app):
 
     tracker.stop.assert_called_once()
     assert app.state.codecarbon_tracker is None
+
+
+@patch.object(cc_fastapi_lifespan, "shutdown_codecarbon_middleware")
+@patch.object(cc_fastapi_lifespan, "EmissionsTracker")
+def test_lifespan_stops_the_tracker_before_shutting_the_middleware_down(
+    MockTracker, shutdown, app
+):
+    """stop() closes one last window; the attributor must still be attached."""
+    order = []
+    tracker = MagicMock()
+    tracker.stop.side_effect = lambda: order.append("stop")
+    shutdown.side_effect = lambda *a, **kw: order.append("shutdown")
+    MockTracker.return_value = tracker
+
+    async def run():
+        async with create_codecarbon_lifespan(app):
+            pass
+
+    asyncio.run(run())
+
+    assert order == ["stop", "shutdown"]

@@ -17,8 +17,8 @@ What it is not
 --------------
 Attribution is *allocation*, not measurement. A request that sleeps for a second
 and a request that burns a core for a second receive the same share, because
-they occupied the same second of the machine. That is a cost-allocation answer, and it is the honest one when
-nothing tells you which request caused which watt.
+they occupied the same second of the machine. That is a cost-allocation answer,
+and it is the honest one when nothing tells you which request caused which watt.
 """
 
 from __future__ import annotations

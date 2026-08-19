@@ -194,6 +194,8 @@ class CodeCarbonMiddleware:
             tracker.stop()
         # After stop(): the tracker's final measurement closes one last window,
         # so requests still in flight get their last share before we emit them.
+        # A lifespan tracker is not ours to stop, so create_codecarbon_lifespan
+        # has to call tracker.stop() before it calls us for the same reason.
         attribution_tracker, self._attribution_tracker = self._attribution_tracker, None
         if self.attributor is not None:
             if attribution_tracker is not None:
