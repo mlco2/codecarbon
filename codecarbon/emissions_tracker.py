@@ -267,6 +267,8 @@ class BaseEmissionsTracker(ABC):
             self._output_methods.append(OutputMethod.LOGFIRE)
 
     def _initialize_runtime_state(self) -> None:
+        self._api_output = None
+        self.run_id = uuid.uuid4()
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
@@ -612,7 +614,6 @@ class BaseEmissionsTracker(ABC):
         methods = set(self._output_methods) if self._output_methods else set()
 
         if not methods and not self._emissions_endpoint:
-            self.run_id = uuid.uuid4()
             return
 
         from codecarbon.output_methods.boamps import BoAmpsOutput
@@ -645,10 +646,8 @@ class BaseEmissionsTracker(ABC):
                 api_key=api_key,
                 conf=self._conf,
             )
-            self.run_id = cc_api__out.run_id
+            self._api_output = cc_api__out
             self._output_handlers.append(cc_api__out)
-        else:
-            self.run_id = uuid.uuid4()
 
         if OutputMethod.PROMETHEUS in methods:
             self._output_handlers.append(
@@ -710,6 +709,15 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._ensure_hardware_ready()
+
+        if self._api_output is not None:
+            # Create the run now, so every record carries the API run id.
+            try:
+                self._api_output._ensure_api_run()
+                self.run_id = self._api_output.run_id or self.run_id
+            except Exception as e:
+                logger.error(e, exc_info=True)
+
         self._last_measured_time = self._start_time = time.perf_counter()
 
         # Clear utilization history for fresh measurements
