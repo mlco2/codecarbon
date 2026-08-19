@@ -330,19 +330,23 @@ def test_middleware_default_logs_after_request(mock_logger_info, MockTracker) ->
 def test_add_codecarbon_middleware_registers_instance_on_app_state() -> None:
     application = FastAPI()
     add_codecarbon_middleware(application, project_name="shutdown-test")
+    with TestClient(application):
+        pass
     middleware = application.state.codecarbon_middleware
     middleware.shutdown_tracker_executor()
     with pytest.raises(RuntimeError, match="shutdown"):
-        middleware._tracker_runner.submit_request(lambda: None)
+        middleware._tracker_runner.submit(lambda: None)
 
 
 def test_shutdown_codecarbon_middleware_helper() -> None:
     application = FastAPI()
     add_codecarbon_middleware(application, project_name="shutdown-test")
+    with TestClient(application):
+        pass
     shutdown_codecarbon_middleware(application)
     middleware = application.state.codecarbon_middleware
     with pytest.raises(RuntimeError, match="shutdown"):
-        middleware._tracker_runner.submit_request(lambda: None)
+        middleware._tracker_runner.submit(lambda: None)
 
 
 @patch.object(cc_fastapi_lifespan, "EmissionsTracker")
@@ -366,7 +370,7 @@ def test_create_codecarbon_lifespan_shuts_down_middleware_executor(
 
     middleware = application.state.codecarbon_middleware
     with pytest.raises(RuntimeError, match="shutdown"):
-        middleware._tracker_runner.submit_request(lambda: None)
+        middleware._tracker_runner.submit(lambda: None)
 
 
 def test_middleware_real_tracker_logs_and_csv_on_lifespan_stop(tmp_path: Path) -> None:
@@ -858,87 +862,6 @@ def test_resolve_header_fields_and_header_names() -> None:
         "X-CodeCarbon-Emissions-kg",
         "X-CodeCarbon-Duration-s",
     }
-
-
-def test_tracker_runner_handles_cancelled_and_failed_jobs() -> None:
-    from concurrent import futures
-
-    runner = cc_fastapi_middleware._TrackerRunner()
-    cancelled = runner.submit_request(lambda: 1)
-    cancelled.cancel()
-    runner.shutdown()
-    assert cancelled.cancelled()
-
-    runner = cc_fastapi_middleware._TrackerRunner()
-
-    def boom() -> None:
-        raise ValueError("tracker failed")
-
-    with pytest.raises(ValueError, match="tracker failed"):
-        runner.submit_request(boom).result(timeout=2)
-    runner.shutdown()
-
-    done = futures.Future()
-    done.set_result(1)
-    runner = cc_fastapi_middleware._TrackerRunner()
-    runner._run_job((lambda: 99, (), done))
-
-    def raise_runtime() -> None:
-        raise RuntimeError("x")
-
-    already_done = futures.Future()
-    already_done.set_result(1)
-    runner._run_job((raise_runtime, (), already_done))
-    runner.shutdown()
-
-
-def test_tracker_runner_finalize_lane_and_no_wait_shutdown() -> None:
-    runner = cc_fastapi_middleware._TrackerRunner()
-    assert runner.submit(runner.FINALIZE, lambda: 42).result(timeout=2) == 42
-    runner.shutdown(wait=False)
-    runner.shutdown()
-
-
-def test_tracker_runner_drains_finalize_after_request_job() -> None:
-    order: list[str] = []
-    runner = cc_fastapi_middleware._TrackerRunner()
-
-    def request_job() -> None:
-        order.append("request")
-
-    def finalize_job() -> None:
-        order.append("finalize")
-
-    runner.submit_request(request_job)
-    runner.submit(runner.FINALIZE, finalize_job)
-    runner.shutdown()
-    assert order == ["request", "finalize"]
-
-
-def test_tracker_runner_prioritizes_new_requests_over_finalize_drain() -> None:
-    import threading
-
-    order: list[str] = []
-    gate = threading.Event()
-    runner = cc_fastapi_middleware._TrackerRunner()
-
-    def slow_request() -> None:
-        gate.wait(timeout=2)
-        order.append("request1")
-
-    def finalize_job() -> None:
-        order.append("finalize")
-
-    def second_request() -> None:
-        order.append("request2")
-
-    runner.submit_request(slow_request)
-    runner.submit(runner.FINALIZE, finalize_job)
-    runner.submit_request(second_request)
-    gate.set()
-    runner.shutdown()
-    assert order.index("request1") < order.index("request2")
-    assert order.index("request2") < order.index("finalize")
 
 
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")

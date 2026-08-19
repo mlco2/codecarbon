@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import collections
 import threading
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from concurrent import futures
@@ -43,8 +42,6 @@ _HEADER_UNITS: dict[str, str] = {
     "ram_power": "w",
 }
 
-_Job = tuple[Callable[..., Any], tuple[Any, ...], futures.Future[Any]]
-
 
 def _codecarbon_header_name(field: str) -> str:
     unit = _HEADER_UNITS.get(field, "")
@@ -78,100 +75,6 @@ def _inject_emission_headers(
         value = str(getattr(emissions_data, field))
         headers.append((name.encode("latin-1"), value.encode("latin-1")))
     return {**message, "headers": headers}
-
-
-class _TrackerRunner:
-    """Single tracker thread: request-path jobs first, then pending finalization."""
-
-    REQUEST = 0
-    FINALIZE = 1
-
-    def __init__(self, thread_name: str = "codecarbon-tracker") -> None:
-        self._request_jobs: collections.deque[_Job] = collections.deque()
-        self._finalize_jobs: collections.deque[_Job] = collections.deque()
-        self._cond = threading.Condition()
-        self._closed = False
-        self._thread = threading.Thread(
-            target=self._worker, name=thread_name, daemon=True
-        )
-        self._thread.start()
-
-    def _run_job(self, job: _Job) -> None:
-        func, args, future = job
-        if future.cancelled():
-            return
-        try:
-            result = func(*args)
-        except Exception as exc:
-            try:
-                future.set_exception(exc)
-            except futures.InvalidStateError:
-                pass
-            return
-        try:
-            future.set_result(result)
-        except futures.InvalidStateError:
-            pass
-
-    def _worker(self) -> None:
-        while True:
-            with self._cond:
-                while (
-                    not self._closed
-                    and not self._request_jobs
-                    and not self._finalize_jobs
-                ):
-                    self._cond.wait()
-                if self._closed and not self._request_jobs and not self._finalize_jobs:
-                    return
-                if self._request_jobs:
-                    job = self._request_jobs.popleft()
-                    lane = self.REQUEST
-                else:
-                    job = self._finalize_jobs.popleft()
-                    lane = self.FINALIZE
-            self._run_job(job)
-            if lane == self.REQUEST:
-                while True:
-                    with self._cond:
-                        if self._request_jobs:
-                            break
-                        if not self._finalize_jobs:
-                            break
-                        finalize_job = self._finalize_jobs.popleft()
-                    self._run_job(finalize_job)
-
-    def submit(
-        self, lane: int, func: Callable[..., Any], *args: Any
-    ) -> futures.Future[Any]:
-        if self._closed:
-            raise RuntimeError("cannot schedule tracker work after shutdown")
-        future: futures.Future[Any] = futures.Future()
-        job = (func, args, future)
-        with self._cond:
-            if lane == self.REQUEST:
-                self._request_jobs.append(job)
-            else:
-                self._finalize_jobs.append(job)
-            self._cond.notify()
-        return future
-
-    def submit_request(
-        self, func: Callable[..., Any], *args: Any
-    ) -> futures.Future[Any]:
-        return self.submit(self.REQUEST, func, *args)
-
-    async def run_async(self, lane: int, func: Callable[..., Any], *args: Any) -> Any:
-        return await asyncio.wrap_future(self.submit(lane, func, *args))
-
-    def shutdown(self, *, wait: bool = True) -> None:
-        if self._closed:
-            return
-        with self._cond:
-            self._closed = True
-            self._cond.notify_all()
-        if wait:
-            self._thread.join()
 
 
 def log_request_complete(
@@ -241,7 +144,11 @@ class CodeCarbonMiddleware:
         self.tracker_kwargs = merged
         self._app_tracker: EmissionsTracker | None = None
         self._tracker_init_lock = threading.Lock()
-        self._tracker_runner = _TrackerRunner()
+        # One worker: the tracker is not re-entrant, and requests must not block
+        # on each other's measurement.
+        self._tracker_runner = futures.ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="codecarbon-tracker"
+        )
 
     def shutdown_tracker_executor(self, *, wait: bool = True) -> None:
         """Shut down the tracker background thread (idempotent).
@@ -277,17 +184,13 @@ class CodeCarbonMiddleware:
             return self.task_name_formatter(request)
         return build_endpoint_key(request)
 
+    async def _run_on_tracker(self, func: Callable[..., Any], *args: Any) -> Any:
+        return await asyncio.wrap_future(self._tracker_runner.submit(func, *args))
+
     async def _run_begin_request(
         self, request: Request
     ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
-        return await self._tracker_runner.run_async(
-            _TrackerRunner.REQUEST, self._begin_request, request
-        )
-
-    async def _run_finalize_tracker(self, func: Callable[..., Any], *args: Any) -> Any:
-        return await self._tracker_runner.run_async(
-            _TrackerRunner.FINALIZE, func, *args
-        )
+        return await self._run_on_tracker(self._begin_request, request)
 
     def _create_and_start_tracker(self) -> EmissionsTracker:
         tracker = EmissionsTracker(
@@ -370,7 +273,7 @@ class CodeCarbonMiddleware:
         *,
         run_callback: bool,
     ) -> EmissionsData | None:
-        return await self._run_finalize_tracker(
+        return await self._run_on_tracker(
             self._finalize_on_worker,
             tracker,
             request,
@@ -572,4 +475,3 @@ def add_codecarbon_middleware(app: Any, **kwargs: Any) -> None:
             app.state.codecarbon_middleware = self
 
     app.add_middleware(_RegisteredCodeCarbonMiddleware, **kwargs)
-    app.build_middleware_stack()
