@@ -1,4 +1,5 @@
 import os
+import subprocess
 from unittest import mock
 
 import pytest
@@ -231,6 +232,24 @@ class TestApplePowerMetrics:
             powermetrics._log_values()
 
         mock_call.assert_called_once()
+        mock_warning.assert_called_once()
+
+    def test_log_values_warns_on_timeout(self):
+        powermetrics = ApplePowermetrics.__new__(ApplePowermetrics)
+        powermetrics._system = "darwin"
+        powermetrics._n_points = 3
+        powermetrics._interval = 100
+        powermetrics._log_file_path = "powermetrics_log.txt"
+
+        with (
+            mock.patch(
+                "codecarbon.core.powermetrics.subprocess.call",
+                side_effect=subprocess.TimeoutExpired(cmd="powermetrics", timeout=1),
+            ),
+            mock.patch("codecarbon.core.powermetrics.logger.warning") as mock_warning,
+        ):
+            assert powermetrics._log_values() is None
+
         mock_warning.assert_called_once()
 
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")

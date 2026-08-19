@@ -153,7 +153,17 @@ class ApplePowermetrics:
                 "-o",
                 self._log_file_path,
             ]
-            returncode = subprocess.call(cmd, universal_newlines=True)
+            timeout = self._n_points * self._interval / 1000 * 2 + 5
+            try:
+                returncode = subprocess.call(
+                    cmd, universal_newlines=True, timeout=timeout
+                )
+            except subprocess.TimeoutExpired:
+                logger.warning(
+                    f"Powermetrics did not complete within {timeout} seconds, "
+                    f"skipping this measure."
+                )
+                return None
 
         else:
             return None
