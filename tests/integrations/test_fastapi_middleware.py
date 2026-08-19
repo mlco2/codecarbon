@@ -678,48 +678,6 @@ def test_concurrent_lazy_tracker_without_lifespan() -> None:
         cc_fastapi_middleware.logger.removeHandler(handler)
 
 
-def test_compose_lifespans_stacks_contexts() -> None:
-    from codecarbon.integrations.fastapi import compose_lifespans
-
-    events: list[str] = []
-
-    @asynccontextmanager
-    async def other(app: FastAPI):
-        events.append("other-enter")
-        app.state.other = True
-        try:
-            yield
-        finally:
-            events.append("other-exit")
-
-    application = FastAPI(
-        lifespan=compose_lifespans(
-            lambda a: create_codecarbon_lifespan(
-                a,
-                project_name="compose-test",
-                save_to_file=False,
-                save_to_api=False,
-                allow_multiple_runs=True,
-            ),
-            other,
-        )
-    )
-    add_codecarbon_middleware(
-        application,
-        project_name="compose-test",
-        on_request_complete=None,
-        tracker_kwargs={"save_to_file": False, "save_to_api": False},
-    )
-
-    with TestClient(application) as client:
-        assert application.state.other is True
-        assert application.state.codecarbon_tracker is not None
-        assert client.get("/docs").status_code == 200
-
-    assert events == ["other-enter", "other-exit"]
-    assert application.state.codecarbon_tracker is None
-
-
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
 def test_response_headers_sync_mode_injects_emissions_header(MockTracker) -> None:
     _configure_mock_running_tracker(MockTracker.return_value, emissions=0.0012)

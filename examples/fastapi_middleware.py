@@ -47,7 +47,6 @@ def predict(text: str = "hello"):
     return {"text": text, "label": "demo"}
 
 
-# Stack other startup with compose_lifespans — see docs/how-to/fastapi.md
 # Per-request: codecarbon logger (INFO) after each response.
 # CSV: examples/output/emissions.csv on shutdown.
 # Run:
