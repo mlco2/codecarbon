@@ -169,8 +169,7 @@ def test_measured_tier_reports_energy() -> None:
     data = _emissions_data(duration=0.03, energy_consumed=1e-8, emissions=4e-9)
     measurement = _build(middleware, [_cpu("intel_rapl")], data)
     assert measurement.tier is MeasurementTier.MEASURED
-    assert measurement.available
-    assert measurement.energy_consumed == 1e-8
+    assert measurement.emissions_data.energy_consumed == 1e-8
     middleware.shutdown_tracker_executor()
 
 
@@ -180,9 +179,7 @@ def test_zero_delta_is_unavailable_not_zero() -> None:
     data = _emissions_data(duration=0.03, energy_consumed=0.0, emissions=0.0)
     measurement = _build(middleware, [_cpu("intel_rapl")], data)
     assert measurement.tier is MeasurementTier.MEASURED
-    assert not measurement.available
-    assert measurement.emissions is None
-    assert measurement.energy_consumed is None
+    assert measurement.emissions_data is None
     assert "no completed sampling window" in measurement.unavailable_reason
     middleware.shutdown_tracker_executor()
 
@@ -193,7 +190,6 @@ def test_aggregate_only_has_no_per_request_energy_field() -> None:
     measurement = _build(middleware, [_cpu("cpu_load")], data)
     assert measurement.tier is MeasurementTier.AGGREGATE_ONLY
     assert measurement.emissions_data is None
-    assert measurement.emissions is None
     assert "endpoint_totals()" in measurement.unavailable_reason
     middleware.shutdown_tracker_executor()
 
@@ -206,8 +202,8 @@ def test_estimated_tier_derives_energy_from_duration() -> None:
     data = _emissions_data(duration=3600.0, cpu_power=100.0, ram_power=20.0)
     measurement = _build(middleware, [_cpu("constant"), _ram()], data, tracker)
     assert measurement.tier is MeasurementTier.ESTIMATED
-    assert measurement.energy_consumed == pytest.approx(0.12)  # 120 W for 1 h
-    assert measurement.emissions == pytest.approx(0.06)
+    assert measurement.emissions_data.energy_consumed == pytest.approx(0.12)
+    assert measurement.emissions_data.emissions == pytest.approx(0.06)
     middleware.shutdown_tracker_executor()
 
 
@@ -218,7 +214,7 @@ def test_estimated_tier_applies_pue() -> None:
     )
     data = _emissions_data(duration=3600.0, cpu_power=100.0, ram_power=20.0)
     measurement = _build(middleware, [_cpu("constant"), _ram()], data, tracker)
-    assert measurement.energy_consumed == pytest.approx(0.18)  # 0.12 kWh x 1.5
+    assert measurement.emissions_data.energy_consumed == pytest.approx(0.18)
     middleware.shutdown_tracker_executor()
 
 
@@ -229,7 +225,7 @@ def test_estimated_tier_without_known_intensity_is_unavailable() -> None:
     )
     data = _emissions_data(duration=3600.0, cpu_power=100.0)
     measurement = _build(middleware, [_cpu("constant")], data, tracker)
-    assert not measurement.available
+    assert measurement.emissions_data is None
     middleware.shutdown_tracker_executor()
 
 

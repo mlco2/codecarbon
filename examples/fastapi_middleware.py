@@ -37,11 +37,11 @@ async def lifespan(app: FastAPI):
 def report(request, response, emissions_data, task_name):
     """Report per request, honestly: never a zero standing in for unknown."""
     measurement = request.state.codecarbon
-    if measurement.available:
+    if emissions_data is not None:
         print(
             f"{task_name}: tier={measurement.tier.value} "
-            f"emissions={measurement.emissions} kg "
-            f"energy={measurement.energy_consumed} kWh"
+            f"emissions={emissions_data.emissions} kg "
+            f"energy={emissions_data.energy_consumed} kWh"
         )
     else:
         print(

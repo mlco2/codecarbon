@@ -190,8 +190,8 @@ A request that spans no completed sampling window reports **unavailable**, never
 ```python
 def on_complete(request, response, emissions_data, task_name):
     m = request.state.codecarbon          # RequestMeasurement
-    if m.available:
-        print(m.tier.value, m.emissions, "kg")
+    if emissions_data is not None:
+        print(m.tier.value, emissions_data.emissions, "kg")
     else:
         print(m.tier.value, "unavailable:", m.unavailable_reason)
 ```

@@ -53,9 +53,6 @@ CPU_MODE_TIERS: dict[str, MeasurementTier] = {
     "intel_rapl": MeasurementTier.MEASURED,
     "constant": MeasurementTier.ESTIMATED,
     "cpu_load": MeasurementTier.AGGREGATE_ONLY,
-    "apple_powermetrics": MeasurementTier.AGGREGATE_ONLY,
-    "intel_power_gadget": MeasurementTier.AGGREGATE_ONLY,
-    "windows_emi": MeasurementTier.AGGREGATE_ONLY,  # unprobed update rate
 }
 
 
@@ -154,20 +151,6 @@ class RequestMeasurement:
     duration: float
     emissions_data: EmissionsData | None = None
     unavailable_reason: str | None = None
-
-    @property
-    def available(self) -> bool:
-        return self.emissions_data is not None
-
-    @property
-    def emissions(self) -> float | None:
-        return None if self.emissions_data is None else self.emissions_data.emissions
-
-    @property
-    def energy_consumed(self) -> float | None:
-        if self.emissions_data is None:
-            return None
-        return self.emissions_data.energy_consumed
 
 
 @dataclasses.dataclass
