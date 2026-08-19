@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import threading
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from concurrent import futures
@@ -19,7 +20,11 @@ from codecarbon.integrations.fastapi._routing import (
     build_endpoint_key,
     should_track_request,
 )
-from codecarbon.integrations.fastapi.attribution import EnergyAttributor
+from codecarbon.integrations.fastapi.attribution import (
+    UNRESOLVED,
+    EnergyAttributor,
+    RequestEnergy,
+)
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 DEFAULT_TRACKER_KWARGS: dict[str, Any] = {
@@ -130,11 +135,11 @@ class CodeCarbonMiddleware:
             attribution: Enable fair-share per-request energy attribution. ``True`` uses
                 a default :class:`~codecarbon.integrations.fastapi.attribution.EnergyAttributor`
                 (no baseline subtraction); pass an instance to configure baseline
-                subtraction or an ``on_request`` callback. This replaces the start/stop-snapshot path, whose per-request
-                numbers overcount by the concurrency. Results resolve one or more
-                sampling windows *after* the response, so ``on_request_complete`` is not
-                called with energy data in this mode - use the attributor's
-                ``on_request`` callback or :meth:`attribution_report`.
+                subtraction or an ``on_request`` callback. This replaces the
+                start/stop-snapshot path, whose per-request numbers overcount by
+                the concurrency. Results resolve one or more sampling windows
+                *after* the response: ``on_request_complete`` and the tracker's
+                output handlers are called then, not at response time.
             include_background_tasks: When ``True`` (default), finalize after the ASGI call
                 returns so FastAPI/Starlette ``BackgroundTasks`` are included. When ``False``,
                 finalize at end of response body (excludes post-body background work).
@@ -184,7 +189,6 @@ class CodeCarbonMiddleware:
         Args:
             wait: When ``True``, block until queued tracker work finishes.
         """
-        self._tracker_runner.shutdown(wait=wait)
         tracker, self._app_tracker = self._app_tracker, None
         if tracker is not None:
             tracker.stop()
@@ -197,6 +201,8 @@ class CodeCarbonMiddleware:
                     self.attributor.on_window
                 )
             self.attributor.close()
+        # Last: close() queues one finalize per flushed request on the executor.
+        self._tracker_runner.shutdown(wait=wait)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """ASGI entrypoint."""
@@ -282,11 +288,87 @@ class CodeCarbonMiddleware:
         assert attributor is not None
         if self._attribution_tracker is None:
             self._bind_attributor(request)
+        tracker, baseline = await self._run_begin_request(request)
+        status_code = 500
+
+        async def send_wrapper(message: Message) -> None:
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
         state = attributor.begin(task_name)
         try:
-            await self.app(scope, receive, send)
+            await self.app(scope, receive, send_wrapper)
         finally:
+            # The route template only lands in request.scope once Starlette's
+            # router has run, so the task can only be named here.
+            state.endpoint = self._task_name(request)
+            state.on_resolved = functools.partial(
+                self._on_attribution_resolved, tracker, baseline, request, status_code
+            )
             attributor.end(state)
+
+    def _on_attribution_resolved(
+        self,
+        tracker: EmissionsTracker,
+        baseline: HttpRequestBaseline,
+        request: Request,
+        status_code: int,
+        result: RequestEnergy,
+    ) -> None:
+        """Hand a resolved share to the tracker's output handlers.
+
+        Runs on the tracker's scheduler thread, which holds the measurement
+        lock, so the tracker work is pushed onto the executor instead.
+        """
+        self._tracker_runner.submit(
+            self._finalize_attributed_on_worker,
+            tracker,
+            baseline,
+            request,
+            status_code,
+            result,
+        )
+
+    def _finalize_attributed_on_worker(
+        self,
+        tracker: EmissionsTracker,
+        baseline: HttpRequestBaseline,
+        request: Request,
+        status_code: int,
+        result: RequestEnergy,
+    ) -> None:
+        emissions_data = tracker.finish_http_request(baseline, result.endpoint)
+        if emissions_data is not None and result.quality != UNRESOLVED:
+            # finish_http_request returns the start/stop-snapshot delta, which
+            # overcounts by the concurrency. Rescale it to the attributed share
+            # so the breakdown (cpu/gpu/ram, emissions) stays self-consistent.
+            share = (result.energy_kwh or 0.0) + (result.baseline_share_kwh or 0.0)
+            total = emissions_data.energy_consumed
+            scale = share / total if total else 0.0
+            for field_name in (
+                "emissions",
+                "energy_consumed",
+                "cpu_energy",
+                "gpu_energy",
+                "ram_energy",
+            ):
+                setattr(
+                    emissions_data,
+                    field_name,
+                    getattr(emissions_data, field_name) * scale,
+                )
+            emissions_data.emissions_rate = (
+                emissions_data.emissions / emissions_data.duration
+                if emissions_data.duration
+                else 0.0
+            )
+        tracker.persist_completed_task(baseline.task_name)
+        tracker.discard_task(baseline.task_name)
+        self._run_request_complete(
+            request, status_code, emissions_data, result.endpoint
+        )
 
     def attribution_report(self) -> dict[str, Any] | None:
         """Per-endpoint energy aggregates, or ``None`` if attribution is off."""

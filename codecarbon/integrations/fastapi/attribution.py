@@ -120,6 +120,11 @@ class _InFlight:
     overlap_s: float = 0.0
     concurrency_sum: float = 0.0
     baseline_seen: bool = False
+    #: Set by the caller of :meth:`EnergyAttributor.begin`; receives the
+    #: :class:`RequestEnergy` when this request resolves. Separate from
+    #: ``on_request`` so the middleware can wire the tracker's output handlers
+    #: without taking the user's callback slot.
+    on_resolved: Callable[[RequestEnergy], None] | None = None
 
 
 # --- attributor --------------------------------------------------------------
@@ -329,9 +334,11 @@ class EnergyAttributor:
             agg.energy_kwh += state.energy
             agg.baseline_share_kwh += state.baseline_share
             agg.quality[quality] = agg.quality.get(quality, 0) + 1
-        if self.on_request is not None:
+        for callback in (state.on_resolved, self.on_request):
+            if callback is None:
+                continue
             try:
-                self.on_request(result)
+                callback(result)
             except Exception:
                 logger.exception("CodeCarbon attribution callback failed")
 

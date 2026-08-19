@@ -143,11 +143,12 @@ a fixed amount from every request and can drive short requests negative.
 
 ### Caveats
 
-- Results resolve **one or more sampling windows after the response**, via the
-  attributor's `on_request` callback. `on_request_complete` is not called with
-  energy data in this mode, and `response_headers` is rejected outright: an
-  attributed share cannot exist before the response is sent. The existing
-  `X-CodeCarbon-*` headers are sampled-at-response, not window-resolved.
+- Results resolve **one or more sampling windows after the response**. The
+  attributor's `on_request` callback, `on_request_complete` and the tracker's
+  output handlers (CSV, logger, API) all fire at that point, not at response
+  time. `response_headers` is rejected outright: an attributed share cannot
+  exist before the response is sent. The existing `X-CodeCarbon-*` headers are
+  sampled-at-response, not window-resolved.
 - Overhead: 0.4 µs per request for `begin`+`end`, and ~190 ns per in-flight
   request per sampling window (0.7 µs/window at 1 in flight, 19 µs at 100,
   193 µs at 1000). In-flight state is 277 B/request and is dropped as soon as the

@@ -504,6 +504,67 @@ def test_middleware_end_to_end_against_a_fake_tracker():
     assert report["in_flight"] == 0
 
 
+def test_attributed_results_reach_the_output_handlers():
+    """The attributed share must land on on_request_complete, not just report()."""
+    import httpx
+    from fastapi import FastAPI
+
+    from codecarbon import OfflineEmissionsTracker
+    from codecarbon.integrations.fastapi.middleware import add_codecarbon_middleware
+
+    app = FastAPI()
+
+    @app.get("/work")
+    async def work():
+        await asyncio.sleep(0.25)
+        return {"ok": True}
+
+    completed = []
+    emitted = []
+    attributor = EnergyAttributor(on_request=emitted.append)
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA",
+        measure_power_secs=0.1,
+        force_cpu_power=100,
+        force_ram_power=10,
+        save_to_file=False,
+        allow_multiple_runs=True,
+        log_level="error",
+    )
+    app.state.codecarbon_tracker = tracker
+    add_codecarbon_middleware(
+        app,
+        attribution=attributor,
+        on_request_complete=lambda *args: completed.append(args),
+    )
+
+    async def drive():
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://t"
+        ) as client:
+            assert (await client.get("/work")).status_code == 200
+        await asyncio.sleep(0.3)
+
+    tracker.start()
+    try:
+        asyncio.run(drive())
+    finally:
+        tracker.stop()
+        app.state.codecarbon_middleware.shutdown_tracker_executor()
+
+    assert len(completed) == 1
+    _request, status_code, emissions_data, task_name = completed[0]
+    assert status_code == 200
+    assert task_name == "GET /work"
+    # the number handed to the output handlers is the attributed share, not the
+    # start/stop-snapshot delta
+    share = (emitted[0].energy_kwh or 0.0) + (emitted[0].baseline_share_kwh or 0.0)
+    assert emissions_data.energy_consumed == pytest.approx(share)
+    assert emissions_data.emissions > 0
+    # the task record is evicted so _tasks stays bounded
+    assert tracker._tasks == {}
+
+
 def test_attribution_path_takes_no_out_of_band_hardware_samples():
     """The request path must not force ``_maybe_measure_power_and_energy``."""
     import httpx
