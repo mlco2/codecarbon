@@ -4,6 +4,7 @@ import sys
 import tempfile
 import time
 import unittest
+import warnings
 from pathlib import Path
 from unittest import mock
 
@@ -383,7 +384,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        with self.assertWarns(DeprecationWarning):
+        with self.assertWarns(FutureWarning):
             tracker = EmissionsTracker(
                 output_dir=self.temp_path,
                 output_handlers=[],
@@ -408,7 +409,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        with self.assertWarns(DeprecationWarning):
+        with self.assertWarns(FutureWarning):
             tracker = EmissionsTracker(
                 output_dir=self.temp_path,
                 output_handlers=[],
@@ -1108,3 +1109,21 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+
+def test_deprecation_warning_survives_the_default_filter():
+    """The save_to_* deprecation is aimed at end users, so it must not be a
+    DeprecationWarning: the default filter would silently drop it."""
+    for tracker_cls, extra in (
+        (EmissionsTracker, {}),
+        (OfflineEmissionsTracker, {"country_iso_code": "FRA"}),
+    ):
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("default")
+            # What Python installs by default, and what hid this warning before.
+            warnings.simplefilter("ignore", DeprecationWarning)
+            tracker_cls(save_to_file=False, **extra)
+
+        assert [
+            w for w in recorded if issubclass(w.category, FutureWarning)
+        ], f"no FutureWarning raised by {tracker_cls.__name__}"
