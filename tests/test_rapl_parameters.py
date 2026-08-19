@@ -3,11 +3,13 @@ Test to verify that rapl_include_dram and rapl_prefer_psys parameters work corre
 """
 
 import logging
+import re
 import sys
 
 import pytest
 
 from codecarbon.core.cpu import IntelRAPL
+from codecarbon.core.units import Time
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
@@ -112,8 +114,50 @@ def test_rapl_include_dram_true_explicit(tmp_path):
 
     # Verify both package and dram are present
     names = [f.name for f in rapl._rapl_files]
-    assert any("Processor Energy" in name for name in names), "Missing package domain"
-    assert any("dram" in name.lower() for name in names), "Missing DRAM domain"
+    # Both domains must be named so that they are summed in the reported energy
+    assert (
+        len([name for name in names if "Processor Energy" in name]) == 2
+    ), f"Expected package and DRAM to both be aggregated, got {names}"
+
+
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
+@pytest.mark.parametrize("include_dram, expected_uj", [(False, 100000), (True, 125000)])
+def test_rapl_include_dram_energy_is_aggregated(tmp_path, include_dram, expected_uj):
+    """
+    Verify that DRAM energy actually contributes to the total reported by
+    get_cpu_details() when rapl_include_dram=True.
+    """
+    base = tmp_path
+    rapl_provider = base / "intel-rapl"
+    rapl_provider.mkdir()
+
+    d_package = rapl_provider / "intel-rapl:0"
+    d_package.mkdir()
+    (d_package / "name").write_text("package-0")
+    (d_package / "energy_uj").write_text("1000000")
+    (d_package / "max_energy_range_uj").write_text("262143328850")
+
+    d_dram = rapl_provider / "intel-rapl:1"
+    d_dram.mkdir()
+    (d_dram / "name").write_text("dram")
+    (d_dram / "energy_uj").write_text("500000")
+    (d_dram / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(rapl_dir=str(base), rapl_include_dram=include_dram)
+
+    # Simulate one second of consumption
+    (d_package / "energy_uj").write_text(str(1000000 + 100000))
+    (d_dram / "energy_uj").write_text(str(500000 + 25000))
+
+    details = rapl.get_cpu_details(Time.from_seconds(1))
+
+    energy = sum(
+        value
+        for metric, value in details.items()
+        if re.match(r"^Processor Energy Delta_\d", metric)
+    )
+    # micro joules -> kWh
+    assert energy == pytest.approx(expected_uj / (1000 * 3600 * 1e6))
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
@@ -295,9 +339,14 @@ def test_rapl_both_parameters_together(tmp_path):
     assert (
         len(rapl2._rapl_files) == 2
     ), f"Expected 2 files (package + dram), got {len(rapl2._rapl_files)}"
+    # Both domains get an aggregated name so their energy is summed in the total
     names = [f.name for f in rapl2._rapl_files]
-    assert any("Processor Energy" in name for name in names), "Missing package domain"
-    assert any("dram" in name.lower() for name in names), "Missing DRAM domain"
+    assert all(
+        "Processor Energy" in name for name in names
+    ), f"All selected domains should be aggregated, got: {names}"
+    paths = [f.path for f in rapl2._rapl_files]
+    assert any("intel-rapl:0" in path for path in paths), "Missing package domain"
+    assert any("intel-rapl:1" in path for path in paths), "Missing DRAM domain"
 
     # Test 3: rapl_prefer_psys=False with rapl_include_dram=False (should use only package)
     rapl3 = IntelRAPL(
@@ -475,3 +524,26 @@ def test_rapl_parameters_stored_correctly(tmp_path):
     )
     assert rapl_true.rapl_include_dram is True
     assert rapl_true.rapl_prefer_psys is True
+
+
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
+def test_rapl_non_power_domain_keeps_its_own_name(tmp_path):
+    """
+    When no package/psys/dram domain exists, the remaining domains are used as a
+    fallback but must not be renamed into the aggregated "Processor Energy" total.
+    """
+    base = tmp_path
+    rapl_provider = base / "intel-rapl"
+    rapl_provider.mkdir()
+
+    d_core = rapl_provider / "intel-rapl:0"
+    d_core.mkdir()
+    (d_core / "name").write_text("core")
+    (d_core / "energy_uj").write_text("1000000")
+    (d_core / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(rapl_dir=str(base))
+
+    names = [f.name for f in rapl._rapl_files]
+    assert names, "Fallback should still expose the available domain"
+    assert not any("Processor Energy" in name for name in names), names
