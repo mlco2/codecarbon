@@ -79,3 +79,17 @@ def test_get_env_cloud_details_mapping_nothing():
     setup_cloud_details_responses("localhost", metadata)
 
     assert get_env_cloud_details() is None
+
+
+@responses.activate
+def test_get_env_cloud_details_probes_all_providers_concurrently():
+    """Every provider is probed, and detection stays deterministic if several answer."""
+    for params in CLOUD_METADATA_MAPPING.values():
+        responses.add(responses.GET, params["url"], json={"region": "here"}, status=200)
+
+    first_provider = next(iter(CLOUD_METADATA_MAPPING))
+    assert get_env_cloud_details() == {
+        "provider": first_provider,
+        "metadata": {"region": "here"},
+    }
+    assert len(responses.calls) == len(CLOUD_METADATA_MAPPING)
