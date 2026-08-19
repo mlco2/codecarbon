@@ -770,8 +770,9 @@ class IntelRAPL:
             domain_name,
         ) in domain_map.values():
             try:
-                if domain_name and (
-                    "package" in domain_name.lower() or "psys" in domain_name.lower()
+                domain_lower = (domain_name or "").lower()
+                if any(
+                    keyword in domain_lower for keyword in ("package", "psys", "dram")
                 ):
                     display_name = f"Processor Energy Delta_{domain_index}(kWh)"
                     domain_index += 1
