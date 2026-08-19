@@ -5,7 +5,6 @@ try:
         EndpointEnergy,
         EnergyAttributor,
         RequestEnergy,
-        install_cpu_accounting,
     )
     from codecarbon.integrations.fastapi.lifespan import create_codecarbon_lifespan
     from codecarbon.integrations.fastapi.middleware import (
@@ -27,7 +26,6 @@ __all__ = [
     "RequestEnergy",
     "add_codecarbon_middleware",
     "create_codecarbon_lifespan",
-    "install_cpu_accounting",
     "log_request_complete",
     "shutdown_codecarbon_middleware",
 ]

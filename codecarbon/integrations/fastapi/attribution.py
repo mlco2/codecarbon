@@ -15,29 +15,22 @@ overcount factor is the concurrency (3.6x at 4 in flight, 88x at 100).
 
 What it is not
 --------------
-Attribution is *allocation*, not measurement. With the default ``wall``
-weighting a request that sleeps for a second and a request that burns a core
-for a second receive the same share, because they occupied the same second of
-the machine. That is a cost-allocation answer, and it is the honest one when
-nothing tells you which request caused which watt. ``cpu`` weighting (opt-in,
-see :func:`install_cpu_accounting`) separates them by charging each request the
-on-thread CPU time its asyncio task actually burned.
+Attribution is *allocation*, not measurement. A request that sleeps for a second
+and a request that burns a core for a second receive the same share, because
+they occupied the same second of the machine. That is a cost-allocation answer, and it is the honest one when
+nothing tells you which request caused which watt.
 """
 
 from __future__ import annotations
 
-import asyncio
-import contextvars
 import statistics
 import time
 from collections import deque
 from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
 from codecarbon.external.logger import logger
-
-WEIGHTINGS = ("wall", "cpu")
 
 #: Quality tiers. ``unresolved`` carries no energy number at all - the request
 #: never covered a completed sampling window, and zero would be a lie.
@@ -49,68 +42,6 @@ MEASURED = "measured"
 # a long-lived server must not grow a list forever, and a recent median also
 # tracks drift in the machine's idle draw.
 _IDLE_SAMPLES = 256
-
-_current: contextvars.ContextVar[Optional["_InFlight"]] = contextvars.ContextVar(
-    "codecarbon_request", default=None
-)
-
-
-# --- per-task CPU accounting -------------------------------------------------
-
-
-class _TimedCoro:
-    """Charge each resumption's thread CPU time to the owning request."""
-
-    __slots__ = ("_coro", "_acc")
-
-    def __init__(self, coro: Any, acc: list) -> None:
-        self._coro = coro
-        self._acc = acc
-
-    def send(self, value: Any) -> Any:
-        mark = time.thread_time()
-        try:
-            return self._coro.send(value)
-        finally:
-            self._acc[0] += time.thread_time() - mark
-
-    def throw(self, *args: Any, **kwargs: Any) -> Any:
-        mark = time.thread_time()
-        try:
-            return self._coro.throw(*args, **kwargs)
-        finally:
-            self._acc[0] += time.thread_time() - mark
-
-    def close(self) -> Any:
-        return self._coro.close()
-
-    def __getattr__(self, name: str) -> Any:
-        return getattr(self._coro, name)
-
-    def __await__(self) -> Any:
-        return self._coro.__await__()
-
-
-def install_cpu_accounting(loop: asyncio.AbstractEventLoop | None = None) -> None:
-    """Install an asyncio task factory that charges CPU time to the request.
-
-    Required for ``weighting="cpu"``. Replaces the loop's task factory, so it
-    is incompatible with another library that sets one. Measured cost:
-    ~2 us per ``create_task``, ~47 us per request end to end.
-
-    Args:
-        loop: Event loop to instrument. Defaults to the running loop.
-    """
-    loop = loop or asyncio.get_event_loop()
-
-    def factory(loop: Any, coro: Any, **kwargs: Any) -> asyncio.Task:
-        state = _current.get()
-        if state is not None:
-            coro = _TimedCoro(coro, state.cpu_acc)
-        return asyncio.Task(coro, loop=loop, **kwargs)
-
-    loop.set_task_factory(factory)
-
 
 # --- results -----------------------------------------------------------------
 
@@ -141,24 +72,11 @@ class RequestEnergy:
     windows: int
     #: Mean number of requests it competed against, window-weighted.
     mean_concurrency: float | None
-    cpu_seconds: float
-    weighting: str
     baseline_subtracted: bool
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable view."""
-        return {
-            "endpoint": self.endpoint,
-            "quality": self.quality,
-            "energy_kwh": self.energy_kwh,
-            "baseline_share_kwh": self.baseline_share_kwh,
-            "duration_s": self.duration_s,
-            "windows": self.windows,
-            "mean_concurrency": self.mean_concurrency,
-            "cpu_seconds": self.cpu_seconds,
-            "weighting": self.weighting,
-            "baseline_subtracted": self.baseline_subtracted,
-        }
+        return asdict(self)
 
 
 @dataclass(slots=True)
@@ -185,14 +103,7 @@ class EndpointEnergy:
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable view."""
-        return {
-            "endpoint": self.endpoint,
-            "count": self.count,
-            "energy_kwh": self.energy_kwh,
-            "baseline_share_kwh": self.baseline_share_kwh,
-            "mean_energy_kwh": self.mean_energy_kwh,
-            "quality": dict(self.quality),
-        }
+        return {**asdict(self), "mean_energy_kwh": self.mean_energy_kwh}
 
 
 @dataclass(slots=True)
@@ -206,11 +117,8 @@ class _InFlight:
     baseline_share: float = 0.0
     windows: int = 0
     overlap_s: float = 0.0
-    cpu_s: float = 0.0
     concurrency_sum: float = 0.0
     baseline_seen: bool = False
-    cpu_acc: list = field(default_factory=lambda: [0.0])
-    cpu_mark: float = 0.0
 
 
 # --- attributor --------------------------------------------------------------
@@ -220,15 +128,6 @@ class EnergyAttributor:
     """Splits each sampling window's energy across the requests in flight.
 
     Args:
-        weighting: ``"wall"`` (default) weights by overlap with the window -
-            cost allocation. ``"cpu"`` weights by on-thread CPU time and
-            requires :func:`install_cpu_accounting`.
-        cores: CPU-seconds of capacity per second of wall clock, used to
-            normalise ``cpu`` weights. ``1`` encodes "one event-loop thread",
-            which is right for a plain async app. Raise it if request handlers
-            fan out to ``run_in_executor`` or a thread pool, otherwise a window
-            in which everyone used 1 ms of CPU hands that 1 ms the whole
-            window's energy.
         subtract_baseline: Split each window into ``P_idle * width`` and a
             dynamic remainder, share only the remainder, and record each
             request's per-capita cut of the baseline separately. ``P_idle`` is
@@ -245,20 +144,10 @@ class EnergyAttributor:
     def __init__(
         self,
         *,
-        weighting: str = "wall",
-        cores: float = 1.0,
         subtract_baseline: bool = False,
         on_request: Callable[[RequestEnergy], None] | None = None,
         track_endpoints: bool = True,
     ) -> None:
-        if weighting not in WEIGHTINGS:
-            raise ValueError(
-                f"weighting must be one of {WEIGHTINGS}, got {weighting!r}"
-            )
-        if cores <= 0:
-            raise ValueError(f"cores must be > 0, got {cores!r}")
-        self.weighting = weighting
-        self.cores = cores
         self.subtract_baseline = subtract_baseline
         self.on_request = on_request
         self.track_endpoints = track_endpoints
@@ -292,8 +181,6 @@ class EnergyAttributor:
         """Start weighting a request. Returns the handle to pass to :meth:`end`."""
         state = _InFlight(endpoint=endpoint, start=time.perf_counter())
         self._in_flight[id(state)] = state
-        if self.weighting == "cpu":
-            _current.set(state)
         return state
 
     def end(self, state: _InFlight) -> None:
@@ -314,8 +201,6 @@ class EnergyAttributor:
         for state in list(self._in_flight.values()):
             self._emit(state)
         self._in_flight.clear()
-        if self.weighting == "cpu":
-            _current.set(None)
 
     # -- window settlement ----------------------------------------------------
 
@@ -355,13 +240,7 @@ class EnergyAttributor:
             overlap = hi - lo
             if overlap <= 0:
                 continue
-            if self.weighting == "cpu":
-                cpu = state.cpu_acc[0] - state.cpu_mark
-                state.cpu_mark = state.cpu_acc[0]
-                state.cpu_s += cpu
-                weights.append(max(0.0, cpu))
-            else:
-                weights.append(overlap)
+            weights.append(overlap)
             state.overlap_s += overlap
             states.append(state)
 
@@ -373,28 +252,10 @@ class EnergyAttributor:
             return
 
         total_weight = sum(weights)
-        if total_weight <= 0:
-            # cpu weighting, nobody on-CPU: this is idle energy, not request
-            # energy. Splitting it evenly would invent work that never ran.
-            self._idle_power_w.append(delta * 3.6e6 / width)
-            self.unattributed_kwh += delta
-            for state in states:
-                state.windows += 1
-                state.concurrency_sum += count
-            return
-
         baseline_w = self.baseline_watts() if self.subtract_baseline else None
         base = min(delta, baseline_w * width / 3.6e6) if baseline_w else 0.0
         dynamic = delta - base
         self.unattributed_kwh += base
-
-        if self.weighting == "cpu":
-            # Physical reading: energy per CPU-second. The window's capacity is
-            # width * cores; CPU time nobody claimed stays unattributed rather
-            # than inflating whoever did run.
-            capacity = max(width * self.cores, total_weight)
-            self.unattributed_kwh += dynamic * (1.0 - total_weight / capacity)
-            dynamic *= total_weight / capacity
 
         for state, weight in zip(states, weights):
             share = dynamic * (weight / total_weight)
@@ -431,8 +292,6 @@ class EnergyAttributor:
             mean_concurrency=(
                 state.concurrency_sum / state.windows if state.windows else None
             ),
-            cpu_seconds=state.cpu_s,
-            weighting=self.weighting,
             baseline_subtracted=state.baseline_seen,
         )
         if self.track_endpoints:
@@ -452,7 +311,6 @@ class EnergyAttributor:
     def report(self) -> dict[str, Any]:
         """Per-endpoint aggregates plus the run-level accounting."""
         return {
-            "weighting": self.weighting,
             "endpoints": {k: v.to_dict() for k, v in self.endpoints.items()},
             "attributed_kwh": self.attributed_kwh,
             "unattributed_kwh": self.unattributed_kwh,

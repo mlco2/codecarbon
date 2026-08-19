@@ -19,10 +19,7 @@ from codecarbon.integrations.fastapi._routing import (
     build_endpoint_key,
     should_track_request,
 )
-from codecarbon.integrations.fastapi.attribution import (
-    EnergyAttributor,
-    install_cpu_accounting,
-)
+from codecarbon.integrations.fastapi.attribution import EnergyAttributor
 from codecarbon.output_methods.emissions_data import EmissionsData
 
 DEFAULT_TRACKER_KWARGS: dict[str, Any] = {
@@ -132,9 +129,8 @@ class CodeCarbonMiddleware:
                 double-count under concurrency. Incompatible with ``attribution``.
             attribution: Enable fair-share per-request energy attribution. ``True`` uses
                 a default :class:`~codecarbon.integrations.fastapi.attribution.EnergyAttributor`
-                (``wall`` weighting, no baseline subtraction); pass an instance to
-                configure weighting, cores, baseline subtraction or an ``on_request``
-                callback. This replaces the start/stop-snapshot path, whose per-request
+                (no baseline subtraction); pass an instance to configure baseline
+                subtraction or an ``on_request`` callback. This replaces the start/stop-snapshot path, whose per-request
                 numbers overcount by the concurrency. Results resolve one or more
                 sampling windows *after* the response, so ``on_request_complete`` is not
                 called with energy data in this mode - use the attributor's
@@ -163,7 +159,6 @@ class CodeCarbonMiddleware:
             EnergyAttributor() if attribution is True else (attribution or None)
         )
         self._attribution_tracker: EmissionsTracker | None = None
-        self._cpu_accounting_installed = False
         merged: dict[str, Any] = dict(DEFAULT_TRACKER_KWARGS)
         merged.update(tracker_kwargs or {})
         merged.update(emissions_tracker_kwargs)
@@ -274,9 +269,6 @@ class CodeCarbonMiddleware:
             attributor.reset_window(tracker._total_energy.kWh)
             tracker.add_energy_window_observer(attributor.on_window)
             self._attribution_tracker = tracker
-        if attributor.weighting == "cpu" and not self._cpu_accounting_installed:
-            install_cpu_accounting(asyncio.get_running_loop())
-            self._cpu_accounting_installed = True
 
     async def _handle_attributed(
         self,
@@ -292,13 +284,7 @@ class CodeCarbonMiddleware:
             self._bind_attributor(request)
         state = attributor.begin(task_name)
         try:
-            if attributor.weighting == "cpu":
-                # The CPU accounting hook wraps tasks at creation time, so the
-                # app has to run in a task created after begin() set the
-                # context. Costs one extra task per request; wall mode skips it.
-                await asyncio.create_task(self.app(scope, receive, send))
-            else:
-                await self.app(scope, receive, send)
+            await self.app(scope, receive, send)
         finally:
             attributor.end(state)
 

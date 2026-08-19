@@ -105,23 +105,13 @@ Measured `sum(per-request) / run total`, forced 100 W CPU + 10 W RAM,
 The residual ~0.15 is idle time before and after the burst: real energy nobody
 requested, parked in `unattributed_kwh` rather than smeared across requests.
 
-### Weighting modes
+### Weighting
 
-- **`wall` (default)** — overlap by wall clock. **This is cost allocation, not
-  measurement.** Four CPU-burning and four sleeping requests running concurrently
-  all receive an identical share, because they occupied the same seconds of the
-  same machine. When nothing tells you which request caused which watt, that is
-  the honest answer.
-- **`cpu` (opt-in)** — charges each request the on-thread CPU time its asyncio
-  task actually burned, via a task factory installed on the event loop. On the
-  same eight requests it separates the CPU-bound from the sleeping ones by four
-  orders of magnitude. It replaces the loop's task factory (incompatible with
-  another library that sets one) and costs ~1 µs per `create_task`, so it is off
-  by default. Weights are normalised by the window's **CPU capacity**
-  (`width × cores`), not by observed CPU — otherwise a window where everyone used
-  1 ms of CPU would hand that 1 ms the entire window's energy. `cores=1` encodes
-  "one event-loop thread"; raise it if your handlers use `run_in_executor` or a
-  thread pool.
+Windows are split by overlap in wall clock. **This is cost allocation, not
+measurement.** Four CPU-burning and four sleeping requests running concurrently
+all receive an identical share, because they occupied the same seconds of the
+same machine. When nothing tells you which request caused which watt, that is
+the honest answer.
 
 ### Quality tiers
 
@@ -164,9 +154,9 @@ a fixed amount from every request and can drive short requests negative.
   request resolves.
 - Attribution is allocation. The dominant error is the assumption that overlap
   tracks causation, which has no distribution to quote — so no ± error bar is
-  synthesised. The uncertainty payload (windows covered, mean concurrency, request
-  CPU-seconds, weighting mode, whether a baseline was subtracted, quality tier)
-  ships with every number instead.
+  synthesised. The uncertainty payload (windows covered, mean concurrency,
+  whether a baseline was subtracted, quality tier) ships with every number
+  instead.
 
 ## Cloud API
 
