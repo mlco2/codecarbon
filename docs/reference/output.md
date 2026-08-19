@@ -29,42 +29,103 @@ It can also be set in the config file as a comma-separated string, e.g.
 
 The package has an in-built logger that logs data into a CSV file named `emissions.csv` in the `output_dir`, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.
 
-| Field | Description |
-|-------|-------------|
-| timestamp | Time of the experiment in `%Y-%m-%dT%H:%M:%S` format |
-| project_name | Name of the project, defaults to `codecarbon` |
-| run_id | ID of the run |
-| duration | Duration of the compute, in seconds |
-| emissions | Emissions as CO₂-equivalents (CO₂eq), in kg |
-| emissions_rate | Emissions divided per duration, in Kg/s |
-| cpu_power | Mean CPU power (W) |
-| gpu_power | Mean GPU power (W) |
-| ram_power | Mean RAM power (W) |
-| cpu_energy | Energy used per CPU (kWh) |
-| gpu_energy | Energy used per GPU (kWh) |
-| ram_energy | Energy used per RAM (kWh) |
-| energy_consumed | Sum of cpu_energy, gpu_energy and ram_energy (kWh) |
-| country_name | Name of the country where the infrastructure is hosted |
-| country_iso_code | 3-letter alphabet ISO Code of the respective country |
-| region | Province/State/City where the compute infrastructure is hosted |
-| on_cloud | `Y` if on cloud, `N` for private infrastructure |
-| cloud_provider | One of aws/azure/gcp |
-| cloud_region | Geographical region (e.g., us-east-2 for aws, brazilsouth for azure, asia-east1 for gcp) |
-| os | Operating system (e.g., Windows-10-10.0.19044-SP0) |
-| python_version | Python version (e.g., 3.8.10) |
-| codecarbon_version | Version of codecarbon used |
-| cpu_count | Number of CPUs |
-| cpu_model | Example: Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz |
-| gpu_count | Number of GPUs |
-| gpu_model | Example: 1 x NVIDIA GeForce GTX 1080 Ti |
-| longitude | Longitude, with reduced precision to a range of 11.1 km / 123 km² (privacy protection) |
-| latitude | Latitude, with reduced precision to a range of 11.1 km / 123 km² (privacy protection) |
-| ram_total_size | Total RAM available (GB) |
-| tracking_mode | `machine` or `process` (default: `machine`) |
-| cpu_utilization_percent | Average CPU utilization during tracking period (%) |
-| gpu_utilization_percent | Average GPU utilization during tracking period (%) |
-| ram_utilization_percent | Average RAM utilization during tracking period (%) |
-| ram_used_gb | Average RAM used during tracking period (GB) |
+The columns are written in the field order of the `EmissionsData` dataclass
+(`codecarbon/output_methods/emissions_data.py`).
+
+The **Provenance** column says where each number comes from: a hardware counter, a model,
+or configuration.
+
+| Field | Description | Provenance |
+|-------|-------------|------------|
+| timestamp | Time of the experiment in `%Y-%m-%dT%H:%M:%S` format | |
+| project_name | Name of the project, defaults to `codecarbon` | Config |
+| run_id | ID of the run | Generated (UUID) |
+| experiment_id | ID of the experiment the run belongs to, used by the API | Config |
+| duration | Duration of the compute, in seconds | Measured (wall clock) |
+| emissions | Emissions as CO₂-equivalents (CO₂eq), in kg | Computed: `energy × carbon intensity`, see the carbon intensity note |
+| emissions_rate | Emissions divided per duration, in Kg/s | Computed: `emissions / duration` |
+| cpu_power | Mean CPU power (W) | Varies by backend, see the CPU backends note. Mean of the per-interval samples, not PUE-scaled |
+| gpu_power | Mean GPU power (W) | Derived from the GPU energy-counter delta over each interval (`core/gpu_device.py:52`), then averaged. Not PUE-scaled |
+| ram_power | Mean RAM power (W) | Always modelled, never measured, see the RAM note |
+| cpu_energy | Energy used per CPU (kWh) | Same backend as `cpu_power`, PUE-inflated |
+| gpu_energy | Energy used per GPU (kWh) | Accumulated board-energy counter: NVML `nvmlDeviceGetTotalEnergyConsumption` (`core/gpu_nvidia.py:49`) or AMD `amdsmi_get_energy_count` (`core/gpu_amd.py:112`). PUE-inflated |
+| ram_energy | Energy used per RAM (kWh) | Modelled RAM power × interval, PUE-inflated |
+| energy_consumed | Sum of cpu_energy, gpu_energy and ram_energy (kWh) | Sum of the three columns above; every term already PUE-inflated |
+| water_consumed | Water footprint of the run, in litres | Computed: `wue × energy_consumed` (`emissions_tracker.py:1195`). `0` unless you set `wue` |
+| country_name | Name of the country where the infrastructure is hosted | IP geolocation (geojs, ipinfo.io fallback), or config in offline mode |
+| country_iso_code | 3-letter alphabet ISO Code of the respective country | As `country_name` |
+| region | Province/State/City where the compute infrastructure is hosted | As `country_name`; on cloud, from the cloud region lookup |
+| cloud_provider | One of aws/azure/gcp | Cloud instance metadata probe |
+| cloud_region | Geographical region (e.g., us-east-2 for aws, brazilsouth for azure, asia-east1 for gcp) | Cloud instance metadata probe |
+| os | Operating system (e.g., Windows-10-10.0.19044-SP0) | |
+| python_version | Python version (e.g., 3.8.10) | |
+| codecarbon_version | Version of codecarbon used | |
+| cpu_count | Number of CPUs | `psutil.cpu_count()`: logical threads, not physical cores. Under SLURM, the CPUs allocated to the job (`core/util.py:149`) |
+| cpu_model | Example: Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz | CPU model string detected at startup |
+| gpu_count | Number of GPUs | NVML / AMDSMI device enumeration |
+| gpu_model | Example: 1 x NVIDIA GeForce GTX 1080 Ti | NVML / AMDSMI device name |
+| longitude | Longitude of the machine | IP geolocation, full precision, see the coordinates note |
+| latitude | Latitude of the machine | IP geolocation, full precision, see the coordinates note |
+| ram_total_size | Total RAM available (GB) | `psutil.virtual_memory().total` |
+| tracking_mode | `machine` or `process` (default: `machine`) | Config |
+| cpu_utilization_percent | Average CPU utilization during tracking period (%) | Mean of `psutil.cpu_percent()` samples, taken every second |
+| gpu_utilization_percent | Average GPU utilization during tracking period (%) | Mean of NVML / AMDSMI utilization samples, taken every second |
+| ram_utilization_percent | Average RAM utilization during tracking period (%) | Mean of `psutil.virtual_memory().percent` samples |
+| ram_used_gb | Average RAM used during tracking period (GB) | Mean of `psutil.virtual_memory().used` samples |
+| on_cloud | `Y` if on cloud, `N` for private infrastructure | Cloud instance metadata probe (`core/cloud.py`) |
+| pue | Power Usage Effectiveness applied to this run (default `1.0`) | Config, see the PUE note |
+| wue | Water Usage Effectiveness in L/kWh (default `0`) | Config |
+
+### Notes on provenance
+
+#### CPU backends
+
+`cpu_power` and `cpu_energy` depend entirely on the backend selected at startup. The
+backend is chosen once, logged at startup, and not recorded in the CSV. Roughly in
+decreasing order of trustworthiness:
+
+| Backend | Nature | Where |
+|---|---|---|
+| Intel RAPL (Linux) | Measured, hardware energy counter | `core/rapl.py` |
+| Windows EMI | Measured, hardware energy counter | `core/windows_emi.py` |
+| `powermetrics` (macOS, needs sudo) | Measured, OS-reported power. Effectively unreachable on Apple Silicon: `psutil` is a hard dependency, so the `cpu_load` path is selected first (`core/resource_tracker.py:228-233`) | `core/powermetrics.py` |
+| `cpu_load` mode | Modelled: cubic in load with a 10 % TDP floor in `machine` mode, linear `TDP × load/cpu_count` in `process` mode | `external/hardware.py:287-288`, `:345-346` |
+| `constant` mode | Modelled: `TDP × 0.5`, a flat 50 % of TDP | `external/hardware.py:362-364` |
+
+The last two are estimates, and on a lightly loaded or unusual machine they can be far
+from the truth. The selection order, including which options override which, is on the
+[methodology page](../explanation/methodology.md); measured deviation figures are in
+[accuracy](../explanation/accuracy.md).
+
+#### RAM
+
+`ram_power` and `ram_energy` are never measured. Commodity hardware exposes no RAM energy
+counter. CodeCarbon estimates a DIMM count from the total RAM size, then applies 5 W per
+DIMM on x86 (1.5 W on ARM), with decreasing marginal power above four DIMMs and a floor of
+two DIMMs' worth (`external/ram.py:82-193`). Treat these columns as an order-of-magnitude
+heuristic. If you can measure your own RAM power, override it with `force_ram_power`.
+
+#### Carbon intensity
+
+`emissions` is only as good as the carbon intensity behind it, which comes from a fallback
+chain documented on the [methodology page](../explanation/methodology.md). No column
+records which level answered: check the run's log output if you need to know.
+
+#### PUE
+
+PUE multiplies the per-component energy columns, not just the total. At
+`emissions_tracker.py:1194` the PUE is applied to each hardware measurement before it is
+accumulated. With `pue=1.5`, the `cpu_energy` column is therefore 1.5x the energy the CPU
+actually drew: it is datacenter energy attributed to the CPU, not raw CPU energy. The
+power columns are not scaled by PUE, so `cpu_energy` will not equal `cpu_power × duration`
+when `pue != 1`. `water_consumed` is computed from the already-inflated energy.
+
+#### Coordinates
+
+`latitude` and `longitude` are written at full precision in the CSV. Rounding to one
+decimal (~11 km) is applied only when data is sent to the CodeCarbon API
+(`core/api_client.py:245-246`). If the CSV leaves your machine, treat the coordinates as
+precise.
 
 !!! note
     Developers can enhance the Output interface by implementing a custom class that extends `BaseOutput` at `codecarbon/output.py`. For example, to log into a database.
