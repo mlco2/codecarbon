@@ -90,7 +90,8 @@ def get_forecast(
         )
     except Exception as e:
         logger.error(
-            f"intensity_forecast.get_forecast: {e} >>> Falling back to running now."
+            f"intensity_forecast.get_forecast: {type(e).__name__}: {e} "
+            ">>> Falling back to running now."
         )
         return None
 
