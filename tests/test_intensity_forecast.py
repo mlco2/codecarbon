@@ -217,3 +217,22 @@ class TestBestWindow(unittest.TestCase):
         start, mean = best_window(forecast, timedelta(hours=10))
         assert start == BASE
         assert mean == 300
+
+    def test_partial_last_hour_is_weighted_by_overlap(self):
+        # 90 minutes over hourly points: the second hour only counts for half.
+        forecast = _forecast([100, 300, 300])
+        start, mean = best_window(forecast, timedelta(minutes=90))
+        assert start == BASE
+        assert mean == (100 * 60 + 300 * 30) / 90
+
+    def test_irregular_gaps_do_not_stretch_the_coverage(self):
+        points = [
+            IntensityPoint(at=BASE, g_co2e_per_kwh=300),
+            IntensityPoint(at=BASE + timedelta(hours=3), g_co2e_per_kwh=100),
+            IntensityPoint(at=BASE + timedelta(hours=4), g_co2e_per_kwh=50),
+        ]
+        forecast = Forecast(zone="FR", points=points, source="test", fetched_at=BASE)
+        # The forecast covers one hour, not three, past its last point, so the
+        # cheapest-looking window (starting at the last point) is not complete.
+        start, _ = best_window(forecast, timedelta(hours=2))
+        assert start == BASE + timedelta(hours=3)

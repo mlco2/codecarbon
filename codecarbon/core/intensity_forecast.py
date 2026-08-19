@@ -111,8 +111,13 @@ def best_window(
     points = forecast.points
     fallback = (points[0].at, points[0].g_co2e_per_kwh)
 
-    # The forecast covers up to one step past its last point.
-    step = points[1].at - points[0].at if len(points) > 1 else duration
+    # The forecast covers up to one step past its last point. Gaps are not
+    # guaranteed uniform, so the smallest one is the safe assumption.
+    step = (
+        min(b.at - a.at for a, b in zip(points, points[1:]))
+        if len(points) > 1
+        else duration
+    )
     covered_until = points[-1].at + step
 
     best: Optional[Tuple[datetime, float]] = None
@@ -124,12 +129,18 @@ def best_window(
             break
         # ponytail: linear rescan per start, fine for hourly points over a few
         # days; use a running sum if horizons ever grow by orders of magnitude.
-        covered = [
-            point.g_co2e_per_kwh
-            for point in points[start_index:]
-            if point.at < window_end
+        # Each point holds until the next one, so weight it by how much of its
+        # period falls inside the window: an hourly point half-covered by the
+        # window's end must not count as a full hour.
+        covered = [point for point in points[start_index:] if point.at < window_end]
+        ends = [point.at for point in covered[1:]] + [window_end]
+        weights = [
+            (min(end, window_end) - point.at).total_seconds()
+            for point, end in zip(covered, ends)
         ]
-        mean = sum(covered) / len(covered)
+        mean = sum(
+            point.g_co2e_per_kwh * weight for point, weight in zip(covered, weights)
+        ) / sum(weights)
         if best is None or mean < best[1]:
             best = (start.at, mean)
 
