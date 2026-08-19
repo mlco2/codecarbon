@@ -108,7 +108,7 @@ def _carbon_intensity(tracker: EmissionsTracker | None) -> float:
 
 
 def _estimate_from_duration(
-    emissions_data: EmissionsData, intensity: float
+    emissions_data: EmissionsData, intensity: float, pue: float
 ) -> EmissionsData | None:
     """ESTIMATED tier: energy is analytic (``P x elapsed``) at any resolution.
 
@@ -120,7 +120,9 @@ def _estimate_from_duration(
     duration = emissions_data.duration or 0.0
     if duration <= 0 or intensity <= 0:
         return None
-    hours = duration / 3600.0
+    # PUE is applied here the way the tracker applies it to _total_energy, so
+    # endpoint totals keep summing to the run total.
+    hours = duration / 3600.0 * pue
     cpu = (emissions_data.cpu_power or 0.0) / 1000.0 * hours
     gpu = (emissions_data.gpu_power or 0.0) / 1000.0 * hours
     ram = (emissions_data.ram_power or 0.0) / 1000.0 * hours
@@ -274,7 +276,9 @@ class CodeCarbonMiddleware:
             )
         if tier is MeasurementTier.ESTIMATED and not emissions_data.energy_consumed:
             emissions_data = _estimate_from_duration(
-                emissions_data, _carbon_intensity(tracker)
+                emissions_data,
+                _carbon_intensity(tracker),
+                getattr(tracker, "_pue", 1.0),
             )
         if emissions_data is None or not emissions_data.energy_consumed:
             return RequestMeasurement(

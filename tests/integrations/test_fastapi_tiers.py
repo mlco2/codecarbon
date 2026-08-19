@@ -211,6 +211,17 @@ def test_estimated_tier_derives_energy_from_duration() -> None:
     middleware.shutdown_tracker_executor()
 
 
+def test_estimated_tier_applies_pue() -> None:
+    middleware = CodeCarbonMiddleware(MagicMock())
+    tracker = SimpleNamespace(
+        _total_energy=SimpleNamespace(kWh=2.0), _total_emissions=1.0, _pue=1.5
+    )
+    data = _emissions_data(duration=3600.0, cpu_power=100.0, ram_power=20.0)
+    measurement = _build(middleware, [_cpu("constant"), _ram()], data, tracker)
+    assert measurement.energy_consumed == pytest.approx(0.18)  # 0.12 kWh x 1.5
+    middleware.shutdown_tracker_executor()
+
+
 def test_estimated_tier_without_known_intensity_is_unavailable() -> None:
     middleware = CodeCarbonMiddleware(MagicMock())
     tracker = SimpleNamespace(
