@@ -157,3 +157,39 @@ tracker.start_task("training")
 tracker.stop_task()
 tracker.stop()
 ```
+
+### Track FastAPI Requests
+
+One tracker runs for the app lifetime; the middleware splits each of its
+sampling windows across the requests that were in flight during that window,
+weighted by overlap. Per-request start/stop snapshots cannot be used here:
+with N requests in flight each one would see the whole machine's delta, so
+the sum overcounts by roughly N.
+
+```python
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from codecarbon import EmissionsTracker
+from codecarbon.integrations.fastapi import add_codecarbon_middleware
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    tracker = EmissionsTracker(allow_multiple_runs=True)
+    tracker.start()
+    add_codecarbon_middleware(app, tracker=tracker)
+    yield
+    tracker.stop()
+    app.state.codecarbon_middleware.close()
+
+
+app = FastAPI(lifespan=lifespan)
+```
+
+A request's share is only known one or more sampling windows *after* its
+response was sent, so the `on_request(energy, emissions, status_code)`
+callback fires then, on the tracker's scheduler thread — keep it cheap.
+`energy.energy_kwh` is `None` when the request was shorter than the gap
+between two samples: there is no honest number, and zero would be a lie.
