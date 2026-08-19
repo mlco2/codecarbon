@@ -9,6 +9,7 @@ from codecarbon.external.geography import GeoMetadata
 from codecarbon.external.logger import logger
 
 URL: str = "https://api.electricitymaps.com/v3/carbon-intensity/latest"
+FORECAST_URL: str = "https://api.electricitymaps.com/v3/carbon-intensity/forecast"
 ELECTRICITYMAPS_API_TIMEOUT: int = 30
 
 # Grid carbon intensity is published hourly at best, while emissions are computed

@@ -10,20 +10,15 @@ API backs off once for the whole process instead of once per caller. The
 forecast response itself is not cached: it is fetched once per `codecarbon
 wait` invocation, and its useful lifetime is nothing like the current
 intensity's short TTL.
-
-Once pluggable intensity providers land (see issue #1356), `get_forecast`
-should become an optional `forecast()` method on the provider protocol.
 """
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple
 
-from codecarbon.core.electricitymaps_api import location_params, request
+from codecarbon.core.electricitymaps_api import FORECAST_URL, location_params, request
 from codecarbon.external.geography import GeoMetadata
 from codecarbon.external.logger import logger
-
-FORECAST_URL: str = "https://api.electricitymaps.com/v3/carbon-intensity/forecast"
 
 
 @dataclass(frozen=True)
@@ -36,8 +31,6 @@ class IntensityPoint:
 class Forecast:
     zone: str
     points: List[IntensityPoint]  # ordered, typically hourly
-    source: str
-    fetched_at: datetime
 
 
 def _parse_datetime(value: str) -> datetime:
@@ -85,8 +78,6 @@ def get_forecast(
         return Forecast(
             zone=data.get("zone", ""),
             points=points,
-            source="electricitymaps",
-            fetched_at=datetime.now(timezone.utc),
         )
     except Exception as e:
         logger.error(

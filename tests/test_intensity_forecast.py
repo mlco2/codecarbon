@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import responses
 
-from codecarbon.core import electricitymaps_api, intensity_forecast
+from codecarbon.core import electricitymaps_api
 from codecarbon.core.intensity_forecast import (
     Forecast,
     IntensityPoint,
@@ -22,8 +22,6 @@ def _forecast(values):
             IntensityPoint(at=BASE + timedelta(hours=i), g_co2e_per_kwh=v)
             for i, v in enumerate(values)
         ],
-        source="test",
-        fetched_at=BASE,
     )
 
 
@@ -78,7 +76,7 @@ class TestGetForecast(unittest.TestCase):
         )
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json=_payload([100]),
             status=200,
         )
@@ -89,14 +87,13 @@ class TestGetForecast(unittest.TestCase):
     def test_parses_forecast(self):
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json=_payload([100, 200, 50]),
             status=200,
         )
         forecast = get_forecast(self._geo, token="tok")
         assert forecast is not None
         assert forecast.zone == "FR"
-        assert forecast.source == "electricitymaps"
         assert [p.g_co2e_per_kwh for p in forecast.points] == [100, 200, 50]
         assert all(p.at.tzinfo is not None for p in forecast.points)
         assert responses.calls[0].request.headers["auth-token"] == "tok"
@@ -106,7 +103,7 @@ class TestGetForecast(unittest.TestCase):
     def test_uses_lat_lon_when_available(self):
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json=_payload([100]),
             status=200,
         )
@@ -120,7 +117,7 @@ class TestGetForecast(unittest.TestCase):
         payload["forecast"][0]["datetime"] = "2999-01-01T03:00:00"
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json=payload,
             status=200,
         )
@@ -131,7 +128,7 @@ class TestGetForecast(unittest.TestCase):
     def test_horizon_truncates_points(self):
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json=_payload([100, 200, 300, 400]),
             status=200,
         )
@@ -142,7 +139,7 @@ class TestGetForecast(unittest.TestCase):
     def test_error_status_returns_none(self):
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json={"error": "no access"},
             status=403,
         )
@@ -152,7 +149,7 @@ class TestGetForecast(unittest.TestCase):
     def test_malformed_payload_returns_none(self):
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json={"unexpected": True},
             status=200,
         )
@@ -162,7 +159,7 @@ class TestGetForecast(unittest.TestCase):
     def test_empty_forecast_returns_none(self):
         responses.add(
             responses.GET,
-            intensity_forecast.FORECAST_URL,
+            electricitymaps_api.FORECAST_URL,
             json={"zone": "FR", "forecast": []},
             status=200,
         )
@@ -231,7 +228,7 @@ class TestBestWindow(unittest.TestCase):
             IntensityPoint(at=BASE + timedelta(hours=3), g_co2e_per_kwh=100),
             IntensityPoint(at=BASE + timedelta(hours=4), g_co2e_per_kwh=50),
         ]
-        forecast = Forecast(zone="FR", points=points, source="test", fetched_at=BASE)
+        forecast = Forecast(zone="FR", points=points)
         # The forecast covers one hour, not three, past its last point, so the
         # cheapest-looking window (starting at the last point) is not complete.
         start, _ = best_window(forecast, timedelta(hours=2))
