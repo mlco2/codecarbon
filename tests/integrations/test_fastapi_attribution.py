@@ -289,6 +289,51 @@ def test_baseline_never_drives_a_share_negative(clock):
     assert state.energy >= 0.0
 
 
+# --- thread safety -----------------------------------------------------------
+
+
+def test_begin_and_end_concurrent_with_settling_preserve_the_invariant():
+    """begin/end run on the loop thread, on_window on the scheduler thread.
+
+    Without a lock this raises ``RuntimeError: dictionary changed size during
+    iteration`` inside ``_settle``, and because the caller swallows it the
+    window's energy vanishes from ``settled_kwh``.
+    """
+    import threading
+
+    a = EnergyAttributor()
+    a.reset_window(0.0)
+    errors = []
+
+    def churn():
+        try:
+            for _ in range(200_000):
+                a.end(a.begin("GET /a"))
+        except Exception as exc:  # pragma: no cover - only on a real race
+            errors.append(exc)
+
+    workers = [threading.Thread(target=churn) for _ in range(2)]
+    for w in workers:
+        w.start()
+
+    energy = 0.0
+    windows = 0
+    while any(w.is_alive() for w in workers):
+        energy += 1e-6
+        windows += 1
+        a.on_window(energy)
+    for w in workers:
+        w.join()
+    a.close()
+
+    assert errors == []
+    assert windows > 0  # the settles really did overlap the churn
+    assert math.isclose(
+        a.attributed_kwh + a.unattributed_kwh, a.settled_kwh, rel_tol=1e-9
+    )
+    assert a.settled_kwh == pytest.approx(energy)
+
+
 # --- aggregates and bounded state --------------------------------------------
 
 

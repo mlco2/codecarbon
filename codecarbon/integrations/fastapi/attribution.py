@@ -24,6 +24,7 @@ nothing tells you which request caused which watt.
 from __future__ import annotations
 
 import statistics
+import threading
 import time
 from collections import deque
 from collections.abc import Callable
@@ -153,6 +154,9 @@ class EnergyAttributor:
         self.track_endpoints = track_endpoints
 
         self._in_flight: dict[int, _InFlight] = {}
+        # begin/end run on the event-loop thread, on_window on the tracker's
+        # scheduler thread. Never held across an on_request callback.
+        self._lock = threading.Lock()
         self.endpoints: dict[str, EndpointEnergy] = {}
         #: Running sum of everything handed to requests, kWh.
         self.attributed_kwh = 0.0
@@ -180,7 +184,8 @@ class EnergyAttributor:
     def begin(self, endpoint: str) -> _InFlight:
         """Start weighting a request. Returns the handle to pass to :meth:`end`."""
         state = _InFlight(endpoint=endpoint, start=time.perf_counter())
-        self._in_flight[id(state)] = state
+        with self._lock:
+            self._in_flight[id(state)] = state
         return state
 
     def end(self, state: _InFlight) -> None:
@@ -191,16 +196,19 @@ class EnergyAttributor:
         over the last partial window is genuinely unknown - settling here would
         drop that energy into a zero-width window and silently lose it.
         """
-        state.end = time.perf_counter()
+        with self._lock:
+            state.end = time.perf_counter()
 
     def close(self) -> None:
         """Emit every in-flight request as-is. Call after the tracker stops.
 
         Requests that never covered a window come out ``unresolved``.
         """
-        for state in list(self._in_flight.values()):
+        with self._lock:
+            pending = list(self._in_flight.values())
+            self._in_flight.clear()
+        for state in pending:
             self._emit(state)
-        self._in_flight.clear()
 
     # -- window settlement ----------------------------------------------------
 
@@ -210,27 +218,32 @@ class EnergyAttributor:
         Wired to :meth:`~codecarbon.emissions_tracker.BaseEmissionsTracker.add_energy_window_observer`.
         Only ever called from a real hardware sample.
         """
-        self._settle(total_energy_kwh)
-        now = time.perf_counter()
-        for key, state in list(self._in_flight.items()):
-            if state.end is not None and state.end <= now:
-                del self._in_flight[key]
-                self._emit(state)
+        with self._lock:
+            self._settle(total_energy_kwh)
+            now = time.perf_counter()
+            finished = [
+                self._in_flight.pop(key)
+                for key, state in list(self._in_flight.items())
+                if state.end is not None and state.end <= now
+            ]
+        # Emitted outside the lock: on_request is user code and may call begin.
+        for state in finished:
+            self._emit(state)
 
     def _settle(self, total_energy_kwh: float) -> None:
+        """Split one window. Caller must hold ``self._lock``."""
         now = time.perf_counter()
         w0, w1 = self._t_prev, now
         width = w1 - w0
         delta = total_energy_kwh - self._e_prev
-        self._t_prev, self._e_prev = now, total_energy_kwh
         if width <= 0:
+            self._t_prev, self._e_prev = now, total_energy_kwh
             return
         if delta < 0:
             # Counter wraparound or reset: no honest way to split a negative.
             self.windows_skipped += 1
+            self._t_prev, self._e_prev = now, total_energy_kwh
             return
-        self.windows_settled += 1
-        self.settled_kwh += delta
 
         states: list[_InFlight] = []
         weights: list[float] = []
@@ -249,22 +262,28 @@ class EnergyAttributor:
             # Nothing in flight: this window is the machine idling.
             self._idle_power_w.append(delta * 3.6e6 / width)
             self.unattributed_kwh += delta
-            return
+        else:
+            total_weight = sum(weights)
+            baseline_w = self.baseline_watts() if self.subtract_baseline else None
+            base = min(delta, baseline_w * width / 3.6e6) if baseline_w else 0.0
+            dynamic = delta - base
+            self.unattributed_kwh += base
 
-        total_weight = sum(weights)
-        baseline_w = self.baseline_watts() if self.subtract_baseline else None
-        base = min(delta, baseline_w * width / 3.6e6) if baseline_w else 0.0
-        dynamic = delta - base
-        self.unattributed_kwh += base
+            for state, weight in zip(states, weights):
+                share = dynamic * (weight / total_weight)
+                state.energy += share
+                state.baseline_share += base / count
+                state.baseline_seen = state.baseline_seen or baseline_w is not None
+                state.windows += 1
+                state.concurrency_sum += count
+                self.attributed_kwh += share
 
-        for state, weight in zip(states, weights):
-            share = dynamic * (weight / total_weight)
-            state.energy += share
-            state.baseline_share += base / count
-            state.baseline_seen = state.baseline_seen or baseline_w is not None
-            state.windows += 1
-            state.concurrency_sum += count
-            self.attributed_kwh += share
+        # Banked only once the split succeeded. The caller swallows exceptions,
+        # so advancing the cursor first would drop this window's energy from
+        # settled_kwh and break attributed + unattributed == settled.
+        self.windows_settled += 1
+        self.settled_kwh += delta
+        self._t_prev, self._e_prev = now, total_energy_kwh
 
     # -- reporting ------------------------------------------------------------
 
@@ -319,5 +338,5 @@ class EnergyAttributor:
             "baseline_watts": self.baseline_watts(),
             "windows_settled": self.windows_settled,
             "windows_skipped": self.windows_skipped,
-            "in_flight": len(self._in_flight),
+            "in_flight": len(self._in_flight),  # racy read, reporting only
         }
