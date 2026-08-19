@@ -968,7 +968,12 @@ class BaseEmissionsTracker(ABC):
 
             task_emission_data = dataclasses.replace(emissions_at_stop)
             request_duration = time.perf_counter() - baseline.started_at
-            task_emission_data.duration = Time.from_seconds(request_duration).seconds
+            # compute_delta_emission subtracts previous.duration, so pass the
+            # absolute elapsed here; the delta is then the request duration and
+            # emissions_rate is computed against it (not against a negative).
+            task_emission_data.duration = (
+                baseline.duration_at_start + Time.from_seconds(request_duration).seconds
+            )
             task_emission_data.compute_delta_emission(previous)
 
             task.emissions_data = task_emission_data
