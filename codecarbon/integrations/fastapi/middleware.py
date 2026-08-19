@@ -191,7 +191,7 @@ class CodeCarbonMiddleware:
 
     async def _run_begin_request(
         self, request: Request
-    ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
+    ) -> tuple[EmissionsTracker, HttpRequestBaseline]:
         return await self._run_on_tracker(self._begin_request, request)
 
     def _create_and_start_tracker(self) -> EmissionsTracker:
@@ -204,23 +204,19 @@ class CodeCarbonMiddleware:
     def _lifespan_tracker(self, request: Request) -> EmissionsTracker | None:
         return getattr(request.app.state, "codecarbon_tracker", None)
 
-    def _tracker_running(self, tracker: EmissionsTracker) -> bool:
-        return getattr(tracker, "_start_time", None) is not None
-
     def _begin_request(
         self, request: Request
-    ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
+    ) -> tuple[EmissionsTracker, HttpRequestBaseline]:
         tracker = self._lifespan_tracker(request)
         if tracker is None:
             with self._tracker_init_lock:
                 if self._app_tracker is None:
                     self._app_tracker = self._create_and_start_tracker()
                 tracker = self._app_tracker
-        if self._tracker_running(tracker):
-            baseline = tracker.mark_http_request_start("")
-            return tracker, baseline
-        tracker.start_task(self._task_name(request))
-        return tracker, None
+        # mark_http_request_start raises when the tracker was never started;
+        # start_task is not a usable fallback because it stops the scheduler and
+        # overwrites the single _active_task slot shared by concurrent requests.
+        return tracker, tracker.mark_http_request_start("")
 
     def _finalize_on_worker(
         self,
@@ -228,20 +224,14 @@ class CodeCarbonMiddleware:
         request: Request,
         response: Response,
         run_callback: bool,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> EmissionsData | None:
         # The route template only lands in request.scope once Starlette's router
         # has run, so the task can only be named here, not at request start.
         task_name = self._task_name(request)
-        if baseline is not None:
-            emissions_data = tracker.finish_http_request(baseline, task_name)
-            resolved_task = baseline.task_name
-        else:
-            active_task = getattr(tracker, "_active_task", None)
-            resolved_task = active_task if isinstance(active_task, str) else task_name
-            emissions_data = tracker.stop_task(resolved_task)
-        tracker.persist_completed_task(resolved_task)
-        tracker.discard_task(resolved_task)
+        emissions_data = tracker.finish_http_request(baseline, task_name)
+        tracker.persist_completed_task(baseline.task_name)
+        tracker.discard_task(baseline.task_name)
         if run_callback:
             self._run_request_complete(request, response, emissions_data, task_name)
         return emissions_data
@@ -273,7 +263,7 @@ class CodeCarbonMiddleware:
         tracker: EmissionsTracker,
         request: Request,
         response: Response,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
         *,
         run_callback: bool,
     ) -> EmissionsData | None:
@@ -293,7 +283,7 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         if self.header_fields:
             await self._handle_tracked_sync_headers(
@@ -316,7 +306,7 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         status_code = 500
 
@@ -352,7 +342,7 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         status_code = 500
         finalized = False
@@ -400,7 +390,7 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         status_code = 500
         finalized = False
