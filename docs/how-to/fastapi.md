@@ -145,7 +145,7 @@ add_codecarbon_middleware(
 - **`response_headers`** — `True` (emissions only) or a list of field names (`emissions`, `duration`, `energy_consumed`, …). Measures before the response starts and sets `X-CodeCarbon-*` headers. Default `None` / off (deferred, no headers).
 - **`include_background_tasks`** — default `True`: FastAPI/Starlette `BackgroundTasks` on the response are included. Set `False` to finalize at end of body and exclude post-body background work.
 - **`task_name_formatter`** — optional `(Request) -> str`; default is `METHOD /route/template`. Concurrent requests on the same route still get unique internal task IDs with `create_codecarbon_lifespan`.
-- **`on_request_complete`** — optional callback; default logs via `log_request_complete`; `None` disables it.
+- **`on_request_complete`** — optional callback `(request, status_code, emissions_data, task_name)`; default logs via `log_request_complete`; `None` disables it.
 
 ```python
 add_codecarbon_middleware(

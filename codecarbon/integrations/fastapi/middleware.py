@@ -9,7 +9,6 @@ from concurrent import futures
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from codecarbon import EmissionsTracker
@@ -79,7 +78,7 @@ def _inject_emission_headers(
 
 def log_request_complete(
     request: Request,
-    response: Response,
+    status_code: int,
     emissions_data: EmissionsData | None,
     task_name: str,
 ) -> None:
@@ -89,7 +88,7 @@ def log_request_complete(
         "CodeCarbon %s: emissions=%s kg CO2 status=%s",
         task_name,
         emissions,
-        response.status_code,
+        status_code,
     )
 
 
@@ -118,7 +117,7 @@ class CodeCarbonMiddleware:
             include: When set, only matching endpoints are tracked (e.g. ``GET /predict``).
             exclude: Endpoints or URL prefixes to skip. Defaults to common docs and health routes.
             task_name_formatter: Overrides default route-based task naming.
-            on_request_complete: Callback ``(request, response, emissions_data | None, task_name)``.
+            on_request_complete: Callback ``(request, status_code, emissions_data | None, task_name)``.
                 Defaults to :func:`log_request_complete`; pass ``None`` to disable logging.
             response_headers: When set, measure before ``http.response.start`` and inject
                 ``X-CodeCarbon-*`` headers (``True`` → ``emissions`` only, or a field list).
@@ -222,7 +221,7 @@ class CodeCarbonMiddleware:
         self,
         tracker: EmissionsTracker,
         request: Request,
-        response: Response,
+        status_code: int,
         run_callback: bool,
         baseline: HttpRequestBaseline,
     ) -> EmissionsData | None:
@@ -233,19 +232,19 @@ class CodeCarbonMiddleware:
         tracker.persist_completed_task(baseline.task_name)
         tracker.discard_task(baseline.task_name)
         if run_callback:
-            self._run_request_complete(request, response, emissions_data, task_name)
+            self._run_request_complete(request, status_code, emissions_data, task_name)
         return emissions_data
 
     def _run_request_complete(
         self,
         request: Request,
-        response: Response | None,
+        status_code: int,
         emissions_data: EmissionsData | None,
         task_name: str,
     ) -> None:
-        if self.on_request_complete is None or response is None:
+        if self.on_request_complete is None:
             return
-        self.on_request_complete(request, response, emissions_data, task_name)
+        self.on_request_complete(request, status_code, emissions_data, task_name)
 
     def _schedule_finalize(self, coro: Awaitable[None]) -> None:
         async def _run() -> None:
@@ -262,7 +261,7 @@ class CodeCarbonMiddleware:
         self,
         tracker: EmissionsTracker,
         request: Request,
-        response: Response,
+        status_code: int,
         baseline: HttpRequestBaseline,
         *,
         run_callback: bool,
@@ -271,7 +270,7 @@ class CodeCarbonMiddleware:
             self._finalize_on_worker,
             tracker,
             request,
-            response,
+            status_code,
             run_callback,
             baseline,
         )
@@ -322,12 +321,11 @@ class CodeCarbonMiddleware:
         except BaseException as exc:
             error = exc
         finally:
-            response = Response(status_code=status_code)
             self._schedule_finalize(
                 self._finalize_after_response(
                     tracker,
                     request,
-                    response,
+                    status_code,
                     baseline,
                     run_callback=error is None,
                 )
@@ -352,12 +350,11 @@ class CodeCarbonMiddleware:
             if finalized:
                 return
             finalized = True
-            response = Response(status_code=status_code)
             self._schedule_finalize(
                 self._finalize_after_response(
                     tracker,
                     request,
-                    response,
+                    status_code,
                     baseline,
                     run_callback=run_callback,
                 )
@@ -401,11 +398,10 @@ class CodeCarbonMiddleware:
                 await send(message)
                 return
             status_code = message["status"]
-            response = Response(status_code=status_code)
             emissions_data = await self._finalize_after_response(
                 tracker,
                 request,
-                response,
+                status_code,
                 baseline,
                 run_callback=True,
             )
@@ -421,12 +417,11 @@ class CodeCarbonMiddleware:
             error = exc
         finally:
             if not finalized:
-                response = Response(status_code=status_code)
                 self._schedule_finalize(
                     self._finalize_after_response(
                         tracker,
                         request,
-                        response,
+                        status_code,
                         baseline,
                         run_callback=error is None,
                     )

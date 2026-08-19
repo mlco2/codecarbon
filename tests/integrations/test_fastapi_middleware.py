@@ -117,8 +117,8 @@ def test_middleware_on_request_complete_callback(MockTracker) -> None:
 
     add_codecarbon_middleware(
         application,
-        on_request_complete=lambda request, response, data, task_name: completed.append(
-            (request.url.path, response.status_code, data, task_name)
+        on_request_complete=lambda request, status_code, data, task_name: completed.append(
+            (request.url.path, status_code, data, task_name)
         ),
     )
     tracker_instance = MockTracker.return_value
@@ -280,7 +280,6 @@ def test_middleware_exclude_endpoints(MockTracker) -> None:
 
 def test_log_request_complete_uses_codecarbon_logger() -> None:
     request = MagicMock(url=MagicMock(path="/predict"))
-    response = MagicMock(status_code=200)
     emissions = MagicMock(emissions=0.0012)
     counter = _CodeCarbonLogCapture()
     previous_level = codecarbon_logger.level
@@ -288,7 +287,7 @@ def test_log_request_complete_uses_codecarbon_logger() -> None:
     codecarbon_logger.setLevel(logging.INFO)
     cc_fastapi_middleware.logger.addHandler(counter)
     try:
-        log_request_complete(request, response, emissions, "GET /predict")
+        log_request_complete(request, 200, emissions, "GET /predict")
     finally:
         cc_fastapi_middleware.logger.removeHandler(counter)
         codecarbon_logger.setLevel(previous_level)
