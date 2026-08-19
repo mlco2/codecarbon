@@ -193,7 +193,7 @@ nav:
     - Accuracy and Validation: explanation/accuracy.md
     - RAPL Metrics: explanation/rapl.md
     - Power Estimation: explanation/power-estimation.md
-    - Model Comparisons: explanation/model-comparisons.md
+    - Model Comparisons (Third-Party Data): explanation/model-comparisons.md
     - FAQ: explanation/faq.md
   - Reference:
     - API Reference: reference/api.md
