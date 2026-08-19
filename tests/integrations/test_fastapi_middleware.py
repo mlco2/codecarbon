@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import threading
+import time
 from concurrent import futures
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -941,3 +943,54 @@ def test_schedule_finalize_logs_measurement_failure() -> None:
                 mock_exception.assert_called_once()
 
     asyncio.run(run())
+
+
+@pytest.mark.no_immediate_finalize
+def test_real_tracker_reports_sub_second_request_duration() -> None:
+    """End-to-end: real tracker, real deferred finalize, plausible duration.
+
+    Everything else here mocks the tracker and finalizes inline, which is how a
+    negative per-request duration went unnoticed.
+    """
+    completed: list[Any] = []
+    measured = threading.Event()
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        async with create_codecarbon_lifespan(
+            application,
+            project_name="e2e-duration",
+            save_to_file=False,
+            save_to_api=False,
+            save_to_logger=False,
+            measure_power_secs=10,
+            allow_multiple_runs=True,
+        ):
+            yield
+
+    application = FastAPI(lifespan=lifespan)
+
+    @application.get("/predict")
+    def predict() -> dict[str, bool]:
+        return {"ok": True}
+
+    def on_complete(request, status_code, data, task_name) -> None:
+        completed.append(data)
+        measured.set()
+
+    add_codecarbon_middleware(
+        application, project_name="e2e-duration", on_request_complete=on_complete
+    )
+
+    with TestClient(application) as client:
+        # Let the tracker run for a while so an absolute-vs-delta duration bug
+        # shows up as a negative or multi-second request duration.
+        time.sleep(1.5)
+        # First request absorbs the metadata snapshot and a stale power sample.
+        assert client.get("/predict").status_code == 200
+        assert measured.wait(10)
+        measured.clear()
+        assert client.get("/predict").status_code == 200
+        assert measured.wait(10)
+
+    assert 0 < completed[-1].duration < 1
