@@ -1,3 +1,4 @@
+import warnings
 from types import SimpleNamespace
 
 import pytest
@@ -178,3 +179,30 @@ def test_run_and_monitor_handles_keyboard_interrupt(monkeypatch):
     assert exc_info.value.exit_code == 130
     assert process_info["terminated"] == 1
     assert process_info["killed"] == 1
+
+
+def test_run_and_monitor_hides_codecarbons_own_deprecation(monkeypatch, recwarn):
+    """`--api` goes through save_to_api: the user must not see our deprecation."""
+
+    class WarningTracker(FakeTracker):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            warnings.warn("save_to_* is deprecated", FutureWarning, stacklevel=2)
+
+    class FakePopen:
+        def __init__(self, command, text=True):
+            pass
+
+        def wait(self):
+            return 0
+
+    _patch_trackers(monkeypatch, online_cls=WarningTracker)
+    monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
+
+    with pytest.raises(typer.Exit):
+        monitor_module.run_and_monitor(
+            SimpleNamespace(args=["--", "echo", "hi"]), save_to_api=True
+        )
+
+    assert [w for w in recwarn if issubclass(w.category, FutureWarning)] == []

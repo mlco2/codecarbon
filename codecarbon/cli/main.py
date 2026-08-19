@@ -422,6 +422,8 @@ def monitor(
             )
             raise typer.Exit(1)
 
+        # `--api` / `--no-api` stays on the deprecated `save_to_api`: it is the
+        # only spelling that *adds* to the user's configured output methods.
         tracker_args = {**tracker_args, "save_to_api": api}
 
     from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
@@ -473,7 +475,7 @@ def detect():
     from codecarbon.emissions_tracker import EmissionsTracker
 
     print("Detecting hardware...")
-    tracker = EmissionsTracker(save_to_file=False)
+    tracker = EmissionsTracker(output_methods=[])
     hardware_info = tracker.get_detected_hardware()
 
     print("\nDetected Hardware and System Information:")

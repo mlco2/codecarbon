@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+import warnings
 
 import typer
 from rich import print
@@ -66,12 +67,15 @@ def run_and_monitor(
         raise typer.Exit(1)
 
     tracker_cls = OfflineEmissionsTracker if offline else EmissionsTracker
-    tracker = tracker_cls(
-        log_level=log_level,
-        save_to_logger=False,
-        tracking_mode="process",
-        **tracker_args,
-    )
+    with warnings.catch_warnings():
+        # `--api` maps to the deprecated `save_to_api`; the CLI *is* codecarbon,
+        # so its own deprecation is noise for the user running it.
+        warnings.simplefilter("ignore", FutureWarning)
+        tracker = tracker_cls(
+            log_level=log_level,
+            tracking_mode="process",
+            **tracker_args,
+        )
 
     print("🌱 CodeCarbon: Starting emissions tracking...")
     print(f"   Command: {' '.join(command)}")
