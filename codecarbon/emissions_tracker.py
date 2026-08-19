@@ -414,6 +414,7 @@ class BaseEmissionsTracker(ABC):
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
+        output_json_file: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
         force_cpu_power: Optional[int] = _sentinel,
         force_ram_power: Optional[int] = _sentinel,
@@ -580,6 +581,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
+        self._set_from_conf(output_json_file, "output_json_file", "emissions.json")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
@@ -667,6 +669,17 @@ class BaseEmissionsTracker(ABC):
 
         if OutputMethod.BOAMPS in methods:
             self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
+
+        if OutputMethod.JSON in methods:
+            from codecarbon.output_methods.json_output import JSONOutput
+
+            self._output_handlers.append(
+                JSONOutput(
+                    output_file_name=self._output_json_file,
+                    output_dir=self._output_dir,
+                    on_json_write=self._on_csv_write,
+                )
+            )
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """

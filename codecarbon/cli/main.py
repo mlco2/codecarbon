@@ -540,6 +540,224 @@ def detect():
     print(f"- GPU model: {gpu_model_str}")
 
 
+@codecarbon.command(
+    "report",
+    short_help="Generate a summary report from emissions data.",
+)
+def report(
+    file: Annotated[
+        str,
+        typer.Option(
+            "--file",
+            "-f",
+            help="Path to the emissions CSV file.",
+        ),
+    ] = "emissions.csv",
+    project: Annotated[
+        Optional[str],
+        typer.Option(
+            "--project",
+            "-p",
+            help="Filter results by project name.",
+        ),
+    ] = None,
+    format_output: Annotated[
+        str,
+        typer.Option(
+            "--format",
+            help="Output format: 'rich' (default) or 'json'.",
+        ),
+    ] = "rich",
+):
+    """
+    Generate a summary report from existing emissions data.
+
+    Reads an emissions CSV file (produced by CodeCarbon's tracker) and
+    displays aggregate statistics with real-world equivalences.
+
+    Examples::
+
+        codecarbon report
+        codecarbon report --file path/to/emissions.csv
+        codecarbon report --project my_project
+        codecarbon report --format json
+    """
+    import json as json_mod
+
+    import pandas as pd
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+
+    from codecarbon.core.equivalences import EmissionsEquivalences
+
+    console = Console()
+
+    if not os.path.isfile(file):
+        console.print(
+            f"[bold red]Error:[/bold red] File '{file}' not found. "
+            "Run CodeCarbon tracker first to generate emissions data, or "
+            "specify a file with --file.",
+        )
+        raise typer.Exit(1)
+
+    try:
+        df = pd.read_csv(file)
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] Could not read '{file}': {e}")
+        raise typer.Exit(1)
+
+    if df.empty:
+        console.print(
+            f"[bold yellow]Warning:[/bold yellow] File '{file}' contains no data."
+        )
+        raise typer.Exit(0)
+
+    if project:
+        if "project_name" not in df.columns:
+            console.print(
+                "[bold red]Error:[/bold red] CSV file has no 'project_name' column."
+            )
+            raise typer.Exit(1)
+        df = df[df["project_name"] == project]
+        if df.empty:
+            console.print(
+                f"[bold yellow]Warning:[/bold yellow] No data found for project '{project}'."
+            )
+            raise typer.Exit(0)
+
+    # Compute aggregate statistics
+    summary = _compute_summary(df)
+
+    # Compute equivalences
+    eq_engine = EmissionsEquivalences()
+    equivalences = eq_engine.compute(summary["total_emissions_kg"])
+
+    if format_output == "json":
+        output = {
+            "summary": summary,
+            "equivalences": equivalences.to_dict(),
+        }
+        console.print(json_mod.dumps(output, indent=2, default=str))
+        return
+
+    # Rich formatted output
+    console.print()
+    console.print(
+        Panel(
+            "[bold green]CodeCarbon Emissions Report[/bold green]",
+            expand=False,
+        )
+    )
+
+    # Summary table
+    summary_table = Table(title="📊 Emissions Summary", show_lines=True)
+    summary_table.add_column("Metric", style="cyan", no_wrap=True)
+    summary_table.add_column("Value", style="green", justify="right")
+
+    summary_table.add_row(
+        "Total CO₂ Emissions",
+        _format_emissions(summary["total_emissions_kg"]),
+    )
+    summary_table.add_row(
+        "Total Energy Consumed",
+        f"{summary['total_energy_kwh']:.6f} kWh",
+    )
+    summary_table.add_row(
+        "Total Duration",
+        _format_duration(summary["total_duration_s"]),
+    )
+    if summary.get("total_water_l", 0) > 0:
+        summary_table.add_row(
+            "Total Water Consumed",
+            f"{summary['total_water_l']:.4f} L",
+        )
+    summary_table.add_row("Number of Runs", str(summary["num_runs"]))
+    if summary["num_projects"] > 1:
+        summary_table.add_row("Number of Projects", str(summary["num_projects"]))
+
+    console.print(summary_table)
+
+    # Per-project breakdown (if multiple projects)
+    if summary["num_projects"] > 1 and "project_name" in df.columns:
+        project_table = Table(title="📁 Per-Project Breakdown", show_lines=True)
+        project_table.add_column("Project", style="cyan")
+        project_table.add_column("Runs", style="white", justify="right")
+        project_table.add_column("Emissions", style="green", justify="right")
+        project_table.add_column("Energy (kWh)", style="yellow", justify="right")
+
+        for proj_name, proj_df in df.groupby("project_name"):
+            proj_emissions = proj_df["emissions"].sum() if "emissions" in proj_df.columns else 0
+            proj_energy = proj_df["energy_consumed"].sum() if "energy_consumed" in proj_df.columns else 0
+            project_table.add_row(
+                str(proj_name),
+                str(len(proj_df)),
+                _format_emissions(proj_emissions),
+                f"{proj_energy:.6f}",
+            )
+        console.print(project_table)
+
+    # Equivalences panel
+    console.print()
+    eq_table = Table(title="🌍 Real-World Equivalences", show_lines=True)
+    eq_table.add_column("Equivalence", style="cyan")
+    eq_table.add_column("Value", style="green", justify="right")
+
+    eq_table.add_row("🚗 Car travel", f"{equivalences.car_km:.1f} km")
+    eq_table.add_row("✈️  Flights (CDG→JFK)", f"{equivalences.flights_paris_nyc:.4f} one-way")
+    eq_table.add_row("📺 TV watching", f"{equivalences.tv_hours:.1f} hours")
+    eq_table.add_row("📱 Smartphone charges", f"{equivalences.smartphone_charges:.0f} charges")
+    if equivalences.tree_months >= 12:
+        eq_table.add_row("🌳 Tree offset", f"{equivalences.tree_months / 12:.2f} tree-years")
+    else:
+        eq_table.add_row("🌳 Tree offset", f"{equivalences.tree_months:.2f} tree-months")
+    eq_table.add_row("🏠 US household weekly", f"{equivalences.household_percentage:.4f}%")
+    eq_table.add_row("💡 LED bulb (10W)", f"{equivalences.led_bulb_hours:.1f} hours")
+    eq_table.add_row("🎬 HD streaming", f"{equivalences.streaming_hours:.1f} hours")
+
+    console.print(eq_table)
+    console.print()
+
+
+def _compute_summary(df) -> dict:
+    """Compute aggregate summary statistics from an emissions DataFrame."""
+    summary = {
+        "num_runs": len(df),
+        "num_projects": df["project_name"].nunique() if "project_name" in df.columns else 1,
+        "total_emissions_kg": df["emissions"].sum() if "emissions" in df.columns else 0,
+        "total_energy_kwh": df["energy_consumed"].sum() if "energy_consumed" in df.columns else 0,
+        "total_duration_s": df["duration"].sum() if "duration" in df.columns else 0,
+        "total_water_l": df["water_consumed"].sum() if "water_consumed" in df.columns else 0,
+    }
+
+    # Average power values
+    for power_col in ["cpu_power", "gpu_power", "ram_power"]:
+        if power_col in df.columns:
+            summary[f"avg_{power_col}_w"] = df[power_col].mean()
+
+    return summary
+
+
+def _format_emissions(kg: float) -> str:
+    """Format emissions with appropriate unit (g, kg, or tonnes)."""
+    if kg >= 1000:
+        return f"{kg / 1000:.3f} tonnes CO₂eq"
+    if kg >= 1:
+        return f"{kg:.4f} kg CO₂eq"
+    return f"{kg * 1000:.4f} g CO₂eq"
+
+
+def _format_duration(seconds: float) -> str:
+    """Format duration in human-readable form."""
+    if seconds < 60:
+        return f"{seconds:.1f} seconds"
+    if seconds < 3600:
+        return f"{seconds / 60:.1f} minutes"
+    if seconds < 86400:
+        return f"{seconds / 3600:.1f} hours"
+    return f"{seconds / 86400:.1f} days"
+
+
 def questionary_prompt(prompt, list_options, default):
     import questionary
 
