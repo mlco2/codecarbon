@@ -289,6 +289,26 @@ def test_baseline_never_drives_a_share_negative(clock):
     assert state.energy >= 0.0
 
 
+def test_baseline_share_is_prorated_by_overlap(clock):
+    """A request present for half the window owes half as much of the baseline."""
+    a = make(clock, subtract_baseline=True)
+    for _ in range(3):  # idle: P_idle == 100 W
+        clock.advance(1.0)
+        a.on_window(clock.energy_kwh)
+
+    clock.watts = 300.0
+    whole = a.begin("GET /whole")
+    clock.advance(0.5)
+    half = a.begin("GET /half")  # arrives halfway into the window
+    clock.advance(0.5)
+    a.on_window(clock.energy_kwh)
+
+    assert half.baseline_share == pytest.approx(whole.baseline_share / 2)
+    # both cuts still come out of the same per-capita half of the baseline
+    baseline_kwh = WATTS * 1.0 / 3.6e6
+    assert whole.baseline_share == pytest.approx(baseline_kwh / 2)
+
+
 def test_a_measured_zero_watt_baseline_still_counts_as_a_baseline(clock):
     """0.0 W idle is a measurement, not "no baseline"."""
     a = make(clock, subtract_baseline=True)

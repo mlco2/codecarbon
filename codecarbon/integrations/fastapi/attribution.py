@@ -278,7 +278,9 @@ class EnergyAttributor:
             for state, weight in zip(states, weights):
                 share = dynamic * (weight / total_weight)
                 state.energy += share
-                state.baseline_share += base / count
+                # Per-capita, but pro-rated by how much of the window the
+                # request was actually there for - same as the marginal share.
+                state.baseline_share += base / count * (weight / width)
                 state.baseline_seen = state.baseline_seen or baseline_w is not None
                 state.windows += 1
                 state.concurrency_sum += count
