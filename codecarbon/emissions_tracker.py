@@ -974,12 +974,14 @@ class BaseEmissionsTracker(ABC):
                 self._run_power_measurement()
 
     def finish_http_request(
-        self, baseline: HttpRequestBaseline
+        self, baseline: HttpRequestBaseline, task_name: Optional[str] = None
     ) -> Optional[EmissionsData]:
         """Compute per-request emissions from a :meth:`mark_http_request_start` baseline.
 
         Args:
             baseline: Value returned by :meth:`mark_http_request_start`.
+            task_name: Final label for the task, when it is only known once the
+                request has been routed (e.g. an endpoint template).
 
         Returns:
             Request-scoped :class:`~codecarbon.output.EmissionsData`, or ``None`` if
@@ -993,6 +995,8 @@ class BaseEmissionsTracker(ABC):
                     "finish_http_request: unknown task %s", baseline.task_name
                 )
                 return None
+            if task_name:
+                task.task_name = task_name
             emissions_at_stop = self._prepare_http_request_emissions_data()
             previous = dataclasses.replace(emissions_at_stop)
             previous.emissions = baseline.emissions
@@ -1005,7 +1009,12 @@ class BaseEmissionsTracker(ABC):
 
             task_emission_data = dataclasses.replace(emissions_at_stop)
             request_duration = time.perf_counter() - baseline.started_at
-            task_emission_data.duration = Time.from_seconds(request_duration).seconds
+            # compute_delta_emission subtracts previous.duration, so pass the
+            # absolute elapsed here; the delta is then the request duration and
+            # emissions_rate is computed against it (not against a negative).
+            task_emission_data.duration = (
+                baseline.duration_at_start + Time.from_seconds(request_duration).seconds
+            )
             task_emission_data.compute_delta_emission(previous)
 
             task.emissions_data = task_emission_data
@@ -1032,6 +1041,22 @@ class BaseEmissionsTracker(ABC):
             if isinstance(handler, CodeCarbonAPIOutput):
                 handler.task_out(task_payload, self._experiment_name)
                 task.uploaded_to_api = True
+
+    def discard_task(self, task_name: str) -> None:
+        """Drop a finished task record so ``_tasks`` stays bounded.
+
+        Long-lived servers create one task per HTTP request; without eviction
+        ``_tasks`` grows for the process lifetime. Call after
+        :meth:`persist_completed_task` (data already left the tracker by then).
+
+        Args:
+            task_name: Name of the task to forget. Unknown names are ignored.
+        """
+        with self._http_task_lock:
+            task = self._tasks.get(task_name)
+            if task is None or task.is_active:
+                return
+            del self._tasks[task_name]
 
     @suppress(Exception)
     def flush(self) -> Optional[float]:
@@ -1140,10 +1165,12 @@ class BaseEmissionsTracker(ABC):
 
         task_emissions_data = []
         api_task_emissions_data = []
-        for task in self._tasks:
-            task_entry = self._tasks[task].out()
+        with self._http_task_lock:
+            tasks = list(self._tasks.values())
+        for task in tasks:
+            task_entry = task.out()
             task_emissions_data.append(task_entry)
-            if not self._tasks[task].uploaded_to_api:
+            if not task.uploaded_to_api and not task.is_active and task.emissions_data:
                 api_task_emissions_data.append(task_entry)
 
         for handler in self._output_handlers:
@@ -1152,7 +1179,7 @@ class BaseEmissionsTracker(ABC):
                 if isinstance(handler, CodeCarbonAPIOutput):
                     if api_task_emissions_data:
                         handler.task_out(api_task_emissions_data, experiment_name)
-                        for task_obj in self._tasks.values():
+                        for task_obj in tasks:
                             if not task_obj.is_active and task_obj.emissions_data:
                                 task_obj.uploaded_to_api = True
                 else:
@@ -1202,11 +1229,17 @@ class BaseEmissionsTracker(ABC):
             self._http_emissions_template = dataclasses.replace(snapshot)
             return dataclasses.replace(snapshot)
 
-        self._update_emissions()
-        duration = Time.from_seconds(time.perf_counter() - self._start_time)
-        emissions = self._total_emissions
-        avg_cpu_power, avg_gpu_power, avg_ram_power = self._average_power_values()
-        cpu_util, gpu_util, ram_util, ram_used = self._utilization_averages()
+        with self._measure_lock:
+            self._update_emissions()
+            duration = Time.from_seconds(time.perf_counter() - self._start_time)
+            emissions = self._total_emissions
+            avg_cpu_power, avg_gpu_power, avg_ram_power = self._average_power_values()
+            cpu_util, gpu_util, ram_util, ram_used = self._utilization_averages()
+            cpu_energy = self._total_cpu_energy.kWh
+            gpu_energy = self._total_gpu_energy.kWh
+            ram_energy = self._total_ram_energy.kWh
+            energy_consumed = self._total_energy.kWh
+            water_consumed = self._total_water.litres
         return dataclasses.replace(
             self._http_emissions_template,
             timestamp=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
@@ -1220,11 +1253,11 @@ class BaseEmissionsTracker(ABC):
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
-            cpu_energy=self._total_cpu_energy.kWh,
-            gpu_energy=self._total_gpu_energy.kWh,
-            ram_energy=self._total_ram_energy.kWh,
-            energy_consumed=self._total_energy.kWh,
-            water_consumed=self._total_water.litres,
+            cpu_energy=cpu_energy,
+            gpu_energy=gpu_energy,
+            ram_energy=ram_energy,
+            energy_consumed=energy_consumed,
+            water_consumed=water_consumed,
         )
 
     def _update_emissions(self) -> None:

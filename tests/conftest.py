@@ -25,17 +25,22 @@ def _reset_process_hardware_cache():
 
 
 @pytest.fixture(autouse=True)
-def _cancel_leaked_scheduler_timers():
-    """Safety net for scheduler threads a test left running.
+def _no_leaked_scheduler_timers():
+    """Fail the test that leaves a scheduler timer running.
 
     PeriodicScheduler re-arms a threading.Timer, so a tracker that is never
     stopped keeps measuring after its test ends. The late measurement lands in
-    whatever test is running at the time and corrupts its hardware mocks.
-
-    Tests are expected to stop their own trackers; this only catches the ones
-    that fail part way through.
+    whatever test runs next and corrupts its hardware mocks. Cancelling the
+    timers silently would hide exactly the leak we want reported.
     """
     yield
-    for thread in threading.enumerate():
-        if isinstance(thread, threading.Timer):
-            thread.cancel()
+    # A cancelled timer stays enumerated until its thread wakes up and exits, so
+    # look at the cancellation flag rather than at liveness.
+    leaked = [
+        t
+        for t in threading.enumerate()
+        if isinstance(t, threading.Timer) and not t.finished.is_set()
+    ]
+    for timer in leaked:
+        timer.cancel()
+    assert not leaked, f"test left scheduler timers running: {leaked}"

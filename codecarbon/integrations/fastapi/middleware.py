@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import collections
 import threading
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from concurrent import futures
 from typing import Any
 
 from starlette.requests import Request
-from starlette.responses import Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from codecarbon import EmissionsTracker
@@ -47,8 +45,6 @@ _HEADER_UNITS: dict[str, str] = {
     "ram_power": "w",
 }
 
-_Job = tuple[Callable[..., Any], tuple[Any, ...], futures.Future[Any]]
-
 
 def _codecarbon_header_name(field: str) -> str:
     unit = _HEADER_UNITS.get(field, "")
@@ -84,103 +80,9 @@ def _inject_emission_headers(
     return {**message, "headers": headers}
 
 
-class _TrackerRunner:
-    """Single tracker thread: request-path jobs first, then pending finalization."""
-
-    REQUEST = 0
-    FINALIZE = 1
-
-    def __init__(self, thread_name: str = "codecarbon-tracker") -> None:
-        self._request_jobs: collections.deque[_Job] = collections.deque()
-        self._finalize_jobs: collections.deque[_Job] = collections.deque()
-        self._cond = threading.Condition()
-        self._closed = False
-        self._thread = threading.Thread(
-            target=self._worker, name=thread_name, daemon=True
-        )
-        self._thread.start()
-
-    def _run_job(self, job: _Job) -> None:
-        func, args, future = job
-        if future.cancelled():
-            return
-        try:
-            result = func(*args)
-        except Exception as exc:
-            try:
-                future.set_exception(exc)
-            except futures.InvalidStateError:
-                pass
-            return
-        try:
-            future.set_result(result)
-        except futures.InvalidStateError:
-            pass
-
-    def _worker(self) -> None:
-        while True:
-            with self._cond:
-                while (
-                    not self._closed
-                    and not self._request_jobs
-                    and not self._finalize_jobs
-                ):
-                    self._cond.wait()
-                if self._closed and not self._request_jobs and not self._finalize_jobs:
-                    return
-                if self._request_jobs:
-                    job = self._request_jobs.popleft()
-                    lane = self.REQUEST
-                else:
-                    job = self._finalize_jobs.popleft()
-                    lane = self.FINALIZE
-            self._run_job(job)
-            if lane == self.REQUEST:
-                while True:
-                    with self._cond:
-                        if self._request_jobs:
-                            break
-                        if not self._finalize_jobs:
-                            break
-                        finalize_job = self._finalize_jobs.popleft()
-                    self._run_job(finalize_job)
-
-    def submit(
-        self, lane: int, func: Callable[..., Any], *args: Any
-    ) -> futures.Future[Any]:
-        if self._closed:
-            raise RuntimeError("cannot schedule tracker work after shutdown")
-        future: futures.Future[Any] = futures.Future()
-        job = (func, args, future)
-        with self._cond:
-            if lane == self.REQUEST:
-                self._request_jobs.append(job)
-            else:
-                self._finalize_jobs.append(job)
-            self._cond.notify()
-        return future
-
-    def submit_request(
-        self, func: Callable[..., Any], *args: Any
-    ) -> futures.Future[Any]:
-        return self.submit(self.REQUEST, func, *args)
-
-    async def run_async(self, lane: int, func: Callable[..., Any], *args: Any) -> Any:
-        return await asyncio.wrap_future(self.submit(lane, func, *args))
-
-    def shutdown(self, *, wait: bool = True) -> None:
-        if self._closed:
-            return
-        with self._cond:
-            self._closed = True
-            self._cond.notify_all()
-        if wait:
-            self._thread.join()
-
-
 def log_request_complete(
     request: Request,
-    response: Response,
+    status_code: int,
     emissions_data: EmissionsData | None,
     task_name: str,
 ) -> None:
@@ -190,7 +92,7 @@ def log_request_complete(
         "CodeCarbon %s: emissions=%s kg CO2 status=%s",
         task_name,
         emissions,
-        response.status_code,
+        status_code,
     )
 
 
@@ -220,7 +122,7 @@ class CodeCarbonMiddleware:
             include: When set, only matching endpoints are tracked (e.g. ``GET /predict``).
             exclude: Endpoints or URL prefixes to skip. Defaults to common docs and health routes.
             task_name_formatter: Overrides default route-based task naming.
-            on_request_complete: Callback ``(request, response, emissions_data | None, task_name)``.
+            on_request_complete: Callback ``(request, status_code, emissions_data | None, task_name)``.
                 Defaults to :func:`log_request_complete`; pass ``None`` to disable logging.
             response_headers: When set, measure before ``http.response.start`` and inject
                 ``X-CodeCarbon-*`` headers (``True`` → ``emissions`` only, or a field list).
@@ -269,7 +171,13 @@ class CodeCarbonMiddleware:
         self.tracker_kwargs = merged
         self._app_tracker: EmissionsTracker | None = None
         self._tracker_init_lock = threading.Lock()
-        self._tracker_runner = _TrackerRunner()
+        # One worker: the tracker is not re-entrant, and requests must not block
+        # on each other's measurement.
+        self._tracker_runner = futures.ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="codecarbon-tracker"
+        )
+        # asyncio only keeps a weak reference to a running task.
+        self._pending_finalizes: set[asyncio.Task[None]] = set()
 
     def shutdown_tracker_executor(self, *, wait: bool = True) -> None:
         """Shut down the tracker background thread (idempotent).
@@ -306,31 +214,26 @@ class CodeCarbonMiddleware:
             await self.app(scope, receive, send)
             return
 
-        task_name = self._task_name(request)
         if self.attributor is not None:
-            await self._handle_attributed(scope, receive, send, request, task_name)
+            await self._handle_attributed(
+                scope, receive, send, request, self._task_name(request)
+            )
             return
-        tracker, baseline = await self._run_begin_request(request, task_name)
-        await self._handle_tracked(
-            scope, receive, send, request, tracker, task_name, baseline
-        )
+        tracker, baseline = await self._run_begin_request(request)
+        await self._handle_tracked(scope, receive, send, request, tracker, baseline)
 
     def _task_name(self, request: Request) -> str:
         if self.task_name_formatter is not None:
             return self.task_name_formatter(request)
         return build_endpoint_key(request)
 
-    async def _run_begin_request(
-        self, request: Request, task_name: str
-    ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
-        return await self._tracker_runner.run_async(
-            _TrackerRunner.REQUEST, self._begin_request, request, task_name
-        )
+    async def _run_on_tracker(self, func: Callable[..., Any], *args: Any) -> Any:
+        return await asyncio.wrap_future(self._tracker_runner.submit(func, *args))
 
-    async def _run_finalize_tracker(self, func: Callable[..., Any], *args: Any) -> Any:
-        return await self._tracker_runner.run_async(
-            _TrackerRunner.FINALIZE, func, *args
-        )
+    async def _run_begin_request(
+        self, request: Request
+    ) -> tuple[EmissionsTracker, HttpRequestBaseline]:
+        return await self._run_on_tracker(self._begin_request, request)
 
     def _create_and_start_tracker(self) -> EmissionsTracker:
         tracker = EmissionsTracker(
@@ -342,9 +245,6 @@ class CodeCarbonMiddleware:
     def _lifespan_tracker(self, request: Request) -> EmissionsTracker | None:
         return getattr(request.app.state, "codecarbon_tracker", None)
 
-    def _tracker_running(self, tracker: EmissionsTracker) -> bool:
-        return getattr(tracker, "_start_time", None) is not None
-
     def _resolve_tracker(self, request: Request) -> EmissionsTracker:
         tracker = self._lifespan_tracker(request)
         if tracker is None:
@@ -355,14 +255,13 @@ class CodeCarbonMiddleware:
         return tracker
 
     def _begin_request(
-        self, request: Request, task_name: str
-    ) -> tuple[EmissionsTracker, HttpRequestBaseline | None]:
+        self, request: Request
+    ) -> tuple[EmissionsTracker, HttpRequestBaseline]:
+        # mark_http_request_start raises when the tracker was never started;
+        # start_task is not a usable fallback because it stops the scheduler and
+        # overwrites the single _active_task slot shared by concurrent requests.
         tracker = self._resolve_tracker(request)
-        if self._tracker_running(tracker):
-            baseline = tracker.mark_http_request_start(task_name)
-            return tracker, baseline
-        tracker.start_task(task_name)
-        return tracker, None
+        return tracker, tracker.mark_http_request_start("")
 
     def _bind_attributor(self, request: Request) -> None:
         """Attach the attributor to the tracker's sampling windows, once."""
@@ -410,34 +309,31 @@ class CodeCarbonMiddleware:
     def _finalize_on_worker(
         self,
         tracker: EmissionsTracker,
-        task_name: str,
         request: Request,
-        response: Response,
+        status_code: int,
         run_callback: bool,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> EmissionsData | None:
-        if baseline is not None:
-            emissions_data = tracker.finish_http_request(baseline)
-            resolved_task = baseline.task_name
-        else:
-            active_task = getattr(tracker, "_active_task", None)
-            resolved_task = active_task if isinstance(active_task, str) else task_name
-            emissions_data = tracker.stop_task(resolved_task)
-        tracker.persist_completed_task(resolved_task)
+        # The route template only lands in request.scope once Starlette's router
+        # has run, so the task can only be named here, not at request start.
+        task_name = self._task_name(request)
+        emissions_data = tracker.finish_http_request(baseline, task_name)
+        tracker.persist_completed_task(baseline.task_name)
+        tracker.discard_task(baseline.task_name)
         if run_callback:
-            self._run_request_complete(request, response, emissions_data, resolved_task)
+            self._run_request_complete(request, status_code, emissions_data, task_name)
         return emissions_data
 
     def _run_request_complete(
         self,
         request: Request,
-        response: Response | None,
+        status_code: int,
         emissions_data: EmissionsData | None,
         task_name: str,
     ) -> None:
-        if self.on_request_complete is None or response is None:
+        if self.on_request_complete is None:
             return
-        self.on_request_complete(request, response, emissions_data, task_name)
+        self.on_request_complete(request, status_code, emissions_data, task_name)
 
     def _schedule_finalize(self, coro: Awaitable[None]) -> None:
         async def _run() -> None:
@@ -446,24 +342,24 @@ class CodeCarbonMiddleware:
             except Exception:
                 logger.exception("CodeCarbon deferred measurement failed")
 
-        asyncio.create_task(_run())
+        task = asyncio.create_task(_run())
+        self._pending_finalizes.add(task)
+        task.add_done_callback(self._pending_finalizes.discard)
 
     async def _finalize_after_response(
         self,
         tracker: EmissionsTracker,
-        task_name: str,
         request: Request,
-        response: Response,
-        baseline: HttpRequestBaseline | None,
+        status_code: int,
+        baseline: HttpRequestBaseline,
         *,
         run_callback: bool,
     ) -> EmissionsData | None:
-        return await self._run_finalize_tracker(
+        return await self._run_on_tracker(
             self._finalize_on_worker,
             tracker,
-            task_name,
             request,
-            response,
+            status_code,
             run_callback,
             baseline,
         )
@@ -475,21 +371,20 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        task_name: str,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         if self.header_fields:
             await self._handle_tracked_sync_headers(
-                scope, receive, send, request, tracker, task_name, baseline
+                scope, receive, send, request, tracker, baseline
             )
             return
         if self.include_background_tasks:
             await self._handle_tracked_after_app(
-                scope, receive, send, request, tracker, task_name, baseline
+                scope, receive, send, request, tracker, baseline
             )
             return
         await self._handle_tracked_end_of_body(
-            scope, receive, send, request, tracker, task_name, baseline
+            scope, receive, send, request, tracker, baseline
         )
 
     async def _handle_tracked_after_app(
@@ -499,8 +394,7 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        task_name: str,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         status_code = 500
 
@@ -516,13 +410,11 @@ class CodeCarbonMiddleware:
         except BaseException as exc:
             error = exc
         finally:
-            response = Response(status_code=status_code)
             self._schedule_finalize(
                 self._finalize_after_response(
                     tracker,
-                    task_name,
                     request,
-                    response,
+                    status_code,
                     baseline,
                     run_callback=error is None,
                 )
@@ -537,8 +429,7 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        task_name: str,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         status_code = 500
         finalized = False
@@ -548,13 +439,11 @@ class CodeCarbonMiddleware:
             if finalized:
                 return
             finalized = True
-            response = Response(status_code=status_code)
             self._schedule_finalize(
                 self._finalize_after_response(
                     tracker,
-                    task_name,
                     request,
-                    response,
+                    status_code,
                     baseline,
                     run_callback=run_callback,
                 )
@@ -587,8 +476,7 @@ class CodeCarbonMiddleware:
         send: Send,
         request: Request,
         tracker: EmissionsTracker,
-        task_name: str,
-        baseline: HttpRequestBaseline | None,
+        baseline: HttpRequestBaseline,
     ) -> None:
         status_code = 500
         finalized = False
@@ -599,12 +487,10 @@ class CodeCarbonMiddleware:
                 await send(message)
                 return
             status_code = message["status"]
-            response = Response(status_code=status_code)
             emissions_data = await self._finalize_after_response(
                 tracker,
-                task_name,
                 request,
-                response,
+                status_code,
                 baseline,
                 run_callback=True,
             )
@@ -620,13 +506,11 @@ class CodeCarbonMiddleware:
             error = exc
         finally:
             if not finalized:
-                response = Response(status_code=status_code)
                 self._schedule_finalize(
                     self._finalize_after_response(
                         tracker,
-                        task_name,
                         request,
-                        response,
+                        status_code,
                         baseline,
                         run_callback=error is None,
                     )
@@ -669,4 +553,3 @@ def add_codecarbon_middleware(app: Any, **kwargs: Any) -> None:
             app.state.codecarbon_middleware = self
 
     app.add_middleware(_RegisteredCodeCarbonMiddleware, **kwargs)
-    app.build_middleware_stack()

@@ -7,10 +7,7 @@ try:
         RequestEnergy,
         install_cpu_accounting,
     )
-    from codecarbon.integrations.fastapi.lifespan import (
-        compose_lifespans,
-        create_codecarbon_lifespan,
-    )
+    from codecarbon.integrations.fastapi.lifespan import create_codecarbon_lifespan
     from codecarbon.integrations.fastapi.middleware import (
         CodeCarbonMiddleware,
         add_codecarbon_middleware,
@@ -29,7 +26,6 @@ __all__ = [
     "EnergyAttributor",
     "RequestEnergy",
     "add_codecarbon_middleware",
-    "compose_lifespans",
     "create_codecarbon_lifespan",
     "install_cpu_accounting",
     "log_request_complete",

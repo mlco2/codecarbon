@@ -100,13 +100,3 @@ def test_matches_filter_pattern_non_path_literal() -> None:
         )
         is True
     )
-    assert (
-        matches_filter_pattern(
-            "predict",
-            "predict",
-            "/predict",
-            "/predict",
-            exclude=False,
-        )
-        is True
-    )

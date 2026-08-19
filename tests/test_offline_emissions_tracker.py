@@ -64,6 +64,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         tracker.start_task()
         heavy_computation(run_time_secs=2)
         task_emission_data = tracker.stop_task()
+        tracker.stop()
 
         self.assertGreater(task_emission_data.emissions, 0.0)
         self.assertEqual(task_emission_data.country_name, None)

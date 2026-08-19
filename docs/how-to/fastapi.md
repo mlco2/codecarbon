@@ -57,39 +57,6 @@ add_codecarbon_middleware(app)
 
 `create_codecarbon_lifespan` puts a shared tracker on `app.state` for the middleware to reuse and stops it cleanly on shutdown. If you skip lifespan, call `shutdown_codecarbon_middleware(app)` before exit.
 
-### Combining with other lifespans
-
-FastAPI accepts only one `lifespan` handler. Nest CodeCarbon with your own startup/shutdown using `compose_lifespans`:
-
-```python
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI
-from codecarbon.integrations.fastapi import (
-    add_codecarbon_middleware,
-    compose_lifespans,
-    create_codecarbon_lifespan,
-)
-
-
-@asynccontextmanager
-async def db_lifespan(app: FastAPI):
-    app.state.db = "connected"
-    try:
-        yield
-    finally:
-        app.state.db = None
-
-
-app = FastAPI(
-    lifespan=compose_lifespans(
-        lambda a: create_codecarbon_lifespan(a, project_name="my-api"),
-        db_lifespan,
-    )
-)
-add_codecarbon_middleware(app)
-```
-
 ## Measurement model
 
 - **Default (deferred):** response is sent first; finalize runs on a dedicated tracker worker thread; sampling is synchronous on that worker before `on_request_complete`.
@@ -225,13 +192,6 @@ add_codecarbon_middleware(
 
 One **run** is created per app process when the shared tracker starts; each measured request uploads one emission after the response. See [Use the Cloud API & Dashboard](cloud-api.md).
 
-Verify logging, CSV, and API locally:
-
-```console
-CODECARBON_ALLOW_MULTIPLE_RUNS=True uv run --extra fastapi \
-  python scripts/verify_fastapi_middleware_outputs.py --save-to-api
-```
-
 ## Performance overview
 
 By default, CodeCarbon measures **after** the response is sent. Clients see only a small amount of middleware bookkeeping; hardware sampling and logging run on a background tracker worker.
@@ -259,7 +219,7 @@ Measured on **Darwin arm64**, Python 3.12 (**2026-07-29**):
 **What this means**
 
 - **Deferred (default):** response is sent before finalize; client latency stays in the same ballpark as inference under concurrency (not hundreds of ms).
-- **Request path:** mark runs on the tracker REQUEST lane; finalize reuses cached metadata and skips redundant power samples when the scheduler is fresh.
+- **Request path:** mark runs on the single tracker worker thread; finalize reuses cached metadata and skips redundant power samples when the scheduler is fresh.
 - **Sync headers:** measure before `http.response.start`; latency includes sample time on the client path when a fresh hardware read is needed.
 - **`save_to_api=True`:** uploads after the response; network time is not on the HTTP critical path in deferred mode.
 
@@ -290,7 +250,7 @@ add_codecarbon_middleware(
 - **`response_headers`** — `True` (emissions only) or a list of field names (`emissions`, `duration`, `energy_consumed`, …). Measures before the response starts and sets `X-CodeCarbon-*` headers. Default `None` / off (deferred, no headers).
 - **`include_background_tasks`** — default `True`: FastAPI/Starlette `BackgroundTasks` on the response are included. Set `False` to finalize at end of body and exclude post-body background work.
 - **`task_name_formatter`** — optional `(Request) -> str`; default is `METHOD /route/template`. Concurrent requests on the same route still get unique internal task IDs with `create_codecarbon_lifespan`.
-- **`on_request_complete`** — optional callback; default logs via `log_request_complete`; `None` disables it.
+- **`on_request_complete`** — optional callback `(request, status_code, emissions_data, task_name)`; default logs via `log_request_complete`; `None` disables it.
 
 ```python
 add_codecarbon_middleware(

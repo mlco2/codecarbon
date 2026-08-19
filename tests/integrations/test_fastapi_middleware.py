@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import threading
+import time
 from concurrent import futures
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -83,7 +85,7 @@ def app():
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
 def test_middleware_tracks_routed_request(MockTracker, app) -> None:
     tracker_instance = MockTracker.return_value
-    _configure_mock_running_tracker(tracker_instance, task_name="GET /items/7")
+    _configure_mock_running_tracker(tracker_instance, task_name="GET /items/{item_id}")
 
     response = TestClient(app).get("/items/7")
 
@@ -92,6 +94,10 @@ def test_middleware_tracks_routed_request(MockTracker, app) -> None:
     tracker_instance.start.assert_called_once()
     tracker_instance.mark_http_request_start.assert_called_once()
     tracker_instance.finish_http_request.assert_called_once()
+    # The route template is only known after Starlette routes the request.
+    assert (
+        tracker_instance.finish_http_request.call_args[0][1] == "GET /items/{item_id}"
+    )
     tracker_instance.persist_completed_task.assert_called_once()
 
 
@@ -113,8 +119,8 @@ def test_middleware_on_request_complete_callback(MockTracker) -> None:
 
     add_codecarbon_middleware(
         application,
-        on_request_complete=lambda request, response, data, task_name: completed.append(
-            (request.url.path, response.status_code, data, task_name)
+        on_request_complete=lambda request, status_code, data, task_name: completed.append(
+            (request.url.path, status_code, data, task_name)
         ),
     )
     tracker_instance = MockTracker.return_value
@@ -155,8 +161,10 @@ def test_middleware_uses_lifespan_tracker(MockTracker) -> None:
     response = TestClient(application).get("/predict")
     assert response.status_code == 200
     MockTracker.assert_not_called()
-    tracker_instance.mark_http_request_start.assert_called_once_with("GET /predict")
-    tracker_instance.finish_http_request.assert_called_once_with(baseline)
+    tracker_instance.mark_http_request_start.assert_called_once_with("")
+    tracker_instance.finish_http_request.assert_called_once_with(
+        baseline, "GET /predict"
+    )
     tracker_instance.persist_completed_task.assert_called_once_with("GET /predict")
     assert completed == [("/predict", emissions, "GET /predict")]
 
@@ -206,7 +214,8 @@ def test_middleware_lazy_tracker(MockTracker) -> None:
     assert response.status_code == 200
     MockTracker.assert_called_once()
     tracker_instance.start.assert_called_once()
-    tracker_instance.mark_http_request_start.assert_called_once_with("GET /run")
+    tracker_instance.mark_http_request_start.assert_called_once_with("")
+    assert tracker_instance.finish_http_request.call_args[0][1] == "GET /run"
 
 
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
@@ -271,7 +280,6 @@ def test_middleware_exclude_endpoints(MockTracker) -> None:
 
 def test_log_request_complete_uses_codecarbon_logger() -> None:
     request = MagicMock(url=MagicMock(path="/predict"))
-    response = MagicMock(status_code=200)
     emissions = MagicMock(emissions=0.0012)
     counter = _CodeCarbonLogCapture()
     previous_level = codecarbon_logger.level
@@ -279,7 +287,7 @@ def test_log_request_complete_uses_codecarbon_logger() -> None:
     codecarbon_logger.setLevel(logging.INFO)
     cc_fastapi_middleware.logger.addHandler(counter)
     try:
-        log_request_complete(request, response, emissions, "GET /predict")
+        log_request_complete(request, 200, emissions, "GET /predict")
     finally:
         cc_fastapi_middleware.logger.removeHandler(counter)
         codecarbon_logger.setLevel(previous_level)
@@ -321,19 +329,23 @@ def test_middleware_default_logs_after_request(mock_logger_info, MockTracker) ->
 def test_add_codecarbon_middleware_registers_instance_on_app_state() -> None:
     application = FastAPI()
     add_codecarbon_middleware(application, project_name="shutdown-test")
+    with TestClient(application):
+        pass
     middleware = application.state.codecarbon_middleware
     middleware.shutdown_tracker_executor()
     with pytest.raises(RuntimeError, match="shutdown"):
-        middleware._tracker_runner.submit_request(lambda: None)
+        middleware._tracker_runner.submit(lambda: None)
 
 
 def test_shutdown_codecarbon_middleware_helper() -> None:
     application = FastAPI()
     add_codecarbon_middleware(application, project_name="shutdown-test")
+    with TestClient(application):
+        pass
     shutdown_codecarbon_middleware(application)
     middleware = application.state.codecarbon_middleware
     with pytest.raises(RuntimeError, match="shutdown"):
-        middleware._tracker_runner.submit_request(lambda: None)
+        middleware._tracker_runner.submit(lambda: None)
 
 
 @patch.object(cc_fastapi_lifespan, "EmissionsTracker")
@@ -357,7 +369,7 @@ def test_create_codecarbon_lifespan_shuts_down_middleware_executor(
 
     middleware = application.state.codecarbon_middleware
     with pytest.raises(RuntimeError, match="shutdown"):
-        middleware._tracker_runner.submit_request(lambda: None)
+        middleware._tracker_runner.submit(lambda: None)
 
 
 def test_middleware_real_tracker_logs_and_csv_on_lifespan_stop(tmp_path: Path) -> None:
@@ -665,48 +677,6 @@ def test_concurrent_lazy_tracker_without_lifespan() -> None:
         cc_fastapi_middleware.logger.removeHandler(handler)
 
 
-def test_compose_lifespans_stacks_contexts() -> None:
-    from codecarbon.integrations.fastapi import compose_lifespans
-
-    events: list[str] = []
-
-    @asynccontextmanager
-    async def other(app: FastAPI):
-        events.append("other-enter")
-        app.state.other = True
-        try:
-            yield
-        finally:
-            events.append("other-exit")
-
-    application = FastAPI(
-        lifespan=compose_lifespans(
-            lambda a: create_codecarbon_lifespan(
-                a,
-                project_name="compose-test",
-                save_to_file=False,
-                save_to_api=False,
-                allow_multiple_runs=True,
-            ),
-            other,
-        )
-    )
-    add_codecarbon_middleware(
-        application,
-        project_name="compose-test",
-        on_request_complete=None,
-        tracker_kwargs={"save_to_file": False, "save_to_api": False},
-    )
-
-    with TestClient(application) as client:
-        assert application.state.other is True
-        assert application.state.codecarbon_tracker is not None
-        assert client.get("/docs").status_code == 200
-
-    assert events == ["other-enter", "other-exit"]
-    assert application.state.codecarbon_tracker is None
-
-
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
 def test_response_headers_sync_mode_injects_emissions_header(MockTracker) -> None:
     _configure_mock_running_tracker(MockTracker.return_value, emissions=0.0012)
@@ -851,87 +821,6 @@ def test_resolve_header_fields_and_header_names() -> None:
     }
 
 
-def test_tracker_runner_handles_cancelled_and_failed_jobs() -> None:
-    from concurrent import futures
-
-    runner = cc_fastapi_middleware._TrackerRunner()
-    cancelled = runner.submit_request(lambda: 1)
-    cancelled.cancel()
-    runner.shutdown()
-    assert cancelled.cancelled()
-
-    runner = cc_fastapi_middleware._TrackerRunner()
-
-    def boom() -> None:
-        raise ValueError("tracker failed")
-
-    with pytest.raises(ValueError, match="tracker failed"):
-        runner.submit_request(boom).result(timeout=2)
-    runner.shutdown()
-
-    done = futures.Future()
-    done.set_result(1)
-    runner = cc_fastapi_middleware._TrackerRunner()
-    runner._run_job((lambda: 99, (), done))
-
-    def raise_runtime() -> None:
-        raise RuntimeError("x")
-
-    already_done = futures.Future()
-    already_done.set_result(1)
-    runner._run_job((raise_runtime, (), already_done))
-    runner.shutdown()
-
-
-def test_tracker_runner_finalize_lane_and_no_wait_shutdown() -> None:
-    runner = cc_fastapi_middleware._TrackerRunner()
-    assert runner.submit(runner.FINALIZE, lambda: 42).result(timeout=2) == 42
-    runner.shutdown(wait=False)
-    runner.shutdown()
-
-
-def test_tracker_runner_drains_finalize_after_request_job() -> None:
-    order: list[str] = []
-    runner = cc_fastapi_middleware._TrackerRunner()
-
-    def request_job() -> None:
-        order.append("request")
-
-    def finalize_job() -> None:
-        order.append("finalize")
-
-    runner.submit_request(request_job)
-    runner.submit(runner.FINALIZE, finalize_job)
-    runner.shutdown()
-    assert order == ["request", "finalize"]
-
-
-def test_tracker_runner_prioritizes_new_requests_over_finalize_drain() -> None:
-    import threading
-
-    order: list[str] = []
-    gate = threading.Event()
-    runner = cc_fastapi_middleware._TrackerRunner()
-
-    def slow_request() -> None:
-        gate.wait(timeout=2)
-        order.append("request1")
-
-    def finalize_job() -> None:
-        order.append("finalize")
-
-    def second_request() -> None:
-        order.append("request2")
-
-    runner.submit_request(slow_request)
-    runner.submit(runner.FINALIZE, finalize_job)
-    runner.submit_request(second_request)
-    gate.set()
-    runner.shutdown()
-    assert order.index("request1") < order.index("request2")
-    assert order.index("request2") < order.index("finalize")
-
-
 @patch.object(cc_fastapi_middleware, "EmissionsTracker")
 def test_task_name_formatter(MockTracker) -> None:
     application = FastAPI()
@@ -949,8 +838,9 @@ def test_task_name_formatter(MockTracker) -> None:
         on_request_complete=None,
     )
     assert TestClient(application).get("/predict").status_code == 200
-    MockTracker.return_value.mark_http_request_start.assert_called_once_with(
-        "custom-/predict"
+    assert (
+        MockTracker.return_value.finish_http_request.call_args[0][1]
+        == "custom-/predict"
     )
 
 
@@ -1051,3 +941,54 @@ def test_schedule_finalize_logs_measurement_failure() -> None:
                 mock_exception.assert_called_once()
 
     asyncio.run(run())
+
+
+@pytest.mark.no_immediate_finalize
+def test_real_tracker_reports_sub_second_request_duration() -> None:
+    """End-to-end: real tracker, real deferred finalize, plausible duration.
+
+    Everything else here mocks the tracker and finalizes inline, which is how a
+    negative per-request duration went unnoticed.
+    """
+    completed: list[Any] = []
+    measured = threading.Event()
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        async with create_codecarbon_lifespan(
+            application,
+            project_name="e2e-duration",
+            save_to_file=False,
+            save_to_api=False,
+            save_to_logger=False,
+            measure_power_secs=10,
+            allow_multiple_runs=True,
+        ):
+            yield
+
+    application = FastAPI(lifespan=lifespan)
+
+    @application.get("/predict")
+    def predict() -> dict[str, bool]:
+        return {"ok": True}
+
+    def on_complete(request, status_code, data, task_name) -> None:
+        completed.append(data)
+        measured.set()
+
+    add_codecarbon_middleware(
+        application, project_name="e2e-duration", on_request_complete=on_complete
+    )
+
+    with TestClient(application) as client:
+        # Let the tracker run for a while so an absolute-vs-delta duration bug
+        # shows up as a negative or multi-second request duration.
+        time.sleep(1.5)
+        # First request absorbs the metadata snapshot and a stale power sample.
+        assert client.get("/predict").status_code == 200
+        assert measured.wait(10)
+        measured.clear()
+        assert client.get("/predict").status_code == 200
+        assert measured.wait(10)
+
+    assert 0 < completed[-1].duration < 1

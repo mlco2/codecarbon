@@ -67,8 +67,6 @@ def matches_filter_pattern(
     """Return True when an include or exclude pattern matches the request."""
     if is_method_pattern(pattern):
         return endpoint_key == pattern
-    if not pattern.startswith("/"):
-        return endpoint_key == pattern
     if exclude:
         return (
             url_path == pattern
