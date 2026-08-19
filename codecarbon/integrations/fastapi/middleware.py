@@ -387,7 +387,9 @@ class CodeCarbonMiddleware:
         except Exception:  # pragma: no cover - exotic scopes without state
             logger.debug("CodeCarbon: could not attach measurement to request.state")
         if run_callback:
-            self._run_request_complete(request, status_code, emissions_data, task_name)
+            self._run_request_complete(
+                request, status_code, measurement.emissions_data, task_name
+            )
         return measurement
 
     def _run_request_complete(

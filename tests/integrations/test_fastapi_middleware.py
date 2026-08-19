@@ -991,7 +991,9 @@ def test_real_tracker_reports_sub_second_request_duration() -> None:
         return {"ok": True}
 
     def on_complete(request, status_code, data, task_name) -> None:
-        completed.append(data)
+        # data is None on hardware whose tier cannot resolve a single request;
+        # the measurement on request.state carries the duration in every tier.
+        completed.append(request.state.codecarbon)
         measured.set()
 
     add_codecarbon_middleware(
