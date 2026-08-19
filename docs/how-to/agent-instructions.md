@@ -60,8 +60,7 @@ Here's what you need to know to navigate and contribute effectively.
    # Run specific test
    uv run pytest tests/test_emissions_tracker.py
 
-   # Lint and format
-   uv run task lint
+   # Lint and format (runs the pre-commit hooks, which rewrite files in place)
    uv run task format
    ```
 
@@ -112,7 +111,7 @@ Here's what you need to know to navigate and contribute effectively.
 1. **Check existing tests** in `tests/` for similar functionality
 2. **Add unit tests** first (test-driven development)
 3. **Update documentation** if public interface changes
-4. **Follow coding style**: Use `uv run task format` and `uv run task lint`
+4. **Follow coding style**: Use `uv run task format`
 
 ### API Development
 1. **Follow FastAPI patterns** - see routers in `carbonserver/carbonserver/api/routers/`
@@ -134,8 +133,7 @@ uv run task -l
 
 # Main tasks:
 # - test-package: Core package testing
-# - lint: Code linting and style checks
-# - format: Code formatting
+# - format: Lint and format, by running the pre-commit hooks
 # - test-api-unit: API unit tests
 # - test-api-integ: API integration tests
 # - dashboard: Run API locally

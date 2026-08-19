@@ -13,8 +13,13 @@ def generate_api_key() -> str:
     return prefixed_api_key
 
 
-def get_api_key_hash(api_key: str) -> str:
-    """Get the hash of the api key"""
+def get_api_key_hash(api_key: str) -> bytes:
+    """Get the hash of the api key.
+
+    Returns bcrypt's own ``bytes`` output. It is stored in a ``String`` column and
+    comes back from the database as ``str``, which is what ``verify_api_key``
+    expects — hence the asymmetric annotations.
+    """
     return bcrypt.hashpw(
         api_key.encode(),
         bcrypt.gensalt(),
@@ -32,7 +37,19 @@ def verify_api_key(plain_api_key: str, hashed_api_key: str) -> bool:
 
 
 def generate_lookup_value(api_key: str) -> str:
-    # Generate a SHA-256 hash of the API key
+    """Derive the non-secret database index for an API key.
+
+    This is a lookup shortcut, not a credential. It narrows a token lookup to a
+    handful of candidate rows; authentication is always ``verify_api_key``
+    (bcrypt) against the stored ``hashed_token``. Collisions are expected and the
+    caller iterates over every candidate, so 8 hex characters is deliberate.
+
+    SHA-256 is correct here and must not be swapped for an HMAC or a KDF: static
+    analysis flags this line as weak credential hashing (``py/weak-sensitive-data-
+    hashing``), but the value authenticates nothing. Changing the derivation would
+    also be unrecoverable — it is computed from plaintext tokens that are never
+    stored, so existing rows could not be backfilled and every issued API key
+    would stop resolving.
+    """
     sha256_hash = hashlib.sha256(api_key.encode()).hexdigest()
-    # Use the first 8 characters of the hash as a lookup value
     return sha256_hash[:8]
