@@ -142,12 +142,14 @@ def wait_for_green_window(
 
     if delay_seconds > 0:
         print(
-            f"   Waiting {delay_seconds / 3600:.1f}h before starting. Ctrl-C to run now."
+            f"   Waiting {delay_seconds / 3600:.1f}h before starting. "
+            "Ctrl-C to abort."
         )
         try:
             time.sleep(delay_seconds)
         except KeyboardInterrupt:
-            print("\n⚠️  Wait interrupted, starting now.", file=sys.stderr)
+            print("\n⚠️  Wait aborted, the command was not run.", file=sys.stderr)
+            raise typer.Exit(130)
 
     # Strip our own subcommand name -- only in first position, so a user
     # command that legitimately contains the word "wait" survives intact.

@@ -102,9 +102,9 @@ CodeCarbon fetches an hourly carbon intensity forecast for your location from
 average intensity over the expected job length, sleeps until then, and finally hands the command
 to `codecarbon monitor`, so measurement, CSV output and exit-code propagation are identical.
 
-The process stays in the foreground for the whole wait. Pressing `Ctrl+C` during the wait does not
-abort: it starts the job immediately. The emissions tracker only starts after the sleep, so a
-waiting process holds no lock.
+The process stays in the foreground for the whole wait. Pressing `Ctrl+C` during the wait aborts:
+the command is not run and the exit code is 130. The emissions tracker only starts after the
+sleep, so a waiting process holds no lock.
 
 **Options:**
 

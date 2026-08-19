@@ -209,7 +209,7 @@ def test_sleeps_until_the_green_window_then_delegates(monkeypatch, no_network):
     assert called["measure_power_secs"] == 15
 
 
-def test_keyboard_interrupt_during_wait_runs_immediately(monkeypatch, no_network):
+def test_keyboard_interrupt_during_wait_aborts(monkeypatch, no_network):
     _patch_forecast(monkeypatch, [300, 300, 100, 100, 300])
 
     def _interrupt(seconds):
@@ -222,8 +222,10 @@ def test_keyboard_interrupt_during_wait_runs_immediately(monkeypatch, no_network
         lambda ctx, **kwargs: called.setdefault("ran", True),
     )
 
-    wait_module.wait_for_green_window(
-        SimpleNamespace(args=["python", "train.py"]), duration="2h", deadline="6h"
-    )
+    with pytest.raises(typer.Exit) as exc_info:
+        wait_module.wait_for_green_window(
+            SimpleNamespace(args=["python", "train.py"]), duration="2h", deadline="6h"
+        )
 
-    assert called["ran"] is True
+    assert exc_info.value.exit_code == 130
+    assert called == {}
