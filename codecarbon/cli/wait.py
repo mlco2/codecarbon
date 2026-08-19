@@ -34,11 +34,29 @@ def find_green_window(
     forecast sees it. Asking the /latest endpoint for a live value instead
     would be a second HTTP call for a number only used to print a percentage.
     """
+    import pycountry
+
+    from codecarbon.core.config import get_hierarchical_config
     from codecarbon.core.intensity_forecast import best_window, get_forecast
     from codecarbon.external.geography import GeoMetadata
     from codecarbon.input import DataSource
 
-    geo = GeoMetadata.from_geo_js(DataSource().geo_js_url)
+    # The tracker honours a configured country, so the forecast must too:
+    # geolocating by IP would silently forecast the wrong grid.
+    config = get_hierarchical_config()
+    configured = config.get("country_iso_code")
+    country = (
+        pycountry.countries.get(alpha_3=configured.upper()) if configured else None
+    )
+    if country:
+        geo = GeoMetadata(
+            country_iso_code=country.alpha_3,
+            country_name=country.name,
+            region=config.get("region"),
+            country_2letter_iso_code=country.alpha_2,
+        )
+    else:
+        geo = GeoMetadata.from_geo_js(DataSource().geo_js_url)
     # A window may start as late as the deadline, so the forecast must cover
     # the deadline plus one job length.
     forecast = get_forecast(

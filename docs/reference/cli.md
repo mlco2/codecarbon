@@ -144,8 +144,8 @@ $ codecarbon wait --dry-run --deadline 24h --duration 90m
 
 A forecast is only available with an `electricitymaps_api_token` (the `co2_signal_api_token` key
 is also accepted), see [Electricity Maps API Token](../how-to/configuration.md#electricity-maps-api-token).
-The location is detected automatically from your IP address; there is no offline or
-`--country-iso-code` option for this command.
+The location comes from `country_iso_code` in your configuration when it is set, and is otherwise
+detected from your IP address.
 
 If no token is configured, or the API returns an error, a malformed payload or an
 empty forecast, CodeCarbon prints `no forecast available, running now.` and starts the command

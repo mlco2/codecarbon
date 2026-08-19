@@ -229,3 +229,25 @@ def test_keyboard_interrupt_during_wait_aborts(monkeypatch, no_network):
 
     assert exc_info.value.exit_code == 130
     assert called == {}
+
+
+def test_configured_country_is_preferred_over_geolocation(monkeypatch):
+    monkeypatch.setattr(
+        "codecarbon.external.geography.GeoMetadata.from_geo_js",
+        classmethod(lambda cls, url: pytest.fail("geolocated despite a config")),
+    )
+    monkeypatch.setattr(
+        "codecarbon.core.config.get_hierarchical_config",
+        lambda: {"country_iso_code": "fra", "region": "ile-de-france"},
+    )
+    seen = {}
+    monkeypatch.setattr(
+        "codecarbon.core.intensity_forecast.get_forecast",
+        lambda geo, **kwargs: seen.update(geo=geo),
+    )
+
+    wait_module.find_green_window(timedelta(hours=1), timedelta(hours=2), "tok")
+
+    assert seen["geo"].country_iso_code == "FRA"
+    assert seen["geo"].country_2letter_iso_code == "FR"
+    assert seen["geo"].region == "ile-de-france"
