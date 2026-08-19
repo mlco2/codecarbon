@@ -265,7 +265,13 @@ class EnergyAttributor:
         else:
             total_weight = sum(weights)
             baseline_w = self.baseline_watts() if self.subtract_baseline else None
-            base = min(delta, baseline_w * width / 3.6e6) if baseline_w else 0.0
+            # `is not None`, not truthiness: a measured 0.0 W idle baseline is
+            # a baseline, and must still mark the results baseline_subtracted.
+            base = (
+                min(delta, baseline_w * width / 3.6e6)
+                if baseline_w is not None
+                else 0.0
+            )
             dynamic = delta - base
             self.unattributed_kwh += base
 

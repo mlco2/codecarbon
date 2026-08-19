@@ -289,6 +289,24 @@ def test_baseline_never_drives_a_share_negative(clock):
     assert state.energy >= 0.0
 
 
+def test_a_measured_zero_watt_baseline_still_counts_as_a_baseline(clock):
+    """0.0 W idle is a measurement, not "no baseline"."""
+    a = make(clock, subtract_baseline=True)
+    clock.watts = 0.0
+    for _ in range(3):
+        clock.advance(1.0)
+        a.on_window(clock.energy_kwh)
+    assert a.baseline_watts() == 0.0
+
+    clock.watts = WATTS
+    state = a.begin("GET /a")
+    clock.advance(1.0)
+    a.on_window(clock.energy_kwh)
+    assert state.baseline_seen is True
+    assert state.baseline_share == 0.0
+    assert state.energy == pytest.approx(WATTS * 1.0 / 3.6e6)
+
+
 # --- thread safety -----------------------------------------------------------
 
 
