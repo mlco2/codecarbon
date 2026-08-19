@@ -55,7 +55,7 @@ def run_and_monitor(
 
     # Get the command from remaining args (strip nested subcommand / `--` leftovers)
     command = list(getattr(ctx, "args", None) or [])
-    while command and command[0] in ("monitor", "--"):
+    while command and command[0] in ("monitor", "wait", "--"):
         command.pop(0)
 
     if not command:

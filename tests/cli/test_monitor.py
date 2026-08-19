@@ -53,7 +53,7 @@ def test_run_and_monitor_strips_nested_monitor_prefix(monkeypatch):
 
     with pytest.raises(typer.Exit) as exc_info:
         monitor_module.run_and_monitor(
-            SimpleNamespace(args=["monitor", "--", "echo", "hi"])
+            SimpleNamespace(args=["wait", "monitor", "--", "echo", "hi"])
         )
 
     assert exc_info.value.exit_code == 0

@@ -169,10 +169,4 @@ def wait_for_green_window(
             print("\n⚠️  Wait aborted, the command was not run.", file=sys.stderr)
             raise typer.Exit(130)
 
-    # Strip our own subcommand name -- only in first position, so a user
-    # command that legitimately contains the word "wait" survives intact.
-    args = list(getattr(ctx, "args", []))
-    if args and args[0] == "wait":
-        args = args[1:]
-    ctx.args = args
     run_and_monitor(ctx, log_level=log_level, **tracker_args)

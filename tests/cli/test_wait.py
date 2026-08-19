@@ -15,8 +15,6 @@ def _forecast(values, start):
             IntensityPoint(at=start + timedelta(hours=i), g_co2e_per_kwh=v)
             for i, v in enumerate(values)
         ],
-        source="test",
-        fetched_at=start,
     )
 
 
@@ -103,7 +101,7 @@ def test_no_forecast_runs_now(monkeypatch, capsys, no_network):
     )
 
     assert slept == []
-    assert called["args"] == ["--", "python", "train.py"]
+    assert called["args"] == ["wait", "--", "python", "train.py"]
     assert "no forecast available" in capsys.readouterr().out
 
 
@@ -171,7 +169,8 @@ def test_finish_by_shorter_than_duration_is_rejected(monkeypatch, capsys, no_net
         )
 
 
-def test_only_the_leading_subcommand_name_is_stripped(monkeypatch, no_network):
+def test_the_context_args_reach_the_monitor_untouched(monkeypatch, no_network):
+    # run_and_monitor strips its own subcommand prefixes, so wait must not.
     _patch_forecast(monkeypatch, [100, 300, 300])
     called = {}
     monkeypatch.setattr(
@@ -183,7 +182,7 @@ def test_only_the_leading_subcommand_name_is_stripped(monkeypatch, no_network):
         SimpleNamespace(args=["wait", "--", "make", "wait"]), duration="1h"
     )
 
-    assert called["args"] == ["--", "make", "wait"]
+    assert called["args"] == ["wait", "--", "make", "wait"]
 
 
 def test_sleeps_until_the_green_window_then_delegates(monkeypatch, no_network):
@@ -205,7 +204,7 @@ def test_sleeps_until_the_green_window_then_delegates(monkeypatch, no_network):
 
     assert len(slept) == 1
     assert 2 * 3600 - 60 < slept[0] <= 2 * 3600
-    assert called["args"] == ["python", "train.py"]
+    assert called["args"] == ["wait", "python", "train.py"]
     assert called["measure_power_secs"] == 15
 
 
