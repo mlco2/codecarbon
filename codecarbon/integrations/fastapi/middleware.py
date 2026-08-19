@@ -97,14 +97,9 @@ def _inject_emission_headers(
 
 def _carbon_intensity(tracker: EmissionsTracker | None) -> float:
     """Effective kg CO2 per kWh implied by the tracker's running totals."""
-    total_energy = getattr(getattr(tracker, "_total_energy", None), "kWh", 0.0)
-    total_emissions = getattr(tracker, "_total_emissions", 0.0)
-    try:
-        if total_energy and total_energy > 0:
-            return float(total_emissions) / float(total_energy)
-    except (TypeError, ValueError):
-        pass
-    return 0.0
+    if tracker is None or tracker._total_energy.kWh <= 0:
+        return 0.0
+    return tracker._total_emissions / tracker._total_energy.kWh
 
 
 def _estimate_from_duration(
