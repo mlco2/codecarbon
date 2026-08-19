@@ -232,6 +232,7 @@ def _app_with_tier(hardware, emissions_data, **middleware_kwargs):
     tracker = MagicMock()
     tracker._start_time = 1.0
     tracker._hardware = hardware
+    tracker._measure_power_secs = 15.0
     tracker._total_energy = SimpleNamespace(kWh=1.0)
     tracker._total_emissions = 0.5
     tracker.mark_http_request_start.return_value = MagicMock(task_name="GET /predict")
@@ -239,6 +240,20 @@ def _app_with_tier(hardware, emissions_data, **middleware_kwargs):
     application.state.codecarbon_tracker = tracker
     add_codecarbon_middleware(application, **middleware_kwargs)
     return application, tracker
+
+
+def test_gpu_machine_reports_per_request_energy(
+    finalize_deferred_immediately,
+) -> None:
+    """The tracker's sampling window, not 0.0, decides the GPU tier."""
+    data = _emissions_data(duration=0.03, energy_consumed=1e-6, emissions=5e-7)
+    application, _ = _app_with_tier(
+        [_cpu("intel_rapl"), _gpu("NvidiaGPUDevice")], data, on_request_complete=None
+    )
+    with TestClient(application) as client:
+        assert client.get("/predict").status_code == 200
+    middleware = application.state.codecarbon_middleware
+    assert middleware.measurement_tier is MeasurementTier.MEASURED
 
 
 def test_endpoint_totals_accumulate_in_aggregate_only_tier(

@@ -241,7 +241,10 @@ class CodeCarbonMiddleware:
         """Resolve the tier once, from the hardware the tracker actually detected."""
         detection = self._tier_detection
         if detection is None:
-            detection = detect_measurement_tier(getattr(tracker, "_hardware", None))
+            detection = detect_measurement_tier(
+                getattr(tracker, "_hardware", None),
+                getattr(tracker, "_measure_power_secs", 0.0),
+            )
             self._tier_detection = detection
             logger.debug("CodeCarbon measurement tier: %s", detection.describe())
         return detection
