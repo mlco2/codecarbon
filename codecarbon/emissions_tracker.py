@@ -1001,6 +1001,22 @@ class BaseEmissionsTracker(ABC):
                 handler.task_out(task_payload, self._experiment_name)
                 task.uploaded_to_api = True
 
+    def discard_task(self, task_name: str) -> None:
+        """Drop a finished task record so ``_tasks`` stays bounded.
+
+        Long-lived servers create one task per HTTP request; without eviction
+        ``_tasks`` grows for the process lifetime. Call after
+        :meth:`persist_completed_task` (data already left the tracker by then).
+
+        Args:
+            task_name: Name of the task to forget. Unknown names are ignored.
+        """
+        with self._http_task_lock:
+            task = self._tasks.get(task_name)
+            if task is None or task.is_active:
+                return
+            del self._tasks[task_name]
+
     @suppress(Exception)
     def flush(self) -> Optional[float]:
         """

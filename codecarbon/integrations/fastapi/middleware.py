@@ -337,6 +337,7 @@ class CodeCarbonMiddleware:
             resolved_task = active_task if isinstance(active_task, str) else task_name
             emissions_data = tracker.stop_task(resolved_task)
         tracker.persist_completed_task(resolved_task)
+        tracker.discard_task(resolved_task)
         if run_callback:
             self._run_request_complete(request, response, emissions_data, resolved_task)
         return emissions_data
