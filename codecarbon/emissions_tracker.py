@@ -1133,7 +1133,7 @@ class BaseEmissionsTracker(ABC):
         for task in tasks:
             task_entry = task.out()
             task_emissions_data.append(task_entry)
-            if not task.uploaded_to_api:
+            if not task.uploaded_to_api and not task.is_active and task.emissions_data:
                 api_task_emissions_data.append(task_entry)
 
         for handler in self._output_handlers:
