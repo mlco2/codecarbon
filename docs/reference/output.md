@@ -13,7 +13,7 @@ tracker = EmissionsTracker(
 )
 ```
 
-Available values: `CSV`, `API`, `LOGGER`, `PROMETHEUS`, `LOGFIRE`, `BOAMPS`.
+Available values: `CSV`, `API`, `LOGGER`, `PROMETHEUS`, `LOGFIRE`, `BOAMPS`, `SCI`.
 It can also be set in the config file as a comma-separated string, e.g.
 `output_methods=csv,api`. HTTP output is enabled separately via the
 `emissions_endpoint` parameter.
@@ -211,3 +211,74 @@ You can send all your data to the CodeCarbon API so you have your historical dat
 ## Logger Output
 
 See [Collecting emissions to a logger](../how-to/logging.md).
+
+## SCI
+
+The [Software Carbon Intensity](https://sci.greensoftware.foundation/) specification, standardised as ISO/IEC 21031:2024, expresses a workload's footprint as a rate:
+
+```
+SCI = (E * I + M) / R
+```
+
+CodeCarbon measures `E` (energy consumed, kWh) and applies `I` (carbon intensity, gCO2eq/kWh). `R` and `M` are declarations:
+
+- `R`, the functional unit: one request, one training run, 1k tokens. There is no default, so if you do not declare one the report is still written, with `sci: null` and a `status` field saying why.
+- `M`, the embodied emissions attributable to the run. When you do not declare a figure the report says `"M_source": "not declared"`, so a reader can see the report is a partial one.
+
+### How to use it
+
+Enable the output method and point it at a JSON context file holding the declarations:
+
+```ini
+[codecarbon]
+output_methods = csv,sci
+sci_context_file = ./sci_context.json
+```
+
+The context file holds what CodeCarbon cannot know:
+
+```json
+{
+  "functionalUnit": {"name": "inference request", "count": 10000},
+  "embodied": {"gCO2e": 42.5, "source": "manufacturer LCA, 4y amortization"},
+  "reporter": {"organization": "Acme", "contact": "green@acme.example"},
+  "boundary": "Application only; excludes client devices and network."
+}
+```
+
+Both `gCO2e` and `gco2e` are accepted for the embodied figure.
+
+!!! warning "The configuration-only path needs a count in the context file"
+    `set_functional_unit_count()` needs a reference to the handler, and the handler created by `output_methods = csv,sci` is owned by the tracker. So with configuration alone, `sci` is `null` in every report unless `functionalUnit.count` is hardcoded in `sci_context_file`. If the count is only known at the end of the run, construct `SCIOutput` yourself and pass it via `output_handlers=[...]`.
+
+CodeCarbon writes a final report named `sci_report_<run_id>.json` in `output_dir`, plus `sci_report_tasks_<run_id>.json` when tasks are used. In the task report, `M` is apportioned across tasks by their share of the run's duration: the declared `M` is the embodied carbon of the device for the whole run, so giving each task the full figure would count it once per task. `R` is not apportioned, because CodeCarbon cannot know how many functional units fell inside a task, so each task reports `sciShare`, its share of the run-level SCI, instead of `sci`. `I` is derived as `emissions * 1000 / energy_consumed` rather than recomputed, so the report is consistent with the CSV by construction; the PUE that was applied is recorded separately in the provenance block.
+
+Sample output:
+```json
+{
+  "specVersion": "ISO/IEC 21031:2024",
+  "generatedBy": "codecarbon 3.2.6",
+  "runId": "79e4408f-ec31-476f-a2c5-8ca7f53e6cc7",
+  "projectName": "my_project",
+  "timestamp": "2025-01-15T10:30:00",
+  "sci": 0.0000127,
+  "unit": "gCO2eq per inference request",
+  "terms": {
+    "E_kWh": 0.1007,
+    "I_gCO2e_per_kWh": 417.08,
+    "M_gCO2e": 42.5,
+    "R": 10000,
+    "R_name": "inference request"
+  },
+  "provenance": {
+    "I_source": "codecarbon regional intensity, country_iso_code=FRA",
+    "M_source": "manufacturer LCA, 4y amortization",
+    "measurementBoundary": "Application only; excludes client devices and network.",
+    "durationSeconds": 3600.0,
+    "hardware": {"cpu": "Intel Xeon", "gpu": "NVIDIA A100", "ramTotalGB": 64.0},
+    "pue": 1
+  }
+}
+```
+
+See [examples/sci_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/sci_output.py) for a runnable example, including the context file format and how to declare the functional unit count from Python.
