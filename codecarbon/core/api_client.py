@@ -8,7 +8,7 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
-from datetime import timedelta, tzinfo
+from datetime import datetime, timedelta, tzinfo
 
 import requests
 
@@ -31,6 +31,26 @@ def get_datetime_with_timezone():
     import arrow
 
     return str(arrow.now().isoformat())
+
+
+# (connect, read) seconds, replacing a flat 2s that timed out on a loaded API.
+_TIMEOUT = (3.05, 10)
+
+
+def _measurement_timestamp(carbon_emission: dict) -> str:
+    """
+    Offset-aware ISO timestamp of *when the measurement was taken*, taken from
+    EmissionsData.timestamp. Falls back to now for hand-built payloads that
+    carry no usable timestamp.
+    """
+    try:
+        return (
+            datetime.fromisoformat(carbon_emission["timestamp"])
+            .astimezone()
+            .isoformat()
+        )
+    except (KeyError, TypeError, ValueError):
+        return get_datetime_with_timezone()
 
 
 class ApiClient:  # (AsyncClient)
@@ -58,6 +78,8 @@ class ApiClient:  # (AsyncClient)
         :create_run_automatically: If False, do not create a run. To use API in read only mode.
         """
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
+        # A Session so the socket and TLS handshake are reused across calls.
+        self._session = requests.Session()
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
@@ -77,14 +99,16 @@ class ApiClient:  # (AsyncClient)
 
     def _send(self, method, url, payload=None):
         """Call the API and return the response, whatever its status code."""
-        return method(url=url, json=payload, timeout=2, headers=self._get_headers())
+        return method(
+            url=url, json=payload, timeout=_TIMEOUT, headers=self._get_headers()
+        )
 
     def _request(self, method, url, payload=None, expected_status=200):
         """
         Call the API and return the response, raising on anything that is not
         the status code the API answers on success.
 
-        :method: the requests function to call, for example requests.get
+        :method: the session function to call, for example self._session.get
         :payload: the JSON body to send, if any
         :expected_status: the http code the API returns when the call succeeds
         """
@@ -92,6 +116,10 @@ class ApiClient:  # (AsyncClient)
         if response.status_code != expected_status:
             self._raise_api_error(url, payload or {}, response)
         return response
+
+    def close(self):
+        """Release the pooled sockets. Safe to call more than once."""
+        self._session.close()
 
     def set_access_token(self, token: str):
         """This method sets the access token to be used for the API.
@@ -105,14 +133,14 @@ class ApiClient:  # (AsyncClient)
         Check API access to user account
         """
         url = self.url + "/auth/check"
-        return self._request(requests.get, url).json()
+        return self._request(self._session.get, url).json()
 
     def get_list_organizations(self):
         """
         List all organizations
         """
         url = self.url + "/organizations"
-        return self._request(requests.get, url).json()
+        return self._request(self._session.get, url).json()
 
     def check_organization_exists(self, organization_name: str):
         """
@@ -137,7 +165,7 @@ class ApiClient:  # (AsyncClient)
             return organization
         else:
             return self._request(
-                requests.post, url, payload=payload, expected_status=201
+                self._session.post, url, payload=payload, expected_status=201
             ).json()
 
     def get_organization(self, organization_id):
@@ -145,7 +173,7 @@ class ApiClient:  # (AsyncClient)
         Get an organization
         """
         url = self.url + "/organizations/" + organization_id
-        return self._request(requests.get, url).json()
+        return self._request(self._session.get, url).json()
 
     def update_organization(self, organization: OrganizationCreate):
         """
@@ -153,14 +181,14 @@ class ApiClient:  # (AsyncClient)
         """
         payload = dataclasses.asdict(organization)
         url = self.url + "/organizations/" + organization.id
-        return self._request(requests.patch, url, payload=payload).json()
+        return self._request(self._session.patch, url, payload=payload).json()
 
     def list_projects_from_organization(self, organization_id):
         """
         List all projects
         """
         url = self.url + "/organizations/" + organization_id + "/projects"
-        return self._request(requests.get, url).json()
+        return self._request(self._session.get, url).json()
 
     def create_project(self, project: ProjectCreate):
         """
@@ -169,7 +197,7 @@ class ApiClient:  # (AsyncClient)
         payload = dataclasses.asdict(project)
         url = self.url + "/projects"
         return self._request(
-            requests.post, url, payload=payload, expected_status=201
+            self._session.post, url, payload=payload, expected_status=201
         ).json()
 
     def get_project(self, project_id):
@@ -177,7 +205,7 @@ class ApiClient:  # (AsyncClient)
         Get a project
         """
         url = self.url + "/projects/" + project_id
-        return self._request(requests.get, url).json()
+        return self._request(self._session.get, url).json()
 
     def add_emission(self, carbon_emission: dict):
         assert self.experiment_id is not None
@@ -199,7 +227,7 @@ class ApiClient:  # (AsyncClient)
             )
             return False
         emission = EmissionCreate(
-            timestamp=get_datetime_with_timezone(),
+            timestamp=_measurement_timestamp(carbon_emission),
             run_id=self.run_id,
             duration=carbon_emission["duration"],
             emissions_sum=carbon_emission["emissions"],
@@ -219,7 +247,7 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             url = self.url + "/emissions"
-            response = self._send(requests.post, url, payload)
+            response = self._send(self._session.post, url, payload)
             duration = payload["duration"]
             if response.status_code == 422 and duration != round(duration):
                 # Servers older than the client declare duration as an int and
@@ -239,7 +267,7 @@ class ApiClient:  # (AsyncClient)
                     " older than this client. Retrying with the duration truncated to whole seconds."
                 )
                 payload["duration"] = int(duration)
-                response = self._send(requests.post, url, payload)
+                response = self._send(self._session.post, url, payload)
             if response.status_code != 201:
                 self._raise_api_error(url, payload, response)
             logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
@@ -282,7 +310,9 @@ class ApiClient:  # (AsyncClient)
             )
             payload = dataclasses.asdict(run)
             url = self.url + "/runs"
-            r = self._request(requests.post, url, payload=payload, expected_status=201)
+            r = self._request(
+                self._session.post, url, payload=payload, expected_status=201
+            )
             self.run_id = r.json()["id"]
             logger.info(
                 "ApiClient Successfully registered your run on the API.\n\n"
@@ -308,7 +338,7 @@ class ApiClient:  # (AsyncClient)
         List all experiments for a project
         """
         url = self.url + "/projects/" + project_id + "/experiments"
-        return self._request(requests.get, url).json()
+        return self._request(self._session.get, url).json()
 
     def set_experiment(self, experiment_id: str):
         """
@@ -324,7 +354,7 @@ class ApiClient:  # (AsyncClient)
         payload = dataclasses.asdict(experiment)
         url = self.url + "/experiments"
         return self._request(
-            requests.post, url, payload=payload, expected_status=201
+            self._session.post, url, payload=payload, expected_status=201
         ).json()
 
     def get_experiment(self, experiment_id):
@@ -332,7 +362,7 @@ class ApiClient:  # (AsyncClient)
         Get an experiment by id
         """
         url = self.url + "/experiments/" + experiment_id
-        return self._request(requests.get, url).json()
+        return self._request(self._session.get, url).json()
 
     def _raise_api_error(self, url, payload, response):
         """
