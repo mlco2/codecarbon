@@ -1,13 +1,12 @@
 import os
 import re
 import shutil
+import statistics
 import subprocess
 import sys
 import time
 from functools import lru_cache
 from typing import Dict
-
-import numpy as np
 
 from codecarbon.core.util import detect_cpu_model
 from codecarbon.external.logger import logger
@@ -118,17 +117,19 @@ class ApplePowermetrics:
         """
         Setup cli command to run Powermetrics
         """
-        if self._system.startswith("darwin"):
-            cpu_model = detect_cpu_model()
-            if cpu_model.startswith("Apple"):
-                if shutil.which(self._osx_silicon_exec):
-                    self._cli = self._osx_silicon_exec
-                else:
-                    raise FileNotFoundError(
-                        f"Powermetrics executable not found on {self._system}"
-                    )
-        else:
+        if not self._system.startswith("darwin"):
             raise SystemError("Platform not supported by Powermetrics")
+        cpu_model = detect_cpu_model() or ""
+        if not cpu_model.startswith("Apple"):
+            raise SystemError(
+                "Powermetrics is only supported on Apple Silicon, "
+                f"detected CPU: {cpu_model!r}"
+            )
+        if not shutil.which(self._osx_silicon_exec):
+            raise FileNotFoundError(
+                f"Powermetrics executable not found on {self._system}"
+            )
+        self._cli = self._osx_silicon_exec
 
     def _log_values(self) -> None:
         """
@@ -140,10 +141,9 @@ class ApplePowermetrics:
             # Run the powermetrics command with sudo and capture its output
             cmd = [
                 "sudo",
-                "powermetrics",
+                self._cli,
                 "-n",
                 str(self._n_points),
-                "",
                 "--samplers",
                 "cpu_power",
                 "--format",
@@ -175,29 +175,15 @@ class ApplePowermetrics:
         try:
             with open(self._log_file_path) as f:
                 logfile = f.read()
-            cpu_pattern = r"CPU Power: (\d+) mW"
-            cpu_power_list = re.findall(cpu_pattern, logfile)
-
-            details["CPU Power"] = np.mean(
-                [float(power) / 1000 for power in cpu_power_list]
-            )
-            details["CPU Energy Delta"] = np.sum(
-                [
-                    (self._interval / 1000) * (float(power) / 1000)
-                    for power in cpu_power_list
-                ]
-            )
-            gpu_pattern = r"GPU Power: (\d+) mW"
-            gpu_power_list = re.findall(gpu_pattern, logfile)
-            details["GPU Power"] = np.mean(
-                [float(power) / 1000 for power in gpu_power_list]
-            )
-            details["GPU Energy Delta"] = np.sum(
-                [
-                    (self._interval / 1000) * (float(power) / 1000)
-                    for power in gpu_power_list
-                ]
-            )
+            for chip_part in ("CPU", "GPU"):
+                power_list = re.findall(rf"{chip_part} Power: (\d+) mW", logfile)
+                watts = [float(power) / 1000 for power in power_list]
+                details[f"{chip_part} Power"] = (
+                    statistics.fmean(watts) if watts else 0.0
+                )
+                details[f"{chip_part} Energy Delta"] = (
+                    details[f"{chip_part} Power"] * len(watts) * self._interval / 1000
+                )
         except Exception as e:
             logger.info(
                 f"Unable to read Powermetrics logged file at {self._log_file_path}\n \
