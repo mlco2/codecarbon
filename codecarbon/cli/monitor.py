@@ -116,13 +116,12 @@ def run_and_monitor(
         else:
             print("   Emissions: N/A")
 
-        # Show where the data was saved
-        if hasattr(tracker, "_conf") and "output_file" in tracker._conf:
-            output_path = tracker._conf["output_file"]
-            # Make it absolute if it's relative
-            if not os.path.isabs(output_path):
-                output_path = os.path.abspath(output_path)
-            print(f"   Saved to: {output_path}")
+        # Show where the data was saved, asking the output handlers themselves
+        # so the path stays right whatever `output_dir` / `output_file` are.
+        for handler in getattr(tracker, "_output_handlers", []):
+            save_file_path = getattr(handler, "save_file_path", None)
+            if save_file_path:
+                print(f"   Saved to: {os.path.abspath(save_file_path)}")
 
         print("   ⚠️  Note: Tracked the command process and its children")
         print("=" * 60)
