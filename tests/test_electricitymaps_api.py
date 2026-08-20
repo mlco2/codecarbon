@@ -11,6 +11,7 @@ from codecarbon.external.geography import GeoMetadata
 class TestElectricityMapsAPI(unittest.TestCase):
     def setUp(self) -> None:
         # GIVEN
+        electricitymaps_api.reset_cache()
         self._energy = Energy.from_energy(kWh=10)
         self._geo = GeoMetadata(
             country_iso_code="FRA",
@@ -43,3 +44,15 @@ class TestElectricityMapsAPI(unittest.TestCase):
         result = electricitymaps_api.get_emissions(self._energy, self._geo, api_key)
         # Should return a positive emissions value
         assert result > 0
+
+    @responses.activate
+    def test_non_json_error_body_falls_back_to_text(self):
+        responses.add(
+            responses.GET,
+            electricitymaps_api.URL,
+            body="<html>502 Bad Gateway</html>",
+            status=502,
+        )
+        with pytest.raises(electricitymaps_api.ElectricityMapsAPIError) as error:
+            electricitymaps_api.get_carbon_intensity(self._geo)
+        assert "502 Bad Gateway" in str(error.value)
