@@ -29,6 +29,9 @@ pip install codecarbon
 
 More installation options: [installation docs](https://docs.codecarbon.io/latest/how-to/installation/).
 
+Something not working, or numbers that look wrong? See the
+[troubleshooting guide](https://docs.codecarbon.io/latest/how-to/troubleshooting/).
+
 ## Quickstart (Python)
 
 ```python
@@ -78,9 +81,11 @@ We created a Python package that estimates your hardware electricity power consu
 
 CodeCarbon focuses on the main compute components it can measure or estimate directly: CPU, GPU, and RAM. It does not separately model disk I/O, network transfers, displays, cooling, or other peripherals because those sources are usually much smaller for local code-level experiments and are not exposed through the same low-overhead measurement interfaces.
 
+On Linux, CodeCarbon reads Intel RAPL hardware energy counters when it can. If those counters are not readable it falls back to estimating from CPU load, which is less accurate — see [getting accurate CPU measurements](https://docs.codecarbon.io/latest/how-to/enable-rapl/) to enable them.
+
 ![calculation Summary](docs/images/calculation.png)
 
-We explain more about this calculation in the [**Methodology**](https://docs.codecarbon.io/latest/explanation/methodology/) section of the documentation.
+We explain more about this calculation in the [**Methodology**](https://docs.codecarbon.io/latest/explanation/methodology/) section of the documentation, and we document how close those numbers are — and where they are not close — in [**Accuracy and validation**](https://docs.codecarbon.io/latest/explanation/accuracy/).
 
 ## Visualize
 
@@ -97,9 +102,12 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 | [CLI Tutorial](https://docs.codecarbon.io/latest/tutorials/cli/)                                      | Track emissions from the command line      |
 | [Python API Tutorial](https://docs.codecarbon.io/latest/tutorials/python-api/)                        | Track emissions in Python code             |
 | [Comparing Model Efficiency](https://docs.codecarbon.io/latest/tutorials/comparing-model-efficiency/) | Measure carbon efficiency across ML models |
+| [Accurate CPU measurements (Linux/RAPL)](https://docs.codecarbon.io/latest/how-to/enable-rapl/)       | Read real energy counters instead of estimating |
 | [API Reference](https://docs.codecarbon.io/latest/reference/api/)                                     | Full parameter documentation               |
 | [Framework examples (scikit-learn)](https://docs.codecarbon.io/latest/how-to/scikit-learn/)           | Task-oriented ML framework examples        |
 | [Methodology](https://docs.codecarbon.io/latest/explanation/methodology/)                             | How emissions are calculated               |
+| [Accuracy and validation](https://docs.codecarbon.io/latest/explanation/accuracy/)                    | How accurate the numbers are, and why      |
+| [Alternatives comparison](https://docs.codecarbon.io/latest/explanation/alternatives/)                 | CodeCarbon vs other carbon tracking tools  |
 | [When to use CodeCarbon vs EcoLogits](https://docs.codecarbon.io/latest/explanation/when-to-use/)     | Choose the right tool                      |
 | [EcoLogits](https://ecologits.ai/)                                                                    | Track emissions from GenAI API calls       |
 | [Discord Community](https://discord.gg/GS9js2XkJR)                                                    | Chat with us and the community             |
@@ -126,29 +134,18 @@ Feel free to chat with us on [Discord](https://discord.gg/GS9js2XkJR).
 
 ## Citation
 
-If you find CodeCarbon useful for your research, you can find a citation under a variety of formats on [Zenodo](https://zenodo.org/records/11171501).
-
-<details>
-<summary>BibTeX</summary>
+If you find CodeCarbon useful for your research, use the **Cite this repository** button in the GitHub sidebar, or copy the BibTeX below. The DOI is a Zenodo concept DOI: it always resolves to the latest release. All versions and formats are on [Zenodo](https://doi.org/10.5281/zenodo.4658424).
 
 ```tex
-@software{benoit_courty_2024_11171501,
+@software{codecarbon,
   author       = {Benoit Courty and
                   Victor Schmidt and
                   Sasha Luccioni and
-                  Goyal-Kamal and
-                  MarionCoutarel and
                   Boris Feld and
                   Jérémy Lecourt and
-                  LiamConnell and
-                  Amine Saboni and
-                  Inimaz and
-                  supatomic and
                   Mathilde Léval and
                   Luis Blanche and
                   Alexis Cruveiller and
-                  ouminasara and
-                  Franklin Zhao and
                   Aditya Joshi and
                   Alexis Bogroff and
                   Hugues de Lavoreille and
@@ -161,19 +158,14 @@ If you find CodeCarbon useful for your research, you can find a citation under a
                   Michał Stęchły and
                   Christian Bauer and
                   Lucas Otávio N. de Araújo and
-                  JPW and
-                  MinervaBooks},
-  title        = {mlco2/codecarbon: v2.4.1},
-  month        = may,
-  year         = {2024},
+                  {The CodeCarbon contributors}},
+  title        = {CodeCarbon: Estimate and track carbon emissions from computing},
   publisher    = {Zenodo},
-  version      = {v2.4.1},
-  doi          = {10.5281/zenodo.11171501},
-  url          = {https://doi.org/10.5281/zenodo.11171501}
+  version      = {3.3.0},
+  doi          = {10.5281/zenodo.4658424},
+  url          = {https://doi.org/10.5281/zenodo.4658424}
 }
 ```
-
-</details>
 
 ## Contact
 

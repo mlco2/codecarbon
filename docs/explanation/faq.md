@@ -6,7 +6,23 @@ Use **CodeCarbon** when you run code on hardware you control—training models, 
 
 ## How accurate are your estimations?
 
-It is hard to quantify the entirety of computing emissions, because there are many factors in play, notably the life-cycle emissions of computing infrastructure. We therefore only focus on the direct emissions produced by running the actual code, but recognize that there is much work to be done to improve this estimation.
+It depends on which measurement backend your machine offers. With hardware energy counters (RAPL on Linux, NVML or amdsmi for GPUs) CodeCarbon reads real energy consumption. Without them it falls back to estimating CPU power from load and TDP, which on the machines we profiled deviated from RAPL by up to roughly a factor of two in either direction. Carbon intensity is a separate and often larger error source: without regional data CodeCarbon uses a world average of 475 gCO2.eq/kWh.
+
+We also only cover the direct emissions of running the code — CPU, GPU and RAM — and not the life-cycle emissions of the hardware.
+
+See [Accuracy and validation](accuracy.md) for the measured figures, the known gaps, and how to improve your own numbers.
+
+## How does CodeCarbon compare to other carbon tracking tools?
+
+See [CodeCarbon and the alternatives](alternatives.md), which covers carbontracker, eco2AI, experiment-impact-tracker, Zeus, Scaphandre, ML CO2 Impact and cloud provider tooling — including the cases where one of those is the better choice.
+
+## Why are my measurements estimates instead of real readings?
+
+On Linux, CodeCarbon reads the Intel RAPL hardware energy counters under `/sys/class/powercap`. Since a kernel security fix these files are root-only by default, so CodeCarbon often cannot read them and falls back to estimating CPU power from CPU load and the processor's TDP. You will see a `RAPL - Permission denied` warning in the logs when this happens, but the warning is easy to miss in a notebook, a training framework that reconfigures logging, or a CI job.
+
+The fix takes about two minutes and persists across reboots: see [Improve Measurement Accuracy with RAPL](../how-to/enable-rapl.md). The one-line `sudo chmod -R a+r /sys/class/powercap/*` also works but is reset on the next restart.
+
+Note that RAPL counters do not exist at all in most containers and virtual machines, so estimation is expected there.
 
 ## What are the sources of your energy carbon intensity data?
 
@@ -51,11 +67,14 @@ In a single Python process, the first tracker pays a one-time cost to detect har
 
 ## What hardware does CodeCarbon support?
 
-CodeCarbon supports various CPU architectures, GPUs, and cloud providers. For details on measurement priority and supported hardware, see the [Methodology](methodology.md#cpu-metrics-priority) page.
+CodeCarbon supports various CPU architectures, GPUs, and cloud providers. For details on measurement priority and supported hardware, see the [Methodology](methodology.md#which-backend-gets-chosen) page.
 
 ## How do I report a bug?
 
-Please open an issue on [GitHub](https://github.com/mlco2/codecarbon/issues) with:
+First check the [Troubleshooting](../how-to/troubleshooting.md) guide — most
+warnings CodeCarbon prints are explained there, along with the fix.
+
+If it is still a bug, please open an issue on [GitHub](https://github.com/mlco2/codecarbon/issues) with:
 - Your environment details
 - Steps to reproduce
 - Expected vs actual behavior

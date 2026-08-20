@@ -21,3 +21,7 @@ CodeCarbon measures actual power consumption (CPU, GPU, RAM) and converts it to 
 ## Both are complementary
 
 Use CodeCarbon for training and local inference. Use EcoLogits for remote API inference. Together they cover the full lifecycle of AI workloads.
+
+## Other tools
+
+For a comparison with carbontracker, eco2AI, experiment-impact-tracker, Zeus, Scaphandre, ML CO2 Impact and cloud provider tooling, see [CodeCarbon and the alternatives](alternatives.md).

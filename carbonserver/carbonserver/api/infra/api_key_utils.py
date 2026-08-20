@@ -13,8 +13,13 @@ def generate_api_key() -> str:
     return prefixed_api_key
 
 
-def get_api_key_hash(api_key: str) -> str:
-    """Get the hash of the api key"""
+def get_api_key_hash(api_key: str) -> bytes:
+    """Get the hash of the api key.
+
+    Returns bcrypt's own ``bytes`` output. It is stored in a ``String`` column and
+    comes back from the database as ``str``, which is what ``verify_api_key``
+    expects — hence the asymmetric annotations.
+    """
     return bcrypt.hashpw(
         api_key.encode(),
         bcrypt.gensalt(),
@@ -32,7 +37,9 @@ def verify_api_key(plain_api_key: str, hashed_api_key: str) -> bool:
 
 
 def generate_lookup_value(api_key: str) -> str:
-    # Generate a SHA-256 hash of the API key
+    """Non-secret lookup index, not a credential: authentication is always
+    ``verify_api_key`` (bcrypt). Collisions are expected and iterated over.
+    """
+    # codeql[py/weak-sensitive-data-hashing]
     sha256_hash = hashlib.sha256(api_key.encode()).hexdigest()
-    # Use the first 8 characters of the hash as a lookup value
     return sha256_hash[:8]

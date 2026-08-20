@@ -28,6 +28,13 @@ if TYPE_CHECKING:
 # default W value per core for a CPU if no model is found in the ref csv
 DEFAULT_POWER_PER_CORE = 4
 
+_TROUBLESHOOTING_URL = "https://docs.codecarbon.io/latest/how-to/troubleshooting/"
+RAPL_PERMISSION_HELP = (
+    "You can grant read permission with: sudo chmod -R a+r /sys/class/powercap/* "
+    "(this does not persist across reboots, see "
+    f"{_TROUBLESHOOTING_URL}#rapl-permission-denied for a permanent setup)"
+)
+
 
 @lru_cache(maxsize=1)
 def is_powergadget_available() -> bool:
@@ -175,18 +182,16 @@ def _create_warn_function():
         nonlocal already_warned
         if not already_warned:
             logger.warning(
-                "\tRAPL - Permission denied reading RAPL file %s. "
-                "You can grant read permission with: "
-                "sudo chmod -R a+r /sys/class/powercap/*",
+                "\tRAPL - Permission denied reading RAPL file %s. %s",
                 energy_path,
+                RAPL_PERMISSION_HELP,
             )
             already_warned = True
         else:
             logger.debug(
-                "\tRAPL - Permission denied reading RAPL file %s. "
-                "You can grant read permission with: "
-                "sudo chmod -R a+r /sys/class/powercap/*",
+                "\tRAPL - Permission denied reading RAPL file %s. %s",
                 energy_path,
+                RAPL_PERMISSION_HELP,
             )
 
     return warn_permission_denied
@@ -583,8 +588,7 @@ class IntelRAPL:
             return True, is_required_main
         except PermissionError:
             msg = f"\tRAPL - Permission denied reading RAPL file {rapl_file}."
-            suggestion = "You can grant read permission with: sudo chmod -R a+r /sys/class/powercap/*"
-            logger.warning("%s %s; skipping.", msg, suggestion)
+            logger.warning("%s %s; skipping.", msg, RAPL_PERMISSION_HELP)
             return False, False
         except Exception as e:
             logger.debug(
@@ -1009,9 +1013,10 @@ class TDP:
                 )
                 return cpu_model_detected, power
             logger.warning(
-                "We saw that you have a %s but we don't know it."
-                + " Please contact us.",
+                "We saw that you have a %s but we don't know it. "
+                "Please help us add it, see %s#unknown-cpu-model",
                 cpu_model_detected,
+                _TROUBLESHOOTING_URL,
             )
             if is_psutil_available():
                 # Count thread of the CPU
