@@ -1,6 +1,8 @@
 import builtins
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
+from unittest.mock import patch
 
 from codecarbon.input import DataSource
 
@@ -33,3 +35,43 @@ def get_custom_mock_open(global_conf_str, local_conf_str) -> callable:
         return conditional_open_func
 
     return mocked_open
+
+
+def join_telemetry(tracker, timeout: float = 10.0) -> None:
+    """Wait for the background telemetry send that ``stop()`` fired, if any."""
+    thread = getattr(getattr(tracker, "_telemetry", None), "_thread", None)
+    if thread is not None:
+        thread.join(timeout)
+
+
+@contextmanager
+def hanging_endpoint():
+    """Yield a URL whose TCP connections are accepted but never answered."""
+    import socket
+
+    server = socket.socket()
+    server.bind(("127.0.0.1", 0))
+    server.listen(8)  # backlog completes the handshake; we never accept()
+    try:
+        yield "http://{}:{}".format(*server.getsockname())
+    finally:
+        server.close()
+
+
+@contextmanager
+def ensure_telemetry_run_duration(min_seconds: float = 10.0):
+    """Force tracker stop emissions duration above telemetry's 1s minimum."""
+    from codecarbon.emissions_tracker import BaseEmissionsTracker
+
+    original_prepare = BaseEmissionsTracker._prepare_emissions_data
+
+    def prepare_with_min_duration(self):
+        data = original_prepare(self)
+        if data is not None and (data.duration is None or data.duration < min_seconds):
+            data.duration = min_seconds
+        return data
+
+    with patch.object(
+        BaseEmissionsTracker, "_prepare_emissions_data", prepare_with_min_duration
+    ):
+        yield

@@ -110,6 +110,31 @@ def normalize_gpu_ids(
     return None
 
 
+def _config_file_paths() -> tuple[str, str]:
+    """Return resolved paths for global and local CodeCarbon config files."""
+    cwd = Path.cwd()
+    home = Path.home()
+    global_path = str((home / ".codecarbon.config").expanduser().resolve())
+    local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
+    return global_path, local_path
+
+
+def get_config_file_settings() -> dict[str, str]:
+    """Return the ``[codecarbon]`` section from config files without environment overlay.
+
+    Reads ``~/.codecarbon.config`` then ``./.codecarbon.config`` (local overrides global).
+
+    Returns:
+        Configuration dict from files only. Empty when no file or section exists.
+    """
+    config = configparser.ConfigParser()
+    global_path, local_path = _config_file_paths()
+    config.read([global_path, local_path])
+    if "codecarbon" not in config:
+        return {}
+    return dict(config["codecarbon"])
+
+
 def get_hierarchical_config():
     """
     Get the user-defined codecarbon configuration ConfigParser dictionnary
@@ -137,13 +162,7 @@ def get_hierarchical_config():
         dict: The final configuration dict parsed from global,
         local and environment configurations. **All values are strings**.
     """
-
-    config = configparser.ConfigParser()
-
-    cwd = Path.cwd()
-    home = Path.home()
-    global_path = str((home / ".codecarbon.config").expanduser().resolve())
-    local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
+    global_path, local_path = _config_file_paths()
     if Path(global_path).exists():
         logger.info(
             f"Codecarbon is taking the configuration from global file: {global_path}"
@@ -155,7 +174,6 @@ def get_hierarchical_config():
             f"Codecarbon is taking the configuration from the local file {local_path}"
         )
 
-    config.read([global_path, local_path])
-    config.read_dict(parse_env_config())
-
-    return dict(config["codecarbon"])
+    conf = get_config_file_settings()
+    conf.update(parse_env_config().get("codecarbon", {}))
+    return conf
