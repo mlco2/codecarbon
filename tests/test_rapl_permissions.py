@@ -2,10 +2,49 @@ import logging
 import os
 import stat
 import sys
+from unittest import mock
 
 import pytest
 
-from codecarbon.core.cpu import IntelRAPL, is_rapl_available
+from codecarbon.core.cpu import (
+    RAPL_PERMISSION_HELP,
+    IntelRAPL,
+    _create_warn_function,
+    is_rapl_available,
+)
+
+
+def test_permission_warning_is_emitted_once(caplog):
+    """The scan hits every domain: warn once, then stay quiet on the debug channel."""
+    warn = _create_warn_function()
+
+    with caplog.at_level(logging.DEBUG, logger="codecarbon"):
+        warn("/sys/class/powercap/intel-rapl:0/energy_uj")
+        warn("/sys/class/powercap/intel-rapl:1/energy_uj")
+
+    levels = [r.levelno for r in caplog.records]
+    assert levels == [logging.WARNING, logging.DEBUG]
+    # Both messages tell the user how to fix the permissions.
+    for record in caplog.records:
+        assert RAPL_PERMISSION_HELP in record.getMessage()
+
+
+def test_unreadable_domain_is_skipped_with_actionable_warning(caplog):
+    rapl = IntelRAPL.__new__(IntelRAPL)  # no filesystem scan, we test the check alone
+
+    with (
+        mock.patch("builtins.open", side_effect=PermissionError("nope")),
+        caplog.at_level(logging.WARNING, logger="codecarbon"),
+    ):
+        readable, is_main = rapl._validate_domain_readable(
+            "/sys/class/powercap/intel-rapl:0/energy_uj",
+            "/sys/class/powercap/intel-rapl:0",
+            "package-0",
+        )
+
+    # An unreadable domain is skipped, and never reported as the main one.
+    assert (readable, is_main) == (False, False)
+    assert RAPL_PERMISSION_HELP in caplog.text
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")

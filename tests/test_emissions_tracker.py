@@ -16,6 +16,7 @@ from codecarbon.emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
     track_emissions,
+    track_task_emissions,
 )
 from codecarbon.external.geography import CloudMetadata
 from codecarbon.output import BoAmpsOutput, CodeCarbonAPIOutput, OutputMethod
@@ -608,6 +609,38 @@ class TestCarbonTracker(unittest.TestCase):
 
         dummy_train_model()
         self.verify_output_file(self.emissions_file_path, 2)
+
+    def test_track_task_emissions_decorator(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            measure_power_secs=1,
+            output_dir=self.temp_path,
+            experiment_id="test",
+        )
+        tracker.start()
+
+        @track_task_emissions(tracker=tracker, task_name="training")
+        def dummy_train_model():
+            heavy_computation(run_time_secs=1)
+            return 42
+
+        # The decorator is transparent: same name, same return value.
+        self.assertEqual("dummy_train_model", dummy_train_model.__name__)
+        self.assertEqual(42, dummy_train_model())
+
+        # ...and the task has been measured on the tracker we passed in.
+        self.assertIn("training", tracker._tasks)
+        self.assertGreater(tracker._tasks["training"].emissions_data.duration, 0)
+        tracker.stop()
 
     def test_offline_tracker_country_name(
         self,

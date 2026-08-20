@@ -54,6 +54,10 @@ Please refer to
 [pyproject.toml](https://github.com/mlco2/codecarbon/blob/master/pyproject.toml)
 for the latest list of the packages used.
 
+## After installing on Linux
+
+CodeCarbon is most accurate when it can read the Intel RAPL hardware energy counters, which are root-only by default on modern kernels. Without them it estimates CPU power from CPU load and the processor's TDP. See [Improve Measurement Accuracy with RAPL](enable-rapl.md) for a permanent, reboot-proof setup.
+
 ## (Non-Python users) Standalone installer
 
 If you are not using Python but would like to run CodeCarbon (for instance to use the [CodeCarbon Command line](../tutorials/cli.md)), we
